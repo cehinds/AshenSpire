@@ -265,13 +265,16 @@ export function auditRelics(registries) {
     conditionalNegativeControls: rows.filter(row => row.condition === 'satisfied' && row.negativeControl === 'passed').length,
     gatedBranches: rows.filter(row => row.gateControl !== 'not-applicable').length,
     gatedBranchesCovered: rows.filter(row => row.gateControl === 'passed').length,
-    passiveIds: passives.ids, passiveEffects: passives.effects.length, passiveEffectRows: passives.effects, passiveEffectsCovered: passives.covered,
+    passiveIds: passives.ids, passiveDeclarations: passives.effects.length + passives.noOpDeclarations.length,
+    passiveEffects: passives.effects.length, passiveEffectRows: passives.effects, passiveEffectsCovered: passives.covered,
+    passiveNoOpDeclarations: passives.noOpDeclarations.length, passiveNoOpRows: passives.noOpDeclarations,
     passiveMissing: passives.missing, missing: rows.filter(row => row.result !== 'covered'), relicCoverage, rows };
 }
 
 function auditRelicPassives(registries) {
   const ids = registries.relics.all().filter(relic => Object.keys(relic.passives || {}).length);
   const effects = [];
+  const noOpDeclarations = [];
   const newRun = relicIds => {
     const run = api.createRunState({ registries, classId: 'reaver', seed: 7306 });
     run.relics = [...relicIds];
@@ -283,6 +286,10 @@ function auditRelicPassives(registries) {
   for (const relic of ids) {
     const own = newRun([relic.id]);
     for (const [key, authored] of Object.entries(relic.passives || {})) {
+      if (key === 'modifiers' && Array.isArray(authored) && authored.length === 0) {
+        noOpDeclarations.push({ relicId: relic.id, key, authored, result: 'no-op-declaration' });
+        continue;
+      }
       let expected, observed, result = 'missing';
       if (key === 'modifiers') {
         const receipt = own.derivedStatRuleSnapshot?.relicModifiers;
@@ -388,7 +395,8 @@ function auditRelicPassives(registries) {
       effects.push({ relicId: relic.id, key, expected, observed, result });
     }
   }
-  return { ids: ids.length, effects, covered: effects.filter(row => row.result === 'covered').length, missing: effects.filter(row => row.result !== 'covered') };
+  return { ids: ids.length, effects, noOpDeclarations, covered: effects.filter(row => row.result === 'covered').length,
+    missing: effects.filter(row => row.result !== 'covered') };
 }
 
 export function auditStatuses(registries) {
@@ -649,7 +657,7 @@ function auditStatusModifierConsumers(registries, silencedProof) {
   };
   const growthBase = growth(false), growthStatus = growth(true);
   addRow('goreblood', 'meterMaxGrowthDisabled', { baseline: growthBase.observed, observed: growthStatus.observed,
-    expected: growthBase.observed, ok: growthBase.observed > growthBase.before && growthStatus.observed === growthStatus.before });
+    expected: growthStatus.before, ok: growthBase.observed > growthBase.before && growthStatus.observed === growthStatus.before });
   const skip = withStatus => {
     const combat = makeAuditCombat(api, { classId: 'reaver', enemyIds: ['wanderingSoldier'], seed: 7318 }).combat;
     if (withStatus) api.applyStatus(combat, combat.enemies[0], 'entombed', 1);
@@ -874,12 +882,14 @@ function auditEnemyReactionMoves(base) {
       settleAuditChoices(api, combat);
       const stacked = combat.eventLog.filter(event => event.type === 'combatEnemyReactionStacked' && event.moveId === 'bindingRiposte');
       const started = combat.eventLog.filter(event => event.type === 'enemyMoveStarted' && event.reaction && event.moveId === 'bindingRiposte');
-      const reactionDamage = combat.eventLog.filter(event => event.type === 'damageDealt' && event.moveId === 'bindingRiposte').map(event => event.amount);
+      const reactionDamageEvents = combat.eventLog.filter(event => event.type === 'damageDealt' && event.moveId === 'bindingRiposte'
+        && event.targetId === combat.player.id);
+      const reactionDamage = reactionDamageEvents.map(event => event.amount);
       const observed = stacked.length === 1 && started.length === 1 && reactionDamage.some(amount => amount > 0) ? true
         : stacked.length === 0 && started.length === 0 && chanceRollDraws === 1 && reactionDamage.length === 0 ? false : null;
       if (observed !== null) seen.set(observed, { seed, observed, chanceRollDraws, stacked: stacked.length, started: started.length,
         settled: !combat.pendingReaction && combat.queue.length === 0,
-        reactionDamage });
+        reactionDamage, reactionDamageTargetIds: reactionDamageEvents.map(event => event.targetId) });
     }
   } finally { api.registries = originalRegistries; }
   for (const [expected, observation] of [[true, seen.get(true)], [false, seen.get(false)]]) {
@@ -887,6 +897,7 @@ function auditEnemyReactionMoves(base) {
       observed: observation?.observed ?? null,
       seed: observation?.seed ?? null, chanceRollDraws: observation?.chanceRollDraws || 0, stacked: observation?.stacked || 0,
       started: observation?.started || 0, reactionDamage: observation?.reactionDamage || [], settled: !!observation?.settled,
+      reactionDamageTargetIds: observation?.reactionDamageTargetIds || [],
       result: observation?.settled && observation.chanceRollDraws === 1
         && (expected ? observation.stacked === 1 && observation.started === 1 && observation.reactionDamage.some(amount => amount > 0)
           : observation.stacked === 0 && observation.started === 0) ? 'covered' : 'missing' });
@@ -957,7 +968,9 @@ export async function runRelicEnemyAudit(mode = 'native') {
   const encounters = auditEncounterClassMatrix();
   return { counts: { relics: relics.ids, relicPropertyCarriers: relics.propertyRelics, relicRules: relics.branches, relicBranchesCovered: relics.covered,
     relicConditionalFalseControls: relics.conditionalNegativeControls, relicGatedBranches: relics.gatedBranches, relicGatedBranchesCovered: relics.gatedBranchesCovered,
-    relicPassives: relics.passiveIds, relicPassiveEffects: relics.passiveEffects, relicPassiveEffectsCovered: relics.passiveEffectsCovered,
+    relicPassives: relics.passiveIds, relicPassiveDeclarations: relics.passiveDeclarations,
+    relicPassiveEffects: relics.passiveEffects, relicPassiveEffectsCovered: relics.passiveEffectsCovered,
+    relicPassiveNoOpDeclarations: relics.passiveNoOpDeclarations,
     statuses: statuses.ids, statusesCovered: statuses.covered, statusModifierOutcomes: statuses.modifierOutcomesCovered,
     statusModifierDeclarations: statuses.modifierDeclarations, statusProcBranches: statuses.procBranches, statusProcBranchesCovered: statuses.procBranchesCovered,
     statusSilencedConsumerPathsCovered: silencedConsumerPaths.covered,

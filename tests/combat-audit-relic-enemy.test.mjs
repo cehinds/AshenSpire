@@ -9,7 +9,7 @@ for (const mode of ['native', 'bundled']) {
       relics: 73, relicPropertyCarriers: 62, relicRules: 68, relicBranchesCovered: 68,
       relicConditionalFalseControls: 33, relicGatedBranches: report.counts.relicGatedBranches,
       relicGatedBranchesCovered: report.counts.relicGatedBranches,
-      relicPassives: 27, relicPassiveEffects: report.counts.relicPassiveEffects,
+      relicPassives: 27, relicPassiveDeclarations: 31, relicPassiveEffects: 19, relicPassiveNoOpDeclarations: 12,
       relicPassiveEffectsCovered: report.counts.relicPassiveEffects,
       statusModifierOutcomes: report.counts.statusModifierDeclarations, statusModifierDeclarations: report.counts.statusModifierDeclarations,
       statusProcBranches: 3, statusProcBranchesCovered: 3,
@@ -27,19 +27,24 @@ for (const mode of ['native', 'bundled']) {
     assert.equal(report.relics.relicCoverage.length, 73);
     assert.equal(report.relics.passiveIds, 27);
     assert.equal(report.relics.passiveMissing.length, 0);
-    assert.equal(report.relics.passiveEffects, 31);
+    assert.equal(report.relics.passiveEffects, 19);
+    assert.equal(report.relics.passiveNoOpDeclarations, 12);
+    assert.equal(report.relics.passiveDeclarations, 31);
     assert.deepEqual(report.relics.passiveEffectRows.map(row => `${row.relicId}:${row.key}`).sort(), [
       'ancestralHorn:powerCostReduction', 'cinderPouch:runeGainMult', 'crackedTear:flaskPowerMult', 'curedHide:poiseThresholdAdd',
-      'cutpursesCoin:modifiers', 'emberFragment:restHealMult', 'feralEye:eliteExtraCardReward', 'forsakenMedallion:modifiers',
-      'goldFigurine:modifiers', 'paupersDiadem:powerCostReduction', 'paupersDiadem:runeGainMult', 'prismaticThorn:exposureBuildupMult',
-      'prismaticThorn:flaskPowerMult', 'progression-cinderbound-crown:modifiers', 'progression-cracked-war-anvil:modifiers',
-      'progression-ember-alms-bowl:modifiers', 'progression-emberjaw-token:modifiers', 'progression-fragment-of-the-third-sky:modifiers',
-      'progression-moonwell-lens:modifiers', 'progression-nightglass-rosary:modifiers', 'progression-ossuary-prayer-wheel:modifiers',
-      'progression-purse-of-borrowed-shadows:modifiers', 'progression-whisperglass-die:modifiers', 'restlessClasp:flaskPowerMult',
+      'emberFragment:restHealMult', 'feralEye:eliteExtraCardReward', 'forsakenMedallion:modifiers', 'paupersDiadem:powerCostReduction',
+      'paupersDiadem:runeGainMult', 'prismaticThorn:exposureBuildupMult', 'prismaticThorn:flaskPowerMult', 'restlessClasp:flaskPowerMult',
       'restlessClasp:restHealMult', 'saltedRelic:runeGainMult', 'sealstoneKey:revealUnknown', 'starstoneShard:modifiers',
       'wayfarersKnot:restHealMult', 'wayfarersKnot:runeGainMult', 'wyrmHeart:restDenied',
     ]);
     assert.ok(report.relics.passiveEffectRows.every(row => row.result === 'covered' && row.observed !== null));
+    assert.deepEqual(report.relics.passiveNoOpRows.map(row => `${row.relicId}:${row.key}`).sort(), [
+      'cutpursesCoin:modifiers', 'goldFigurine:modifiers', 'progression-cinderbound-crown:modifiers',
+      'progression-cracked-war-anvil:modifiers', 'progression-ember-alms-bowl:modifiers', 'progression-emberjaw-token:modifiers',
+      'progression-fragment-of-the-third-sky:modifiers', 'progression-moonwell-lens:modifiers', 'progression-nightglass-rosary:modifiers',
+      'progression-ossuary-prayer-wheel:modifiers', 'progression-purse-of-borrowed-shadows:modifiers', 'progression-whisperglass-die:modifiers',
+    ]);
+    assert.ok(report.relics.passiveNoOpRows.every(row => row.result === 'no-op-declaration'));
     assert.deepEqual(report.relics.passiveEffectRows.filter(row => row.key !== 'modifiers').map(row => row.key).sort(), [
       'eliteExtraCardReward', 'exposureBuildupMult', 'flaskPowerMult', 'flaskPowerMult', 'flaskPowerMult',
       'poiseThresholdAdd', 'powerCostReduction', 'powerCostReduction', 'restDenied', 'restHealMult', 'restHealMult',
@@ -54,6 +59,8 @@ for (const mode of ['native', 'bundled']) {
     assert.ok(report.silencedConsumerPaths.normativeContract.includes('combatExpansionVersion 2'));
     assert.equal(report.statusModifierConsumers.declarations, 20);
     assert.equal(report.statusModifierConsumers.covered, 20);
+    const meterGrowth = report.statusModifierConsumers.rows.find(row => row.statusId === 'goreblood' && row.key === 'meterMaxGrowthDisabled');
+    assert.deepEqual({ baseline: meterGrowth.baseline, observed: meterGrowth.observed, expected: meterGrowth.expected }, { baseline: 13, observed: 10, expected: 10 });
     assert.deepEqual(report.statusModifierConsumers.rows.map(row => `${row.statusId}:${row.key}`).sort(), [
       'confused:damageDealtMult', 'dexterity:blockAdd', 'entombed:damageTakenMult', 'entombed:skipTurn',
       'frail:blockGainedMult', 'glassCannon:damageDealtMult', 'glassCannon:damageTakenMult', 'goreblood:meterMaxGrowthDisabled',
@@ -69,6 +76,7 @@ for (const mode of ['native', 'bundled']) {
     assert.deepEqual(report.enemies.reactionRows.filter(row => row.caseId === 'chance-taken' || row.caseId === 'chance-declined').map(row => row.caseId).sort(), ['chance-declined', 'chance-taken']);
     assert.ok(report.enemies.rows.every(row => row.effectRows?.length && row.effectRows.every(effect => effect.observed)));
     assert.ok(report.enemies.reactionRows.filter(row => row.moveId === 'bindingRiposte').every(row => row.chanceRollDraws === 1 && row.settled && row.observed === row.expected));
+    assert.ok(report.enemies.reactionRows.filter(row => row.moveId === 'bindingRiposte').every(row => row.reactionDamageTargetIds.every(id => id === 'player')));
     assert.equal(report.enemies.missing.length, 0);
     assert.equal(report.encounters.missing.length, 0);
   });
