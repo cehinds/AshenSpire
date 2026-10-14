@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-14
 
+- **Restore cards show their full price in combat** ([#1976](https://github.com/cehinds/AshenSpire/pull/1976), `0.7.1.1515`). Attune and Ember Communion now show their full discounted Mana price on the card and in Information, matching rewards and deck views. Their own restore still pays that part: they remain playable at zero Mana and leave Mana unchanged. Stamina restores follow the same display rule, and a card cannot borrow a discount held by another queued card in Combat Rounds. Solo, co-op and older saved rules keep their payment behavior.
 - **Quickstep reactions and Guard no longer freeze combat** ([#1972](https://github.com/cehinds/AshenSpire/pull/1972), `0.7.1.1515`). Playing Quickstep as a reaction after a Defend card arms its Poise guard now resolves the enemy attack, and End Turn remains usable. An ordinary guarded End Turn and rated Counterstrike replies also resolve correctly in standalone builds. Five bundled-runtime checks cover the Guard paths in solo and co-op and the rated Counter return.
 - **Cards show the same rules before and during combat** ([#1971](https://github.com/cehinds/AshenSpire/pull/1971), `0.7.1.1513`). Character creation, rewards and deck inspection now show the current combat effects, costs and traits: Crystal Barrier grants Ward in every view instead of promising Block outside combat. Reward captions and deck descriptions agree with their cards, while older saved runs keep their original rules.
 
