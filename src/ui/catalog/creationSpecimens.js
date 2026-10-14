@@ -3,11 +3,14 @@
 import { el, pane } from '../kit/index.js';
 import { feats } from '../../content/feats.js';
 import { createRunState } from '../../model/state.js';
+import { statProjection } from '../../model/statProjection.js';
+import { classChoiceCard, classUnfold } from '../components/creationCards.js';
+import { creationClassTileSummary } from '../models/CreationClassTileModel.js';
 import { subclassOptions } from '../../model/subclasses.js';
 import * as SubclassDeck from '../../model/subclassDeck.js';
 import { createCreationSubclassSelector, createCreationStartingDeck } from '../components/creationSubclass.js';
 import { renderCard } from '../components/card.js';
-import { CREATION_CARD_RULES } from '../models/CreationSubclassModel.js';
+import { creationDraftStartingDeck, CREATION_CARD_RULES } from '../models/CreationSubclassModel.js';
 import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
 import { creationFeatBrowserGroups } from '../models/CreationFeatBrowserModel.js';
 import { engravedIcon } from '../components/engravedIcon.js';
@@ -52,6 +55,21 @@ function panelSpecimen() {
   return creationPanel({ kind: 'catalog-panel', title: feats[0].name,
     children: el('p', { text: feats[0].description }),
   });
+}
+
+/** The selected Class miniature uses the live summary, gear and opening refs. */
+export function createCreationClassSpecimen({ registries, classId, run = null, settings = {}, visual = null, makeSprite = null, onRelicInspect = null }) {
+  const cls = registries.classes.get(classId);
+  const draft = run || createRunState({ registries, classId, subclassId: subclassOptions(registries, classId)[0].id,
+    seed: 7, profileMeta: { settings } });
+  const refs = creationDraftStartingDeck(registries, draft, [], settings);
+  const summary = creationClassTileSummary(registries, draft, statProjection(registries, draft), refs);
+  const relic = registries.relics.get(draft.relics[0]);
+  const card = classChoiceCard(cls, { selected: true, expanded: true, visual });
+  card.classList.add('unfolded', 'cc-catalog-specimen');
+  card.append(classUnfold({ cls, summary, relic, visual,
+    sprite: makeSprite?.(classId, draft.loadout.sets.armor[0]), onRelicInspect }));
+  return card;
 }
 
 export function mountCreationPartSpecimens({ host, registries }) {

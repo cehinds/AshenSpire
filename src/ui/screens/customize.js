@@ -1,4 +1,4 @@
-import { masteryClassSummary } from '../components/classMastery.js';
+import { creationClassTileSummary } from '../models/CreationClassTileModel.js';
 import { subclassOptions, subclassSelectionProblem } from '../../model/subclasses.js';
 import { creationSubclassSelection, creationDraftStartingDeck, CREATION_CARD_RULES } from '../models/CreationSubclassModel.js';
 import { createCreationSubclassSelector, createCreationStartingDeck } from '../components/creationSubclass.js';
@@ -9,7 +9,7 @@ import { EMPTY_HAND_PRESENTATION } from '../components/emptyHandCard.js';
 import { startingEquipmentPreview } from '../../model/startingEquipmentPreview.js';
 import { creationFeatBrowserGroups } from '../models/CreationFeatBrowserModel.js';
 import { createCreationFeatBrowser, creationPageHeading, decorateCreationWorkspace } from '../components/creationPageParts.js';
-import { mountCreationPartSpecimens } from '../catalog/creationSpecimens.js';
+import { createCreationClassSpecimen, mountCreationPartSpecimens } from '../catalog/creationSpecimens.js';
 import { startingAbilityPlan, startingAbilityProblem, startingAbilityRef } from '../../model/startingAbilities.js';
 import { paintedPresentation } from '../paintedOutfits.js';
 // Character creation: authored progressive pages backed by validated content.
@@ -745,7 +745,8 @@ export function mountCustomize(app, {
       const card = state.classChosen ? classBox.querySelector(`.cz-class[data-class="${state.classId}"]`) : null;
       if (card) {
         const unfold = classUnfold({ cls, sprite, resources, relic,
-          visual: classGlyph(cls.id), mastery: masteryClassSummary(registries, meta, cls.id), onRelicInspect: inspectRelic });
+          visual: classGlyph(cls.id), onRelicInspect: inspectRelic,
+          summary: creationClassTileSummary(registries, run, projection, creationDraftStartingDeck(registries, run, state.startingAbilityIds, meta.settings || {})) });
         card.classList.add('unfolded');
         card.append(unfold);
       }
@@ -1035,7 +1036,6 @@ export function mountCustomize(app, {
       selected: state.classChosen && cls.id === state.classId,
       expanded: !catalog && creationClassPreview() === 'unfold',
       visual: classGlyph(cls.id),
-      mastery: masteryClassSummary(registries, meta, cls.id),
       locked: !classAvailable(registries.unlocks, cls.id, meta),
       hint: classAvailable(registries.unlocks, cls.id, meta) ? null : (classUnlockRow(registries.unlocks, cls.id) || {}).hint || null,
       onChoose: () => {
@@ -1735,21 +1735,18 @@ export function mountCustomize(app, {
     const statHost = el('div', { class: 'as-stack tight cc-primary-stats cc-catalog-specimen' }, primaryStatCards(specimenAttributes));
     const classChoiceHost = options([], { class: 'cc-catalog-specimen', dataset: { view: 'list' } });
     let specimenClassId = state.classId;
-    const drawClassChoices = () => classChoiceHost.replaceChildren(...registries.classes.all().slice(0, 2).map((cls) => classChoiceCard(cls, {
-      selected: cls.id === specimenClassId,
-      visual: classGlyph(cls.id),
-      onChoose: () => { specimenClassId = cls.id; drawClassChoices(); },
-    })));
+    const inspectSpecimenRelic = (relic, opener) => openCreationRelicDetail(relic, relicText(relic, registries), opener);
+    const specimenSprite = (classId, armourId) => paintedPresentation(classId, armourId, 'stand');
+    const drawClassChoices = () => classChoiceHost.replaceChildren(...registries.classes.all().slice(0, 2).map((cls) => cls.id === specimenClassId
+      ? createCreationClassSpecimen({ registries, classId: cls.id, settings: meta.settings || {},
+        visual: classGlyph(cls.id), makeSprite: specimenSprite, onRelicInspect: inspectSpecimenRelic })
+      : classChoiceCard(cls, { visual: classGlyph(cls.id),
+        onChoose: () => { specimenClassId = cls.id; drawClassChoices(); },
+      })));
     drawClassChoices();
-    const previewRelic = registries.relics.get(state.startingRelicId);
-    const classPreviewHost = classPreviewPane({
-      cls: registries.classes.get(state.classId),
-      sprite: paintedPresentation(state.classId, state.startingArmourId, 'portrait'),
-      resources: classResourceGrid(classPreviewResources(specimenRun, specimenProjection)),
-      relic: previewRelic,
-      relicDescription: relicText(previewRelic, registries),
-    });
-    classPreviewHost.classList.add('cc-catalog-specimen');
+    const classPreviewHost = createCreationClassSpecimen({ registries, classId: state.classId,
+      run: specimenRun, settings: meta.settings || {}, visual: classGlyph(state.classId),
+      makeSprite: specimenSprite, onRelicInspect: inspectSpecimenRelic });
     const classResourceSpecimen = classResourceGrid(classPreviewResources(specimenRun, specimenProjection));
     classResourceSpecimen.classList.add('cc-catalog-specimen');
     let viewToggleHost = null;

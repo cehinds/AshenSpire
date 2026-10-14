@@ -592,9 +592,9 @@ const SEMANTIC_COMPONENTS = [
  ['creation-feat-detail','inspected canonical feat + progression requirement','creationPageParts.createCreationFeatBrowser + creationPanel','creation','Feats step + catalog','Detail panel follows the inspected feat, including its level requirement and lock status, and changes no run state.','creationFeatDetail'],
  ['creation-feat-emblem','canonical feat ID','creationPageParts.creationFeatEmblem','creation','Feat tiles and details + catalog','Separate material, medallion trim and shipped engraved symbol.','creationFeatEmblem'],
  ['character-disclosure','disclosure entries','disclosure.mountDisclosure','creation','Character Creation + catalog','One-open nested picker shell.','characterDisclosure'],
- ['class-preview-pane','class preview presentation','creationCards.classPreviewPane + classUnfold','creation','Character Creation + catalog','Compact contained sprite and icon beside the details. Native stat and relic buttons open shared modal details; stat definition and value precede the projected calculation at the bottom.','classPreviewPane'],
+ ['class-preview-pane','class preview presentation','CreationClassTileModel + creationCards.classUnfold','creation','Character Creation + catalog','Concise selected Class tile: short canonical lore, damage and defense playstyle, nine live ratings, both held armaments, relic and opening weapon art. Neutral stance sits beside the title; the relic keeps native inspection. The miniature uses the production draft model and renderer.','classPreviewPane'],
  ['class-resource-grid','statProjection.derived[] + hand resource rows','creationCards.classResourceGrid','creation','Class preview + catalog','HP, SP, MP, opening Hand and Draw; native inspection buttons with full accessible names.','classResourceGrid'],
- ['class-choice-card','class row + selected/locked/expanded state','creationCards.classChoiceCard','creation','Class selection + catalog','Folded choices are buttons; expanded selected card is a labelled article containing stat and relic detail buttons.','classChoiceCard'],
+ ['class-choice-card','class row + selected/locked/expanded state','creationCards.classChoiceCard','creation','Class selection + catalog','Folded choices are buttons with short lore and playstyle; the expanded selected article contains the same four-row live summary and a native relic inspection button. Mastery and upcoming progression copy are omitted.','classChoiceCard'],
  ['view-mode-toggle','view mode state','creationCards.viewModeToggle','creation','Class/Equipment + catalog','List and Grid presentation switch.','viewModeToggle'],
  ['boolean-setting-toggle','boolean setting state','creationCards.booleanSettingToggle','creation','Equipment + future settings','Reusable accessible setting switch.','booleanSettingToggle'],
  ['selection-section-face','label/value/visual receipt','creationCards.selectionSectionFace','creation','Equipment disclosure + catalog','Collapsed selection subcard receipt.','selectionSectionFace'],
@@ -779,7 +779,7 @@ const COMPOSITION = Object.freeze({
   ,'creation-feat-tile':['creation-choice-art','creation-choice-copy','creation-feat-emblem']
   ,'creation-feat-detail':['creation-part-material','creation-part-trim','creation-part-body','creation-feat-emblem']
   ,'creation-feat-emblem':['creation-part-material','creation-part-trim','player.engravedIcon']
-  ,'class-preview-pane':['class-resource-grid']
+  ,'class-preview-pane':['canonical short lore','short damage and defense playstyle','live HP / SP / MP / AR / PR / DR / Poise / Ward / Evasion','actual armaments / relic / weapon art','neutral stance badge']
   ,'character-disclosure':['mode-choice','primary-stat-card × N','stat-allocation-row × N in Assign Points','resource-strip','sprite-choice','sigil-choice','tint-choice','keepsake-choice']
   ,'stat-allocation-row':['primary-stat-card','current value','decrement/increment controls','full-width disclosure reveal']
   ,'smith-upgrade-modal':['smith-candidate-card × eligible deck cards','smith-upgrade-preview','Back to Shrine / Escape','Confirm selected card']

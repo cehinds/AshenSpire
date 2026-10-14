@@ -1576,3 +1576,26 @@ creation.subclass.role.class,,Class,Class,Class
 creation.subclass.role.weaponArt,,Weapon art,Weapon art,Weapon art
 creation.subclass.role.strike,,Strike,Strike,Strike
 creation.subclass.role.defend,,Defend,Defend,Defend
+
+# Compact Class tile copy; canonical backstories: docs/LORE.md §5.
+creation.class.reaver.lore,,Bastion sellsword guarding the fallen gate.,Bastion sellsword guarding the fallen gate.,Bastion sellsword guarding the fallen gate.
+creation.class.rogue.lore,,Dock scavenger hunting a Court Surgeon.,Dock scavenger hunting a Court Surgeon.,Dock scavenger hunting a Court Surgeon.
+creation.class.starseer.lore,,Observatory apprentice seeking the Spire.,Observatory apprentice seeking the Spire.,Observatory apprentice seeking the Spire.
+creation.class.herald.lore,,"Furnace Chapel novice the fire spared.","Furnace Chapel novice the fire spared.","Furnace Chapel novice the fire spared."
+creation.class.reaver.style,,Physical melee · high physical defense,Physical melee · high physical defense,Physical melee · high physical defense
+creation.class.rogue.style,,Physical versatility · high evasion,Physical versatility · high evasion,Physical versatility · high evasion
+creation.class.starseer.style,,Ranged magic · high magical defense,Ranged magic · high magical defense,Ranged magic · high magical defense
+creation.class.herald.style,,Mixed damage · balanced defenses,Mixed damage · balanced defenses,Mixed damage · balanced defenses
+creation.class.neutral,,Neutral,Neutral,Neutral
+creation.class.stance,,Starting stance: {name},Starting stance: {name},Starting stance: {name}
+creation.class.armament,,Armament: {name},Armament: {name},Armament: {name}
+creation.class.relic,,Relic: {name},Relic: {name},Relic: {name}
+creation.class.art,,Weapon art: {name},Weapon art: {name},Weapon art: {name}
+creation.class.unarmed,,Bare hands,Bare hands,Bare hands
+creation.class.rating,,{name} {value},{name} {value},{name} {value}
+creation.class.ratings,,Starting ratings,Starting ratings,Starting ratings
+creation.class.stat.hp,,HP,HP,HP
+creation.class.stat.stamina,,SP,SP,SP
+creation.class.stat.mana,,MP,MP,MP
+creation.class.stat.evasion,,Evasion,Evasion,Evasion
+creation.class.unavailable,,—,—,—

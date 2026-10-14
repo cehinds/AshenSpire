@@ -10431,5 +10431,152 @@ export const uiStrings = [
     "short": "Defend",
     "full": "Defend",
     "tip": "Defend"
+  },
+  {
+    "id": "creation.class.reaver.lore",
+    "extends": "",
+    "short": "Bastion sellsword guarding the fallen gate.",
+    "full": "Bastion sellsword guarding the fallen gate.",
+    "tip": "Bastion sellsword guarding the fallen gate."
+  },
+  {
+    "id": "creation.class.rogue.lore",
+    "extends": "",
+    "short": "Dock scavenger hunting a Court Surgeon.",
+    "full": "Dock scavenger hunting a Court Surgeon.",
+    "tip": "Dock scavenger hunting a Court Surgeon."
+  },
+  {
+    "id": "creation.class.starseer.lore",
+    "extends": "",
+    "short": "Observatory apprentice seeking the Spire.",
+    "full": "Observatory apprentice seeking the Spire.",
+    "tip": "Observatory apprentice seeking the Spire."
+  },
+  {
+    "id": "creation.class.herald.lore",
+    "extends": "",
+    "short": "Furnace Chapel novice the fire spared.",
+    "full": "Furnace Chapel novice the fire spared.",
+    "tip": "Furnace Chapel novice the fire spared."
+  },
+  {
+    "id": "creation.class.reaver.style",
+    "extends": "",
+    "short": "Physical melee · high physical defense",
+    "full": "Physical melee · high physical defense",
+    "tip": "Physical melee · high physical defense"
+  },
+  {
+    "id": "creation.class.rogue.style",
+    "extends": "",
+    "short": "Physical versatility · high evasion",
+    "full": "Physical versatility · high evasion",
+    "tip": "Physical versatility · high evasion"
+  },
+  {
+    "id": "creation.class.starseer.style",
+    "extends": "",
+    "short": "Ranged magic · high magical defense",
+    "full": "Ranged magic · high magical defense",
+    "tip": "Ranged magic · high magical defense"
+  },
+  {
+    "id": "creation.class.herald.style",
+    "extends": "",
+    "short": "Mixed damage · balanced defenses",
+    "full": "Mixed damage · balanced defenses",
+    "tip": "Mixed damage · balanced defenses"
+  },
+  {
+    "id": "creation.class.neutral",
+    "extends": "",
+    "short": "Neutral",
+    "full": "Neutral",
+    "tip": "Neutral"
+  },
+  {
+    "id": "creation.class.stance",
+    "extends": "",
+    "short": "Starting stance: {name}",
+    "full": "Starting stance: {name}",
+    "tip": "Starting stance: {name}"
+  },
+  {
+    "id": "creation.class.armament",
+    "extends": "",
+    "short": "Armament: {name}",
+    "full": "Armament: {name}",
+    "tip": "Armament: {name}"
+  },
+  {
+    "id": "creation.class.relic",
+    "extends": "",
+    "short": "Relic: {name}",
+    "full": "Relic: {name}",
+    "tip": "Relic: {name}"
+  },
+  {
+    "id": "creation.class.art",
+    "extends": "",
+    "short": "Weapon art: {name}",
+    "full": "Weapon art: {name}",
+    "tip": "Weapon art: {name}"
+  },
+  {
+    "id": "creation.class.unarmed",
+    "extends": "",
+    "short": "Bare hands",
+    "full": "Bare hands",
+    "tip": "Bare hands"
+  },
+  {
+    "id": "creation.class.rating",
+    "extends": "",
+    "short": "{name} {value}",
+    "full": "{name} {value}",
+    "tip": "{name} {value}"
+  },
+  {
+    "id": "creation.class.ratings",
+    "extends": "",
+    "short": "Starting ratings",
+    "full": "Starting ratings",
+    "tip": "Starting ratings"
+  },
+  {
+    "id": "creation.class.stat.hp",
+    "extends": "",
+    "short": "HP",
+    "full": "HP",
+    "tip": "HP"
+  },
+  {
+    "id": "creation.class.stat.stamina",
+    "extends": "",
+    "short": "SP",
+    "full": "SP",
+    "tip": "SP"
+  },
+  {
+    "id": "creation.class.stat.mana",
+    "extends": "",
+    "short": "MP",
+    "full": "MP",
+    "tip": "MP"
+  },
+  {
+    "id": "creation.class.stat.evasion",
+    "extends": "",
+    "short": "Evasion",
+    "full": "Evasion",
+    "tip": "Evasion"
+  },
+  {
+    "id": "creation.class.unavailable",
+    "extends": "",
+    "short": "—",
+    "full": "—",
+    "tip": "—"
   }
 ];

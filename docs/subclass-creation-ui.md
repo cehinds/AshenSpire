@@ -5,6 +5,18 @@ keeps the existing category order: Class, Attributes, Keepsake, Equipment,
 Feats, the conditional Spells page, and Review. Feats remains a progression
 browser and grants no feat at creation.
 
+Base Class tiles use `CreationClassTileModel` and the production `classUnfold`
+renderer. The body has four summary rows: 5–12 word canonical lore, short damage
+and defense playstyle, HP/SP/MP/AR/PR/DR/Poise/Ward/base Evasion, and actual held
+armaments plus relic and opening weapon art. Evasion is the combat score rather
+than a percentage. No stance is active at birth, so Neutral appears beside the
+title. Mastery and upcoming-node paragraphs stay out of these tiles. The layout
+targets four desktop body lines and six phone lines; rendered wrap/height QA is
+required before certifying those limits. Selected tiles share a viewport height
+and contain a portrait scaled from their width. Relic inspection remains native
+with a 44-pixel touch target. The catalog Class miniature uses the same draft
+model and renderer, without adding a component ID.
+
 The subclass selector uses the shipped soot material, gold trim, and registered
 engraved icons. Both choices are native buttons. A choice takes one activation
 and retains keyboard focus; the selected subclass's complete description stays
