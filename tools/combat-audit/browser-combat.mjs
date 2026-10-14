@@ -19,7 +19,7 @@ export function isDirectInvocation(entrypoint, moduleUrl) {
 }
 
 async function main() {
-const sourceRoot = resolve(process.env.QA_REFERENCE_SOURCE || new URL('../../src/', import.meta.url).pathname);
+const sourceRoot = resolve(process.env.QA_REFERENCE_SOURCE || fileURLToPath(new URL('../../src/', import.meta.url)));
 const [{ contentBundle }, { createRegistries }, { SFX_MANIFEST, resolveRecipe }] = await Promise.all([
   import(pathToFileURL(resolve(sourceRoot, 'content/index.js')).href),
   import(pathToFileURL(resolve(sourceRoot, 'model/registries.js')).href),
@@ -36,6 +36,7 @@ const classFilter = arg('class');
 const variantFilter = arg('variant');
 const pace = arg('pace') || 'fast';
 const curated = arg('curated') === 'true';
+const seed = arg('seed') || 'B';
 const resumePath = arg('resume');
 const caseKey = row => [row.device, row.classId, row.category || 'card', row.cardId, row.variant,
   ...(row.category === 'enemy-turn' ? [row.enemyIds.join('+')] : [])].join('/');
@@ -109,6 +110,11 @@ const html = await (await fetch(url)).text();
 const htmlSha256 = createHash('sha256').update(html).digest('hex');
 if (process.env.QA_EXPECT_HTML_SHA256) assert.equal(htmlSha256, process.env.QA_EXPECT_HTML_SHA256, 'compiled HTML byte identity');
 const build = { source: html.match(/const SOURCE = '([a-f0-9]+)'/)?.[1], ordinal: html.match(/const ORDINAL = '(\d+)'/)?.[1] };
+const release = html.match(/const RELEASE = '([^']+)'/)?.[1];
+const artifact = { sha256: htmlSha256, bytes: Buffer.byteLength(html), edition: html.match(/const EDITION = '([^']+)'/)?.[1],
+  runPath: html.match(/const RUN_PATH = '([^']+)'/)?.[1], version: release && `${release}.${build.ordinal}` };
+for (const [env, field] of [['QA_EXPECT_EDITION', 'edition'], ['QA_EXPECT_RUN_PATH', 'runPath'], ['QA_EXPECT_VERSION', 'version']])
+  if (process.env[env]) assert.equal(artifact[field], process.env[env], `compiled ${field} identity`);
 assert.ok(build.source, 'compiled HTML loader and source receipt are required');
 assert.ok(process.env.QA_EXPECT_SOURCE && process.env.QA_EXPECT_ORDINAL, 'QA_EXPECT_SOURCE and QA_EXPECT_ORDINAL pin the immutable artifact');
 assert.equal(build.source, process.env.QA_EXPECT_SOURCE, 'compiled SOURCE identity');
@@ -142,7 +148,7 @@ if (previousReport) assertResumeIdentity(previousReport, { build, htmlSha256, so
 const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const owner = await launchBrowser({ browser: process.env.CHROME || '/usr/bin/chromium', prefix: 'ca-' });
 const browser = await chromium.connectOverCDP(owner.wsUrl);
-const report = previousReport || { url, source, sourceRoot, build, htmlSha256, sourceDigests, inventory, mode, pace, host: { cpuCount: cpus().length, load: loadavg(), freeMemory: freemem(), samples: [] },
+const report = previousReport || { url, source, sourceRoot, build, artifact, htmlSha256, sourceDigests, inventory, mode, pace, seed, host: { cpuCount: cpus().length, load: loadavg(), freeMemory: freemem(), samples: [] },
   fixture: curated
     ? 'Fresh createRunCombat preserving the canonical screenshot run HP and pools, with canonical enemies/knowledge/moves and hpMult=1. Authored card appended to a legal run deck and paid through real input. Data-only isolated fixture; production runtime functions and listeners preserved.'
     : 'Fresh createRunCombat from the screenshot run, canonical enemies/knowledge/moves, custom difficulty hpMult=20 and resource maxima 200. One registered card plus legal draw/discard fillers. Data fields only copied into the live fight; original runtime functions, listeners, dispatch, target resolver, renderer and timeline preserved. These are isolated fixtures, not earned playthroughs.',
@@ -194,7 +200,7 @@ async function boot(context, classId) {
   const settings = encodeURIComponent(JSON.stringify({ animSpeed: pace }));
   const kit = arg('main-hand') ? `&shotKit=1&shotMainHand=${encodeURIComponent(arg('main-hand'))}&shotOffHand=${encodeURIComponent(arg('off-hand') || '')}` : '';
   const pools = curated ? '' : '&shotMaxHp=200&shotMaxMana=200&shotMaxStamina=200&shotMana=200';
-  await page.goto(`${url}?shot=combat&shotClass=${classId}&shotSeed=B${pools}&shotSettings=${settings}${kit}`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${url}?shot=combat&shotClass=${classId}&shotSeed=${encodeURIComponent(seed)}${pools}&shotSettings=${settings}${kit}`, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.end-turn:not([disabled])', { timeout: 30000 });
   await page.evaluate(() => { window.__auditBaseRun = structuredClone(window.__combatRunForShot); window.__auditBaseRng = window.__combat.rng.getCounters(); window.__auditRuntime = Object.fromEntries(Object.entries(window.__combat).filter(([, v]) => typeof v === 'function')); });
   return page;
@@ -279,6 +285,8 @@ async function fixture(page, row) {
       } catch (error) { hash = String(error); }
       window.__auditFrameSamples.push({ at: performance.now(), hash, missing: !stage, pose: stage?.pose,
         art: stage?.currentArt, action: stage?.presentation?.action, stance: stage?.stance, rest: stage?.rest,
+        reactionPoses: stage?.reactionPoses,
+        spriteTransform: host?.closest('.sprite') ? getComputedStyle(host.closest('.sprite')).transform : null,
         // The live setStance contract only exposes a non-null stance when its
         // held frame exists; restPose resolves that value to stance-<id>.
         heldPose: stage?.stance ? `stance-${stage.stance}` : null });
@@ -418,7 +426,7 @@ async function receipt(page) {
         enemies: window.__auditOracle.enemies, piles: window.__auditOracle.piles, phase: window.__auditOracle.phase },
       actual: { player: c.player, enemies: c.enemies, piles: c.piles, phase: c.phase }, frames: window.__auditFrameSamples,
       selectedOrigin: window.__auditSelectedOrigin,
-      stage: stage ? { animationSetId: stage.animationSetId, pose: stage.pose, stance: stage.stance, rest: stage.rest, alternateWeaponPoses: stage.poses.filter(p => p.startsWith('weapon:')) } : null,
+      stage: stage ? { animationSetId: stage.animationSetId, pose: stage.pose, stance: stage.stance, rest: stage.rest, reactionPoses: stage.reactionPoses, alternateWeaponPoses: stage.poses.filter(p => p.startsWith('weapon:')) } : null,
       inputReceipts: window.__auditClickReceipts.filter(r => r.inputAt >= window.__auditStart.at) };
   });
 }
@@ -509,6 +517,10 @@ async function runCase(page, device, classId, row) {
     if (row.sampleAnimation) await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     entry.after = await receipt(page);
     if (row.category?.endsWith('counter-return')) assert.ok(entry.after.events.some(e => e.type === 'combatCounterTriggered' && e.cardInstanceId === row.instanceId), 'the real incoming action triggers this prepared Counter return');
+    if (row.successfulEvade) {
+      assert.ok(entry.after.events.some(e => e.type === 'attackMissed' && e.targetId === entry.after.actual.player.id && e.evadeAttempted && e.hit === false), 'the seeded incoming attack genuinely misses an active evade');
+      assert.equal(entry.after.events.some(e => e.type === 'combatCounterTriggered' && e.cardInstanceId === row.instanceId), false, 'successful Evade does not automatically trigger Counter (accepted expansion contract)');
+    }
     if (row.reactionCard) {
       assert.ok(entry.input.choices.some(choice => choice.kind === 'reactionPlayed'), 'a genuine reaction option was selected and confirmed');
       assert.ok(entry.after.events.some(e => e.type === 'combatEnemyReactionStacked'), 'the authored NPC reaction opened the stack');
@@ -544,7 +556,8 @@ async function runCase(page, device, classId, row) {
       if (current) actions.push({ ...current, completed: false });
       for (const action of actions) { action.frameChanged = new Set(action.hashes).size > 1; delete action.hashes; }
       report.animationDispatch.push({ device, classId, cardId: row.cardId, receiptId: row.instanceId, dispatchType: 'paid-card', cardPlayed: entry.after.events.some(e => e.type === 'cardPlayed'),
-        presentationKind: entry.after.events.some(e => e.type === 'combatCounterTriggered' && e.cardInstanceId === row.instanceId) ? 'counter-return'
+        presentationKind: row.successfulEvade ? 'successful-evasion-no-counter'
+          : entry.after.events.some(e => e.type === 'combatCounterTriggered' && e.cardInstanceId === row.instanceId) ? 'counter-return'
           : entry.before.tags.includes('maneuver:counter') ? 'held-preparation' : 'finite-playback',
         frameChanged: new Set(actionFrames.map(f => f.hash).filter(h => typeof h === 'number')).size > 1, actionStarted: actionFrames.length > 0,
         actionCompleted: actionFrames.length > 0 && !frames.at(-1)?.action,
@@ -608,7 +621,8 @@ try {
       for (const card of cards) {
         const variants = ['base', ...(card.upgraded ? ['upgraded'] : [])].filter(v => !variantFilter || variantFilter === v);
         for (const variant of variants) {
-          const row = { cardId: card.id, variant, category: 'card', figureTarget: card.id.length % 2 === 0, curated,
+          const row = { cardId: card.id, variant, category: arg('category') || 'card', figureTarget: card.id.length % 2 === 0, curated,
+            ...(arg('enemy') ? { enemyIds: arg('enemy').split(',') } : {}), endTurn: arg('end-turn') === 'true',
             sampleAnimation: pace === 'normal' && variant === 'base' && ['strike','defend','starSpark','guardCounter','sweepingBlow','crimsonCleave','quickstep','bindingParry','ricochet','cometFragment','litany','bloodPact','bashingBlow','evasiveGuard','wardingStar','nockAndWait','progression-falling-constellation'].includes(card.id) };
           let baseEntry = completedCase(device, classId, row);
           if (!baseEntry && !await runCase(page, device, classId, row)) {
@@ -647,6 +661,7 @@ try {
           ...[
             { cardId: classId === 'reaver' ? 'guardCounter' : 'spikedReprisal', enemyIds: ['wanderingSoldier'], category: 'guard-counter-return', endTurn: true, prePlayCard: 'defend' },
             { cardId: 'dodgeRoll', enemyIds: ['wanderingSoldier'], category: 'evasion-counter-return', endTurn: true, prePlayCard: 'defend' },
+            { cardId: 'dodgeRoll', enemyIds: ['wanderingSoldier'], category: 'successful-evasion', endTurn: true, prePlayCard: 'defend', successfulEvade: true },
           ],
           { cardId: 'defend', enemyIds: ['wanderingSoldier'], category: 'defend-selected-origin', prePlayCard: 'strike' },
           ...(classId === 'herald' ? [{ cardId: 'bloodPact', category: 'spell-selected-origin', prePlayCard: 'strike' }] : []),
