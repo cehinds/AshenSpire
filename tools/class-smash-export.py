@@ -7,6 +7,7 @@ normalized 1024-square source canvas. Airborne frames never get foot-aligned.
 import argparse
 import hashlib
 import json
+import math
 from pathlib import Path
 from PIL import Image
 
@@ -34,15 +35,20 @@ def prepare_class(actor, root=ROOT):
         raise ValueError(actor+': source requires directorApproved: true before export')
     registration = provenance['registration']
     anchor = registration['groundAnchor']
+    # Anatomical hood/head-to-ground boot height of the held seed, excluding
+    # raised hands/weapons, cape tails and effects; not the alpha bounding box.
     body_height = registration['bodyHeight']
-    if len(anchor) != 2 or not all(isinstance(v, (int, float)) and 0 <= v <= 1024 for v in anchor):
+    if len(anchor) != 2 or not all(isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v) and 0 <= v <= 1024 for v in anchor):
         raise ValueError(actor+': groundAnchor must be a source pixel coordinate')
-    if not isinstance(body_height, (int, float)) or not 0 < body_height <= 1024:
+    if isinstance(body_height, bool) or not isinstance(body_height, (int, float)) or not math.isfinite(body_height) or not 0 < body_height <= 1024:
         raise ValueError(actor+': invalid shared bodyHeight')
     images = [Image.open(folder / (name+'.png')).convert('RGBA') for name in NAMES]
     for image in images:
         if image.size != (1024, 1024) or image.getchannel('A').getextrema()[0] != 0 or not image.getbbox():
             raise ValueError(actor+': all five sources must be nonempty transparent 1024-square frames')
+        bounds = image.getbbox()
+        if bounds[0] <= 0 or bounds[1] <= 0 or bounds[2] >= 1024 or bounds[3] >= 1024:
+            raise ValueError(actor+': source alpha touches a canvas edge; preserve full weapon/effect reach')
     if images[0].tobytes() != images[-1].tobytes():
         raise ValueError(actor+': held bookends must have identical decoded RGBA pixels')
     base = load_catalog(root / 'src/content/alternativeCardAnimations.js', 'alternativeCardAnimations')['classes'][actor]

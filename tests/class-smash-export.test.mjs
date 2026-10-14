@@ -26,6 +26,22 @@ with tempfile.TemporaryDirectory() as tmp:
  assert air['stageBounds'][3]<held['stageBounds'][3]-70,'airborne feet must stay airborne'
  assert len([p for p in outputs if p.endswith('.webp')])==8
  assert all(f['stageAnchor']==[384,464] for f in frames.values())
+ # Reject malformed rasters before writing any derivative.
+ original=(folder/'02-takeoff.png').read_bytes()
+ Image.new('RGBA',(512,1024),(100,120,140,255)).save(folder/'02-takeoff.png')
+ try:m.prepare_class('rogue',root);raise AssertionError('accepted malformed dimensions')
+ except ValueError as e:assert '1024' in str(e)
+ (folder/'02-takeoff.png').write_bytes(original)
+ # Bool is not a measured anatomical height.
+ provenance['registration']['bodyHeight']=True;(folder/'provenance.json').write_text(json.dumps(provenance))
+ try:m.prepare_class('rogue',root);raise AssertionError('accepted boolean body height')
+ except ValueError as e:assert 'bodyHeight' in str(e)
+ provenance['registration']['bodyHeight']=600;(folder/'provenance.json').write_text(json.dumps(provenance))
+ # Clipped trails must be repaired on the source side, never cropped away.
+ clipped=Image.open(folder/'02-takeoff.png').convert('RGBA');clipped.putpixel((0,500),(255,0,0,255));clipped.save(folder/'02-takeoff.png')
+ try:m.prepare_class('rogue',root);raise AssertionError('accepted clipped reach')
+ except ValueError as e:assert 'canvas edge' in str(e)
+ (folder/'02-takeoff.png').write_bytes(original)
  # A changed return pose cannot silently become an approximate bookend.
  image.putpixel((500,500),(255,0,0,255));image.save(folder/'05-held.png')
  try:m.prepare_class('rogue',root);raise AssertionError('accepted changed bookend')
