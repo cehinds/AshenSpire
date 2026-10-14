@@ -585,7 +585,7 @@ try {
         const variants = ['base', ...(card.upgraded ? ['upgraded'] : [])].filter(v => !variantFilter || variantFilter === v);
         for (const variant of variants) {
           const row = { cardId: card.id, variant, category: 'card', figureTarget: card.id.length % 2 === 0, curated,
-            sampleAnimation: pace === 'normal' && variant === 'base' && ['strike','defend','starSpark','guardCounter','sweepingBlow','crimsonCleave','quickstep','bindingParry','ricochet','cometFragment','litany','bloodPact','bashingBlow','evasiveGuard','wardingStar','nockAndWait'].includes(card.id) };
+            sampleAnimation: pace === 'normal' && variant === 'base' && ['strike','defend','starSpark','guardCounter','sweepingBlow','crimsonCleave','quickstep','bindingParry','ricochet','cometFragment','litany','bloodPact','bashingBlow','evasiveGuard','wardingStar','nockAndWait','progression-falling-constellation'].includes(card.id) };
           let baseEntry = completedCase(device, classId, row);
           if (!baseEntry && !await runCase(page, device, classId, row)) {
             await page.close(); page = await boot(context, classId);
