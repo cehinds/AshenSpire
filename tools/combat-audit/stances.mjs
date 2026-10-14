@@ -7,6 +7,9 @@ import {alternativeCardAnimations} from '../../src/content/alternativeCardAnimat
 import {alternativeSelectedStances} from '../../src/content/alternativeSelectedStances.js';
 import {selectedWeaponSequence} from '../../src/model/selectedWeaponSequences.js';
 import {selectedWeaponReactionFor,REAVER_GREATSWORD_PILOT as pilot} from '../../src/model/selectedWeaponStances.js';
+import {loadAuditRuntime} from './runtime.mjs';
+import {auditInventory} from './inventory.mjs';
+import {makeAuditCombat} from './fixtures.mjs';
 
 const classes=['reaver','rogue','starseer','herald'];
 const approvedBuild={ordinal:'1527',digest:'d93ee7b6bf',runtimeSource:'0962c5ecc6467be75ffc1a4cbccc39d583e44dac'};
@@ -109,7 +112,23 @@ function readGallery(path){
  return {build:gallery.build,viewport:gallery.viewport,captureType:gallery.captureType,classes:rows,totals:{held:heldTotal,clipGroups:clipTotal},errors:gallery.errors||[]};
 }
 
-function readPlayedEvidence(path){
+async function resolvedProfileFamilyCandidates(){
+ const api=await loadAuditRuntime('bundled'),inventory=auditInventory(api.registries),result=Object.fromEntries(classes.map(id=>[id,Object.fromEntries(['spell','ranged','rangedMagic'].map(family=>[family,[]]))]));
+ for(const variant of inventory.variants.filter(v=>v.instance.profileId&&!v.instance.upgraded&&v.upcastTier===undefined&&(v.instance.abilityRank===undefined||v.instance.abilityRank===0))){
+  const carrierId=variant.carrierIds[0];if(!carrierId)continue;
+  try{
+   const {combat}=makeAuditCombat(api,{classId:variant.classId,instance:variant.instance,relicIds:[],carrierId});
+   const def=api.resolveCombatCard(combat,combat.piles.hand[0]),tags=def.cardTags||def.tags||[];
+   const isRanged=tags.includes('ranged')||tags.includes('maneuver:ranged'),isSpell=tags.includes('camp:spell')||tags.includes('maneuver:casting');
+   const families=[...(isSpell?['spell']:[]),...(isRanged?['ranged']:[]),...(isSpell&&isRanged?['rangedMagic']:[])];
+   for(const family of families)result[variant.classId][family].push({cardId:variant.instance.cardId,profileId:variant.instance.profileId,carrierId,cardTags:tags});
+  }catch{}
+ }
+ for(const classId of classes)for(const family of Object.keys(result[classId]))result[classId][family]=[...new Map(result[classId][family].map(row=>[`${row.cardId}/${row.profileId}`,row])).values()];
+ return {runtime:'bundled source adapter',classes:result};
+}
+
+function readPlayedEvidence(path,resolvedCandidates){
  const data=JSON.parse(readFileSync(path,'utf8'));
  // browser-combat evidence must be explicitly paid card dispatch, not a stage
  // seek or direct stage.play. The producer can contain other scenarios; only
@@ -150,8 +169,12 @@ function readPlayedEvidence(path){
   } else summary.originSampleGaps.push({device:row.device,cardId:row.cardId,afterPose:row.after.pose,reason:'post-selection action origin was not published; return remains unproven'});
  }
  for(const id of classes){assert.ok(classSummary[id].rows>0,`${id} has actual paid card animation evidence`);classSummary[id].actions=[...new Set(classSummary[id].actions)].sort();}
- const familyCoverage=Object.fromEntries(classes.map(id=>[id,Object.fromEntries(Object.keys(actionTags).map(family=>[family,{played:actualFamilies[id].has(family),candidateCards:familyCandidates[id][family],status:actualFamilies[id].has(family)?'actual-frame-action-observed':familyCandidates[id][family].length?'candidate-exists-but-no-paid-frame-observed':'no-authored-class-card-candidate'}]))]));
- return {dispatchRows:actual.length,classes:classSummary,familyCandidates,familyCoverage,rows:actual,provenance:'real paid card dispatch; event/render samples supplied by browser-combat',limits:'Frames are sampled during real playback, not frame-perfect timing. Rows without a pre-action pose are origin-sampling gaps and are not counted as return-stance passes.'};
+ const profileCandidates=resolvedCandidates.classes;
+ const familyCoverage=Object.fromEntries(classes.map(id=>[id,Object.fromEntries(Object.keys(actionTags).map(family=>{
+  const authored=familyCandidates[id][family],profiles=profileCandidates[id][family]||[],candidates=[...new Set([...authored,...profiles.map(row=>`${row.cardId}@${row.profileId}`)])];
+  return [family,{played:actualFamilies[id].has(family),candidateCards:candidates,authoredCardCandidates:authored,resolvedProfileCandidates:profiles,status:actualFamilies[id].has(family)?'actual-frame-action-observed':candidates.length?'candidate-exists-but-no-paid-frame-observed':'no-authored-or-resolved-profile-candidate'}];
+ }))]));
+ return {dispatchRows:actual.length,classes:classSummary,familyCandidates,familyCoverage,resolvedProfileCandidates:profileCandidates,rows:actual,provenance:'real paid card dispatch; event/render samples supplied by browser-combat',limits:'Frames are sampled during real playback, not frame-perfect timing. Rows without a pre-action pose are origin-sampling gaps and are not counted as return-stance passes. Resolved equipment-profile candidates indicate card availability under that profile, not default-class-weapon playback.'};
 }
 
 function readCounterScenarioEvidence(path){
@@ -188,6 +211,7 @@ function readCounterScenarioEvidence(path){
 }
 
 const args=process.argv.slice(2),arg=(name)=>{const i=args.indexOf(name);return i<0?undefined:args[i+1]};
-const report={schema:'stances-coverage-v1',staticContracts:assertStaticContracts(),gallery:arg('--gallery')?readGallery(resolve(arg('--gallery'))):null,paidDispatch:arg('--played')?readPlayedEvidence(resolve(arg('--played'))):{dispatchRows:0,rows:[],status:'not supplied; reference gallery alone does not prove dispatch animation playback'},counterScenarios:arg('--counter-scenarios')?readCounterScenarioEvidence(resolve(arg('--counter-scenarios'))):null};
+const profileCandidates=await resolvedProfileFamilyCandidates();
+const report={schema:'stances-coverage-v1',staticContracts:assertStaticContracts(),gallery:arg('--gallery')?readGallery(resolve(arg('--gallery'))):null,paidDispatch:arg('--played')?readPlayedEvidence(resolve(arg('--played')),profileCandidates):{dispatchRows:0,rows:[],status:'not supplied; reference gallery alone does not prove dispatch animation playback'},counterScenarios:arg('--counter-scenarios')?readCounterScenarioEvidence(resolve(arg('--counter-scenarios'))):null};
 const out=arg('--out');if(out){const path=resolve(out);mkdirSync(dirname(path),{recursive:true});writeFileSync(path,JSON.stringify(report,null,2)+'\n');}
 console.log(JSON.stringify({totals:report.gallery?.totals||null,staticClasses:Object.keys(report.staticContracts.classRows),paidDispatchRows:report.paidDispatch.dispatchRows,reportPath:out?resolve(out):undefined},null,2));
