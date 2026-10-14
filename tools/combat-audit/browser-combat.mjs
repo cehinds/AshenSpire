@@ -354,11 +354,27 @@ async function endTurnAndPlayNext(page, device, row) {
   await page.waitForSelector('.end-turn:not([disabled])', { timeout: 30000 });
   assert.equal(await page.evaluate(() => window.__combat.turn), 2, 'enemy turn completes into player turn two');
   assert.equal(await page.locator('.hand .card.selected,.hand .card.armed').count(), 0, 'end turn clears targeting');
+  const recovered = [];
+  for (let i = 0; i < 9; i++) {
+    const recovery = await page.evaluate(async source => {
+      const { controlGate, recoveryControls } = await import(source + 'engine/combatStatusControl.js');
+      const { resolveCombatCard } = await import(source + 'engine/combatExpansion.js');
+      const c = window.__combat;
+      if (c.piles.hand.some(card => controlGate(c, c.player, resolveCombatCard(c, card)).allowed)) return null;
+      return recoveryControls(c, c.player).find(row => !row.disabled && c.player.energy >= row.costPerStack) || null;
+    }, source);
+    if (!recovery) break;
+    const intent = { type: 'recoverControl', selections: [{ status: recovery.status, stacks: 1 }] };
+    await page.evaluate(intent => window.__auditOracleDispatch(window.__auditOracle, intent), intent);
+    await tap(page, page.locator(`[data-control-recovery="${recovery.status}"]`), device);
+    await finishPending(page, device); recovered.push(recovery.status);
+  }
   const next = await page.evaluate(async source => {
     const { previewCard, cardChoicePlan } = await import(source + 'engine/combat.js');
     const { resolveCombatCard } = await import(source + 'engine/combatExpansion.js');
+    const { controlGate } = await import(source + 'engine/combatStatusControl.js');
     const c = window.__combat;
-    const inst = c.piles.hand.find(i => { const p = previewCard(c, i.instanceId); return !c.registries.framework.isUnplayable(resolveCombatCard(c, i)) && p.cost <= c.player.energy && p.manaCost <= c.player.mana; });
+    const inst = c.piles.hand.find(i => { const p = previewCard(c, i.instanceId), def = resolveCombatCard(c, i); return controlGate(c, c.player, def).allowed && !c.registries.framework.isUnplayable(def) && p.cost <= c.player.energy && p.manaCost <= c.player.mana; });
     if (!inst) return null;
     const p = previewCard(c, inst.instanceId), choice = cardChoicePlan(c, inst.instanceId);
     return { instanceId: inst.instanceId, cardId: inst.cardId, needsTarget: p.needsTarget, choice: choice?.options.find(o => !o.active)?.id };
@@ -372,7 +388,7 @@ async function endTurnAndPlayNext(page, device, row) {
   if (next.choice) await tap(page, page.locator(`.card-choice [data-choice="${next.choice}"]`), device);
   await page.waitForFunction(id => window.__combat.eventLog.some(e => e.type === 'cardPlayed' && e.cardInstanceId === id), next.instanceId, { timeout: 10000 });
   choices.push(...await finishPending(page, device));
-  return { discardIds, choices, next };
+  return { discardIds, choices, recovered, next };
 }
 
 async function runCase(page, device, classId, row) {
