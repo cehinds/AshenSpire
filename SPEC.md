@@ -16,6 +16,8 @@ A single-player roguelike deckbuilder for the browser. Mechanically faithful to 
 
 Numbers in this spec are the **initial balance targets**. They will move during the M3 balance pass, but the *structures* (formulas, orderings, state shapes) are contractual.
 
+> **Stance combat continuation (planned, owner 2026-10-14).** [docs/STANCE-COMBAT-RULES.md](docs/STANCE-COMBAT-RULES.md) is normative for the revised stance discounts, active ratings and entry grants, Defense restoration, maneuver matchups, Evade, hit previews and HUD/floater rules. It supersedes conflicting older prose in this specification and its combat contracts; all unrelated WardToBlock and reaction rules remain in force. Implementation follows in a separate PR under CONTRIBUTING ground rule 1.
+
 ### Scope status — what is built, partly built and planned
 
 *Checked 2026-09-27 against `dev` @ `7f78c5d0` (build `0.7.1.625`). Rows 14 and 13.4p–r (new) re-checked 2026-10-10 against `dev` @ `73a1342aa` (build `0.7.1.1262`); the other rows are as of 2026-09-27. One line per section, so the real scope is visible in one place. A section marked **planned** is a contract written before its code (CONTRIBUTING rule 1), not stale text. **built** means the section's features ship; the "what is left" column names the known gaps and is not exhaustive, so a gap found later is a correction to this table, not a contradiction of it. Per-item verdicts for §12 and §14–§15 are in [docs/SPEC-RECONCILE.md](docs/SPEC-RECONCILE.md); the release criteria are in [docs/FINISH.md](docs/FINISH.md). Update a line here in the PR that changes it.*
