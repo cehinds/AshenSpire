@@ -1,6 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { cardClassification, actualCardRank } from '../src/model/cardClassification.js';
+import { contentBundle } from '../src/content/index.js';
+import { createRegistries } from '../src/model/registries.js';
+import { playingCardModel, playingCardClasses } from '../src/model/playingCard.js';
+import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
 import { applyCardTraits } from '../src/content/traitProjection.js';
 
 const card = (maneuver, rank = 1, extra = {}) => ({ id: 'taxonomy-fixture', type: 'skill', rank,
@@ -35,4 +39,18 @@ test('Sweep Reaction uses actual rank two, while Defense uses rank one', () => {
   const legacy = card('sweep', 1, { defensiveReaction: true });
   assert.deepEqual(cardClassification(legacy).stanceGroups, ['offense', 'defensive']);
   assert.equal(!!applyCardTraits(legacy).traitValues?.reaction, false);
+});
+
+test('shared card model exposes canonical identity and separate ability labels with legacy CSS hooks', () => {
+  const registries = createRegistries(contentBundle);
+  for (const [id, subtype] of [['frostCounter', 'Counter'], ['crystalBarrier', 'Defense'], ['dodgeRoll', 'Evade']]) {
+    const def = applyCardTraits(applyCombatExpansionCard(registries.cards.get(id)));
+    const model = playingCardModel(registries, { cardId: id }, { definition: def });
+    assert.equal(model.type.id, 'stance');
+    assert.equal(model.type.label, 'STANCE');
+    assert.equal(model.type.subtype, subtype);
+    assert.ok(playingCardClasses(model).includes('type-stance'));
+    assert.ok(playingCardClasses(model).includes('type-' + def.type));
+    assert.equal(model.stanceType, subtype.toLowerCase());
+  }
 });
