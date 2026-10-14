@@ -874,19 +874,19 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         left: rect.left - fieldRect.left, right: rect.right - fieldRect.left,
         top: rect.top - fieldRect.top, bottom: rect.bottom - fieldRect.top,
       })),
-      // Idle enemies read above their bodies. Reserve below-body footers only
-      // when they paint, so hidden plates cannot displace the player's HUD.
+      // Idle enemies read above their bodies. Living players retain a 44px
+      // proxy even with waist-overlap art, so pack it clear of their own HUD.
       targets: boxes.flatMap((box, i) => box.frameRect && !placed[i].frame.classList.contains('dead')
-        && (placed[i].frame.classList.contains('player') ? combat.dataset?.waistOverlap !== 'true'
-          : placed[i].frame.classList.contains('context-selected')) ? [combatFrameTarget({
+        && (placed[i].frame.classList.contains('player')
+          || placed[i].frame.classList.contains('context-selected')) ? [combatFrameTarget({
         ...box, id: placed[i].frame.dataset.eid, fieldRect, footerSize,
         player: placed[i].frame.classList.contains('player'),
       })] : []) });
     // A fallen frame survives for its defeat pose but paints no target
     // proxy, so it neither competes for footer space nor blocks the HUD.
     const targetCores = boxes.flatMap((box, i) => {
-        if (placed[i].frame.classList.contains('dead') || (placed[i].frame.classList.contains('player')
-          ? combat.dataset?.waistOverlap === 'true' : !placed[i].frame.classList.contains('context-selected'))) return [];
+        if (placed[i].frame.classList.contains('dead') || (!placed[i].frame.classList.contains('player')
+          && !placed[i].frame.classList.contains('context-selected'))) return [];
         const target = combatFrameTarget({ ...box, id: placed[i].frame.dataset.eid, fieldRect, footerSize,
           player: placed[i].frame.classList.contains('player') });
         const half = COMBAT_TARGET_HIT_PX / 2;

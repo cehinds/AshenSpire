@@ -97,18 +97,57 @@ test('a fallen enemy frame is neither packed nor reserved as a retry core',()=>{
   assert.deepEqual(retryInput.targetCores.map(core=>core.id),['player','alive']);
 });
 
-test('idle overhead HP and an artwork-owned player reserve no hidden footers',()=>{
+test('waist-overlap players retain packed cores while idle enemies reserve no hidden footers',()=>{
   const source=readFileSync(new URL('../src/ui/components/battlefieldStage.js',import.meta.url),'utf8');
   const begin=source.indexOf('    const packTargets = () => '),end=source.indexOf('    settledTargetCores = targetCores;',begin);
-  const ids=['player','idle','selected'];
+  const ids=['player','idle','selected','dead-player'];
   const boxes=ids.map((_id,i)=>({hostRect:{left:30+i*90,width:80,bottom:225},footerWidth:88,frameRect:{},controls:[]}));
-  const placed=ids.map(id=>({frame:{dataset:{eid:id},classList:{contains:role=>role===(id==='player'?'player':'enemy')||(id==='selected'||id==='player')&&role==='context-selected'}}}));
+  const placed=ids.map(id=>({frame:{dataset:{eid:id},classList:{contains:role=>role===(id.includes('player')?'player':'enemy')
+    ||(id==='selected'||id==='player')&&role==='context-selected'||id==='dead-player'&&role==='dead'}}}));
   let packed,reserved;
   runInNewContext(source.slice(begin,end),{fieldRect:{left:0,top:76,width:288,height:183},boxes,placed,footerSize:44,COMBAT_TARGET_HIT_PX,combatFrameTarget,
     combat:{dataset:{waistOverlap:'true'},getBoundingClientRect:()=>({bottom:513})},readFooterObstacles:()=>[],
     combatTargetAnchors:input=>{packed=input.targets;return input.targets;},placePlayerHud:()=>{},
     packCombatTargetsWithHud:input=>{reserved=input.targetCores;return input.pack();}});
-  assert.deepEqual(packed.map(target=>target.id),['selected']);
-  assert.deepEqual(reserved.map(target=>target.id),['selected']);
-  assert.equal(packed[0].minY,packed[0].y,'the visible enemy footer remains attached below its body');
+  assert.deepEqual(packed.map(target=>target.id),['player','selected']);
+  assert.deepEqual(reserved.map(target=>target.id),['player','selected']);
+  assert.equal(packed[0].minY,22,'the player proxy can pack above its HUD');
+  assert.equal(reserved[0].right-reserved[0].left,44);
+  assert.equal(reserved[0].bottom-reserved[0].top,44);
+  assert.equal(packed[1].minY,packed[1].y,'the visible enemy footer remains attached below its body');
+});
+
+test('captured1515 waist-overlap player packs above HP without moving artwork or HUD',()=>{
+  // Source reconstruction of the390x650-xl native failure: recorded field,
+  // sprite and HP boxes. Other native obstacles were not dumped; the entire
+  // lower UI is conservatively reserved. This is not a browser hit-test claim.
+  const source=readFileSync(new URL('../src/ui/components/battlefieldStage.js',import.meta.url),'utf8');
+  const begin=source.indexOf('    const packTargets = () => '),end=source.indexOf('    settledTargetCores = targetCores;',begin);
+  assert.ok(begin>=0&&end>begin);
+  const fieldRect={left:0,top:73.578125,width:390,height:282.953125};
+  const hostRect={left:16.390625,width:83.875,bottom:321.453125};
+  const hp={left:4,right:116,top:323.765625,bottom:342.765625};
+  const obstacles=[{left:hp.left-8,right:hp.right+8,top:hp.top-8,bottom:hp.bottom+8},
+    {left:0,right:390,top:356.53125,bottom:650}];
+  const boxes=[{hostRect,footerWidth:0,frameRect:{},controls:[]}];
+  const placed=[{frame:{dataset:{eid:'player'},classList:{contains:role=>role==='player'}}}];
+  const before=structuredClone({fieldRect,hostRect,hp,obstacles});
+  const fallback=combatFrameTarget({id:'player',hostRect,fieldRect,footerSize:44,footerWidth:0,player:true});
+  assert.equal(fallback.y+fieldRect.top,334.53125);
+  assert.ok(!clear(fallback,{...obstacles[0],top:obstacles[0].top-fieldRect.top,bottom:obstacles[0].bottom-fieldRect.top}),
+    'unpacked fallback reproduces the own-HP collision');
+  let targets;
+  runInNewContext(source.slice(begin,end),{fieldRect,boxes,placed,footerSize:44,COMBAT_TARGET_HIT_PX,combatFrameTarget,
+    combat:{dataset:{waistOverlap:'true'},getBoundingClientRect:()=>({bottom:650})},
+    readFooterObstacles:()=>obstacles,combatTargetAnchors,placePlayerHud:()=>{},
+    packCombatTargetsWithHud:input=>{assert.equal(input.targetCores.length,1);targets=input.pack();return targets;}});
+  assert.equal(targets.length,1,'the actual waist-overlap pack must include the living player');
+  const [target]=targets;
+  assert.equal(target.obstructed,false);assert.equal(target.x,58.328125);
+  assert.equal(target.y+fieldRect.top,291.765625);
+  assert.ok(target.y+22<=fieldRect.height,'the full44px core stays inside the field');
+  assert.ok(target.y+fieldRect.top+22<=hp.top-10,'full proxy clears the unchanged HP panel');
+  assert.ok(target.y+fieldRect.top-22>=232.46875&&target.y+fieldRect.top+22<=hostRect.bottom,
+    'the core sits over its own captured sprite, preserving frame/sprite ownership');
+  assert.deepEqual({fieldRect,hostRect,hp,obstacles},before,'artwork, HUD and blockers remain immutable');
 });
