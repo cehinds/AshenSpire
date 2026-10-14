@@ -5,6 +5,8 @@ import { coopProgressionProblems } from './coopProgression.js';
 import {abilityDraftClaimProblems} from './abilityDraftReceipts.js';
 import { classMilestoneProblems } from './classMilestones.js';
 import { classMasteryRunProblems } from './classMasteryRun.js';
+import * as ClassMasteryRun from './classMasteryRun.js';
+import * as CreationTraits from './creationTraits.js';
 import { retiredAttackSlots } from './cardRemoval.js';
 import { advancedConfigSnapshot } from './advancedConfig.js';
 import { reactionRulesSnapshot, reactionRulesProblems } from '../content/combatCardTraits.js';
@@ -157,6 +159,7 @@ export function createRunState({
   startingArmourId = undefined,
   startingRelicId = undefined,
   startingAbilityIds = undefined,
+  initialClassMastery = undefined,
   profileMeta = {},
 }) {
   if (![1, 2].includes(combatExpansionVersion)) throw new Error('combatExpansionVersion must be 1 or 2');
@@ -348,6 +351,19 @@ export function createRunState({
   // Starter families keep their weak action-only face even when their reward
   // catalogue defaults to an advanced Mana-costing profile.
   if (run.progressionRulesVersion === 1) for (const inst of run.deck) if (registries.cards.get(inst.cardId).gradeProfiles) inst.abilityRank = 0;
+  // Explicit creation starts must validate selected abilities against the
+  // same mastery level as their detached preview. Defaults remain grade zero;
+  // the canonical selected-ability composition below still owns replacements.
+  if (initialClassMastery !== undefined) {
+    run.custom = initialClassMastery.custom || { ascension: 0, mods: {}, deckMode: 'standard' };
+    ClassMasteryRun.openRunClassMastery(registries, run, profileMeta, {
+      receiptId: initialClassMastery.receiptId, bankable: initialClassMastery.bankable ?? true,
+    });
+    if (!CreationTraits.applyCreationTraits(registries, run, initialClassMastery.initialClassTreeChoices)) {
+      throw new Error('Your class or profile changed. Return to Subclass and choose your traits again.');
+    }
+    registries = ClassMasteryRun.registriesForClassMastery(registries, run);
+  }
   const chosenAbilityRefs = startingAbilityRefs(registries, run, startingAbilityIds, profileMeta.settings || {});
   if (subclassId !== undefined && chosenAbilityRefs.length) {
     run.deck = SubclassDeck.subclassDeckPreview(registries, run, { startingAbilityRefs: chosenAbilityRefs })
