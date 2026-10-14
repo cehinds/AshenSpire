@@ -1,4 +1,5 @@
 import { combatWeaponProfilesFor } from '../../model/combatWeaponPresentation.js';
+import { attackHitPreview, effectiveEvasion } from '../../engine/stanceHit.js';
 import { enemyActionPose } from '../../model/enemyActionPose.js';
 import { enemyStanceCategory } from '../../model/enemyStancePose.js';
 import { enemyMoveCarrier } from '../../engine/combatCardTactics.js';
@@ -23,7 +24,7 @@ import { playCardEffectLayers } from '../cardEffectLayers.js';
 // Renders strictly from combat state; animates from dispatch events. Every
 // number displayed comes from previewCard / previewIntent — no math here.
 
-import { dispatch as engineDispatch, previewCard as enginePreviewCard, previewIntent, getEntity, cardChoicePlan } from '../../engine/combat.js';
+import { dispatch as engineDispatch, previewCard as enginePreviewCard, previewIntent, getEntity, cardChoicePlan, previewCardHit } from '../../engine/combat.js';
 import { createPreviewMemo } from '../models/PreviewMemoModel.js';
 import { decorateCombatRoundsScreen } from '../components/combatRoundsScreen.js';
 import { targetedEnemyId } from '../models/CombatRoundsScreenModel.js';
@@ -750,6 +751,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // stance. While a play's receipt is pending (hand frozen), keep the preview: the held ledgers
     // still name the stance before the play until its cardPlayed beat lands.
     if (def || !$('.hand')?.inert) syncPlayerPreview(player, inst, def);
+    syncHitChances();
     applyTargetLayer();
     setHintMode(active ? 'targeting' : null);
     hideTooltip();
@@ -1484,6 +1486,59 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     };
   }
 
+  // The first Perception roll is the exact read. A clue alone reveals no odds.
+  function hitChanceKnown(enemy) {
+    const ownerId = combat.playerKey || 'player';
+    return enemy.knowledgeAction?.reads?.[ownerId]?.visibility === 'exact';
+  }
+
+  function hitChanceBadge(enemy) {
+    if (combat.combatExpansionVersion !== 2 || !enemy.alive || !hitChanceKnown(enemy)) return null;
+    let preview;
+    try {
+      const inst = selected && findInst(selected);
+      const carrier = inst && resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(selected) });
+      const hostile = carrier?.effects?.some(effect => ['enemy', 'allEnemies', 'randomEnemy'].includes(effect.target)) || carrier?.counterPayload;
+      preview = selected && hostile ? previewCardHit(combat, selected, enemy.id, upcastRanksByCard.get(selected))
+        : attackHitPreview(combat, combat.player, enemy, { combatProfile: { maneuver: 'attack', camp: 'physical', range: 'melee' }, effects: [{ op: 'damage', target: 'enemy', amount: 0 }] });
+    } catch { return null; }
+    if (!preview || !Number.isFinite(preview.hitChance)) return null;
+    const node = document.createElement('span');
+    node.className = 'combat-hit-chance';
+    node.dataset.rollMode = preview.advantage ? 'advantage' : preview.disadvantage ? 'disadvantage' : 'neutral';
+    node.textContent = Number(preview.hitChance.toFixed(2)) + '%';
+    node.setAttribute('aria-label', 'Chance to hit ' + node.textContent);
+    return node;
+  }
+
+  function syncHitChances() {
+    combatEl.querySelectorAll('.card-hit-chances').forEach(node => node.remove());
+    const inst = selected && findInst(selected);
+    const definition = inst && resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(selected) });
+    const hostile = definition?.effects?.some(effect => ['enemy', 'allEnemies', 'randomEnemy'].includes(effect.target)) || definition?.counterPayload;
+    const selectedCard = hostile && combatEl.querySelector('.hand .card[data-instance-id="' + CSS.escape(selected) + '"]');
+    const cardOdds = document.createElement('div');
+    cardOdds.className = 'card-hit-chances';
+    cardOdds.setAttribute('aria-live', 'polite');
+    for (const enemy of combat.enemies) {
+      const frame = enemyFrames.get(enemy.id)?.box;
+      if (!frame) continue;
+      frame.querySelector('.combat-hit-chance')?.remove();
+      const badge = hitChanceBadge(enemy);
+      if (badge) {
+        frame.querySelector('.combatant-leading')?.append(badge);
+        if (selectedCard) {
+          const odds = badge.cloneNode(true);
+          odds.className = 'card-hit-chance';
+          odds.dataset.targetId = enemy.id;
+          odds.textContent = registries.enemies.get(enemy.enemyId).name + ' ' + badge.textContent;
+          cardOdds.append(odds);
+        }
+      }
+    }
+    if (selectedCard && cardOdds.children.length) selectedCard.append(cardOdds);
+  }
+
   function meterBars(entity, { tooltips = true } = {}) {
     const v = dv(entity);
     const wrap = meters([], { class: 'meters tight' });
@@ -1505,7 +1560,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (bar.id === 'hp') {
         markUiComponent(el, UI.healthStatusBar, entity.kind);
         const next = el.nextSibling;
-        const row = combatHealthRow(el, protectionPresentation(v), { tooltips, blockHelp: helpText('block') });
+        const row = combatHealthRow(el, { ...protectionPresentation(v), evasion: combat.combatExpansionVersion === 2 && (entity.kind !== 'enemy' || hitChanceKnown(entity)) ? effectiveEvasion(combat, v) : null }, { tooltips, blockHelp: helpText('block') });
         bars.insertBefore(row, next);
       }
       if (bar.id === 'poise') markUiComponent(el, UI.poiseStatusBar, entity.kind);
@@ -1811,6 +1866,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (!record) row.appendChild(box);
       enemyFrames.set(enemy.id, { key: artKey, renderKey, box });
     }
+    syncHitChances();
     applyTargetLayer();
   }
 
@@ -1850,6 +1906,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     });
     syncHandPager(handList);
     handRenderKey = key;
+    syncHitChances();
   }
 
   /**

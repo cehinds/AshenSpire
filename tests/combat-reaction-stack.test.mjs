@@ -358,8 +358,17 @@ test('a seat stops at maxDepth, so the fifth copy is never offered', () => {
 });
 
 // One enemy at 3 HP: a Strike is lethal, so a second Strike stacked on top kills the root's attacker.
+// These lifecycle fixtures exercise landed contacts; preserve real seeded draws
+// and saved counters while putting their ordinary Accuracy threshold below every
+// non-fumble result. Dedicated stance-hit tests cover misses and natural ones.
+function landedContacts(combat) {
+  const actors = combat.players ? [...combat.players.values()].map(seat => seat.entity) : [combat.player];
+  for (const actor of [...actors, ...combat.enemies]) { actor.accuracy = 100; actor.evasion = 0; }
+}
+
 function lowHpFixture(cardIds) {
   const built = fixture({ cardIds });
+  landedContacts(built.combat);
   for (const enemy of built.combat.enemies) enemy.hp = 3;
   dispatch(built.combat, { type: 'endTurn' });
   return built;
@@ -423,6 +432,7 @@ test('discard candidates leave out only the choosing seat\'s own stacked cards',
 test('rank-two Sweep resolves before the root; a lethal sweep interrupts and a nonlethal sweep resumes it', () => {
   for (const lethal of [true, false]) {
     const { combat } = fixture({ cardIds: ['sweepingBlow'] });
+    landedContacts(combat);
     combat.player.block = 0;
     combat.enemies[0].hp = lethal ? 1 : 500;
     combat.enemies[0].maxHp = 500;

@@ -1,3 +1,4 @@
+import { stanceRulesFor } from '../model/stanceRules.js';
 import { combatProfileFor } from '../model/combatCardProfile.js';
 import { evaluate, isFormula } from '../model/formulas.js';
 import { counterstrikeAmount, counterstrikePct, hasStanceAdvantage, stanceManeuverOf } from './combatCardTraitMath.js';
@@ -27,6 +28,7 @@ export function tacticalCarrier(def, extra = {}, ctx = null, source = null) {
     combatRiderTargets: [] };
   if (combatExpansionEnabled(ctx) && extra.ratingId === undefined && def.ratingId !== undefined) carrier.ratingId = def.ratingId;
   carrier.combatProfile = { ...combatProfileFor(carrier), ...(def.combatProfile || {}), ...(extra.combatProfile || {}) };
+  if (carrier.combatProfile.evade?.whileStatus && source) carrier.combatProfile.evadeEligible = source.statuses?.[carrier.combatProfile.evade.whileStatus]?.stacks > 0;
   // A mixed card's weapon part is resolved like an untagged card's whole type.
   const weaponPart = !!(carrier.attack?.weaponDamage && carrier.attack.components);
   if ((!carrier.combatProfile.damageType || weaponPart) && carrier.combatProfile.camp && ctx?.registries && source?.kind !== 'enemy' && !source?.enemyId) {
@@ -156,6 +158,19 @@ function counterstrikeEffects(ctx, source, target, carrier, effects, arm) {
 
 /** Counter keeps support actions, postponing its printed damage to retaliation. */
 export function prepareTacticalCard(ctx, source, target, carrier, effects, meta = {}, { arm = true, damageBonus = 0, poiseBonus = 0 } = {}) {
+  // A reaction Sweep intercepts the physical melee attacker's break pools.
+  if (combatExpansionEnabled(ctx) && arm && ctx._reactionPlaying && carrier.combatProfile?.maneuver === 'sweep') {
+    const enemy = counterstrikeTarget(ctx, target);
+    const pending = (ctx.reactionResume?.queue || []).find(action =>
+      action.meta?.expansionGroup?.sourceId === enemy?.id)?.meta?.expansionGroup?.carrier?.combatProfile;
+    const incoming = pending || enemy?.intent?.combatProfile;
+    const range = incoming?.range || (incoming?.maneuver === 'ranged' || incoming?.projectile ? 'ranged' : 'melee');
+    if (enemy?.alive && incoming?.camp === 'physical' && range === 'melee') {
+      const cfg = stanceRulesFor(ctx);
+      effects = [...effects, { op: 'poiseDamage', target: 'enemy', amount: cfg.sweepReactionPoise },
+        { op: 'wardDamage', target: 'enemy', amount: cfg.sweepReactionWard }];
+    }
+  }
   // Feats may inject an application after the printed face was snapshotted.
   // The final action list owns duplicate-rider suppression, including charges.
   carrier.appliedStatusEffects = effects.filter(effect => effect.op === 'applyStatus');
@@ -163,7 +178,7 @@ export function prepareTacticalCard(ctx, source, target, carrier, effects, meta 
   carrier.appliedBuildupStatuses = effects.filter(effect => effect.op === 'buildup').map(effect => effect.status);
   if (combatExpansionEnabled(ctx) && arm) {
     setCombatStance(ctx, source, carrier);
-    if (carrier.combatProfile?.evade) prepareCombatEvade(ctx, source, carrier.combatProfile.evade);
+    // Evade's entry stack is granted only by a real stance change.
   }
   if (carrier.combatProfile?.maneuver !== 'counter') return counterstrikeEffects(ctx, source, target, carrier, effects, arm);
   const rules = matchupRules(ctx).counter;
@@ -206,6 +221,10 @@ export function prepareTacticalCard(ctx, source, target, carrier, effects, meta 
           Object.assign(payload, { hpBase: base, hpRating: damaging[0].preview.value - base });
         }
         payload.poiseBase = Math.max(0, numbers.poiseDamage - Math.max(0, Number(poiseBonus) || 0));
+      }
+      // A Counter with no authored Poise impact receives the shared fallback once.
+      if (!(payload.poise > 0) && !effects.some(effect => effect.op === 'poiseDamage')) {
+        payload.poise = stanceRulesFor(ctx).fallbackPoise;
       }
       armCombatCounter(ctx, source, carrier, { ...numbers, payload });
     } else armCombatCounter(ctx, source, carrier, numbers);

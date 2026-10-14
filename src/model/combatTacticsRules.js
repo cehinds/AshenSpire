@@ -72,7 +72,7 @@ export function combatCounterProblems(counter, path, version = 1) {
 
 const CAMPS = ['physical', 'spell'];
 const TARGETING = ['single', 'area'];
-const MANEUVERS = ['attack', 'defend', 'counter', 'sweep', 'ranged', 'smash', 'casting'];
+const MANEUVERS = ['attack', 'defend', 'counter', 'sweep', 'ranged', 'smash', 'casting', 'evade'];
 const SCHOOLS = ['frost', 'fire', 'lightning', 'force', 'alteration', 'illusion', 'divine', 'decay', 'earth'];
 
 function stringsProblems(value, path, allowed = null, required = false) {
@@ -158,13 +158,16 @@ export function combatExpansionEntityProblems(entity, path = 'entity') {
       for (const [key, allowed] of [['maneuver', MANEUVERS], ['camp', CAMPS], ['range', RANGES]]) {
         if (!allowed.includes(stance[key])) problems.push(`${path}.combatStance.${key} is unsupported`);
       }
+      if (stance.counterStance !== undefined && (stance.counterStance !== true || stance.maneuver !== 'evade')) problems.push(`${path}.combatStance.counterStance requires true in Evade stance`);
       if (stance.school !== undefined && !SCHOOLS.includes(stance.school)) problems.push(`${path}.combatStance.school is unsupported`);
       if (stance.expiresOnOwnerCycle !== undefined && !whole(stance.expiresOnOwnerCycle)) problems.push(`${path}.combatStance.expiresOnOwnerCycle must be a non-negative whole number`);
     }
   }
   if (entity.combatCounter !== undefined) {
     problems.push(...expansionCounterProblems(entity.combatCounter, `${path}.combatCounter`));
-    if (stance?.maneuver !== 'counter') problems.push(`${path}.combatCounter requires Counter stance`);
+    const hybridEvade = stance?.maneuver === 'evade'
+      && entity.combatCounter.carrier?.combatProfile?.maneuver === 'counter';
+    if (stance?.maneuver !== 'counter' && !hybridEvade) problems.push(`${path}.combatCounter requires Counter stance or an authored Counter in Evade stance`);
     if (entity.combatPreparationSerial !== entity.combatCounter.serial) problems.push(`${path}.combatCounter.serial must match its preparation serial`);
   }
   const evade = entity.combatEvade;

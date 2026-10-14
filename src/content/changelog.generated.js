@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-14",
     "summary": "Combat fades cover fighters, and player targets stay clear of Health",
     "detail": "Screen fades now cover idle and selected fighters while target selection, cards and the combat HUD remain above them. When the perspective view places the player behind the hand, its transparent 44px target moves clear of its own Health strip without changing the artwork, Health position or selected fighter size.",
-    "build": "0.7.1.1527",
+    "build": "0.7.1.1529",
     "pullRequest": 1978,
     "url": "https://github.com/cehinds/AshenSpire/pull/1978"
+  },
+  {
+    "id": "pr-1984",
+    "date": "2026-10-14",
+    "group": "2026-10-14",
+    "summary": "Stances, Evade and hit previews share their combat rules",
+    "detail": "Same-stance cards use the configured SP discount, stance ratings stay active without stacking, and Defense restores Poise and Ward with protection overflow. Smash, Counter and Sweep apply their matchup and range rules. Evade stacks, explicit Target bypasses and exact hit previews use the same hit calculation, while the combat HUD and hit labels show the result.",
+    "build": "0.7.1.1529",
+    "pullRequest": 1984,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1984"
   },
   {
     "id": "pr-1985",
