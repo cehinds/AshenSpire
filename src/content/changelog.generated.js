@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-14",
     "summary": "Quickstep reactions and Guard no longer freeze combat",
     "detail": "Playing Quickstep as a reaction after a Defend card arms its Poise guard now resolves the enemy attack, and End Turn remains usable. An ordinary guarded End Turn and rated Counterstrike replies also resolve correctly in standalone builds. Five bundled-runtime checks cover the Guard paths in solo and co-op and the rated Counter return.",
-    "build": "0.7.1.1513",
+    "build": "0.7.1.1515",
     "pullRequest": 1972,
     "url": "https://github.com/cehinds/AshenSpire/pull/1972"
   },
