@@ -333,13 +333,34 @@ const INTENT_OVERLAP = `(async () => {
         || Math.abs(playerAfter.left + playerAfter.width / 2 - playerBefore.left - playerBefore.width / 2) > 1)
       throw new Error('screenreach: small-player fixture changed its foot anchor or is not small');
   }
-  const frames = [...document.querySelectorAll('.combatant.enemy')];
-  const depth = frame => Number(getComputedStyle(frame.querySelector('.combatant-card > .sprite')).zIndex);
-  const low = frames.reduce((a, b) => depth(a) < depth(b) ? a : b);
-  const high = frames.find(frame => depth(frame) > depth(low));
-  const intent = low?.querySelector('.intent');
-  const sprite = high?.querySelector('.combatant-card > .sprite');
-  if (!intent || !sprite) throw new Error('screenreach: intent overlap fixture is missing its two enemies');
+  const visible = node => {
+    if (!node) return false;
+    const box = node.getBoundingClientRect(), style = getComputedStyle(node);
+    return box.width > 0 && box.height > 0 && style.display !== 'none'
+      && style.visibility !== 'hidden' && style.visibility !== 'collapse';
+  };
+  const frames = [...document.querySelectorAll('.combatant.enemy')].filter(frame =>
+    !frame.classList.contains('dead') && visible(frame.querySelector('.intent'))
+      && visible(frame.querySelector('.combatant-card > .sprite')));
+  const depth = frame => {
+    const value = getComputedStyle(frame.querySelector('.combatant-card > .sprite')).zIndex;
+    if (value === 'auto' || !Number.isFinite(Number(value)))
+      throw new Error('screenreach: intent overlap fixture requires numeric sprite depth');
+    return Number(value);
+  };
+  if (frames.length < 2) throw new Error('screenreach: intent overlap fixture is missing its two enemies');
+  let low = frames.reduce((a, b) => depth(a) < depth(b) ? a : b);
+  let high = frames.find(frame => depth(frame) > depth(low));
+  // Same-row enemies legitimately share a depth. Their later sibling paints
+  // above the earlier one; use that real order without changing authored layers.
+  if (!high) {
+    low = frames[0];
+    high = frames.find(frame => frame !== low && frame.parentElement === low.parentElement);
+    if (!high || depth(high) !== depth(low))
+      throw new Error('screenreach: intent overlap fixture requires two ordered same-depth siblings');
+  }
+  const intent = low.querySelector('.intent');
+  const sprite = high.querySelector('.combatant-card > .sprite');
   const a = intent.getBoundingClientRect(), initial = sprite.getBoundingClientRect();
   const intentScale = a.width / intent.offsetWidth, spriteScale = initial.width / sprite.offsetWidth;
   // Authored formations can make this neighbour narrower than an XL badge.
