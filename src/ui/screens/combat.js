@@ -1,3 +1,4 @@
+import { classSmashProfileFor } from '../../model/classSmashAnimations.js';
 import { enemyActionPose } from '../../model/enemyActionPose.js';
 import { ratingValue, ratingDamageMultiplier } from '../../model/combatRatings.js';
 import { openCollectibleInspection } from '../components/collectibleCard.js';
@@ -263,6 +264,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // The player's last confirmed card kind: the at-rest intent glyph above the head.
   const heldKinds = createStanceLedger(kindForCard);
   const heldCards = createStanceLedger(card => card);
+  function smashProfile() {
+    return classSmashProfileFor({classId:run.class, armourId:figureSpec(registries,run.loadout,run.class).armourId, grip:gripOf(registries,run.loadout,run.class)});
+  }
   function selectedProfile() {
     return selectedWeaponProfileFor({ classId: run.class, armourId: figureSpec(registries, run.loadout, run.class).armourId, grip: gripOf(registries, run.loadout, run.class) });
   }
@@ -1575,7 +1579,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const p = combat.player;
     const figure = figureSpec(registries, run.loadout, run.class);
     const animation = equipmentAnimationForLoadout(registries, run.loadout, run.class);
-    const artKey = JSON.stringify([run.class, run.customization, figure.armourId, selectedProfile(), animation?.setId, animation?.grip, spritesAreEnabled(), document.documentElement.dataset.performance, displayAppearance()]);
+    const artKey = JSON.stringify([run.class, run.customization, figure.armourId, selectedProfile(), smashProfile(), animation?.setId, animation?.grip, spritesAreEnabled(), document.documentElement.dataset.performance, displayAppearance()]);
     const existing = artKey === playerArtKey ? zone.querySelector('.combatant.player') : null;
     const renderKey = JSON.stringify([artKey, p, dv(p), run.attributes, run.loadout, selected, selfArm, playerRest, heldStances.get(), heldKinds.get(), readinessOrder, readSettings()]);
     if (existing && playerRenderKey === renderKey) return;
@@ -1625,7 +1629,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       entityId: 'player',
       leading: [combatantInfo(combatantSubject('player', p).name, opener => openCombatantDoor(combatantSubject('player', p), opener))],
       classNames: [selfArm ? 'armed' : '', selectedCombatantId === 'player' ? 'context-selected' : ''],
-      sprite: existing ? null : playerSprite(run.customization || {}, run.class, figure.armourId, { animation, view: 'combat', selectedWeaponProfile: selectedProfile() }),
+      sprite: existing ? null : playerSprite(run.customization || {}, run.class, figure.armourId, { animation, view: 'combat', selectedWeaponProfile: selectedProfile(), classSmashProfile: smashProfile() }),
       name: markMeterRow(labelStack({ label: `${run.customization?.name || runClassIdentity(registries, run).name} · Lv ${characterLevel(run)}`, attrs: { class: 'nm' } }), 'name'),
       meters: meterBars(p),
       trailing,
