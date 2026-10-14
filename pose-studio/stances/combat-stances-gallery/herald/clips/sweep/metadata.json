@@ -1,0 +1,83 @@
+{
+  "action": "sweep",
+  "aliases": [
+    "sweep"
+  ],
+  "origin": "sweep",
+  "timing": {
+    "totalMs": 195,
+    "impactMs": 41.25
+  },
+  "registeredSequence": {
+    "selection": "herald-sweep-03",
+    "label": "Open palm set \u2192 broad palm sweep",
+    "poses": [
+      "herald.sweep.stance",
+      "herald.sweep.contact",
+      "herald.sweep.recovery",
+      "ready"
+    ],
+    "durations": [
+      55,
+      60,
+      65,
+      80
+    ],
+    "impact": 1,
+    "travel": [
+      0,
+      55,
+      28,
+      0
+    ],
+    "effects": [
+      null,
+      "herald.sweep.effect-1",
+      "herald.sweep.effect-2",
+      null
+    ],
+    "hold": false
+  },
+  "reviewFrames": [
+    {
+      "pose": "stance-sweep",
+      "label": "origin stance-sweep",
+      "weight": 1
+    },
+    {
+      "pose": "herald.sweep.stance",
+      "registeredFrameId": "herald.sweep.stance",
+      "label": "1/4 herald.sweep.stance \u00b7 weight 55",
+      "weight": 55,
+      "timeMs": 20.625
+    },
+    {
+      "pose": "herald.sweep.contact",
+      "registeredFrameId": "herald.sweep.contact",
+      "label": "2/4 herald.sweep.contact \u00b7 weight 60",
+      "weight": 60,
+      "timeMs": 63.75
+    },
+    {
+      "pose": "herald.sweep.recovery",
+      "registeredFrameId": "herald.sweep.recovery",
+      "label": "3/4 herald.sweep.recovery \u00b7 weight 65",
+      "weight": 65,
+      "timeMs": 110.625
+    },
+    {
+      "pose": "stance-sweep",
+      "registeredFrameId": "ready",
+      "label": "4/4 ready \u00b7 weight 80",
+      "weight": 80,
+      "timeMs": 165
+    },
+    {
+      "pose": "stance-sweep",
+      "label": "return Sweep",
+      "weight": 1
+    }
+  ],
+  "capture": "Actual mounted combat stage canvas; review timing separate from Normal gameplay",
+  "sharedPhaseArtWith": []
+}

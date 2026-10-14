@@ -1,0 +1,45 @@
+{
+  "action": "counterPrepare",
+  "aliases": [
+    "counterPrepare"
+  ],
+  "origin": "counter",
+  "timing": {
+    "totalMs": 195,
+    "impactMs": 0
+  },
+  "registeredSequence": {
+    "poses": [
+      "herald.counter.stance"
+    ],
+    "durations": [
+      260
+    ],
+    "impact": 0,
+    "travel": [
+      0
+    ],
+    "hold": true
+  },
+  "reviewFrames": [
+    {
+      "pose": "stance-counter",
+      "label": "origin stance-counter",
+      "weight": 1
+    },
+    {
+      "pose": "herald.counter.stance",
+      "registeredFrameId": "herald.counter.stance",
+      "label": "1/1 herald.counter.stance \u00b7 weight 260",
+      "weight": 260,
+      "timeMs": 97.5
+    },
+    {
+      "pose": "stance-counter",
+      "label": "return Counter",
+      "weight": 1
+    }
+  ],
+  "capture": "Actual mounted combat stage canvas; review timing separate from Normal gameplay",
+  "sharedPhaseArtWith": []
+}

@@ -1,0 +1,87 @@
+{
+  "action": "attack",
+  "aliases": [
+    "attack"
+  ],
+  "origin": "offensive",
+  "timing": {
+    "totalMs": 195,
+    "impactMs": 86.25
+  },
+  "registeredSequence": {
+    "label": "Attack",
+    "poses": [
+      "ready",
+      "attack-load",
+      "attack-contact",
+      "attack-contact",
+      "ready"
+    ],
+    "durations": [
+      60,
+      55,
+      50,
+      45,
+      50
+    ],
+    "travel": [
+      0,
+      0,
+      80,
+      50,
+      0
+    ],
+    "effect": "slash",
+    "impact": 2,
+    "hold": false
+  },
+  "reviewFrames": [
+    {
+      "pose": "stance-offensive",
+      "label": "origin stance-offensive",
+      "weight": 1
+    },
+    {
+      "pose": "stance-offensive",
+      "registeredFrameId": "ready",
+      "label": "1/5 ready \u00b7 weight 60",
+      "weight": 60,
+      "timeMs": 22.5
+    },
+    {
+      "pose": "attack-load",
+      "registeredFrameId": "attack-load",
+      "label": "2/5 attack-load \u00b7 weight 55",
+      "weight": 55,
+      "timeMs": 65.625
+    },
+    {
+      "pose": "attack-contact",
+      "registeredFrameId": "attack-contact",
+      "label": "3/5 attack-contact \u00b7 weight 50",
+      "weight": 50,
+      "timeMs": 105
+    },
+    {
+      "pose": "attack-contact",
+      "registeredFrameId": "attack-contact",
+      "label": "4/5 attack-contact \u00b7 weight 45",
+      "weight": 45,
+      "timeMs": 140.625
+    },
+    {
+      "pose": "stance-offensive",
+      "registeredFrameId": "ready",
+      "label": "5/5 ready \u00b7 weight 50",
+      "weight": 50,
+      "timeMs": 176.25
+    },
+    {
+      "pose": "stance-offensive",
+      "label": "return Attack",
+      "weight": 1
+    }
+  ],
+  "capture": "Actual mounted combat stage canvas; review timing separate from Normal gameplay",
+  "sharedPhaseArtWith": []
+}

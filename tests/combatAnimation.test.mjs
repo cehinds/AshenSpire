@@ -21,19 +21,19 @@ test('ranged attacks stay projectile motions even without a matching authored bo
   assert.equal(route({kindIds:['classification.attack'],tags:['blade']}).family,'strike');
 });
 
-test('real shield equipment selects bash; dagger and lighting tools do not',()=>{
+test('shield and dagger mechanics retain class-default attack and guard art',()=>{
   for(const id of ['buckler','kiteShield','towerShield','roundShield','spikedShield']) {
-    assert.equal(route(card('shieldBash'),items([id])).technique,'shieldBash');
-    assert.equal(route(card('strike','shieldAttack'),items([id])).technique,'shieldBash');
-    assert.equal(route(card('defend','shieldGuard'),items([id])).technique,'shieldGuard');
-    assert.equal(route({kindIds:['classification.attack'],sourceArmamentId:id},items([id])).technique,'shieldBash');
-    assert.equal(route({kindIds:['classification.skill'],tags:['guard']},items([id])).technique,'shieldGuard');
+    assert.equal(route(card('shieldBash'),items([id])).technique,'attack');
+    assert.equal(route(card('strike','shieldAttack'),items([id])).technique,'attack');
+    assert.equal(route(card('defend','shieldGuard'),items([id])).technique,'guard');
+    assert.equal(route({kindIds:['classification.attack'],sourceArmamentId:id},items([id])).technique,'attack');
+    assert.equal(route({kindIds:['classification.skill'],tags:['guard']},items([id])).technique,'guard');
   }
   for(const id of ['parryDagger','torch','lantern']) assert.equal(route(card('shieldBash'),items([id])).technique,'attack');
-  assert.equal(route(card('defend','shieldGuard'),items(['parryDagger'])).technique,'parry');
+  assert.equal(route(card('defend','shieldGuard'),items(['parryDagger'])).technique,'guard');
   assert.equal(route({...card('strike','shieldAttack'),sourceArmamentId:'parryDagger'},items(['parryDagger','buckler'])).technique,'attack');
-  assert.equal(route({kindIds:['classification.attack'],animationTags:['fx:shield']},items(['buckler'])).technique,'shieldBash','the visual tag identifies any shield attack');
-  assert.equal(route({kindIds:['classification.skill'],tags:['guard'],animationTags:['fx:shield']},items(['buckler'])).technique,'shieldGuard');
+  assert.equal(route({kindIds:['classification.attack'],animationTags:['fx:shield']},items(['buckler'])).technique,'attack','shield effects do not select alternate weapon art');
+  assert.equal(route({kindIds:['classification.skill'],tags:['guard'],animationTags:['fx:shield']},items(['buckler'])).technique,'guard');
 });
 test('attack and Power kind precede guard tags; untagged skill casts',()=>{
   // The router reads a card's KIND TAG (model/tree.js cardKind), never its
@@ -46,7 +46,7 @@ test('attack and Power kind precede guard tags; untagged skill casts',()=>{
   assert.equal(route(kind('skill',['block'])).rest,'guard');
   assert.equal(route({type:'attack',tags:['guard']}).group,'cast','a type with no kind row is not quietly an attack');
 });
-test('card tags select spell casting and Blade choreography across held weapons',()=>{
+test('card tags preserve casting and ranged semantics without borrowed weapon choreography',()=>{
   const run=createRunState({seed:14,classId:'reaver',registries:reg});
   run.loadout.active.rightHand=0;run.loadout.active.leftHand=0;run.loadout.active.armor=0;
   run.loadout.sets.armor[0]='default';
@@ -55,16 +55,16 @@ test('card tags select spell casting and Blade choreography across held weapons'
     const animation=equip(right,left);
     assert.equal(animation?.motionProfile,profile);
     const plan=route(card('strike','bladeAttack'),items([right,left]),{animation});
-    assert.equal(plan.technique,'bladeAttack');
+    assert.equal(plan.technique,'attack');
     assert.ok(animationClip(animation,plan.technique));
   }
   const sword=equip('straightSword',null);
   assert.equal(route(card('starSpark'),items(['straightSword']),{animation:sword}).technique,'cast');
-  assert.equal(route(card('gorefireSlash'),items(['straightSword']),{animation:sword,action:{casting:true}}).technique,'bladeAttack','weapon-source slash keeps blade motion even when its effect family casts');
+  assert.equal(route(card('gorefireSlash'),items(['straightSword']),{animation:sword,action:{casting:true}}).technique,'attack','weapon-source slash keeps attack semantics even when its effect family casts');
   const staffStrike=route(card('strike','staffMagicAttack'),items(['ashStaff']),{animation:sword,action:{family:'slash',motion:'impact'}});
   assert.deepEqual([staffStrike.technique,staffStrike.family,staffStrike.motion],['cast','spell','cast'],'the spell tag wins an ordinary Strike override');
-  assert.equal(route(card('shieldBash'),items(['buckler']),{animation:equip('straightSword','buckler')}).technique,'shieldBash');
-  assert.equal(route(card('defend','shieldGuard'),items(['buckler'])).technique,'shieldGuard');
+  assert.equal(route(card('shieldBash'),items(['buckler']),{animation:equip('straightSword','buckler')}).technique,'attack');
+  assert.equal(route(card('defend','shieldGuard'),items(['buckler'])).technique,'guard');
   const shieldSet=equip('straightSword','buckler');
   const painted=paintedOutfit('reaver','default');
   const shieldArt=animationArt(shieldSet,painted);
@@ -76,7 +76,7 @@ test('card tags select spell casting and Blade choreography across held weapons'
   assert.equal(bowClip?.motionProfile,'bow');
   const bowPlan=route(card('strike','bowPierceAttack'),items(['shortbow']),{animation:bowClip});
   assert.deepEqual([bowPlan.technique,bowPlan.family,bowPlan.motion],
-    ['bowAttack','projectile','release'],'a bow Attack uses the authored draw and release');
+    ['attack','projectile','release'],'a bow card retains projectile semantics without the alternate bow clip');
   assert.equal(route({...card('strike','bowPierceAttack'),sourceArmamentId:'dagger'},items(['shortbow','dagger']),{animation:bowClip}).technique,'attack');
   assert.equal(equip('warhammer',null),null,'the hammer lacks the Blade motion tag');
 });

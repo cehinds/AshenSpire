@@ -1,0 +1,67 @@
+{
+  "action": "reaction:evade",
+  "aliases": [],
+  "origin": "evade",
+  "timing": {
+    "totalMs": 97.5,
+    "impactMs": 0
+  },
+  "registeredSequence": {
+    "poses": [
+      "pilot-evade-1",
+      "pilot-evade-2",
+      "pilot-evade-3"
+    ],
+    "durations": [
+      1,
+      1,
+      1
+    ],
+    "impact": 0,
+    "travel": [
+      0,
+      0,
+      0
+    ],
+    "hold": false,
+    "pilot": true,
+    "reaction": false
+  },
+  "reviewFrames": [
+    {
+      "pose": "stance-evade",
+      "label": "Held origin evade",
+      "weight": 1,
+      "atMs": 0
+    },
+    {
+      "pose": "pilot-evade-1",
+      "registeredFrameId": "pilot-evade-1",
+      "label": "pilot-evade-1 \u00b7 weight 1",
+      "weight": 1,
+      "atMs": 224
+    },
+    {
+      "pose": "pilot-evade-2",
+      "registeredFrameId": "pilot-evade-2",
+      "label": "pilot-evade-2 \u00b7 weight 1",
+      "weight": 1,
+      "atMs": 657.2999999970198
+    },
+    {
+      "pose": "pilot-evade-3",
+      "registeredFrameId": "pilot-evade-3",
+      "label": "pilot-evade-3 \u00b7 weight 1",
+      "weight": 1,
+      "atMs": 1090.5
+    },
+    {
+      "pose": "stance-evade",
+      "label": "Held return evade",
+      "weight": 1,
+      "atMs": 1400
+    }
+  ],
+  "capture": "Actual mounted combat stage canvas; review timing separate from Normal gameplay",
+  "sharedPhaseArtWith": []
+}

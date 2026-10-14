@@ -1,0 +1,72 @@
+{
+  "action": "reaction:hurt",
+  "aliases": [
+    "hit",
+    "hurt"
+  ],
+  "origin": "offensive",
+  "timing": {
+    "totalMs": 280,
+    "impactMs": 0
+  },
+  "registeredSequence": null,
+  "reviewFrames": [
+    {
+      "pose": "stance-offensive",
+      "label": "Held origin offensive",
+      "weight": 1,
+      "atMs": 0
+    },
+    {
+      "pose": "stance-offensive",
+      "label": "Generic hurt strobe phase 1 \u00b7 weight 1",
+      "weight": 1,
+      "atMs": 99.5
+    },
+    {
+      "pose": "stance-offensive",
+      "label": "Generic hurt strobe phase 2 \u00b7 weight 1",
+      "weight": 1,
+      "atMs": 283.3999999985099
+    },
+    {
+      "pose": "stance-offensive",
+      "label": "Generic hurt strobe phase 3 \u00b7 weight 1",
+      "weight": 1,
+      "atMs": 465.8999999985099
+    },
+    {
+      "pose": "stance-offensive",
+      "label": "Generic hurt strobe phase 4 \u00b7 weight 1",
+      "weight": 1,
+      "atMs": 650.3000000044703
+    },
+    {
+      "pose": "stance-offensive",
+      "label": "Generic hurt strobe phase 5 \u00b7 weight 1",
+      "weight": 1,
+      "atMs": 832.3999999985099
+    },
+    {
+      "pose": "stance-offensive",
+      "label": "Generic hurt strobe phase 6 \u00b7 weight 1",
+      "weight": 1,
+      "atMs": 1027.8000000044703
+    },
+    {
+      "pose": "stance-offensive",
+      "label": "Generic hurt strobe phase 7 \u00b7 weight 1",
+      "weight": 1,
+      "atMs": 1199.3000000044703
+    },
+    {
+      "pose": "stance-offensive",
+      "label": "Held return offensive",
+      "weight": 1,
+      "atMs": 1400
+    }
+  ],
+  "capture": "Actual mounted combat stage canvas; review timing separate from Normal gameplay",
+  "sharedPhaseArtWith": [],
+  "presentation": "General existing hurt art with seven strobe/recoil phases; no seven-frame painted reaction sequence."
+}

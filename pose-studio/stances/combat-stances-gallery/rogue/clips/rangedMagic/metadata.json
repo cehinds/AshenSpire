@@ -1,0 +1,87 @@
+{
+  "action": "rangedMagic",
+  "aliases": [
+    "rangedMagic"
+  ],
+  "origin": "casting",
+  "timing": {
+    "totalMs": 195,
+    "impactMs": 86.25
+  },
+  "registeredSequence": {
+    "label": "Ranged \u00b7 magic",
+    "poses": [
+      "magic-return",
+      "magic-load",
+      "magic-release",
+      "magic-release",
+      "magic-return"
+    ],
+    "durations": [
+      60,
+      55,
+      50,
+      45,
+      50
+    ],
+    "travel": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "effect": "starbolt",
+    "impact": 2,
+    "hold": false
+  },
+  "reviewFrames": [
+    {
+      "pose": "stance-casting",
+      "label": "origin stance-casting",
+      "weight": 1
+    },
+    {
+      "pose": "magic-return",
+      "registeredFrameId": "magic-return",
+      "label": "1/5 magic-return \u00b7 weight 60",
+      "weight": 60,
+      "timeMs": 22.5
+    },
+    {
+      "pose": "magic-load",
+      "registeredFrameId": "magic-load",
+      "label": "2/5 magic-load \u00b7 weight 55",
+      "weight": 55,
+      "timeMs": 65.625
+    },
+    {
+      "pose": "magic-release",
+      "registeredFrameId": "magic-release",
+      "label": "3/5 magic-release \u00b7 weight 50",
+      "weight": 50,
+      "timeMs": 105
+    },
+    {
+      "pose": "magic-release",
+      "registeredFrameId": "magic-release",
+      "label": "4/5 magic-release \u00b7 weight 45",
+      "weight": 45,
+      "timeMs": 140.625
+    },
+    {
+      "pose": "magic-return",
+      "registeredFrameId": "magic-return",
+      "label": "5/5 magic-return \u00b7 weight 50",
+      "weight": 50,
+      "timeMs": 176.25
+    },
+    {
+      "pose": "stance-casting",
+      "label": "return Magic",
+      "weight": 1
+    }
+  ],
+  "capture": "Actual mounted combat stage canvas; review timing separate from Normal gameplay",
+  "sharedPhaseArtWith": []
+}
