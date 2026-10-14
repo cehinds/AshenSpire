@@ -85,7 +85,7 @@ function rewriteTags(def, row, maneuver) {
 }
 
 export function applyCombatExpansionCard(def) {
-  def = applyCombatExpansionMartial(def);
+  def = { ...applyCombatExpansionMartial(def), defenseRulesVersion: 2 };
   // Each paid Power instance leaves the usable deck for this combat. Its
   // installed status remains active; old runs never enter this projection.
   if (def.type === 'power' && !(def.keywords || []).includes('exhaust')) {
