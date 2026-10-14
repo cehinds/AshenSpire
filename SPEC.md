@@ -464,7 +464,55 @@ rule is one row of `swapCostRules` with no code (proven by test 28q).
 in `model/loadout.js`, beside the functions that branch on them. A row naming anything else is a
 validation failure; before A8 it validated clean and silently did nothing.
 
-**The starting deck.** `balance.startingDeckSize` is a **cap on the BASE cards** — the
+**Opening subclass selection (2026-10-14).** New character creation offers two
+opening identities per base class: Reaver — Heavy Knight (`heavyKnight`) and
+SwordMaster (`swordMaster`); Starseer — BattleMage (`battleMage`) and FrostMonarch
+(`frostMonarch`); Rogue — Ranger (`ranger`) and Assassin (`assassin`); Herald —
+Cleric (`cleric`) and Monk (`monk`). Definitions are configurable content rows,
+validated for parent class, unique identity, five role slots and registered card
+references. `run.subclassId` records the explicit opening identity. This optional
+field is authoritative for presentation and opening subclass effects; absent
+means the historical run, not an inferred or automatically assigned selection.
+Unknown identities and identities of another base class are refused by name.
+Old tier-3 nodes, their names and their effects remain unchanged. Class XP,
+mastery and tier drafts retain their existing progression; an explicit opening
+identity survives respec and takes presentation precedence over earned tier-3
+identity. Without it, the old earned-identity projection remains authoritative.
+
+**The selected-subclass opening deck.** This is a separate composition contract
+from the historical composer below. Exactly eleven playable instances are dealt:
+five subclass slots (`Smash`, `Counter`, `Power`, `Skill`, and either `Sweep` or
+`Spell`), one configured base-class card, one unique weapon art and four basics
+(default two Strike-role and two Defend-role instances, skinned by equipment).
+The core class card is a projection, not a twelfth playable instance. Slot roles
+are recipe labels, not mutually exclusive values of `card.type`. Existing legal
+cards and artwork are reused. Loadout-dependent slots select legal alternatives;
+unarmed and ranged starts must have legal delivery. Caster starting spell choices
+occupy existing Skill/Spell recipe slots; they are never appended beyond eleven.
+Other starting maneuver choices occupy a compatible recipe slot or are refused
+with a reason. The base-class slot deliberately selects the ability card; class
+signatures remain reward content instead of being silently appended at birth.
+
+Equipment ownership is retained: the selected art is item-owned, deterministic
+and restamped with its owner. The opening subclass composer installs one default
+art (main hand, offhand, then unarmed fallback) and suppresses additional default
+equipment/package/global grants. It still honors mounts the player installs
+later and library suppression/removal rules. Future rewards may grow the deck;
+eleven is the birth contract, not a permanent deck cap. Equipment swaps, save
+reload, co-op seats and combat restore carry the explicit identity and the same
+grant-selection policy; they do not run the historical birth composer against
+an eleven-card subclass deck. Legacy saves and custom dealt pool decks preserve
+their existing behavior and are never retroactively re-dealt.
+
+**FrostMonarch weapon infusion.** The selected subclass authors its recipe as
+`weaponInfusion` data: extra Cold (`frost`) damage components, Frost buildup and
+Frost tags on physical attacks actually sourced from its held weapon. Default
+numbers are configurable (2 Cold damage and 1 Frost buildup per hit). The recipe
+does not change spell damage, resurrect `frostbite`, rename old nodes or grant
+Cold to other subclass weapons. Solo, co-op and snapshot restore derive the same
+weapon recipe from the persisted opening identity.
+
+**The historical starting deck (no opening subclass).** `balance.startingDeckSize` is a **cap on the BASE cards** — the
 strikes and defends the game mints for you — and it applies at **character creation and
 nowhere else**. The order is fixed:
 
