@@ -1,13 +1,57 @@
 # Character creation continuation handoff
 
-Updated 2026-10-14. Current code: `f8546a0ac1fd76657218d266fa40f690eda69472`,
-based on origin/dev `53e92b0da`. Final artifact: **0.7.1.1520 / `20bd788bd1`**.
-Runtime validation is at `479bf4fe3` / `615181cdbb`; the subsequent change only
-aligns component specimens with the production row layout and page order.
+Updated 2026-10-14. Current code: `711358b686cc4258d9a12db36eb7b11947d31de7`,
+based on origin/dev `53e92b0da`. Final artifact: **0.7.1.1520 / `12841b3d31`**.
+Runtime validation is at `479bf4fe3` / `615181cdbb`; later changes affect only creation icons, responsive typography/alignment and
+component specimens. Engine, model and content bytes are unchanged in this pass.
 The previous `ef85447e6b` and provisional `7fba9e1339` artifacts are historical.
 Never identify an artifact by ordinal alone: these local previews share 1520.
 
-## Current owner instructions and implemented behavior
+## Current visual pass
+
+- [x] Wireframe shown before implementation: shared centered left icon column,
+  class name/lore/play style aligned in the right text column. Orange reference
+  guides are not production decoration; all Class words remain unchanged.
+- [x] Original reusable SVG marks: **Reaver red point-down greatsword; Starseer
+  purple spellbook; Rogue green paired daggers; Herald gold sun**. These are
+  creation-only; global class glyphs and canonical character paintings are intact.
+  SVGs are decorative, namespace-correct, nonfocusable, and inherited/unknown
+  IDs safely return null for the caller's fallback.
+- [x] Physical sizes compensated for UI zoom: class names 24 px, collapsed lore/
+  play style 16/15 px, section headings 28–32 px, navigation labels 20 px. All are
+  below the owner's **36 pt / 48 px** maximum; section names remain single-line.
+  Desktop rail is 280 physical px. Phone current-step / All Steps controls stack.
+- [x] Phone title has its own row above the view toggle and portrait/menu/close
+  toolbar. QA reproduced then fixed the former collision at 390×844.
+- [x] Expanded body copy stays 16 px, with existing four desktop/six phone lines,
+  shared responsive heights, contained sprites and the native relic target.
+- [x] Final focused Class/detail gate: **11 passed, zero failed** at current code.
+  Receipt: `/workspace/scratch/creation-icon-alignment-preview/validation/final-tests.result.json`.
+  Independent Sol source review approved; engine/model/content delta is empty.
+- [x] Source browser QA: full-width List/Grid rows, centered icons, exact copy,
+  correct motifs/colors and no horizontal document overflow at 1440×900,
+  1440×720 and 390×844. Fixed phone header has no overlap; Subclass headings and
+  navigation names remain on their own rows. No runtime errors.
+- Wireframe: `/workspace/scratch/creation-icon-alignment-preview/wireframe/`.
+  Fixed source captures/metrics: the adjacent `sourceQA-fixed/` folder; earlier
+  `sourceQA/` preserves the initial phone overlap evidence.
+- Current build receipt/stamp: `/workspace/scratch/creation-icon-alignment-preview/validation/build.result.json`
+  and `build-stamp.json`. Build source is `711358b686` / digest `12841b3d31`.
+- Final artifact captures passed at digest `12841b3d31`: desktop/mobile Class,
+  Subclass headings/navigation and the shared Class choice folio. All four known
+  class SVGs exist in the shipped DOM with the exact red/purple/green/gold colors.
+  Actual-DOM SVG exports and 256×256 transparent PNGs are provided separately.
+- Current launcher: `/workspace/scratch/creation-icon-alignment-preview/packages/0.7.1.1520-12841b3d31/AshenSpire-class-layout-preview-0.7.1.1520/START-HERE.html`.
+  ZIP is alongside that folder. Package hash matches the exact built game;
+  integrity check passes. It includes current screenshots/folios, four SVG/PNG
+  marks, the corrected desktop/mobile wireframe, a gallery and design-only editor.
+- Owner's next requested pass: remove live List/Grid; align portrait/menu/close
+  with Create character; combine section name, right-anchored step count and
+  caret into one dropdown row. Then capture all nine creation menu types at
+  desktop/tablet/mobile/widescreen, with one wireframe per menu and a preview.
+  Finish this visual pass's feature PR/merge before applying that next change.
+
+## Creation flow and implemented behavior
 
 - [x] Preserve the existing Class lore, play style, stats and gear wording.
 - [x] Every collapsed Class occupies its own full-width row in List and Grid:
@@ -94,10 +138,14 @@ self-tests and release checks were not run. No dev/main/release merge is claimed
   images and superseded navigation/Class folios are excluded. The final game and
   live component viewer are `20bd788bd1`; no broad runtime rerun is claimed after
   the catalog-only correction.
-- Origin publication receipt: `/workspace/scratch/creation-flow-origin-state.json`.
+- Current origin publication receipt: `/workspace/scratch/creation-icon-alignment-preview/origin-state.json`.
+  The earlier flow receipt remains `/workspace/scratch/creation-flow-origin-state.json`.
   Local workers are published first, then integrated into `Feature/AddSubClasses`
   and `Feature/updateCharacterCreation`. Publication must verify exact tree parity.
-- Artifact source remains `f8546a0ac`; later handoff-only commits do not relabel the build.
+- Current artifact source remains `711358b686`; later handoff-only commits do not relabel the build.
+  The previous flow package is retained as historical evidence below.
+- Class icon renderer: `src/ui/components/creationClassIcon.js`; creationCards uses it
+  for known identities and retains fallback visuals for unknown/locked classes.
 - Production surfaces: `src/ui/screens/customize.js`, `CreationWorkspaceModel.js`,
   `creationCards.js`, `styles/kit.css`, and authored creation config/UI strings.
 - Trait projection/replay: `src/model/creationTraits.js`; staged constructor:
