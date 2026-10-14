@@ -26,6 +26,8 @@ const variantFilter = arg('variant');
 const pace = arg('pace') || 'fast';
 const curated = arg('curated') === 'true';
 const resumePath = arg('resume');
+const caseKey = row => [row.device, row.classId, row.category || 'card', row.cardId, row.variant,
+  ...(row.category === 'enemy-turn' ? [row.enemyIds.join('+')] : [])].join('/');
 const url = process.env.QA_BUILD_URL;
 const source = process.env.QA_SOURCE_URL || (url && new URL('./src/', url).href);
 const out = resolve(process.env.QA_OUTPUT || '/workspace/scratch/full-combat-audit/browser');
@@ -53,7 +55,7 @@ if (mode === 'summarize') {
   const latest = new Map(), history = [];
   const expectedDevices = (arg('expected-devices') || 'desktop,phone').split(',');
   assert.ok(expectedDevices.length && expectedDevices.every(device => ['desktop', 'phone'].includes(device)), 'expected devices must explicitly name desktop and/or phone');
-  const key = row => [row.device, row.classId, row.category || 'card', row.cardId, row.variant].join('/');
+  const key = caseKey;
   for (const input of inputs) {
     assert.ok(input.report.finished, `authoritative report must be complete: ${input.path}`);
     assert.ok(input.report.cases?.length, `authoritative report must have nonempty cases: ${input.path}`);
@@ -93,6 +95,8 @@ if (mode === 'summarize') {
 }
 if (!url || !source) throw new Error('QA_BUILD_URL must name the served compiled standalone HTML');
 const html = await (await fetch(url)).text();
+const htmlSha256 = createHash('sha256').update(html).digest('hex');
+if (process.env.QA_EXPECT_HTML_SHA256) assert.equal(htmlSha256, process.env.QA_EXPECT_HTML_SHA256, 'compiled HTML byte identity');
 const build = { source: html.match(/const SOURCE = '([a-f0-9]+)'/)?.[1], ordinal: html.match(/const ORDINAL = '(\d+)'/)?.[1] };
 assert.ok(build.source, 'compiled HTML loader and source receipt are required');
 assert.ok(process.env.QA_EXPECT_SOURCE && process.env.QA_EXPECT_ORDINAL, 'QA_EXPECT_SOURCE and QA_EXPECT_ORDINAL pin the immutable artifact');
@@ -125,7 +129,7 @@ for (let i = 0; i < sourceFiles.length; i += 16) await Promise.all(sourceFiles.s
 const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const owner = await launchBrowser({ browser: process.env.CHROME || '/usr/bin/chromium', prefix: 'ca-' });
 const browser = await chromium.connectOverCDP(owner.wsUrl);
-const report = resumePath ? JSON.parse(readFileSync(resolve(resumePath), 'utf8')) : { url, source, sourceRoot, build, sourceDigests, inventory, mode, pace, host: { cpuCount: cpus().length, load: loadavg(), freeMemory: freemem(), samples: [] },
+const report = resumePath ? JSON.parse(readFileSync(resolve(resumePath), 'utf8')) : { url, source, sourceRoot, build, htmlSha256, sourceDigests, inventory, mode, pace, host: { cpuCount: cpus().length, load: loadavg(), freeMemory: freemem(), samples: [] },
   fixture: 'Fresh createRunCombat from the screenshot run, canonical enemies/knowledge/moves, custom difficulty hpMult=20 and resource maxima 200. One registered card plus legal draw/discard fillers. Data fields only copied into the live fight; original runtime functions, listeners, dispatch, target resolver, renderer and timeline preserved. These are isolated fixtures, not earned playthroughs.',
   cases: [], errors: [], platformWarnings: [], networkFailures: [], animationDispatch: [], started: new Date().toISOString(), coverageLimits: [
     'Source-engine oracle parity proves compiled input and effect resolution match canonical source. Independent intended-effect/conditional trigger contracts are reported by the engine audit.',
@@ -138,7 +142,6 @@ if (resumePath) {
   report.runs.push({ pace, started: new Date().toISOString(), resumedFrom: resumePath });
   report.pace = pace; delete report.finished; delete report.counts;
 }
-const caseKey = row => [row.device, row.classId, row.category || 'card', row.cardId, row.variant].join('/');
 const latestCases = new Map(report.cases.map(row => [caseKey(row), row]));
 const completedCase = (device, classId, row) => {
   const entry = latestCases.get(caseKey({ device, classId, ...row }));
