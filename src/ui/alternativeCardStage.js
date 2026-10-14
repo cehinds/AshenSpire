@@ -182,7 +182,7 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
     const left=leftPadding+offset[0]+bodyX+place.dx, top=16+topPadding+offset[1]+place.dy, width=dimensions[0]*place.scale,height=dimensions[1]*place.scale;
     currentArt={canvas,image:source,left,top,width,height};
     ctx.save();
-    auraRenderer.draw(ctx,source,filterFor(pose,playing?.sequence.action || playing?.action),left,top,width,height,{materialize});ctx.restore();
+    auraRenderer.draw(ctx,source,filterFor(pose,playing?.sequence.action || playing?.action),left,top,width,height,{materialize,reuse:!!classSmash&&playing?.action==='smash'&&!clipping&&!reacting});ctx.restore();
     // Trails share body registration, but never enter its aura or hit mask.
     if(effect && !still && !reducedMotionRequested() && !document.body.classList.contains('reduce-flashes')) {
       const overlay=images.get(effect);

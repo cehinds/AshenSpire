@@ -22,7 +22,7 @@ try{
   for(const mode of ['desktop','desktop-cold','phone','reduced','instant'].filter(mode=>!process.env.QA_MODES||process.env.QA_MODES.split(',').includes(mode))){
    const phone=mode==='phone',staticMode=['reduced','instant'].includes(mode);
    const context=await browser.newContext({viewport:phone?{width:390,height:844}:{width:1440,height:1000},isMobile:phone,hasTouch:phone,reducedMotion:mode==='reduced'?'reduce':'no-preference'});
-   const page=await context.newPage();page.on('pageerror',e=>errors.push({actor,mode,message:e.message}));
+   const page=await context.newPage();page.on('pageerror',e=>errors.push({actor,mode,message:e.message}));page.on('console',m=>{if(m.type()==='error')errors.push({actor,mode,console:m.text()});});
    const params=new URLSearchParams({shot:'combat',shotKit:'1',shotClass:actor,shotMainHand:right,shotOffHand:left,shotSeed:'B',shotSettings:JSON.stringify({animSpeed:mode==='instant'?'instant':'normal'})});
    await page.goto(url+'?'+params,{waitUntil:'domcontentloaded'});await page.waitForSelector('.end-turn:not([disabled])');
    const prepared=await page.evaluate(async()=>{
@@ -53,7 +53,8 @@ try{
    const shot=!staticMode?page.waitForFunction(()=>document.querySelector('.combatant.player .alternative-card-stage')?.dataset.pose==='class-smash-impact',{},{polling:'raf',timeout:15000}).then(()=>page.screenshot({path:resolve(out,actor+'-'+mode+'.png')})).catch(async error=>{console.error(JSON.stringify(await page.evaluate(()=>({trace:window.__classSmashTrace,fx:window.__fx.trace,events:window.__combat.eventLog.slice(-6),body:document.body.innerText.slice(-3500),pose:document.querySelector('.combatant.player .alternative-card-stage')?.dataset.pose}))));throw error;}):null;
    const card=page.locator('.hand .card[data-instance-id='+JSON.stringify(prepared.instanceId)+']');
    if(phone)await card.tap();else await card.click();
-   const readyBeforeTarget=await page.evaluate(async()=>{const stage=document.querySelector('.combatant.player .alternative-card-stage').__poseStage;await stage.ready;return {pose:stage.pose,poses:stage.poses,at:performance.now()};});
+   const readyBeforeTarget=await page.evaluate(async()=>{const stage=document.querySelector('.combatant.player .alternative-card-stage').__poseStage;const ready=await stage.ready;return {ready,pose:stage.pose,poses:stage.poses,at:performance.now()};});
+   eq(readyBeforeTarget.ready,true,actor+' '+mode+' current actor bitmaps preloaded before paid target');
    const target=page.locator('.enemy-target-button').first();await target.waitFor();if(phone)await target.tap();else await target.click();
    let stress=null;
    if(mode==='desktop-cold')stress=await page.evaluate(()=>{const start=performance.now();const trace=window.__fx.trace;const swing=trace.findLast(t=>t[1]==='swing');const already=trace.some(t=>t[1]==='contact'&&t[0]>=(swing?.[0]||0));while(performance.now()-start<220){}return {start,end:performance.now(),already};});
