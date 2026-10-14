@@ -12,8 +12,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
-      - name: Keep checked-out bytes identical to stored bytes
-        run: git config --global core.autocrlf false
+      - run: git config --global core.autocrlf false
       - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha }}
@@ -39,4 +38,4 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           node tools/about-changelog.mjs --write
-          node -e "console.log('GENERATED_BASE64='+require('fs').readFileSync('src/content/changelog.generated.js').toString('base64'))"
+          node -e "const s=require('fs').readFileSync('src/content/changelog.generated.js').toString('base64');for(let i=0;i<s.length;i+=8000)console.log('GENERATED_CHUNK='+s.slice(i,i+8000));console.log('GENERATED_DONE')"
