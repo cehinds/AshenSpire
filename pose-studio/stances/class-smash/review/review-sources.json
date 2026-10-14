@@ -1,12 +1,14 @@
 {
   "purpose": "Review-only composite; source frame files are not modified.",
   "alignment": "Uniform whole-frame scale maps a held-pose anatomical estimate to 494 px in the source-space review canvas; each provenance groundAnchor maps to the same baseline. Airborne/VFX are preserved with no frame cropping. Estimates exclude raised weapons and are for comparative display only.",
-  "reviewTimingMsPerSlot": 350,
-  "nominalTimingMsPerSlot": 195,
+  "reviewExposureMsPerSlot": 350,
+  "nominalActionMs": 195,
+  "nominalSlotMs": 39,
+  "nominalContactMs": 117,
   "classes": [
     {
       "class": "Rogue",
-      "sourceProvenance": "class-smash-rogue/pose-studio/stances/class-smash/rogue/provenance.json",
+      "sourceProvenance": "pose-studio/stances/class-smash/rogue/provenance.json",
       "groundAnchor": [
         512,
         930
@@ -25,7 +27,7 @@
     },
     {
       "class": "Starseer",
-      "sourceProvenance": "class-smash-starseer/pose-studio/stances/class-smash/starseer/provenance.json",
+      "sourceProvenance": "pose-studio/stances/class-smash/starseer/provenance.json",
       "groundAnchor": [
         512,
         880
@@ -44,7 +46,7 @@
     },
     {
       "class": "Herald",
-      "sourceProvenance": "class-smash-herald/pose-studio/stances/class-smash/herald/provenance.json",
+      "sourceProvenance": "pose-studio/stances/class-smash/herald/provenance.json",
       "groundAnchor": [
         512,
         900

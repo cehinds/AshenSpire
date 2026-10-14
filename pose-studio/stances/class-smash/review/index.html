@@ -23,7 +23,7 @@
 <body>
   <h1>Class Smash review</h1>
   <p>Rogue · Starseer · Herald</p>
-  <p class="timing">Review timing: 350 ms per slot. The nominal in-game timing is 195 ms per slot.</p>
+  <p class="timing">Review timing: 350 ms per slot. The nominal Normal action is 195 ms total (39 ms per slot; contact is 117 ms).</p>
   <div class="controls" aria-label="Animation controls">
     <button id="play" type="button">Play</button>
     <button id="pause" type="button">Pause</button>
@@ -47,6 +47,7 @@
     const label = document.querySelector("#slot");
     let index = 0;
     let timer = null;
+    const reviewExposureMs = 350;
     function show(i) {
       index = (i + phases.length) % phases.length;
       image.src = phases[index][0];
@@ -54,7 +55,7 @@
       label.textContent = phases[index][1];
     }
     document.querySelector("#play").addEventListener("click", () => {
-      if (timer === null) timer = window.setInterval(() => show(index + 1), 350);
+      if (timer === null) timer = window.setInterval(() => show(index + 1), reviewExposureMs);
     });
     document.querySelector("#pause").addEventListener("click", () => {
       window.clearInterval(timer);

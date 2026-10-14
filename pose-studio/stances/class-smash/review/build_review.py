@@ -1,13 +1,14 @@
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 import json
+import hashlib
 
 ROOT = Path(__file__).resolve().parents[4]
 OUT = Path(__file__).resolve().parent
 CLASSES = [
-    ("Rogue", ROOT.parent / "class-smash-rogue/pose-studio/stances/class-smash/rogue", ""),
-    ("Starseer", ROOT.parent / "class-smash-starseer/pose-studio/stances/class-smash/starseer", ""),
-    ("Herald", ROOT.parent / "class-smash-herald/pose-studio/stances/class-smash/herald", "frames/"),
+    ("Rogue", ROOT / "pose-studio/stances/class-smash/rogue", ""),
+    ("Starseer", ROOT / "pose-studio/stances/class-smash/starseer", ""),
+    ("Herald", ROOT / "pose-studio/stances/class-smash/herald", "frames/"),
 ]
 PHASES = [
     ("01", "Stance", "01-held.png"),
@@ -26,10 +27,31 @@ GAP = 12
 PAD = 12
 HEADER = 44
 TARGET_BODY = 494
+REVIEW_EXPOSURE_MS = 350
+NOMINAL_ACTION_MS = 195
+NOMINAL_SLOT_MS = 39
+NOMINAL_CONTACT_MS = 117
 REVIEW_BODY_HEIGHT = {"Rogue": 515, "Starseer": 508, "Herald": 480}
 BASELINE = 418
-FONT = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 18)
-SMALL = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 13)
+def load_font(size):
+    candidates = [
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/Library/Fonts/Arial.ttf",
+        "C:/Windows/Fonts/arial.ttf",
+    ]
+    for candidate in candidates:
+        try:
+            return ImageFont.truetype(candidate, size)
+        except OSError:
+            continue
+    try:
+        return ImageFont.load_default(size=size)
+    except TypeError:
+        return ImageFont.load_default()
+
+
+FONT = load_font(18)
+SMALL = load_font(13)
 
 sources = []
 for name, folder, sub in CLASSES:
@@ -82,7 +104,7 @@ for pi, (num, label, _) in enumerate(PHASES):
     phases[-1].save(OUT / f"phase-{num}.png", optimize=True)
 
 # Animated review preview; each of the five slots is held for 350 ms.
-phases[0].save(OUT / "combined-review.gif", save_all=True, append_images=phases[1:], duration=350, loop=0, optimize=False, disposal=2)
+phases[0].save(OUT / "combined-review.gif", save_all=True, append_images=phases[1:], duration=REVIEW_EXPOSURE_MS, loop=0, optimize=False, disposal=2)
 
 # Three class rows by five phase columns.
 cell_w, cell_h = 264, 292
@@ -102,3 +124,35 @@ for si, src in enumerate(sources):
         card.paste(tile.convert("RGB"), ((cell_w-tile.width)//2, (cell_h-tile.height)//2))
         sheet.paste(card, (x, y))
 sheet.save(OUT / "contact-sheet.png", optimize=True)
+
+# Keep source hashes and timing provenance reproducible from the integrated files.
+metadata = {
+    "purpose": "Review-only composite; source frame files are not modified.",
+    "alignment": "Uniform whole-frame scale maps a held-pose anatomical estimate to 494 px in the source-space review canvas; each provenance groundAnchor maps to the same baseline. Airborne/VFX are preserved with no frame cropping. Estimates exclude raised weapons and are for comparative display only.",
+    "reviewExposureMsPerSlot": REVIEW_EXPOSURE_MS,
+    "nominalActionMs": NOMINAL_ACTION_MS,
+    "nominalSlotMs": NOMINAL_SLOT_MS,
+    "nominalContactMs": NOMINAL_CONTACT_MS,
+    "classes": [],
+}
+for name, folder, sub in CLASSES:
+    prov = json.loads((folder / "provenance.json").read_text())
+    reg = prov.get("registration", {})
+    anchor = reg.get("groundAnchor") or prov.get("groundAnchor")
+    body = reg.get("bodyHeight") or prov.get("bodyHeight")
+    review_body = REVIEW_BODY_HEIGHT[name]
+    frame_hashes = {}
+    for _, _, filename in PHASES:
+        path = folder / sub / filename
+        frame_hashes[filename] = hashlib.sha256(path.read_bytes()).hexdigest()
+    metadata["classes"].append({
+        "class": name,
+        "sourceProvenance": str((folder / "provenance.json").relative_to(ROOT)),
+        "groundAnchor": anchor,
+        "documentedBodyHeight": body,
+        "reviewHeldPoseAnatomicalEstimate": review_body,
+        "sourceFrameSha256": frame_hashes,
+        "reviewScaleFactor": round(TARGET_BODY / review_body, 6),
+        "reviewDisplayBodyHeight": TARGET_BODY,
+    })
+(OUT / "review-sources.json").write_text(json.dumps(metadata, indent=2) + "\n")
