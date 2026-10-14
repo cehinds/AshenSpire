@@ -8,6 +8,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { initialClassTreeChoices } from '../src/model/classTree.js';
 import { registriesForClassMastery } from '../src/model/classMasteryRun.js';
+import { createRng } from '../src/engine/rng.js';
 import { createSession } from '../tools/session.mjs';
 import { coopTimelineRoute, coopPacedRoute, coopReceiptOverlays, coopCardPlayBuzz, coopReceiptSounds, coopFinalFrame } from '../src/ui/screens/coop.js';
 import { haptic } from '../src/ui/haptics.js';
@@ -222,6 +223,14 @@ test('the blow that ends a fight is paced once, on the board, before its reward 
   const [last, ...rest] = host.live.combat.enemies.filter(enemy => enemy.alive);
   for (const enemy of rest) { enemy.hp = 0; enemy.alive = false; }
   last.hp = 1;
+  // The pacing contract starts with a landed killing blow. Put this fixture
+  // within melee reach and retain real RNG state with a natural20 next.
+  if (last.combatStance) last.combatStance.range = 'melee';
+  const rng = host.live.combat.rng;
+  const counters = rng.getCounters();
+  const probe = createRng(rng.seed, counters);
+  while (probe.int('combatAvoidance', 1, 20) !== 20) counters.combatAvoidance = (counters.combatAvoidance || 0) + 1;
+  rng.restoreCounters(counters);
   const attack = board.players.find(player => player.id === 'p1').hand.find(card => registries.cards.get(card.cardId)?.type === 'attack');
   assert.equal(host.combatPlay('p1', attack.instanceId, last.id).ok, true);
   const scene = host.snapshot().scene;

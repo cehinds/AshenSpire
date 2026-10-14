@@ -105,7 +105,7 @@ test('Earth attacks slow; Entomb entombs', () => {
   }
   const entomb = play('entomb');
   assert(entomb.landed('entombed'));
-  assert.equal(getStacks(entomb.enemy, 'entombed'), 1);
+  assert.equal(getStacks(entomb.enemy, 'entombed'), 2, 'one authored Entombed stack plus one Spell stance stack');
 });
 
 test('Stoneskin gives Block that survives the next turn start', () => {

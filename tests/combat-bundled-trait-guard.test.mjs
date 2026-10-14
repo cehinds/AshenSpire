@@ -1,3 +1,4 @@
+import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { productionBundle } from './helpers/production-bundle.mjs';
@@ -46,6 +47,8 @@ function fixture({ reaction = true, coop = false } = {}) {
   // Crystal Barrier's Barrier absorbs spells; physical Block from another
   // source supplies the reduced physical hit in the ordinary EndTurn case.
   if (!reaction) combat.player.block = 20;
+  // Preserve the production bundled engine and real transactional RNG while pinning landed contacts.
+  primeAccuracyRolls(combat, { count: reaction ? 2 : 1 });
   return combat;
 }
 

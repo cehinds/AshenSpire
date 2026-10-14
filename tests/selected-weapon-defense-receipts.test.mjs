@@ -18,7 +18,16 @@ import { applyAttackDamage, executeAction } from '../src/engine/actions.js';
 import { selectedWeaponReactionFor, REAVER_GREATSWORD_PILOT as pilot } from '../src/model/selectedWeaponStances.js';
 
 const registries=createRegistries(contentBundle);
-function contact({camp='physical',damage=5,block=0,barrier=0,ward=0,flat=0,statuses={},evade,profiles}={}) {
+// Prime the persisted named stream, so transactional RNG clones see the same dice.
+function primeAccuracy(combat, wanted) {
+  for (let skipped=0; skipped<10000; skipped++) {
+    const probe=createRng(combat.rng.seed,combat.rng.getCounters());
+    if (wanted.every(die=>probe.int('combatAvoidance',1,20)===die)) return;
+    combat.rng.int('combatAvoidance',1,20);
+  }
+  throw new Error('Unable to prime Accuracy fixture');
+}
+function contact({camp='physical',damage=5,block=0,barrier=0,ward=0,flat=0,statuses={},evade,profiles,accuracyDie}={}) {
   const combat=createCombat({registries,rng:createRng(904),combatExpansionVersion:2,
     ...(profiles?{ruleset:combatRules,combatProfiles:profiles}:{}),enemyIds:['wanderingSoldier'],
     player:{classId:'reaver',maxHp:100,hp:100,maxMana:20,mana:20,maxStamina:20,stamina:20,
@@ -27,6 +36,7 @@ function contact({camp='physical',damage=5,block=0,barrier=0,ward=0,flat=0,statu
     damageResistanceFlat:{blunt:flat},damageWeaknessPercent:{},combatEvade:evade});
   combat.player.persistentWard.value=ward;
   combat.enemies[0].ratings={ar:0,dr:0,pr:0,poise:0,ward:0};
+  if (accuracyDie != null) primeAccuracy(combat,[accuracyDie]);
   const before=combat.eventLog.length;
   // A melee spell with a physical type splits (magicShareOf); the spell cases are all magic so Barrier and Ward meet the whole hit.
   applyAttackDamage(combat,combat.enemies[0],combat.player,damage,[],{
@@ -66,7 +76,11 @@ test('real Invulnerability and successful Evade remain distinct from Decoy and s
   assert.deepEqual(reactions(immune.events),['defend']);
   assert.equal(immune.events.some(event=>event.type==='damageDealt'),false);
   assert.equal(immune.combat.player.combatEvade.charges,1,'immunity does not spend Evade');
-  const evaded=contact({evade:{charges:1,bonus:100}});
+  const evaded=contact({evade:{charges:1},statuses:{evade:{stacks:1}},accuracyDie:1});
+  const miss=evaded.events.find(event=>event.type==='attackMissed');
+  assert.equal(miss?.missReason,'accuracy');
+  assert.equal(miss?.evadeStacks,1);
+  assert.equal(evaded.combat.player.statuses.evade?.stacks || 0,0,'successful avoidance consumes its stack');
   assert.deepEqual(reactions(evaded.events),['evade']);
   assert.equal(evaded.events.some(event=>event.type==='damageDealt'),false);
   assert.deepEqual(reactions(contact({damage:0,statuses:{invulnerability:{stacks:1}}}).events),[]);
@@ -85,12 +99,13 @@ test('paid production Guard and Evasion counters associate only their actual abs
     const combat=createRunCombat({registries,run,rng:createRng(seed),enemyIds:['wanderingSoldier'],settings:{playInDeckOrder:true}});
     dispatch(combat,{type:'setReactions',enabled:false});
     for(const inst of [guard,counter])assert.ok(dispatch(combat,{type:'playCard',cardInstanceId:inst.instanceId,targetId:'player'}).events.some(row=>row.type==='cardPlayed'));
+    primeAccuracy(combat,cardId!=='guardCounter'&&seed===6 ? [1,1] : [20]);
     const before=combat.player.hp,{events}=dispatch(combat,{type:'endTurn'});
     assert.equal(combat.player.hp,before);
     const returned=events.find(row=>row.type==='combatCounterTriggered');
-    const avoided=events.find(row=>row.type==='combatAvoidanceResolved'&&row.avoided);
+    const avoided=events.find(row=>row.type==='attackMissed'&&row.missReason==='accuracy');
     if(cardId!=='guardCounter'&&seed===6) {
-      assert.ok(avoided?.evade?.success);assert.equal(returned,undefined);
+      assert.ok(avoided?.evadeActive || avoided?.evadeStacks > 0);assert.equal(returned,undefined);
       assert.equal(selectedWeaponCounterOrigins(events).size,0,'an actual successful evade never invents a Counter');
       assert.deepEqual(reactions(events),['evade']);
     } else {
@@ -119,4 +134,13 @@ test('paid production Guard and Evasion counters associate only their actual abs
       assert.ok(events.every(event=>combat.eventLog.includes(event)),'dispatch retains receipt identity');
     }
   }
+});
+
+test('universal accuracy receipts animate only an actual Evade avoidance',()=>{
+  const miss={type:'attackMissed',targetId:'player',missReason:'accuracy',evadeStacks:1};
+  assert.equal(selectedWeaponReactionFor(miss,pilot),'evade');
+  assert.equal(selectedWeaponReactionFor({...miss,evadeStacks:0,evadeActive:true},pilot),'evade');
+  assert.equal(selectedWeaponReactionFor({...miss,missReason:'range'},pilot),null);
+  assert.equal(selectedWeaponReactionFor({...miss,evadeStacks:0},pilot),null);
+  assert.equal(selectedWeaponReactionFor({...miss,type:'attackHit'},pilot),null);
 });

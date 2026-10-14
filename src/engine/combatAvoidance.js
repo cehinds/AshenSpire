@@ -90,7 +90,8 @@ export function previewAvoidance(ctx, entity, profile, incomingDamage, options =
 export function resolveAvoidance(ctx, source, target, profile, incomingDamage, options = {}, saved = null) {
   if (saved?.resolved) return saved;
   const preview = previewAvoidance(ctx, target, profile, incomingDamage, options);
-  const outcome = { resolved: true, avoided: false, distance: null, evade: null, chance: preview.chance };
+  const outcome = { resolved: true, avoided: false, distance: null, evade: null, chance: preview.chance,
+    ...(options.hitCheck ? { hitCheck: true } : {}) };
   if (preview.prevention) {
     Statuses.removeStatus(ctx, target, preview.prevention, { amount: 1, reason: 'consumed' });
     outcome.avoided = true;

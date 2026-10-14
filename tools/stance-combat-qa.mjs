@@ -162,6 +162,28 @@ async function remount(cards, options = {}) {
   await page.locator('.combat').waitFor({ state: 'visible' });
   await waitArt();
 }
+async function assertChanceSurfaces(expectedMode) {
+  const hud = page.locator('.combat-hit-chance:visible').first();
+  await hud.waitFor({ state: 'visible', timeout: 10000 });
+  const targetId = await page.evaluate(() => window.__combat.enemies.find(enemy => enemy.alive)?.id);
+  assert.ok(targetId, 'a live target exists for the selected attack');
+  const card = page.locator('.card-hit-chance[data-target-id="' + targetId + '"]:visible').first();
+  await card.waitFor({ state: 'visible', timeout: 10000 });
+  const [hudInfo, cardInfo] = await Promise.all([
+    hud.evaluate(node => ({ text: node.innerText.trim(), mode: node.dataset.rollMode })),
+    card.evaluate(node => ({ text: node.innerText.trim(), mode: node.dataset.rollMode })),
+  ]);
+  const percent = text => {
+    const match = text.match(/([\d.]+)%/);
+    assert.ok(match, 'percentage is visible: ' + text);
+    return Number(match[1]);
+  };
+  assert.equal(hudInfo.mode, expectedMode, 'fighter HUD roll mode');
+  assert.equal(cardInfo.mode, expectedMode, 'selected card roll mode');
+  assert.equal(percent(hudInfo.text), percent(cardInfo.text), 'card and fighter HUD show the same exact hit chance');
+  return { hud: hudInfo, card: cardInfo };
+}
+
 async function inspectCard(cardId, label) {
   const card = page.locator('.hand .card[data-card-id="' + cardId + '"]').first();
   await card.waitFor({ state: 'visible', timeout: 20000 });
@@ -177,6 +199,14 @@ async function inspectCard(cardId, label) {
     await rules.waitFor({ state: 'visible', timeout: 5000 });
     const fit = await rules.evaluate(node => ({ scrollHeight: node.scrollHeight, clientHeight: node.clientHeight }));
     assert.ok(fit.scrollHeight <= fit.clientHeight, 'Crystal Barrier text fits without vertical clipping');
+    const rulesPanel = page.locator('.card-inspection-modal .ic-layer[data-component="rules"]').first();
+    const lastFaceLine = rulesPanel.locator('.face-line').last();
+    await lastFaceLine.waitFor({ state: 'visible', timeout: 5000 });
+    const visualGap = await lastFaceLine.evaluate(line => {
+      const panel = line.closest('.ic-layer[data-component="rules"]');
+      return panel.getBoundingClientRect().bottom - line.getBoundingClientRect().bottom;
+    });
+    assert.ok(visualGap >= 2, 'Crystal Barrier final face line leaves at least 2px at the rules panel bottom');
   }
   await capture(label, { width: 1440, height: 1000 });
   await page.keyboard.press('Escape').catch(() => {});
@@ -209,14 +239,16 @@ try {
   const attack = page.locator('.hand .card[data-card-id="strike"]').first();
   await attack.waitFor({ state: 'visible', timeout: 20000 });
   await attack.click();
-  const chance = page.locator('.combat-hit-chance:visible').first();
-  await chance.waitFor({ state: 'visible', timeout: 10000 });
+  const chance = await assertChanceSurfaces('neutral');
   await capture('selected-damage-known-enemy', { width: 1440, height: 1000 });
+  views['selected-damage-known-enemy'].hitChance = chance;
 
   await remount(['strike'], { unknown: true });
   await page.locator('.hand .card[data-card-id="strike"]').first().click();
   await page.waitForTimeout(150);
-  assert.equal(await page.locator('.combat-hit-chance:visible').count(), 0, 'unknown enemy hides hit percentage');
+  assert.equal(await page.locator('.combat-hit-chance:visible, .card-hit-chance:visible').count(), 0,
+    'unknown enemy hides both fighter HUD and selected-card hit percentages');
+  assert.equal(await page.locator('.card-hit-chances:visible').count(), 0, 'unknown enemy has no selected-card odds panel');
   await capture('selected-damage-unknown-enemy', { width: 1440, height: 1000 });
 
   await page.close();
@@ -240,10 +272,12 @@ try {
       color: getComputedStyle(node).color,
       mode: node.dataset.rollMode,
     }));
+    const surfaces = await assertChanceSurfaces(mode);
     assert.match(detail.label, /\b[\d.]+%/i, mode + ' displays a numeric hit percentage');
     assert.notEqual(detail.color, 'rgba(0, 0, 0, 0)', mode + ' has visible roll-mode color');
     await capture('phone-hit-' + mode, { width: 390, height: 844 });
     views['phone-hit-' + mode].hitChance = detail;
+    views['phone-hit-' + mode].cardHitChance = surfaces.card;
   }
   const chances = ['advantage', 'neutral', 'disadvantage'].map(mode => {
     const match = views['phone-hit-' + mode].hitChance.label.match(/([\d.]+)%/);
@@ -264,7 +298,16 @@ try {
     const callout = page.locator('.fx-callout[data-callout-kind="' + kind + '"]');
     await callout.waitFor({ state: 'visible', timeout: 15000 });
     assert.match(await callout.innerText(), label);
-    await capture(name, { width: 390, height: 844 }, false);
+    if (kind === 'hit' || kind === 'evadeFailed') {
+      await page.waitForTimeout(120);
+      const damageFloats = page.locator('.float-num.dmg:visible, .float-num.poise:visible, .float-num.ward:visible');
+      assert.equal(await damageFloats.count(), 0, name + ': hit outcome callout is visible before HP/Poise/Ward damage floats');
+      await capture(name, { width: 390, height: 844 }, false);
+      await damageFloats.first().waitFor({ state: 'visible', timeout: 3000 });
+      views[name].eventOrder = 'hit callout captured before the first damage or pressure float';
+    } else {
+      await capture(name, { width: 390, height: 844 }, false);
+    }
   }
   report.browserErrors = errors;
   writeFileSync(resolve(OUT, 'report.json'), JSON.stringify(report, null, 2) + '\n');

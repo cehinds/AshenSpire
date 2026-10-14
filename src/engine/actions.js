@@ -367,7 +367,8 @@ const OWNER_OPS = new Set(['draw', 'discard', 'exhaust', 'addCard', 'gainEnergy'
 // draw (its owner) or any other op. A random target is not re-rolled here, so a randomEnemy
 // effect spends nothing.
 function spendSilencedForEffect(ctx, action, eff) {
-  if (ctx.combatExpansionVersion !== 2 || !action.card || ['damage', 'completeCombatAction'].includes(eff.op) || eff.target === 'randomEnemy') return;
+  if (ctx.combatExpansionVersion !== 2 || !action.card || action.meta?.stanceEntry || action.meta?.stanceRestore
+    || ['damage', 'completeCombatAction'].includes(eff.op) || eff.target === 'randomEnemy') return;
   if (!isForceHit(action.card.combatProfile || combatProfileFor(action.card))) return;
   const targets = eff.target === undefined && OWNER_OPS.has(eff.op) ? [action.owner || action.source].filter(Boolean) : resolveTargets(ctx, action, eff.target);
   for (const target of targets) {

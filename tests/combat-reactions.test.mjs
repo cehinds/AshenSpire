@@ -1,3 +1,4 @@
+import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -8,7 +9,7 @@ import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/co
 import { createCoopCombat, endTurn, chooseReaction, joinCombat, leaveCombat, playCard, chooseDiscard, setReactions } from '../src/engine/coopCombat.js';
 import { combatRules } from '../src/content/combatRules.js';
 import { createFoundation } from '../src/engine/combatRules.js';
-import { armCombatCounter } from '../src/engine/combatMatchups.js';
+import { armCombatCounter, counterCoverageMatches } from '../src/engine/combatMatchups.js';
 import { serializeCoopCombatSnapshot, decodeCoopCombatSnapshot } from '../src/engine/coopCombatSnapshot.js';
 import { botControlAction } from '../tools/simbot.mjs';
 import { payAshenBlight, chooseAshenBlightFeat } from '../src/engine/ashenBlight.js';
@@ -287,13 +288,19 @@ test('a defensive Sweep can cancel its attacker without executing its intent', (
 test('paid Counter reply to an automatic return terminates the chain', () => {
   const { combat } = fixture({ cardIds: ['guardCounter', 'strike'], enemyCount: 1 });
   landedContacts(combat);
+  primeAccuracyRolls(combat, { count: 3 });
   const enemy = combat.enemies[0];
   enemy.block = 100;
   enemy.combatStance = { camp: 'physical', maneuver: 'counter', range: 'melee', targeting: 'single' };
   armCombatCounter(combat, enemy, { moveId: 'returnCarrier',
     tags: ['camp:physical', 'maneuver:counter', 'range:melee', 'targeting:single'],
     combatProfile: { ...enemy.combatStance, damageType: 'blunt' } }, { payload: { hp: 1, poise: 0, ward: 0 } });
+  const coverage = combat.combatExpansionRules.matchups.counter.defaultCoverage.melee;
+  const returnProfile = { camp: 'physical', maneuver: 'counter', range: 'melee', targeting: 'single', counterReturnAttack: true };
+  assert.equal(counterCoverageMatches(coverage, returnProfile), true, 'automatic Counter return uses Attack delivery for coverage');
+  assert.equal(counterCoverageMatches(coverage, { ...returnProfile, counterReturnAttack: false }), false, 'ordinary Counter identity does not widen coverage');
   dispatch(combat, { type: 'playCard', cardInstanceId: 'r1', targetId: enemy.id });
+  assert.ok(combat.pendingReaction?.options.length, 'the automatic return offers a paid Counter reply');
   const option = combat.pendingReaction.options.find(row => row.cardId === 'guardCounter');
   const out = answer(combat, option.id);
   assert.deepEqual(out.events.filter(event => event.type === 'combatCounterTriggered').map(event => event.sourceKind), ['enemy', 'player']);

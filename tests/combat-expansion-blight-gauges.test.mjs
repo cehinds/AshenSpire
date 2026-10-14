@@ -7,6 +7,7 @@ import { createCombat, dispatch } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import * as S from '../src/engine/statuses.js';
 import { recoverStatusesAtOwnerStart } from '../src/engine/combatStatusControl.js';
+import { primeAccuracyRolls } from './accuracyFixture.mjs';
 
 const cards = new Map(contentBundle.cards.map(card => [card.id, card]));
 const buildupStatuses = effects => (effects || []).filter(effect => effect.op === 'buildup').map(effect => effect.status);
@@ -64,6 +65,7 @@ const v2Combat = ({ cardId = 'flagellation', rng = createRng(1) } = {}) => creat
 test('a damaging decay spell hit applies Necrotic Blight pressure once: the card rider suppresses the Necrotic matchup rider', () => {
   const c = v2Combat();
   const enemy = c.enemies[0];
+  primeAccuracyRolls(c, { die: 20 });
   const before = c.eventLog.length;
   dispatch(c, { type: 'playCard', cardInstanceId: c.piles.hand[0].instanceId, targetId: enemy.id });
   const events = c.eventLog.slice(before);
@@ -88,6 +90,7 @@ for (const cardId of ['plagueBearer', 'scourge', 'rotMote', 'blightwardLash', 'w
   test(`a v2 ${cardId} hit fills Crimson Blight only: the printed Crimson also suppresses the Necrotic matchup rider`, () => {
     const c = v2Combat({ cardId });
     const enemy = c.enemies[0];
+    primeAccuracyRolls(c, { die: 20 });
     const before = c.eventLog.length;
     dispatch(c, { type: 'playCard', cardInstanceId: c.piles.hand[0].instanceId, targetId: enemy.id });
     const events = c.eventLog.slice(before);

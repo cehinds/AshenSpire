@@ -72,7 +72,7 @@ export function combatCounterProblems(counter, path, version = 1) {
 
 const CAMPS = ['physical', 'spell'];
 const TARGETING = ['single', 'area'];
-const MANEUVERS = ['attack', 'defend', 'counter', 'sweep', 'ranged', 'smash', 'casting'];
+const MANEUVERS = ['attack', 'defend', 'counter', 'sweep', 'ranged', 'smash', 'casting', 'evade'];
 const SCHOOLS = ['frost', 'fire', 'lightning', 'force', 'alteration', 'illusion', 'divine', 'decay', 'earth'];
 
 function stringsProblems(value, path, allowed = null, required = false) {
@@ -164,7 +164,9 @@ export function combatExpansionEntityProblems(entity, path = 'entity') {
   }
   if (entity.combatCounter !== undefined) {
     problems.push(...expansionCounterProblems(entity.combatCounter, `${path}.combatCounter`));
-    if (stance?.maneuver !== 'counter') problems.push(`${path}.combatCounter requires Counter stance`);
+    const hybridEvade = stance?.maneuver === 'evade'
+      && entity.combatCounter.carrier?.combatProfile?.maneuver === 'counter';
+    if (stance?.maneuver !== 'counter' && !hybridEvade) problems.push(`${path}.combatCounter requires Counter stance or an authored Counter in Evade stance`);
     if (entity.combatPreparationSerial !== entity.combatCounter.serial) problems.push(`${path}.combatCounter.serial must match its preparation serial`);
   }
   const evade = entity.combatEvade;

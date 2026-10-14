@@ -23,6 +23,7 @@ export function effectCarrier(carrier, effect) {
   if (effect.attack && !typed.damageComponents) delete merged.combatProfile.damageComponents;
   // The action stance belongs to the card; an effect can override its delivery/type.
   merged.combatProfile.maneuver = effect.combatProfile?.maneuver || carrier?.combatProfile?.maneuver || merged.combatProfile.maneuver;
+  if (carrier?.counterReturnAttack) merged.combatProfile.counterReturnAttack = true;
   return merged;
 }
 export function enqueueExpandedAction(ctx, actions, { source, target, carrier, completionMeta } = {}) {

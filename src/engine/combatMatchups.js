@@ -281,6 +281,7 @@ function normalizedProfile(carrier, contact = {}) {
   // Compatibility mapping uses existing authored delivery, never card names.
   profile.range ||= profile.delivery === 'projectile' || profile.maneuver === 'ranged' ? 'reach' : 'melee';
   profile.targeting ||= profile.maneuver === 'sweep' ? 'area' : 'single';
+  if (carrier?.counterReturnAttack) profile.counterReturnAttack = true;
   profile.projectile ??= carrier?.attack?.delivery === 'projectile' || hasTrait(profile, 'projectile');
   profile.dodgeable ??= carrier?.attack?.dodgeable;
   return profile;
@@ -407,7 +408,10 @@ export function counterCoverageMatches(coverage, profile, effect = 'damage') {
     ['targeting', 'targeting'], ['maneuvers', 'maneuver']];
   for (const [list, key] of filters) {
     const values = coverage[list];
-    if (values?.length && !values.includes(profile[key])) return false;
+    // A Counter return retains its stance for matchup math; its offensive
+    // delivery is an Attack for authored incoming-maneuver coverage.
+    const value = key === 'maneuver' && profile.counterReturnAttack && profile.maneuver === 'counter' ? 'attack' : profile[key];
+    if (values?.length && !values.includes(value)) return false;
   }
   if (coverage.effects?.length && !coverage.effects.includes(effect)) return false;
   if (profile.targeting === 'area' && !coverage.targeting?.includes('area')) return false;
@@ -489,7 +493,7 @@ export function previewTacticalAction(ctx, source, target, carrier, contacts = [
   const avoidanceAmount = counterAttack && !(amount > 0)
     ? contacts.reduce((sum, contact) => sum + (contact.effect === 'impact' ? number(contact.pressure) : 0), 0) : amount;
   const avoidance = Avoidance.previewAvoidance(ctx, target, profile, avoidanceAmount,
-    { evadeDisabled: control.evadeDisabled, evadeBonus: options.evadeBonus || 0 });
+    { evadeDisabled: control.evadeDisabled, evadeBonus: options.evadeBonus || 0, hitCheck: Boolean(counterAttack) });
   if (counterAttack) avoidance.chance = 100 - counterAttack.hitChance
     + counterAttack.hitChance * avoidance.chance / 100;
   const guardBefore = number(target?.block) - Math.min(number(target?.block), number(target?.wardBlock));

@@ -118,6 +118,8 @@ test('one Bashing Blow logs each stagger-meter impact with its own cause, and a 
     enemyIds: ['valkyrieShade'] });
   // This source-attribution test exercises a landed hit with real seeded draws.
   c.player.accuracy = 100; c.enemies[0].evasion = 0;
+  // Valkyrie can telegraph from range; this fixture tests contact attribution.
+  if (c.enemies[0].combatStance) c.enemies[0].combatStance.range = 'melee';
   dispatch(c, { type: 'playCard', cardInstanceId: c.piles.hand[0].instanceId, targetId: c.enemies[0].id });
   const impacts = c.eventLog.filter(event => event.type === 'ratingImpact');
   assert.deepEqual(impacts.map(event => event.cause), ['hit', 'rider:blunt', 'poiseDamage', 'trait:impact', 'relic:forsakenMedallion']);

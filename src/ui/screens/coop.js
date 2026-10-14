@@ -1009,7 +1009,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const selected = actor.hand?.find(card => card.instanceId === litCard());
     const definition = selected && cardDef(selected);
     const hostile = definition?.effects?.some(effect => ['enemy', 'allEnemies', 'randomEnemy'].includes(effect.target)) || definition?.counterPayload;
-    const carrier = hostile ? definition : { combatProfile: { maneuver: 'attack', camp: 'physical', range: 'melee' }, effects: [{ op: 'damage', target: 'enemy', amount: 0 }] };
+    const carrier = hostile ? { ...definition, combatProfile: combatProfileFor(definition) } : { combatProfile: { maneuver: 'attack', camp: 'physical', range: 'melee' }, effects: [{ op: 'damage', target: 'enemy', amount: 0 }] };
+    app.querySelectorAll('.card-hit-chances').forEach(node => node.remove());
+    const selectedCard = hostile && app.querySelector('.hand .card[data-instance-id="' + CSS.escape(selected.instanceId) + '"]');
+    const cardOdds = document.createElement('div');
+    cardOdds.className = 'card-hit-chances';
+    cardOdds.setAttribute('aria-live', 'polite');
     for (const enemy of sc.enemies) {
       const frame = app.querySelector('.combatant.enemy[data-eid="' + CSS.escape(enemy.id) + '"]');
       frame?.querySelector('.combat-hit-chance')?.remove();
@@ -1022,7 +1027,15 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       badge.textContent = Number(preview.hitChance.toFixed(2)) + '%';
       badge.setAttribute('aria-label', 'Chance to hit ' + badge.textContent);
       (frame.querySelector('.combatant-leading') || frame).append(badge);
+      if (selectedCard) {
+        const odds = badge.cloneNode(true);
+        odds.className = 'card-hit-chance';
+        odds.dataset.targetId = enemy.id;
+        odds.textContent = registries.enemies.get(enemy.enemyId).name + ' ' + badge.textContent;
+        cardOdds.append(odds);
+      }
     }
+    if (selectedCard && cardOdds.children.length) selectedCard.append(cardOdds);
   }
   const releaseHitChanceSelection = onSelectionChange(() => syncCoopHitChances());
 

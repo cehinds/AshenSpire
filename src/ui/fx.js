@@ -1189,7 +1189,7 @@ export function playTimeline(events, ctx, done) {
             safe(() => haptic.play('damageTaken'));
           }
           hitStop = 0;
-          schedule(stepV, speed.stepMs + (held ? holdMs : 0));
+          schedule(stepV, Math.max(speed.stepMs, event.type === 'attackHit' ? STACK_STEP_MS * 2 : 0) + (held ? holdMs : 0));
           return;
         }
         let reactionEndAt = 0;
@@ -1539,7 +1539,7 @@ export function calloutForEvent(e = {}) {
   const popup = statusPopupFor(e);
   if (popup) return { kind: popup.kind, targetId: popup.targetId };
   switch (e.type) {
-    case 'attackHit': kind = e.label === 'Hit — Evade Failed' ? 'evadeFailed' : 'hit'; break;
+    case 'attackHit': kind = e.evadeActive && !e.bypass ? 'evadeFailed' : 'hit'; break;
     case 'attackMissed': kind = 'missed'; break;
     case 'damageDealt': case 'statusImmune': kind = outcomeKindForEvent(e); break;
     // A stagger a break caused shows that break's word and INTERRUPTED, not a second STAGGERED.
@@ -1573,6 +1573,8 @@ function withCallout(parts, e) {
 
 // An event whose only visual is its callout: it never takes a step of its own.
 function calloutOnly(e, opts) {
+  // Accuracy has its own readable beat before damage or pressure begins.
+  if (e.type === 'attackHit' || e.type === 'attackMissed') return false;
   const parts = visualPartsFor(e, undefined, opts);
   return !!parts && Object.keys(parts).every((key) => key === 'callout' || !parts[key]);
 }

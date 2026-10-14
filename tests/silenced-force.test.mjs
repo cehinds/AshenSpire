@@ -155,7 +155,8 @@ test('a Force Ward strip on a Silenced enemy spends 1 stack', () => {
 
 test('a Force draw spends 1 of its Silenced owner\'s stacks and none of the enemy\'s', () => {
   const { combat, enemy } = forceSetup('testForceDraw', { enemyStacks: 2, playerStacks: 2 });
-  dispatch(combat, { type: 'playCard', cardInstanceId: 'c' });
+  const out = dispatch(combat, { type: 'playCard', cardInstanceId: 'c' });
+  assert.equal(out.events.filter(event => event.type === 'statusRemoved' && event.status === 'silenced' && event.targetId === combat.player.id).length, 1, 'only the authored Force draw consumes a stack; stance entry does not');
   assert.equal(getStacks(combat.player, 'silenced'), 1);
   assert.equal(getStacks(enemy, 'silenced'), 2);
 });

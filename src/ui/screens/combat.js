@@ -1492,13 +1492,31 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function syncHitChances() {
+    combatEl.querySelectorAll('.card-hit-chances').forEach(node => node.remove());
+    const inst = selected && findInst(selected);
+    const definition = inst && resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(selected) });
+    const hostile = definition?.effects?.some(effect => ['enemy', 'allEnemies', 'randomEnemy'].includes(effect.target)) || definition?.counterPayload;
+    const selectedCard = hostile && combatEl.querySelector('.hand .card[data-instance-id="' + CSS.escape(selected) + '"]');
+    const cardOdds = document.createElement('div');
+    cardOdds.className = 'card-hit-chances';
+    cardOdds.setAttribute('aria-live', 'polite');
     for (const enemy of combat.enemies) {
       const frame = enemyFrames.get(enemy.id)?.box;
       if (!frame) continue;
       frame.querySelector('.combat-hit-chance')?.remove();
       const badge = hitChanceBadge(enemy);
-      if (badge) frame.querySelector('.combatant-leading')?.append(badge);
+      if (badge) {
+        frame.querySelector('.combatant-leading')?.append(badge);
+        if (selectedCard) {
+          const odds = badge.cloneNode(true);
+          odds.className = 'card-hit-chance';
+          odds.dataset.targetId = enemy.id;
+          odds.textContent = registries.enemies.get(enemy.enemyId).name + ' ' + badge.textContent;
+          cardOdds.append(odds);
+        }
+      }
     }
+    if (selectedCard && cardOdds.children.length) selectedCard.append(cardOdds);
   }
 
   function meterBars(entity, { tooltips = true } = {}) {
@@ -1868,6 +1886,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     });
     syncHandPager(handList);
     handRenderKey = key;
+    syncHitChances();
   }
 
   /**
