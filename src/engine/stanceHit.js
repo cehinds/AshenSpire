@@ -5,8 +5,9 @@ import { RANGES } from '../model/combatRanges.js';
 import { stanceRulesFor, stanceOf, sameStance, stanceEntryBonuses } from '../model/stanceRules.js';
 
 function hitMode(source, target, { evadeDisabled = false } = {}) {
-  const advantage = !!(source?.accuracyAdvantage || (!evadeDisabled && (target?.evadeDisadvantage || target?.combatEvade?.disadvantage || target?.nextEvadeMode?.disadvantage)));
-  const disadvantage = !!(source?.accuracyDisadvantage || (!evadeDisabled && (target?.evadeAdvantage || target?.combatEvade?.advantage || target?.nextEvadeMode?.advantage)));
+  const pending = eligibleEvadeMode(target);
+  const advantage = !!(source?.accuracyAdvantage || (!evadeDisabled && (target?.evadeDisadvantage || target?.combatEvade?.disadvantage || pending?.disadvantage)));
+  const disadvantage = !!(source?.accuracyDisadvantage || (!evadeDisabled && (target?.evadeAdvantage || target?.combatEvade?.advantage || pending?.advantage)));
   return advantage === disadvantage ? 'normal' : advantage ? 'advantage' : 'disadvantage';
 }
 function diceHit(dice, need, mode) {
@@ -16,6 +17,12 @@ function diceHit(dice, need, mode) {
   return die !== 1 && die >= need;
 }
 const stacks = (entity, id) => Math.max(0, Number(entity?.statuses?.[id]?.stacks) || 0);
+function eligibleEvadeMode(entity) {
+  const mode = entity?.nextEvadeMode, prepared = entity?.combatEvade;
+  const eligible = stacks(entity, 'evade') > 0 || (prepared?.charges > 0
+    && (!prepared.whileStatus || stacks(entity, prepared.whileStatus) > 0));
+  return eligible && mode && (!mode.whileStatus || stacks(entity, mode.whileStatus) > 0) ? mode : null;
+}
 export function effectiveEvasion(ctx, entity, { evadeDisabled = false } = {}) {
   return counterBaseEvasion(ctx, entity) + (evadeDisabled ? 0 : stanceRulesFor(ctx).evasionPerStack * stacks(entity, 'evade'));
 }
@@ -58,7 +65,7 @@ export function resolveAttackHit(ctx, source, target, carrier, options = {}) {
   const dice = d20 == null ? [] : [d20];
   if (dice.length && preview.mode !== 'normal') dice.push(typeof ctx.rng.int === 'function' ? ctx.rng.int('combatAvoidance', 1, 20) : 1 + Math.floor(ctx.rng.float('combatAvoidance') * 20));
   const hit = preview.inRange && (preview.bypass || diceHit(dice, preview.need, preview.mode));
-  if (dice.length) delete target.nextEvadeMode;
+  if (dice.length && !options.evadeDisabled && eligibleEvadeMode(target)) delete target.nextEvadeMode;
   const result = { ...preview, d20, dice, hit, ...(source?.knowledgeAction ? { enemyActionSerial: source.knowledgeAction.serial } : {}), ...(!hit ? { missReason: preview.inRange ? 'accuracy' : 'range' } : {}) };
   if (!hit && preview.inRange && !preview.bypass && preview.evadeStacks > 0) Statuses.removeStatus(ctx, target, 'evade', { amount: 1, reason: 'consumed' });
   const label = hit ? preview.evadeActive && !preview.bypass ? 'Hit — Evade Failed' : 'Hit' : 'Missed';

@@ -317,6 +317,10 @@ export function setCombatStance(ctx, entity, carrier) {
     clearCombatCounter(entity, ctx);
     syncWardMaximum(ctx, entity);
     const grants = stanceEntryBonuses({ combatProfile: profile }, ctx);
+    if (grants.evade > 0 && (profile.evade?.advantage || profile.evade?.disadvantage)) {
+      entity.nextEvadeMode = { advantage: !!profile.evade.advantage, disadvantage: !!profile.evade.disadvantage,
+        ...(profile.evade.whileStatus ? { whileStatus: profile.evade.whileStatus } : {}) };
+    }
     for (const [op, amount] of [['block', grants.block], ['gainBarrier', grants.barrier]]) {
       if (amount > 0) ctx.enqueue({ effect: { op, target: 'self', amount }, source: entity, owner: entity, target: entity,
         card: { ...carrier, skipRatingBonus: true }, meta: { ...provenance, stanceEntry: true } });
