@@ -32,8 +32,11 @@ check(() => assert.doesNotMatch(nameHandler, /selectCombatant/, 'the name must n
 check(() => assert.match(combat, /nm\.setAttribute\('aria-label', `\$\{def\.name\} — the full read`\)/));
 check(() => assert.match(combat, /nm\.addEventListener\('click', openThisRead\);/));
 check(() => assert.match(combat, /nm\.addEventListener\('keydown', \(event\) => \{\s*if \(event\.key !== 'Enter' && event\.key !== ' '\) return;\s*event\.preventDefault\(\);\s*openThisRead\(event\);/));
-// The frame (left core) click still selects when unarmed.
-check(() => assert.match(combat, /else if \(selectedFlask != null\) useFlask\(selectedFlask, enemy\.id\);\s*else if \(!selfArm\) \{\s*selectCombatant\(enemy\.id\);/));
+// The frame (left core) tap retains the same selection and targeting routes.
+const frameTapAt = combat.indexOf('function routeEnemyFrameTap');
+check(() => assert.ok(frameTapAt >= 0, 'the composite enemy-frame tap route exists'));
+const frameTap = combat.slice(frameTapAt, combat.indexOf('\n  }', frameTapAt));
+check(() => assert.match(frameTap, /if \(selected\) playCard\(selected, enemyId\);\s*else if \(selectedFlask != null\) useFlask\(selectedFlask, enemyId\);\s*else if \(!selfArm\) selectCombatant\(enemyId\);/));
 
 // Behaviour of the control itself.
 const dom = rewardDom();

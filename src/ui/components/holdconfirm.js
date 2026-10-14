@@ -180,6 +180,7 @@ export function armHold(btn, {
   ms, onConfirm, onTap = null, id = null, hintHost = null, hintBefore = null, showHint = true,
   feedbackHosts = null, pointerOnly = false, tapOnEarlyRelease = false,
   onHoldStart = null, onHoldEnd = null, settleMs = 0, tapOnPointerRelease = false,
+  shouldBegin = null, stopImmediateClick = false,
 }) {
   const msOf = typeof ms === 'function' ? ms : () => ms;
   // Like `ms`, the settle may be a function so a surface can turn it off while
@@ -326,8 +327,17 @@ export function armHold(btn, {
     // activates it with a synthetic click; that click must not be eaten by a
     // pointer press that ended in a scroll (pointercancel, no click) earlier.
     movedThisPress = false;
-    if (pointerOnly && origin.source !== 'pointer') return false;
+    if (pointerOnly && origin.source !== 'pointer') {
+      if (shouldBegin && !armed) { heldThisPress = false; committedThisPress = false; }
+      return false;
+    }
     if (offPointerPress || fired || armed) return false;
+    if (shouldBegin && !shouldBegin(origin)) {
+      heldThisPress = false;
+      committedThisPress = false;
+      offPointerPress = false;
+      return false;
+    }
     heldThisPress = false;
     committedThisPress = false;
     offPointerPress = false;
@@ -531,6 +541,20 @@ export function armHold(btn, {
       committedThisPress = false;
       ev.preventDefault();
       ev.stopPropagation();
+      if (stopImmediateClick) ev.stopImmediatePropagation?.();
+      return;
+    }
+    // A screen that owns a composite frame may request that every click from
+    // its pointer press be consumed, even when a browser/input shim labels the
+    // trailing activation as synthetic (`detail === 0`).
+    if (stopImmediateClick && heldThisPress) {
+      const tapped = !committedThisPress;
+      heldThisPress = false;
+      committedThisPress = false;
+      ev.preventDefault();
+      ev.stopPropagation();
+      ev.stopImmediatePropagation?.();
+      if (tapped && onTap) onTap(ev);
       return;
     }
     if (ev.detail === 0) {
@@ -548,6 +572,7 @@ export function armHold(btn, {
     committedThisPress = false;
     ev.preventDefault();
     ev.stopPropagation();
+    if (stopImmediateClick) ev.stopImmediatePropagation?.();
     // A composite card may owe two SAFE meanings to the same pointer: a short
     // tap reveals its details while a completed hold commits its action. The
     // ordinary irreversible controls pass no onTap and retain the universal
