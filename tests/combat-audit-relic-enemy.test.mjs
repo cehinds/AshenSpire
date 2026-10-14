@@ -27,6 +27,24 @@ for (const mode of ['native', 'bundled']) {
     assert.equal(report.relics.relicCoverage.length, 73);
     assert.equal(report.relics.passiveIds, 27);
     assert.equal(report.relics.passiveMissing.length, 0);
+    assert.equal(report.relics.passiveEffects, 31);
+    assert.deepEqual(report.relics.passiveEffectRows.map(row => `${row.relicId}:${row.key}`).sort(), [
+      'ancestralHorn:powerCostReduction', 'cinderPouch:runeGainMult', 'crackedTear:flaskPowerMult', 'curedHide:poiseThresholdAdd',
+      'cutpursesCoin:modifiers', 'emberFragment:restHealMult', 'feralEye:eliteExtraCardReward', 'forsakenMedallion:modifiers',
+      'goldFigurine:modifiers', 'paupersDiadem:powerCostReduction', 'paupersDiadem:runeGainMult', 'prismaticThorn:exposureBuildupMult',
+      'prismaticThorn:flaskPowerMult', 'progression-cinderbound-crown:modifiers', 'progression-cracked-war-anvil:modifiers',
+      'progression-ember-alms-bowl:modifiers', 'progression-emberjaw-token:modifiers', 'progression-fragment-of-the-third-sky:modifiers',
+      'progression-moonwell-lens:modifiers', 'progression-nightglass-rosary:modifiers', 'progression-ossuary-prayer-wheel:modifiers',
+      'progression-purse-of-borrowed-shadows:modifiers', 'progression-whisperglass-die:modifiers', 'restlessClasp:flaskPowerMult',
+      'restlessClasp:restHealMult', 'saltedRelic:runeGainMult', 'sealstoneKey:revealUnknown', 'starstoneShard:modifiers',
+      'wayfarersKnot:restHealMult', 'wayfarersKnot:runeGainMult', 'wyrmHeart:restDenied',
+    ]);
+    assert.ok(report.relics.passiveEffectRows.every(row => row.result === 'covered' && row.observed !== null));
+    assert.deepEqual(report.relics.passiveEffectRows.filter(row => row.key !== 'modifiers').map(row => row.key).sort(), [
+      'eliteExtraCardReward', 'exposureBuildupMult', 'flaskPowerMult', 'flaskPowerMult', 'flaskPowerMult',
+      'poiseThresholdAdd', 'powerCostReduction', 'powerCostReduction', 'restDenied', 'restHealMult', 'restHealMult',
+      'restHealMult', 'revealUnknown', 'runeGainMult', 'runeGainMult', 'runeGainMult', 'runeGainMult',
+    ]);
     assert.equal(report.statuses.applyAndDecayCovered, 69);
     assert.equal(report.statuses.modifierOutcomesCovered, report.statuses.modifierDeclarations);
     assert.equal(report.statuses.procBranchesCovered, 3);
