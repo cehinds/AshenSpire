@@ -1,6 +1,7 @@
 // Defensive Ward shares are independent of a school's damage routing.
-// Split the already modified total once: Block rounds to nearest, Ward keeps
-// the remainder, so upgrades, upcasting and rating bonuses retain their total.
+// Split base protection once: Block rounds to nearest, Ward keeps the remainder.
+// The engine then adds DR to Block and PR to Ward independently before applying
+// guard modifiers; live previews carry those final portions explicitly.
 import { combatProfileFor } from './combatCardProfile.js';
 import { spellDefenseRules } from '../content/spellDefenseRules.js';
 
