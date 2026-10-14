@@ -8,6 +8,7 @@ import { resolve } from 'node:path';
 import { launchBrowser } from '../browser.mjs';
 import { contentBundle } from '../../src/content/index.js';
 import { createRegistries } from '../../src/model/registries.js';
+import { SFX_MANIFEST, resolveRecipe } from '../../src/content/sfx.js';
 
 const registries = createRegistries(contentBundle);
 const classes = registries.classes.ids();
@@ -60,7 +61,11 @@ for (let i = 0; i < sourceFiles.length; i += 16) await Promise.all(sourceFiles.s
   if (relative === 'buildversion.js') {
     assert.equal(served.match(/export const SOURCE = '([^']+)'/)?.[1], build.source, 'served source stamp matches compiled artifact');
     assert.equal(served.match(/export const ORDINAL = '([^']+)'/)?.[1], build.ordinal, 'served source ordinal matches compiled artifact');
-    for (const field of ['BUILT', 'RUN_PATH', 'EDITION']) assert.equal(served.match(new RegExp(`export const ${field} = '([^']*)'`))?.[1], html.match(new RegExp(`const ${field} = '([^']*)'`))?.[1], `generated ${field} source stamp matches compiled artifact`);
+    assert.equal(served.match(/export const BUILT = '([^']*)'/)?.[1], html.match(/const BUILT = '([^']*)'/)?.[1], 'generated BUILT source stamp matches compiled artifact');
+    assert.equal(served.match(/export const EDITION = '([^']*)'/)?.[1], 'high', 'source entrypoint retains high edition');
+    assert.ok(['high','light'].includes(html.match(/const EDITION = '([^']*)'/)?.[1]), 'compiled edition is an authored build tier');
+    assert.equal(served.match(/export const RUN_PATH = '([^']*)'/)?.[1], 'source tree', 'source entrypoint identifies source tree');
+    assert.equal(html.match(/const RUN_PATH = '([^']*)'/)?.[1], 'standalone file', 'compiled entrypoint identifies standalone file');
     assert.equal(digest(normalizeStamp(served)), digest(normalizeStamp(readFileSync(path, 'utf8'))), 'buildversion code identity excluding generated stamp fields');
   } else assert.equal(sourceDigests[relative], digest(readFileSync(path)), `immutable source fixture identity: ${relative}`);
 }));
@@ -79,6 +84,9 @@ const tap = async (page, locator, device) => device === 'phone' ? locator.tap({ 
 
 async function boot(context, classId) {
   const page = await context.newPage();
+  const cdp = await context.newCDPSession(page); page.__auditAudioNodes = [];
+  await cdp.send('WebAudio.enable');
+  cdp.on('WebAudio.audioNodeCreated', event => page.__auditAudioNodes.push({ at: Date.now(), node: event.node.nodeType }));
   page.on('pageerror', e => report.errors.push({ case: activeCase, kind: 'pageerror', message: e.stack }));
   page.on('console', e => {
     if (/Blocked call to navigator.vibrate|Failed to load resource:/.test(e.text()))
@@ -286,10 +294,18 @@ async function runCase(page, device, classId, row) {
   activeCase = { device, classId, ...row };
   const entry = { ...activeCase, status: 'running' }; report.cases.push(entry);
   const errorStart = report.errors.length;
+  const audioStart = page.__auditAudioNodes.length, networkStart = report.networkFailures.length;
   try {
     entry.before = await fixture(page, row);
     entry.input = await play(page, device, row, entry.before);
     entry.after = await receipt(page);
+    entry.audioNodes = page.__auditAudioNodes.slice(audioStart);
+    for (const failure of report.networkFailures.slice(networkStart)) {
+      const match = new URL(failure.url).pathname.match(/^\/assets\/sfx\/([^/]+)\.ogg$/);
+      if (match && !Object.hasOwn(SFX_MANIFEST, decodeURIComponent(match[1])) && resolveRecipe(decodeURIComponent(match[1])).recipe.length
+        && entry.audioNodes.some(n => ['OscillatorNode','AudioBufferSourceNode'].includes(n.node))) failure.classification = 'optional-cue-with-observed-synthesis';
+      else { failure.classification = 'unexpected-resource-failure'; report.errors.push({ case: activeCase, kind: 'network', message: failure.url }); }
+    }
     if (row.sampleAnimation) {
       const frames = entry.after.frames, actionFrames = frames.filter(f => f.action);
       report.animationDispatch.push({ device, classId, cardId: row.cardId, receiptId: 'audit-card', dispatchType: 'paid-card', cardPlayed: entry.after.events.some(e => e.type === 'cardPlayed'),
