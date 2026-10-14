@@ -53,7 +53,7 @@ Keep this feature-specific evidence inside one removable block:
 <!-- feature-preview:start -->
 ## Feature preview — <feature name>
 
-[Play this feature build](https://cehinds.github.io/AshenSpire/branches/<branch>/latest/)
+[Try this feature build](<verified workflow artifact or hosted build URL>)
 
 <Brief description connecting the change to the build and captures.>
 
@@ -63,17 +63,25 @@ Keep this feature-specific evidence inside one removable block:
 <!-- feature-preview:end -->
 ```
 
-Use the exact branch spelling in the URL. An open PR into `dev` publishes the
-branch build; a draft PR is allowed when needed to publish a preview before
-review readiness. For `Feature/updateCharacterCreation`, the link is
-`https://cehinds.github.io/AshenSpire/branches/Feature/updateCharacterCreation/latest/`.
-Verify the hosted build actually loads the change before presenting the link as
-working. Refresh the block and captures when the feature changes.
+Code pushes to `feature/**`, `Feature/**`, `fix/**` and `chore/**` run
+`.github/workflows/feature-preview.yml`. It builds that exact branch HEAD and
+uploads `feature-preview-<commit>` with the self-contained HTML, build stamp and
+play instructions. Link the successful run's artifact in the README; GitHub
+sign-in is required and downloads expire after 14 days. Refresh the link and
+captures when the feature changes. Documentation-only pushes keep the current
+code build; use a manual workflow dispatch to renew an expired build.
+
+A hosted preview is also available while a same-repository feature PR into
+`dev` is open. Use the exact branch spelling in
+`https://cehinds.github.io/AshenSpire/branches/<branch>/latest/`; a draft PR may
+publish it during review. Verify any hosted build loads the change before
+presenting that link as working. For a downloadable build, verify the run
+succeeded, its artifact is live, and its source matches the tested code.
 
 Capture and inspect real mobile, desktop, wide and tablet views of the change.
 Track their files in `docs/preview/features/<feature>/` (this feature uses
 `docs/preview/features/update-character-creation/`). Include a capture record
-there naming the feature, source commit, full hosted build version, capture
+there naming the feature, source commit, full build version/digest, capture
 date, viewport sizes and playable URL so the images are associated with the
 change. Explicitly stage only intended files with `git add -f -- <paths>`.
 The existing release screenshot gallery remains separate and must still be
@@ -86,7 +94,7 @@ folder.** Run `node tools/feature-preview.mjs --remove`, then remove only
 `docs/preview/features/<feature>/` for the completed feature. The helper refuses
 malformed or duplicate markers and strips only the marked block; release
 screenshots, AI disclosures and `readme-sync` blocks must remain intact. Keep
-this shared protocol and helper after promotion. This is mandatory merge
+this shared protocol, helper and feature-preview workflow after promotion. This is mandatory merge
 cleanup, even when the feature's preview is useful during review.
 
 ### README screenshots

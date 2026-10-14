@@ -1,13 +1,49 @@
 # Character creation continuation handoff
 
-Updated 2026-10-14. Current built code: `893a58d7dedad7e14f0931eaea217a46662fec53`,
-based on origin/dev `53e92b0da`. Final artifact: **0.7.1.1520 / `4185f5c773`**.
+Updated 2026-10-14. Current built code: `eb5937f97c9fe51b2bf12cf949adff689c29514b`,
+based on origin/dev `53e92b0da`. Final artifact: **0.7.1.1520 / `1ad05d6483`**.
 Runtime validation is at `479bf4fe3` / `615181cdbb`; later changes affect only creation icons, responsive typography/alignment, navigation and
 component specimens. Engine/model and gameplay content are unchanged in this pass; the canonical UI-string table adds the step-count label.
 The previous `ef85447e6b` and provisional `7fba9e1339` artifacts are historical.
 Never identify an artifact by ordinal alone: these local previews share 1520.
 
-## Current compact navigation pass
+## Current density and locked-choice pass
+
+- [x] Scoped compact spacing/fonts; readable main copy and44px controls retained.
+  Removed repeated ability subtitles and duplicate selected-subclass description.
+  Phone spells use two columns; maneuvers keep the horizontal shelf to avoid a
+  vertical-scroll regression. Review uses compact gear and an existing native
+  disclosure for its eleven-card starting deck; all inspectors remain available.
+- [x] Locked feats are native-disabled, cannot become active through mouse,
+  keyboard or inspect API, and show requirements inline. Spell pool remains
+  authored/eligibility-filtered; activation rechecks the current legal plan to
+  reject stale click/inspector handlers. No rule or deck-count change.
+- [x]52 focused tests passed at sourceeb5937f97; UI-string/diff gates passed.
+  Independent Sol source review approved. Phone Review collapsed scroll range
+ 855px vs1554.5px baseline in the same CSS-pixel unit, about45% less. Expanding
+  the disclosure retains all11 card inspection controls. Source/browser receipts
+  are in `/workspace/scratch/creation-density-preview/`.
+- Current standalone build:0.7.1.1520/digest1ad05d6483, sourceeb5937f97.
+  Build succeeded80.69s. Later evidence/README commits do not relabel this source.
+- Exact feature HEAD CI build succeeded:
+  https://github.com/cehinds/AshenSpire/actions/runs/38654072847
+  Download: https://github.com/cehinds/AshenSpire/actions/runs/38654072847/artifacts/11935887981
+  CI sourcefb7c6c587 has the same b97e6cfed source tree as localeb5937f97.
+  Artifacts require GitHub sign-in and expire after14days; the workflow builds
+  feature HEAD on code pushes without merging dev and excludes docs-only pushes.
+- Code PR#1993 merged into Feature/AddSubClasses and Feature/updateCharacterCreation.
+  New36 screenshots+36structural PNG/SVG wireframes use only digest1ad05d6483.
+  Feature GitHub evidence: `docs/preview/features/update-character-creation/README.md`.
+  Local package directory: `/workspace/scratch/creation-density-preview/packages/0.7.1.1520-1ad05d6483/`.
+- Persistent feature delivery protocol: CONTRIBUTING.md#feature-branch-previews.
+  Root README marked preview block must stay directly below the title and show
+  working test-build links and mobile/desktop/wide/tablet evidence for the change.
+  BEFORE merging into dev run `node tools/feature-preview.mjs --remove` and
+  remove only docs/preview/features/update-character-creation/. Keep the shared
+  protocol, helper/tests and feature-preview workflow. Do not replace Release screenshots.
+- Origin/PR publication receipt: `/workspace/scratch/creation-density-preview/origin-state.json`.
+
+## Previous compact navigation pass (historical4185 artifact)
 
 - [x] Live List/Grid controls removed. Phone header places portrait, menu and close
   beside Create character on one row. Reference annotation lines/colors are not UI.
