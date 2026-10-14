@@ -478,6 +478,17 @@ Old tier-3 nodes, their names and their effects remain unchanged. Class XP,
 mastery and tier drafts retain their existing progression; an explicit opening
 identity survives respec and takes presentation precedence over earned tier-3
 identity. Without it, the old earned-identity projection remains authoritative.
+The selected identity stays attached to its birth class across class swaps:
+its effects and name apply only while that class is equipped, and return when
+it is equipped again. `run.subclassDeckVersion: 1` preserves the opening grant
+policy even while another class is equipped. Saves validate the subclass against
+the persisted starting kit's birth class; creation validates the selected class.
+Each definition's `progressionNodeIds` names its allowed historical tier-3
+upgrade path (Heavy Knight: Bulwark King; SwordMaster: Warlord; BattleMage:
+Conduit; FrostMonarch: Reservoir; Ranger: Shadow; Assassin: Assassin; Cleric:
+Saint; Monk: Martyr). Their effects and level gates are unchanged. Selected
+subclass drafts and respec offer the mapped top-tier nodes; legacy drafts still
+offer either historical choice. Lower-tier progression is unchanged.
 
 **The selected-subclass opening deck.** This is a separate composition contract
 from the historical composer below. Exactly eleven playable instances are dealt:
