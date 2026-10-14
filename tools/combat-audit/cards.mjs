@@ -27,26 +27,27 @@ export function assertImmediateContracts(def, events, instanceId) {
   }
   return { covered, uncovered };
 }
-export async function auditCards({ mode = 'native', allEnemies = false } = {}) {
+export async function auditCards({ mode = 'native', allEnemies = false, allVariants = false } = {}) {
   const api = await loadAuditRuntime(mode), inventory = auditInventory(api.registries);
   const report = { mode, inventory: { cards: inventory.cardIds.length, classes: inventory.classes.length, candidates: inventory.variants.length },
-    played: [], rejected: [], failures: [], contracts: {}, uncovered: {} };
+    played: [], rejected: [], fixtureGaps: [], failures: [], contracts: {}, uncovered: {} };
   // First sweep isolates authored base definitions. Grades, carriers and upcast
   // conditions are separate coverage and are deliberately not claimed here.
-  const base = inventory.variants.filter(v => !v.instance.upgraded && !v.instance.profileId && v.upcastTier === undefined &&
+  const base = allVariants ? inventory.variants : inventory.variants.filter(v => !v.instance.upgraded && !v.instance.profileId && v.upcastTier === undefined &&
     (v.instance.abilityRank === undefined || v.instance.abilityRank === 0));
   for (const variant of base) for (const enemyId of allEnemies ? inventory.enemyIds : ['wanderingSoldier', 'gildedKnight']) {
     const key = `${variant.key}/${enemyId}`;
     try {
-      const { combat: c } = makeAuditCombat(api, { classId: variant.classId, enemyIds: [enemyId], instance: variant.instance, relicIds: [] });
-      const inst = c.piles.hand[0], def = api.resolveCombatCard(c, inst);
+      const carrierId = variant.instance.profileId ? variant.carrierIds[0] || null : undefined;
+      const { combat: c } = makeAuditCombat(api, { classId: variant.classId, enemyIds: [enemyId], instance: variant.instance, relicIds: [], carrierId });
+      const inst = c.piles.hand[0], def = api.resolveCombatCard(c, inst, { upcastTier: variant.upcastTier });
       const plan = api.cardTargetPlan(def, c.player.id, c.enemies, [c.player], { solo: true });
       const targetId = plan.legalIds[0];
       const choicePlan = api.cardChoicePlan(c, inst.instanceId);
       const choice = choicePlan?.options?.find(option => !option.active)?.id;
-      const costs = api.cardPlayCosts(c, inst.instanceId);
+      const costs = api.cardPlayCosts(c, inst.instanceId, variant.upcastTier);
       const eventStart = c.eventLog.length;
-      try { api.dispatch(c, { type: 'playCard', cardInstanceId: inst.instanceId, targetId, ...(choice ? { choice } : {}) }); }
+      try { api.dispatch(c, { type: 'playCard', cardInstanceId: inst.instanceId, targetId, ...(choice ? { choice } : {}), ...(variant.upcastTier !== undefined ? { upcastTier: variant.upcastTier } : {}) }); }
       catch (error) {
         if (error.playRefusal?.reason === 'unplayable' && api.registries.framework.isUnplayable(def)) {
           assert.equal(c.eventLog.slice(eventStart).filter(e => e.type === 'cardPlayed').length, 0);
@@ -78,12 +79,14 @@ export async function auditCards({ mode = 'native', allEnemies = false } = {}) {
       settleAuditChoices(api, c);
       assert.ok(c.eventLog.some(e => e.type === 'cardPlayed' && e.cardInstanceId === 'audit:followup'), 'next-turn card works');
       report.played.push(key);
-    } catch (error) { report.failures.push({ key, message: error.message, refusal: error.playRefusal || null }); }
+    } catch (error) {
+      if (/^Carrier '.+' supplies no '.+' card$/.test(error.message)) { report.fixtureGaps.push({ key, reason: error.message }); continue; }
+      report.failures.push({ key, message: error.message, refusal: error.playRefusal || null }); }
   }
   return report;
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const report = await auditCards({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native', allEnemies: process.argv.includes('--all-enemies') });
+  const report = await auditCards({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native', allEnemies: process.argv.includes('--all-enemies'), allVariants: process.argv.includes('--all-variants') });
   console.log(JSON.stringify(report));
-  if (report.failures.length) process.exitCode = 1;
+  if (report.failures.length || report.fixtureGaps.length) process.exitCode = 1;
 }
