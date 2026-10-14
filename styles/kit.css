@@ -5658,11 +5658,17 @@ button[data-button-size] {
 /* Creation uses straight borders even when the shared polish kit is loaded. */
 .customize.cc-design-workspace :is(.as-pane, .as-option, .as-face) { border-image-source:none; border-radius:2px; box-shadow:none; }
 .customize.cc-design-workspace .cc-choice-collection[data-view="grid"] { grid-template-columns:repeat(2,minmax(0,1fr)); gap:calc(12px / var(--ui-zoom,1)); }
-.customize.cc-design-workspace .cc-choice-collection[data-view="grid"] > .cz-class:not(.unfolded) { flex-direction:column; align-items:center; text-align:center; gap:calc(8px / var(--ui-zoom,1)); padding:calc(12px / var(--ui-zoom,1)); }
-.customize #cz-classes[data-view="grid"] > .cz-class:not(.unfolded) > .ob { width:100%; align-self:stretch; min-width:0; flex:none; }
-.customize.cc-design-workspace .cc-choice-collection[data-view="grid"] > .cz-class:not(.unfolded) > .og { flex:none; font-size:calc(32px / var(--ui-zoom,1)); line-height:1; }
-.customize.cc-design-workspace .cc-choice-collection[data-view="grid"] > .cz-class:not(.unfolded) > .og > * { width:calc(32px / var(--ui-zoom,1)); height:calc(32px / var(--ui-zoom,1)); object-fit:contain; }
-.customize.cc-design-workspace .cc-choice-collection[data-view="grid"] > .cz-class:not(.unfolded) .on { justify-content:center; white-space:normal; font-size:calc(18px / var(--ui-zoom,1)); }
+/* Class choices always occupy a row. The shared OptionCard's existing
+   title, lore and meta become a centered heading above icon + two text rows. */
+.customize.cc-design-workspace :is(#cz-classes, .cc-class-row-specimen).cc-choice-collection { grid-template-columns:minmax(0,1fr); }
+.customize.cc-design-workspace :is(#cz-classes, .cc-class-row-specimen) > .cz-class:not(.unfolded) { display:grid; grid-template-columns:calc(32px / var(--ui-zoom,1)) minmax(0,1fr); grid-template-rows:auto auto auto; grid-column:1 / -1; align-items:center; text-align:start; column-gap:calc(12px / var(--ui-zoom,1)); row-gap:calc(4px / var(--ui-zoom,1)); box-sizing:border-box; width:100%; max-width:none; min-height:calc(112px / var(--ui-zoom,1)); padding:calc(10px / var(--ui-zoom,1)) calc(12px / var(--ui-zoom,1)); }
+.customize.cc-design-workspace :is(#cz-classes, .cc-class-row-specimen) > .cz-class:not(.unfolded) > .ob { display:contents; }
+.customize.cc-design-workspace :is(#cz-classes, .cc-class-row-specimen) > .cz-class:not(.unfolded) > .og { grid-column:1; grid-row:2; align-self:center; font-size:calc(32px / var(--ui-zoom,1)); line-height:1; }
+.customize.cc-design-workspace :is(#cz-classes, .cc-class-row-specimen) > .cz-class:not(.unfolded) > .og > * { width:calc(32px / var(--ui-zoom,1)); height:calc(32px / var(--ui-zoom,1)); object-fit:contain; }
+.customize.cc-design-workspace :is(#cz-classes, .cc-class-row-specimen) > .cz-class:not(.unfolded) .on { grid-column:1 / -1; grid-row:1; justify-content:center; white-space:normal; font-size:calc(18px / var(--ui-zoom,1)); }
+.customize.cc-design-workspace :is(#cz-classes, .cc-class-row-specimen) > .cz-class:not(.unfolded) .od { display:block; grid-column:2; grid-row:2; overflow:visible; font-size:calc(14px / var(--ui-zoom,1)); line-height:1.35; }
+.customize.cc-design-workspace :is(#cz-classes, .cc-class-row-specimen) > .cz-class:not(.unfolded) .om { grid-column:2; grid-row:3; font-size:calc(13px / var(--ui-zoom,1)); line-height:1.35; }
+.customize.cc-design-workspace :is(#cz-classes, .cc-class-row-specimen) > .cz-class:not(.unfolded)::after { display:none; }
 @media(max-width:600px) { .customize.cc-design-workspace .cc-choice-collection[data-view="grid"] { grid-template-columns:minmax(0,1fr); } }
 
 /* Concise Class cards keep four desktop body rows, with natural phone wraps.

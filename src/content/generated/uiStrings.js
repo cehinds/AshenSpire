@@ -5255,7 +5255,7 @@ export const uiStrings = [
   {
     "id": "creation.category.equipment",
     "extends": "",
-    "short": "Equipment",
+    "short": "Starting Equipment",
     "full": "",
     "tip": ""
   },
@@ -9966,7 +9966,7 @@ export const uiStrings = [
   {
     "id": "creation.category.keepsake",
     "extends": "",
-    "short": "Keepsake",
+    "short": "Relic and Keepsake",
     "full": "",
     "tip": ""
   },
@@ -9980,7 +9980,7 @@ export const uiStrings = [
   {
     "id": "creation.category.spells",
     "extends": "",
-    "short": "Spells",
+    "short": "Starting Spells",
     "full": "",
     "tip": ""
   },
@@ -10578,5 +10578,54 @@ export const uiStrings = [
     "short": "—",
     "full": "—",
     "tip": "—"
+  },
+  {
+    "id": "creation.category.subclass",
+    "extends": "",
+    "short": "Subclass",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.category.maneuvers",
+    "extends": "",
+    "short": "Combat Maneuvers",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.traits.title",
+    "extends": "",
+    "short": "Subclass traits",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.traits.reason",
+    "extends": "",
+    "short": "Choose your subclass traits before continuing.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.traits.complete",
+    "extends": "",
+    "short": "Subclass traits chosen.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.maneuvers.description",
+    "extends": "",
+    "short": "Choose your starting combat maneuvers before beginning the journey.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.abilities.return",
+    "extends": "",
+    "short": "Return to {category} to choose abilities for your current attributes and equipment.",
+    "full": "",
+    "tip": ""
   }
 ];

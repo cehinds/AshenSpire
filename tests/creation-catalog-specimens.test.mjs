@@ -43,6 +43,8 @@ test('catalog mounts all new registered production specimens with working inspec
   tileFolio.querySelector('button').click();
   assert.equal(tileFolio.querySelector('button').getAttribute('aria-pressed'), 'true');
   const nav = host.querySelector('#folio-creation-step-navigation .cc-step-navigation');
+  assert.deepEqual([...nav.querySelectorAll('[data-creation-step]')].map(node => node.dataset.creationStep),
+    ['class', 'subclass', 'attributes', 'feats', 'spells', 'equipment', 'keepsake', 'review'], 'individual navigation specimen follows the production caster flow');
   nav.querySelector('[data-creation-step="attributes"]').click();
   assert.equal(nav.querySelector('[aria-current="step"]').dataset.creationStep, 'attributes');
   catalog.destroy();

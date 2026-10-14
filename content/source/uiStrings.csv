@@ -816,7 +816,7 @@ creation.menu.quit,,Quit game,,
 creation.categories,,Creation steps,The steps of making a character.,
 creation.category.class,,Class,,
 creation.category.character,,Character,,
-creation.category.equipment,,Equipment,,
+creation.category.equipment,,Starting Equipment,,
 creation.category.review,,Review,,
 creation.next,,Next,Go on to the next step.,
 creation.next.tip,,On to {category}.,,
@@ -1506,9 +1506,9 @@ debugChrome.refresh,,Refresh,,
 
 card.tags.evade,,Evade,Evade or dodge an incoming action.,
 creation.category.attributes,,Attributes,,
-creation.category.keepsake,,Keepsake,,
+creation.category.keepsake,,Relic and Keepsake,,
 creation.category.feats,,Feats,,
-creation.category.spells,,Spells,,
+creation.category.spells,,Starting Spells,,
 creation.section.attributes,,ATTRIBUTES,,
 creation.section.feats,,FEATS,,
 creation.section.spells,,SPELLS,,
@@ -1599,3 +1599,11 @@ creation.class.stat.stamina,,SP,SP,SP
 creation.class.stat.mana,,MP,MP,MP
 creation.class.stat.evasion,,Evasion,Evasion,Evasion
 creation.class.unavailable,,—,—,—
+
+creation.category.subclass,,Subclass,,
+creation.category.maneuvers,,Combat Maneuvers,,
+creation.traits.title,,Subclass traits,,
+creation.traits.reason,,Choose your subclass traits before continuing.,,
+creation.traits.complete,,Subclass traits chosen.,,
+creation.maneuvers.description,,Choose your starting combat maneuvers before beginning the journey.,,
+creation.abilities.return,,Return to {category} to choose abilities for your current attributes and equipment.,,
