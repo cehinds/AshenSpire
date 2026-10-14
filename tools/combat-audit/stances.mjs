@@ -9,6 +9,7 @@ import {selectedWeaponSequence} from '../../src/model/selectedWeaponSequences.js
 import {selectedWeaponReactionFor,REAVER_GREATSWORD_PILOT as pilot} from '../../src/model/selectedWeaponStances.js';
 
 const classes=['reaver','rogue','starseer','herald'];
+const approvedBuild={ordinal:'1527',digest:'d93ee7b6bf',runtimeSource:'0962c5ecc6467be75ffc1a4cbccc39d583e44dac'};
 const core=['attack','smash','sweep','counter','defend','spell','ranged','rangedMagic'];
 const origin={attack:'offensive',smash:'smash',sweep:'sweep',counter:'counter',defend:'defensive',spell:'casting',ranged:'offensive',rangedMagic:'casting'};
 const expectedHeld={reaver:8,rogue:7,starseer:7,herald:7};
@@ -81,8 +82,13 @@ function assertStaticContracts(){
 
 function readGallery(path){
  const gallery=JSON.parse(readFileSync(path,'utf8'));
+ assert.equal(gallery.build?.ordinal,approvedBuild.ordinal,'approved build ordinal');
+ assert.equal(gallery.build?.digest,approvedBuild.digest,'approved compiled content digest');
+ assert.equal(gallery.build?.runtimeSource,approvedBuild.runtimeSource,'approved runtime source commit');
+ assert.deepEqual(gallery.errors||[],[],'no browser/runtime/HTTP/encoding errors');
  const rows=Object.fromEntries(classes.map(id=>{
   const actor=gallery.actors?.[id];assert.ok(actor,`gallery contains ${id}`);
+  assert.equal(actor.mounted?.ready,true,`${id} frame images preloaded and decoded`);
   const held=actor.held||[],clips=actor.clips||[];
   assert.equal(held.length,expectedHeld[id],`${id} held count comes from manifest rows`);
   assert.equal(clips.length,expectedClipGroups[id],`${id} clip count comes from manifest rows`);
