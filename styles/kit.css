@@ -6521,3 +6521,107 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
   .customize .cz-class.unfolded:has(> .cc-concise-class) { height:calc(max(28vh,220px) / var(--ui-zoom,1)); }
  }
 }
+
+/* Creation density: spend space on choices and rules rather than repeated
+   headings and ornamental vertical stacks. Sizes below are physical pixels. */
+.customize.cc-design-workspace {
+ --cc-body-font:calc(15px / var(--ui-zoom,1));
+ --cc-control-floor:calc(max(44px,var(--tap-target,44px)) / var(--ui-zoom,1));
+ --cc-space:calc(8px / var(--ui-zoom,1));
+}
+.customize.cc-design-workspace .cc-page-parts { --cc-body-font:inherit; --cc-control-floor:inherit; }
+.customize.cc-design-workspace .cc-page-heading { gap:var(--cc-space); margin-bottom:var(--cc-space); }
+.customize.cc-design-workspace :is(.cc-page-title,.cc-feat-detail-title) { font-size:calc(24px / var(--ui-zoom,1)); margin:0 0 var(--cc-space); line-height:1.2; }
+.customize.cc-design-workspace :is(.as-title-m,.cz-stage > h3,#cz-subclass-traits > h3,.cc-equipment-header > b) { font-size:calc(20px / var(--ui-zoom,1)); }
+.customize.cc-design-workspace .cc-panel-heading { margin-bottom:var(--cc-space); }
+.customize.cc-design-workspace .cc-panel-heading .as-title-m { margin-bottom:calc(4px / var(--ui-zoom,1)); }
+.customize.cc-design-workspace :is(.cc-panel,.cc-subclass-selector,.cc-subclass-deck,.cc-feat-detail) { padding:calc(10px / var(--ui-zoom,1)); }
+.customize.cc-design-workspace :is(.cc-page-description,.cc-panel-heading .as-subtitle,.cc-subclass-description,.cc-feat-detail-description) { line-height:1.35; }
+.customize.cc-design-workspace .cc-feat-availability { font-size:var(--cc-body-font); line-height:1.35; margin:0; }
+.customize.cc-design-workspace .cz-tab { flex-direction:row; align-items:center; gap:var(--cc-space); padding:calc(8px / var(--ui-zoom,1)); }
+.customize.cc-design-workspace .cz-tab > .rail-label { flex:none; font-size:calc(16px / var(--ui-zoom,1)); white-space:nowrap; }
+.customize.cc-design-workspace .cz-tab-value { flex:1 1 0; min-width:0; font-size:calc(14px / var(--ui-zoom,1)); text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.customize.cc-design-workspace .as-catnav-toggle .cc-step-name { font-size:calc(18px / var(--ui-zoom,1)); }
+.customize.cc-design-workspace :is(.cc-subclass-choices,.cc-feat-choices,.cc-feat-layout) { gap:var(--cc-space); }
+.customize.cc-design-workspace :is(.cc-subclass-tile,.cc-feat-browser .cc-choice-tile) { padding:var(--cc-space); text-align:left; }
+.customize.cc-design-workspace :is(.cc-subclass-tile,.cc-feat-browser .cc-choice-tile) .cc-choice-body { grid-template-columns:calc(44px / var(--ui-zoom,1)) minmax(0,1fr); align-items:center; gap:var(--cc-space); }
+.customize.cc-design-workspace :is(.cc-subclass-tile,.cc-feat-browser .cc-choice-tile) .cc-choice-copy { align-items:flex-start; gap:calc(3px / var(--ui-zoom,1)); }
+.customize.cc-design-workspace .cc-feat-browser .cc-feat-emblem { width:calc(44px / var(--ui-zoom,1)); height:calc(44px / var(--ui-zoom,1)); }
+.customize.cc-design-workspace .cc-feat-groups { margin-bottom:var(--cc-space); }
+.customize.cc-design-workspace .cc-feat-detail .cc-feat-emblem { width:calc(64px / var(--ui-zoom,1)); height:calc(64px / var(--ui-zoom,1)); margin:0 0 var(--cc-space); }
+.customize.cc-design-workspace .cc-feat-detail-divider { margin:var(--cc-space) 0; }
+.customize.cc-design-workspace .cc-feat-detail-description { margin-bottom:var(--cc-space); }
+.customize.cc-design-workspace .cc-subclass-description { margin-top:var(--cc-space); }
+.customize.cc-design-workspace #cz-subclass-traits { padding:var(--cc-space); }
+.customize.cc-design-workspace #cz-subclass-traits > :is(h3,p) { margin:var(--cc-space) 0; }
+.customize.cc-design-workspace :is(.cc-stats-side,#cz-primary-group,.cc-review,#cz-review-edit) { gap:var(--cc-space); }
+.customize.cc-design-workspace .cc-name-row { padding-block:calc(4px / var(--ui-zoom,1)); }
+.customize.cc-design-workspace .cc-equipment-header { padding-block:calc(4px / var(--ui-zoom,1)); gap:var(--cc-space); }
+.customize.cc-design-workspace #cz-equipment-count { font-size:calc(14px / var(--ui-zoom,1)); }
+.customize.cc-design-workspace #cz-review-edit { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,calc(180px / var(--ui-zoom,1))),1fr)); }
+@media(max-width:600px) {
+ .customize.cc-design-workspace { --cc-body-font:calc(16px / var(--ui-zoom,1)); }
+ .customize.cc-design-workspace .cc-feat-choices { grid-template-columns:minmax(0,1fr); }
+ .customize.cc-design-workspace .modal-head-id { min-width:0; flex:1 1 auto; }
+ .customize.cc-design-workspace .modal-head-id h2 { font-size:calc(20px / var(--ui-zoom,1)); white-space:normal; line-height:1.1; }
+}
+/* Locked feat tiles explain their gate without looking actionable. */
+.customize.cc-design-workspace .cc-feat-tile-requirement { color:var(--cc-copy-muted); font-size:var(--cc-body-font); line-height:1.3; white-space:normal; overflow-wrap:break-word; }
+.customize.cc-design-workspace .cc-feat-browser .cc-choice-tile:disabled { opacity:1; cursor:default; box-shadow:none; transform:none; filter:none; color:var(--cc-copy-muted); }
+.customize.cc-design-workspace .cc-feat-browser .cc-choice-tile:disabled:hover { background-color:#11100c; border-color:var(--line,#786443); box-shadow:none; transform:none; }
+.customize.cc-design-workspace .cc-feat-detail:not([data-feat]) { display:none; }
+.customize.cc-design-workspace .cc-feat-layout:has(> .cc-feat-detail:not([data-feat])) { grid-template-columns:minmax(0,1fr); }
+/* Both ability pages share the same card budget and keep the card's heading
+   overhang clear. The former spell-only 58px inset left an empty band. */
+.customize.cc-design-workspace :is(#cz-spell-choices,#cz-maneuver-choices) { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,var(--card-w,14rem)),var(--card-w,14rem))); justify-content:start; align-content:start; grid-auto-flow:row; grid-auto-columns:auto; gap:calc(24px / var(--ui-zoom,1)) calc(12px / var(--ui-zoom,1)); padding:calc(18px / var(--ui-zoom,1)) calc(4px / var(--ui-zoom,1)) var(--cc-space); overflow:visible; }
+.customize.cc-design-workspace .cc-starting-abilities { gap:var(--cc-space); }
+.customize.cc-design-workspace .cc-ability-choice { gap:calc(6px / var(--ui-zoom,1)); }
+@media(max-width:600px) {
+ .customize.cc-design-workspace :is(#cz-spell-choices,#cz-maneuver-choices) { grid-template-columns:repeat(auto-fill,minmax(min(100%,140px),1fr)); justify-items:center; }
+}
+
+/* Review is a loadout receipt. Its miniatures use a physical width so the
+   automatic UI zoom cannot turn the receipt into several full-size rows. */
+.customize.cc-design-workspace #cz-review-summary { padding:0; }
+.customize.cc-design-workspace #cz-review-summary .cc-summary-cards { grid-template-columns:repeat(auto-fit,minmax(min(100%,calc(160px / var(--ui-zoom,1))),calc(180px / var(--ui-zoom,1)))); gap:calc(16px / var(--ui-zoom,1)) var(--cc-space); }
+.customize.cc-design-workspace #cz-review-summary .cc-summary-slot { gap:calc(4px / var(--ui-zoom,1)); }
+.customize.cc-design-workspace #cz-review-summary .cc-summary-slot > .as-eyebrow { font-size:calc(14px / var(--ui-zoom,1)); letter-spacing:.025em; }
+.customize.cc-design-workspace #cz-review-summary .cc-summary-slot > :is(.card,.equipment-poker-card,.cc-summary-empty) { width:100%; max-width:100%; height:auto; min-width:0; aspect-ratio:var(--card-ratio,5/7); margin:0; }
+.customize.cc-design-workspace #cz-review-summary .cc-summary-slot[data-summary-slot="character"] { grid-column:1 / -1; }
+.customize.cc-design-workspace #cz-review-summary .cc-summary-character { width:100%; max-width:none; aspect-ratio:auto; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,2fr); gap:var(--cc-space); padding:var(--cc-space); }
+.customize.cc-design-workspace #cz-review-summary .cc-summary-eyebrow { font-size:var(--cc-body-font); letter-spacing:0; text-transform:none; }
+.customize.cc-design-workspace #cz-review-summary .cc-summary-name { grid-column:1; font-size:calc(20px / var(--ui-zoom,1)); }
+.customize.cc-design-workspace #cz-review-summary .cc-summary-character > .as-hairline { display:none; }
+.customize.cc-design-workspace #cz-review-summary .cc-summary-stats { grid-column:2; grid-template-columns:repeat(3,minmax(0,1fr)); gap:calc(4px / var(--ui-zoom,1)) var(--cc-space); }
+.customize.cc-design-workspace #cz-review-summary .cc-summary-stats:first-of-type { grid-row:1; }
+.customize.cc-design-workspace #cz-review-summary .cc-summary-stats:last-child { grid-row:2; margin-top:0; }
+.customize.cc-design-workspace #cz-review-summary .cc-summary-stats > .as-statpair { font-size:var(--cc-body-font); }
+.customize.cc-design-workspace #cz-review-summary .cc-subclass-deck > .cc-part-body { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,calc(240px / var(--ui-zoom,1))),1fr)); gap:var(--cc-space); align-items:start; }
+.customize.cc-design-workspace #cz-review-summary .cc-subclass-deck-group + .cc-subclass-deck-group { margin-top:0; }
+.customize.cc-design-workspace #cz-review-summary .cc-subclass-deck-cards { grid-template-columns:minmax(0,1fr); gap:calc(4px / var(--ui-zoom,1)); }
+.customize.cc-design-workspace #cz-review-summary .cc-subclass-deck-card { grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) calc(16px / var(--ui-zoom,1)); padding:calc(5px / var(--ui-zoom,1)) var(--cc-space); align-items:center; }
+.customize.cc-design-workspace #cz-review-summary .cc-subclass-card-name { grid-column:2; }
+.customize.cc-design-workspace #cz-review-summary .cc-subclass-deck-card .engraved-icon { grid-column:3; grid-row:1; }
+@media(max-width:600px) {
+ .customize.cc-design-workspace #cz-review-summary .cc-summary-cards { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .customize.cc-design-workspace #cz-review-summary .cc-summary-character { grid-template-columns:minmax(0,1fr); }
+ .customize.cc-design-workspace #cz-review-summary .cc-summary-stats { grid-column:1; }
+ .customize.cc-design-workspace #cz-review-summary .cc-summary-stats:first-of-type,
+ .customize.cc-design-workspace #cz-review-summary .cc-summary-stats:last-child { grid-row:auto; }
+ .customize.cc-design-workspace :is(#cz-equipment-panel,.cc-equipment-fold,.cc-equipment-header,.cc-equipment-header select,.cc-equip-group,.cc-card-selectors,.poker-equipment-choice) { min-width:0; max-width:100%; box-sizing:border-box; }
+ .customize.cc-design-workspace .cc-equipment-header > b { font-size:var(--cc-body-font); }
+ .customize.cc-design-workspace #cz-equipment-count { white-space:normal; flex:0 1 auto; }
+}
+/* Maneuvers remain a single browseable shelf on phones, so choosing a
+   starting move does not introduce a long vertical card wall. */
+@media(max-width:600px) {
+ .customize.cc-design-workspace #cz-maneuver-choices { grid-template-columns:none; grid-auto-flow:column; grid-auto-columns:min(72vw,calc(200px / var(--ui-zoom,1))); justify-content:start; justify-items:stretch; gap:calc(12px / var(--ui-zoom,1)); overflow-x:auto; overflow-y:hidden; scroll-snap-type:x proximity; padding-bottom:var(--cc-space); }
+ .customize.cc-design-workspace #cz-maneuver-choices > .cc-ability-choice { scroll-snap-align:start; }
+}
+/* The Review disclosure face already carries the canonical deck heading and
+   source counts; opening it reveals the existing card inspection controls. */
+.customize.cc-design-workspace #cz-review-summary .cc-review-deck .cc-subclass-deck > .cc-panel-heading { display:none; }
+/* Subclass choices carry their complete authored description once. The
+   selected paragraph otherwise repeats that same description below the tiles. */
+.customize.cc-design-workspace .cc-subclass-tile .cc-choice-description { display:block; overflow:visible; -webkit-line-clamp:unset; }
+.customize.cc-design-workspace .cc-subclass-description { display:none; }
