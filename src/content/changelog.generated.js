@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-14",
     "summary": "Every enemy shows its planned action stance",
     "detail": "All 33 enemies hold a readable Smash, Attack, Counter, Sweep, Defend or Preparing pose while awaiting their action. The body cue remains visible when intent text is concealed; exact moves and damage stay hidden. Skill, Power and Spell share Preparing. New guarded Counter poses and grounded Hound wind-ups preserve the existing action animations, body scale and floor anchors, and return to the next planned stance after reactions.",
-    "build": "0.7.1.1521",
+    "build": "0.7.1.1523",
     "pullRequest": 1982,
     "url": "https://github.com/cehinds/AshenSpire/pull/1982"
+  },
+  {
+    "id": "pr-1983",
+    "date": "2026-10-14",
+    "group": "2026-10-14",
+    "summary": "Stance combat continuation is specified",
+    "detail": "Records the next stance discounts, protection, maneuver matchups, Evade, hit previews and combat labels before their implementation. Nothing in play changes in this specification-only update.",
+    "build": "0.7.1.1523",
+    "pullRequest": 1983,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1983"
   },
   {
     "id": "pr-1974",

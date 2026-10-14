@@ -13,6 +13,38 @@ import { enemyExpansionSprite } from '../src/ui/enemyExpansionStage.js';
 import { stageFor } from '../src/ui/services/PoseAnimator.js';
 import { projectLanSnapshot } from '../tools/lan-state.mjs';
 import { coopEnemyIntent } from '../src/ui/models/CoopIntentModel.js';
+import { enemyMoveCarrier } from '../src/engine/combatCardTactics.js';
+
+// Execute the actual paced reducer case without mounting the screen's DOM.
+const combatSource = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+const moveCase = combatSource.match(/case 'enemyMoveStarted': \{([\s\S]*?)\n        case 'enemyActorTurnStarted':/);
+const applyMoveBeat = new Function('e', 'disp', 'combat', 'registries', 'enemyStanceCategory', 'enemyMoveCarrier',
+  `switch (e.type) { case 'enemyMoveStarted': { ${moveCase?.[1] || 'break; }'} }`);
+
+test('paced pooled follow-ups use the performed move, not the final live intent', () => {
+  assert.ok(moveCase, 'the live reducer handles follow-up receipts');
+  const moves = Object.fromEntries(['smash', 'attack', 'counter', 'sweep', 'defend'].map(maneuver =>
+    [maneuver, { intent: 'attack', tags: ['camp:physical', `maneuver:${maneuver}`] }]));
+  moves.spell = { intent: 'attack', tags: ['camp:spell'] };
+  const enemy = { id: 'e1', enemyId: 'probe', intent: { kind: 'block' } };
+  const combat = { enemies: [enemy] }, disp = { ents: { e1: { presentationStance: 'defend', intentPreview: { hidden: true } } } };
+  const registries = { enemies: new Map([['probe', { moves }]]) };
+  for (const [moveId, expected] of [...Object.keys(moves).map(id => [id, id === 'spell' ? 'preparing' : id])]) {
+    applyMoveBeat({ type: 'enemyMoveStarted', sourceId: 'e1', enemyId: 'probe', moveId }, disp, combat, registries, enemyStanceCategory, enemyMoveCarrier);
+    assert.equal(disp.ents.e1.presentationStance, expected);
+    assert.deepEqual(disp.ents.e1.intentPreview, { hidden: true }, 'body pose does not reveal private intent');
+  }
+});
+
+test('reaction and unknown move receipts preserve the current planned hold', () => {
+  const enemy = { id: 'e1', enemyId: 'probe' }, combat = { enemies: [enemy] };
+  const disp = { ents: { e1: { presentationStance: 'smash' } } };
+  const registries = { enemies: new Map([['probe', { moves: { defend: { intent: 'block' } } }]]) };
+  for (const event of [{ moveId: 'defend', reaction: true }, { moveId: 'missing' }, { sourceId: 'missing', moveId: 'defend' }]) {
+    applyMoveBeat({ type: 'enemyMoveStarted', sourceId: 'e1', ...event }, disp, combat, registries, enemyStanceCategory, enemyMoveCarrier);
+    assert.equal(disp.ents.e1.presentationStance, 'smash');
+  }
+});
 
 test('all 33 enemies have six valid held stance frames without altering action clips', () => {
   const canonical = [...act1Enemies, ...act2Enemies, ...act3Enemies].map(enemy => enemy.id).sort();

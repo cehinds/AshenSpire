@@ -1,6 +1,7 @@
 import { combatWeaponProfilesFor } from '../../model/combatWeaponPresentation.js';
 import { enemyActionPose } from '../../model/enemyActionPose.js';
 import { enemyStanceCategory } from '../../model/enemyStancePose.js';
+import { enemyMoveCarrier } from '../../engine/combatCardTactics.js';
 import { ratingValue, ratingDamageMultiplier } from '../../model/combatRatings.js';
 import { openCollectibleInspection } from '../components/collectibleCard.js';
 import { combatantInfo, combatantIntent, playerActionIntent, RESTING_PLAYER_ACTION, selectCombatantInfo } from '../components/combatantOverhead.js';
@@ -1038,6 +1039,18 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           if (actor && e.sourceKind === 'enemy') actor.intentPreview = { kind: 'attack', moveId: e.moveId,
             damage: e.amount, hits: 1, counterDamage: e.amount, counterPoiseDamage: e.poiseDamage,
             counterWardDamage: e.wardDamage, profile: e.combatProfile || {}, stance: 'countering', revealed: true, hidden: false };
+          break;
+        }
+        case 'enemyMoveStarted': {
+          // Reactions return to the planned hold; pooled follow-ups replace it.
+          if (e.reaction) break;
+          const actor = disp.ents[e.sourceId];
+          const enemy = combat.enemies.find(row => row.id === e.sourceId);
+          const move = registries.enemies.get(e.enemyId || enemy?.enemyId)?.moves?.[e.moveId];
+          if (actor && enemy && move) actor.presentationStance = enemyStanceCategory({
+            kind: e.kind || move.intent,
+            combatProfile: enemyMoveCarrier(enemy, move, e.moveId, combat).combatProfile,
+          });
           break;
         }
         case 'enemyActorTurnStarted': {
