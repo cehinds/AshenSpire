@@ -5,7 +5,6 @@
 import { loadAuditRuntime } from './runtime.mjs';
 import { makeAuditCombat, setAuditHand, settleAuditChoices } from './fixtures.mjs';
 import { combatStatusRules } from '../../src/content/combatStatusRules.js';
-import { restDeniedBy } from '../../src/model/locations.js';
 
 let api = null;
 
@@ -297,16 +296,94 @@ function auditRelicPassives(registries) {
           || row.tag === 'resource.flat' && ((row.resource === 'hp' && hpDelta >= row.amount) || (row.resource === 'mana' && manaDelta >= row.amount) || (row.resource === 'stamina' && staminaDelta >= row.amount))
           || row.tag === 'resource.attributeTier' && sources.some(source => source.resource === row.resource && Number.isFinite(source.value))) ? 'covered' : 'missing';
       } else if (typeof authored === 'boolean') {
-        expected = authored; observed = api.passiveFlag(registries, [relic.id], key); result = observed === expected ? 'covered' : 'missing';
+        if (key === 'eliteExtraCardReward') {
+          const base = api.rollCardRewardIds(registries, api.createRng(7319), { classId: 'reaver', pool: 'elite' });
+          const actual = api.rollCardRewardIds(registries, api.createRng(7319), { classId: 'reaver', pool: 'elite', relicIds: [relic.id] });
+          expected = base.length + 1; observed = actual.length; result = authored && observed === expected ? 'covered' : 'missing';
+        } else if (key === 'revealUnknown') {
+          const graph = { nodes: { audit: { id: 'audit', type: 'event', resolved: { kind: 'combat' } } } };
+          const base = api.mapKnowledge({ graph, mode: 'path' });
+          const actual = api.mapKnowledge({ graph, mode: 'path', reveal: api.passiveFlag(registries, [relic.id], key) });
+          expected = { baseline: 'placed', withRelic: 'known' }; observed = { baseline: base.rung.get('audit'), withRelic: actual.rung.get('audit') };
+          result = authored && observed.baseline === expected.baseline && observed.withRelic === expected.withRelic ? 'covered' : 'missing';
+        } else { expected = authored; observed = null; }
       } else if (typeof authored === 'number') {
-        const multiplicative = /Mult$/.test(key);
-        expected = authored; observed = multiplicative ? api.passiveMult(registries, [relic.id], key) : api.passiveSum(registries, [relic.id], key);
-        result = observed === expected ? 'covered' : 'missing';
+        if (key === 'runeGainMult') {
+          const base = api.rollRuneReward(registries, api.createRng(7320), 'elite', []);
+          const actual = api.rollRuneReward(registries, api.createRng(7320), 'elite', [relic.id]);
+          expected = Math.floor(base * authored); observed = actual; result = observed === expected ? 'covered' : 'missing';
+        } else if (key === 'restHealMult') {
+          const rested = relicIds => {
+            const run = newRun(relicIds); run.hp = Math.floor(run.maxHp / 2);
+            const visit = api.createLocationVisit({ run, registries, rng: api.createRng(7321) }, 'shrine');
+            return api.restAt(visit).heal;
+          };
+          const base = rested([]), actual = rested([relic.id]);
+          expected = { baseline: base, withRelic: Math.ceil(base * authored) }; observed = { baseline: base, withRelic: actual };
+          result = actual === expected.withRelic && base > 0 ? 'covered' : 'missing';
+        } else if (key === 'flaskPowerMult') {
+          const heal = relicIds => {
+            const run = newRun(relicIds); run.hp = 1; run.flaskCharges.hpCurrent = 1;
+            api.useRunChargeFlask({ run, registries, rng: api.createRng(7322), kind: 'hp' });
+            return { amount: run.hp - 1, maxHp: run.maxHp };
+          };
+          const base = heal([]), actual = heal([relic.id]);
+          const expectedRelicHeal = Math.ceil(actual.maxHp * 0.25 * authored);
+          expected = { baseline: base.amount, withRelic: expectedRelicHeal }; observed = { baseline: base.amount, withRelic: actual.amount, maxHp: actual.maxHp };
+          result = actual.amount === expectedRelicHeal && base.amount > 0 ? 'covered' : 'missing';
+        } else if (key === 'powerCostReduction') {
+          const cost = relicIds => {
+            const combat = makeAuditCombat(api, { classId: 'reaver', enemyIds: ['wanderingSoldier'], seed: 7323, relicIds }).combat;
+            setAuditHand(combat, [{ cardId: 'rallyingStandard', instanceId: `power-cost:${relicIds.length}` }]);
+            return api.cardPlayCosts(combat, `power-cost:${relicIds.length}`).energy;
+          };
+          const base = cost([]), actual = cost([relic.id]);
+          expected = { baseline: base, withRelic: Math.max(0, base - authored) }; observed = { baseline: base, withRelic: actual };
+          result = actual === expected.withRelic && base > 0 ? 'covered' : 'missing';
+        } else if (key === 'poiseThresholdAdd') {
+          const run = newRun([relic.id]), baseRun = newRun([]);
+          const actual = api.playerPoiseThresholdReceipt(registries, run), base = api.playerPoiseThresholdReceipt(registries, baseRun);
+          expected = { baseline: base.value, withRelic: base.value + authored };
+          observed = { baseline: base.value, withRelic: actual.value, relicContribution: actual.relic };
+          result = actual.value === expected.withRelic && actual.relic === authored ? 'covered' : 'missing';
+        } else if (key === 'exposureBuildupMult') {
+          const exposure = relicIds => {
+            const combat = makeAuditCombat(api, { classId: 'starseer', enemyIds: ['wanderingSoldier'], seed: 7325, relicIds }).combat;
+            // The default headless runner may freeze the legacy single-meter
+            // ruleset. This scenario exercises the configured Arcane Exposure
+            // consumer through the canonical card-hit pipeline.
+            combat.combatExpansionVersion = 1;
+            combat.player.combatExpansionVersion = 1;
+            combat.breakMeterVersion = null;
+            for (const enemy of combat.enemies) enemy.arcaneExposure = { ...structuredClone(registries.enemies.get(enemy.enemyId).arcaneExposure), value: 0 };
+            const cardId = 'starstoneArc', instanceId = `exposure:${relicIds.length}`;
+            const cardDef = registries.cards.get(cardId);
+            setAuditHand(combat, [{ cardId, instanceId, damageSchool: cardDef.damageSchool, exposureBuildupPerHit: cardDef.exposureBuildupPerHit }]);
+            const enemy = combat.enemies[0], before = enemy.arcaneExposure.value;
+            api.dispatch(combat, { type: 'playCard', cardInstanceId: instanceId, targetId: enemy.id });
+            const after = enemy.arcaneExposure.value;
+            const hit = combat.eventLog.find(event => event.type === 'damageDealt' && event.targetId === enemy.id && event.amount > 0);
+            return { before, after, hit: hit?.amount || 0, receipts: combat.eventLog.filter(event => event.type === 'arcaneExposureChanged' && event.targetId === enemy.id) };
+          };
+          const base = exposure([]), actual = exposure([relic.id]);
+          const schoolMult = registries.balance.arcaneExposure.schoolBuildupMultipliers.magic;
+          const buildupMult = registries.enemies.get('wanderingSoldier').arcaneExposure.buildupMultiplier;
+          const amount = Math.floor(registries.cards.get('starstoneArc').exposureBuildupPerHit * schoolMult * buildupMult * authored);
+          expected = { baselineIncrease: Math.floor(registries.cards.get('starstoneArc').exposureBuildupPerHit * schoolMult * buildupMult), withRelicIncrease: amount };
+          observed = { baselineIncrease: base.after - base.before, withRelicIncrease: actual.after - actual.before, damage: actual.hit, receipts: actual.receipts.length };
+          result = observed.baselineIncrease === expected.baselineIncrease && observed.withRelicIncrease === expected.withRelicIncrease
+            && actual.hit > 0 && actual.receipts.some(receipt => receipt.amount === amount) ? 'covered' : 'missing';
+        } else { expected = authored; observed = null; }
       } else if (key === 'restDenied') {
-        expected = authored;
-        const tags = Array.isArray(authored) ? authored : authored ? ['restHpPartial'] : [];
-        observed = restDeniedBy(registries, { relics: [relic.id] }, tags);
-        result = observed === (tags.length ? relic.id : null) ? 'covered' : 'missing';
+        const baselineRun = newRun([]), deniedRun = newRun([relic.id]);
+        const baselineVisit = api.createLocationVisit({ run: baselineRun, registries, rng: api.createRng(7324) }, 'shrine');
+        const deniedVisit = api.createLocationVisit({ run: deniedRun, registries, rng: api.createRng(7324) }, 'shrine');
+        let baselineRested = false, denied;
+        try { api.restAt(baselineVisit); baselineRested = baselineVisit.rested; } catch {}
+        try { api.restAt(deniedVisit); denied = 'rested'; } catch (error) { denied = error.message; }
+        expected = { baselineRested: true, deniedBy: relic.id };
+        observed = { baselineRested, denied: deniedVisit.restDenied, outcome: denied };
+        result = baselineRested && deniedVisit.restDenied === relic.id && denied.includes(`denied by relic '${relic.id}'`) ? 'covered' : 'missing';
       } else { expected = authored; observed = null; }
       effects.push({ relicId: relic.id, key, expected, observed, result });
     }
