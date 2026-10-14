@@ -25,6 +25,10 @@ function fixture(effects = [{ op: 'damage', target: 'enemy', amount: 5, hits: 2 
     enemyIds: ['wanderingSoldier'], player: { classId: 'starseer', maxHp: 100, hp: 100,
       maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1,
       deck: [{ cardId: 'starstonePebble', instanceId: 'paired', upgraded: false }] } });
+  // These fixtures verify protection and damage budgets; pin their independent
+  // Accuracy decision while still advancing the registered seeded stream.
+  const drawInt = combat.rng.int.bind(combat.rng);
+  combat.rng.int = (stream, min, max) => { const value = drawInt(stream, min, max); return stream === 'combatAvoidance' ? 20 : value; };
   const enemy = combat.enemies[0]; enemy.block = enemy.barrier = 0;
   enemy.damageResistanceFlat = {}; enemy.damageWeaknessPercent = {};
   enemy.ratings = { ar: 0, dr: 0, pr: 0, poise: 100, ward: 3 };

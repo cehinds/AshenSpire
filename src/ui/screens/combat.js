@@ -1486,7 +1486,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const node = document.createElement('span');
     node.className = 'combat-hit-chance';
     node.dataset.rollMode = preview.advantage ? 'advantage' : preview.disadvantage ? 'disadvantage' : 'neutral';
-    node.textContent = Math.round(preview.hitChance) + '%';
+    node.textContent = Number(preview.hitChance.toFixed(2)) + '%';
     node.setAttribute('aria-label', 'Chance to hit ' + node.textContent);
     return node;
   }

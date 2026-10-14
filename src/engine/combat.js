@@ -1,3 +1,4 @@
+import { decayStanceRoundStart } from './combatMatchups.js';
 import { attackHitPreview } from './stanceHit.js';
 import { stanceStaminaCost } from '../model/stanceRules.js';
 import { combatMatchups, combatIntent, combatExpansionMatchups } from '../content/combatMatchups.js';
@@ -515,6 +516,7 @@ function finishCombat(combat, result) {
 
 function startPlayerTurn(combat) {
   combat.turn += 1;
+  decayStanceRoundStart(combat);
   clearEnemyReactionRolls(combat);
   combat.phase = 'player';
   // SPEC §4.11: a turn is a round for normal-combat momentum; each enemy's M decays one step first (rounds rule).

@@ -1014,12 +1014,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const frame = app.querySelector('.combatant.enemy[data-eid="' + CSS.escape(enemy.id) + '"]');
       frame?.querySelector('.combat-hit-chance')?.remove();
       if (!frame || enemy.hp <= 0 || enemy.knowledgeAction?.reads?.[me]?.visibility !== 'exact') continue;
-      const preview = attackHitPreview({ ...sc, registries, combatExpansionVersion: 2 }, actor, enemy, carrier, { additionalTargets: carrier.effects?.some(effect => effect.target === 'allEnemies') ? Math.max(0, sc.enemies.filter(entry => entry.hp > 0).length - 1) : 0 });
+      const preview = attackHitPreview({ ...sc, registries, combatExpansionVersion: 2 }, { ...actor, kind: 'player' }, { ...enemy, kind: 'enemy' }, carrier, { additionalTargets: carrier.effects?.some(effect => effect.target === 'allEnemies') ? Math.max(0, sc.enemies.filter(entry => entry.hp > 0).length - 1) : 0 });
       if (!Number.isFinite(preview?.hitChance)) continue;
       const badge = document.createElement('span');
       badge.className = 'combat-hit-chance';
       badge.dataset.rollMode = preview.advantage ? 'advantage' : preview.disadvantage ? 'disadvantage' : 'neutral';
-      badge.textContent = Math.round(preview.hitChance) + '%';
+      badge.textContent = Number(preview.hitChance.toFixed(2)) + '%';
       badge.setAttribute('aria-label', 'Chance to hit ' + badge.textContent);
       (frame.querySelector('.combatant-leading') || frame).append(badge);
     }

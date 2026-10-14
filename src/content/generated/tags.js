@@ -3862,5 +3862,14 @@ export const tags = [
     "glyph": "◇",
     "visibility": "",
     "blurb": "Unreflectable combat interaction."
+  },
+  {
+    "id": "target",
+    "domain": "card",
+    "label": "Target",
+    "color": "9FC3E8",
+    "glyph": "◎",
+    "visibility": "",
+    "blurb": "An explicitly targeted spell bypasses Evasion without consuming an Evasion stack."
   }
 ];

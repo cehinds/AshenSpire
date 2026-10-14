@@ -25,6 +25,7 @@
 // Headless: no document/window/localStorage/timers.
 
 import * as F from './combatRules.js';
+import { stanceRulesFor } from '../model/stanceRules.js';
 import { allocateInteger, resolveDamageComponents, groupedResistance, taggedBonusFloor } from '../model/combatRules.js';
 import { COMBAT_OPCODES, RUN_OPCODES, relicInRewardPool } from '../model/schemas.js';
 import { LEGACY_HAND_MAX } from '../model/statRows.js';
@@ -1211,7 +1212,8 @@ function splitSmashPressure(ctx, action, target, row) {
   done.push(key);
   const total = row.contacts.filter(contact => contact.effect === 'impact').reduce((n, contact) => n + Math.max(0, contact.pressure || 0), 0);
   const amount = Math.ceil(total * Matchups.stancePressureMultiplier(ctx, action.source, target, action.card));
-  const [poise, ward] = allocateInteger(amount, [0.7, 0.3]);
+  const wardShare = stanceRulesFor(ctx).spellSmashWardShare;
+  const [poise, ward] = allocateInteger(amount, [1 - wardShare, wardShare]);
   if (poise > 0) {
     const before = Math.max(0, target.poiseGuard || 0);
     dealPoiseDamage(ctx, target, poise);

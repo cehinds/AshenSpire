@@ -36,6 +36,8 @@ jobs:
       - uses: ./.github/actions/which-browser
       - name: Install browser driver
         run: npm install --no-save --no-package-lock playwright@1.56.1
+      - name: Verify generated content
+        run: node tools/content-build.mjs --check
       - name: Targeted card and combat tests
         id: tests
         continue-on-error: true

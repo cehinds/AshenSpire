@@ -7,6 +7,10 @@
 import { expansionStatuses } from './combatStatusRules.js';
 
 export const statuses = [
+  { id: 'precision', name: 'Precision', icon: '◎', stackMode: 'add', decay: 'none',
+    tooltip: 'Each stack adds 1 Accuracy.' },
+  { id: 'evade', name: 'Evade', icon: '↝', stackMode: 'add', decay: 'none',
+    tooltip: 'Each stack adds 3 Evasion. Lose 1 stack at the start of each round.' },
   // ---- StS layer (SPEC §4.4 table) ----------------------------------------
   {
     id: 'strength',

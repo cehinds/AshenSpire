@@ -34,7 +34,7 @@ Physical offense and melee offensive magic gain active AR. Spell stance and magi
 for each target in an action group:
     if effectiveRange cannot reach contact:
         result = Missed          // no Evasion consumption
-    else if carrier explicitly has Target tag:
+    else if spell carrier explicitly has Target tag:
         result = Hit             // bypass Evasion, no Evasion consumption
     else:
         accuracy = effectiveAccuracy + Precision + SweepTargetAdjustment
@@ -51,22 +51,33 @@ for each target in an action group:
         apply no damage or hostile status
         continue
 
-    emit active-Evade-failed ? "Hit — Evade Failed" : "Hit"
+    emit (Evade stance or reaction failed) AND !TargetBypass
+        ? "Hit — Evade Failed" : "Hit"
     apply stance matchup multiplier once to HP and pressure
     if Smash against Spell:
-        split explicit pressure into 30% Ward, 70% Poise
+        split explicit and fallback pressure into 30% Ward, 70% Poise
         preserve HP damage type
     resolve defenses, pressure and HP damage through ordinary pipeline
     emit damage after hit floater
 ```
 
-The any-natural-20 rule also applies when two dice are rolled. Preview enumerates the same 20 or 400 outcomes as resolution. Out-of-range and explicit Target bypass are resolved before rolling. Evasion decays by one at round start.
+Before resolving effects, Smash and Counter receive +3 Poise damage only if they have none. Sweep applies −1 Precision plus 1 per additional enemy. A reactive Sweep intercepting a melee physical attack adds +3 Poise/+3 Ward damage, resolves first, and can interrupt the incoming attack.
+
+| Attacker | Target stance | HP/Poise/Ward multiplier |
+| --- | --- | --- |
+| Smash | Defense, Spell, landed hit against Evade | 1.5× |
+| Counter | Attack, Smash, landed hit against Evade | 1.5× |
+| Sweep | Counter | 2× |
+| Otherwise | Any | 1× |
+
+The hit threshold is capped so Evasion cannot exceed 95% avoidance. The any-natural-20 rule also applies when two dice are rolled. Preview enumerates the same 20 or 400 outcomes as resolution. Out-of-range and explicit Target bypass are resolved before rolling. Evasion decays by one at round start.
 
 ## Preview and rendering
 
 ```text
-if first Perception read succeeded:
+if this observer's first Perception read succeeded:
     show exact read-only hit probability from engine
+    in both selected-card and persistent HUD previews
     color advantage green, disadvantage red, neutral white
 else:
     hide percentage

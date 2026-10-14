@@ -1,12 +1,12 @@
+import { attackHitPreview, resolveAttackHit } from './stanceHit.js';
 // Counter attack reach, Accuracy and base Evasion are independent of protection
 // coverage and prepared Evade. One committed check gates the entire return.
-import { accuracyFor, evasionFor, hitRoll, parseEvasionArmor } from './combatRounds/resolver.js';
+import { accuracyFor, evasionFor, parseEvasionArmor } from './combatRounds/resolver.js';
 import { EVASION_ARMOR_CSV } from '../content/combatRounds.js';
 import { counterReturnRules } from '../content/counterReturnRules.js';
 import { combatExpansionEquipment } from '../content/combatExpansionEquipment.js';
 import { enemyAttributesOf } from '../model/actionCosts.js';
 import { equippedIn } from '../model/loadout.js';
-import { RANGES } from '../model/combatRanges.js';
 
 const armorDefaults = parseEvasionArmor(EVASION_ARMOR_CSV);
 const finite = value => Number.isFinite(value) ? value : 0;
@@ -68,30 +68,11 @@ export function attackAccuracy(ctx, source, carrier) {
 
 export function counterAttackPreview(ctx, source, target, carrier) {
   if (ctx.combatExpansionVersion !== 2 || !carrier?.counterReturnAttack) return null;
-  const range = carrier.combatProfile?.range || 'melee';
-  const requiredRange = carrier.counterRequiredRange || target?.combatStance?.range || 'melee';
-  const inRange = RANGES.indexOf(range) >= RANGES.indexOf(requiredRange)
-    && RANGES.includes(range) && RANGES.includes(requiredRange);
-  const seat = seatOf(ctx, source);
-  const level = source?.level?.level ?? source?.level ?? seat?.characterLevel
-    ?? (source === ctx.player ? ctx.characterLevel : 0);
-  const accuracy = accuracyFor({ attrs: timelineAttrs(attributesOf(ctx, source)), level: finite(level),
-    tags: carrier.tags || [], accuracy: finite(source?.accuracy) });
-  const evasion = counterBaseEvasion(ctx, target);
-  const need = hitRoll({ accuracy, evasion }, 20).need;
-  let hits = 0;
-  if (inRange) for (let d20 = 1; d20 <= 20; d20++) if (hitRoll({ accuracy, evasion }, d20).hit) hits++;
-  return { range, requiredRange, inRange, accuracy, evasion, need, hitChance: hits * 5,
-    ...(inRange ? {} : { missReason: 'range' }) };
+  return attackHitPreview(ctx, source, target, carrier);
 }
 
-/** Called after reaction choices resolve; range or accuracy misses spend no Evade charge. */
+/** Counter replies use the same group Accuracy and Evasion decision as other offense. */
 export function resolveCounterAttack(ctx, source, target, carrier) {
-  const preview = counterAttackPreview(ctx, source, target, carrier);
-  if (!preview) return null;
-  if (!preview.inRange) return { ...preview, hit: false, missReason: 'range' };
-  const d20 = typeof ctx.rng.int === 'function' ? ctx.rng.int('combatAvoidance', 1, 20)
-    : 1 + Math.floor(ctx.rng.float('combatAvoidance') * 20);
-  const hit = hitRoll({ accuracy: preview.accuracy, evasion: preview.evasion }, d20).hit;
-  return { ...preview, d20, hit, ...(!hit ? { missReason: 'accuracy' } : {}) };
+  if (ctx.combatExpansionVersion !== 2 || !carrier?.counterReturnAttack) return null;
+  return resolveAttackHit(ctx, source, target, carrier);
 }

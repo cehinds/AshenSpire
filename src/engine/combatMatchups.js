@@ -1,3 +1,4 @@
+import { removeStatus } from './statuses.js';
 import { stanceOf, sameStance, stanceEntryBonuses, stanceRulesFor } from '../model/stanceRules.js';
 import { syncWardMaximum } from './combatPools.js';
 // Tactical profiles share the ordinary action queue. No card IDs or UI state.
@@ -678,4 +679,16 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
     if (group) group.counterReturn = event;
   } else ctx.emit?.('combatCounterTriggered', event);
   return queue;
+}
+
+/** One shared round boundary, rather than separate player/enemy owner-end clocks. */
+export function decayStanceRoundStart(ctx) {
+  if (!combatExpansionEnabled(ctx) || ctx.turn <= 1) return;
+  const players = ctx.players ? [...ctx.players.values()].map(seat => seat.entity) : [ctx.player];
+  for (const entity of [...players, ...(ctx.enemies || [])]) {
+    if (!entity?.alive) continue;
+    for (const [status, amount] of Object.entries(stanceRulesFor(ctx).roundStartDecay || {})) {
+      if (entity.statuses?.[status]?.stacks > 0) removeStatus(ctx, entity, status, { amount, reason: 'roundStart' });
+    }
+  }
 }

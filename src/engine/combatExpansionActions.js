@@ -56,6 +56,7 @@ export function enqueueExpandedAction(ctx, actions, { source, target, carrier, c
       continue;
     }
     if (eff.oncePerTurn) {
+      if (eff.if && !Triggers.evalPredicate(prefix, eff.if, shadow)) { action.meta.expansionContacts = []; action.meta.expansionTargets = []; continue; }
       const accepted = allowAbilityOnce(shadow.owner || shadow.source || prefix.player, eff.oncePerTurn, action.card, action.meta?.abilityEffectIndex ?? eff.op);
       if (!accepted) { action.meta.expansionContacts = []; action.meta.expansionTargets = []; continue; }
       shadow.effect = { ...eff, oncePerTurn: undefined };

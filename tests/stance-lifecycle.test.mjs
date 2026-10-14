@@ -1,8 +1,11 @@
+import { createRegistries } from '../src/model/registries.js';
+import { contentBundle } from '../src/content/index.js';
+import { executeAction } from '../src/engine/actions.js';
 import assert from 'node:assert/strict';
 import { stanceOf, stanceEntryBonuses, stanceRatingBonus, stanceStaminaCost } from '../src/model/stanceRules.js';
 import { enemyMoveSpOf } from '../src/model/actionCosts.js';
 import { primeEnemyCounter } from '../src/engine/combatCardTactics.js';
-import { setCombatStance, startTacticalTurn, stancePressureMultiplier } from '../src/engine/combatMatchups.js';
+import { setCombatStance, startTacticalTurn, stancePressureMultiplier, decayStanceRoundStart } from '../src/engine/combatMatchups.js';
 const ctx = { combatExpansionVersion: 2, queue: [], emit() {}, enqueue(action) { this.queue.push(action); } };
 const card = (maneuver, camp = 'physical', school = undefined, range = 'melee') => ({ combatProfile: { maneuver, camp, school, range } });
 const entity = { id: 'test', alive: true };
@@ -50,4 +53,13 @@ assert.equal(stancePressureMultiplier(ctx, entity, { combatStance: stanceOf(card
 assert.equal(stancePressureMultiplier(ctx, entity, { combatStance: stanceOf(card('counter')) }, card('sweep')), 2);
 assert.equal(stancePressureMultiplier(ctx, entity, { combatStance: stanceOf(card('attack')) }, { ...card('counter'), combatReaction: true }), 1.5);
 assert.equal(stancePressureMultiplier(ctx, entity, { combatStance: stanceOf(card('smash')) }, card('attack')), 1);
+const statusCtx = { ...ctx, registries: createRegistries(contentBundle), turn: 2, queue: [], emit() {},
+  player: { id: 'player', alive: true, statuses: { evade: { stacks: 2 } } }, enemies: [] };
+statusCtx.enqueue = action => statusCtx.queue.push(action);
+setCombatStance(statusCtx, statusCtx.player, card('attack'));
+while (statusCtx.queue.length) executeAction(statusCtx, statusCtx.queue.shift());
+assert.equal(statusCtx.player.statuses.precision.stacks, 1, 'registered Precision applies through the real DSL');
+decayStanceRoundStart(statusCtx);
+assert.equal(statusCtx.player.statuses.evade.stacks, 1);
+assert.equal(statusCtx.player.statuses.precision.stacks, 1);
 console.log('stance lifecycle assertions passed');

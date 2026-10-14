@@ -4,6 +4,7 @@
 import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { serve } from './serve.mjs';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
 
@@ -15,7 +16,7 @@ const browser = await chromium.launch({ headless: true, executablePath: process.
 const errors = [];
 const views = {};
 const report = {
-  head: process.env.GITHUB_SHA || null,
+  head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
   generatedAt: new Date().toISOString(),
   fixtureBoundary: 'Screenshots use the production combat route and mountCombat renderer with production card/enemy definitions. Combat state, stance/status values, card instances, and RNG stream return values are deterministic QA fixtures; these captures are not player navigation recordings.',
   viewports: { desktop: { width: 1440, height: 1000 }, phone: { width: 390, height: 844 } },
@@ -24,6 +25,28 @@ const report = {
   browserErrors: errors,
 };
 let page;
+let fixtureSeq = 0;
+async function waitStableVisible(locator) {
+  await locator.waitFor({ state: 'visible', timeout: 10000 });
+  await locator.evaluate(async element => {
+    const animations = [];
+    for (let node = element; node; node = node.parentElement) animations.push(...node.getAnimations());
+    await Promise.all(animations.filter(animation => animation.playState === 'running'
+      && Number.isFinite(animation.effect?.getComputedTiming().endTime))
+      .map(animation => animation.finished.catch(() => {})));
+  });
+  const handle = await locator.elementHandle();
+  await page.waitForFunction(element => {
+    const rect = element.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return false;
+    for (let node = element; node; node = node.parentElement) {
+      const style = getComputedStyle(node);
+      if (style.visibility !== 'visible' || Number(style.opacity) < 0.98) return false;
+    }
+    return true;
+  }, handle, { timeout: 10000 });
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+}
 async function waitArt() {
   await page.evaluate(async () => {
     await document.fonts?.ready;
@@ -31,8 +54,8 @@ async function waitArt() {
     await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   });
 }
-async function capture(name, viewport) {
-  await waitArt();
+async function capture(name, viewport, settleArt = true) {
+  if (settleArt) await waitArt();
   const path = resolve(OUT, name + '.png');
   const jpg = resolve(OUT, name + '.jpg');
   await page.screenshot({ path, fullPage: false });
@@ -57,45 +80,100 @@ async function boot(viewport, query = '') {
   await waitArt();
 }
 async function remount(cards, options = {}) {
-  await page.evaluate(async ({ cards, options }) => {
+  const sequence = ++fixtureSeq;
+  await page.evaluate(async ({ cards, options, sequence }) => {
     const { mountCombat } = await import('/src/ui/screens/combat.js');
     const { createRunState } = await import('/src/model/state.js');
     const combat = window.__combat, registries = combat.registries;
-    const run = createRunState({ seed: 7814, classId: 'starseer', registries });
-    combat.piles.hand = cards.map((cardId, index) => ({ instanceId: 'stance-qa-' + index, cardId, upgraded: false }));
+    const run = window.__combatRunForShot || createRunState({ seed: 7814, classId: 'starseer', registries });
+    if (!window.__stanceQaInitial) window.__stanceQaInitial = {
+      playerStatuses: structuredClone(combat.player.statuses),
+      enemies: combat.enemies.map(enemy => ({
+        hp: enemy.hp, maxHp: enemy.maxHp, alive: enemy.alive, block: enemy.block,
+        statuses: structuredClone(enemy.statuses), combatStance: structuredClone(enemy.combatStance),
+        knowledgeAction: structuredClone(enemy.knowledgeAction),
+      })),
+    };
+    combat.phase = 'player';
+    combat.player.alive = true;
+    combat.player.statuses = structuredClone(window.__stanceQaInitial.playerStatuses);
+    combat.piles.hand = cards.map((cardId, index) => ({ instanceId: 'stance-qa-' + sequence + '-' + index, cardId, upgraded: false }));
+    for (const [index, enemy] of combat.enemies.entries()) {
+      const initial = window.__stanceQaInitial.enemies[index];
+      if (!initial) continue;
+      enemy.hp = initial.hp; enemy.maxHp = initial.maxHp; enemy.alive = initial.alive; enemy.block = initial.block;
+      enemy.statuses = structuredClone(initial.statuses);
+      enemy.combatStance = structuredClone(initial.combatStance);
+      enemy.knowledgeAction = structuredClone(initial.knowledgeAction);
+    }
     combat.player.energy = 10;
     combat.player.stamina = 10;
+    const target = combat.enemies[0];
+    combat.player.accuracyAdvantage = !!options.accuracyAdvantage;
+    combat.player.accuracyDisadvantage = !!options.accuracyDisadvantage;
+    if (target) {
+      target.evadeAdvantage = false; target.evadeDisadvantage = false;
+      target.nextEvadeMode = null; target.combatEvade = null;
+      target.combatStance = options.enemyStance || null;
+      const observer = combat.playerKey || 'player';
+      const previousRead = target.knowledgeAction?.reads?.[observer] || {};
+      target.knowledgeAction = {
+        ...target.knowledgeAction,
+        reads: {
+          ...(target.knowledgeAction?.reads || {}),
+          [observer]: { ...previousRead, visibility: options.unknown ? 'unknown' : 'exact' },
+        },
+      };
+      if (!options.failedEvade) {
+        const statuses = { ...target.statuses };
+        delete statuses.evade;
+        target.statuses = statuses;
+      }
+    }
+    if (options.hud) {
+      combat.player.block = 12;
+      combat.player.wardBlock = 3;
+      combat.player.persistentWard = { value: 5, max: 5 };
+      combat.player.persistentPoise = { value: 4, max: 20 };
+      combat.player.poiseMeter = { value: 4, max: 20 };
+      combat.player.statuses = { ...combat.player.statuses, evade: { stacks: 2 } };
+    }
     if (options.playerStance) combat.player.combatStance = options.playerStance;
     if (options.enemyStance) combat.enemies[0].combatStance = options.enemyStance;
-    if (options.unknown) {
-      combat.enemies[0].knowledgeAction = { reads: { player: { visibility: 'unknown' } } };
+    if (options.failedEvade) {
+      combat.enemies[0].combatStance = { maneuver: 'evade', camp: 'physical', range: 'melee' };
+      combat.enemies[0].statuses = { ...combat.enemies[0].statuses, evade: { stacks: 1 } };
     }
     if (options.evade) combat.enemies[0].combatEvade = { charges: 1, bonus: 100, advantage: false, disadvantage: false, expiresOnOwnerCycle: 1 };
     if (options.roll != null) combat.rng.int = stream => stream === 'combatAvoidance' ? options.roll : 20;
-    mountCombat(document.querySelector('#app'), {
+    if (typeof window.__renderCombatForShot === 'function') window.__renderCombatForShot();
+    else mountCombat(document.querySelector('#app'), {
       registries, run, combat,
-      meta: { settings: { animationSpeed: 'instant', holdConfirm: 'off', reducedMotion: true } },
+      meta: { settings: { animationSpeed: options.slow ? 'slow' : 'instant', holdConfirm: 'off', reducedMotion: true } },
       onEnd() {},
     });
     window.__stanceQaRun = run;
-  }, { cards, options });
+  }, { cards, options, sequence });
   await page.locator('.combat').waitFor({ state: 'visible' });
   await waitArt();
 }
 async function inspectCard(cardId, label) {
   const card = page.locator('.hand .card[data-card-id="' + cardId + '"]').first();
   await card.waitFor({ state: 'visible', timeout: 20000 });
+  await card.focus();
+  await card.press('Tab');
   const info = page.locator('.card-info-button:visible').first();
-  if (await info.count()) await info.click();
-  else await card.click({ position: { x: 30, y: 35 } });
+  await info.waitFor({ state: 'visible', timeout: 5000 });
+  await info.press('Enter');
   const detail = page.locator('.card-inspection-modal:visible, .card-inspection-details:visible, .deck-editor-inspector:visible').first();
-  await detail.waitFor({ state: 'visible', timeout: 10000 });
+  await waitStableVisible(detail);
   await capture(label, { width: 1440, height: 1000 });
   await page.keyboard.press('Escape').catch(() => {});
 }
 
 try {
   await boot({ width: 1440, height: 1000 });
+  await remount([], { hud: true });
   assert.ok(await page.locator('.combatant.player .combat-health-row').count(), 'player HP row rendered');
   for (const kind of ['evade', 'poise', 'ward', 'shield']) {
     assert.ok(await page.locator('.combatant.player .combat-health-row [data-defense-kind="' + kind + '"]').count(), 'player ' + kind + ' row rendered');
@@ -131,16 +209,45 @@ try {
 
   // Stance modes are rendered from production preview state; each capture
   // records the data-roll-mode value so desktop review can identify the case.
-  for (const [mode, playerStance, enemyStance] of [
-    ['neutral', { maneuver: 'attack', camp: 'physical', range: 'melee' }, { maneuver: 'attack', camp: 'physical', range: 'melee' }],
-    ['advantage', { maneuver: 'attack', camp: 'physical', range: 'melee' }, { maneuver: 'evade', camp: 'physical', range: 'melee' }],
-    ['disadvantage', { maneuver: 'smash', camp: 'physical', range: 'melee' }, { maneuver: 'defend', camp: 'physical', range: 'melee' }],
+  for (const [mode, flags] of [
+    ['neutral', {}],
+    ['advantage', { accuracyAdvantage: true }],
+    ['disadvantage', { accuracyDisadvantage: true }],
   ]) {
-    await remount(['strike'], { playerStance, enemyStance });
+    await remount(['strike'], flags);
     await page.locator('.hand .card[data-card-id="strike"]').first().click();
     const modeNode = page.locator('.combat-hit-chance:visible[data-roll-mode="' + mode + '"]').first();
     await modeNode.waitFor({ state: 'visible', timeout: 10000 });
+    const detail = await modeNode.evaluate(node => ({
+      label: node.innerText.trim(),
+      color: getComputedStyle(node).color,
+      mode: node.dataset.rollMode,
+    }));
+    assert.match(detail.label, /\b[\d.]+%/i, mode + ' displays a numeric hit percentage');
+    assert.notEqual(detail.color, 'rgba(0, 0, 0, 0)', mode + ' has visible roll-mode color');
     await capture('phone-hit-' + mode, { width: 390, height: 844 });
+    views['phone-hit-' + mode].hitChance = detail;
+  }
+  const chances = ['advantage', 'neutral', 'disadvantage'].map(mode => {
+    const match = views['phone-hit-' + mode].hitChance.label.match(/([\d.]+)%/);
+    return match ? Number(match[1]) : NaN;
+  });
+  assert.ok(chances[0] > chances[1] && chances[1] > chances[2], 'accuracy modes order hit chances advantage > neutral > disadvantage');
+
+  // Capture event callouts while the real action is in progress. Hit reports
+  // are captured on the first callout frame, before the later damage callout.
+  for (const [name, options, kind, label] of [
+    ['hit-callout', { roll: 20, slow: true }, 'hit', /^Hit\b/],
+    ['failed-evade-callout', { failedEvade: true, roll: 20, slow: true }, 'evadeFailed', /Hit — Evade Failed/],
+    ['successful-miss-callout', { evade: true, roll: 1, slow: true }, 'missed', /Missed/],
+  ]) {
+    await remount(['strike'], options);
+    await page.locator('.hand .card[data-card-id="strike"]').first().click();
+    await page.locator('.enemy:not(.dead)').first().click();
+    const callout = page.locator('.fx-callout[data-callout-kind="' + kind + '"]');
+    await callout.waitFor({ state: 'visible', timeout: 15000 });
+    assert.match(await callout.innerText(), label);
+    await capture(name, { width: 390, height: 844 }, false);
   }
   report.browserErrors = errors;
   writeFileSync(resolve(OUT, 'report.json'), JSON.stringify(report, null, 2) + '\n');

@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { attackHitPreview, resolveAttackHit, effectiveEvasion } from '../src/engine/stanceHit.js';
@@ -6,6 +7,7 @@ import { createCombat } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { resolveCombatRatings } from '../src/model/combatRatings.js';
 import { enqueueExpandedAction } from '../src/engine/combatExpansionActions.js';
+import { syncWardMaximum, syncPoiseMaximum } from '../src/engine/combatPools.js';
 import { executeAction } from '../src/engine/actions.js';
 import { createRegistries } from '../src/model/registries.js';
 const registries = createRegistries(contentBundle);
@@ -73,7 +75,10 @@ test('one committed miss gates every contact and hostile pressure/status', () =>
     ratingsRules: resolveCombatRatings({}, contentBundle), enemyIds: ['wanderingSoldier'],
     player: { classId: 'starseer', maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1, deck: [] } });
   const target = ctx.enemies[0]; target.evasion = 0; target.statuses = {}; delete target.combatStance;
+  target.ratings = { ...target.ratings, ward: 30, poise: 100 };
   target.persistentWard = { max: 30, value: 30 };
+  target.persistentPoise = { max: 100, value: 100 };
+  syncWardMaximum(ctx, target); syncPoiseMaximum(ctx, target);
   const before = { hp: target.hp, ward: target.persistentWard.value, poise: structuredClone(target.persistentPoise) };
   let draws = 0; ctx.rng.int = stream => { if (stream === 'combatAvoidance') draws++; return 1; };
   const carrier = { type: 'attack', tags: ['camp:physical', 'maneuver:attack', 'range:melee'], combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee' } };
@@ -88,7 +93,10 @@ test('Smash pressure planning excludes later oncePerTurn rejection without spend
     ratingsRules: resolveCombatRatings({}, contentBundle), enemyIds: ['wanderingSoldier'],
     player: { classId: 'starseer', maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1, deck: [] } });
   const target = ctx.enemies[0]; target.evasion = 0; target.statuses = {}; target.combatStance = { maneuver: 'casting', camp: 'spell' };
+  target.ratings = { ...target.ratings, ward: 30, poise: 100 };
   target.persistentWard = { max: 30, value: 30 };
+  target.persistentPoise = { max: 100, value: 100 };
+  syncWardMaximum(ctx, target); syncPoiseMaximum(ctx, target);
   const before = { hp: target.hp, ward: target.persistentWard.value, poise: structuredClone(target.persistentPoise) };
   let draws = 0; ctx.rng.int = stream => { if (stream === 'combatAvoidance') draws++; return 20; };
   const carrier = { type: 'attack', tags: ['camp:physical', 'maneuver:smash', 'range:melee'], combatProfile: { camp: 'physical', maneuver: 'smash', range: 'melee' } };
@@ -100,4 +108,21 @@ test('Smash pressure planning excludes later oncePerTurn rejection without spend
   while (ctx.queue.length) executeAction(ctx, ctx.queue.shift());
   assert.equal(draws, 1); assert.equal(target.hp, before.hp); assert.equal(target.persistentWard.value, before.ward - 4);
   assert.equal(target.statuses.weak, undefined);
+});
+
+test('Target is authored and compiled for Hex only, without school inference', () => {
+  const nodes = readFileSync(new URL('../content/source/nodes.csv', import.meta.url), 'utf8');
+  const tagging = readFileSync(new URL('../content/source/tagging.csv', import.meta.url), 'utf8');
+  assert.match(nodes, /^target,card,Target,/m);
+  const targetRows = tagging.split(/\r?\n/).filter(line => /^card,,[^,]+,target$/.test(line));
+  assert.deepEqual(targetRows, ['card,,hex,target']);
+  const hex = registries.cards.get('hex');
+  assert.ok(hex.tags.includes('target'));
+  const f = fixture(1); f.target.statuses.evade = { stacks: 10 };
+  f.target.combatStance = { maneuver: 'evade', range: 'ranged' };
+  const carrier = { ...hex, cardId: 'hex', combatProfile: { camp: 'spell', maneuver: 'casting', range: 'reach' } };
+  assert.equal(resolveAttackHit(f.ctx, f.source, f.target, carrier).hit, true);
+  assert.equal(f.target.statuses.evade.stacks, 10);
+  assert.equal(f.events.at(-1).label, 'Hit');
+  assert.equal(f.draws(), 0);
 });
