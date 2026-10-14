@@ -26,6 +26,7 @@ export function alternativeAuraLayers(filter) {
 export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=544, createCanvas = () => document.createElement('canvas') } = {}) {
   let surface = null, work = null, disposed = false;
   const parsed = new Map();
+  const rendered = []; // Opt-in fixed-travel actions retain at most four phase surfaces.
   function layers(filter) {
     if (!parsed.has(filter)) {
       // Parsing is tiny; bound retained configurations even if runtime settings
@@ -36,7 +37,7 @@ export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=54
     return parsed.get(filter);
   }
   return Object.freeze({
-    draw(context, image, filter, x, y, width = 512, height = 512, { materialize = false } = {}) {
+    draw(context, image, filter, x, y, width = 512, height = 512, { materialize = false, reuse = false } = {}) {
       if (disposed || !image) return false;
       const plan = layers(filter);
       context.save();
@@ -46,6 +47,14 @@ export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=54
           // than silently discarding effects. Authored filters use the fast path.
           context.filter = filter; context.drawImage(image, x, y, width, height);
         } else {
+          const cached = reuse && rendered.find(entry => entry.image === image && entry.filter === filter
+            && entry.x === x && entry.y === y && entry.width === width && entry.height === height);
+          if (cached) {
+            context.filter = plan.brightness === 1 ? 'none' : `brightness(${plan.brightness})`;
+            context.drawImage(cached.surface, 0, 0);
+            if (materialize) context.getImageData(0, 0, 1, 1);
+            return true;
+          }
           if (!surface) {
             surface = createCanvas(); surface.width = canvasWidth; surface.height = canvasHeight;
             work = surface.getContext('2d');
@@ -61,6 +70,14 @@ export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=54
             work.drawImage(image, x + outside, y, width, height); work.restore();
           }
           work.save(); work.filter = 'none'; work.drawImage(image, x, y, width, height); work.restore();
+          if (reuse) {
+            const copy = createCanvas(); copy.width = canvasWidth; copy.height = canvasHeight;
+            const copyContext = copy.getContext('2d');
+            if (!copyContext) throw new Error('Character aura reuse requires a canvas context');
+            copyContext.drawImage(surface, 0, 0);
+            rendered.push({image,filter,x,y,width,height,surface:copy});
+            if (rendered.length > 4) { const oldest = rendered.shift().surface; oldest.width = oldest.height = 0; }
+          }
           context.filter = plan.brightness === 1 ? 'none' : `brightness(${plan.brightness})`;
           context.drawImage(surface, 0, 0);
         }
@@ -71,7 +88,8 @@ export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=54
     dispose() {
       disposed = true; parsed.clear();
       if (surface) { surface.width = 0; surface.height = 0; }
-      surface = null; work = null;
+      for (const entry of rendered) entry.surface.width = entry.surface.height = 0;
+      rendered.length = 0;surface = null; work = null;
     },
   });
 }

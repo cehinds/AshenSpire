@@ -1,0 +1,240 @@
+{
+  "schemaVersion": 1,
+  "classId": "rogue",
+  "sourceProvenance": "pose-studio/stances/class-smash/rogue/provenance.json",
+  "sourceProvenanceSha256": "40f62435ba55f1e85cefbc4002fbaa706a69b8f9f130294b6d8c6435a3960dd4",
+  "sharedLogicalScale": 0.4657142857142857,
+  "groundAnchor": [
+    512,
+    930
+  ],
+  "bodyHeight": 700,
+  "logicalStageAnchor": [
+    384,
+    464
+  ],
+  "sourceLogicalDrawSize": [
+    476.89142857142855,
+    476.89142857142855
+  ],
+  "sourceLogicalDrawOffset": [
+    145.55428571428573,
+    30.8857142857143
+  ],
+  "transparentCropMargin": 16,
+  "rasterDownsampleFactors": {
+    "full": 2,
+    "lite": 4
+  },
+  "sourceBookends": {
+    "first": "8384178d191cd7d3e3601742ee618860537b22a7303d6c24b58f25b41ffbc2b6",
+    "last": "8384178d191cd7d3e3601742ee618860537b22a7303d6c24b58f25b41ffbc2b6",
+    "decodedRGBA": "9d6d2c007cbda10d5b3db4e1883be535d955a44f8d04154af6000aa546f5d3a3"
+  },
+  "frames": {
+    "held": {
+      "path": "assets-display/alternative/class-smash-rogue-held.webp",
+      "lite": "assets-display/alternative/class-smash-rogue-held-mobile.webp",
+      "sha256": "d3588ad741536f17f5a7cd9522245cf15e0e40f907a1c9bb900fa72fbb0b9ef1",
+      "liteSha256": "1bd5b045170e59f54a59e69030e4d60ac32f57691ce3d5601190821b67bd88df",
+      "size": [
+        257.0742857142857,
+        391.2
+      ],
+      "drawOffset": [
+        259.18857142857144,
+        84.90857142857143
+      ],
+      "bounds": [
+        261,
+        133,
+        779,
+        939
+      ],
+      "sourceCrop": [
+        244,
+        116,
+        796,
+        956
+      ],
+      "stageBounds": [
+        267.10571428571427,
+        92.8257142857143,
+        508.3457142857143,
+        468.19142857142856
+      ],
+      "stageAnchor": [
+        384,
+        464
+      ],
+      "rasterSize": [
+        276,
+        420
+      ],
+      "mobileRasterSize": [
+        138,
+        210
+      ],
+      "source": {
+        "path": "pose-studio/stances/class-smash/rogue/01-held.png",
+        "sha256": "8384178d191cd7d3e3601742ee618860537b22a7303d6c24b58f25b41ffbc2b6",
+        "width": 1024,
+        "height": 1024
+      },
+      "provenance": "pose-studio/stances/class-smash/rogue/provenance.json"
+    },
+    "takeoff": {
+      "path": "assets-display/alternative/class-smash-rogue-takeoff.webp",
+      "lite": "assets-display/alternative/class-smash-rogue-takeoff-mobile.webp",
+      "sha256": "2391f084f65b77ad948cfe26ddabd14f52980bc0016325dde9d9f3158090408d",
+      "liteSha256": "e305e61baac4f0218a83845eaf9baf14541c3b3e1340e9b80920149b0eea0494",
+      "size": [
+        262.66285714285715,
+        398.65142857142854
+      ],
+      "drawOffset": [
+        253.60000000000002,
+        73.73142857142858
+      ],
+      "bounds": [
+        250,
+        110,
+        779,
+        932
+      ],
+      "sourceCrop": [
+        232,
+        92,
+        796,
+        948
+      ],
+      "stageBounds": [
+        261.98285714285714,
+        82.11428571428573,
+        508.3457142857143,
+        464.93142857142857
+      ],
+      "stageAnchor": [
+        384,
+        464
+      ],
+      "rasterSize": [
+        282,
+        428
+      ],
+      "mobileRasterSize": [
+        141,
+        214
+      ],
+      "source": {
+        "path": "pose-studio/stances/class-smash/rogue/02-takeoff.png",
+        "sha256": "36a5a7075399fca0583c4c6fca2c591b75cf13dea224461a67bc4581398896d4",
+        "width": 1024,
+        "height": 1024
+      },
+      "provenance": "pose-studio/stances/class-smash/rogue/provenance.json"
+    },
+    "airborne": {
+      "path": "assets-display/alternative/class-smash-rogue-airborne.webp",
+      "lite": "assets-display/alternative/class-smash-rogue-airborne-mobile.webp",
+      "sha256": "239640730defbcf35a149950cff37bc99726ccc655684d0af025c6cf2be1646e",
+      "liteSha256": "81efd2879eb697ca1d082f0c887f3674357c184adec718838a6dabeedaba348b",
+      "size": [
+        255.21142857142857,
+        346.49142857142857
+      ],
+      "drawOffset": [
+        257.3257142857143,
+        109.1257142857143
+      ],
+      "bounds": [
+        257,
+        186,
+        771,
+        894
+      ],
+      "sourceCrop": [
+        240,
+        168,
+        788,
+        912
+      ],
+      "stageBounds": [
+        265.24285714285713,
+        117.50857142857144,
+        504.62,
+        447.2342857142857
+      ],
+      "stageAnchor": [
+        384,
+        464
+      ],
+      "rasterSize": [
+        274,
+        372
+      ],
+      "mobileRasterSize": [
+        137,
+        186
+      ],
+      "source": {
+        "path": "pose-studio/stances/class-smash/rogue/03-airborne.png",
+        "sha256": "67bbce96c89beaa819b84e6b2957395100d3902a5d1d7f7869ad9849b98fea0e",
+        "width": 1024,
+        "height": 1024
+      },
+      "provenance": "pose-studio/stances/class-smash/rogue/provenance.json"
+    },
+    "impact": {
+      "path": "assets-display/alternative/class-smash-rogue-impact.webp",
+      "lite": "assets-display/alternative/class-smash-rogue-impact-mobile.webp",
+      "sha256": "0c2b737bb7ab4971763e8d7cc2c46975abfc55da01c0e0fd44388da8b6f16930",
+      "liteSha256": "6d37677aaf7c3f4a43d55862a1322032fc07a11e028f0187177d10f567569d4c",
+      "size": [
+        298.0571428571428,
+        322.2742857142857
+      ],
+      "drawOffset": [
+        231.2457142857143,
+        151.9714285714286
+      ],
+      "bounds": [
+        203,
+        279,
+        807,
+        934
+      ],
+      "sourceCrop": [
+        184,
+        260,
+        824,
+        952
+      ],
+      "stageBounds": [
+        240.09428571428572,
+        160.82000000000002,
+        521.3857142857142,
+        465.86285714285714
+      ],
+      "stageAnchor": [
+        384,
+        464
+      ],
+      "rasterSize": [
+        320,
+        346
+      ],
+      "mobileRasterSize": [
+        160,
+        173
+      ],
+      "source": {
+        "path": "pose-studio/stances/class-smash/rogue/04-impact.png",
+        "sha256": "7bd3dae8afdf4b27d636612af480ebfd66b0e150a31d866e7158a9ae6e5d0cb9",
+        "width": 1024,
+        "height": 1024
+      },
+      "provenance": "pose-studio/stances/class-smash/rogue/provenance.json"
+    }
+  }
+}

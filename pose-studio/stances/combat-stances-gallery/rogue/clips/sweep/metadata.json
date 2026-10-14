@@ -1,0 +1,83 @@
+{
+  "action": "sweep",
+  "aliases": [
+    "sweep"
+  ],
+  "origin": "sweep",
+  "timing": {
+    "totalMs": 195,
+    "impactMs": 41.25
+  },
+  "registeredSequence": {
+    "selection": "rogue-sweep-05",
+    "label": "High dagger set \u2192 descending diagonal sweep",
+    "poses": [
+      "rogue.sweep.stance",
+      "rogue.sweep.contact",
+      "rogue.sweep.recovery",
+      "ready"
+    ],
+    "durations": [
+      55,
+      60,
+      65,
+      80
+    ],
+    "impact": 1,
+    "travel": [
+      0,
+      55,
+      28,
+      0
+    ],
+    "effects": [
+      null,
+      "rogue.sweep.effect-1",
+      "rogue.sweep.effect-2",
+      null
+    ],
+    "hold": false
+  },
+  "reviewFrames": [
+    {
+      "pose": "stance-sweep",
+      "label": "origin stance-sweep",
+      "weight": 1
+    },
+    {
+      "pose": "rogue.sweep.stance",
+      "registeredFrameId": "rogue.sweep.stance",
+      "label": "1/4 rogue.sweep.stance \u00b7 weight 55",
+      "weight": 55,
+      "timeMs": 20.625
+    },
+    {
+      "pose": "rogue.sweep.contact",
+      "registeredFrameId": "rogue.sweep.contact",
+      "label": "2/4 rogue.sweep.contact \u00b7 weight 60",
+      "weight": 60,
+      "timeMs": 63.75
+    },
+    {
+      "pose": "rogue.sweep.recovery",
+      "registeredFrameId": "rogue.sweep.recovery",
+      "label": "3/4 rogue.sweep.recovery \u00b7 weight 65",
+      "weight": 65,
+      "timeMs": 110.625
+    },
+    {
+      "pose": "stance-sweep",
+      "registeredFrameId": "ready",
+      "label": "4/4 ready \u00b7 weight 80",
+      "weight": 80,
+      "timeMs": 165
+    },
+    {
+      "pose": "stance-sweep",
+      "label": "return Sweep",
+      "weight": 1
+    }
+  ],
+  "capture": "Actual mounted combat stage canvas; review timing separate from Normal gameplay",
+  "sharedPhaseArtWith": []
+}
