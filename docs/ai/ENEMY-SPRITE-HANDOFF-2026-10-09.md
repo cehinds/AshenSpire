@@ -1,5 +1,70 @@
 # Enemy sprite integration handoff — 2026-10-09
 
+## Continuation checkpoint — 2026-10-14
+
+Continue on `feature/AddEnemySpriteStances`, reconciled with current dev at
+`0cf6166fcc21d5482f82d1bad35ab8965663dfb0`. This continuation targets that feature
+branch; it does not authorize merging into dev or test.
+
+The integration rules have changed since the October 9–10 notes below. Current
+`DEVELOPER.md` requires art release caches for runtime readers: update the verified `art-release.json`
+pin, regenerate `art-manifest.json` with `node tools/art-manifest.mjs --write`,
+and fetch the pinned packs with `node tools/fetch-art.mjs --pack all`.
+`CONTRIBUTING.md` explicitly retains the tracked light tier under `assets-mobile/`
+(owner decision, October 11), so refresh the changed compact twin from the
+verified light pack as well. The high/art authoring trees remain external.
+Feature pull requests do not commit
+`buildordinal.json`; the dev build-stamp workflow owns merged build identity.
+
+PR #1799 is merged. Subsequent dev fixes also restore the expansion idle bob,
+remove failed frames until Retry/load restores them, preserve detached-frame
+built-in fallbacks, and name non-interactive placeholders for reachability checks.
+The exact-head dev preview and phone reachability gates at the head above passed.
+The old post-promotion failures below describe historical evidence, not current
+unfixed sprite bugs. Focused enemy expansion, art Retry and external-play network
+tests passed 15/15 on the reconciled feature branch.
+
+The current art repair covers Stitched Hound idle only. Keep its 512-square canvas,
+floor y=480 and painted height 343 so the other 23 frames retain their scale and
+action timing. The authored replacement PNG is 328 pixels wide; the final encoded
+high WebP measures 329 pixels at alpha >8. Update only `idleWidth` 347 → 329 in
+`src/content/enemyExpansion.js`; keep `idleHeight: 343`.
+Review the actual renderer at desktop and 390×650 before publishing or pinning.
+Physical-phone and owner artwork acceptance remain separate.
+
+Art PR #24 merged at `ed7e7f12f694511f554e98f2341fdcb13c47a71d` and published
+`hd-assets-v22`. Published high/light/common pack SHA-256 values match the local
+verified packs. The game pin and regenerated manifest contain that release; only
+the Stitched Hound idle manifest ID changed. All 7312 high, 7312 light and 146
+common files were verified into the v22 cache, and the retained tracked compact
+idle was refreshed from its verified light twin.
+
+Source combat smoke used the canonical `a2_kennel` encounter through a temporary
+shot-fixture route, with two Stitched Hounds. End Turn and declining reaction
+offers advanced turn 1 → 2 and event log 12 → 47 at 1440×1000 and 390×650. No
+page or art request errors occurred. Optional existing SFX probes returned 404
+for `playerHurt`, `deckShuffle`, `cardDraw` and `turnStinger`; these remain outside
+this art repair. Evidence and executable harnesses are under
+`D:/repos/.codex/outputs/enemy-hound-review-20261014/`. This is source browser
+and phone-emulation evidence, not physical-phone acceptance or a published game
+build. `node tools/art-manifest.mjs --check` passed against all three fetched
+packs. Focused enemy/Retry/network and manifest tests passed 29/29; the retained
+tracked light-art hash check passed separately, for 30/30 checks total.
+
+The final high idle SHA-256 is
+`12fc21c34a884469beb277cbef41be92e4ef2132cb1668c91c97cf26ac7b0d42`;
+the light idle SHA-256 is
+`1da0f00263e3db632dfa211bb228bf9263cbba001d89eac378148d24886eb790`.
+Actual renderer comparison passed idle, attack and return to idle at 1100×650
+and 390×650, with no page/request errors. Both variants retain the same rendered
+foot position (within 0.01px of the floor). All other 791 authoring frames are
+byte-identical to the original package. The reviewed replacement has a more
+viewer-facing chest and subdued charcoal/copper materials; this replaces the
+historical side-on idle concern below, while owner and physical-phone acceptance
+remain open.
+
+## Historical October 9–10 checkpoint
+
 Owner request: integrate the current package into the game on `dev`, merge what exists, and leave a handoff. Enemy direction is toward the viewer, angled slightly **screen-left**. The player's intended direction is screen-right; player artwork is outside this package.
 
 ## Package
@@ -25,7 +90,7 @@ Counterattack, sweep and preparing frames exist in the package. Their use depend
 3. Inspect Glass Regent and Valkyrie Shade for gray/cyan matte halos; inspect winged silhouettes and long spears for edge intersections.
 4. Stitched King uses a fully clothed patchwork-armored variant. Its body design differs from the original exposed stitched figure and needs an explicit art decision before calling it canonical/approved.
 5. Eclipse Cantor ranged-02 was replaced with a full-body physical-throw pose after the source cell contained only a projectile.
-6. Continue angle-fidelity review: Stitched Hound idle remains more side-on than the supplied soldier reference. The target is front three-quarter/screen-left; generation is not owner acceptance. Validate on a physical phone.
+6. Continue angle-fidelity review across the remaining enemy poses. The target is front three-quarter/screen-left; generation is not owner acceptance. The October 14 Hound idle repair is documented above. Validate on a physical phone.
 7. The portable project schema passed validation. The earlier workshop browser screenshot remained at “Loading workshop”; do not treat it as a successful editor import. Serve `.mjs` with JavaScript MIME and verify actual project loading.
 
 ## Continue safely
@@ -73,4 +138,4 @@ Next art pass: rebuild/open the portable projects, inspect all contact sheets at
 - Post-promotion preview run 38034887780 failed its blocked-index placeholder assertion: the new stage deliberately retains a hidden failed image, while the gate required zero image elements. Both combat and dialogue successfully redrew after Retry. Follow-up PR #1799 updates the assertion to require a marked placeholder with no loaded visible image. It must pass and merge separately; inspect its current status rather than assuming this file means it merged.
 - Broad CI run 38034887740 reported mobile visual reach known-bads (2/4) and all-five-layout failures. The 390x650 baseline has covered combatant controls in combat-xl and covered Info/target controls in combat-overlap. The all-five-layout gate additionally reports combat-xl/overlap failures at 360x640 and 844x390; inspect job 114163152772. Do not call post-promotion CI green. Retrieve current job logs and reproduce at that viewport before changing geometry; this has not yet been isolated to new sprite dimensions versus the preceding HUD changes.
 - Local blocked-index rerun encountered multiple loading/time-limit failures under disk contention and does not establish a pass. Dedicated dev-preview run 38035796100 on codex/enemy-retry-gate passed the actual blocked-index Retry step (job 114165830319), as well as normal HTTP/file loading and high-to-light fallback. The original CI evidence establishes successful retry redraw, not a clean complete blocked-index run.
-- The local compact art tree is tracked in this game repository: all 792 new files were copied from the verified v18 light cache. The complete 7136-file local-light-art test passed with exact manifest sizes and hashes. Future art pins must refresh this tree as well as the external packs.
+- At this historical checkpoint all 792 new compact files were copied from the verified v18 light cache, and the complete 7136-file local-light-art test passed with exact manifest sizes and hashes. Current runtime readers use verified external pack caches, while CONTRIBUTING.md retains the tracked light tier; follow the October 14 checkpoint above for both parts of new art updates.
