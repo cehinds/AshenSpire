@@ -6,13 +6,16 @@ import { mkdirSync, writeFileSync, readFileSync, readdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { loadavg, freemem, cpus } from 'node:os';
 import { resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { pathToFileURL, fileURLToPath } from 'node:url';
 import { launchBrowser } from '../browser.mjs';
 export function assertResumeIdentity(report, current) {
   assert.ok(report.htmlSha256, 'resumed report must pin compiled HTML bytes');
   assert.equal(report.htmlSha256, current.htmlSha256, 'resumed compiled HTML byte identity');
   assert.deepEqual(report.build, current.build, 'resumed artifact identity');
   assert.deepEqual(report.sourceDigests, current.sourceDigests, 'resumed immutable source identity');
+}
+export function isDirectInvocation(entrypoint, moduleUrl) {
+  return !!entrypoint && resolve(entrypoint) === resolve(fileURLToPath(moduleUrl));
 }
 
 async function main() {
@@ -678,4 +681,4 @@ console.log(JSON.stringify({ counts: report.counts, out }));
 if (report.counts.failed) process.exitCode = 1;
 }
 
-if (resolve(process.argv[1] || '') === new URL(import.meta.url).pathname) await main();
+if (isDirectInvocation(process.argv[1], import.meta.url)) await main();

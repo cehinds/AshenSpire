@@ -4,7 +4,8 @@ import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { test } from 'node:test';
-import { assertResumeIdentity } from './browser-combat.mjs';
+import { assertResumeIdentity, isDirectInvocation } from './browser-combat.mjs';
+import { pathToFileURL } from 'node:url';
 
 function summarize(cases, inventory = { cards: [{ id: 'strike', classes: ['reaver'], upgraded: false }] }) {
   const dir = mkdtempSync(resolve(tmpdir(), 'combat-summary-'));
@@ -57,4 +58,10 @@ test('distinct enemy rows keep distinct provenance keys', () => {
   assert.equal(result.status, 0, result.stderr);
   assert.equal(result.manifest.latestKeys, 4);
   assert.equal(result.manifest.cases.filter(item => item.key.includes('/enemy-turn/')).length, 2);
+});
+test('direct invocation decodes filesystem paths rather than comparing URL pathnames', () => {
+  const path = resolve(tmpdir(), 'audit folder', 'browser-combat.mjs');
+  assert.equal(isDirectInvocation(path, pathToFileURL(path).href), true);
+  assert.equal(isDirectInvocation(path + '.other', pathToFileURL(path).href), false);
+  assert.equal(isDirectInvocation(undefined, pathToFileURL(path).href), false);
 });
