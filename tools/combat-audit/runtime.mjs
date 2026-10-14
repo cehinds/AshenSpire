@@ -6,6 +6,9 @@ const moduleIds = [
   'src/engine/abilityRiders.js', 'src/model/cardTargets.js', 'src/model/upcasting.js',
   'src/engine/combatSnapshot.js', 'src/engine/combatStatusControl.js',
   'src/engine/actions.js', 'src/engine/statuses.js', 'src/engine/triggers.js', 'src/engine/properties.js',
+  'src/model/loadout.js', 'src/model/skills.js',
+  'src/engine/encounters.js', 'src/engine/locations.js', 'src/model/locations.js',
+  'src/model/mapknowledge.js', 'src/model/statProjection.js',
 ];
 export async function loadAuditRuntime(mode = 'native') {
   if (!['native', 'bundled'].includes(mode)) throw new Error(`Unknown audit loader '${mode}'`);
