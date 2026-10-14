@@ -6,8 +6,7 @@ import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
 // Keep the shared resource renderer's HP amount, fill and total trough length.
 // Badges use space inside that length; removing one gives it back to health.
-// Poise is no badge: it trims the HP bar in gold, and its value is read from
-// the bar's tooltip and aria-label.
+// Poise has a gold numeric badge and retains the HP trim, tooltip and aria-label.
 export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull('combat.protection.block'), wardHelp = tFull('combat.protection.ward') } = {}) {
   if (!hp) return null;
   const model = combatHealthModel(values);

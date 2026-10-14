@@ -2,6 +2,7 @@
 import { attackAccuracy, counterBaseEvasion } from './counterReturn.js';
 import * as Statuses from './statuses.js';
 import { RANGES } from '../model/combatRanges.js';
+import { stanceRulesFor } from '../model/stanceRules.js';
 
 function hitMode(source, target, { evadeDisabled = false } = {}) {
   const advantage = !!(source?.accuracyAdvantage || (!evadeDisabled && (target?.evadeDisadvantage || target?.combatEvade?.disadvantage || target?.nextEvadeMode?.disadvantage)));
@@ -16,7 +17,7 @@ function diceHit(dice, need, mode) {
 }
 const stacks = (entity, id) => Math.max(0, Number(entity?.statuses?.[id]?.stacks) || 0);
 export function effectiveEvasion(ctx, entity, { evadeDisabled = false } = {}) {
-  return counterBaseEvasion(ctx, entity) + (evadeDisabled ? 0 : 3 * stacks(entity, 'evade'));
+  return counterBaseEvasion(ctx, entity) + (evadeDisabled ? 0 : stanceRulesFor(ctx).evasionPerStack * stacks(entity, 'evade'));
 }
 
 export function attackHitPreview(ctx, source, target, carrier, options = {}) {
@@ -31,7 +32,8 @@ export function attackHitPreview(ctx, source, target, carrier, options = {}) {
   const override = profile.rangeOverride === true || profile.adequateReach === true || profile.traits?.includes('adequateReach');
   const inRange = bypass || override || (RANGES.includes(range) && RANGES.includes(requiredRange) && RANGES.indexOf(range) >= RANGES.indexOf(requiredRange));
   const precision = stacks(source, 'precision');
-  const sweep = profile.maneuver === 'sweep' ? -1 + Math.max(0, options.additionalTargets ?? carrier?.additionalTargets ?? 0) : 0;
+  const rules = stanceRulesFor(ctx);
+  const sweep = profile.maneuver === 'sweep' ? rules.sweepPrecisionBase + rules.sweepPerAdditionalTarget * Math.max(0, options.additionalTargets ?? carrier?.additionalTargets ?? 0) : 0;
   const accuracy = attackAccuracy(ctx, source, carrier) + precision + sweep;
   const evadeStacks = options.evadeDisabled ? 0 : stacks(target, 'evade');
   const evasion = effectiveEvasion(ctx, target, options);

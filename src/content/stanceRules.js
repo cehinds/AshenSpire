@@ -1,5 +1,6 @@
 // Configurable stance defaults, shared by both combatants.
 export const stanceRules = Object.freeze({
+  evasionPerStack: 3, sweepPrecisionBase: -1, sweepPerAdditionalTarget: 1,
   roundStartDecay: Object.freeze({ evade: 1 }),
   fallbackPoise: 3,
   smashMultiplier: 1.5, counterMultiplier: 1.5, sweepCounterMultiplier: 2,

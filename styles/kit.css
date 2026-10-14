@@ -6418,3 +6418,6 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 :root .combat .combatant .combat-hit-chance[data-roll-mode='disadvantage'] { color: #ff8179; }
 
 :root .combat .combatant .combat-health-evade-icon svg { width: .85em; height: .85em; display: block; }
+
+:root .combat .combatant .combat-health-meter .m-value,
+:root .combat .combatant .combat-health-meter .m-value::after { -webkit-text-stroke: 1px #000; paint-order: stroke fill; }
