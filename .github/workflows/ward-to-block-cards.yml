@@ -44,6 +44,8 @@ jobs:
           tests/combat-card-presentation.test.mjs tests/combat-sigils.test.mjs
           tests/combat-expansion-tactics.test.mjs tests/card-surface-consistency.test.mjs
       - name: Export exact compact and inspection card text
+        id: text
+        continue-on-error: true
         run: node tools/ward-to-block-card-text.mjs
       - name: Capture six production views and inspections
         id: capture
@@ -71,6 +73,10 @@ jobs:
               for (let i = 0; i < bytes.length; i += 16000) console.log('WARD_IMAGE_DATA ' + bytes.slice(i, i + 16000));
               console.log('WARD_IMAGE_END ' + file);
             }
+            if (existsSync(dir + '/card-text.json')) {
+              const text = JSON.parse(readFileSync(dir + '/card-text.json', 'utf8'));
+              console.log('WARD_TEXT_SUMMARY ' + JSON.stringify({ assumptions: text.assumptions, liveExamples: text.liveExamples, cards: text.cards.filter(card => ['fireCounter', 'frostCounter', 'forceCounter', 'crystalBarrier', 'sweepingBlow', 'dodgeRoll'].includes(card.ref.cardId) && !card.ref.upgraded).slice(0,24) }));
+            }
             if (existsSync(dir + '/report.json')) console.log('WARD_REPORT ' + readFileSync(dir + '/report.json', 'utf8').replace(/\n/g, ' '));
           }
           NODE
@@ -78,5 +84,6 @@ jobs:
         if: always()
         env:
           TEST_RESULT: ${{ steps.tests.outcome }}
+          TEXT_RESULT: ${{ steps.text.outcome }}
           CAPTURE_RESULT: ${{ steps.capture.outcome }}
-        run: test "$TEST_RESULT" = success && test "$CAPTURE_RESULT" = success
+        run: test "$TEST_RESULT" = success && test "$TEXT_RESULT" = success && test "$CAPTURE_RESULT" = success
