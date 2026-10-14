@@ -1,0 +1,79 @@
+{
+  "action": "weapon:attack:single-sword",
+  "aliases": [
+    "weapon:attack:single-sword",
+    "weapon:spell:single-sword",
+    "weapon:ranged:single-sword",
+    "weapon:rangedMagic:single-sword"
+  ],
+  "origin": "offensive",
+  "timing": {
+    "totalMs": 405,
+    "impactMs": 112.5
+  },
+  "registeredSequence": {
+    "poses": [
+      "herald.single-sword.attack.anticipation",
+      "herald.single-sword.attack.strike",
+      "herald.single-sword.attack.follow-through",
+      "herald.single-sword.attack.recovery"
+    ],
+    "durations": [
+      150,
+      80,
+      130,
+      180
+    ],
+    "impact": 1,
+    "travel": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "hold": false,
+    "action": "attack"
+  },
+  "reviewFrames": [
+    {
+      "pose": "stance-offensive",
+      "label": "origin stance-offensive",
+      "weight": 1
+    },
+    {
+      "pose": "herald.single-sword.attack.anticipation",
+      "registeredFrameId": "herald.single-sword.attack.anticipation",
+      "label": "1/4 herald.single-sword.attack.anticipation \u00b7 weight 150",
+      "weight": 150,
+      "timeMs": 56.25
+    },
+    {
+      "pose": "herald.single-sword.attack.strike",
+      "registeredFrameId": "herald.single-sword.attack.strike",
+      "label": "2/4 herald.single-sword.attack.strike \u00b7 weight 80",
+      "weight": 80,
+      "timeMs": 142.5
+    },
+    {
+      "pose": "herald.single-sword.attack.follow-through",
+      "registeredFrameId": "herald.single-sword.attack.follow-through",
+      "label": "3/4 herald.single-sword.attack.follow-through \u00b7 weight 130",
+      "weight": 130,
+      "timeMs": 221.25
+    },
+    {
+      "pose": "herald.single-sword.attack.recovery",
+      "registeredFrameId": "herald.single-sword.attack.recovery",
+      "label": "4/4 herald.single-sword.attack.recovery \u00b7 weight 180",
+      "weight": 180,
+      "timeMs": 337.5
+    },
+    {
+      "pose": "stance-offensive",
+      "label": "return Attack",
+      "weight": 1
+    }
+  ],
+  "capture": "Actual mounted combat stage canvas; review timing separate from Normal gameplay",
+  "sharedPhaseArtWith": []
+}

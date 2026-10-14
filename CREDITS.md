@@ -1,5 +1,19 @@
 # Credits & Asset Licenses
 
+## Starter-class Smash paintings (2026-10-14)
+
+The Rogue dagger-and-buckler, Starseer ash-staff and Herald bone-sceptre
+[Smash strips](pose-studio/stances/class-smash/README.md) are first-party
+OpenAI ImageGen paintings created under human direction from the shipped rear-view
+class seeds. Each complete strip was generated in one edit; director-requested
+anatomy, handedness and rear-facing corrections are retained with prompts and
+raw source hashes in each class provenance record. Five slots repeat the exact
+held bookend around takeoff, airborne load and ground impact. Normalization uses
+one shared scale and fixed world ground registration per class, preserving the
+airborne displacement. Full/Lite WebPs and production registration preserve
+source hashes; review GIF exposures are separate from gameplay timing. No
+third-party artwork was downloaded and no third-party licence is asserted.
+
 ## Card art library (2026-10-12)
 
 The 60 original paintings under `assets/cards/library/` were generated with

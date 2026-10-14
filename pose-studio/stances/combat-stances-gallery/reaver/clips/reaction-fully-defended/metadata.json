@@ -1,0 +1,85 @@
+{
+  "action": "reaction:fully-defended",
+  "aliases": [],
+  "origin": "defensive",
+  "timing": {
+    "totalMs": 422.5,
+    "impactMs": 0
+  },
+  "registeredSequence": {
+    "poses": [
+      "pilot-defend",
+      "pilot-impact-v",
+      "pilot-impact-g",
+      "pilot-impact-h",
+      "pilot-counter",
+      "pilot-defend"
+    ],
+    "durations": [
+      2,
+      3,
+      1,
+      2,
+      3,
+      2
+    ],
+    "impact": 0,
+    "travel": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "hold": false,
+    "pilot": true,
+    "reaction": false
+  },
+  "reviewFrames": [
+    {
+      "pose": "pilot-defend",
+      "registeredFrameId": "pilot-defend",
+      "label": "pilot-defend \u00b7 weight 2",
+      "weight": 2,
+      "atMs": 92.29999999701977
+    },
+    {
+      "pose": "pilot-impact-v",
+      "registeredFrameId": "pilot-impact-v",
+      "label": "pilot-impact-v \u00b7 weight 3",
+      "weight": 3,
+      "atMs": 342.29999999701977
+    },
+    {
+      "pose": "pilot-impact-g",
+      "registeredFrameId": "pilot-impact-g",
+      "label": "pilot-impact-g \u00b7 weight 1",
+      "weight": 1,
+      "atMs": 542.5
+    },
+    {
+      "pose": "pilot-impact-h",
+      "registeredFrameId": "pilot-impact-h",
+      "label": "pilot-impact-h \u00b7 weight 2",
+      "weight": 2,
+      "atMs": 695.5
+    },
+    {
+      "pose": "pilot-counter",
+      "registeredFrameId": "pilot-counter",
+      "label": "pilot-counter \u00b7 weight 3",
+      "weight": 3,
+      "atMs": 942.1000000014901
+    },
+    {
+      "pose": "pilot-defend",
+      "registeredFrameId": "pilot-defend",
+      "label": "pilot-defend \u00b7 weight 2",
+      "weight": 2,
+      "atMs": 1192.2999999970198
+    }
+  ],
+  "capture": "Actual mounted combat stage canvas; review timing separate from Normal gameplay",
+  "sharedPhaseArtWith": []
+}
