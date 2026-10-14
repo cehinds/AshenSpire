@@ -15,9 +15,6 @@ export function cardTier(def) {
 
 const SWEEP_ANY_TIER = new Set(['whirlingGuard', 'sweepingBlow']);
 const SWEEP_T3 = new Set(['crimsonCleave', 'progression-ashen-cleaver']);
-const DEFEND_REACTION_T4 = new Set(['bracingStance', 'smokeBomb', 'vanish', 'progression-cinder-guard',
-  'progression-warbound-defiance', 'progression-pocket-coil', 'crystalBarrier', 'blightward',
-  'progression-lunar-aegis', 'progression-firmament-ward']);
 const COUNTER_NO_STRIKE = new Set(['dodgeRoll', 'evasiveGuard', 'backstep', 'acrobaticsRogue', 'nockAndWait', 'barrageCounter']);
 const SWEEP_STRIKE_T4 = new Set(['crimsonCleave', 'progression-ashen-cleaver']);
 const COUNTER_IMPACT_SPELL = new Set(['frostCounter', 'forceCounter', 'alterationCounter', 'illusionCounter',
@@ -47,7 +44,8 @@ function picks(def, profile, tier, rules) {
   // Reaction
   if (maneuver === 'counter' || def.evade != null) out.reaction = true;
   if (maneuver === 'sweep' && (SWEEP_ANY_TIER.has(id) || (SWEEP_T3.has(id) && tier >= 3))) out.reaction = true;
-  if (maneuver === 'defend' && DEFEND_REACTION_T4.has(id) && tier >= 4) out.reaction = true;
+  const rank = Array.isArray(def.gradeProfiles) ? def.abilityRank ?? 0 : def.rank ?? 1;
+  if (maneuver === 'defend' && rank >= 1) out.reaction = true;
 
   // Counterstrike
   if (maneuver === 'counter' && !COUNTER_NO_STRIKE.has(id)) out.counterstrike = true;

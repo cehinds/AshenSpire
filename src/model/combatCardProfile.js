@@ -85,7 +85,7 @@ export function combatProfileFor(carrier = {}) {
   if (traits.length) profile.traits = traits;
   // These are authored payloads, not guessed from a card's name or damage type.
   if (typeof carrier.reach === 'string' && carrier.range === undefined && RANGE.has(normalizeRange(carrier.reach))) profile.range = normalizeRange(carrier.reach);
-  for (const key of ['range', 'targeting', 'traits', 'projectile', 'counterCoverage', 'counterPayload',
+  for (const key of ['range', 'defenseRange', 'targeting', 'traits', 'projectile', 'counterCoverage', 'counterPayload',
     'evade', 'upcast', 'stanceTrigger', 'stanceExpiry', 'schoolEffect', 'caster', 'breakPoiseBonus', 'pronePoiseBonus', 'traitValues']) {
     if (carrier[key] !== undefined) profile[key] = structuredClone(carrier[key]);
   }

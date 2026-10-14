@@ -2,6 +2,7 @@
 // only by the v2 resolver; old runs continue to use their original definitions.
 import { applyCombatExpansionMartial } from './combatExpansionMartial.js';
 import { RANGES } from '../model/combatRanges.js';
+import { spellDefenseSplit } from '../model/spellDefense.js';
 const SCHOOL_IDS = {
   force: ['starstonePebble', 'cometFragment', 'starbladePhalanx', 'starShower', 'starSlicer', 'starlance', 'starstoneArc', 'moonrendCut', 'meteorite', 'meteorSwarm', 'astralCleave', 'radiantSpray', 'supernova', 'starstoneKris', 'starfallBeam', 'starcaller', 'shootingShard', 'celestialLance', 'progression-comet-needle', 'progression-falling-constellation'],
   frost: ['frostVeil', 'frostNova', 'progression-rime-mirror', 'progression-eclipse-lance'],
@@ -84,6 +85,16 @@ function rewriteTags(def, row, maneuver) {
   return tags;
 }
 
+// Protection range is separate from the authored offensive range. Only the
+// incoming range filter widens; camp, targeting and trait restrictions stay.
+function withSpellDefenseRange(def) {
+  if (!spellDefenseSplit(def, 0)) return def;
+  const defenseRange = def.defenseRange || 'ranged';
+  const ranges = RANGES.slice(0, RANGES.indexOf(defenseRange) + 1);
+  return { ...def, defenseRange,
+    ...(def.counterCoverage ? { counterCoverage: { ...def.counterCoverage, ranges } } : {}) };
+}
+
 export function applyCombatExpansionCard(def) {
   def = { ...applyCombatExpansionMartial(def), defenseRulesVersion: 2 };
   // Each paid Power instance leaves the usable deck for this combat. Its
@@ -92,7 +103,7 @@ export function applyCombatExpansionCard(def) {
     def = { ...def, keywords: [...(def.keywords || []), 'exhaust'] };
   }
   const row = combatExpansionSpellProfiles[def.equipmentProfileId] || combatExpansionCardOverlay[def.id];
-  if (!row) return def;
+  if (!row) return withSpellDefenseRange(def);
   const originalTags = def.cardTags || def.tags || [];
   const maneuver = row.maneuver || (COUNTERS[def.id] ? 'counter' : originalTags.find(tag => tag.startsWith('maneuver:'))?.slice(9)
     || (def.type === 'attack' ? 'casting' : null));
@@ -139,7 +150,7 @@ export function applyCombatExpansionCard(def) {
   card.effects = revise(card.effects, 50);
   if (card.upgrade?.effects) card.upgrade.effects = revise(card.upgrade.effects, 75);
   if (card.upcast && CHANCE_PRESSURE.has(def.id)) card.upcast.chancePerRank = 25;
-  return card;
+  return withSpellDefenseRange(card);
 }
 
 const counter = (id, school, { camps = ['spell'], ranges = ['melee', 'reach', 'ranged'], targeting = ['single'], poise = 0, ward = 2, cost = 1 } = {}) => ({

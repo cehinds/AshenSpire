@@ -125,7 +125,7 @@ test('per-tag card counts at tier 0 across every card', () => {
   console.log(`trait card counts (tier from rank, all ${allDefs.length} defs): ${JSON.stringify(counts)}`);
   // Flux +6: the Psychic and Earth spells Mind Spike, Mind Fracture, Waking Nightmare,
   // Stone Sling, Rockfall and Entomb (owner decision 5, 2026-10-12).
-  assert.deepEqual(counts, { reaction: 31, counterstrike: 22, impact: 60, flux: 76 });
+  assert.deepEqual(counts, { reaction: 82, counterstrike: 22, impact: 60, flux: 76 });
 });
 
 test('applyCardTraits reads Impact and Flux magnitudes from the fight rules', () => {
