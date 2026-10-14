@@ -9,7 +9,7 @@ import { reactionRulesSnapshot } from '../src/content/combatCardTraits.js';
 
 const registries = createRegistries(contentBundle);
 const rules = { combatExpansionVersion: 2, reactionRulesVersion: 2, breakMeterVersion: 2, reactionRules: reactionRulesSnapshot() };
-for (const cardId of ['crystalBarrier', 'starbladePhalanx', 'cinderSigil', 'strike', 'starstonePebble']) {
+for (const cardId of ['crystalBarrier', 'starbladePhalanx', 'cinderSigil', 'strike', 'starstonePebble', 'frostCounter', 'mindSpike']) {
   test(`${cardId}: non-combat definition matches combat before temporary modifiers`, () => {
     const ref = { cardId, abilityRank: 1 };
     const def = playingCardDefinition(registries, ref, { rules });
@@ -30,4 +30,16 @@ test('explicit definitions reach the model and live preview definitions take pri
   const live = { ...definition, name: 'Live barrier' };
   assert.equal(playingCardModel(registries, ref, { definition }).name, definition.name);
   assert.equal(playingCardDefinition(registries, ref, { definition, rules, preview: { resolvedDefinition: live } }), live);
+});
+
+test('unoverlaid expansion cards retain projected trait tags in every model path', () => {
+  const ref = { cardId: 'frostCounter', abilityRank: 1 };
+  const definition = playingCardDefinition(registries, ref, { rules });
+  assert.equal(definition.cardTags, undefined);
+  for (const opts of [{ rules }, { definition }, { preview: { resolvedDefinition: definition, values: [] } }]) {
+    const ids = playingCardModel(registries, ref, opts).tags.map(tag => tag.id);
+    for (const id of ['trait:reaction', 'trait:counterstrike', 'trait:impact', 'trait:flux']) {
+      assert.ok(ids.includes(id), `projected model keeps ${id}`);
+    }
+  }
 });

@@ -686,7 +686,8 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
     }
   }
   const service = tagService(registries);
-  const tags = def.cardTags != null ? service.resolve(def.cardTags) : service.tagsOf('card', def);
+  const tags = def.cardTags != null ? service.resolve(def.cardTags)
+    : def.traitValues && Array.isArray(def.tags) ? service.resolve(def.tags) : service.tagsOf('card', def);
   for (const tag of tags) { const row = numberedTraitRow(tag, def.traitValues); lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(row.blurb)}">${esc(row.label)}</span>`); }
   for (const tag of combatProfileTags(combatProfile, registries).filter(tag => !tags.some(existing => existing.id === tag.id))) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(tag.blurb)}">${esc(tag.label)}</span>`);
   if (lines.length) html += `<div class="inspection-tags">${[...new Set(lines)].join('')}</div>`;

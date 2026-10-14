@@ -365,7 +365,9 @@ export function playingCardModel(registries, ref, { preview = null, definition =
     ? service.resolve([...new Set(liveTagRows.flatMap((row) => row.tags))])
     : def.cardTags != null
       ? service.resolve(def.cardTags)
-      : service.tagsOf('card', def);
+      : def.traitValues && Array.isArray(def.tags)
+        ? service.resolve(def.tags)
+        : service.tagsOf('card', def);
   // Keep legacy schools for compatibility, but do not print Blood/Heavy twice
   // when the categorized theme/technique is the same visible word.
   const categorized = new Set(
