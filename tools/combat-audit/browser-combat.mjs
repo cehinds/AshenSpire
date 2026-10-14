@@ -20,6 +20,7 @@ const cardFilter = arg('card');
 const classFilter = arg('class');
 const variantFilter = arg('variant');
 const pace = arg('pace') || 'fast';
+const resumePath = arg('resume');
 const url = process.env.QA_BUILD_URL;
 const source = process.env.QA_SOURCE_URL || (url && new URL('./src/', url).href);
 const out = resolve(process.env.QA_OUTPUT || '/workspace/scratch/full-combat-audit/browser');
@@ -74,12 +75,25 @@ for (let i = 0; i < sourceFiles.length; i += 16) await Promise.all(sourceFiles.s
 const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const owner = await launchBrowser({ browser: process.env.CHROME || '/usr/bin/chromium', prefix: 'ca-' });
 const browser = await chromium.connectOverCDP(owner.wsUrl);
-const report = { url, source, build, sourceDigests, inventory, mode, pace, host: { cpuCount: cpus().length, load: loadavg(), freeMemory: freemem(), samples: [] },
+const report = resumePath ? JSON.parse(readFileSync(resolve(resumePath), 'utf8')) : { url, source, build, sourceDigests, inventory, mode, pace, host: { cpuCount: cpus().length, load: loadavg(), freeMemory: freemem(), samples: [] },
   fixture: 'Fresh createRunCombat from the screenshot run, canonical enemies/knowledge/moves, custom difficulty hpMult=20 and resource maxima 200. One registered card plus legal draw/discard fillers. Data fields only copied into the live fight; original runtime functions, listeners, dispatch, target resolver, renderer and timeline preserved. These are isolated fixtures, not earned playthroughs.',
   cases: [], errors: [], platformWarnings: [], networkFailures: [], animationDispatch: [], started: new Date().toISOString(), coverageLimits: [
     'Source-engine oracle parity proves compiled input and effect resolution match canonical source. Independent intended-effect/conditional trigger contracts are reported by the engine audit.',
     'Relic/status registries are inventoried here; exhaustive relic/status activation belongs to the engine audit.',
   ] };
+if (resumePath) {
+  assert.deepEqual(report.build, build, 'resumed artifact identity');
+  assert.deepEqual(report.sourceDigests, sourceDigests, 'resumed immutable source identity');
+  report.runs ||= [{ pace: report.pace, started: report.started }];
+  report.runs.push({ pace, started: new Date().toISOString(), resumedFrom: resumePath });
+  report.pace = pace; delete report.finished; delete report.counts;
+}
+const caseKey = row => [row.device, row.classId, row.category || 'card', row.cardId, row.variant].join('/');
+const latestCases = new Map(report.cases.map(row => [caseKey(row), row]));
+const completedCase = (device, classId, row) => {
+  const entry = latestCases.get(caseKey({ device, classId, ...row }));
+  return entry && ['passed','expected-refusal'].includes(entry.status) ? entry : null;
+};
 let activeCase = null;
 const checkpoint = () => writeFileSync(resolve(out, `report-${mode}-${deviceFilter || 'both'}-${classFilter || 'all'}-${variantFilter || 'all'}.json`), JSON.stringify(report, null, 2));
 const tap = async (page, locator, device) => device === 'phone' ? locator.tap({ timeout: 6000 }) : locator.click({ timeout: 6000 });
@@ -135,6 +149,8 @@ async function fixture(page, row) {
     const inst = { cardId: row.cardId || 'strike', instanceId: row.instanceId, upgraded: row.variant === 'upgraded',
       ...(row.school ? { damageSchool: row.school } : {}) };
     run.deck = [...run.deck, inst, ...Array.from({ length: 10 }, (_, i) => ({ cardId: i % 2 ? 'defend' : 'strike', instanceId: `audit-fill-${row.instanceId}-${i}`, upgraded: false }))];
+    const prefix = row.prePlayCard ? { cardId: row.prePlayCard, instanceId: `${inst.instanceId}-prefix`, upgraded: false } : null;
+    if (prefix) run.deck.push(prefix);
     window.__auditInstanceId = inst.instanceId;
     const enemies = row.enemyIds || ['wanderingSoldier', 'wanderingSoldier'];
     const encounter = c.registries.encounters.all().find(e => enemies.every(id => e.enemies.includes(id)));
@@ -150,7 +166,7 @@ async function fixture(page, row) {
     // Runtime closures retain the original fight identity. Only serializable data changes.
     for (const key of Object.keys(c)) if (typeof c[key] !== 'function' && key !== 'registries' && key !== 'rng') delete c[key];
     for (const [key, value] of Object.entries(fresh)) if (typeof value !== 'function' && key !== 'registries' && key !== 'rng') c[key] = value;
-    c.piles.hand = [inst, ...c.piles.hand.filter(i => i.instanceId !== inst.instanceId).slice(0, 2)];
+    c.piles.hand = [inst, ...(prefix ? [prefix] : []), ...c.piles.hand.filter(i => i.instanceId !== inst.instanceId && i.instanceId !== prefix?.instanceId).slice(0, 2)];
     c.piles.draw = run.deck.filter(i => !c.piles.hand.some(h => h.instanceId === i.instanceId));
     c.piles.discard = []; c.piles.exhaust = [];
     c.player.energy = row.deniedCost ? 0 : 20; c.player.energyMax = 20;
@@ -236,7 +252,7 @@ async function play(page, device, row, before) {
     await card.locator('.card-upcast-rank').selectOption(String(row.upcastTier));
   }
   if (row.sampleAnimation) {
-    await page.waitForFunction(() => !!document.querySelector('.combatant.player .alternative-card-stage')?.__poseStage, null, { timeout: 10000 });
+    await page.waitForFunction(() => !!document.querySelector('.combatant.player .alternative-card-stage')?.__poseStage, null, { timeout: 600 }).catch(() => {});
     await page.evaluate(async () => {
     await document.querySelector('.combatant.player .alternative-card-stage')?.__poseStage?.ready;
     await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
@@ -353,10 +369,19 @@ async function runCase(page, device, classId, row) {
   row.instanceId = `audit-${report.cases.length}-${row.cardId}-${row.variant}`;
   activeCase = { device, classId, ...row };
   const entry = { ...activeCase, status: 'running' }; report.cases.push(entry);
+  latestCases.set(caseKey(entry), entry);
   const errorStart = report.errors.length;
   const audioStart = page.__auditAudioNodes.length, networkStart = report.networkFailures.length;
   try {
     entry.before = await fixture(page, row);
+    if (row.prePlayCard) {
+      const instanceId = `${row.instanceId}-prefix`;
+      await page.evaluate(instanceId => window.__auditOracleDispatch(window.__auditOracle, { type: 'playCard', cardInstanceId: instanceId }), instanceId);
+      await tap(page, page.locator(`.hand .card[data-instance-id="${instanceId}"]`), device);
+      await tap(page, page.locator('.combatant.player .player-action-intent'), device);
+      await page.waitForFunction(id => window.__combat.eventLog.some(e => e.type === 'cardPlayed' && e.cardInstanceId === id), instanceId);
+      await finishPending(page, device);
+    }
     entry.input = await play(page, device, row, entry.before);
     if (row.recoverControl) {
       const refusalEvidence = entry.input;
@@ -382,7 +407,8 @@ async function runCase(page, device, classId, row) {
       const firstAction = frames.findIndex(f => f.action);
       const origin = frames.slice(0, Math.max(0, firstAction)).findLast(f => f.pose?.startsWith('stance-'));
       report.animationDispatch.push({ device, classId, cardId: row.cardId, receiptId: row.instanceId, dispatchType: 'paid-card', cardPlayed: entry.after.events.some(e => e.type === 'cardPlayed'),
-        presentationKind: entry.before.tags.includes('maneuver:counter') ? 'held-preparation' : 'finite-playback',
+        presentationKind: entry.after.events.some(e => e.type === 'combatCounterTriggered' && e.cardInstanceId === row.instanceId) ? 'counter-return'
+          : entry.before.tags.includes('maneuver:counter') ? 'held-preparation' : 'finite-playback',
         frameChanged: new Set(actionFrames.map(f => f.hash).filter(h => typeof h === 'number')).size > 1, actionStarted: actionFrames.length > 0,
         actionCompleted: actionFrames.length > 0 && !frames.at(-1)?.action,
         returnedToOrigin: !!origin && origin.pose === frames.at(-1)?.pose, origin, tags: entry.before.tags, before: frames[0], after: frames.at(-1), frames });
@@ -441,12 +467,15 @@ try {
         for (const variant of variants) {
           const row = { cardId: card.id, variant, category: 'card', figureTarget: card.id.length % 2 === 0,
             sampleAnimation: pace === 'normal' && variant === 'base' && ['strike','defend','starSpark','guardCounter','sweepingBlow','crimsonCleave','quickstep','bindingParry','ricochet','cometFragment','litany','bloodPact','bashingBlow','evasiveGuard','wardingStar','nockAndWait'].includes(card.id) };
-          const entryIndex = report.cases.length;
-          if (!await runCase(page, device, classId, row)) {
+          let baseEntry = completedCase(device, classId, row);
+          if (!baseEntry && !await runCase(page, device, classId, row)) {
             await page.close(); page = await boot(context, classId);
           }
-          if (variant === 'base' && (!variantFilter || variantFilter === 'all')) for (const upcastTier of report.cases[entryIndex].before?.upcastTiers || [])
-            if (!await runCase(page, device, classId, { ...row, variant: `upcast-${upcastTier}`, upcastTier, sampleAnimation: false })) { await page.close(); page = await boot(context, classId); }
+          baseEntry ||= latestCases.get(caseKey({ device, classId, ...row }));
+          if (variant === 'base' && (!variantFilter || variantFilter === 'all')) for (const upcastTier of baseEntry.before?.upcastTiers || []) {
+            const upcast = { ...row, variant: `upcast-${upcastTier}`, upcastTier, sampleAnimation: false };
+            if (!completedCase(device, classId, upcast) && !await runCase(page, device, classId, upcast)) { await page.close(); page = await boot(context, classId); }
+          }
         }
       }
       if (mode === 'negatives') {
@@ -466,7 +495,10 @@ try {
           { cardId: 'strike', enemyIds: ['gildedKnight'], category: 'enemy-reaction', endTurn: true },
           { cardId: 'defend', enemyIds: ['wanderingSoldier'], category: 'guarded-enemy-turn', endTurn: true },
           { cardId: 'evasiveGuard', enemyIds: ['wanderingSoldier'], category: 'evade-enemy-turn', endTurn: true },
-          ...(classId === 'reaver' ? [{ cardId: 'guardCounter', enemyIds: ['wanderingSoldier'], category: 'guard-counter-return', endTurn: true }] : []),
+          ...(classId === 'reaver' ? [
+            { cardId: 'guardCounter', enemyIds: ['wanderingSoldier'], category: 'guard-counter-return', endTurn: true, prePlayCard: 'defend' },
+            { cardId: 'dodgeRoll', enemyIds: ['wanderingSoldier'], category: 'evasion-counter-return', endTurn: true, prePlayCard: 'defend' },
+          ] : []),
           { cardId: 'strike', enemyStatuses: [{ status: 'invulnerability', stacks: 1 }], category: 'damage-without-health-loss' },
           { cardId: 'strike', enemyIds: ['wanderingSoldier'], category: 'victory-reward', victory: true },
         ];
@@ -499,7 +531,8 @@ try {
   }
 } finally {
   report.finished = new Date().toISOString();
-  report.counts = Object.fromEntries(['passed', 'expected-refusal', 'failed'].map(status => [status, report.cases.filter(c => c.status === status).length]));
+  report.counts = Object.fromEntries(['passed', 'expected-refusal', 'failed'].map(status => [status, [...latestCases.values()].filter(c => c.status === status).length]));
+  report.attempts = report.cases.length;
   checkpoint(); await browser.close(); await owner.close();
 }
 console.log(JSON.stringify({ counts: report.counts, out }));
