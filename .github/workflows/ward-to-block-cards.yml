@@ -1,0 +1,80 @@
+name: WardToBlock card evidence
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'tools/ward-to-block-cards-qa.mjs'
+      - '.github/workflows/ward-to-block-cards.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ward-to-block-cards-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  cards:
+    if: github.head_ref == 'feature/WardToBlock' || github.ref_name == 'feature/WardToBlock'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      ASHEN_ART_SOURCE: cache
+      WARD_CARD_QA_OUT: outputs/ward-to-block
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          lfs: false
+      - uses: ./.github/actions/setup-node
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: all
+      - uses: ./.github/actions/which-browser
+      - name: Install browser driver
+        run: npm install --no-save --no-package-lock playwright@1.56.1
+      - name: Targeted card and combat tests
+        id: tests
+        continue-on-error: true
+        run: >-
+          node --test tests/spell-defense.test.mjs
+          tests/spell-defense-ranges.test.mjs tests/counter-return-range.test.mjs
+          tests/card-classification.test.mjs tests/combat-reaction-stack.test.mjs
+          tests/playing-card-model.test.mjs tests/ability-card-identity.test.mjs
+          tests/combat-card-presentation.test.mjs tests/combat-sigils.test.mjs
+          tests/combat-expansion-tactics.test.mjs
+      - name: Capture six production views and inspections
+        id: capture
+        continue-on-error: true
+        run: node tools/ward-to-block-cards-qa.mjs
+      - name: Upload screenshots and exact visible text
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ward-to-block-cards-${{ github.event.pull_request.head.sha || github.sha }}
+          path: outputs/ward-to-block/
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Inline screenshot evidence
+        if: always()
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { existsSync, readdirSync, readFileSync } from 'node:fs';
+          const dir = 'outputs/ward-to-block';
+          if (existsSync(dir)) {
+            for (const file of readdirSync(dir).filter(file => /\.jpe?g$/.test(file)).sort()) {
+              const bytes = readFileSync(dir + '/' + file).toString('base64');
+              console.log('WARD_IMAGE_START ' + file);
+              for (let i = 0; i < bytes.length; i += 16000) console.log('WARD_IMAGE_DATA ' + bytes.slice(i, i + 16000));
+              console.log('WARD_IMAGE_END ' + file);
+            }
+            if (existsSync(dir + '/report.json')) console.log('WARD_REPORT ' + readFileSync(dir + '/report.json', 'utf8').replace(/\n/g, ' '));
+          }
+          NODE
+      - name: Require tests and all requested captures
+        if: always()
+        env:
+          TEST_RESULT: ${{ steps.tests.outcome }}
+          CAPTURE_RESULT: ${{ steps.capture.outcome }}
+        run: test "$TEST_RESULT" = success && test "$CAPTURE_RESULT" = success
