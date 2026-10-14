@@ -16,6 +16,8 @@ const browser = await chromium.launch({ headless: true, executablePath: process.
 const errors = [];
 const closingPages = new WeakSet();
 const teardownAborts = [];
+const imageCancellations = [];
+const cancellationChecks = [];
 const views = {};
 const report = {
   head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
@@ -26,6 +28,7 @@ const report = {
   failures: [],
   browserErrors: errors,
   teardownAborts,
+  imageCancellations,
 };
 let page;
 let fixtureSeq = 0;
@@ -77,6 +80,34 @@ async function boot(viewport, query = '') {
   page.setDefaultTimeout(15000);
   page.on('pageerror', error => errors.push(error.message));
   const observedPage = page;
+  await page.addInitScript(() => {
+    // Record actual DOM image replacement/removal, rather than assuming that
+    // every aborted image was an animation. Keep exact resolved source URLs.
+    const changes = window.__stanceQaImageChanges = [];
+    const record = (source, kind) => {
+      if (!source) return;
+      let url;
+      try { url = new URL(source, document.baseURI).href; } catch { return; }
+      changes.push({ url, kind, at: Date.now(), fixture: window.__stanceQaFixture || 0 });
+      if (changes.length > 2000) changes.shift();
+    };
+    new MutationObserver(records => {
+      for (const mutation of records) {
+        if (mutation.type === 'attributes' && mutation.target.tagName === 'IMG') {
+          const previous = mutation.oldValue;
+          if (previous && previous !== mutation.target.getAttribute('src')) record(previous, 'src-replaced');
+        }
+        for (const removed of mutation.removedNodes || []) {
+          const images = removed.nodeType === 1
+            ? [...(removed.tagName === 'IMG' ? [removed] : []), ...removed.querySelectorAll('img')] : [];
+          for (const image of images) {
+            record(image.currentSrc, 'image-removed');
+            record(image.getAttribute('src'), 'image-removed');
+          }
+        }
+      }
+    }).observe(document, { subtree: true, childList: true, attributes: true, attributeFilter: ['src'], attributeOldValue: true });
+  });
   page.on('requestfailed', request => {
     const errorText = request.failure()?.errorText || '';
     // Sprite frame preloads may still be in flight after document images decode.
@@ -86,8 +117,33 @@ async function boot(viewport, query = '') {
       teardownAborts.push({ url: request.url(), errorText });
       return;
     }
-    errors.push('request failed: ' + request.url() + ' ' + errorText
-      + ' [fixture=' + fixtureSeq + ', pageClosing=' + closingPages.has(observedPage) + ', pageClosed=' + observedPage.isClosed() + ']');
+    const failure = 'request failed: ' + request.url() + ' ' + errorText
+      + ' [fixture=' + fixtureSeq + ', pageClosing=' + closingPages.has(observedPage) + ', pageClosed=' + observedPage.isClosed() + ']';
+    if (errorText !== 'net::ERR_ABORTED' || request.resourceType() !== 'image'
+      || new URL(request.url()).origin !== base) {
+      errors.push(failure);
+      return;
+    }
+    const cancellation = { url: request.url(), errorText, fixture: fixtureSeq, verified: false };
+    imageCancellations.push(cancellation);
+    cancellationChecks.push(observedPage.evaluate(async ({ url, fixture }) => {
+      const change = [...(window.__stanceQaImageChanges || [])].reverse().find(entry =>
+        entry.url === url && entry.fixture === fixture && Date.now() - entry.at <= 5000);
+      if (!change) throw new Error('no matching recent image source replacement or removal');
+      // Verify the exact cancelled URL, not a fallback or a related frame.
+      const response = await fetch(url, { cache: 'reload', signal: AbortSignal.timeout(10000) });
+      if (!response.ok) throw new Error('asset verification HTTP ' + response.status);
+      const bitmap = await createImageBitmap(await response.blob());
+      const width = bitmap.width, height = bitmap.height;
+      bitmap.close();
+      if (!width || !height) throw new Error('asset verification decoded no pixels');
+      return { change, status: response.status, width, height };
+    }, { url: cancellation.url, fixture: cancellation.fixture }).then(result => {
+      Object.assign(cancellation, result, { verified: true });
+    }).catch(error => {
+      cancellation.verificationError = error.message;
+      errors.push(failure + ' [image cancellation verification failed: ' + error.message + ']');
+    }));
   });
   await page.goto(base + '/?shot=combat&shotClass=starseer&shotExpansion=ward' + query, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.locator('.combat').waitFor({ state: 'visible', timeout: 60000 });
@@ -100,6 +156,7 @@ async function closePage(target) {
   // count as live-page errors. A bounded wait also permits teardown of a page
   // with a stalled connection; only its explicit abort is classified below.
   await target.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
+  await Promise.all(cancellationChecks);
   closingPages.add(target);
   await target.close();
 }
@@ -118,6 +175,7 @@ async function waitActionSettled() {
 async function remount(cards, options = {}) {
   const sequence = ++fixtureSeq;
   await page.evaluate(async ({ cards, options, sequence }) => {
+    window.__stanceQaFixture = sequence;
     const { mountCombat } = await import('/src/ui/screens/combat.js');
     const { createRunState } = await import('/src/model/state.js');
     const combat = window.__combat, registries = combat.registries;
@@ -356,24 +414,6 @@ try {
   });
   assert.ok(chances[0] > chances[1] && chances[1] > chances[2], 'accuracy modes order hit chances advantage > neutral > disadvantage');
 
-  // Focus motes are a six-frame cast animation. Production warms them without
-  // awaiting decode and swaps the visible img.src on a timer, so a cold frame
-  // can be cancelled by the next frame even while the page remains live.
-  // These are screenshot fixtures: decode the actual configured art first,
-  // with no fallback or swallowed load failure, before capturing timed callouts.
-  report.predecodedEffectFrames = await page.evaluate(async () => {
-    const { combatEffectFrames } = await import('/src/ui/assets.js');
-    const { currentArtUrl } = await import('/src/ui/highResArt.js');
-    return Promise.all(combatEffectFrames('focusMotes').map(async frame => {
-      const image = new Image();
-      image.src = currentArtUrl(frame);
-      try { await image.decode(); }
-      catch (error) { throw new Error('QA effect frame failed to decode: ' + image.src + ': ' + error.message); }
-      if (!image.naturalWidth || !image.naturalHeight) throw new Error('QA effect frame has no pixels: ' + image.src);
-      return image.src;
-    }));
-  });
-
   // Capture event callouts while the real action is in progress. Hit reports
   // are captured on the first callout frame, before the later damage callout.
   for (const [name, options, kind, label] of [
@@ -401,6 +441,7 @@ try {
     // next fixture or checking the final network audit.
     await waitActionSettled();
   }
+  await Promise.all(cancellationChecks);
   report.browserErrors = errors;
   writeFileSync(resolve(OUT, 'report.json'), JSON.stringify(report, null, 2) + '\n');
   assert.equal(errors.length, 0, errors.join('\n'));
