@@ -2884,8 +2884,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   });
   endTurnBeat.refresh();
 
-  const showDraw = () => openPileModal(registries, 'Draw pile', combat.piles.draw, { shuffleForDisplay: true });
-  const showSpent = () => openSpentPileModal(registries, combat.piles, $('.pile.spent'));
+  const showDraw = () => openPileModal(registries, 'Draw pile', combat.piles.draw, { shuffleForDisplay: true, rules: combat });
+  const showSpent = () => openSpentPileModal(registries, combat.piles, $('.pile.spent'), { rules: combat });
 
   $('.pile.draw').addEventListener('click', showDraw);
   $('.pile.spent').addEventListener('click', showSpent);

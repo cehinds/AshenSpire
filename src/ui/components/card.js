@@ -21,6 +21,7 @@ import { esc } from './tooltip.js';
 import { statusTooltipText } from '../uiContent.js';
 import { balance } from '../../content/balance.js';
 import { flasks } from '../../content/flasks.js';
+import { cardTagExplanation } from '../../model/cardTagExplanation.js';
 import { tagService } from '../../model/tagService.js';
 import { metadataFooter, artworkAnchor } from '../models/IdentityModel.js';
 import { cardArtFallbacks } from '../cardArtwork.js';
@@ -37,6 +38,7 @@ import { ashenBlightCardLabel } from './ashenBlight.js';
 import { ACTION_SIGILS, SCHOOL_SIGILS, cardSigilIdentity } from '../../content/combatSigils.js';
 import { compactCardRules, sigilExplanationHtml } from './combatSigilView.js';
 import { cardFaceLines } from '../../model/cardFaceText.js';
+import { spellDefenseSplit } from '../../model/spellDefense.js';
 
 // WCI3: rarity at the start of the band, the owned count at the end, each only
 // when the surface can state it. No domain action ever belongs in this band.
@@ -104,6 +106,21 @@ export function relicText(def, registries = null) {
 function fillTemplate(def, tokens, baseTokens, damageSequences = []) {
   let template = def.textTemplate;
   const liveTokens = { ...tokens };
+  let comparedTokens = baseTokens;
+  // Complex cards retain authored clauses; their defensive amount still reads
+  // the same allocation as the compact face and combat execution.
+  template = template.replace(/\{((?:gainBarrier|block)(?:\.\d+)?)\}(?: (?:temporary )?(?:Barrier|Ward|Block))?/g, (match, token) => {
+    if (token.startsWith('block') && def.defenseRulesVersion !== 2 && def.minCombatExpansionVersion !== 2) return match;
+    const liveBlock = liveTokens[token + '.block'], liveWard = liveTokens[token + '.ward'];
+    const split = Number.isFinite(liveBlock) && Number.isFinite(liveWard)
+      ? { block: liveBlock, ward: liveWard } : spellDefenseSplit(def, liveTokens[token]);
+    if (!split) return match;
+    liveTokens[token + '.block'] = split.block;
+    liveTokens[token + '.ward'] = split.ward;
+    const baseSplit = baseTokens && spellDefenseSplit(def, baseTokens[token]);
+    if (baseSplit) comparedTokens = { ...comparedTokens, [token + '.block']: baseSplit.block, [token + '.ward']: baseSplit.ward };
+    return `{${token}.block} Block, {${token}.ward} Ward`;
+  });
   for (const sequence of damageSequences) {
     if (!sequence?.amountToken || !sequence?.hitsToken || !Array.isArray(sequence.hitDamages)
       || sequence.hitDamages.length < 2 || sequence.hitDamages.every(amount => amount === sequence.hitDamages[0])) continue;
@@ -119,9 +136,9 @@ function fillTemplate(def, tokens, baseTokens, damageSequences = []) {
     const v = liveTokens[tok];
     if (v == null) return m;
     let cls = 'val';
-    if (baseTokens && typeof v === 'number' && typeof baseTokens[tok] === 'number') {
-      if (v > baseTokens[tok]) cls += ' up';
-      else if (v < baseTokens[tok]) cls += ' down';
+    if (comparedTokens && typeof v === 'number' && typeof comparedTokens[tok] === 'number') {
+      if (v > comparedTokens[tok]) cls += ' up';
+      else if (v < comparedTokens[tok]) cls += ' down';
     }
     return `<span class="${cls}">${esc(v)}</span>`;
   });
@@ -153,11 +170,9 @@ export function renderCard(registries, ref, opts = {}) {
   const rawModel = playingCardModel(registries, ref, { preview: opts.preview || null, definition: def });
   const combatProfile = combatProfileFor(def);
   const combatTags = combatProfileTags(combatProfile, registries);
-  const expanded = opts.preview?.combatExpansionVersion === 2 || def.minCombatExpansionVersion === 2;
-  const stanceLabel = combatProfile.maneuver && `${combatProfile.maneuver[0].toUpperCase()}${combatProfile.maneuver.slice(1)}`;
-  const model = { ...rawModel, ...(expanded && stanceLabel ? { type: { ...rawModel.type, label: stanceLabel,
-    subtype: combatProfile.camp === 'spell' ? 'Spell' : 'Martial' } } : {}),
-    ...(expanded ? { faceType: combatCardType(def) } : {}),
+  const expanded = opts.preview?.combatExpansionVersion === 2 || opts.rules?.combatExpansionVersion === 2
+    || def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2;
+  const model = { ...rawModel, ...(expanded ? { faceType: combatCardType(def) } : {}),
     tags: [...rawModel.tags, ...combatTags.filter(tag => !rawModel.tags.some(existing => existing.id === tag.id))] };
   model.sideTags = cardSideTags(model, def, registries, opts.preview || null);
   // The combat hand's range chip (opts.range), by the same rule the deck editor uses.
@@ -173,8 +188,10 @@ export function renderCard(registries, ref, opts = {}) {
     model.sigils.school && `${SCHOOL_SIGILS[model.sigils.school].label} school`,
     damageWords.length && `Damage: ${damageWords.join(', ')}`,
     ...model.sideTags.map(tag => tag.label),
-    model.abilityRank !== null && rawModel.type.label,
-    model.abilityRank !== null && rawModel.type.subtype,
+    rawModel.type.label,
+    rawModel.type.subtype,
+    rawModel.type.abilityLabel,
+    rawModel.type.weaponArt,
     model.abilityRank !== null ? `rank ${model.abilityRank}` : model.rankBadge?.toLowerCase(),
   ].filter(Boolean).join(', ') + (opts.inspectReadOnly && opts.inspection !== false ? '. Enter to inspect. On touch, tap then Information.' : '');
   const sourcePiece = ref.sourceArmamentId
@@ -551,10 +568,13 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
  */
 export function cardPlainText(registries, ref, opts = {}) {
   const def = playingCardDefinition(registries, ref, opts);
-  const lines = opts.rules?.combatExpansionVersion === 2 ? cardFaceLines(def, null, registries) : null;
+  const model = opts.preview ? playingCardModel(registries, ref, { ...opts, definition: def })
+    : { tokens: staticTokens(def), damageSequences: [] };
+  const lines = opts.rules?.combatExpansionVersion === 2 || opts.preview?.combatExpansionVersion === 2
+    ? cardFaceLines(def, opts.preview || null, registries) : null;
   // Plain string work only: no DOM, so it runs the same headless and in a
   // browser. Tags go first; &amp; is decoded last so "&amp;lt;" stays literal.
-  return String(lines ? lines.map(line => line.html).join(' · ') : fillTemplate(def, staticTokens(def), null))
+  return String(lines ? lines.map(line => line.html).join(' · ') : fillTemplate(def, model.tokens, null, model.damageSequences))
     .replace(/<[^>]+>/g, '')
     .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
     .replace(/&amp;/g, '&')
@@ -613,9 +633,10 @@ function glossaryEntry(registries, kind, id) {
 
 /** W1h: the read-only reading a pile viewer shows beside its collection —
  *  the same body the card's own inspect door and tooltip use. */
-export function cardDetailHtml(registries, ref) {
-  const def = resolveCard(registries, ref);
-  return cardTooltip(registries, def, playingCardModel(registries, ref).tokens);
+export function cardDetailHtml(registries, ref, opts = {}) {
+  const def = playingCardDefinition(registries, ref, opts);
+  const model = playingCardModel(registries, ref, { ...opts, definition: def });
+  return cardTooltip(registries, def, model.tokens, model.hasPreview ? model.costs : null, model.damageSequences);
 }
 
 function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences = []) {
@@ -629,8 +650,10 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
     + (pools.mana ? ` + ${esc(pools.mana)} ${word('mana')}` : '');
   // THE TITLE IS THE NAME AND NOTHING ELSE (kit §08): type and cost sit on the
   // meta line as the same tag and value atoms the card face uses.
+  const identity = playingCardModel(registries, { cardId: def.id }, { definition: def });
+  const typeText = [identity.type.label, identity.type.subtype, identity.type.abilityLabel, identity.type.weaponArt].filter(Boolean).join(' · ');
   let html = `<div class="tt-title">${esc(def.name)}</div>`
-    + `<div class="ti-meta"><span class="as-tag">${esc(def.type)}</span><span class="ti-cost">${costText}</span></div>`;
+    + `<div class="ti-meta"><span class="as-tag">${esc(typeText)}</span><span class="ti-cost">${costText}</span></div>`;
   if (pools.estimated) html += '<div class="combat-rule-hint">Estimated price; temporary discounts may lower it.</div>';
   // Card text here too — same function, same marks, same class. The in-play
   // card tooltip had the identical defect; it is one fix, not two.
@@ -643,6 +666,14 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
       const coverage = [c.camps, c.ranges, c.targeting, c.effects].map(ids => (ids || []).map(id => names[id] || id).join(' + ')).filter(Boolean).join(' · ');
       html += `<div class="combat-rule-hint"><strong>Counter coverage:</strong> ${esc(coverage)}${c.schools ? ` · ${esc(c.schools.join(' + '))}` : ''}. Return once after all covered damage and status pressure is resisted. Evade and Invulnerability give no return. The prepared stance remains until another maneuver replaces it.</div>`;
     } else html += '<div class="combat-rule-hint">Prepare counter until next player turn. Listed damage and Poise damage become retaliation after full Guard or Ward absorption; card support effects resolve when played.</div>';
+  }
+  if (def.defenseRange) html += `<div class="combat-rule-hint"><strong>Defense range:</strong> ${esc(def.defenseRange[0].toUpperCase() + def.defenseRange.slice(1))} · Covers ${esc(['melee', 'reach', 'ranged'].slice(0, ['melee', 'reach', 'ranged'].indexOf(def.defenseRange) + 1).map(range => t('deckEditor.range.' + range)).join(' + '))}.</div>`;
+  if (identity.cardCategory === 'stance') {
+    html += `<div class="combat-rule-hint"><strong>Stance group:</strong> ${esc(identity.stanceGroups.map(group => group === 'offense' ? 'Offense' : 'Defensive').join(' + '))}.</div>`;
+    if (combatProfile.maneuver === 'counter' && def.defenseRulesVersion === 2)
+      html += `<div class="combat-rule-hint"><strong>Return range:</strong> ${esc((combatProfile.range || 'melee')[0].toUpperCase() + (combatProfile.range || 'melee').slice(1))}. Return misses out of range, on a failed Accuracy check against base Evasion, or when avoided. A miss deals no HP, Poise, or Ward damage.</div>`;
+    if (combatProfile.maneuver === 'sweep' && (def.tags || def.cardTags || []).includes('trait:reaction'))
+      html += '<div class="combat-rule-hint">Reaction Sweep resolves before the incoming attack. Killing, staggering or controlling its attacker can interrupt it; otherwise the attack resumes.</div>';
   }
   html += `<div class="ctext">${fillTemplate(def, tokens, null, damageSequences)}</div>`;
   // Nested keyword + status tooltips (SPEC §7.3).
@@ -688,8 +719,8 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
   const service = tagService(registries);
   const tags = def.cardTags != null ? service.resolve(def.cardTags)
     : def.traitValues && Array.isArray(def.tags) ? service.resolve(def.tags) : service.tagsOf('card', def);
-  for (const tag of tags) { const row = numberedTraitRow(tag, def.traitValues); lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(row.blurb)}">${esc(row.label)}</span>`); }
-  for (const tag of combatProfileTags(combatProfile, registries).filter(tag => !tags.some(existing => existing.id === tag.id))) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(tag.blurb)}">${esc(tag.label)}</span>`);
+  for (const tag of tags) { const row = numberedTraitRow(tag, def.traitValues); lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(cardTagExplanation(def, row))}">${esc(row.label)}</span>`); }
+  for (const tag of combatProfileTags(combatProfile, registries).filter(tag => !tags.some(existing => existing.id === tag.id))) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(cardTagExplanation(def, tag))}">${esc(tag.label)}</span>`);
   if (lines.length) html += `<div class="inspection-tags">${[...new Set(lines)].join('')}</div>`;
   return html;
 }

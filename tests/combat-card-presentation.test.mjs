@@ -7,7 +7,7 @@ import { combatCardType, combatCardSummary } from '../src/model/playingCard.js';
 const reg = createRegistries(contentBundle);
 const card = id => applyCombatExpansionCard(reg.cards.get(id));
 test('large face labels match the maneuver while spell Counters remain Counter', () => {
-  for (const [id, label] of [['strike','Attack'],['defend','Defend'],['bashingBlow','Smash'],['shieldBash','Counter'],['dodgeRoll','Counter'],['barrageCounter','Counter'],['emberDart','Spell']]) assert.equal(combatCardType(card(id)), label, id);
+  for (const [id, label] of [['strike','Attack'],['defend','Defense'],['bashingBlow','Smash'],['shieldBash','Counter'],['dodgeRoll','Evade'],['barrageCounter','Counter'],['emberDart','Attack']]) assert.equal(combatCardType(card(id)), label, id);
 });
 test('Counter summary distinguishes protection from return and includes card Evade', () => {
   assert.doesNotMatch(combatCardSummary(card('barrageCounter'), null, reg), /Counter|Area|Melee|attacks and spells/);
@@ -26,7 +26,7 @@ test('summary uses live bindings and preserves full conditional effects', () => 
   const text = combatCardSummary(fire, {tokens:{damage:9,burn:6}}, reg);
   assert.match(text, /Deal 9 Fire damage/); assert.match(text, /Add 6 Burn buildup/);
   const lucid = combatCardSummary(card('lucidRecovery'), null, reg);
-  assert.match(lucid, /you have Sleep/); assert.match(lucid, /Remove 1 Sleep/); assert.match(lucid, /gain 2 Ward/);
+  assert.match(lucid, /you have Sleep/); assert.match(lucid, /Remove 1 Sleep/); assert.match(lucid, /gain 1 Block and 1 Ward/);
 });
 test('complex passive cards preserve authored text rather than hiding trigger rules', () => {
   for (const id of ['emberCovenant','shatterOpportunity','earthGrounding','restfulDream']) assert.equal(combatCardSummary(card(id), null, reg), null);
@@ -59,7 +59,7 @@ test('expanded grade summaries retain added buildup together with authored limit
   const ward = grade('progression-firmament-ward');
   const charged = combatCardSummary(ward, {tokens:{chargeManaDiscount:2}}, reg);
   assert.match(charged, /Next spell this turn: 2 less Mana \(min 0\); cannot stack with itself/);
-  assert.match(charged, /Gain 2 Ward once per turn per family/);
+  assert.match(charged, /Gain 1 Block and 1 Ward once per turn per family/);
   const constellation = combatCardSummary(grade('progression-falling-constellation'), null, reg);
   assert.match(constellation, /distinct starstone card IDs played at least 2 this turn/);
   const shelter = combatCardSummary(grade('progression-pilgrim-s-shelter'), null, reg);
@@ -89,5 +89,5 @@ test('primary Power and Status labels precede camps; utility skills remain Skill
   assert.equal(combatCardType({id:'fixture-status',type:'status',cardTags:['camp:spell']}), 'Status');
   assert.equal(combatCardType({id:'fixture-curse',type:'curse',cardTags:['camp:spell']}), 'Status');
   assert.equal(combatCardType(card('dreamHarvest')), 'Skill');
-  assert.equal(combatCardType(card('emberDart')), 'Spell');
+  assert.equal(combatCardType(card('emberDart')), 'Attack');
 });
