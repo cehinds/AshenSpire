@@ -127,18 +127,20 @@ export function releaseMapScreen() {
   liveMapViewportRelease = null;
 }
 
-export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, quickControls = {}, mapAdapter = null, selectedId = null, selectedPointerType = 'mouse' }) {
+export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, quickControls = {}, mapAdapter = null, revisitId = null, selectedId = null, selectedPointerType = 'mouse' }) {
   // Before anything is drawn: the previous mount's keyboard handler, if this is
   // a re-mount. See `liveMapKeys` above.
   releaseMapScreen();
   // A redraw keeps the destination the player selected (#1474 review).
-  const remount = () => mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, quickControls, mapAdapter, selectedId: selection.selectedId, selectedPointerType: lastPickPointerType });
+  const remount = () => mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, quickControls, mapAdapter, revisitId, selectedId: selection.selectedId, selectedPointerType: lastPickPointerType });
   const map = mapAdapter?.graph || run.mapGraph;
   const current = mapAdapter ? mapAdapter.current : run.mapNodeId;
   // WHAT THIS RUN KNOWS AND MAY DO — the viewer's half, and the only half this
   // screen still computes. Geometry, drawing and the camera are the board's
   // (ui/components/mapboard.js).
   const reachable = new Set(mapAdapter?.reachable || (current ? map.nodes[current].next : map.startIds));
+  // A left classic rest site stays enterable until a new node is chosen (owner, 2026-10-12).
+  if (!mapAdapter && revisitId && map.nodes[revisitId]) reachable.add(revisitId);
   const reveal = passiveFlag(registries, run.relics, 'revealUnknown');
   const mode = mapAdapter?.mode || resolveMapMode(meta);
   const fog = mode === 'fog';
@@ -488,7 +490,13 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // The camera settles on the board's own ResizeObserver + backstop; the focus
   // cursor lands once it has (only when the player is using keyboard/gamepad, so
   // mouse players get no stray ring).
-  board.recenter(() => { if (isEngaged()) focusFirst('.map-node.reachable'); });
+  // The first cursor stop is a node the player can travel to: the node they
+  // stand on (a rest revisit keeps it reachable) is skipped when another exists.
+  board.recenter(() => {
+    if (!isEngaged()) return;
+    const fresh = '.map-node.reachable:not(.current)';
+    focusFirst(document.querySelector(fresh) ? fresh : '.map-node.reachable');
+  });
   let frameA = 0;
   let frameB = 0;
   const recenterAfterSettle = () => {

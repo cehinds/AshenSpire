@@ -5,6 +5,7 @@ import { classMilestoneProblems } from './classMilestones.js';
 import { classMasteryRunProblems } from './classMasteryRun.js';
 import { retiredAttackSlots } from './cardRemoval.js';
 import { advancedConfigSnapshot } from './advancedConfig.js';
+import { reactionRulesSnapshot, reactionRulesProblems } from '../content/combatCardTraits.js';
 // src/model/state.js — run/combat state factories + (de)serialization (SPEC §3.3, §3.12)
 //
 // State stores INSTANCE data referencing definitions by id only:
@@ -46,7 +47,8 @@ import { featById } from './feats.js';
 import { combatSnapshotProblems } from './combatSnapshot.js';
 import { createAshenBlightState, ashenBlightProblems, effectiveAshenBlightAttributes, ashenBlightBonuses } from './ashenBlight.js';
 import { ensureExpandedStarterCoverage } from './combatExpansionStarter.js';
-import { createCombatExpansionRuleSnapshot, combatExpansionRulesProblems } from './combatExpansionRules.js';
+import { createCombatExpansionRuleSnapshot, bringCombatExpansionRulesForward, combatExpansionRulesProblems, backfillCombatStatusRuleRows } from './combatExpansionRules.js';
+import { bringRangesForward } from './combatRanges.js';
 import { defaultSeatOrder, seatOrderProblems } from './seats.js';
 import { bringShopStockForward, shopStockProblems } from './shopKinds.js';
 import { boughtArmourProblems, consumablesProblems, companionsProblems } from './marketStock.js';
@@ -105,7 +107,12 @@ export const MAX_CARD_RANK = 99;
 // runs keep their previous class curve and pools; migration never opts them in.
 // 23: new runs carry enemy knowledge rules and their exact learning receipts.
 // Migration preserves absence on historical runs.
-export const RUN_SCHEMA_VERSION = 23;
+// 24 (SPEC §6): a pending reward may carry `relicChoices` (a boss victory's
+// up-to-three relics to pick ONE from) and its checkpoint `chosenRelicId`. The
+// bump is what makes an OLDER build refuse-and-keep such a save rather than
+// read it and drop the choice; a 23 save has no relic choices, so 23 → 24 is a
+// no-op at the migration door.
+export const RUN_SCHEMA_VERSION = 24;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 export function createIdGen(prefix = 'i') {
@@ -137,7 +144,7 @@ export function createRunState({
   registries,
   combatExpansionVersion = 2,
   enemyKnowledgeVersion = 1,
-  reactionRulesVersion = combatExpansionVersion === 2 ? 1 : null,
+  reactionRulesVersion = combatExpansionVersion === 2 ? 2 : null,
   attributeMode = undefined,
   attributes: requestedAttributes = undefined,
   derivedStatOptions = {},
@@ -151,7 +158,7 @@ export function createRunState({
 }) {
   if (![1, 2].includes(combatExpansionVersion)) throw new Error('combatExpansionVersion must be 1 or 2');
   if (![null, 1].includes(enemyKnowledgeVersion)) throw new Error('enemyKnowledgeVersion must be 1 or null');
-  if (![null, 1].includes(reactionRulesVersion) || (reactionRulesVersion === 1 && combatExpansionVersion !== 2)) throw new Error('Reaction rules require an expanded run');
+  if (![null, 1, 2].includes(reactionRulesVersion) || (reactionRulesVersion >= 1 && combatExpansionVersion !== 2)) throw new Error('Reaction rules require an expanded run');
   const classDef = registries.classes.get(classId);
   const selectedAttributeMode = attributeMode === undefined
     ? defaultCreationModeId(registries)
@@ -192,7 +199,7 @@ export function createRunState({
   const oldMaxHp = classDef.maxHp + equipmentPoolBonuses.maxHp;
   const run = {
     combatExpansionVersion,
-    ...(reactionRulesVersion === 1 ? { reactionRulesVersion: 1 } : {}),
+    ...([1, 2].includes(reactionRulesVersion) ? { reactionRulesVersion, ...(reactionRulesVersion === 2 ? { reactionRules: reactionRulesSnapshot() } : {}) } : {}),
     ...(combatExpansionVersion === 2 ? { ashenBlight: createAshenBlightState(), combatExpansionRules: createCombatExpansionRuleSnapshot() } : {}),
     advancedConfigSnapshot: { ...advancedConfigSnapshot(profileMeta.settings || {}), breakMeterVersion: combatExpansionVersion === 2 ? 2 : 1 },
     schemaVersion: RUN_SCHEMA_VERSION,
@@ -800,6 +807,8 @@ export const RUN_SHAPE = [
   { key: 'savedAt', type: 'string', optional: true }, // ISO time of the last landed save (W1l–W1r)
   { key: 'mapNodeId', type: 'string', nullable: true },
   { key: 'mapGraph', type: 'object', nullable: true },
+  // Classic-map rest re-entry record (restRevisit.js); absent when none.
+  { key: 'restRevisit', type: 'object', optional: true, nullable: true },
   // Optional, backward-compatible presentation state. It is owned by the run
   // rather than Settings because the ladder and pan are live choices for this
   // climb; Settings only supplies the default when this field is absent.
@@ -942,7 +951,9 @@ export function levelProblems(level) {
 export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils, preTrainingPool = preConsumables, preAttunedSigils = preTrainingPool } = {}) {
   const problems = [];
   if (run.combatExpansionVersion !== undefined && ![1, 2].includes(run.combatExpansionVersion)) problems.push('combatExpansionVersion must be 1 or 2 when present');
-  if (run.reactionRulesVersion !== undefined && (run.reactionRulesVersion !== 1 || run.combatExpansionVersion !== 2)) problems.push('Reaction rules require an expanded run');
+  if (run.reactionRulesVersion !== undefined && (![1, 2].includes(run.reactionRulesVersion) || run.combatExpansionVersion !== 2)) problems.push('Reaction rules require an expanded run');
+  if (run.reactionRulesVersion === 2) problems.push(...reactionRulesProblems(run.reactionRules).map(problem => `reactionRules: ${problem}`));
+  else if (run.reactionRules !== undefined) problems.push('reactionRules require reaction rules version 2');
   if (run.advancedConfigSnapshot?.breakMeterVersion !== undefined && ![1, 2].includes(run.advancedConfigSnapshot.breakMeterVersion)) problems.push('advancedConfigSnapshot.breakMeterVersion must be 1 or 2');
   if (run.combatExpansionVersion === 2 && run.advancedConfigSnapshot?.breakMeterVersion !== 2) problems.push('Expanded runs require breakMeterVersion 2');
   if (run.combatExpansionVersion === 2) problems.push(...ashenBlightProblems(run.ashenBlight), ...combatExpansionRulesProblems(run.combatExpansionRules));
@@ -958,6 +969,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     if (run.combatExpansionVersion !== 2 || !typeOk(snapshot, 'object')) return;
     if (snapshot.combatExpansionVersion !== 2) problems.push(`${path}.combatExpansionVersion must match the run`);
     if (snapshot.reactionRulesVersion !== run.reactionRulesVersion) problems.push(`${path}.reactionRulesVersion must match the run`);
+    else if (run.reactionRulesVersion === 2 && JSON.stringify(snapshot.reactionRules) !== JSON.stringify(run.reactionRules)) problems.push(`${path}.reactionRules must match the run`);
     problems.push(...ashenBlightProblems(snapshot.player?.ashenBlight, `${path}.player.ashenBlight`));
     const saved = snapshot.player?.ashenBlight, prior = run.ashenBlight;
     if (saved && prior && ['payments', 'entries'].some(field => Array.isArray(prior[field]) && Array.isArray(saved[field])
@@ -1418,6 +1430,25 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       if (pending.chosenCardId && pending.states?.card !== 'taken') {
         problems.push('pendingReward chosenCardId requires card Taken state');
       }
+      // A boss victory's relic choice (SPEC §6): `relicChoices` is the
+      // distinct relics offered, pick ONE; `chosenRelicId` is null or one of them.
+      if (pending.rewards?.relicChoices !== undefined) {
+        const ids = pending.rewards.relicChoices;
+        if (!Array.isArray(ids) || ids.some((id) => typeof id !== 'string' || !id) || new Set(ids).size !== ids.length) {
+          problems.push('pendingReward.rewards.relicChoices must be an array of distinct non-empty relic ids');
+        }
+      }
+      if (pending.chosenRelicId !== null && pending.chosenRelicId !== undefined
+          && (typeof pending.chosenRelicId !== 'string' || !pending.chosenRelicId)) {
+        problems.push('pendingReward.chosenRelicId must be null or a non-empty string');
+      }
+      const relicChoices = Array.isArray(pending.rewards?.relicChoices) ? pending.rewards.relicChoices : [];
+      if (pending.chosenRelicId && !relicChoices.includes(pending.chosenRelicId)) {
+        problems.push('pendingReward.chosenRelicId must belong to pendingReward.rewards.relicChoices');
+      }
+      if (pending.rewards?.relicChoices !== undefined && pending.states?.relic === 'taken' && !pending.chosenRelicId) {
+        problems.push('pendingReward relic Taken state requires chosenRelicId');
+      }
     }
   }
   // Deck entries are the ids the run is rebuilt from — the one nested shape
@@ -1677,10 +1708,26 @@ export function migrateRunSchema(run) {
   // needs the deck's own attack slots, so the load door does it once
   // (engine/save.js, the POOL-BUILT DECK block), reading this version from
   // migratedFromRunSchemaVersion. A Standard run has nothing to migrate.
-  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
+  // v23 → v24: no relic choices could be written before (SPEC §6); nothing to fill.
+  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
     throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: ${Array.from({ length: RUN_SCHEMA_VERSION }, (_, index) => index + 1).join(', ')})`);
   }
+  if (run.combatExpansionVersion === 2) {
+    bringCombatExpansionRulesForward(run.combatExpansionRules);
+    // A run saved in (or just after) a fight carries its own frozen copy in
+    // the combat snapshot; bring those forward by the same narrow migration.
+    for (const holder of [run.combatEntered, run.combatPendingOutcome]) {
+      if (holder?.snapshot?.combatExpansionVersion === 2) bringCombatExpansionRulesForward(holder.snapshot.combatExpansionRules);
+    }
+  }
+  // A saved fight's own stances, counters, carriers and tags read the range
+  // rename the same way (combatRanges.js), in memory only.
+  for (const holder of [run.combatEntered, run.combatPendingOutcome]) {
+    if (holder?.snapshot) bringRangesForward(holder.snapshot);
+  }
   if (preShopKinds) bringShopStockForward(run);
+  // Status rows added to the shipped rule table after a v2 run began join its frozen copy.
+  if (run.combatExpansionVersion === 2) for (const holder of [run, run.combatPendingOutcome?.snapshot, run.combatEntered?.snapshot]) backfillCombatStatusRuleRows(holder);
   const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones, preShopKinds, preSigils, preConsumables, preTrainingPool, preAttunedSigils });
   if (preTrainingPool && (run.trainingPool === undefined || run.trainingPool === null)) run.trainingPool = 0;
   if (preAttunedSigils && (run.attunedSigils === undefined || run.attunedSigils === null)) run.attunedSigils = [];

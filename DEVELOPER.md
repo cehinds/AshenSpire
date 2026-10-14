@@ -34,11 +34,36 @@ downloaded. A `dev` clone needs no Git LFS. `tools/verify-shipped.mjs` fails if
 any of them is tracked again. Historical builds (and `release`/`main`, which
 still carry theirs) remain LFS pointers; readers of those verify content hashes.
 
-A pull request still commits the one derived fact the build writes,
-`buildordinal.json` (plus `src/content/changelog.generated.js`), and its receipt
-names that ordinal. CI rebuilds and requires the rebuild to change nothing
-committed, then runs `node tools/buildversion.mjs --check` against the fresh
-build, so the box and the receipt are still checked to agree.
+A pull request does not commit `buildordinal.json`. Its receipt is stamped with
+the box as it stands on its own branch. After a push to `dev`, the
+`build-stamp.yml` workflow rebuilds the merged tree, re-points the receipts of the
+pull requests that landed, regenerates `src/content/changelog.generated.js`, and
+commits those three files to `dev` as `build: stamp <release>.<ordinal>
+[build-stamp]`. On a pull request and on `dev`, `dev-preview.yml` tolerates a
+rebuild that changes only those two derived files; test, release and main still
+require the rebuild to change nothing. Promotion from `dev` to `test` waits for
+the build-stamp run on the `dev` tip to succeed, and for that tip to be the stamp
+commit or a later docs-only bot commit, since `test`'s strict check would otherwise
+refuse the promotion. After a successful stamp push, build-stamp dispatches
+`dev-preview` for the stamped tip, so its `dev-standalone-<sha>` artifact is that
+commit's build. If all three dispatch tries fail, the run fails, but the stamp is
+already pushed: rerunning build-stamp redispatches the preview, with no manual
+`gh workflow run`, as long as the tip is still the stamp or the stamp with only the
+architecture-sync and readme-sync documentation commits above it
+(`build-stamp.mjs --stamp-is-current`). Any other commit above the stamp is not
+current, and that rerun dispatches nothing. The Pages site's dev channel
+is not republished by the bot; see the comment in `build-stamp.yml`.
+
+After each successful stamp, `pr-restamp.yml` runs `tools/pr-restamp.mjs` on every
+open pull request into `dev` that now conflicts. It merges `dev` into the pull
+request's branch, takes `dev`'s box and generated module, re-stamps that pull
+request's receipt to the box, and pushes one merge commit when the receipt checks
+pass, then dispatches the pull request's checks by hand (a `GITHUB_TOKEN` push starts
+none). It resolves conflicts only in the three derived files, and it refuses (exit 3)
+a merge that adds to or drops from the set of non-derived files the pull request changes
+against `dev` (the set is compared, not each file's content). It asks a person,
+with one comment on the pull request, for that refusal or a failed check; the owner's
+review gate is unchanged (CONTRIBUTING rule 6).
 
 **Which checks gate a pull request** (owner, 2026-10-11, the stage rules). Every
 check runs in one of four stages, and this table is the only list of them. Each
@@ -61,9 +86,11 @@ Any workflow can be started by hand on any branch (Actions → *Run workflow*).
 | `worker-check.yml` → sanity: receipts self-test (`tools/receipts.mjs --selftest`) | yes | — | — | — |
 | `receipts.yml` → receipts: selftest; a PR runs `--check --pr auto`, a push to `dev` the range to `origin/test` | — | yes | — | — |
 | `dev-preview.yml` → preview: build, standalone artifact, fast gates | — | yes | yes (the build runs again) | yes (the build runs again) |
+| `build-stamp.yml` → stamp: rebuild the merged tree, re-point the landed receipts, commit `buildordinal.json`, `CHANGELOG.md` and the generated module as `[build-stamp]`, then dispatch `dev-preview` for that commit | — | yes (push to `dev` only; not on a pull request) | — | — |
+| `pr-restamp.yml` → re-stamp: after a successful `build-stamp` on `dev`, merge `dev` into each conflicting open PR into `dev` with `tools/pr-restamp.mjs`, push that merge, dispatch its checks; or comment once when a person must merge | — | yes (after a stamp on `dev`; also dispatch) | — | — |
 | `tests.yml` → core: engine suite, each tool's verdict, CHANGELOG order (no browser) | — | yes | — | — |
 | `tests.yml` → discovered tests, four shards, `--no-slow` (`SLOW_DISCOVERED` in `tests/run-node-lanes.mjs`; this includes `tests/readme-sync.test.mjs`) | — | yes | — | — |
-| `quick-start.yml` → Quick start to the first card play within 6 inputs; click to impact ≤ 400 ms at Normal pacing | — | yes | yes | only when release differs from test |
+| `quick-start.yml` → Quick start to the first card play within 6 inputs; click to contact ≤ 400 ms and click to first number ≤ 750 ms (medians) at Normal pacing (`tools/click-impact-probe.mjs`: contact is the effects layer's `data-contact` counter, which `src/ui/fx.js` bumps at each impact frame; the number is the first `.float-num` damage or guard float, which under the default `sequential` beat order follows the defender's reaction) | — | yes | yes | only when release differs from test |
 | `ci.yml` → stage decision (`stage`): a push to `test` is the functional stage; a push to `release` is polish, and also functional when its tree differs from `test` | — | — | yes | yes |
 | `ci.yml` → tests (ubuntu, windows, macOS): engine suite and tool verdicts | — | — | yes | yes, if the tree differs from `test` |
 | `ci.yml` → discovered tests, 3 OS, all shards (no `--no-slow`, so the slow files run too) | — | — | yes | yes, if the tree differs from `test` |
@@ -87,7 +114,7 @@ Any workflow can be started by hand on any branch (Actions → *Run workflow*).
 | `ci.yml` → mobile and combat layout, all five layouts, hint strip and Armoury, and their known-bads (`browser-layout-*`, `browser-hintstrip-plants`) | — | — | — | yes |
 | `ci.yml` → idle animation and reduced motion in a real browser (`browser-motion`, sharded) | — | — | — | yes |
 | `windows-installer.yml` → build, silent install with the high-res art, start, uninstall; uploads `windows-installer-<commit>`; a push replaces the `installer-release` prerelease ([desktop/windows/README.md](desktop/windows/README.md)) (also push to `main`) | — | — | — | yes |
-| `pages-builds.yml` → assemble and prove the site (a push to `dev`, `test`, `release` or `main`) | — | yes (push to `dev`) | yes | yes |
+| `pages-builds.yml` → assemble and prove the site (a push to `dev`, `test`, `release` or `main`); the same run also publishes the Workbench as a static site at `/workbench/` (built from this checkout, `continue-on-error` so it never stops the game site) | — | yes (push to `dev`) | yes | yes |
 | `pages-builds.yml` → deploy to GitHub Pages (push to `dev` or `release`, or the owner's dispatch with `PUBLISH` for any branch the environment admits; `release` needs the owner's one-time `github-pages` deployment-branch addition, see the workflow header) | — | yes (push to `dev`) | — | — |
 | `pages-builds.yml` → per-branch build at `branches/<branch>/latest/` (`build.txt` as text, played by a sandboxed wrapper that keeps no progress) for each open same-repo `feature/*`, `fix/*`, `chore/*` PR into `dev` (after its `dev preview` run; a failed or cancelled preview removes the stale build, since only a successful run for the PR's current head is published; removed on close), plus a PR comment with the link | — | yes (PR into `dev`) | — | — |
 | `art-migrate.yml` → intake: a pull request that adds art stays red until the art leaves it (staged in `cehinds/AshenSpire-art`); runs on `pull_request_target`, so the workflow definition that holds the token is the base's, and a fork gets no token | — | yes (PR into `dev`) | — | — |
@@ -530,8 +557,8 @@ and raise nothing; `isBenignPageNotice()` is the anchored classifier, and
 `node tools/launch.mjs --build-only` still writes the build tree into `build/`
 and `dist/` (the pack-shaped `AshenSpire.html` with its packs, and the light
 single file at `download/`) and the root alias, but only to your working tree:
-git ignores them. Commit the box it moves
-(`buildordinal.json`) and the regenerated changelog module, never the HTML.
+git ignores them. Do not commit the box it moves (`buildordinal.json`): the
+build-stamp workflow commits it on `dev` after a merge. Never commit the HTML.
 To play a build you did not make, download the `<branch>-standalone-<commit>`
 artifact from that commit's workflow run: every pull request into `dev` and
 every push to `dev`, `test`, `release` and `main` uploads one. A tool or test
@@ -695,18 +722,29 @@ receipt of its own is the author's to fix, before merge.
 The tool checks **coverage**, not truth: whether an entry exists naming each
 merged pull request. Whether the prose is accurate is not machine-checkable.
 The one stamp it does check is the `--pr` pull request's own: its receipt must
-carry exactly the release and ordinal of `buildordinal.json` in the tree being
-checked, the box that pull request ships (#1315 merged with `0.7.1.518` on a
-box of 519, and nothing caught it). Older receipts' ordinals belong to
+name a build of the release in `buildordinal.json`. A stamp of any build in the release, below or
+above the tree's box, passes with a note, since build-stamp re-points it after the
+merge; no stamp, prose, a malformed stamp or another release fails (#1315 merged
+with `0.7.1.518` on a box of 519, and nothing caught it). Older receipts' ordinals belong to
 `tools/about-changelog.mjs`, which owns the file's shape. If CHANGELOG.md ever
 yields no pull-request references at all, that is this tool's own syntax having
 moved out from under it, and it exits **2 (harness could not run)** rather than
 reporting every merge as unreceipted.
 
-Writing one is in the file's own header: a receipt for already-landed work names
-the ordinal **as committed at that merge**; a receipt shipping in its own pull
-request is written one ahead, then `node tools/about-changelog.mjs --write` and a
-rebuild converge the box to the receipt.
+Writing one is in the file's own header: a receipt names the ordinal of
+`buildordinal.json` as it stands on the pull request's branch, and build-stamp
+re-points it to the real build after the merge (`tools/build-stamp.mjs`). A
+receipt for already-landed work keeps the ordinal **as committed at that merge**,
+which build-stamp does not change except for the pull requests in the push it
+handles.
+
+**Pending receipts in the order check.** `tools/about-changelog.mjs --check-order`
+runs with `--pending auto` on a pull request into `dev` and on a push to `dev`
+(`tests.yml`). A pending receipt is one whose pull request is the event's own, or
+landed in the push, and whose stamp build-stamp has not yet re-pointed. Its shape is
+still checked, a bullet, a link and a well-formed stamp of this release, but it is
+left out of the order comparisons, and each one prints a NOTE. On `test`, `release`
+and `main` the order is strict.
 
 ## The four layers (dependencies point down only)
 
@@ -1172,14 +1210,23 @@ itself; read them there.
 
 ### Character-creation component catalog
 
-Open `?shot=components` on a served checkout to see the Class, Character,
-Starting Equip, and Seed sections together as interactive reference specimens.
+Open `?shot=components` on a served checkout to see the Class, Attributes,
+Keepsake, Equipment, Feats, Spells, and Review sections as interactive reference specimens.
 The catalog moves the production panels into labeled folios; it does not keep a
 second copy of their markup or content. Select **Assign Points** to inspect its
 live dialog and refusal states. `node tools/character-creation-check.mjs`
 drives the player flow's stats step at desktop and 390×844 mobile sizes:
 Standard and Assign points for every class, with the Hand and Draw chips
 checked against the hand a solo fight deals. It does not visit the catalog.
+
+Every folio has a direct `#folio-<component-id>` link. The new page heading,
+panel, choice tile, material/trim/body layers, navigation, and canonical feat
+browser are mounted through `src/ui/catalog/creationSpecimens.js` using their
+production renderers. Feat inspection grants nothing with the current allowance
+of zero. `node tools/character-creation-components-qa.mjs --out /tmp/creation-components`
+captures each registered specimen at desktop and phone widths and checks DOM
+identity, layout fit, runtime errors, and interaction state. Add `--artifact`
+to check the frozen `build/download/AshenSpire.html` build after integration.
 
 ## Shared Load / Quit confirmation
 
@@ -1217,7 +1264,8 @@ the HTML; the score stays synthesized, as for any `file://` page.
 `node tools/external-play.mjs --file` opens it that way in Chromium.
 `node tools/launch.mjs --build-only` picks the flags for you (see *Run & test*).
 The files are local build output, ignored by git on `dev`: of the build's own
-outputs, commit only `buildordinal.json` (and the generated changelog module).
+outputs, a pull request commits none: `buildordinal.json` and the generated
+changelog module are written on `dev` by build-stamp after the merge.
 Generated content and config modules are committed as usual.
 
 The browser tools that drive a built page (`--dist`, `--standalone`,

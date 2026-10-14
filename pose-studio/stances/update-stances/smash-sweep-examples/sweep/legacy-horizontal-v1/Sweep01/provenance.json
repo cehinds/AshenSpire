@@ -1,0 +1,63 @@
+{
+  "generator": "image_gen.imagegen",
+  "whole_strip_generation": true,
+  "approved_seed": "pose-studio/stances/update-stances/sequence-review/frames/W.webp",
+  "approved_seed_sha256": "40f7c5f3a1d988ae99b0764050630f1a00028be50131bd13456db58b4d737865",
+  "source_painting": "greatsword-sweep/sheet-b.png middle-left SW18",
+  "active_raw": "raw-revision2.png",
+  "raw_files": [
+    {
+      "path": "raw-revision.png",
+      "sha256": "1b916d0cfce327497d55f3639164fe75b6fb8c0476a33093312e6cdf76dc7b74",
+      "dimensions": [
+        2172,
+        724
+      ]
+    },
+    {
+      "path": "raw-revision2.png",
+      "sha256": "acb881767095333a4d5b5c26de9468ec5d9c846ae70a7eec34c4de85a026d482",
+      "dimensions": [
+        2172,
+        724
+      ]
+    },
+    {
+      "path": "raw-superseded.png",
+      "sha256": "ffd6e0b95ec4c14cece8d8a2db14c37c422d4d1d940c75e1286259f204633af7",
+      "dimensions": [
+        2172,
+        724
+      ]
+    },
+    {
+      "path": "raw.png",
+      "sha256": "ffd6e0b95ec4c14cece8d8a2db14c37c422d4d1d940c75e1286259f204633af7",
+      "dimensions": [
+        2172,
+        724
+      ]
+    }
+  ],
+  "prompts": [
+    {
+      "path": "prompt.txt",
+      "sha256": "b66436416fd97b06a5ba7706caa832c1c8fd7fbfb0b12a2fa1122d46a55fe730"
+    },
+    {
+      "path": "revision-prompt.txt",
+      "sha256": "f19e5402008db3805d62b28781ad33219f20bd631f92a5efeb7f2676bf6a3ae2"
+    },
+    {
+      "path": "revision2-prompt.txt",
+      "sha256": "bfa58c06e621c51c8d1dc391acba3dd25fb5451f739722225f6c117b281845e4"
+    }
+  ],
+  "bookends": "frames01/05 exact W bytes; not newly painted assets",
+  "reference_policy": "techniques interpreted from text; no external images imported",
+  "references": [
+    "https://www.hema101.com/post/beginner-s-guide-to-fencing-with-the-longsword",
+    "https://hemapenzance.com/blog/how-to-lunge-with-a-sabre"
+  ],
+  "reference_limitations": "Waist/knee/footwork variations are artistic adaptations, not direct source poses. Sabre footwork cautiously adapted to greatsword."
+}

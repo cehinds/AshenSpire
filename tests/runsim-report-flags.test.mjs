@@ -10,7 +10,18 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { bossTierScale } from '../src/model/seats.js';
 
+// runsim is deterministic per seed, and four tests read the same `2 --mana-ab`
+// fleet (two read the same `--seat-tiers` one). Each fleet is run once and its
+// output shared: the file used to run the heaviest fleet four times over, and
+// on a loaded Windows shard one copy passed its 120 s spawn limit (run
+// 38382452982, while the others took 82-110 s).
+const outputs = new Map();
 const run = (...args) => {
+  const key = args.join('\0');
+  if (!outputs.has(key)) outputs.set(key, runOnce(...args));
+  return outputs.get(key);
+};
+const runOnce = (...args) => {
   const r = spawnSync(process.execPath, ['tools/runsim.mjs', ...args], {
     cwd: new URL('..', import.meta.url), encoding: 'utf8', timeout: 120000,
   });
@@ -47,7 +58,8 @@ test('the ON arm is the shipped game: its wins equal a plain fleet on the same s
 test('the OFF arm actually lifts the Mana line, and the ON arm never does', () => {
   // A regression that ran the shipped rules twice would print two equal arms
   // and still pass the shape checks above; the waived Mana tells them apart.
-  const out = run('2', '--mana-ab');
+  // Ten seeds: with the harder tier-1 normals (owner, 2026-10-13) two runs per class die before any Mana runs short.
+  const out = run('10', '--mana-ab');
   const cut = out.indexOf('-'.repeat(72));
   assert.ok(cut > 0, 'no separator between the arms');
   const waived = [...out.slice(0, cut).matchAll(/([\d.]+) per run waived by the OFF arm/g)].map((m) => Number(m[1]));
@@ -59,7 +71,8 @@ test('the OFF arm actually lifts the Mana line, and the ON arm never does', () =
 test('the ON arm drinks a Mana flask charge to pay a card the pool is short for', () => {
   // Every class carries Azure charges and Shrines refill them; an ON bot that
   // never drinks one blames its own unused consumable on the Mana line.
-  const out = run('2', '--mana-ab');
+  // Ten seeds: with the harder tier-1 normals (owner, 2026-10-13) two runs per class die before any Mana runs short.
+  const out = run('10', '--mana-ab');
   const onHalf = out.slice(out.indexOf('-'.repeat(72)));
   const drunk = [...onHalf.matchAll(/([\d.]+) Mana flask charges drunk per run/g)].map((m) => Number(m[1]));
   assert.equal(drunk.length, classes.length, 'the ON arm should report Mana flask charges drunk for every class');
@@ -85,7 +98,8 @@ test('--seat-tiers pairs each boss multiplier with the boss actually fought', ()
   // The final tier can send a seat to the null-seat Valkyrie; a multiplier
   // derived from the seat instead would print that seat's boss scale beside a
   // fight that never used it.
-  const out = run('2', '--seat-tiers', '--seeded-seats');
+  // Six seeds: with the harder tier-1 normals (owner, 2026-10-13) two runs per class die before any boss.
+  const out = run('6', '--seat-tiers', '--seeded-seats');
   const rows = [...out.matchAll(/^    boss (\S+) at tier (\d+): hp x([\d.]+) damage x([\d.]+)  fought (\d+), cleared (\d+)$/gm)];
   assert.ok(rows.length > 0, 'no per-boss rows');
   for (const [, id, tier, hp, damage, fought, cleared] of rows) {

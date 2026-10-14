@@ -99,6 +99,18 @@ for(const [slug,tags,scenario,opcode,values] of cases)test(slug+' applies its au
  c.turn++;triggers.emitEvent(c,event.type,event);assert.equal(c.queue.length,start+(scenario.killedStatus?1:2),'turn gates reset; kill gates remain once per combat');
 });
 
+// Necrotic damage's Blight is its own row (necroticBlight, owner 2026-10-12 #4);
+// every Blight-reading feat fires on it alone, exactly as on Crimson Blight.
+for(const slug of ['choir-of-bone','requiem-reader','sepulchral-promise'])test(slug+' fires with only Necrotic Blight present',()=>{
+ const [,tags,scenario,opcode]=cases.find(row=>row[0]===slug);
+ const swapped=Object.fromEntries(Object.entries(scenario).map(([key,value])=>[key,value==='crimsonBlight'?'necroticBlight':value]));
+ assert.notDeepEqual(swapped,scenario,'the case reads Crimson Blight');
+ const c=fight([id(slug)]);const event=eventFor(c,slug,tags,swapped);
+ assert.ok(!c.enemies[0].statuses.crimsonBlight&&!event.targetStatusesBefore?.crimsonBlight,'no Crimson Blight anywhere');
+ const start=c.queue.length;triggers.emitEvent(c,event.type,event);
+ assert.equal(c.queue.length,start+1,'fired on Necrotic Blight');assert.equal(c.queue.at(-1).effect.op,opcode);
+});
+
 test('fifty unique feats, matching gates, and unchanged original twenty',()=>{
  assert.equal(progressionFeats.length,50);assert.equal(new Set(progressionFeats.map(f=>f.id)).size,50);
  assert.equal(cases.length+1,50);assert.equal(classSkillFeats.length,20);
@@ -125,9 +137,10 @@ test('co-op mounts each seat selection under its own identity',()=>{
  const a=propertyMountsOf(c,c.players.get('a').entity),b=propertyMountsOf(c,c.players.get('b').entity);assert.ok(a['feat:'+id('coal-on-steel')]);assert.ok(!a['feat:'+id('brace-and-bite')]);assert.ok(b['feat:'+id('brace-and-bite')]);
 });
 
+// The enemy's planned follow-ups (its 3-SP pool, SPEC §4.6a) are cleared with its intent, so no blow eats the Block.
 test('Memory of Winter retains at most four Block on a real turn, with highest allowance',()=>{
- const c=fight([id('memory-of-winter')]);c.player.block=10;c.enemies[0].intent=null;dispatch(c,{type:'endTurn'});assert.equal(c.player.block,4);assert.equal(passiveMax(reg,[],'retainBlockUpTo',propertyMountsOf(c,c.player)),4);
- c.skillFeats=[];syncFeatProperties(c);c.player.block=10;c.enemies[0].intent=null;dispatch(c,{type:'endTurn'});assert.equal(c.player.block,0);
+ const c=fight([id('memory-of-winter')]);c.player.block=10;c.enemies[0].intent=null;c.enemies[0].plannedMoves=[];dispatch(c,{type:'endTurn'});assert.equal(c.player.block,4);assert.equal(passiveMax(reg,[],'retainBlockUpTo',propertyMountsOf(c,c.player)),4);
+ c.skillFeats=[];syncFeatProperties(c);c.player.block=10;c.enemies[0].intent=null;c.enemies[0].plannedMoves=[];dispatch(c,{type:'endTurn'});assert.equal(c.player.block,0);
  assert.equal(passiveMax(reg,[],'retainBlockUpTo',{a:{rules:[{passives:{retainBlockUpTo:4}}]},b:{rules:[{passives:{retainBlockUpTo:6}}]}}),6);
 });
 
@@ -179,7 +192,7 @@ test('Hidden Palm sees the explicit discard performed within the resolving card'
  triggers.emitEvent(c,'cardResolved',event);assert.equal(c.queue.length,1);assert.equal(c.queue[0].effect.amount,3);
 });
 
-for(const [slug,status]of [['harvest-the-wound','bleed'],['sepulchral-promise','crimsonBlight']])test(slug+' heals after a lethal final hit using target status before death',()=>{
+for(const [slug,status]of [['harvest-the-wound','bleed'],['sepulchral-promise','crimsonBlight'],['sepulchral-promise','necroticBlight']])test(slug+' heals after a lethal final hit using target status before death ('+status+')',()=>{
  const card={...acceptance,cost:0,effects:[{op:'damage',target:'enemy',amount:5}],upgrade:undefined};
  const rr=createRegistries({...bundle,cards:[...contentBundle.cards,card],tagging:[...bundle.tagging,{family:'card',scope:'',objectId:'acceptance',tagId:'classification.attack'}]});
  const c=engine.createCombat({registries:rr,rng:createRng(77),player:{...player([id(slug)]),hp:50},enemyIds:['wanderingSoldier']});c.skillFeats=[id(slug)];syncFeatProperties(c);

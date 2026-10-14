@@ -40,7 +40,9 @@ export function allocateSceneBands({ width, height, zoom = 1, rem = 16 } = {}, l
   });
 }
 
-// Nominal 10/55/30/5 shares. The hand and footer keep their physical minimums
+// Nominal 10/55/30/5 shares, on every form factor (desktop and widescreen
+// included: the battlefield's share of the viewport is the same everywhere).
+// The hand and footer keep their physical minimums
 // and the battlefield absorbs the difference; it is never funded by shrinking
 // the hand. A battlefield too short for one readable combatant is reported as
 // unsupported geometry rather than hidden by shrinking text or targets.

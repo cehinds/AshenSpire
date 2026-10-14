@@ -1,4 +1,5 @@
 import { rollPendingAbilityOffers } from './model/abilityOffers.js';
+import { openRestRecord, recordRestConsumed, markRestLeft, restRevisitNodeId, clearRestRevisitOnTravel } from './model/restRevisit.js';
 import { queueInitialProgression } from './model/initialProgression.js';
 import { isAbilitySkill } from './model/abilityGrades.js';
 import { expandedProgression } from './model/classMilestones.js';
@@ -8,6 +9,7 @@ import { mountInitialClassMastery } from './ui/components/classMastery.js';
 import { hasClassMastery, openRunClassMastery, registriesForClassMastery, adoptClassMasteryProfile, refreshRunClassMastery } from './model/classMasteryRun.js';
 import { mergeProgressionRewards, partitionProgressionRewards, unclaimedProgressionRewards } from './model/deferredProgression.js';
 import { applyArtQuality, onArtSourceChange, builtInArtArrived, ART_REDRAW_EVENT } from './ui/highResArt.js';
+import { applyCardArtStyle } from './ui/cardArtStyle.js';
 import { whenBuiltInArtReady, musicHold, bootLine, packsPinned, builtInArtStatus, builtInArtSettled } from './ui/assetPacks.js';
 import { applyArtTier, onTierArrived, requestedTier, retryBuiltInArt, onRetryProgress } from './ui/artTier.js';
 import { startBootArt, bootArtLine, bootArtRetried } from './ui/bootArt.js';
@@ -91,6 +93,7 @@ import {
   rollClassDraftIds,
   rollFlaskDrop,
   rollRelicReward,
+  rollRelicChoices,
   rollArmamentDrop,
 } from './engine/encounters.js';
 import { buildMarketStock, marketVisitStock, commitInnRest, buildBlacksmithStock, blacksmithVisitStock, buildMasterStock, masterVisitStock } from './engine/shopKinds.js';
@@ -840,6 +843,7 @@ function applyCardSizeSettings(settings) {
 }
 
 function applyDisplaySettings(settings) {
+  applyCardArtStyle(settings);
   const appearanceChanged = applyDisplayAppearance(settings);
   // Art quality: lay a local high-res source over the built-in art, or clear
   // it. Asynchronous (a served hd/ folder is fetched); screens drawn after it
@@ -1225,10 +1229,10 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
     ? legacyArcaneShot || shotCombatVersion === '1' ? null : 1
     : shotKnowledgeVersion === '0' ? null : 1;
   const shotReactionVersion = shotState === 'combat' ? shotParams.get('shotReactionVersion') : null;
-  if (shotReactionVersion !== null && !['0', '1'].includes(shotReactionVersion)) throw new Error('shotReactionVersion must be 0 or 1');
+  if (shotReactionVersion !== null && !['0', '1', '2'].includes(shotReactionVersion)) throw new Error('shotReactionVersion must be 0, 1 or 2');
   const reactionRulesVersion = shotReactionVersion === null
-    ? legacyArcaneShot || shotCombatVersion === '1' || shotKnowledgeVersion === '0' ? null : 1
-    : shotReactionVersion === '0' ? null : 1;
+    ? legacyArcaneShot || shotCombatVersion === '1' || shotKnowledgeVersion === '0' ? null : 2
+    : shotReactionVersion === '0' ? null : Number(shotReactionVersion);
   const configSnapshot = { ...advancedConfigSnapshot(saves.loadMeta().settings || {}),
     breakMeterVersion: combatExpansionVersion === 2 ? 2 : 1 };
   // The Arcane matrix is a legacy-run visual fixture. It deliberately carries
@@ -2482,6 +2486,8 @@ function showMap(opts) {
     run,
     meta: activeMeta,
     selectedId,
+    // A left classic rest site stays enterable until a new node is chosen.
+    revisitId: restRevisitNodeId(run),
     onPick: enterNode,
     onSettings: showSettings,
     onSettingsChange: persistSettingsChange,
@@ -2662,8 +2668,11 @@ function finishWorldService() {
 }
 
 function enterNode(nodeId) {
-  sfx.play('nodeTravel');
+  // Re-entering the node the player stands on is not travel, so no travel sound.
+  if (nodeId !== run.mapNodeId) sfx.play('nodeTravel');
   const node = run.mapGraph.nodes[nodeId];
+  // Travelling to another node ends a left rest site's re-entry (restRevisit.js).
+  clearRestRevisitOnTravel(run, nodeId);
   run.mapNodeId = nodeId;
   if (!run.path.includes(nodeId)) run.path.push(nodeId);
   run.floor = node.floor;
@@ -2950,7 +2959,7 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
     }
   }
   if (shotState === 'combat' && shotParams.get('shotReaction') === 'counter') {
-    if (combat.reactionRulesVersion !== 1) throw new Error('shotReaction=counter requires reaction rules version 1');
+    if (!(combat.reactionRulesVersion >= 1)) throw new Error('shotReaction=counter requires reaction rules');
     // Memory-only validation pose; choices, payment and returns use production commands.
     combat.piles.draw.push(...combat.piles.hand);
     combat.piles.hand = ['guardCounter', 'sweepingBlow', 'strike'].map((cardId, index) => ({ cardId, instanceId: `reaction-shot-${index}`, upgraded: false }));
@@ -2959,7 +2968,7 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
     for (const enemy of combat.enemies) {
       enemy.hp = enemy.maxHp = 100;
       enemy.intent = { kind: 'attack', moveId: 'slash', damage: 7, hits: 1,
-        combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', reach: 'contact', targeting: 'single' } };
+        combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single' } };
       enemy.intentRevealed = false;
     }
   }
@@ -3177,6 +3186,9 @@ async function onCombatEnd(result, combat, enc) {
     const drops = registries.balance.equipment.drops || {};
     const bossDrafts = settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts('boss', manualLevelUp) : [];
     const bossClassDrafts = settingOn(saves.loadMeta().settings, 'rewardBattleClassDrafts') ? rollClassDrafts(manualLevelUp) : [];
+    // A boss offers up to balance.rewards.bossRelicChoices relics to pick ONE
+    // from; one relic (or none) keeps the single relicId shape.
+    const bossRelics = rollRelicChoices(registries, rng, run.relics, { rarities: ['boss'], count: Math.max(1, registries.balance.rewards.bossRelicChoices ?? 3) });
     const bossRewards = {
       title: victoryTitle(enc),
       cinders: Math.floor(rollRuneReward(registries, rng, 'boss', run.relics) * featMultiplier(run, 'cinders')) + (bossArmament ? 0 : drops.consolationCinders || 0),
@@ -3186,7 +3198,7 @@ async function onCombatEnd(result, combat, enc) {
       skillAttributes: settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillAttributes(manualLevelUp) : [],
       skillFeats: settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillFeats(manualLevelUp) : [],
       ...rollCardRows('boss', levelsEarned),
-      relicId: rollRelicReward(registries, rng, run.relics, { rarities: ['boss'] }),
+      ...(bossRelics.length > 1 ? { relicChoices: bossRelics } : { relicId: bossRelics[0] ?? null }),
       ...sigilOffer('boss'),
       armamentId: bossArmament,
       smithingStoneReceipt,
@@ -3593,7 +3605,15 @@ function showRest(openPanel = null, locationId = null) {
     dlog('ERROR', `settings.${b.key}: stored value ${JSON.stringify(b.stored)} is not one of the counts this row offers — using ${b.used}.`);
   }
   const worldRest = run.journey?.activeService;
-  const restState = run.legacyDungeon?.activeRest || (worldRest ? run.journey.serviceStates[worldRest.pointId] : null);
+  // The classic map's rest site keeps its own record (restRevisit.js), which
+  // stands in for the service state so a re-entry does not refill again.
+  const classicRest = !run.journey && !run.legacyDungeon;
+  const priorRevisit = run.restRevisit;
+  // The Multi-use setting is read once; a record opened now keeps it for the visit.
+  const multiUseSetting = run.journey ? false : settingOn(saves.loadMeta().settings, 'shrineMultiUse');
+  const record = classicRest ? openRestRecord(run, { multiUse: multiUseSetting }) : null;
+  if (record !== priorRevisit) persist();
+  const restState = run.legacyDungeon?.activeRest || (worldRest ? run.journey.serviceStates[worldRest.pointId] : null) || record;
   if (!openVisit || openVisit.locationId !== restLocationId || openVisit.ctx.run !== run) {
     openVisit = createLocationVisit({ run, registries, rng }, restLocationId, { healMult, refillCounts: counts, restBonus: restRecoveryBonus(saves.loadMeta().settings || {}) });
     // A resumed atlas visit arrived once already (the service state says so);
@@ -3609,6 +3629,19 @@ function showRest(openPanel = null, locationId = null) {
   }
   const visit = openVisit;
   const refill = visit.refill;
+  // The smith's services are rolled once per classic visit and kept on the
+  // record, so a re-entry shows the same offer. A plain copy saves as JSON.
+  let smithServices = null;
+  if (visit.services.smith) {
+    if (record) {
+      if (!record.smithServices) {
+        const roll = smithServicesAt(registries, 'shrine', rng);
+        record.smithServices = { ...roll, services: [...roll.services] };
+        persist();
+      }
+      smithServices = record.smithServices;
+    } else smithServices = smithServicesAt(registries, 'shrine', rng);
+  }
   mountRest(app, {
     registries,
     run,
@@ -3621,7 +3654,7 @@ function showRest(openPanel = null, locationId = null) {
     // Which smith services this place offers — the table's word, resolved
     // here so the screen reads one answer (a chance of 100 consumes no roll),
     // and only where the place carries the `smith` tag.
-    services: visit.services.smith ? smithServicesAt(registries, 'shrine', rng) : null,
+    services: smithServices,
     // The board is the atlas town's (plan phase 10b): offered where the place
     // carries `questBoard` and the run stands in a town, returning here.
     questBoard: visit.services.questBoard && worldRest ? (() => {
@@ -3632,6 +3665,9 @@ function showRest(openPanel = null, locationId = null) {
     // The deck editor under Rest sites only (SPEC §14.1): where the place
     // carries `deckEdit`; it closes back onto this visit.
     deckEditor: deckDoors(visit.services).rest ? { onOpen: () => showDeckEditor(() => showRest()) } : null,
+    // The classic rest site's re-entry record and its consumed-choice hook.
+    revisit: record,
+    onConsumed: (kind) => { if (record) { recordRestConsumed(run, kind); persist(); } },
     onReallocate: () => persist(),
     // An assigned point is permanent. It persists the moment it is assigned,
     // not when the player leaves the shrine, for the same reason the
@@ -3641,12 +3677,13 @@ function showRest(openPanel = null, locationId = null) {
     onLevelUp: () => persist(),
     // E13's toggle: with it on, Rest and Smith re-open the Shrine instead of
     // leaving it, and the screen carries its own LEAVE.
-    multiUse: run.journey ? false : settingOn(saves.loadMeta().settings, 'shrineMultiUse'),
+    multiUse: record && typeof record.multiUse === 'boolean' ? record.multiUse : multiUseSetting,
     onDone: () => {
       leaveLocation(visit);
       openVisit = null;
       if (run.legacyDungeon?.activeRest) resolveDungeonNode(run);
       else finishWorldService();
+      if (classicRest) markRestLeft(run);
       persist();
       showMap();
     },
@@ -4555,7 +4592,8 @@ if (shotState === 'combat-test') {
         cardIds: [],
       } : { cardIds: registries.classes.get(run.class).cardPool.slice(0, 3) }),
       flaskId: 'crimsonFlask',
-      relicId: 'forsakenMedallion',
+      // `?shotReward=bossRelics` poses a boss victory's relic choice (SPEC §6).
+      ...(pose === 'bossRelics' ? { relicChoices: ['crownOfStitches', 'wardenHorn', 'ashOfRemembrance'] } : { relicId: 'forsakenMedallion' }),
       armamentId: 'greatsword',
       smithingStoneReceipt,
       // What the fight paid, authored like the rest of the pose.

@@ -15,8 +15,8 @@ import { payAshenBlight, chooseAshenBlightFeat } from '../src/engine/ashenBlight
 
 function fixture({ version = 1, cardIds = ['guardCounter', 'sweepingBlow'], enemyCount = 2 } = {}) {
   const registries = createRegistries({ ...contentBundle, enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier'
-    ? { ...enemy, firstMove: 'slash', moves: { slash: { intent: 'attack', damage: 1, hits: 2, weight: 1,
-      tags: ['camp:physical', 'maneuver:attack', 'reach:contact', 'targeting:single'] } } } : enemy) });
+    ? { ...enemy, firstMove: 'slash', attributes: { strength: 6, dexterity: 4, constitution: 4, wisdom: 2, intelligence: 2 }, moves: { slash: { intent: 'attack', damage: 1, hits: 2, weight: 1,
+      tags: ['camp:physical', 'maneuver:attack', 'range:melee', 'targeting:single'] } } } : enemy) });
   const combat = createCombat({ registries, rng: createRng(701), combatExpansionVersion: 2, reactionRulesVersion: version,
     enemyIds: Array(enemyCount).fill('wanderingSoldier'), player: { classId: 'reaver', maxHp: 100, hp: 100,
       maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: cardIds.length,
@@ -40,13 +40,21 @@ test('incoming plans pause before hits, reveal only the actor, and decline resum
   assert.throws(() => dispatch(combat, { type: 'chooseReaction', offerId: 'stale' }));
   assert.deepEqual(serializeCombatSnapshot(combat), before);
   assert.deepEqual(combat.rng.getCounters(), rng);
+  // Owner 2026-10-12: each fixture enemy spends a 3-SP stat pool (SPEC §4.6a: Dexterity 4 and Constitution 4), so a 1-SP slash is played three times per
+  // enemy turn, and each planned move pauses for its own reaction, in roster order: e1 ×3, then e2 ×3.
   const first = answer(combat);
   assert.deepEqual(first.events.filter(event => event.type === 'enemyMoveStarted').map(event => event.sourceId), ['e1']);
+  assert.equal(combat.pendingReaction.sourceId, 'e1', "e1's second planned slash pauses next");
+  answer(combat);
+  assert.equal(combat.pendingReaction.sourceId, 'e1', "and its third");
+  answer(combat);
   assert.equal(combat.pendingReaction.sourceId, 'e2');
+  answer(combat);
+  answer(combat);
   answer(combat);
   assert.equal(combat.turn, 2);
   assert.equal(combat.phase, 'player');
-  assert.deepEqual(combat.enemies.map(enemy => enemy.performedMoves), [['slash'], ['slash']]);
+  assert.deepEqual(combat.enemies.map(enemy => enemy.performedMoves), [['slash', 'slash', 'slash'], ['slash', 'slash', 'slash']]);
 });
 
 test('headless bot resolves optional offers before trying ordinary player actions', () => {
@@ -58,7 +66,7 @@ test('headless bot resolves optional offers before trying ordinary player action
     assert.equal(action.type, 'chooseReaction'); assert.equal(action.optionId, null);
     dispatch(combat, action); choices++;
   }
-  assert.equal(choices, 2); assert.equal(combat.turn, 2); assert.equal(combat.phase, 'player');
+  assert.equal(choices, 6, 'two enemies, three planned slashes each (3-SP pool, 1 SP per slash)'); assert.equal(combat.turn, 2); assert.equal(combat.phase, 'player');
   assert.equal(combat.eventLog.filter(event => event.type === 'cardPlayed').length, 0);
 });
 
@@ -72,8 +80,15 @@ test('one selected Counter pays once and successful multi-hit return follows the
   assert.equal(out.events.filter(event => event.type === 'combatCounterTriggered').length, 1);
   const trigger = out.events.findIndex(event => event.type === 'combatCounterTriggered');
   const contacts = out.events.map((event, index) => ({ event, index })).filter(({ event }) => event.type === 'damageDealt' && event.targetId === 'player');
-  assert.equal(contacts.length, 2);
+  // The first slash has two hits, both before the Counter's return. The enemy's second planned slash pauses for its own
+  // reaction, so its hits are not in this answer's events yet.
+  assert.equal(contacts.length, 2, 'the first slash lands both hits before the return');
   assert.ok(contacts.every(({ index }) => index < trigger));
+  assert.equal(combat.pendingReaction?.sourceId, 'e1', "the enemy's second planned slash is offered next");
+  answer(combat);
+  assert.equal(combat.pendingReaction?.sourceId, 'e1', 'and its third (a 3-SP pool)');
+  answer(combat);
+  assert.equal(combat.eventLog.filter(event => event.type === 'damageDealt' && event.targetId === 'player').length >= 6, true, 'the later slashes land their hits after their own reactions');
   assert.equal(combat.pendingReaction, undefined);
 });
 
@@ -261,9 +276,9 @@ test('paid Counter reply to an automatic return terminates the chain', () => {
   const { combat } = fixture({ cardIds: ['guardCounter', 'strike'], enemyCount: 1 });
   const enemy = combat.enemies[0];
   enemy.block = 100;
-  enemy.combatStance = { camp: 'physical', maneuver: 'counter', reach: 'contact', targeting: 'single' };
+  enemy.combatStance = { camp: 'physical', maneuver: 'counter', range: 'melee', targeting: 'single' };
   armCombatCounter(combat, enemy, { moveId: 'returnCarrier',
-    tags: ['camp:physical', 'maneuver:counter', 'reach:contact', 'targeting:single'],
+    tags: ['camp:physical', 'maneuver:counter', 'range:melee', 'targeting:single'],
     combatProfile: { ...enemy.combatStance, damageType: 'blunt' } }, { payload: { hp: 1, poise: 0, ward: 0 } });
   dispatch(combat, { type: 'playCard', cardInstanceId: 'r1', targetId: enemy.id });
   const option = combat.pendingReaction.options.find(row => row.cardId === 'guardCounter');
@@ -290,9 +305,9 @@ test('nested paid Sweep discard resumes a player-phase Counter return exactly af
     owner.block = 100;
     const enemy = combat.enemies[0]; enemy.block = 100;
     enemy.ratings = { ar: 0, dr: 0, pr: 0, poise: 100, ward: 0 };
-    enemy.combatStance = { camp: 'physical', maneuver: 'counter', reach: 'contact', targeting: 'single' };
+    enemy.combatStance = { camp: 'physical', maneuver: 'counter', range: 'melee', targeting: 'single' };
     armCombatCounter(combat, enemy, { moveId: 'returnCarrier',
-      tags: ['camp:physical', 'maneuver:counter', 'reach:contact', 'targeting:single'],
+      tags: ['camp:physical', 'maneuver:counter', 'range:melee', 'targeting:single'],
       combatProfile: { ...enemy.combatStance, damageType: 'blunt' } }, { payload: { hp: 1, poise: 0, ward: 0 } });
     if (coop) playCard(combat, 'a', 'strike', enemy.id);
     else dispatch(combat, { type: 'playCard', cardInstanceId: 'strike', targetId: enemy.id });
@@ -357,7 +372,7 @@ test('terminal reaction victory and defeat retire continuation before durable co
   for (const coop of [false, true]) for (const result of ['victory', 'defeat']) {
     const registries = createRegistries({ ...contentBundle, enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier'
       ? { ...enemy, firstMove: 'slash', moves: { slash: { intent: 'attack', damage: 100, hits: 1, weight: 1,
-        tags: ['camp:physical', 'maneuver:attack', 'reach:contact', 'targeting:single'] } } } : enemy) });
+        tags: ['camp:physical', 'maneuver:attack', 'range:melee', 'targeting:single'] } } } : enemy) });
     const player = { id: 'a', classId: 'reaver', hp: 100, maxHp: 100, mana: 20, maxMana: 20,
       stamina: 20, maxStamina: 20, energyMax: 20, drawPerTurn: 1, combatExpansionVersion: 2,
       deck: [{ cardId: 'guardCounter', instanceId: 'terminal-counter', upgraded: false }] };
@@ -408,7 +423,7 @@ test('a terminal Blight play saves ended combat under the new reaction rules', (
   const registries = createRegistries({ ...contentBundle, cards: contentBundle.cards.map(card => card.id === 'guardCounter'
     ? { ...card, ashenBlightCost: 12 } : card), enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier'
     ? { ...enemy, firstMove: 'slash', moves: { slash: { intent: 'attack', damage: 1, hits: 1, weight: 1,
-      tags: ['camp:physical', 'maneuver:attack', 'reach:contact', 'targeting:single'] } } } : enemy) });
+      tags: ['camp:physical', 'maneuver:attack', 'range:melee', 'targeting:single'] } } } : enemy) });
   const combat = createCombat({ registries, rng: createRng(seed), enemyIds: ['wanderingSoldier'], combatExpansionVersion: 2,
     reactionRulesVersion: 1, player: { classId: 'reaver', hp: 100, maxHp: 100, mana: 20, maxMana: 20,
       stamina: 20, maxStamina: 20, energyMax: 20, drawPerTurn: 1,
@@ -433,17 +448,17 @@ test('saved contacts skip disconnected bodies without spending Block or Counter,
   for (const block of [0, 100]) for (const suspend of [false, true]) {
     const registries = createRegistries({ ...contentBundle, enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier'
       ? { ...enemy, firstMove: 'slash', moves: { slash: { intent: 'attack', damage: 10, weight: 1,
-        tags: ['camp:physical', 'maneuver:attack', 'reach:contact', 'targeting:single'] } } } : enemy) });
+        tags: ['camp:physical', 'maneuver:attack', 'range:melee', 'targeting:single'] } } } : enemy) });
     const players = ['a', 'b'].map(id => ({ id, classId: 'reaver', maxHp: 100, hp: 100,
       maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 1,
       combatExpansionVersion: 2, deck: [{ cardId: 'guardCounter', instanceId: `${id}:counter`, upgraded: false }] }));
     const C = createCoopCombat({ registries, rng: createRng(709), players, enemyIds: ['wanderingSoldier'], reactionRulesVersion: 1 });
     const body = C.players.get('b').entity;
     body.block = block;
-    body.combatStance = { camp: 'physical', maneuver: 'counter', damageType: 'blunt', reach: 'contact', targeting: 'single' };
+    body.combatStance = { camp: 'physical', maneuver: 'counter', damageType: 'blunt', range: 'melee', targeting: 'single' };
     armCombatCounter(C, body, { cardId: 'guardCounter', instanceId: 'b:armed',
-      tags: ['camp:physical', 'maneuver:counter', 'reach:contact', 'targeting:single'],
-      combatProfile: { camp: 'physical', maneuver: 'counter', damageType: 'blunt', reach: 'contact', targeting: 'single' } },
+      tags: ['camp:physical', 'maneuver:counter', 'range:melee', 'targeting:single'],
+      combatProfile: { camp: 'physical', maneuver: 'counter', damageType: 'blunt', range: 'melee', targeting: 'single' } },
     { payload: { hp: 1, poise: 0, ward: 0 } });
     endTurn(C, 'a'); endTurn(C, 'b'); leaveCombat(C, 'b');
     // The already accepted End Turn still owns hand/SP cleanup. Incoming

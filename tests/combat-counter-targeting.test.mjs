@@ -8,7 +8,11 @@ import { cardNeedsEnemyTarget, friendlyTargetPlan } from '../src/model/friendlyT
 import { cardTargetPlan, immediateCardEffects } from '../src/model/cardTargets.js';
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
 
-const registries = createRegistries(contentBundle);
+// These checks read the authored card numbers, so every card keeps its authored cost and numbers: it opts out of the
+// cost formula (costRule 'fixed', SPEC §4.3a), which tests/action-costs-*.test.mjs cover.
+const authoredCosts = (bundle) => ({ ...bundle, cards: bundle.cards.map((card) => ({ ...card, costRule: 'fixed' })) });
+
+const registries = createRegistries(authoredCosts(contentBundle));
 const players = [{ id: 'a', alive: true, connected: true }, { id: 'b', alive: true, connected: true }];
 const enemies = [{ id: 'e1', alive: true }];
 const counter = { tags: ['camp:physical', 'maneuver:counter', 'counter:melee'], effects: [

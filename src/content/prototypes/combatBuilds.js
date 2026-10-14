@@ -8,7 +8,9 @@ import { createRng } from '../../engine/rng.js';
 import { prototypeEquipment } from './combatEquipment.js';
 import { computeTokenBindings } from '../../model/validate.js';
 
-const card = (id, name, cost, effects, extra = {}) => ({ id, name, class: 'colorless', rarity: 'special', cost, type: 'attack', keywords: [], effects,
+// Prototype cards pin their own Stamina and Mana (the dual-cost prototype measures them), so they opt out of the card
+// cost formula (costRule 'fixed', SPEC §4.3a).
+const card = (id, name, cost, effects, extra = {}) => ({ id, name, class: 'colorless', rarity: 'special', cost, costRule: 'fixed', type: 'attack', keywords: [], effects,
   textTemplate: `${name}. ${computeTokenBindings(effects).map((b) => `${b.token}: {${b.token}}`).join('; ')}`,
   ...(effects.some((e) => e.op === 'damage') ? { damageSchool: extra.attack?.source === 'spell' ? 'arcane' : 'physical', exposureBuildupPerHit: 0 } : {}), ...extra });
 const hit = (amount, hits = 1) => ({ op: 'damage', target: 'enemy', amount, hits });

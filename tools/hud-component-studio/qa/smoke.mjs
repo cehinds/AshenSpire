@@ -13,7 +13,7 @@ await fs.mkdir(artifacts, { recursive: true });
 await fs.mkdir(shots, { recursive: true });
 const errors = [];
 const failedRequests = [];
-const browser = await chromium.launch({ ...(process.env.HUD_STUDIO_BROWSER ? { channel: process.env.HUD_STUDIO_BROWSER } : {}), headless: true });
+const browser = await chromium.launch({ ...(process.env.HUD_STUDIO_EXECUTABLE ? { executablePath: process.env.HUD_STUDIO_EXECUTABLE } : {}), ...(process.env.HUD_STUDIO_BROWSER ? { channel: process.env.HUD_STUDIO_BROWSER } : {}), headless: true });
 const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, acceptDownloads: true });
 const page = await context.newPage();
 page.on('pageerror', error => errors.push(error.message));

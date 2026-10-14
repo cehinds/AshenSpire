@@ -26,7 +26,7 @@ const ORDER = defaultSeatOrder(REG);
 // remain unused during map generation; every older counter stays compared.
 function mapCountersBeforeCombatStreams(counters) {
   const historical = { ...counters };
-  for (const stream of ['combatAvoidance', 'statusRecovery', 'statusPressure', 'ashenBlight', 'enemyIntentClue']) {
+  for (const stream of ['combatAvoidance', 'statusRecovery', 'statusPressure', 'ashenBlight', 'enemyIntentClue', 'enemyReaction']) {
     assert.equal(historical[stream], 0, `building a map draws nothing on ${stream}`);
     delete historical[stream];
   }
@@ -117,7 +117,7 @@ test('13.6 claims 1 and 3: every existing seed\'s act map and HP roll are byte-i
     // `rewardRolls` (SPEC §15.1) is appended after the fixture was taken; a
     // map draws nothing on it, so it is left out beside `seats` and asserted 0.
     // Shop offers, sigils and intent visibility likewise append after capture.
-    const { seats: _liveSeats, rewardRolls: _rewardRolls, shopOffers: _shopOffers, sigils: _sigils, enemyIntentVisibility: _intentReads, ...liveCounters } = mapCountersBeforeCombatStreams(liveRng.getCounters());
+    const { seats: _liveSeats, rewardRolls: _rewardRolls, shopOffers: _shopOffers, sigils: _sigils, enemyIntentVisibility: _intentReads, enemyReaction: _enemyReaction, ...liveCounters } = mapCountersBeforeCombatStreams(liveRng.getCounters());
     assert.equal(_sigils, 0, 'building a map draws nothing on sigils');
     assert.equal(_intentReads, 0, 'building a map draws nothing on intent visibility');
     assert.equal(_rewardRolls, 0, 'building a map draws nothing on rewardRolls');
@@ -127,7 +127,7 @@ test('13.6 claims 1 and 3: every existing seed\'s act map and HP roll are byte-i
     const rng = createRng(seed);
     const g = buildActMap(PRE_SEAT_REG, rng, ORDER[tier - 1], tier);
     const after = { counters: rng.getCounters(), nodes: Object.values(g.nodes).map(({ id, floor, col, type, next, resolved, encounterId, destinationLabel }) => ({ id, floor, col, type, next, resolved, encounterId, destinationLabel })), bossIds: g.bossIds, startIds: g.startIds };
-    const { seats, rewardRolls, shopOffers, sigils, enemyIntentVisibility, ...counters } = mapCountersBeforeCombatStreams(after.counters);
+    const { seats, rewardRolls, shopOffers, sigils, enemyIntentVisibility, enemyReaction, ...counters } = mapCountersBeforeCombatStreams(after.counters);
     assert.equal(rewardRolls, 0);
     assert.equal(shopOffers, 0);
     assert.equal(sigils, 0);
@@ -135,11 +135,14 @@ test('13.6 claims 1 and 3: every existing seed\'s act map and HP roll are byte-i
     // JSON round-trip: the fixture dropped `undefined` fields the way any save does.
     assert.deepEqual(JSON.parse(JSON.stringify({ ...after, counters })), before, `seed ${seed} tier ${tier}`);
   }
+  // The HP rolls are read against the HP range the fixture's enemies shipped with: the Wandering Soldier's 22-26 was
+  // retuned to 31-36 (owner, 2026-10-13: harder tier-1 normals), which moves the rolled value and no draw.
+  const PRE_HP_REG = createRegistries({ ...contentBundle, enemies: contentBundle.enemies.map((e) => (e.id === 'wanderingSoldier' ? { ...e, hp: [22, 26] } : e)) });
   for (const [key, hp] of Object.entries(fixture.hp)) {
     const [seed, tier] = key.split(':').map(Number);
-    const enc = REG.encounters.all().find((e) => e.pool === 'normal' && e.seat === ORDER[tier - 1]);
-    const hpMult = seatTierHpMult(REG, ORDER[tier - 1], tier);
-    const c = createCombat({ registries: REG, rng: createRng(seed), player: { classId: 'reaver', maxHp: 80, hp: 80, energyMax: 3, drawPerTurn: 5, deck: [{ instanceId: 'x1', cardId: 'strike', upgraded: false }] }, enemyIds: enc.enemies, hpMult });
+    const enc = PRE_HP_REG.encounters.all().find((e) => e.pool === 'normal' && e.seat === ORDER[tier - 1]);
+    const hpMult = seatTierHpMult(PRE_HP_REG, ORDER[tier - 1], tier);
+    const c = createCombat({ registries: PRE_HP_REG, rng: createRng(seed), player: { classId: 'reaver', maxHp: 80, hp: 80, energyMax: 3, drawPerTurn: 5, deck: [{ instanceId: 'x1', cardId: 'strike', upgraded: false }] }, enemyIds: enc.enemies, hpMult });
     assert.deepEqual(c.enemies.map((e) => e.hp), hp, `seed ${seed} tier ${tier} HP`);
   }
 });

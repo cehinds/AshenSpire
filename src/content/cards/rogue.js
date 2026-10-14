@@ -10,6 +10,7 @@ const TARGET_WEAK = { p: 'hasStatus', of: 'target', status: 'weak' };
 const TARGET_VULNERABLE = { p: 'hasStatus', of: 'target', status: 'vulnerable' };
 const TARGET_BLEED = { p: 'hasStatus', of: 'target', status: 'bleed' };
 const TARGET_VENOM = { p: 'hasStatus', of: 'target', status: 'venom' };
+const TARGET_VENOM_3 = { p: 'hasStatus', of: 'target', status: 'venom', atLeast: 3 };
 const prepare = () => ({ op: 'applyStatus', target: 'self', status: 'prepared', stacks: one });
 const spendPrepared = () => ({ op: 'removeStatus', target: 'self', status: 'prepared' });
 
@@ -36,7 +37,7 @@ export const rogueCards = [
     },
   },
   {
-    id: 'rogueShiv', name: 'Shiv', class: 'rogue', rarity: 'special', cost: 0, type: 'attack',
+    id: 'rogueShiv', name: 'Shiv', class: 'rogue', rarity: 'special', cost: 0, costRule: 'fixed', type: 'attack',
     flavor: "Sliver of iron from the rail of the Fourth Bridge.\n\nThe ironwork froze brittle the night the Court Flame died. Dock children say the railings were cast from the Court's melted oath-tokens, and so are worth more than any blade in the right hands.\n\nWhose hands are right, the children will not tell.",
     keywords: ['exhaust'], icon: '🔪',
     effects: [{ op: 'damage', target: 'enemy', amount: 4 }],
@@ -44,7 +45,7 @@ export const rogueCards = [
     upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 6 }] },
   },
   {
-    id: 'smokePellet', name: 'Smoke Pellet', class: 'rogue', rarity: 'special', cost: 0, type: 'skill',
+    id: 'smokePellet', name: 'Smoke Pellet', class: 'rogue', rarity: 'special', cost: 0, costRule: 'fixed', type: 'skill',
     flavor: "Tallow and ash, rolled in a back room on the Chandlers' Stair.\n\nSold as lamp-starters. The chandler says the recipe was his grandmother's, taken from a Court surgeon, though in his telling the surgeon is sometimes a knight.\n\nThe docks buy more of them each winter.",
     keywords: ['exhaust'], icon: '🌫',
     effects: [{ op: 'block', target: 'self', amount: 3 }, prepare()],
@@ -133,7 +134,7 @@ export const rogueCards = [
   {
     id: 'vanish', name: 'Vanish', class: 'rogue', rarity: 'common', cost: 1, type: 'skill', keywords: ['exhaust'], icon: '◌',
     flavor: "Art of the unmarked beneath the bridges.\n\nTaught to the docks by those who lived under the Citadel's bridges before the Decree, when to be seen was to be entered on a roll. Under the bridges there is nothing but ice.\n\nMost of those teachers vanished in the end. Where to, the docks cannot agree.",
-    effects: [{ op: 'block', target: 'self', amount: 8 }, prepare(), { op: 'addCard', card: 'smokePellet', pile: 'hand' }],
+    effects: [{ op: 'block', target: 'self', amount: 6 }, prepare(), { op: 'addCard', card: 'smokePellet', pile: 'hand' }],
     textTemplate: 'Gain {block} Block. Become Prepared. Add a Smoke Pellet to your hand. Exhaust.',
     upgrade: { keywords: [], effects: [{ op: 'block', target: 'self', amount: 8 }, prepare(), { op: 'addCard', card: 'smokePellet', pile: 'hand' }], textTemplate: 'Gain {block} Block. Become Prepared. Add a Smoke Pellet to your hand.' },
   },
@@ -145,6 +146,20 @@ export const rogueCards = [
     upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 13 }, { op: 'damage', target: 'enemy', amount: 8, if: TARGET_WEAK }] },
   },
 
+  {
+    id: 'aspDart', name: 'Asp Dart', class: 'rogue', rarity: 'common', cost: 1, type: 'attack', keywords: [], icon: '➳',
+    flavor: "Thorn of the river reeds, dipped in the second shelf.\n\nThe ice-cutters carry a pinch of it in a quill and spit it Near. The surgeons called the wound a bite and billed the bitten.\n\nNo asp has lived on the docks in living memory.",
+    effects: [{ op: 'damage', target: 'enemy', amount: 6 }],
+    textTemplate: 'Deal {damage} damage. Poison damage leaves Venom behind.',
+    upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 9 }] },
+  },
+  {
+    id: 'viperStrike', name: 'Viper Strike', class: 'rogue', rarity: 'common', cost: 1, type: 'attack', keywords: [], icon: '⥼',
+    flavor: "Short blade, long wait.\n\nThe docks coat the edge at dusk and let the cold carry the rest. A viper strikes once and withdraws, and the ice-cutters admire the manners of it. The bridge watch logs the wound as a scratch, the fee as a gift.\n\nThe wounded rarely admire anything by morning.",
+    effects: [{ op: 'damage', target: 'enemy', amount: 5 }, { op: 'applyStatus', target: 'enemy', status: 'venom', stacks: 2 }],
+    textTemplate: 'Deal {damage} damage. Apply {venom} Venom.',
+    upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 8 }, { op: 'applyStatus', target: 'enemy', status: 'venom', stacks: 2 }] },
+  },
   // ---- Uncommons (13) -----------------------------------------------------
   {
     id: 'bladeDanceRogue', name: 'Blade Dance', class: 'rogue', rarity: 'uncommon', cost: 1, type: 'attack', keywords: [], icon: '⚔',
@@ -168,7 +183,7 @@ export const rogueCards = [
     upgrade: { effects: [{ op: 'damage', target: 'allEnemies', amount: 7 }, { op: 'draw', amount: 1 }] },
   },
   {
-    id: 'setupRogue', name: 'Setup', class: 'rogue', rarity: 'uncommon', cost: 0, type: 'skill', keywords: ['exhaust'], icon: '⚙',
+    id: 'setupRogue', name: 'Setup', class: 'rogue', rarity: 'uncommon', cost: 0, costRule: 'fixed', type: 'skill', keywords: ['exhaust'], icon: '⚙',
     flavor: "Preparation of a dock job.\n\nA window left open on the Lantern Bridge, a lamp turned low, a guard paid to cough. The method is credited to a thief called the Wick, who planned the first robbery of the Regent's hall in the years of the Mark Trade.\n\nIt is said the Court itself paid her to rob it.",
     effects: [prepare(), { op: 'gainEnergy', amount: 1 }, { op: 'addCard', card: 'rogueShiv', pile: 'hand' }],
     textTemplate: 'Become Prepared. Gain {gainEnergy} Stamina. Add a Shiv to your hand. Exhaust.',
@@ -238,6 +253,21 @@ export const rogueCards = [
     upgrade: { effects: [{ op: 'block', target: 'self', amount: 9 }, { op: 'applyStatus', target: 'allEnemies', status: 'weak', stacks: 1 }, prepare()] },
   },
 
+  {
+    id: 'septicBlade', name: 'Septic Blade', class: 'rogue', rarity: 'uncommon', cost: 2, type: 'attack', keywords: [], icon: '⚔',
+    flavor: "Edge left unwashed on purpose.\n\nThe Court's surgeons scrubbed their blades between patients and were called fussy for it. The docks keep theirs in a jar of the second shelf's dregs and call that discipline.\n\nA wound that has already been poisoned once takes the edge twice as hard.",
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 8 },
+      { op: 'damage', target: 'enemy', amount: 4, if: TARGET_VENOM_3 },
+      { op: 'applyStatus', target: 'enemy', status: 'venom', stacks: 3 },
+    ],
+    textTemplate: 'Deal {damage} damage. If the target has 3 or more Venom, deal {damage.2} more. Apply {venom} Venom.',
+    upgrade: { effects: [
+      { op: 'damage', target: 'enemy', amount: 12 },
+      { op: 'damage', target: 'enemy', amount: 4, if: TARGET_VENOM_3 },
+      { op: 'applyStatus', target: 'enemy', status: 'venom', stacks: 3 },
+    ] },
+  },
   // ---- Rares (10) ---------------------------------------------------------
   {
     id: 'assassinate', name: 'Assassinate', class: 'rogue', rarity: 'rare', cost: 2, type: 'attack', keywords: ['exhaust'], icon: '🗡',
@@ -304,6 +334,8 @@ export const rogueCards = [
   },
   {
     id: 'deathblow', name: 'Deathblow', class: 'rogue', rarity: 'rare', cost: 3, type: 'attack', keywords: [], icon: '☠',
+    // 60% Blunt, 40% Necrotic (owner, 2026-10-13).
+    attack: { components: [{ type: 'blunt', weight: 60 }, { type: 'decay', weight: 40 }] },
     flavor: "Killing stroke of the frozen docks.\n\nStruck where the river keeps what the surgeons leave. The river does not thaw, the docks say, because it is full, and the Court built more bridges rather than ask why.\n\nBeneath the ice the Marrow Organist plays the funeral service. He has never reached its end.",
     effects: [
       { op: 'damage', target: 'enemy', amount: 24 },
@@ -313,10 +345,23 @@ export const rogueCards = [
     textTemplate: 'Deal {damage} damage. If the target has Bleed, deal {damage.2} more. If it has Venom, deal {damage.3} more.',
     upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 30 }, { op: 'damage', target: 'enemy', amount: 12, if: TARGET_BLEED }, { op: 'damage', target: 'enemy', amount: 12, if: TARGET_VENOM }] },
   },
+  {
+    id: 'lethalDose', name: 'Lethal Dose', class: 'rogue', rarity: 'rare', cost: 1, type: 'attack', keywords: ['exhaust'], icon: '⚗',
+    flavor: "Whole vial, all at once.\n\nThe surgeons measured doses by the drop and wrote each one down. The docks pour the vial and write nothing, which is why the surgeons' ledgers hold so many unexplained recoveries.\n\nThe docks' ledgers hold the rest.",
+    effects: [
+      { op: 'damage', target: 'enemy', amount: { f: 'add', args: [6, { f: 'mul', args: [4, { f: 'stacks', status: 'venom', of: 'target' }] }] } },
+      { op: 'removeStatus', target: 'enemy', status: 'venom' },
+    ],
+    textTemplate: "Deal 6 damage plus 4 times the target's Venom, then remove its Venom. Exhaust.",
+    upgrade: { effects: [
+      { op: 'damage', target: 'enemy', amount: { f: 'add', args: [8, { f: 'mul', args: [5, { f: 'stacks', status: 'venom', of: 'target' }] }] } },
+      { op: 'removeStatus', target: 'enemy', status: 'venom' },
+    ], textTemplate: "Deal 8 damage plus 5 times the target's Venom, then remove its Venom. Exhaust." },
+  },
   // ---- The class ability card (plan phase 5a, proposal §4) -----------------
   // Prepare: the Rogue's loop is setup then payoff; the cheapest way in.
   {
-    id: 'prepare', name: 'Prepare', class: 'rogue', rarity: 'starter', cost: 0, type: 'skill',
+    id: 'prepare', name: 'Prepare', class: 'rogue', rarity: 'starter', cost: 0, costRule: 'fixed', type: 'skill',
     flavor: "Hands warmed before the work.\n\nCold hands drop knives. Dock children learn to warm their hands before they learn to steal, and never at a fire another has lit. A borrowed fire is a debt, and the docks collect.\n\nThe fires on the Citadel side burn more than wood.",
     keywords: ['exhaust'], icon: '◈',
     effects: [{ op: 'applyStatus', target: 'self', status: 'prepared', stacks: one }],
@@ -369,9 +414,9 @@ export const rogueCards = [
   {
     id: 'bindingParry', name: 'Binding Parry', class: 'rogue', rarity: 'rare', cost: 1, type: 'skill', keywords: [], icon: '⚔',
     flavor: "The blade caught, turned, and held aside.\n\nA duelling master of the Court taught it for coin to anyone who asked, dock thieves among them. When the Court learned whom he had taught, it stitched his hands.\n\nHe teaches it still, by describing it.",
-    effects: [{ op: 'block', target: 'self', amount: 12 }, prepare(), { op: 'draw', amount: 1 }],
+    effects: [{ op: 'block', target: 'self', amount: 9 }, prepare(), { op: 'draw', amount: 1 }],
     textTemplate: 'Gain {block} Block. Prepare Melee Counter. Become Prepared. Draw {draw} card.',
-    upgrade: { effects: [{ op: 'block', target: 'self', amount: 16 }, prepare(), { op: 'draw', amount: 1 }] },
+    upgrade: { effects: [{ op: 'block', target: 'self', amount: 13 }, prepare(), { op: 'draw', amount: 1 }] },
   },
   {
     id: 'whirlingGuard', name: 'Whirling Guard', class: 'rogue', rarity: 'rare', cost: 1, type: 'attack', keywords: [], icon: '🌀',

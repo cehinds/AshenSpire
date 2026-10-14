@@ -1305,6 +1305,56 @@ export const propertyRuleEffects = {
       }
     }
   },
+  "oathKept": {
+    "triggers": [
+      {
+        "on": "stanceEntered",
+        "if": {
+          "p": "eventSourceIsOwner"
+        },
+        "do": [
+          {
+            "op": "applyStatus",
+            "target": "owner",
+            "status": "stanceShifted",
+            "stacks": 1
+          }
+        ]
+      },
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "cardTagIs",
+              "tag": "oath"
+            },
+            {
+              "p": "not",
+              "pred": {
+                "p": "hasStatus",
+                "of": "owner",
+                "status": "stanceShifted"
+              }
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "block",
+            "target": "owner",
+            "amount": {
+              "balance": "tagMechanics.oath.block"
+            }
+          }
+        ]
+      }
+    ]
+  },
   "ashenGrip": {
     "triggers": [
       {
@@ -4139,10 +4189,21 @@ export const propertyRuleEffects = {
                   "tag": "guard"
                 },
                 {
-                  "p": "hasStatus",
-                  "of": "allEnemies",
-                  "status": "crimsonBlight",
-                  "snapshot": "beforePlay"
+                  "p": "any",
+                  "preds": [
+                    {
+                      "p": "hasStatus",
+                      "of": "allEnemies",
+                      "status": "crimsonBlight",
+                      "snapshot": "beforePlay"
+                    },
+                    {
+                      "p": "hasStatus",
+                      "of": "allEnemies",
+                      "status": "necroticBlight",
+                      "snapshot": "beforePlay"
+                    }
+                  ]
                 }
               ]
             }
@@ -4188,10 +4249,21 @@ export const propertyRuleEffects = {
                   ]
                 },
                 {
-                  "p": "hasStatus",
-                  "of": "target",
-                  "status": "crimsonBlight",
-                  "snapshot": "beforePlay"
+                  "p": "any",
+                  "preds": [
+                    {
+                      "p": "hasStatus",
+                      "of": "target",
+                      "status": "crimsonBlight",
+                      "snapshot": "beforePlay"
+                    },
+                    {
+                      "p": "hasStatus",
+                      "of": "target",
+                      "status": "necroticBlight",
+                      "snapshot": "beforePlay"
+                    }
+                  ]
                 }
               ]
             }
@@ -4348,6 +4420,7 @@ export const propertyRuleEffects = {
             "frostExposed",
             "insanityExposed",
             "crimsonBlight",
+            "necroticBlight",
             "burn",
             "madness",
             "staggered",
@@ -4379,8 +4452,17 @@ export const propertyRuleEffects = {
               "p": "eventSourceIsOwner"
             },
             {
-              "p": "enemyKilledWithStatus",
-              "status": "crimsonBlight"
+              "p": "any",
+              "preds": [
+                {
+                  "p": "enemyKilledWithStatus",
+                  "status": "crimsonBlight"
+                },
+                {
+                  "p": "enemyKilledWithStatus",
+                  "status": "necroticBlight"
+                }
+              ]
             }
           ]
         },
@@ -4716,8 +4798,17 @@ export const propertyRuleEffects = {
               "p": "eventSourceIsOwner"
             },
             {
-              "p": "enemyKilledWithStatus",
-              "status": "crimsonBlight"
+              "p": "any",
+              "preds": [
+                {
+                  "p": "enemyKilledWithStatus",
+                  "status": "crimsonBlight"
+                },
+                {
+                  "p": "enemyKilledWithStatus",
+                  "status": "necroticBlight"
+                }
+              ]
             }
           ]
         },

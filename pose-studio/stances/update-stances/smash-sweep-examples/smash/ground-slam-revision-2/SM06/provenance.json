@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 2,
+  "catalogId": "SM06",
+  "revision": "ground-slam-revision-2",
+  "frameCount": 5,
+  "frameSlots": [
+    "S",
+    "takeoff",
+    "airborne",
+    "ground-impact",
+    "S"
+  ],
+  "tool": "image_gen.imagegen",
+  "rawSha256": "c34ed60752348f3fd1b0304149dc42dc8d2d685a2fab2a167883d1db9ab51b88",
+  "rawDimensions": [
+    2172,
+    724
+  ],
+  "alphaExtrema": [
+    0,
+    255
+  ],
+  "seedPath": "pose-studio/stances/update-stances/sequence-review/frames/S.webp",
+  "seedPathBase": "repository root",
+  "seedSha256": "9abfefe7258a3bfa2238e7c0516396c61baa5ca009a649b8408183b91fcdf6e2",
+  "frameSize": [
+    768,
+    768
+  ],
+  "sharedActionScale": 1.0970588235294119,
+  "groundY": 658,
+  "seedPlacement": [
+    128,
+    192
+  ],
+  "extraction": [
+    {
+      "frame": 2,
+      "bounds": [
+        455,
+        175,
+        820,
+        599
+      ],
+      "rawGround": 599,
+      "placement": [
+        184,
+        193
+      ]
+    },
+    {
+      "frame": 3,
+      "bounds": [
+        878,
+        40,
+        1209,
+        561
+      ],
+      "rawGround": 595,
+      "placement": [
+        202,
+        49
+      ]
+    },
+    {
+      "frame": 4,
+      "bounds": [
+        1236,
+        321,
+        1804,
+        642
+      ],
+      "rawGround": 595,
+      "placement": [
+        72,
+        357
+      ]
+    }
+  ],
+  "bookends": "Exact original S decoded RGBA pixels padded without resize; first/last PNG bytes identical; source WebP container differs",
+  "normalizationNotes": "Five alpha-connected figures isolated; detached particles assigned to closest full figure through nearest-alpha map within90px. One action scale across strip preserves airborne offset. Impact floor inferred from blade contact/boot plane, not effect bottom; dust can extend belowfloor. Airborne feet never independently floored.",
+  "status": "director_accepted_normalized_option_review_QA_passed",
+  "runtimeChanged": false,
+  "motif": "Long-leap crater slam",
+  "uniqueActionPaintings": 3,
+  "unchangedGeneratedOriginal": "/workspace/generated_images/exec-781202ce-35bc-4f80-baf7-2e7f7560e010.png",
+  "initialGeneration": "/workspace/generated_images/exec-781202ce-35bc-4f80-baf7-2e7f7560e010.png",
+  "promptFiles": [
+    "prompt.txt"
+  ],
+  "inputCanvasSha256": "c284d5b4b8c9f97b162dd1530c027510d4d32dfe3b1ecb7fe8a89e7d5cbdfb3b",
+  "reviewScope": "New heavy jumping ground-slam option concepts only; supersedes prior vault/horizontal studies; no gameplay adoption",
+  "normalizationAlphaHandling": "Retain whole connected figure/impact footprint; detached visible debris assigned via closest alpha support within90pixels. Omit disconnected islands maxalpha<=16. Source S unchanged.",
+  "fileSha256": {
+    "frames/01.png": "45e710d9e001eb9f7e1b1b0f42296564c30a5b556169e4000cb7eb0194a0ae41",
+    "frames/02.png": "e74acd79de12e65b25558c012dd09703c9e9a61129449c88c9fdf68b9d433fa2",
+    "frames/03.png": "a71cf0e2b74c90b0d1d99bc3470e9e7c93919410565c78ec6fa3f3aeb799c94d",
+    "frames/04.png": "6593412810edfea35025e84b83b763f1228d6bac7654518cb693f071f3f1999b",
+    "frames/05.png": "45e710d9e001eb9f7e1b1b0f42296564c30a5b556169e4000cb7eb0194a0ae41",
+    "preview.gif": "a7fb55c58808d1188ec9fec9691fa97c65d0dd067f1e9eecb6faf83e16a52ce8",
+    "preview.png": "75198963ef38ddd620655e41f05fdaeadbb9b1864d104127c25ed203b1e0a07d",
+    "prompt.txt": "6b6a857ba60dfd5d04f59b8a1fc373413fc7f7b61d06f7129039b49b153d44ee",
+    "raw.png": "c34ed60752348f3fd1b0304149dc42dc8d2d685a2fab2a167883d1db9ab51b88"
+  },
+  "qa": {
+    "reviewers": [
+      "sweep_sequences_art",
+      "integration_audit"
+    ],
+    "result": "APPROVE",
+    "verified": "50 RGBA frames, 20 exact padded S bookends, ten GIFs of five slots, complete blades and impact effects, fixed floor with airborne offsets",
+    "metadataHashAssertions": 122,
+    "minimumVisibleMarginPx": 24,
+    "scope": "Option artwork only; not gameplay selection"
+  }
+}

@@ -22,13 +22,18 @@ test('approved compact Inspect and HP shapes retain active paging', () => {
 
 test('expanded combat panels and selected details stay in the correct layer', () => {
   assert.match(css, /\.combat-tools:has\(\.combat-log-panel:not\(\[hidden\]\)\)\s*\{[^}]*z-index:\s*calc\(var\(--combat-layer-hud\) \+ 1\)/s);
-  assert.match(css, /\.player:not\(\.context-selected\):not\(\.selected-target\)[^{]*\.statuses\s*\{\s*display:\s*none !important;/s);
+  // Owner decision (2026-10-11): at rest a player folds only its name and
+  // resource rows; the stance chip and status icons stay visible.
+  assert.match(css, /\.player:not\(\.context-selected\):not\(\.selected-target\)[^{]*\[data-meter-row='resource'\]\s*\{\s*display:\s*none !important;/s);
+  const restHide = css.match(/\.player:not\(\.context-selected\):not\(\.selected-target\)[^{]*\{\s*display:\s*none !important;/s)?.[0] ?? '';
+  assert.doesNotMatch(restHide, /data-meter-row='stance'|\.statuses/, 'the stance chip and statuses are not hidden at rest');
 });
 
 test('compact geometry reserves the measured controls and overhead gaps', () => {
   assert.match(battlefield, /setProperty\('--overhead-top', `\$\{-overheadGap \/ zoom\}px`\)/);
   const reserve = COMBAT_TOOLS_HEIGHT_PX;
-  assert.match(hand, /const toolsHeight = COMBAT_TOOLS_HEIGHT_PX \/ zoom;/);
+  assert.match(hand, /const toolsHeight = toolsPhysical \/ zoom;/);
+  assert.match(hand, /!desktop \? COMBAT_TOOLS_HEIGHT_PX/, 'only the desktop form factor measures its tool row');
   const dockOffset = Number(tools.match(/top: \(handBox\?\.top \|\| 0\) \+ (\d+)/)?.[1] ?? (tools.includes('top: handBox?.top || 0') || tools.includes('const dockTop = handBox?.top || 0;') ? 0 : NaN));
   const toolHeight = Number(css.match(/\.combat-tools > button\s*\{[^}]*height:\s*calc\((\d+)px \/ var\(--ui-zoom,1\)\)/s)?.[1]);
   assert([reserve, dockOffset, toolHeight].every(Number.isFinite), 'all toolbar dimensions must be accounted for');
@@ -39,7 +44,7 @@ test('compact geometry reserves the measured controls and overhead gaps', () => 
 
 test('unarmed intent taps preserve the selection-first tooltip path', () => {
   assert.match(combat, /selectCombatant\(enemy\.id\);[\s\S]*?return false;/);
-  assert.match(coop, /selectCombatant\(e\.id\);[\s\S]*?return false;/);
+  assert.match(coop, /selectCombatant\((?:e\.id|enemyId)\);[\s\S]*?return false;/);
 });
 
 test('an armed self-target HUD click reaches only one frame listener', () => {

@@ -4,7 +4,7 @@ import { assetUrl } from '../assetmap.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 
 const ICONS = new Set('accessibility actions armour attack audio back bleed blight block boss burn check cinders close collapse combat compare compendium connected contrast controls coop deck dexterity dialogue discard disconnected display draw equipment expand flask-health flask-mana frail frost health history info insanity inventory journey link location lock madness mana map menu merchant motion next poise profile progression quest regen relic reset rest reward save search seed settings shield skill smith staggered stamina strength sword target touch unknown vulnerable warning weak weight world'.split(' '));
-const ALIASES = Object.freeze({ hp: 'health', action: 'actions', energy: 'actions', crimsonBlight: 'blight' });
+const ALIASES = Object.freeze({ hp: 'health', action: 'actions', energy: 'actions', crimsonBlight: 'blight', necroticBlight: 'blight', confused: 'madness', slowed: 'weak', entombed: 'staggered' });
 const GLYPHS = Object.freeze({ '☰': 'menu', '×': 'close', '✕': 'close', '✖': 'close', '←': 'back', '‹': 'back', '›': 'next', '⚙': 'settings', '⚔': 'attack', '⚒': 'smith', '♥': 'health', '❤': 'health', '🛡': 'shield', '🔒': 'lock', '✓': 'check', '✔': 'check', '⚠': 'warning', '🔍': 'search', '🔥': 'burn', '💧': 'mana', '📜': 'quest', '🎲': 'seed', '↻': 'reset', 'ℹ': 'info' });
 
 export function engravedIconId(id) {

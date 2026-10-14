@@ -11,7 +11,7 @@ import { configureTooltipGlossary, decorateKeywords } from './tooltipGlossary.js
 // computeTokenBindings. No math happens here.
 
 import { resolveCard, relicPropertyRules } from '../../model/registries.js';
-import { playingCardModel, playingCardClasses, staticCardTokens, combatCardType, combatCardSummary, combatCardDamageLabel } from '../../model/playingCard.js';
+import { playingCardModel, playingCardClasses, staticCardTokens, combatCardType, combatCardDamageLabel } from '../../model/playingCard.js';
 import { cardFields, resolveCardLevel } from '../../model/cardFields.js';
 import { cardShape } from '../models/CardSizeModel.js';
 import { litCard } from './cardSelection.js';
@@ -23,17 +23,20 @@ import { balance } from '../../content/balance.js';
 import { flasks } from '../../content/flasks.js';
 import { tagService } from '../../model/tagService.js';
 import { metadataFooter, artworkAnchor } from '../models/IdentityModel.js';
-import { defaultCardArtFallbacks } from '../cardArtwork.js';
+import { cardArtFallbacks } from '../cardArtwork.js';
+import { markArtPlaceholder } from '../artFallback.js';
+import { registerCardArtRefresh } from '../cardArtStyle.js';
 import { assetUrl } from '../assetmap.js';
 import { t } from '../strings.js';
 import { loreLine } from './loreLine.js';
 import { cardChoice } from '../../model/cardChoices.js';
 import { engravedIconHtml, engravedGlyphId } from './engravedIcon.js';
 import { equipmentCardArt } from '../assets.js';
-import { combatProfileFor, combatProfileTags } from '../../model/combatCardProfile.js';
+import { combatCardRange, combatProfileFor, combatProfileTags, numberedTraitRow } from '../../model/combatCardProfile.js';
 import { ashenBlightCardLabel } from './ashenBlight.js';
 import { ACTION_SIGILS, SCHOOL_SIGILS, cardSigilIdentity } from '../../content/combatSigils.js';
 import { compactCardRules, sigilExplanationHtml } from './combatSigilView.js';
+import { cardFaceLines } from '../../model/cardFaceText.js';
 
 // WCI3: rarity at the start of the band, the owned count at the end, each only
 // when the surface can state it. No domain action ever belongs in this band.
@@ -135,11 +138,12 @@ function fillTemplate(def, tokens, baseTokens, damageSequences = []) {
  *   opts — { preview?    (previewCard result → live numbers),
  *            affordable? (bool; greys out when false),
  *            small?      (scale for reward/pile grids),
- *            tooltip?    (false suppresses the shared hover/focus tooltip) }
+ *            tooltip?    (false suppresses the shared hover/focus tooltip),
+ *            definition? (an already projected definition, e.g. the run's trait projection) }
  */
 export function renderCard(registries, ref, opts = {}) {
   configureTooltipGlossary(registries);
-  const def = opts.preview?.resolvedDefinition || resolveCard(registries, ref);
+  const def = opts.preview?.resolvedDefinition || opts.definition || resolveCard(registries, ref);
   // ONE PROJECTION, READ ONCE. Everything this function used to derive on its
   // way to innerHTML — the tag junction, the cost profile, the type row, the
   // class tint — is `model` now (src/model/playingCard.js). Drawing is what is
@@ -154,11 +158,13 @@ export function renderCard(registries, ref, opts = {}) {
     subtype: combatProfile.camp === 'spell' ? 'Spell' : 'Martial' } } : {}),
     ...(expanded ? { faceType: combatCardType(def) } : {}),
     tags: [...rawModel.tags, ...combatTags.filter(tag => !rawModel.tags.some(existing => existing.id === tag.id))] };
-  model.sideTags = cardSideTags(model, def, registries);
-  // Authored clauses carry family limits and charge/payment constraints that
-  // the generic effect summary cannot express. Keep those complete on the face.
-  const faceSummary = expanded ? combatCardSummary(def, opts.preview, registries) : null;
-  const fallbackDamageLabel = expanded && !faceSummary
+  model.sideTags = cardSideTags(model, def, registries, opts.preview || null);
+  // The combat hand's range chip (opts.range), by the same rule the deck editor uses.
+  model.range = opts.range ? combatCardRange(def) : null;
+  // When the shared face model refuses a card, the authored clauses (family
+  // limits, charge and payment constraints) stay complete on the face, led by
+  // the damage label in an expanded combat view.
+  const fallbackDamageLabel = expanded
     && (def.effects?.some(effect => effect.op === 'damage') || def.counterPayload?.hp)
     ? combatCardDamageLabel(def, opts.preview, registries) : '';
   const damageWords = model.tags.filter(tag => tag.id.startsWith('damage:')).map(tag => tag.label);
@@ -266,20 +272,34 @@ export function renderCard(registries, ref, opts = {}) {
     floor, lit: litCard() === identity,
   });
   let drawn = levelNow();
+  // ONE TEXT FOR EVERY VIEW. The face lines are the shared model's output
+  // (cardFaceText.js); a weight-priced card adds its pricing note as a detail line.
+  const faceLines = cardFaceLines(def, opts.preview || null, registries);
+  if (faceLines && def.weightClassPriced) faceLines.push({ kind: 'detail', html: 'Cost reflects your current weight' });
+  // The combat hand passes faceLineLimit: lines past it stay in the DOM, hidden until the card is selected.
+  const faceLineLimit = Number.isFinite(opts.faceLineLimit) ? opts.faceLineLimit : null;
+  // In the hand, detail lines (a partial chance, usable-through, pricing) wait for selection: hidden at rest, shown when selected.
+  const extraLine = (line, i) => faceLineLimit !== null && (i >= faceLineLimit || (line.kind === 'detail' && i > 0));
   const paint = (at) => {
-    const artwork = illustratedArtwork(ref, model.id, {large:at==='inspect',equipmentArt:equipmentPainting});
+    const artwork = illustratedArtwork(ref, model.id, {large:at==='inspect',equipmentArt:equipmentPainting,
+      definition:def,registries});
     const kept = el.children?[...el.children].filter(node=>node?.dataset?.cardPainted!=='1'):[];
     const authoredRules = def.weightClassPriced
       ? fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences).replace(/ Light:.*$/,'')+' Cost reflects your current weight.'
       : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences);
+    const rulesHtml = faceLines
+      ? compactCardRules(faceLines.map((line, i) => `<span class="face-line" data-face-kind="${line.kind}"${extraLine(line, i) ? ' data-face-extra="true"' : ''}>${line.html}</span>`).join(''))
+      // A face the shared model refused keeps the authored rules, never the looser summary.
+      : compactCardRules(`${fallbackDamageLabel ? `${esc(fallbackDamageLabel)}: ` : ''}${authoredRules}`);
+    el.dataset.faceLines = faceLines ? String(faceLines.length) : '';
     el.innerHTML = illustratedCardHtml(model,{
       // The printed price is live; the full weight table stays in Information.
-      rules: compactCardRules(faceSummary ? esc(faceSummary)
-        : `${fallbackDamageLabel ? `${esc(fallbackDamageLabel)}: ` : ''}${authoredRules}`),
+      rules: rulesHtml,
       painting:artwork?.path,
       equipmentArtwork:artwork?.equipment,
       artworkKind:artwork?.kind,
       artworkPosition:artwork?.position,
+      artworkComposition:artwork,
       glyph:engravedIconHtml(engravedGlyphId(model.icon))||esc(model.icon),
     });
     applyCardAppearance(el.querySelector('.illustrated-card-face'));
@@ -294,12 +314,25 @@ export function renderCard(registries, ref, opts = {}) {
     const image = el.querySelector?.('.playing-card-art');
     if(image){
       image.dataset.cardArt = artwork?.kind || 'illustrated';
-      const fallbacks = defaultCardArtFallbacks(ref).filter(path=>path!==artwork?.path);
-      image.addEventListener('error',()=>{const next=fallbacks.shift();if(next){image.dataset.cardArt='outline';image.style.objectFit='contain';image.style.objectPosition='center';image.src=assetUrl(next);}});
+      const fallbacks = cardArtFallbacks(ref, artwork, {large:at==='inspect',
+        legacy:artwork?.kind==='simple'?illustratedArtwork(ref,model.id,{large:at==='inspect',equipmentArt:equipmentPainting,style:'Legacy'}):null});
+      image.addEventListener('error',()=>{
+        markArtPlaceholder(el, () => paint(drawn));
+        const next=fallbacks.shift();
+        if(next){
+          image.parentNode?.querySelectorAll('[data-card-art-layers]').forEach(node=>node.remove());
+          image.dataset.cardArt=next.kind;
+          image.style.filter='';
+          image.style.objectFit=next.fit||(next.extended?'cover':'contain');
+          image.style.objectPosition=next.position||'center';
+          image.src=assetUrl(next.path);
+        }
+      });
     }
 
   };
   paint(drawn);
+  registerCardArtRefresh(el, () => paint(drawn));
 
   // #61 M5: a matched tag-scoped vulnerability lights the card's boosted
   // number in the status row's own tint — "these cards just lit up" instead
@@ -337,7 +370,7 @@ export function renderCard(registries, ref, opts = {}) {
       // element the equipment card uses, so the two card kinds read alike.
       const lore = loreLine({ text: def.flavor, title: def.name });
       if (lore) details.append(lore);
-      const face = renderCard(registries, ref, { ...opts, tooltip: false, inspection: false, level: 'inspect' });
+      const face = renderCard(registries, ref, { ...opts, tooltip: false, inspection: false, level: 'inspect', faceLineLimit: undefined });
       details.classList.add('playing-card-details');
       // NO DEFAULT VERB. This line used to read
       //   `opts.inspectionAction || (() => ({ enabled: false, reason: 'Play cards from your combat hand.' }))`
@@ -389,6 +422,14 @@ export function renderCard(registries, ref, opts = {}) {
  */
 const pendingFits = new Set();
 let fitFrame = 0;
+
+// The combat hand shows three face lines at rest and five when selected.
+export function setHandFaceBudget(el, selected) {
+  const rules = el?.querySelector?.('.ic-text[data-face-lines="true"]');
+  if (!rules) return;
+  rules.dataset.maxLines = selected ? '5' : '3';
+  scheduleCardFits([el]);
+}
 
 export function scheduleCardFits(cards) {
   for (const card of cards) pendingFits.add(card);
@@ -503,6 +544,22 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
 }
 
 /**
+ * cardPlainText(registries, ref) → the card's effect text as a plain string:
+ * the same template the face fills, with tags stripped. Pure string work, no
+ * DOM, so it runs the same headless and in a browser.
+ */
+export function cardPlainText(registries, ref) {
+  const def = resolveCard(registries, ref);
+  // Plain string work only: no DOM, so it runs the same headless and in a
+  // browser. Tags go first; &amp; is decoded last so "&amp;lt;" stays literal.
+  return String(fillTemplate(def, staticTokens(def), null))
+    .replace(/<[^>]+>/g, '')
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ').trim();
+}
+
+/**
  * Tooltip HTML previewing what a card becomes when Smithed: current text in
  * muted, upgraded text below with changed values highlighted green/red (the
  * same up/down coloring cards use in play). All numbers come from the defs.
@@ -580,8 +637,8 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
   if (combatProfile.maneuver === 'counter') {
     if (def.counterCoverage) {
       const c = def.counterCoverage;
-      const names = { physical: 'Martial', spell: 'Spell', contact: 'Contact', near: 'Near', far: 'Far', single: 'Single', area: 'Area', damage: 'damage', status: 'status pressure' };
-      const coverage = [c.camps, c.reaches, c.targeting, c.effects].map(ids => (ids || []).map(id => names[id] || id).join(' + ')).filter(Boolean).join(' · ');
+      const names = { physical: 'Martial', spell: 'Spell', melee: t('deckEditor.range.melee'), reach: t('deckEditor.range.reach'), ranged: t('deckEditor.range.ranged'), single: 'Single', area: 'Area', damage: 'damage', status: 'status pressure' };
+      const coverage = [c.camps, c.ranges, c.targeting, c.effects].map(ids => (ids || []).map(id => names[id] || id).join(' + ')).filter(Boolean).join(' · ');
       html += `<div class="combat-rule-hint"><strong>Counter coverage:</strong> ${esc(coverage)}${c.schools ? ` · ${esc(c.schools.join(' + '))}` : ''}. Return once after all covered damage and status pressure is resisted. Evade and Invulnerability give no return. The prepared stance remains until another maneuver replaces it.</div>`;
     } else html += '<div class="combat-rule-hint">Prepare counter until next player turn. Listed damage and Poise damage become retaliation after full Guard or Ward absorption; card support effects resolve when played.</div>';
   }
@@ -628,7 +685,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
   }
   const service = tagService(registries);
   const tags = def.cardTags != null ? service.resolve(def.cardTags) : service.tagsOf('card', def);
-  for (const tag of tags) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(tag.blurb)}">${esc(tag.label)}</span>`);
+  for (const tag of tags) { const row = numberedTraitRow(tag, def.traitValues); lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(row.blurb)}">${esc(row.label)}</span>`); }
   for (const tag of combatProfileTags(combatProfile, registries).filter(tag => !tags.some(existing => existing.id === tag.id))) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(tag.blurb)}">${esc(tag.label)}</span>`);
   if (lines.length) html += `<div class="inspection-tags">${[...new Set(lines)].join('')}</div>`;
   return html;

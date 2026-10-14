@@ -1754,7 +1754,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
     grid-template-rows: auto auto minmax(0, 1fr); column-gap: .6rem; row-gap: .1rem;
     padding: var(--deck-tile-pad);
   }
-  .deck-editor .deck-editor-tile .deck-editor-grip { grid-column: 1; grid-row: 1 / 4; align-self: center; justify-self: center; transform: rotate(90deg); }
+  .deck-editor .deck-editor-tile .deck-editor-grip { grid-column: 1; grid-row: 1 / 4; align-self: center; justify-self: center; }
   .deck-editor .deck-editor-tile .deck-editor-main > .deck-editor-art { grid-column: 2; grid-row: 1 / 4; width: 4.8rem; height: 100%; max-height: 7.2rem; align-self: center; object-fit: cover; }
   .deck-editor .deck-editor-tile .deck-editor-heading { grid-column: 3; grid-row: 1 / 3; display: flex; flex-wrap: wrap; align-items: baseline; align-content: start; gap: .1rem .5rem; max-height: none; overflow: visible; padding: 0; }
   .deck-editor .deck-editor-tile .deck-editor-heading .deck-editor-name { flex: 1 1 100%; white-space: normal; overflow-wrap: anywhere; line-height: 1.15; font-size: max(1.3rem, var(--deck-min-text)); }
@@ -1792,18 +1792,20 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
    stance on line 2; the physical or magical mark leads the costs. */
 .deck-editor .deck-editor-main > .deck-editor-rank {
   grid-column: 2; grid-row: 1; align-self: start; justify-self: stretch; z-index: 2; position: relative;
-  margin: .2rem .1rem 0; padding: .1rem .1rem; border-radius: .3rem; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: clip;
+  margin: -.25rem .1rem 0; padding: .1rem .1rem; border-radius: .3rem; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: clip;
   background: rgba(18, 32, 74, .9); border: 1px solid #5a7bd6; color: #dfe8ff;
   font: 700 max(1rem, var(--deck-min-text)) system-ui, sans-serif; letter-spacing: 0; line-height: 1.2;
 }
 /* A row without art gives its badge its own track between the text and the
    costs, so the badge never covers the name, stance or range. */
+/* Rank 0 (Basic, Cantrip) reads grey; a real rank keeps the blue. */
+.deck-editor .deck-editor-main > .deck-editor-rank[data-rank="0"] { background: rgba(58, 58, 62, .92); border-color: #8d8d94; color: #e8e8ec; }
 .deck-editor .deck-editor-main[data-illustrated="false"]:has(> .deck-editor-rank) { grid-template-columns: 1rem minmax(0, 1fr) auto var(--deck-row-costs); }
 .deck-editor .deck-editor-main[data-illustrated="false"]:has(> .deck-editor-rank) > :is(.deck-editor-row-rules, .deck-editor-meta) { grid-column: 2 / 4; }
 .deck-editor .deck-editor-main[data-illustrated="false"] > .deck-editor-rank { grid-column: 3; grid-row: 1; justify-self: end; align-self: center; margin: 0; }
 .deck-editor .deck-editor-heading .deck-editor-range { flex: none; font: 600 max(.9rem, var(--deck-min-text)) system-ui, sans-serif; letter-spacing: .035em; color: #e5c36a; }
-.deck-editor .deck-editor-costs .deck-editor-camp { display: inline-flex; align-items: center; justify-content: center; width: var(--deck-row-cost); height: var(--deck-row-cost); color: #9fd0ff; }
-.deck-editor .deck-editor-costs .deck-editor-camp[data-camp="physical"] { color: #e3c9a0; }
+.deck-editor .deck-editor-costs .deck-editor-camp { display: inline-flex; align-items: center; justify-content: center; width: var(--deck-row-cost); height: var(--deck-row-cost); color: #efd09a; }
+.deck-editor .deck-editor-costs .deck-editor-camp[data-camp="physical"] { color: #efd09a; }
 .deck-editor .deck-editor-costs .deck-editor-camp .combat-sigil, .deck-editor .deck-editor-costs .deck-editor-camp svg { width: 80%; height: 80%; display: block; }
 /* Desktop: a library tile's name takes line 1 in full, and its type and stance
    wrap onto line 2 (the same shape as on phones), in the text column. */

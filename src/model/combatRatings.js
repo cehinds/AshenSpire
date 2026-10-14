@@ -5,6 +5,7 @@ import { cardIsMagical } from './attackCardDamage.js';
 import { attributeRatingReceipt, equipmentRatingBase, ratingAttributeIds, ratingIds } from './ratingFormula.js';
 import { LEGACY_RATING_FORMULA, STAT_ROW_KEY_PREFIX, STAT_ROW_NO_MAX, legacyRatingFormulaFromSettings } from './statRows.js';
 import { resolvedRuleRow } from './derivedStats.js';
+import { combatRules as damageTypeRules } from '../content/combatRules.js';
 
 export { ratingIds };
 const attributes = ratingAttributeIds;
@@ -15,14 +16,27 @@ export const combatRatingDefaults = {
   // Advanced → Stats with every other stat, and `ratings` is filled with the
   // rows a run reads (model/statRows.js ratingsConfigFor). Equipment, relic
   // and status bonuses are added afterward by their owning receipts.
-  resistance: { physicalK: 100, magicalK: 100, statusK: 100, maximum: 0.8 },
+  // schoolTaken: the share of a hit a creature with an authored school
+  // resistance still takes (0.75 → floor(0.75 × damage); 0.1 is the floor, a
+  // 90% cap). wardPool: the share of the Ward rating that becomes the Ward pool
+  // a combatant starts each fight with (1: full Ward, restored every fight).
+  // poisePool: the same for Poise, the physical twin: the share of the Poise
+  // rating that becomes the Poise pool a combatant starts each fight with.
+  resistance: { physicalK: 100, magicalK: 100, statusK: 100, maximum: 0.8, schoolTaken: 0.75, wardPool: 1, poisePool: 1 },
   impact: { magic: 1, light: 1, medium: 2, heavy: 3, colossal: 4,
-    lightMaxWeight: 3, mediumMaxWeight: 6, heavyMaxWeight: 8, unarmed: 1, enemyPhysical: 2 },
+    lightMaxWeight: 3, mediumMaxWeight: 6, heavyMaxWeight: 8, unarmed: 1, enemyPhysical: 1 },
   breaks: { poiseActionLoss: 1, wardActionLoss: 1, thresholdGrowth: 1.25, recoveryPerTurn: 0 },
+  // The magic share of each damage type (content/combatRules.js is the
+  // default): the share of a hit that is Barrier/Ward rather than Block. A
+  // card or weapon may still override it for its own hits.
+  damageTypes: Object.fromEntries(Object.entries(damageTypeRules.damageTypes).map(([id, type]) => [id, type.magicShare])),
+  // The magic share of a melee spell and of a martial technique with spell effects (content/combatRules.js).
+  magicSplit: { ...damageTypeRules.magicSplit },
   statuses: {
     bleed: { poise: 1, ward: 0 }, frost: { poise: 0.5, ward: 0.5 },
     insanity: { poise: 0, ward: 1 }, madness: { poise: 0, ward: 1 },
-    crimsonBlight: { poise: 0.5, ward: 0.5 }, venom: { poise: 1, ward: 0 },
+    crimsonBlight: { poise: 0.5, ward: 0.5 }, necroticBlight: { poise: 0.5, ward: 0.5 },
+    venom: { poise: 1, ward: 0 },
     burn: { poise: 0.25, ward: 0.75 },
   },
 };
@@ -266,14 +280,29 @@ export function combatRatingRows(bundle) {
   // — Advanced → Stats → AR, DR, PR, Poise, Ward — in ruleset 7. Their old
   // keys convert on import: model/statRows.js migrateLegacyStatSettings.)
   for (const group of ['resistance', 'impact', 'breaks']) {
-    for (const [field, value] of Object.entries(combatRatingDefaults[group])) add(`${group}.${field}`, value, ({ physicalK: 'Poise resistance curve', magicalK: 'Ward resistance curve', statusK: 'Status resistance curve', maximum: 'Resistance cap', magic: 'Magic impact', lightMaxWeight: 'Light weapon weight limit', mediumMaxWeight: 'Medium weapon weight limit', heavyMaxWeight: 'Heavy weapon weight limit', thresholdGrowth: 'Break threshold multiplier' })[field] || phrase(field), words(group), {
-      min: field.endsWith('K') ? 0.01 : field === 'thresholdGrowth' ? 1 : 0,
-      max: field === 'maximum' ? 0.95 : 999,
-      note: field.endsWith('K') ? 'Rating needed for 50% resistance before the cap. A higher value makes resistance weaker.' : field === 'maximum' ? 'Maximum damage or status reduction: 0.8 means 80%.' : field === 'thresholdGrowth' ? 'After a break, multiply the threshold by this amount. 1.25 means 25% higher; 1 disables growth.' : group === 'impact' ? 'Physical hits pressure Poise; magical hits pressure Ward. Only hits that pass Block cause impact.' : 'Applies to new runs.',
+    for (const [field, value] of Object.entries(combatRatingDefaults[group])) add(`${group}.${field}`, value, ({ physicalK: 'Poise resistance curve', magicalK: 'Ward resistance curve', statusK: 'Status resistance curve', maximum: 'Resistance cap', magic: 'Magic impact', lightMaxWeight: 'Light weapon weight limit', mediumMaxWeight: 'Medium weapon weight limit', heavyMaxWeight: 'Heavy weapon weight limit', thresholdGrowth: 'Break threshold multiplier', schoolTaken: 'Resisted school damage taken', wardPool: 'Ward pool share', poisePool: 'Poise pool share' })[field] || phrase(field), words(group), {
+      min: field.endsWith('K') ? 0.01 : field === 'thresholdGrowth' ? 1 : field === 'schoolTaken' ? 0.1 : 0,
+      max: field === 'maximum' ? 0.95 : field === 'schoolTaken' || field === 'wardPool' || field === 'poisePool' ? 1 : 999,
+      note: field === 'schoolTaken' ? 'A creature resistant to a damage school takes this share of the hit, rounded down: 0.75 takes 75%, 0.5 takes half. Never below 0.1 (90% resistance).'
+        : field === 'wardPool' ? 'Each combatant starts every fight with this share of its Ward rating as its Ward pool: 1 means full. Ward absorbs hits (each hit still lets at least 1 through), is spent by what it absorbs, and does not regenerate unless a card, feat, class feature or relic restores it.'
+        : field === 'poisePool' ? 'Physical only. Each combatant starts every fight with this share of its Poise rating as its Poise pool: 1 means full. Poise absorbs physical hits after Block (each hit still lets at least 1 through), is spent by what it absorbs, and does not regenerate unless a card, feat, class feature or relic restores it. A break staggers an enemy or costs a player Stamina next turn.'
+        : field.endsWith('K') ? 'Rating needed for 50% resistance before the cap. A higher value makes resistance weaker.' : field === 'maximum' ? 'Maximum damage or status reduction: 0.8 means 80%.' : field === 'thresholdGrowth' ? 'After a break, multiply the threshold by this amount. 1.25 means 25% higher; 1 disables growth.' : group === 'impact' ? 'Physical hits pressure Poise; magical hits pressure Ward. Only hits that pass Block cause impact.' : 'Applies to new runs.',
       integer: group === 'impact' || field.endsWith('ActionLoss') || field === 'recoveryPerTurn',
       step: group === 'impact' || field.endsWith('ActionLoss') || field === 'recoveryPerTurn' ? 1 : 0.01,
     });
   }
+  for (const [type, value] of Object.entries(combatRatingDefaults.damageTypes)) add(`damageTypes.${type}`, value,
+    `${phrase(type)} magic share`, 'Damage types', {
+      min: 0, max: 1, step: 0.05,
+      note: 'The share of a hit of this damage type that is magic: Barrier and Ward take it, Block takes the rest. 0 is all physical, 1 is all magic. A card or weapon with its own magic share overrides this for its hits.',
+    });
+  const splitRows = { meleeSpell: 'Melee spell magic share', technique: 'Technique magic share' };
+  for (const [id, label] of Object.entries(splitRows)) add(`magicSplit.${id}`, combatRatingDefaults.magicSplit[id], label, 'Damage types', {
+    min: 0, max: 1, step: 0.05,
+    note: id === 'meleeSpell'
+      ? 'A spell with no magic school that hits in melee with a physical damage type deals this share of its damage as magic (Barrier and Ward) and the rest as physical (Block, then Poise). A school with its own share (force: half; alteration: none) decides instead.'
+      : 'A martial technique with spell effects (a magic school, a magic damage type, or a spell rider) deals this share of its damage as magic and the rest as physical.',
+  });
   for (const status of bundle.statuses) {
     for (const id of ['poise', 'ward']) add(`statuses.${status.id}.${id}`, combatRatingDefaults.statuses[status.id]?.[id] || 0,
       `${status.name} — ${ratingLabel(id)} weight`, 'Status resistance', {
@@ -433,6 +462,13 @@ export function combatRatingProblems(config) {
     if (!r || !Number.isFinite(r.base) || r.base < 0 || attributes.some(k => r[k] !== undefined && (!Number.isFinite(r[k]) || r[k] < 0))) problems.push(`Invalid ${id} formula`);
   }
   if (!config.resistance || ['physicalK', 'magicalK', 'statusK'].some(k => !(config.resistance[k] > 0)) || !(config.resistance.maximum >= 0 && config.resistance.maximum < 1)) problems.push('Invalid resistance curve');
+  // Absent on fights saved before these rows existed; they read the defaults.
+  if (config.resistance?.schoolTaken !== undefined && !(config.resistance.schoolTaken >= 0.1 && config.resistance.schoolTaken <= 1)) problems.push('Invalid resisted school damage share');
+  if (config.resistance?.wardPool !== undefined && !(config.resistance.wardPool >= 0 && config.resistance.wardPool <= 1)) problems.push('Invalid Ward pool share');
+  // Absent on fights saved before the damage-type rows existed; they read the content defaults.
+  if (config.damageTypes !== undefined && Object.values(config.damageTypes).some(v => !(Number.isFinite(v) && v >= 0 && v <= 1))) problems.push('Invalid damage type magic share');
+  if (config.magicSplit !== undefined && Object.values(config.magicSplit).some(v => !(Number.isFinite(v) && v >= 0 && v <= 1))) problems.push('Invalid split magic share');
+  if (config.resistance?.poisePool !== undefined && !(config.resistance.poisePool >= 0 && config.resistance.poisePool <= 1)) problems.push('Invalid Poise pool share');
   const impact = config.impact;
   if (!impact || !(impact.lightMaxWeight <= impact.mediumMaxWeight && impact.mediumMaxWeight <= impact.heavyMaxWeight)) problems.push('Weapon weight thresholds must be ordered');
   if (!impact || Object.values(impact).some(n => !Number.isInteger(n) || n < 0 || n > 999)) problems.push('Invalid impact values');
@@ -535,13 +571,244 @@ export function sourceRatingValue(ctx, entity, id, sourceArmamentId, equipmentSc
 }
 
 export function isMagicalAttack(ctx, carrier) {
-  const def = carrier?.cardId ? ctx.registries.cards.get(carrier.cardId) : null;
+  const def = carrier?.cardId && ctx.registries.cards.has(carrier.cardId) ? ctx.registries.cards.get(carrier.cardId) : null;
   return cardIsMagical({
     ...def,
     ...carrier,
     damageSchool: carrier?.damageSchool || def?.damageSchool,
     tags: carrier?.tags || def?.tags,
   });
+}
+
+/**
+ * isMagicalHit(ctx, carrier) → whether a hit has any magic part, so its impact
+ * lands on the Ward meter. A carrier with a combat profile is read by the same
+ * routing that splits its damage (magicShareOf), so a spell-camp alteration hit
+ * with a physical type is all physical here, as it is in the split. A carrier
+ * without a profile keeps the card reading.
+ */
+export function isMagicalHit(ctx, carrier) {
+  if (ctx.combatExpansionVersion === 2 && carrier?.combatProfile) {
+    return magicShareOf({ ...carrier.combatProfile, ...(Number.isFinite(carrier.magicShare) ? { magicShare: carrier.magicShare } : {}) }, ctx.ratingsRules) > 0;
+  }
+  return isMagicalAttack(ctx, carrier);
+}
+
+/**
+ * damageTypeMagicShare(config, type) → the magic share a damage type carries
+ * when no card or weapon overrides it: the Advanced row if the run has one,
+ * else the content default. Null for a type the rules do not name.
+ */
+// Routing class of a damage type: its content magicShare decides (0 is physical, above 0 magic),
+// else its `physical` flag. Earth is physical: false for the foundation's armour but routes physical.
+function routingShare(type) {
+  const row = damageTypeRules.damageTypes[type];
+  if (!row) return null;
+  return Number.isFinite(row.magicShare) ? row.magicShare : row.physical === false ? 1 : 0;
+}
+
+export function isMagicDamageType(type) {
+  const share = routingShare(type);
+  return share !== null && share > 0;
+}
+
+export function isPhysicalDamageType(type) {
+  return routingShare(type) === 0;
+}
+
+export function damageTypeMagicShare(config, type) {
+  const value = config?.damageTypes?.[type];
+  if (Number.isFinite(value)) return value;
+  const fallback = damageTypeRules.damageTypes[type]?.magicShare;
+  return Number.isFinite(fallback) ? fallback : null;
+}
+
+const DAMAGE_TYPE_ALIASES = { pierce: 'piercing', slash: 'slashing', cold: 'frost', force: 'arcane', holy: 'sacred', necrotic: 'decay' };
+export function canonicalDamageType(type) {
+  return DAMAGE_TYPE_ALIASES[type] || type || null;
+}
+
+/** The magic school a contact carries: its profile school, else a school:<id> tag. */
+export function schoolOf(profile) {
+  const tag = (profile?.tags || []).find(t => typeof t === 'string' && t.startsWith('school:'));
+  const school = profile?.school || (tag ? tag.slice('school:'.length) : null) || null;
+  // 'physical' names a camp's weapon work, not a magic school.
+  return school && school !== 'physical' ? school : null;
+}
+
+/** The magic share a school carries (content/combatRules.js). A school the rules do not list is all magic. */
+export function schoolMagicShare(school) {
+  const row = damageTypeRules.schools?.[school];
+  return row && Number.isFinite(row.magicShare) ? row.magicShare : 1;
+}
+
+// The physical damage type of a hit: the source weapon's, else the card's own physical tag,
+// else its school's physicalType (force and alteration: blunt).
+function physicalTypeOf(profile) {
+  const type = canonicalDamageType(profile?.damageType);
+  const school = damageTypeRules.schools?.[schoolOf(profile)];
+  return profile?.physicalDamageType || (isPhysicalDamageType(type) ? type : null) || school?.physicalType || null;
+}
+
+const MELEE_REACHES = new Set(['contact', 'melee']);
+
+/**
+ * magicShareOf(profile, config) → the share of a hit that is magic (Barrier,
+ * then Ward) rather than physical (Block, then Poise). Precedence (owner rules):
+ *   1. the carrier's own magicShare; else its damage components, when it lists
+ *      more than one: the weight of its magic types over the whole weight (the
+ *      card says what it deals: magic and physical parts deal both, magic only
+ *      deals magic);
+ *   2. a school whose listed share is below 1 decides at any reach: force splits
+ *      (0.5), alteration is all physical (0);
+ *   3. a melee spell (spell camp, contact or melee reach) with no magic school and
+ *      a physical damage type splits by the Melee spell share. A magic-only school
+ *      spell that carries a physical tag is never this branch: it stays all magic;
+ *   4. a physical-camp maneuver that carries a magic school, a magic damage type
+ *      or a spell rider splits by the Technique magic share;
+ *   5. a magic school decides: its share (lightning, fire, frost, divine, decay
+ *      and an unlisted school such as illusion are all magic);
+ *   6. the damage type's share (0 and 1 honoured);
+ *   7. otherwise the camp: a spell is all magic, a physical hit all physical.
+ * The engine and the card face both read this.
+ */
+export function magicShareOf(profile, config = null) {
+  if (Number.isFinite(profile?.magicShare)) return Math.min(1, Math.max(0, profile.magicShare));
+  const components = componentPartsOf(profile);
+  if (components) return components.magicShare;
+  const spell = profile?.camp === 'spell';
+  const school = schoolOf(profile);
+  const type = canonicalDamageType(profile?.damageType);
+  const schoolShare = school ? damageTypeRules.schools?.[school]?.magicShare : undefined;
+  if (Number.isFinite(schoolShare) && schoolShare < 1) return Math.max(0, schoolShare);
+  if (spell && !school && MELEE_REACHES.has(profile?.reach) && physicalTypeOf(profile)) return meleeSpellMagicShare(config);
+  if (isTechniqueProfile(profile)) return techniqueMagicShare(config);
+  if (school) return schoolMagicShare(school);
+  const typed = damageTypeMagicShare(config, type);
+  if (typed !== null) return typed;
+  return spell ? 1 : 0;
+}
+
+/**
+ * isForceHit(profile) → true for a Force hit or carrier: the force school (a
+ * school:force tag or profile school, read as magicShareOf reads it), or any
+ * Arcane part: an Arcane (or 'force') damage type or damage component (owner,
+ * 2026-10-13: Arcane damage is Force). The one test Silenced's immunity, its
+ * stack removal and the preview read.
+ */
+export function isForceHit(profile) {
+  if (!profile) return false;
+  const arcane = type => canonicalDamageType(type) === 'arcane';
+  return schoolOf(profile) === 'force' || arcane(profile.damageType)
+    || (profile.damageComponents || []).some(component => arcane(component?.type));
+}
+
+/**
+ * isTechniqueProfile(profile) → true for a physical-camp maneuver that carries a
+ * magic school, a magic damage type (or a magic damage component) or a spell
+ * rider: the hits the Technique magic share splits.
+ */
+export function isTechniqueProfile(profile) {
+  if (profile?.camp !== 'physical' || !profile.maneuver) return false;
+  const magicComponent = (profile.damageComponents || []).some(component => isMagicDamageType(canonicalDamageType(component?.type)));
+  return !!(schoolOf(profile) || isMagicDamageType(canonicalDamageType(profile.damageType)) || magicComponent || profile.riderSpell);
+}
+
+/**
+ * techniqueNeedsWeaponType(carrier) → true when a technique has no physical
+ * damage type of its own (no authored physicalDamageType, no physical damage
+ * type or component), so its physical part takes the wielded weapon's type.
+ */
+export function techniqueNeedsWeaponType(carrier) {
+  const profile = carrier?.combatProfile;
+  if (!isTechniqueProfile(profile) || carrier.physicalDamageType || profile.physicalDamageType) return false;
+  if (isPhysicalDamageType(canonicalDamageType(profile.damageType))) return false;
+  return !(profile.damageComponents || []).some(component => isPhysicalDamageType(canonicalDamageType(component?.type)));
+}
+
+/**
+ * componentPartsOf(profile) → { magic, physical, magicShare } for a contact whose
+ * damageComponents list more than one entry, else null. Each part lists its
+ * component types ({ type, weight }, canonical names); a type the rules mark
+ * physical: false is magic, every other type physical. magicShare is the magic
+ * weight over the whole weight.
+ */
+export function componentPartsOf(profile) {
+  const list = profile?.damageComponents;
+  if (!Array.isArray(list) || list.length < 2) return null;
+  const magic = [], physical = [];
+  for (const component of list) {
+    const weight = Math.max(0, Number(component?.weight) || 0);
+    const type = canonicalDamageType(component?.type);
+    if (!type) continue;
+    (isMagicDamageType(type) ? magic : physical).push({ type, weight });
+  }
+  const sum = parts => parts.reduce((total, part) => total + part.weight, 0);
+  const total = sum(magic) + sum(physical);
+  if (!(total > 0)) return null;
+  return { magic, physical, magicShare: sum(magic) / total };
+}
+
+// The heaviest type of a part (first on a tie), or null for an empty part.
+function heaviestType(parts) {
+  return parts.reduce((best, part) => (!best || part.weight > best.weight ? part : best), null)?.type || null;
+}
+
+/** The Melee spell magic share: the Advanced row when the run has one, else the content default. */
+export function meleeSpellMagicShare(config) {
+  const value = config?.magicSplit?.meleeSpell;
+  return Number.isFinite(value) ? value : damageTypeRules.magicSplit.meleeSpell;
+}
+
+/** The Technique magic share: the Advanced row when the run has one, else the content default. */
+export function techniqueMagicShare(config) {
+  const value = config?.magicSplit?.technique;
+  return Number.isFinite(value) ? value : damageTypeRules.magicSplit.technique;
+}
+
+/**
+ * splitContactParts({ amount, base, ratingBonus, ratingPart, share, primary })
+ * → { magic, physical }: one hit's amount, split by the CARD'S OWN damage. `base`
+ * is the card's damage after its procedural generation and scaling (upgrades,
+ * levels); the share applies to it alone. A rating bonus is added on top: typed
+ * 'magic' or 'physical' when its rating has a category, else untyped and joined
+ * to the `primary` part. Every other bonus or multiplier (statuses, relics,
+ * matchups, crits) is what the amount holds beyond base and the rating, and it
+ * also joins the primary part. Parts never go negative: a shortfall moves to the
+ * other part, so the two always sum to the amount.
+ */
+export function splitContactParts({ amount, base = amount, ratingBonus = 0, ratingPart = null, share = 0, primary = 'physical' }) {
+  const total = Math.max(0, Math.floor(Number(amount) || 0));
+  const card = Math.max(0, Math.floor(Number(base) || 0));
+  const rating = Math.max(0, Math.floor(Number(ratingBonus) || 0));
+  const cardMagic = share >= 1 ? card : share > 0 ? Math.floor(card * share + 1e-9) : 0;
+  let magic = cardMagic, physical = card - cardMagic;
+  if (ratingPart === 'magic') magic += rating;
+  else if (ratingPart === 'physical') physical += rating;
+  // The rest of the hit: everything beyond the card and its typed rating, and an untyped rating too.
+  const rest = total - card - (ratingPart ? rating : 0);
+  if (primary === 'magic') magic += rest; else physical += rest;
+  if (magic < 0) { physical += magic; magic = 0; }
+  if (physical < 0) { magic += physical; physical = 0; }
+  return { magic, physical };
+}
+
+/** magicDamageTypeOf(profile) → the Ward type a hit's magic part deals: its school's, else its damage type when that is magic. */
+export function magicDamageTypeOf(profile) {
+  const row = damageTypeRules.schools?.[schoolOf(profile)];
+  if (row?.magicType) return row.magicType;
+  const type = canonicalDamageType(profile?.damageType);
+  return isMagicDamageType(type) ? type : null;
+}
+
+/** splitDamageTypesOf(profile) → the magic and physical damage types of a split hit. */
+export function splitDamageTypesOf(profile) {
+  const components = componentPartsOf(profile);
+  if (components) {
+    return { magic: heaviestType(components.magic) || magicDamageTypeOf(profile) || 'arcane',
+      physical: heaviestType(components.physical) || physicalTypeOf(profile) || 'blunt' };
+  }
+  return { magic: magicDamageTypeOf(profile) || 'arcane', physical: physicalTypeOf(profile) || 'blunt' };
 }
 
 export function ratingDamageMultiplier(ctx, target, magical) {
@@ -551,12 +818,35 @@ export function ratingDamageMultiplier(ctx, target, magical) {
   return 1 - Math.min(r.maximum, rating / (rating + (magical ? r.magicalK : r.physicalK)));
 }
 
-export function attackImpact(ctx, source, carrier) {
+/**
+ * schoolResistanceMultiplier(ctx, target, school) → the share of a hit a
+ * creature with an authored resistance to this school takes. Any positive
+ * resistance means the configured share (default 0.75), never below 0.1.
+ */
+export function schoolResistanceMultiplier(ctx, target, school) {
+  const resistance = school ? target?.damageResistanceBySchool?.[school] : undefined;
+  if (!(Number.isFinite(resistance) && resistance > 0)) return 1;
+  const taken = ctx?.ratingsRules?.resistance?.schoolTaken;
+  return Math.min(1, Math.max(0.1, Number.isFinite(taken) ? taken : combatRatingDefaults.resistance.schoolTaken));
+}
+
+/** persistentWardMaximum(ctx, entity) → the Ward pool a combatant starts a fight with. */
+export function persistentWardMaximum(ctx, entity) {
+  const share = ctx?.ratingsRules?.resistance?.wardPool;
+  return Math.max(0, Math.floor(ratingValue(ctx, entity, 'ward') * (Number.isFinite(share) ? share : combatRatingDefaults.resistance.wardPool)));
+}
+
+/** persistentPoiseMaximum(ctx, entity) → the Poise pool a combatant starts a fight with (physical only). */
+export function persistentPoiseMaximum(ctx, entity) {
+  const share = ctx?.ratingsRules?.resistance?.poisePool;
+  return Math.max(0, Math.floor(ratingValue(ctx, entity, 'poise') * (Number.isFinite(share) ? share : combatRatingDefaults.resistance.poisePool)));
+}
+
+export function attackImpact(ctx, source, carrier, magical = isMagicalAttack(ctx, carrier)) {
   const config = ctx.ratingsRules;
   if (!config) return 0;
   const explicit = config.attackImpact?.[carrier?.cardId];
   if (Number.isFinite(explicit) && explicit >= 0) return explicit;
-  const magical = isMagicalAttack(ctx, carrier);
   // A PHYSICAL HIT A WEAPON LENDS IS AS HEAVY AS THE WEAPON (SPEC §13.4): the
   // weight category, and the per-enemy override, come before any card value,
   // or every weapon's Strike would land with the same cost-derived number and
@@ -573,7 +863,7 @@ export function attackImpact(ctx, source, carrier) {
   // Otherwise the card's own Poise or Ward value (SPEC §3.4) is its impact.
   // The carrier holds the RESOLVED face's values — a staff's Strike carries
   // Ward — and the registry def is the fallback for a carrier built without.
-  const def = carrier?.cardId ? ctx.registries.cards.get(carrier.cardId) : null;
+  const def = carrier?.cardId && ctx.registries.cards.has(carrier.cardId) ? ctx.registries.cards.get(carrier.cardId) : null;
   const ratingValues = carrier?.cardRatingValues
     || (carrier?.upgraded ? def?.upgrade?.cardRatingValues : null)
     || def?.cardRatingValues;

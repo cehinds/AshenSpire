@@ -44,10 +44,12 @@ for (const coop of [false, true]) for (const split of [false, true]) for (const 
     const shown = f.preview();
     const values = shown.values.filter(value => value.op === 'damage');
     const hits = values.flatMap(value => value.hitDamages);
-    assert.deepEqual(hits, smash ? [4, 3, 3] : [1, 3, 3]);
+    // The flurry carries damage:slashing (dev's fixed Slashing type), so it costs 2 SP as an attack or a smash (SPEC
+    // §4.3a) and its 3s scale to 5 either way; only the first hit differs, by the Guard or the armed Counter it meets.
+    assert.deepEqual(hits, smash ? [7, 5, 5] : [2, 5, 5]);
     if (!split) {
       const summary = combatCardSummary(shown.resolvedDefinition, shown, f.registries);
-      assert.ok(summary.includes(`${hits.join(' + ')} damage (${hits.reduce((sum, amount) => sum + amount, 0)} total across 3 hits)`), summary);
+      assert.ok(summary.includes(`${hits.join(' + ')} Slashing damage (${hits.reduce((sum, amount) => sum + amount, 0)} total across 3 hits)`), summary);
     }
     for (const value of values) {
       assert.equal(value.totalDamage, value.hitDamages.reduce((sum, amount) => sum + amount, 0));

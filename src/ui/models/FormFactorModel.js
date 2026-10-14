@@ -22,3 +22,12 @@ export function formFactorFor(width, height, thresholds) {
   if (t.tabletMaxWidth != null && w <= t.tabletMaxWidth) return 'tablet';
   return 'desktop';
 }
+
+// The wide-screen form factors: the desktop and widescreen HUD layouts. Their
+// combat bands, hand, formation and horizon are the phone's (owner, 2026-10-13);
+// only the footer art width (footerLayout sizing.desktopMaximumWidthPx) and the
+// desktop tool corners differ.
+export const WIDE_FORM_FACTORS = Object.freeze(['desktop', 'widescreen']);
+export function isWideFormFactor(formFactor) {
+  return WIDE_FORM_FACTORS.includes(formFactor);
+}

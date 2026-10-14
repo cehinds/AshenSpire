@@ -1,0 +1,58 @@
+{
+  "frame_size": [
+    1024,
+    1024
+  ],
+  "frame_count": 5,
+  "raw_sha256": "25697cf4b96b977c213af52c3bbdedf06453a8c8f19a4da5dba718df7e8f5424",
+  "seed_sha256": "9979e65f7c61c446203d0a10f2a23e8e7ebcab86786d483eb3727bb528158405",
+  "frames_sha256": [
+    "9979e65f7c61c446203d0a10f2a23e8e7ebcab86786d483eb3727bb528158405",
+    "127342cc7026c08c948efecc55ae5137cb5bd5e5fbdbbf4f23265453a0dd83a3",
+    "635f03b78df16a897c5367266d3963575a8ca0a8d4b4832f12fd3166b3948291",
+    "1b5f340ad9379722438b3ad4335d2ad7db125cd1b26c84625e78b5d4383fcfb0",
+    "9979e65f7c61c446203d0a10f2a23e8e7ebcab86786d483eb3727bb528158405"
+  ],
+  "method": "bounded connected-component isolation, one scale from raw idle body/approved seed, anatomical helmet x and boot floor anchors, exact normalized seed PNG bytes locked in01/05; no alpha-bounds centering",
+  "transforms": [
+    {
+      "slot": 2,
+      "raw_component": 3,
+      "shared_scale": 1.291497975708502,
+      "raw_helmet_x": 700.0,
+      "target_helmet_x": 550.0,
+      "raw_boot_floor": 500.0,
+      "ground_y": 726,
+      "placement": [
+        201,
+        388
+      ]
+    },
+    {
+      "slot": 3,
+      "raw_component": 1,
+      "shared_scale": 1.291497975708502,
+      "raw_helmet_x": 1020.0,
+      "target_helmet_x": 560.0,
+      "raw_boot_floor": 500.0,
+      "ground_y": 726,
+      "placement": [
+        375,
+        385
+      ]
+    },
+    {
+      "slot": 4,
+      "raw_component": 2,
+      "shared_scale": 1.291497975708502,
+      "raw_helmet_x": 1590.0,
+      "target_helmet_x": 575.0,
+      "raw_boot_floor": 504.0,
+      "ground_y": 726,
+      "placement": [
+        199,
+        381
+      ]
+    }
+  ]
+}

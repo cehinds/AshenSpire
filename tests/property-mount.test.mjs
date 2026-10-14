@@ -9,7 +9,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
-import { createRegistries, passiveMult, passiveSum, passiveFlag } from '../src/model/registries.js';
+import { createRegistries, resolveCard, passiveMult, passiveSum, passiveFlag } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
@@ -60,7 +60,8 @@ function playIntoBreak(combat, card, { value = null, extra = {}, startMana = 0 }
   enemy.block = 0;
   cfg.value = value == null ? cfg.threshold - 1 : value;
   // startMana is the intended pool after payment, before any siphon refund.
-  p.mana = startMana + (card.manaCost || 0);
+  // The card's Mana is the cost formula's (SPEC §4.3a), read from the resolved face.
+  p.mana = startMana + (resolveCard(combat.registries, { cardId: card.id }).manaCost || 0);
   p.stamina = card.staminaCost || 0;
   p.maxStamina = Math.max(p.maxStamina || 0, p.stamina);
   p.energy = 99;
@@ -80,7 +81,8 @@ function playIntoBreak(combat, card, { value = null, extra = {}, startMana = 0 }
 // The EQUIPMENT mounts: the class card mounts too since plan phase 5a
 // (`class:<id>`, its `favored` leaning), and these tests ask about the hands.
 const mountedKeys = (combat) => Object.keys((combat.propertyMounts || {}).player || {}).filter((k) => !k.startsWith('class:'));
-const propertyGateKeys = (combat) => [...combat.triggerState.keys()].filter((k) => k.startsWith('property:'));
+// The class card's own rules (favored, the Oath rule oathKept) are not the hands'.
+const propertyGateKeys = (combat) => [...combat.triggerState.keys()].filter((k) => k.startsWith('property:') && !k.includes(':class:'));
 
 test('a scepter-wielding player\'s own arcane break restores balance.exposure.siphonRefund Mana', () => {
   const { combat, card } = fight();

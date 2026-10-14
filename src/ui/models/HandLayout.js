@@ -1,9 +1,15 @@
 import { wireframeUi } from '../../content/wireframeUi.js';
+import { uiConfig } from '../../config/generated/ui.js';
 
 // The combat hand reserves a 30px compact row plus four physical pixels of
 // separation before card geometry begins. Keep the band allocator and the
 // renderer on the same physical floor.
 export const COMBAT_TOOLS_HEIGHT_PX = 34;
+// The desktop tool row is 36 physical px (styles/combat-layers.css), so its
+// reserve is that row plus the same four px. hand.js measures the live row and
+// uses this only when the row cannot be measured.
+export const COMBAT_TOOLS_DESKTOP_HEIGHT_PX = 40;
+const compactCard = uiConfig.scenes.w4a.sizing.compactCombat;
 
 // Presentation order is local, keyed by instance, and never mutates a pile.
 export function reconcileHandOrder(previous, current) {
@@ -18,28 +24,54 @@ export function moveHandInstance(order, id, slot) {
   return next;
 }
 
-export function handLayout({ width, height, count, rem = 16, zoom = 1, compact = false, controlsHeight = 0 }, config = wireframeUi.hand) {
+// `headroom` is band above `height` (the phone's compact tool row) that a
+// selected card may rise into. Its lift, and its chooser's rise, are reserved
+// only where they exceed that headroom, so the resting fan sits right under
+// the row instead of under an empty band, and the reclaimed height goes to
+// the cards.
+// Every form factor takes this one plan: the card is sized by the hand band
+// (the face fills the band less the lift, arc and insets), and the phone's
+// compact path keeps its own readable floor and cap.
+export function handLayout({ width, height, count, rem = 16, zoom = 1, compact = false, controlsHeight = 0, controlled = null, headroom = 0 }, config = wireframeUi.hand) {
   let inset = config.verticalInsetRem * rem;
   const lift = config.selectedLiftRem * rem;
-  // The selected face already rises by lift. Reserve only the additional
-  // space its below-card controls need, before selection or a touch begins.
-  const controlsReserve = Math.max(0, controlsHeight - lift);
+  const liftReserve = Math.max(0, lift - headroom);
+  // The selected face already rises by lift, and the chooser's correction
+  // (handInspectionOverlay) may raise it on through the headroom. Reserve only
+  // the additional space its below-card controls need, before selection or a
+  // touch begins.
+  const controlsReserve = Math.max(0, controlsHeight - Math.max(lift, headroom));
   const arc = config.arcRem * rem;
-  const available = Math.max(0, height - inset * 2 - lift - arc - controlsReserve);
-  const cardWidth = compact
-    ? Math.max(72 / zoom, Math.min(100 / zoom, available * wireframeUi.card.ratio))
-    : Math.max(config.minWidthRem * rem, Math.min(config.maxWidthRem * rem, available * wireframeUi.card.ratio));
-  const cardHeight = cardWidth / wireframeUi.card.ratio;
-  inset = Math.max(inset, Math.sin(config.fanAngleDegrees * Math.PI / 180) * cardHeight / 2 + 1);
+  const available = Math.max(0, height - inset * 2 - liftReserve - arc - controlsReserve);
   const progress = Math.max(0, Math.min(1,
     (width / rem - config.narrowWidthRem) / (config.wideWidthRem - config.narrowWidthRem)));
   const requested = Math.round(config.minCapacity + progress * (config.maxCapacity - config.minCapacity));
+  // A phone fan keeps every card's description and type line readable: each
+  // card shows at least cardVisibleFraction of its width past its neighbour,
+  // and the outer rotated corners keep cardSideGutterPx from the hand's edges.
+  // `spread` is the rotated face's extra half-width per unit of card width.
+  const fanAngle = Math.abs(config.fanAngleDegrees) * Math.PI / 180;
+  const spread = (Math.sin(fanAngle) / wireframeUi.card.ratio + Math.cos(fanAngle) - 1) / 2;
+  const gutter = compact ? compactCard.cardSideGutterPx / zoom : 0;
+  const fanCount = Math.max(1, Math.min(count, requested));
+  const readableWidth = (width - gutter * 2) / (1 + (fanCount - 1) * compactCard.cardVisibleFraction + spread * 2);
+  // The non-phone face fills the band up to the shared cap (hand.maxWidthRem).
+  const cardWidth = compact
+    // Phone cards fill the band between a readable floor and a cap, both in
+    // physical px (content/config/ui/scenes/w4a-combat.json, compactCombat).
+    ? Math.max(compactCard.cardMinWidthPx / zoom, Math.min(compactCard.cardMaxWidthPx / zoom, readableWidth, available * wireframeUi.card.ratio))
+    : Math.max(config.minWidthRem * rem, Math.min(config.maxWidthRem * rem, available * wireframeUi.card.ratio));
+  const cardHeight = cardWidth / wireframeUi.card.ratio;
+  inset = Math.max(inset, Math.sin(config.fanAngleDegrees * Math.PI / 180) * cardHeight / 2 + 1);
+  // Horizontal margin: the vertical inset everywhere but a phone, which keeps
+  // its gutter clear of the outer cards' rotated corners.
+  const side = compact ? Math.max(inset, gutter + spread * cardWidth) : inset;
   const touch = config.exposedTargetPx / zoom;
   const capacity = Math.max(1, Math.min(requested, Math.floor(Math.max(0, width - cardWidth) / touch) + 1));
   const visible = Math.max(1, Math.min(count, capacity));
-  const step = visible > 1 ? Math.max(touch, Math.min(cardWidth, (width - cardWidth - inset * 2) / (visible - 1))) : count > 1 ? touch : 0;
+  const step = visible > 1 ? Math.max(touch, Math.min(cardWidth, (width - cardWidth - side * 2) / (visible - 1))) : count > 1 ? touch : 0;
   const span = count ? cardWidth + Math.max(0, count - 1) * step : 0;
-  const start = Math.max(inset, (width - span) / 2);
+  const start = Math.max(side, (width - span) / 2);
   const middle = (count - 1) / 2;
   // The rotated outside corners, not just the unrotated face, must clear
   // the footer. Keep one physical pixel between the fan and that next band.
@@ -57,7 +89,24 @@ export function handLayout({ width, height, count, rem = 16, zoom = 1, compact =
     return card.x + cardWidth / 2 - (Math.abs(Math.cos(radians)) * cardWidth
       + Math.abs(Math.sin(radians)) * cardHeight) / 2;
   })) : 0;
-  const top = Math.max(0, Math.min(bottomLimit, Math.max(inset + lift, (height - controlsReserve - cardHeight - arc) / 2)));
+  // A phone docks the fan right under its tool row; a width-bound fan leaves
+  // its spare height below the cards, not in a gap under the row.
+  const centred = compact ? 0 : (height - controlsReserve - cardHeight - arc) / 2;
+  const base = Math.max(inset + liftReserve, centred);
+  // A phone's fan sits a little lower, into the space its tool row leaves. The
+  // drop is limited by each card's own resting edge, and only a card that
+  // carries a chooser reserves the chooser's extra space below it (a plain
+  // card's outer corner does not, which the uniform bottom limit assumed; with
+  // no list every card is taken to carry one).
+  const drop = compact ? (config.compactDropRem || 0) * rem : 0;
+  const reach = Math.max(...cards.map((card, index) => {
+    const radians = card.angle * Math.PI / 180;
+    const reserve = !controlled || controlled.includes(index) ? controlsReserve : 0;
+    return card.y + cardHeight / 2 + (Math.abs(Math.sin(radians)) * cardWidth + Math.abs(Math.cos(radians)) * cardHeight) / 2 + reserve;
+  }), 0);
+  const top = drop > 0
+    ? Math.max(0, Math.min(Math.max(bottomLimit, height - 1 / zoom - reach), base + drop))
+    : Math.max(0, Math.min(bottomLimit, base));
   const restTop = cards.length ? Math.min(...cards.map(card => {
     const radians = card.angle * Math.PI / 180;
     return top + card.y + cardHeight / 2 - (Math.abs(Math.sin(radians)) * cardWidth
@@ -65,7 +114,7 @@ export function handLayout({ width, height, count, rem = 16, zoom = 1, compact =
   })) : 0;
   // The chooser's bounded vertical correction may lift its owner to the hand
   // clipping edge. Reserve that possible face before selection, not afterwards.
-  const clearanceTop = controlsHeight > 0 ? 0 : Math.min(restTop, Math.max(0, top - lift));
+  const clearanceTop = controlsHeight > 0 ? 0 - headroom : Math.min(restTop, Math.max(0 - Math.min(headroom, lift), top - lift));
   return Object.freeze({ cardWidth, cardHeight, capacity, span, start, step, lift, restLeft, restTop, clearanceTop, controlsReserve,
     top,
     cards,
