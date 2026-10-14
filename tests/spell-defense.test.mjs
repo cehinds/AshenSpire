@@ -3,9 +3,10 @@ import assert from 'node:assert/strict';
 import { spellDefenseSplit } from '../src/model/spellDefense.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { createCombat } from '../src/engine/combat.js';
+import { createCombat, previewCard } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
-import { gainBarrier, gainBlock, computeBlockGain } from '../src/engine/actions.js';
+import { gainBarrier, gainBlock, computeBlockGain, computeMeterGuardGain } from '../src/engine/actions.js';
+import { resolveCombatRatings } from '../src/model/combatRatings.js';
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
 import { cardPlainText } from '../src/ui/components/card.js';
 import { cardFaceLines } from '../src/model/cardFaceText.js';
@@ -87,4 +88,62 @@ test('expanded block opcode faces and allied gains use defense shares; legacy fa
   assert.match(cardPlainText(registries, { cardId: 'crystalBarrier' },
     { definition: { ...expanded, ashenBlightCost: 1 }, rules: { combatExpansionVersion: 2 } }), /Ally gains 4 Block, 1 Ward/);
   assert.match(cardPlainText(registries, { cardId: 'crystalBarrier' }, { definition: legacy }), /Ally gains 5 Block/);
+});
+
+function ratedFixture(dr, pr) {
+  const combat = createCombat({ registries, rng: createRng(5),
+    ratingsRules: resolveCombatRatings({}, contentBundle),
+    combatExpansionVersion: 2, enemyIds: ['wanderingSoldier'],
+    player: { classId: 'starseer', maxHp: 100, hp: 100,
+      maxMana: 20, mana: 20, maxStamina: 20, stamina: 20,
+      energyMax: 20, drawPerTurn: 1,
+      deck: [{ instanceId: 'rated-defense', cardId: 'frostCounter' }] } });
+  combat.player.ratings = { ar: 0, dr, pr, poise: 0, ward: 30 };
+  combat.player.ratingSources = [];
+  combat.player.statuses = {};
+  combat.player.block = 0; combat.player.barrier = 0;
+  combat.player.persistentWard = { max: 30, value: 0 };
+  return combat;
+}
+
+test('live DR and PR each add once before spell defense is split, with preview parity', () => {
+  for (const [dr, pr, total] of [[3, 0, 8], [0, 3, 8], [3, 3, 11]]) {
+    for (const gain of [gainBarrier, gainBlock]) {
+      const combat = ratedFixture(dr, pr), player = combat.player;
+      const card = { ...guard('frost'), cardId: 'frostCounter', damageSchool: 'magic' };
+      assert.equal(computeBlockGain(combat, player, 5, card), total);
+      const preview = previewCard(combat, 'rated-defense');
+      assert.equal(preview.values.find(value => value.op === 'gainBarrier').value, total);
+      assert.equal(gain(combat, player, 5, card), total);
+      assert.deepEqual({ block: player.block, ward: player.persistentWard.value + player.barrier },
+        spellDefenseSplit(card, total));
+    }
+  }
+});
+
+test('combined spell defense rating caps once and preserves source equipment filtering', () => {
+  const combat = ratedFixture(3, 3), player = combat.player;
+  const card = { ...guard('frost'), cardId: 'frostCounter', damageSchool: 'magic', ratingCap: 9 };
+  assert.equal(computeBlockGain(combat, player, 5, card), 9, 'DR + PR share one cap');
+  assert.equal(computeBlockGain(combat, player, 10, card), 10, 'a cap never removes the authored base');
+  player.ratingSources = [
+    { kind: 'attribute', dr: 1, pr: 1 },
+    { kind: 'equipment', sourceId: 'focus-a', dr: 20, pr: 20, effectiveRatings: { dr: 2, pr: 3 } },
+    { kind: 'equipment', sourceId: 'focus-b', dr: 50, pr: 50 },
+  ];
+  assert.equal(computeBlockGain(combat, player, 5,
+    { ...card, ratingCap: undefined, sourceArmamentId: 'focus-a', equipmentRole: 'guard' }), 12);
+  assert.equal(computeBlockGain(combat, player, 5,
+    { ...card, ratingCap: undefined, equipmentRole: 'guard' }), 7, 'unbound equipment guard excludes all equipment rows');
+});
+
+test('physical defense, evasion, legacy spell defense and meter guards retain their existing rating', () => {
+  const combat = ratedFixture(3, 7), player = combat.player;
+  const spell = { ...guard('frost'), cardId: 'frostCounter', damageSchool: 'magic' };
+  const physical = { ...spell, damageSchool: 'physical', combatProfile: { camp: 'physical', maneuver: 'defend' } };
+  assert.equal(computeBlockGain(combat, player, 5, physical), 8);
+  assert.equal(computeBlockGain(combat, player, 5, { ...spell, evade: { charges: 1 } }), 12);
+  assert.equal(computeMeterGuardGain(combat, player, 5, spell), 12, 'meter guard still reads PR alone');
+  combat.combatExpansionVersion = 1;
+  assert.equal(computeBlockGain(combat, player, 5, spell), 12);
 });

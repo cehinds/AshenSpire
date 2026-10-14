@@ -717,11 +717,15 @@ export function addArcaneExposure(ctx, source, target, { school, attempted = nul
 
 /**
  * computeBlockGain(ctx, entity, base) → final integer block gain:
- * base + per-stack 'blockAdd' modifiers, × 'blockGainedMult' modifiers,
+ * base + the eligible rating bonus + per-stack 'blockAdd' modifiers,
+ * × 'blockGainedMult' modifiers (expanded split spell defenses add DR + PR),
  * floored, min 0 (SPEC §4.2). Pure. Cap NOT applied here.
  */
 export function computeBlockGain(ctx, entity, base, card = null) {
-  let amt = base + Ratings.cardRatingBonus(ctx, entity, card, 'block', base) + statuses.getAdd(ctx, entity, 'blockAdd');
+  const ratingBonus = ctx.combatExpansionVersion === 2 && spellDefenseSplit(card, base)
+    ? Ratings.spellDefenseRatingBonus(ctx, entity, card, base)
+    : Ratings.cardRatingBonus(ctx, entity, card, 'block', base);
+  let amt = base + ratingBonus + statuses.getAdd(ctx, entity, 'blockAdd');
   amt *= statuses.getMult(ctx, entity, 'blockGainedMult');
   amt = Math.floor(amt);
   return amt < 0 ? 0 : amt;

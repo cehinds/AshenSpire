@@ -189,3 +189,20 @@ export function cardRatingBonus(ctx, source, carrier, op, base = 0) {
   if (op === 'heal' && magical) return value('pr');
   return 0;
 }
+
+/**
+ * A split spell defense uses both physical Defense and magical Power.
+ * Read both through the same source-scoping door and cap their combined bonus
+ * once. A carrier without live ratings keeps its existing fallback bonus;
+ * a single ratingValue does not imply a second Defense rating.
+ */
+export function spellDefenseRatingBonus(ctx, source, carrier, base = 0) {
+  if (!source || !carrier?.cardId) return 0;
+  if (!ctx.ratingsRules || !source.ratings) return cardRatingBonus(ctx, source, carrier, 'block', base);
+  const scoped = !!carrier.equipmentRole;
+  const amount = sourceRatingValue(ctx, source, 'dr', carrier.sourceArmamentId, scoped)
+    + sourceRatingValue(ctx, source, 'pr', carrier.sourceArmamentId, scoped);
+  return Number.isFinite(carrier.ratingCap)
+    ? Math.max(0, Math.min(amount, carrier.ratingCap - base))
+    : amount;
+}
