@@ -25,7 +25,7 @@ export function effectCarrier(carrier, effect) {
   return merged;
 }
 export function enqueueExpandedAction(ctx, actions, { source, target, carrier, completionMeta } = {}) {
-  if (ctx.combatExpansionVersion !== 2 || (carrier?.combatReaction && !(ctx.reactionRulesVersion >= 1))) {
+  if (ctx.combatExpansionVersion !== 2 || (carrier?.combatReaction && !(ctx.reactionRulesVersion >= 1) && !carrier?.counterReturnAttack)) {
     for (const action of actions) ctx.enqueue(action);
     return null;
   }
