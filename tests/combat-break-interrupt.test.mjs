@@ -1,3 +1,4 @@
+import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -23,6 +24,8 @@ function fixture() {
   enemy.persistentWard = { max: 0, value: 0 };
   enemy.persistentPoise = { max: 0, value: 0 };
   enemy.pendingMove = { moveId: 'slam', cardId: 'x' }; // a prepared action the break should cancel
+  // Protection arithmetic is exercised after a real seeded landed Accuracy decision.
+  primeAccuracyRolls(combat);
   return { combat, enemy };
 }
 

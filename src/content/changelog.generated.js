@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-14",
     "summary": "Quit is the final main menu entry, and blocked browser exits explain what happened",
     "detail": "Quit saves the run before leaving. When the browser refuses to close the tab, a visible message lets you return to the game. Settings defers preparing its sample card until you open the preview, and card-value calculation indexes tags once per operation. The combat audit now inventories cards from the registries and checks paid effects and next-turn recovery through native and compiled engines.",
-    "build": "0.7.1.1527",
+    "build": "0.7.1.1529",
     "pullRequest": 1990,
     "url": "https://github.com/cehinds/AshenSpire/pull/1990"
+  },
+  {
+    "id": "pr-1984",
+    "date": "2026-10-14",
+    "group": "2026-10-14",
+    "summary": "Stances, Evade and hit previews share their combat rules",
+    "detail": "Same-stance cards use the configured SP discount, stance ratings stay active without stacking, and Defense restores Poise and Ward with protection overflow. Smash, Counter and Sweep apply their matchup and range rules. Evade stacks, explicit Target bypasses and exact hit previews use the same hit calculation, while the combat HUD and hit labels show the result.",
+    "build": "0.7.1.1529",
+    "pullRequest": 1984,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1984"
   },
   {
     "id": "pr-1985",

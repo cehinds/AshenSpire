@@ -156,7 +156,8 @@ test('registered tags retain identity, approved tactical metadata changes are ex
   }
   // The damage types the owner added on 2026-10-12: Poison (decision 2), Psychic and Earth (decision 5).
   const ADDED_DAMAGE_TYPES = ['damage:poison', 'damage:psychic', 'damage:earth'];
-  const tacticalIds = [...Object.values(TACTICAL_TAGS).flat(), 'targeting:single', 'targeting:area', ...ADDED_DAMAGE_TYPES];
+  // Owner stance continuation: Target is an explicit card identity, distinct from a selector.
+  const tacticalIds = [...Object.values(TACTICAL_TAGS).flat(), 'targeting:single', 'targeting:area', 'target', ...ADDED_DAMAGE_TYPES];
   assert.deepEqual(TAGS.filter(t => t.id.startsWith('ability:')).map(t => t.id).sort(), [...ABILITY_TAGS].sort(), 'the fifty approved ability identities are exact');
   for (const id of ABILITY_TAGS) {
     const tag = tags.get(id);

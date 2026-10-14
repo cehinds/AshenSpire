@@ -1,3 +1,4 @@
+import { stanceOf } from '../model/stanceRules.js';
 // Combat Rounds Preview, solo adapter (SPEC §4.11, PREVIEW-PLAN P3a/P3b). Headless: no DOM, no timers.
 //
 // combat.js calls this module only when `combat.combatRounds` is set; every other path is untouched.
@@ -38,7 +39,7 @@ export function roundState(combat) {
 // move costs one more SP per Silenced stack, as a player's spell card does (owner, 2026-10-13).
 export function moveSp(move, { enemy = null, moveId, combat = null } = {}) {
   const entity = enemy && combat?.combatExpansionVersion === 2 ? enemy : null;
-  return enemyMoveSpOf(move, moveKind(move), MOVE_SP, { entity, enemyId: enemy?.enemyId, moveId });
+  return enemyMoveSpOf(move, moveKind(move), MOVE_SP, { entity, enemyId: enemy?.enemyId, moveId, ctx: combat });
 }
 export const enemyMoveSp = moveSp;
 
@@ -65,19 +66,27 @@ export function buildEnemyQueue(enemy, def, { isFirstTurn = false, pick, combat 
 // `endAtCharge` (rounds queues): stop after a charging move (see buildEnemyQueue).
 export function extendEnemyQueue(enemy, def, queue, { isFirstTurn = false, pick, combat = null, endAtCharge = false }) {
   const pool = enemyPool(def);
+  // Price the accepted sequence against the stance before each move; planning grants nothing.
+  const pricingEnemy = { ...enemy };
+  for (const entry of queue) {
+    const stance = stanceOf({ ...def.moves[entry.moveId], enemyId: enemy.enemyId, moveId: entry.moveId });
+    if (stance) pricingEnemy.combatStance = stance;
+  }
   let spent = queue.reduce((sum, entry) => sum + entry.sp, 0);
   while (queue.length < QUEUE_MAX) {
     if (endAtCharge && queue.some((entry) => def.moves[entry.moveId]?.delay)) break;
     if (queue.length > 0 && spent >= pool) break;
     const opener = isFirstTurn && queue.length === 0 && def.firstMove ? def.firstMove : null;
-    let moveId = opener ?? pick(enemy, def, pool - spent);
-    if (moveId == null && queue.length === 0 && opener == null) moveId = pick(enemy, def, Infinity);
+    let moveId = opener ?? pick(pricingEnemy, def, pool - spent);
+    if (moveId == null && queue.length === 0 && opener == null) moveId = pick(pricingEnemy, def, Infinity);
     if (moveId == null) break;
-    const sp = moveSp(def.moves[moveId], { enemy, moveId, combat });
+    const sp = moveSp(def.moves[moveId], { enemy: pricingEnemy, moveId, combat });
     if (spent + sp > pool && queue.length > 0) break;
     spent += sp;
     enemy.movesHistory.push(moveId);
     queue.push({ moveId, sp });
+    const stance = stanceOf({ ...def.moves[moveId], enemyId: enemy.enemyId, moveId });
+    if (stance) pricingEnemy.combatStance = stance;
   }
   return queue;
 }

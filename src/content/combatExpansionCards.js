@@ -99,6 +99,22 @@ function withSpellDefenseRange(def) {
     ...(def.counterCoverage ? { counterCoverage: { ...def.counterCoverage, ranges } } : {}) };
 }
 
+// Hostile spell skills have the same Spell stance as ranged offensive spells.
+// The payload decides this role; classifying a card as Skill does not make it support.
+function withSpellOffenseStance(def) {
+  const tags = def.cardTags || def.tags || [];
+  if (def.stanceTrigger === false || def.combatProfile?.stanceTrigger === false
+    || !tags.includes('camp:spell') || def.combatProfile?.maneuver
+    || tags.some(tag => tag.startsWith('maneuver:'))) return def;
+  const range = def.range || def.combatProfile?.range || tags.find(tag => tag.startsWith('range:'))?.slice(6) || 'reach';
+  const hostile = [...(def.effects || []), ...(def.upgrade?.effects || [])].some(effect =>
+    ['enemy', 'allEnemies', 'randomEnemy', 'otherEnemies', 'target'].includes(effect.target));
+  if (range === 'melee' || !hostile) return def;
+  const nextTags = [...tags, 'maneuver:casting'];
+  return { ...def, tags: nextTags, cardTags: nextTags,
+    ...(def.combatProfile ? { combatProfile: { ...def.combatProfile, maneuver: 'casting' } } : {}) };
+}
+
 export function applyCombatExpansionCard(def) {
   def = { ...applyCombatExpansionMartial(def), defenseRulesVersion: 2 };
   // Each paid Power instance leaves the usable deck for this combat. Its
@@ -107,7 +123,7 @@ export function applyCombatExpansionCard(def) {
     def = { ...def, keywords: [...(def.keywords || []), 'exhaust'] };
   }
   const row = combatExpansionSpellProfiles[def.equipmentProfileId] || combatExpansionCardOverlay[def.id];
-  if (!row) return withSpellDefenseRange(def);
+  if (!row) return withSpellDefenseRange(withSpellOffenseStance(def));
   const originalTags = def.cardTags || def.tags || [];
   const maneuver = row.maneuver || (COUNTERS[def.id] ? 'counter' : originalTags.find(tag => tag.startsWith('maneuver:'))?.slice(9)
     || (def.type === 'attack' ? 'casting' : null));
@@ -154,7 +170,7 @@ export function applyCombatExpansionCard(def) {
   card.effects = revise(card.effects, 50);
   if (card.upgrade?.effects) card.upgrade.effects = revise(card.upgrade.effects, 75);
   if (card.upcast && CHANCE_PRESSURE.has(def.id)) card.upcast.chancePerRank = 25;
-  return withSpellDefenseRange(card);
+  return withSpellDefenseRange(withSpellOffenseStance(card));
 }
 
 const counter = (id, school, { camps = ['spell'], ranges = ['melee', 'reach', 'ranged'], targeting = ['single'], poise = 0, ward = 2, cost = 1 } = {}) => ({

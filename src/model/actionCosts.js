@@ -1,3 +1,4 @@
+import { stanceStaminaCost } from './stanceRules.js';
 // src/model/actionCosts.js — the action-cost rules (owner decisions, 2026-10-12; SPEC §4.3a, §4.6a, §4.11).
 //
 // Pure model. Player cards: the per-resource cost formula (cardCostBudget). Enemy moves: their own `sp`, else the stance
@@ -217,14 +218,13 @@ function twoCostEffects(effects, tags, config) {
 
 /**
  * All smashes deal Poise damage (owner, 2026-10-13): a smash's Poise damage is smashPoiseBase plus its own (scaled at
- * 2 SP or more). The base is added to its first Poise damage effect, or, with none, a Poise damage effect is added on
+ * 2 SP or more). Existing Poise damage stands; with none, a Poise damage effect is added on
  * its first damage target.
  */
 function withSmashPoise(effects, tags, config) {
   const base = config.budget.smashPoiseBase;
   if (!tags.includes('maneuver:smash') || !(base > 0)) return effects;
-  const at = effects.findIndex((e) => e?.op === 'poiseDamage' && typeof e.amount === 'number');
-  if (at >= 0) return effects.map((e, i) => (i === at ? Object.freeze({ ...e, amount: e.amount + base }) : e));
+  if (effects.some(e => e?.op === 'poiseDamage')) return effects;
   const hit = effects.find((e) => e?.op === 'damage');
   return [...effects, Object.freeze({ op: 'poiseDamage', target: hit?.target ?? 'enemy', amount: base })];
 }
@@ -314,8 +314,9 @@ export const enemySpOf = enemyPoolOf;
  * `entity` (the enemy paying, expanded combat only), a spell-camp move adds the Silenced surcharge the player's cards pay
  * (model/combatCardProfile.js spellCardCostSurcharge, one SP per stack); `enemyId` and `moveId` find its authored tags.
  */
-export function enemyMoveSpOf(move, kind, fallback, { entity = null, enemyId, moveId } = {}) {
+export function enemyMoveSpOf(move, kind, fallback, { entity = null, enemyId, moveId, ctx = null } = {}) {
   const own = Number.isFinite(Number(move?.sp)) && move?.sp !== null && move?.sp !== undefined;
   const base = own ? Math.max(0, Number(move.sp)) : stanceCost(actionStance({ kind, tags: move?.tags })) ?? fallback;
-  return base + (entity ? spellCardCostSurcharge(entity, { ...move, enemyId, moveId }) : 0);
+  const carrier = { ...move, enemyId, moveId };
+  return stanceStaminaCost(base, entity, carrier, ctx) + (entity ? spellCardCostSurcharge(entity, carrier) : 0);
 }
