@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-14",
     "summary": "Rogue, Starseer and Herald jump into their ground-slam Smash",
     "detail": "The selected dagger-and-buckler, ash-staff and bone-sceptre paintings now move from their held stance through takeoff, airborne load and ground impact before returning to that same stance. They appear with the matching default-armour starter grips; other equipment retains its existing moves. Phone views preserve the complete weapons and effects, and delayed impact cues finish before the pose recovers.",
-    "build": "0.7.1.1515",
+    "build": "0.7.1.1517",
     "pullRequest": 1974,
     "url": "https://github.com/cehinds/AshenSpire/pull/1974"
+  },
+  {
+    "id": "pr-1976",
+    "date": "2026-10-14",
+    "group": "2026-10-14",
+    "summary": "Restore cards show their full price in combat",
+    "detail": "Attune and Ember Communion now show their full discounted Mana price on the card and in Information, matching rewards and deck views. Their own restore still pays that part: they remain playable at zero Mana and leave Mana unchanged. Stamina restores follow the same display rule, and a card cannot borrow a discount held by another queued card in Combat Rounds. Solo, co-op and older saved rules keep their payment behavior.",
+    "build": "0.7.1.1517",
+    "pullRequest": 1976,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1976"
   },
   {
     "id": "pr-1972",
