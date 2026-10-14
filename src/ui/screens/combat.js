@@ -1560,7 +1560,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (bar.id === 'hp') {
         markUiComponent(el, UI.healthStatusBar, entity.kind);
         const next = el.nextSibling;
-        const row = combatHealthRow(el, { ...protectionPresentation(v), evasion: combat.combatExpansionVersion === 2 && (entity.kind !== 'enemy' || hitChanceKnown(entity)) ? effectiveEvasion(combat, v) : null }, { tooltips, blockHelp: helpText('block') });
+        const row = combatHealthRow(el, { ...protectionPresentation(v), evasion: combat.combatExpansionVersion === 2 && (entity.kind !== 'enemy' || hitChanceKnown(entity)) ? effectiveEvasion(combat, v, { baseEntity: entity }) : null }, { tooltips, blockHelp: helpText('block') });
         bars.insertBefore(row, next);
       }
       if (bar.id === 'poise') markUiComponent(el, UI.poiseStatusBar, entity.kind);

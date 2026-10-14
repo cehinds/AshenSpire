@@ -26,10 +26,10 @@ function eligibleEvadeMode(entity) {
   const eligible = stacks(entity, 'evade') > 0 || eligiblePreparedEvade(entity);
   return eligible && mode && (!mode.whileStatus || stacks(entity, mode.whileStatus) > 0) ? mode : null;
 }
-export function effectiveEvasion(ctx, entity, { evadeDisabled = false } = {}) {
+export function effectiveEvasion(ctx, entity, { evadeDisabled = false, baseEntity = entity } = {}) {
   const prepared = !evadeDisabled && eligiblePreparedEvade(entity);
   const preparedBonus = prepared ? stanceRulesFor(ctx).evasionPerStack + (Number.isFinite(prepared.bonus) ? prepared.bonus : 0) : 0;
-  return counterBaseEvasion(ctx, entity) + (evadeDisabled ? 0 : stanceRulesFor(ctx).evasionPerStack * stacks(entity, 'evade') + preparedBonus);
+  return counterBaseEvasion(ctx, baseEntity) + (evadeDisabled ? 0 : stanceRulesFor(ctx).evasionPerStack * stacks(entity, 'evade') + preparedBonus);
 }
 
 export function attackHitPreview(ctx, source, target, carrier, options = {}) {

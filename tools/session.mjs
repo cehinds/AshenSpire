@@ -799,7 +799,8 @@ export function createSession({ registries, seedString, endless = false, restore
         // Reaction notes (model/combatLog.js) and callouts (fx.js calloutForEvent).
         ownerId: e.ownerId, attackKind: e.attackKind, need: e.need, have: e.have, resource: e.resource,
         ...(Array.isArray(e.cardIds) ? { cardIds: [...e.cardIds] } : {}),
-        avoided: e.avoided, ...(e.evade && typeof e.evade === 'object' ? { evade: structuredClone(e.evade) } : {}),
+        avoided: e.avoided, ...(e.hitCheck === true ? { hitCheck: true } : {}),
+        ...(e.evade && typeof e.evade === 'object' ? { evade: structuredClone(e.evade) } : {}),
         breaks: e.breaks, label: e.label, poise: e.poise,
         ...(['attackHit', 'attackMissed'].includes(e.type) ? { hit: e.hit, missReason: e.missReason,
           mode: e.mode, advantage: e.advantage, disadvantage: e.disadvantage,

@@ -278,6 +278,10 @@ export function expandedEnemyMove(enemy, move, moveId, ctx = null) {
     delete result.block;
     result.barrier = (move.barrier || 0) + move.block;
   }
+  if (profile.maneuver === 'smash' && (move.damage != null || result.effects.some(effect => effect.op === 'damage'))
+    && !result.effects.some(effect => effect.op === 'poiseDamage')) {
+    result.effects.push({ op: 'poiseDamage', target: 'player', amount: stanceRulesFor(ctx).fallbackPoise });
+  }
   if (profile.maneuver === 'ranged') result.projectile = true;
   if (move.delay?.whileCharging) result.delay = { ...move.delay,
     whileCharging: expandedEnemyMove(enemy, { ...move.delay.whileCharging, tags: move.tags, cardTags: move.cardTags }, moveId, ctx) };
@@ -308,9 +312,12 @@ export function primeEnemyCounter(ctx, enemy, move, moveId) {
   if (combatExpansionEnabled(ctx)) {
     const payload = carrier.combatProfile.counterPayload;
     const damage = move.counterDamage ?? move.damage;
+    const authoredPoise = payload?.poise ?? move.counterPoiseDamage ?? 0;
+    const poiseDamage = authoredPoise > 0 || move.effects?.some(effect => effect.op === 'poiseDamage')
+      ? authoredPoise : stanceRulesFor(ctx).fallbackPoise;
     armCombatCounter(ctx, enemy, carrier, { damage: damage === undefined ? 0 : enemyMoveDamage(enemy, { ...move, damage }),
-      poiseDamage: move.counterPoiseDamage || 0, wardDamage: move.counterWardDamage || 0,
-      ...(payload ? { payload } : {}) });
+      poiseDamage, wardDamage: move.counterWardDamage || 0,
+      ...(payload ? { payload: { ...payload, poise: poiseDamage } } : {}) });
     if (move.block > 0) ctx.enqueue({ effect: { op: 'block', target: 'self', amount: move.block }, source: enemy, owner: enemy, target: enemy, card: carrier, meta: { moveId, preparing: true } });
     if (move.barrier > 0) ctx.enqueue({ effect: { op: 'gainBarrier', target: 'self', amount: move.barrier }, source: enemy, owner: enemy, target: enemy, card: carrier, meta: { moveId, preparing: true } });
     if (enemy.intent?.moveId === moveId) enemy.intent.counterDefensePrimed = true;
