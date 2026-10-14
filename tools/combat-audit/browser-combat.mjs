@@ -54,15 +54,22 @@ for (let i = 0; i < sourceFiles.length; i += 16) await Promise.all(sourceFiles.s
   const relative = path.slice(sourceRoot.length + 1), response = await fetch(source + relative);
   assert.equal(response.ok, true, `source fixture module ${relative} served`);
   const digest = data => createHash('sha256').update(data).digest('hex');
-  sourceDigests[relative] = digest(await response.text());
-  assert.equal(sourceDigests[relative], digest(readFileSync(path)), `immutable source fixture identity: ${relative}`);
+  const served = await response.text();
+  sourceDigests[relative] = digest(served);
+  const normalizeStamp = text => text.replace(/export const (SOURCE|ORDINAL|BUILT|RUN_PATH|EDITION) = '[^']*';/g, 'export const $1 = \'STAMP\';');
+  if (relative === 'buildversion.js') {
+    assert.equal(served.match(/export const SOURCE = '([^']+)'/)?.[1], build.source, 'served source stamp matches compiled artifact');
+    assert.equal(served.match(/export const ORDINAL = '([^']+)'/)?.[1], build.ordinal, 'served source ordinal matches compiled artifact');
+    for (const field of ['BUILT', 'RUN_PATH', 'EDITION']) assert.equal(served.match(new RegExp(`export const ${field} = '([^']*)'`))?.[1], html.match(new RegExp(`const ${field} = '([^']*)'`))?.[1], `generated ${field} source stamp matches compiled artifact`);
+    assert.equal(digest(normalizeStamp(served)), digest(normalizeStamp(readFileSync(path, 'utf8'))), 'buildversion code identity excluding generated stamp fields');
+  } else assert.equal(sourceDigests[relative], digest(readFileSync(path)), `immutable source fixture identity: ${relative}`);
 }));
 const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const owner = await launchBrowser({ browser: process.env.CHROME || '/usr/bin/chromium', prefix: 'ca-' });
 const browser = await chromium.connectOverCDP(owner.wsUrl);
 const report = { url, source, build, sourceDigests, inventory, mode,
   fixture: 'Fresh createRunCombat from the screenshot run, canonical enemies/knowledge/moves, custom difficulty hpMult=20 and resource maxima 200. One registered card plus legal draw/discard fillers. Data fields only copied into the live fight; original runtime functions, listeners, dispatch, target resolver, renderer and timeline preserved. These are isolated fixtures, not earned playthroughs.',
-  cases: [], errors: [], started: new Date().toISOString(), coverageLimits: [
+  cases: [], errors: [], platformWarnings: [], networkFailures: [], animationDispatch: [], started: new Date().toISOString(), coverageLimits: [
     'Source-engine oracle parity proves compiled input and effect resolution match canonical source. Independent intended-effect/conditional trigger contracts are reported by the engine audit.',
     'Relic/status registries are inventoried here; exhaustive relic/status activation belongs to the engine audit.',
   ] };
@@ -74,9 +81,12 @@ async function boot(context, classId) {
   const page = await context.newPage();
   page.on('pageerror', e => report.errors.push({ case: activeCase, kind: 'pageerror', message: e.stack }));
   page.on('console', e => {
-    if (e.type() === 'error' || /\[combat\].*(rejected|ignored|refused|failed|not previewable)/.test(e.text()))
+    if (/Blocked call to navigator.vibrate|Failed to load resource:/.test(e.text()))
+      report.platformWarnings.push({ case: activeCase, kind: e.type(), message: e.text(), location: e.location() });
+    else if (e.type() === 'error' || /\[combat\].*(rejected|ignored|refused|failed|not previewable)/.test(e.text()))
       report.errors.push({ case: activeCase, kind: e.type(), message: e.text() });
   });
+  page.on('response', response => { if (response.status() >= 400) report.networkFailures.push({ case: activeCase, status: response.status(), url: response.url() }); });
   await page.addInitScript(() => {
     window.__auditUnhandled = []; window.__auditLongTasks = [];
     addEventListener('unhandledrejection', e => window.__auditUnhandled.push(String(e.reason?.stack || e.reason)));
@@ -84,7 +94,7 @@ async function boot(context, classId) {
   });
   await page.goto(`${url}?shot=combat&shotClass=${classId}&shotSeed=B&shotMaxHp=200&shotMaxMana=200&shotMaxStamina=200&shotMana=200`, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.end-turn:not([disabled])', { timeout: 30000 });
-  await page.evaluate(() => { window.__auditBaseRun = structuredClone(window.__combatRunForShot); window.__auditRuntime = Object.fromEntries(Object.entries(window.__combat).filter(([, v]) => typeof v === 'function')); });
+  await page.evaluate(() => { window.__auditBaseRun = structuredClone(window.__combatRunForShot); window.__auditBaseRng = window.__combat.rng.getCounters(); window.__auditRuntime = Object.fromEntries(Object.entries(window.__combat).filter(([, v]) => typeof v === 'function')); });
   return page;
 }
 
@@ -98,6 +108,9 @@ async function fixture(page, row) {
       throw new Error('Previous case left pending state or animation; refusing fixture reset');
     for (const [key, fn] of Object.entries(window.__auditRuntime)) if (c[key] !== fn) throw new Error(`Runtime function changed: ${key}`);
     const run = structuredClone(window.__auditBaseRun);
+    run.maxHp = run.maxMana = run.maxStamina = 200; run.hp = 100; run.mana = run.stamina = 100;
+    run.ashenBlightBasePools = { maxHp: 200, maxMana: 200, maxStamina: 200 };
+    c.rng.restoreCounters(window.__auditBaseRng);
     if (row.relicId) run.relics = [...new Set([...run.relics, row.relicId])];
     const inst = { cardId: row.cardId || 'strike', instanceId: 'audit-card', upgraded: row.variant === 'upgraded',
       ...(row.school ? { damageSchool: row.school } : {}) };
@@ -106,6 +119,13 @@ async function fixture(page, row) {
     const encounter = c.registries.encounters.all().find(e => enemies.every(id => e.enemies.includes(id)));
     const fresh = createRunCombat({ registries: c.registries, rng: c.rng, run, enemyIds: enemies, encounter, hpMult: row.victory ? 1 : 20,
       enemyStatuses: row.enemyStatuses || [], playerStatuses: row.playerStatuses || [] });
+    // The unchanged live commit callback owns this same run encounter. Mirror the
+    // canonical fixture's accepted knowledge receipt into the host run, too.
+    Object.assign(window.__combatRunForShot, structuredClone(run));
+    if (fresh.enemyKnowledge?.encounter) {
+      window.__combatRunForShot.enemyKnowledgeState.currentEncounter = structuredClone(fresh.enemyKnowledge.encounter);
+      window.__combatRunForShot.enemyKnowledgeState.visitOrdinal = fresh.enemyKnowledge.encounter.visit;
+    }
     // Runtime closures retain the original fight identity. Only serializable data changes.
     for (const key of Object.keys(c)) if (typeof c[key] !== 'function' && key !== 'registries' && key !== 'rng') delete c[key];
     for (const [key, value] of Object.entries(fresh)) if (typeof value !== 'function' && key !== 'registries' && key !== 'rng') c[key] = value;
@@ -116,7 +136,10 @@ async function fixture(page, row) {
     c.player.mana = row.deniedCost ? 0 : Math.floor(c.player.maxMana / 2); c.player.stamina = row.deniedCost ? 0 : Math.floor(c.player.maxStamina / 2);
     c.player.hp = Math.ceil(c.player.maxHp / 2);
     // A repeat-enter refusal gets a separate expected-refusal case; initial stance cards can enter normally.
-    if (!row.repeatStance && c.registries.cards.get(inst.cardId).effects?.some(e => e.op === 'enterStance' && e.stance === c.player.stanceId)) c.player.stanceId = null;
+    const stance = c.registries.cards.get(inst.cardId).effects?.find(e => e.op === 'enterStance' && e.stance)?.stance;
+    if (row.repeatStance) c.player.stanceId = stance;
+    else if (stance === c.player.stanceId) c.player.stanceId = null;
+    if (row.activeControl) c.player.statuses[row.activeControl] = { stacks: 1 };
     if (row.victory) { c.enemies = c.enemies.slice(0, 1); c.enemies[0].hp = 1; }
     const def = resolveCombatCard(c, inst, row.upcastTier ? { upcastTier: row.upcastTier } : {});
     let preview = previewCard(c, inst.instanceId, undefined, row.upcastTier);
@@ -130,8 +153,22 @@ async function fixture(page, row) {
     window.__auditOracleDispatch = dispatch;
     window.__renderCombatForShot();
     window.__auditStart = { hp: c.enemies.map(e => e.hp), player: { hp: c.player.hp, energy: c.player.energy, mana: c.player.mana, stamina: c.player.stamina }, eventCount: c.eventLog.length, at: performance.now() };
+    window.__auditFrameSamples = []; window.__auditSampling = !!row.sampleAnimation;
+    const sample = () => {
+      const host = document.querySelector('.combatant.player .alternative-card-stage'), stage = host?.__poseStage, canvas = host?.querySelector('canvas');
+      let hash = null;
+      if (canvas) try {
+        const probe = document.createElement('canvas'); probe.width = probe.height = 32; const context = probe.getContext('2d');
+        context.drawImage(canvas, 0, 0, 32, 32); const bytes = context.getImageData(0, 0, 32, 32).data;
+        let h = 2166136261; for (const byte of bytes) h = Math.imul(h ^ byte, 16777619); hash = h >>> 0;
+      } catch (error) { hash = String(error); }
+      window.__auditFrameSamples.push({ at: performance.now(), hash, missing: !stage, pose: stage?.pose,
+        art: stage?.currentArt, action: stage?.presentation?.action, stance: stage?.stance, rest: stage?.rest });
+      if (window.__auditSampling) requestAnimationFrame(sample);
+    };
+    if (row.sampleAnimation) requestAnimationFrame(sample);
     return { ...window.__auditStart, refused, preview: { needsTarget: preview.needsTarget, cost: preview.cost, manaCost: preview.manaCost, staminaCost: preview.staminaCost }, choice, plan,
-      effects: def.effects, tags: def.cardTags || def.tags, attack: def.attack, knowledge: !!c.enemyKnowledge };
+      effects: def.effects, tags: def.cardTags || def.tags, attack: def.attack, upcastTiers: def.upcast?.unlockedTiers || [], knowledge: !!c.enemyKnowledge, rng: c.rng.getCounters() };
   }, { source, row });
 }
 
@@ -177,7 +214,31 @@ async function play(page, device, row, before) {
   if (before.refused || row.deniedCost) {
     assert.equal(await page.evaluate(() => window.__combat.eventLog.slice(window.__auditStart.eventCount).some(e => e.type === 'cardPlayed')), false);
     assert.equal(await page.locator('.end-turn').isEnabled(), true);
-    return { refusal: before.refused || 'insufficient resource fixture', choices: [] };
+    const reason = await page.locator('[role="tooltip"]').allTextContents();
+    assert.ok(reason.join(' ').trim(), 'refusal has a visible explanation');
+    return { refusal: before.refused || 'insufficient resource fixture', visibleReason: reason, choices: [] };
+  }
+  if (row.invalidTarget) {
+    const point = await page.locator('.combatant.player .sprite').boundingBox();
+    assert.ok(point, 'wrong-side player figure exists');
+    if (device === 'phone') await page.touchscreen.tap(point.x + point.width / 2, point.y + point.height / 2);
+    else await page.mouse.click(point.x + point.width / 2, point.y + point.height / 2);
+    const denied = await receipt(page);
+    assert.deepEqual(denied.events, [], 'wrong-side target emits no effects');
+    assert.deepEqual(denied.player, before.player, 'wrong-side target spends no pools');
+    assert.equal(denied.pile, 'hand', 'wrong-side target keeps card');
+    const blank = await page.evaluate(() => {
+      const root = document.querySelector('.combat');
+      for (let y = 80; y < innerHeight - 150; y += 40) for (let x = 30; x < innerWidth - 30; x += 60) {
+        const hit = document.elementFromPoint(x, y);
+        if (root?.contains(hit) && !hit.closest('.combatant,button,.hand,.card,.as-tip,.modal,input')) return { x, y };
+      }
+      return null;
+    });
+    assert.ok(blank, 'pointer-accessible empty field cancels targeting');
+    if (device === 'phone') await page.touchscreen.tap(blank.x, blank.y); else await page.mouse.click(blank.x, blank.y);
+    assert.equal(await page.locator('.hand .card.selected,.hand .card.armed').count(), 0, 'wrong-side selection can be cancelled');
+    await tap(page, card, device);
   }
   const intent = { type: 'playCard', cardInstanceId: 'audit-card', ...(before.plan.mode === 'enemy' ? { targetId: 'e1' } : {}),
     ...(before.choice ? { choice: before.choice.options.find(o => !o.active).id } : {}), ...(row.upcastTier ? { upcastTier: row.upcastTier } : {}) };
@@ -202,12 +263,13 @@ async function play(page, device, row, before) {
   }
   if (before.choice) await tap(page, page.locator('.card-choice [data-choice]:not([disabled])').first(), device);
   await page.waitForFunction(() => window.__combat.eventLog.slice(window.__auditStart.eventCount).some(e => e.type === 'cardPlayed' && e.cardInstanceId === 'audit-card'), null, { timeout: 10000 });
-  return { choices: await finishPending(page, device, row.chooseReaction) };
+  return { choices: await finishPending(page, device, row.chooseReaction), invalidTargetRecovered: !!row.invalidTarget };
 }
 
 async function receipt(page) {
   return page.evaluate(() => {
     const c = window.__combat, events = c.eventLog.slice(window.__auditStart.eventCount);
+    window.__auditSampling = false;
     return { hp: c.enemies.map(e => e.hp), player: { hp: c.player.hp, energy: c.player.energy, mana: c.player.mana, stamina: c.player.stamina },
       events, pile: ['hand', 'draw', 'discard', 'exhaust'].find(p => c.piles[p].some(i => i.instanceId === 'audit-card')) || 'consumedPower',
       pending: !!(c.pendingReaction || c.reactionResume || c.pendingAbilityDiscard), queue: c.queue.length, phase: c.phase, turn: c.turn, result: c.result,
@@ -216,7 +278,7 @@ async function receipt(page) {
       runtimePreserved: Object.entries(window.__auditRuntime).every(([key, fn]) => c[key] === fn),
       oracle: { events: window.__auditOracle.eventLog.slice(window.__auditStart.eventCount), player: window.__auditOracle.player,
         enemies: window.__auditOracle.enemies, piles: window.__auditOracle.piles, phase: window.__auditOracle.phase },
-      actual: { player: c.player, enemies: c.enemies, piles: c.piles, phase: c.phase } };
+      actual: { player: c.player, enemies: c.enemies, piles: c.piles, phase: c.phase }, frames: window.__auditFrameSamples };
   });
 }
 
@@ -228,6 +290,13 @@ async function runCase(page, device, classId, row) {
     entry.before = await fixture(page, row);
     entry.input = await play(page, device, row, entry.before);
     entry.after = await receipt(page);
+    if (row.sampleAnimation) {
+      const frames = entry.after.frames, actionFrames = frames.filter(f => f.action);
+      report.animationDispatch.push({ device, classId, cardId: row.cardId, receiptId: 'audit-card', dispatchType: 'paid-card', cardPlayed: entry.after.events.some(e => e.type === 'cardPlayed'),
+        frameChanged: new Set(actionFrames.map(f => f.hash).filter(h => typeof h === 'number')).size > 1, actionStarted: actionFrames.length > 0,
+        actionCompleted: actionFrames.length > 0 && !frames.at(-1)?.action,
+        returnedToOrigin: frames[0]?.pose === frames.at(-1)?.pose, before: frames[0], after: frames.at(-1), frames });
+    }
     const paid = entry.after.events.filter(e => e.type === 'cardPlayed' && e.cardInstanceId === 'audit-card');
     assert.equal(paid.length, entry.input.refusal ? 0 : 1, 'one paid card receipt per play');
     if (!entry.input.refusal) {
@@ -265,14 +334,29 @@ try {
     const context = await browser.newContext({ viewport: device === 'phone' ? { width: 390, height: 844 } : { width: 1440, height: 900 }, hasTouch: device === 'phone' });
     for (const classId of classes.filter(id => !classFilter || id === classFilter)) {
       let page = await boot(context, classId);
-      const cards = inventory.cards.filter(card => card.classes.includes(classId) && (!cardFilter || cardFilter.split(',').includes(card.id)));
+      const cards = mode === 'cards' ? inventory.cards.filter(card => card.classes.includes(classId) && (!cardFilter || cardFilter.split(',').includes(card.id))) : [];
       for (const card of cards) {
         const variants = ['base', ...(card.upgraded ? ['upgraded'] : [])].filter(v => !variantFilter || variantFilter === v);
         for (const variant of variants) {
-          if (!await runCase(page, device, classId, { cardId: card.id, variant, figureTarget: card.id.length % 2 === 0 })) {
+          const row = { cardId: card.id, variant, category: 'card', figureTarget: card.id.length % 2 === 0,
+            sampleAnimation: variant === 'base' && ['strike','defend','starSpark','guardCounter','sweepingBlow','crimsonCleave','quickstep','bindingParry','ricochet','cometFragment','litany','bloodPact'].includes(card.id) };
+          const entryIndex = report.cases.length;
+          if (!await runCase(page, device, classId, row)) {
             await page.close(); page = await boot(context, classId);
           }
+          if (variant === 'base' && (!variantFilter || variantFilter === 'all')) for (const upcastTier of report.cases[entryIndex].before?.upcastTiers || [])
+            if (!await runCase(page, device, classId, { ...row, variant: `upcast-${upcastTier}`, upcastTier, sampleAnimation: false })) { await page.close(); page = await boot(context, classId); }
         }
+      }
+      if (mode === 'negatives') {
+        const rows = [
+          { cardId: 'strike', deniedCost: true, category: 'insufficient-resources' },
+          { cardId: 'strike', activeControl: 'dazed', category: 'controlled' },
+          { cardId: 'guardianBulwark', repeatStance: true, category: 'repeat-stance' },
+          { cardId: 'strike', invalidTarget: true, category: 'invalid-target-recovery' },
+          { cardId: 'strike', category: 'legal-after-refusals', figureTarget: true },
+        ];
+        for (const row of rows) if (!await runCase(page, device, classId, { ...row, variant: 'base' })) { await page.close(); page = await boot(context, classId); }
       }
       await page.close();
     }
