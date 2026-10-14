@@ -4,6 +4,13 @@ import { loadAuditRuntime } from './runtime.mjs';
 import { auditInventory } from './inventory.mjs';
 import { makeAuditCombat, settleAuditChoices, setAuditHand, setAuditPredicate } from './fixtures.mjs';
 
+// The current-source renderer applies stance-pressure bonuses when a queued
+// poiseDamage effect resolves. Older pinned builds predate this config file and
+// correctly use a multiplier of 1. Importing the authored defaults keeps this
+// oracle tied to the game rule instead of accepting an unexplained meter delta.
+let authoredStanceRules = null;
+try { ({ stanceRules: authoredStanceRules } = await import('../../src/content/stanceRules.js')); } catch {}
+
 // One authored representative per requested opcode. Variant rows (upgrade and
 // ability grade) come from the registry inventory, never a handwritten list.
 const representatives = {
@@ -159,8 +166,20 @@ export async function auditCardEffectContracts({ mode = 'native' } = {}) {
         const reaction = combat.eventLog.slice(start).find(e => e.type === 'combatCounterTriggered' && e.cardId === cardId && e.poiseDamage > 0);
         assert.ok(reaction, 'real enemy action triggers the selected card counter and explicit Poise result');
         const after = stateFor(op, combat, cardId);
-        assert.equal(after.poise - before.poise, reaction.poiseDamage, 'actual enemy meter delta matches the counter receipt');
-        report.contracts.push({ op, cardId, variant: variant.key, result: 'deferred-positive', event: 'combatCounterTriggered', poiseDamage: reaction.poiseDamage, beforePoise: before.poise, afterPoise: after.poise });
+        const receiver = combat.enemies.find(enemy => enemy.id === reaction.targetId);
+        // actions.js resolves the queued reaction's poiseDamage through
+        // stancePressureMultiplier. A Counter return against a target currently
+        // in Attack/Smash therefore receives the authored counterMultiplier;
+        // the combatCounterTriggered receipt remains the pre-pressure payload.
+        const receiverStance = receiver?.combatStance?.maneuver;
+        const pressureMultiplier = authoredStanceRules && ['attack', 'smash'].includes(receiverStance)
+          ? authoredStanceRules.counterMultiplier : 1;
+        const expectedPoiseDelta = Math.floor(reaction.poiseDamage * pressureMultiplier);
+        assert.equal(after.poise - before.poise, expectedPoiseDelta,
+          `actual enemy meter delta matches counter receipt ${reaction.poiseDamage} × stance pressure ${pressureMultiplier}`);
+        report.contracts.push({ op, cardId, variant: variant.key, result: 'deferred-positive', event: 'combatCounterTriggered',
+          poiseDamage: reaction.poiseDamage, pressureMultiplier, expectedPoiseDelta,
+          beforePoise: before.poise, afterPoise: after.poise, receiverStance });
         continue;
       }
       const after = stateFor(op, combat, cardId, eff);
