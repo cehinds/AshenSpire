@@ -113,19 +113,20 @@ function readGallery(path){
 }
 
 async function resolvedProfileFamilyCandidates(){
- const api=await loadAuditRuntime('bundled'),inventory=auditInventory(api.registries),result=Object.fromEntries(classes.map(id=>[id,Object.fromEntries(['spell','ranged','rangedMagic'].map(family=>[family,[]]))])),fixtureGaps=[];
+ const api=await loadAuditRuntime('bundled'),inventory=auditInventory(api.registries),result=Object.fromEntries(classes.map(id=>[id,Object.fromEntries(['spell','ranged','rangedMagic'].map(family=>[family,[]]))])),fixtureGaps=[],fixtureRows=[];
  for(const variant of inventory.variants.filter(v=>v.instance.profileId&&!v.instance.upgraded&&v.upcastTier===undefined&&(v.instance.abilityRank===undefined||v.instance.abilityRank===0))){
   const carrierId=variant.carrierIds[0];if(!carrierId)continue;
   try{
    const {combat,fixtureKind}=makeAuditCombat(api,{classId:variant.classId,instance:variant.instance,relicIds:[],carrierId});
    const def=api.resolveCombatCard(combat,combat.piles.hand[0]),tags=def.cardTags||def.tags||[];
+   fixtureRows.push({classId:variant.classId,cardId:variant.instance.cardId,profileId:variant.instance.profileId,carrierId,fixtureKind,cardTags:tags});
    const isRanged=tags.includes('ranged')||tags.includes('maneuver:ranged'),isSpell=tags.includes('camp:spell')||tags.includes('maneuver:casting');
    const families=[...(isSpell?['spell']:[]),...(isRanged?['ranged']:[]),...(isSpell&&isRanged?['rangedMagic']:[])];
    for(const family of families)result[variant.classId][family].push({cardId:variant.instance.cardId,profileId:variant.instance.profileId,carrierId,fixtureKind,cardTags:tags});
   }catch(error){fixtureGaps.push({classId:variant.classId,cardId:variant.instance.cardId,profileId:variant.instance.profileId,carrierId,reason:error.message});}
  }
  for(const classId of classes)for(const family of Object.keys(result[classId]))result[classId][family]=[...new Map(result[classId][family].map(row=>[`${row.cardId}/${row.profileId}`,row])).values()];
- return {runtime:'bundled source adapter',classes:result,fixtureGaps};
+ return {runtime:'bundled source adapter',classes:result,fixtureRows,fixtureGaps};
 }
 
 function readPlayedEvidence(path,resolvedCandidates){
@@ -174,7 +175,7 @@ function readPlayedEvidence(path,resolvedCandidates){
   const authored=familyCandidates[id][family],profiles=profileCandidates[id][family]||[],candidates=[...new Set([...authored,...profiles.map(row=>`${row.cardId}@${row.profileId}`)])];
   return [family,{played:actualFamilies[id].has(family),candidateCards:candidates,authoredCardCandidates:authored,resolvedProfileCandidates:profiles,status:actualFamilies[id].has(family)?'actual-frame-action-observed':candidates.length?'candidate-exists-but-no-paid-frame-observed':'no-authored-or-resolved-profile-candidate'}];
  }))]));
- return {dispatchRows:actual.length,classes:classSummary,familyCandidates,familyCoverage,resolvedProfileCandidates:profileCandidates,resolvedProfileFixtureGaps:resolvedCandidates.fixtureGaps,rows:actual,provenance:'real paid card dispatch; event/render samples supplied by browser-combat',limits:'Frames are sampled during real playback, not frame-perfect timing. Rows without a pre-action pose are origin-sampling gaps and are not counted as return-stance passes. Resolved equipment-profile candidates indicate card availability under that profile, not default-class-weapon playback.'};
+ return {dispatchRows:actual.length,classes:classSummary,familyCandidates,familyCoverage,resolvedProfileCandidates:profileCandidates,resolvedProfileFixtureRows:resolvedCandidates.fixtureRows,resolvedProfileFixtureGaps:resolvedCandidates.fixtureGaps,rows:actual,provenance:'real paid card dispatch; event/render samples supplied by browser-combat',limits:'Frames are sampled during real playback, not frame-perfect timing. Rows without a pre-action pose are origin-sampling gaps and are not counted as return-stance passes. Resolved equipment-profile candidates indicate card availability under that profile, not default-class-weapon playback.'};
 }
 
 function readCounterScenarioEvidence(path){
