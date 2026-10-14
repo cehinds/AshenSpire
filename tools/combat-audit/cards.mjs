@@ -33,7 +33,7 @@ export async function auditCards({ mode = 'native', allEnemies = false, allVaria
     resourceDeltaChecks: 0, played: [], rejected: [], fixtureGaps: [], failures: [], contracts: {}, uncovered: {} };
   // First sweep isolates authored base definitions. Grades, carriers and upcast
   // conditions are separate coverage and are deliberately not claimed here.
-  const base = allVariants ? inventory.variants : inventory.variants.filter(v => !v.instance.upgraded && !v.instance.profileId && v.upcastTier === undefined &&
+  const base = allVariants ? inventory.variants : inventory.variants.filter(v => !v.instance.upgraded && !v.instance.profileId && !v.instance.legacyAbility && v.upcastTier === undefined &&
     (v.instance.abilityRank === undefined || v.instance.abilityRank === 0));
   for (const variant of base) for (const enemyId of allEnemies ? inventory.enemyIds : ['wanderingSoldier', 'gildedKnight']) {
     const key = `${variant.key}/${enemyId}`;
@@ -178,8 +178,43 @@ export async function auditCounterLifecycle({ mode = 'native' } = {}) {
   }
   return { mode, cases, failures: [] };
 }
+export async function auditRefusals({ mode = 'native' } = {}) {
+  const api = await loadAuditRuntime(mode), inventory = auditInventory(api.registries);
+  const report = { mode, rejected: [], acceptedEmptyPools: [], failures: [] };
+  const variants = inventory.variants.filter(v => !v.instance.upgraded && !v.instance.profileId && !v.instance.legacyAbility && v.upcastTier === undefined && (v.instance.abilityRank === undefined || v.instance.abilityRank === 0));
+  for (const variant of variants) for (const scenario of ['wrong-side', 'empty-pools']) {
+    const key = `${variant.key}/${scenario}`;
+    try {
+      const { combat: c } = makeAuditCombat(api, { classId: variant.classId, instance: variant.instance, relicIds: [], scenario: scenario === 'empty-pools' ? scenario : 'baseline' });
+      const inst = c.piles.hand[0], def = api.resolveCombatCard(c, inst);
+      const plan = api.cardTargetPlan(def, c.player.id, c.enemies, [{ ...c.player, connected: true }], { solo: true });
+      const targetId = scenario === 'wrong-side' ? plan.mode === 'enemy' ? c.player.id : c.enemies[0].id : plan.legalIds[0];
+      const choice = api.cardChoicePlan(c, inst.instanceId)?.options.find(o => !o.active)?.id;
+      const before = JSON.stringify({ player: c.player, piles: c.piles, log: c.eventLog });
+      let refusal;
+      try { api.dispatch(c, { type: 'playCard', cardInstanceId: inst.instanceId, targetId, ...(choice ? { choice } : {}) }); }
+      catch (error) { refusal = error; }
+      if (refusal) {
+        const reason = refusal.playRefusal?.reason || /^Invalid (enemy|friendly) target /.test(refusal.message) && 'wrong-side';
+        assert.ok(['unplayable', 'cost', 'wrong-side'].includes(reason), `unexpected refusal: ${refusal.message}`);
+        assert.equal(JSON.stringify({ player: c.player, piles: c.piles, log: c.eventLog }), before, 'rejected play is atomic');
+        report.rejected.push({ key, reason });
+      } else {
+        assert.equal(scenario, 'empty-pools', 'wrong-side target must never play');
+        const costs = api.cardPlayCosts(makeAuditCombat(api, { classId: variant.classId, instance: variant.instance, relicIds: [], scenario: 'empty-pools' }).combat, inst.instanceId);
+        const selfFunding = def.effects?.some(e => ['gainEnergy', 'restoreMana', 'restoreStamina'].includes(e.op));
+        assert.ok((costs.energy === 0 && costs.mana === 0) || selfFunding, 'positive unfunded resource price cannot play from empty pools');
+        settleAuditChoices(api, c);
+        assert.ok(c.eventLog.some(e => e.type === 'cardPlayed' && e.cardInstanceId === inst.instanceId));
+        assert.equal(c.queue.length, 0);
+        report.acceptedEmptyPools.push({ key, reason: selfFunding ? 'authored restoration funds its own price' : 'zero effective resource price' });
+      }
+    } catch (error) { report.failures.push({ key, message: error.message }); }
+  }
+  return report;
+}
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const report = process.argv.includes('--counter-lifecycle') ? await auditCounterLifecycle({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native' }) : process.argv.includes('--conditions') ? await auditConditionalCards({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native' }) : await auditCards({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native', allEnemies: process.argv.includes('--all-enemies'), allVariants: process.argv.includes('--all-variants') });
+  const report = process.argv.includes('--refusals') ? await auditRefusals({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native' }) : process.argv.includes('--counter-lifecycle') ? await auditCounterLifecycle({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native' }) : process.argv.includes('--conditions') ? await auditConditionalCards({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native' }) : await auditCards({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native', allEnemies: process.argv.includes('--all-enemies'), allVariants: process.argv.includes('--all-variants') });
   console.log(JSON.stringify(report));
   if (report.failures.length || (report.fixtureGaps?.length || 0)) process.exitCode = 1;
 }

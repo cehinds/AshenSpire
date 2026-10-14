@@ -6,13 +6,13 @@ export function auditInventory(registries) {
   const variants = [];
   for (const classId of classes) for (const card of cards) {
     if (card.class && card.class !== 'colorless' && card.class !== classId) continue;
-    const grades = Array.isArray(card.gradeProfiles) ? card.gradeProfiles.map(p => p.rank) : [null];
+    const grades = Array.isArray(card.gradeProfiles) ? [...(card.legacyFace ? [null] : []), ...card.gradeProfiles.map(p => p.rank)] : [null];
     const matchedProfiles = profiles.filter(p => p.baseCardId === card.id);
     for (const upgraded of card.upgrade ? [false, true] : [false]) for (const abilityRank of grades) {
       for (const profile of [null, ...matchedProfiles]) {
         const upcasts = [null, ...(card.upcast?.unlockedTiers || [])];
         for (const upcastTier of upcasts) {
-          const instance = { cardId: card.id, upgraded, ...(abilityRank !== null ? { abilityRank } : {}), ...(profile ? { profileId: profile.id } : {}) };
+          const instance = { cardId: card.id, upgraded, ...(abilityRank !== null ? { abilityRank } : card.legacyFace ? { legacyAbility: true } : {}), ...(profile ? { profileId: profile.id } : {}) };
           variants.push({ key: [classId, card.id, upgraded ? 'upgraded' : 'base', abilityRank ?? 'legacy', profile?.id || 'authored', upcastTier ?? 'base'].join('/'),
             classId, instance, carrierIds: profile ? (registries.equipment.armaments || []).filter(piece => [piece.attackProfile, piece.guardProfile, piece.techniqueProfile, piece.weaponCardPackage?.fillerAttackProfileId, piece.weaponCardPackage?.combatKit?.attackProfileId, piece.weaponCardPackage?.combatKit?.guardProfileId].includes(profile.id)).map(piece => piece.id) : [], ...(upcastTier !== null ? { upcastTier } : {}), effects: [...new Set((card.effects || []).map(e => e.op))] });
         }
