@@ -4,6 +4,8 @@
 // explicit rows and never counted as passes.
 import { loadAuditRuntime } from './runtime.mjs';
 import { makeAuditCombat, setAuditHand, settleAuditChoices } from './fixtures.mjs';
+import { combatStatusRules } from '../../src/content/combatStatusRules.js';
+import { restDeniedBy } from '../../src/model/locations.js';
 
 let api = null;
 
@@ -219,13 +221,59 @@ export function auditRelics(registries) {
     return { id: relic.id, propertyRules: rules.length, triggerBranches: triggerCount,
       passiveKeys: Object.keys(passive), authoredNonCombatRole: !rules.length && !triggerCount && !Object.keys(passive).length ? 'no-authored-passive-or-property' : null };
   });
+  const passives = auditRelicPassives(registries);
   return { ids: registries.relics.all().length, propertyRelics: relicCoverage.filter(row => row.propertyRules).length,
     branches: branches.length, covered: rows.filter(row => row.result === 'covered').length,
     conditionalBranches: rows.filter(row => row.condition === 'satisfied').length,
     conditionalNegativeControls: rows.filter(row => row.condition === 'satisfied' && row.negativeControl === 'passed').length,
     gatedBranches: rows.filter(row => row.gateControl !== 'not-applicable').length,
     gatedBranchesCovered: rows.filter(row => row.gateControl === 'passed').length,
-    missing: rows.filter(row => row.result !== 'covered'), relicCoverage, rows };
+    passiveIds: passives.ids, passiveEffects: passives.effects.length, passiveEffectRows: passives.effects, passiveEffectsCovered: passives.covered,
+    passiveMissing: passives.missing, missing: rows.filter(row => row.result !== 'covered'), relicCoverage, rows };
+}
+
+function auditRelicPassives(registries) {
+  const ids = registries.relics.all().filter(relic => Object.keys(relic.passives || {}).length);
+  const effects = [];
+  const newRun = relicIds => {
+    const run = api.createRunState({ registries, classId: 'reaver', seed: 7306 });
+    run.relics = [...relicIds];
+    delete run.derivedStatRuleSnapshot;
+    api.initializeRunDerivedStats(run, registries, { preserveDeficits: false });
+    return run;
+  };
+  const baseline = newRun([]);
+  for (const relic of ids) {
+    const own = newRun([relic.id]);
+    for (const [key, authored] of Object.entries(relic.passives || {})) {
+      let expected, observed, result = 'missing';
+      if (key === 'modifiers') {
+        const receipt = own.derivedStatRuleSnapshot?.relicModifiers;
+        const sources = (receipt?.sources || []).filter(row => row.relicId === relic.id);
+        const expectedSources = authored.length;
+        const hpDelta = own.maxHp - baseline.maxHp, manaDelta = own.maxMana - baseline.maxMana, staminaDelta = own.maxStamina - baseline.maxStamina;
+        const hasDamage = authored.filter(row => row.tag === 'damage.school.flat').every(row => receipt?.damageBySchoolAdd?.[row.school] === row.amount);
+        expected = { sourceRows: expectedSources, poolDelta: { hp: hpDelta, mana: manaDelta, stamina: staminaDelta } };
+        observed = { sourceRows: sources.length, poolDelta: { hp: hpDelta, mana: manaDelta, stamina: staminaDelta }, damageRowsMatch: hasDamage };
+        result = sources.length === expectedSources && hasDamage && authored.every(row => row.tag === 'damage.school.flat'
+          || row.tag === 'resource.flat' && ((row.resource === 'hp' && hpDelta >= row.amount) || (row.resource === 'mana' && manaDelta >= row.amount) || (row.resource === 'stamina' && staminaDelta >= row.amount))
+          || row.tag === 'resource.attributeTier' && sources.some(source => source.resource === row.resource && Number.isFinite(source.value))) ? 'covered' : 'missing';
+      } else if (typeof authored === 'boolean') {
+        expected = authored; observed = api.passiveFlag(registries, [relic.id], key); result = observed === expected ? 'covered' : 'missing';
+      } else if (typeof authored === 'number') {
+        const multiplicative = /Mult$/.test(key);
+        expected = authored; observed = multiplicative ? api.passiveMult(registries, [relic.id], key) : api.passiveSum(registries, [relic.id], key);
+        result = observed === expected ? 'covered' : 'missing';
+      } else if (key === 'restDenied') {
+        expected = authored;
+        const tags = Array.isArray(authored) ? authored : authored ? ['restHpPartial'] : [];
+        observed = restDeniedBy(registries, { relics: [relic.id] }, tags);
+        result = observed === (tags.length ? relic.id : null) ? 'covered' : 'missing';
+      } else { expected = authored; observed = null; }
+      effects.push({ relicId: relic.id, key, expected, observed, result });
+    }
+  }
+  return { ids: ids.length, effects, covered: effects.filter(row => row.result === 'covered').length, missing: effects.filter(row => row.result !== 'covered') };
 }
 
 export function auditStatuses(registries) {
@@ -282,9 +330,56 @@ export function auditStatuses(registries) {
       }
     }
     const appliedReceipt = combat.eventLog.slice(before).some(event => event.type === 'statusApplied' && event.status === def.id);
+    const modifierOutcomes = Object.entries(def.modifiers || {}).map(([key, expected]) => {
+      const readers = [
+        ['add', () => api.getAdd(combat, player, key)], ['mult', () => api.getMult(combat, player, key)],
+        ['flag', () => api.getFlag(combat, player, key)], ['cap', () => api.getCap(combat, player, key)],
+      ];
+      const outcome = readers.map(([reader, read]) => ({ reader, value: read() })).find(row =>
+        row.reader === 'add' && typeof expected === 'number' && row.value === expected * stacksBeforeDecay
+        || row.reader === 'mult' && typeof expected === 'number' && row.value === Math.pow(expected, stacksBeforeDecay)
+        || row.reader === 'flag' && expected === true && row.value === true
+        || row.reader === 'cap' && typeof expected === 'number' && row.value === expected);
+      return { key, expected, outcome: outcome || null };
+    });
+    const proc = def.proc ? (() => {
+      const probe = api.createCombat({ registries, rng: api.createRng(7305), enemyIds: ['wanderingSoldier'], player: playerFor('reaver') });
+      const enemy = probe.enemies[0];
+      enemy.hp = enemy.maxHp = 1000;
+      const threshold = def.proc.threshold;
+      api.applyStatus(probe, enemy, def.id, threshold);
+      drainProbeQueue(probe);
+      const procReceipt = probe.eventLog.find(event => event.type === 'procBurst' && event.status === def.id);
+      const effectRows = [
+        { op: 'procBurst', observed: !!procReceipt },
+        { op: 'loseHp', observed: enemy.hp < enemy.maxHp },
+        ...(def.proc.poiseDamage ? [{ op: 'poiseDamage', observed: enemy.poiseMeter?.value > 0 || probe.eventLog.some(event => event.type === 'persistentPoiseChanged' && event.targetId === enemy.id) }] : []),
+        ...(def.proc.stagger ? [{ op: 'stagger', observed: probe.eventLog.some(event => event.type === 'enemyStaggered' && event.targetId === enemy.id) }] : []),
+        ...(def.proc.effects || []).map(effect => ({ op: effect.op, status: effect.status,
+          observed: effect.op === 'applyStatus' ? api.getStacks(enemy, effect.status) >= (effect.stacks || 1) : false })),
+        ...(def.proc.resistance ? [{ op: 'resistance', status: def.proc.resistance.status, observed: api.getStacks(enemy, def.proc.resistance.status) > 0 }] : []),
+      ];
+      const effectObserved = effectRows.every(row => row.observed) && api.getStatusInstance(enemy, def.id)?.meter?.value === 0;
+      return { threshold, burst: probe.eventLog.find(event => event.type === 'procBurst' && event.status === def.id) || null,
+        effectRows, effectObserved,
+        result: effectObserved ? 'covered' : 'missing' };
+    })() : null;
+    const resistance = def.resists ? (() => {
+      const probe = api.createCombat({ registries, rng: api.createRng(7307), enemyIds: ['wanderingSoldier'], player: playerFor('reaver') });
+      const target = probe.enemies[0];
+      api.applyStatus(probe, target, def.id, 1);
+      api.applyStatus(probe, target, def.resists.status, 1);
+      const meterBefore = api.getStatusInstance(target, def.resists.status)?.meter?.value;
+      const receiptStart = probe.eventLog.length;
+      api.applyStatus(probe, target, def.resists.status, 1);
+      const blocked = probe.eventLog.slice(receiptStart).find(event => event.type === 'procResisted' && event.status === def.resists.status);
+      return { status: def.resists.status, expectedPercent: def.resists.percent, meterBefore,
+        blocked: blocked?.blocked ?? 0, result: blocked?.blocked > 0 ? 'covered' : 'missing' };
+    })() : null;
     rows.push({ id: def.id, decay: decay === undefined ? 'missing' : decay, hook: def.hooks?.map(x => x.on) || [],
       hasModifier: Object.keys(def.modifiers || {}).length > 0, hasProc: !!def.proc, hasMeter: !!def.meter, hasResist: !!def.resists,
       hasTaggedVulnerability: !!def.taggedVulnerability, applied, appliedReceipt, decayVerified, hookResult: hook,
+      modifierOutcomes, modifierOutcomesCovered: modifierOutcomes.every(row => row.outcome), proc, resistance,
       result: applied && appliedReceipt && decayVerified && hook !== 'no-receipt' ? 'covered' : 'missing' });
     // Keep this local reference to ensure zero-stack/absent rows don't pass just
     // because their hook or decay was intentionally inert.
@@ -292,10 +387,70 @@ export function auditStatuses(registries) {
   }
   return { ids: registries.statuses.all().length, covered: rows.filter(row => row.result === 'covered').length,
     applyAndDecayCovered: rows.filter(row => row.applied && row.appliedReceipt && row.decayVerified).length,
+    modifierDeclarations: rows.reduce((sum, row) => sum + row.modifierOutcomes.length, 0),
+    modifierOutcomesCovered: rows.reduce((sum, row) => sum + row.modifierOutcomes.filter(outcome => outcome.outcome).length, 0),
+    procBranches: rows.filter(row => row.proc).length,
+    procBranchesCovered: rows.filter(row => row.proc?.result === 'covered').length,
+    resistanceBranches: rows.filter(row => row.resistance).length,
+    resistanceBranchesCovered: rows.filter(row => row.resistance?.result === 'covered').length,
     authoredHooks: rows.filter(row => row.hook.length).length,
     hooksWithObservedOutcome: rows.filter(row => row.hook.length && row.hookResult !== 'no-receipt').length,
     unsupportedEffectPaths: rows.filter(row => row.hook.length && row.hookResult === 'no-receipt').map(row => row.id),
     missing: rows.filter(row => row.result !== 'covered'), rows };
+}
+
+export function auditStatusControls(registries) {
+  const rows = [];
+  const controls = Object.entries(combatStatusRules.statuses).filter(([, rule]) => rule.lock)
+    .map(([id, rule]) => ({ id, status: rule.activeStatus }));
+  controls.push({ id: 'prone', status: combatStatusRules.prone.status });
+  for (const row of controls) {
+    const { combat } = makeAuditCombat(api, { classId: 'reaver', enemyIds: ['wanderingSoldier'], seed: 7308 });
+    api.applyStatus(combat, combat.player, row.status, 1);
+    const lockedBefore = api.controlRestrictions(combat, combat.player).locked;
+    const controlActiveBefore = row.id === 'prone' ? api.getStacks(combat.player, row.status) > 0 : lockedBefore;
+    const selections = api.recoveryControls(combat, combat.player).filter(control => !control.disabled)
+      .map(control => ({ status: control.status, stacks: control.stacks }));
+    let recovered = false;
+    if (selections.length) {
+      api.dispatch(combat, { type: 'recoverControl', selections });
+      recovered = !api.controlRestrictions(combat, combat.player).locked && api.getStacks(combat.player, row.status) === 0;
+    }
+    rows.push({ id: row.id, status: row.status, lockedBefore, controls: selections, recovered,
+      result: controlActiveBefore && recovered ? 'covered' : 'missing' });
+  }
+  return { branches: rows.length, covered: rows.filter(row => row.result === 'covered').length, missing: rows.filter(row => row.result !== 'covered'), rows };
+}
+
+function auditTaggedVulnerabilities(registries) {
+  const rows = [];
+  for (const status of registries.statuses.all().filter(def => def.taggedVulnerability)) {
+    for (const tag of status.taggedVulnerability.tags) {
+      const card = registries.cards.all().find(def => def.tags?.includes(tag) && def.effects?.some(effect => effect.op === 'damage' && effect.target === 'enemy'));
+      if (!card) { rows.push({ status: status.id, tag, result: 'missing', reason: 'no authored damage card carries tag' }); continue; }
+      const run = withStatus => {
+        const { combat } = makeAuditCombat(api, { classId: 'starseer', enemyIds: ['wanderingSoldier'], seed: 7309 });
+        const enemy = combat.enemies[0]; enemy.hp = enemy.maxHp = 1000;
+        if (withStatus) api.applyStatus(combat, enemy, status.id, 1);
+        setAuditHand(combat, [{ cardId: card.id, instanceId: `tagged:${status.id}:${tag}` }]);
+        api.dispatch(combat, { type: 'playCard', cardInstanceId: `tagged:${status.id}:${tag}`, targetId: enemy.id });
+        settleAuditChoices(api, combat);
+        return combat.eventLog.filter(event => event.type === 'damageDealt' && event.targetId === enemy.id).reduce((sum, event) => sum + event.amount, 0);
+      };
+      const baselineDamage = run(false), exposedDamage = run(true);
+      rows.push({ status: status.id, tag, cardId: card.id, baselineDamage, exposedDamage,
+        expectedMultiplier: status.taggedVulnerability.mult, result: exposedDamage > baselineDamage ? 'covered' : 'missing' });
+    }
+  }
+  return { branches: rows.length, covered: rows.filter(row => row.result === 'covered').length, missing: rows.filter(row => row.result !== 'covered'), rows };
+}
+
+function drainProbeQueue(combat) {
+  let steps = 0;
+  while (combat.queue.length) {
+    if (++steps > MAX_QUEUE) throw new Error(`Status probe queue exceeded ${MAX_QUEUE}`);
+    api.executeAction(combat, combat.queue.shift());
+  }
 }
 
 function passReactions(combat) {
@@ -448,18 +603,26 @@ export async function runRelicEnemyAudit(mode = 'native') {
   const registries = api.registries;
   const relics = auditRelics(registries);
   const statuses = auditStatuses(registries);
+  const statusControls = auditStatusControls(registries);
+  const taggedVulnerabilities = auditTaggedVulnerabilities(registries);
   const enemies = auditEnemyMoves();
   const encounters = auditEncounterClassMatrix();
   return { counts: { relics: relics.ids, relicPropertyCarriers: relics.propertyRelics, relicRules: relics.branches, relicBranchesCovered: relics.covered,
     relicConditionalFalseControls: relics.conditionalNegativeControls, relicGatedBranches: relics.gatedBranches, relicGatedBranchesCovered: relics.gatedBranchesCovered,
-    statuses: statuses.ids, statusesCovered: statuses.covered, enemies: enemies.enemies, enemyMoves: enemies.moves, enemyMovesCovered: enemies.covered,
+    relicPassives: relics.passiveIds, relicPassiveEffects: relics.passiveEffects, relicPassiveEffectsCovered: relics.passiveEffectsCovered,
+    statuses: statuses.ids, statusesCovered: statuses.covered, statusModifierOutcomes: statuses.modifierOutcomesCovered,
+    statusModifierDeclarations: statuses.modifierDeclarations, statusProcBranches: statuses.procBranches, statusProcBranchesCovered: statuses.procBranchesCovered,
+    statusResistanceBranches: statuses.resistanceBranches, statusResistanceBranchesCovered: statuses.resistanceBranchesCovered,
+    statusControlBranches: statusControls.branches, statusControlBranchesCovered: statusControls.covered,
+    statusTaggedVulnerabilityBranches: taggedVulnerabilities.branches, statusTaggedVulnerabilityCovered: taggedVulnerabilities.covered,
+    enemies: enemies.enemies, enemyMoves: enemies.moves, enemyMovesCovered: enemies.covered,
     enemyReactionMoves: enemies.reactionMoves, enemyReactionScenariosCovered: enemies.reactionCovered,
     encounters: encounters.encounters, classes: encounters.classes, encounterClassScenarios: encounters.scenarios, encounterClassCovered: encounters.covered },
-    relics, statuses, enemies, encounters };
+    relics, statuses, statusControls, taggedVulnerabilities, enemies, encounters };
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const report = await runRelicEnemyAudit(process.argv[2] || 'native');
   console.log(JSON.stringify(report, null, 2));
-  if (report.relics.missing.length || report.statuses.missing.length || report.enemies.missing.length || report.enemies.reactionRows.some(row => row.result !== 'covered') || report.encounters.missing.length) process.exitCode = 1;
+  if (report.relics.missing.length || report.relics.passiveMissing.length || report.statuses.missing.length || report.statusControls.missing.length || report.taggedVulnerabilities.missing.length || report.enemies.missing.length || report.enemies.reactionRows.some(row => row.result !== 'covered') || report.encounters.missing.length) process.exitCode = 1;
 }
