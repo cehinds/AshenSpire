@@ -1,0 +1,70 @@
+[
+  {
+    "id": "reaver",
+    "name": "Reaver",
+    "attributes": {
+      "strength": 2,
+      "dexterity": 1,
+      "constitution": 1,
+      "wisdom": 1,
+      "intelligence": 1
+    },
+    "loadout": {
+      "rightHand": "greatsword",
+      "leftHand": null
+    },
+    "specialCardId": "core.reaverSpecial",
+    "maxHp": 84
+  },
+  {
+    "id": "starseer",
+    "name": "Starseer",
+    "attributes": {
+      "strength": 1,
+      "dexterity": 1,
+      "constitution": 1,
+      "wisdom": 1,
+      "intelligence": 2
+    },
+    "loadout": {
+      "rightHand": "boneSceptre",
+      "leftHand": null
+    },
+    "specialCardId": "core.starseerSpecial",
+    "maxHp": 72
+  },
+  {
+    "id": "rogue",
+    "name": "Rogue",
+    "attributes": {
+      "strength": 1,
+      "dexterity": 2,
+      "constitution": 1,
+      "wisdom": 1,
+      "intelligence": 1
+    },
+    "loadout": {
+      "rightHand": "dagger",
+      "leftHand": "dagger"
+    },
+    "specialCardId": "core.rogueSpecial",
+    "maxHp": 74
+  },
+  {
+    "id": "herald",
+    "name": "Herald",
+    "attributes": {
+      "strength": 1,
+      "dexterity": 1,
+      "constitution": 1,
+      "wisdom": 2,
+      "intelligence": 1
+    },
+    "loadout": {
+      "rightHand": "boneSceptre",
+      "leftHand": null
+    },
+    "specialCardId": "core.heraldSpecial",
+    "maxHp": 78
+  }
+]
