@@ -42,7 +42,7 @@ Settings live in `engine/modules/defenses/settings.schema.json`; shipped default
 - `/blockScope` (type enum; default `"all"`; allowed "all"): Configured Block scope.
 - `/poiseDepletes` (type enum; default `false`; allowed false): Current adapter does not spend Poise.
 
-The exact provenance is recorded in `games/ashenspire/bundles/core/bundle.json`: module defaults are the base, selected bundle settings and `policyBindings` apply next, and the author object applies last. Arrays replace the inherited array. If a field has no bundle binding, its module default is inherited unchanged. `false` disables; `true` selects inherited defaults; null has no removal meaning. Unknown keys and invalid values fail validation.
+The exact provenance is recorded in `games/ashenspire/bundles/core/bundle.json`: module defaults are the base, selected bundle settings and the author object resolve next, then `policyBindings` copies resolved module fields onto selected content. Arrays replace inherited arrays. `false` disables; `true` selects inherited defaults; null has no removal meaning. Unknown keys and invalid values fail validation.
 
 ## Content changes
 

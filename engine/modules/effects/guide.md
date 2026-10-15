@@ -37,9 +37,9 @@ Settings live in `engine/modules/effects/settings.schema.json`; shipped defaults
 - `/elements` (type enum; default `false`; allowed false): Core disables elemental damage.
 - `/spellRanks` (type enum; default `false`; allowed false): Core disables spell ranks.
 - `/attackRatingWeight` (type number; default `1`; range 0..100): Host adapter AR contribution.
-- `/defenseRatingWeight` (type number; default `1`; range 0..100): Host adapter DR contribution.
+- `/defenseRatingWeight` (type number; default `1`; range 0..100): Confirmed host-adapter contribution to Block gained: `baseBlock + DR × defenseRatingWeight`.
 
-The exact provenance is recorded in `games/ashenspire/bundles/core/bundle.json`: module defaults are the base, selected bundle settings and `policyBindings` apply next, and the author object applies last. Arrays replace the inherited array. If a field has no bundle binding, its module default is inherited unchanged. `false` disables; `true` selects inherited defaults; null has no removal meaning. Unknown keys and invalid values fail validation.
+The exact provenance is recorded in `games/ashenspire/bundles/core/bundle.json`: module defaults are the base, selected bundle settings and the author object resolve next, then `policyBindings` copies resolved module fields onto selected content where declared. Arrays replace inherited arrays. `false` disables; `true` selects inherited defaults; null has no removal meaning. Unknown keys and invalid values fail validation.
 
 ## Content changes
 
