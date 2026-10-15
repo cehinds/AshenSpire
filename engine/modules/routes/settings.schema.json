@@ -15,12 +15,14 @@
     "prebossNodes": {
       "type": "integer",
       "minimum": 1,
-      "maximum": 100
+      "maximum": 100,
+      "description": "Number of pre-boss depths visited on a path; branching alternatives do not add levels."
     },
     "restsPerAct": {
       "type": "integer",
       "minimum": 0,
-      "maximum": 100
+      "maximum": 100,
+      "description": "Number of mandatory rest depths; each rest depth has one visible node shared by every path."
     },
     "hideUnknownNodes": {
       "type": "boolean"
@@ -33,6 +35,12 @@
         "minimum": 1,
         "maximum": 1000
       }
+    },
+    "branchColumns": {
+      "type": "integer",
+      "minimum": 2,
+      "maximum": 5,
+      "description": "Number of lanes at non-rest depths. Rest and boss nodes merge the lanes."
     }
   },
   "required": [
@@ -41,7 +49,8 @@
     "prebossNodes",
     "restsPerAct",
     "hideUnknownNodes",
-    "restFloors"
+    "restFloors",
+    "branchColumns"
   ],
   "additionalProperties": false
 }

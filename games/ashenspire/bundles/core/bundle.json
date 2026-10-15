@@ -92,7 +92,8 @@
         "acts": "acts",
         "prebossNodes": "prebossNodes",
         "restsPerAct": "restsPerAct",
-        "restFloors": "restFloors"
+        "restFloors": "restFloors",
+        "branchColumns": "branchColumns"
       }
     },
     {
