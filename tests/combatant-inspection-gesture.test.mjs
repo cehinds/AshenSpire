@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { bindCombatantInspectionGesture } from '../src/ui/components/combatantInspectionGesture.js';
 
-function fixture(t, { selected = true } = {}) {
+function fixture(t, { selected = true, selection = null } = {}) {
   t.mock.timers.enable({ apis: ['setTimeout'] });
   const previous = globalThis.window;
   const win = new EventTarget(); globalThis.window = win;
@@ -12,7 +13,7 @@ function fixture(t, { selected = true } = {}) {
   let plays = 0, inspections = 0, hud = false, live = true;
   frame.closest = selector => hud && selector.includes('.nm') ? frame : null;
   const gesture = bindCombatantInspectionGesture(frame, {
-    isSelected: () => selected, canInspect: () => live, canActivate: () => live,
+    isSelected: () => selection ? selection() : selected, canInspect: () => live, canActivate: () => live,
     open: () => inspections++, activate: () => plays++, holdMs: 600, movePx: 8,
   });
   function emit(target, type, attrs = {}) {
@@ -76,3 +77,30 @@ test('a second press cancels pending single activation before a hold completes',
   f.emit(f.frame, 'pointerdown'); f.tick(600); f.emit(f.win, 'pointerup'); f.emit(f.frame, 'click'); f.tick(700);
   assert.deepEqual(f.counts(), { plays: 0, inspections: 1 });
 });
+
+
+for (const screen of ['combat', 'coop']) {
+  test(`${screen}: actual selection writer retains inspection identity through card arming`, t => {
+    const source = readFileSync(new URL(`../src/ui/screens/${screen}.js`, import.meta.url), 'utf8');
+    const writer = source.match(/function selectCombatant\(id,[\s\S]*?\n  }/)[0];
+    const arming = screen === 'combat'
+      ? source.match(/cardinspectionselect', event => \{\s*(selectCombatant\([^;]+;)/)[1]
+      : source.match(/const inspectCard = \(\) => (selectCombatant\([^;]+;)/)[1];
+    const state = new Function(`
+      let selectedCombatantId=null,lastReadingSelection=null,armedFriendlyCard=null;
+      const inspectionGestures=new Map(), combatEl={}, app={}, snap=null;
+      const getEntity=()=>({alive:true}),combat={},selectCombatantInfo=()=>{};
+      ${writer}
+      return { select:selectCombatant, arm:()=>{${arming}}, selected:()=>selectedCombatantId,
+        inspectionSelected:()=> (selectedCombatantId||lastReadingSelection)==='enemy' };
+    `)();
+    state.select('enemy'); state.arm();
+    assert.equal(state.selected(), null, 'arming still dismisses expanded reading presentation');
+    assert.equal(state.inspectionSelected(), true, 'the inspected enemy remains eligible for double-click arbitration');
+    const f = fixture(t, { selection: state.inspectionSelected });
+    f.emit(f.frame, 'click'); f.tick(100); f.emit(f.frame, 'click', { detail: 2 }); f.tick(700);
+    assert.deepEqual(f.counts(), { plays: 0, inspections: 1 });
+    state.select(null); assert.equal(state.inspectionSelected(), false, 'an explicit blank/Escape dismisses the remembered identity');
+    assert.match(source, /isSelected: \(\) => \(selectedCombatantId \|\| lastReadingSelection\) ===/);
+  });
+}
