@@ -1,3 +1,4 @@
+import { applyViewViewport } from './ui/viewViewport.js';
 import { screenshotRoutePath } from './ui/models/ScreenshotFixtureModel.js';
 import { t } from './ui/strings.js';
 import { gameProfileRewardOffers, claimGameProfileReward, gameProfileShopStock, purchaseGameProfileShopOffer } from './model/gameProfileRewards.js';
@@ -693,8 +694,9 @@ function resolveLayout(uiScale, vw, vh) {
 function applyUiScale(settings) {
   const viewport = window.visualViewport;
   const visibleHeight = viewport && viewport.scale === 1 ? viewport.height : window.innerHeight;
-  document.documentElement.style.setProperty('--visible-height', visibleHeight + 'px');
-  const { zoom, narrow, compact, short } = resolveLayout(settings.uiScale, window.innerWidth, visibleHeight);
+  const view = applyViewViewport(settings.viewPreset, window.innerWidth, visibleHeight);
+  document.documentElement.style.setProperty('--visible-height', view.height + 'px');
+  const { zoom, narrow, compact, short } = resolveLayout(settings.uiScale, view.width, view.height);
   // Set as a CSS var so base.css can compensate the body's width/height for the
   // zoom (avoids the zoom×100vh overflow). Any leftover inline zoom is cleared.
   document.body.style.zoom = '';
@@ -711,7 +713,7 @@ function applyUiScale(settings) {
   // stage observe this attribute and re-measure when it changes.
   // Thresholds: balance.ui.uiScale.formFactor.
   document.documentElement.setAttribute('data-form-factor',
-    formFactorFor(window.innerWidth, window.innerHeight, UI.uiScale.formFactor));
+    view.preset === 'auto' ? formFactorFor(view.width, view.height, UI.uiScale.formFactor) : view.preset);
   // Publish the short/refusal value from that same decider for layout consumers too.
   // This is not another short-screen predicate: CSS reads the answer computed
   // above, just as it reads `data-layout`. In particular, combat may let its
@@ -727,7 +729,7 @@ function applyUiScale(settings) {
   // a gate nobody believes the second time.
   const turned = typeof window === 'undefined'
     ? { short: true }
-    : resolveLayout(settings.uiScale, window.innerHeight, window.innerWidth);
+    : resolveLayout(settings.uiScale, view.height, view.width);
   // AND ONE CAPABILITY QUERY, FOR THE WORDS ONLY. "Turn your phone upright" read
   // on an 800x410 DESKTOP WINDOW is a false instruction, and a screen that tells
   // you one wrong thing is a screen you stop reading. `(pointer: coarse)` is NOT
@@ -879,8 +881,8 @@ function applyDisplaySettings(settings) {
   document.documentElement.style.setProperty('--selection-color', advancedPresentation.selectionColor);
   document.documentElement.dataset.formationGrid = String(advancedPresentation.showFormationGrid);
   const rootStyle = document.documentElement.style;
-  rootStyle.setProperty('--settings-window-width', `${advancedPresentation.settingsWidthPercent}vw`);
-  rootStyle.setProperty('--settings-window-height', `${advancedPresentation.settingsHeightPercent}dvh`);
+  rootStyle.setProperty('--settings-window-width', `calc(${advancedPresentation.settingsWidthPercent} * var(--view-vw, 1vw))`);
+  rootStyle.setProperty('--settings-window-height', `calc(${advancedPresentation.settingsHeightPercent} * var(--view-vh, 1dvh))`);
   document.documentElement.dataset.playerSpawnRow = advancedPresentation.playerSpawnRow;
   document.documentElement.dataset.enemySpawnRow = advancedPresentation.enemySpawnRow;
   document.documentElement.dataset.playerSpawnColumn = advancedPresentation.playerSpawnColumn;

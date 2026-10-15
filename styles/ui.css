@@ -14,7 +14,7 @@
 
 /* Formation editor: a shared live grid beside a compact inspector. */
 .modal:has([data-advanced-panel='Interface']:not([hidden]) [data-topic-panel='Formation layout']:not([hidden])) {
-  width: min(120rem, calc(94vw / var(--ui-zoom, 1))); max-width: calc(94vw / var(--ui-zoom, 1));
+  width: min(120rem, calc(calc(94 * var(--view-vw, 1vw)) / var(--ui-zoom, 1))); max-width: calc(calc(94 * var(--view-vw, 1vw)) / var(--ui-zoom, 1));
 }
 .formation-editor { container-type: inline-size; width: 100%; min-width: 0; font-size: max(1.3rem, calc(14px / var(--ui-zoom, 1))); }
 .formation-workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, .62fr); gap: 1.4rem; align-items: start; padding: .8rem .2rem; }
@@ -25,7 +25,7 @@
 .formation-editor h4 { margin: 0 0 .5rem; font: 600 max(1.3rem, calc(14px / var(--ui-zoom, 1))) var(--font-ui, sans-serif); color: var(--parchment); }
 .formation-team-labels { display: grid; grid-template-columns: 1fr 1fr; text-align: center; gap: 1.5rem; margin: 1rem 0 .25rem; }
 .formation-team-labels small { display: block; font-size: max(1.1rem, calc(12px / var(--ui-zoom, 1))); color: var(--parchment); opacity: .75; margin-top: .2rem; }
-.formation-editor .formation-preview { display: block; position: relative; inset: auto; width: 100%; height: calc(42dvh / var(--ui-zoom, 1)); min-height: 260px; max-height: 480px; z-index: 0; }
+.formation-editor .formation-preview { display: block; position: relative; inset: auto; width: 100%; height: calc(calc(42 * var(--view-vh, 1dvh)) / var(--ui-zoom, 1)); min-height: 260px; max-height: 480px; z-index: 0; }
 .formation-preview .formation-grid-cell { transform: translate(-50%, -50%); pointer-events: none; }
 .formation-preview .formation-grid-cell::after { display: none; }
 .formation-preview .formation-grid-cell span { background: var(--bg-raise); color: var(--parchment); font-size: max(1.1rem, calc(12px / var(--ui-zoom, 1))); font-weight: 400; padding: .1rem .2rem; }
@@ -79,7 +79,7 @@
   .formation-editor .formation-preview { min-height: 340px; }
 }
 /* UI zoom can make a narrow viewport report a wide logical container. */
-@media (max-width: 760px) {
+@container game-viewport (max-width: 760px) {
   .formation-workspace { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
   .formation-preview-panel { position: static; }
   .formation-inspector { border-left: 0; padding-left: 0; }
@@ -492,7 +492,7 @@
   60% { opacity: 0.5; }
   100% { transform: translate(26px, -92vh); opacity: 0; }
 }
-@media (max-width: 30rem) {
+@container game-viewport (max-width: 480.0px) {
 
   .title-screen { padding: 1.2rem 0.8rem 1rem; }}
 
@@ -538,11 +538,11 @@
    five of them put the section's Continue under the fold at 1366x768
    (measured: the open PRIMARY STATS reveal stood 578px in a 594px body).
    Narrow screens keep the reserve, where the summary does wrap. */
-@media (min-width: 701px) {
+@container game-viewport (min-width: 701px) {
   .customize .cc-primary-stats .as-option.cc-primary-stat.hosts-face > .as-row { min-height: 5.6rem; }
 }
 
-@media (max-width: 30rem) {
+@container game-viewport (max-width: 480.0px) {
   .cc-preview-side { min-height: 28rem; }
   .cc-preview-side > .cz-portrait { min-height: 22rem; }
 }
@@ -689,7 +689,7 @@ button.ev-choice {
 #cz-equipment-receipts, .armoury-equipment-receipts { font-size: max(13px, 1em); }
 #cz-equipment-receipts small, .armoury-equipment-receipts small { font-size: max(13px, 0.84em); line-height: 1.35; }
 
-@media (max-width: 1000px) {
+@container game-viewport (max-width: 1000px) {
   .armoury-equipment-receipts, .armoury-equipment-receipts * { min-width: 0; overflow-wrap: anywhere; }
   .armoury-equipment-receipts .equip-role-receipts > div { grid-template-columns: minmax(0, 1fr); }
   .armoury-equipment-receipts .equip-role-receipts small { grid-column: 1; }
@@ -804,7 +804,7 @@ button.ev-choice {
    before. It is a bound, not a length. */
 :root[data-layout='narrow'] .cp-body { flex: 1; min-width: 0; }
 
-@media (max-width: 720px) {
+@container game-viewport (max-width: 720px) {
 
   .overlay-settings-actions { gap: 3px; }
   .ov-quick-action { min-width: var(--tap-floor); padding-inline: 6px; }
@@ -898,9 +898,9 @@ button.ev-choice {
 }
 .title-screen > * { position: relative; z-index: 1; }
 
-@media (max-width: 30rem) {
+@container game-viewport (max-width: 480.0px) {
   .title-screen { padding: 1.2rem 0.8rem 1rem; }}
-@media (max-width: 30rem) {
+@container game-viewport (max-width: 480.0px) {
   .startup-subtitle { font-size: 0.9rem; letter-spacing: 0.2em; }
   .startup-rule { width: 90%; }
 
@@ -1010,11 +1010,11 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
    (`--modal-rung-width`, published by the ladder in kit.css) and the player's
    own Window width, so the two settings compose instead of cancelling. */
 .modal.settings-modal[data-authored-size='lg'] {
-  width: min(var(--modal-rung-width, 76rem), calc(var(--settings-window-width, 100vw) / var(--ui-zoom, 1)), 100%);
-  height: min(calc(var(--settings-window-height, 100dvh) / var(--ui-zoom, 1)), calc(100dvh / var(--ui-zoom, 1) - var(--veil-pad-top, 8px) - var(--veil-pad-bottom, 8px)));
-  max-height: calc(100dvh / var(--ui-zoom, 1) - var(--veil-pad-top, 8px) - var(--veil-pad-bottom, 8px));
+  width: min(var(--modal-rung-width, 76rem), calc(var(--settings-window-width, calc(100 * var(--view-vw, 1vw))) / var(--ui-zoom, 1)), 100%);
+  height: min(calc(var(--settings-window-height, calc(100 * var(--view-vh, 1dvh))) / var(--ui-zoom, 1)), calc(calc(100 * var(--view-vh, 1dvh)) / var(--ui-zoom, 1) - var(--veil-pad-top, 8px) - var(--veil-pad-bottom, 8px)));
+  max-height: calc(calc(100 * var(--view-vh, 1dvh)) / var(--ui-zoom, 1) - var(--veil-pad-top, 8px) - var(--veil-pad-bottom, 8px));
 }
-:root[data-short='true'] .modal.settings-modal[data-authored-size='lg'] { height: min(calc(var(--settings-window-height, 100dvh) / var(--ui-zoom, 1)), calc(100dvh / var(--ui-zoom, 1) - var(--veil-pad-top, 8px) - var(--veil-pad-bottom, 8px))); }
+:root[data-short='true'] .modal.settings-modal[data-authored-size='lg'] { height: min(calc(var(--settings-window-height, calc(100 * var(--view-vh, 1dvh))) / var(--ui-zoom, 1)), calc(calc(100 * var(--view-vh, 1dvh)) / var(--ui-zoom, 1) - var(--veil-pad-top, 8px) - var(--veil-pad-bottom, 8px))); }
 .modal > [data-settings-host] { display: flex; flex-direction: column; min-height: 0; overflow: hidden; padding: 0; }
 .modal > [data-settings-host] > .set-notice { flex: 0 0 auto; margin: 0; padding: .65rem var(--modal-inset); border-bottom: 1px solid var(--line-soft); background: rgba(var(--accent-rgb), .06); }
 [data-settings-host] .set-railed { flex: 1 1 auto; min-height: 0; height: auto; }
@@ -1083,14 +1083,14 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .set-export-body { padding: 1rem; }
 .set-general-pickers { display: flex; gap: .5rem; }
 .set-general-pickers select { flex: 1 1 0; min-width: 0; }
-@media (max-width: 600px) {
+@container game-viewport (max-width: 600px) {
   .settings-modal .modal-head { flex-wrap: wrap; }
   .settings-modal .modal-head-actions { flex-basis: 100%; }
   [data-settings-host] > .set-inline-bar { flex-wrap: wrap; }
   .settings-modal .modal-head:has(.set-header-tools.search-open) .modal-head-id { display: none; }
   .settings-modal .modal-head:has(.set-header-tools.search-open) .set-header-tools { width: 100%; }
 }
-@media (min-width: 800px) {
+@container game-viewport (min-width: 800px) {
   [data-settings-host] .set-advanced-group[data-advanced-panel='Classes'] .set-topic-panel:not([hidden]) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 1.5rem; }
   [data-settings-host] .set-advanced-group[data-advanced-panel='Classes'] .set-topic-panel::before { grid-column: 1 / -1; }
 }
@@ -1122,7 +1122,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .set-example-hint { margin: .35rem 0 0; color: var(--muted); font-style: italic; }
 .set-example-refused { margin: 0 0 .35rem; padding: .3rem .5rem; border-left: 3px solid var(--danger); color: var(--parchment); }
 .set-example-problem { border-left-color: var(--blood); }
-@media (max-width: 520px) { .set-example-lines > div { grid-template-columns: 1fr; } }
+@container game-viewport (max-width: 520px) { .set-example-lines > div { grid-template-columns: 1fr; } }
 /* The Levelling preview (SPEC §15.2): the curve as a wrapping grid of steps. */
 .set-level-pace-curve { display: grid; grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr)); gap: .25rem .5rem; margin: .35rem 0 0; padding: 0; list-style: none; font-variant-numeric: tabular-nums; }
 .set-level-pace-curve li { display: flex; flex-wrap: wrap; gap: 0 .35rem; align-items: baseline; padding: .15rem .3rem; border: 1px solid var(--line); border-radius: var(--r-2); }
@@ -1134,7 +1134,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .set-subsection-heading:first-child { margin-top: .2rem; }
 .set-topic-panel[data-searching='true']::before { content: attr(data-topic-panel); display: block; color: var(--accent); padding: .7rem; }
 [data-settings-host] .set-topic-panel .set-row { padding: .4rem .7rem; }
-@media (min-width: 800px) { .modal.settings-modal[data-authored-size='lg'] { height: min(80rem, calc(86dvh / var(--ui-zoom, 1))); } }
+@container game-viewport (min-width: 800px) { .modal.settings-modal[data-authored-size='lg'] { height: min(80rem, calc(calc(86 * var(--view-vh, 1dvh)) / var(--ui-zoom, 1))); } }
 .set-reset-menu { position: relative; }
 .set-reset-menu summary { list-style: none; cursor: pointer; }
 .set-reset-menu[open] > button { position: absolute; right: 0; top: 100%; z-index: 5; min-width: 16rem; background: var(--panel, #211d17); }
@@ -1158,7 +1158,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .set-config-search input { width: 100%; min-height: var(--tap-floor); }
 .set-config-actions { display: flex; gap: .6rem; flex-wrap: wrap; }
 .set-config-count { flex: 0 0 100%; min-height: 1em; color: var(--muted); font-size: 1.05rem; }
-@media (max-width: 600px) {
+@container game-viewport (max-width: 600px) {
   .modal.settings-modal[data-authored-size='lg'] { width: 100%; border-radius: var(--r-3); }
   [data-settings-host] .set-subtabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; border: 0; gap: .4rem; }
   [data-settings-host] .set-subtabs > button { border: 1px solid var(--line-soft); border-radius: var(--r-2); min-width: 0; }
@@ -1167,7 +1167,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
    CATEGORY NAVIGATION"): a rail beside the pane, or one [Section ▾] selector
    above it (`.set-cat-select`) that opens the same `.set-tabs` as a list.
    data-settings-nav / data-nav-open mirror its state for the instruments. */
-@media (max-width: 600px) {
+@container game-viewport (max-width: 600px) {
   .modal .set-panel .r-trail:has(> .choice-group) {
     flex-basis: 100%; width: 100%; max-width: 100%;
   }
@@ -1180,7 +1180,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
     min-width: 0; padding-inline: .6rem;
   }
 }
-@media (min-width: 601px) {
+@container game-viewport (min-width: 601px) {
   .modal .set-panel .r-trail:has(> .choice-group > button:nth-child(5)) {
     flex-basis: 100%; width: 100%; max-width: 100%;
   }
@@ -1266,7 +1266,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .set-sync-fields { display: grid; gap: .5rem; margin-top: .6rem; }
 .set-sync-fields label { display: grid; gap: .2rem; color: var(--muted); }
 .set-sync-fields .set-text { width: 100%; min-height: var(--tap-floor); }
-@media (max-width: 600px) {
+@container game-viewport (max-width: 600px) {
   /* Phones: a row is label over control, the control full width. */
   [data-settings-host] .set-panel .as-row.setting { flex-direction: column; align-items: stretch; }
   [data-settings-host] .set-panel .as-row.setting > .as-labelstack { flex: 0 0 auto; }
@@ -1292,7 +1292,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 [data-settings-host] .set-preview-buttons { display: flex; flex-wrap: wrap; gap: .5rem; }
 [data-settings-host] .set-preview-card { flex: 0 0 auto; width: min(var(--card-w-glance, 152px), 40%); min-width: 0; }
 [data-settings-host] .set-preview-card > .card { width: 100%; max-width: 100%; margin: 0; }
-@media (max-width: 600px) {
+@container game-viewport (max-width: 600px) {
   [data-settings-host] .set-preview > .set-preview-body { padding: 0 .7rem .7rem; gap: .7rem; }
 }
 .set-color { width: 64px; min-height: var(--tap-floor, 44px); padding: 3px; cursor: pointer; }
@@ -1372,7 +1372,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 }
 .deck-editor-chip.on { border-color: var(--gold); background: rgba(var(--accent-rgb), 0.18); color: var(--gold); }
 .deck-editor-panes { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.8rem; min-height: 0; }
-@media (orientation: portrait) and (max-width: 760px) {
+@container game-viewport (orientation: portrait) and (max-width: 760px) {
   .deck-editor-panes { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); }
 }
 .deck-editor-pane { display: flex; flex-direction: column; min-height: 0; min-width: 0; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
@@ -1506,13 +1506,13 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor-row .deck-editor-name, .deck-editor-full-rules, .deck-editor .deck-editor-reading .card .cost { font-size: max(1.6rem, var(--deck-min-text)); }
 .deck-editor-row:has(.deck-editor-order) { flex-wrap: wrap; }
 .deck-editor-row:has(.deck-editor-order) .deck-editor-main { flex-basis: 100%; }
-@media (max-width: 900px) {
+@container game-viewport (max-width: 900px) {
   .deck-editor { padding: 1.2rem; }
   .deck-editor-panes { gap: 1rem; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, .85fr); }
   .deck-editor-inspector { padding-inline: .5rem; }
   .deck-editor-tile .deck-editor-main { grid-template-columns: 5rem minmax(0, 1fr) auto; }
 }
-@media (max-width: 1000px) {
+@container game-viewport (max-width: 1000px) {
   .deck-editor { gap: .5rem; }
   .deck-editor-title { font-size: 2.3rem; }
   .deck-editor-curve, .deck-editor-keys { display: none; }
@@ -1575,15 +1575,15 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor-feedback[hidden] { display: none; }
 .deck-editor-feedback .deck-editor-undo { min-height: var(--deck-editor-target); min-width: 8rem; }
 .deck-editor .deck-editor-foot > .modal-btnrow { width: min(100%, 32rem); margin-left: auto; }
-@media (min-width: 1001px) and (max-height: 820px) {
-  .deck-editor .deck-editor-reading > .card { width: min(100%, var(--deck-inspect-width), max(180px, calc((100dvh - 340px) * var(--card-ratio)))); }
+@container game-viewport (min-width: 1001px) and (max-height: 820px) {
+  .deck-editor .deck-editor-reading > .card { width: min(100%, var(--deck-inspect-width), max(180px, calc((calc(100 * var(--view-vh, 1dvh)) - 340px) * var(--card-ratio)))); }
   .deck-editor .deck-editor-reading .card > .cname { font-size: 2rem; padding-block: .8rem; }
   .deck-editor .deck-editor-reading .card .cd-body .ctext { padding-top: .8rem; }
 }
-@media (max-width: 1100px) and (min-width: 1001px) {
+@container game-viewport (max-width: 1100px) and (min-width: 1001px) {
   .deck-editor-tile .deck-editor-main { grid-template-columns: 5rem minmax(0, 1fr) auto; }
 }
-@media (max-width: 1000px) {
+@container game-viewport (max-width: 1000px) {
   .deck-editor-class { display: none; }
   .deck-editor-counter { margin-left: auto; }
   .deck-editor-tile .deck-editor-main { grid-template-columns: 8rem minmax(0, 1fr) auto; }
@@ -1707,7 +1707,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor-animation-controls { display: flex; align-items: center; justify-content: space-between; gap: .8rem; font-size: max(1.1rem, var(--deck-min-text)); color: var(--muted); }
 .deck-editor .deck-editor-animation-toggle { min-height: var(--deck-editor-target); min-width: var(--deck-editor-target); font-size: inherit; }
 .deck-editor-animation.paused * { animation-play-state: paused !important; }
-@media (min-width: 1001px) {
+@container game-viewport (min-width: 1001px) {
   .deck-editor { padding: 1.2rem 1.6rem .8rem; gap: .5rem; --deck-editor-text: max(1.35rem, calc(12px / var(--ui-zoom, 1))); }
   .deck-editor-head { padding-bottom: .6rem; }
   .deck-editor-title { font-size: 2.2rem; }
@@ -1731,7 +1731,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   .deck-editor .deck-editor-foot > .modal-btnrow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: min(100%, 33rem); gap: .6rem; }
   .deck-editor .deck-editor-foot .as-btn { width: auto; min-width: 0; max-width: 100%; }
 }
-@media (max-width: 1000px) {
+@container game-viewport (max-width: 1000px) {
   .deck-editor { --deck-row-art: 4.4rem; --deck-row-cost: max(3.2rem, calc(28px / var(--ui-zoom, 1))); }
   .deck-editor .deck-editor-main { column-gap: .35rem; padding-inline: .35rem; }
   .deck-editor .deck-editor-heading { gap: .2rem .4rem; font-size: max(1.3rem, var(--deck-min-text)); }
@@ -1744,7 +1744,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
    The stepper is a sibling of the card's button (buttons cannot nest), laid
    over the card's reserved right column; costs and stepper share one right
    inset so their right edges line up. */
-@media (max-width: 1000px) {
+@container game-viewport (max-width: 1000px) {
   .deck-editor { --deck-tile-pad: .6rem; --deck-step: max(3rem, var(--deck-editor-target)); --deck-stepper-w: calc(2 * var(--deck-step) + 4.2rem + .6rem); }
   .deck-editor-tile.deck-editor-item { position: relative; display: block; }
   .deck-editor .deck-editor-tile > .deck-editor-main {
@@ -1776,7 +1776,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 /* Small phones keep the same card at every width (owner, 2026-10-11, "make it
    exactly the same even if it means I miss out on px for tapping"): costs top
    right, stepper bottom right, smaller art, costs and stepper. */
-@media (max-width: 400px) {
+@container game-viewport (max-width: 400px) {
   .deck-editor { --deck-tile-pad: .45rem; --deck-step: 3.3rem; --deck-row-cost: 2.6rem; --deck-stepper-w: calc(2 * var(--deck-step) + 3rem + .4rem); }
   .deck-editor .deck-editor-tile > .deck-editor-main { grid-template-columns: 1rem 4.4rem minmax(0, 1fr) var(--deck-stepper-w); column-gap: .45rem; min-height: calc(var(--deck-row-cost) + var(--deck-step) + .6rem + 2 * var(--deck-tile-pad)); }
   .deck-editor .deck-editor-tile .deck-editor-main > .deck-editor-art { width: 4.4rem; }
@@ -1809,7 +1809,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor .deck-editor-costs .deck-editor-camp .combat-sigil, .deck-editor .deck-editor-costs .deck-editor-camp svg { width: 80%; height: 80%; display: block; }
 /* Desktop: a library tile's name takes line 1 in full, and its type and stance
    wrap onto line 2 (the same shape as on phones), in the text column. */
-@media (min-width: 1001px) {
+@container game-viewport (min-width: 1001px) {
   .deck-editor .deck-editor-tile .deck-editor-heading { grid-column: 3; grid-row: 1; flex-wrap: wrap; max-height: none; overflow: visible; row-gap: .1rem; }
   .deck-editor .deck-editor-tile .deck-editor-heading .deck-editor-name { flex: 1 1 100%; }
 }
@@ -1911,7 +1911,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .armoury .armoury-foot-action { white-space: normal; height: auto; min-height: 48px; }
 .armoury .armoury-selection-context { display: flex; flex-wrap: wrap; align-items: center; gap: .8rem; padding: .7rem; border: 1px solid var(--line); }
 .armoury .armoury-selection-context > p { flex: 1; margin: 0; }
-@media (max-width: 760px) {
+@container game-viewport (max-width: 760px) {
  .armoury .armament-destination-options { grid-template-columns: minmax(0, 1fr); }
  .armoury .armament-position-actions > button { min-height: 48px; }
  .armoury .armoury-back { white-space: normal; min-width: 0; }
@@ -1934,4 +1934,4 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .class-respec-tree label { justify-content:flex-start; }
 .class-respec-changes { margin:0; padding-left:24px; display:grid; gap:8px; }
 .class-respec-problems { color:var(--danger,#f0a08c); }
-@media(max-width:600px) { .class-respec-slots label { align-items:stretch; flex-direction:column; } .class-respec-slots select { max-width:100%; width:100%; } }
+@container game-viewport (max-width:600px) { .class-respec-slots label { align-items:stretch; flex-direction:column; } .class-respec-slots select { max-width:100%; width:100%; } }
