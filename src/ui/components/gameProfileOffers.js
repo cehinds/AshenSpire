@@ -6,11 +6,18 @@ import { clearSelection } from './cardSelection.js';
 import { el, button, modalFooter } from '../kit/index.js';
 import { t } from '../strings.js';
 
+// Presentation ownership stays outside the serializable run and offer data.
+const rewardDoorOwners = new WeakMap();
+
 // Configured mixed rewards share the full-game reward door, option columns,
 // card faces and explicit selection/confirmation. Claims remain host-owned.
 export function mountGameProfileOffers(app, { registries, run, offer, title, onTake, onContinue }) {
   clearSelection();
-  app.replaceChildren();
+  let presentation = rewardDoorOwners.get(run);
+  if (!presentation || presentation.offerId !== offer.id) {
+    presentation = { offerId: offer.id, owner: {} };
+    rewardDoorOwners.set(run, presentation);
+  }
   const strip = el('div', { class: 'reward-row reward-choice-grid', role: 'radiogroup', 'aria-label': t('reward.card.aria') });
   strip.style.setProperty('--choice-count', String(offer.options.length));
   const note = el('p', { class: 'reward-note', text: t('reward.configured.note', { count: offer.takeCount }) });
@@ -60,5 +67,5 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
     catch (error) { status.textContent = error.message; }
     finally { pending = false; if (app.contains(confirm)) confirm.disabled = offer.claimed !== null || offer.taken.includes(selected); }
   });
-  mountRewardDoor(app, { owner: {}, title, body: [note, strip, status], foot: modalFooter({ secondary: [next], primary: confirm, className: 'reward-foot reward-chooser-foot', size: 'medium' }) });
+  mountRewardDoor(app, { owner: presentation.owner, title, body: [note, strip, status], foot: modalFooter({ secondary: [next], primary: confirm, className: 'reward-foot reward-chooser-foot', size: 'medium' }) });
 }

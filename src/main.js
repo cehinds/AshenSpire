@@ -1,3 +1,4 @@
+import { screenshotRoutePath } from './ui/models/ScreenshotFixtureModel.js';
 import { t } from './ui/strings.js';
 import { gameProfileRewardOffers, claimGameProfileReward, gameProfileShopStock, purchaseGameProfileShopOffer } from './model/gameProfileRewards.js';
 import { mountGameProfileOffers } from './ui/components/gameProfileOffers.js';
@@ -4555,7 +4556,7 @@ if (shotState === 'combat-test') {
       const node = Object.values(run.mapGraph.nodes).find(row => row.type === 'shrine');
       if (!node) throw new Error('Configured rest screenshot requires an authored rest node');
       run.mapNodeId = node.id; run.floor = node.floor;
-      run.path = Object.values(run.mapGraph.nodes).filter(row => row.floor <= node.floor).map(row => row.id);
+      run.path = screenshotRoutePath(run.mapGraph, node.id);
       if (shotParams.get('shotRestState') === 'wounded') { run.hp = Math.max(1, Math.floor(run.maxHp * .6)); run.mana = 0; run.stamina = 0; }
       if (shotState === 'smith') run.smithingStones = Math.max(1, run.smithingStones || 0);
       persist(); showRest(); return;
@@ -4609,6 +4610,16 @@ if (shotState === 'combat-test') {
     if (shotState === 'smith') run.smithingStones = Math.max(1, run.smithingStones || 0);
     showRest(shotState === 'smith' ? 'smith' : null);
   } else if (shotState === 'shop') {
+    if (isConfiguredRun(run)) {
+      if (!gameModule(run, 'shops')) throw new Error('Configured shop screenshot requires shops to be enabled');
+      const nodes = Object.values(run.mapGraph.nodes);
+      const node = nodes.find(row => row.actualType === 'shop' || row.resolved?.kind === 'merchant') || run.mapGraph.nodes[run.mapGraph.startIds[0]];
+      run.mapNodeId = node.id; run.floor = node.floor;
+      run.path = screenshotRoutePath(run.mapGraph, node.id);
+      run.cinders = 999;
+      run.gameProfileOpenShop = `${run.actNumber}:${node.id}`;
+      persist(); showShop(); return;
+    }
     // A REACH STATE, and the fourth of the same shape (`?shotEvent`, `?shotAt`,
     // `?shot=rest`). The merchant is one of the screens no instrument this repo
     // owns can open, which is why "burn a card out of the deck for good, one
@@ -4804,9 +4815,15 @@ if (shotState === 'combat-test') {
     // pose carries one of each and the check sees both cells of the row.
     run.flasks = [{ flaskId: 'crimsonFlask' }, { flaskId: 'blightCoating' }];
     const g = run.mapGraph;
-    const startId = g.startIds.find((id) => g.nodes[id].type === 'monster') || g.startIds[0];
-    if (shotParams.get('shotArcane') === 'matrix') enterCombat(startId, 'packHunt');
-    else enterNode(startId);
+    // A seeded start can resolve to an event. This fixture promises combat,
+    // so select an actual fight and enter through the production fight door.
+    const isFight = node => ['monster', 'fight', 'elite'].includes(node.type) || node.resolved?.kind === 'fight';
+    const node = g.startIds.map(id => g.nodes[id]).find(isFight)
+      || Object.values(g.nodes).find(isFight) || g.nodes[g.startIds[0]];
+    run.mapNodeId = node.id; run.floor = node.floor;
+    run.path = screenshotRoutePath(g, node.id);
+    if (shotParams.get('shotArcane') === 'matrix') enterCombat(node.id, 'packHunt');
+    else startFight(node.type === 'elite' ? 'elite' : 'normal', node.id);
     if (shotState === 'fx') setTimeout(poseFxShowcase, 1600);
   }
 } else if (shotState === 'coop') {

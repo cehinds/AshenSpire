@@ -3581,7 +3581,7 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "path": "src/** (excluding generated gameProfiles/changelog)",
-      "hash": "sha256:fd05235aedb29438990454b867c1cbcf1f30df25ca098e37596837d1922caff5"
+      "hash": "sha256:7bb64b1dd334ed47fe51b9fac502fd115fbe678352084df7f499b8d3a0300c4a"
     }
   ],
   "runtimeSources": [
@@ -5125,7 +5125,7 @@ export const gameProfileCatalog = {
       "path": "src/main.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:11c9d456462761a8aabe5532e39823240eafa94bab0a3793bf089e86d09b571c"
+      "hash": "sha256:a4a86412ec297246cfde151207c93fcc435b269ca6f92973f5fd4b8552ea7a4f"
     },
     {
       "path": "src/model/abilityDraftReceipts.js",
@@ -6913,7 +6913,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/components/gameProfileOffers.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:68472c72eaa23a82e733fb5a36918d3a4f0a28880dc2347a2e6e9a9802600726"
+      "hash": "sha256:db4c176dbf18fb41aad0d9dc57a6cb2f8659c59b64a6450ea0788f7773ad6cb3"
     },
     {
       "path": "src/ui/components/gameProfileRest.js",
@@ -7930,6 +7930,12 @@ export const gameProfileCatalog = {
       "hash": "sha256:c096d48568be21837e9c3f7a26bfc5e1b0deae37299b201257eee47623bc386a"
     },
     {
+      "path": "src/ui/models/ScreenshotFixtureModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:254614ed5d1b095f1b7f31fb3a499c47c2b74865859e0c0e2655bb399006e5d7"
+    },
+    {
       "path": "src/ui/models/SelectionEffectModel.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
@@ -8410,7 +8416,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:23af16d4e9c9f6d88fe655d32ecf1a688b47df39f9e3a1d6d193ce63923593ab"
     }
   ],
-  "runtimeHash": "sha256:61b460e9eb833c3cdcb15be873635a73e520a6f9a9576c4b1819039c46a26901"
+  "runtimeHash": "sha256:dc68ff0f0feaeae9b090a69aa0b2ef878b4386d296b5d5e816891368d9930272"
 };
 export const gameProfileAuthors = {
   "default": {
