@@ -1,0 +1,28 @@
+{
+  "type": "object",
+  "properties": {
+    "mode": {
+      "enum": [
+        "legacy",
+        "configured"
+      ]
+    },
+    "initialClass": {
+      "type": "string",
+      "minLength": 1
+    },
+    "fixedAttributes": {
+      "type": "boolean"
+    },
+    "fixedLoadout": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "mode",
+    "initialClass",
+    "fixedAttributes",
+    "fixedLoadout"
+  ],
+  "additionalProperties": false
+}

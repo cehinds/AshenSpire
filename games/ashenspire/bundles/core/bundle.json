@@ -1,0 +1,87 @@
+{
+  "id": "ashen.core",
+  "version": "1.0.0",
+  "profileId": "core",
+  "foundationMode": "configured",
+  "modules": {
+    "cards": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "resources": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "stats": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "defenses": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "stances": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "effects": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "statuses": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "equipment": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "class-selection": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "progression": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "routes": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "rest": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "shops": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "rewards": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "art": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "animation": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "intent": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "reactions": {
+      "version": "1.0.0",
+      "settings": {}
+    }
+  },
+  "packs": [
+    {
+      "id": "ashen.core-content",
+      "version": "1.0.0",
+      "path": "../../packs/core/pack.json"
+    }
+  ]
+}

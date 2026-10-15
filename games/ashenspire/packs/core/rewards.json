@@ -1,0 +1,12 @@
+{
+  "offerCount": 3,
+  "takeCount": 1,
+  "categories": [
+    "weapons",
+    "relics",
+    "combatCards",
+    "weaponArts",
+    "potions",
+    "armor"
+  ]
+}

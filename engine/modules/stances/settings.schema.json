@@ -1,0 +1,119 @@
+{
+  "type": "object",
+  "properties": {
+    "mode": {
+      "enum": [
+        "legacy",
+        "configured"
+      ]
+    },
+    "include": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "matchups": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "uniqueItems": true,
+        "items": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "advantageMultiplier": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "evadeFailureMultiplier": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000
+    },
+    "accuracyPolicy": {
+      "type": "string",
+      "minLength": 1
+    },
+    "staggerPolicy": {
+      "type": "string",
+      "minLength": 1
+    },
+    "accuracyBase": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "accuracyWeight": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "minimumHitChance": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "maximumHitChance": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "accuracyStat": {
+      "enum": [
+        "ar",
+        "dr",
+        "accuracy",
+        "evasion"
+      ]
+    },
+    "evasionStat": {
+      "enum": [
+        "ar",
+        "dr",
+        "accuracy",
+        "evasion"
+      ]
+    },
+    "staggerOnAdvantage": {
+      "type": "boolean"
+    },
+    "staggerManeuvers": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "staggerLimitPerTargetPerRound": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000
+    }
+  },
+  "required": [
+    "mode",
+    "include",
+    "matchups",
+    "advantageMultiplier",
+    "evadeFailureMultiplier",
+    "accuracyPolicy",
+    "staggerPolicy",
+    "accuracyBase",
+    "accuracyWeight",
+    "minimumHitChance",
+    "maximumHitChance",
+    "accuracyStat",
+    "evasionStat",
+    "staggerOnAdvantage",
+    "staggerManeuvers",
+    "staggerLimitPerTargetPerRound"
+  ],
+  "additionalProperties": false
+}

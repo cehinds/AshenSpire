@@ -1,0 +1,14 @@
+{
+  "initial": [
+    "reaver"
+  ],
+  "sequence": [
+    "starseer",
+    "rogue",
+    "herald"
+  ],
+  "qualifyingOutcomes": [
+    "victory",
+    "defeat"
+  ]
+}
