@@ -16,7 +16,7 @@ async function open(profile='core',host='desktop',extra='') {
  const [width,height]=hosts[host];
  const page=await browser.newPage({viewport:{width,height},reducedMotion:'reduce'});
  page.setDefaultTimeout(10000);page.on('pageerror',error=>errors.push(error.message));
- await page.goto(`${base}${entry}?shot=rest&gameProfile=${profile}&shotRestState=wounded&shotSeed=3${extra}`);
+ await page.goto(`${base}${entry}?shot=rest&gameProfile=${profile}&shotRestState=wounded&shotSeed=3${extra}`,{waitUntil:'domcontentloaded',timeout:30000});
  await page.locator('.rest-door').waitFor();return page;
 }
 async function frame(page) {
@@ -96,7 +96,7 @@ async function behavior() {
 try {
  if(!process.env.REST_UI_CAPTURE_ONLY) await behavior();
  if(!process.env.REST_UI_BEHAVIOR_ONLY) {
- for(const host of Object.keys(hosts)) {
+ for(const host of Object.keys(hosts).filter(host=>!process.env.REST_UI_CAPTURE_HOSTS || process.env.REST_UI_CAPTURE_HOSTS.split(',').includes(host))) {
   const page=await open('core',host,'&shotRestPoints=1');await frame(page);
   await page.screenshot({path:resolve(output,`${host}-rest.png`)});
   await page.locator('#smith-opt').click();await page.locator('.smith-upgrade-modal').waitFor();
@@ -122,6 +122,10 @@ try {
  await creation.screenshot({path:resolve(output,'desktop-class.png')});
  await creation.locator('#cz-next').click();
  assert.equal(await creation.locator('.cc-starter-deck .card').count(),10);
+ await creation.locator('[data-summary-slot="rightHand"] .epc-name').waitFor();
+ await creation.waitForFunction(()=>[...document.querySelectorAll('.cc-summary-cards img')].filter(img=>img.getClientRects().length && !img.hidden).every(img=>img.complete && img.naturalWidth>0));
+ await creation.locator('[data-summary-slot="rightHand"] img').evaluateAll(images=>Promise.all(images.map(img=>img.decode())));
+ await creation.mouse.move(0,0);
  await creation.screenshot({path:resolve(output,'desktop-review.png')});await creation.close();
  }
  assert.deepEqual(errors,[],'no page errors');
