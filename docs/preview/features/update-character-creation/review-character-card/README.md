@@ -1,10 +1,14 @@
-# Opened Review — character stat and equipment cards
+# Opened Review — all 16 character stats
 
-Captured **0.7.1.1520 / `a12edfdd78`**, source `6d88c4d641fbd870beb5a8c25f6390636c9a2bbd`, 2026-10-14 (America/Anchorage).
+Captured **0.7.1.1520 / `ee6988101d`**, source `c749675356517618d102789f8ea79965cdefad4e`, 2026-10-15 (America/Anchorage), using Starseer / Battle Mage.
 
-Standalone SHA-256: `50da976c929e0dc4af4c983f90babd7b6db6c0a20fa0363ea6584de3d744321b`. [Capture record](capture-record.json).
+All 16 glance stats are visible inside the Character card; its 2:3 dimensions still match the equipment cards. Review loadout is open in each screenshot.
 
-The character stat card uses the equipment-card dimensions in the opened Review loadout. Review loadout is open in each screenshot. [CI build passed](https://github.com/cehinds/AshenSpire/actions/runs/38696812396/job/116295197508); [download backup](https://github.com/cehinds/AshenSpire/actions/runs/38696812396/artifacts/11954500967). Public delivery of this revision is pending; the existing hosted route was verified for the earlier `652574f013` revision.
+![Character card closeup with all 16 stats](character-card-desktop-1440x900.png)
+
+[CI build passed](https://github.com/cehinds/AshenSpire/actions/runs/38754284560/job/116488453653) · [Download backup](https://github.com/cehinds/AshenSpire/actions/runs/38754284560/artifacts/11982198573) · [Capture hashes and provenance](capture-record.json).
+
+Standalone SHA-256: `3f7ba1098cfc6bdc986a64c607c8660633f0015e185b504d425cec10142b229a`. Public delivery verification for this new revision is pending. The prior `a12edfdd78` revision passed public verification in run `38723725136`, job `116395824345`.
 
 ## 1440 × 900
 
