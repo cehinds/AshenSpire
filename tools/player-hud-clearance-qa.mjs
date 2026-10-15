@@ -18,7 +18,7 @@ try {
     await page.locator('.combatant.player .sprite').first().waitFor({ timeout: 60000 });
     await page.evaluate(() => {
       const p = window.__combat.player;
-      p.block = 12; p.wardBlock = 3;
+      p.block = 12; p.wardBlock = 3; p.barrier = 4;
       p.persistentWard = { value: 5, max: 5 };
       p.persistentPoise = { value: 4, max: 20 };
       p.poiseMeter = { value: 4, max: 20 };
@@ -43,7 +43,7 @@ try {
       const box = e => { const r=e.getBoundingClientRect(); return { left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height }; };
       const hp = panel.querySelector('.combat-health-meter .m-value');
       const text = [...panel.querySelectorAll('[data-meter-row="resource"] :is(.m-label,.m-value)')].filter(e => e.getBoundingClientRect().width);
-      return { panel:box(panel), hp:box(hp), hpText:hp.textContent, labels:[...panel.querySelectorAll('[data-meter-row="resource"] .m-label')].map(e=>e.textContent.trim().toLowerCase()), text:text.map(e=>({text:e.textContent,box:box(e)})), order:[...panel.querySelector('.combat-health-row').children].map(e=>e.dataset.defenseKind || e.dataset.res), viewport:{width:innerWidth,height:innerHeight} };
+      return { panel:box(panel), hp:box(hp), hpText:hp.textContent, labels:[...panel.querySelectorAll('[data-meter-row="resource"] .m-label')].map(e=>e.textContent.trim().toLowerCase()), text:text.map(e=>({text:e.textContent,box:box(e)})), order:[...panel.querySelector('.combat-health-row').children].map(e=>e.dataset.defenseKind || e.dataset.res), barrier:panel.querySelector('[data-defense-kind="ward"]')?.dataset.barrier, viewport:{width:innerWidth,height:innerHeight} };
     });
     await page.screenshot({path:resolve(out,name+'.png')});
     await page.screenshot({path:resolve(out,name+'.jpg'),type:'jpeg',quality:85});
@@ -55,6 +55,7 @@ try {
       for (const t of geometry.text) assert.ok(geometry.hp.bottom + 1 <= t.box.top || geometry.hp.right <= t.box.left || t.box.right <= geometry.hp.left, name+': HP value overlaps '+t.text);
       assert.ok(geometry.hp.left >= geometry.panel.left && geometry.hp.right <= geometry.panel.right, name+': HP value fits panel');
       assert.ok(geometry.panel.left >= 0 && geometry.panel.right <= width && geometry.panel.top >= 0 && geometry.panel.bottom <= height, name+': panel fits viewport');
+      assert.equal(geometry.barrier, '4', name+': Barrier stays on Ward badge');
       assert.deepEqual(geometry.order, ['evade','poise','ward','shield','hp'], name+': defense order');
     } catch(error) { report.failures.push(error.message); }
     await page.close();
