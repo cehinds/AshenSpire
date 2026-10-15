@@ -1,3 +1,5 @@
+import { gameProfileRewardOffers, claimGameProfileReward, gameProfileShopStock, purchaseGameProfileShopOffer } from './model/gameProfileRewards.js';
+import { mountGameProfileOffers } from './ui/components/gameProfileOffers.js';
 import { profileStarterCount } from './ui/models/GameProfileTitleModel.js';
 import { mountGameProfileSelector } from './ui/components/gameProfileSelector.js';
 import { beginGameProfileRest, createGameProfileRestDraft, commitGameProfileRest } from './model/gameProfileRest.js';
@@ -1491,7 +1493,11 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
     return resumeTerminal(() => onCombatEnd(pending.result, ended, encounter));
   }
   if (pendingPrologueScene(run) !== null) return showPrologue();
-  if (run.pendingReward) {
+  if (run.gameProfilePendingReward) {
+    showGameProfileReward();
+  } else if (run.gameProfileOpenShop) {
+    showShop();
+  } else if (run.pendingReward) {
     mountPendingReward();
   } else if (run.combatEntered && run.combatEntered.encounterId) {
     // Current saves resume the exact committed turn. Older saves that only
@@ -2761,6 +2767,10 @@ function enterNode(nodeId) {
       // small rest and no services. A shrine node is the Shrine.
       return showRest(null, node.type === 'event' ? CAMP_LOCATION : 'shrine');
     case 'merchant': {
+      if (isConfiguredRun(run)) {
+        if (!gameModule(run, 'shops')) { persist(); return showMap(); }
+        run.gameProfileOpenShop = `${run.actNumber}:${nodeId}`; persist(); return showShop();
+      }
       // A classic merchant rolls its kind first (SPEC §14.2, `shopOffers`); the
       // shipped weights make every one a market with every shelf out, drawing
       // nothing new, so a seed's shelves are what they always were.
@@ -2779,6 +2789,7 @@ function enterNode(nodeId) {
       return showShop();
     }
     case 'treasure': {
+      if (isConfiguredRun(run)) return beginGameProfileReward({ source: 'combat', after: 'map' });
       const relicId = rollRelicReward(registries, rng, run.relics);
       const armamentId = rollDrop('treasure');
       // Treasure pays Smithing Stones through the combat door's faucet (SPEC
@@ -3196,7 +3207,7 @@ async function onCombatEnd(result, combat, enc) {
   const levelChoices = rollLevelChoices(levelsEarned);
   // A weapon swapped mid-fight stays swapped: combat works on copies of the
   // deck's instances, so the run's own copies need the new numbers stamped in.
-  stampDeck(registries, run, undefined, { adoptEquipmentBonuses: combat.equipmentChanged });
+  if (!configuredProgression) stampDeck(registries, run, undefined, { adoptEquipmentBonuses: combat.equipmentChanged });
 
   if (result !== 'victory') {
     audio.stopMusic();
@@ -3219,11 +3230,18 @@ async function onCombatEnd(result, combat, enc) {
   run.combatEntered = null;
   // The claim id is the one this door has always written (smithingRewardId);
   // a partial rewardChancePct rolls once on the `smith` stream (SPEC §15.3).
-  const smithingStoneReceipt = grantSmithingReward(registries, run, enc.pool, smithingRewardId(run, enc.pool), rng);
+  const smithingStoneReceipt = isConfiguredRun(run) ? null : grantSmithingReward(registries, run, enc.pool, smithingRewardId(run, enc.pool), rng);
   // The Stone, its idempotent claim, the cleared combat receipt, every RNG
   // counter used to roll the offer, and the offer itself cross one persistence
   // boundary below. A reload therefore resumes the reward menu instead of
   // losing either the Stone or the other spoils.
+
+  if (configuredProgression) {
+    const boss = enc.pool === 'boss';
+    if (boss) run.bossesBeaten = [...new Set([...(run.bossesBeaten || []), ...enc.enemies])];
+    if (boss && run.actNumber >= (gameModule(run, 'routes')?.acts || 3)) return showFinishedRun(true);
+    return beginGameProfileReward({ source: 'combat', after: boss ? 'advanceAct' : 'map', levelOffers: levelsEarned });
+  }
 
   if (enc.pool === 'boss') {
     run.bossesBeaten = run.bossesBeaten || [];
@@ -3774,7 +3792,42 @@ function showRest(openPanel = null, locationId = null) {
   });
 }
 
+function beginGameProfileReward({ source = 'combat', after = 'map', levelOffers = 0 } = {}) {
+  if (!gameModule(run, 'rewards')) { persist(); return after === 'advanceAct' ? advanceAct() : showMap(); }
+  const offerId = `${run.actNumber}:${run.mapNodeId}:${source}`;
+  gameProfileRewardOffers(registries, run, rng, { offerId, source });
+  run.gameProfilePendingReward = { offerId, source, after, levelOffers };
+  persist(); return showGameProfileReward();
+}
+
+function showGameProfileReward() {
+  const pending = run.gameProfilePendingReward;
+  const offer = run.gameProfileRewardOffers[pending.offerId];
+  mountGameProfileOffers(app, { registries, run, offer, title: pending.source === 'level' ? 'Level reward' : 'Victory rewards',
+    onTake: index => { claimGameProfileReward(registries, run, pending.offerId, index); persist(); showGameProfileReward(); },
+    onContinue: () => {
+      delete run.gameProfilePendingReward; persist();
+      if (pending.levelOffers > 0) {
+        const offerId = `${pending.offerId}:level:${pending.levelOffers}`;
+        gameProfileRewardOffers(registries, run, rng, { offerId, source: 'level' });
+        run.gameProfilePendingReward = { ...pending, offerId, source: 'level', levelOffers: pending.levelOffers - 1 };
+        persist(); return showGameProfileReward();
+      }
+      if (pending.after === 'advanceAct') return advanceAct();
+      showMap();
+    } });
+}
+
 function showShop() {
+  if (isConfiguredRun(run)) {
+    if (!gameModule(run, 'shops')) return showMap();
+    const shopId = run.gameProfileOpenShop || `${run.actNumber}:${run.mapNodeId}`;
+    run.gameProfileOpenShop = shopId;
+    const offer = gameProfileShopStock(registries, run, rng, { shopId }); persist();
+    return mountGameProfileOffers(app, { registries, run, offer, title: 'Shop',
+      onTake: index => { purchaseGameProfileShopOffer(registries, run, shopId, index); persist(); showShop(); },
+      onContinue: () => { delete run.gameProfileOpenShop; persist(); showMap(); } });
+  }
   if (run.journey?.activeService) {
     const state = run.journey.serviceStates[run.journey.activeService.pointId];
     // After a JSON reload these are distinct objects; reconnect the canonical stock.
