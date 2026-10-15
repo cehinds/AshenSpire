@@ -61,6 +61,13 @@ export function applyGameProfileToContent(baseBundle,profileOrAuthor = 'current'
       return {...def,maxHp:row.maxHp,...(gameModule(profile,'cards')?.mode === 'configured' ? {cardPool:[...new Set([...(def.cardPool||[]),row.specialCardId])],startingSignatureCard:row.specialCardId} : {})};
     });
   }
+  if(gameModule(profile,'equipment')?.requirementsPolicy === 'none' && bundle.equipment) {
+    // These six-point profiles deliberately omit the legacy attribute gates.
+    // Strip both executable piece requirements and their authored table so
+    // validation, equipment UI and mutation receipts see the same policy.
+    bundle.equipment.equipmentRequirements = [];
+    for (const key of ['armaments','armour']) bundle.equipment[key] = (bundle.equipment[key] || []).map(piece => ({...piece,requirements:{attributes:{}}}));
+  }
   if(Array.isArray(bundle.resources)) {
     const pools=gameModule(profile,'resources')?.include||[],defenses=gameModule(profile,'defenses')?.include||[];
     bundle.resources=bundle.resources.filter(row=>{

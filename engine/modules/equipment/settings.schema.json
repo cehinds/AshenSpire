@@ -16,13 +16,20 @@
     },
     "fixedAppearance": {
       "type": "boolean"
+    },
+    "requirementsPolicy": {
+      "enum": [
+        "none",
+        "legacy"
+      ]
     }
   },
   "required": [
     "mode",
     "editorEnabled",
     "editorWhere",
-    "fixedAppearance"
+    "fixedAppearance",
+    "requirementsPolicy"
   ],
   "additionalProperties": false
 }
