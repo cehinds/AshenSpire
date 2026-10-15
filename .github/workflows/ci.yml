@@ -352,6 +352,8 @@ jobs:
           fi
           "$encoder/python" -m pip install Pillow==11.1.0
           echo "$encoder" >> "$GITHUB_PATH"
+          # Windows has python.exe in the venv, but python3 may resolve outside it.
+          echo "ASHEN_PYTHON=$("$encoder/python" -c 'import sys; print(sys.executable)')" >> "$GITHUB_ENV"
       # The art packs, before anything builds, serves or tests this checkout (step 12).
       - uses: ./.github/actions/fetch-art
         with:
@@ -503,6 +505,8 @@ jobs:
           fi
           "$encoder/python" -m pip install Pillow==11.1.0
           echo "$encoder" >> "$GITHUB_PATH"
+          # Windows has python.exe in the venv, but python3 may resolve outside it.
+          echo "ASHEN_PYTHON=$("$encoder/python" -c 'import sys; print(sys.executable)')" >> "$GITHUB_ENV"
       # The art packs, before anything builds, serves or tests this checkout (step 12).
       - uses: ./.github/actions/fetch-art
         with:

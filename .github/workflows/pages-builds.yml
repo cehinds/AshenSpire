@@ -75,24 +75,17 @@
 # section at its newest commit. What a branch that cannot deploy loses is only the
 # ability to TRIGGER a publication — not its place in the published site.
 #
-# FEATURE-BRANCH BUILDS. Every open pull request into dev whose head is a branch of
-# this repository (feature/*, fix/*, chore/*) has its newest playable build at
-# branches/<branch>/latest/ (README, Play and download). The assemble job lists the
-# open PRs with GITHUB_TOKEN, fetches each one's newest successful dev-preview build
-# for its head commit and hands them to tools/pages-site.mjs, which publishes them
-# and lists them on the index. A build therefore lives exactly as long as its PR is
-# open: a merge arrives as the build-stamp run after its push to dev, a close as the pull_request_target event
-# below, and each publishes a site without it. The deploy job is unchanged. The
-# sticky "Playable build" comment is posted by its own job after a successful deploy.
-#
-# A FAILED OR CANCELLED PREVIEW MUST NOT LEAVE A STALE BUILD LIVE. A completed
-# dev-preview run on a feature/, fix/ or chore/ branch wakes assemble and deploy
-# whatever its conclusion. The assemble step lists only a preview whose run for the
-# PR's CURRENT head sha concluded success (the `select(.head_sha == $sha and
-# .conclusion == "success")` filter), so a head whose preview failed has no
-# qualifying run and its branch is left out of the site: the stale
-# branches/<branch>/latest/ is removed, not kept. Dev, test, release and main keep
-# their own publishing conditions; alternative/ previews still publish on success only.
+# FEATURE-BRANCH BUILDS. Current feature/fix/chore branches do not need a PR:
+# collect-feature-previews.mjs lists branches and downloads their successful
+# feature-preview artifacts. The artifact must match HEAD or be an ancestor with
+# only README.md, CONTRIBUTING.md and docs/** changes since that build. Code
+# changes with no successful build remove stale previews on the next publication.
+# Open PR dev-preview artifacts are collected too, retaining their PR labels.
+# Preview HTML is data only (build.txt); trusted wrappers use opaque-origin
+# sandboxed frames. No feature checkout or feature build command runs here.
+# Feature preview completions wake publication on every conclusion, so failed
+# builds can remove stale previews. Listing/API failures abort assembly and keep
+# the existing live site; expired or invalid individual artifacts are skipped.
 #
 # WHY pull_request_target AND NOT pull_request. A closed pull_request run's ref is
 # refs/pull/N/merge, which the github-pages environment's branch rule refuses (the
@@ -137,7 +130,7 @@ on:
     # the deploy job's `if:`) and it has its own concurrency group.
     # Successful alternative previews republish through the default dev ref,
     # which is already admitted by the github-pages environment.
-    workflows: [build-stamp, dev preview]
+    workflows: [build-stamp, dev preview, feature preview]
     branches: ['dev', 'alternative/**/dev', 'alternative/**/test', '[Ff][Ee][Aa][Tt][Uu][Rr][Ee]/**', '[Ff][Ii][Xx]/**', '[Cc][Hh][Oo][Rr][Ee]/**']
     types: [completed]
   # A closed PR (merged or not) republishes the site without its branch build. A
@@ -161,7 +154,7 @@ concurrency:
   # (a newer arrival replaces a queued run even with cancel-in-progress: false), so it goes to
   # its own group, `pages-builds-skipped`. Only a workflow_run the jobs will run for, and every
   # non-workflow_run event, use `pages-builds`.
-  group: ${{ (github.event_name != 'workflow_run' || (github.event.workflow_run.name == 'build-stamp' && github.event.workflow_run.head_branch == 'dev' && github.event.workflow_run.conclusion == 'success') || (github.event.workflow_run.name == 'dev preview' && github.event.workflow_run.head_branch != 'dev' && (github.event.workflow_run.conclusion == 'success' || startsWith(github.event.workflow_run.head_branch, 'feature/') || startsWith(github.event.workflow_run.head_branch, 'fix/') || startsWith(github.event.workflow_run.head_branch, 'chore/')))) && 'pages-builds' || 'pages-builds-skipped' }}
+  group: ${{ (github.event_name != 'workflow_run' || (github.event.workflow_run.name == 'build-stamp' && github.event.workflow_run.head_branch == 'dev' && github.event.workflow_run.conclusion == 'success') || ((github.event.workflow_run.name == 'feature preview' || github.event.workflow_run.name == 'dev preview') && github.event.workflow_run.head_branch != 'dev' && (github.event.workflow_run.name == 'feature preview' || github.event.workflow_run.conclusion == 'success' || startsWith(github.event.workflow_run.head_branch, 'feature/') || startsWith(github.event.workflow_run.head_branch, 'fix/') || startsWith(github.event.workflow_run.head_branch, 'chore/')))) && 'pages-builds' || 'pages-builds-skipped' }}
   # NO RUN CANCELS ANOTHER, BECAUSE "WILL THIS RUN PUBLISH?" CANNOT BE ANSWERED HERE.
   #
   # One group keeps publications serialised, which is right — two deploys to the
@@ -219,7 +212,7 @@ permissions:
 
 jobs:
   assemble:
-    if: github.event_name != 'workflow_run' || (github.event.workflow_run.name == 'build-stamp' && github.event.workflow_run.head_branch == 'dev' && github.event.workflow_run.conclusion == 'success') || (github.event.workflow_run.name == 'dev preview' && github.event.workflow_run.head_branch != 'dev' && (github.event.workflow_run.conclusion == 'success' || startsWith(github.event.workflow_run.head_branch, 'feature/') || startsWith(github.event.workflow_run.head_branch, 'fix/') || startsWith(github.event.workflow_run.head_branch, 'chore/')))
+    if: github.event_name != 'workflow_run' || (github.event.workflow_run.name == 'build-stamp' && github.event.workflow_run.head_branch == 'dev' && github.event.workflow_run.conclusion == 'success') || ((github.event.workflow_run.name == 'feature preview' || github.event.workflow_run.name == 'dev preview') && github.event.workflow_run.head_branch != 'dev' && (github.event.workflow_run.name == 'feature preview' || github.event.workflow_run.conclusion == 'success' || startsWith(github.event.workflow_run.head_branch, 'feature/') || startsWith(github.event.workflow_run.head_branch, 'fix/') || startsWith(github.event.workflow_run.head_branch, 'chore/')))
     runs-on: ubuntu-latest
     # Bounded: about 20 light rebuilds (~20 s each) plus hydrating the committed
     # builds. A run that needs more than this is broken, not slow.
@@ -236,7 +229,7 @@ jobs:
       pull-requests: read
     outputs:
       # Compact JSON array of {pr, dir} for every PR whose preview is in the site this run.
-      comment_targets: ${{ steps.previews.outputs.comment_targets }}
+      comment_targets: ${{ steps.feature_previews.outputs.comment_targets }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -456,15 +449,23 @@ jobs:
             echo "  fetched PR #$pr $ref at $sha"
           done <<< "$prs"
           jq -s '{previews: .}' "$entries" > "$out/previews.json"
-          # A run that coalesces several pushes publishes several previews, so the sticky
-          # comment goes to every PR whose preview is in the site from this run, not only
-          # the PR that triggered it. Compact JSON on one line, so it is safe as an output.
-          targets=$(jq -sc '[.[] | {pr: (.pr | tostring), dir: .dir}]' "$entries")
+      - name: Collect current feature branch builds without requiring a PR
+        id: feature_previews
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/branch-previews"
+          node tools/collect-feature-previews.mjs "$out"
+          # Derive announcements only after the collector removes stale entries.
+          # Branch builds without a PR never become PR comment targets.
+          targets=$(jq -c '[.previews[] | select(.pr > 0) | {pr: (.pr | tostring), dir: .dir}]' "$out/previews.json")
           echo "comment_targets=$targets" >> "$GITHUB_OUTPUT"
           {
             echo "### Feature-branch builds"
             echo
-            echo "$(jq -s 'length' "$entries") open pull request(s) into \`dev\` carry a playable build at \`branches/<branch>/latest/\`."
+            echo "$(jq '.previews | length' "$out/previews.json") current branch build(s) carry a playable preview."
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Assemble the site from git history — committed builds proven byte-identical, uncommitted ones rebuilt from their commit
         # `keep` from a dispatch is clamped here (1..25) and again in the
@@ -533,7 +534,7 @@ jobs:
           # 2026-10-11). A run that cannot publish must not claim it will: until the
           # github-pages environment admits `release`, its deploy is refused at the
           # gate — see the header.
-          PUBLISH_REQUESTED: ${{ (github.event_name == 'push' && (github.ref_name == 'dev' || github.ref_name == 'release')) || (github.event_name == 'workflow_run' && ((github.event.workflow_run.name == 'build-stamp' && github.event.workflow_run.head_branch == 'dev' && github.event.workflow_run.conclusion == 'success') || (github.event.workflow_run.name == 'dev preview' && github.event.workflow_run.head_branch != 'dev' && (github.event.workflow_run.conclusion == 'success' || startsWith(github.event.workflow_run.head_branch, 'feature/') || startsWith(github.event.workflow_run.head_branch, 'fix/') || startsWith(github.event.workflow_run.head_branch, 'chore/'))))) || (github.event_name == 'pull_request_target') || (github.event_name == 'workflow_dispatch' && inputs.publish == 'PUBLISH') }}
+          PUBLISH_REQUESTED: ${{ (github.event_name == 'push' && (github.ref_name == 'dev' || github.ref_name == 'release')) || (github.event_name == 'workflow_run' && ((github.event.workflow_run.name == 'build-stamp' && github.event.workflow_run.head_branch == 'dev' && github.event.workflow_run.conclusion == 'success') || ((github.event.workflow_run.name == 'feature preview' || github.event.workflow_run.name == 'dev preview') && github.event.workflow_run.head_branch != 'dev' && (github.event.workflow_run.name == 'feature preview' || github.event.workflow_run.conclusion == 'success' || startsWith(github.event.workflow_run.head_branch, 'feature/') || startsWith(github.event.workflow_run.head_branch, 'fix/') || startsWith(github.event.workflow_run.head_branch, 'chore/'))))) || (github.event_name == 'pull_request_target') || (github.event_name == 'workflow_dispatch' && inputs.publish == 'PUBLISH') }}
         run: |
           set -u
           {
@@ -671,10 +672,11 @@ jobs:
             && github.event.workflow_run.conclusion == 'success'
           )
           || (
-            github.event.workflow_run.name == 'dev preview'
+            (github.event.workflow_run.name == 'feature preview' || github.event.workflow_run.name == 'dev preview')
             && github.event.workflow_run.head_branch != 'dev'
             && (
-              github.event.workflow_run.conclusion == 'success'
+              github.event.workflow_run.name == 'feature preview'
+              || github.event.workflow_run.conclusion == 'success'
               || startsWith(github.event.workflow_run.head_branch, 'feature/')
               || startsWith(github.event.workflow_run.head_branch, 'fix/')
               || startsWith(github.event.workflow_run.head_branch, 'chore/')
