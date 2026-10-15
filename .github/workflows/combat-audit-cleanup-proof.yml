@@ -1,0 +1,89 @@
+name: audit official feature cleanup proof
+
+on:
+  push:
+    branches: ['worker/FullCombatAudit/cleanup-proof']
+    paths: ['.github/workflows/combat-audit-cleanup-proof.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  official-cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      EXPECTED_SOURCE_SHA: '399dd69762d25b02a44c87658647873861fe2bac'
+      EXPECTED_README_BLOB: 'e82cde2b00cf5f9252a4ee9d6ab6501030f39202'
+      CLEANUP_PROOF_PHASE: 'preflight'
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: '399dd69762d25b02a44c87658647873861fe2bac'
+          persist-credentials: false
+          fetch-depth: 1
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /README.md
+            /tools/feature-preview.mjs
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - name: Require exact reviewed source and README
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { execFileSync } from 'node:child_process';
+          import { mkdirSync, copyFileSync } from 'node:fs';
+          assert.equal(execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), process.env.EXPECTED_SOURCE_SHA);
+          assert.equal(execFileSync('git', ['hash-object', 'README.md'], { encoding: 'utf8' }).trim(), process.env.EXPECTED_README_BLOB);
+          mkdirSync('cleanup-proof');
+          copyFileSync('README.md', 'cleanup-proof/original-README.md');
+          NODE
+      - name: Execute official feature preview check and removal
+        run: |
+          node tools/feature-preview.mjs --check
+          node tools/feature-preview.mjs --remove
+          git diff --check
+      - name: Record exact official output and bounded diff
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { execFileSync } from 'node:child_process';
+          import { readFileSync, writeFileSync } from 'node:fs';
+          import { createHash } from 'node:crypto';
+          import { removeFeaturePreview } from './tools/feature-preview.mjs';
+          const original = readFileSync('cleanup-proof/original-README.md', 'utf8');
+          const cleaned = readFileSync('README.md');
+          assert.deepEqual(cleaned, Buffer.from(removeFeaturePreview(original)));
+          assert.ok(!cleaned.includes(Buffer.from('<!-- feature-preview:')));
+          const changedFiles = execFileSync('git', ['diff', '--name-only'], { encoding: 'utf8' }).trim().split('\n');
+          assert.deepEqual(changedFiles, ['README.md']);
+          const gitBlob = execFileSync('git', ['hash-object', 'README.md'], { encoding: 'utf8' }).trim();
+          const computedBlob = createHash('sha1').update(Buffer.from('blob ' + cleaned.length + '\0')).update(cleaned).digest('hex');
+          assert.equal(gitBlob, computedBlob);
+          const proof = {
+            schema: 'official-feature-cleanup-v1',
+            phase: process.env.CLEANUP_PROOF_PHASE,
+            sourceCommit: process.env.EXPECTED_SOURCE_SHA,
+            originalReadmeBlob: process.env.EXPECTED_README_BLOB,
+            officialHelperBlob: execFileSync('git', ['hash-object', 'tools/feature-preview.mjs'], { encoding: 'utf8' }).trim(),
+            cleanedReadmeBlob: gitBlob,
+            cleanedReadmeSha256: createHash('sha256').update(cleaned).digest('hex'),
+            cleanedReadmeBytes: cleaned.length,
+            changedFiles,
+            scope: 'Actual official CLI changed README only. Temporary feature images and record are deleted separately in the reviewed parent docs commit.'
+          };
+          writeFileSync('cleanup-proof/README.md', cleaned);
+          writeFileSync('cleanup-proof/proof.json', JSON.stringify(proof, null, 2) + '\n');
+          console.log('CLEANUP_PROOF ' + JSON.stringify(proof));
+          console.log('CLEANED_README_BASE64 ' + cleaned.toString('base64'));
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: official-feature-cleanup-preflight-399dd69762d25b02a44c87658647873861fe2bac
+          path: cleanup-proof/
+          if-no-files-found: error
+          retention-days: 14
