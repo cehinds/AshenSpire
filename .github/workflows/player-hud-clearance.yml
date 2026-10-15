@@ -1,0 +1,51 @@
+name: Player HUD clearance evidence
+on:
+  push:
+    branches: [fix/combat-player-hud-clearance]
+  pull_request:
+    branches: [dev]
+    paths: ['styles/combat-layers.css', 'tools/player-hud-clearance-qa.mjs', '.github/workflows/player-hud-clearance.yml']
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      ASHEN_ART_SOURCE: cache
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          lfs: false
+      - uses: ./.github/actions/setup-node
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: all
+      - uses: ./.github/actions/which-browser
+      - run: npm install --no-save --no-package-lock playwright@1.56.1
+      - name: Capture production selected player and check text clearance
+        id: capture
+        continue-on-error: true
+        run: node tools/player-hud-clearance-qa.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: player-hud-${{ github.event.pull_request.head.sha || github.sha }}
+          path: outputs/player-hud/
+      - name: Inline capture evidence
+        if: always()
+        run: |
+          node --input-type=module <<'NODE'
+          import { existsSync, readdirSync, readFileSync } from 'node:fs';
+          const dir='outputs/player-hud';
+          if(existsSync(dir)) for(const f of readdirSync(dir).filter(f=>f.endsWith('.jpg'))) {
+            console.log('HUD_IMAGE_START '+f);
+            const data=readFileSync(dir+'/'+f).toString('base64');
+            for(let i=0;i<data.length;i+=16000) console.log('HUD_IMAGE_DATA '+data.slice(i,i+16000));
+            console.log('HUD_IMAGE_END '+f);
+          }
+          NODE
+      - name: Require production geometry regression
+        if: always()
+        run: test "${{ steps.capture.outcome }}" = success
