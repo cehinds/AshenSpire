@@ -11,6 +11,8 @@ import { createRng } from '../src/engine/rng.js';
 import { expandedEnemyMove, primeEnemyCounter } from '../src/engine/combatCardTactics.js';
 import { enqueueExpandedAction } from '../src/engine/combatExpansionActions.js';
 import { executeAction } from '../src/engine/actions.js';
+import { mountBestiary } from '../src/ui/screens/bestiary.js';
+import { withKitDom } from './helpers/kit-dom.mjs';
 
 const registries = createRegistries(contentBundle);
 function fight() {
@@ -196,3 +198,37 @@ test('charging pressure display preserves authored effects, support-only phases 
   assert.match(nested.detail, /7 base Poise damage to player while charging/);
   assert.match(nested.detail, /7 base Poise damage to player during charging stage 2/);
 });
+
+const knowledgeRecord = points => ({ target: 30,
+  receipts: Object.fromEntries(Array.from({ length: points }, (_, index) => [`r${index}`, { bonus: false }])) });
+
+for (const fallbackPoise of [3, 7]) for (const points of [21, 30]) {
+  test(`mounted Bestiary shows current configured ${fallbackPoise} Poise at knowledge ${points}`, () => withKitDom(({ document }) => {
+    const configured = { ...registries, balance: { ...registries.balance, stanceRules: { fallbackPoise } } };
+    const app = document.createElement('main'); document.body.append(app);
+    const dispose = mountBestiary(app, { registries: configured, onBack() {}, initialEnemyId: 'gildedKnight',
+      meta: { enemyKnowledge: { enemies: { gildedKnight: knowledgeRecord(points), fellWarden: knowledgeRecord(points) } } } });
+    assert.match(app.querySelector('[data-move-id="parry"]').getAttribute('aria-label'),
+      new RegExp(`${fallbackPoise} base counter Poise damage(?: ·|$)`));
+    app.querySelector('[data-member="fellWarden"]').click();
+    assert.match(app.querySelector('[data-move-id="heldBlade"]').getAttribute('aria-label'),
+      new RegExp(`${fallbackPoise} base Poise damage to player`));
+    assert.equal(app.querySelectorAll('[data-member]').length, 2, 'unencountered enemies stay absent');
+    dispose();
+  }));
+}
+
+test('mounted Bestiary preserves unknown-effect privacy and explicit legacy rules', () => withKitDom(({ document }) => {
+  const app = document.createElement('main'); document.body.append(app);
+  const meta = points => ({ enemyKnowledge: { enemies: { gildedKnight: knowledgeRecord(points) } } });
+  let dispose = mountBestiary(app, { registries, meta: meta(12), onBack() {} });
+  assert.doesNotMatch(app.querySelector('[data-move-id="parry"]').getAttribute('aria-label'), /base counter Poise damage/);
+  dispose();
+  dispose = mountBestiary(app, { registries, meta: meta(30), onBack() {}, combatExpansionVersion: 1,
+    stanceRules: { fallbackPoise: 7 } });
+  assert.doesNotMatch(app.querySelector('[data-move-id="parry"]').getAttribute('aria-label'), /base counter Poise damage/);
+  dispose();
+  dispose = mountBestiary(app, { registries, meta: meta(30), onBack() {}, stanceRules: { fallbackPoise: 7 } });
+  assert.match(app.querySelector('[data-move-id="parry"]').getAttribute('aria-label'), /7 base counter Poise damage(?: ·|$)/);
+  dispose();
+}));
