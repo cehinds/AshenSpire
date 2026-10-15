@@ -1,3 +1,4 @@
+import { t } from '../strings.js';
 import { classSprite, tintCss } from '../assets.js';
 // Fixed-loadout selection reuses the normal start callback and run model guard.
 export function mountGameProfileCreation(app, { profile, classes, available, starterCount = null, classUnlocks = false, defaultSeedString, onStart, onBack }) {
@@ -5,15 +6,15 @@ export function mountGameProfileCreation(app, { profile, classes, available, sta
   const screen = document.createElement('section');
   screen.className = 'screen game-profile-creation';
   screen.style.cssText = 'max-width:52rem;margin:auto;padding:2rem;display:flex;flex-direction:column;gap:1rem';
-  const heading = document.createElement('h1'); heading.textContent = 'Choose your class';
+  const heading = document.createElement('h1'); heading.textContent = t('gameProfile.creation.copy1');
   const note = document.createElement('p'); note.textContent = `Fixed starting equipment${starterCount == null ? '' : ` · ${starterCount} starting cards`}.${classUnlocks ? ' Complete a run to unlock the next class.' : ''}`;
   const portrait = document.createElement('div'); portrait.className = 'figure cc-class-art'; portrait.style.cssText = 'height:18rem;max-width:20rem;margin:auto';
   const choices = document.createElement('div'); choices.style.cssText = 'display:flex;flex-wrap:wrap;gap:.75rem';
   const summary = document.createElement('p'); summary.setAttribute('aria-live', 'polite');
   const seed = document.createElement('input'); seed.value = defaultSeedString;
-  seed.setAttribute('aria-label', 'Run seed');
-  const start = document.createElement('button'); start.textContent = 'Begin the climb';
-  const back = document.createElement('button'); back.textContent = 'Back'; back.onclick = onBack;
+  seed.setAttribute('aria-label', t('gameProfile.creation.copy4'));
+  const start = document.createElement('button'); start.textContent = t('gameProfile.creation.copy2');
+  const back = document.createElement('button'); back.textContent = t('gameProfile.creation.copy3'); back.onclick = onBack;
   const status = document.createElement('p'); status.setAttribute('role', 'alert');
   let selected = classes.find(row => available(row.id))?.id;
   const refresh = () => {

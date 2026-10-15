@@ -887,7 +887,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
 
     const def = registries.enemies.get(entity.enemyId);
-    const intent = configuredArt && !gameModule(run, 'intent') ? { hidden: true, label: 'Unread' } : disp?.ents[entity.id]?.intentPreview || previewIntent(combat, entity.id);
+    const intent = configuredArt && !gameModule(run, 'intent') ? { hidden: true, label: t('gameProfile.combat.unreadIntent') } : disp?.ents[entity.id]?.intentPreview || previewIntent(combat, entity.id);
     const moveCardOptions = { registries, combatMatchupRules: combat.combatMatchupRules,
       combatExpansionVersion: combat.combatExpansionVersion, stanceRules: combat.stanceRules };
     const learning = combat.enemyKnowledge ? projectEnemyKnowledge(def, combat.enemyKnowledge.owners.player?.knowledge.enemies[def.id], { ...moveCardOptions, ratingsRules: combat.ratingsRules }) : null;
@@ -2075,8 +2075,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       let actions = combatEl.querySelector('.foundation-actions');
       if (!actions) {
         actions = document.createElement('div'); actions.className = 'foundation-actions';
-        const target = document.createElement('select'); target.setAttribute('aria-label', 'Attack target');
-        const attack = document.createElement('button'); attack.textContent = 'Attack'; attack.className = 'as-btn foundation-attack';
+        const target = document.createElement('select'); target.setAttribute('aria-label', t('gameProfile.combat.attackTarget'));
+        const attack = document.createElement('button'); attack.textContent = t('gameProfile.combat.attack'); attack.className = 'as-btn foundation-attack';
         attack.onclick = () => {
           if (busy || combat.result || combat.phase !== 'player') return;
           disp = takeSnapshot();

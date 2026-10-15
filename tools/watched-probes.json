@@ -362,28 +362,24 @@
   },
   {
    "id": "A3",
-   "by": "Bjorn",
-   "read": "src/ui/screens/compendium.js (.cp-cell, state-teased) · src/ui/screens/title.js (#armaments)",
+   "by": "Codex",
+   "read": "src/ui/screens/compendium.js (.cp-cell, state-teased) · src/main.js (shotState compendium reach state)",
    "anchors": [
-    "#armaments",
-    "cp-cell"
+    "cp-cell",
+    "shotState === 'compendium'"
    ],
-   "screen": "ARMAMENTS (the Compendium), from the main menu",
+   "screen": "Compendium content; former title entry retired by the owner five-entry menu requirement",
    "reach": [
     {
      "op": "goto",
-     "q": ""
-    },
-    {
-     "op": "click",
-     "sel": "#armaments",
+     "q": "?shot=compendium&gameProfile=current",
      "ms": 900
     }
    ],
    "focus": ".cp-cell",
    "expect": {
     "present": {
-     "its own menu entry, and the shape of what you don't have": ".cp-cell"
+     "the collection and the shape of what is not owned": ".cp-cell"
     },
     "count": [
      {

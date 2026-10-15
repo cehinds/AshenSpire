@@ -1,12 +1,13 @@
+import { t } from '../strings.js';
 // New-run configuration only: selecting/importing never mutates a running save.
 export function mountGameProfileSelector(host, { profile, importedProfile = null, onSelect }) {
   const panel = document.createElement('div');
   panel.className = 'game-profile-selector';
   panel.style.cssText = 'display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;justify-content:center;margin:.75rem auto;max-width:38rem';
   const label = document.createElement('label');
-  label.textContent = 'New game: ';
+  label.textContent = t('gameProfile.selector.copy1');
   const select = document.createElement('select');
-  select.setAttribute('aria-label', 'New game configuration');
+  select.setAttribute('aria-label', t('gameProfile.selector.copy2'));
   for (const [id, name] of [['current', 'Current game'], ['core', 'Ashen core']]) {
     const option = new Option(name, id);
     select.append(option);
@@ -16,7 +17,7 @@ export function mountGameProfileSelector(host, { profile, importedProfile = null
   label.append(select);
   const upload = document.createElement('input');
   upload.type = 'file'; upload.accept = '.json,application/json';
-  upload.setAttribute('aria-label', 'Import game configuration JSON');
+  upload.setAttribute('aria-label', t('gameProfile.selector.copy3'));
   upload.style.maxWidth = '16rem';
   const status = document.createElement('span');
   status.setAttribute('role', 'status');
