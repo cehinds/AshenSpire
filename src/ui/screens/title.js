@@ -1,3 +1,4 @@
+import { mountGameProfileSelector } from '../components/gameProfileSelector.js';
 // src/ui/screens/title.js — folded title menu with load/new slot modal.
 //
 // The title owns layout and interaction state; save-slot content stays in the
@@ -38,6 +39,8 @@ export function focusTitleDefault(app, { showCursor = true } = {}) {
 }
 export function mountTitle(app, {
   slots,
+  gameProfile = null,
+  onGameProfile = null,
   meta,
   registries,
   onContinue,
@@ -429,6 +432,7 @@ export function mountTitle(app, {
     });
     wireTitleActions(root);
     renderModal();
+    if (gameProfile && onGameProfile) mountGameProfileSelector(root, { profile: gameProfile, onSelect: onGameProfile });
     artNotice?.(root);
   }
 
