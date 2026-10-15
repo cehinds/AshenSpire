@@ -18,7 +18,7 @@ Labels below matter: **Confirmed** means requested by the owner or an already ac
 | Every class starts with Evade/Power/Skill | Each starts with one class-specific card only, in addition to nine shared cards. Evade is available as content/reward, not a starter. |
 | Distinct elemental damage and ranked spells | Unified damage; no elemental distinction or spell-rank system in this core. Smith upgrades equipment, not cards. No spell ranks are restored. |
 | Generic rest/card-upgrade menu | Strategize (deck editing), Smith (equipment upgrading), Level Up (earned attribute allocation); every choice fully restores HP/MP/SP and both flask types. Standalone rest card upgrades are superseded. |
-| Feats, skill XP, attribute allocation at creation | Class selector with fixed starting loadouts; character-level progression; no feats, skill XP or creation attribute allocation. |
+| Feats, skill XP, attribute allocation at creation | Class selector with fixed starting loadouts; character-level progression plus the explicitly requested profile class-unlock sequence below; no feats, skill XP or creation attribute allocation. |
 | Retain hand between rounds | Entire deck reshuffled at round end; no hand retain; fresh draw from base four plus INT: five normally, six for Starseer. |
 | Old Poise pool absorption, break and automatic stagger | Core Poise only reduces damage. Do not retain pool absorption/depletion-to-stagger implicitly. Stagger/interrupt rules require separate authored semantics. |
 
@@ -89,6 +89,25 @@ Proposed fixed-stat data excerpt (all values confirmed; schema still proposed):
   }
 }
 ```
+
+### Persistent class unlocks
+
+**Confirmed, latest owner instruction:** “core should only have reaver unlocked, starting run until win or defeat unlocks then star seer, then another one rogue, and then another one harold.” All four classes remain defined, but a fresh profile may select only Reaver for a new run. Class unlocks persist in the profile across runs; they are separate from character levels, attribute allocation, feats and skill XP.
+
+| Unique full-run completions recorded by profile | Newly unlocked class | Classes selectable for a new run |
+| --- | --- | --- |
+| 0 | Reaver initially | Reaver |
+| 1 | Starseer | Reaver, Starseer |
+| 2 | Rogue | Reaver, Starseer, Rogue |
+| 3 or more | Herald at completion 3 | Reaver, Starseer, Rogue, Herald |
+
+A completion is a terminal **full-run win or defeat**, not an encounter victory: beating the final act's boss wins the run; hero death defeats the run. Either terminal outcome advances the sequence. Quitting, abandoning or restarting without a terminal run outcome does not count. No win-only gate or requirement to play the newly unlocked class is added. Working interpretation: a qualifying run with any currently unlocked class counts; the owner did not require a particular class.
+
+Consume committed full-run outcome facts into a persistent, idempotent per-profile ledger keyed by unique run identity. Each unique completed run grants at most one next class; duplicate delivery, reload, retry or repeated processing of the same terminal save must not grant additional unlocks. At three completions all classes are available; further completions do not invent additional progression or rewards.
+
+Profile storage, backup and migration must preserve the completion ledger and unlocked classes. Keep this profile state distinct from versioned run locks and run-local character progression: unlocking a class changes future selection eligibility without rewriting existing runs or their pinned gameplay artifacts. Existing-profile migration must be explicit; do not guess historical completions or silently reset unlocks. This requested class-unlock progression is the explicit exception to the earlier character-level-only direction; no other profile progression system is introduced.
+
+The core bundle declares the necessary class-selector/progression/unlock capability selected by default. Unlock implementation may be owned by progression with a class-selector integration rather than inventing a second implicit activation registry. Any separately packaged unlock module must be declared by the bundle and resolved with the same pins/provenance rules as other features.
 
 Exact item/card IDs, starting armor, flask quantities and equipment slot accounting are not supplied here. Fixed starting weapons do not establish a lifetime class restriction on reward equipment. Core sprites do not change with weapon or armor; equipment still changes authored gameplay values.
 
@@ -246,12 +265,12 @@ This is a future responsibility map, not a claim that packages exist. IDs can be
 | Kernel/contracts | Generic scheduling, transactions, RNG, state isolation and typed operations. |
 | Cards | Starter/editor, deck/hand lifecycle, card readability and rest-only Strategize integration. |
 | Resources | SP/MP pools and flask-related resource integration; authored resource-off variants. |
-| Stats / progression | Attribute rows, hidden dependencies, fixed class presets, character-level gains and save snapshots. |
+| Stats / progression | Attribute rows, hidden dependencies, fixed class presets, character-level gains, run snapshots and profile-owned idempotent class-unlock ledger. |
 | Defenses | Block/Poise and declared ordered damage pipeline; confirmed 25% damage reduction and separately decided eligibility/order. |
 | Stances / reactions | Seven stance identities, directed matchups, authored consequences and response scheduling. |
 | Effects / statuses | Unified damage effects, buffs, evade outcome integration and separate stagger/interrupt semantics. |
 | Equipment | Fixed starting gear, families, mechanics, reward eligibility, Smith equipment upgrades and separately authored equipment-editor timing policy. |
-| Character creation | Four-class selector and fixed loadouts; no attribute allocation. |
+| Character creation | Four defined classes with fixed loadouts; only profile-unlocked classes selectable, initially Reaver alone; no attribute allocation. |
 | Routes / encounters | Three-act route constraints, unique act bosses, visibility and seeded actual node types. |
 | Rest / shops | Strategize/Smith/Level Up, exactly one service per visit, full recovery after every service; authored shops. Services remain reachable through activities when routes are disabled. |
 | Rewards | Mixed three-option offers, claim policy, equipment/card/resource integration. |
@@ -267,6 +286,8 @@ These are **future acceptance requirements**, not tests already run:
 
 - [ ] Empty `modules` resolves the full versioned product bundle, with exact bundle/module artifacts and selection/settings provenance. Explicit false overrides inheritance; missing nonbundled entries stay off. Merge vectors cover recursive objects and replaced arrays/scalars.
 - [ ] Each class starts from its approved six-total fixed attributes/gear with exactly ten cards and exactly one correct class special. No creation allocation, feats, skill XP or starter Evade; new presets and old snapshots pass the appropriate save validators.
+- [ ] A fresh profile exposes only Reaver. Three unique completed full runs unlock Starseer, Rogue, Herald in that order; test win and defeat independently at every step and a run using any already-unlocked class. Encounter wins and nonterminal quit/abandon/restart do not count; locked classes cannot start runs.
+- [ ] Duplicate outcome delivery, terminal-save reload/retry and repeated processing grant at most one unlock per unique run. Profile reload/backup/migration retains the ledger and unlocks; two profiles remain independent. Existing run locks/state stay unchanged, and completions after all four unlock add no invented rewards.
 - [ ] Strategize changes/grows the active deck only at rests. Outside rests editing is blocked without state loss; owned-card rewards remain claimable and follow an explicit active-deck policy. Equipment editor is on with its separately declared timing. Round end reshuffles with no retained hand. Base 4 + INT gives starting draws 5/6/5/5; tests cover INT growth, permanent rewards and temporary card lifecycles.
 - [ ] Attribute increase vectors prove STR→AR, DEX→DR, CON→HP, WIS→MP, INT→draw benefits. Secondary dependencies, SP thresholds/combinations, flooring, caps and old snapshot restoration have explicit vectors; no guessed starting derived totals.
 - [ ] Seven stance identities and exactly the five directed advantage rows are authored. Tests cover ties/unlisted pairs and decided advantage consequences without invented reverse edges.
