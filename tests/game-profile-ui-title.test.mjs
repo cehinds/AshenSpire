@@ -17,3 +17,17 @@ test('new-game starter summary follows imported copy changes', () => {
   assert.equal(profileStarterCount({ ...starter, classSpecificCopies: 2 }), 8);
   assert.equal(profileStarterCount(null), null);
 });
+
+test('configured editor definition keeps authored effects instead of adding legacy stance riders', async () => {
+  const { contentBundle } = await import('../src/content/index.js');
+  const { createRegistries } = await import('../src/model/registries.js');
+  const { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } = await import('../src/model/gameProfile.js');
+  const { playingCardDefinition } = await import('../src/model/playingCard.js');
+  const { cardFaceLines } = await import('../src/model/cardFaceText.js');
+  const profile = resolveGameProfile('core');
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const definition = playingCardDefinition(registries, { cardId: 'core.defend' }, { rules: { gameProfile: profile, combatExpansionVersion: 2 } });
+  const lines = cardFaceLines(definition, null, registries).map(line => line.html).join(' ');
+  assert.match(lines, /Block/);
+  assert.doesNotMatch(lines, /Entry|Precision|Ward|Restore/);
+});
