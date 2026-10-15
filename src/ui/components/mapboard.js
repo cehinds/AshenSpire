@@ -717,8 +717,10 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     // plate were sized `0 0 width height`; grown content would have ended the
     // parchment in the middle of the screen with the scrollport's background
     // carrying on in the same tone — invisible today, and a seam the day Freja's
-    // plates land. One `<rect>` is the home; the plate copies it (attachParchment).
-    for (const el of svgEl.querySelectorAll('.map-fog-ground > rect, .map-fog-ground > image')) {
+    // plates land. The terrain shares this viewport-wide ground too: fitting
+    // the painting to a one-column route graph leaves a narrow strip of art.
+    // Its SVG image uses a uniform cover fit, so architecture never stretches.
+    for (const el of svgEl.querySelectorAll('.map-fog-ground > rect, .map-fog-ground > image, .map-terrain .terrain-detail')) {
       el.setAttribute('x', String(x0));
       el.setAttribute('y', String(y0));
       el.setAttribute('width', String(w));
