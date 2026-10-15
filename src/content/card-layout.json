@@ -903,7 +903,7 @@
         "fit": "contain",
         "svg": {
           "viewBox": "0 0 32 32",
-          "body": "<path d=\"m1 25 10-20 8 13 5-7 7 14ZM3 28h26v3H3Z\"/>",
+          "body": "<path d=\"m8 5 13-2 9 11-3 14-16 3L2 20Zm1 4-4 10 7 8 1-12Zm6 6-1 12 10-2 3-10Zm1-3h9l-6-6-7 2Z\"/>",
           "fill": "currentColor"
         }
       },
@@ -1308,7 +1308,7 @@
         "fit": "contain",
         "svg": {
           "viewBox": "0 0 32 32",
-          "body": "<path d=\"m8 5 13-2 9 11-3 14-16 3L2 20Zm1 4-4 10 7 8 1-12Zm6 6-1 12 10-2 3-10Zm1-3h9l-6-6-7 2Z\"/>",
+          "body": "<path d=\"m1 25 10-20 8 13 5-7 7 14ZM3 28h26v3H3Z\"/>",
           "fill": "currentColor"
         }
       },

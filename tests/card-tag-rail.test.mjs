@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { cardSideTags, cardTagRailHtml, cardCategorySigilHtml } from '../src/ui/components/cardTagSymbols.js';
 import { applyCardAppearance } from '../src/ui/components/cardAppearance.js';
 import { CARD_COMPONENTS } from '../src/content/cardComponents.generated.js';
-import { ACTION_SIGILS } from '../src/content/combatSigils.js';
+import { ACTION_SIGILS, SCHOOL_SIGILS } from '../src/content/combatSigils.js';
 import { contentBundle } from '../src/content/index.js';
 import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
@@ -84,6 +84,27 @@ test('approved category and damage geometry is shared without changing Smash',()
   for(const id of ['damage:slashing','blade'])assert.ok(cardTagRailHtml([{id,label:id}]).includes(ACTION_SIGILS.attack.shape));
   assert.ok(cardTagRailHtml([{id:'damage:blunt',label:'Blunt'}]).includes('M5 2h22v12H5'));
   for(const id of ['earth','evade','piercing','frost','fire'])assert.ok(CARD_COMPONENTS.template.symbols.tags[id].svg.body);
+});
+test('Earth and Alteration swap their existing glyphs across rails, aliases and authored layouts',()=>{
+  const stone='<path d="m8 5 13-2 9 11-3 14-16 3L2 20Zm1 4-4 10 7 8 1-12Zm6 6-1 12 10-2 3-10Zm1-3h9l-6-6-7 2Z"/>';
+  const mountains='<path d="m1 25 10-20 8 13 5-7 7 14ZM3 28h26v3H3Z"/>';
+  for(const [id,shape] of [['alteration',stone],['earth',mountains]]){
+    assert.equal(SCHOOL_SIGILS[id].shape,shape);
+    assert.equal(SCHOOL_SIGILS[id].solid,true);
+    for(const layout of [CARD_COMPONENTS.template,...Object.values(CARD_COMPONENTS.cards)])assert.equal(layout.symbols.tags[id].svg.body,shape);
+    const tagIds=['school:'+id,'element:'+id,'damage:'+id,...(id==='alteration'?['element:alternation']:[])];
+    for(const tagId of tagIds){
+      const markup=cardTagRailHtml([{id:tagId,label:id}]);
+      assert.ok(markup.includes(shape),tagId);
+      withModalDom(()=>{
+        const face=document.createElement('div');face.dataset.cardLayoutId='strike';
+        face.innerHTML=markup;document.body.append(face);
+        applyCardAppearance(face);
+        assert.equal(face.querySelector('[data-tag-id] svg path').getAttribute('d'),shape.match(/d="([^"]+)"/)[1],tagId);
+        assert.equal(face.querySelector('[data-tag-id]').getAttribute('aria-label'),id);
+      });
+    }
+  }
 });
 test('evasion uses the boot only from authored identity or dodge payload',()=>{
   for(const def of [{evade:{charges:1}},{effects:[{op:'dodgeRoll'}]}])assert.equal(cardSideTags(model('camp:physical'),def,reg)[1].id,'effect:evade');

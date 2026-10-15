@@ -3,7 +3,13 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {validateCardAppearance} from '../src/model/cardAppearance.js';
 import {cardLayoutDocumentWithChanges} from '../src/model/cardLayoutDocument.js';
+import {cardComponentsModule,compileCardComponents} from '../tools/card-components.mjs';
+import {contentBundle} from '../src/content/index.js';
 const master=JSON.parse(readFileSync(new URL('../src/content/card-layout.json',import.meta.url),'utf8'));
+
+test('generated card components match the authoritative visual definitions',()=>{
+ assert.equal(readFileSync(new URL('../src/content/cardComponents.generated.js',import.meta.url),'utf8').replace(/\r\n/g,'\n'),cardComponentsModule(compileCardComponents(master,contentBundle.cards)));
+});
 test('master visual definitions validate and survive an editor layout save',()=>{
  assert.equal(validateCardAppearance(master),master);
  const input={...master,layouts:{shared:{...master.layouts.shared,panel:master.referenceRects.panel}},components:{...master.components,'panel-trim':{href:'assets/card-components/custom.png',fit:'fill'}}};

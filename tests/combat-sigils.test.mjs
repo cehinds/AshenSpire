@@ -12,15 +12,16 @@ import { INTENT_ICON_SHAPES } from '../src/ui/components/intentIcon.js';
 
 test('all requested identities have unique monochrome geometry', () => {
   assert.deepEqual(Object.keys(ACTION_SIGILS), ['attack','defense','stance','consumable','defend','evade','counter','sweep','ranged','smash','spell','power','skill','status']);
-  assert.deepEqual(Object.keys(SCHOOL_SIGILS), ['frost','fire','lightning','force','alteration','illusion','divine','decay']);
+  assert.deepEqual(Object.keys(SCHOOL_SIGILS), ['frost','fire','lightning','force','alteration','earth','illusion','divine','decay']);
   const marks = [...Object.values(ACTION_SIGILS), ...Object.values(SCHOOL_SIGILS)];
-  assert.equal(new Set(marks.map(m => m.shape)).size, 21);
+  assert.equal(new Set(marks.map(m => m.shape)).size, 22);
   for (const m of marks) { assert.ok(m.label && m.help); assert.doesNotMatch(m.shape, /fill=|style=|#[0-9a-f]/i); }
 });
 
 test('identity follows authored action and school rather than damage or card name', () => {
   assert.deepEqual(cardSigilIdentity('Smash', {camp:'physical',maneuver:'smash',damageType:'fire'}), {action:'smash',school:null});
   assert.deepEqual(cardSigilIdentity('Spell', {camp:'spell',maneuver:'ranged',school:'alteration'}), {action:'spell',school:'alteration'});
+  assert.deepEqual(cardSigilIdentity('Spell', {camp:'spell',school:'earth'}), {action:'spell',school:'earth'});
   assert.deepEqual(cardSigilIdentity('Power', {camp:'spell',school:'divine'}), {action:'power',school:'divine'});
   assert.equal(cardSigilIdentity('Skill', {}).action, 'skill');
   assert.equal(cardSigilIdentity('Status', {}).action, 'status');
@@ -51,6 +52,9 @@ test('marks preserve readable accessible names and inspection explanations', () 
   assert.equal(sigilHtml('constructor'), '');
   assert.match(sigilExplanationHtml(identity), /earth and grounding/);
   assert.match(sigilExplanationHtml(identity), /role="img" aria-label="Alteration"/);
+  const earth = sigilExplanationHtml({action:'spell',school:'earth'});
+  assert.match(earth, /role="img" aria-label="Earth"/);
+  assert.ok(earth.includes(SCHOOL_SIGILS.earth.shape));
 });
 
 test('card footer icons and corresponding intents use the same approved geometry', () => {
@@ -103,7 +107,7 @@ test('every base, upgrade, authored rank and equipment profile uses the shared i
     assert.ok(Object.isFrozen(model.sigils));
     actions.add(model.sigils.action); if(model.sigils.school)schools.add(model.sigils.school);
   }
-  assert.deepEqual([...actions].sort(), ['attack','counter','defense','evade','power','skill','smash','status','sweep']); assert.equal(schools.size, 8);
+  assert.deepEqual([...actions].sort(), ['attack','counter','defense','evade','power','skill','smash','status','sweep']); assert.equal(schools.size, 9);
 });
 
 test('approved solid footer symbols stay distinct and have a visible action name', () => {

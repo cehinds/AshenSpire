@@ -1,4 +1,4 @@
-import { ACTION_SIGILS } from '../../content/combatSigils.js';
+import { ACTION_SIGILS, SCHOOL_SIGILS } from '../../content/combatSigils.js';
 import { constantFormulaValue } from '../../model/formulas.js';
 import { cardArtElement } from '../cardArtComposition.js';
 import { t, tFull } from '../strings.js';
@@ -14,7 +14,7 @@ const SYMBOL_TRAITS = new Set(['flux', 'impact', 'reaction', 'counterstrike']);
 // Original solid silhouettes, matching the approved B footer treatment.
 const SHAPES = Object.freeze({
   evade: '<path d="M7 2h13l-2 12 4 6 7 3 2 5-2 3H13L2 25l2-8Zm1 5-1 4 10 2 1-4ZM5 21l-1 3 10 5h14v-3H15Z"/>',
-  earth: '<path d="m8 5 13-2 9 11-3 14-16 3L2 20Zm1 4-4 10 7 8 1-12Zm6 6-1 12 10-2 3-10Zm1-3h9l-6-6-7 2Z"/>',
+  earth: SCHOOL_SIGILS.earth.shape,
   fire: '<path d="M18 1c4 9-5 11-1 16 4-2 6-6 6-10 12 14 9 24-7 24C1 31-2 19 9 10c-1 6 1 9 4 9-4-9 3-13 5-18ZM16 21c-7 7-3 9 0 9s8-4 0-9Z"/>',
   ritual: '<path d="M16 2 31 28H1Zm0 7L7 25h18Z"/><circle cx="16" cy="19" r="4"/>',
   skill: '<path d="m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z"/>',
@@ -27,7 +27,7 @@ const SHAPES = Object.freeze({
   impact: SHAPES_BLUNT,
   reaction: '<path d="M16 4a12 12 0 1 0 12 12h-4a8 8 0 1 1-8-8Z"/>',
   counterstrike: COUNTER_SHAPE,
-  alteration: '<path d="m1 25 10-20 8 13 5-7 7 14ZM3 28h26v3H3Z"/>',
+  alteration: SCHOOL_SIGILS.alteration.shape,
   illusion: '<path d="M1 16Q16-3 31 16 16 35 1 16Zm8 0a7 7 0 1 0 14 0 7 7 0 1 0-14 0Z"/><circle cx="16" cy="16" r="4"/>',
   divine: '<path d="m16 0 3 7 7-4-1 8 7 5-7 4 1 9-7-5-3 8-3-8-7 5 1-9-7-4 7-5-1-8 7 4Z"/>',
   decay: '<path d="M16 14C6 17 1 9 7 3l6 8ZM18 14l2-11c9 0 13 10 3 13ZM17 19l8 8c-5 8-17 5-15-5Z"/><circle cx="16" cy="16" r="4"/>',
