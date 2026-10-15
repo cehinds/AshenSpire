@@ -149,13 +149,16 @@ test('form factors follow the contract rule order at the reference viewports', (
   assert.equal(formFactorFor(0, 0, t), 'desktop');
 });
 
-test('applyUiScale writes data-form-factor beside data-layout from the balance thresholds', () => {
+test('applyUiScale derives layout and form factor from the same selected view', () => {
   const main = read('src/main.js');
   const body = main.slice(main.indexOf('function applyUiScale('));
   const layout = body.indexOf("setAttribute('data-layout'");
   const formFactor = body.indexOf("setAttribute('data-form-factor'");
   assert.ok(layout > 0 && formFactor > layout && formFactor < body.indexOf('updateUprightGate('), 'written in applyUiScale, after data-layout');
-  assert.match(body.slice(formFactor, formFactor + 200), /formFactorFor\(window\.innerWidth, window\.innerHeight, UI\.uiScale\.formFactor\)/);
+  assert.match(body, /const view = applyViewViewport\(settings\.viewPreset, window\.innerWidth, visibleHeight\)/);
+  assert.match(body, /resolveLayout\(settings\.uiScale, view\.width, view\.height\)/);
+  assert.match(body.slice(formFactor, formFactor + 240), /view\.preset === 'auto' \? formFactorFor\(view\.width, view\.height, UI\.uiScale\.formFactor\) : view\.preset/,
+    'Auto uses the native logical view with balance thresholds; named views select their HUD composition');
 });
 
 test('a form-factor change re-measures the tools row at once and refits the stage', () => {
@@ -278,8 +281,8 @@ test('the tools pass reads its row height and obstacles only for a raise', () =>
 test('the tools row keeps its field span unless the token asks for the card band', () => {
   const tools = read('src/ui/components/combatTools.js');
   assert.match(tools, /span === 'hand' \? cardBand\(hand\) : null/);
-  assert.match(tools, /let width = Math\.max\(0, \(handBox\?\.width \|\| innerWidth\) - 12\);/, 'field: the old width');
-  assert.match(tools, /let left = \(handBox\?\.right \|\| innerWidth\) - width - 6;/, 'field: the old dock');
+  assert.match(tools, /let width = Math\.max\(0, \(handBox\?\.width \|\| viewViewportBox\(\)\.width\) - 12\);/, 'field: hand width with fitted frame fallback');
+  assert.match(tools, /let left = \(handBox\?\.right \|\| viewViewportBox\(\)\.right\) - width - 6;/, 'field: hand edge with fitted frame fallback');
 });
 
 // ---- --merge: studio exports into content/hud-layout (temp roots only) ----
