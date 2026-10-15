@@ -4,6 +4,7 @@ import { test } from 'node:test';
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { armHold } from '../src/ui/components/holdconfirm.js';
 import { canRestoreEnemyHoldCard, enemyHoldActionStep, enemyHoldPlayReason } from '../src/ui/models/EnemyHoldActionModel.js';
+import { t, tFull } from '../src/ui/strings.js';
 
 function harness(run, { tapOnPointerRelease = true } = {}) {
   withKitDom((dom) => {
@@ -171,10 +172,10 @@ test('closing and inspector Back preserve only the captured, still-live selectio
 
 test('combat wires the chooser labels, preservation guard and canonical enemy play', () => {
   const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
-  assert.match(source, /label: 'Inspect'/);
-  assert.match(source, /label: 'Play'/);
-  assert.match(source, /label: 'Back'/);
-  assert.match(source, /label: 'Exit'/);
+  assert.match(source, /label: t\('combat\.enemyHold\.inspect'\)/);
+  assert.match(source, /label: t\('combat\.reaction\.play'\)/);
+  assert.match(source, /label: t\('common\.back'\)/);
+  assert.match(source, /label: t\('combat\.enemyHold\.exit'\)/);
   assert.match(source, /function enemyHoldPlayReason\(instanceId, enemyId\)/);
   assert.match(source, /function restoreEnemyHoldCard\(instanceId, selfArmed = false\)/);
   assert.match(source, /heldCardInstanceId = selected \|\| selfArm/);
@@ -187,6 +188,16 @@ test('combat wires the chooser labels, preservation guard and canonical enemy pl
   assert.match(source, /canRestoreEnemyHoldCard\(/);
   assert.match(source, /frame\.inert = !alive/);
   assert.match(source, /onExit: \(\) => \{[\s\S]*?finishEnemyHoldFlow\(instanceId, selfArmed\);/);
+});
+
+test('enemy hold labels and tokenized notes resolve through authored UI strings', () => {
+  assert.deepEqual([
+    t('combat.enemyHold.inspect'), t('common.back'), t('combat.enemyHold.exit'), t('combat.reaction.play'),
+  ], ['Inspect', 'Back', 'Exit', 'Play']);
+  assert.equal(tFull('combat.enemyHold.inspectOrPlay', { enemy: 'Imp', card: 'Strike' }), 'Inspect Imp or play Strike on it.');
+  assert.equal(tFull('combat.enemyHold.playUnavailable', { card: 'Strike', reason: 'No target' }), 'Play Strike unavailable: No target');
+  assert.equal(tFull('combat.enemyHold.closeInspection', { enemy: 'Imp' }), 'Close Imp');
+  assert.equal(tFull('combat.enemyHold.closeActions', { enemy: 'Imp' }), 'Close actions for Imp');
 });
 
 test('combatant frame Enter yields to captured holds and ignores repeats while Space keeps tap fallback', () => {
