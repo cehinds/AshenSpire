@@ -5,7 +5,10 @@ import { createHash } from 'node:crypto';
 import { cardValueIndexCases, cardValueOracleOutput } from './helpers/card-value-index-cases.mjs';
 import { contentBundle } from '../src/content/index.js';
 import * as model from '../src/model/attackCardDamage.js';
-// Recorded by invoking the unchanged model at c58cfef56 before indexing tags.
+// Recorded from the unindexed Dev model at 04adc68513b3f13f2b5c28702edce4ec513202a1
+// against current WardToBlock content, not from this indexed implementation.
+// The fixture records the exact model and content SHA256 used for provenance.
+// The earlier c58cfef56 fixture described obsolete content, not changed semantics.
 // Each hash covers the serialized card definitions/damage configuration/problem list.
 const baseline = JSON.parse(readFileSync(new URL('./fixtures/card-value-tag-index-baseline.json', import.meta.url)));
 for (const [name, bundle] of cardValueIndexCases()) {
