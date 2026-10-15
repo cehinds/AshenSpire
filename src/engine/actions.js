@@ -286,7 +286,7 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
 function applyProfileDamage(ctx, source, target, base, carrier) {
   const chance = profileDamageReceipt(ctx, source, target, base, carrier);
   const receipt = profileDamageReceipt(ctx, source, target, base, carrier,
-    { roll: chance.hitChance < 1 ? ctx.rng.float('profileAccuracy') : null });
+    { roll: chance.hitChance < 1 ? ctx.rng.float(configuredModule(ctx, 'stances')?.accuracyStream || 'combatAvoidance') : null });
   const before = target.block || 0;
   target.block = receipt.blockRemaining;
   target.hp -= receipt.hpLoss;
@@ -757,7 +757,8 @@ export function addArcaneExposure(ctx, source, target, { school, attempted = nul
  * floored, min 0 (SPEC §4.2). Pure. Cap NOT applied here.
  */
 export function computeBlockGain(ctx, entity, base, card = null) {
-  if (configuredCombat(ctx)) return configuredModule(ctx, 'defenses')?.include?.includes('block') ? Math.max(0, Math.floor(base)) : 0;
+  if (configuredCombat(ctx)) return configuredModule(ctx, 'defenses')?.include?.includes('block')
+    ? Math.max(0, Math.floor(base + (entity?.ratings?.dr || 0) * (configuredModule(ctx, 'effects')?.defenseRatingWeight || 0))) : 0;
   const split = computeSpellDefenseGain(ctx, entity, base, card);
   if (split) return split.block + split.ward;
   let amt = base + Ratings.cardRatingBonus(ctx, entity, card, 'block', base) + statuses.getAdd(ctx, entity, 'blockAdd');

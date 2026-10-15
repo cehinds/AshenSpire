@@ -1,3 +1,5 @@
+import { configuredCombat, configuredModule } from './gameProfileCombat.js';
+import { deriveStat } from '../model/derivedStats.js';
 // engine/runCombat.js — the one door a run's fight is built through.
 //
 // The live game (src/main.js enterCombat) and every headless simulator
@@ -57,7 +59,7 @@ export function runCombatPlayer(run) {
   return {
     classId: run.class,
     ...(run.classUnequipped ? { classUnequipped: true } : {}),
-    attributes: run.combatExpansionVersion === 2 ? effectiveAshenBlightAttributes(run) : run.attributes,
+    attributes: !configuredCombat(run) && run.combatExpansionVersion === 2 ? effectiveAshenBlightAttributes(run) : run.attributes,
     allocatedAttributes: run.attributes,
     ashenBlight: run.ashenBlight,
     baseResourceMaxima: run.ashenBlightBasePools,
@@ -123,7 +125,7 @@ export function createRunCombat({
 }) {
   // The every-5th-level skill bonus is derived (SPEC §13.4o): stamped fresh
   // here so the fight's copies carry the levels and hands it starts with.
-  stampSkillBonuses(registries, run);
+  if (!configuredCombat(run)) stampSkillBonuses(registries, run);
   const knowledgeRun = run.enemyKnowledgeState ? { ...run, enemyKnowledgeState: structuredClone(run.enemyKnowledgeState) } : null;
   if (knowledgeRun) openKnowledgeEncounter(knowledgeRun, run.mapNodeId || 'combat', encounter?.id || enemyIds.join(','), enemyIds, enemyKnowledgeProfile);
   const combat = createCombat({
@@ -156,7 +158,9 @@ export function createRunCombat({
     normalPreview: normalPreviewFor(run.advancedConfigSnapshot?.overrides),
     registries,
     rng,
-    player: { ...runCombatPlayer(run), ...player },
+    player: { ...runCombatPlayer(run),
+      ...(configuredCombat(run) && configuredModule(run, 'stats') && run.derivedStatRuleSnapshot?.rules ? { ratings: Object.fromEntries(['ar', 'dr', 'poise'].map(id => [id, deriveStat(run.derivedStatRuleSnapshot.rules, id, { attributes: run.attributes, classDef: registries.classes.get(run.class), level: run.level?.level }).value])) } : {}),
+      ...player },
     enemyIds,
     enemyLevels: enemyLevelsForFight(registries, run, enemyIds, encounter),
     hpMult,

@@ -1,5 +1,5 @@
 import { validateGameProfileSnapshot } from '../model/gameProfile.js';
-import { freezeProfile } from './gameProfileCombat.js';
+import { freezeProfile, configuredCombat } from './gameProfileCombat.js';
 // src/engine/combatSnapshot.js — CombatSnapshotService.
 //
 // A save is a committed combat state, not a replay instruction. Registries,
@@ -257,7 +257,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   combat._emitEvent = emitEvent;
   // The one listener createCombat hooks on the bus, hooked again here: the
   // raw emitter alone would record no XP for the rest of the restored fight.
-  attachSkillXp(combat);
+  if (!configuredCombat(combat)) attachSkillXp(combat);
   combat.enqueue = (action) => combat.queue.push(action);
   for (const key of ['reactionRulesVersion', 'reactionRules', 'reactionStack', 'foundationNextSerial', 'reactionCursor', 'reactionHandCleanup', 'pendingReaction', 'reactionResume', 'enemyReactionRolls', 'reactionRootPlay']) {
     if (saved[key] !== undefined) combat[key] = saved[key];
@@ -294,7 +294,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   // exactly as a fresh fight would (stampPlayerPoiseMax clamps the value).
   if (combat.ratingsRules) {
     refreshCombatRatings(combat);
-  } else if (combat.player && combat.loadout) {
+  } else if (!configuredCombat(combat) && combat.player && combat.loadout) {
     stampPlayerPoiseMax(combat.player, playerPoiseThresholdReceipt(registries, {
       loadout: combat.loadout, relics: combat.player.relicIds || [], class: combat.player.classId,
       itemUpgradeLevels: combat.itemUpgradeLevels || {}, attributes: combat.attributes || null,
