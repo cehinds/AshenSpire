@@ -20,7 +20,9 @@ jobs:
   hosted-proof:
     if: github.ref == 'refs/heads/feature/FullCombatAudit'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # Trusted Pages assembly can take 45 minutes after the feature build; the
+    # previous 12-minute proof wait expired before its route was published.
+    timeout-minutes: 65
     steps:
       - uses: actions/checkout@v5
         with:
@@ -35,7 +37,7 @@ jobs:
           EXPECTED_COMMIT: ${{ github.sha }}
           GITHUB_TOKEN: ${{ github.token }}
           HOSTED_PREVIEW_OUT: _hosted-preview
-          HOSTED_PREVIEW_WAIT_MS: '720000'
+          HOSTED_PREVIEW_WAIT_MS: '3600000'
         run: node tools/combat-audit/hosted-preview.mjs
       - name: Upload public screenshots and source identity
         if: always()

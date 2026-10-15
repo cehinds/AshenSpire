@@ -38,8 +38,8 @@ async function main() {
   const expectedSource = sourceDigest(process.cwd()).digest;
   const report = { url: HOSTED_URL, expectedCommit, expectedSource, started: new Date().toISOString(),
     attempts: [], errors: [], checks: {}, passed: false };
-  const requestedWait = Number(process.env.HOSTED_PREVIEW_WAIT_MS || 720000);
-  assert.ok(Number.isFinite(requestedWait) && requestedWait >= 0 && requestedWait <= 720000, 'publication wait is bounded to twelve minutes');
+  const requestedWait = Number(process.env.HOSTED_PREVIEW_WAIT_MS || 3600000);
+  assert.ok(Number.isFinite(requestedWait) && requestedWait >= 0 && requestedWait <= 3600000, 'publication wait is bounded to one hour');
   const deadline = Date.now() + requestedWait;
   const fetchText = async (url, authenticated = false) => {
     const response = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(15000), headers: authenticated && process.env.GITHUB_TOKEN
