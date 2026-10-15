@@ -227,6 +227,48 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "combat.enemyHold.inspect",
+    "extends": "armoury.action.inspect",
+    "short": "",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.enemyHold.exit",
+    "extends": "",
+    "short": "Exit",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.enemyHold.closeActions",
+    "extends": "",
+    "short": "Close actions for {enemy}",
+    "full": "Close actions for {enemy}",
+    "tip": ""
+  },
+  {
+    "id": "combat.enemyHold.closeInspection",
+    "extends": "",
+    "short": "Close {enemy}",
+    "full": "Close {enemy}",
+    "tip": ""
+  },
+  {
+    "id": "combat.enemyHold.inspectOrPlay",
+    "extends": "",
+    "short": "",
+    "full": "Inspect {enemy} or play {card} on it.",
+    "tip": ""
+  },
+  {
+    "id": "combat.enemyHold.playUnavailable",
+    "extends": "",
+    "short": "",
+    "full": "Play {card} unavailable: {reason}",
+    "tip": ""
+  },
+  {
     "id": "combat.reaction.upcast",
     "extends": "",
     "short": "Upcast {tier}",

@@ -952,14 +952,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (!subject?.name) return;
     hideTooltip();
     let returnToChooser = false;
-    const done = button({ label: onBack ? 'Back' : 'Close', role: onBack ? 'back' : 'exit', attrs: { 'data-focusable': 'true', title: onBack ? 'Return to actions' : helpText('close') } });
+    const done = button({ label: onBack ? t('common.back') : t('common.close'), role: onBack ? 'back' : 'exit', attrs: { 'data-focusable': 'true', title: onBack ? 'Return to actions' : helpText('close') } });
     const shell = openModal({
       size: 'lg',
       className: 'combatant-door',
       opener,
       eyebrow: subject.subtitle || 'Combatant',
       title: subject.name,
-      closeLabel: `Close ${subject.name}`,
+      closeLabel: tFull('combat.enemyHold.closeInspection', { enemy: subject.name }),
       bodyClassName: 'combatant-inspector-body',
       body: (host) => host.replaceChildren(combatantInspectorLayout(subject, { sprite: inspectorPreviewSprite(subject), previewFraction: wireframeUi.inspector.previewFraction })),
       primary: done,
@@ -1020,15 +1020,17 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const reason = enemyHoldPlayReason(instanceId, enemyId);
       const selectedInst = combat.piles.hand.find(card => card.instanceId === instanceId);
       const selectedName = selectedInst ? resolveCard(registries, selectedInst).name : 'selected card';
-      const inspect = button({ label: 'Inspect', role: 'secondary', attrs: { 'data-focusable': 'true' } });
-      const back = button({ label: 'Back', role: 'back', attrs: { 'data-focusable': 'true' } });
-      const exit = button({ label: 'Exit', role: 'exit', attrs: { 'data-focusable': 'true' } });
-      const play = button({ label: 'Play', role: 'primary', attrs: { 'data-focusable': 'true', ...(reason ? { disabled: true, title: reason } : {}) } });
+      const inspect = button({ label: t('combat.enemyHold.inspect'), role: 'secondary', attrs: { 'data-focusable': 'true' } });
+      const back = button({ label: t('common.back'), role: 'back', attrs: { 'data-focusable': 'true' } });
+      const exit = button({ label: t('combat.enemyHold.exit'), role: 'exit', attrs: { 'data-focusable': 'true' } });
+      const play = button({ label: t('combat.reaction.play'), role: 'primary', attrs: { 'data-focusable': 'true', ...(reason ? { disabled: true, title: reason } : {}) } });
       let transitioningToInspector = false;
       const shell = openModal({
         size: 'md', className: 'enemy-hold-actions', opener, eyebrow: subject.subtitle || 'Enemy', title: subject.name,
-        closeLabel: `Close actions for ${subject.name}`,
-        note: reason ? `Play ${selectedName} unavailable: ${reason}` : `Inspect ${subject.name} or play ${selectedName} on it.`,
+        closeLabel: tFull('combat.enemyHold.closeActions', { enemy: subject.name }),
+        note: reason
+          ? tFull('combat.enemyHold.playUnavailable', { card: selectedName, reason })
+          : tFull('combat.enemyHold.inspectOrPlay', { enemy: subject.name, card: selectedName }),
         secondary: [back, exit, inspect], primary: play, footSize: 'fill',
         onClose: () => {
           if (!transitioningToInspector) {
