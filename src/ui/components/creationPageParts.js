@@ -206,7 +206,10 @@ export function createCreationFeatBrowser({ feats = [], groups = null, selectedI
       });
       if (row.locked) {
         tile.disabled = true;
-        tile.querySelector('.cc-choice-copy').append(el('span', { class: 'cc-feat-tile-requirement', text: requirement(row) || labels.locked || '', dataset: { creationPart: 'lock-reason' } }));
+        const reason = requirement(row) || labels.locked || '';
+        const requirementNode = el('span', { class: 'cc-feat-tile-requirement', text: reason, title: reason, 'aria-label': reason, dataset: { creationPart: 'lock-reason' } });
+        requirementNode.prepend(engravedIcon('lock'));
+        tile.querySelector('.cc-choice-copy').append(requirementNode);
       }
       markUiComponent(tile, UI.creationFeatTile);
       tile.style.setProperty('--cc-choice-order', String(tiles.size * 2));
