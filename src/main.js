@@ -4204,6 +4204,20 @@ if (shotState) {
   // NOT a player-facing surface: what a PLAYER should be told when their save
   // was repaired is wording, and wording is not this seat's to write.
   window.__runstatus = () => saves.runStatus();
+  // Rest QA reads the live transaction and its actual persisted slot. No
+  // mutable references escape, and this handle exists only in shot boots.
+  if (shotState === 'rest' || shotState === 'smith') window.__restStateForShot = () => {
+    const snapshot = row => row ? structuredClone({
+      hp: row.hp, maxHp: row.maxHp, mana: row.mana, maxMana: row.maxMana,
+      stamina: row.stamina, maxStamina: row.maxStamina,
+      flaskCharges: row.flaskCharges, visitId: row.gameProfileRestVisitId,
+      visit: row.gameProfileRestVisits?.[row.gameProfileRestVisitId] || null,
+      deck: row.deck, sideboard: row.sideboard, attributes: row.attributes, level: row.level,
+      itemUpgradeLevels: row.itemUpgradeLevels, smithingStones: row.smithingStones,
+      loadout: row.loadout, mapNodeId: row.mapNodeId, restRevisit: row.restRevisit,
+    }) : null;
+    return { live: snapshot(run), saved: snapshot(saves.loadRun(registries, activeSlot)) };
+  };
   // The creation probe reads both the live deck and the shot's memory save.
   window.__startingAbilities = () => {
     const saved = saves.loadRun(registries, activeSlot);
@@ -4544,7 +4558,21 @@ if (shotState === 'combat-test') {
       if (!node) throw new Error('Configured rest screenshot requires an authored rest node');
       run.mapNodeId = node.id; run.floor = node.floor;
       run.path = screenshotRoutePath(run.mapGraph, node.id);
-      if (shotParams.get('shotRestState') === 'wounded') { run.hp = Math.max(1, Math.floor(run.maxHp * .6)); run.mana = 0; run.stamina = 0; }
+      // A bounded, ephemeral earned-point fixture goes through the production
+      // XP/claim ledger; arbitrary unearned attribute allocations are not posed.
+      const rawPoints = shotParams.get('shotRestPoints');
+      if (rawPoints !== null) {
+        const points = Number(rawPoints);
+        if (!Number.isInteger(points) || ![0, 1].includes(points)) throw new Error('?shotRestPoints: expected exactly 0 or 1');
+        if (points === 1) {
+          bankLevelXp(registries, run, levelXpToNext(registries, run.level.level));
+          claimBankedLevel(registries, run, { pointsPerLevel: 1 });
+        }
+      }
+      if (shotParams.get('shotRestState') === 'wounded') {
+        run.hp = Math.max(1, Math.floor(run.maxHp * .6)); run.mana = 0; run.stamina = 0;
+        if (run.flaskCharges) { run.flaskCharges.hpCurrent = 0; run.flaskCharges.manaCurrent = 0; }
+      }
       if (shotState === 'smith') run.smithingStones = Math.max(1, run.smithingStones || 0);
       persist(); showRest(); return;
     }
