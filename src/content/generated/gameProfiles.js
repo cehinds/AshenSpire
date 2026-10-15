@@ -2748,7 +2748,8 @@ export const gameProfileCatalog = {
               "dr": 1
             },
             "constitution": {
-              "hp": 10
+              "hp": 10,
+              "sp": 0.5
             },
             "wisdom": {
               "mp": 1
@@ -2833,7 +2834,7 @@ export const gameProfileCatalog = {
             "Evade uses seeded hit chance clamp(0.75 + (AR-DR)*0.02, 0.05, 0.95); failure doubles damage. Rating contributions and ordering are provisional.",
             "Stance advantage multiplier 1.25, bounded Smash stagger and Prepared interruption are provisional adapter policies.",
             "Equipment editor noncombat timing, reward take-one, free-work and reaction limits are provisional.",
-            "SP recovery delegates to the existing turn-start adapter; exact SP growth remains legacy.",
+            "CON contributes 0.5 SP per point: CON1 to CON3 adds one max SP. Other secondary floors remain legacy; combined-contribution rounding is provisional.",
             "Herald power behavior is a provisional card fixture; persistent stacking needs the runtime adapter.",
             "Rest positions [2,6] and generic shop price10 are provisional source-configured fixtures.",
             "Stance advantage multiplier1.25 and one Smash advantage stagger per target/round are provisional."
@@ -3095,7 +3096,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/stats.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:4dde9f2e1968b325d9ba29a389175a148c70425959a5208ba82834449fd5b6c8"
+          "hash": "sha256:a6ceca9f64665580255004bdfaeb606c87024eb4b1cd78e1e75ed30374d4adc7"
         },
         {
           "path": "games/ashenspire/packs/core/classUnlocks.json",
@@ -3125,7 +3126,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/provisionalPolicies.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:5d2712b0677f52bc53940dc1f58d9f94b624fab82dab378a787e673af3261310"
+          "hash": "sha256:6d2a223bfce52355f1eddc01b4288f01c2361be19361a6ef3100d9ff9c6f992c"
         },
         {
           "path": "games/ashenspire/packs/core/resourceVariants.json",
@@ -3153,7 +3154,7 @@ export const gameProfileCatalog = {
       "path": "engine/kernel/gameConfig.js",
       "id": "ashen.runtime",
       "version": "1.0.0",
-      "hash": "sha256:b4b38b3a2c558484eecd59b79d276d84282e297adba243a6c8ea4fb5bbcf5de4"
+      "hash": "sha256:f4ebf5988190d79506f654c658154abce768a133c7288e17329630874ae52346"
     },
     {
       "path": "engine/contracts/game-profile.json",
@@ -3171,7 +3172,7 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "path": "src/** (excluding generated gameProfiles/changelog)",
-      "hash": "sha256:b6ae47f1e82543c82d11d181bec41693c97801f36449c0769b91ebec6d87e402"
+      "hash": "sha256:0ee23136181619eafa7139e097f48910480df71890a809948bd14b3211e0aa47"
     }
   ],
   "runtimeSources": [
@@ -3324,12 +3325,6 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "hash": "sha256:57447de82f7fd1750cad636cc93b773a687a308dead336e13dde986001e688e8"
-    },
-    {
-      "path": "src/content/changelog.generated.js",
-      "id": "ashen.source-runtime",
-      "version": "1.0.0",
-      "hash": "sha256:d9df95d2f1f411f2002dd44ee89302e6e64cf5017878fe9460b60e22745a1123"
     },
     {
       "path": "src/content/classArtAnchors.js",
@@ -5387,7 +5382,7 @@ export const gameProfileCatalog = {
       "path": "src/model/gameProfile.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:95084336438f6addc14e9f71751192f0ce6b7407136728b1cd296ba0f7f14f2c"
+      "hash": "sha256:fc43ac660be7e79a428c33010afb2a799b1d5e6a7b081e391751312867f17df3"
     },
     {
       "path": "src/model/gracerefill.js",
@@ -7940,7 +7935,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:23af16d4e9c9f6d88fe655d32ecf1a688b47df39f9e3a1d6d193ce63923593ab"
     }
   ],
-  "runtimeHash": "sha256:dc57af811c287628f1c85260b54a082a85aba9734b29de1740b085a85e162f83"
+  "runtimeHash": "sha256:e8dac67d4f4df0b83b151565be0dc828ecd59e4ce5d5f878eef3eaa4e039da4c"
 };
 export const gameProfileAuthors = {
   "default": {
