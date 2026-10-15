@@ -195,7 +195,8 @@ and interfaces are proposed, not existing files:
     { "id": "defenses.stanceProtection", "owner": "defenses", "version": 1,
       "whenEnabled": ["defenses", "stances"], "requiresCapabilities": ["stance.entry@1"] }
   ],
-  "entrypoints": { "implementation": "./defenses.mjs", "ui": "./defenses.ui.mjs" },
+  "entrypoints": { "implementation": "./defenses.mjs" },
+  "ui": ["./defenses.ui.json"],
   "guide": "./defenses.md",
   "stateSchema": { "$ref": "./defenses.schema.json#/$defs/state" },
   "content": ["./defenses.content.json"],
