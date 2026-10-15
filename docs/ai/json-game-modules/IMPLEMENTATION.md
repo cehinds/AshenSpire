@@ -48,7 +48,7 @@ This is a complete core-only game request. A module entry absent or false disabl
 }
 ```
 
-A versioned catalog maps these stable IDs to pinned manifests. Resolve settings as defaults followed by the entry's object overrides: keyed objects merge recursively, arrays replace entirely, scalars replace. Removal is only an explicit RFC 6902 config patch applied before resolution, never a special null convention. Validate patches and the resulting configuration. Unknown properties and unresolved required references report their exact JSON paths. Permit $comment metadata; ignore it in execution and gameplay hashes. Do not silently activate optional features because another module mentions them.
+A versioned catalog maps these stable IDs to pinned manifests. Resolve settings as defaults followed by the entry's object overrides: keyed objects merge recursively, arrays replace entirely, scalars replace. Removal is only an explicit RFC 6902 config patch applied before resolution, never a special null convention. An RFC 6902 remove deletes an authored override, so the inherited module default returns during resolution; it cannot erase a package default. To replace that default, use a schema-defined replacement setting such as include:[], or edit the owning package definition/default; null has no magic removal meaning. Validate patches and the resulting configuration. Unknown properties and unresolved required references report their exact JSON paths. Permit $comment metadata; ignore it in execution and gameplay hashes. Do not silently activate optional features because another module mentions them.
 
 Freeze definitions for typed IDs, values, state, commands, events, operation signatures and adapter versions. Specify canonical JSON ordering, numeric representation, finite-number restrictions, integer bounds, rounding, per-hit versus per-action application and mixed-damage allocation. Specify named RNG streams, draw order, scheduler ordering and a bounded declarative rules VM. The lock records exact versions, artifact hashes, contract versions and the resolved gameplay hash. Native host extensions must declare a separately versioned execution capability; they are not portable declarative rules.
 
@@ -69,6 +69,21 @@ Build the core-only vertical slice behind an adapter while retaining the current
 Acceptance: core-only browser and headless games reach outcomes; attack/pass and target inspection work; saving preserves the deterministic continuation; two simultaneous runtimes cannot affect each other's registries, caches, RNG or state. The legacy preset still produces its recorded trace within declared compatibility limits.
 
 ## 4. Package ownership and module catalog
+
+The following is a **future target map**, not a tree that currently exists. Introduce paths only for an implemented slice; do not bulk scaffold them or move legacy files merely to match this map.
+
+| Proposed path | Responsibility |
+| --- | --- |
+| engine/kernel/ | Generic registries, transactions, scheduling and composition. |
+| engine/contracts/ | Versioned ABI, bounded rules VM, numeric policies and RNG contracts. |
+| engine/core/ | Required playable baseline; core.json, core.schema.json, core.mjs, core.md, core.content.json, core.ui.json, core.standins.json and core.cases.json. |
+| engine/modules/<id>/ | Optional feature packages using the template below. |
+| engine/games/ashenspire/ | game.json, generated game.lock.json, game.md and authored presets/, groups/ and packs/. |
+| engine/tools/ | Proposed resolver, configuration and export commands; executable names remain undefined until implemented. |
+| engine/adapters/web/ and engine/adapters/headless/ | Browser presentation/input and headless host integration. |
+| engine/verification/ | Shared contract, numeric, replay and portability conformance vectors. |
+
+Extend the existing Workbench through workbench/modules/<configuration>/ and its existing ctx API; do not build a second application or duplicate editor. Existing src/content compilation inputs remain canonical through a compatibility adapter until each migration explicitly selects its single authored owner. Never leave both the legacy and replacement trees editable as competing sources of truth.
 
 Proposed package organization is:
 
