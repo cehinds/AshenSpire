@@ -1,5 +1,15 @@
 # Character creation continuation handoff
 
+## Current Review character stat card follow-up
+
+The user requested the opened Review character stat card use the equipment-card dimensions. Current local build is **0.7.1.1520 / `a12edfdd78`**, source `6d88c4d641fbd870beb5a8c25f6390636c9a2bbd`; remote equivalent is `b0d1dc0f258fcd5d3e166072aa11cc75a6019301`. Standalone SHA-256: `50da976c929e0dc4af4c983f90babd7b6db6c0a20fa0363ea6584de3d744321b`.
+
+- Four actual opened Review screenshots and four structural PNG wireframes are in `docs/preview/features/update-character-creation/review-character-card/`, with a small source/hash capture record and zero recorded capture errors.
+- Current CI run `38696812396`, job `116295197508`, passed at exact digest `a12edfdd78`; backup artifact `11954500967`. Pages run `38696977562` is pending; public hosting verification for this revision is pending. Do not apply the prior public HTTP success receipt to this new revision.
+- README leads with these four new views. The existing 36-view matrix at `652574f013` remains prior compact-layout evidence, with its original source and manifest intact.
+- Evidence is prepared for root review/publication. Earlier completed compact-layout delivery and its limitations are historical context below.
+
+
 Updated 2026-10-14 (America/Anchorage). Current integrated code: `b5ac91a039e38e7ed2b8bc01770b14ed29b94a9f`.
 Captured production source: `f6801043c9d9762550a7a3ff28cba7fc346fee81`; both have
 source tree `9124302fb4c26347d21269b9a69db273d99349d3`.

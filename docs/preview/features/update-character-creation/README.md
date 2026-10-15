@@ -1,4 +1,6 @@
-# Character creation — feature preview
+# Character creation — prior compact-layout evidence
+
+[Current Review Character-card evidence](review-character-card/README.md) — four new screenshots and wireframes at `a12edfdd78`; publication verification pending. The 36-view matrix below remains the prior `652574f013` build and has not been relabeled.
 
 [Play the test build](https://cehinds.github.io/AshenSpire/branches/Feature/updateCharacterCreation/latest/) · [Build run](https://github.com/cehinds/AshenSpire/actions/runs/38659839311)
 
