@@ -665,7 +665,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
   // card tooltip had the identical defect; it is one fix, not two.
   const combatProfile = combatProfileFor(def);
   html += sigilExplanationHtml(cardSigilIdentity(combatCardType(def), combatProfile));
-  if (def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2) {
+  if (registries.gameProfile?.foundation?.mode !== 'configured' && (def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2)) {
     const stance = stanceOf(def);
     if (stance) {
       const ctx = { registries, combatExpansionVersion: 2, stanceRules: registries.balance?.stanceRules };
