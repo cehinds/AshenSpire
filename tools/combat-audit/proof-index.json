@@ -3,9 +3,9 @@
   "productionCommit": "60e89f5ff8c4763552e62ebaf08830e26461b5b9",
   "sourceDigest": "368140ce27",
   "ordinal": 1530,
-  "htmlSha256": "1d63824ea3d6df48d2909b31b595e48d63e46e2d4322f74e868371b92792c319",
+  "packedBrowserHtmlSha256": "1d63824ea3d6df48d2909b31b595e48d63e46e2d4322f74e868371b92792c319",
   "artRelease": "hd-assets-v23",
-  "cardHarnessCommit": "500cefb9b",
+  "cardHarnessCommit": "500cefb9bd3e108349d834a67d8f7f8e91cd1ad4",
   "rawEvidenceDirectory": "scratch/full-combat-audit/final-current (untracked; publication artifacts may carry raw evidence)",
   "proofs": [
     {
@@ -118,7 +118,7 @@
     },
     {
       "name": "relic-enemy-native",
-      "sha256": "a1a4c49c9dc29ef1afe8afd0300bf62f332c0f4ee3e85a258e292e4368e40d84",
+      "sha256": "41f0d1af29d24f4455b80ed283c06dfd092172be63ace9db2f8460894c4a66c2",
       "loader": "native",
       "counts": {
         "relics": 73,
@@ -158,11 +158,11 @@
         "encounterClassScenarios": 140,
         "encounterClassCovered": 140
       },
-      "harnessRevision": "0e716d059bfe358a30b138575d229914da78b46c"
+      "harnessRevision": "3f6273262d2bb6d674cc79d83d2c166e20f86c3b"
     },
     {
       "name": "relic-enemy-bundled",
-      "sha256": "ef0a8b5b609d3971e7a13f872d567e261459c2b0465dc8a517a9dda4cc1cd5bf",
+      "sha256": "f350ef01fe02b114165f173184921fe29c355db55645d08b6f9abbb089c35f0e",
       "loader": "bundled",
       "counts": {
         "relics": 73,
@@ -202,21 +202,178 @@
         "encounterClassScenarios": 140,
         "encounterClassCovered": 140
       },
-      "harnessRevision": "0e716d059bfe358a30b138575d229914da78b46c"
+      "harnessRevision": "3f6273262d2bb6d674cc79d83d2c166e20f86c3b"
+    },
+    {
+      "name": "families-native",
+      "sha256": "f5dc2e91a386ca4414286e809bef5f4c5538ff6a69a7080e5be78b62d617c048",
+      "loader": "native",
+      "harnessCommit": "940a7d31880d1bbabfcb32b146b40cd015e0d5a0",
+      "families": 5,
+      "paidPlays": 8
+    },
+    {
+      "name": "families-bundled",
+      "sha256": "4ce6da92d1796c5dd461029de8b13dadc14e8a24da4176c0eeebb7567a3e0e48",
+      "loader": "bundled",
+      "harnessCommit": "940a7d31880d1bbabfcb32b146b40cd015e0d5a0",
+      "families": 5,
+      "paidPlays": 8
     }
   ],
   "conditionalProofScope": {
     "generalAttributedIndices": 156,
     "generalUncoveredIndices": 106,
-    "literalAuthoredShapesProven": 37,
+    "literalAuthoredShapesProven": 42,
     "projectedShapeProof": "frost/frostExposed becomes frozen/chilled",
     "additionalProjectedShapesProven": 1,
-    "remainingSemanticFamilies": [
-      "notBulwark",
-      "targetStaggered",
-      "notTargetStaggered",
-      "notStarstoneCharge",
-      "notHpBelow50"
+    "remainingSemanticFamilies": [],
+    "representativeFamilyClosureCount": 5,
+    "representativeFamilyPaidPlaysPerLoader": 8
+  },
+  "standaloneHtmlSha256": "586c07905d157e2a77a2877c727c7c0751665c335c78f4c1ece4a9564dbc9f98",
+  "standaloneBytes": 79970928,
+  "browser": {
+    "manifestSha256": "132e7e216ce812995b11241920c75a0bb474ca4076d512042018dc271692ee88",
+    "expectedDistinctKeys": 360,
+    "actualDistinctKeys": 360,
+    "counts": {
+      "passed": 360,
+      "expected-refusal": 0,
+      "failed": 0,
+      "running": 0
+    },
+    "artifactCounts": {
+      "1d63824ea3d6df48d2909b31b595e48d63e46e2d4322f74e868371b92792c319": {
+        "passed": 358,
+        "expected-refusal": 0,
+        "failed": 0
+      },
+      "586c07905d157e2a77a2877c727c7c0751665c335c78f4c1ece4a9564dbc9f98": {
+        "passed": 2,
+        "expected-refusal": 0,
+        "failed": 0
+      }
+    },
+    "sourceJavaScriptModulesVerified": 794,
+    "runtimeErrors": 0,
+    "unexpectedNetworkFailures": 0,
+    "missingKeys": 0,
+    "unexpectedKeys": 0,
+    "unfinishedReports": 0,
+    "inputs": [
+      {
+        "name": "integrated-gallery-verified/report-cards-both-all-base.json",
+        "sha256": "328824cd9f45c59760367c4648d5a22284e7806882f38b9a59015080071e5994",
+        "artifactSha256": "1d63824ea3d6df48d2909b31b595e48d63e46e2d4322f74e868371b92792c319",
+        "cases": 8,
+        "finished": "2026-10-14T23:45:33.562Z"
+      },
+      {
+        "name": "integrated-normal/report-scenarios-both-all-all.json",
+        "sha256": "43d6f07048f15b35343b1990819fb54929a67937e2a7085e3b13cdbc63cf9077",
+        "artifactSha256": "1d63824ea3d6df48d2909b31b595e48d63e46e2d4322f74e868371b92792c319",
+        "cases": 26,
+        "finished": "2026-10-14T23:41:59.908Z"
+      },
+      {
+        "name": "integrated-profile-shortbow/report-profiles-both-all-all.json",
+        "sha256": "ae9b913777bb3db46d87ba1b52d5f4cc8244e35bc4f304d1d62e0b8b813e9734",
+        "artifactSha256": "1d63824ea3d6df48d2909b31b595e48d63e46e2d4322f74e868371b92792c319",
+        "cases": 8,
+        "finished": "2026-10-14T23:43:15.675Z"
+      },
+      {
+        "name": "integrated-profile-ashStaff/report-profiles-both-all-all.json",
+        "sha256": "18dc312b22190ca325e6f5939fabe9009978bee1f8df9026d81f8c1d86069d40",
+        "artifactSha256": "1d63824ea3d6df48d2909b31b595e48d63e46e2d4322f74e868371b92792c319",
+        "cases": 8,
+        "finished": "2026-10-14T23:43:53.773Z"
+      },
+      {
+        "name": "integrated-profile-boneSceptre/report-profiles-both-all-all.json",
+        "sha256": "532373b27fbd61b7dac32ca7bec46d641aed74c3e2fc83a511baadc1499dced3",
+        "artifactSha256": "1d63824ea3d6df48d2909b31b595e48d63e46e2d4322f74e868371b92792c319",
+        "cases": 8,
+        "finished": "2026-10-14T23:44:30.695Z"
+      },
+      {
+        "name": "integrated-ranged-magic/report-cards-both-starseer-base.json",
+        "sha256": "e9e49e64f2ceab1af948af8ba286ad86e31ca5184c8c6161c394e9566fff766c",
+        "artifactSha256": "1d63824ea3d6df48d2909b31b595e48d63e46e2d4322f74e868371b92792c319",
+        "cases": 2,
+        "finished": "2026-10-14T23:44:42.164Z"
+      },
+      {
+        "name": "integrated-reaction-choice/report-scenarios-both-all-all.json",
+        "sha256": "3b9411b14e25d0f7f5aee66c32788d5e8d431d20926926442f949ee18dff501c",
+        "artifactSha256": "1d63824ea3d6df48d2909b31b595e48d63e46e2d4322f74e868371b92792c319",
+        "cases": 8,
+        "finished": "2026-10-14T23:50:57.446Z"
+      },
+      {
+        "name": "integrated-sweep/report-cards-both-all-base.json",
+        "sha256": "9087bf1d4c26534ff4d367e132875e39e50d2ec29b086b827bdbfbce24091687",
+        "artifactSha256": "1d63824ea3d6df48d2909b31b595e48d63e46e2d4322f74e868371b92792c319",
+        "cases": 8,
+        "finished": "2026-10-14T23:51:58.181Z"
+      },
+      {
+        "name": "integrated-spell-target/report-cards-both-starseer-all.json",
+        "sha256": "66e01f26f29ff313971f8946df281283b6b24565ff95aa2c684a73deb773f244",
+        "artifactSha256": "1d63824ea3d6df48d2909b31b595e48d63e46e2d4322f74e868371b92792c319",
+        "cases": 10,
+        "finished": "2026-10-14T23:53:34.809Z"
+      },
+      {
+        "name": "integrated-successful-evasion-verified/report-scenarios-both-all-all.json",
+        "sha256": "3246fc928962f6b3c1dd424464c6c125ee2f1e843e22f425d1d65f2c4503a8fc",
+        "artifactSha256": "1d63824ea3d6df48d2909b31b595e48d63e46e2d4322f74e868371b92792c319",
+        "cases": 8,
+        "finished": "2026-10-14T23:57:19.689Z"
+      },
+      {
+        "name": "integrated-enemies-desktop/report-enemies-desktop-all-all.json",
+        "sha256": "2a2cc10578dce977575413b7c4e2130f2bca5fa135a588f07871b428ae2b3d2f",
+        "artifactSha256": "1d63824ea3d6df48d2909b31b595e48d63e46e2d4322f74e868371b92792c319",
+        "cases": 132,
+        "finished": "2026-10-15T00:06:34.860Z"
+      },
+      {
+        "name": "integrated-enemies-phone/report-enemies-phone-all-all.json",
+        "sha256": "3bf5dd40f32c1d2a499b5bf88356de0ee4b4397771658d4f8b3b68b06ba421d9",
+        "artifactSha256": "1d63824ea3d6df48d2909b31b595e48d63e46e2d4322f74e868371b92792c319",
+        "cases": 132,
+        "finished": "2026-10-15T00:09:43.784Z"
+      },
+      {
+        "name": "standalone-spell-target/report-cards-both-starseer-base.json",
+        "sha256": "f9ad1867186a875fa42d896afcc9b11d11d1ad0011e831d3c74b62d4ac97898e",
+        "artifactSha256": "586c07905d157e2a77a2877c727c7c0751665c335c78f4c1ece4a9564dbc9f98",
+        "cases": 2,
+        "finished": "2026-10-15T00:10:06.962Z"
+      }
     ]
+  },
+  "historicalBrowserBaseline": {
+    "manifestSha256": "876375f4bcf824e10a0ec8a7952c196e598f46316f3f9416e42651fe305a3f2e",
+    "productionCommit": "0962c5ecc6467be75ffc1a4cbccc39d583e44dac",
+    "sourceDigest": "d93ee7b6bf",
+    "ordinal": 1527,
+    "distinctCases": 2262,
+    "paidPlays": 2238,
+    "namedRefusals": 24,
+    "claim": "Historical broader UI evidence; current critical360 is separately bound."
+  },
+  "localBroadSuite": {
+    "logSha256": "4e228c2c5bd0ae8193303531ec401d730794dd1202e17ae6a8137ca3c7575d71",
+    "files": 685,
+    "tests": 6553,
+    "failedAtRun": 24,
+    "assertionFailuresSubsequentlyFixed": 16,
+    "focusedOracleEscapeQuitTests": 92,
+    "focusedOracleEscapeQuitPassed": 92,
+    "remainingSparseArtPrerequisiteFailures": 8,
+    "claim": "Full run was red; later focused proofs repair16 assertions, authoritative exact-head CI is required. No tests skipped or weakened."
   }
 }
