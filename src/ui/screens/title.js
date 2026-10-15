@@ -7,16 +7,12 @@ import { loadableTitleSlots } from '../models/GameProfileTitleModel.js';
 
 import { beatArmer } from '../../framework/optionDecision.js';
 import { buildStampHtml } from '../components/buildstamp.js';
-import { hudQuickSettingsHtml, wireHudQuickSettings } from '../components/hudQuickSettings.js';
 import { closeSaveSlotSelector, deleteSlotReview, openSaveSlotSelector, slotFacts, slotOption, slotDoor, slotDecisionDoor } from '../components/saveSlotSelector.js';
 import { el, html, titleMenu } from '../kit/index.js';
-import { uiConfig } from '../../config/generated/ui.js';
 import { t, tFull } from '../strings.js';
-import { hudQuickSettingsModel } from '../models/HudQuickSettingsModel.js';
 import { saveSlotSelectionModel } from '../models/SaveSlotSelectionModel.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { focusElement } from '../input.js';
-import { offlinePlay } from '../../content/offlinePlay.js';
 import { assetUrl } from '../assetmap.js';
 import { engravedIconHtml } from '../components/engravedIcon.js';
 import { registerModal } from '../modalState.js';
@@ -373,7 +369,6 @@ export function mountTitle(app, {
         <div class="title-modal-layer" data-title-modal-layer style="display:contents">${modalHtml()}</div>
       </div>`;
 
-    wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
     const root = app.querySelector('.title-screen');
     const replayScene = () => {
       if (document.body.classList.contains('reduced-motion') || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
