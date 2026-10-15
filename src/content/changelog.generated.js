@@ -23,6 +23,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1996"
   },
   {
+    "id": "pr-2004",
+    "date": "2026-10-15",
+    "group": "2026-10-15",
+    "summary": "Feature Play links are checked after publication",
+    "detail": "Development-process change only. After Pages deployment, publication checks the public feature index, its source commit, the sandbox wrapper and loader, and that the game payload is available as nonempty plain text. This route check does not execute the game.",
+    "build": "0.7.1.1531",
+    "pullRequest": 2004,
+    "url": "https://github.com/cehinds/AshenSpire/pull/2004"
+  },
+  {
     "id": "pr-1995",
     "date": "2026-10-14",
     "group": "2026-10-14",

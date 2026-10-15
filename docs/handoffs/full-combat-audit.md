@@ -53,7 +53,7 @@ Preserved gameplay capture commit: `60e89f5ff8c4763552e62ebaf08830e26461b5b9`, d
 - Separate embedded-media standalone: 79,970,928 bytes; SHA256 `586c07905d157e2a77a2877c727c7c0751665c335c78f4c1ece4a9564dbc9f98`.
 - Preserved immutable snapshot: `/workspace/scratch/full-combat-audit/final-source-368140ce27`.
 - Baseline immutable snapshot: `/workspace/scratch/combat-audit-baseline-0962`, commit `0962c5ecc6467be75ffc1a4cbccc39d583e44dac`, digest `d93ee7b6bf`, build `0.7.1.1527`.
-- **Servers stopped by manager via SIGTERM**, all browsers closed. Do not assume ports4413/4414 are running. Inspect existing listeners before any restart; use using the original serve tool (plain HTTP omits required source transforms):
+- **Servers stopped by manager via SIGTERM**, all browsers closed. Do not assume ports4413/4414 are running. Inspect existing listeners before any restart; use the original serve tool (plain HTTP omits required source transforms):
 
 ```sh
 node tools/serve.mjs --root /workspace/scratch/combat-audit-baseline-0962 --port 4413 --host 127.0.0.1 --no-open --no-lan
@@ -87,6 +87,8 @@ These historical entries explain the state at pause; they are **not current exac
 ## Resume verification — 2026-10-15 UTC
 
 Remote head `c54c4728ad2f4c59eea0753ebca6d1f996a0c5af` integrates Dev `3d40c190983069eec8d8a2370fb3f229ac376290`, box `0.7.1.1533`. Its 25-file difference from the pause handoff exactly matches the difference between the old and new Dev bases. PR1996 changes charging-action hit grouping, enemy Smash/Counter Poise fallback, Smash against an attempted Evade, paced Evasion display and enemy move-card configuration. PR2004 adds public feature-route verification. No audit-specific gameplay change was introduced by the fast-forward.
+
+The resume also restores PR2004's missing changelog receipt using its actual committed merge box: `git show da35a73558c10beee5ef29dbe56aa46e3d614232:buildordinal.json` records `0.7.1.1531`. Its entry sits below the newer 1533 receipts, and the in-game projection is regenerated with `node tools/about-changelog.mjs --write`; no build ordinal is changed.
 
 The changed runtime files are `src/engine/{combat,combatCardTactics,combatMatchups,stanceHit}.js`, `src/model/{enemyKnowledgeView,enemyMoveCards,stanceRules}.js` and `src/ui/screens/{bestiary,combat,coop}.js`. The generated changelog also advances with the upstream stamp. The new runtime needs its own bounded compiled-browser checks; the preserved 360-row report cannot establish these later changes.
 
