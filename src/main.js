@@ -1,3 +1,5 @@
+import { resolveGameProfile, gameModule, gameContent, applyGameProfileToContent } from './model/gameProfile.js';
+import { isConfiguredRun, gameProfileClassAvailable } from './model/gameProfileRun.js';
 import { rollPendingAbilityOffers } from './model/abilityOffers.js';
 import { openRestRecord, recordRestConsumed, markRestLeft, restRevisitNodeId, clearRestRevisitOnTravel } from './model/restRevisit.js';
 import { queueInitialProgression } from './model/initialProgression.js';
@@ -226,20 +228,25 @@ if (!validation.ok) {
   }
 }
 
-let registries = createRegistries(contentBundle);
+let selectedGameProfile = resolveGameProfile(new URLSearchParams(location.search).get('gameProfile') || 'current');
+let registryGameProfile = selectedGameProfile;
+let registries = createRegistries(applyGameProfileToContent(contentBundle, registryGameProfile));
 let xpCombat = null;
 configureTooltipGlossary(registries);
 setClassGlyphs(registries.classes.all()); // class sigils are data (class defs)
 
-function rebuildRegistries(configuration = {}, masteryRun = null) {
-  const configured = configuredContentBundle(contentBundle, configuration);
+function rebuildRegistries(configuration = {}, masteryRun = null, gameProfile = registryGameProfile) {
+  registryGameProfile = gameProfile;
+  const authored = applyGameProfileToContent(contentBundle, gameProfile);
+  const configured = isConfiguredRun(gameProfile) ? authored : configuredContentBundle(authored, configuration);
   const result = validateContent(configured);
-  const structuralProblems = advancedConfigStructuralProblems(contentBundle, configuration?.overrides || configuration);
+  const structuralProblems = isConfiguredRun(gameProfile) ? [] : advancedConfigStructuralProblems(contentBundle, configuration?.overrides || configuration);
   if (!result.ok || structuralProblems.length) {
     const first = structuralProblems[0] || `${result.errors[0].path}: ${result.errors[0].msg}`;
     const message = `Game configuration unchanged: ${first} Authored defaults remain active until the values form a valid configuration.`;
     console.warn('[advanced-config]', message, result.errors, structuralProblems);
     if (typeof document !== 'undefined') showSettingsNotice(message, 'game-config');
+    if (isConfiguredRun(gameProfile)) throw new Error(`Invalid game profile ${gameProfile.id}: ${first}`);
     registries = createRegistries(contentBundle);
   } else {
     registries = createRegistries(configured);
@@ -1141,6 +1148,7 @@ function randomSeedString() {
 
 const runStartOwner = createRunStartOwner();
 function newRun(config) {
+  config = { ...config, gameProfile: config.gameProfile || selectedGameProfile };
   const asked = config.seedString || randomSeedString();
   const why = seedProblem(asked);
   if (why) {
@@ -1171,7 +1179,7 @@ function newRun(config) {
   });
 }
 
-function beginPreparedRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, journeyProfile = null, slot = 1, skipOpening = false, quickStart = false }) {
+function beginPreparedRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, journeyProfile = null, slot = 1, skipOpening = false, quickStart = false, gameProfile = selectedGameProfile }) {
   resetArmouryTraySession();
   // THE CATCH THAT USED TO BE HERE IS GONE, and it is the whole point of the
   // change. It read:
@@ -1238,10 +1246,10 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
   // The Arcane matrix is a legacy-run visual fixture. It deliberately carries
   // the old Exposure states; the pose must also carry their older rules.
   if (legacyArcaneShot) delete configSnapshot.breakMeterVersion;
-  rebuildRegistries(configSnapshot);
+  rebuildRegistries(configSnapshot, null, gameProfile);
   run = createRunState({
     seed, classId, registries, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes,
-    profileMeta: saves.loadMeta(), combatExpansionVersion, enemyKnowledgeVersion, reactionRulesVersion,
+    gameProfile, profileMeta: saves.loadMeta(), combatExpansionVersion, enemyKnowledgeVersion, reactionRulesVersion,
   });
   run.advancedConfigSnapshot = configSnapshot;
   run.seedString = seedToString(seed);
@@ -1249,7 +1257,7 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
   run.customization = customization || { name: 'Forsaken', glyph: '⚔', tint: 'gold' };
   run.custom = custom || { ascension: 0, mods: {}, deckMode: 'standard' };
   if (quickStart) run.quickStart = true;
-  if (!shotState) {
+  if (!shotState && !isConfiguredRun(run)) {
     openRunClassMastery(registries, run, saves.loadMeta(), { receiptId: crypto.randomUUID() });
     openRunEnemyKnowledge(run, { receiptId: run.classMasteryState.receiptId, bankable: true });
     registries = registriesForClassMastery(registries, run);
@@ -1266,7 +1274,7 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
   run.seatOrder = drawSeatOrder(registries, rng, { firstSeat: run.custom.firstSeat || null });
 
   // Keepsake: a one-time bundle of run-level effects (content/keepsakes.js).
-  const keepsake = (registries.characterCreation.keepsakes || []).find((k) => k.id === keepsakeId);
+  const keepsake = !isConfiguredRun(run) && (registries.characterCreation.keepsakes || []).find((k) => k.id === keepsakeId);
   if (keepsake && keepsake.effects.length) {
     executeRunEffects({ run, registries, rng }, keepsake.effects);
   }
@@ -1305,7 +1313,7 @@ function startClimb({ skipOpening = false } = {}) {
   if (isPoolDeckMode(run)) stampDeck(registries, run, undefined, { adoptEquipmentBonuses: false, reconcileEquipmentPools: false });
   run.mapGraph = run.journey ? journeyGraph(run.journey) : buildActMap(registries, rng, currentSeat(), contentAct(), runMapShape(), { history: run.history });
   if (run.journey) syncWorldPosition();
-  if (!skipOpening && (!shotState || shotState === 'prologue') && shouldPlayPrologue(saves.loadMeta().settings, saves.loadMeta().settings?.prologueSeen === true)) {
+  if (!isConfiguredRun(run) && !skipOpening && (!shotState || shotState === 'prologue') && shouldPlayPrologue(saves.loadMeta().settings, saves.loadMeta().settings?.prologueSeen === true)) {
     run.prologue = { version: PROLOGUE_STATE_VERSION, status: 'pending', scene: 0 };
   }
   persist();
@@ -1414,19 +1422,22 @@ function refusedRunLanding(slot) {
 let terminalResume = null;
 function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } = {}) {
   if (terminalResume) return terminalResume;
-  const liveRegistries = registries;
+  const liveRegistries = registries, liveGameProfile = registryGameProfile;
   const refused = () => {
     if (registries !== liveRegistries) {
       registries = liveRegistries;
+      registryGameProfile = liveGameProfile;
       configureTooltipGlossary(registries);
       setClassGlyphs(registries.classes.all());
     }
     return onRefused(slot);
   };
-  const authoredRegistries = createRegistries(contentBundle);
+  const savedGameProfile = saves.peekRunGameProfile(slot);
+  const loadGameProfile = savedGameProfile || resolveGameProfile('current');
+  const authoredRegistries = createRegistries(applyGameProfileToContent(contentBundle, loadGameProfile));
   let loaded = saves.loadRun(authoredRegistries, slot);
   if (!loaded) return refused();
-  rebuildRegistries(loaded.advancedConfigSnapshot || { schemaVersion: 1, overrides: {} });
+  rebuildRegistries(loaded.advancedConfigSnapshot || { schemaVersion: 1, overrides: {} }, null, loadGameProfile);
   loaded = saves.loadRun(registries, slot);
   if (!loaded) return refused();
   // The load is certain from here; a caller that must tear down what the
@@ -1435,7 +1446,7 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   resetArmouryTraySession();
   activeSlot = slot;
   run = loaded;
-  refreshRunClassMastery(run, saves.loadMeta(), registries);
+  if (!isConfiguredRun(run)) refreshRunClassMastery(run, saves.loadMeta(), registries);
   registries = registriesForClassMastery(registries, run);
   if (run.journey) syncWorldPosition();
   rng = createRng(run.seed, run.streamCounters);
@@ -1468,7 +1479,7 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   }
   if (run.combatPendingOutcome) {
     const pending = run.combatPendingOutcome;
-    const ended = restoreCombatSnapshot({ registries, rng, snapshot: pending.snapshot });
+    const ended = restoreCombatSnapshot({ registries, rng, expectedGameProfile: run.gameProfile, snapshot: pending.snapshot });
     const encounter = combatEncounterFor(registries, run, { nodeId: pending.nodeId, encounterId: pending.encounterId });
     return resumeTerminal(() => onCombatEnd(pending.result, ended, encounter));
   }
@@ -1751,9 +1762,17 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
     showStartupGate();
     return;
   }
+  rebuildRegistries(saves.loadMeta().settings || {}, null, selectedGameProfile);
   const slots = saveSlotRecords();
   mountTitle(app, {
     slots,
+    gameProfile: selectedGameProfile,
+    onGameProfile: value => {
+      const resolved = resolveGameProfile(value);
+      rebuildRegistries(saves.loadMeta().settings || {}, null, resolved);
+      selectedGameProfile = resolved;
+      showTitle({ skipStartup: true });
+    },
     reopen,
     // The delete beat rides the shared machinery now: the armer reads the
     // dial from meta.settings and the table from the registries.
@@ -2275,10 +2294,10 @@ async function finishRun(victory) {
     stampSkillBonuses(finishedRegistries, finishedRun);
     saves.saveRun(finishedRun, finishedRng, finishedSlot);
   };
-  const resultRecord = runResult(victory);
+  const resultRecord = { ...runResult(victory), gameProfile: finishedRun.gameProfile, runId: finishedRun.runId };
   return commitRunFinishAsync(finishedRun, {
     victory,
-    finishId: finishedRun.classMasteryState?.receiptId || crypto.randomUUID(),
+    finishId: finishedRun.runId || finishedRun.classMasteryState?.receiptId || crypto.randomUUID(),
     checkpoint,
     bank: async () => {
       const knowledge = saves.bankEnemyKnowledge ? await saves.bankEnemyKnowledge(finishedRun) : { ok: true };
@@ -2327,8 +2346,11 @@ async function showFinishedRun(victory) {
 }
 
 function showCustomize(slot = 1, catalog = false) {
-  rebuildRegistries(saves.loadMeta().settings || {});
+  rebuildRegistries(saves.loadMeta().settings || {}, null, selectedGameProfile);
   mountCustomize(app, {
+    gameProfile: selectedGameProfile,
+    fixedClasses: isConfiguredRun(selectedGameProfile) ? gameContent(selectedGameProfile, 'classes') : null,
+    classAvailable: id => gameProfileClassAvailable(selectedGameProfile, saves.loadMeta(), id),
     registries,
     meta: saves.loadMeta(),
     // A ?shot= boot gets a fixed seed so the field photographs identically on
@@ -2882,7 +2904,7 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
   audio.music(enc.pool === 'boss' ? 'boss' : enc.pool === 'elite' ? 'elite' : 'combat');
   const cm = combatMods(enc.pool, enc);
   const entryRng = run.combatExpansionVersion === 2 && !savedSnapshot ? createRng(rng.seed, rng.getCounters()) : rng;
-  const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot, fallbackAttackSlotCount: run.equipmentAttackSlotCount, fallbackRemovedAttackSlotIds: run.removedAttackSlotIds, fallbackDerivedStatRuleSnapshot: run.derivedStatRuleSnapshot, fallbackAttributeMode: run.attributeMode, fallbackPoolDeck: isPoolDeckMode(run) }) : createRunCombat({
+  const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, expectedGameProfile: run.gameProfile, snapshot: savedSnapshot, fallbackAttackSlotCount: run.equipmentAttackSlotCount, fallbackRemovedAttackSlotIds: run.removedAttackSlotIds, fallbackDerivedStatRuleSnapshot: run.derivedStatRuleSnapshot, fallbackAttributeMode: run.attributeMode, fallbackPoolDeck: isPoolDeckMode(run) }) : createRunCombat({
     registries,
     rng: entryRng,
     run,
