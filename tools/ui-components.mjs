@@ -999,7 +999,7 @@ function selftest() {
     ['remove Vitals id', 'C1 ', (r) => ({ ...r, registry: r.registry.replace("vitalsPanel: 'vitals-panel',", '') })],
     ['remove Vitals export', 'C2 ', (r) => ({ ...r, hud: r.hud.replace('export function vitalsPanelHtml', 'function vitalsPanelHtml') })],
     ['give Map a second HUD', 'C3 ', (r) => ({ ...r, map: r.map.replace('${runHudHtml({', '${(() => "")({') })],
-    ['give the merchant its own band', 'C3 ', (r) => ({ ...r, shop: r.shop.replace('wireRunHud(app, {', 'wireMerchantBand(app, {') })],
+    ['give the merchant its own band', 'C3 ', (r) => ({ ...r, shop: r.shop.replaceAll('wireRunHud(app, {', 'wireMerchantBand(app, {') })],
     ['detach Rest from the shared room frame', 'C3 ', (r) => ({ ...r, rest: r.rest.replace('mountRestFrame(app, {', 'mountBareRest(app, {') })],
     ['detach configured Rest from the shared room frame', 'C3 ', (r) => ({ ...r, configuredRest: r.configuredRest.replace('mountRestFrame(app, {', 'mountBareRest(app, {') })],
     ['give the shared Rest frame its own HUD', 'C3 ', (r) => ({ ...r, restFrame: r.restFrame.replace('wireRunHud(app, {', 'wireRestBand(app, {') })],
