@@ -469,6 +469,7 @@ export function restampSmithingCards(registries, run, cards = run.deck || []) {
 
 /** Host-side, revalidated generic commit. `free` is for event/keepsake grants. */
 export function commitItemUpgrade(registries, run, requestedItemRef, explicitRules = undefined, { free = false, cards = undefined, purse = 'stones' } = {}) {
+  if (gameModule(run, 'rest')?.mode === 'configured' && !gameProfileServiceActive(run, 'smith')) throw new Error('Configured equipment upgrades require a committed Smith rest service');
   const itemRef = typeof requestedItemRef === 'string' && requestedItemRef.includes('/')
     ? requestedItemRef
     : `armament/${requestedItemRef}`;
@@ -517,7 +518,6 @@ export function commitItemUpgrade(registries, run, requestedItemRef, explicitRul
 
 /** Backward-compatible name; bare ids still mean armament/<id>. */
 export function commitSmithing(registries, run, itemRefOrArmamentId, explicitRules = undefined, options = {}) {
-  if (gameModule(run, 'rest')?.mode === 'configured' && !gameProfileServiceActive(run, 'smith')) throw new Error('Configured equipment upgrades require a committed Smith rest service');
   return commitItemUpgrade(registries, run, itemRefOrArmamentId, explicitRules, options);
 }
 

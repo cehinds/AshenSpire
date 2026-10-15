@@ -16,6 +16,7 @@ export function gameProfileCompletedRunMeta(subject, meta, result) {
   const rules = gameContent(subject, 'classUnlocks');
   if (!isConfiguredRun(subject) || !rules) return { meta, unlocked: [] };
   if (!result.finishId) throw new Error('Configured completion requires a durable finishId');
+  if (typeof result.victory !== 'boolean') throw new Error('Configured completion requires a terminal victory or defeat fact');
   const key = unlockKey(subject);
   const next = structuredClone(meta);
   next.gameProfileUnlocks ||= {};

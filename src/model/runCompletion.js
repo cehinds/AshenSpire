@@ -7,7 +7,8 @@ export function completedRunMeta(registries, current, result) {
   if (isConfiguredRun(result)) {
     const completion = gameProfileCompletedRunMeta(result, current, result);
     if (completion.meta === current) return completion;
-    completion.meta.results = [...(completion.meta.results || []), result].slice(-20);
+    const { gameProfile, ...history } = result;
+    completion.meta.results = [...(completion.meta.results || []), { ...history, gameProfileId: gameProfile.id, gameProfileHash: gameProfile.hash }].slice(-20);
     return completion;
   }
   if ((current.results || []).some(row => row.finishId === result.finishId)) return { meta: current, unlocked: [] };

@@ -91,9 +91,18 @@ test('cards and routes off use an empty deck and explicit foundation activities'
 });
 
 test('configured low-level level and smith mutations cannot bypass rest',async()=>{
- const {applyLevelUp}=await import('../src/model/levelup.js');const {commitSmithing}=await import('../src/model/smithing.js');
+ const {applyLevelUp}=await import('../src/model/levelup.js');const {commitSmithing,commitItemUpgrade}=await import('../src/model/smithing.js');
  const run=fresh();run.level.unspentPoints=1;const before=JSON.stringify(run);
  assert.throws(()=>applyLevelUp(reg,run,'strength'),/committed rest/);
  assert.throws(()=>commitSmithing(reg,run,'armament:greatsword'),/Smith rest/);
+ assert.throws(()=>commitItemUpgrade(reg,run,'armament:greatsword',undefined,{free:true}),/Smith rest/);
  assert.equal(JSON.stringify(run),before);
+});
+
+
+test('profile completion ledger persists independently from bounded history and rejects nonterminal facts',()=>{
+ let meta=gameProfileCompletedRunMeta(profile,{}, {finishId:'completed',victory:false}).meta;
+ const save=createSaveManager(createMemoryStorage());assert.equal(save.saveMeta(meta).ok,true);
+ const restored=save.loadMeta();assert.deepEqual(restored.gameProfileUnlocks,meta.gameProfileUnlocks);
+ assert.throws(()=>gameProfileCompletedRunMeta(profile,restored,{finishId:'quit'}),/terminal/);
 });
