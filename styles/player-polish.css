@@ -363,7 +363,6 @@ main:has(> .rest-screen) > .shared-hud .hud-vitals-panel { max-width:28rem; padd
 /* Experimental pass 2: scene-first compositions from boards 01, 05 and 08. */
 .title-screen .as-titlemenu { width:min(35%,42rem); }
 .title-screen .title-menu { gap:.65rem; }
-.title-screen .title-menu > li:nth-child(n+3) { width:82%; align-self:center; }
 .title-screen .title-menu .tm-entry { display:flex; align-items:center; justify-content:center; gap:.8rem; font-weight:500; }
 .title-screen .title-menu .slot-continue { min-height:6.2rem; }
 .title-screen .title-menu .tm-entry .engraved-icon { color:var(--gold); }
@@ -415,7 +414,6 @@ main:has(> .rest-screen) > .shared-hud .hud-vitals-panel { max-width:28rem; padd
 
 :root[data-layout='narrow'] .title-screen .as-titlemenu { width:100%; }
 :root[data-layout='narrow'] .title-screen .title-traveler { width:36%; height:32%; left:1%; top:5%; bottom:auto; }
-:root[data-layout='narrow'] .title-screen .title-menu > li:nth-child(n+3) { width:88%; }
 :root[data-layout='narrow'] :is(.combat,main:has(>.shop-workspace),main:has(>.rest-screen)) > .shared-hud > .hud-top { grid-template-columns:14rem 1fr auto; }
 :root[data-layout='narrow'] .shop-workspace:not(.master-workspace) { padding:30vh 1rem 1rem; }
 :root[data-layout='narrow'] .shop-workspace:not(.master-workspace) .shop-frame { width:100%; }
