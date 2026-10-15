@@ -9,6 +9,8 @@
     "Stance advantage multiplier 1 preserves authored relationship without inventing a damage bonus.",
     "Equipment editor noncombat timing, reward take-one, free-work and reaction limits are provisional.",
     "SP recovery delegates to the existing turn-start adapter; exact SP growth remains legacy.",
-    "Herald power behavior is a provisional card fixture; persistent stacking needs the runtime adapter."
+    "Herald power behavior is a provisional card fixture; persistent stacking needs the runtime adapter.",
+    "Rest positions [2,6] and generic shop price10 are provisional source-configured fixtures.",
+    "Stance advantage multiplier1.25 and one Smash advantage stagger per target/round are provisional."
   ]
 }
