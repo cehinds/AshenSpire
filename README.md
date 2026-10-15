@@ -27,7 +27,7 @@ build number and link to its history. Play and HTML follow that channel's latest
 · [Installation guide](desktop/windows/README.md).
 The chooser identifies the selected game build; its installer can be newer than the hosted Test badge.
 
-**Feature branches:** every `feature/*`, `fix/*` or `chore/*` branch with an open pull request into `dev`, named with ASCII letters, digits, `.`, `_`, `-` and `/` only, has a build at `https://cehinds.github.io/AshenSpire/branches/<branch>/latest/`, which plays in a sandbox and does not keep progress (open ones are listed on [All builds](https://cehinds.github.io/AshenSpire/)); the pull request links it.
+**Feature branches:** pushed `Feature/*`, `feature/*`, `fix/*` and `chore/*` branches are built on push and publish to `https://cehinds.github.io/AshenSpire/branches/<branch>/latest/` when the Pages workflow completes; a pull request is not required. Branch previews play in a sandbox and do not keep progress. The build is also available from its [Actions run](https://github.com/cehinds/AshenSpire/actions/workflows/feature-preview.yml).
 
 [All builds](https://cehinds.github.io/AshenSpire/) · [Workbench](https://cehinds.github.io/AshenSpire/workbench/) · [ZIP artifacts](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml) · [Changelog](CHANGELOG.md).
 Publication can lag source changes. For ZIPs, open a successful run and download its named build artifact.
@@ -50,6 +50,16 @@ Dev/Test can contain newer features. Select an image to view its full size.
 ![Phone combat with enemy intentions, cards and turn controls](docs/preview/releases/0.7.1.1060/combat-phone.png)
 
 </details>
+
+### JSON-driven game profile previews
+
+The same tested runtime can start as either the optional-module-free product core or the current Ashen Spire configuration. These preview branches differ only in their authored default profile JSON. GitHub Actions completed both builds; GitHub Pages publication is still pending, so the play links may not resolve until its deployment finishes.
+
+- [Play product core](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-modules/latest/) · [Core build run](https://github.com/cehinds/AshenSpire/actions/runs/38701086476)
+- [Play current game](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-current-preview/latest/) · [Current build run](https://github.com/cehinds/AshenSpire/actions/runs/38701086793)
+- [Profile screenshots and capture details](docs/preview/features/json-game-modules/README.md)
+
+The screenshots record both fresh and saved-run title menus, combat, and rest at desktop, wide, tablet, and phone sizes.
 
 ## Features
 
