@@ -103,6 +103,25 @@ test('HTTP: token, origin and host are enforced; only the page files are served'
   assert.equal((await call('/api/doc?path=../SPEC.md')).status, 400);
 });
 
+test('profile validation uses the shared resolver and reports author path errors', async (t) => {
+  const root = await project(t);
+  const { call } = await boot(t, root);
+  const author = JSON.parse(await fs.readFile(new URL('../../games/ashenspire/game.json', import.meta.url), 'utf8'));
+  const post = (path, data) => call(path, { method: 'POST', body: JSON.stringify(data) });
+  const valid = await post('/api/game-profile/validate', { author });
+  assert.equal(valid.status, 200);
+  const resolved = await valid.json();
+  assert.equal(resolved.valid, true);
+  assert.equal(resolved.id, 'core');
+  assert.match(resolved.hash, /^sha256:/);
+  assert.ok(resolved.modules.cards);
+
+  const invalid = await post('/api/game-profile/validate', { author: { formatVersion: 1, core: 'missing.bundle@1', modules: {} } });
+  assert.equal(invalid.status, 422);
+  const problem = await invalid.json();
+  assert.ok(problem.problems[0].message);
+});
+
 test('jobs: only allowlisted ids run, one at a time, and history is kept', async (t) => {
   const root = await project(t);
   const { app, call } = await boot(t, root);
