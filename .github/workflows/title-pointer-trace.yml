@@ -1,4 +1,4 @@
-name: audit title pointer trace
+name: audit title pointer repair validation
 on:
   push:
     branches: ['worker/FullCombatAudit/title-pointer-trace']
@@ -8,7 +8,7 @@ permissions:
 jobs:
   trace:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     env:
       ASHEN_ART_SOURCE: cache
     steps:
@@ -16,13 +16,24 @@ jobs:
         with:
           persist-credentials: false
           lfs: false
+      - name: Preserve reviewed observational wrapper
+        run: cp tools/combat-audit/trace-title-pointer.mjs "$RUNNER_TEMP/trace-title-pointer.mjs"
+      - uses: actions/checkout@v5
+        with:
+          ref: ebc49a7f5985f4e1568c8391ac35a83498df93c4
+          persist-credentials: false
+          lfs: false
+      - name: Verify exact repaired source
+        run: test "$(git rev-parse HEAD)" = ebc49a7f5985f4e1568c8391ac35a83498df93c4
       - uses: ./.github/actions/setup-node
       - uses: ./.github/actions/fetch-art
         with:
           packs: all
       - uses: ./.github/actions/which-browser
       - name: Observe the trusted whole-run pointer path
-        run: node tools/combat-audit/trace-title-pointer.mjs
+        run: node "$RUNNER_TEMP/trace-title-pointer.mjs"
+      - name: Run the uninstrumented trusted whole-run gate
+        run: node tools/verdict.mjs -- node tools/full-run-probe.mjs --check
       - uses: actions/upload-artifact@v4
         if: always()
         with:
