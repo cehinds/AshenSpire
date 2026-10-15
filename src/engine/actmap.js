@@ -62,6 +62,7 @@ export function buildActMap(registries, rng, seat, tier, mapShape = null, { hist
   if (typeof seat !== 'string' || !seat) throw new Error(`buildActMap: a seat id is required, got ${JSON.stringify(seat)} (SPEC §13.2)`);
   if (!Number.isInteger(tier) || tier < 1) throw new Error(`buildActMap: tier must be a positive integer, got ${JSON.stringify(tier)}`);
   registries.seats.get(seat); // an unknown seat throws by name here, before any draw
+  if (registries.gameProfile?.foundation.mode === 'configured' && !gameModule(registries, 'routes')) return buildGameProfileActivities(registries, rng, seat, tier);
   if (gameModule(registries, 'routes')?.mode === 'configured') return buildGameProfileActMap(registries, rng, seat, tier, { history });
   const authored = registries.mapConfig(tier);
   const shaped = applyRunShape(authored, mapShape, MAP_SHAPE_LIMITS);
@@ -154,4 +155,23 @@ export function buildGameProfileActMap(registries, rng, seat, tier, { history = 
   const boss = rng.pick('map', pool);
   nodes.boss = { id:'boss',floor:count+1,col:0,type:'boss',actualType:'boss',next:[],encounterId:boss.id,label:bossDestinationLabel(registries,boss.id) };
   return { nodes,startIds:['n1_0'],shrineId:`n${restFloors.at(-1)}_0`,bossId:'boss',bossIds:['boss'],floors:count+1,columns:1,gameProfileHash:registries.gameProfile.hash };
+}
+
+
+// Adapter-shaped activities let existing encounter/service doors remain useful
+// with the routes feature absent. The UI renders these as a launcher, not a map.
+export function buildGameProfileActivities(registries, rng, seat, tier) {
+  const definitions = [
+    { id: 'activityFight', type: 'monster', label: 'Fight' },
+    ...(gameModule(registries, 'rest') ? [{ id: 'activityRest', type: 'shrine', label: 'Rest' }] : []),
+    ...(gameModule(registries, 'shops') ? [{ id: 'activityShop', type: 'merchant', label: 'Shop' }] : []),
+    { id: 'activityBoss', type: 'boss', label: 'Challenge boss' },
+  ];
+  const ids = definitions.map(row => row.id);
+  const fit = { seat, tier, finalTier: gameContent(registries, 'routes')?.acts || registries.seats.all().length };
+  const pool = registries.encounters.all().filter(row => row.pool === 'boss' && encounterFitsSeat(row, fit));
+  if (!pool.length) throw new Error('Foundation activity requires a valid boss encounter');
+  const boss = rng.pick('map', pool);
+  const nodes = Object.fromEntries(definitions.map((row, col) => [row.id, { ...row, floor: 1, col, next: ids, ...(row.type === 'boss' ? { encounterId: boss.id } : {}) }]));
+  return { activityLauncher: true, nodes, startIds: ids, bossId: 'activityBoss', bossIds: ['activityBoss'], shrineId: nodes.activityRest ? 'activityRest' : null, floors: 1, columns: definitions.length, gameProfileHash: registries.gameProfile.hash };
 }
