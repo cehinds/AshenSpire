@@ -2,7 +2,8 @@
 
 **Status: documentation blueprint only.** None of the interfaces, module loader,
 update requests, portable runtime, or verification procedures below is implemented
-by this document. Existing gameplay remains behind its legacy adapter. Follow the
+by this document. Existing gameplay is unchanged; the compatibility legacy adapter
+is a future implementation step, not a component supplied here. Follow the
 scope and delivery sequence in [IMPLEMENTATION.md](IMPLEMENTATION.md); record work
 and resume instructions in [CONTINUE.md](CONTINUE.md). Integration is restricted to
 `Feature/json-game-modules`; do not promote to `dev`, `test`, `main`, or a release.
@@ -27,47 +28,88 @@ Free support actions require a configured finite per-turn budget. No combination
 may allow an infinite free-action loop or require a resource that is absent.
 
 ```text
-type CorePhase = launch | playerTurn | resolving | enemyTurn | victory | death
+type CorePhase = launch | activity | playerTurn | enemyTurn | victory | death
+type TransactionStatus = COMMITTED | REJECTED | SUSPENDED
 CoreState = {
-  phase, cycle, hero, enemies, activityId, outcome,
-  turn: {ownerId, opportunitiesRemaining, freeCommandsRemaining},
-  commandSequence, transactionSequence
+  phase, cycle, hero, activity: {id, kind, enemies, localState, enemyCursor},
+  outcome, turn: {ownerId, opportunitiesRemaining, freeCommandsRemaining},
+  commandSequence, transactionSequence, pendingDecision
 }
+RunState = {lock, core: CoreState, modules: namespacedPerRunState}
 
-startActivity(activityId):
-  require activityId in runtime.activities
-  create core hero/enemies from resolved definitions; initialize module state
-  enterPlayerTurn()
+submit(request):
+  result = executeTransaction(request)  // includes all lifecycle/system commands
+  if result.status == REJECTED: publish public rejection; return
+  if result.status == SUSPENDED: publish allowlisted decision choices; return
+  // Only COMMITTED may dispatch the persisted successor system command.
+  publish committed public view
+  dispatchPersistedSuccessorIfAny(result.transactionId)
 
-enterPlayerTurn():
-  if terminalOutcome(): enterOutcome(); return
-  core.phase = playerTurn
-  core.turn = boundedPolicy.begin(hero, core.cycle)
-  require finite nonnegative integer budgets
-  require legalCommands(hero) includes core.pass
-
-acceptPlayerRequest(request):
-  require phase == playerTurn and request.actorId == hero.id
-  validate target, legality, projected definition and bounded budget
-  if request.actionId == core.pass: atomically close player's opportunity
-  else executeTransaction(request, spending declared opportunity/free budget)
-  if terminalOutcome(): enterOutcome()
-  else if pass or opportunitiesRemaining == 0: runEnemyResponse()
-  else publish legal choices, always including pass
-
-runEnemyResponse():
-  phase = enemyTurn
-  for each living enemy in stable initiative order:
-    intent = enemyAI.chooseLegalAttackOrPass(readOnlyWorld, enemyAIStream)
-    executeTransaction(intent within finite enemy opportunity policy)
-    if terminalOutcome(): enterOutcome(); return
-  cycle += 1
-  enterPlayerTurn()
-
-restart():
-  require phase in [victory, death]
-  begin new run from explicit selected config lock; never mutate old lock
+handleCandidate(candidate, command):  // called only inside executeTransaction
+  switch command.kind:
+    newRun:
+      require no active run or explicit permitted restart from terminal outcome
+      create new run ID and immutable lock; initialize hero and per-run module state
+      initialize durable deck/currency/progression/resources using new-run policies
+      set phase = launch; offer activity launcher
+    startActivity:
+      require legal launch/transition and registered activity ID
+      retain hero, deck, currency, progression and resource state
+      apply explicit entry/recovery/carry policies through candidate deltas
+      initialize only activity-local module state
+      if activity.kind == combat:
+        create its enemy instances; enemyCursor = 0
+        enqueueSystem(enterPlayerTurn)
+      else:
+        phase = activity; open registered activity handler (shop creates no enemies)
+    enterPlayerTurn:
+      require combat and no pending decision
+      if terminalOutcome(candidate): set outcome and terminal phase; return
+      phase = playerTurn
+      turn = boundedPolicy.begin(hero, cycle)
+      require finite nonnegative budgets and legalCommands includes core.pass
+    playerAction:
+      require phase == playerTurn and actor == hero and no pending decision
+      validate target, projected definition, legality and budget before any spend
+      if action == core.pass: close remaining opportunity through candidate delta
+      else: resolve action; spend declared opportunity/free budget in candidate
+      if terminalOutcome(candidate): set outcome and terminal phase
+      else if pass or opportunitiesRemaining == 0:
+        enqueueSystem(beginEnemyResponse)
+    beginEnemyResponse:
+      phase = enemyTurn; enemyCursor = 0; enqueueSystem(enemyStep)
+    enemyStep:
+      require phase == enemyTurn
+      choose next living enemy in stable initiative order
+      if none:
+        cycle += 1; enqueueSystem(enterPlayerTurn); return
+      // RNG fork already exists: no authoritative draws outside transaction.
+      intent = enemyAI.chooseLegalAttackOrPass(candidate.view, candidate.rng.enemyAI)
+      resolve within finite enemy opportunity policy; advance enemyCursor
+      if terminalOutcome(candidate): set outcome and terminal phase
+      else: enqueueSystem(enemyStep)
+    activityCommand:
+      delegate validated command to current activity handler in candidate
+      preserve per-run state except explicit declared deltas
+    resumeDecision:
+      resume the saved candidate at its exact boundary, using validated choice
 ```
+
+`enqueueSystem` writes the candidate scheduler/outbox only. A successor becomes
+eligible after the complete transaction commits; the dispatcher claims its stable
+ID idempotently and submits it through the same transaction entry point. While a
+mandatory successor is pending, gameplay command legality permits only that system
+command (or an authorized pending-decision response); a player cannot race another
+pass/action between turn-ending commit and enemy dispatch. Phase, cycle, pass, opportunity spends, enemy cursor, AI selection/RNG, outcome, and
+activity lifecycle handlers never mutate live state outside that entry point.
+A rejected request discards all candidate changes, including opportunity spends.
+A suspended request does not advance phase, enemy cursor, or successor dispatch;
+its persisted continuation resumes inside the transaction protocol in section 5.
+
+A run transition is not a new run: activity exit/entry policies explicitly declare
+which local state expires and how persistent resources carry or recover. Returning
+from a shop or launching another fight must not recreate the hero or reset deck,
+currency, progression or resource pools by accidental initialization.
 
 Core policy must define simultaneous death precedence and multiple-enemy ordering
 in versioned rules. UI and headless drivers submit the same commands. Minimal UI
@@ -111,8 +153,11 @@ are pinned through a reviewed catalog artifact: `modules.cards` selects the
 catalog's pinned cards package, never an opportunistic latest version. Built-in
 preset/pack references use registered namespaces with complete closure; unknown
 custom references are errors. Defaults and overrides merge recursively for keyed
-objects; arrays and scalars replace whole values. Removing a default is an explicit
-RFC 6902 patch to the author source before resolution, not a magic null value.
+objects; arrays and scalars replace whole values. RFC 6902 patches edit the author
+source before resolution. Removing an override restores the inherited default;
+it cannot remove that default. To change a default, edit its owning module, or use
+a schema-defined replacement such as `include: []` or an explicit policy field.
+Null has only its declared schema meaning, never implicit deletion semantics.
 
 Reserve `$comment` at every object depth. Preserve it in author source and strip it
 recursively before execution and gameplay hashing. Preserve array order. Reject
@@ -137,8 +182,8 @@ and interfaces are proposed, not existing files:
   "configSchema": {
     "type": "object",
     "properties": {
-      "include": { "type": "array", "uniqueItems": true, "items": { "enum": ["block", "poise", "barrier", "ward"] } },
-      "order": { "type": "array", "uniqueItems": true, "items": { "enum": ["block", "poise", "barrier", "ward"] } }
+      "include": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+      "order": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
     },
     "required": ["include", "order"],
     "additionalProperties": false
@@ -150,16 +195,21 @@ and interfaces are proposed, not existing files:
     { "id": "defenses.stanceProtection", "owner": "defenses", "version": 1,
       "whenEnabled": ["defenses", "stances"], "requiresCapabilities": ["stance.entry@1"] }
   ],
-  "entrypoints": { "implementation": "runtime/defenses", "ui": "ui/defenses" },
-  "guide": "GUIDE.md",
-  "stateSchema": "state.schema.json",
-  "content": ["content/defenses.json"],
-  "integrationCases": ["cases/core-defenses.json", "cases/stances-defenses.json"]
+  "entrypoints": { "implementation": "./defenses.mjs", "ui": "./defenses.ui.mjs" },
+  "guide": "./defenses.md",
+  "stateSchema": { "$ref": "./defenses.schema.json#/$defs/state" },
+  "content": ["./defenses.content.json"],
+  "integrationCases": ["./defenses.cases.json"]
 }
 ```
 
-Require `order` to contain exactly the selected defense IDs once; schema alone is
-insufficient. Technical dependencies ship inside the reviewed package closure.
+These proposed paths are relative to the module folder; `defenses.schema.json`
+contains its config schema and `$defs.state`. No such files are created by this
+blueprint. Defense IDs are registry-validated strings, not a closed four-ID enum:
+authors can define additional defenses using supported behavior contracts. Require
+`order` to contain exactly the selected registered defense IDs once, each with a
+supported stage implementation; schema alone is insufficient. Technical
+dependencies ship inside the reviewed package closure.
 Optional feature dependencies never silently activate another feature. An optional
 bridge activates only when both selected features and compatible capabilities
 exist; its owner/version are explicit. A selected unsupported combination reports
@@ -178,10 +228,13 @@ resolve(authorSource, pinnedCatalog):
   close bundled technical dependencies with typed version checks
   assert selected feature IDs unchanged by technical closure
   settings = mergeDefaultsThenGameForEachEnabledPackage()
-  validate settings and all stable-ID references
+  validate root/settings schemas and manifest/package/schema reference closure
+  validate candidate definition shapes without requiring inactive capabilities
   activate explicitly owned compatible integrations for selected pairs
   providers = arbitrateCapabilities(packages, integrations)
   definitions = projectDefinitions(settings, providers)
+  validate all active projection references, operations and capabilities
+  report inactive definitions/variants and eligibility reasons separately
   phases = compileOrderedStageGraph(providers)
   verify all referenced opcodes/formulas/predicates/capabilities supported
   verify gameplay invariants and core fallback availability
@@ -261,27 +314,42 @@ Do not hot-unload modules from existing saves in v1. Feature changes construct a
 new runtime for new runs; running saves retain the locked package set.
 
 ```text
-executeTransaction(request):
-  validate request schema, authority, idempotency key and current legality
+executeTransaction(request) -> {status: COMMITTED | REJECTED | SUSPENDED, ...}:
+  validate request schema, authority, idempotency key and committed revision
+  reject invalid decision choice before touching its pending record
   fork state + action queue + RNG streams/counters + scheduler + identity counters
-  resolve typed action envelope from immutable projected definition
+  if resumeDecision:
+    load saved candidate and verify boundary/base revision/choice authority
+  else:
+    require no pending decision; invoke handleCandidate(candidate, request)
+  when resolving action: derive typed envelope from projected definition
   at declared precommit reaction boundary:
-    collect reaction offers from eligible providers in declared order
-    suspend as serializable pending decision if player input is required
-    bound reaction ancestry, depth, events and repeated rule firings
-  apply selected reaction requests in the candidate transaction
-  execute ordered action stages and queued descendants against candidate
+    collect eligible offers in declared order; enforce ancestry/depth/event bounds
+    if input needed:
+      durably store candidate + base revision/hash + boundary/program counter
+      + selected offers + queues/RNG/scheduler/counters as pending continuation
+      publish only allowlisted choices; return SUSPENDED
+  resume/continue selected reactions and ordered stages against candidate
   validate deltas, terminal outcome, numeric limits and invariant postconditions
-  on any error: discard candidate in full; emit diagnostic outside gameplay
-  on success: persist state, queue, RNG, scheduler and committed facts atomically
-              with outbox and dedup ledger; publish after durability
+  on error:
+    discard candidate; clear failed continuation transactionally if present
+    return REJECTED with public reason (no budget/RNG/phase changes)
+  on success:
+    atomically persist state, queue, RNG, scheduler, facts, outbox and dedup ledger
+    clear pending continuation in same commit; return COMMITTED after durability
 ```
 
-Do not expose speculative damage as a committed fact. A reaction input suspension
-must persist a precisely versioned continuation before accepting further commands;
-its resolution begins from that boundary, without replaying previously committed
-prefix effects. Version which boundaries commit a prefix and which remain wholly
-speculative. Enforce the same semantics in solo, co-op, delayed actions and preview.
+Do not expose speculative damage as a committed fact. For v1, a transaction with a
+reaction decision is wholly speculative until resolution: only the pending decision
+record is durable on SUSPENDED, and no gameplay prefix is committed. Block other
+gameplay/system commands at that base revision; allow only authorized resume or
+explicit cancellation. Resume from the stored program counter and candidate RNG
+counters, never reroll AI or replay prefix effects. Cancellation drops the candidate
+and pending record without changing committed gameplay. Invalid decision choices
+leave the pending record intact and return REJECTED. Verify revision/lock before
+resuming; reject stale/corrupt continuations with explicit recovery rather than
+rebase. Any future prefix-commit protocol requires a new boundary contract version.
+Apply identical boundaries to solo, co-op, delayed actions and sandbox preview.
 
 Outbox records carry deterministic `effectId = transactionId + ordinal + sink`.
 Visual/audio/network sinks acknowledge with deduplication. A postcommit sink failure
@@ -326,14 +394,20 @@ preserve or explicitly version their distinction.
 preview(request, committedSnapshot):
   sandbox = clone authoritative state, queues, scheduler, counters and RNG
   run the same legality, reaction and damage path with sandbox sinks
-  return receipt + public projection + known uncertainty
+  derive publicReceipt/publicView through explicit field allowlists
+  redact hidden intent, private stage receipts and exact hidden/future RNG results
+  replace uncertain fields with permitted ranges/distributions/conditional results
   discard sandbox; assert live state/RNG/counters/outbox unchanged
+  return only {publicReceipt, publicView, uncertainty}
 ```
 
-Known deterministic outcomes match execution from the same state. Hidden reactions
-or unknown future RNG outcomes require ranges/distributions or an explicit
-conditional result, not a false guaranteed value. Preview must not reveal hidden
-intent by running an unrestricted inspector on the sandbox.
+Known deterministic outcomes match execution from the same state. Even when a
+sandbox clone can compute the exact next RNG result, that private result is not
+public knowledge and must not be returned. Hidden reactions or unknown future RNG
+outcomes require permitted ranges/distributions or a conditional result. Apply
+public projection after the shared math; never return raw receipts or an
+unrestricted sandbox inspector. Preview consumes no authoritative draws, writes
+no durable suspension, and delivers no real outbox effects.
 
 ## 7. Save, restore, and update through pinned artifacts
 
@@ -473,8 +547,12 @@ ownership, examples and upgrade constraints.
 
 Verification below is a future acceptance procedure, not a claim of executed tests:
 
-1. Core-only: launch, target, attack, pass, enemy response, victory/death/restart,
-   inspect, procedural visuals and save/restore; bound every turn without pools.
+1. Core-only with every optional module absent/false: launch, target, attack, pass,
+   enemy response, inspect, procedural visuals and save/restore. Prove an invalid
+   attack spends no opportunity, pass reaches an enemy response, and repeated
+   legal attacks against the default finite-HP enemy reach victory (or death under
+   the declared default matchup), then restart starts a fresh run. Bound each turn
+   without MP, SP or Actions; an intentionally endless pass script need not win.
 2. For each built-in feature: core plus that feature, and full preset minus that
    feature. Verify actual absence of its costs/state/effects, not just UI hiding.
 3. Targeted pairs: cards/resources, resources/stances, defenses/mixed damage,
