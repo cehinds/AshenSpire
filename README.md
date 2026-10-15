@@ -1,5 +1,22 @@
 # AshenSpire
 
+<!-- feature-preview:start -->
+## Feature preview — Combat audit and menu fixes
+
+**Hosted Play: pending publication and verification.** Intended route:
+`https://cehinds.github.io/AshenSpire/branches/feature/FullCombatAudit/latest/`.
+
+Quit is the last main-menu panel, with a clear return path when a browser keeps
+the window open. The paused co-op entry is hidden. These four real viewport
+captures show build **0.7.1.1530**, source **368140ce27**.
+[Capture record](docs/preview/features/full-combat-audit/CAPTURE.md) ·
+[Combat audit evidence](docs/preview/full-combat-audit/README.md).
+
+| Mobile | Desktop | Wide | Tablet |
+| --- | --- | --- | --- |
+| ![Mobile: Quit is the last visible main-menu panel](docs/preview/features/full-combat-audit/mobile.png) | ![Desktop: main menu with Quit after Settings](docs/preview/features/full-combat-audit/desktop.png) | ![Wide: main menu with the final Quit panel](docs/preview/features/full-combat-audit/wide.png) | ![Tablet: portrait main menu with reachable Quit](docs/preview/features/full-combat-audit/tablet.png) |
+<!-- feature-preview:end -->
+
 A browser roguelike: build a character, explore a seeded world, and fight with cards.
 
 > **AI-made game.** The original game code, design, writing, artwork and music
