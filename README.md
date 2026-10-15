@@ -5,12 +5,12 @@
 
 The same runtime supports two authored configurations. **Product core** includes its required bundled modules and keeps optional gameplay packages off where the core has a fallback. **Current game** preserves the full legacy configuration.
 
-- **Product core:** [Play on Pages (publication pending)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-modules/latest/) · [latest build run](https://github.com/cehinds/AshenSpire/actions/runs/38808828137)
-- **Current game:** [Play on Pages (publication pending)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-current-preview/latest/) · [latest build run](https://github.com/cehinds/AshenSpire/actions/runs/38808849439)
+- **Product core:** [Play on Pages (publication pending)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-modules/latest/) · [latest build run](https://github.com/cehinds/AshenSpire/actions/runs/38809056393)
+- **Current game:** [Play on Pages (publication pending)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-current-preview/latest/) · [latest build run](https://github.com/cehinds/AshenSpire/actions/runs/38809060402)
 
 Game rules and JSON imports now live in **Settings → General → Game rules**. New Game goes directly to character creation. **Settings → General → Display** offers Auto, Desktop (1440×900), Mobile (390×844), Widescreen (1920×1080), and Tablet (1024×768); switching views keeps the active fight and fits the selected layout inside the current window.
 
-The latest CI source revisions are core `7c3e48537` and current `3c048f38e`; their builds and Pages publication are pending. Fresh local Settings captures from source `90c21acf0` (build `0.7.1.1534`) are recorded in [the Settings update evidence](docs/preview/features/json-game-modules/settings-update/README.md).
+The latest CI source revisions are core `eaa1581b9` and current `74804f13b`; their builds and Pages publication are pending. Fresh local Settings captures from source `90c21acf0` (build `0.7.1.1534`) are recorded in [the Settings update evidence](docs/preview/features/json-game-modules/settings-update/README.md). Later changes preserve headless coordinate helpers and refine the capture script; the photographed interface is unchanged.
 
 | Desktop · 1440×900 | Wide · 1920×1080 | Tablet · 1024×768 | Mobile · 390×844 |
 | --- | --- | --- | --- |
