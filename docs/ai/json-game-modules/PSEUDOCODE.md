@@ -444,6 +444,7 @@ restCommand(candidate, request):  // every branch executes inside executeTransac
     require visit.status == available and not visit.visitTokenConsumed
     require service in [Strategize, Smith, LevelUp]
     validate selected service eligibility and available authored budgets
+    // Versioned empty-Strategize fallback is eligible if no normal service can finish.
     visit.selectedService = service; visit.visitTokenConsumed = true
     visit.status = active; visit.draft = versioned service-specific empty draft
     increment visit.revision  // durable exclusive choice; no effects/refill yet
@@ -455,13 +456,21 @@ restCommand(candidate, request):  // every branch executes inside executeTransac
     require visit.status == active  // token is already consumed; do not spend twice
     revalidate draft, eligibility, earned points and authored upgrade budget
     switch visit.selectedService:
-      Strategize: apply validated deck moves preserving identities/history
+      Strategize:
+        if declared empty-Strategize fallback: accept valid empty/no-change draft
+        else: apply validated deck moves preserving identities/history
       Smith: upgrade eligible equipment only; spend declared upgrade budget once
       LevelUp: allocate existing earned points through compiled stat provider
     reconcile maxima after equipment/stat changes using their dependency receipts
-    set current HP = resulting maxHP, MP = resulting maxMP, SP = resulting maxSP
-    refill healing and MP flask charges to resulting declared capacities
-    // Enabled providers own these deltas; no absent-module resource is recreated.
+    require typed HP recovery provider (core fallback always supplies it)
+    if full default bundle: assert requested HP/SP/MP/flask providers all present
+    for resourceId in [hp, sp, mp]:
+      if availableTypedResourceProvider(resourceId):
+        provider.setCurrentToResultingMaximum(candidate)
+      else: require resourceId != hp; skip without creating optional state
+    for available flask provider in [healingFlask, mpFlask]:
+      provider.refillChargesToResultingCapacity(candidate)
+    // Disabled SP/MP/flask modules stay absent; do not resurrect their state.
     visit.status = resolved; close service editor; increment visit.revision
     persist receipt keyed by visitId with choice/service/recovery facts
   if request == leaveRest:
@@ -505,10 +514,22 @@ idempotency handling. Leaving requires resolution and closes the editor. If an
 editor needs a reaction/input suspension, section 5's transaction continuation
 retains that same visit identity; SUSPENDED never authorizes a second choice.
 
-Permit an eligible service editor to finish without changes as a recommendation
-to prevent a softlock; express that no-op policy explicitly rather than inventing
-free earned points, XP or equipment upgrades. Eligibility and upgrade/point budgets
-remain authored policies. Invalid drafts keep the locked choice and editor open
+The following is a **proposed versioned runtime compatibility contract**, not a
+new user-facing rest mechanic: guarantee that at least one service can complete
+when feature overrides remove cards/editors, earned points and eligible Smith
+targets. Resolve an authored empty-Strategize/recovery fallback with a valid empty
+draft and no-change completion; it must not construct a missing cards/editor
+module. Default full-core Strategize continues to expose its enabled deck editor.
+The fallback retains the same one-choice visit and provider-based recovery, never
+free XP, points, gear upgrades or optional state. Reject candidate configurations
+whose replacement policies remove every completable rest path.
+
+Permit an otherwise eligible service editor to finish without changes as a
+recommendation; encode the no-op policy explicitly. Before choosing, UI cancel
+has no effect. After choosing, UI cancel may close/suspend the draft view but
+cannot clear the consumed token or selected service: resume the same draft, or
+finalize its valid no-change form under the declared policy before leaving.
+Eligibility and upgrade/point budgets remain authored policies. Invalid drafts keep the locked choice and editor open
 for correction. Smith is the rest-menu equipment-upgrade path; there is no rest
 card-upgrade option in this profile. Level/card reward acquisition remains governed
 by its own reward rules and is not a free LevelUp grant.
