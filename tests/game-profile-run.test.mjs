@@ -147,3 +147,14 @@ test('configured class cards cannot swap or unequip the fixed run class',async()
  assert.throws(()=>swapRunClass(reg,run,'herald'),/fixed for the run/);
  assert.equal(JSON.stringify(run),before);
 });
+
+
+test('configured equipment requirements default none across six families and four armor categories, legacy override restores gates',async()=>{
+ const {equipmentRequirementReceipt,equipPiece,ownership}=await import('../src/model/loadout.js');
+ const weaponIds=['straightSword','kiteShield','boneSceptre','shortbow','greatsword','dagger'];
+ for(const id of weaponIds){const run=fresh(),piece=reg.equipment.armaments.find(row=>row.id===id);assert.ok(piece,id);assert.equal(equipmentRequirementReceipt(reg,piece,run.attributes).ok,true,id);run.loadout.storage.push(id);assert.equal(equipPiece(reg,run.loadout,'rightHand',0,id,ownership(reg,{loadout:run.loadout}),{inCombat:false,classId:run.class,attributes:run.attributes}),true,id);}
+ for(const id of ['nightweave','gutterLeathers','default','wayfarerPlate']){const run=fresh(),piece=reg.equipment.armour.find(row=>row.classId===run.class&&row.id===id);assert.ok(piece,id);assert.equal(equipmentRequirementReceipt(reg,piece,run.attributes).ok,true,id);}
+ const run=fresh(),owned=ownership(reg,{loadout:run.loadout}),ctx={inCombat:false,classId:run.class,attributes:run.attributes};assert.equal(equipPiece(reg,run.loadout,'rightHand',0,null,owned,ctx),true);assert.equal(equipPiece(reg,run.loadout,'rightHand',0,'greatsword',ownership(reg,{loadout:run.loadout}),ctx),true);
+ const old=resolveGameProfile({formatVersion:1,core:'ashen.core@1.0.0',modules:{equipment:{requirementsPolicy:'legacy'}}});const r=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,old)),old),legacy=createRunState({seed:1,classId:'reaver',registries:r});assert.equal(equipmentRequirementReceipt(r,r.equipment.armaments.find(row=>row.id==='greatsword'),legacy.attributes).ok,false);
+ assert.deepEqual(applyGameProfileToContent(contentBundle,'current').equipment.equipmentRequirements,contentBundle.equipment.equipmentRequirements);
+});
