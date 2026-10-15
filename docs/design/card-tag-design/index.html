@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="A searchable, inspectable catalog of live and proposed card and tag wireframes.">
+<title>Card & Tag Wireframes</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar"><a class="brand" href="#catalog" aria-label="Card wireframe catalog home"><span class="brand-mark">✦</span><span>ASHEN SPIRE <small>DESIGN CATALOG</small></span></a><div class="top-actions"><a class="button quiet" href="contact-sheets/index.html">Proposed wireframe sheets</a><a class="button quiet" href="all-cards-and-tags.json" download>Download all cards & tags JSON</a></div></header>
+<main id="catalog">
+<section class="intro"><div><p class="eyebrow">CARD & TAG SYSTEM / FIELD NOTES</p><h1>Card wireframes</h1><p class="lede">Design preview · proposed entries are unimplemented · ? means undecided.</p><div class="motif-key" aria-label="Maneuver color key"><span><i class="swatch silver"></i>Smash / defend</span><span><i class="swatch red"></i>Sweep / counter</span><span><i class="swatch purple"></i>Prepare</span><span><i class="swatch gold"></i>Staggered</span><span><i class="swatch white"></i>Evade / evade failed / miss</span></div></div><div class="scope-chip"><span class="scope-dot"></span><span id="scopeCount">Loading catalog…</span></div></section>
+<div class="workspace">
+<section class="catalog-pane" aria-label="Catalog">
+<div class="tabs" role="tablist" aria-label="Card collections"><button id="tabProposed" role="tab" aria-selected="true" aria-controls="cardGrid">Proposed <span id="proposedCount" class="count">0</span></button><button id="tabLive" role="tab" aria-selected="false" aria-controls="cardGrid">Live cards <span id="liveCount" class="count">0</span></button></div>
+<div class="filters"><label class="search"><span aria-hidden="true">⌕</span><input id="searchInput" type="search" placeholder="Search cards, tags, or text…" aria-label="Search catalog"><kbd>/</kbd></label><label class="select-label"><span class="sr-only">Filter by school</span><select id="schoolFilter"><option value="">All schools</option></select></label><label class="select-label"><span class="sr-only">Filter by stance</span><select id="stanceFilter"><option value="">All stances</option></select></label><button id="clearFilters" class="text-button">Clear</button></div>
+<div class="results-row"><span id="resultsLabel">Showing proposed cards</span><span id="resultCount">0 cards</span></div><div id="cardGrid" class="card-grid" role="tabpanel" aria-labelledby="tabProposed"></div>
+</section>
+<aside class="tag-pane" aria-label="Tag catalog"><div class="tag-head"><div><p class="eyebrow">SYSTEM INDEX</p><h2>Tags</h2></div><span id="tagCount" class="count">0</span></div><p class="tag-intro">Runtime, historical, and proposed tags with source labels.</p><label class="search tag-search"><span aria-hidden="true">⌕</span><input id="tagSearch" type="search" placeholder="Find a tag…" aria-label="Search tags"></label><div id="tagGroups" class="tag-groups"></div></aside>
+</div>
+</main>
+<div id="dialogBackdrop" class="dialog-backdrop" hidden><section id="inspectDialog" class="inspect-dialog" role="dialog" aria-modal="true" aria-labelledby="inspectTitle" tabindex="-1"><button id="closeDialog" class="close-button" aria-label="Close inspector">×</button><div id="inspectContent"></div></section></div>
+<footer><span>WIREFRAME CATALOG</span><span>Darkgold · parchment · restrained ornament</span></footer>
+<script src="catalog-data.js"></script><script src="gallery.js"></script>
+</body></html>
