@@ -28,17 +28,29 @@ try {
     await page.locator('.combatant.player .sprite').first().click();
     await page.locator('.player.context-selected .combatant-mini-hud').waitFor();
     await page.evaluate(async () => { await document.fonts.ready; await Promise.all([...document.images].map(i => i.decode().catch(() => {}))); });
-    await page.waitForTimeout(350);
+    await page.locator('.player.context-selected .combatant-mini-hud').first().evaluate(async panel => {
+      let previous = '', stable = 0;
+      for (let frame = 0; frame < 180 && stable < 8; frame++) {
+        await new Promise(requestAnimationFrame);
+        const rect = panel.getBoundingClientRect();
+        const current = [rect.x, rect.y, rect.width, rect.height].map(n => n.toFixed(2)).join(',');
+        stable = current === previous ? stable + 1 : 0;
+        previous = current;
+      }
+      if (stable < 8) throw new Error('selected player panel did not settle');
+    });
     const geometry = await page.locator('.player.context-selected .combatant-mini-hud').first().evaluate(panel => {
       const box = e => { const r=e.getBoundingClientRect(); return { left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height }; };
       const hp = panel.querySelector('.combat-health-meter .m-value');
       const text = [...panel.querySelectorAll('[data-meter-row="resource"] :is(.m-label,.m-value)')].filter(e => e.getBoundingClientRect().width);
-      return { panel:box(panel), hp:box(hp), text:text.map(e=>({text:e.textContent,box:box(e)})), order:[...panel.querySelector('.combat-health-row').children].map(e=>e.dataset.defenseKind || e.dataset.res), viewport:{width:innerWidth,height:innerHeight} };
+      return { panel:box(panel), hp:box(hp), hpText:hp.textContent, labels:[...panel.querySelectorAll('[data-meter-row="resource"] .m-label')].map(e=>e.textContent.trim().toLowerCase()), text:text.map(e=>({text:e.textContent,box:box(e)})), order:[...panel.querySelector('.combat-health-row').children].map(e=>e.dataset.defenseKind || e.dataset.res), viewport:{width:innerWidth,height:innerHeight} };
     });
     await page.screenshot({path:resolve(out,name+'.png')});
     await page.screenshot({path:resolve(out,name+'.jpg'),type:'jpeg',quality:85});
     report.views.push({name,width,height,geometry});
     try {
+      assert.match(geometry.hpText, /\d/, name+': HP number is rendered');
+      assert.ok(geometry.labels.includes('poise') && geometry.labels.includes('ward'), name+': Poise and Ward labels are rendered');
       assert.ok(geometry.text.length >= 4, name+': selected Poise/Ward text is visible');
       for (const t of geometry.text) assert.ok(geometry.hp.bottom + 1 <= t.box.top || geometry.hp.right <= t.box.left || t.box.right <= geometry.hp.left, name+': HP value overlaps '+t.text);
       assert.ok(geometry.hp.left >= geometry.panel.left && geometry.hp.right <= geometry.panel.right, name+': HP value fits panel');
