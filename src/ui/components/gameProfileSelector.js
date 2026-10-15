@@ -1,5 +1,5 @@
 // New-run configuration only: selecting/importing never mutates a running save.
-export function mountGameProfileSelector(host, { profile, onSelect }) {
+export function mountGameProfileSelector(host, { profile, importedProfile = null, onSelect }) {
   const panel = document.createElement('div');
   panel.className = 'game-profile-selector';
   panel.style.cssText = 'display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;justify-content:center;margin:.75rem auto;max-width:38rem';
@@ -11,8 +11,8 @@ export function mountGameProfileSelector(host, { profile, onSelect }) {
     const option = new Option(name, id);
     select.append(option);
   }
-  if (!['current', 'core'].includes(profile.id)) select.append(new Option('Imported configuration', profile.id));
-  select.value = profile.id;
+  if (importedProfile) select.append(new Option('Imported configuration', 'imported'));
+  select.value = importedProfile?.hash === profile.hash ? 'imported' : profile.id;
   label.append(select);
   const upload = document.createElement('input');
   upload.type = 'file'; upload.accept = '.json,application/json';
@@ -24,7 +24,7 @@ export function mountGameProfileSelector(host, { profile, onSelect }) {
   status.textContent = `Configuration ${profile.id} · ${profile.hash.slice(0, 12)} · new runs only`;
   const apply = async value => {
     try { await onSelect(value); }
-    catch (error) { status.textContent = error.message; select.value = profile.id; }
+    catch (error) { status.textContent = error.message; select.value = importedProfile?.hash === profile.hash ? 'imported' : profile.id; }
   };
   select.addEventListener('change', () => apply(select.value));
   upload.addEventListener('change', async () => {

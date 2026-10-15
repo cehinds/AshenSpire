@@ -234,6 +234,7 @@ if (!validation.ok) {
 const profileQuery = new URLSearchParams(location.search);
 const askedGameProfile = profileQuery.get('gameProfile') || profileQuery.get('wb.gameProfile') || globalThis.__ASHEN_GAME_PROFILE_PREVIEW__ || 'current';
 let selectedGameProfile = resolveGameProfile(askedGameProfile.trim().startsWith('{') ? JSON.parse(askedGameProfile) : askedGameProfile);
+let importedGameProfile = askedGameProfile.trim().startsWith('{') ? selectedGameProfile : null;
 let registryGameProfile = selectedGameProfile;
 let registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, registryGameProfile)), registryGameProfile);
 let xpCombat = null;
@@ -2355,8 +2356,9 @@ function showCustomize(slot = 1, catalog = false, profileChosen = false) {
     const controls = document.createElement('div');
     const renderSelector = () => {
       controls.replaceChildren();
-      mountGameProfileSelector(controls, { profile: selectedGameProfile, onSelect: value => {
-        const profile = resolveGameProfile(value);
+      mountGameProfileSelector(controls, { profile: selectedGameProfile, importedProfile: importedGameProfile, onSelect: value => {
+        const profile = value === 'imported' ? importedGameProfile : resolveGameProfile(value);
+        if (typeof value === 'object') importedGameProfile = profile;
         rebuildRegistries(saves.loadMeta().settings || {}, null, profile);
         selectedGameProfile = profile; renderSelector();
       } });
@@ -3644,6 +3646,7 @@ function showRest(openPanel = null, locationId = null) {
       persist(); showRest();
     };
     const strategize = () => {
+      if (!gameModule(run, 'cards')) return commit('strategize', {});
       const draft = createGameProfileRestDraft(run);
       mountDeckEditor(document.body, {
         registries, run: draft, settings: saves.loadMeta().settings || {},
