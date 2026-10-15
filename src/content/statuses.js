@@ -239,7 +239,7 @@ export const statuses = [
       },
     ],
     tooltip:
-      'At the start of its turn, loses HP equal to Blight stacks (ignores Block). Stacks do not tick down; the Blight expires entirely after 3 turns. Re-applying adds stacks and refreshes the duration.',
+      'At the start of its turn, loses HP equal to Blight stacks (ignores Block). Stacks do not tick down; its turn timer starts at {decay.duration}.',
   },
   // Necrotic damage's own Blight (SPEC §4.7; owner, 2026-10-12 #4): the same
   // per-turn HP loss as Crimson Blight, but it lasts the whole fight. Only

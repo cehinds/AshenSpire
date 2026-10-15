@@ -6,6 +6,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { applyStatus, decayAtTurnEnd, advanceStatusClock } from '../src/engine/statuses.js';
 import { statusTooltipText, statusInstancePresentation } from '../src/ui/uiContent.js';
 import { statusLifecycleText } from '../src/ui/statusLifecycle.js';
+import { combatStatusRules } from '../src/content/combatStatusRules.js';
 
 const registries = createRegistries(contentBundle);
 const row = id => registries.statuses.get(id);
@@ -55,7 +56,7 @@ test('timed percent payload keeps magnitude and reapplication timer separate', (
   const shown = statusInstancePresentation(def, inst);
   assert.equal(shown.valueText, '25%');
   assert.match(shown.tooltip, /keeps the higher effect value/);
-  assert.match(shown.tooltip, new RegExp(`Turn timer: ${def.decay.duration} owner turn ends. Reapplying resets the timer`));
+  assert.match(shown.tooltip, new RegExp(`Turn timer: ${def.decay.duration} owner turn ends. Successful reapplication resets the timer`));
   assert.doesNotMatch(shown.tooltip, /higher stack|25 stacks/);
 });
 
@@ -97,6 +98,58 @@ test('foundation rules require context and use their own magnitude and expiry cl
   assert.doesNotMatch(full, /decreases by 1 at the end/);
   advanceStatusClock(h.ctx, h.target, 'ownerTurnStart');
   assert.equal(h.target.statuses.test, undefined);
+});
+
+test('expanded active status reapplication resets its timer below cap but not at cap', () => {
+  const def = row('crimsonBlight'), h = harness(def);
+  Object.assign(h.ctx, { combatExpansionVersion: 2, combatStatusRules });
+  h.grant(1);
+  decayAtTurnEnd(h.ctx, h.target);
+  assert.equal(h.target.statuses.crimsonBlight.duration, 2);
+  h.grant(1);
+  assert.equal(h.target.statuses.crimsonBlight.stacks, 2);
+  assert.equal(h.target.statuses.crimsonBlight.duration, 3);
+  h.grant(1);
+  decayAtTurnEnd(h.ctx, h.target);
+  h.grant(1);
+  assert.equal(h.target.statuses.crimsonBlight.stacks, 3);
+  assert.equal(h.target.statuses.crimsonBlight.duration, 2);
+  const full = statusTooltipText(def, h.ctx);
+  assert.match(full, /stack total up to 3/);
+  assert.match(full, /only when at least one stack is added/);
+  assert.match(full, /at the cap leaves the timer unchanged/);
+  assert.doesNotMatch(full, /Re-applying adds stacks and refreshes/);
+});
+
+test('legacy and unknown-version inspection keep their distinct reapplication rules', () => {
+  const def = row('crimsonBlight'), h = harness(def);
+  h.ctx.combatExpansionVersion = 1;
+  h.grant(3);
+  decayAtTurnEnd(h.ctx, h.target);
+  h.grant(1);
+  assert.equal(h.target.statuses.crimsonBlight.stacks, 4);
+  assert.equal(h.target.statuses.crimsonBlight.duration, 3);
+  const legacy = statusTooltipText(def, h.ctx);
+  assert.doesNotMatch(legacy, /up to 3|at the cap/);
+  const unknown = statusTooltipText(def);
+  assert.match(unknown, /Classic combat: Reapplying adds/);
+  assert.match(unknown, /Expanded combat: Reapplying adds to the stack total up to 3/);
+  assert.match(unknown, /at the cap leaves the timer unchanged/);
+});
+
+test('expanded cap detail follows the supplied rule table and overrides legacy meter semantics', () => {
+  const customRules = { ...combatStatusRules, statuses: {
+    ...combatStatusRules.statuses, crimsonBlight: { ...combatStatusRules.statuses.crimsonBlight, cap: 5 },
+  } };
+  const def = row('crimsonBlight'), h = harness(def);
+  Object.assign(h.ctx, { combatExpansionVersion: 2, combatStatusRules: customRules });
+  h.grant(9);
+  assert.equal(h.target.statuses.crimsonBlight.stacks, 5);
+  assert.match(statusTooltipText(def, h.ctx), /up to 5/);
+  const meter = { ...row('bleeding'), proc: row('bleed').proc };
+  const expanded = statusLifecycleText(meter, h.ctx);
+  assert.match(expanded, /stack total up to 3/);
+  assert.doesNotMatch(expanded, /adds to the build-up/);
 });
 
 test('foundation modes describe caps and source replacement without changing data', () => {
