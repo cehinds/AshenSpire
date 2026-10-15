@@ -1,5 +1,5 @@
+import { gameProfileRatingReceipt } from '../model/gameProfileRun.js';
 import { configuredCombat, configuredModule } from './gameProfileCombat.js';
-import { deriveStat } from '../model/derivedStats.js';
 // engine/runCombat.js — the one door a run's fight is built through.
 //
 // The live game (src/main.js enterCombat) and every headless simulator
@@ -159,7 +159,7 @@ export function createRunCombat({
     registries,
     rng,
     player: { ...runCombatPlayer(run),
-      ...(configuredCombat(run) && configuredModule(run, 'stats') && run.derivedStatRuleSnapshot?.rules ? { ratings: Object.fromEntries(['ar', 'dr', 'poise'].map(id => [id, deriveStat(run.derivedStatRuleSnapshot.rules, id, { attributes: run.attributes, classDef: registries.classes.get(run.class), level: run.level?.level }).value])) } : {}),
+      ...(configuredCombat(run) ? { ratings: gameProfileRatingReceipt(registries,run).totals } : {}),
       ...player },
     enemyIds,
     enemyLevels: enemyLevelsForFight(registries, run, enemyIds, encounter),

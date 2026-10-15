@@ -3,5 +3,9 @@
   "editorEnabled": true,
   "editorWhere": "noncombat",
   "fixedAppearance": true,
-  "requirementsPolicy": "none"
+  "requirementsPolicy": "none",
+  "upgradeBonuses": {
+    "weaponARPerTier": 1,
+    "armorDRPerTier": 1
+  }
 }
