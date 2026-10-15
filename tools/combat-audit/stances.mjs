@@ -14,6 +14,14 @@ import {makeAuditCombat} from './fixtures.mjs';
 const classes=['reaver','rogue','starseer','herald'];
 const args=process.argv.slice(2),arg=(name)=>{const i=args.indexOf(name);return i<0?undefined:args[i+1]};
 const approvedBuild={ordinal:arg('--build-ordinal')||'1527',digest:arg('--build-source')||'d93ee7b6bf',runtimeSource:arg('--runtime-source')||'0962c5ecc6467be75ffc1a4cbccc39d583e44dac',sourceKind:arg('--build-source-kind')||'compiled-content-digest',htmlSha256:arg('--html-sha256')||null};
+function assertBuildIdentity(report,label){
+ assert.equal(report.build?.ordinal,approvedBuild.ordinal,`${label} build ordinal`);
+ assert.equal(report.build?.source??report.build?.digest,approvedBuild.digest,`${label} compiled content digest`);
+ if(approvedBuild.htmlSha256){
+  assert.match(approvedBuild.htmlSha256,/^[a-f0-9]{64}$/i,'approved HTML SHA256 must be a full 64-character digest');
+  assert.equal(report.htmlSha256,approvedBuild.htmlSha256,`${label} exact HTML SHA256`);
+ }
+}
 const core=['attack','smash','sweep','counter','defend','spell','ranged','rangedMagic'];
 const origin={attack:'offensive',smash:'smash',sweep:'sweep',counter:'counter',defend:'defensive',spell:'casting',ranged:'offensive',rangedMagic:'casting'};
 const expectedHeld={reaver:8,rogue:7,starseer:7,herald:7};
@@ -87,8 +95,7 @@ function assertStaticContracts(){
 function readGallery(path){
  const gallery=JSON.parse(readFileSync(path,'utf8'));
  const actors=gallery.actors||Object.fromEntries((gallery.classRows||[]).map(row=>[row.classId,row]));
- assert.equal(gallery.build?.ordinal,approvedBuild.ordinal,'approved build ordinal');
- assert.equal(gallery.build?.digest,approvedBuild.digest,'approved compiled content digest');
+ assertBuildIdentity({...gallery,build:{...gallery.build,source:gallery.build?.digest}},'reference gallery');
  assert.equal(gallery.build?.runtimeSource,approvedBuild.runtimeSource,'approved runtime source commit');
  assert.deepEqual(gallery.errors||[],[],'no browser/runtime/HTTP/encoding errors');
  const rows=Object.fromEntries(classes.map(id=>{
@@ -132,7 +139,7 @@ async function resolvedProfileFamilyCandidates(){
 
 function readPlayedEvidence(path,resolvedCandidates,contractPath,profilePlayback,originPath,extraPaths){
  const data=JSON.parse(readFileSync(path,'utf8'));
- assert.equal(data.build?.ordinal,approvedBuild.ordinal,'paid-dispatch build ordinal');assert.equal(data.build?.source,approvedBuild.digest,'paid-dispatch compiled content digest');
+ assertBuildIdentity(data,'paid-dispatch report');
  assert.deepEqual(data.errors||[],[],'paid-dispatch report has no browser/runtime errors');
  // browser-combat evidence must be explicitly paid card dispatch, not a stage
  // seek or direct stage.play. The producer can contain other scenarios; only
@@ -146,8 +153,7 @@ function readPlayedEvidence(path,resolvedCandidates,contractPath,profilePlayback
  const extraReports=[];
  for(const extraPath of extraPaths?extraPaths.split(','):[]){
   const extra=JSON.parse(readFileSync(resolve(extraPath),'utf8'));
-  assert.equal(extra.build?.ordinal,approvedBuild.ordinal,`additional paid-dispatch build ordinal: ${extraPath}`);
-  assert.equal(extra.build?.source,approvedBuild.digest,`additional paid-dispatch content digest: ${extraPath}`);
+  assertBuildIdentity(extra,`additional paid-dispatch report ${extraPath}`);
   assert.deepEqual(extra.errors||[],[],`additional paid-dispatch report has no browser/runtime errors: ${extraPath}`);
   const receipts=new Map((extra.cases||[]).map(row=>[row.instanceId,row]));
   for(const row of extra.animationDispatch||[]){
@@ -225,8 +231,7 @@ function readPlayedEvidence(path,resolvedCandidates,contractPath,profilePlayback
 
 function readNormalActionContract(path){
  const data=JSON.parse(readFileSync(path,'utf8'));
- assert.equal(data.build?.ordinal,approvedBuild.ordinal,'normal action contract build ordinal');
- assert.equal(data.build?.source,approvedBuild.digest,'normal action contract compiled content digest');
+ assertBuildIdentity(data,'normal action contract');
  assert.deepEqual(data.errors||[],[],'normal action contract has no browser/runtime errors');
  assert.equal(data.counts?.failed,0,'normal action contract has no failed cases');
  const rows=data.animationDispatch||[];
@@ -274,7 +279,7 @@ function readNormalActionContract(path){
 
 function readOriginRecaptures(path){
  const data=JSON.parse(readFileSync(path,'utf8'));
- assert.equal(data.build?.ordinal,approvedBuild.ordinal,'origin recapture build ordinal');assert.equal(data.build?.source,approvedBuild.digest,'origin recapture compiled content digest');
+ assertBuildIdentity(data,'origin recapture');
  assert.deepEqual(data.errors||[],[],'origin recaptures have no browser/runtime errors');assert.equal(data.counts?.failed,0,'origin recaptures have no failed cases');
  const expected=[['reaver','defend'],['rogue','defend'],['starseer','defend'],['herald','defend'],['herald','bloodPact']],rows=data.animationDispatch||[];
  assert.equal(rows.length,expected.length,'fresh origin recaptures cover all requested rows');
@@ -297,7 +302,7 @@ function readEquipmentProfilePlayback(paths){
  for(const path of paths.split(',')){
   const data=JSON.parse(readFileSync(resolve(path),'utf8')),kind=Object.keys(allowed).find(name=>path.includes(name));
   assert.ok(kind,`equipment profile report path identifies known carrier: ${path}`);const expected=allowed[kind];
-  assert.equal(data.build?.ordinal,approvedBuild.ordinal,`${kind} profile build ordinal`);assert.equal(data.build?.source,approvedBuild.digest,`${kind} profile compiled content digest`);
+  assertBuildIdentity(data,`${kind} profile`);
   assert.deepEqual(data.errors||[],[],`${kind} profile run has no uncaught runtime errors`);assert.equal(data.counts?.failed,0,`${kind} profile run has no failed paid cases`);
   assert.equal(data.cases?.length,8,`${kind} profile has 4 classes × 2 devices`);
   const cases=new Map(data.cases.map(row=>[row.instanceId,row]));
@@ -318,8 +323,7 @@ function readEquipmentProfilePlayback(paths){
 
 function readCounterScenarioEvidence(path){
  const data=JSON.parse(readFileSync(path,'utf8'));
- assert.equal(data.build?.ordinal,approvedBuild.ordinal,'counter scenario approved build ordinal');
- assert.equal(data.build?.source,approvedBuild.digest,'counter scenario approved compiled content digest');
+ assertBuildIdentity(data,'counter scenario');
  assert.deepEqual(data.errors||[],[],'counter scenario has no browser/runtime errors');
  const required=['guard-counter-return','evasion-counter-return'];
  const rows=Object.fromEntries(required.map(category=>{
