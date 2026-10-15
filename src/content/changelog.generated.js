@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-15",
     "summary": "Quit is the final main menu entry, and blocked browser exits explain what happened",
     "detail": "Quit saves the run before leaving. When the browser refuses to close the tab, a visible message lets you return to the game. Settings defers preparing its sample card until you open the preview, and card-value calculation indexes tags once per operation. The combat audit now inventories cards from the registries and checks paid effects and next-turn recovery through native and compiled engines.",
-    "build": "0.7.1.1533",
+    "build": "0.7.1.1535",
     "pullRequest": 1990,
     "url": "https://github.com/cehinds/AshenSpire/pull/1990"
+  },
+  {
+    "id": "pr-2010",
+    "date": "2026-10-15",
+    "group": "2026-10-15",
+    "summary": "Selected combat details keep their numbers apart",
+    "detail": "The player's compact plate leaves room below the health bar for its HP value before the Poise and Ward labels, including narrow phones. Evade, Poise, Ward, Block and HP retain their order, and Barrier keeps its protection marker.",
+    "build": "0.7.1.1535",
+    "pullRequest": 2010,
+    "url": "https://github.com/cehinds/AshenSpire/pull/2010"
   },
   {
     "id": "pr-1996",
@@ -21,16 +31,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1533",
     "pullRequest": 1996,
     "url": "https://github.com/cehinds/AshenSpire/pull/1996"
-  },
-  {
-    "id": "pr-2004",
-    "date": "2026-10-15",
-    "group": "2026-10-15",
-    "summary": "Feature Play links are checked after publication",
-    "detail": "Development-process change only. After Pages deployment, publication checks the public feature index, its source commit, the sandbox wrapper and loader, and that the game payload is available as nonempty plain text. This route check does not execute the game.",
-    "build": "0.7.1.1531",
-    "pullRequest": 2004,
-    "url": "https://github.com/cehinds/AshenSpire/pull/2004"
   },
   {
     "id": "pr-1995",
