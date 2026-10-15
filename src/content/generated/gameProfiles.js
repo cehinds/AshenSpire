@@ -2610,7 +2610,8 @@ export const gameProfileCatalog = {
               "leftHand": null
             },
             "specialCardId": "core.reaverSpecial",
-            "maxHp": 84
+            "maxHp": 84,
+            "description": "Strength-focused fighter with a greatsword and heavy attacks."
           },
           {
             "id": "starseer",
@@ -2627,7 +2628,8 @@ export const gameProfileCatalog = {
               "leftHand": null
             },
             "specialCardId": "core.starseerSpecial",
-            "maxHp": 72
+            "maxHp": 72,
+            "description": "Intelligence-focused caster with a sceptre and Star Spark."
           },
           {
             "id": "rogue",
@@ -2644,7 +2646,8 @@ export const gameProfileCatalog = {
               "leftHand": "dagger"
             },
             "specialCardId": "core.rogueSpecial",
-            "maxHp": 74
+            "maxHp": 74,
+            "description": "Dexterity-focused fighter with two daggers and Quick Guard."
           },
           {
             "id": "herald",
@@ -2661,7 +2664,8 @@ export const gameProfileCatalog = {
               "leftHand": null
             },
             "specialCardId": "core.heraldSpecial",
-            "maxHp": 78
+            "maxHp": 78,
+            "description": "Wisdom-focused fighter with a sceptre and Lasting Resolve."
           }
         ],
         "cards": [
@@ -3487,7 +3491,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/classes.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:fbd8e9324606e364f2bfe09afd4c92fe6407a4e33b3a3b23ea7a9e4309fffb26"
+          "hash": "sha256:836998f30d4bae5284d1003be84e4966065f20dcd4349cf9871b8cdb10905df4"
         },
         {
           "path": "games/ashenspire/packs/core/cards.json",
@@ -3581,7 +3585,7 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "path": "src/** (excluding generated gameProfiles/changelog)",
-      "hash": "sha256:7bb64b1dd334ed47fe51b9fac502fd115fbe678352084df7f499b8d3a0300c4a"
+      "hash": "sha256:b2c2a5a87c9c430148e8d9504f7ad4cfc8cf76b0948494a643886d1806d8f0bd"
     }
   ],
   "runtimeSources": [
@@ -5797,7 +5801,7 @@ export const gameProfileCatalog = {
       "path": "src/model/gameProfile.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:230bf01eea4bbcecbc19949b702689975b6180a5f864d887c3de08d732c93939"
+      "hash": "sha256:b47b5819854ca7bea537f4531f29475735e17e78d691a844a0cffa95dbee098e"
     },
     {
       "path": "src/model/gameProfileRest.js",
@@ -8203,7 +8207,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/screens/customize.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:e5e2cc1b2dbdd7ae4c7553703f70ca61c931289e13713995d92b9ce1d6a0644d"
+      "hash": "sha256:c4756f42cb8d3544b12ddf7cbdd43df4a58bd9ab480088a6e32cf6c9e42c419f"
     },
     {
       "path": "src/ui/screens/deckEditor.js",
@@ -8416,7 +8420,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:23af16d4e9c9f6d88fe655d32ecf1a688b47df39f9e3a1d6d193ce63923593ab"
     }
   ],
-  "runtimeHash": "sha256:dc68ff0f0feaeae9b090a69aa0b2ef878b4386d296b5d5e816891368d9930272"
+  "runtimeHash": "sha256:5bfe7526a92a6b93cd0d1a8c5131b0f61a9ef459fa9174dc1945b0249b882024"
 };
 export const gameProfileAuthors = {
   "default": {

@@ -14,6 +14,8 @@ try {
  let started; mountCustomize(app,{registries:reg,gameProfile:profile,fixedClasses:gameContent(profile,'classes'),classAvailable:id=>gameProfileClassAvailable(profile,{},id),defaultSeedString:'TEST',onBack(){},onStart(config){started=config;}});
  const classStage=app.querySelector('.cz-railed').dataset.creationStage, count=app.querySelector('.cz-railed').dataset.creationStepCount;
  const locked=app.querySelectorAll('.cz-class.locked').length;
+ const classText=app.querySelector('#cz-classes').textContent;
+ const legacyClassCopy=reg.classes.all().filter(row => gameContent(profile,'classes').some(cls => cls.id===row.id)).some(row => !gameContent(profile,'classes').find(cls => cls.id===row.id).description || row.description !== gameContent(profile,'classes').find(cls => cls.id===row.id).description);
  app.querySelector('#cz-next').click(); const review=app.querySelector('.cz-railed').dataset.creationStage;
  const deckCount=app.querySelectorAll('.cc-starter-deck .card').length;
  const strengths=app.querySelector('.cc-summary-character [data-stat=strength]').textContent;
@@ -38,7 +40,7 @@ try {
  mountGameProfileOffers(app,{...rewardOptions,offer:{...rewards,id:'another-reward'}});
  const differentDoor=firstDoor!==app.querySelector('.reward-door');
  const serializable=JSON.stringify(run).includes('rewardDoorOwner')===false;
- return {sameDoor,differentDoor,serializable,preservesUnderlying,rewardDoor,disabledBefore,selected,claims,claimed,deckUnchanged,classStage,count,review,deckCount,strengths,locked,startedKeys:Object.keys(started).sort(),shop,offers};
+ return {classText,legacyClassCopy,sameDoor,differentDoor,serializable,preservesUnderlying,rewardDoor,disabledBefore,selected,claims,claimed,deckUnchanged,classStage,count,review,deckCount,strengths,locked,startedKeys:Object.keys(started).sort(),shop,offers};
  });
- assert.equal(result.classStage,'class'); assert.equal(result.count,'2'); assert.equal(result.review,'review'); assert.equal(result.deckCount,10); assert.match(result.strengths,/2/); assert.equal(result.locked,3); assert.deepEqual(result.startedKeys,['classId','gameProfile','seedString']); assert.equal(result.shop,true); assert.equal(result.offers,3); assert.equal(result.sameDoor,true); assert.equal(result.differentDoor,true); assert.equal(result.serializable,true); assert.equal(result.preservesUnderlying,true); assert.equal(result.rewardDoor,true); assert.equal(result.disabledBefore,true); assert.equal(result.selected,1); assert.equal(result.claims,1); assert.equal(result.claimed,1); assert.equal(result.deckUnchanged,true); console.log('Configured creation, merchant and reward UI contracts passed.');
+ assert.equal(result.legacyClassCopy,false); assert.doesNotMatch(result.classText,/Mastery|bleed|rot that|second spell|poison|feats/i); assert.equal(result.classStage,'class'); assert.equal(result.count,'2'); assert.equal(result.review,'review'); assert.equal(result.deckCount,10); assert.match(result.strengths,/2/); assert.equal(result.locked,3); assert.deepEqual(result.startedKeys,['classId','gameProfile','seedString']); assert.equal(result.shop,true); assert.equal(result.offers,3); assert.equal(result.sameDoor,true); assert.equal(result.differentDoor,true); assert.equal(result.serializable,true); assert.equal(result.preservesUnderlying,true); assert.equal(result.rewardDoor,true); assert.equal(result.disabledBefore,true); assert.equal(result.selected,1); assert.equal(result.claims,1); assert.equal(result.claimed,1); assert.equal(result.deckUnchanged,true); console.log('Configured creation, merchant and reward UI contracts passed.');
 } finally {await browser.close();server.close();}

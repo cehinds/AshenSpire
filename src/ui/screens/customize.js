@@ -692,7 +692,8 @@ export function mountCustomize(app, {
     const sprite = spritesAreEnabled()
       ? paintedPresentation(state.classId, state.startingArmourId, 'stand')
       : null;
-    const relic = registries.relics.get(state.startingRelicId || cls.startingRelic);
+    const relicId = state.startingRelicId || cls.startingRelic;
+    const relic = run.relics.includes(relicId) ? registries.relics.get(relicId) : null;
     const resourceOrder = ['hp', 'stamina', 'mana', 'openingHand', 'draw'];
     const resources = classResourceGrid(classPreviewResources(run, projection)
       .map((entry) => ({ ...entry, faceLabel: creationDerivedLabel(entry), inspectionLabel: CREATION_INSPECTION_LABELS[entry.id] || entry.label }))
@@ -706,7 +707,7 @@ export function mountCustomize(app, {
       const card = state.classChosen ? classBox.querySelector(`.cz-class[data-class="${state.classId}"]`) : null;
       if (card) {
         const unfold = classUnfold({ cls, sprite, resources, relic,
-          visual: classGlyph(cls.id), mastery: masteryClassSummary(registries, meta, cls.id), onRelicInspect: inspectRelic });
+          visual: classGlyph(cls.id), mastery: fixedCreation ? null : masteryClassSummary(registries, meta, cls.id), onRelicInspect: inspectRelic });
         card.classList.add('unfolded');
         card.append(unfold);
       }
@@ -996,7 +997,7 @@ export function mountCustomize(app, {
       selected: state.classChosen && cls.id === state.classId,
       expanded: !catalog && creationClassPreview() === 'unfold',
       visual: classGlyph(cls.id),
-      mastery: masteryClassSummary(registries, meta, cls.id),
+      mastery: fixedCreation ? null : masteryClassSummary(registries, meta, cls.id),
       locked: !eligibleClass(cls.id),
       hint: eligibleClass(cls.id) ? null : (classUnlockRow(registries.unlocks, cls.id) || {}).hint || null,
       onChoose: () => {
@@ -1506,7 +1507,7 @@ export function mountCustomize(app, {
     };
     slots.push(handSlot('rightHand', 'Main hand'));
     if (state.startingHands.leftHand) slots.push(handSlot('leftHand', 'Off hand'));
-    const relic = registries.relics.get(state.startingRelicId);
+    const relic = run.relics.includes(state.startingRelicId) ? registries.relics.get(state.startingRelicId) : null;
     slots.push({ key: 'relic', label: 'Relic', node: relic
       ? renderCollectibleCard(registries, relic, 'Relic', { ...summaryCard, identity: 'creation-summary:relic' }).card
       : null, empty: 'None' });
