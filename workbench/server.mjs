@@ -35,7 +35,7 @@ const REPO = path.resolve(HERE, '..');
 export const DEFAULT_PORT = 4300;
 const STATIC = /^(index\.html|app\.mjs|workbench\.css|shared\/[\w-]+\.css|ui\/(kit\/)?[\w-]+\.(mjs|css)|modules\/([\w-]+\/)?[\w-]+\.(mjs|css))$/;
 const PREVIEW_FILE = /^([\w.-]+-preview|tooltip-review[\w.-]*)\.html$/;
-const WATCH_DIRS = ['content', 'src', 'styles'];
+const WATCH_DIRS = ['content', 'src', 'styles', 'games'];
 const EXPORT_DIR = 'build/engine-export';
 // A save carries up to 100 files of up to 4 MB each, as JSON.
 const FILES_BODY_LIMIT = 32 * 1024 * 1024;
@@ -167,7 +167,7 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
   // and the run resolves, so the GENERATED lock is released, only once that group is empty.
   const runBuild = (script) => track(new Promise((resolve) => {
     let out = '';
-    const group = spawnGroup(process.execPath, [script], { cwd: root, env: { ...process.env, FORCE_COLOR: '0', ...jobs.lockEnv(GENERATED) }, windowsHide: true });
+    const group = spawnGroup(process.execPath, script.split(' '), { cwd: root, env: { ...process.env, FORCE_COLOR: '0', ...jobs.lockEnv(GENERATED) }, windowsHide: true });
     liveBuilds.add(group);
     group.child.stdout.on('data', (d) => { out = (out + d).slice(-20000); });
     group.child.stderr.on('data', (d) => { out = (out + d).slice(-20000); });
@@ -179,7 +179,7 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
   // Batches not yet taken by the chain; one arriving meanwhile joins them, so a
   // writer's files that land while the reload waits for it reload once.
   let queued = null;
-  const stepsFor = (files) => buildsFor(files, root).filter((s) => existsSync(path.join(root, s)));
+  const stepsFor = (files) => buildsFor(files, root).filter((s) => existsSync(path.join(root, s.split(' ')[0])));
   function onBatch(batch) {
     if (queued) { for (const f of batch) queued.add(f); return; }
     const mine = queued = new Set(batch);
@@ -357,6 +357,16 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
     }
     if (req.method === 'POST') {
       const data = await readJson(req, { limit: 64 * 1024 });
+      if (p === '/api/game-profile/validate') {
+        if (!data.author || typeof data.author !== 'object' || Array.isArray(data.author)) return sendJson(res, 400, { error: 'Profile author entry must be a JSON object.' });
+        try {
+          const { resolveGameProfile } = await import('../src/model/gameProfile.js');
+          const profile = resolveGameProfile(data.author);
+          return sendJson(res, 200, { valid: true, id: profile.id, hash: profile.hash, modules: profile.modules });
+        } catch (error) {
+          return sendJson(res, 422, { error: error.message, problems: [{ path: error.path || 'profile', message: error.message }] });
+        }
+      }
       const restart = p.match(/^\/api\/tools\/([\w-]+)\/restart$/);
       if (restart) return sendJson(res, 200, await supervisor.restart(restart[1]));
       if (p === '/api/jobs') return sendJson(res, 200, jobs.start(data.id, data.params));
