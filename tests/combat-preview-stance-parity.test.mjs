@@ -127,4 +127,80 @@ for (const mode of ['native', 'bundled']) {
       assert.equal(out.events.filter(event => event.type === 'cardPlayed').length, 1);
     }
   });
+
+  test(`${mode}: default spell Counter support matches paid protection with Ward overflow`, () => {
+    const { combat, instance } = fixture(api, { classId: 'starseer', cardId: 'frostCounter', protection: 'none' });
+    assert.equal(combat.player.ratings.dr, 2);
+    assert.equal(combat.player.ratings.pr, 4);
+    const before = state(combat), hp = combat.enemies[0].hp;
+    const shown = api.previewCard(combat, instance.instanceId);
+    const protection = shown.values.find(value => value.op === 'gainBarrier');
+    // Counterstrike makes the base 7 (4 Block/3 Ward); Defense 2 joins Block,
+    // and Power 4 plus the accepted Counter's 1 joins Ward. Full Ward overflows.
+    assert.equal(protection.value, 14);
+    assert.equal(JSON.stringify(protection.defenseSplit), JSON.stringify({ block: 6, ward: 8 }));
+    assert.equal(shown.tokens['gainBarrier.block'], 6);
+    assert.equal(shown.tokens['gainBarrier.ward'], 8);
+    assert.equal(state(combat), before);
+    const out = api.dispatch(combat, { type: 'playCard', cardInstanceId: instance.instanceId, targetId: combat.player.id });
+    const own = out.events.filter(event => event.cardInstanceId === instance.instanceId && !event.triggeredBy);
+    assert.equal(own.find(event => event.type === 'blockGained').amount, 6);
+    assert.equal(own.find(event => event.type === 'persistentWardChanged' && event.source === 'card').credited, 8);
+    assert.equal(own.find(event => event.type === 'barrierGained').amount, 8);
+    const entry = out.events.filter(event => event.triggeredBy?.kind === 'stance');
+    assert.equal(entry.find(event => event.type === 'blockGained').amount, 2);
+    assert.equal(entry.find(event => event.type === 'barrierGained').amount, 1);
+    assert.equal(combat.player.block, 8);
+    assert.equal(combat.player.barrier, 9);
+    assert.equal(combat.player.persistentWard.value, 6);
+    assert.equal(combat.enemies[0].hp, hp, 'only preparation, no retaliation');
+    assert.equal(out.events.filter(event => event.type === 'combatCounterArmed').length, 1);
+  });
+
+  test(`${mode}: Counterstrike support keeps duplicate effect slots and deferred Counter payloads`, () => {
+    const tags = ['classification.skill', 'camp:physical', 'maneuver:counter', 'damage:blunt', 'range:melee', 'targeting:single'];
+    const card = { id: 'auditMixedCounter', name: 'Mixed Counter', class: 'colorless', type: 'skill',
+      cost: 1, costRule: 'fixed', traitValues: { counterstrike: true }, tags,
+      effects: [
+        { op: 'block', target: 'self', amount: 3 },
+        { op: 'damage', target: 'enemy', amount: 5 },
+        { op: 'block', target: 'self', amount: 7 },
+        { op: 'poiseDamage', target: 'enemy', amount: 2 },
+        { op: 'block', target: 'self', amount: { f: 'add', args: [1, 2] } },
+        { op: 'wardDamage', target: 'enemy', amount: 1 },
+        { op: 'block', target: 'self', amount: 0 },
+      ], textTemplate: 'Gain {block} Block. Return {damage} damage. Gain {block.2} Block. Gain {block.3} Block. Gain {block.4} Block.' };
+    const registries = api.createRegistries({ ...api.contentBundle,
+      balance: { ...api.contentBundle.balance, combatRatings: api.registries.balance.combatRatings },
+      cards: [...api.contentBundle.cards, card],
+      tagging: [...api.contentBundle.tagging, ...tags.map(tagId => ({ family: 'card', objectId: card.id, tagId }))] });
+    const combat = api.createCombat({ registries, rng: api.createRng(11), combatExpansionVersion: 2, reactionRulesVersion: 2,
+      ratingsRules: registries.balance.combatRatings, enemyIds: ['wanderingSoldier'],
+      player: { classId: 'reaver', hp: 100, maxHp: 100, mana: 20, maxMana: 20, stamina: 20, maxStamina: 20,
+        energyMax: 20, drawPerTurn: 1, deck: [{ cardId: card.id, instanceId: 'mixed-counter' }] } });
+    combat.player.ratings = { ar: 0, dr: 0, pr: 0, poise: 0, ward: 0 };
+    combat.player.ratingSources = []; combat.player.statuses = {}; combat.player.block = 0;
+    const before = state(combat), hp = combat.enemies[0].hp;
+    // The explicit hostile Ward row gives this synthetic card an enemy target.
+    // Counter beats that enemy's prepared Attack, so the shared bonus is 75%:
+    // bases 3/7/3/0 become 5/12/5/0, then the accepted Counter adds 3 Defense.
+    const shown = api.previewCard(combat, 'mixed-counter', combat.enemies[0].id);
+    assert.deepEqual(Array.from(shown.values, value => value.op), card.effects.map(effect => effect.op));
+    assert.deepEqual(Array.from(shown.values.filter(value => value.op === 'block'), value => value.value), [8, 15, 8, 3]);
+    assert.deepEqual(['block', 'block.2', 'block.3', 'block.4'].map(token => shown.tokens[token]), [8, 15, 8, 3]);
+    assert.equal(shown.tokens.damage, 6, 'deferred damage keeps its unscaled preparation base plus Attack');
+    assert.equal(shown.values[3].value, 2, 'deferred Poise keeps its authored value');
+    assert.equal(shown.chargedEffects[5].amount, 1, 'deferred Ward keeps its authored value and slot');
+    assert.equal(state(combat), before, 'preview neither arms nor consumes a Counter or entry grant');
+    const out = api.dispatch(combat, { type: 'playCard', cardInstanceId: 'mixed-counter', targetId: combat.enemies[0].id });
+    const support = out.events.filter(event => event.type === 'blockGained' && event.cardInstanceId === 'mixed-counter' && !event.triggeredBy);
+    assert.deepEqual(Array.from(support, event => event.amount), [8, 15, 8, 3]);
+    assert.equal(combat.enemies[0].hp, hp, 'preparation never deals its deferred damage');
+    assert.equal(combat.player.combatCounter.payload.hp, 6);
+    assert.equal(combat.player.combatCounter.payload.poise, 2);
+    assert.equal(combat.player.combatCounter.payload.ward, 1);
+    assert.equal(out.events.filter(event => event.type === 'combatCounterArmed').length, 1);
+    assert.equal(out.events.filter(event => event.type === 'combatCounterstrikeApplied').length, 1);
+    assert.equal(out.events.filter(event => event.type === 'combatStanceChanged').length, 1);
+  });
 }

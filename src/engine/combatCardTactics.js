@@ -80,6 +80,9 @@ function wieldedArmament(ctx, carrier, source, kind) {
   return piece || null;
 }
 
+const counterPayloadOps = ctx => combatExpansionEnabled(ctx)
+  ? ['damage', 'poiseDamage', 'wardDamage'] : ['damage', 'poiseDamage'];
+
 function counterFormulaContext(ctx, source, target, meta) {
   return { entities: { self: source, owner: source, player: ctx.player, target, enemy: target,
     allEnemies: (ctx.enemies || []).filter(enemy => enemy.alive) },
@@ -90,7 +93,7 @@ function counterFormulaContext(ctx, source, target, meta) {
 export function counterEffectPreview(ctx, source, target, carrier, effect, meta = {}, { ignoreCondition = false } = {}) {
   const action = { source, owner: source, target, card: carrier, meta };
   const formulas = counterFormulaContext(ctx, source, target, meta);
-  const payloadOps = combatExpansionEnabled(ctx) ? ['damage', 'poiseDamage', 'wardDamage'] : ['damage', 'poiseDamage'];
+  const payloadOps = counterPayloadOps(ctx);
   if (!payloadOps.includes(effect.op) || (!ignoreCondition && effect.if && !evalPredicate(ctx, effect.if, action))) return null;
   const base = Math.max(0, Math.floor(evaluate(effect.amount ?? 0, formulas)));
   const hits = Math.max(0, Math.floor(evaluate(effect.hits ?? 1, formulas)))
@@ -231,10 +234,23 @@ export function prepareTacticalCard(ctx, source, target, carrier, effects, meta 
     // Enemy stances are armed before player phase and expire on enemy turn start.
     if (source.kind === 'enemy') delete source.combatCounter.expiresOnTurn;
   }
-  const payloadOps = combatExpansionEnabled(ctx) ? ['damage', 'poiseDamage', 'wardDamage'] : ['damage', 'poiseDamage'];
+  const payloadOps = counterPayloadOps(ctx);
   const support = effects.filter(effect => !payloadOps.includes(effect.op));
   if (!combatExpansionEnabled(ctx) && !support.some(effect => effect.op === 'block')) support.unshift({ op: 'block', target: 'self', amount: rules.guard });
   return counterstrikeEffects(ctx, source, target, carrier, support, arm);
+}
+
+/** Project immediate preparation through the live rule without arming a reply. */
+export function previewTacticalEffects(ctx, source, target, carrier, effects, meta = {}) {
+  if (!combatExpansionEnabled(ctx)) return effects;
+  const prepared = prepareTacticalCard(ctx, source, target, carrier, effects, meta, { arm: false });
+  if (carrier.combatProfile?.maneuver !== 'counter') return prepared;
+  // The face retains its deferred payload rows. Only its support effects run
+  // now, so preserve those authored positions while using their prepared values.
+  const payloadOps = counterPayloadOps(ctx);
+  let supportIndex = 0;
+  return effects.map(effect => payloadOps.includes(effect.op)
+    ? effect : prepared[supportIndex++]);
 }
 
 /** Ward is provenance within Block; buildup protection remains gainWard. */
