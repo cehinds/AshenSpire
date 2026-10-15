@@ -20,7 +20,7 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
   const model = gameProfileRestModel(registries, run, visit);
   const icons = { strategize: 'deck', smith: 'smith', levelUp: 'progression' };
   const optionIds = { strategize: 'strategize-opt', smith: 'smith-opt', levelUp: 'level-opt' };
-  const availability = restChoiceStatus(model.services.map(service => ({ ...service, used: !!visit.service })));
+  const availability = restChoiceStatus(model.services.map(service => ({ ...service, used: visit.service === service.id })));
   const layout = restPresentation(registries).optionLayout;
   const choices = el('div', { class: 'choice-body-choices rest-choices' }, el('div', {
     class: `class-row shrine-option-${layout}`, dataset: { optionLayout: layout },
@@ -57,10 +57,10 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
     el('p', { class: 'as-flavor', text: visit.service ? t('gameProfile.rest.complete', { service: t(`gameProfile.rest.service.${visit.service}`) }) : t('gameProfile.rest.chooseOne') }),
     el('div', { html: recoveryHtml(preview) }),
     el('ul', { class: 'choice-status-list' }, model.services.map(service => el('li', {
-      class: 'choice-status-row', dataset: { option: service.id, state: visit.service ? 'used' : service.available ? 'available' : 'unavailable' },
+      class: 'choice-status-row', dataset: { option: service.id, state: visit.service === service.id ? 'used' : service.available ? 'available' : 'unavailable' },
     }, [
       el('span', { class: 'choice-status-name', text: service.title }),
-      el('span', { class: 'choice-status-state', text: visit.service ? t('rest.state.used') : service.available ? t('rest.state.available') : t('rest.state.unavailable') }),
+      el('span', { class: 'choice-status-state', text: visit.service === service.id ? t('rest.state.used') : service.available ? t('rest.state.available') : t('rest.state.unavailable') }),
     ]))),
   ]);
   const status = el('p', { class: 'as-status', role: 'alert' });
