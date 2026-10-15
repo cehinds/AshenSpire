@@ -253,5 +253,29 @@
     ],
     "textTemplate": " Gain {block} Block.",
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+  },
+  {
+    "id": "core.evade",
+    "name": "Evade",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "↝",
+    "keywords": [],
+    "effects": [],
+    "tags": [
+      "camp:physical",
+      "maneuver:defend",
+      "classification.skill"
+    ],
+    "stanceTrigger": {
+      "stance": "evade"
+    },
+    "textTemplate": "Evade the next attack; a failed dodge takes double damage.",
+    "flavor": "Core adapter fixture. Evade is available in rewards, never starter."
   }
 ]
