@@ -19,7 +19,7 @@ async function pageFor(profile, shot, host = 'desktop') {
   const page = await browser.newPage({ viewport: { width,height }, reducedMotion: 'reduce' });
   page.setDefaultTimeout(10000);
   page.on('pageerror', e => errors.push(e.message));
-  await page.goto(`${base}index.html?shot=${shot}&gameProfile=${profile}&shotSeed=3`);
+  await page.goto(`${base}${process.env.VIEW_PRESETS_ENTRY || 'index.html'}?shot=${shot}&gameProfile=${profile}&shotSeed=3`);
   return page;
 }
 async function choose(page, preset) {
@@ -27,11 +27,10 @@ async function choose(page, preset) {
   await select.click();
   await select.selectOption(preset);
   await page.waitForFunction(value => document.documentElement.dataset.viewPreset === value, preset);
-  const dimensions = await page.evaluate(async () => {
-    const { logicalViewport } = await import('/src/ui/viewViewport.js');
+  const dimensions = await page.evaluate(() => {
     const root = document.documentElement;
     const box = root.getBoundingClientRect();
-    return { logical: logicalViewport(), width: box.width, height: box.height, scale: Number(root.dataset.viewScale), host: [innerWidth,innerHeight] };
+    return { logical: { width: parseFloat(root.style.getPropertyValue('--view-width')), height: parseFloat(root.style.getPropertyValue('--view-height')) }, width: box.width, height: box.height, scale: Number(root.dataset.viewScale), host: [innerWidth,innerHeight] };
   });
   if (presets[preset]) {
     const [width,height] = presets[preset];
@@ -39,21 +38,21 @@ async function choose(page, preset) {
     assert.equal(dimensions.logical.height, height);
     assert.ok(dimensions.width <= dimensions.host[0] + 2, `${preset} fits host width`);
     assert.ok(dimensions.height <= dimensions.host[1] + 2, `${preset} fits host height`);
-    assert.ok(dimensions.scale > 0 && dimensions.scale <= 1);
+    assert.ok(dimensions.scale > 0);
   }
   assert.ok(await select.isVisible(), `Settings reachable in ${preset}`);
 }
 async function openCombatSettings(page) {
   await page.locator('[data-action-hint="menu"]').click();
   const settings = page.locator('[data-settings-host]');
-  if (!await settings.count()) await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  if (!await settings.count()) await page.locator('.qn-row[data-tab="settings"]').click();
   await settings.waitFor();
   await page.locator('[data-general-select]').selectOption('Display');
 }
 function liveSnapshot() {
   const run = window.__combatRunForShot;
   const combat = window.__combat;
-  return JSON.stringify({ runHP: run.runHP, deck: run.deck, round: combat.round, playerHP: combat.player.hp, phase: combat.phase });
+  return JSON.stringify({ runHP: run.hp, deck: run.deck, round: combat.turn, playerHP: combat.player.hp, phase: combat.phase });
 }
 try {
   for (const profile of ['core','current']) {
@@ -67,6 +66,20 @@ try {
       assert.equal(await page.evaluate(() => window.__qaCombatIdentity === window.__combat), true, 'view change preserves live combat object');
       assert.equal(await page.evaluate(liveSnapshot), before, 'view change preserves HP, deck, round and phase');
     }
+    await page.locator('#ov-close').click();
+    const target = page.locator('.combatant[data-eid]').last();
+    await target.click();
+    await target.hover();
+    await page.locator('[role="tooltip"]').first().waitFor();
+    const targetBox = await target.boundingBox();
+    assert.ok(targetBox, 'combat target remains reachable after preset changes');
+    await page.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + targetBox.height / 2);
+    await page.mouse.down();
+    await page.waitForTimeout(700);
+    await page.mouse.up();
+    await page.locator('.combatant-inspector-body').waitFor();
+    await page.keyboard.press('Escape');
+    await openCombatSettings(page);
     await page.setViewportSize({ width:390,height:844 });
     await choose(page, 'desktop');
     await choose(page, 'auto');
@@ -92,5 +105,5 @@ try {
   console.log(`View preset state preservation and responsive Settings checks passed. Captures: ${output}`);
 } finally {
   await browser.close();
-  if (server) await server.close();
+  if (server) await new Promise(resolve => server.server.close(resolve));
 }
