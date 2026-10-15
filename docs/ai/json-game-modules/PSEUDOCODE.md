@@ -253,7 +253,7 @@ policy or copy the bundle's settings:
   "stateVersion": 1,
   "defaults": { "$ref": "./defaults.json" },
   "configSchema": { "$ref": "./settings.schema.json" },
-  "requires": [{ "kind": "core", "capability": "damage.pipeline", "version": "1" }],
+  "requires": [{ "kind": "foundation", "capability": "damage.pipeline", "version": "1" }],
   "provides": [{ "capability": "damage.defenseStages", "version": "1", "mode": "contribution" }],
   "technicalDependencies": [],
   "integrations": [
@@ -316,7 +316,12 @@ resolve(authorSource, pinnedCatalog):
   validate root/settings schemas and manifest/package/schema reference closure
   validate candidate definition shapes without requiring inactive capabilities
   activate explicitly owned compatible integrations for selected pairs
-  providers = arbitrateCapabilities(packages, integrations)
+  executableProviders = runtime.foundation + selectedModuleImplementations
+  // Kernel supplies infrastructure; data-only bundles/packs never register providers.
+  // packages is the combined pinned artifact closure, not an executable registry.
+  dataClosure = validateDataReferences(coreBundle, selectedPacks, effective)
+  providers = arbitrateCapabilities(executableProviders, compatibleIntegrationImplementations)
+  // Only declared implementation contributions register; data rules are validated inputs.
   definitions = projectDefinitions(settings, providers)
   validate all active projection references, operations and capabilities
   report inactive definitions/variants and eligibility reasons separately
