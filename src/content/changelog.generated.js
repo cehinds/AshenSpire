@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-2010",
+    "date": "2026-10-15",
+    "group": "2026-10-15",
+    "summary": "Selected combat details keep their numbers apart",
+    "detail": "The player's compact plate leaves room below the health bar for its HP value before the Poise and Ward labels, including narrow phones. Evade, Poise, Ward, Block and HP retain their order, and Barrier keeps its protection marker.",
+    "build": "0.7.1.1533",
+    "pullRequest": 2010,
+    "url": "https://github.com/cehinds/AshenSpire/pull/2010"
+  },
+  {
     "id": "pr-1996",
     "date": "2026-10-15",
     "group": "2026-10-15",
