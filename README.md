@@ -5,24 +5,22 @@
 
 The same runtime supports two authored configurations. **Product core** includes its required bundled modules and keeps optional gameplay packages off where the core has a fallback. **Current game** preserves the full legacy configuration.
 
-- **Product core:** [Play on Pages (publication pending)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-modules/latest/) · [exact standalone artifact](https://github.com/cehinds/AshenSpire/actions/runs/38701086476/artifacts/11955653884) · [build run](https://github.com/cehinds/AshenSpire/actions/runs/38701086476)
-- **Current game:** [Play on Pages (publication pending)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-current-preview/latest/) · [exact standalone artifact](https://github.com/cehinds/AshenSpire/actions/runs/38701086793/artifacts/11956237379) · [build run](https://github.com/cehinds/AshenSpire/actions/runs/38701086793)
+- **Product core:** [Play on Pages (publication pending)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-modules/latest/) · [standalone artifact](https://github.com/cehinds/AshenSpire/actions/runs/38757871534/artifacts/11985005463) · [build run](https://github.com/cehinds/AshenSpire/actions/runs/38757871534)
+- **Current game:** [Play on Pages (publication pending)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-current-preview/latest/) · [standalone artifact](https://github.com/cehinds/AshenSpire/actions/runs/38758036149/artifacts/11984102705) · [build run](https://github.com/cehinds/AshenSpire/actions/runs/38758036149)
 
-The combat captures below are from build 0.7.1.1538, digest `4c1356f8c0`. Capture details, including title and rest screens, are in [the profile evidence folder](docs/preview/features/json-game-modules/README.md).
+The latest source builds are core `4f27e2913` (runtime `81f6402182`) and current `627a256b7`. Fresh core captures show the entrance, class and review steps, branched map and merchant across four viewport sizes. [Capture details and the full image set](docs/preview/features/json-game-modules/README.md).
 
-**Product core — combat**
+**Product core — configured flow**
 
-| Mobile · 390×844 | Desktop · 1440×900 | Wide · 1920×1080 | Tablet · 820×1180 |
-| --- | --- | --- | --- |
-| ![Product core mobile combat](docs/preview/features/json-game-modules/core/mobile-combat.png) | ![Product core desktop combat](docs/preview/features/json-game-modules/core/desktop-combat.png) | ![Product core wide combat](docs/preview/features/json-game-modules/core/wide-combat.png) | ![Product core tablet combat](docs/preview/features/json-game-modules/core/tablet-combat.png) |
+| | Mobile · 390×844 | Desktop · 1440×900 | Wide · 1920×1080 | Tablet · 1024×768 |
+| --- | --- | --- | --- | --- |
+| Class | ![Core class selection on mobile](docs/preview/features/json-game-modules/final-core/mobile-class.png) | ![Core class selection on desktop](docs/preview/features/json-game-modules/final-core/desktop-class.png) | ![Core class selection wide](docs/preview/features/json-game-modules/final-core/wide-class.png) | ![Core class selection on tablet](docs/preview/features/json-game-modules/final-core/tablet-class.png) |
+| Map | ![Core route map on mobile](docs/preview/features/json-game-modules/final-core/mobile-map.png) | ![Core route map on desktop](docs/preview/features/json-game-modules/final-core/desktop-map.png) | ![Core route map wide](docs/preview/features/json-game-modules/final-core/wide-map.png) | ![Core route map on tablet](docs/preview/features/json-game-modules/final-core/tablet-map.png) |
+| Shop | ![Core merchant on mobile](docs/preview/features/json-game-modules/final-core/mobile-shop.png) | ![Core merchant on desktop](docs/preview/features/json-game-modules/final-core/desktop-shop.png) | ![Core merchant wide](docs/preview/features/json-game-modules/final-core/wide-shop.png) | ![Core merchant on tablet](docs/preview/features/json-game-modules/final-core/tablet-shop.png) |
 
-**Current game — combat**
+The route map fits all four viewports. These local captures used the embedded low-resolution terrain fallback because detail tiles were not available from the local preview server; the map artwork appears soft. The branch build’s Pages workflow is still running, so the links above identify CI artifacts and queued preview URLs, not a verified Pages deployment.
 
-| Mobile · 390×844 | Desktop · 1440×900 | Wide · 1920×1080 | Tablet · 820×1180 |
-| --- | --- | --- | --- |
-| ![Current game mobile combat](docs/preview/features/json-game-modules/current/mobile-combat.png) | ![Current game desktop combat](docs/preview/features/json-game-modules/current/desktop-combat.png) | ![Current game wide combat](docs/preview/features/json-game-modules/current/wide-combat.png) | ![Current game tablet combat](docs/preview/features/json-game-modules/current/tablet-combat.png) |
-
-The current profile's 390-pixel combat capture is visually crowded. Public Pages availability and the existing release gallery were not verified in this pass; the local standalone captures and successful build artifacts are verified.
+The previous core/current combat captures remain in the [profile evidence folder](docs/preview/features/json-game-modules/README.md); the current profile’s mobile combat layout remains visually dense.
 <!-- feature-preview:end -->
 
 A browser roguelike: build a character, explore a seeded world, and fight with cards.
