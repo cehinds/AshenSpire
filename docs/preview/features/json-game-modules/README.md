@@ -10,7 +10,7 @@ GitHub Actions built both branch artifacts successfully: [core build run](https:
 
 ## Final core flow captures
 
-The updated core browser suite runs against the final standalone artifact from CI run [38757871534](https://github.com/cehinds/AshenSpire/actions/runs/38757871534), artifact [11985005463](https://github.com/cehinds/AshenSpire/actions/runs/38757871534/artifacts/11985005463). Fresh class and review captures use source `4f27e2913`; route and shop captures use source `71b140f1f`. Each is a viewport capture. Class, review, map and shop were captured at desktop 1440×900, wide 1920×1080, tablet 1024×768 and mobile 390×844.
+The updated core browser suite runs against a locally built standalone artifact from the same source as successful CI run [38757871534](https://github.com/cehinds/AshenSpire/actions/runs/38757871534), whose downloadable artifact is [11985005463](https://github.com/cehinds/AshenSpire/actions/runs/38757871534/artifacts/11985005463). The CI download itself was not used for these captures. Fresh class and review captures use source `4f27e2913`; route and shop captures use source `71b140f1f`. Each is a viewport capture. Class, review, map and shop were captured at desktop 1440×900, wide 1920×1080, tablet 1024×768 and mobile 390×844.
 
 | Viewport | Class | Review | Map | Shop |
 | --- | --- | --- | --- | --- |
