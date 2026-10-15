@@ -44,11 +44,19 @@ await Promise.all(['dev', 'test', 'release', 'main'].map(channel => capture(asyn
   if (errors.length) throw Error(errors.join('; '));
   const [history, badge, json] = requests.map(result => result.value);
   const metadata = JSON.parse(json);
-  if (metadata.branch !== channel || !Number.isInteger(metadata.ordinal)
-    || !/^[a-f0-9]{40}$/.test(metadata.commit || '') || !metadata.version) throw Error(`${channel}: incomplete published identity`);
+  // These are the fields emitted by pages-site.mjs, not an inferred source SHA.
+  if (metadata.branch !== channel || !Number.isSafeInteger(metadata.ordinal) || metadata.ordinal < 0
+    || !/^[a-f0-9]{40}$/.test(metadata.commit || '')
+    || !/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(metadata.version || '')
+    || !/^[a-f0-9]{10}$/.test(metadata.digest || '')
+    || !['full', 'light'].includes(metadata.edition) || !['pack', 'single'].includes(metadata.shape)
+    || !/^\d{4}-\d{2}-\d{2}$/.test(metadata.built || '')
+    || !Number.isFinite(Date.parse(metadata.built))
+    || new Date(metadata.built).toISOString().slice(0, 10) !== metadata.built) throw Error(`${channel}: invalid published identity`);
   const version = `${metadata.version}.${metadata.ordinal}`;
   if (!badge.includes(version)) throw Error(`${channel}: badge disagrees with build.json (${version})`);
   if (!history.includes(`${metadata.ordinal}/`)) throw Error(`${channel}: history lacks latest build ${metadata.ordinal}`);
+  await request(`${route}/${metadata.ordinal}/`);
   report.channels.push({ channel, version, commit: metadata.commit, digest: metadata.digest,
     edition: metadata.edition, shape: metadata.shape, built: metadata.built,
     exactPlayUrl: `${route}/${metadata.ordinal}/` });
