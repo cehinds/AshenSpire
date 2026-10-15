@@ -42,12 +42,14 @@ Settings live in `engine/modules/rest/settings.schema.json`; shipped defaults ar
   - `/recovery/mp` (object; default `"full"`; allowed "full"): part of the parent object setting.
   - `/recovery/healingFlasks` (object; default `"full"`; allowed "full"): part of the parent object setting.
   - `/recovery/mpFlasks` (object; default `"full"`; allowed "full"): part of the parent object setting.
+- `/smith/free` (type boolean; default `true`): Provisional working policy. `true` makes the single Smith upgrade free; `false` charges the configured upgrade-stone cost.
+- `/smith/tiersPerService` (type integer; default `1`; allowed 1): One upgrade tier per Smith visit.
 
-The exact provenance is recorded in `games/ashenspire/bundles/core/bundle.json`: module defaults are the base, selected bundle settings and `policyBindings` apply next, and the author object applies last. Arrays replace the inherited array. If a field has no bundle binding, its module default is inherited unchanged. `false` disables; `true` selects inherited defaults; null has no removal meaning. Unknown keys and invalid values fail validation.
+The exact provenance is recorded in `games/ashenspire/bundles/core/bundle.json`: module defaults are the base, selected bundle settings and the author object resolve next, then `policyBindings` copies the resolved module fields onto selected content. Thus the resolved `rest.smith` settings overwrite the matching fields in `packs/core/rests.json`; edit `game.json` for per-game changes to bound fields. Arrays replace the inherited array. `false` disables; `true` selects inherited defaults; null has no removal meaning. Unknown keys and invalid values fail validation.
 
 ## Content changes
 
-games/ashenspire/packs/core/rests.json Edit service list and recovery policy here. Strategize is the only manual deck editing service; every service restores HP, SP, MP and both flask types.
+`games/ashenspire/packs/core/rests.json` defines rest service content. The service list, recovery, and Smith policy are bound into module settings, so edit `game.json` for local overrides; pack-only edits to these fields can be replaced during resolution. Strategize is the only manual deck editing service; every service restores HP, SP, MP and both flask types. Smith currently grants one free tier per visit as a provisional balance choice; setting `free` to `false` uses upgrade stones.
 
 The referenced pack JSON is gameplay authoring data; it is not executable module code. Keep stable IDs and update every reference when renaming an item.
 

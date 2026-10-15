@@ -25,7 +25,7 @@ The one author entry shape is:
 }
 ```
 
-Omitted bundled modules inherit their bundle settings. `false` disables; `true` selects bundle/default settings; an object recursively overrides settings and arrays replace. The `current` preset selects the existing legacy behavior. Catalog presence does not guarantee a configured adapter: unsupported future module selections and instances must fail closed.
+Omitted bundled modules inherit their bundle settings. `false` disables; `true` selects bundle/default settings; an object recursively overrides settings and arrays replace. The `current` preset selects existing legacy behavior and has no configured module overrides; unsupported overrides are rejected rather than silently ignored. Catalog presence does not guarantee a configured adapter: unsupported future module selections and instances must fail closed.
 
 ## Runtime and release boundary
 

@@ -36,7 +36,7 @@ To change a setting, use the module's schema and guide. For example, change the 
 }
 ```
 
-For a selected module, the precedence is module defaults → core bundle settings → author object. The core bundle also binds gameplay values from its data pack, such as route counts, rest floors, rewards and shop price, into the selected module settings. Edit the data pack when changing authored content rather than copying the expanded runtime profile.
+For a selected module, settings resolve as module defaults → bundle settings → author object. `policyBindings` then projects the resolved module settings back onto the corresponding selected pack content before runtime use. This means an edit to a bound pack field alone can be replaced by the module's resolved default. For bound values, edit the module setting in `game.json` (or the module/bundle default when changing the shared preset); edit pack files for definitions and fields not owned by a binding. For example, route counts/rest floors are bound to `routes` settings, while route node content remains in `routes.json`.
 
 ## Edit game content
 
@@ -66,6 +66,6 @@ Apply a reviewed candidate with `node tools/game-config.mjs apply --input /path/
 
 ## Current boundaries
 
-The adapter uses the existing host runtime. Its export lock includes source/runtime and profile artifacts, but this is not proof of a portable interpreter or support for every module listed in the catalog. The Ashen bundle's configured behaviors are documented in the individual module guides. Catalog-only future modules and unsupported instance selections fail closed; `presets/current.json` selects the unchanged legacy behavior.
+The adapter uses the existing host runtime. Its export lock includes source/runtime and profile artifacts, but this is not proof of a portable interpreter or support for every module listed in the catalog. The Ashen bundle's configured behaviors are documented in the individual module guides. Catalog-only future modules and unsupported instance selections fail closed. `presets/current.json` selects the unchanged legacy behavior with no configured module overrides; the legacy profile rejects unsupported module overrides instead of silently ignoring them.
 
 The current work is on `Feature/json-game-modules`. Source slices and headless tests are in progress; full desktop/mobile browser acceptance is still outstanding. Do not describe a pushed feature branch as a deployed preview.
