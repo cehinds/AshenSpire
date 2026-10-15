@@ -1,3 +1,5 @@
+import { configuredCombat } from './gameProfileCombat.js';
+import { projectGameCard } from '../model/gameProfile.js';
 import { resolveCard } from '../model/registries.js';
 import { upcastCard } from '../model/upcasting.js';
 import { applyCombatExpansionCard } from '../content/combatExpansionCards.js';
@@ -5,6 +7,11 @@ import { applyCardTraits } from '../content/traitProjection.js';
 import { corruptedCardProjection } from './ashenBlight.js';
 
 export function resolveCombatCard(ctx, instance, { upcastTier, upcastRanks } = {}) {
+  if (configuredCombat(ctx)) {
+    if (upcastTier || upcastRanks) throw new Error('Spell ranks are disabled by this profile');
+    const projected = projectGameCard(ctx, instance);
+    if (projected) return projected;
+  }
   const def = resolveCard(ctx.registries, instance, ctx.breakMeterVersion || 0);
   if (ctx.combatExpansionVersion !== 2) {
     if (upcastTier || upcastRanks) throw new Error('Upcasting requires the expanded combat rules');

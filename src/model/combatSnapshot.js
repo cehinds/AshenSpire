@@ -1,3 +1,4 @@
+import { validateGameProfileSnapshot, projectGameCard } from './gameProfile.js';
 import { combatExpansionRulesProblems } from './combatExpansionRules.js';
 import { retiredAttackSlots } from './cardRemoval.js';
 import { handRulesProblems } from './handRules.js';
@@ -108,6 +109,11 @@ function cardProblems(card, path) {
 export function combatSnapshotProblems(snapshot) {
   if (!record(snapshot)) return ['snapshot must be an object'];
   const problems = [];
+  if (snapshot.gameProfile !== undefined) {
+    try { validateGameProfileSnapshot(snapshot.gameProfile); } catch (error) { problems.push(`gameProfile: ${error.message}`); }
+    if (!Number.isInteger(snapshot.gameProfileCommands) || snapshot.gameProfileCommands < 0) problems.push('gameProfileCommands must be a nonnegative integer');
+    if (!record(snapshot.gameProfileInterrupts) || Object.values(snapshot.gameProfileInterrupts).some(count => !Number.isInteger(count) || count < 0)) problems.push('gameProfileInterrupts must contain nonnegative counts');
+  }
   if (snapshot.version !== COMBAT_SNAPSHOT_VERSION) problems.push(`version must be ${COMBAT_SNAPSHOT_VERSION}`);
   if (snapshot.combatMatchupRules !== undefined) problems.push(...combatMatchupRulesProblems(snapshot.combatMatchupRules));
   if (snapshot.combatIntentRules !== undefined) problems.push(...combatIntentRulesProblems(snapshot.combatIntentRules));
@@ -347,7 +353,10 @@ export function combatSnapshotReferenceProblems(snapshot, registries) {
     enemyIds: new Set(registries.enemies.ids()), ownerIds: new Set(['player']),
   }));
   for (const pile of SNAPSHOT_PILES) {
-    for (const card of snapshot.piles?.[pile] || []) has(registries.cards, card?.cardId, `piles.${pile}.cardId`);
+    for (const card of snapshot.piles?.[pile] || []) {
+      if (snapshot.gameProfile && projectGameCard(snapshot, card)) continue;
+      has(registries.cards, card?.cardId, `piles.${pile}.cardId`);
+    }
   }
   const loadout = snapshot.loadout;
   if (loadout !== null) {
