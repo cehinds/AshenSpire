@@ -83,6 +83,10 @@ async function main() {
     owner = await launchBrowser({ prefix: 'hp-' }); browser = await chromium.connectOverCDP(owner.wsUrl);
     const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
     page = await context.newPage(); page.on('pageerror', error => report.errors.push(error.message));
+    // Keep the actual ~80 MB wrapper response available for the SHA check.
+    // Chrome's default inspector cache can evict it before Response.text().
+    const network = await context.newCDPSession(page);
+    await network.send('Network.enable', { maxResourceBufferSize: 128 * 1024 * 1024, maxTotalBufferSize: 256 * 1024 * 1024 });
     const [fetchedBuild, response] = await Promise.all([
       page.waitForResponse(response => response.url() === BUILD_URL && response.ok(), { timeout: 45000 }),
       page.goto(HOSTED_URL, { waitUntil: 'domcontentloaded', timeout: 45000 }),
