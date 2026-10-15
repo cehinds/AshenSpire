@@ -75,3 +75,30 @@ test('normal Smithing quotes keep their authored cost and affordability', () => 
   assert.ok(ordinary.candidates.some(row => row.cost > 0 && !row.affordable));
   assert.ok(free.candidates.every(row => row.cost === 0 && row.affordable));
 });
+
+test('Strategize exposes only authored basics and rejects the legacy attack mint before mutation', async () => {
+  const { deckEditorModel, openDeckEdit } = await import('../src/ui/models/DeckEditorModel.js');
+  const { createGameProfileRestDraft } = await import('../src/model/gameProfileRest.js');
+  const { gameContent } = await import('../src/model/gameProfile.js');
+  const { run } = fixture();
+  const draft = createGameProfileRestDraft(run);
+  const session = openDeckEdit(registries, draft);
+  const before = structuredClone(draft);
+  const editor = deckEditorModel({ registries, run: draft });
+  const allowed = gameContent(run, 'editor')?.unlimitedBasicCards || [];
+  const mints = editor.collection.filter(tile => tile.unlimited);
+  assert.deepEqual(mints.map(tile => tile.cardId).sort(), [...allowed].sort());
+  assert.equal(editor.collection.some(tile => tile.key === 'basic:attack' || tile.key === 'basic:guard'), false);
+  assert.throws(() => session.add('basic:attack'), /not an unlimited card id/);
+  assert.deepEqual(draft, before, 'the formerly enabled legacy tile cannot alter a configured draft');
+  const removed = draft.deck[0];
+  assert.equal(session.remove(removed.instanceId).ok, true);
+  assert.equal(draft.deck.length, run.deck.length - 1);
+  assert.equal(draft.sideboard.some(card => card.instanceId === removed.instanceId), true);
+  assert.equal(session.confirm().ok, true);
+  commitGameProfileRest(registries, run, 'strategize', { draft });
+  assert.equal(run.deck.length, before.deck.length - 1);
+  assert.equal(run.sideboard.some(card => card.instanceId === removed.instanceId), true);
+  assert.equal(run.hp, run.maxHp);
+  assert.equal(run.gameProfileRestVisits[run.gameProfileRestVisitId].service, 'strategize');
+});
