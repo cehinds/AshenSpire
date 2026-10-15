@@ -53,7 +53,7 @@ saves, screens and content are actually defined. Trace the concrete dependency
 and import paths; identify which current behaviors a compatibility adapter must
 preserve. Record exact files and the smallest headless/browser checks that cover
 those seams. Then freeze the first interfaces and example JSON, and implement a
-thin **core-only playable vertical slice** only when authorized. Add one complete
+thin **core-only playable vertical slice** as authorized in the active session. Add one complete
 cards package with defaults, schema, runtime implementation, guide, content,
 UI, state integration and test cases; prove cards can be disabled while core
 attack/pass remain useful. A coherent SP/block/equipment interaction can follow
@@ -112,7 +112,7 @@ action opportunity budget independent of optional SP/MP/Actions, a simple enemy
   packages. Save migration is explicit and tested separately from configuration
   migration and module upgrades.
 
-The proposed package catalog covers 26 optional feature families, including
+The proposed package catalog covers optional feature families, including
 cards, resources, defenses, stances and effects/statuses. See the
 implementation contract for the complete package boundary. Do not create module
 folders or scaffold the entire catalog during the initial slice.
