@@ -1,3 +1,4 @@
+import { profileStarterCount } from './ui/models/GameProfileTitleModel.js';
 import { mountGameProfileSelector } from './ui/components/gameProfileSelector.js';
 import { beginGameProfileRest, createGameProfileRestDraft, commitGameProfileRest } from './model/gameProfileRest.js';
 import { resolveGameProfile, gameModule, gameContent, applyGameProfileToContent, bindGameProfileRegistries } from './model/gameProfile.js';
@@ -2369,7 +2370,7 @@ function showCustomize(slot = 1, catalog = false, profileChosen = false) {
   mountCustomize(app, {
     gameProfile: selectedGameProfile,
     fixedClasses: isConfiguredRun(selectedGameProfile) ? gameContent(selectedGameProfile, 'classes') : null,
-    profileStarterCount: (() => { const starter = gameContent(selectedGameProfile, 'starterDeck'); return starter ? Object.values(starter.shared || {}).reduce((sum, count) => sum + count, 0) + (starter.classSpecificCopies || 0) : null; })(),
+    profileStarterCount: profileStarterCount(gameContent(selectedGameProfile, 'starterDeck')),
     profileClassUnlocks: gameModule(selectedGameProfile, 'progression')?.classUnlocks === true,
     classAvailable: id => gameProfileClassAvailable(selectedGameProfile, saves.loadMeta(), id),
     registries,

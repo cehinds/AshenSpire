@@ -1,3 +1,4 @@
+import { loadableTitleSlots } from '../models/GameProfileTitleModel.js';
 // src/ui/screens/title.js — folded title menu with load/new slot modal.
 //
 // The title owns layout and interaction state; save-slot content stays in the
@@ -65,7 +66,7 @@ export function mountTitle(app, {
   // every read goes through currentSlots and occupied() rather than the mount's
   // argument.
   let currentSlots = slots;
-  const occupied = () => currentSlots.filter(({ summary }) => !!summary && !['corrupt', 'newer', 'invalid', 'blocked'].includes(summary.state)).sort((a, b) => String(b.summary.savedAt || '').localeCompare(String(a.summary.savedAt || '')));
+  const occupied = () => loadableTitleSlots(currentSlots);
   let modal = null;
   let selectedSlot = null;
   let newReviewSlot = null; // the slot the New Game decision door is asking about
