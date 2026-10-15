@@ -8,13 +8,9 @@ authored `?shot=title` saved-run fixture. No screenshot pixels were edited.
 - Full build: **0.7.1.1530**, light edition; source digest **368140ce27**.
 - Packed HTML SHA256: `1d63824ea3d6df48d2909b31b595e48d63e46e2d4322f74e868371b92792c319`.
 - Local playable capture route: `http://127.0.0.1:4414/AshenSpire.html?shot=title`.
-- Hosted preview: **unverified; the last real hosted proof failed**. Intended public route:
-  `https://cehinds.github.io/AshenSpire/branches/feature/FullCombatAudit/latest/`.
-  [Proof run 38659820168](https://github.com/cehinds/AshenSpire/actions/runs/38659820168)
-  checked source commit `d43f0c143f0be4dd5d751e0248584ed829ee7b0b` on 2026-10-15;
-  the route and `build.txt` returned HTTP 404 throughout its twelve-minute wait.
-  Its [642-byte diagnostic artifact](https://github.com/cehinds/AshenSpire/actions/runs/38659820168/artifacts/11939036249)
-  contains no successful browser proof. This record does not claim the public route works.
+- Public route [verified for the frozen production build](https://cehinds.github.io/AshenSpire/branches/feature/FullCombatAudit/latest/) on 2026-10-15 at 08:26 UTC: **0.7.1.1536 / 78492dee2e**, commit `eccdfe210380b12b7b9ec380f83b59bada881690`.
+- These four images remain the original **1530 / 368140ce27** captures. [Fresh public menu/Quit captures and exact identity](hosted/README.md) are recorded separately.
+- The tooling-only parent correction `d2d02a91fdf59dcd2012aa38a9e86be18e03ac44` starts a fresh normal build/publication/proof. That normal pipeline is pending; the frozen replay is not a claim that it passed.
 
 | View | Viewport | Capture date (UTC) | Permanent image |
 | --- | --- | --- | --- |
@@ -33,17 +29,12 @@ of physical-device testing.
 
 The snapshot's 857 source inputs reproduce digest `368140ce27`. These images
 retain that original identity. The later integration commit
-`c54c4728ad2f4c59eea0753ebca6d1f996a0c5af` includes upstream runtime changes;
+`eccdfe210380b12b7b9ec380f83b59bada881690` includes upstream runtime and HUD changes;
 these captures do not establish the behavior of that newer source.
 
-The [d43 feature build](https://github.com/cehinds/AshenSpire/actions/runs/38659819675)
-succeeded and has a [download backup](https://github.com/cehinds/AshenSpire/actions/runs/38659819675/artifacts/11938726789)
-(expires 2026-10-29), but it predates those runtime changes. Trusted Pages run
-[38662239630](https://github.com/cehinds/AshenSpire/actions/runs/38662239630)
-assembled this feature route after the failed hosted proof had ended.
-The later [publication run 38676827571](https://github.com/cehinds/AshenSpire/actions/runs/38676827571)
-omitted the newer c54 source because it lacked a successful current preview.
-A fresh eligible build and real hosted browser proof remain required.
+The fresh [feature build 38699427329](https://github.com/cehinds/AshenSpire/actions/runs/38699427329) succeeded for the frozen commit above: **0.7.1.1536 / 78492dee2e**. Its [download backup](https://github.com/cehinds/AshenSpire/actions/runs/38699427329/artifacts/11954559610) expires 2026-10-29; extract `AshenSpire.html`. The real [public replay 38705237731](https://github.com/cehinds/AshenSpire/actions/runs/38705237731) subsequently passed all six wrapper/source/menu/Quit/Return checks with zero runtime page errors. Its [artifact](https://github.com/cehinds/AshenSpire/actions/runs/38705237731/artifacts/11958675887) contains the three actual public screenshots and source report. These are separate from the four 1530 captures above.
+
+Earlier failures remain explicit: [d43 run 38659820168](https://github.com/cehinds/AshenSpire/actions/runs/38659820168) exhausted its twelve-minute wait on HTTP 404; [its 642-byte artifact](https://github.com/cehinds/AshenSpire/actions/runs/38659820168/artifacts/11939036249) is diagnostic only. The normal [eccd proof 38699427242](https://github.com/cehinds/AshenSpire/actions/runs/38699427242) reached the correct public source but failed on Chrome's response-body cache limit before browser checks completed; [artifact 11958190075](https://github.com/cehinds/AshenSpire/actions/runs/38699427242/artifacts/11958190075) preserves that actual tooling failure. The successful frozen replay used bounded 256/512 MiB buffers and the same observed CDP request's bytes.
 
 The feature preview folder and marked root README block are temporary review
 evidence. Before merging into Dev, remove the block with

@@ -3,8 +3,13 @@
 <!-- feature-preview:start -->
 ## Feature preview — Combat audit and menu fixes
 
-**Hosted Play: pending publication and verification.** Intended route:
-`https://cehinds.github.io/AshenSpire/branches/feature/FullCombatAudit/latest/`.
+[Play this feature build](https://cehinds.github.io/AshenSpire/branches/feature/FullCombatAudit/latest/)
+
+Hosted build **0.7.1.1536**, source **78492dee2e**, verified through the actual
+public wrapper and sandboxed game in [public browser proof](https://github.com/cehinds/AshenSpire/actions/runs/38705237731).
+This proof executed the published game from code-bearing commit `eccdfe2103`.
+[Current integration and proof status](https://github.com/cehinds/AshenSpire/pull/1990).
+[Download backup](https://github.com/cehinds/AshenSpire/actions/runs/38699427329/artifacts/11954559610).
 
 Quit is the last main-menu panel, with a clear return path when a browser keeps
 the window open. The paused co-op entry is hidden. These four real viewport
@@ -51,20 +56,20 @@ Publication can lag source changes. For ZIPs, open a successful run and download
 
 ## Screenshots
 
-Latest published Release candidate **0.7.1.1060**, captured 2026-10-08 UTC.
-[Play this exact build](https://cehinds.github.io/AshenSpire/release/1060/) · [Capture details](docs/preview/releases/0.7.1.1060/README.md).
+Latest published Release candidate **0.7.1.1517**, captured 2026-10-15 UTC.
+[Play this exact build](https://cehinds.github.io/AshenSpire/release/1517/) · [Capture details](docs/preview/releases/0.7.1.1517/README.md).
 Dev/Test can contain newer features. Select an image to view its full size.
 
 | Create a character | Explore a route |
 | --- | --- |
-| ![Character creation with four classes and Reaver starting statistics](docs/preview/releases/0.7.1.1060/creation.png) | ![Pale Marches map with a revealed route and encounter nodes](docs/preview/releases/0.7.1.1060/map.png) |
+| ![Release 0.7.1.1517 character creation with four classes](docs/preview/releases/0.7.1.1517/creation.png) | ![Release 0.7.1.1517 map with a posed five-step route and encounter nodes](docs/preview/releases/0.7.1.1517/map.png) |
 | **Fight with cards** | **Visit shops and improve equipment** |
-| ![Combat with enemy intentions and four cards in hand](docs/preview/releases/0.7.1.1060/combat.png) | ![Merchant relics, equipment categories and services](docs/preview/releases/0.7.1.1060/shop.png) |
+| ![Release 0.7.1.1517 combat with enemy intentions and cards in hand](docs/preview/releases/0.7.1.1517/combat.png) | ![Release 0.7.1.1517 merchant relics, equipment categories and services](docs/preview/releases/0.7.1.1517/shop.png) |
 
 <details>
 <summary>Phone combat — 390 × 844</summary>
 
-![Phone combat with enemy intentions, cards and turn controls](docs/preview/releases/0.7.1.1060/combat-phone.png)
+![Release 0.7.1.1517 phone combat with enemy intentions, cards and turn controls](docs/preview/releases/0.7.1.1517/combat-phone.png)
 
 </details>
 
