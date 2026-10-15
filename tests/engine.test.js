@@ -7341,8 +7341,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // ---- THE COMBAT GROUP IS THE ANSWER TO "no good section to customize
     // combat, combat animation, etc", so what it HOLDS is asserted, not
     // described. A row that drifts back out of it takes the report with it.
-    eq(GENERAL_GROUPS.join(','), 'Display,Combat,Audio',
-      'the General tab offers three groups, and Combat sits between them');
+    eq(GENERAL_GROUPS.join(','), 'Display,Combat,Audio,Game rules',
+      'General offers Display, Combat, Audio and the custom Game rules section');
     const combatTopics = generalGroups('Combat');
     eq([...combatTopics.keys()].join(','), 'Animation & effects,Armaments',
       'Combat names its topics for what a player came looking for');

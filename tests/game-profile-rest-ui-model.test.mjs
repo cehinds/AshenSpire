@@ -105,3 +105,22 @@ test('Strategize exposes only authored basics and rejects the legacy attack mint
   assert.equal(run.hp, run.maxHp);
   assert.equal(run.gameProfileRestVisits[run.gameProfileRestVisitId].service, 'strategize');
 });
+
+test('the editor follows an explicit nonempty configured basic policy without legacy equipment slots', async () => {
+  const { deckEditorModel, openDeckEdit } = await import('../src/ui/models/DeckEditorModel.js');
+  const { run } = fixture();
+  // Supply the read-model contract directly: the shipped core deliberately
+  // has no such author row and therefore keeps all starter cards finite.
+  run.gameProfile = { ...run.gameProfile, content: { ...run.gameProfile.content,
+    editor: { unlimitedBasicCards: ['core.strike'] },
+  } };
+  const model = deckEditorModel({ registries, run });
+  assert.deepEqual(model.collection.filter(tile => tile.unlimited).map(tile => tile.key), ['basic:core.strike']);
+  const slots = run.equipmentAttackSlotCount;
+  const session = openDeckEdit(registries, run);
+  assert.equal(session.add('basic:core.strike').ok, true);
+  assert.equal(run.deck.at(-1).cardId, 'core.strike');
+  assert.equal(run.deck.at(-1).equipmentRole, undefined);
+  assert.equal(run.equipmentAttackSlotCount, slots);
+  session.cancel();
+});
