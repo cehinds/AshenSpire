@@ -17,23 +17,24 @@ export function resolveViewViewport(preset, width, height) {
     top: (height - dimensions.height * scale) / 2 };
 }
 
-export function logicalViewport(win = window) {
-  const preset = win.document.documentElement.dataset.viewPreset;
-  return VIEW_PRESETS[preset] || { width: win.innerWidth,
-    height: win.visualViewport?.scale === 1 ? win.visualViewport.height : win.innerHeight };
+export function logicalViewport(win = globalThis.window) {
+  const preset = win?.document?.documentElement?.dataset?.viewPreset;
+  return VIEW_PRESETS[preset] || { width: win?.innerWidth ?? 0,
+    height: win?.visualViewport?.scale === 1 ? win.visualViewport.height : win?.innerHeight ?? 0 };
 }
 
-export function viewScale(win = window) {
-  return Number(win.document.documentElement.dataset.viewScale) || 1;
+export function viewScale(win = globalThis.window) {
+  return Number(win?.document?.documentElement?.dataset?.viewScale) || 1;
 }
 
 // DOMRects and pointer coordinates are physical pixels, including letterboxing.
-export function viewViewportBox(win = window) {
-  if (!VIEW_PRESETS[win.document.documentElement.dataset.viewPreset]) {
+export function viewViewportBox(win = globalThis.window) {
+  const root = win?.document?.documentElement;
+  if (!VIEW_PRESETS[root?.dataset?.viewPreset]) {
     const { width, height } = logicalViewport(win);
     return { left: 0, top: 0, width, height, right: width, bottom: height };
   }
-  const rect = win.document.documentElement.getBoundingClientRect();
+  const rect = root.getBoundingClientRect();
   return { left: rect.left, top: rect.top, width: rect.width, height: rect.height, right: rect.right, bottom: rect.bottom };
 }
 
