@@ -1,0 +1,51 @@
+name: focused compiled Rogue parity
+on:
+  push:
+    branches: ['worker/FullCombatAudit/rogue-compiled-parity']
+    paths: ['.github/workflows/rogue-compiled-parity.yml']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  capture:
+    if: github.ref == 'refs/heads/worker/FullCombatAudit/rogue-compiled-parity'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            tools/browser.mjs
+            tools/combat-audit/rogue-compiled-parity.mjs
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - name: Verify existing immutable standalone archive
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const assert=require('node:assert/strict'),fs=require('node:fs'),crypto=require('node:crypto');
+            const expected={"run":38717599329,"id":11963700715,"commit":"b3498d02bd148af6cf0849e13b4ef58c3fc1b743","source":"1548b38085","ordinal":"1538","archiveSha256":"96c19ea617c33d7f37bbb5308747bb9dbdcb6992de25ca60d70fe41998dfdaf3","archiveBytes":50376272,"htmlBytes":79978413};
+            const {data:run}=await github.rest.actions.getWorkflowRun({owner:'cehinds',repo:'AshenSpire',run_id:expected.run});
+            assert.equal(run.head_sha,expected.commit);
+            const {data:artifact}=await github.rest.actions.getArtifact({owner:'cehinds',repo:'AshenSpire',artifact_id:expected.id});
+            assert.equal(artifact.workflow_run.id,expected.run);assert.equal(artifact.workflow_run.head_sha,expected.commit);assert.equal(artifact.expired,false);
+            const response=await github.rest.actions.downloadArtifact({owner:'cehinds',repo:'AshenSpire',artifact_id:expected.id,archive_format:'zip'});
+            const bytes=Buffer.from(response.data),digest=crypto.createHash('sha256').update(bytes).digest('hex');
+            assert.equal(bytes.length,expected.archiveBytes);assert.equal(digest,expected.archiveSha256);
+            fs.writeFileSync('_existing-standalone.zip',bytes);fs.writeFileSync('_archive-identity.json',JSON.stringify({...expected,artifactName:artifact.name,observedAt:new Date().toISOString()},null,2));
+      - run: unzip -q _existing-standalone.zip -d _existing-standalone
+      - run: npm install --no-save --package-lock=false playwright
+      - name: Two canonical Rogue preview and paid receipts
+        env:
+          PARITY_ARTIFACT_IDENTITY: '{"run":38717599329,"id":11963700715,"commit":"b3498d02bd148af6cf0849e13b4ef58c3fc1b743","source":"1548b38085","ordinal":"1538","archiveSha256":"96c19ea617c33d7f37bbb5308747bb9dbdcb6992de25ca60d70fe41998dfdaf3","archiveBytes":50376272,"htmlBytes":79978413}'
+        run: node tools/combat-audit/rogue-compiled-parity.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: focused-compiled-rogue-parity-${{ github.sha }}
+          path: _rogue-parity/
+          if-no-files-found: error
+          retention-days: 14
