@@ -3,7 +3,7 @@ import { enemyMoveDamage } from './state.js';
 import { combatProfileFor, combatProfileTags } from './combatCardProfile.js';
 import { combatMatchups } from '../content/combatMatchups.js';
 import { variableIntentDamage } from './intentDamage.js';
-import { enemySmashFallbackPoise } from './stanceRules.js';
+import { enemySmashFallbackPoise, enemyCounterPoiseDamage } from './stanceRules.js';
 const words = (value) => String(value || '').replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/[_-]/g, ' ').replace(/^./, (c) => c.toUpperCase());
 
 function effectText(effect, registries) {
@@ -38,7 +38,8 @@ export function enemyMoveCards(def, { enemy = null, preview = null, registries =
         damage: move.counterDamage ?? move.damage ?? rules.defaultDamage });
       pieces.push(`${base} base counter damage`);
       pieces.push(`One eligible hit spends the reaction. Incoming eligible damage × ${rules.incomingMultiplier}; reply only after full Guard or Ward absorption: floor(base × ${rules.retaliationMultiplier}) + ${rules.retaliationFlat} + bonus`);
-      if (move.counterPoiseDamage > 0) pieces.push(`${move.counterPoiseDamage} base counter Poise damage × ${rules.poiseMultiplier}`);
+      const poise = enemyCounterPoiseDamage(move, profile, { combatExpansionVersion, stanceRules, registries });
+      if (poise > 0) pieces.push(`${poise} base counter Poise damage${combatExpansionVersion === 2 ? '' : ` × ${rules.poiseMultiplier}`}`);
     }
     const sequence = liveDamage ? variableIntentDamage(preview) : null;
     if (damage != null) pieces.push(`${sequence ? `${sequence.text} (${sequence.totalDamage} total)` : `${damage}${hits > 1 ? ` × ${hits}` : ''}`} ${liveDamage ? 'preview damage before Block' : 'base damage'}`);

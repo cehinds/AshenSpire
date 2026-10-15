@@ -118,3 +118,40 @@ test('enemy move cards show configured fallback pressure without changing legacy
   assert.match(card.detail, /4 base Poise damage/);
   assert.doesNotMatch(card.detail, /7 base Poise damage/);
 });
+
+for (const [label, patch, stanceRules, expected] of [
+  ['default', {}, null, 3],
+  ['configured', {}, { fallbackPoise: 7 }, 7],
+  ['authored field', { counterPoiseDamage: 5 }, { fallbackPoise: 7 }, 5],
+  ['authored payload', { counterPayload: { hp: 2, poise: 6 } }, { fallbackPoise: 7 }, 6],
+  ['authored effect', { effects: [{ op: 'poiseDamage', amount: 4, target: 'player' }] }, { fallbackPoise: 7 }, 0],
+  ['zero fallback', {}, { fallbackPoise: 0 }, 0],
+]) {
+  test(`Counter move cards match live ${label} Poise without exposing locked knowledge`, () => {
+    const original = registries.enemies.get('gildedKnight');
+    const move = { ...original.moves.parry, ...patch };
+    const def = { ...original, moves: { parry: move } };
+    const options = { registries, combatExpansionVersion: 2, stanceRules };
+    const combat = fight(); drain(combat);
+    if (stanceRules) combat.stanceRules = stanceRules;
+    primeEnemyCounter(combat, combat.enemies[0], move, 'parry'); drain(combat);
+    assert.equal(combat.enemies[0].combatCounter.payload.poise, expected);
+    const cards = [enemyMoveCards(def, options)[0], ...[4, 5].map(stage => learnedEnemyMoveCards(def, stage, options)[0])];
+    for (const card of cards) {
+      if (expected > 0) assert.match(card.detail, new RegExp(`${expected} base counter Poise damage(?: ·|$)`));
+      else assert.doesNotMatch(card.detail, /base counter Poise damage/);
+      if (label === 'authored effect') assert.match(card.detail, /4 base Poise damage to player/);
+    }
+    assert.doesNotMatch(learnedEnemyMoveCards(def, 3, options)[0].detail, /Poise|[0-9]/);
+    assert.doesNotMatch(enemyMoveCards(original, { registries }).find(row => row.moveId === 'parry').detail, /base counter Poise damage/);
+  });
+}
+
+test('Counter card fallback reads registry configuration and preserves legacy authored pressure', () => {
+  const def = registries.enemies.get('gildedKnight');
+  const configured = { ...registries, balance: { ...registries.balance, stanceRules: { fallbackPoise: 7 } } };
+  assert.match(enemyMoveCards(def, { registries: configured, combatExpansionVersion: 2 }).find(row => row.moveId === 'parry').detail,
+    /7 base counter Poise damage(?: ·|$)/);
+  const authored = { ...def, moves: { parry: { ...def.moves.parry, counterPoiseDamage: 5 } } };
+  assert.match(enemyMoveCards(authored, { registries: configured })[0].detail, /5 base counter Poise damage ×/);
+});

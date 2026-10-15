@@ -10,6 +10,14 @@ export function enemySmashFallbackPoise(move, profile, ctx) {
     || move.effects?.some(effect => effect.op === 'poiseDamage')) return null;
   return stanceRulesFor(ctx).fallbackPoise;
 }
+
+// Counter execution and catalogs must agree on authored lanes and fallback.
+export function enemyCounterPoiseDamage(move, profile, ctx) {
+  if (ctx?.combatExpansionVersion !== 2) return move.counterPoiseDamage || 0;
+  const authored = profile?.counterPayload?.poise ?? move.counterPoiseDamage ?? 0;
+  return authored > 0 || move.effects?.some(effect => effect.op === 'poiseDamage')
+    ? authored : stanceRulesFor(ctx).fallbackPoise;
+}
 export function stanceOf(carrier, entity = null) {
   if (!carrier) return null;
   const profile = carrier.combatProfile || (carrier.camp ? carrier : combatProfileFor(carrier));

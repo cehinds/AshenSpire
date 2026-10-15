@@ -1,4 +1,4 @@
-import { stanceRulesFor, enemySmashFallbackPoise } from '../model/stanceRules.js';
+import { stanceRulesFor, enemySmashFallbackPoise, enemyCounterPoiseDamage } from '../model/stanceRules.js';
 import { combatProfileFor } from '../model/combatCardProfile.js';
 import { evaluate, isFormula } from '../model/formulas.js';
 import { counterstrikeAmount, counterstrikePct, hasStanceAdvantage, stanceManeuverOf } from './combatCardTraitMath.js';
@@ -312,9 +312,7 @@ export function primeEnemyCounter(ctx, enemy, move, moveId) {
   if (combatExpansionEnabled(ctx)) {
     const payload = carrier.combatProfile.counterPayload;
     const damage = move.counterDamage ?? move.damage;
-    const authoredPoise = payload?.poise ?? move.counterPoiseDamage ?? 0;
-    const poiseDamage = authoredPoise > 0 || move.effects?.some(effect => effect.op === 'poiseDamage')
-      ? authoredPoise : stanceRulesFor(ctx).fallbackPoise;
+    const poiseDamage = enemyCounterPoiseDamage(move, carrier.combatProfile, ctx);
     armCombatCounter(ctx, enemy, carrier, { damage: damage === undefined ? 0 : enemyMoveDamage(enemy, { ...move, damage }),
       poiseDamage, wardDamage: move.counterWardDamage || 0,
       ...(payload ? { payload: { ...payload, poise: poiseDamage } } : {}) });

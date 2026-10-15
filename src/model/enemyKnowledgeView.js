@@ -22,7 +22,7 @@ export function learnedEnemyMoveCards(def, stage, { registries = null, combatMat
   const catalog = stage >= 5 ? def : {
     id: def.id,
     moves: Object.fromEntries(Object.entries(def.moves || {}).map(([moveId, move]) => [moveId,
-      Object.fromEntries(Object.entries(move).filter(([key]) => ['name', 'intent', 'damage', 'hits', 'block', 'effects', 'tags', 'counterDamage', 'counterPoiseDamage'].includes(key)))])),
+      Object.fromEntries(Object.entries(move).filter(([key]) => ['name', 'intent', 'damage', 'hits', 'block', 'effects', 'tags', 'counterDamage', 'counterPoiseDamage', 'counterPayload'].includes(key)))])),
   };
   return enemyMoveCards(catalog, { registries, combatMatchupRules, combatExpansionVersion, stanceRules });
 }
