@@ -6249,7 +6249,15 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 .cc-design-workspace .cc-ability-choice > .card { width:100%; max-width:var(--card-w,14rem); }
 .cc-design-workspace .cc-ability-choose { max-width:var(--card-w,14rem); min-height:var(--cc-control-floor); font-size:var(--cc-body-font); }
 .cc-design-workspace .cc-review { font-size:var(--cc-body-font); }
-.cc-design-workspace .cc-review .card { max-width:300px; }
+/* Review uses the same authored resting width for the character, equipment
+   and starter deck. A shelf must not promote its playing cards to focus size. */
+.cc-design-workspace .cc-review :is(.cc-summary-cards, .cc-starter-deck) {
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(min(100%, var(--card-w-glance, 152px)), var(--card-w-glance, 152px)));
+  justify-content:start;
+  align-items:start;
+}
+.cc-design-workspace .cc-review .card { width:100%; max-width:var(--card-w-glance, 152px); }
 @container game-viewport (max-width:960px) {
  .cc-feat-layout { grid-template-columns:minmax(0,1fr); }
  .cc-feat-detail .cc-part-body { min-height:300px; }
