@@ -13,6 +13,14 @@ sentences; a following cap or generated-card cost stays with its sentence.
 It never takes a substring of a rule. `cardPlainText`, `cardFaceLines` and the
 Information details retain the complete reading.
 
+Information also displays complete status explanations as visible text,
+including duration and reapplication/stacking rules. It visits all registered
+applications and buildup effects in nested effects, counter payloads, upcasts,
+school riders and live charged effects; each status appears once, without the
+face rail's three-status cap. The shared status presenter receives the actual
+preview/run rules. An unstamped definition names both Classic and Expanded
+rules where their behavior differs.
+
 The renderer wraps clauses together rather than assigning one block per
 semantic row. The fitter measures three physical lines and can omit a whole
 secondary clause on a narrow face. It cannot expand this panel into artwork

@@ -298,7 +298,7 @@ export function renderCard(registries, ref, opts = {}) {
       ? fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences).replace(/ Light:.*$/,'')+' Cost reflects your current weight.'
       : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences);
     const projection = cardFaceProjection(def, { lines: faceLines, authoredHtml: authoredRules, registries });
-    const rulesHtml = compactCardRules(projection.clauses.map((line, i) => `<span class="face-line" data-face-kind="${line.kind}" data-face-clause="${i}">${i ? '; ' : ''}${line.html}</span>`).join(''));
+    const rulesHtml = compactCardRules(projection.clauses.map((line, i) => `<span class="face-line" data-face-kind="${line.kind}" data-face-clause="${i}">${line.html.replace(/\.$/, '')}.</span>`).join(' '));
     el.dataset.faceLines = String(projection.clauses.length);
     el.dataset.faceOmitted = String(projection.omitted);
     el.innerHTML = illustratedCardHtml(model,{
@@ -365,7 +365,9 @@ export function renderCard(registries, ref, opts = {}) {
     open: opener => {
       const details = document.createElement('div');
       const liveCosts = model.hasPreview ? model.costs : null;
-      details.innerHTML = opts.tooltipFn ? sigilExplanationHtml(model.sigils) + opts.tooltipFn() : cardTooltip(registries, def, model.tokens, liveCosts, model.damageSequences);
+      const reading = cardStatusContext(def, opts);
+      details.innerHTML = opts.tooltipFn ? sigilExplanationHtml(model.sigils) + opts.tooltipFn() + cardStatusDetailsHtml(registries, def, reading)
+        : cardTooltip(registries, def, model.tokens, liveCosts, model.damageSequences, reading);
       decorateKeywords(details);
       // AUTHORED FLAVOUR REACHES THE PLAYER, at the level that promises
       // everything. The note above the regions used to say a playing card
@@ -609,7 +611,7 @@ export function upgradePreviewHtml(registries, ref) {
  * is reachable we substitute against it; when it is not, we fall back to the
  * words-only display, which is exactly the behavior this file had before.
  */
-function glossaryEntry(registries, kind, id) {
+function glossaryEntry(registries, kind, id, context = {}) {
   const source = kind === 'status' ? registries.statuses : registries.stances;
   const row = source?.get?.(id) || null;
   const withWords = kind === 'status'
@@ -618,8 +620,43 @@ function glossaryEntry(registries, kind, id) {
   const display = row && typeof withWords === 'function'
     ? withWords(row)
     : (kind === 'status' ? registries.frameworkTerms.statusDisplay(id) : registries.frameworkTerms.stanceDisplay(id));
-  if (!display || !display.tooltip) return null;
-  return { name: display.name, tooltip: statusTooltipText(display) };
+  if (!display) return null;
+  const tooltip = statusTooltipText(display, context);
+  return tooltip ? { name: display.name, tooltip } : null;
+}
+
+// Carry the actual run/preview rules into every status reading. A definition
+// stamped v2 is evidence too; a definition with no version keeps the shared
+// helper's explicitly labelled Classic/Expanded reading.
+function cardStatusContext(def, { preview = null, rules = null } = {}) {
+  return {
+    combatExpansionVersion: preview?.combatExpansionVersion ?? rules?.combatExpansionVersion
+      ?? (def.minCombatExpansionVersion === 2 || def.defenseRulesVersion === 2 ? 2 : undefined),
+    combatStatusRules: preview?.combatStatusRules ?? rules?.combatStatusRules,
+    combatExpansionRules: preview?.combatExpansionRules ?? rules?.combatExpansionRules,
+    foundation: preview?.foundation ?? rules?.foundation,
+    chargedEffects: preview?.chargedEffects,
+  };
+}
+
+// Information has no three-status cap. Every registered application, including
+// nested counter/upcast riders, gets one visible complete reading. Tooltips
+// remain useful, but duration and stacking never require another hover.
+function cardStatusDetailsHtml(registries, def, context) {
+  const ids = new Set(), visited = new Set();
+  const walk = (value, depth = 0) => {
+    if (!value || typeof value !== 'object' || depth > 12 || visited.has(value)) return;
+    visited.add(value);
+    if (['applyStatus', 'buildup'].includes(value.op) && registries.statuses?.has?.(value.status)) ids.add(value.status);
+    for (const child of Object.values(value)) if (child && typeof child === 'object') walk(child, depth + 1);
+  };
+  for (const key of ['effects', 'counterPayload', 'upcast', 'schoolEffect']) walk(def[key]);
+  walk(context.chargedEffects);
+  const rows = [...ids].map(id => {
+    const entry = glossaryEntry(registries, 'status', id, context);
+    return entry ? `<div class="combat-rule-hint" data-inspection-status="${esc(id)}"><strong>${esc(entry.name)}:</strong> ${esc(entry.tooltip)}</div>` : '';
+  }).join('');
+  return rows ? `<section class="inspection-status-details">${rows}</section>` : '';
 }
 
 /** W1h: the read-only reading a pile viewer shows beside its collection —
@@ -627,10 +664,10 @@ function glossaryEntry(registries, kind, id) {
 export function cardDetailHtml(registries, ref, opts = {}) {
   const def = playingCardDefinition(registries, ref, opts);
   const model = playingCardModel(registries, ref, { ...opts, definition: def });
-  return cardTooltip(registries, def, model.tokens, model.hasPreview ? model.costs : null, model.damageSequences);
+  return cardTooltip(registries, def, model.tokens, model.hasPreview ? model.costs : null, model.damageSequences, cardStatusContext(def, opts));
 }
 
-function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences = []) {
+function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences = [], statusContext = {}) {
   // Cost numbers come from the framework profile (or the preview's already
   // resolved live costs, when the card is in play) and the resource words from
   // TermRegistry — same rendered string, one authority for both.
@@ -685,6 +722,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
       html += '<div class="combat-rule-hint">Reaction Sweep resolves before the incoming attack. Killing, staggering or controlling its attacker can interrupt it; otherwise the attack resumes.</div>';
   }
   html += `<div class="ctext">${fillTemplate(def, tokens, null, damageSequences)}</div>`;
+  html += cardStatusDetailsHtml(registries, def, statusContext);
   // Nested keyword + status tooltips (SPEC §7.3).
   const lines = [];
   for (const kw of def.keywords || []) {
@@ -713,14 +751,14 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
     // the mechanics ride through, "for a display site that needs the whole def
     // (mechanics numbers for tooltip substitution)". This is that site.
     if (eff.op === 'applyStatus') {
-      const s = glossaryEntry(registries, 'status', eff.status);
+      const s = glossaryEntry(registries, 'status', eff.status, statusContext);
       if (s && !def.textTemplate.includes(s.name)) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(s.tooltip)}">${esc(s.name)}</span>`);
     }
     if (eff.op === 'enterStance') {
       // A chosen stance (Warrior's Vow) explains every stance it can offer.
       const ids = eff.choose ? (cardChoice(registries, def, def.class)?.options || []).map((o) => o.id) : [eff.stance];
       for (const id of ids) {
-        const s = glossaryEntry(registries, 'stance', id);
+        const s = glossaryEntry(registries, 'stance', id, statusContext);
         if (s && !def.textTemplate.includes(s.name)) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(s.tooltip)}">${esc(s.name)}</span>`);
       }
     }

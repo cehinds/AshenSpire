@@ -25,7 +25,7 @@ test('buff inspection and combat tooltips share the registered stacking rule', (
   assert.match(full, /No automatic turn-end decay/);
   assert.equal(statusInstancePresentation(def, h.target.statuses.strength).tooltip, full);
   const card = readFileSync(new URL('../src/ui/components/card.js', import.meta.url), 'utf8');
-  assert.match(card, /tooltip: statusTooltipText\(display\)/);
+  assert.match(card, /const tooltip = statusTooltipText\(display, context\)/);
 });
 
 test('no-decay does not promise that Evade lasts the whole fight', () => {

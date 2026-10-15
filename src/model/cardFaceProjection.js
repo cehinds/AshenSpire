@@ -61,11 +61,13 @@ export function cardFaceProjection(def, { lines = null, authoredHtml = '', regis
   candidates = [...payments, ...candidates.filter(line => !payments.some(payment => payment.html === line.html))];
   const clauses = [];
   const requiredPayments = payments.reduce((sum, line) => sum + plain(line.html).length + 2, 0);
+  const requiredPaymentClauses = payments.reduce((sum, line) => sum + clauseCount(line.html), 0);
   for (const line of candidates) {
     const size = plain(line.html).length;
     const used = clauses.reduce((sum, clause) => sum + plain(clause.html).length + 2, 0);
     const count = clauses.reduce((sum, clause) => sum + clauseCount(clause.html), 0);
-    if (requiredPayments > FACE_EFFECT_CHARACTERS || !size || used + size > FACE_EFFECT_CHARACTERS || count + clauseCount(line.html) > FACE_EFFECT_CLAUSES) continue;
+    if (requiredPayments > FACE_EFFECT_CHARACTERS || requiredPaymentClauses > FACE_EFFECT_CLAUSES
+      || !size || used + size > FACE_EFFECT_CHARACTERS || count + clauseCount(line.html) > FACE_EFFECT_CLAUSES) continue;
     clauses.push(line);
     if (clauses.length === FACE_EFFECT_CLAUSES) break;
   }

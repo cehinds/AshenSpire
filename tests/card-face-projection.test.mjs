@@ -70,6 +70,14 @@ test('payments lead their payoff and long qualified riders move whole to Informa
   assert.match(blighted, /^Pay 12 Ashen Blight;/);
 });
 
+test('a payment requiring more than two clauses never leaves a free-looking payoff', () => {
+  const projection = cardFaceProjection({}, { lines: [
+    { kind: 'cost', html: 'Pay 2 HP. Discard 1. Offer 1 HP' },
+    { kind: 'damage', html: 'Inflict 9 Fire damage' },
+  ] });
+  assert.deepEqual(projection.clauses.map(line => line.html), ['Inspect full effect']);
+});
+
 test('authored fallback keeps trigger, cap and generated-card costs together', () => {
   assert.match(project(defOf('rallyingStandard')).clauses[0].html, /^Turn start: gain 1 Strength and take 1 damage$/);
   const bloom = project(defOf('blightBloom')).clauses.map(line => line.html).join('; ');
