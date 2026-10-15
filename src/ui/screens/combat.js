@@ -1,4 +1,4 @@
-import { bindCombatantInspectionGesture } from '../components/combatantInspectionGesture.js';
+import { bindCombatantInspectionGesture, isCombatBlankPress, markCombatantInspectionSurfaces } from '../components/combatantInspectionGesture.js';
 import { enemyActionPose } from '../../model/enemyActionPose.js';
 import { ratingValue, ratingDamageMultiplier } from '../../model/combatRatings.js';
 import { openCollectibleInspection } from '../components/collectibleCard.js';
@@ -512,7 +512,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // A blank press dismisses only the floating explanation. The edge inspector
   // is a separately owned Folding Tray and remains until its label is folded.
   combatEl.addEventListener('click', (event) => {
-    if (event.target.closest('.combatant, .combatant-inspector-host')) return;
+    if (!isCombatBlankPress(event)) return;
     selectCombatant(null);
   });
 
@@ -1757,6 +1757,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const box = record ? updateCombatantFrame(record.box, slots) : combatantFrame(slots);
       stageFor(box)?.setState?.({ ...dv(enemy), maxHp: enemy.maxHp });
       box.dataset.stature = statureFor(registries, def.id);
+      markCombatantInspectionSurfaces(box, { playback: busy || enemyPlayback });
       if (!record) {
         wireCombatantContext(box, combatantSubject('enemy', enemy));
         const activate = () => {
@@ -2557,6 +2558,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function afterDispatch(events) {
+    // Playback begins without rebuilding unchanged frames; protect reading
+    // presses before the global timeline skip listener is installed.
+    for (const record of enemyFrames.values()) markCombatantInspectionSurfaces(record.box, { playback: true });
     // Each step before playTimeline is guarded: busy is already true and only the timeline's finish releases it.
     try { events = decorateCombatEffects(events, registries, barrierVisuals); } catch (e) { console.warn('[combat] effect decoration failed:', e && e.message); }
     playbackEvents = events;
