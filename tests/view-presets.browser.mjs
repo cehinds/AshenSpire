@@ -41,6 +41,10 @@ async function choose(page, preset) {
     assert.ok(dimensions.scale > 0);
   }
   assert.ok(await select.isVisible(), `Settings reachable in ${preset}`);
+  await page.waitForFunction(() => {
+    const zoom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom'));
+    return document.querySelector('[data-applied="uiScale"]')?.textContent.includes(`Showing ${zoom.toFixed(2)}×`);
+  });
 }
 async function openCombatSettings(page) {
   await page.locator('#combat-menu').click();
@@ -55,6 +59,7 @@ function liveSnapshot() {
   return JSON.stringify({ runHP: run.hp, deck: run.deck, round: combat.turn, playerHP: combat.player.hp, phase: combat.phase });
 }
 try {
+  if (!process.env.VIEW_PRESETS_CAPTURE_ONLY) {
   for (const profile of ['core','current']) {
     const page = await pageFor(profile, 'combat');
     await page.locator('.end-turn').waitFor();
@@ -63,6 +68,10 @@ try {
     await openCombatSettings(page);
     for (const preset of [...Object.keys(presets), 'auto']) {
       await choose(page, preset);
+      if (profile === 'core' && preset === 'mobile') {
+        await page.locator('select[data-key="viewPreset"]').scrollIntoViewIfNeeded();
+        await page.screenshot({ path:resolve(output, 'desktop-mobile-preset.png') });
+      }
       assert.equal(await page.evaluate(() => window.__qaCombatIdentity === window.__combat), true, 'view change preserves live combat object');
       assert.equal(await page.evaluate(liveSnapshot), before, 'view change preserves HP, deck, round and phase');
     }
@@ -111,6 +120,7 @@ try {
   assert.ok(Math.abs(finalTop - expected) < 5, 'scaled map drag follows pointer distance in map coordinates');
   assert.equal(await pan.evaluate(node => node.classList.contains('grabbing')), false);
   await map.close();
+  }
   for (const host of Object.keys(hosts)) {
     const page = await pageFor('core', 'title', host);
     await page.locator('.title-menu').waitFor();
@@ -123,12 +133,17 @@ try {
     assert.equal(await page.getByLabel('Import game configuration JSON').count(), 1);
     await page.screenshot({ path: resolve(output, `${host}-rules.png`) });
     await page.locator('[data-general-select]').selectOption('Display');
-    await page.locator('select[data-key="viewPreset"]').waitFor();
+    await page.locator('select[data-key="viewPreset"]').scrollIntoViewIfNeeded();
     await page.screenshot({ path: resolve(output, `${host}.png`) });
+    if (host === 'desktop') {
+      await choose(page, 'mobile');
+      await page.locator('select[data-key="viewPreset"]').scrollIntoViewIfNeeded();
+      await page.screenshot({ path:resolve(output, 'desktop-mobile-preset.png') });
+    }
     await page.close();
   }
   assert.deepEqual(errors, [], 'no browser runtime errors');
-  console.log(`View preset state preservation and responsive Settings checks passed. Captures: ${output}`);
+  console.log(`${process.env.VIEW_PRESETS_CAPTURE_ONLY ? 'Responsive Settings captures' : 'View preset state preservation and responsive Settings checks'} passed. Captures: ${output}`);
 } finally {
   await browser.close();
   if (server) await new Promise(resolve => server.server.close(resolve));
