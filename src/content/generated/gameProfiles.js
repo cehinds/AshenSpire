@@ -951,7 +951,11 @@ export const gameProfileCatalog = {
         "editorEnabled": true,
         "editorWhere": "noncombat",
         "fixedAppearance": true,
-        "requirementsPolicy": "none"
+        "requirementsPolicy": "none",
+        "upgradeBonuses": {
+          "weaponARPerTier": 1,
+          "armorDRPerTier": 1
+        }
       },
       "schema": {
         "type": "object",
@@ -977,6 +981,26 @@ export const gameProfileCatalog = {
               "none",
               "legacy"
             ]
+          },
+          "upgradeBonuses": {
+            "type": "object",
+            "properties": {
+              "weaponARPerTier": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000
+              },
+              "armorDRPerTier": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000
+              }
+            },
+            "required": [
+              "weaponARPerTier",
+              "armorDRPerTier"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -984,7 +1008,8 @@ export const gameProfileCatalog = {
           "editorEnabled",
           "editorWhere",
           "fixedAppearance",
-          "requirementsPolicy"
+          "requirementsPolicy",
+          "upgradeBonuses"
         ],
         "additionalProperties": false
       },
@@ -999,13 +1024,13 @@ export const gameProfileCatalog = {
           "path": "engine/modules/equipment/defaults.json",
           "id": "equipment",
           "version": "1.0.0",
-          "hash": "sha256:003f80892fc61fc5d34dad83aa27f0f3ed9792f0c24bec1e32e4d45831d96b62"
+          "hash": "sha256:dc63c25d206a0942e5d6513e8f0277864bef5c447f5d95a0c43380fe76d92b24"
         },
         {
           "path": "engine/modules/equipment/settings.schema.json",
           "id": "equipment",
           "version": "1.0.0",
-          "hash": "sha256:e94a3dd64568623ec48ea266d299a8439e1621545e36cd43eb03ef7bcf0a49f3"
+          "hash": "sha256:636d8a109bac8a492fc1d26109713251ed0ac938645dbd0305e87cf5c4ab2aaf"
         }
       ]
     },
@@ -3047,7 +3072,8 @@ export const gameProfileCatalog = {
             "Rest positions [2,6] and generic shop price10 are provisional source-configured fixtures.",
             "Stance advantage multiplier1.25 and one Smash advantage stagger per target/round are provisional.",
             "Smith upgrades exactly one equipment tier for free as the one rest service; the foregone Strategize/Level Up is its visit budget. Free Smith is provisional until an explicit upgrade economy is authored.",
-            "Equipment attribute requirementsPolicy defaults to none for six-total core attributes; ownership, slot fit and timing remain enforced. Explicit legacy restores old minima. This is provisional until core item requirements are balanced."
+            "Equipment attribute requirementsPolicy defaults to none for six-total core attributes; ownership, slot fit and timing remain enforced. Explicit legacy restores old minima. This is provisional until core item requirements are balanced.",
+            "Configured equipment upgrades give AR from the highest active non-shield armament tier and DR from the highest active armor/shield tier, at one point per tier each; tiers do not stack within a group. Stats off disables these bonuses. This provisional policy drives shared UI/combat/preview ratings."
           ]
         },
         "resourceVariants": {
@@ -3336,7 +3362,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/provisionalPolicies.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:2814e67e24aadbd27ed7ed6e4fe55a2c5fb4509d792fd1a0d021b2467169e4c4"
+          "hash": "sha256:cb69cd1e3006172b1956bb54f425fab1bc5d22c576898ad4ece9abe72c9c8aeb"
         },
         {
           "path": "games/ashenspire/packs/core/resourceVariants.json",
@@ -3382,7 +3408,7 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "path": "src/** (excluding generated gameProfiles/changelog)",
-      "hash": "sha256:1f191ff763cd0531253f5531fb3fbf4ffbfeda37483d0c627c0f9048e86a2c24"
+      "hash": "sha256:98835b89a3e3ae005328a50c51b23496f4ebcf79d8a6a3e627faddc1d5315ad2"
     }
   ],
   "runtimeSources": [
@@ -4686,7 +4712,7 @@ export const gameProfileCatalog = {
       "path": "src/engine/runCombat.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:b8dd236cf44b4ec9765dbde3c0c316afc8a7c105d1fd79cac8ddf5af216e1ac2"
+      "hash": "sha256:2738e8d854cc71a19b7b75edf767426fbd51961d2f581e96d4518facddd0a309"
     },
     {
       "path": "src/engine/save.js",
@@ -5310,7 +5336,7 @@ export const gameProfileCatalog = {
       "path": "src/model/combatRatings.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:fe3052b7465b0685490737a1df3edd859267b6ba87aca9aa5d2ef2b1d8fc7f89"
+      "hash": "sha256:2ffa12e23efe9fc68419661f1cca01c08b971dc0e801c8dbf4e66271f261e23f"
     },
     {
       "path": "src/model/combatReactionState.js",
@@ -5616,7 +5642,7 @@ export const gameProfileCatalog = {
       "path": "src/model/gameProfileRun.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:ca64c4d412bb7b205dd9465f4ac927eba0e8f832906a92d9c95bc20bd83a5ce4"
+      "hash": "sha256:c9178f8c7bddd5fcb2fcb2642c03ac52356e590272a2df92603bf5de9849b0c9"
     },
     {
       "path": "src/model/gracerefill.js",
@@ -8205,7 +8231,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:23af16d4e9c9f6d88fe655d32ecf1a688b47df39f9e3a1d6d193ce63923593ab"
     }
   ],
-  "runtimeHash": "sha256:1850d0b9d0d0841a5a6783e12424e0800d20c4cdb69bb87d868023cacb2c1066"
+  "runtimeHash": "sha256:972c3ece7227c8e5072fdb5f4f13d18079d7a5d49dc2e1eafe8056a8b63321c7"
 };
 export const gameProfileAuthors = {
   "default": {
