@@ -35,7 +35,7 @@ try {
     const selector = page.getByLabel('New game configuration');
     assert.equal(await selector.inputValue(), profile);
     if (profile === 'core') {
-      const imported = { formatVersion: 1, core: 'ashen.core@1.0.0', modules: { routes: { prebossNodes: 4 } } };
+      const imported = { formatVersion: 1, core: 'ashen.core@1.0.0', modules: { routes: { prebossNodes: 5, restFloors: [2, 4] } } };
       await page.getByLabel('Import game configuration JSON').setInputFiles({ name: 'custom.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(imported)) });
       await page.waitForTimeout(100);
       assert.equal(await selector.inputValue(), 'imported');
@@ -43,7 +43,7 @@ try {
       await page.getByRole('button', { name: 'Choose class', exact: true }).click();
       assert.equal(await page.getByRole('button', { name: 'Starseer · Locked', exact: true }).isDisabled(), true);
       await page.getByRole('button', { name: 'Begin the climb', exact: true }).click();
-      assert.equal(await page.locator('.map-node').count(), 5, 'imported route override changes real map generation');
+      assert.equal(await page.locator('.map-node').count(), 6, 'imported route override changes real map generation');
     }
     await page.close();
   }
