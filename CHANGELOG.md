@@ -35,6 +35,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 ## 2026-10-15
 
 - **Combat stances keep their damage, pressure and hit feedback consistent** ([#1996](https://github.com/cehinds/AshenSpire/pull/1996), `0.7.1.1531`). Smash gains its failed-Evade bonus when a retained Evade stack attempts the dodge after a stance change. Enemy Counters and damaging Smash moves receive the configured fallback Poise damage when none is authored, while support-only charging stages stay harmless. Paced combat keeps the correct Evasion rating, and co-op prevention shows one Missed callout.
+- **Combat fades cover fighters, and player targets stay clear of Health** ([#1978](https://github.com/cehinds/AshenSpire/pull/1978), `0.7.1.1531`). Screen fades now cover idle and selected fighters while target selection, cards and the combat HUD remain above them. When the perspective view places the player behind the hand, its transparent 44px target moves clear of its own Health strip without changing the artwork, Health position or selected fighter size.
 
 ## 2026-10-14
 
