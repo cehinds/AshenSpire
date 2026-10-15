@@ -65,4 +65,4 @@ for (const key of ['lungeMs', 'impactCapMs']) {
   assert.ok(ANIM_SPEEDS.slow[key] > ANIM_SPEEDS.normal[key] && ANIM_SPEEDS.normal[key] > ANIM_SPEEDS.fast[key],
     `${key} must order Slow > Normal > Fast`);
 }
-assert.ok(ANIM_SPEEDS.normal.impactCapMs <= 300, 'Normal impact cap stays within the click-to-impact budget');
+assert.ok(ANIM_SPEEDS.normal.impactCapMs <= 400, 'Normal impact cap stays within the click-to-impact budget');

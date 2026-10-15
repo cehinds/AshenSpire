@@ -4,8 +4,8 @@
 // numbers and bars update. stanceLeadMs: the wait after an attacker that is
 // out of its stance is returned to it, before its swing starts.
 export const ANIM_SPEEDS = {
-  slow: { beatMs: 420, stepMs: 105, lungeMs: 255, impactCapMs: 317, reactionMs: 315, stanceLeadMs: 175 },
-  normal: { beatMs: 240, stepMs: 68, lungeMs: 195, impactCapMs: 186, reactionMs: 180, stanceLeadMs: 100 },
+  slow: { beatMs: 600, stepMs: 220, lungeMs: 760, impactCapMs: 500, reactionMs: 480, stanceLeadMs: 175, popupDwellMs: 750, floatMs: 1200 },
+  normal: { beatMs: 420, stepMs: 160, lungeMs: 560, impactCapMs: 360, reactionMs: 360, stanceLeadMs: 100, popupDwellMs: 550, floatMs: 1000 },
   fast: { beatMs: 108, stepMs: 34, lungeMs: 121, impactCapMs: 108, reactionMs: 81, stanceLeadMs: 45 },
   instant: null,
 };
