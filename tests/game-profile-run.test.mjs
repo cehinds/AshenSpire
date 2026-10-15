@@ -80,3 +80,20 @@ test('unconfigured legacy creation remains unchanged in mechanics',()=>{
  const legacy=createRunState({seed:73,classId:'reaver',registries:createRegistries(contentBundle)});
  assert.equal(legacy.gameProfile,undefined);assert.equal(legacy.attributes.strength,3);assert.equal(legacy.attributes.constitution,2);
 });
+
+test('cards and routes off use an empty deck and explicit foundation activities',()=>{
+ const p=resolveGameProfile({formatVersion:1,core:'ashen.core@1.0.0',modules:{cards:false,routes:false}});
+ const r=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,p)),p);
+ const run=createRunState({seed:1,classId:'reaver',registries:r});
+ assert.deepEqual(run.deck,[]);assert.deepEqual(run.sideboard,[]);stampDeck(r,run);assert.deepEqual(run.deck,[]);
+ const map=buildActMap(r,createRng(1),run.seatOrder[0],1);
+ assert.equal(map.activityLauncher,true);assert.ok(map.nodes.activityFight);assert.ok(map.nodes.activityRest);assert.ok(map.nodes.activityBoss);
+});
+
+test('configured low-level level and smith mutations cannot bypass rest',async()=>{
+ const {applyLevelUp}=await import('../src/model/levelup.js');const {commitSmithing}=await import('../src/model/smithing.js');
+ const run=fresh();run.level.unspentPoints=1;const before=JSON.stringify(run);
+ assert.throws(()=>applyLevelUp(reg,run,'strength'),/committed rest/);
+ assert.throws(()=>commitSmithing(reg,run,'armament:greatsword'),/Smith rest/);
+ assert.equal(JSON.stringify(run),before);
+});

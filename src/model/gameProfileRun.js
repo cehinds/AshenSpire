@@ -1,12 +1,12 @@
 // Profile-selected run policies. Legacy profiles never enter these branches.
 import { gameModule, gameContent } from './gameProfile.js';
 
-export const isConfiguredRun = (subject) => gameModule(subject, 'class-selection')?.mode === 'configured';
+export const isConfiguredRun = (subject) => (subject?.gameProfile || subject)?.foundation?.mode === 'configured';
 export const gameProfileAttributes = (subject, classId) => gameContent(subject, 'classAttributes')?.[classId];
 
 export function gameProfileClassAvailable(subject, meta = {}, classId) {
   const rules = gameContent(subject, 'classUnlocks');
-  if (!isConfiguredRun(subject) || !rules) return true;
+  if (gameModule(subject, 'class-selection')?.mode !== 'configured' || !rules) return true;
   const state = meta.gameProfileUnlocks?.[unlockKey(subject)];
   return [...rules.initial, ...rules.sequence.slice(0, state?.completedRunIds?.length || 0)].includes(classId);
 }
@@ -76,3 +76,12 @@ export function initializeGameProfileRun(registries, run, { profileMeta = {} } =
   run.skills = {};
   run.coreTags = [];
 }
+
+// Synchronous internal service scope; low-level mutation doors cannot bypass rest.
+const services = new WeakMap();
+export function withGameProfileService(run, service, operation) {
+  if (services.has(run)) throw new Error('Nested configured service transaction');
+  services.set(run, service);
+  try { return operation(); } finally { services.delete(run); }
+}
+export const gameProfileServiceActive = (run, service) => services.get(run) === service;

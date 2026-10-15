@@ -1,4 +1,5 @@
 // Exactly one committed configured service per persisted visit. No arrival grant.
+import { withGameProfileService } from './gameProfileRun.js';
 import { gameModule, gameContent } from './gameProfile.js';
 import { applyLevelUp } from './levelup.js';
 import { commitSmithing } from './smithing.js';
@@ -55,8 +56,8 @@ function applyService(registries, draft, service, payload) {
       if (edited[key] !== undefined) draft[key] = structuredClone(edited[key]);
     }
   }
-  if (service === 'levelUp') applyLevelUp(registries, draft, payload.attributeId);
-  if (service === 'smith') commitSmithing(registries, draft, payload.itemRef);
+  if (service === 'levelUp') withGameProfileService(draft, service, () => applyLevelUp(registries, draft, payload.attributeId));
+  if (service === 'smith') withGameProfileService(draft, service, () => commitSmithing(registries, draft, payload.itemRef));
   draft.hp = draft.maxHp;
   draft.mana = draft.maxMana;
   draft.stamina = draft.maxStamina;

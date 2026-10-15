@@ -169,9 +169,9 @@ export function createRunState({
   const configured = isConfiguredRun(profileSubject);
   if (configured) enemyKnowledgeVersion = null;
   if (!gameProfileClassAvailable(profileSubject, profileMeta, classId)) throw new Error(`Class '${classId}' is locked in this profile`);
-  const fixedAttributes = configured ? gameProfileAttributes(profileSubject, classId) : null;
-  if (configured && !fixedAttributes) throw new Error(`Configured class '${classId}' has no attributes`);
-  if (configured && requestedAttributes && Object.entries(fixedAttributes).some(([key,value]) => requestedAttributes[key] !== value)) throw new Error('Configured creation uses fixed attributes');
+  const fixedAttributes = gameModule(profileSubject, 'class-selection')?.mode === 'configured' ? gameProfileAttributes(profileSubject, classId) : null;
+  if (gameModule(profileSubject, 'class-selection')?.mode === 'configured' && !fixedAttributes) throw new Error(`Configured class '${classId}' has no attributes`);
+  if (fixedAttributes && requestedAttributes && Object.entries(fixedAttributes).some(([key,value]) => requestedAttributes[key] !== value)) throw new Error('Configured creation uses fixed attributes');
   derivedStatOptions = gameProfileStatOptions(profileSubject, derivedStatOptions);
   const classDef = registries.classes.get(classId);
   const selectedAttributeMode = attributeMode === undefined
@@ -181,11 +181,11 @@ export function createRunState({
     ? classAttributePreset(registries, classId, selectedAttributeMode)
     : normalizeRunAttributes({ class: classId, attributeMode: selectedAttributeMode, attributes: requestedAttributes }, registries).attributes;
   const attributeModeSnapshot = creationModeSnapshot(registries, selectedAttributeMode);
-  if (configured) Object.assign(attributeModeSnapshot, { baseline: 1, bonusPool: Object.values(fixedAttributes).reduce((a,b)=>a+b,0)-5, minimum: 1, maximum: Math.max(...Object.values(fixedAttributes)) });
+  if (fixedAttributes) Object.assign(attributeModeSnapshot, { baseline: 1, bonusPool: Object.values(fixedAttributes).reduce((a,b)=>a+b,0)-5, minimum: 1, maximum: Math.max(...Object.values(fixedAttributes)) });
   const idGen = createIdGen('rc');
   const baseStartingKit = resolveStartingKit(registries, classId, startingKitId, profileMeta);
   const hands = resolveCreationHands(registries, classId, configured ? undefined : startingHands, baseStartingKit, profileMeta);
-  const fixedHands = configured ? gameContent(profileSubject, 'classes')?.find(row => row.id === classId)?.loadout : null;
+  const fixedHands = fixedAttributes ? gameContent(profileSubject, 'classes')?.find(row => row.id === classId)?.loadout : null;
   const startingKit = { ...baseStartingKit, ...hands, ...(startingHands ? { customized: true } : {}), ...(fixedHands || {}) };
   const startingRelic = resolveCreationRelic(registries, classId, startingRelicId, profileMeta);
   // E5 (#250): the set the run begins wearing. Resolved against the same
@@ -275,7 +275,7 @@ export function createRunState({
     smithingStonesRefined: 0, // refined Smithing Stones (SPEC §15.3)
     itemUpgradeLevels: {},
     smithingRewardClaims: [],
-    deck: startingDeckRefs(registries, loadout, classId).map((ref) => ({ ...createCardInstance(ref.cardId, false, idGen), ...ref })),
+    deck: configured ? [] : startingDeckRefs(registries, loadout, classId).map((ref) => ({ ...createCardInstance(ref.cardId, false, idGen), ...ref })),
     sideboard: [], // owned cards the deck editor took out of the deck (SPEC §14.1)
     // SPEC §14.3: owned sigils not installed anywhere, and the sigil slots cut
     // into items ({ [itemRef]: (sigilId|null)[] }, keyed like itemMounts).
@@ -355,7 +355,7 @@ export function createRunState({
   // Starter families keep their weak action-only face even when their reward
   // catalogue defaults to an advanced Mana-costing profile.
   if (run.progressionRulesVersion === 1) for (const inst of run.deck) if (registries.cards.get(inst.cardId).gradeProfiles) inst.abilityRank = 0;
-  for (const ref of startingAbilityRefs(registries, run, startingAbilityIds, profileMeta.settings || {})) {
+  for (const ref of configured ? [] : startingAbilityRefs(registries, run, startingAbilityIds, profileMeta.settings || {})) {
     run.deck.push({ ...createCardInstance(ref.cardId, false, idGen), ...ref });
   }
   // Stamp only after every opening card exists. Starting ability grades own
