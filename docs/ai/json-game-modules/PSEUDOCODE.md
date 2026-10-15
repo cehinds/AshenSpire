@@ -434,24 +434,50 @@ makeRewardOffer(candidate, earnedReward):
   persist offer IDs, takePolicy and RNG receipt; retry displays reuse same offers
   return public offers; selection spends claim token once in a transaction
 
-restCommand(candidate, request):
-  require current activity exposes registered rest services
-  for enterRest: fully restore HP/SP and refill healing/MP flask charges
-                 through their enabled declared resource/flask providers
-  // Rest does not directly refill MP unless an explicit future policy says so.
-  for allocatePoint: applyAllocatedLevelPoint(candidate, request.attributeId)
-  for upgradeCard:
-    require eligible instance and available declared upgrade entitlement/budget
-    persist upgrade and provenance; consume budget once; never replay on reopen
-  preserve other per-run state; return committed service receipt
+RestVisit = {visitId, revision, semanticsVersion, status: available|active|resolved|closed,
+             visitTokenConsumed, selectedService?, draft?, completedReceipt?}
+
+restCommand(candidate, request):  // every branch executes inside executeTransaction
+  require actual current rest activity and matching visitId/expectedVisitRevision
+  visit = candidate.restVisits.require(request.visitId)
+  if request == chooseService:
+    require visit.status == available and not visit.visitTokenConsumed
+    require service in [Strategize, Smith, LevelUp]
+    validate selected service eligibility and available authored budgets
+    visit.selectedService = service; visit.visitTokenConsumed = true
+    visit.status = active; visit.draft = versioned service-specific empty draft
+    increment visit.revision  // durable exclusive choice; no effects/refill yet
+  if request == updateServiceDraft:
+    require visit.status == active and request.service == visit.selectedService
+    validate draft against selected service, owned instances and current budgets
+    persist draft and increment visit.revision; apply no irreversible service effects
+  if request == finalizeService:
+    require visit.status == active  // token is already consumed; do not spend twice
+    revalidate draft, eligibility, earned points and authored upgrade budget
+    switch visit.selectedService:
+      Strategize: apply validated deck moves preserving identities/history
+      Smith: upgrade eligible equipment only; spend declared upgrade budget once
+      LevelUp: allocate existing earned points through compiled stat provider
+    reconcile maxima after equipment/stat changes using their dependency receipts
+    set current HP = resulting maxHP, MP = resulting maxMP, SP = resulting maxSP
+    refill healing and MP flask charges to resulting declared capacities
+    // Enabled providers own these deltas; no absent-module resource is recreated.
+    visit.status = resolved; close service editor; increment visit.revision
+    persist receipt keyed by visitId with choice/service/recovery facts
+  if request == leaveRest:
+    require visit.status == resolved
+    visit.status = closed; close editor; increment visit.revision
+    authorize activity exit without creating another visit token
 
 editDeck(candidate, request):
   require deck editor enabled and current activity is an actual rest spot
+  require visit.status == active and visit.selectedService == Strategize
+  require service editor active for matching visitId/revision
   require no combat or pending decision; map disguise cannot grant rest legality
-  require target instance owned and resulting deck legal under selected modules
-  move existing instances; preserve upgrade state, history and stable IDs
-  never undo an irreversible upgrade through remove/re-add or restart of editor
-  // Acquiring a reward card elsewhere is not a manual deck-edit command.
+  validate owned instances and resulting deck legality; update Strategize draft
+  preserve upgrade state, history and stable IDs; finalize via finalizeService
+  never undo an irreversible upgrade through remove/re-add or reopening editor
+  // Reward acquisition elsewhere is not a manual deck-edit command.
 
 editEquipment(candidate, request):
   require equipment editor enabled
@@ -461,13 +487,42 @@ editEquipment(candidate, request):
   // Do not inherit deck editor's rest-only rule; choose this policy separately.
 ```
 
-Both editors are on. Manual deck editing is **rest-only**; reward acquisition
-outside rest is a distinct transaction and does not permit arbitrary deck changes.
-Equipment editing has its own context policy; noncombat safe phases remain a
-recommendation, not a confirmed rest-only restriction. Fixed starting attributes
-use six total points distributed by class exactly as CORE-SPEC records. Apply
-level-point contributions once, replacing the corresponding legacy primary term;
-preserve other hidden formulas with source/version/dependency receipts. Do not
+Each rest visit offers **one service choice**: Strategize edits the deck, Smith
+upgrades equipment, or LevelUp allocates earned attribute points. All three fully
+restore HP, MP and SP and refill healing/MP flasks after the chosen service's
+changes, so a raised maximum is filled too. Selecting a service commits the one-use
+visit choice; it cannot be swapped for another service by reopening, reloading or
+retrying a request. Entering/reopening the UI alone does not trigger recovery or
+create a new visit. A legitimate visit ID derives from committed activity-entry
+identity, not render/mount count; activity policy controls any genuine later visit.
+
+Service selection and finalization are separate transactions. Save the chosen
+service, consumed token, revision, semantics version and draft while active;
+reload resumes that editor, without new budgets, a new choice or duplicate
+recovery. Finalize atomically applies the selected service, resource recovery and
+resolved receipt. Duplicate finalize requests return the stored receipt through
+idempotency handling. Leaving requires resolution and closes the editor. If an
+editor needs a reaction/input suspension, section 5's transaction continuation
+retains that same visit identity; SUSPENDED never authorizes a second choice.
+
+Permit an eligible service editor to finish without changes as a recommendation
+to prevent a softlock; express that no-op policy explicitly rather than inventing
+free earned points, XP or equipment upgrades. Eligibility and upgrade/point budgets
+remain authored policies. Invalid drafts keep the locked choice and editor open
+for correction. Smith is the rest-menu equipment-upgrade path; there is no rest
+card-upgrade option in this profile. Level/card reward acquisition remains governed
+by its own reward rules and is not a free LevelUp grant.
+
+Both editors are on. Manual deck editing is **rest-only within active Strategize**;
+reward acquisition outside rest is distinct and permits no arbitrary deck edit.
+The equipment editor has its own context policy; noncombat safe phases remain a
+recommendation, not a confirmed rest-only restriction. Its general editing
+permission does not grant the Smith upgrade service or a second rest service.
+Fixed starting attributes
+use six total points distributed by class exactly as CORE-SPEC records. Replace
+legacy primary terms only while constructing the stat provider; allocation updates
+attributes and recomputes it once. Preserve other hidden formulas with
+source/version/dependency receipts. Do not
 invent SP math such as `floor(CON/2)` or silently add new primary gains on top of
 old scaling. Intended level gains per act do not establish an XP curve or an
 unambiguous final level.
@@ -780,7 +835,10 @@ Verification below is a future acceptance procedure, not a claim of executed tes
    hiding. Target cards/resources/stances, unified damage/defenses, counters,
    equipment/progression, shops without routes and failed/disabled art. Verify
    shop/fight/rest transitions preserve run-owned deck/currency/progress/resources
-   except explicit recovery, cost, reward or upgrade deltas.
+   except explicit recovery, cost, reward or upgrade deltas. At each rest, assert
+   one durable service choice, Strategize-only deck editing, Smith equipment-only
+   upgrades, earned-point-only LevelUp, full HP/MP/SP/flasks against post-service
+   maxima, and save/reopen/retry protection with no second service or refill.
 4. Generate supported higher-order combinations. Assert End Turn/pass always legal
    when awaiting player input, finite per-turn work, response/outcome progression,
    unchanged feature selection after technical closure, deck/fallback validity,
