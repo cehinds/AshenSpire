@@ -20,7 +20,9 @@ export function mountGameProfileSettings(host, { settings, onChange, gameProfile
     const fallback = query.get('gameProfile') || query.get('wb.gameProfile') || globalThis.__ASHEN_GAME_PROFILE_PREVIEW__ || 'default';
     const value = settings.newGameProfile || fallback;
     const profile = gameProfile?.read() || resolveNewGameProfile(value);
-    const imported = settings.importedGameProfile || (typeof value === 'string' && value.trim().startsWith('{') ? value : null);
+    let imported = settings.importedGameProfile || (typeof value === 'string' && value.trim().startsWith('{') ? value : null);
+    // An imported author in an explicit preview URL is also a selectable import.
+    if (fallback.trim().startsWith('{') && resolveNewGameProfile(fallback).hash === profile.hash) imported = fallback;
     mountGameProfileSelector(host, {
       profile, importedProfile: imported ? resolveNewGameProfile(imported) : null,
       onSelect: async selection => {
@@ -54,11 +56,13 @@ export function mountGameProfileSettings(host, { settings, onChange, gameProfile
 // New-run configuration only: selecting/importing never mutates a running save.
 export function mountGameProfileSelector(host, { profile, importedProfile = null, onSelect }) {
   const panel = document.createElement('div');
-  panel.className = 'game-profile-selector';
-  panel.style.cssText = 'display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;justify-content:center;margin:.75rem auto;max-width:38rem';
+  panel.className = 'game-profile-selector set-row set-row-wide';
+  panel.style.cssText = 'display:flex;flex-wrap:wrap;gap:1rem;align-items:center;margin:.75rem 0';
   const label = document.createElement('label');
   label.textContent = t('gameProfile.selector.copy1');
+  label.style.cssText = 'display:flex;flex-wrap:wrap;gap:.75rem;align-items:center';
   const select = document.createElement('select');
+  select.className = 'set-choice-select';
   select.setAttribute('aria-label', t('gameProfile.selector.copy2'));
   const names = { current: t('gameProfile.settings.current'), core: t('gameProfile.settings.core'), imported: t('gameProfile.settings.imported') };
   for (const id of ['current', 'core']) select.append(new Option(names[id], id));
@@ -69,20 +73,24 @@ export function mountGameProfileSelector(host, { profile, importedProfile = null
   const upload = document.createElement('input');
   upload.type = 'file'; upload.accept = '.json,application/json';
   upload.setAttribute('aria-label', t('gameProfile.selector.copy3'));
-  upload.style.maxWidth = '16rem';
+  upload.hidden = true;
+  const importButton = document.createElement('button');
+  importButton.type = 'button'; importButton.className = 'as-btn';
+  importButton.textContent = t('gameProfile.settings.import');
+  importButton.addEventListener('click', () => upload.click());
   const status = document.createElement('span');
   status.setAttribute('role', 'status');
-  status.style.cssText = 'width:100%;font-size:.8rem;overflow-wrap:anywhere;text-align:center';
+  status.style.cssText = 'width:100%;font-size:.9em;overflow-wrap:anywhere';
   status.textContent = t('gameProfile.settings.future', { profile: names[chosen] });
   let pending = false;
   const apply = async value => {
     if (pending) return;
-    pending = true; select.disabled = true; upload.disabled = true;
+    pending = true; select.disabled = true; upload.disabled = true; importButton.disabled = true;
     try { await onSelect(value); }
     catch (error) {
       status.textContent = t('gameProfile.settings.invalid', { error: error.message });
       select.value = chosen;
-    } finally { pending = false; select.disabled = false; upload.disabled = false; }
+    } finally { pending = false; select.disabled = false; upload.disabled = false; importButton.disabled = false; }
   };
   select.addEventListener('change', () => apply(select.value));
   upload.addEventListener('change', async () => {
@@ -94,6 +102,6 @@ export function mountGameProfileSelector(host, { profile, importedProfile = null
     } catch (error) { status.textContent = t('gameProfile.settings.invalid', { error: error.message }); }
     finally { upload.value = ''; }
   });
-  panel.append(label, upload, status); host.append(panel);
+  panel.append(label, importButton, upload, status); host.append(panel);
   return panel;
 }

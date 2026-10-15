@@ -10522,5 +10522,12 @@ export const uiStrings = [
     "short": "Tablet",
     "full": "Tablet",
     "tip": ""
+  },
+  {
+    "id": "gameProfile.settings.import",
+    "extends": "",
+    "short": "Import JSON",
+    "full": "Import JSON",
+    "tip": ""
   }
 ];
