@@ -26,7 +26,7 @@ To start a new core run without cards, change just the module entry:
 
 The profile keeps the foundation's basic attack and pass, and the run uses its cardless activities. A missing bundled module inherits the core selection. `false` disables it. `true` selects the bundle settings. An object recursively overrides settings; arrays replace the inherited array. Unknown properties, unsupported configured modules and invalid settings fail validation. `$comment` is ignored by gameplay resolution.
 
-To change a setting, use the module's schema and guide. For example, change the route node count only if it remains compatible with the selected rest floors:
+To change a setting, use the module's schema and guide. For example, change route depth, branching lanes or rest floors only when they remain compatible:
 
 ```json
 {
@@ -36,7 +36,7 @@ To change a setting, use the module's schema and guide. For example, change the 
 }
 ```
 
-For a selected module, settings resolve as module defaults → bundle settings → author object. `policyBindings` then projects the resolved module settings back onto the corresponding selected pack content before runtime use. This means an edit to a bound pack field alone can be replaced by the module's resolved default. For bound values, edit the module setting in `game.json` (or the module/bundle default when changing the shared preset); edit pack files for definitions and fields not owned by a binding. For example, route counts/rest floors are bound to `routes` settings, while route node content remains in `routes.json`.
+For a selected module, settings resolve as module defaults → bundle settings → author object. `policyBindings` then projects the resolved module settings back onto the corresponding selected pack content before runtime use. This means an edit to a bound pack field alone can be replaced by the module's resolved default. For bound values, edit the module setting in `game.json` (or the module/bundle default when changing the shared preset); edit pack files for definitions and fields not owned by a binding. Route depth, lane count and rest floors are bound to `routes` settings, while route node/boss content remains in `routes.json`. The default route has eight depths including the boss; branching alternatives occupy lanes within a depth rather than adding levels.
 
 ## Edit game content
 

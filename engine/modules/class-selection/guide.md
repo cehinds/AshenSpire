@@ -3,7 +3,7 @@
 Select fixed Ashen classes and gate later classes behind completed runs.
 
 **Status:** Listed in `ashen.core@1.0.0`.
-Runtime scope: Configured fixed classes, lock progression and selection guards.
+Runtime scope: Configured fixed classes, lock progression and selection guards, with a two-step class selection and review flow before a run begins.
 
 ## Authoring example
 
@@ -47,7 +47,7 @@ The referenced pack JSON is gameplay authoring data; it is not executable module
 
 ## Disable behavior, portability and checks
 
-Default eligible hero/fixed loadout is the fallback. Character creation remains a separate unsupported optional module.
+Core creation is fixed and has two stages: choose an unlocked class, then review its authored starting attributes, equipment and ten-card deck before selecting Begin. A new profile can choose Reaver; the three later classes unlock in the authored order after unique terminal full-run results. This flow does not create free-form attributes or equipment. When class-selection is disabled, the declared default eligible hero and loadout provide the fallback. Optional character creation remains a separate module and stays off unless selected.
 
 The current export requires `ashen.legacy-adapter@1`; it is host-dependent and does not claim a portable rules VM. Unsupported configured modules or values should fail validation rather than silently omit their behavior.
 
