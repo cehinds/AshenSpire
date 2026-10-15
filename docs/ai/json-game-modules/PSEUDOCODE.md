@@ -17,6 +17,8 @@ pending decisions. Read that sibling before implementing a policy or filling in 
 number. The bundle declares feature modules and exact package pins explicitly;
 the runtime kernel supplies their shared contracts and technical fallbacks.
 
+The full profile defines four classes; a new player profile can select only Reaver.
+Complete runs unlock the other classes in CORE-SPEC order, on victory or defeat.
 The full profile includes class selection, fixed starting loadouts, a combat deck,
 SP/MP, multi-card turns with End Turn, stances and rewards, a deck editor,
 progression and the three-act journey. `modules: {}` means those bundle defaults.
@@ -53,7 +55,10 @@ CoreState = {
   outcome, turn: {ownerId, policyId, opportunitiesRemaining?, freeCommandsRemaining},
   commandSequence, transactionSequence, pendingDecision
 }
-RunState = {lock, core: CoreState, modules: namespacedPerRunState}
+RunState = {lock, profileRef: {profileId, observedRevision, unlockSnapshot},
+            completionPolicySnapshot, core: CoreState, modules: namespacedPerRunState}
+ProfileState = {profileId, revision, policyVersion, unlockLedgerVersion,
+                unlockedClassIds, completedRunIds, completionReceipts}
 
 submit(request):
   result = executeTransaction(request)  // includes all lifecycle/system commands
@@ -70,6 +75,9 @@ handleCandidate(candidate, command):  // called only inside executeTransaction
       create new run ID and immutable lock; initialize hero and per-run module state
       if projected full-profile class provider is active:
         require selected class belongs to the four-class core selector
+        require selected class unlocked in authoritative profile revision
+        // Reject a locked class even if a direct command bypasses the selector UI.
+        capture profile reference/unlock snapshot and completion policy in run
         apply fixed starting loadout/class definition; no attribute creation flow
       else: instantiate declared compatible baseline hero
       initialize only enabled durable deck/currency/progression/resource state
@@ -149,6 +157,8 @@ Combat victory grants the earned reward and permits a journey/activity transitio
 it does not run `newRun` or reset persistent state. The final act boss victory and
 hero death end the run according to the outcome policy. Classify activity outcomes
 separately from run outcomes; commit reward/transition eligibility with the result.
+A committed terminal full-run outcome also creates the durable profile-completion
+award request described below; an ordinary combat victory never creates one.
 
 Core policy must define simultaneous death precedence and multiple-enemy ordering
 in versioned rules. UI and headless drivers submit the same commands. The full
@@ -554,6 +564,70 @@ per act plus visible elite/boss anchors, and actual activity types behind questi
 the map view, never its resolved type. Shops, treasure, events, fights and rests
 all use transactional activity services even without the route module.
 
+## 4.2. Unlock classes through a separate profile ledger
+
+Profile progression is distinct from `RunState`. The initial profile unlock set
+contains only Reaver. The first, second and third distinct completed runs unlock
+Starseer, Rogue and Herald respectively, as recorded by CORE-SPEC's ordered table.
+Victory **or defeat** counts: final-boss victory or hero death ends a full run.
+A quit, abandon, uncommitted outcome or restart without a terminal result does not
+count. The working interpretation is that a run using **any already unlocked
+class** counts; neither a win nor playing the newest class is required. This
+class-unlock ledger is an explicit metaprogression exception, not authorization
+for persistent feats, skill XP or other unspecified progression.
+
+```text
+commitFullRunOutcome(candidate, outcome):  // within the run transaction
+  require outcome in [finalBossVictory, heroDeath]
+  require authoritative run terminal predicate matches outcome
+  persist terminal outcome with runId/profileId and completionPolicySnapshot
+  enqueue durable outbox award with stable effectId = profileId/runId/completion
+  // Never emit on intermediate combat victory, quit, abandon or restart.
+
+completeRun(profileId, runId, outcome, completionPolicySnapshot, expectedRevision):
+  require trusted committed run-outcome receipt bound to these exact arguments
+  begin profile transaction:
+    profile = load authoritative profileId
+    if completedRunIds contains runId: return stored completion receipt
+    require profile.revision == expectedRevision
+    require compatible ledger/policy version and pinned completion policy
+    require outcome qualifies under that policy
+    record runId in completedRunIds with outcome receipt and policy digest
+    ordinal = count unique qualifying completion receipts
+    nextClass = completionPolicySnapshot.unlockTable[ordinal] if present
+    if nextClass: add to unlockedClassIds idempotently
+    increment profile.revision
+    atomically save ledger + unlock set + receipt + award-consumer dedup record
+  return committed profile receipt; acknowledge run outbox effect
+
+handleCompletionDelivery(award):
+  retry completeRun against latest profile revision after revision conflict
+  // Each retry first checks runId dedup; never count the same finished run twice.
+```
+
+The run outcome and its outbox entry commit together. A delivery failure retries
+that same stable award ID; the profile transaction records completion and unlock
+atomically before acknowledgement. A crash after profile commit but before
+acknowledgement reuses the stored receipt. Distinct finished runs for one profile
+serialize against profile revision and each count once; never calculate an unlock
+from a stale UI snapshot. This provides an exactly-once **ledger effect** through
+transactional deduplication, without claiming atomic commits across independent
+run/profile stores. Invalid or unsupported policy versions reject with a retained
+pending award and explicit recovery information rather than silently adopting a
+latest policy or losing a completion.
+
+Save the versioned profile ledger and completion receipts separately from run
+saves. A run save carries its profile reference, observed unlock snapshot and
+completion-policy snapshot; restoring a run never replaces a newer profile ledger
+with that old snapshot or reinterprets its run lock. Restore an actual profile
+backup only through an explicit separate profile-restore policy, reconciling
+completion IDs and pending awards. Constructing a new run reads the authoritative
+profile and validates class selection at its recorded revision; serialize that
+creation read/guard with profile updates or reject/retry a stale revision.
+Terminal outcome reloads, completion delivery retries and profile UI refreshes
+must not unlock extra classes. Unlocks affect future selection, not existing run
+configuration, classes, geometry or fixed starting loadouts.
+
 ## 5. Construct module lifecycles and typed transactions
 
 ```text
@@ -701,7 +775,9 @@ no durable suspension, and delivers no real outbox effects.
 
 ## 7. Save, restore, and update through pinned artifacts
 
-A save contains core and module implementation/config/state versions, package
+A run save contains its profile reference/unlock snapshot and pinned completion
+policy, while the versioned profile unlock ledger has its own persistence boundary
+as specified in section 4.2. A save contains core and module implementation/config/state versions, package
 content digests, exact lock/resolved hash, core/module state, queue continuations,
 RNG state, scheduler and identity counters. Pin runtime ABI, portable VM version,
 RNG algorithm, scheduler semantics, numeric policy and canonical encoding versions.
@@ -846,6 +922,11 @@ Verification below is a future acceptance procedure, not a claim of executed tes
    class selector/fixed gear, starter role recipe, multi-card SP/MP turn plus End
    Turn, whole-pool round shuffle/fresh hand, journey and rest services. No optional
    module may be accidentally absent merely because the author omitted its entry.
+   A new profile exposes Reaver only; direct selection of a locked class rejects.
+   Three distinct full runs, including both winning and losing cases, unlock the
+   ordered next classes. Replaying/reloading one outcome adds nothing; quit or
+   nonterminal restart adds nothing. Concurrent distinct completions each count
+   once after revision retries; crash/redelivery preserves one award per run.
 2. Fallback with every bundle feature explicitly false (or the internal fallback
    fixture): launch, attack/pass, enemy response, outcomes/restart, inspection,
    stand-ins and save/restore. Invalid attack spends no opportunity, pass yields,
