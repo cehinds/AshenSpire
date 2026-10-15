@@ -60,7 +60,50 @@ export function cardFaceLines(def, preview = null, registries = null) {
   }
 }
 
-function buildLines(def, preview, registries) {
+// Ordinary faces select whole qualified clauses; inspection and plain text
+// continue to use the complete cardFaceLines projection above.
+const SUMMARY_CHAR_BUDGET = 90;
+const inspectionCue = () => ({ lines: [{ kind: 'detail', html: 'Inspect for full effects.' }], omitted: true });
+const plainText = html => String(html).replace(/<[^>]*>/g, '').replace(/&(?:amp|lt|gt|quot|#39);/g,
+  entity => ({ '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'" })[entity]);
+const sentence = html => /[.!?]$/.test(plainText(html).trim()) ? html : `${html}.`;
+const oneClause = html => !/[;]|[.!?]\s+\S/.test(plainText(html));
+
+/** At most two complete effect clauses for an ordinary face, never a text cut. */
+export function cardFaceSummary(def, preview = null, registries = null) {
+  let result;
+  try { result = buildLines(def, preview, registries, true); }
+  catch (error) { if (error !== UNPHRASEABLE) throw error; }
+  if (!result?.clauses?.length) {
+    // A short literal authored description is already the authoritative rule.
+    // Tokens/live effects or hidden payments require the reading door instead
+    // of guessing values or taking a potentially misleading first sentence.
+    const authored = String(def.textTemplate || '').trim();
+    const clauses = authored.split(/(?<=[.!?])\s+/).filter(Boolean);
+    if (!authored || /[{}<>;]/.test(authored) || authored.length > SUMMARY_CHAR_BUDGET
+      || clauses.length > 2 || preview?.values?.length || def.ashenBlightCost
+      || (def.effects || []).some(effect => effect.op === 'loseHp')) return inspectionCue();
+    return { lines: clauses.map(html => ({ kind: 'detail', html: sentence(esc(html)) })), omitted: false };
+  }
+  const clauses = result.clauses;
+  const required = clauses.filter(line => line.required);
+  if (required.length > 2 || required.some(line => !oneClause(line.html))) return inspectionCue();
+  const selected = [];
+  let length = 0;
+  for (const line of [...required, ...clauses.filter(line => !line.required)]) {
+    if (selected.length === 2) break;
+    const html = sentence(line.html), size = plainText(html).length;
+    if (!oneClause(html) || length + size > SUMMARY_CHAR_BUDGET) {
+      if (line.required) return inspectionCue();
+      continue;
+    }
+    selected.push({ kind: line.kind, html });
+    length += size;
+  }
+  return selected.length ? { lines: selected, omitted: result.omitted || selected.length < clauses.length } : inspectionCue();
+}
+
+function buildLines(def, preview, registries, summary = false) {
   // A live preview prices the effects an active charge expands (an added buildup row); its values follow that list.
   if (Array.isArray(preview?.chargedEffects) && preview.chargedEffects !== def.effects) def = { ...def, effects: preview.chargedEffects };
   if (def.comboHook) return null;
@@ -276,10 +319,29 @@ function buildLines(def, preview, registries) {
     return `If ${esc(text)}${statusSnapshotInside(predicate) ? ' before this card' : ''}: `;
   };
 
-  const unconditional = [], groups = new Map();
+  const unconditional = [], groups = new Map(), ordinary = [];
+  // A consumed prerequisite or a later/conditional HP payment cannot be
+  // detached from its payoff without changing what the short text promises.
+  if (summary && (def.effects || []).some((effect, index) =>
+    (effect.op === 'loseHp' && (index !== 0 || effect.if))
+    || (effect.op === 'removeStatus' && effect.target === 'self' && dependentStatuses.has(effect.status)))) return null;
   for (const [index, effect] of (def.effects || []).entries()) {
     const fragments = phraseEffect(effect, index);
     if (effect.oncePerTurn && fragments.length) fragments[fragments.length - 1].text += ' once per turn per family';
+    if (summary) {
+      if (['damage', 'poiseDamage'].includes(effect.op) && effect.target && !ENEMY_TARGETS.includes(effect.target)) fail();
+      if (effect.duration !== undefined && effect.op !== 'applyStatus') fail();
+      const chance = preview?.values?.[index]?.chance ?? effect.chance;
+      if (chance !== undefined && (!Number.isFinite(chance) || chance < 0 || chance > 100)) fail();
+      const chancePrefix = chance !== undefined && chance < 100 ? `${esc(chance)}% chance: ` : '';
+      const prefix = effect.if ? prefixFor(effect.if) : '';
+      for (const segment of segmentsOf(fragments)) {
+        let html = segment.text.replace(/^Inflict (?=.*damage)/, 'Deal ');
+        if (effect.oncePerCombat && !html.includes('once per combat')) html += ' once per combat';
+        ordinary.push({ kind: effect.if ? 'condition' : segment.kind, html: prefix + chancePrefix + html,
+          required: effect.op === 'loseHp' });
+      }
+    }
     if (effect.if) {
       const key = JSON.stringify(effect.if);
       if (!groups.has(key)) groups.set(key, { prefix: prefixFor(effect.if), fragments: [], sleeping: JSON.stringify(effect.if).includes('"status":"sleep"') });
@@ -330,5 +392,18 @@ function buildLines(def, preview, registries) {
   const lines = [];
   for (const kind of LINE_ORDER) for (const html of byKind[kind]) if (html) lines.push({ kind, html });
   // Nothing phrased (a status or curse with no effects) keeps the authored text, as combatCardSummary does.
+  if (summary) {
+    // Counter payloads and Evade are represented outside the effects array.
+    // Keep their complete projection only when it is already two short clauses.
+    if (counter || def.evade || def.pronePoiseBonus) {
+      if (lines.length > 2 || lines.some(line => line.kind === 'detail' || !oneClause(line.html))) return null;
+      return { clauses: lines, omitted: false };
+    }
+    for (const keyword of ['unplayable', 'exhaust', 'ethereal']) {
+      if ((def.keywords || []).includes(keyword)) ordinary.push({ kind: 'detail',
+        html: keyword[0].toUpperCase() + keyword.slice(1), required: true });
+    }
+    return { clauses: ordinary, omitted: byKind.detail.length > 0 || keywords.some(keyword => keyword === 'Retain' || keyword === 'Innate') };
+  }
   return lines.length ? lines : null;
 }

@@ -37,7 +37,7 @@ import { combatCardRange, combatProfileFor, combatProfileTags, numberedTraitRow 
 import { ashenBlightCardLabel } from './ashenBlight.js';
 import { ACTION_SIGILS, SCHOOL_SIGILS, cardSigilIdentity } from '../../content/combatSigils.js';
 import { compactCardRules, sigilExplanationHtml } from './combatSigilView.js';
-import { cardFaceLines } from '../../model/cardFaceText.js';
+import { cardFaceLines, cardFaceSummary } from '../../model/cardFaceText.js';
 import { spellDefenseSplit } from '../../model/spellDefense.js';
 
 // WCI3: rarity at the start of the band, the owned count at the end, each only
@@ -290,13 +290,13 @@ export function renderCard(registries, ref, opts = {}) {
     floor, lit: litCard() === identity,
   });
   let drawn = levelNow();
-  // ONE TEXT FOR EVERY VIEW. The face lines are the shared model's output
-  // (cardFaceText.js); a weight-priced card adds its pricing note as a detail line.
+  // Inspection keeps the complete projection; ordinary faces use whole bounded clauses.
   const faceLines = cardFaceLines(def, opts.preview || null, registries);
+  const faceSummary = cardFaceSummary(def, opts.preview || null, registries);
   if (faceLines && def.weightClassPriced) faceLines.push({ kind: 'detail', html: 'Cost reflects your current weight' });
-  // The combat hand passes faceLineLimit: lines past it stay in the DOM, hidden until the card is selected.
+  // Legacy full-face callers may still request extra-line markers; ordinary summaries never use them.
   const faceLineLimit = Number.isFinite(opts.faceLineLimit) ? opts.faceLineLimit : null;
-  // In the hand, detail lines (a partial chance, usable-through, pricing) wait for selection: hidden at rest, shown when selected.
+  // Full inspection normally clears this limit through its inspection factory.
   const extraLine = (line, i) => faceLineLimit !== null && (i >= faceLineLimit || (line.kind === 'detail' && i > 0));
   const paint = (at) => {
     const artwork = illustratedArtwork(ref, model.id, {large:at==='inspect',equipmentArt:equipmentPainting,
@@ -305,14 +305,20 @@ export function renderCard(registries, ref, opts = {}) {
     const authoredRules = def.weightClassPriced
       ? fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences).replace(/ Light:.*$/,'')+' Cost reflects your current weight.'
       : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences);
-    const rulesHtml = faceLines
+    const summary = at !== 'inspect';
+    const rulesHtml = summary
+      ? faceSummary.lines.map(line => `<span class="face-line" data-face-kind="${line.kind}">${line.html}</span>`).join('')
+      : faceLines
       ? compactCardRules(faceLines.map((line, i) => `<span class="face-line" data-face-kind="${line.kind}"${extraLine(line, i) ? ' data-face-extra="true"' : ''}>${line.html}</span>`).join(''))
       // A face the shared model refused keeps the authored rules, never the looser summary.
       : compactCardRules(`${fallbackDamageLabel ? `${esc(fallbackDamageLabel)}: ` : ''}${authoredRules}`);
-    el.dataset.faceLines = faceLines ? String(faceLines.length) : '';
+    el.dataset.faceLines = summary ? String(faceSummary.lines.length) : faceLines ? String(faceLines.length) : '';
+    el.dataset.faceSummaryOmitted = summary && faceSummary.omitted ? 'true' : 'false';
     el.innerHTML = illustratedCardHtml(model,{
       // The printed price is live; the full weight table stays in Information.
       rules: rulesHtml,
+      effectMode: summary ? 'summary' : 'full',
+      effectLineBudget: summary ? 3 : null,
       painting:artwork?.path,
       equipmentArtwork:artwork?.equipment,
       artworkKind:artwork?.kind,

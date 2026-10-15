@@ -96,3 +96,22 @@ test('a combat face the shared model refuses shows the authored rules, not the l
   assert.doesNotMatch(html, /class="face-line"/);
   assert.doesNotMatch(html, /Add 1 Enter: Bulwark to hand/);
 }));
+
+test('ordinary resting and selected faces share the same two-clause budget; inspection keeps every effect', () => withKitDom(dom => {
+  const markup = trackInnerHtml(dom);
+  const render = level => renderCard(reg, { cardId: 'bloodPact' }, { inspection: false, level, preview: previewOf('bloodPact'), faceLineLimit: 3 });
+  const resting = render('glance'), selected = render('focus'), inspected = render('inspect');
+  const restLines = faceLinesOf(markup.get(resting));
+  assert.equal(restLines.length, 2);
+  assert.deepEqual(faceLinesOf(markup.get(selected)).map(textOf), restLines.map(textOf));
+  assert.match(textOf(restLines[0]), /^Pay .* HP\./);
+  assert.ok(restLines.every(line => !/data-face-extra/.test(line.attrs)), 'selection has no hidden extra clauses to reveal');
+  assert.equal(resting.dataset.faceSummaryOmitted, 'true');
+  assert.ok(faceLinesOf(markup.get(inspected)).some(line => /Draw/.test(textOf(line))), 'inspection retains the third effect');
+}));
+
+test('an ordinary simple attack retains its complete Deal verb', () => withKitDom(dom => {
+  const markup = trackInnerHtml(dom);
+  const el = renderCard(reg, { cardId: 'bashingBlow' }, { inspection: false, level: 'glance' });
+  assert.match(textOf(faceLinesOf(markup.get(el))[0]), /^Deal \d+ Blunt damage\./);
+}));
