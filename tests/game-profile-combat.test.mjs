@@ -217,3 +217,56 @@ test('work budget rejects another free card atomically while End Turn remains le
   dispatch(combat, { type: 'endTurn' });
   assert.ok(combat.turn > before.turn || combat.result);
 });
+
+test('DR Block weight changes authored protection and its card face and live gain together', () => {
+  for (const weight of [0, 1]) {
+    const { combat } = live({ effects: { defenseRatingWeight: weight } });
+    combat.player.ratings.dr = 3;
+    const inst = { instanceId: 'weight-defend', cardId: 'core.defend', upgraded: false };
+    combat.piles.hand.push(inst);
+    const shown = previewCard(combat, inst.instanceId).values.find(value => value.op === 'block').value;
+    const before = combat.player.block;
+    const out = dispatch(combat, { type: 'playCard', cardInstanceId: inst.instanceId });
+    const gained = out.events.find(event => event.type === 'blockGained' && event.targetId === combat.player.id);
+    assert.equal(shown, 5 + 3 * weight);
+    assert.equal(gained.amount, shown); assert.equal(combat.player.block - before, shown);
+  }
+});
+
+test('configured attack card faces match executed receipts across Block Poise and stance contexts', () => {
+  for (const context of [
+    { block: 0, poise: 0, maneuver: 'neutral' },
+    { block: 3, poise: 5, maneuver: 'defend' },
+    { block: 100, poise: 5, maneuver: 'defend' },
+    { block: 0, poise: 5, maneuver: 'prepared' },
+  ]) {
+    for (const cardId of ['core.strike', 'core.smash', 'core.counter', 'core.sweep']) {
+      const { combat } = live();
+      combat.player.ratings.ar = 2;
+      const target = combat.enemies[0]; target.hp = target.maxHp = 1000;
+      target.block = context.block; target.gameProfilePoise = context.poise;
+      target.combatStance = { maneuver: context.maneuver };
+      const inst = { instanceId: 'matrix-action', cardId, upgraded: false }; combat.piles.hand.push(inst);
+      const shown = previewCard(combat, inst.instanceId, target.id).values.find(value => value.op === 'damage');
+      const before = target.hp;
+      const out = dispatch(combat, { type: 'playCard', cardInstanceId: inst.instanceId, targetId: target.id });
+      const actual = out.events.find(event => event.type === 'damageDealt' && event.targetId === target.id);
+      assert.equal(shown.value, actual.amount, `${cardId} ${JSON.stringify(context)}`);
+      assert.equal(shown.perTarget[target.id], actual.amount);
+      assert.equal(before - target.hp, actual.hpLoss);
+    }
+  }
+});
+
+test('configured Counter targets its immediate enemy effect while legacy Counter remains deferred', async () => {
+  const { immediateCardEffects } = await import('../src/model/combatCardEffects.js');
+  const { cardTargetPlan } = await import('../src/model/cardTargets.js');
+  const def = projectGameCard(profile(), 'core.counter');
+  const enemy = fighter('e1'), player = fighter('player');
+  assert.equal(def.combatEffectsTiming, 'immediate');
+  assert.equal(cardTargetPlan(def, player.id, [enemy], [player], { solo: true }).mode, 'enemy');
+  assert.equal(immediateCardEffects(def).some(effect => effect.op === 'damage'), true);
+  const { combatEffectsTiming, ...legacy } = def;
+  assert.equal(immediateCardEffects(legacy).some(effect => effect.op === 'damage'), false);
+  assert.equal(cardTargetPlan(legacy, player.id, [enemy], [player], { solo: true }).mode, 'friendly');
+});
