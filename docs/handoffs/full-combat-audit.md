@@ -29,7 +29,7 @@
 - Audit PR: https://github.com/cehinds/AshenSpire/pull/1990 . It was unmerged and unpromoted at the historical pause; its live PR state and delivery updates are authoritative now.
 - Confirmed fixes: primary Quit is last/reachable and handles blocked closes with Return to title; the Settings sample card is created only when its folded Preview opens; card-value projection groups authored tags once per operation, with an independently captured unindexed-current-Dev parity oracle. No combat gameplay defect was confirmed by this audit.
 - Preserved upstream Ward/stance combat and art v23. No balance or default-character/weapon animation policy was changed by the audit.
-- Previous, separate Starseer fix: PR1985 https://github.com/cehinds/AshenSpire/pull/1985 extracted `reactionState.js` from the combatReactions/enemyReactions import cycle while preserving the public re-export. Original compiled HTML legally targeted Gilded Knight but caught `reactionPaused is not a function`, with no payment/damage/recovery. That fix was already merged and promoted (historical Test repair PR1988, SHA `b275dc55b00e2d6a41173d1f8dffc28202842d78`); do not confuse that completed task with unmerged audit PR1990.
+- Previous, separate Starseer fix: PR1985 https://github.com/cehinds/AshenSpire/pull/1985 extracted `reactionState.js` from the combatReactions/enemyReactions import cycle while preserving the public re-export. Original compiled HTML legally targeted Gilded Knight but caught `reactionPaused is not a function`, with no payment/damage/recovery. That fix was already merged and promoted (historical Test repair PR1988, SHA `b275dc55b00e2d6a41173d1f8dffc28202842d78`); do not confuse that completed task with later audit PR1990.
 
 All integrated code/tool changes received independent review. Key recent commits: `e78df41da` refreshes the independent unindexed Ward-content oracle and strict Quit/Escape wiring; `9ecf8b5dd` fixes the relic CLI's platform file-URL guard; `3a2983522` integrates the approved exact standalone/browser proof; `659d4ca32` records final bounded evidence; `613455b55` makes the 92-test command and per-file counts explicit. `be35d478f` and `d43f0c143` add the reviewed read-only hosted verification workflow/helper and settle response/navigation readers. The interpreter merge preserves `ASHEN_PYTHON`, then `PYTHON`, then the platform fallback; it does not relax tests.
 
@@ -96,6 +96,8 @@ These historical entries explain the state at pause; they are **not current exac
 - Intended hosted Play URL: https://cehinds.github.io/AshenSpire/branches/feature/FullCombatAudit/latest/ . **NOT VERIFIED at pause.** Local proxy returned CONNECT403; remote real-browser proof was pending. Do not present it as working based only on deploy metadata. Do not bypass network policy.
 - Last-known d43 core/four shards, Workbench, receipts and Quick Start were queued; intake pending; Dev preview active. No exact-head failure was known then, and none was called green. Resumed status checks are recorded separately; automatic completion was not treated as authorization during the pause.
 - Previous completed Starseer Test artifact, historical only: https://github.com/cehinds/AshenSpire/actions/runs/38643326556/artifacts/11930758581 (`AshenSpire-test-preview.html`). This is not the unmerged full-audit build.
+
+<a id="resume-verification--2026-10-15-utc"></a>
 
 ## Earlier resume verification — c54 baseline, 2026-10-15 UTC
 

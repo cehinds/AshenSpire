@@ -10,7 +10,7 @@ authored `?shot=title` saved-run fixture. No screenshot pixels were edited.
 - Local playable capture route: `http://127.0.0.1:4414/AshenSpire.html?shot=title`.
 - Public route [verified for the frozen production build](https://cehinds.github.io/AshenSpire/branches/feature/FullCombatAudit/latest/) on 2026-10-15 at 08:26 UTC: **0.7.1.1536 / 78492dee2e**, commit `eccdfe210380b12b7b9ec380f83b59bada881690`.
 - These four images remain the original **1530 / 368140ce27** captures. [Fresh public menu/Quit captures and exact identity](hosted/README.md) are recorded separately.
-- The tooling-only parent correction `d2d02a91fdf59dcd2012aa38a9e86be18e03ac44` starts a fresh normal build/publication/proof. That normal pipeline is pending; the frozen replay is not a claim that it passed.
+- The tooling-only parent correction `d2d02a91fdf59dcd2012aa38a9e86be18e03ac44` starts a fresh normal build/publication/proof. At this consolidation record, that normal pipeline was pending; [live PR1990](https://github.com/cehinds/AshenSpire/pull/1990) is authoritative for subsequent results. The frozen replay is not a claim that it passed.
 
 | View | Viewport | Capture date (UTC) | Permanent image |
 | --- | --- | --- | --- |
