@@ -8,7 +8,7 @@ Real browser captures of the actual published Release-channel build, taken **202
 - Each actual public browser navigation returned **15,057,883 bytes** with SHA-256 `4a8f3df4f2b5d54819691661e2d1cfa9c2a0179da7ba8efe4090cd41fce519cd`, matching the fixed public `build.json` page hash. Numeric and `latest` metadata agreed at capture time.
 - Capture run: [38699217698](https://github.com/cehinds/AshenSpire/actions/runs/38699217698), [five PNGs and raw identity manifest](https://github.com/cehinds/AshenSpire/actions/runs/38699217698/artifacts/11954519235). Artifact ZIP SHA-256: `4ab4a526f25dde263b920841af51d84e1c4590080547284c365bc135d7b758e9`.
 - Read-only capture helper: [worker `ee33d73be`](https://github.com/cehinds/AshenSpire/commit/ee33d73be), following the states and landmark checks in `tools/release-shots.mjs`. The workflow has only `contents: read`; it neither builds nor publishes the game.
-- Browser: Chromium `154.0.8037.97` on Linux. Desktop 1440 × 1000, phone 390 × 844, device scale 1; phone uses viewport/touch emulation, not a physical device.
+- Browser: Chromium `155.0.8059.39` on Linux. Desktop 1440 × 1000, phone 390 × 844, device scale 1; phone uses viewport/touch emulation, not a physical device.
 - Captured between `2026-10-15T07:30:39Z` and `2026-10-15T07:31:12Z`. Every image was inspected after download.
 
 ## Capture states and image hashes
