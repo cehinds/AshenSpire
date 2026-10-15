@@ -473,6 +473,13 @@ Damage entries include `perTarget: { enemyInstanceId: dmg }` for every living
 enemy. `randomEnemy` previews against the first living enemy **without
 consuming RNG**. Substitute `tokens` into the card's `textTemplate` for display.
 
+The preview also carries `combatExpansionVersion`, `foundation` and a detached
+`combatStatusRules` copy for status explanations in Information. Status rules
+use the engine's precedence: `combat.combatStatusRules`, then
+`combat.combatExpansionRules.statuses`, then the shipped defaults. UI readers
+can therefore describe a custom saved cap from the preview alone; modifying
+this presentation copy cannot mutate the combat snapshot or its calculations.
+
 ### `previewIntent(combat, enemyInstanceId)`
 
 `{ kind, moveId, damage, hits, totalDamage, block, delayed, pending }` —

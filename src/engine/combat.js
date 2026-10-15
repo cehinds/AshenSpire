@@ -2559,6 +2559,10 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
   return {
     // The effects the play will run, a charge's added rows included; `values` follow this list (the card face reads it).
     resolvedDefinition: def, chargedEffects, combatExpansionVersion: combat.combatExpansionVersion || 1,
+    // Information travels with this preview, including custom saved status
+    // caps. Clone presentation metadata so a UI reader cannot alter combat.
+    combatStatusRules: structuredClone(combat.combatStatusRules || combat.combatExpansionRules?.statuses || combatStatusRules),
+    foundation: !!combat.foundation,
     cardId: inst.cardId,
     upgraded: inst.upgraded,
     name: def.name,
