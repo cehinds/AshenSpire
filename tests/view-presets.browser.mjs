@@ -43,7 +43,7 @@ async function choose(page, preset) {
   assert.ok(await select.isVisible(), `Settings reachable in ${preset}`);
 }
 async function openCombatSettings(page) {
-  await page.locator('[data-action-hint="menu"]').click();
+  await page.locator('#combat-menu').click();
   const settings = page.locator('[data-settings-host]');
   if (!await settings.count()) await page.locator('.qn-row[data-tab="settings"]').click();
   await settings.waitFor();
@@ -69,22 +69,48 @@ try {
     await page.locator('#ov-close').click();
     const target = page.locator('.combatant[data-eid]').last();
     await target.click();
-    await target.hover();
+    await page.locator('.end-turn').hover();
     await page.locator('[role="tooltip"]').first().waitFor();
     const targetBox = await target.boundingBox();
     assert.ok(targetBox, 'combat target remains reachable after preset changes');
+    if (profile === 'core') {
     await page.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + targetBox.height / 2);
     await page.mouse.down();
     await page.waitForTimeout(700);
     await page.mouse.up();
+    } else await page.locator('.nm-inspect').last().click();
     await page.locator('.combatant-inspector-body').waitFor();
     await page.keyboard.press('Escape');
     await openCombatSettings(page);
     await page.setViewportSize({ width:390,height:844 });
     await choose(page, 'desktop');
     await choose(page, 'auto');
+    console.log(`Combat preset checks passed: ${profile}`);
     await page.close();
   }
+  const map = await pageFor('core', 'map', 'mobile');
+  await map.locator('.mapscreen').waitFor();
+  // The shot setting boots the same in-document preset used by Settings.
+  await map.goto(`${base}${process.env.VIEW_PRESETS_ENTRY || 'index.html'}?shot=map&gameProfile=core&shotSeed=3&shotSettings=${encodeURIComponent(JSON.stringify({ viewPreset:'desktop', mapFreePan:true }))}`);
+  await map.locator('.map-scroll').waitFor();
+  for (let i = 0; i < 3; i++) await map.locator('#zoom-in').click();
+  const pan = map.locator('.map-scroll');
+  const initial = await pan.evaluate(node => {
+    node.scrollTop = (node.scrollHeight - node.clientHeight) / 2;
+    return { top:node.scrollTop, max:node.scrollHeight-node.clientHeight, scale:node.getBoundingClientRect().width/node.offsetWidth };
+  });
+  assert.ok(initial.max > 20, 'zoomed map has camera travel');
+  const port = await pan.boundingBox();
+  const distance = Math.min(20, port.height / 4);
+  await map.mouse.move(port.x + 4, port.y + port.height / 2);
+  await map.mouse.down();
+  await map.mouse.move(port.x + 4, port.y + port.height / 2 - distance, { steps:5 });
+  await map.mouse.up();
+  const finalTop = await pan.evaluate(node => node.scrollTop);
+  const expected = Math.min(initial.max, initial.top + distance / initial.scale);
+  assert.ok(Math.abs(finalTop - expected) < 5, 'scaled map drag follows pointer distance in map coordinates');
+  assert.equal(await pan.evaluate(node => node.classList.contains('grabbing')), false);
+  await map.close();
   for (const host of Object.keys(hosts)) {
     const page = await pageFor('core', 'title', host);
     await page.locator('.title-menu').waitFor();
