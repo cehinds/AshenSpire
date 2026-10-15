@@ -518,6 +518,7 @@ export function commitItemUpgrade(registries, run, requestedItemRef, explicitRul
 
 /** Backward-compatible name; bare ids still mean armament/<id>. */
 export function commitSmithing(registries, run, itemRefOrArmamentId, explicitRules = undefined, options = {}) {
+  if (gameModule(run, 'rest')?.mode === 'configured' && !gameProfileServiceActive(run, 'smith')) throw new Error('Configured equipment upgrades require a committed Smith rest service');
   return commitItemUpgrade(registries, run, itemRefOrArmamentId, explicitRules, options);
 }
 

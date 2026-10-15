@@ -232,8 +232,9 @@ if (!validation.ok) {
 }
 
 const profileQuery = new URLSearchParams(location.search);
-const askedGameProfile = profileQuery.get('gameProfile') || profileQuery.get('wb.gameProfile') || globalThis.__ASHEN_GAME_PROFILE_PREVIEW__ || 'current';
+const askedGameProfile = profileQuery.get('gameProfile') || profileQuery.get('wb.gameProfile') || globalThis.__ASHEN_GAME_PROFILE_PREVIEW__ || 'default';
 let selectedGameProfile = resolveGameProfile(askedGameProfile.trim().startsWith('{') ? JSON.parse(askedGameProfile) : askedGameProfile);
+let importedGameProfile = askedGameProfile.trim().startsWith('{') ? selectedGameProfile : null;
 let registryGameProfile = selectedGameProfile;
 let registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, registryGameProfile)), registryGameProfile);
 let xpCombat = null;
@@ -2355,8 +2356,9 @@ function showCustomize(slot = 1, catalog = false, profileChosen = false) {
     const controls = document.createElement('div');
     const renderSelector = () => {
       controls.replaceChildren();
-      mountGameProfileSelector(controls, { profile: selectedGameProfile, onSelect: value => {
-        const profile = resolveGameProfile(value);
+      mountGameProfileSelector(controls, { profile: selectedGameProfile, importedProfile: importedGameProfile, onSelect: value => {
+        const profile = value === 'imported' ? importedGameProfile : resolveGameProfile(value);
+        if (typeof value === 'object') importedGameProfile = profile;
         rebuildRegistries(saves.loadMeta().settings || {}, null, profile);
         selectedGameProfile = profile; renderSelector();
       } });
@@ -2500,8 +2502,21 @@ function remountMapIfShowing(changed) {
 }
 
 function showMap(opts) {
-  if (run.classMasteryState?.initialTreeTiers?.length) return mountInitialClassMastery(app, { registries, run, onPersist: persist, onDone: () => showMap(opts), onBack: showTitle });
-  queueInitialProgression(registries,rng,run,{meta:saves.loadMeta(),onPersist:persist});
+  if (run.mapGraph?.activityLauncher) {
+    app.replaceChildren();
+    const screen = document.createElement('section'); screen.className = 'screen game-profile-activities';
+    screen.style.cssText = 'max-width:42rem;margin:auto;padding:2rem;display:flex;flex-direction:column;gap:1rem';
+    const title = document.createElement('h1'); title.textContent = 'Choose an activity'; screen.append(title);
+    for (const id of run.mapGraph.startIds) {
+      const node = run.mapGraph.nodes[id], control = document.createElement('button');
+      control.textContent = node.label || ({ monster: 'Fight', shrine: 'Rest', merchant: 'Shop', boss: 'Challenge boss' })[node.type] || node.type;
+      control.onclick = () => enterNode(id); screen.append(control);
+    }
+    const menu = document.createElement('button'); menu.textContent = 'Menu'; menu.onclick = () => showOverlay(); screen.append(menu);
+    app.append(screen); return;
+  }
+  if (!isConfiguredRun(run) && run.classMasteryState?.initialTreeTiers?.length) return mountInitialClassMastery(app, { registries, run, onPersist: persist, onDone: () => showMap(opts), onBack: showTitle });
+  if (!isConfiguredRun(run)) queueInitialProgression(registries,rng,run,{meta:saves.loadMeta(),onPersist:persist});
   // Quick start previews its first fight after the required tree choice.
   // Enter still confirms travel, and every other reachable route can be chosen.
   const suggested = run.quickStart && !run.mapNodeId && !run.journey && !run.legacyDungeon
@@ -3644,6 +3659,7 @@ function showRest(openPanel = null, locationId = null) {
       persist(); showRest();
     };
     const strategize = () => {
+      if (!gameModule(run, 'cards')) return commit('strategize', {});
       const draft = createGameProfileRestDraft(run);
       mountDeckEditor(document.body, {
         registries, run: draft, settings: saves.loadMeta().settings || {},

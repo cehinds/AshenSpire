@@ -1,3 +1,4 @@
+import { foundationStandin } from '../components/foundationStandin.js';
 import { gameModule } from '../../model/gameProfile.js';
 import { combatWeaponProfilesFor } from '../../model/combatWeaponPresentation.js';
 import { attackHitPreview, effectiveEvasion } from '../../engine/stanceHit.js';
@@ -159,6 +160,17 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // One preview per (card, target, ranks) until the fight next changes: see
   // PreviewMemoModel. The fight changes only through dispatch and the Classic
   // cell normalisation below.
+  const configuredArt = run.gameProfile?.foundation?.mode === 'configured';
+  const profileArt = (render, options) => {
+    if (configuredArt && !gameModule(run, 'art')) return foundationStandin(options);
+    const figure = render();
+    if (configuredArt) figure.addEventListener('error', () => figure.replaceChildren(foundationStandin(options)), { capture: true, once: true });
+    return figure;
+  };
+  const profilePlayerSprite = (customization, classId, armourId, presentation) => profileArt(
+    () => playerSprite(customization, classId, configuredArt ? 'default' : armourId, presentation), { enemy: false });
+  const profileEnemySprite = (definition, entity) => profileArt(
+    () => enemySprite(definition, entity), { enemy: true, boss: definition.size === 'boss' });
   const previewMemo = createPreviewMemo({ combat, preview: enginePreviewCard, dispatch: engineDispatch });
   const { dispatch, previewCard } = previewMemo;
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
@@ -937,12 +949,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function inspectorPreviewSprite(subject) {
     if (subject.role === 'player') {
       const figure = figureSpec(registries, run.loadout, run.class);
-      return playerSprite(run.customization || {}, run.class, figure.armourId, { animation: equipmentAnimationForLoadout(registries, run.loadout, run.class), view: 'portrait' });
+      return profilePlayerSprite(run.customization || {}, run.class, figure.armourId, { animation: equipmentAnimationForLoadout(registries, run.loadout, run.class), view: 'portrait' });
     }
     const enemy = combat.enemies.find((e) => e.id === subject.entityId);
     if (!enemy) return null;
     const def = registries.enemies.get(enemy.enemyId);
-    return enemySprite(enemyAppearance[def.id] ? { ...def, id: enemyAppearance[def.id] } : def, enemySpriteState(enemy));
+    return profileEnemySprite(enemyAppearance[def.id] ? { ...def, id: enemyAppearance[def.id] } : def, enemySpriteState(enemy));
   }
 
   function openCombatantDoor(subject, opener = document.activeElement) {
@@ -1707,7 +1719,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       entityId: 'player',
       leading: [combatantInfo(combatantSubject('player', p).name, opener => openCombatantDoor(combatantSubject('player', p), opener))],
       classNames: [selfArm ? 'armed' : '', selectedCombatantId === 'player' ? 'context-selected' : ''],
-      sprite: existing ? null : playerSprite(run.customization || {}, run.class, figure.armourId, { animation, view: 'combat', selectedWeaponProfile: selectedProfile(), classSmashProfile: smashProfile() }),
+      sprite: existing ? null : profilePlayerSprite(run.customization || {}, run.class, figure.armourId, { animation, view: 'combat', selectedWeaponProfile: selectedProfile(), classSmashProfile: smashProfile() }),
       name: markMeterRow(labelStack({ label: `${run.customization?.name || runClassIdentity(registries, run).name} · Lv ${characterLevel(run)}`, attrs: { class: 'nm' } }), 'name'),
       meters: meterBars(p),
       trailing,
@@ -1828,7 +1840,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         entityId: enemy.id,
         classNames: [dv(enemy).alive ? '' : 'dead', eligibleTargets.includes(enemy.id) ? 'targetable' : '', selectedCombatantId === enemy.id ? 'context-selected' : ''],
         leading,
-        sprite: record ? null : enemySprite(enemyAppearance[def.id] ? { ...def, id: enemyAppearance[def.id] } : def, enemySpriteState(enemy)),
+        sprite: record ? null : profileEnemySprite(enemyAppearance[def.id] ? { ...def, id: enemyAppearance[def.id] } : def, enemySpriteState(enemy)),
         name: markMeterRow(nm, 'name'),
         meters: meterBars(enemy),
         trailing: [statusRow(enemy)],
