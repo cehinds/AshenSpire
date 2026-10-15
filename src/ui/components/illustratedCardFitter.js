@@ -3,11 +3,49 @@ const ruleGeometry = new WeakMap();
 
 // Search every text in one batch. Complete effects use the authored readable
 // floor, then borrow artwork height; names and costs keep their line budgets.
+export function fitSummaryRules(text, face, scale) {
+  // Restore the authored summary before each resize; omitted clauses remain in
+  // the DOM for a later wider fit, while full inspection uses its own text.
+  text.querySelector('[data-summary-cue]')?.remove();
+  if(!text.querySelector('.face-line')&&!text.querySelector('[data-summary-fallback]')){
+    const fallback=text.ownerDocument.createElement('span');fallback.dataset.summaryFallback='true';
+    while(text.firstChild)fallback.append(text.firstChild);text.append(fallback);
+  }
+  const clauses=[...text.children];
+  for(const clause of clauses)clause.hidden=false;
+  const layer=text.parentElement;
+  const budget=Math.min(3,Math.max(1,Number(text.dataset.effectLineBudget)||3));
+  const floor=Math.max(Math.min(11,face.clientWidth/12),22*scale,Number(text.dataset.minFont)*scale);
+  const ceiling=Math.max(floor,Number(text.dataset.maxFont)*scale);
+  text.style.display='block';text.style.webkitLineClamp='unset';
+  const fits=size=>{
+    text.style.fontSize=size+'px';
+    return text.scrollHeight<=Math.min(layer.clientHeight,size*1.25*budget)+1&&text.scrollWidth<=text.clientWidth+1;
+  };
+  let omitted=false;
+  if(!fits(floor)){
+    // Never slice a condition or duration: remove whole secondary clauses first.
+    for(let index=clauses.length-1;index>0&&!fits(floor);index--){clauses[index].hidden=true;omitted=true;}
+    if(!fits(floor)){
+      for(const clause of clauses)clause.hidden=true;
+      const cue=text.ownerDocument.createElement('span');
+      cue.dataset.summaryCue='true';cue.textContent='Inspect for full effects.';
+      text.append(cue);omitted=true;
+    }
+  }
+  let low=floor,high=ceiling;
+  for(let pass=0;pass<7;pass++){const size=(low+high)/2;if(fits(size))low=size;else high=size;}
+  fits(low);text.dataset.fittedFont=String(low/scale);
+  text.dataset.summaryOmitted=String(omitted);
+  text.dataset.rulesComplete=String(!omitted);
+  face.dataset.rulesExpanded='false';face.dataset.rulesNarrowFit='false';
+}
+
 export function fitIllustratedCards(cards) {
   const faces=[];
   for(const card of cards){const face=card?.querySelector('.illustrated-card-face');if(face)faces.push(face);}
   const widths=faces.map(face=>face.clientWidth);
-  const texts=[];
+  let texts=[];
   faces.forEach((face,i)=>{
     if(!widths[i])return;
     resetCardLayout(face);
@@ -53,6 +91,9 @@ export function fitIllustratedCards(cards) {
     row.layer.style.top=(row.rankTop+row.rankInset)/row.faceHeight*100+'%';
     row.layer.style.height=Math.max(1,row.rankHeight-row.rankInset)/row.faceHeight*100+'%';
   }
+  for(const row of texts)if(row.rules&&row.text.dataset.effectLineBudget)fitSummaryRules(row.text,row.face,row.scale);
+  texts=texts.filter(row=>!(row.rules&&row.text.dataset.effectLineBudget));
+  if(!texts.length){applyCardLayouts(faces);return;}
   for(const row of texts)row.boxHeight=row.layer.clientHeight;
   const probe=(list,sizeOf)=>{
     for(const row of list){row.text.style.webkitLineClamp='unset';row.text.style.fontSize=sizeOf(row)+'px';}

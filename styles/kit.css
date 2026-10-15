@@ -6844,3 +6844,16 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 .customize.cc-design-workspace .cc-review-edit-fold > summary { min-height:var(--cc-control-floor); padding:var(--cc-space); box-sizing:border-box; color:var(--gold); cursor:pointer; border:1px solid var(--line,#786443); }
 .customize.cc-design-workspace .cc-review-edit-choices { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,calc(180px / var(--ui-zoom,1))),1fr)); gap:var(--cc-space); padding-block:var(--cc-space); }
 .customize.cc-design-workspace #cz-seed-panel .ls-hint { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* Ordinary summaries share one physical budget across all effect clauses. */
+:root .illustrated-card-face .ic-text[data-effect-line-budget] { white-space:normal; line-height:1.25; overflow:visible; }
+:root .illustrated-card-face .ic-text[data-effect-line-budget] [hidden] { display:none !important; }
+:root .hand .illustrated-card:not(.selected) .ic-text[data-effect-line-budget] [data-face-extra]:not([hidden]) { display:block; }
+
+/* Possession effects use the same whole-clause summary budget. */
+.epc-effect-summary { display:block; font:inherit; line-height:inherit; margin:0; padding:0; overflow:visible; -webkit-line-clamp:unset; }
+.epc-effect-summary > .epc-bonus { display:block; margin:0; padding:0; }
+.epc-effect-summary > [hidden], .epc-effects[data-effect-mode="summary"] [hidden] { display:none !important; }
+.epc-effects[data-effect-mode="summary"]::after { display:none; }
+.epc-effects[data-effect-mode="full"] { overflow:visible; -webkit-line-clamp:unset; }
+.epc-effects[data-effect-mode="full"] .epc-bonus { display:block; }
