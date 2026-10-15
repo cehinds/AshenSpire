@@ -22,14 +22,21 @@ The current implementation baseline is still
 verified. Start with one bounded source inventory: compare the proposed full
 four-class Ashen core bundle with live authored data and runtime behavior, then
 freeze the actual source/ownership map and only the contracts needed for the
-core manifest, class selection, ten-card starter deck and first combat slice.
+core manifest, profile-backed class selection/unlocks, ten-card starter deck,
+one-service rest flow and first combat slice. A fresh profile exposes only
+Reaver; each unique terminal full-run outcome unlocks one class in the
+Starseer/Rogue/Herald sequence, idempotently by `completedRunId`. Each rest
+visit chooses exactly one service—Strategize, Smith or Level Up—and then fully
+restores HP/MP/SP and refills healing and MP flasks.
 Verify every path and behavior against the current checkout. Do not scaffold the
 full package catalog or invent executable CLI commands.
 
-The product core is the full playable four-class Ashen bundle specified in
-CORE-SPEC.md, not the minimal attack/pass harness. A technical fallback host
-fixture may support infrastructure tests; it is not the user-facing core or
-product acceptance. Implement incrementally with a behavior-preserving adapter.
+The product core is the full playable Ashen bundle with four defined classes
+specified in CORE-SPEC.md, not the minimal attack/pass harness. A fresh profile
+can select only Reaver; the other classes unlock through completed full runs.
+A technical fallback host fixture may support infrastructure tests; it is not
+the user-facing core or product acceptance. Implement incrementally with a
+behavior-preserving adapter.
 Make the full Ashen core usable first; then prove optional modules can be
 independently omitted while supported combinations remain playable. Do not move
 all legacy code into core at once.
@@ -55,16 +62,19 @@ source. Trace class definitions, cards/loadout, weapons/armor, stats, combat
 rounds and stances, activities/routes, rewards, saves, UI and generated content.
 Identify owners, mutable state, imports/dependencies, legacy behavior and the
 smallest useful test coverage. Then freeze the source map and minimal
-versioned contracts for a core manifest, class selector, starter deck and first
-combat vertical slice. Keep the design specified in `CORE-SPEC.md` as the
-product target; record remaining unknowns instead of filling them with invented
-rules. Do not scaffold all runtime packages or build a generic empty engine.
+versioned contracts for a core manifest, profile-backed class selector/unlock
+ledger, starter deck, one-service rest flow and first combat vertical slice.
+Keep `CORE-SPEC.md` as the product target; record remaining unknowns instead of
+filling them with invented rules. Do not scaffold all runtime packages or build
+a generic empty engine.
 
 The four-class product core and the technical fallback fixture are distinct:
 
-- The product core selects Reaver, Rogue, Starseer or Herald, uses the specified
-  default stats and ten-card starting deck, and supports the in-scope combat,
-  gear, rest and activity interactions. It is the acceptance target.
+- The product core defines Reaver, Rogue, Starseer and Herald with the specified
+  stats and ten-card starting decks. A fresh profile selects only Reaver;
+  full-run completions unlock Starseer, Rogue and Herald in order. It supports
+  the in-scope combat, gear, rest and activity interactions and is the acceptance
+  target.
 - A fallback-only technical host (`ashen.fallback@1.0.0`) may provide a player,
   enemy, direct attack and pass when testing module-loader infrastructure. It is
   not a user-selectable core bundle and does not satisfy core gameplay
@@ -118,16 +128,24 @@ validation errors.
 `CORE-SPEC.md` owns full detail. Preserve these decisions when summarizing or
 implementing them:
 
-- Four classes are in the product core: Reaver, Rogue, Starseer, Herald. There
-  is no attribute-creation flow. Default six-stat profiles are Reaver
-  STR2/DEX1/CON1/WIS1/INT1; Starseer STR1/DEX1/CON1/WIS1/INT2; Rogue
-  STR1/DEX2/CON1/WIS1/INT1; Herald STR1/DEX1/CON1/WIS2/INT1.
+- Four classes are defined in the product core: Reaver, Rogue, Starseer, Herald.
+  A fresh profile can select only Reaver. Each unique terminal full-run completion
+  unlocks the next class in order: Starseer, Rogue, then Herald. Final-act boss
+  victory or player death counts; an encounter victory, quit, abandon or restart
+  without a terminal outcome does not. There is no win-only or class-specific
+  requirement. Working interpretation: any currently unlocked class can complete
+  the qualifying run. Process the committed outcome idempotently in a versioned
+  profile ledger keyed by unique `completedRunId`. Default profiles allocate six
+  total points across five attributes (STR, DEX, CON, WIS, INT): Reaver
+  STR2/DEX1/CON1/WIS1/INT1;
+  Starseer STR1/DEX1/CON1/WIS1/INT2; Rogue STR1/DEX2/CON1/WIS1/INT1; Herald
+  STR1/DEX1/CON1/WIS2/INT1. There is no attribute-creation flow.
 - The ten-card opening deck is 3 Strike, 3 Defend, 1 Counter, 1 Smash,
   1 Sweep and 1 class-specific card. Deck and equipment editors are on; deck
-  editing is available only at rest spots. Full rounds reshuffle and draw fresh;
-  hand retention is off. Deck growth through rewards is allowed. Equipment
-  editor timing is unrestricted by the user; a safe non-combat surface is a
-  recommendation, not a settled requirement.
+  editing is available only through Strategize at a rest stop. Full rounds
+  reshuffle and draw fresh; hand retention is off. Deck growth through rewards
+  is allowed. Equipment editor timing is unrestricted by the user; a safe
+  non-combat surface is a recommendation, not a settled requirement.
 - Hand size is base 4 + INT: 5 for most classes and 6 for Starseer. Primary
   stat gains are STR +1 AR, DEX +1 DR, CON +10 HP, WIS +1 MP, INT +1 draw.
   Other resource formulas and thresholds remain unspecified. Do not invent
@@ -144,18 +162,20 @@ implementing them:
   accuracy-based and fully avoids or applies 2x damage as specified there.
   Damage is unified: no elements, rank, spell, feat or skill-XP systems.
 - The run spans three acts, each with seven pre-boss nodes and a distinct boss.
-  Activity types include events, fights, elites, treasure, shops and rests. Rest
-  interactions include HP/SP recovery, healing, MP flask refill, level
-  allocation and card upgrades; a direct MP refill is not established. Rewards
-  include weapons, relics, combat cards, weapon-art spots, potions and armor;
-  usually offer three choices and take one. Keep unsettled route-visibility,
-  reward and level-up details in CORE-SPEC; do not add guessed rules.
-- Deck editing is available only at rest spots. Equipment editing is enabled
-  without a settled timing restriction; a safe non-combat surface is only a
-  recommendation. Inspect by holding a target or tapping an already-selected
-  target HUD. Normal click and `i` are not the
-  default inspect action. Card faces show 2–3 total simple effect lines; inspect
-  reveals details. Preserve the combat log.
+  Activity types include events, fights, elites, treasure, shops and rests. Each
+  rest visit offers exactly one service: Strategize edits the deck, Smith
+  upgrades equipment, or Level Up allocates an earned attribute level. Completing
+  the chosen service fully restores HP, MP and SP and refills healing and MP
+  flasks. There is no generic Rest service or separate card-upgrade service.
+  Card rewards and earned level-ups remain available through their progression
+  flows. Equipment editor timing otherwise remains unrestricted; a safe
+  non-combat surface is only a recommendation. Equipment-upgrade costs and
+  eligibility remain unspecified. Rewards include weapons, relics, combat cards,
+  weapon-art spots, potions and armor; offer/claim details remain in CORE-SPEC.
+  Keep unsettled route-visibility, reward and level-up details there rather than
+  guessing. Inspect by holding a target or tapping an already-selected target
+  HUD. Normal click and `i` are not the default inspect action. Card faces show 2–3
+  total simple effect lines; inspect reveals details. Preserve the combat log.
 - Reaver uses a greatsword, Starseer a scepter, Rogue two daggers, Herald a
   scepter. Allowed weapons: straight swords, shields, scepters, bows, greatswords
   and daggers. Armor: robes, light, medium and heavy. Gear does not alter the
@@ -163,8 +183,13 @@ implementing them:
   evade, hit, hurt, status, defeated and staggered. Missing/off art uses
   low-poly fallback with identical geometry and interactions.
 - Character level, attributes and card rewards provide 1–2 choices per act and
-  3–6 level-ups; exact XP math is not settled. Do not add XP thresholds or other
-  formulas without source/spec support.
+  3–6 level-ups; exact XP math is not settled. Class unlocks are a separate
+  versioned profile ledger keyed by unique completed-run identity. Process each
+  terminal outcome idempotently so reloads, retries and duplicate delivery never
+  grant duplicate unlocks. Keep profile ledger state separate from run locks and
+  run-local character progression. Unlocking is the explicit profile-progression
+  exception to the no-feats/no-skill-XP/no-creation-allocation direction. Do not
+  invent historical completion migrations or extra rewards.
 
 This handoff does not override or amend the live `SPEC.md`. Resolve conflicts
 between this proposed product target, `CORE-SPEC.md`, and live implementation by
@@ -230,19 +255,34 @@ Keep existing commands distinct from these proposed verbs:
   later code, use targeted tests from `DEVELOPER.md`, documented fast checks and
   touched discovered shards. Inspect generated-file/stamp behavior before any
   writing check; never commit generated HTML.
-- Future full-product acceptance must cover all four classes, default stats and
-  ten-card opening deck; deck editing at rest spots only; equipment editing
-  enabled without a user-imposed timing restriction; supported stance edges,
-  class gear, damage, rewards, rest actions,
-  distinct act bosses and saves. Exercise module resolution with missing,
-  false, true and object values, nested overrides, provenance/hash stability,
-  and supported combinations. Verify the full core remains playable as
-  features are omitted. The technical fallback fixture is only an
-  infrastructure test, never product-core acceptance.
+- Future full-product acceptance must cover all four defined classes, default
+  stats and ten-card starting decks; fresh profiles expose only Reaver, then
+  three unique full-run completions unlock Starseer, Rogue and Herald in order.
+  Test win and defeat, any already-unlocked class as the next run, encounter win
+  versus final-run outcomes, nonterminal quit/abandon/restart, unique
+  `completedRunId`, duplicate event delivery, reload/retry and profile
+  persistence/idempotence. Keep the versioned profile ledger separate from
+  run-local progression and exact run locks; this is the explicit profile-meta
+  progression exception to no feats, skill XP or attribute allocation at
+  creation. Deck editing occurs only through Strategize at rest; Smith upgrades
+  equipment, Level Up allocates earned attribute levels, and exactly one service
+  is selected per visit. Each chosen service fully restores HP/MP/SP and refills
+  both flask types. No generic Rest or standalone card-upgrade service exists.
+  Card rewards and level-ups remain available. Equipment editor timing remains
+  unrestricted; the Smith upgrade cost and eligibility require explicit authored
+  rules. Also cover supported stance edges, class gear, damage, rewards, distinct
+  act bosses and saves.
+  Exercise module resolution with missing, false, true and object values, nested
+  overrides, provenance/hash stability and supported combinations. Verify the full
+  core remains playable as features are omitted. The technical fallback fixture
+  is only an infrastructure test, never product-core acceptance.
 - Keep resolved saves locked to the exact lockfile and gameplay hash, package
-  artifacts, ABI and numeric policy. Test deterministic traces for two isolated
-  runtime instances; no shared mutable singleton state. Save/config/module
-  migrations stay explicit and separate.
+  artifacts, ABI and numeric policy. Persist profile unlocks in a separate
+  versioned, per-profile ledger keyed by unique full-run IDs. Test duplicate
+  outcome delivery, reload and retry idempotence, profile backup/migration, and
+  independent profiles. Test deterministic traces for two isolated runtime
+  instances; no shared mutable singleton state. Save/config/module migrations
+  stay explicit and separate.
 - Visible UI work needs real screenshots and a verified preview. `Feature/**`
   builds the exact branch commit; Pages publishes later. No preview is verified
   by this handoff. Root README still contains stale PR-required wording; update
