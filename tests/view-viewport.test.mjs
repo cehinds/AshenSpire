@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { VIEW_PRESETS, resolveViewViewport, matchViewMedia } from '../src/ui/viewViewport.js';
+import { VIEW_PRESETS, resolveViewViewport, matchViewMedia, logicalViewport, viewScale, viewViewportBox } from '../src/ui/viewViewport.js';
 
 test('named views fit their logical aspect inside every host', () => {
   for (const preset of Object.keys(VIEW_PRESETS)) for (const [width, height] of [[1440, 900], [390, 844], [1920, 1080], [320, 568]]) {
@@ -34,4 +34,12 @@ test('geometric queries read the view while browser capabilities stay outside th
   win.innerWidth = 390; win.innerHeight = 844;
   assert.equal(phone.matches, true);
   assert.throws(() => matchViewMedia('(pointer: coarse)', win).matches, /Unsupported/);
+});
+
+
+test('headless coordinate helpers retain zero origin and unit scale without a window', () => {
+  assert.deepEqual(logicalViewport(), { width: 0, height: 0 });
+  assert.equal(viewScale(), 1);
+  assert.deepEqual(viewViewportBox(), { left: 0, top: 0, width: 0, height: 0, right: 0, bottom: 0 });
+  assert.deepEqual(logicalViewport({ innerWidth: 390, innerHeight: 844 }), { width: 390, height: 844 });
 });
