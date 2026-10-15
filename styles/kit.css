@@ -4375,16 +4375,19 @@ p.inspection-lore-line .lore-identity { white-space:normal; overflow:visible; te
 .cc-summary-slot { position:relative; min-width:0; display:flex; flex-direction:column; gap:6px; }
 .cc-summary-slot > .as-eyebrow { margin:0; }
 .cc-summary-slot > .equipment-poker-card { width:100%; margin:0; }
-.cc-summary-slot > .card-inspection-target {
+.cc-summary-slot > .card-inspection-target,
+.cc-review .cc-starter-deck > .card-inspection-target {
   position:relative; z-index:1;
   transition:margin-top var(--card-info-fade,120ms) ease;
 }
-.cc-summary-slot > .card-inspection-target.inspection-selected {
+.cc-summary-slot > .card-inspection-target.inspection-selected,
+.cc-review .cc-starter-deck > .card-inspection-target.inspection-selected {
   z-index:2;
   margin-top:calc(var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem))) + var(--inspect-gap, calc(10px / var(--ui-zoom, 1))));
 }
 @media (prefers-reduced-motion:reduce) {
-  .cc-summary-slot > .card-inspection-target { transition:none; }
+  .cc-summary-slot > .card-inspection-target,
+  .cc-review .cc-starter-deck > .card-inspection-target { transition:none; }
 }
 .cc-summary-slot.unmet > .equipment-poker-card { outline:2px solid var(--danger); outline-offset:2px; border-radius:10px; }
 .cc-summary-unmet { margin:0; color:var(--danger); font-size:13px; line-height:1.35; }
