@@ -950,7 +950,8 @@ export const gameProfileCatalog = {
         "mode": "configured",
         "editorEnabled": true,
         "editorWhere": "noncombat",
-        "fixedAppearance": true
+        "fixedAppearance": true,
+        "requirementsPolicy": "none"
       },
       "schema": {
         "type": "object",
@@ -970,13 +971,20 @@ export const gameProfileCatalog = {
           },
           "fixedAppearance": {
             "type": "boolean"
+          },
+          "requirementsPolicy": {
+            "enum": [
+              "none",
+              "legacy"
+            ]
           }
         },
         "required": [
           "mode",
           "editorEnabled",
           "editorWhere",
-          "fixedAppearance"
+          "fixedAppearance",
+          "requirementsPolicy"
         ],
         "additionalProperties": false
       },
@@ -991,13 +999,13 @@ export const gameProfileCatalog = {
           "path": "engine/modules/equipment/defaults.json",
           "id": "equipment",
           "version": "1.0.0",
-          "hash": "sha256:5b7d0a170fd033c0a89ab8aa24ac5f2c0bce7756351d85dd7d3e76cd55732dc7"
+          "hash": "sha256:003f80892fc61fc5d34dad83aa27f0f3ed9792f0c24bec1e32e4d45831d96b62"
         },
         {
           "path": "engine/modules/equipment/settings.schema.json",
           "id": "equipment",
           "version": "1.0.0",
-          "hash": "sha256:aa3ddeb23e6c55fbe704f83886521eab74e4f71ebf6a0719ca126dbbcbf692b5"
+          "hash": "sha256:e94a3dd64568623ec48ea266d299a8439e1621545e36cd43eb03ef7bcf0a49f3"
         }
       ]
     },
@@ -3038,7 +3046,8 @@ export const gameProfileCatalog = {
             "Herald power behavior is a provisional card fixture; persistent stacking needs the runtime adapter.",
             "Rest positions [2,6] and generic shop price10 are provisional source-configured fixtures.",
             "Stance advantage multiplier1.25 and one Smash advantage stagger per target/round are provisional.",
-            "Smith upgrades exactly one equipment tier for free as the one rest service; the foregone Strategize/Level Up is its visit budget. Free Smith is provisional until an explicit upgrade economy is authored."
+            "Smith upgrades exactly one equipment tier for free as the one rest service; the foregone Strategize/Level Up is its visit budget. Free Smith is provisional until an explicit upgrade economy is authored.",
+            "Equipment attribute requirementsPolicy defaults to none for six-total core attributes; ownership, slot fit and timing remain enforced. Explicit legacy restores old minima. This is provisional until core item requirements are balanced."
           ]
         },
         "resourceVariants": {
@@ -3327,7 +3336,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/provisionalPolicies.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:ca2763de1d4d4c1879f384f2c6a61d2a93f5b96f96e9bd9665bcc2b916329a00"
+          "hash": "sha256:2814e67e24aadbd27ed7ed6e4fe55a2c5fb4509d792fd1a0d021b2467169e4c4"
         },
         {
           "path": "games/ashenspire/packs/core/resourceVariants.json",
@@ -3373,7 +3382,7 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "path": "src/** (excluding generated gameProfiles/changelog)",
-      "hash": "sha256:505462048bfe2798b2f8f03870f82b51ab6c025902b2836611111a3822e8f01e"
+      "hash": "sha256:1f191ff763cd0531253f5531fb3fbf4ffbfeda37483d0c627c0f9048e86a2c24"
     }
   ],
   "runtimeSources": [
@@ -5589,7 +5598,7 @@ export const gameProfileCatalog = {
       "path": "src/model/gameProfile.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:7d4c63a1e55472b8728e5254602f260402ec6eb82e7f6e35a4f089bb426df055"
+      "hash": "sha256:f1bbc2f22d19a3f50415761dbe73b0ae53b2580bda03b96cd6f8257b65e04018"
     },
     {
       "path": "src/model/gameProfileRest.js",
@@ -8196,7 +8205,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:23af16d4e9c9f6d88fe655d32ecf1a688b47df39f9e3a1d6d193ce63923593ab"
     }
   ],
-  "runtimeHash": "sha256:49e1c9173db1ab107cee0789d7fe143044d4aa662814b00db5de0fcbac63607f"
+  "runtimeHash": "sha256:1850d0b9d0d0841a5a6783e12424e0800d20c4cdb69bb87d868023cacb2c1066"
 };
 export const gameProfileAuthors = {
   "default": {
