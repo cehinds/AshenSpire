@@ -68,14 +68,16 @@ async function main() {
     owner = await launchBrowser({ prefix: 'hp-' }); browser = await chromium.connectOverCDP(owner.wsUrl);
     const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
     page = await context.newPage(); page.on('pageerror', error => report.errors.push(error.message));
-    const fetchedBuild = page.waitForResponse(response => response.url() === BUILD_URL && response.ok(), { timeout: 45000 });
-    const response = await page.goto(HOSTED_URL, { waitUntil: 'domcontentloaded', timeout: 45000 });
+    const [fetchedBuild, response] = await Promise.all([
+      page.waitForResponse(response => response.url() === BUILD_URL && response.ok(), { timeout: 45000 }),
+      page.goto(HOSTED_URL, { waitUntil: 'domcontentloaded', timeout: 45000 }),
+    ]);
     assert.ok(response.ok(), 'actual hosted Play route loads');
     assert.equal(sha256(await response.text()), report.wrapperSha256, 'actual Play route serves the identified public wrapper');
     assert.equal(page.url(), HOSTED_URL, 'proof remains on the fixed public Play route');
     const frameElement = page.locator('#preview'); await frameElement.waitFor();
     assert.equal(await frameElement.getAttribute('sandbox'), 'allow-scripts allow-pointer-lock allow-popups');
-    const loadedBytes = await (await fetchedBuild).text();
+    const loadedBytes = await fetchedBuild.text();
     assert.equal(sha256(loadedBytes), report.identity.htmlSha256, 'the wrapper actually executes the identified public build bytes');
     const frame = page.frameLocator('#preview');
     await frame.locator('.startup-gate').waitFor({ timeout: 45000 });
