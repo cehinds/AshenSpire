@@ -16,8 +16,9 @@ Labels below matter: **Confirmed** means requested by the owner or an already ac
 | Missing module always means off | Missing bundled module inherits bundle selection/settings; missing nonbundled module is off. Explicit `false` disables either. |
 | Fixed nine-slot deck; editor off | Ten-card starter; deck editor on at rest spots only; deck can change and grow through rewards. No fixed nine-slot constraint. |
 | Every class starts with Evade/Power/Skill | Each starts with one class-specific card only, in addition to nine shared cards. Evade is available as content/reward, not a starter. |
-| Distinct elemental damage and ranked spells | Unified damage; no elemental distinction or spell-rank system in this core. Rest card upgrades do not reintroduce spell ranks. |
-| Feats, skill XP, attribute allocation at creation | Class selector with fixed starting loadouts; character-level progression; no feats, skill XP or creation attribute allocation. |
+| Distinct elemental damage and ranked spells | Unified damage; no elemental distinction or spell-rank system in this core. Smith upgrades equipment, not cards. No spell ranks are restored. |
+| Generic rest/card-upgrade menu | Strategize (deck editing), Smith (equipment upgrading), Level Up (earned attribute allocation); every choice fully restores HP/MP/SP and both flask types. Standalone rest card upgrades are superseded. |
+| Feats, skill XP, attribute allocation at creation | Class selector with fixed starting loadouts; character-level progression plus the explicitly requested profile class-unlock sequence below; no feats, skill XP or creation attribute allocation. |
 | Retain hand between rounds | Entire deck reshuffled at round end; no hand retain; fresh draw from base four plus INT: five normally, six for Starseer. |
 | Old Poise pool absorption, break and automatic stagger | Core Poise only reduces damage. Do not retain pool absorption/depletion-to-stagger implicitly. Stagger/interrupt rules require separate authored semantics. |
 
@@ -89,6 +90,25 @@ Proposed fixed-stat data excerpt (all values confirmed; schema still proposed):
 }
 ```
 
+### Persistent class unlocks
+
+**Confirmed, latest owner instruction:** “core should only have reaver unlocked, starting run until win or defeat unlocks then star seer, then another one rogue, and then another one harold.” All four classes remain defined, but a fresh profile may select only Reaver for a new run. Class unlocks persist in the profile across runs; they are separate from character levels, attribute allocation, feats and skill XP.
+
+| Unique full-run completions recorded by profile | Newly unlocked class | Classes selectable for a new run |
+| --- | --- | --- |
+| 0 | Reaver initially | Reaver |
+| 1 | Starseer | Reaver, Starseer |
+| 2 | Rogue | Reaver, Starseer, Rogue |
+| 3 or more | Herald at completion 3 | Reaver, Starseer, Rogue, Herald |
+
+A completion is a terminal **full-run win or defeat**, not an encounter victory: beating the final act's boss wins the run; hero death defeats the run. Either terminal outcome advances the sequence. Quitting, abandoning or restarting without a terminal run outcome does not count. No win-only gate or requirement to play the newly unlocked class is added. Working interpretation: a qualifying run with any currently unlocked class counts; the owner did not require a particular class.
+
+Consume committed full-run outcome facts into a persistent, idempotent per-profile ledger keyed by unique run identity. Each unique completed run grants at most one next class; duplicate delivery, reload, retry or repeated processing of the same terminal save must not grant additional unlocks. At three completions all classes are available; further completions do not invent additional progression or rewards.
+
+Profile storage, backup and migration must preserve the completion ledger and unlocked classes. Keep this profile state distinct from versioned run locks and run-local character progression: unlocking a class changes future selection eligibility without rewriting existing runs or their pinned gameplay artifacts. Existing-profile migration must be explicit; do not guess historical completions or silently reset unlocks. This requested class-unlock progression is the explicit exception to the earlier character-level-only direction; no other profile progression system is introduced.
+
+The core bundle declares the necessary class-selector/progression/unlock capability selected by default. Unlock implementation may be owned by progression with a class-selector integration rather than inventing a second implicit activation registry. Any separately packaged unlock module must be declared by the bundle and resolved with the same pins/provenance rules as other features.
+
 Exact item/card IDs, starting armor, flask quantities and equipment slot accounting are not supplied here. Fixed starting weapons do not establish a lifetime class restriction on reward equipment. Core sprites do not change with weapon or armor; equipment still changes authored gameplay values.
 
 | Attribute increase | Confirmed primary benefit | Other behavior |
@@ -110,13 +130,13 @@ A source survey using `git show` establishes these existing seams, not approval 
 | `src/content/derivedStats.js` SP row | Existing SP uses DEX/CON weights .25 and WIS/INT .2, base 3 and per-level .1. Independent flooring does not necessarily let two subthreshold attribute contributions combine. The requested two-CON/combined-other growth cannot be claimed implemented by retaining this row. Specify whether growth counts absolute attributes or gains and whether secondary contributions combine before or after flooring; no new coefficients or starting pool are assumed. |
 | `src/content/derivedStats.js` MP/hand rows | MP has secondary STR/CON/INT contributions; INT also affects PR and hand rows with legacy baselines/caps. Preserve other applicable roles, replacing the primary MP/draw terms with the confirmed new rules; draw now uses base 4 + INT. |
 | `src/model/attributes.js`, `src/content/attributes.js` | Creation totals/mode bounds, class presets, granted points and save validation are coupled. New class allocations sum to six; creation and save validation must accept those approved fixed presets and preserve old saves. New rules must not invalidate old saves. |
-| `content/framework/mechanics.json` | Weight/capacity reads CON/STR; dodge rules read DEX/mode/weight; legacy rest/resource and equipment grant rules exist. The revised six-point allocations need balance/compatibility checks against legacy thresholds. A legacy full-MP-rest field does not settle the new core request. |
+| `content/framework/mechanics.json` | Weight/capacity reads CON/STR; dodge rules read DEX/mode/weight; legacy rest/resource and equipment grant rules exist. The revised six-point allocations need balance/compatibility checks against legacy thresholds. The latest owner clarification independently confirms full MP recovery for every rest service; do not treat the legacy field as authority for unrelated defaults. |
 
 **Confirmed families:** weapons: straight swords, shields, scepters, bows, greatswords, daggers; armor: robes, light, medium, heavy. Shields are retained in the requested weapon-family catalog. Additional equipment taxonomy, starting armor and equip restrictions remain to be authored. **Confirmed:** equipment editor is on. Only deck editing was restricted to rests; do not apply that restriction to equipment by inference. Suggested: equipment editing in safe noncombat phases; exact timing/cost policy remains to be authored.
 
 ## Deck and readable cards
 
-**Confirmed:** Deck editor is enabled **at rest spots only**. The owner clarified: “and limit deck editing to rest spots.” Manual adding/removing/reordering/equipping of the active deck is blocked at other nodes and in combat, without deleting cards or deck state. The starter is exactly ten cards:
+**Confirmed:** Deck editor is enabled **at rest spots only**. The owner clarified: “and limit deck editing to rest spots.” Deck editing is the Strategize service. Manual adding/removing/reordering/equipping of the active deck is blocked at other nodes and in combat, without deleting cards or deck state. The starter is exactly ten cards:
 
 | Shared starter | Copies |
 | --- | ---: |
@@ -155,6 +175,7 @@ Proposed content excerpt (illustrative vocabulary, not the runtime schema):
     },
     "editorEnabled": true,
     "editorAllowedAt": ["rest"],
+    "editorRestService": "strategize",
     "roundEndReshuffle": "entireDeck",
     "retainHand": false,
     "draw": { "base": 4, "attribute": "intelligence", "perPoint": 1 }
@@ -190,7 +211,45 @@ Combat log is retained and consumes committed facts only. It must not leak conce
 
 **Confirmed:** Three acts; each act has seven pre-boss nodes followed by one boss, with a different boss in each act. Two rest stops per act are visible; elites and bosses are visible; other route nodes display `?` while their actual authored type remains one of event, fight, elite, treasure, shop or rest. The generator must preserve actual types for resolution without leaking hidden ones through inspect/log/UI. The two-visible-rest-stops-per-act count is confirmed; do not add an elite-count quota. Suggested: place the final rest before each boss rather than treating that placement as confirmed.
 
-Rests allow resting, leveling up and card upgrades. Rest restores HP and SP and refills healing flasks and MP flasks. **Pending:** directly restoring current MP is not explicitly requested; MP-flask refill does not imply full MP restoration. Costs, number of upgrades per visit and interaction/order among rest/level/upgrade are not specified. Suggested: one card upgrade per rest; no invented currency cost or unlimited upgrades as default. Card upgrades are independent of removed spell ranks.
+**Confirmed rest services:** The owner specified: “it will be the options strategize: deck editing smith: upgrade equipment level up: all options is a full heal and full mp and full healing and mp flasks”. This supersedes the earlier generic resting/card-upgrade proposal.
+
+| Rest option | Service | Recovery attached to every option |
+| --- | --- | --- |
+| Strategize | Edit the active deck; deck editing remains rest-only. | Full HP, full MP, full SP, full healing-flask charges and full MP-flask charges. |
+| Smith | Upgrade equipment, not cards. | The same full recovery. |
+| Level Up | Allocate an earned character-level attribute increase. | The same full recovery. |
+
+The earlier full-SP restoration remains in effect; the new instruction does not revoke it. Equipment editor enablement and its separate timing policy remain distinct from Smith's rest-menu equipment upgrading. There is no standalone card-upgrade rest service unless the owner later adds one; card-level rewards remain separate content.
+
+**Confirmed:** the owner clarified “core is one service per visit.” Each rest visit commits exactly one of Strategize, Smith or Level Up, exactly once. Recovery belongs to the committed service choice, not merely entering the rest screen. Do not infer unlimited Smith upgrades or free levels. The amount/cost of equipment upgrading and XP eligibility need authored policies; Level Up must spend an earned level and must not grant one simply because a rest was visited.
+
+Apply full recovery against final resource maxima after the service, including any maximum-HP/MP/SP changes caused by Level Up. Keep Strategize usable without making an edit, so a player with no earned level or upgradeable equipment can still recover. Suggested eligibility policy: disable unavailable Level Up/Smith services with a clear reason while retaining Strategize; exact XP and equipment upgrade requirements remain to be authored.
+
+Proposed service excerpt (illustrative vocabulary, not a runtime schema):
+
+```json
+{
+  "rest": {
+    "servicesPerVisit": 1,
+    "recoveryAfterService": true,
+    "services": [
+      { "id": "strategize", "action": "editDeck" },
+      { "id": "smith", "action": "upgradeEquipment" },
+      { "id": "levelUp", "action": "allocateEarnedAttributeLevel" }
+    ],
+    "eachServiceRecovery": {
+      "hp": "full",
+      "mp": "full",
+      "sp": "full",
+      "healingFlaskCharges": "full",
+      "mpFlaskCharges": "full"
+    }
+  }
+}
+```
+
+The excerpt deliberately omits equipment-upgrade amount/cost and eligibility policies and is not deployable configuration.
+
 
 The owner targets one to two attribute level-ups per “floor,” three to six total levels. **Pending:** interpret “floor” as act (giving one to two per act), and distinguish three to six level gains from final character levels. Starting level, XP curve, grant timing and any off-by-one conversion must be explicit before implementation; no curve is authorized by these numbers alone.
 
@@ -204,16 +263,16 @@ This is a future responsibility map, not a claim that packages exist. IDs can be
 | --- | --- |
 | Core bundle/catalog | Declared module selection/defaults, content preset, exact pins and provenance. |
 | Kernel/contracts | Generic scheduling, transactions, RNG, state isolation and typed operations. |
-| Cards | Starter/editor, deck/hand lifecycle, card readability and rest upgrades. |
+| Cards | Starter/editor, deck/hand lifecycle, card readability and rest-only Strategize integration. |
 | Resources | SP/MP pools and flask-related resource integration; authored resource-off variants. |
-| Stats / progression | Attribute rows, hidden dependencies, fixed class presets, character-level gains and save snapshots. |
+| Stats / progression | Attribute rows, hidden dependencies, fixed class presets, character-level gains, run snapshots and profile-owned idempotent class-unlock ledger. |
 | Defenses | Block/Poise and declared ordered damage pipeline; confirmed 25% damage reduction and separately decided eligibility/order. |
 | Stances / reactions | Seven stance identities, directed matchups, authored consequences and response scheduling. |
 | Effects / statuses | Unified damage effects, buffs, evade outcome integration and separate stagger/interrupt semantics. |
-| Equipment | Fixed starting gear, families, mechanics, reward eligibility and separately authored equipment timing policy. |
-| Character creation | Four-class selector and fixed loadouts; no attribute allocation. |
+| Equipment | Fixed starting gear, families, mechanics, reward eligibility, Smith equipment upgrades and separately authored equipment-editor timing policy. |
+| Character creation | Four defined classes with fixed loadouts; only profile-unlocked classes selectable, initially Reaver alone; no attribute allocation. |
 | Routes / encounters | Three-act route constraints, unique act bosses, visibility and seeded actual node types. |
-| Rest / shops | Rest services and authored shops, reachable through activities when routes are disabled. |
+| Rest / shops | Strategize/Smith/Level Up, exactly one service per visit, full recovery after every service; authored shops. Services remain reachable through activities when routes are disabled. |
 | Rewards | Mixed three-option offers, claim policy, equipment/card/resource integration. |
 | Core UI / log / inspect | Usable simple controls, committed-fact log, target/HUD inspection and disclosure. |
 | Art / animation | Stable core sprites, action vocabulary and optional presentation over fixed geometry. |
@@ -227,12 +286,14 @@ These are **future acceptance requirements**, not tests already run:
 
 - [ ] Empty `modules` resolves the full versioned product bundle, with exact bundle/module artifacts and selection/settings provenance. Explicit false overrides inheritance; missing nonbundled entries stay off. Merge vectors cover recursive objects and replaced arrays/scalars.
 - [ ] Each class starts from its approved six-total fixed attributes/gear with exactly ten cards and exactly one correct class special. No creation allocation, feats, skill XP or starter Evade; new presets and old snapshots pass the appropriate save validators.
-- [ ] Deck editor changes/grows the active deck only at rests. Outside rests editing is blocked without state loss; owned-card rewards remain claimable and follow an explicit active-deck policy. Equipment editor is on with its separately declared timing. Round end reshuffles with no retained hand. Base 4 + INT gives starting draws 5/6/5/5; tests cover INT growth, permanent rewards and temporary card lifecycles.
+- [ ] A fresh profile exposes only Reaver. Three unique completed full runs unlock Starseer, Rogue, Herald in that order; test win and defeat independently at every step and a run using any already-unlocked class. Encounter wins and nonterminal quit/abandon/restart do not count; locked classes cannot start runs.
+- [ ] Duplicate outcome delivery, terminal-save reload/retry and repeated processing grant at most one unlock per unique run. Profile reload/backup/migration retains the ledger and unlocks; two profiles remain independent. Existing run locks/state stay unchanged, and completions after all four unlock add no invented rewards.
+- [ ] Strategize changes/grows the active deck only at rests. Outside rests editing is blocked without state loss; owned-card rewards remain claimable and follow an explicit active-deck policy. Equipment editor is on with its separately declared timing. Round end reshuffles with no retained hand. Base 4 + INT gives starting draws 5/6/5/5; tests cover INT growth, permanent rewards and temporary card lifecycles.
 - [ ] Attribute increase vectors prove STR→AR, DEX→DR, CON→HP, WIS→MP, INT→draw benefits. Secondary dependencies, SP thresholds/combinations, flooring, caps and old snapshot restoration have explicit vectors; no guessed starting derived totals.
 - [ ] Seven stance identities and exactly the five directed advantage rows are authored. Tests cover ties/unlisted pairs and decided advantage consequences without invented reverse edges.
 - [ ] Evade success deals zero; failure doubles eligible damage under a declared accuracy rule/stage order. Poise takes max(floor(incomingDamage * .75), 1) while active, under the declared positive/zero eligibility and stage policy without old absorption/break coupling. Separate stagger rules and animation states are tested.
 - [ ] Seeded routes satisfy three acts, seven pre-boss nodes plus a distinct boss per act, two visible rest stops per act, approved placement and visibility. Hidden node types/plans never leak through log or inspect.
-- [ ] Rest restores HP/SP and both flask types; approved direct-MP behavior, upgrade limit/cost and level cadence are explicit. Rewards cover all six categories and the approved offer/claim policy.
+- [ ] Rest exposes Strategize (deck edit), Smith (equipment upgrade) and Level Up (earned attribute allocation). Every option restores full HP/MP/SP and both flask-charge types. Exactly one service commits per visit, once; recovery uses final maxima and does not trigger merely on entry. Equipment-upgrade amount/cost, eligibility and level cadence have tests; no unearned level or standalone rest card upgrade appears. Recovery remains reachable without edits/earned levels/upgradeable equipment, and approved recovery ordering covers changed resource maxima. Rewards cover all six categories and the approved offer/claim policy.
 - [ ] Press-hold target and press already-selected target HUD open inspect. Ordinary selection does not become unintended inspect; release/cancel behavior works. Log reports committed facts and preserves concealment.
 - [ ] Equipment changes gameplay while core sprites stay fixed. All requested families/actions are represented; art disabled/missing/failed preserves target geometry and interaction.
 - [ ] Supported built-in toggle combinations, including cards/resources/stats/defenses/stances/routes/equipment off and targeted pairs, preserve useful actions, turn advancement, outcomes, restart and save/load through authored fallbacks. Invalid custom variants fail clearly. Two differently configured runtimes remain isolated and replay deterministically.
@@ -246,7 +307,7 @@ Open decisions to resolve before freezing deployable defaults:
 | Poise | Nominal high value, activation/duration, stage order and zero/positive-hit eligibility; confirmed taken-damage formula stays fixed. |
 | Stances / stagger / Evade | Advantage consequences, neutral/tied pairs, evade accuracy/scope/order, separately authored stagger triggers/duration. |
 | Equipment | Editor enabled; exact timing/cost, starting armor and item/card identities. |
-| Rests | Placement of the confirmed two visible stops per act; direct MP restoration; upgrade count/cost and service ordering. |
+| Rests | Placement of the confirmed two visible stops per act; equipment-upgrade amount/cost and XP eligibility. Exactly one service per visit and full HP/MP/SP plus both flask refills after the chosen service are confirmed. |
 | Level cadence | “Floor” means act? Three to six gains versus final levels; timing/start level/curve. |
 | Rewards / deck limits | Three offers choose one recommendation; exceptions, taking policy, deck bounds, owned collection versus active-deck grant policy. Manual editing is already rest-only. |
 
