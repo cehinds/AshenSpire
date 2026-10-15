@@ -10,7 +10,6 @@ import { t } from '../strings.js';
 // card faces and explicit selection/confirmation. Claims remain host-owned.
 export function mountGameProfileOffers(app, { registries, run, offer, title, onTake, onContinue }) {
   clearSelection();
-  app.replaceChildren();
   const strip = el('div', { class: 'reward-row reward-choice-grid', role: 'radiogroup', 'aria-label': t('reward.card.aria') });
   strip.style.setProperty('--choice-count', String(offer.options.length));
   const note = el('p', { class: 'reward-note', text: t('reward.configured.note', { count: offer.takeCount }) });
