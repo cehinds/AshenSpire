@@ -82,7 +82,7 @@ function buildLines(def, preview, registries) {
     for (const child of predicate.preds || []) collectDependentStatuses(child);
   };
   for (const effect of def.effects || []) collectDependentStatuses(effect.if);
-  const counter = p.maneuver === 'counter';
+  const counter = p.maneuver === 'counter' && registries?.gameProfile?.foundation?.mode !== 'configured';
   // A counter is prepared, not dealt: name its mode ("Prepare Melee Counter: return …").
   // Coverage is named by the mode whose default it equals; any other coverage keeps the authored text.
   const counterMode = counter ? counterModeOf(def, p) : null;

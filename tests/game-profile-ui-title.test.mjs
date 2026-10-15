@@ -31,3 +31,15 @@ test('configured editor definition keeps authored effects instead of adding lega
   assert.match(lines, /Block/);
   assert.doesNotMatch(lines, /Entry|Precision|Ward|Restore/);
 });
+
+test('configured counter face describes its direct effect without promising deferred damage', async () => {
+  const { contentBundle } = await import('../src/content/index.js');
+  const { createRegistries } = await import('../src/model/registries.js');
+  const { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries, projectGameCard } = await import('../src/model/gameProfile.js');
+  const { cardFaceLines } = await import('../src/model/cardFaceText.js');
+  const profile = resolveGameProfile('core');
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const lines = cardFaceLines(projectGameCard(profile, 'core.counter'), null, registries).map(row => row.html).join(' ');
+  assert.match(lines, /Inflict/);
+  assert.doesNotMatch(lines, /Prepare|return/i);
+});

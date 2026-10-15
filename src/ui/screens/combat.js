@@ -2075,6 +2075,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       let actions = combatEl.querySelector('.foundation-actions');
       if (!actions) {
         actions = document.createElement('div'); actions.className = 'foundation-actions';
+        actions.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:1rem;z-index:6;pointer-events:auto';
         const target = document.createElement('select'); target.setAttribute('aria-label', t('gameProfile.combat.attackTarget'));
         const attack = document.createElement('button'); attack.textContent = t('gameProfile.combat.attack'); attack.className = 'as-btn foundation-attack';
         attack.onclick = () => {
@@ -2085,7 +2086,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
             busy = true; afterDispatch(out.events);
           } catch (error) { disp = null; console.warn('[combat] attack rejected:', error.message); render(); }
         };
-        actions.append(target, attack); $('.end-turn').before(actions);
+        actions.append(target, attack); $('.hand-overlay').append(actions);
       }
       const target = actions.querySelector('select'), selectedTarget = target.value;
       target.replaceChildren(...combat.enemies.filter(enemy => enemy.alive).map(enemy => new Option(registries.enemies.get(enemy.enemyId).name, enemy.id)));
