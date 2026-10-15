@@ -2558,6 +2558,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function afterDispatch(events) {
+    // Playback begins without rebuilding unchanged frames; protect reading
+    // presses before the global timeline skip listener is installed.
+    for (const record of enemyFrames.values()) markCombatantInspectionSurfaces(record.box, { playback: true });
     // Each step before playTimeline is guarded: busy is already true and only the timeline's finish releases it.
     try { events = decorateCombatEffects(events, registries, barrierVisuals); } catch (e) { console.warn('[combat] effect decoration failed:', e && e.message); }
     playbackEvents = events;
