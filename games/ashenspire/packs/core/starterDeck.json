@@ -1,0 +1,31 @@
+{
+  "shared": [
+    {
+      "card": "core.strike",
+      "copies": 3
+    },
+    {
+      "card": "core.defend",
+      "copies": 3
+    },
+    {
+      "card": "core.counter",
+      "copies": 1
+    },
+    {
+      "card": "core.smash",
+      "copies": 1
+    },
+    {
+      "card": "core.sweep",
+      "copies": 1
+    }
+  ],
+  "classSpecificCopies": 1,
+  "classSpecials": {
+    "reaver": "core.reaverSpecial",
+    "starseer": "core.starseerSpecial",
+    "rogue": "core.rogueSpecial",
+    "herald": "core.heraldSpecial"
+  }
+}

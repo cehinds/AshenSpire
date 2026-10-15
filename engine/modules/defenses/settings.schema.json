@@ -1,0 +1,64 @@
+{
+  "type": "object",
+  "properties": {
+    "mode": {
+      "enum": [
+        "legacy",
+        "configured"
+      ]
+    },
+    "include": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "order": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "poiseMultiplier": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1000000
+    },
+    "poiseRounding": {
+      "type": "string",
+      "minLength": 1
+    },
+    "minimumPositiveDamage": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000
+    },
+    "poiseActive": {
+      "type": "string",
+      "minLength": 1
+    },
+    "blockScope": {
+      "type": "string",
+      "minLength": 1
+    },
+    "poiseDepletes": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "mode",
+    "include",
+    "order",
+    "poiseMultiplier",
+    "poiseRounding",
+    "minimumPositiveDamage",
+    "poiseActive",
+    "blockScope",
+    "poiseDepletes"
+  ],
+  "additionalProperties": false
+}

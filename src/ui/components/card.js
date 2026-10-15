@@ -1,3 +1,4 @@
+import { gameModule } from '../../model/gameProfile.js';
 import { stanceOf, stanceEntryBonuses, stanceRulesFor, stanceRatingBonus } from '../../model/stanceRules.js';
 import { cardSideTags } from './cardTagSymbols.js';
 import { illustratedCardHtml, illustratedArtwork, fitIllustratedCards } from './illustratedCard.js';
@@ -293,7 +294,10 @@ export function renderCard(registries, ref, opts = {}) {
   let drawn = levelNow();
   // ONE TEXT FOR EVERY VIEW. The face lines are the shared model's output
   // (cardFaceText.js); a weight-priced card adds its pricing note as a detail line.
-  const faceLines = cardFaceLines(def, opts.preview || null, registries);
+  const faceRules = gameModule(registries, 'cards');
+  const allFaceLines = cardFaceLines(def, opts.preview || null, registries);
+  const faceLines = allFaceLines && registries.gameProfile?.foundation?.mode === 'configured' && opts.level !== 'inspect'
+    ? allFaceLines.slice(0, Math.min(faceRules?.faceMaxEffects ?? Infinity, faceRules?.faceMaxLines ?? Infinity)) : allFaceLines;
   if (faceLines && def.weightClassPriced) faceLines.push({ kind: 'detail', html: 'Cost reflects your current weight' });
   // The combat hand passes faceLineLimit: lines past it stay in the DOM, hidden until the card is selected.
   const faceLineLimit = Number.isFinite(opts.faceLineLimit) ? opts.faceLineLimit : null;
@@ -306,8 +310,9 @@ export function renderCard(registries, ref, opts = {}) {
     const authoredRules = def.weightClassPriced
       ? fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences).replace(/ Light:.*$/,'')+' Cost reflects your current weight.'
       : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences);
-    const rulesHtml = faceLines
-      ? compactCardRules(faceLines.map((line, i) => `<span class="face-line" data-face-kind="${line.kind}"${extraLine(line, i) ? ' data-face-extra="true"' : ''}>${line.html}</span>`).join(''))
+    const visibleLines = at === 'inspect' ? allFaceLines : faceLines;
+    const rulesHtml = visibleLines
+      ? compactCardRules(visibleLines.map((line, i) => `<span class="face-line" data-face-kind="${line.kind}"${extraLine(line, i) ? ' data-face-extra="true"' : ''}>${line.html}</span>`).join(''))
       // A face the shared model refused keeps the authored rules, never the looser summary.
       : compactCardRules(`${fallbackDamageLabel ? `${esc(fallbackDamageLabel)}: ` : ''}${authoredRules}`);
     el.dataset.faceLines = faceLines ? String(faceLines.length) : '';

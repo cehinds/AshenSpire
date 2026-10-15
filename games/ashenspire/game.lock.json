@@ -1,0 +1,965 @@
+{
+  "formatVersion": 1,
+  "profiles": {
+    "core": {
+      "hash": "sha256:ff9b86fcf3b3b68694be8dbabc09835fd95ea1cb08159c7ad58a01f74430cc73",
+      "formatVersion": 1,
+      "core": "ashen.core@1.0.0",
+      "artifacts": [
+        {
+          "path": "engine/contracts/game-profile.json",
+          "id": "ashen.runtime",
+          "version": "1.0.0",
+          "hash": "sha256:d3ef924c3fcbba008e71ac78ffba1aed29503699de7938944f54ba0baada081c"
+        },
+        {
+          "path": "engine/foundation/foundation.json",
+          "id": "ashen.runtime",
+          "version": "1.0.0",
+          "hash": "sha256:d088f943d538b0183b0b0a6462ad0950dc473ea738497c455e8b04da360118e9"
+        },
+        {
+          "path": "engine/kernel/gameConfig.js",
+          "id": "ashen.runtime",
+          "version": "1.0.0",
+          "hash": "sha256:265054ebd68a176c5a22a5c78bcd9b3e86562328e42b4db80a35ee3d6c3666b1"
+        },
+        {
+          "path": "engine/kernel/kernel.json",
+          "id": "ashen.runtime",
+          "version": "1.0.0",
+          "hash": "sha256:e13532ae886a182a47c35d32384c1b42a5849c2ad537a30fb11aa7525d639847"
+        },
+        {
+          "path": "engine/modules/animation/defaults.json",
+          "id": "animation",
+          "version": "1.0.0",
+          "hash": "sha256:f5a953eeaa66a221404d7928b204e98cbc8baa14198445a445e1c20f32ba26f6"
+        },
+        {
+          "path": "engine/modules/animation/module.json",
+          "id": "animation",
+          "version": "1.0.0",
+          "hash": "sha256:70acf099701fe2effd7c5aca1037b238db8172b4266ac593bfb8a0a6b2bf37a0"
+        },
+        {
+          "path": "engine/modules/animation/settings.schema.json",
+          "id": "animation",
+          "version": "1.0.0",
+          "hash": "sha256:cd31a5558d31f26c52ec26543a338758a0d290ef9bd39fd80249605ac3473dee"
+        },
+        {
+          "path": "engine/modules/art/defaults.json",
+          "id": "art",
+          "version": "1.0.0",
+          "hash": "sha256:efa1abca8f577c0da0c3a10ccc03688da7e91c0788be1d29bec1b51d798790d5"
+        },
+        {
+          "path": "engine/modules/art/module.json",
+          "id": "art",
+          "version": "1.0.0",
+          "hash": "sha256:ecee1b58d04c285dbea675d2b8be1daf1cad535fe807aa90e932a609276715e0"
+        },
+        {
+          "path": "engine/modules/art/settings.schema.json",
+          "id": "art",
+          "version": "1.0.0",
+          "hash": "sha256:f2a7df5a1fb14210092f0c3a7dbe588d38ac917de87b613dc822445fb61e232d"
+        },
+        {
+          "path": "engine/modules/cards/defaults.json",
+          "id": "cards",
+          "version": "1.0.0",
+          "hash": "sha256:d5ad68914a7e794d3621edf3e7bf77bf2f48857c5f8152f21e92c1e5b61bf184"
+        },
+        {
+          "path": "engine/modules/cards/module.json",
+          "id": "cards",
+          "version": "1.0.0",
+          "hash": "sha256:d3fc04369c8dd6ea0580231271ce9efac16b74dc08ae2629e0c302c9e1b587d8"
+        },
+        {
+          "path": "engine/modules/cards/settings.schema.json",
+          "id": "cards",
+          "version": "1.0.0",
+          "hash": "sha256:157b752e7007217b1c2e134c7bcd808a9312f1a506ca218eaf39566dd064c802"
+        },
+        {
+          "path": "engine/modules/class-selection/defaults.json",
+          "id": "class-selection",
+          "version": "1.0.0",
+          "hash": "sha256:8b7195f7bf56e604c1e2d55d1eb6adb3eb1864a3cfe12256e07ebe2f3b3bfde3"
+        },
+        {
+          "path": "engine/modules/class-selection/module.json",
+          "id": "class-selection",
+          "version": "1.0.0",
+          "hash": "sha256:e33c9af96068171c2e2aec8b94d34c99b23ed97f13a6b6703819a2cc25883524"
+        },
+        {
+          "path": "engine/modules/class-selection/settings.schema.json",
+          "id": "class-selection",
+          "version": "1.0.0",
+          "hash": "sha256:45a0504df5d4eb6bf348964e36945309b127f85d56cf78d62e54f1e6edce92b0"
+        },
+        {
+          "path": "engine/modules/defenses/defaults.json",
+          "id": "defenses",
+          "version": "1.0.0",
+          "hash": "sha256:c983cd65cb424211f907016e81fce0a17b73800e2d0197ab0708623368eefb02"
+        },
+        {
+          "path": "engine/modules/defenses/module.json",
+          "id": "defenses",
+          "version": "1.0.0",
+          "hash": "sha256:d9c632dfbd4d94e2a59ccbc7b0ba7492acf96f02da705550710da006d6989013"
+        },
+        {
+          "path": "engine/modules/defenses/settings.schema.json",
+          "id": "defenses",
+          "version": "1.0.0",
+          "hash": "sha256:c212c3f24a8017a70acf42b5ae529f337866445ce3aa602768f5af3be61707ba"
+        },
+        {
+          "path": "engine/modules/effects/defaults.json",
+          "id": "effects",
+          "version": "1.0.0",
+          "hash": "sha256:6781d6b6dd947cfb37fb182035f6e00513a4f65b85d4054abfeb4b9100c83010"
+        },
+        {
+          "path": "engine/modules/effects/module.json",
+          "id": "effects",
+          "version": "1.0.0",
+          "hash": "sha256:966d061ecedfbb5082d962f17f4e596cca40591290a1bb64ceecabf3aea439be"
+        },
+        {
+          "path": "engine/modules/effects/settings.schema.json",
+          "id": "effects",
+          "version": "1.0.0",
+          "hash": "sha256:cc0adebde96842eeb9ffbcb307ad3a3974452545a92c4e84d432ae83ecfc0c1c"
+        },
+        {
+          "path": "engine/modules/equipment/defaults.json",
+          "id": "equipment",
+          "version": "1.0.0",
+          "hash": "sha256:5b7d0a170fd033c0a89ab8aa24ac5f2c0bce7756351d85dd7d3e76cd55732dc7"
+        },
+        {
+          "path": "engine/modules/equipment/module.json",
+          "id": "equipment",
+          "version": "1.0.0",
+          "hash": "sha256:0c90c0934c0e73b82787875c97b92b4684926d79eefe4f8d637c39ed9dd972e9"
+        },
+        {
+          "path": "engine/modules/equipment/settings.schema.json",
+          "id": "equipment",
+          "version": "1.0.0",
+          "hash": "sha256:aa3ddeb23e6c55fbe704f83886521eab74e4f71ebf6a0719ca126dbbcbf692b5"
+        },
+        {
+          "path": "engine/modules/intent/defaults.json",
+          "id": "intent",
+          "version": "1.0.0",
+          "hash": "sha256:6ac228e2ffec18da283cceea5e3fd9ad85b4fc1cac27004af6ba6371132279b4"
+        },
+        {
+          "path": "engine/modules/intent/module.json",
+          "id": "intent",
+          "version": "1.0.0",
+          "hash": "sha256:10d3b308a18c59e1378bc362088b89f55d8bb0fae56efb89695f03052d0f2634"
+        },
+        {
+          "path": "engine/modules/intent/settings.schema.json",
+          "id": "intent",
+          "version": "1.0.0",
+          "hash": "sha256:58360cd61e761c1c0c1f9e7e9fa51e606c9442d8653e6bbba21db12b23faf3c7"
+        },
+        {
+          "path": "engine/modules/progression/defaults.json",
+          "id": "progression",
+          "version": "1.0.0",
+          "hash": "sha256:2a64ef7652726885ea0e1f1455c649133e5b384576129af3e08c8c908aafc8d1"
+        },
+        {
+          "path": "engine/modules/progression/module.json",
+          "id": "progression",
+          "version": "1.0.0",
+          "hash": "sha256:c95424a9e60fcfa03ed51f1140a1f0aff70130fb6f5d09bb8df096c3eee70d1b"
+        },
+        {
+          "path": "engine/modules/progression/settings.schema.json",
+          "id": "progression",
+          "version": "1.0.0",
+          "hash": "sha256:df250a24c43a1e5a971c3b5e5f0269245f350c832ac9e6406624e321e34a636c"
+        },
+        {
+          "path": "engine/modules/reactions/defaults.json",
+          "id": "reactions",
+          "version": "1.0.0",
+          "hash": "sha256:f9bfdc69d7eaa9f41a6a3265efe56a8f1b9ae56c94a265766b6826d51f7fadc8"
+        },
+        {
+          "path": "engine/modules/reactions/module.json",
+          "id": "reactions",
+          "version": "1.0.0",
+          "hash": "sha256:8841df2ce83f760232165207276e45da5f4b7643718773a6a97631d2f3f72f85"
+        },
+        {
+          "path": "engine/modules/reactions/settings.schema.json",
+          "id": "reactions",
+          "version": "1.0.0",
+          "hash": "sha256:63e00f28647fbec410451d980e1135df1f231f58fee4e978f51f2c4f905a5cc9"
+        },
+        {
+          "path": "engine/modules/resources/defaults.json",
+          "id": "resources",
+          "version": "1.0.0",
+          "hash": "sha256:7f7da4845b2e94c2fcb4754fec54afd5b382b6b48b729d6c094b69f449a686d9"
+        },
+        {
+          "path": "engine/modules/resources/module.json",
+          "id": "resources",
+          "version": "1.0.0",
+          "hash": "sha256:531797c8f12417497fc4bca95e4b3013088c9ead06ba011585cd1d675aa0ac63"
+        },
+        {
+          "path": "engine/modules/resources/settings.schema.json",
+          "id": "resources",
+          "version": "1.0.0",
+          "hash": "sha256:25b2764af2418855649e2bdf2a3a8a2de8ff68c28205df65528da7bdf31016ea"
+        },
+        {
+          "path": "engine/modules/rest/defaults.json",
+          "id": "rest",
+          "version": "1.0.0",
+          "hash": "sha256:5f1b3d8fbeeff88f2eb950c905ec5c63e998f7030768e0491caad4d2f6e6ac60"
+        },
+        {
+          "path": "engine/modules/rest/module.json",
+          "id": "rest",
+          "version": "1.0.0",
+          "hash": "sha256:29f068fa8dd5570d2c3358a25ff4ee8c46b5eddf96e21fcbac38c5bac2d06306"
+        },
+        {
+          "path": "engine/modules/rest/settings.schema.json",
+          "id": "rest",
+          "version": "1.0.0",
+          "hash": "sha256:bfb143b324fda872c682320ae63632c156d215c1076edde8b671b2608a455689"
+        },
+        {
+          "path": "engine/modules/rewards/defaults.json",
+          "id": "rewards",
+          "version": "1.0.0",
+          "hash": "sha256:d773c37535395b75346c375489fe6d987e807d4d29c354600f231bcb51ca911b"
+        },
+        {
+          "path": "engine/modules/rewards/module.json",
+          "id": "rewards",
+          "version": "1.0.0",
+          "hash": "sha256:26ac11b84c80bd88e94b489d0a9d718a2bc2ba5babad7ab9b3dc7a00fcb02ca9"
+        },
+        {
+          "path": "engine/modules/rewards/settings.schema.json",
+          "id": "rewards",
+          "version": "1.0.0",
+          "hash": "sha256:c86375307f36ad55573603737f9f4420633282912e66948b732351f38868bbbe"
+        },
+        {
+          "path": "engine/modules/routes/defaults.json",
+          "id": "routes",
+          "version": "1.0.0",
+          "hash": "sha256:01cd71f391ef6e82a42cd7abc5c2d4e085ed276d8b3bdad26fed3ccd228d48b9"
+        },
+        {
+          "path": "engine/modules/routes/module.json",
+          "id": "routes",
+          "version": "1.0.0",
+          "hash": "sha256:c490a22a6f704fdf42f4ffba1f74946f19ffddb082ab8d1e1f89a1152d5c9b78"
+        },
+        {
+          "path": "engine/modules/routes/settings.schema.json",
+          "id": "routes",
+          "version": "1.0.0",
+          "hash": "sha256:27fcafd108a02766ee6da46763b8b83414f8d00ecf6ce1412b8ae610107bae59"
+        },
+        {
+          "path": "engine/modules/shops/defaults.json",
+          "id": "shops",
+          "version": "1.0.0",
+          "hash": "sha256:f803a639c7c88d15270d36488ea21e4e64d90532bc7e8da806932e71f149337d"
+        },
+        {
+          "path": "engine/modules/shops/module.json",
+          "id": "shops",
+          "version": "1.0.0",
+          "hash": "sha256:ed7a3fe07590810d685c505b488942d320bbcc826c20252ba550b5e7e323d81a"
+        },
+        {
+          "path": "engine/modules/shops/settings.schema.json",
+          "id": "shops",
+          "version": "1.0.0",
+          "hash": "sha256:8f64f073c8195f5680190808cb682b338eeff96def538e289b56e0ab00eefc0d"
+        },
+        {
+          "path": "engine/modules/stances/defaults.json",
+          "id": "stances",
+          "version": "1.0.0",
+          "hash": "sha256:416b103a6e732e50ecb0dff1d64f9d253b16531a41ad9b6aef5c236ad168c15f"
+        },
+        {
+          "path": "engine/modules/stances/module.json",
+          "id": "stances",
+          "version": "1.0.0",
+          "hash": "sha256:bdcefef6e68d6f61817f23583e0e6fbf195e3d8569f55007c808d925068dac7c"
+        },
+        {
+          "path": "engine/modules/stances/settings.schema.json",
+          "id": "stances",
+          "version": "1.0.0",
+          "hash": "sha256:247f7882dd5c50a39fadbdba0e6e1afd8db645356799e0a1e859302d62030d5c"
+        },
+        {
+          "path": "engine/modules/stats/defaults.json",
+          "id": "stats",
+          "version": "1.0.0",
+          "hash": "sha256:4ada9e44833996477e007edfaf424faed64fb1db7e0787914132752dba13ba2e"
+        },
+        {
+          "path": "engine/modules/stats/module.json",
+          "id": "stats",
+          "version": "1.0.0",
+          "hash": "sha256:6dd7a116ad9b6bb67f24f4a9605dfd9a46e36b4450c0e40ec4227319fbb278d2"
+        },
+        {
+          "path": "engine/modules/stats/settings.schema.json",
+          "id": "stats",
+          "version": "1.0.0",
+          "hash": "sha256:da176820bb881e2f29859df7d2990e4c940afdf599d970c6c0703c0c1dd8c963"
+        },
+        {
+          "path": "engine/modules/statuses/defaults.json",
+          "id": "statuses",
+          "version": "1.0.0",
+          "hash": "sha256:218c8f81c48c2dac4053a136c6eec7cce35a5eca40598b3ecb1208ff4d67df9e"
+        },
+        {
+          "path": "engine/modules/statuses/module.json",
+          "id": "statuses",
+          "version": "1.0.0",
+          "hash": "sha256:5f17badae12cef9b83f22734fb815f143917dec13b40b2e22c5d5f6a60594462"
+        },
+        {
+          "path": "engine/modules/statuses/settings.schema.json",
+          "id": "statuses",
+          "version": "1.0.0",
+          "hash": "sha256:0ceac248551b24da67db0ccac3f8442c47f7c242e6473ff099d51bfb4c333da5"
+        },
+        {
+          "path": "games/ashenspire/bundles/core/bundle.json",
+          "id": "ashen.core",
+          "version": "1.0.0",
+          "hash": "sha256:bafceb2dbb59977d0bf1992eb6e8de30e28e5f101bc9f6e9714b151bcb8c25fd"
+        },
+        {
+          "path": "games/ashenspire/packs/core/cards.json",
+          "id": "ashen.core-content",
+          "version": "1.0.0",
+          "hash": "sha256:273c669a5bb9ec675d26490ea7799cb956dd0ef39802bf7cbfec4afda39458be"
+        },
+        {
+          "path": "games/ashenspire/packs/core/classUnlocks.json",
+          "id": "ashen.core-content",
+          "version": "1.0.0",
+          "hash": "sha256:736fb6c59e2daa76f704ccd82e0db0158036bd07eaadde043215c31adbc50ef4"
+        },
+        {
+          "path": "games/ashenspire/packs/core/classes.json",
+          "id": "ashen.core-content",
+          "version": "1.0.0",
+          "hash": "sha256:fbd8e9324606e364f2bfe09afd4c92fe6407a4e33b3a3b23ea7a9e4309fffb26"
+        },
+        {
+          "path": "games/ashenspire/packs/core/pack.json",
+          "id": "ashen.core-content",
+          "version": "1.0.0",
+          "hash": "sha256:c8d7eedd366830005c1d7f717259de8655682c961b54d034b4de0ea470545cf8"
+        },
+        {
+          "path": "games/ashenspire/packs/core/provisionalPolicies.json",
+          "id": "ashen.core-content",
+          "version": "1.0.0",
+          "hash": "sha256:5d2712b0677f52bc53940dc1f58d9f94b624fab82dab378a787e673af3261310"
+        },
+        {
+          "path": "games/ashenspire/packs/core/resourceVariants.json",
+          "id": "ashen.core-content",
+          "version": "1.0.0",
+          "hash": "sha256:ba5d1b0af898660fb55ba07e053c19efdbe83b30ee640cb8bb840b7ebb5eaf74"
+        },
+        {
+          "path": "games/ashenspire/packs/core/rests.json",
+          "id": "ashen.core-content",
+          "version": "1.0.0",
+          "hash": "sha256:bfefe718bc5e9d260ec49dcdb4dd3f25dcc6ad638bda18ed8178f4916d1be76b"
+        },
+        {
+          "path": "games/ashenspire/packs/core/rewards.json",
+          "id": "ashen.core-content",
+          "version": "1.0.0",
+          "hash": "sha256:de615f325186601e662053f0f45189d4051f33aa4eb0789615dca176ab8099a0"
+        },
+        {
+          "path": "games/ashenspire/packs/core/routes.json",
+          "id": "ashen.core-content",
+          "version": "1.0.0",
+          "hash": "sha256:4be1fee3208796e7a84d229141695fe39a7f95726033d6ccd62344c0fa1264b6"
+        },
+        {
+          "path": "games/ashenspire/packs/core/shops.json",
+          "id": "ashen.core-content",
+          "version": "1.0.0",
+          "hash": "sha256:ba77194603609da10b1f2960d5f5784e1256cabb2fb99e22d909a27e86bbca8c"
+        },
+        {
+          "path": "games/ashenspire/packs/core/starterDeck.json",
+          "id": "ashen.core-content",
+          "version": "1.0.0",
+          "hash": "sha256:7e013299a9ca58f466f3f239401dc653d422169c310a9fab5d1579861a6db611"
+        },
+        {
+          "path": "games/ashenspire/packs/core/stats.json",
+          "id": "ashen.core-content",
+          "version": "1.0.0",
+          "hash": "sha256:4dde9f2e1968b325d9ba29a389175a148c70425959a5208ba82834449fd5b6c8"
+        }
+      ],
+      "runtimeABI": "ashen.runtime@1",
+      "numericPolicy": "ashen.adapter-numbers@1"
+    },
+    "current": {
+      "hash": "sha256:679fcf75c2501fc98de37df6e42cba08ca0084c4b4b94fc99b08c6ef88c8fd7f",
+      "formatVersion": 1,
+      "core": "ashen.current@1.0.0",
+      "artifacts": [
+        {
+          "path": "engine/contracts/game-profile.json",
+          "id": "ashen.runtime",
+          "version": "1.0.0",
+          "hash": "sha256:d3ef924c3fcbba008e71ac78ffba1aed29503699de7938944f54ba0baada081c"
+        },
+        {
+          "path": "engine/foundation/foundation.json",
+          "id": "ashen.runtime",
+          "version": "1.0.0",
+          "hash": "sha256:d088f943d538b0183b0b0a6462ad0950dc473ea738497c455e8b04da360118e9"
+        },
+        {
+          "path": "engine/kernel/gameConfig.js",
+          "id": "ashen.runtime",
+          "version": "1.0.0",
+          "hash": "sha256:265054ebd68a176c5a22a5c78bcd9b3e86562328e42b4db80a35ee3d6c3666b1"
+        },
+        {
+          "path": "engine/kernel/kernel.json",
+          "id": "ashen.runtime",
+          "version": "1.0.0",
+          "hash": "sha256:e13532ae886a182a47c35d32384c1b42a5849c2ad537a30fb11aa7525d639847"
+        },
+        {
+          "path": "engine/modules/advanced-ui/defaults.json",
+          "id": "advanced-ui",
+          "version": "1.0.0",
+          "hash": "sha256:f5a953eeaa66a221404d7928b204e98cbc8baa14198445a445e1c20f32ba26f6"
+        },
+        {
+          "path": "engine/modules/advanced-ui/module.json",
+          "id": "advanced-ui",
+          "version": "1.0.0",
+          "hash": "sha256:1e0c6c5243961f733b33f88d7f1c3f1b9e2fc56b1527652827b9913c05fb4136"
+        },
+        {
+          "path": "engine/modules/advanced-ui/settings.schema.json",
+          "id": "advanced-ui",
+          "version": "1.0.0",
+          "hash": "sha256:cd31a5558d31f26c52ec26543a338758a0d290ef9bd39fd80249605ac3473dee"
+        },
+        {
+          "path": "engine/modules/animation/defaults.json",
+          "id": "animation",
+          "version": "1.0.0",
+          "hash": "sha256:f5a953eeaa66a221404d7928b204e98cbc8baa14198445a445e1c20f32ba26f6"
+        },
+        {
+          "path": "engine/modules/animation/module.json",
+          "id": "animation",
+          "version": "1.0.0",
+          "hash": "sha256:70acf099701fe2effd7c5aca1037b238db8172b4266ac593bfb8a0a6b2bf37a0"
+        },
+        {
+          "path": "engine/modules/animation/settings.schema.json",
+          "id": "animation",
+          "version": "1.0.0",
+          "hash": "sha256:cd31a5558d31f26c52ec26543a338758a0d290ef9bd39fd80249605ac3473dee"
+        },
+        {
+          "path": "engine/modules/art/defaults.json",
+          "id": "art",
+          "version": "1.0.0",
+          "hash": "sha256:efa1abca8f577c0da0c3a10ccc03688da7e91c0788be1d29bec1b51d798790d5"
+        },
+        {
+          "path": "engine/modules/art/module.json",
+          "id": "art",
+          "version": "1.0.0",
+          "hash": "sha256:ecee1b58d04c285dbea675d2b8be1daf1cad535fe807aa90e932a609276715e0"
+        },
+        {
+          "path": "engine/modules/art/settings.schema.json",
+          "id": "art",
+          "version": "1.0.0",
+          "hash": "sha256:f2a7df5a1fb14210092f0c3a7dbe588d38ac917de87b613dc822445fb61e232d"
+        },
+        {
+          "path": "engine/modules/audio/defaults.json",
+          "id": "audio",
+          "version": "1.0.0",
+          "hash": "sha256:f5a953eeaa66a221404d7928b204e98cbc8baa14198445a445e1c20f32ba26f6"
+        },
+        {
+          "path": "engine/modules/audio/module.json",
+          "id": "audio",
+          "version": "1.0.0",
+          "hash": "sha256:bee4ddbd38e7443afc98968560aab9cf6d84ce705eb94523bb641a5299eb98aa"
+        },
+        {
+          "path": "engine/modules/audio/settings.schema.json",
+          "id": "audio",
+          "version": "1.0.0",
+          "hash": "sha256:cd31a5558d31f26c52ec26543a338758a0d290ef9bd39fd80249605ac3473dee"
+        },
+        {
+          "path": "engine/modules/cards/defaults.json",
+          "id": "cards",
+          "version": "1.0.0",
+          "hash": "sha256:d5ad68914a7e794d3621edf3e7bf77bf2f48857c5f8152f21e92c1e5b61bf184"
+        },
+        {
+          "path": "engine/modules/cards/module.json",
+          "id": "cards",
+          "version": "1.0.0",
+          "hash": "sha256:d3fc04369c8dd6ea0580231271ce9efac16b74dc08ae2629e0c302c9e1b587d8"
+        },
+        {
+          "path": "engine/modules/cards/settings.schema.json",
+          "id": "cards",
+          "version": "1.0.0",
+          "hash": "sha256:157b752e7007217b1c2e134c7bcd808a9312f1a506ca218eaf39566dd064c802"
+        },
+        {
+          "path": "engine/modules/character-creation/defaults.json",
+          "id": "character-creation",
+          "version": "1.0.0",
+          "hash": "sha256:a985e893be28d5ae5da242fcc2a8dbe84b1d2fd24bc0a0c6581e0251caad2743"
+        },
+        {
+          "path": "engine/modules/character-creation/module.json",
+          "id": "character-creation",
+          "version": "1.0.0",
+          "hash": "sha256:8be2fc8cb2d597216031069797e26bced81845e0f0542694d62336af1d192d8f"
+        },
+        {
+          "path": "engine/modules/character-creation/settings.schema.json",
+          "id": "character-creation",
+          "version": "1.0.0",
+          "hash": "sha256:27e48acf57ff46999f33c3ca08f18b9cd0ab244296672562d3178708eb5d736a"
+        },
+        {
+          "path": "engine/modules/class-selection/defaults.json",
+          "id": "class-selection",
+          "version": "1.0.0",
+          "hash": "sha256:8b7195f7bf56e604c1e2d55d1eb6adb3eb1864a3cfe12256e07ebe2f3b3bfde3"
+        },
+        {
+          "path": "engine/modules/class-selection/module.json",
+          "id": "class-selection",
+          "version": "1.0.0",
+          "hash": "sha256:e33c9af96068171c2e2aec8b94d34c99b23ed97f13a6b6703819a2cc25883524"
+        },
+        {
+          "path": "engine/modules/class-selection/settings.schema.json",
+          "id": "class-selection",
+          "version": "1.0.0",
+          "hash": "sha256:45a0504df5d4eb6bf348964e36945309b127f85d56cf78d62e54f1e6edce92b0"
+        },
+        {
+          "path": "engine/modules/damage-types/defaults.json",
+          "id": "damage-types",
+          "version": "1.0.0",
+          "hash": "sha256:74df29e3676f5fd665f0085b101cb49f9be9f276ee52e76e282dd654f91fee86"
+        },
+        {
+          "path": "engine/modules/damage-types/module.json",
+          "id": "damage-types",
+          "version": "1.0.0",
+          "hash": "sha256:6cb34fe8e48a9ea643b5748421c1d489cc2c67c223af14459f8077497d6dbeb5"
+        },
+        {
+          "path": "engine/modules/damage-types/settings.schema.json",
+          "id": "damage-types",
+          "version": "1.0.0",
+          "hash": "sha256:df98d4f5b099d98b25cc3325266fe539673d9c844c94f312a120884f4943ea7e"
+        },
+        {
+          "path": "engine/modules/defenses/defaults.json",
+          "id": "defenses",
+          "version": "1.0.0",
+          "hash": "sha256:c983cd65cb424211f907016e81fce0a17b73800e2d0197ab0708623368eefb02"
+        },
+        {
+          "path": "engine/modules/defenses/module.json",
+          "id": "defenses",
+          "version": "1.0.0",
+          "hash": "sha256:d9c632dfbd4d94e2a59ccbc7b0ba7492acf96f02da705550710da006d6989013"
+        },
+        {
+          "path": "engine/modules/defenses/settings.schema.json",
+          "id": "defenses",
+          "version": "1.0.0",
+          "hash": "sha256:c212c3f24a8017a70acf42b5ae529f337866445ce3aa602768f5af3be61707ba"
+        },
+        {
+          "path": "engine/modules/dialogue/defaults.json",
+          "id": "dialogue",
+          "version": "1.0.0",
+          "hash": "sha256:f5a953eeaa66a221404d7928b204e98cbc8baa14198445a445e1c20f32ba26f6"
+        },
+        {
+          "path": "engine/modules/dialogue/module.json",
+          "id": "dialogue",
+          "version": "1.0.0",
+          "hash": "sha256:b0c494e8e9d3b0ac449bc57658c6aa1afc66d941fdafa64551d6efebf40db687"
+        },
+        {
+          "path": "engine/modules/dialogue/settings.schema.json",
+          "id": "dialogue",
+          "version": "1.0.0",
+          "hash": "sha256:cd31a5558d31f26c52ec26543a338758a0d290ef9bd39fd80249605ac3473dee"
+        },
+        {
+          "path": "engine/modules/dungeons/defaults.json",
+          "id": "dungeons",
+          "version": "1.0.0",
+          "hash": "sha256:f5a953eeaa66a221404d7928b204e98cbc8baa14198445a445e1c20f32ba26f6"
+        },
+        {
+          "path": "engine/modules/dungeons/module.json",
+          "id": "dungeons",
+          "version": "1.0.0",
+          "hash": "sha256:bbef883b17bae5d94b632cd951747161e48f113b1f378dcd158c4a2f59ea4110"
+        },
+        {
+          "path": "engine/modules/dungeons/settings.schema.json",
+          "id": "dungeons",
+          "version": "1.0.0",
+          "hash": "sha256:cd31a5558d31f26c52ec26543a338758a0d290ef9bd39fd80249605ac3473dee"
+        },
+        {
+          "path": "engine/modules/effects/defaults.json",
+          "id": "effects",
+          "version": "1.0.0",
+          "hash": "sha256:6781d6b6dd947cfb37fb182035f6e00513a4f65b85d4054abfeb4b9100c83010"
+        },
+        {
+          "path": "engine/modules/effects/module.json",
+          "id": "effects",
+          "version": "1.0.0",
+          "hash": "sha256:966d061ecedfbb5082d962f17f4e596cca40591290a1bb64ceecabf3aea439be"
+        },
+        {
+          "path": "engine/modules/effects/settings.schema.json",
+          "id": "effects",
+          "version": "1.0.0",
+          "hash": "sha256:cc0adebde96842eeb9ffbcb307ad3a3974452545a92c4e84d432ae83ecfc0c1c"
+        },
+        {
+          "path": "engine/modules/equipment/defaults.json",
+          "id": "equipment",
+          "version": "1.0.0",
+          "hash": "sha256:5b7d0a170fd033c0a89ab8aa24ac5f2c0bce7756351d85dd7d3e76cd55732dc7"
+        },
+        {
+          "path": "engine/modules/equipment/module.json",
+          "id": "equipment",
+          "version": "1.0.0",
+          "hash": "sha256:0c90c0934c0e73b82787875c97b92b4684926d79eefe4f8d637c39ed9dd972e9"
+        },
+        {
+          "path": "engine/modules/equipment/settings.schema.json",
+          "id": "equipment",
+          "version": "1.0.0",
+          "hash": "sha256:aa3ddeb23e6c55fbe704f83886521eab74e4f71ebf6a0719ca126dbbcbf692b5"
+        },
+        {
+          "path": "engine/modules/intent/defaults.json",
+          "id": "intent",
+          "version": "1.0.0",
+          "hash": "sha256:6ac228e2ffec18da283cceea5e3fd9ad85b4fc1cac27004af6ba6371132279b4"
+        },
+        {
+          "path": "engine/modules/intent/module.json",
+          "id": "intent",
+          "version": "1.0.0",
+          "hash": "sha256:10d3b308a18c59e1378bc362088b89f55d8bb0fae56efb89695f03052d0f2634"
+        },
+        {
+          "path": "engine/modules/intent/settings.schema.json",
+          "id": "intent",
+          "version": "1.0.0",
+          "hash": "sha256:58360cd61e761c1c0c1f9e7e9fa51e606c9442d8653e6bbba21db12b23faf3c7"
+        },
+        {
+          "path": "engine/modules/multiplayer/defaults.json",
+          "id": "multiplayer",
+          "version": "1.0.0",
+          "hash": "sha256:f5a953eeaa66a221404d7928b204e98cbc8baa14198445a445e1c20f32ba26f6"
+        },
+        {
+          "path": "engine/modules/multiplayer/module.json",
+          "id": "multiplayer",
+          "version": "1.0.0",
+          "hash": "sha256:491756ca3459f1a2faed48f58db9731a42908ee2f6b1a266c1cd2e3c019b48bb"
+        },
+        {
+          "path": "engine/modules/multiplayer/settings.schema.json",
+          "id": "multiplayer",
+          "version": "1.0.0",
+          "hash": "sha256:cd31a5558d31f26c52ec26543a338758a0d290ef9bd39fd80249605ac3473dee"
+        },
+        {
+          "path": "engine/modules/posture/defaults.json",
+          "id": "posture",
+          "version": "1.0.0",
+          "hash": "sha256:f5a953eeaa66a221404d7928b204e98cbc8baa14198445a445e1c20f32ba26f6"
+        },
+        {
+          "path": "engine/modules/posture/module.json",
+          "id": "posture",
+          "version": "1.0.0",
+          "hash": "sha256:e419075dddb75f4e6837b42281ff5469e8119846fd89c7d7363a0fea241683f2"
+        },
+        {
+          "path": "engine/modules/posture/settings.schema.json",
+          "id": "posture",
+          "version": "1.0.0",
+          "hash": "sha256:cd31a5558d31f26c52ec26543a338758a0d290ef9bd39fd80249605ac3473dee"
+        },
+        {
+          "path": "engine/modules/progression/defaults.json",
+          "id": "progression",
+          "version": "1.0.0",
+          "hash": "sha256:2a64ef7652726885ea0e1f1455c649133e5b384576129af3e08c8c908aafc8d1"
+        },
+        {
+          "path": "engine/modules/progression/module.json",
+          "id": "progression",
+          "version": "1.0.0",
+          "hash": "sha256:c95424a9e60fcfa03ed51f1140a1f0aff70130fb6f5d09bb8df096c3eee70d1b"
+        },
+        {
+          "path": "engine/modules/progression/settings.schema.json",
+          "id": "progression",
+          "version": "1.0.0",
+          "hash": "sha256:df250a24c43a1e5a971c3b5e5f0269245f350c832ac9e6406624e321e34a636c"
+        },
+        {
+          "path": "engine/modules/quests/defaults.json",
+          "id": "quests",
+          "version": "1.0.0",
+          "hash": "sha256:f5a953eeaa66a221404d7928b204e98cbc8baa14198445a445e1c20f32ba26f6"
+        },
+        {
+          "path": "engine/modules/quests/module.json",
+          "id": "quests",
+          "version": "1.0.0",
+          "hash": "sha256:1935369e44f4c17a5194cbb4e4b2cd20cc790645072a8a013d948d63b7cc2b66"
+        },
+        {
+          "path": "engine/modules/quests/settings.schema.json",
+          "id": "quests",
+          "version": "1.0.0",
+          "hash": "sha256:cd31a5558d31f26c52ec26543a338758a0d290ef9bd39fd80249605ac3473dee"
+        },
+        {
+          "path": "engine/modules/reactions/defaults.json",
+          "id": "reactions",
+          "version": "1.0.0",
+          "hash": "sha256:f9bfdc69d7eaa9f41a6a3265efe56a8f1b9ae56c94a265766b6826d51f7fadc8"
+        },
+        {
+          "path": "engine/modules/reactions/module.json",
+          "id": "reactions",
+          "version": "1.0.0",
+          "hash": "sha256:8841df2ce83f760232165207276e45da5f4b7643718773a6a97631d2f3f72f85"
+        },
+        {
+          "path": "engine/modules/reactions/settings.schema.json",
+          "id": "reactions",
+          "version": "1.0.0",
+          "hash": "sha256:63e00f28647fbec410451d980e1135df1f231f58fee4e978f51f2c4f905a5cc9"
+        },
+        {
+          "path": "engine/modules/resources/defaults.json",
+          "id": "resources",
+          "version": "1.0.0",
+          "hash": "sha256:7f7da4845b2e94c2fcb4754fec54afd5b382b6b48b729d6c094b69f449a686d9"
+        },
+        {
+          "path": "engine/modules/resources/module.json",
+          "id": "resources",
+          "version": "1.0.0",
+          "hash": "sha256:531797c8f12417497fc4bca95e4b3013088c9ead06ba011585cd1d675aa0ac63"
+        },
+        {
+          "path": "engine/modules/resources/settings.schema.json",
+          "id": "resources",
+          "version": "1.0.0",
+          "hash": "sha256:25b2764af2418855649e2bdf2a3a8a2de8ff68c28205df65528da7bdf31016ea"
+        },
+        {
+          "path": "engine/modules/rest/defaults.json",
+          "id": "rest",
+          "version": "1.0.0",
+          "hash": "sha256:5f1b3d8fbeeff88f2eb950c905ec5c63e998f7030768e0491caad4d2f6e6ac60"
+        },
+        {
+          "path": "engine/modules/rest/module.json",
+          "id": "rest",
+          "version": "1.0.0",
+          "hash": "sha256:29f068fa8dd5570d2c3358a25ff4ee8c46b5eddf96e21fcbac38c5bac2d06306"
+        },
+        {
+          "path": "engine/modules/rest/settings.schema.json",
+          "id": "rest",
+          "version": "1.0.0",
+          "hash": "sha256:bfb143b324fda872c682320ae63632c156d215c1076edde8b671b2608a455689"
+        },
+        {
+          "path": "engine/modules/rewards/defaults.json",
+          "id": "rewards",
+          "version": "1.0.0",
+          "hash": "sha256:d773c37535395b75346c375489fe6d987e807d4d29c354600f231bcb51ca911b"
+        },
+        {
+          "path": "engine/modules/rewards/module.json",
+          "id": "rewards",
+          "version": "1.0.0",
+          "hash": "sha256:26ac11b84c80bd88e94b489d0a9d718a2bc2ba5babad7ab9b3dc7a00fcb02ca9"
+        },
+        {
+          "path": "engine/modules/rewards/settings.schema.json",
+          "id": "rewards",
+          "version": "1.0.0",
+          "hash": "sha256:c86375307f36ad55573603737f9f4420633282912e66948b732351f38868bbbe"
+        },
+        {
+          "path": "engine/modules/routes/defaults.json",
+          "id": "routes",
+          "version": "1.0.0",
+          "hash": "sha256:01cd71f391ef6e82a42cd7abc5c2d4e085ed276d8b3bdad26fed3ccd228d48b9"
+        },
+        {
+          "path": "engine/modules/routes/module.json",
+          "id": "routes",
+          "version": "1.0.0",
+          "hash": "sha256:c490a22a6f704fdf42f4ffba1f74946f19ffddb082ab8d1e1f89a1152d5c9b78"
+        },
+        {
+          "path": "engine/modules/routes/settings.schema.json",
+          "id": "routes",
+          "version": "1.0.0",
+          "hash": "sha256:27fcafd108a02766ee6da46763b8b83414f8d00ecf6ce1412b8ae610107bae59"
+        },
+        {
+          "path": "engine/modules/shops/defaults.json",
+          "id": "shops",
+          "version": "1.0.0",
+          "hash": "sha256:f803a639c7c88d15270d36488ea21e4e64d90532bc7e8da806932e71f149337d"
+        },
+        {
+          "path": "engine/modules/shops/module.json",
+          "id": "shops",
+          "version": "1.0.0",
+          "hash": "sha256:ed7a3fe07590810d685c505b488942d320bbcc826c20252ba550b5e7e323d81a"
+        },
+        {
+          "path": "engine/modules/shops/settings.schema.json",
+          "id": "shops",
+          "version": "1.0.0",
+          "hash": "sha256:8f64f073c8195f5680190808cb682b338eeff96def538e289b56e0ab00eefc0d"
+        },
+        {
+          "path": "engine/modules/stances/defaults.json",
+          "id": "stances",
+          "version": "1.0.0",
+          "hash": "sha256:416b103a6e732e50ecb0dff1d64f9d253b16531a41ad9b6aef5c236ad168c15f"
+        },
+        {
+          "path": "engine/modules/stances/module.json",
+          "id": "stances",
+          "version": "1.0.0",
+          "hash": "sha256:bdcefef6e68d6f61817f23583e0e6fbf195e3d8569f55007c808d925068dac7c"
+        },
+        {
+          "path": "engine/modules/stances/settings.schema.json",
+          "id": "stances",
+          "version": "1.0.0",
+          "hash": "sha256:247f7882dd5c50a39fadbdba0e6e1afd8db645356799e0a1e859302d62030d5c"
+        },
+        {
+          "path": "engine/modules/stats/defaults.json",
+          "id": "stats",
+          "version": "1.0.0",
+          "hash": "sha256:4ada9e44833996477e007edfaf424faed64fb1db7e0787914132752dba13ba2e"
+        },
+        {
+          "path": "engine/modules/stats/module.json",
+          "id": "stats",
+          "version": "1.0.0",
+          "hash": "sha256:6dd7a116ad9b6bb67f24f4a9605dfd9a46e36b4450c0e40ec4227319fbb278d2"
+        },
+        {
+          "path": "engine/modules/stats/settings.schema.json",
+          "id": "stats",
+          "version": "1.0.0",
+          "hash": "sha256:da176820bb881e2f29859df7d2990e4c940afdf599d970c6c0703c0c1dd8c963"
+        },
+        {
+          "path": "engine/modules/statuses/defaults.json",
+          "id": "statuses",
+          "version": "1.0.0",
+          "hash": "sha256:218c8f81c48c2dac4053a136c6eec7cce35a5eca40598b3ecb1208ff4d67df9e"
+        },
+        {
+          "path": "engine/modules/statuses/module.json",
+          "id": "statuses",
+          "version": "1.0.0",
+          "hash": "sha256:5f17badae12cef9b83f22734fb815f143917dec13b40b2e22c5d5f6a60594462"
+        },
+        {
+          "path": "engine/modules/statuses/settings.schema.json",
+          "id": "statuses",
+          "version": "1.0.0",
+          "hash": "sha256:0ceac248551b24da67db0ccac3f8442c47f7c242e6473ff099d51bfb4c333da5"
+        },
+        {
+          "path": "games/ashenspire/bundles/current/bundle.json",
+          "id": "ashen.current",
+          "version": "1.0.0",
+          "hash": "sha256:98c79cc2960346a6297048eb85fe64d2e5d9779da17e03649678b2ad410d9cb9"
+        }
+      ],
+      "runtimeABI": "ashen.runtime@1",
+      "numericPolicy": "ashen.adapter-numbers@1"
+    }
+  }
+}

@@ -1,3 +1,4 @@
+import { configuredCombat, configuredModule, profileDamageReceipt } from './gameProfileCombat.js';
 // src/engine/actions.js — effect-DSL opcode implementations (SPEC §3.4)
 //
 // A queued ACTION is { effect, source, owner?, target?, card?, meta? }:
@@ -87,6 +88,7 @@ export function spellDamageDealtMultiplier(ctx, source, carrier) {
  * Pure (no mutation). Pass target = null to preview without defender mods.
  */
 export function computeAttackDamage(ctx, source, target, base, attackTags, carrier = null, { matchups = true, beforeDefense = false } = {}) {
+  if (configuredCombat(ctx)) return profileDamageReceipt(ctx, source, target, base, carrier).amount;
   const ratedBase = base + (carrier?.skipRatingBonus ? 0 : Ratings.cardRatingBonus(ctx, source, carrier, 'damage', base));
   if (ctx.foundation) {
     const amount = F.foundationDamage(ctx, source, target, ratedBase, carrier, attackTags || [], { beforeDefense }).amount;
@@ -219,6 +221,7 @@ export function rollCrit(ctx, source, tags) {
  */
 export function applyAttackDamage(ctx, source, target, base, attackTags, carrier = null) {
   if (!target || !target.alive) return 0;
+  if (configuredCombat(ctx)) return applyProfileDamage(ctx, source, target, base, carrier);
   if (ctx.combatExpansionVersion === 2) return applyExpandedDamage(ctx, source, target, base, attackTags, carrier);
   const targetStatusesBefore = structuredClone(target.statuses || {});
   if (F.consumeFoundationEvade(ctx, source, target, carrier)) return 0;
@@ -279,11 +282,36 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
   return dmg;
 }
 
+// One receipt evaluator drives configured live damage and detached previews.
+function applyProfileDamage(ctx, source, target, base, carrier) {
+  const chance = profileDamageReceipt(ctx, source, target, base, carrier);
+  const receipt = profileDamageReceipt(ctx, source, target, base, carrier,
+    { roll: chance.hitChance < 1 ? ctx.rng.float('profileAccuracy') : null });
+  const before = target.block || 0;
+  target.block = receipt.blockRemaining;
+  target.hp -= receipt.hpLoss;
+  ctx.emit('damageDealt', { sourceId: source?.id || null, targetId: target.id,
+    amount: receipt.amount, blocked: receipt.blocked, hpLoss: receipt.hpLoss,
+    poiseMitigated: receipt.poiseMitigated, evaded: receipt.evaded,
+    advantage: receipt.advantage, blockRemaining: target.block, isAttack: true });
+  if (before > 0 && target.block === 0) ctx.emit('blockBroken', { sourceId: source?.id, targetId: target.id });
+  if (receipt.hpLoss > 0) ctx.emit('hpLost', { targetId: target.id, amount: receipt.hpLoss, cause: 'attack' });
+  if (receipt.interrupted && target.kind === 'enemy' && target.alive) {
+    const limit = configuredModule(ctx, 'stances')?.staggerLimitPerTargetPerRound ?? 1;
+    const ledger = ctx.gameProfileInterrupts ||= {};
+    const key = `${ctx.turn}:${target.id}`;
+    if ((ledger[key] || 0) < limit) { ledger[key] = (ledger[key] || 0) + 1; staggerEnemy(ctx, target); }
+  }
+  afterHpChange(ctx, target, { sourceId: source?.id });
+  return receipt.amount;
+}
+
 /**
  * Barrier is Ward added past full: gaining it refills Ward first and only the
  * rest becomes Barrier, the blue layer that lasts until the owner's next turn.
  */
 export function gainBarrier(ctx, entity, base, card = null) {
+  if (configuredCombat(ctx)) return gainBlock(ctx, entity, base, card);
   if (!entity?.alive) return 0;
   const split = computeSpellDefenseGain(ctx, entity, base, card);
   if (split) return gainSpellDefenseAmount(ctx, entity, split, card);
@@ -729,6 +757,7 @@ export function addArcaneExposure(ctx, source, target, { school, attempted = nul
  * floored, min 0 (SPEC §4.2). Pure. Cap NOT applied here.
  */
 export function computeBlockGain(ctx, entity, base, card = null) {
+  if (configuredCombat(ctx)) return configuredModule(ctx, 'defenses')?.include?.includes('block') ? Math.max(0, Math.floor(base)) : 0;
   const split = computeSpellDefenseGain(ctx, entity, base, card);
   if (split) return split.block + split.ward;
   let amt = base + Ratings.cardRatingBonus(ctx, entity, card, 'block', base) + statuses.getAdd(ctx, entity, 'blockAdd');
@@ -803,6 +832,12 @@ function gainSpellDefenseAmount(ctx, entity, split, card) {
 
 /** gainBlock — mutating block gain with 'blockCap' modifier honored. */
 export function gainBlock(ctx, entity, base, card = null) {
+  if (configuredCombat(ctx)) {
+    const amount = computeBlockGain(ctx, entity, base, card);
+    entity.block = (entity.block || 0) + amount;
+    ctx.emit('blockGained', { targetId: entity.id, amount, total: entity.block });
+    return amount;
+  }
   if (!entity.alive) return 0;
   if (ctx.combatExpansionVersion === 2) {
     const split = computeSpellDefenseGain(ctx, entity, base, card);
@@ -1012,6 +1047,7 @@ export function staggerPlayer(ctx, player) {
  */
 export function dealPoiseDamage(ctx, entity, amount, { knowledgeMatchup = false, cause = null, source = null, cardId = null } = {}) {
   // `source` and `cardId` only name who dealt it in the receipt (an explicit amount never reads the source).
+  if (configuredCombat(ctx)) return; // Core Poise mitigation never fills a legacy break meter.
   if (ctx.ratingsRules) return Ratings.applyRatingImpact(ctx, source, entity, { damageSchool: 'physical' }, amount, { knowledgeMatchup, cause, cardId });
   if (!entity || !entity.alive || (entity.kind !== 'enemy' && entity.kind !== 'player')) return;
   if (!entity.poiseMeter || !(entity.poiseMeter.max > 0)) return;
@@ -1382,7 +1418,7 @@ function runOpcode(ctx, action, eff) {
           // balance.poise.playerImpactPerHit — the one impact the shipped
           // fight has (plan phase 8, SPEC §13.4k). The ruleset's weapon impact
           // below replaces it wherever a ruleset is handed in.
-          if (!ctx.ratingsRules && !ctx.foundation && !carrier.combatReaction && t.kind === 'player' && action.source && action.source.kind === 'enemy' && t.alive && t.hp < hpBefore) {
+          if (!configuredCombat(ctx) && !ctx.ratingsRules && !ctx.foundation && !carrier.combatReaction && t.kind === 'player' && action.source && action.source.kind === 'enemy' && t.alive && t.hp < hpBefore) {
             const perHit = ((ctx.registries.balance || {}).poise || {}).playerImpactPerHit;
             if (Number.isInteger(perHit) && perHit > 0) {
               dealPoiseDamage(ctx, t, perHit);
@@ -1452,6 +1488,15 @@ function runOpcode(ctx, action, eff) {
     }
     case 'gainPoise':
     case 'gainWard': {
+      if (configuredCombat(ctx)) {
+        if (eff.op === 'gainPoise' && configuredModule(ctx, 'defenses')?.include?.includes('poise')) {
+          for (const t of resolveTargets(ctx, action, eff.target)) {
+            t.gameProfilePoise = (t.gameProfilePoise || 0) + Math.max(0, evalNum(ctx, action, eff.amount, 0, t));
+            ctx.emit('meterGuardGained', { targetId: t.id, meter: 'poise', amount: t.gameProfilePoise, total: t.gameProfilePoise });
+          }
+        }
+        break;
+      }
       const meter = eff.op === 'gainPoise' ? 'poise' : 'ward';
       for (const t of resolveTargets(ctx, action, eff.target)) {
         // The same amount the preview shows: the base plus the card's rating bonus (computeMeterGuardGain).
@@ -1470,6 +1515,10 @@ function runOpcode(ctx, action, eff) {
       break;
     }
     case 'dodgeRoll': {
+      if (configuredCombat(ctx)) {
+        if (configuredModule(ctx, 'stances')?.include?.includes('evade')) action.source.combatStance = { maneuver: 'evade', camp: 'physical' };
+        break;
+      }
       if (ctx.combatExpansionVersion === 2) { Matchups.prepareCombatEvade(ctx, action.source, action.card?.combatProfile?.evade || {}); break; }
       if (ctx.foundation) { F.grantFoundationEvade(ctx, action.source); break; }
       // The dodge (framework contract: Weight Class and Dodge Roll). Player

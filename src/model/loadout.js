@@ -1,3 +1,4 @@
+import { gameModule } from './gameProfile.js';
 import { retiredAttackSlots, isPoolDeckRun } from './cardRemoval.js';
 import { tokenRe } from './tokens.js';
 import {
@@ -2114,6 +2115,7 @@ function playerInstalledGrants(run, desired) {
 }
 
 export function reconcileGrantedCards(registries, run) {
+  if (run.gameProfile?.foundation?.mode !== 'legacy' && run.gameProfile && (!gameModule(run, 'cards') || gameModule(run, 'cards')?.mode === 'configured')) return;
   if (!run.deck) run.deck = [];
   // A dealt deck (Sealed, Draft) keeps only the cards the player installed in
   // the worn equipment's mounts; every other lent card is swept (an older

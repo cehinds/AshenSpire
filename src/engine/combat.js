@@ -1,3 +1,4 @@
+import { configuredCombat, configuredModule, setProfileStance, profileCardCosts, profileHandSize, profileFallbackDamage, freezeProfile } from './gameProfileCombat.js';
 import { decayStanceRoundStart } from './combatMatchups.js';
 import { previewCardAttackHit } from './stanceHit.js';
 import { stanceOf, stanceStaminaCost } from '../model/stanceRules.js';
@@ -160,8 +161,13 @@ export function createCombat({
   // SPEC §4.11 (owner, 2026-10-12): the normal fight's momentum and multi-action toggles, frozen at New Run
   // (model/combatRounds.js normalPreviewFor). null — both off, or rounds mode on — stamps nothing.
   normalPreview = null,
-  combatExpansionVersion = 1, combatExpansionRules = null, combatKey = 'headless',
+  combatExpansionVersion = 1, combatExpansionRules = null, combatKey = 'headless', gameProfile = null,
 }) {
+  if (configuredCombat({ gameProfile })) {
+    // Keep the existing orchestrator; new profile providers replace legacy v2 extras.
+    combatExpansionVersion = 1; reactionRulesVersion = null; ratingsRules = null;
+    ruleset = null; combatRounds = null; normalPreview = null; recoveryRules = null;
+  }
   // New expanded fights carry reaction rules version 2; null (saved or explicit) stays without reactions.
   const reactionVersion = reactionRulesVersion === undefined ? (combatExpansionVersion === 2 ? 2 : null) : reactionRulesVersion;
   // Run creation owns derived Mana. Older headless fixtures without a Mana
@@ -196,6 +202,7 @@ export function createCombat({
       }).value
       : 0);
   const combat = {
+    ...(gameProfile ? { gameProfile: freezeProfile(structuredClone(gameProfile)) } : {}),
     ...(combatExpansionVersion === 2 ? { combatExpansionVersion, combatKey,
       combatExpansionRules: structuredClone(combatExpansionRules || { matchups: combatExpansionMatchups, statuses: combatStatusRules, ashenBlight: ASHEN_BLIGHT_RULES, equipment: combatExpansionEquipment }),
       allocatedAttributes: structuredClone(player.allocatedAttributes || player.attributes || {}) } : {}),
@@ -377,7 +384,7 @@ export function createCombat({
     }
   }
   // Deck → draw pile: shuffle (stream 'shuffle'), Innate cards to top (§4.1(1)).
-  const deck = player.deck.map((c) => ({
+  const deck = (configuredCombat(combat) && !configuredModule(combat, 'cards') ? [] : player.deck).map((c) => ({
     ...([1, 2].includes(combat.breakMeterVersion) ? { breakMeterVersion: combat.breakMeterVersion } : {}),
     instanceId: c.instanceId,
     cardId: c.cardId,
@@ -411,7 +418,9 @@ export function createCombat({
     ...(Number.isInteger(c.smithingLevel) ? { smithingLevel: c.smithingLevel } : {}),
     ...(c.sourceEquipmentInstanceId ? { sourceEquipmentInstanceId: c.sourceEquipmentInstanceId } : {}),
   }));
-  const isInnate = (card) => registries.framework.isInnate(resolveCard(registries, card));
+  const isInnate = (card) => configuredCombat(combat)
+    ? (resolveCombatCard(combat, card).keywords || []).includes('innate')
+    : registries.framework.isInnate(resolveCard(registries, card));
   if (orderedDraw) {
     // In deck order, and no `shuffle` value is consumed (SPEC §14.1).
     combat.orderedDraw = { order: deck.map((card) => card.instanceId) };
@@ -424,6 +433,11 @@ export function createCombat({
     refreshExpandedLoadout(combat, combat.player, { refreshPoise: false });
     const entry = Blight.rollAshenBlightEncounter(combat, combat.player, combatKey);
     if (entry.terminal) { combat.turn = 1; combat.player.alive = false; combat.player.hp = 0; combat.phase = 'ended'; combat.result = 'defeat'; combat.emit('ashenBlightLost', { targetId: combat.player.id, reason: 'encounter' }); return combat; }
+  }
+  if (configuredCombat(combat)) {
+    combat.handMax = profileHandSize(combat);
+    combat.gameProfileCommands = 0;
+    if (!configuredModule(combat, 'stances')) for (const entity of [combat.player, ...combat.enemies]) entity.combatStance = { maneuver: 'neutral' };
   }
   combat.emit('combatStart', {});
   // Optional Custom Climb buffs (generic — statuses are content ids, applied via
@@ -553,6 +567,12 @@ function startPlayerTurn(combat) {
   // Set energy to base (relics that add energy hook playerTurnStart) — less
   // what a Stagger took (plan phase 8): the loss is owed to the next turn only.
   p.energy = Math.max(0, p.energyMax - (p.pendingActionLoss || 0));
+  if (configuredCombat(combat)) {
+    combat.gameProfileCommands = 0;
+    const resources = configuredModule(combat, 'resources');
+    if (!resources?.include?.includes('sp')) p.energy = 0;
+    if (resources?.manaPerTurn) p.mana = Math.min(p.maxMana, p.mana + resources.manaPerTurn);
+  }
   combat.equipmentPoolDeficits.stamina = p.energyMax - p.energy;
   p.pendingActionLoss = 0;
   recoverRatingMeters(combat, p);
@@ -886,7 +906,7 @@ function enemyMoveActions(combat, enemy, move, moveId, carrier) {
       target: enemy, card: carrier, meta: { moveId } });
   }
   for (const eff of move.effects || []) {
-    if (carrier.combatProfile.maneuver !== 'counter' || !['damage', 'poiseDamage', ...(combat.combatExpansionVersion === 2 ? ['wardDamage'] : [])].includes(eff.op)) actions.push({ effect: eff, source: enemy, owner: enemy, target: combat.player, card: carrier, meta: { moveId } });
+    if (configuredCombat(combat) || carrier.combatProfile.maneuver !== 'counter' || !['damage', 'poiseDamage', ...(combat.combatExpansionVersion === 2 ? ['wardDamage'] : [])].includes(eff.op)) actions.push({ effect: eff, source: enemy, owner: enemy, target: combat.player, card: carrier, meta: { moveId } });
   }
   return actions;
 }
@@ -943,7 +963,8 @@ function presentIntent(combat, enemy, def, moveId) {
     delete enemy.intentRevealed;
   } else if (enemy.intent.combatProfile.camp) enemy.intentRevealed = combat.rng.float('enemyIntentVisibility') >= hiddenIntentChance(combat.attributes || {}, combat.combatIntentRules || {});
   else delete enemy.intentRevealed;
-  primeEnemyCounter(combat, enemy, def.moves[moveId], moveId);
+  if (configuredCombat(combat)) setProfileStance(combat, enemy, enemyMoveCarrier(enemy, def.moves[moveId], moveId, combat));
+  else primeEnemyCounter(combat, enemy, def.moves[moveId], moveId);
 }
 
 // The weighted pick (SPEC §4.6). `maxSp` is the SP left in the enemy's pool: a move that costs more is not picked
@@ -1009,7 +1030,8 @@ function buildIntent(move, moveId, enemy = null, combat = null) {
  * The action queue drains fully before this returns (SPEC §3.9).
  */
 export function dispatch(combat, intent) {
-  if (!combat._foundationTransaction && (combat.combatExpansionVersion === 2 || combat.foundation || ['playCard', 'unqueueCard', 'chooseDiscard'].includes(intent.type))) return F.foundationTransaction(combat, (candidate) => dispatch(candidate, intent), { advanceAction: intent.type === 'chooseDiscard' ? !combat.reactionResume : !['predictIntent', 'chooseReaction', 'setReactions'].includes(intent.type) });
+  if (combat.gameProfile) freezeProfile(combat.gameProfile);
+  if (!combat._foundationTransaction && (configuredCombat(combat) || combat.combatExpansionVersion === 2 || combat.foundation || ['playCard', 'unqueueCard', 'chooseDiscard'].includes(intent.type))) return F.foundationTransaction(combat, (candidate) => dispatch(candidate, intent), { advanceAction: intent.type === 'chooseDiscard' ? !combat.reactionResume : !['predictIntent', 'chooseReaction', 'setReactions'].includes(intent.type) });
   if (combat.result) throw new Error('Combat is over');
   combat._buffer = [];
   try {
@@ -1060,7 +1082,24 @@ export function dispatch(combat, intent) {
         drainQueue(combat);
         break;
       }
+      case 'basicAttack': {
+        if (!configuredCombat(combat) || configuredModule(combat, 'cards')) throw new Error('Basic attack fallback is unavailable');
+        if (combat.phase !== 'player') throw new Error('Not your turn');
+        const target = combat.enemies.find(enemy => enemy.id === intent.targetId && enemy.alive);
+        if (!target) throw new Error('Choose a living enemy');
+        const carrier = { combatProfile: { maneuver: 'attack', camp: 'physical' } };
+        setProfileStance(combat, combat.player, carrier);
+        A.applyAttackDamage(combat, combat.player, target, profileFallbackDamage(combat), [], carrier);
+        drainQueue(combat);
+        if (!combat.result) doEndTurn(combat);
+        break;
+      }
+      case 'pass':
+        if (!configuredCombat(combat)) throw new Error('Pass fallback is unavailable');
+        doEndTurn(combat);
+        break;
       case 'playCard':
+        if (configuredCombat(combat) && !configuredModule(combat, 'cards')) throw new Error('Cards are disabled');
         if (combat.combatRounds) queueRoundCard(combat, intent);
         else withPlayedCardStance(combat, intent, () => doPlayCard(combat, intent));
         break;
@@ -1381,6 +1420,10 @@ export function resolvedCardPlayCosts(combat, def, claimed = null) {
 // Restore cards show their full discounted price, although their own restore
 // funds part of the payment. Keep both amounts before payment clamps to zero.
 function resolvedCardPriceReceipt(combat, def, claimed = null) {
+  if (configuredCombat(combat)) {
+    const paid = profileCardCosts(combat, def);
+    return { paid, display: { action: paid.energy, stamina: paid.stamina, mana: paid.mana }, selfFunded: false };
+  }
   const weightClass = playerWeightClass(combat).weightClass;
   const pools = F.foundationCosts(combat, def, weightClass, combat.registries.framework.costProfile(def, { weightClass }));
   // A break-even restore pays its own part of the price (owner, 2026-10-13; model/actionCosts.js ownRestoreFunds).
@@ -1715,7 +1758,14 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
   if (charges.keys.length) combat.emit('cardChargeConsumed', { keys: charges.keys, cardId: inst.cardId, sourceId: p.id });
   combat.pendingAbilityPlay = { instance: inst, ref: cardRef, kind, printedManaCost: def.manaCost || 0, targetId: target?.id || null, before };
   const charged = new Set();
-  const tacticalEffects = prepareTacticalCard(combat, p, target, cardRef, chargedEffects, meta, { damageBonus: charges.damage + charges.damageEffect, poiseBonus: charges.break });
+  const tacticalEffects = configuredCombat(combat) ? chargedEffects
+    : prepareTacticalCard(combat, p, target, cardRef, chargedEffects, meta, { damageBonus: charges.damage + charges.damageEffect, poiseBonus: charges.break });
+  if (configuredCombat(combat)) {
+    const limit = configuredModule(combat, 'cards')?.freeCommandLimit ?? 32;
+    if ((combat.gameProfileCommands || 0) >= limit) throw new Error('Turn work budget reached; End Turn remains available');
+    combat.gameProfileCommands = (combat.gameProfileCommands || 0) + 1;
+    setProfileStance(combat, p, cardRef);
+  }
   const expandedActions = [];
   for (const [index, action] of F.cardActions(combat, { ...def, effects: tacticalEffects }, p, target, cardRef, meta, sourceSnapshots).entries()) {
     action.meta = { ...action.meta, abilityEffectIndex: index };
@@ -1723,7 +1773,7 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
     expandedActions.push(action);
   }
   enqueueExpandedAction(combat, expandedActions, { source: p, target, carrier: cardRef });
-  enqueueCounterWard(combat, p, cardRef, meta);
+  if (!configuredCombat(combat)) enqueueCounterWard(combat, p, cardRef, meta);
   combat.emit('cardPlayed', {
     ...before, abilityKind: cardRef.abilityKind, printedManaCost: def.manaCost || 0, sourceId: p.id,
     ...(combat.combatExpansionVersion === 2 ? { cardInstance: structuredClone(inst),
@@ -2419,7 +2469,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
           entry.sourceBuildup = structuredClone(carrier.resolvedSource.buildup || []);
           attackTags = carrier.tags;
         }
-        const isCounterReply = action.card.combatProfile?.maneuver === 'counter';
+        const isCounterReply = !configuredCombat(combat) && action.card.combatProfile?.maneuver === 'counter';
         entry.hits = isCounterReply
           ? previewCounter(primary, i).hitDamages.length
           : evalPreview(combat, action, eff.hits != null ? eff.hits : 1, primary);
@@ -2435,7 +2485,8 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
           entry.perTarget[e.id] = result.damage;
           entry.perTargetHitDamages[e.id] = result.hitDamages;
           if (primary?.id === e.id) Object.assign(entry, { value: result.damage,
-            hitDamages: result.hitDamages, totalDamage: result.totalDamage });
+            hitDamages: result.hitDamages, totalDamage: result.totalDamage,
+            ...(configuredCombat(combat) ? { hitChance: result.hitChance, uncertain: result.uncertain, hpLossBounds: result.hpLossBounds } : {}) });
         }
         if (entry.value == null && isCounterReply) {
           const result = previewCounter(primary, i);
