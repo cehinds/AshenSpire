@@ -7,6 +7,13 @@ import { makeAuditCombat, settleAuditChoices, setAuditHand, setAuditPredicate } 
 // Independent authored-op contracts. Conditional/triggered operations are reported
 // uncovered until a fixture establishes their predicates; preview is not the oracle.
 const immediateEvents = { damage: 'damageDealt', block: 'blockGained', heal: 'healed' };
+function assertConfiguredScope(audit, { configuration, allVariants = false, allEnemies = false }, unknown = {}) {
+  if (configuration !== 'configured-defaults') return;
+  const keys = Object.keys(unknown);
+  if (keys.length) throw new Error(`Unknown configured card-audit options: ${keys.join(', ')}`);
+  if (audit === 'refusals' || audit === 'cards' && allVariants === true && allEnemies === false) return;
+  throw new Error(`Configured defaults support only --all-variants (default two enemies) or --refusals; '${audit}' with these options is unsupported`);
+}
 export function assertImmediateContracts(def, events, instanceId) {
   const covered = [], uncovered = [];
   const preparesCounter = (def.cardTags || def.tags || []).includes('maneuver:counter');
@@ -27,9 +34,10 @@ export function assertImmediateContracts(def, events, instanceId) {
   }
   return { covered, uncovered };
 }
-export async function auditCards({ mode = 'native', allEnemies = false, allVariants = false } = {}) {
-  const api = await loadAuditRuntime(mode), inventory = auditInventory(api.registries);
-  const report = { mode, inventory: { cards: inventory.cardIds.length, classes: inventory.classes.length, candidates: inventory.variants.length },
+export async function auditCards({ mode = 'native', configuration = 'raw-authored', allEnemies = false, allVariants = false, ...unknown } = {}) {
+  assertConfiguredScope('cards', { configuration, allVariants, allEnemies }, unknown);
+  const api = await loadAuditRuntime(mode, { configuration }), inventory = auditInventory(api.registries);
+  const report = { mode, configuration: api.configuration, source: api.source, inventory: { cards: inventory.cardIds.length, classes: inventory.classes.length, candidates: inventory.variants.length },
     resourceDeltaChecks: 0, played: [], rejected: [], fixtureGaps: [], failures: [], contracts: {}, uncovered: {} };
   // First sweep isolates authored base definitions. Grades, carriers and upcast
   // conditions are separate coverage and are deliberately not claimed here.
@@ -136,9 +144,10 @@ function proveConditionalMutation(api, c, effect, chosen, inst, before, events, 
     }
   }
 }
-export async function auditConditionalCards({ mode = 'native' } = {}) {
-  const api = await loadAuditRuntime(mode), inventory = auditInventory(api.registries);
-  const report = { mode, verified: [], uncovered: [], failures: [] };
+export async function auditConditionalCards({ mode = 'native', configuration = 'raw-authored', ...unknown } = {}) {
+  assertConfiguredScope('conditions', { configuration }, unknown);
+  const api = await loadAuditRuntime(mode, { configuration }), inventory = auditInventory(api.registries);
+  const report = { mode, configuration: api.configuration, source: api.source, verified: [], uncovered: [], failures: [] };
   const eventTypes = { damage: 'damageDealt', block: 'blockGained', heal: 'healed', applyStatus: 'statusApplied', draw: 'cardDrawn', gainBarrier: 'barrierGained' };
   const seen = new Set();
   for (const variant of inventory.variants.filter(v => !v.instance.upgraded && !v.instance.profileId && v.upcastTier === undefined)) {
@@ -199,8 +208,9 @@ export async function auditConditionalCards({ mode = 'native' } = {}) {
   }
   return report;
 }
-export async function auditCounterLifecycle({ mode = 'native' } = {}) {
-  const api = await loadAuditRuntime(mode), cases = [];
+export async function auditCounterLifecycle({ mode = 'native', configuration = 'raw-authored', ...unknown } = {}) {
+  assertConfiguredScope('counter-lifecycle', { configuration }, unknown);
+  const api = await loadAuditRuntime(mode, { configuration }), cases = [];
   for (const scenario of ['eligible-blocked', 'eligible-unblocked', 'ineligible-spell', 'declined']) {
     const { combat: c } = makeAuditCombat(api, { classId: 'reaver', enemyIds: [scenario === 'ineligible-spell' ? 'mirrorScribe' : 'wanderingSoldier'],
       instance: { cardId: 'guardCounter', abilityRank: 0 }, relicIds: [] });
@@ -237,10 +247,11 @@ export async function auditCounterLifecycle({ mode = 'native' } = {}) {
     assert.equal(api.reactionPaused(c), false);
     cases.push({ scenario, returns: returns.length, consumed: consumed.length, choices: choices.length });
   }
-  return { mode, cases, failures: [] };
+  return { mode, configuration: api.configuration, source: api.source, cases, failures: [] };
 }
-export async function auditDeferredConditions({ mode = 'native' } = {}) {
-  const api = await loadAuditRuntime(mode), rows = [];
+export async function auditDeferredConditions({ mode = 'native', configuration = 'raw-authored', ...unknown } = {}) {
+  assertConfiguredScope('deferred-conditions', { configuration }, unknown);
+  const api = await loadAuditRuntime(mode, { configuration }), rows = [];
   const instances = [
     { cardId: 'guardCounter', legacyAbility: true, upgraded: false },
     { cardId: 'guardCounter', legacyAbility: true, upgraded: true },
@@ -304,7 +315,7 @@ export async function auditDeferredConditions({ mode = 'native' } = {}) {
     rows.push({ instance, condition, truth, prepared: expected, returnHp: returned[0].amount, returnPoise: returned[0].poiseDamage,
       ...(instance.legacyAbility ? { complementaryCondition: { p: 'not', pred: condition } } : {}) });
   }
-  return { mode, rows, failures: [] };
+  return { mode, configuration: api.configuration, source: api.source, rows, failures: [] };
 }
 // Save service covers committed model state; add transient queue and RNG.
 // Derived preview caches are intentionally excluded: they are not gameplay state.
@@ -313,9 +324,10 @@ export function auditStateSnapshot(api, c) {
     queue: c.queue.map(({ source, owner, target, ...action }) => ({ ...action, sourceId: source?.id, ownerId: owner?.id, targetId: target?.id })),
     buffer: c._buffer, pendingExpansionActions: c.pendingExpansionActions });
 }
-export async function auditRefusals({ mode = 'native' } = {}) {
-  const api = await loadAuditRuntime(mode), inventory = auditInventory(api.registries);
-  const report = { mode, rejected: [], acceptedEmptyPools: [], failures: [] };
+export async function auditRefusals({ mode = 'native', configuration = 'raw-authored', ...unknown } = {}) {
+  assertConfiguredScope('refusals', { configuration }, unknown);
+  const api = await loadAuditRuntime(mode, { configuration }), inventory = auditInventory(api.registries);
+  const report = { mode, configuration: api.configuration, source: api.source, rejected: [], acceptedEmptyPools: [], failures: [] };
   const variants = inventory.variants.filter(v => !v.instance.upgraded && !v.instance.profileId && !v.instance.legacyAbility && v.upcastTier === undefined && (v.instance.abilityRank === undefined || v.instance.abilityRank === 0));
   for (const variant of variants) for (const scenario of ['wrong-side', 'empty-pools']) {
     const key = `${variant.key}/${scenario}`;
@@ -368,8 +380,48 @@ export async function auditRefusals({ mode = 'native' } = {}) {
   }
   return report;
 }
+export const cardAuditHelp = `Raw authored fixtures:
+  node tools/combat-audit/cards.mjs [--all-variants] [--all-enemies] [--bundled]
+  node tools/combat-audit/cards.mjs {--conditions|--refusals|--counter-lifecycle|--deferred-conditions} [--bundled]
+Validated configured v2 defaults:
+  node tools/combat-audit/cards.mjs --all-variants --configured-defaults [--bundled]
+  node tools/combat-audit/cards.mjs --refusals --configured-defaults [--bundled]
+Configured base-only, all-enemy, conditional, Counter-lifecycle and deferred-condition audits are unsupported.
+Use --help to print this usage without executing an audit.`;
+
+export function parseCardAuditArgs(args) {
+  const selectors = ['--conditions', '--refusals', '--counter-lifecycle', '--deferred-conditions'];
+  const known = new Set([...selectors, '--all-variants', '--all-enemies', '--configured-defaults', '--bundled', '--help']);
+  for (const arg of args) if (!known.has(arg)) throw new Error(`Unknown card-audit option '${arg}'`);
+  if (args.includes('--help')) return { help: true };
+  const selected = selectors.filter(flag => args.includes(flag));
+  if (selected.length > 1) throw new Error(`Conflicting card-audit modes: ${selected.join(', ')}`);
+  const audit = selected[0]?.slice(2) || 'cards';
+  const options = { mode: args.includes('--bundled') ? 'bundled' : 'native',
+    configuration: args.includes('--configured-defaults') ? 'configured-defaults' : 'raw-authored' };
+  if (audit === 'cards') {
+    options.allVariants = args.includes('--all-variants');
+    options.allEnemies = args.includes('--all-enemies');
+  } else if (args.includes('--all-variants') || args.includes('--all-enemies')) {
+    throw new Error('--all-variants and --all-enemies apply only to the card matrix');
+  }
+  assertConfiguredScope(audit, options);
+  return { help: false, audit, options };
+}
+
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const report = process.argv.includes('--deferred-conditions') ? await auditDeferredConditions({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native' }) : process.argv.includes('--refusals') ? await auditRefusals({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native' }) : process.argv.includes('--counter-lifecycle') ? await auditCounterLifecycle({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native' }) : process.argv.includes('--conditions') ? await auditConditionalCards({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native' }) : await auditCards({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native', allEnemies: process.argv.includes('--all-enemies'), allVariants: process.argv.includes('--all-variants') });
-  console.log(JSON.stringify(report));
-  if (report.failures.length || (report.fixtureGaps?.length || 0)) process.exitCode = 1;
+  try {
+    const command = parseCardAuditArgs(process.argv.slice(2));
+    if (command.help) console.log(cardAuditHelp);
+    else {
+      const audits = { cards: auditCards, conditions: auditConditionalCards, refusals: auditRefusals,
+        'counter-lifecycle': auditCounterLifecycle, 'deferred-conditions': auditDeferredConditions };
+      const report = await audits[command.audit](command.options);
+      console.log(JSON.stringify(report));
+      if (report.failures.length || (report.fixtureGaps?.length || 0)) process.exitCode = 1;
+    }
+  } catch (error) {
+    console.error(`combat-audit: ${error.message}`);
+    process.exitCode = 2;
+  }
 }

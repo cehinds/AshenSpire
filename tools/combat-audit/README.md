@@ -41,6 +41,19 @@ This is bounded coverage, not every possible state cross-product. Uncovered comb
 
 Reproduce with `node tools/combat-audit/cards.mjs --all-variants`, adding `--bundled` for the actual production transform. Other modes are `--conditions`, `--refusals`, `--counter-lifecycle` and `--deferred-conditions`; `--all-enemies` expands the base sweep. Focused modules have matching tests under `tests/combat-audit-*.test.mjs`. Keep raw output in scratch or CI artifacts. Unexpected failures and named capability gaps fail the command.
 
+The historical engine audit matrices above used **raw authored registries**. Raw `contentBundle` does not enable the live rating rules that `configuredContentBundle` resolves at application initialization. A bundled engine result proves the production compiler/loader on its stated fixture; it does not by itself prove the production settings. Those historical engine counts remain bound to their original source and raw configuration. Browser and hosted captures retain their own source, build and configuration identities.
+
+Use `--configured-defaults` to select the application’s new v2 run configuration explicitly: the selected native or production loader calls `advancedConfigSnapshot()` and `configuredContentBundle`, with `breakMeterVersion: 2` overriding the snapshot's legacy value of 1 exactly as `main.js` does for a new expanded run. This mode enables the resolved default ratings; it does not change the high-HP/resource capability fixtures into normal campaign progress. The default remains `raw-authored` for comparison. Every card report names its loader/configuration and records source byte hashes; configured reports also embed the complete run snapshot, explicit v2 override and resolved content, with SHA-256 digests.
+
+Configured defaults are supported only for the full variant matrix against the default Soldier/Knight pair and for the wrong-side/empty-pool refusal matrix. The four commands below are the supported configured invocations. Base-only, all-enemy, conditional, Counter-lifecycle and deferred-condition configured audits are rejected before loading or execution: their broader semantics and raw-only oracles have not been validated for this configuration. Exported APIs enforce the same boundary: `auditCards` requires `allVariants: true` and `allEnemies: false`, while `auditRefusals` accepts the configured mode. Other configured API modes and unknown options fail explicitly. Raw Counter/deferred-condition oracles retain their original assertions and source scope. `--help` prints the supported commands; conflicting mode flags and unknown CLI options are errors.
+
+```sh
+node tools/combat-audit/cards.mjs --all-variants --configured-defaults
+node tools/combat-audit/cards.mjs --all-variants --configured-defaults --bundled
+node tools/combat-audit/cards.mjs --refusals --configured-defaults
+node tools/combat-audit/cards.mjs --refusals --configured-defaults --bundled
+```
+
 
 ## Resumed delivery validation, 2026-10-15
 

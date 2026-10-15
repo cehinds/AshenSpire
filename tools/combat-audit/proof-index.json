@@ -418,5 +418,169 @@
     "logSha256": "31e7a42ff242ef76b96e2a360a674d4b2ae7c4c729b141c2da4dcb20f4f59b3e",
     "rawLog": "scratch/full-combat-audit/resume-c54-targeted-tests.log (untracked)",
     "claim": "Focused source checks only. Full matrices and compiled browser360 retain their original source identities; fresh compiled-browser and hosted proof remain pending."
+  },
+  "historicalCardConfiguration": {
+    "mode": "raw-authored",
+    "ratingsEnabled": false,
+    "proofNames": [
+      "variants-native",
+      "variants-bundled",
+      "refusals-native",
+      "refusals-bundled"
+    ],
+    "scope": "Historical card matrices used raw authored registries. A bundled loader verifies compilation/loading, independently of configured new-run settings. The original source, counts and hashes above remain historical."
+  },
+  "configuredDefaultsValidation": {
+    "date": "2026-10-15",
+    "gameplayCommit": "8aaab585923a49dac618e28b5ac7c2758af9cd31",
+    "auditHarnessCommit": "c35ebaca9ac23387a6c8c4303f4d501a09b15629",
+    "integratedCommit": "30310f07452a6b5dd9b7bca3f18280766427a38a",
+    "configuration": {
+      "mode": "configured-defaults",
+      "snapshot": {
+        "breakMeterVersion": 2,
+        "classMasteryVersion": 1,
+        "overrides": {},
+        "ratingsVersion": 1,
+        "schemaVersion": 1,
+        "xpCurveVersion": 1
+      },
+      "snapshotSha256": "9680ab2559d49102c024bf6fd8fdf8ff4889bf9a39c83c84bf7e06a048c29270",
+      "v2RunOverride": {
+        "breakMeterVersion": 2
+      },
+      "resolvedContentSha256": "14d07c03473e5bf38b4085bb1a771bb19da8dcdae05038fb39f4bde46e2cddc2"
+    },
+    "source": {
+      "auditFiles": {
+        "tests/helpers/production-bundle.mjs": "2c0e0b4ee6d2368db874956f4b61af226170a15d186f4a38c50a0bbe92b21086",
+        "tools/combat-audit/cards.mjs": "f4e73e94f4b416e68d4239add9743a78f6e089f78efb516f479d130884fea62a",
+        "tools/combat-audit/fixtures.mjs": "5046820dac61a4fc9b2d80577d8b3c77b2f70cbcac3b4c5c6d6d59e00778ef36",
+        "tools/combat-audit/inventory.mjs": "0e90520a25591643c5d9260902d5b9c7efa067e95fc1453d12ea7a7b20cc2e38",
+        "tools/combat-audit/runtime.mjs": "a7ad654849856816b47aaead19f6ec047df506508a1f38e3108b121b146d80de"
+      },
+      "files": 796,
+      "method": "sha256(sorted repository path + NUL + exact bytes + NUL); all src/**/*.js, index.html, tools/bundle.mjs",
+      "sha256": "41611221b35af8948bc8223e6b4a24138ad36b5fccd0f01fb50e6d524fea7162"
+    },
+    "sourceScope": "These first configured reports tested the 8aa gameplay/c35 tooling candidate before the derived PR2017 receipt. At b3498d02bd148af6cf0849e13b4ef58c3fc1b743, only derived changelog text changed beyond that tested product source. The subsequent Counterstrike support-preview fix is a separate source-bound phase in counterstrikeFollowup.",
+    "rawEvidenceDirectory": "/workspace/scratch/rogue-projection/configured-matrix (untracked local reports, not an uploaded artifact)",
+    "commands": [
+      "node tools/combat-audit/cards.mjs --all-variants --configured-defaults",
+      "node tools/combat-audit/cards.mjs --all-variants --configured-defaults --bundled",
+      "node tools/combat-audit/cards.mjs --refusals --configured-defaults",
+      "node tools/combat-audit/cards.mjs --refusals --configured-defaults --bundled"
+    ],
+    "proofs": [
+      {
+        "name": "variants-native",
+        "sha256": "666402b9bbb573cc60d1c37688ed666fe5342e5eb2b82033c66abd36322c4d6f",
+        "loader": "native",
+        "failures": 0,
+        "candidates": 1892,
+        "intents": 3784,
+        "paidPlays": 3760,
+        "namedRefusals": 24,
+        "fixtureGaps": 0,
+        "resourceLedgers": 3760,
+        "contracts": {
+          "block": 878,
+          "counter-preparation": 564,
+          "damage": 1628,
+          "heal": 114
+        },
+        "uncovered": {
+          "addCard": 40,
+          "applyStatus": 964,
+          "block": 40,
+          "buildup": 1176,
+          "damage": 340,
+          "deferred-damage": 92,
+          "deferred-poiseDamage": 204,
+          "discard": 16,
+          "draw": 784,
+          "enterStance": 44,
+          "gainBarrier": 958,
+          "gainEnergy": 84,
+          "gainWard": 4,
+          "grantCardCharge": 40,
+          "grantRollMode": 8,
+          "heal": 56,
+          "loseHp": 64,
+          "poiseDamage": 292,
+          "removeStatus": 128,
+          "restoreMana": 16
+        }
+      },
+      {
+        "name": "refusals-native",
+        "sha256": "f76b2ad9edb5ed10e7098e12a0abb2eecb1629e438928f17cefdb67ba6bd6460",
+        "loader": "native",
+        "failures": 0,
+        "namedRefusals": 1013,
+        "acceptedZeroNetPrice": 33
+      },
+      {
+        "name": "variants-bundled",
+        "sha256": "5869d97ae096962446de2df32f085c0aa48eeb52d7f6ae40f77f7de0f2a42a07",
+        "loader": "bundled",
+        "failures": 0,
+        "candidates": 1892,
+        "intents": 3784,
+        "paidPlays": 3760,
+        "namedRefusals": 24,
+        "fixtureGaps": 0,
+        "resourceLedgers": 3760,
+        "contracts": {
+          "block": 878,
+          "counter-preparation": 564,
+          "damage": 1628,
+          "heal": 114
+        },
+        "uncovered": {
+          "addCard": 40,
+          "applyStatus": 964,
+          "block": 40,
+          "buildup": 1176,
+          "damage": 340,
+          "deferred-damage": 92,
+          "deferred-poiseDamage": 204,
+          "discard": 16,
+          "draw": 784,
+          "enterStance": 44,
+          "gainBarrier": 958,
+          "gainEnergy": 84,
+          "gainWard": 4,
+          "grantCardCharge": 40,
+          "grantRollMode": 8,
+          "heal": 56,
+          "loseHp": 64,
+          "poiseDamage": 292,
+          "removeStatus": 128,
+          "restoreMana": 16
+        }
+      },
+      {
+        "name": "refusals-bundled",
+        "sha256": "7b1ecfe2c5e9bb9816504be8ee9d5cc756f4670d1b0c63a0cf8a9fe0547fe8d5",
+        "loader": "bundled",
+        "failures": 0,
+        "namedRefusals": 1013,
+        "acceptedZeroNetPrice": 33
+      }
+    ],
+    "scope": "Canonical variants, payment/refusal atomicity, recovery and follow-up play only; this does not replace the historical conditional/effect matrices or prove all effect amounts, RNG states, settings overrides or browser inputs."
+  },
+  "counterstrikeFollowup": {
+    "gameplayCommit": "2eae12d09b8c265b3d11531d5f05b1a0acb88ec0",
+    "reviewedFiles": [
+      "src/engine/combat.js",
+      "src/engine/combatCardTactics.js",
+      "tests/spell-defense.test.mjs",
+      "tests/combat-preview-stance-parity.test.mjs"
+    ],
+    "generatedReceiptBlob": "c09ed1a5a1e17452f15db7a3a668ccad1e805b03",
+    "evidenceRecord": "docs/preview/full-combat-audit/accepted-stance-followup.md",
+    "scope": "Shared accepted-card preparation is projected on detached state without arming a live Counter. Final configured matrix metadata and compiled Rogue/Counter evidence are separately source-bound in the evidence record; the earlier configured reports above are not relabeled."
   }
 }
