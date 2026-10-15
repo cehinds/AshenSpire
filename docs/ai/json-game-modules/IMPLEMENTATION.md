@@ -1,6 +1,6 @@
 # JSON game modules: implementation instructions
 
-Status: implementation instructions delivered; gameplay changes are **not implemented**. This document describes proposed future development, not a claim that the proposed paths, schemas, CLI or runtime exist. Read [PSEUDOCODE.md](PSEUDOCODE.md) for algorithm sketches and [CONTINUE.md](CONTINUE.md) for continuation and handoff instructions. The parent README records delivery status. [ARCHITECTURE.md](ARCHITECTURE.md) defines the refined layer boundaries, state-owner catalog and illustrative manifest/pack formats. [CORE-SPEC.md](CORE-SPEC.md) is the canonical product-core specification: use its confirmed requirements, recommendations and open questions without copying unresolved numbers into implementation defaults. This revision supersedes the earlier minimal attack/pass product definition; runtime/source implementation remains pending.
+**Status: mixed.** The profile resolver, JSON schemas/defaults, Ashen core/current bundles, content pack, generated lock, authoring CLI and selected configured host adapters are implemented on the feature branch. The full target is not: the export is host-dependent (`ashen.legacy-adapter@1`), several catalogue modules are intentionally unsupported, and portable rules execution, broad provider extraction, Workbench integration and complete browser acceptance remain outstanding. This document retains target requirements but is not proof they are complete. Read [CONTINUE.md](CONTINUE.md) for the current bounded task, [README.md](README.md) for status, [ARCHITECTURE.md](ARCHITECTURE.md) for target boundaries, [PSEUDOCODE.md](PSEUDOCODE.md) for proposed algorithms, and [CORE-SPEC.md](CORE-SPEC.md) for product authority and provisional/pending values. The full Ashen profile, not the attack/pass fallback, is the product goal.
 
 ## Authority and working boundary
 
@@ -12,7 +12,7 @@ For this documentation delivery, only these instructions are being committed by 
 
 ## 1. Verify the live baseline before changing it
 
-The prior feature documentation tip is 49c5781fe; the runtime baseline remains 3d40c1909. Record source paths and current behavior in a short checked-in inventory. Confirm each cited seam in the current branch; line numbers drift. The live data compiler is tools/content-build.mjs, which reads content/source and emits src/content/generated. tools/config-build.mjs separately compiles content/config UI definitions. content/framework supplies the framework tree. Retain these as adapters during migration.
+Historical baseline hashes below are not current. Recheck the active feature tip and source before every change; line numbers and files move while workers integrate. Keep an inventory of remaining source seams, distinguishing migrated profile behavior from unchanged legacy authority. The live data compiler is tools/content-build.mjs, which reads content/source and emits src/content/generated. tools/config-build.mjs separately compiles content/config UI definitions. content/framework supplies the framework tree. Retain these as adapters during migration.
 
 Inspect src/engine/actions.js for effect execution; src/model/combatCardProfile.js for card resolution; src/model/loadout.js and src/model/state.js for initial equipment, grant sources and deck assembly. Inspect bridge/singleton registry paths and identify every global cache or RNG that could leak between two runtimes. Inventory src/model/worldAtlas.js, content/source/worldAtlas.json, src/content/mapconfig.js, content/source/legacyDungeons.json and src/content/shops.js. Character choices already use content/source/characterCreation.json. UI fields already use content/config/ui/components/card.json and src/model/cardFields.js; card-face phrase order still lives in src/model/cardFaceText.js.
 
@@ -22,7 +22,7 @@ Acceptance: an inventory distinguishes executable behavior, declarative live con
 
 ## 2. Freeze the authoring contract and examples
 
-The sole public entry shape is proposed as:
+The current public author entry shape is:
 
 ```json
 {
@@ -32,7 +32,7 @@ The sole public entry shape is proposed as:
 }
 ```
 
-This selects the complete four-class, ten-card Ashen core bundle, not the internal attack/pass harness. ashen.core@1.0.0 is an explicit versioned declaration of the same feature modules used elsewhere, with Ashen selections and settings; it is not a second monolithic implementation. A missing bundled module inherits its bundle selection/settings; a missing nonbundled module is off. false explicitly disables a module. true enables module defaults plus bundle overrides, preserving Ashen defaults. An object applies module defaults, then bundle settings, then author overrides. Do not introduce a parallel settings.enable registry. A second proposed example is:
+This selects the complete four-class, ten-card Ashen core bundle, not the internal attack/pass harness. ashen.core@1.0.0 is an explicit versioned declaration of the same feature modules used elsewhere, with Ashen selections and settings; it is not a second monolithic implementation. A missing bundled module inherits its bundle selection/settings; a missing nonbundled module is off. false explicitly disables a module. true enables module defaults plus bundle overrides, preserving Ashen defaults. An object applies module defaults, then bundle settings, then author overrides. Do not introduce a parallel settings.enable registry. A supported core override example is:
 
 ```json
 {
@@ -42,7 +42,7 @@ This selects the complete four-class, ten-card Ashen core bundle, not the intern
     "cards": true,
     "resources": { "include": ["sp", "mp"] },
     "defenses": { "include": ["block", "poise"], "order": ["block", "poise"] },
-    "stances": { "include": ["attack", "counter", "smash", "sweep", "prepare", "evade", "defend"] },
+    "stances": { "include": ["attack", "counter", "smash", "sweep", "prepared", "evade", "defend"] },
     "art": false
   }
 }
@@ -52,13 +52,13 @@ A versioned catalog maps these stable IDs to pinned manifests. Expand the declar
 
 Freeze definitions for typed IDs, values, state, commands, events, operation signatures and adapter versions. Specify canonical JSON ordering, numeric representation, finite-number restrictions, integer bounds, rounding, per-hit versus per-action application and mixed-damage allocation. Specify named RNG streams, draw order, scheduler ordering and a bounded declarative rules VM. The lock records the exact bundle and module versions, artifact hashes, contract versions, expanded selections, provenance and resolved gameplay hash. Native host extensions must declare a separately versioned execution capability; they are not portable declarative rules.
 
-Acceptance: positive examples include the full inherited Ashen bundle, explicit disabling of bundled modules with supported fallback content, nonbundled additions and selected narrow combinations. Separately exercise individual modules against the technical fallback harness; those cases do not redefine the product core. Negative examples include unknown IDs/settings, incompatible contracts, required missing references, invalid patches and unsupported portable behavior. Every example is machine-readable and tested against the real schema once it exists. The schemas in these instructions are proposals until implementation lands.
+Current status: the author shape and JSON schemas are implemented; the CLI resolves the full inherited core, supported explicit disables and rejects unsupported configured modules/instances. Nonbundled configured module additions are not a general supported extension path. Machine-readable validation and selected toggle tests exist, but the full combination and portable conformance matrix remains incomplete. The fallback harness does not redefine the product core.
 
 ## 3. Build the declared four-class playable core incrementally
 
 Keep the generic kernel separate from the product bundle. The kernel owns typed contracts, deterministic scheduling, registries, transactions and adapter boundaries. ashen.core@1.0.0 declares the feature-module selection/settings needed for the complete product in [CORE-SPEC.md](CORE-SPEC.md): cards, HP/SP/MP resources, stats, block/poise, seven stances, enhanced effects/statuses, reactions, equipment, fixed class selection, progression, routes/rest/shops/rewards and basic log/inspect/UI. Presentation uses fixed class appearances and required procedural lowpoly stand-ins. Do not hide legacy systems wholesale under a core name or create separate core copies of module mechanics.
 
-Begin with the four-class core manifest and a ten-card baseline scene, then a typed combat slice through live source seams and a future compatibility adapter; the full adapter is not implemented yet. Retain the legacy preset and entry path. An internal minimal attack/pass scene can prove transactions, targeting, enemy response, outcomes and saves before the product bundle is complete. Optionally name that fixture ashen.fallback@1.0.0; it is a technical fixture, not the current product core or default author example.
+The four-class core bundle, ten-card starter, core author file and profile-backed run/combat/rest/reward/shop adapters now exist. Continue closing the remaining behavior and UI acceptance gaps in small slices; preserve the legacy preset and entry path. The foundation attack/pass path is technical fallback, not the product example. Do not claim the current host adapter is a portable or complete engine-neutral runtime.
 
 The always-installed foundation, separate from the generic kernel, owns HP, attack/pass, targets, fallback enemy response/outcomes, launcher and basic log/inspect/presentation. Each capability has one authoritative state owner compiled into provider bindings once. The technical runtime must always have attack/pass fallback actions. Its fallback policy ends a turn opportunity after one baseline command independently of SP, MP or Actions. The full Ashen profile permits multiple card plays using SP/MP followed by End Turn; the fallback policy does not impose one card per product turn. Providers for action, target, stats, damage, navigation and presentation remain stable when features are explicitly disabled. Disabled stats/equipment use baseline values, defenses pass damage through, stances are neutral, and hidden intent leaves enemy planning active. Disabled routes/dungeons expose core activities; independently enabled shops, quests and dialogue remain reachable through that launcher. Fixed class selection explicitly disabled supplies the authored default eligible hero; optional character creation remains off unless selected; progression explicitly disabled is static.
 
@@ -68,11 +68,11 @@ Art disabled, missing or load-failed must show stand-ins using identical hitboxe
 
 ## 4. Package ownership and module catalog
 
-Use [ARCHITECTURE.md](ARCHITECTURE.md) for the full proposed hierarchy and ownership catalog. These paths are unimplemented; introduce only the slice being delivered, without bulk scaffolding. Generic infrastructure lives in engine/kernel/ and versioned contracts in engine/contracts/. Always-installed minimal gameplay lives in engine/foundation/, not the kernel or a user toggle. Reusable features live in engine/modules/<id>/ with module.json, settings.schema.json, defaults.json, guide.md and rules.json. Include state.schema.json whenever a module owns state, and content/ui/cases/integrations only where used. runtime.mjs is optional for an explicit native extension or host interpreter implementation; portability requires the declared contract, not JavaScript serialization.
+Use [ARCHITECTURE.md](ARCHITECTURE.md) for the target hierarchy and ownership catalog. Many paths and schemas already exist; add only missing files for a reviewed slice and never scaffold duplicates. Generic infrastructure lives in engine/kernel/ and versioned contracts in engine/contracts/. Always-installed minimal gameplay lives in engine/foundation/, not the kernel or a user toggle. Reusable features live in `engine/modules/<id>/`; current manifests, settings schemas, defaults and guides exist for the catalog. `rules.json`, `state.schema.json`, UI contributions and integration cases remain target additions where the implemented slice needs them. runtime.mjs is optional for an explicit native extension or host interpreter implementation; portability requires the declared contract, not JavaScript serialization.
 
 The public ashen.core@1.0.0 resolves to data-only games/ashenspire/bundles/core/bundle.json selecting module pins, settings and pack references. Game definitions live in packs/core/; fixed class selection is class-selection, while character-creation is a later optional feature off by default. Rest is an explicit core-selected module. Its policy coordinates cards' deck editor, equipment's inventory/upgrades/editor and progression's earned allocation without taking ownership of their state. Run progression and permanent profile unlocks have separate namespaces and lifetimes even under the progression package. Foundation owns baseline log/inspect and enemy response; do not fragment helpers into toggles.
 
-The canonical generated lock is games/ashenspire/game.lock.json, committed reproducible metadata. Generated exports/reports go to ignored build/game-config/ashenspire/. Tools, web/headless adapters and conformance vectors use engine/tools/, engine/adapters/ and engine/verification/. Extend workbench/modules/<configuration>/ through the existing ctx API. Existing src/content inputs remain canonical through a future compatibility adapter until each migration explicitly transfers its single authored owner; never keep two editable authoritative trees.
+`games/ashenspire/game.lock.json` is the current generated lock; the author CLI provides `validate`, `build`, `check`, `export` and `apply`. A full Workbench module UI and portable web/headless conformance suite remain target work. Existing `src/content` remains authoritative for unmigrated host behavior; only one authored source owns each migrated definition.
 
 Resources owns SP/MP/optional Actions and decorates foundation HP through its public capability; it never creates another HP pool, and disabling resources cannot remove HP. Any legacy HP selector becomes an alias to that foundation capability. Defenses provides selectable block/barrier/ward/poise instances with declared applicability and ordering, without freezing unresolved numeric or damage-stage policies here. Tags/groups select content or declared behavior references, never enable features; easy include lists remain supported. Pending advanced values and required unresolved references fail executable compilation.
 
@@ -114,17 +114,17 @@ Assign separate workers to non-overlapping module files, with one integration wo
 
 ## 7. Workbench, CLI, export and save discipline
 
-Build one resolver used by Workbench and CLI. Workbench supports validate, preview, apply to a new game, update configuration and export. Show errors with JSON paths, module ownership and unavailable-content reasons. Do not create a second editor-only interpretation of merges, versions or feature enablement. Any new module CLI commands are proposed work; document them as executable only after files and help output exist.
+The CLI resolver already provides `validate`, `build`, `check`, `export` and `apply`; export is host-dependent and `--portable` rejects the required legacy adapter. A full Workbench UI, preview flow and update UI remain target work. Do not describe proposed editor commands as implemented, or create a second interpretation of merging, versions or enablement.
 
 Distinguish configuration edits, module upgrades and save migrations. New games use current selected toggles. Running saves pin their exact lock and resolved hash; v1 has no hot unload. An upgrade proposes a new lock. A save migration is an explicit, tested, atomic operation with rollback and is not automatically authorized by editing a setting. Refuse incompatible saves without destroying their bytes.
 
 Export one engine-neutral resolved bundle containing contracts, manifests, canonical/projected content, declarative rules, UI descriptions, assets, lock and hashes. Preserve source/provenance references without exposing browser objects or HTML as behavior contracts. Web and headless are adapters; Unity/Unreal consumers should not need JavaScript execution merely to understand a direct-damage rule. Reject unsupported required native behavior with its owning path/capability; never omit a function and report a complete export.
 
-Acceptance: Workbench and CLI resolve identical bytes/hashes; export round trips in a non-web validation harness; unsupported required behavior fails explicitly; save mismatch and failed migration preserve the original save; unchanged comments do not change the gameplay hash.
+Remaining target acceptance: if/when Workbench is added, compare its output with the CLI; portable export round-trip is not implemented. Current CLI explicitly rejects unsupported configured modules/instances and portable export. Save profile mismatch preserves original bytes; no configured-save migration is provided.
 
 ## 8. Module guide and catalog template
 
-Every module guide must answer the following in plain language, with a minimal valid JSON example and one meaningful change example:
+Every guide should answer the following for supported configured behavior. Current guides cover settings, bundle selection, content sources, fallback and portability; they do not claim unsupported catalog modules are implemented. Add integration-specific state/operation details only when their adapter exists:
 
 1. What feature the player gains, its stable ID/version, whether the Ashen bundle selects it, and the authored fallback when explicitly disabled.
 2. Each setting's type, module default, inherited bundle override/provenance, unit, range, merge behavior and exact schema path; distinguish mechanic switches from visibility controls.
@@ -135,9 +135,9 @@ Every module guide must answer the following in plain language, with a minimal v
 7. Numeric/rounding policies and resource costs, especially disabled-resource behavior and loop prevention.
 8. Portability class, native extensions if any, adapter requirements and export limitations.
 9. Save compatibility/version policy and any separately authorized migration procedure.
-10. Behavior cases and runnable verification commands once implemented; include inherited bundle, fallback-harness enabled-alone, explicit disabled and integration outcomes. Include a new-module handoff listing catalog registration, owner, public contracts, authored fallback, guide, portable cases and required integration changes.
+10. Runnable behavior cases for each implemented slice; keep inherited bundle, fallback harness, explicit disabled and unimplemented integration outcomes clearly separated. For a future module, include a handoff with catalog registration, owner, public contract, authored fallback, guide, supported cases and required integration changes. A catalog entry alone must not be advertised as a configured feature.
 
-The catalog links each guide, pinned manifest, schema and representative case. Include a quick-start recipe for the inherited full Ashen core, its ten-card starters, a three-act eight-node-per-act route, custom shops and presentation settings. Explain that authors edit the one entry JSON and referenced content modules, while the resolver derives runtime artifacts.
+The catalog links each guide, manifest, schema and available behavior test. The author guide gives the inherited full core and small settings/content edits. The resolver derives runtime artifacts; the portable engine-neutral export remains outstanding.
 
 ## 9. Reviewer recommendation and user-goal acceptance matrix
 
@@ -167,11 +167,11 @@ For source work, start with scenario-specific tests and touched discovered test 
 
 Generate a supported-toggle matrix covering the complete inherited bundle, supported explicit feature disables/additions, fallback harness plus each module, all supported resource/defense selections and selected higher-order combinations. Invariants include at least one legal action, turn advance, reachable outcome, legal deck where cards are enabled, valid save/reload and isolated runtimes. Add targeted regression cases for reactions and transactional rollback, numeric allocation/rounding, fallback art and unsupported exports. Preserve baseline trace parity through the legacy preset while the migration remains partial.
 
-Browser review must exercise full four-class product-core win/lose/save, separately exercise fallback-harness outcomes, and meaningful module add/remove on new runs, rather than only rendering the settings screen. Capture desktop/mobile evidence for visible UI changes and use the verified feature-preview delivery path. Integrate only after review and applicable checks. Finish each phase with committed status: delivered files, exact SHAs, actual commands and results, remaining risks and next bounded task. Until source slices pass these gates, report this package as **documentation delivered, implementation pending**.
+Browser review must exercise full four-class product-core win/lose/save, separately exercise fallback-harness outcomes, and meaningful module add/remove on new runs, rather than only rendering the settings screen. Capture desktop/mobile evidence for visible UI changes and use the verified feature-preview delivery path. Integrate only after review and applicable checks. Finish each phase with committed status: delivered files, exact SHAs, actual commands and results, remaining risks and next bounded task. Report this package as **partially implemented, host-dependent, browser acceptance in progress** until the full product/browser/export gates pass. Do not let the attack/pass fallback or a green resolver test stand in for product completion.
 
 ## 11. Product-rule freeze and unresolved choices
 
-Use [CORE-SPEC.md](CORE-SPEC.md) as the detailed source for fixed loadouts, attributes/bonuses, weapon and armour families, level gains, starting hand, round reshuffle, class specials, replayable stacking powers, recovery, rewards, stance edges and animation states. It separates confirmed requirements from recommendations and pending answers. Current legacy formulas and traces are comparison fixtures, not authority to override this new ruleset. Source SPEC changes belong to future implementation slices, not this documentation revision.
+Use [CORE-SPEC.md](CORE-SPEC.md) as the detailed source for fixed loadouts, attributes/bonuses, weapon and armour families, level gains, starting hand, round reshuffle, class specials, replayable stacking powers, recovery, rewards, stance edges and animation states. It separates confirmed requirements from recommendations and pending answers. Current legacy formulas and traces are comparison fixtures, not authority to override this new ruleset. `SPEC.md` now includes a feature-only profile addendum; the older legacy sections remain authoritative for the legacy preset.
 
 The owner has resolved the Poise, starting attributes/hand size, and editor decisions; do not preserve their stale alternatives as pending gates. Use CORE-SPEC.md's exact six-total-attribute class table rather than adding six to every attribute or retaining the earlier all-seven proposal. Initial hand size is exactly 4+INT: five for most classes and six for Starseer. Applicable Poise damage taken is max(floor(d*.75),1). Both editors are enabled, but manual deck editing is restricted to the chosen Strategize service at rest spots; other services cannot open that editor; reward grants and ownership are separate from editing. Equipment-editor availability has its own timing policy: the owner did not restrict its location, so any safe noncombat-only recommendation must remain labeled a recommendation until specified, without reopening settled choices.
 
