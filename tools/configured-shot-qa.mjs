@@ -15,7 +15,14 @@ try {
     page.on('pageerror', error => errors.push(error.message));
     const url = new URL(base); url.searchParams.set('gameProfile', 'core'); url.searchParams.set('shot', shot); url.searchParams.set('shotSeed', '3');
     await page.goto(url.href, { waitUntil: 'domcontentloaded' });
-    if (shot === 'combat') await page.waitForFunction(() => Boolean(window.__combat), null, { timeout: 20000 });
+    if (shot === 'combat') {
+      await page.waitForFunction(() => Boolean(window.__combat), null, { timeout: 20000 });
+      const connected = await page.evaluate(() => {
+        const run = window.__combatRunForShot;
+        return run.path.length === run.floor && run.path.every((id, at) => !at || run.mapGraph.nodes[run.path[at - 1]].next.includes(id));
+      });
+      assert.equal(connected, true, 'combat pose retains one connected route through its floor');
+    }
     else await page.waitForSelector('.merchant-workspace', { timeout: 20000 });
     assert.deepEqual(errors, [], `${shot} fixture page errors`);
     await page.close();
