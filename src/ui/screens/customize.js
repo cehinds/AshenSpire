@@ -73,6 +73,8 @@ import { mountCreationInfoLayer } from '../components/creationInfoLayer.js';
 import { focusCreationClassPreview, openCreationStatDetail, openCreationRelicDetail } from '../components/creationPreviewDetails.js';
 import { placeAnchored, placeGap, viewportLocalBox, anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { classAvailable, classUnlockRow } from '../../model/unlocks.js';
+import { gameContent } from '../../model/gameProfile.js';
+import { profileClassChoiceIds } from '../models/ProfileClassChoiceModel.js';
 
 const CREATION_DERIVED_LABELS = Object.freeze({
   hp: 'HP',
@@ -994,13 +996,21 @@ export function mountCustomize(app, {
     classBox.dataset.view = state.classChoiceView;
     // Plan phase 5c: a class card the profile has not earned is listed locked,
     // with its unlock's hint; every shipped class is free until a row gates it.
-    const cards = (fixedCreation ? fixedClasses.map(row => registries.classes.get(row.id)) : registries.classes.all()).map((cls) => classChoiceCard(cls, {
+    const allClasses = fixedCreation ? fixedClasses.map(row => registries.classes.get(row.id)) : registries.classes.all();
+    const visibleClasses = fixedCreation && profileClassUnlocks
+      ? profileClassChoiceIds(allClasses.map(cls => cls.id), gameContent(gameProfile, 'classUnlocks'), eligibleClass)
+        .map(id => allClasses.find(cls => cls.id === id)).filter(Boolean)
+      : allClasses;
+    const cards = visibleClasses.map((cls) => classChoiceCard(cls, {
       selected: state.classChosen && cls.id === state.classId,
       expanded: !catalog && creationClassPreview() === 'unfold',
       visual: classGlyph(cls.id),
       mastery: fixedCreation ? null : masteryClassSummary(registries, meta, cls.id),
       locked: !eligibleClass(cls.id),
-      hint: eligibleClass(cls.id) ? null : (classUnlockRow(registries.unlocks, cls.id) || {}).hint || null,
+      lockIcon: fixedCreation && profileClassUnlocks && !eligibleClass(cls.id),
+      hint: eligibleClass(cls.id) ? null : profileClassUnlocks
+        ? t('creation.class.unlockNextRun')
+        : (classUnlockRow(registries.unlocks, cls.id) || {}).hint || null,
       onChoose: () => {
         if (state.classChosen && state.classId === cls.id) return;
         state.classId = cls.id; state.classChosen = true; resetClassChoices();

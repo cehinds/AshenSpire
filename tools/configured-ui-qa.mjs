@@ -11,7 +11,24 @@ try {
  const [{contentBundle},{createRegistries},{resolveGameProfile,applyGameProfileToContent,bindGameProfileRegistries,gameContent},{mountCustomize},{gameProfileClassAvailable},{createRunState},{mountConfiguredShop},{createRng},{gameProfileShopStock,gameProfileRewardOffers,claimGameProfileReward},{mountGameProfileOffers}]=await Promise.all([import('/src/content/index.js'),import('/src/model/registries.js'),import('/src/model/gameProfile.js'),import('/src/ui/screens/customize.js'),import('/src/model/gameProfileRun.js'),import('/src/model/state.js'),import('/src/ui/screens/shop.js'),import('/src/engine/rng.js'),import('/src/model/gameProfileRewards.js'),import('/src/ui/components/gameProfileOffers.js')]);
  const profile=resolveGameProfile('core'),reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);
  document.body.replaceChildren();const app=document.createElement('main');document.body.append(app);
- let started; mountCustomize(app,{registries:reg,gameProfile:profile,fixedClasses:gameContent(profile,'classes'),classAvailable:id=>gameProfileClassAvailable(profile,{},id),defaultSeedString:'TEST',onBack(){},onStart(config){started=config;}});
+ const classChoicesByCompletedRuns=[];
+ for(let completedRuns=0;completedRuns<=3;completedRuns++){
+  const state={gameProfileUnlocks:{[profile.id]:{completedRunIds:Array.from({length:completedRuns},(_,i)=>`completed-${i}`)}}};
+  mountCustomize(app,{registries:reg,gameProfile:profile,fixedClasses:gameContent(profile,'classes'),profileClassUnlocks:true,meta:state,classAvailable:id=>gameProfileClassAvailable(profile,state,id),defaultSeedString:'TEST',onBack(){},onStart(){}});
+  const visible=[...app.querySelectorAll('#cz-classes .cz-class')].map(card=>card.dataset.class);
+  const lockedCard=app.querySelector('#cz-classes .cz-class.locked');
+  const selectedBefore=app.querySelector('#cz-classes .is-selected')?.dataset.class||null;
+  if(lockedCard){lockedCard.focus();lockedCard.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));lockedCard.dispatchEvent(new KeyboardEvent('keydown',{key:' ',bubbles:true}));lockedCard.click();}
+  classChoicesByCompletedRuns.push({visible,locked:lockedCard?.dataset.class||null,note:lockedCard?.textContent.includes('Play 1 game to unlock.')||false,lock:!!lockedCard?.querySelector('[data-engraved-icon="lock"]'),focusable:lockedCard?lockedCard.tabIndex===0:null,disabled:lockedCard?.getAttribute('aria-disabled')==='true'||false,selectionUnchanged:!lockedCard||app.querySelector('#cz-classes .is-selected')?.dataset.class===selectedBefore});
+ }
+ assert.deepEqual(classChoicesByCompletedRuns,[
+  {visible:['reaver','starseer'],locked:'starseer',note:true,lock:true,focusable:true,disabled:true,selectionUnchanged:true},
+  {visible:['reaver','starseer','rogue'],locked:'rogue',note:true,lock:true,focusable:true,disabled:true,selectionUnchanged:true},
+  {visible:['reaver','starseer','rogue','herald'],locked:'herald',note:true,lock:true,focusable:true,disabled:true,selectionUnchanged:true},
+  {visible:['reaver','starseer','rogue','herald'],locked:null,note:false,lock:false,focusable:null,disabled:false,selectionUnchanged:true},
+ ],'the configured creation chooser exposes only the next authored class lock');
+ const freshState={};
+ let started; mountCustomize(app,{registries:reg,gameProfile:profile,fixedClasses:gameContent(profile,'classes'),profileClassUnlocks:true,meta:freshState,classAvailable:id=>gameProfileClassAvailable(profile,freshState,id),defaultSeedString:'TEST',onBack(){},onStart(config){started=config;}});
  const classStage=app.querySelector('.cz-railed').dataset.creationStage, count=app.querySelector('.cz-railed').dataset.creationStepCount;
  const locked=app.querySelectorAll('.cz-class.locked').length;
  const classText=app.querySelector('#cz-classes').textContent;
@@ -42,5 +59,5 @@ try {
  const serializable=JSON.stringify(run).includes('rewardDoorOwner')===false;
  return {classText,legacyClassCopy,sameDoor,differentDoor,serializable,preservesUnderlying,rewardDoor,disabledBefore,selected,claims,claimed,deckUnchanged,classStage,count,review,deckCount,strengths,locked,startedKeys:Object.keys(started).sort(),shop,offers};
  });
- assert.equal(result.legacyClassCopy,false); assert.doesNotMatch(result.classText,/Mastery|bleed|rot that|second spell|poison|feats/i); assert.equal(result.classStage,'class'); assert.equal(result.count,'2'); assert.equal(result.review,'review'); assert.equal(result.deckCount,10); assert.match(result.strengths,/2/); assert.equal(result.locked,3); assert.deepEqual(result.startedKeys,['classId','gameProfile','seedString']); assert.equal(result.shop,true); assert.equal(result.offers,3); assert.equal(result.sameDoor,true); assert.equal(result.differentDoor,true); assert.equal(result.serializable,true); assert.equal(result.preservesUnderlying,true); assert.equal(result.rewardDoor,true); assert.equal(result.disabledBefore,true); assert.equal(result.selected,1); assert.equal(result.claims,1); assert.equal(result.claimed,1); assert.equal(result.deckUnchanged,true); console.log('Configured creation, merchant and reward UI contracts passed.');
+ assert.equal(result.legacyClassCopy,false); assert.doesNotMatch(result.classText,/Mastery|bleed|rot that|second spell|poison|feats/i); assert.equal(result.classStage,'class'); assert.equal(result.count,'2'); assert.equal(result.review,'review'); assert.equal(result.deckCount,10); assert.match(result.strengths,/2/); assert.equal(result.locked,1); assert.deepEqual(result.startedKeys,['classId','gameProfile','seedString']); assert.equal(result.shop,true); assert.equal(result.offers,3); assert.equal(result.sameDoor,true); assert.equal(result.differentDoor,true); assert.equal(result.serializable,true); assert.equal(result.preservesUnderlying,true); assert.equal(result.rewardDoor,true); assert.equal(result.disabledBefore,true); assert.equal(result.selected,1); assert.equal(result.claims,1); assert.equal(result.claimed,1); assert.equal(result.deckUnchanged,true); console.log('Configured creation, merchant and reward UI contracts passed.');
 } finally {await browser.close();server.close();}
