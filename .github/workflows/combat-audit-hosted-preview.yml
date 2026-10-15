@@ -1,0 +1,47 @@
+name: combat audit hosted preview proof
+
+on:
+  push:
+    branches: ['feature/FullCombatAudit']
+    paths-ignore:
+      - README.md
+      - CONTRIBUTING.md
+      - 'docs/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: combat-audit-hosted-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  hosted-proof:
+    if: github.ref == 'refs/heads/feature/FullCombatAudit'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: ./.github/actions/setup-node
+      - uses: ./.github/actions/which-browser
+      - name: Install the existing browser adapter
+        run: npm install --no-save --package-lock=false playwright
+      - name: Verify public publication and actual hosted game
+        env:
+          EXPECTED_COMMIT: ${{ github.sha }}
+          GITHUB_TOKEN: ${{ github.token }}
+          HOSTED_PREVIEW_OUT: _hosted-preview
+          HOSTED_PREVIEW_WAIT_MS: '720000'
+        run: node tools/combat-audit/hosted-preview.mjs
+      - name: Upload public screenshots and source identity
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hosted-preview-proof-${{ github.sha }}
+          path: _hosted-preview/
+          if-no-files-found: warn
+          retention-days: 14
