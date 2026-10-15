@@ -1,0 +1,43 @@
+name: combat audit frozen hosted replay
+
+on:
+  push:
+    branches: ['worker/FullCombatAudit/hosted-replay']
+    paths:
+      - .github/workflows/combat-audit-hosted-replay.yml
+      - tools/combat-audit/hosted-preview.mjs
+
+permissions:
+  contents: read
+
+jobs:
+  hosted-replay:
+    if: github.ref == 'refs/heads/worker/FullCombatAudit/hosted-replay'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: ./.github/actions/setup-node
+      - uses: ./.github/actions/which-browser
+      - name: Install the existing browser adapter
+        run: npm install --no-save --package-lock=false playwright
+      - name: Verify the frozen public eccd build without rebuilding
+        env:
+          EXPECTED_COMMIT: eccdfe210380b12b7b9ec380f83b59bada881690
+          GITHUB_TOKEN: ${{ github.token }}
+          HOSTED_PREVIEW_OUT: _hosted-preview
+          HOSTED_PREVIEW_WAIT_MS: '0'
+        run: |
+          node --input-type=module -e "import assert from 'node:assert/strict'; import {sourceDigest} from './tools/buildversion.mjs'; assert.equal(sourceDigest(process.cwd()).digest, '78492dee2e');"
+          node tools/combat-audit/hosted-preview.mjs
+      - name: Upload actual public screenshots and identity
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frozen-hosted-preview-proof-${{ github.sha }}
+          path: _hosted-preview/
+          if-no-files-found: warn
+          retention-days: 14
