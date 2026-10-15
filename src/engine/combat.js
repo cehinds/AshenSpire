@@ -2337,6 +2337,11 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
   };
 
   Object.assign(action.card, tacticalCarrier(def, action.card, combat, p));
+  // Execution enters the accepted card's stance before planning its contacts.
+  // Prices above use the current stance; effect values use the prospective one.
+  // This combat is already the detached preparing preview, so entry grants and
+  // rating changes cannot spend or alter the live fight.
+  if (combat.combatExpansionVersion === 2) setCombatStance(combat, p, action.card);
   const bindings = computeTokenBindings(def.effects || []);
   const tokenByIndexField = new Map();
   for (const bd of bindings) tokenByIndexField.set(`${bd.index}:${bd.field}`, bd.token);
