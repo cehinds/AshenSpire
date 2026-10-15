@@ -1,13 +1,60 @@
 # Character creation continuation handoff
 
-Updated 2026-10-14. Current built code: `eb5937f97c9fe51b2bf12cf949adff689c29514b`,
-based on origin/dev `53e92b0da`. Final artifact: **0.7.1.1520 / `1ad05d6483`**.
-Runtime validation is at `479bf4fe3` / `615181cdbb`; later changes affect only creation icons, responsive typography/alignment, navigation and
-component specimens. Engine/model and gameplay content are unchanged in this pass; the canonical UI-string table adds the step-count label.
-The previous `ef85447e6b` and provisional `7fba9e1339` artifacts are historical.
-Never identify an artifact by ordinal alone: these local previews share 1520.
+Updated 2026-10-15. Current integrated code: `b5ac91a039e38e7ed2b8bc01770b14ed29b94a9f`.
+Captured production source: `f6801043c9d9762550a7a3ff28cba7fc346fee81`; both have
+source tree `9124302fb4c26347d21269b9a69db273d99349d3`.
+Current artifact: **0.7.1.1520 / `652574f013`**. Never identify a preview by ordinal
+alone: local previews share 1520. Older `1ad05d6483` and `7b7e9a674f` captures are historical.
 
-## Current density and locked-choice pass
+## Stop and continuation status
+
+The user explicitly stopped work on 2026-10-15 and requested a handoff plus merge to origin feature.
+**Do not resume implementation or testing without a new request.**
+Use [the continuation prompt](CHARACTER-CREATION-CONTINUATION-PROMPT.md).
+
+- All current game source is merged into origin `Feature/updateCharacterCreation` at `b5ac91a039e38e7ed2b8bc01770b14ed29b94a9f` via #2006.
+- Final local production artifact: **0.7.1.1520 / `652574f013`**, SHA-256 `20c5fd7db59de53faa7e0debe9a243d875d59ecbe9ecf32718e5174df7b73eea`, 78,151,638 bytes.
+- Final capture directory contains 36 PNG screenshots and a manifest with zero recorded errors. Final wireframes and visual review are pending.
+- Tracked README/gallery still show the older `1ad05d6483` evidence and download link. They have **not** been refreshed to the final build.
+- GitHub feature run `38659839311` was queued at stop. Public Pages publication/HTTP verification is pending; do not call the URL verified.
+- The public-site browser probe failed with `ERR_TUNNEL_CONNECTION_FAILED` before HTTP. This is a local proxy limitation, not evidence of a Pages 404.
+- Persistent public HTTP checks merged into dev via #2004. They must pass after publication; no manual workflow rerun was requested.
+
+## Shared header and compact rows
+
+- [x] Desktop header combines Create character, active section and live count/hint.
+- [x] Phone header keeps Create character and a compact live count; the dropdown names the section.
+- [x] Repeated page headings removed; desktop header padding reduced.
+- [x] Trait/keepsake rows keep related text on one line; long text uses ellipsis with full authored text retained.
+- [x] Starting deck defaults closed; all eleven card inspectors remain available when opened.
+- [x] Relic rules/details fold; the duplicate Continue to Review body button is hidden in the live screen.
+- [x] Phone class sprites sit beside text. Equal selected rows are about 203px, folded rows 96px; 320px-width checks also passed.
+- [x] First-row spell information control stays inside card art instead of covering navigation.
+- [x] 36 focused tests passed for the shared-header pass; 11 screen tests passed for the Review follow-up. Sol source review approved both. Live counters, disclosures and 44px inspector target were verified.
+- [x] Review loadout and edit choices fold closed; phone Review has zero vertical scroll range, with all original cards, eleven deck inspectors and seven edit controls retained.
+- [ ] Public Pages deployment and final four-size capture publication verified (update this after deployment).
+
+Code PRs: [#2001](https://github.com/cehinds/AshenSpire/pull/2001) worker to AddSubClasses,
+then [#2002](https://github.com/cehinds/AshenSpire/pull/2002) to updateCharacterCreation.
+The Review follow-up merged through #2005 and #2006. The earlier compact-heading pass merged through #1998 and #1999.
+
+## Feature build hosting
+
+The shared Pages publisher merged into dev through [#1997](https://github.com/cehinds/AshenSpire/pull/1997).
+The persistent delivery guide and README cleanup helper merged through [#2000](https://github.com/cehinds/AshenSpire/pull/2000).
+Feature branches no longer require an open PR for Pages hosting. The primary link should be:
+`https://cehinds.github.io/AshenSpire/branches/Feature/updateCharacterCreation/latest/`.
+Verify it opens the intended build before presenting it as ready. Artifact downloads are backups.
+Only exact source builds or proven documentation-only descendants qualify; changed code without a fresh
+successful build is omitted. The trusted dev publisher keeps the existing channels and serves feature HTML
+as text inside an opaque-origin sandbox. No persistent progress is promised in that preview.
+
+Known existing input issue: native DOM focus and the gamepad cursor can differ; Enter follows the gamepad
+cursor. A matched baseline/current browser probe reproduced this before and after the layout change.
+This presentation pass does not change global input routing.
+
+## Previous density and locked-choice pass
+
 
 - [x] Scoped compact spacing/fonts; readable main copy and44px controls retained.
   Removed repeated ability subtitles and duplicate selected-subclass description.
@@ -23,7 +70,7 @@ Never identify an artifact by ordinal alone: these local previews share 1520.
  855px vs1554.5px baseline in the same CSS-pixel unit, about45% less. Expanding
   the disclosure retains all11 card inspection controls. Source/browser receipts
   are in `/workspace/scratch/creation-density-preview/`.
-- Current standalone build:0.7.1.1520/digest1ad05d6483, sourceeb5937f97.
+- Historical standalone build:0.7.1.1520/digest1ad05d6483, sourceeb5937f97.
   Build succeeded80.69s. Later evidence/README commits do not relabel this source.
 - Exact feature HEAD CI build succeeded:
   https://github.com/cehinds/AshenSpire/actions/runs/38654072847
