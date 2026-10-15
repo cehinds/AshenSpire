@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-2010",
+    "date": "2026-10-15",
+    "group": "2026-10-15",
+    "summary": "Selected combat details keep their numbers apart",
+    "detail": "The player's compact plate leaves room below the health bar for its HP value before the Poise and Ward labels, including narrow phones. Evade, Poise, Ward, Block and HP retain their order, and Barrier keeps its protection marker.",
+    "build": "0.7.1.1535",
+    "pullRequest": 2010,
+    "url": "https://github.com/cehinds/AshenSpire/pull/2010"
+  },
+  {
+    "id": "pr-1996",
+    "date": "2026-10-15",
+    "group": "2026-10-15",
+    "summary": "Combat stances keep their damage, pressure and hit feedback consistent",
+    "detail": "Smash gains its failed-Evade bonus when a retained Evade stack attempts the dodge after a stance change. Enemy Counters and damaging Smash moves receive the configured fallback Poise damage when none is authored, while support-only charging stages stay harmless. Paced combat keeps the correct Evasion rating, and co-op prevention shows one Missed callout.",
+    "build": "0.7.1.1533",
+    "pullRequest": 1996,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1996"
+  },
+  {
     "id": "pr-1995",
     "date": "2026-10-14",
     "group": "2026-10-14",
