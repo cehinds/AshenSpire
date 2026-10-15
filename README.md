@@ -1,13 +1,15 @@
 # AshenSpire
 
 <!-- feature-preview:start -->
-## Feature preview — Review character stat card
+## Feature preview — Review character stats
 
-[Feature Play route](https://cehinds.github.io/AshenSpire/branches/Feature/updateCharacterCreation/latest/) · [Current build run](https://github.com/cehinds/AshenSpire/actions/runs/38696812396) · [Download backup](https://github.com/cehinds/AshenSpire/actions/runs/38696812396/artifacts/11954500967) · [Four Review screenshots and wireframes](docs/preview/features/update-character-creation/review-character-card/README.md)
+[Feature Play route](https://cehinds.github.io/AshenSpire/branches/Feature/updateCharacterCreation/latest/) · [Current build run](https://github.com/cehinds/AshenSpire/actions/runs/38754284560) · [Download backup](https://github.com/cehinds/AshenSpire/actions/runs/38754284560/artifacts/11982198573) · [Four Review screenshots and wireframes](docs/preview/features/update-character-creation/review-character-card/README.md)
 
-**Current build passed; Pages publication is pending.** Public delivery was verified for the prior compact-layout build `652574f013`; the route is not yet verified for the new character stat card revision. Feature previews are sandboxed; progress is not saved. Press **Enter** on the startup screen.
+**Current revision publication is pending.** The prior `a12edfdd78` revision passed public delivery checks; the Play route is not yet verified for this new stats revision. Feature previews are sandboxed; progress is not saved. Press **Enter** on the startup screen.
 
-Opened Review now gives the character stat card the same 2:3 shape as the equipment cards (165.5 × 248.25 px on mobile; 180 × 270 px at the other three sizes). Captured **0.7.1.1520 / `a12edfdd78`**, source `6d88c4d641`, 2026-10-14 (America/Anchorage). Review loadout is open in each screenshot.
+The opened Review character stat card now shows all 16 glance stats instead of hiding five behind an ellipsis. Its 2:3 dimensions still match the equipment cards. Captured **0.7.1.1520 / `ee6988101d`**, source `c749675356`, 2026-10-15 (America/Anchorage), with Starseer / Battle Mage and the Review loadout open.
+
+![Character stat card with all 16 glance stats visible](docs/preview/features/update-character-creation/review-character-card/character-card-desktop-1440x900.png)
 
 | Mobile · 390 × 844 | Tablet · 1024 × 768 |
 | --- | --- |
