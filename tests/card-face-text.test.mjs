@@ -181,3 +181,44 @@ test('an authored Grounded effect on a version-two Counter retains its stacks an
   const wording = cardFaceLines(def, null, reg).map(line => line.html.replace(/<[^>]+>/g, '')).join(' | ');
   assert.match(wording, /Grounded 1.*2 turns/);
 });
+
+test('ordinary summaries preserve live values and bound whole effects without changing the full projection', async () => {
+  const { cardFaceSummary } = await import('../src/model/cardFaceText.js');
+  const preview = { values: [{ op: 'damage', value: 9, hits: 1 }, { op: 'poiseDamage', value: 4 }] };
+  const summary = cardFaceSummary(card('bashingBlow'), preview, reg);
+  assert.equal(summary.lines.length, 2);
+  assert.match(summary.lines[0].html, /^Deal <span class="val up">9<\/span> Blunt damage\.$/);
+  assert.equal(summary.omitted, false);
+  const single = cardFaceSummary({ ...card('bashingBlow'), effects: [{ op: 'block', amount: 8 }] }, null, reg);
+  assert.equal(single.lines.length, 1);
+  assert.equal(single.lines[0].html.replace(/<[^>]+>/g, ''), 'Gain 8 Block.');
+  assert.match(lines('bashingBlow', preview)[0].html, /^Inflict /);
+  const payment = cardFaceSummary(card('bloodPact'), null, reg);
+  assert.match(payment.lines[0].html, /^Pay .* HP\.$/);
+  assert.equal(payment.lines.length, 2);
+  assert.equal(payment.omitted, true);
+  assert.ok(text('bloodPact').some(line => /Draw/.test(line)), 'full text retains omitted draw');
+});
+
+test('ordinary summaries keep conditions, chance, random targets and duration on their clauses', async () => {
+  const { cardFaceSummary } = await import('../src/model/cardFaceText.js');
+  const plain = definition => cardFaceSummary(definition, null, reg).lines.map(line => line.html.replace(/<[^>]+>/g, '')).join(' ');
+  assert.match(plain(card('cinderSigil')), /50% chance: Inflict Burn 4\./);
+  assert.match(plain(card('starSpark')), /Starstone Charge: 50% chance:/);
+  const base = card('bashingBlow');
+  assert.match(plain({ ...base, effects: [{ op: 'damage', target: 'randomEnemy', amount: 6 }] }), /random enemy/);
+  assert.match(plain({ ...base, effects: [{ op: 'applyStatus', target: 'self', status: 'strength', stacks: 2, duration: 3 }] }), /3 turns/);
+});
+
+test('ordinary summaries use honest authored or inspection fallback for risky scripted effects', async () => {
+  const { cardFaceSummary } = await import('../src/model/cardFaceText.js');
+  const base = card('bashingBlow');
+  const short = { ...base, type: 'power', textTemplate: 'At the start of your turn, heal 3 HP.' };
+  assert.equal(cardFaceSummary(short, null, reg).lines[0].html, short.textTemplate);
+  assert.equal(cardFaceSummary(short, { values: [{ value: 5 }] }, reg).lines[0].html, 'Inspect for full effects.', 'an authored static number never masks a live value');
+  const unknown = { ...base, effects: [{ op: 'unknownScript' }], textTemplate: 'Resolve {damage} through a complex scripted interaction.' };
+  assert.equal(cardFaceSummary(unknown, null, reg).lines[0].html, 'Inspect for full effects.');
+  assert.equal(cardFaceSummary(card('ambush'), null, reg).omitted, true);
+  const latePayment = { ...base, effects: [{ op: 'gainSp', amount: 2 }, { op: 'loseHp', amount: 2 }] };
+  assert.equal(cardFaceSummary(latePayment, null, reg).lines[0].html, 'Inspect for full effects.');
+});
