@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { bindCombatantInspectionGesture } from '../src/ui/components/combatantInspectionGesture.js';
+import { withKitDom } from './helpers/kit-dom.mjs';
+import { bindCombatantInspectionGesture, isCombatBlankPress, markCombatantInspectionSurfaces } from '../src/ui/components/combatantInspectionGesture.js';
 
 function fixture(t, { selected = true, selection = null } = {}) {
   t.mock.timers.enable({ apis: ['setTimeout'] });
@@ -104,3 +105,27 @@ for (const screen of ['combat', 'coop']) {
     assert.match(source, /isSelected: \(\) => \(selectedCombatantId \|\| lastReadingSelection\) ===/);
   });
 }
+
+
+test('a bubbling hand-card activation preserves enemy inspection identity; actual blank clears it', () => withKitDom(({ document, Event }) => {
+  const combat = document.createElement('div'), hand = document.createElement('div'), card = document.createElement('button'), blank = document.createElement('div');
+  hand.className = 'hand'; card.className = 'card'; hand.append(card); combat.append(hand, blank); document.body.append(combat);
+  let reading = 'enemy', remembered = 'enemy';
+  card.addEventListener('click', () => { reading = null; });
+  combat.addEventListener('click', event => { if (isCombatBlankPress(event)) { reading = null; remembered = null; } });
+  card.dispatchEvent(new Event('click', { bubbles: true }));
+  assert.equal(reading, null); assert.equal(remembered, 'enemy');
+  blank.dispatchEvent(new Event('click', { bubbles: true })); assert.equal(remembered, null);
+  for (const screen of ['combat', 'coop']) assert.match(readFileSync(new URL(`../src/ui/screens/${screen}.js`, import.meta.url), 'utf8'), /isCombatBlankPress\(event\)/);
+}));
+
+test('HUD read-only markers reach the timeline skip guard while a blank stage remains skippable', () => withKitDom(({ document }) => {
+  const frame = document.createElement('article'); frame.innerHTML = '<div class="sprite"></div><button class="intent">Intent</button><div class="nm">Enemy</div><div class="resbars">HP</div><div class="statuses">Effects</div><button class="combatant-info">i</button>';
+  document.body.append(frame); markCombatantInspectionSurfaces(frame, { playback: true });
+  const source = readFileSync(new URL('../src/ui/fx.js', import.meta.url), 'utf8');
+  const actualGuard = source.slice(source.indexOf('export function playTimeline')).match(/const skip = event => \{\s*(if \(event\?\.target[\s\S]*?return;)/)[1];
+  const wouldFlush = new Function('event', `${actualGuard} return true;`);
+  for (const surface of frame.children) assert.equal(wouldFlush({ target: surface }), undefined, `${surface.className}: reading must not skip playback`);
+  const blank = document.createElement('div'); assert.equal(wouldFlush({ target: blank }), true);
+  markCombatantInspectionSurfaces(frame); assert.equal(frame.querySelector('.sprite').attributes.has('data-combat-read-only'), false);
+}));

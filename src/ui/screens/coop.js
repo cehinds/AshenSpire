@@ -1,4 +1,4 @@
-import { bindCombatantInspectionGesture } from '../components/combatantInspectionGesture.js';
+import { bindCombatantInspectionGesture, isCombatBlankPress, markCombatantInspectionSurfaces } from '../components/combatantInspectionGesture.js';
 import { enemyActionPose } from '../../model/enemyActionPose.js';
 import {mountClassRespec,closeClassRespec,isClassRespecOpen,classRespecOptionName} from '../components/classRespec.js';
 import {abilityDraftChoice} from '../../model/abilityDraftReceipts.js';
@@ -374,7 +374,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     });
   }
   const dismissCombatant = event => {
-    if (!event.target.closest('.combatant, .hand, .combatant-door, .modal')) selectCombatant(null);
+    if (isCombatBlankPress(event)) selectCombatant(null);
   };
   const inspectCard = () => selectCombatant(null, { preserveInspection: true });
   app.addEventListener('click', dismissCombatant);
@@ -1402,6 +1402,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         box.addEventListener('pointerleave', () => box.classList.remove('hover-target'));
       }
       adoptCombatantFrame(box);
+      markCombatantInspectionSurfaces(box, { playback: busy() });
       box.inert = dead || !!targetPlan;
       if (box.inert) box.setAttribute('aria-disabled', 'true');
       row.appendChild(box);

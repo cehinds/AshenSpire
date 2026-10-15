@@ -1,6 +1,23 @@
 import { trackGesture } from '../gesture.js';
 
 const HUD = '.intent, .nm, .resbars, .statuses';
+// Shared by the solo and snapshot screens: only an actual stage/background
+// press dismisses reading identity. Card and toolbar bubbling is not blank.
+export function isCombatBlankPress(event) {
+  return !event.target.closest('.combatant, .combatant-inspector-host, .combatant-door, .modal, .hand, .hand-area, .card, .combat-action-row, .combat-tools, .combat-hud, .combat-footer, button, input, select, textarea, a, [role="button"], [data-focusable], [data-combat-read-only]');
+}
+
+export function markCombatantInspectionSurfaces(frame, { playback = false } = {}) {
+  for (const surface of frame.querySelectorAll('.intent, .nm, .resbars, .statuses, .combatant-info')) {
+    surface.setAttribute('data-combat-read-only', '');
+  }
+  const sprite = frame.querySelector('.sprite');
+  if (sprite) {
+    if (playback) sprite.setAttribute('data-combat-read-only', '');
+    else sprite.removeAttribute('data-combat-read-only');
+  }
+}
+
 // Reading gestures arbitrate before any child targeting/tooltip listener.
 // The caller owns activation and live eligibility; this module owns timers.
 export function bindCombatantInspectionGesture(frame, {
