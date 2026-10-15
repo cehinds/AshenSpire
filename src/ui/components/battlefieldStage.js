@@ -1232,14 +1232,34 @@ function wireGridTargeting(field) {
   if (gridTargetingFields.has(field)) return;
   gridTargetingFields.add(field);
   const passive = target => target.closest('.combatant, button:not(.formation-grid-cell), .hand, .card, .modal, input, a, [role="button"]');
-  field.addEventListener('click', event => {
+  const mouseInit = event => ({ bubbles: true, cancelable: true, composed: true,
+    detail: event.detail, clientX: event.clientX, clientY: event.clientY,
+    screenX: event.screenX, screenY: event.screenY, button: event.button, buttons: event.buttons,
+    ctrlKey: event.ctrlKey, shiftKey: event.shiftKey, altKey: event.altKey, metaKey: event.metaKey });
+  field.addEventListener('pointerdown', event => {
+    if (passive(event.target) || event.button > 0 || event.isPrimary === false) return;
+    const frame = enemyFrameAtCell(field, event.clientX, event.clientY);
+    if (!frame) return;
+    // The frame's inspection gesture captures this real active pointer. Native
+    // move/up/cancel then keep their lifecycle even when the press began on its
+    // standing cell; do not turn a hold into a later synthetic single click.
+    event.stopPropagation();
+    frame.dispatchEvent(new PointerEvent('pointerdown', { ...mouseInit(event),
+      pointerId: event.pointerId, pointerType: event.pointerType, isPrimary: event.isPrimary,
+      width: event.width, height: event.height, pressure: event.pressure }));
+  }, true);
+  const proxyClick = event => {
     if (passive(event.target)) return;
     const frame = enemyFrameAtCell(field, event.clientX, event.clientY);
     if (!frame) return;
     event.stopPropagation();
     event.preventDefault();
-    frame.click();
-  }, true);
+    // Capture normally delivers the native click directly to the frame. This
+    // fallback also covers refused capture and keeps the double-click count.
+    frame.dispatchEvent(new MouseEvent(event.type, mouseInit(event)));
+  };
+  field.addEventListener('click', proxyClick, true);
+  field.addEventListener('dblclick', proxyClick, true);
   let hovered = null;
   field.addEventListener('pointermove', event => {
     // Over a body or control, that element's own pointer events own the
