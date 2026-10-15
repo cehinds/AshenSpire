@@ -3574,7 +3574,7 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "path": "src/** (excluding generated gameProfiles/changelog)",
-      "hash": "sha256:0d560ff55373224e3871c06c7443fdb773b7ea342a3cba653c475045234d4a01"
+      "hash": "sha256:4a8a758549ed4704885dba5e75de963977b9bb38be3ea21fab8251f4c5eb6af1"
     }
   ],
   "runtimeSources": [
@@ -4212,7 +4212,7 @@ export const gameProfileCatalog = {
       "path": "src/content/generated/uiStrings.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:54320cf08be19060e26fab9b552f2b884674c996de2c87cfd9207ffdb5145d84"
+      "hash": "sha256:42992d1ccb3a81ef90d95661d7320c84d19eb7ec21fd9c7ac6840e2496650687"
     },
     {
       "path": "src/content/generated/unlocks.js",
@@ -5118,7 +5118,7 @@ export const gameProfileCatalog = {
       "path": "src/main.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:67d72f72119c4f9a6c11c5780ac549894c223a84f1ec33962700e0e6f21041b7"
+      "hash": "sha256:11c9d456462761a8aabe5532e39823240eafa94bab0a3793bf089e86d09b571c"
     },
     {
       "path": "src/model/abilityDraftReceipts.js",
@@ -8184,7 +8184,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/screens/customize.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:c98e8fcc0ea02a9aab7802c4719975b6dc1fe6db82e8f89929ffc072a835fb32"
+      "hash": "sha256:e5e2cc1b2dbdd7ae4c7553703f70ca61c931289e13713995d92b9ce1d6a0644d"
     },
     {
       "path": "src/ui/screens/deckEditor.js",
@@ -8304,7 +8304,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/screens/shop.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:b7b6b4eddbf40dc9e3f78586769717ac8f584d97feb6078181697b3184af24aa"
+      "hash": "sha256:3f6a3eedf3e69828fa25d8ef5fdf2b6216f0137b8b7154432a8e381b719551e0"
     },
     {
       "path": "src/ui/screens/smithServices.js",
@@ -8397,7 +8397,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:23af16d4e9c9f6d88fe655d32ecf1a688b47df39f9e3a1d6d193ce63923593ab"
     }
   ],
-  "runtimeHash": "sha256:360055c786eb27dff90a7d02186786d0aa9f7b62398b7192f4bbfca6533cb7f0"
+  "runtimeHash": "sha256:5050fc237840bcfa285aa27b5057840a58f08edb74ffff498d6fa36e8c8c2f27"
 };
 export const gameProfileAuthors = {
   "default": {
