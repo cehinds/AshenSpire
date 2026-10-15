@@ -20,6 +20,20 @@ function effectText(effect, registries) {
   return `${words(effect.op)}: ${JSON.stringify(Object.fromEntries(Object.entries(effect).filter(([key]) => key !== 'op')))}`;
 }
 
+function chargingPoiseText(move, profile, context) {
+  if (context.combatExpansionVersion !== 2) return [];
+  const pieces = [];
+  // Expansion inherits the parent maneuver through every charging payload.
+  for (let charging = move.delay?.whileCharging, stage = 1; charging; charging = charging.delay?.whileCharging, stage++) {
+    const phase = stage === 1 ? 'while charging' : `during charging stage ${stage}`;
+    pieces.push(...(charging.effects || []).filter(effect => effect.op === 'poiseDamage')
+      .map(effect => `${effectText(effect, context.registries)} ${phase}`));
+    const fallback = enemySmashFallbackPoise(charging, profile, context);
+    if (fallback != null) pieces.push(`${fallback} base Poise damage to player ${phase}`);
+  }
+  return pieces;
+}
+
 /** No RNG, mutation, selection or engine dispatch; preview must come from previewIntent. */
 export function enemyMoveCards(def, { enemy = null, preview = null, registries = null, combatMatchupRules = null,
   combatExpansionVersion = enemy?.combatExpansionVersion || 1, stanceRules = null } = {}) {
@@ -50,6 +64,7 @@ export function enemyMoveCards(def, { enemy = null, preview = null, registries =
     if (move.delay) {
       pieces.push(`Delayed ${move.delay.turns} turn${move.delay.turns === 1 ? '' : 's'}`);
       if (move.delay.whileCharging?.block != null) pieces.push(`${move.delay.whileCharging.block} base Block while charging`);
+      pieces.push(...chargingPoiseText(move, profile, { combatExpansionVersion, stanceRules, registries }));
     }
     const phaseRequirements = (def.phases || []).filter((phase) => phase.unlockMoves?.includes(moveId)).map((phase) => (
       phase.on === 'hpBelowPct' ? `Unlocks at ${phase.pct}% HP or below` : `Unlocks on ${words(phase.on)}`

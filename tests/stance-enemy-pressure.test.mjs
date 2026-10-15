@@ -155,3 +155,44 @@ test('Counter card fallback reads registry configuration and preserves legacy au
   const authored = { ...def, moves: { parry: { ...def.moves.parry, counterPoiseDamage: 5 } } };
   assert.match(enemyMoveCards(authored, { registries: configured })[0].detail, /5 base counter Poise damage ×/);
 });
+
+for (const fallbackPoise of [3, 7]) {
+  test(`charging Smash cards separate configured ${fallbackPoise} pressure from resolution pressure`, () => {
+    const original = registries.enemies.get('fellWarden');
+    const move = { ...original.moves.heldBlade,
+      delay: { turns: 1, whileCharging: { effects: [{ op: 'damage', target: 'player', amount: 2 }] } } };
+    const def = { ...original, moves: { heldBlade: move } };
+    const before = JSON.stringify(def);
+    const options = { registries, combatExpansionVersion: 2, stanceRules: { fallbackPoise } };
+    const projected = expandedEnemyMove({ enemyId: def.id }, move, 'heldBlade', options);
+    assert.equal(projected.effects.find(effect => effect.op === 'poiseDamage').amount, fallbackPoise);
+    assert.equal(projected.delay.whileCharging.effects.find(effect => effect.op === 'poiseDamage').amount, fallbackPoise);
+    for (const card of [enemyMoveCards(def, options)[0], learnedEnemyMoveCards(def, 5, options)[0]]) {
+      const pieces = card.detail.split(' · ');
+      assert.equal(pieces.filter(piece => piece === `${fallbackPoise} base Poise damage to player`).length, 1);
+      assert.equal(pieces.filter(piece => piece === `${fallbackPoise} base Poise damage to player while charging`).length, 1);
+    }
+    assert.doesNotMatch(learnedEnemyMoveCards(def, 3, options)[0].detail, /Poise|charging|[0-9]/);
+    assert.doesNotMatch(learnedEnemyMoveCards(def, 4, options)[0].detail, /charging|Delayed/);
+    assert.doesNotMatch(enemyMoveCards(def, { registries })[0].detail, /base Poise damage to player/);
+    const pressurePieces = card => card.detail.split(' · ').filter(piece => piece.includes('base Poise damage'));
+    assert.deepEqual(pressurePieces(enemyMoveCards({ ...def, moves: { heldBlade: projected } }, options)[0]),
+      pressurePieces(enemyMoveCards(def, options)[0]), 'already-expanded pressure is not displayed twice');
+    assert.equal(JSON.stringify(def), before, 'the read-only card projection preserves authored content');
+  });
+}
+
+test('charging pressure display preserves authored effects, support-only phases and nested expansion', () => {
+  const original = registries.enemies.get('fellWarden');
+  const options = { registries, combatExpansionVersion: 2, stanceRules: { fallbackPoise: 7 } };
+  const cardFor = charging => enemyMoveCards({ ...original, moves: { heldBlade: { ...original.moves.heldBlade,
+    delay: { turns: 1, whileCharging: charging } } } }, options)[0];
+  const authored = cardFor({ effects: [{ op: 'damage', amount: 2, target: 'player' }, { op: 'poiseDamage', amount: 4, target: 'player' }] });
+  assert.match(authored.detail, /4 base Poise damage to player while charging/);
+  assert.doesNotMatch(authored.detail, /7 base Poise damage to player while charging/);
+  assert.doesNotMatch(cardFor({ block: 8 }).detail, /Poise damage to player while charging/);
+  const nested = cardFor({ effects: [{ op: 'damage', amount: 2, target: 'player' }],
+    delay: { turns: 1, whileCharging: { effects: [{ op: 'damage', amount: 1, target: 'player' }] } } });
+  assert.match(nested.detail, /7 base Poise damage to player while charging/);
+  assert.match(nested.detail, /7 base Poise damage to player during charging stage 2/);
+});
