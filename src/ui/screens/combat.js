@@ -2044,6 +2044,27 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function renderControls() {
+    if (combat.gameProfile?.foundation?.mode === 'configured' && !gameModule(combat, 'cards')) {
+      let actions = combatEl.querySelector('.foundation-actions');
+      if (!actions) {
+        actions = document.createElement('div'); actions.className = 'foundation-actions';
+        const target = document.createElement('select'); target.setAttribute('aria-label', 'Attack target');
+        const attack = document.createElement('button'); attack.textContent = 'Attack'; attack.className = 'as-btn foundation-attack';
+        attack.onclick = () => {
+          if (busy || combat.result || combat.phase !== 'player') return;
+          disp = takeSnapshot();
+          try {
+            const out = dispatch(combat, { type: 'basicAttack', targetId: target.value });
+            busy = true; afterDispatch(out.events);
+          } catch (error) { disp = null; console.warn('[combat] attack rejected:', error.message); render(); }
+        };
+        actions.append(target, attack); $('.end-turn').before(actions);
+      }
+      const target = actions.querySelector('select'), selectedTarget = target.value;
+      target.replaceChildren(...combat.enemies.filter(enemy => enemy.alive).map(enemy => new Option(registries.enemies.get(enemy.enemyId).name, enemy.id)));
+      if ([...target.options].some(option => option.value === selectedTarget)) target.value = selectedTarget;
+      actions.querySelector('button').disabled = busy || !!combat.result || combat.phase !== 'player';
+    }
     // The bound key (or pad button) rides on the End Turn button itself, so the
     // shortcut is discoverable without reading the hint bar. Tracks rebinds.
     const etKey = hasGamepad() ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn');

@@ -143,7 +143,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // A left classic rest site stays enterable until a new node is chosen (owner, 2026-10-12).
   if (!mapAdapter && revisitId && map.nodes[revisitId]) reachable.add(revisitId);
   const configuredRoutes = gameModule(run, 'routes')?.mode === 'configured';
-  const reveal = configuredRoutes ? false : passiveFlag(registries, run.relics, 'revealUnknown');
+  const reveal = configuredRoutes ? gameModule(run, 'routes').hideUnknownNodes === false : passiveFlag(registries, run.relics, 'revealUnknown');
   const mode = configuredRoutes ? 'path' : mapAdapter?.mode || resolveMapMode(meta);
   const fog = mode === 'fog';
 
