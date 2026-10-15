@@ -1,25 +1,21 @@
 # AshenSpire
 
 <!-- feature-preview:start -->
-## Feature preview — compact character creation
+## Feature preview — Review character stat card
 
-**[Play this feature build](https://cehinds.github.io/AshenSpire/branches/Feature/updateCharacterCreation/latest/)** · [Build run](https://github.com/cehinds/AshenSpire/actions/runs/38659839311) · [All 36 screenshots and wireframes](docs/preview/features/update-character-creation/README.md)
+[Feature Play route](https://cehinds.github.io/AshenSpire/branches/Feature/updateCharacterCreation/latest/) · [Current build run](https://github.com/cehinds/AshenSpire/actions/runs/38696812396) · [Download backup](https://github.com/cehinds/AshenSpire/actions/runs/38696812396/artifacts/11954500967) · [Four Review screenshots and wireframes](docs/preview/features/update-character-creation/review-character-card/README.md)
 
-Public delivery verified by [GitHub HTTP checks](https://github.com/cehinds/AshenSpire/actions/runs/38676827571/job/116243897791). Press **Enter** on the startup screen to begin. Feature previews are sandboxed; progress is not saved. [Download backup](https://github.com/cehinds/AshenSpire/actions/runs/38659839311/artifacts/11938781737).
+**Current build passed; Pages publication is pending.** Public delivery was verified for the prior compact-layout build `652574f013`; the route is not yet verified for the new character stat card revision. Feature previews are sandboxed; progress is not saved. Press **Enter** on the startup screen.
 
-- Compact heading rows; counts and instructions beside titles.
-- Locked feats cannot be selected; spell choices recheck eligibility.
-- Mobile class sprites sit beside text; long details and Review cards fold closed.
-
-Captured **0.7.1.1520 / `652574f013`**, source `f6801043c9` — 2026-10-14 (America/Anchorage).
+Opened Review now gives the character stat card the same 2:3 shape as the equipment cards (165.5 × 248.25 px on mobile; 180 × 270 px at the other three sizes). Captured **0.7.1.1520 / `a12edfdd78`**, source `6d88c4d641`, 2026-10-14 (America/Anchorage). Review loadout is open in each screenshot.
 
 | Mobile · 390 × 844 | Tablet · 1024 × 768 |
 | --- | --- |
-| ![Mobile Review with folded details](docs/preview/features/update-character-creation/review-mobile-390x844.png) | ![Tablet compact Class rows](docs/preview/features/update-character-creation/class-tablet-1024x768.png) |
+| ![Mobile opened Review character stat and equipment cards](docs/preview/features/update-character-creation/review-character-card/review-mobile-390x844.png) | ![Tablet opened Review character stat and equipment cards](docs/preview/features/update-character-creation/review-character-card/review-tablet-1024x768.png) |
 | Desktop · 1440 × 900 | Widescreen · 1920 × 1080 |
-| ![Desktop one-line subclass traits](docs/preview/features/update-character-creation/subclass-desktop-1440x900.png) | ![Widescreen starting spells with shared header](docs/preview/features/update-character-creation/spells-wide-1920x1080.png) |
+| ![Desktop opened Review character stat and equipment cards](docs/preview/features/update-character-creation/review-character-card/review-desktop-1440x900.png) | ![Widescreen opened Review character stat and equipment cards](docs/preview/features/update-character-creation/review-character-card/review-wide-1920x1080.png) |
 
-[Mobile gallery](docs/preview/features/update-character-creation/README.md#mobile) · [Desktop gallery](docs/preview/features/update-character-creation/README.md#desktop) · [Wide gallery](docs/preview/features/update-character-creation/README.md#wide) · [Tablet gallery](docs/preview/features/update-character-creation/README.md#tablet)
+[Prior compact-layout matrix: 36 screenshots and wireframes](docs/preview/features/update-character-creation/README.md) remains evidence for **`652574f013`**, source `f6801043c9`; it is not recaptured or relabeled as the current revision.
 
 **Feature branch only:** remove this section and its feature gallery before merging to `dev`. See [the delivery protocol](CONTRIBUTING.md#feature-branch-previews).
 <!-- feature-preview:end -->

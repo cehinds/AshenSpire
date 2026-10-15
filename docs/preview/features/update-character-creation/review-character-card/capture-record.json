@@ -1,0 +1,54 @@
+{
+  "feature": "Opened Review character stat and equipment cards",
+  "capturedDate": "2026-10-14",
+  "timezone": "America/Anchorage",
+  "sourceCommit": "6d88c4d641fbd870beb5a8c25f6390636c9a2bbd",
+  "remoteEquivalentSource": "b0d1dc0f258fcd5d3e166072aa11cc75a6019301",
+  "version": "0.7.1.1520",
+  "digest": "a12edfdd78",
+  "standaloneSha256": "50da976c929e0dc4af4c983f90babd7b6db6c0a20fa0363ea6584de3d744321b",
+  "buildRun": "https://github.com/cehinds/AshenSpire/actions/runs/38696812396",
+  "publicationStatus": "CI build passed; Pages publication verification pending (run 38696977562)",
+  "errors": [],
+  "captureKind": "Review loadout open screenshot",
+  "expectedFallback": "Optional music manifest absent; procedural music fallback.",
+  "captures": [
+    {
+      "viewport": "1440 \u00d7 900",
+      "screenshot": "review-desktop-1440x900.png",
+      "wireframe": "review-desktop-1440x900-wireframe.png",
+      "sha256": {
+        "review-desktop-1440x900.png": "16fdddfa0654a54b4988a1afe590103ed2215a8aff0d0f86df5d7813109048b3",
+        "review-desktop-1440x900-wireframe.png": "d95a7cc5bf48bb4ef0ab702d2945d30c1f05eac30678b06ed24a9d2e139ff335"
+      }
+    },
+    {
+      "viewport": "1024 \u00d7 768",
+      "screenshot": "review-tablet-1024x768.png",
+      "wireframe": "review-tablet-1024x768-wireframe.png",
+      "sha256": {
+        "review-tablet-1024x768.png": "392517dfe91e73f8ff4c2abb7371eb8c58382919ac90b31fd6cf7e0a3c3d8d5f",
+        "review-tablet-1024x768-wireframe.png": "39e1c997d475ceb1c577159197dfaf3117c9b88b8c3fbb604aad04ac2409e81d"
+      }
+    },
+    {
+      "viewport": "390 \u00d7 844",
+      "screenshot": "review-mobile-390x844.png",
+      "wireframe": "review-mobile-390x844-wireframe.png",
+      "sha256": {
+        "review-mobile-390x844.png": "2dd1e6fbee0647418de5ee74d10bcd60d1219cafe840abdaea75b455436f78a0",
+        "review-mobile-390x844-wireframe.png": "fd4254876b13ac08dcb0c01121d3e1abd129578f40a21a345a25b30e24f2aa4c"
+      }
+    },
+    {
+      "viewport": "1920 \u00d7 1080",
+      "screenshot": "review-wide-1920x1080.png",
+      "wireframe": "review-wide-1920x1080-wireframe.png",
+      "sha256": {
+        "review-wide-1920x1080.png": "757c41a58d16994c046271ded1bd8990c3bc4c9022dab35d501558e16b307070",
+        "review-wide-1920x1080-wireframe.png": "c3975457527d8dbbc98e10fbd1aa22b1447c035d50e902f8747b4ba83090e537"
+      }
+    }
+  ],
+  "artifactUrl": "https://github.com/cehinds/AshenSpire/actions/runs/38696812396/artifacts/11954500967"
+}
