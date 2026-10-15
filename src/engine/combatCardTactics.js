@@ -1,4 +1,4 @@
-import { stanceRulesFor } from '../model/stanceRules.js';
+import { stanceRulesFor, enemySmashFallbackPoise } from '../model/stanceRules.js';
 import { combatProfileFor } from '../model/combatCardProfile.js';
 import { evaluate, isFormula } from '../model/formulas.js';
 import { counterstrikeAmount, counterstrikePct, hasStanceAdvantage, stanceManeuverOf } from './combatCardTraitMath.js';
@@ -278,9 +278,9 @@ export function expandedEnemyMove(enemy, move, moveId, ctx = null) {
     delete result.block;
     result.barrier = (move.barrier || 0) + move.block;
   }
-  if (profile.maneuver === 'smash' && (move.damage != null || result.effects.some(effect => effect.op === 'damage'))
-    && !result.effects.some(effect => effect.op === 'poiseDamage')) {
-    result.effects.push({ op: 'poiseDamage', target: 'player', amount: stanceRulesFor(ctx).fallbackPoise });
+  const fallbackPoise = enemySmashFallbackPoise(result, profile, ctx);
+  if (fallbackPoise != null) {
+    result.effects.push({ op: 'poiseDamage', target: 'player', amount: fallbackPoise });
   }
   if (profile.maneuver === 'ranged') result.projectile = true;
   if (move.delay?.whileCharging) result.delay = { ...move.delay,

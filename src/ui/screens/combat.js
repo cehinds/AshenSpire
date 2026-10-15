@@ -875,7 +875,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
     const def = registries.enemies.get(entity.enemyId);
     const intent = disp?.ents[entity.id]?.intentPreview || previewIntent(combat, entity.id);
-    const learning = combat.enemyKnowledge ? projectEnemyKnowledge(def, combat.enemyKnowledge.owners.player?.knowledge.enemies[def.id], { registries, combatMatchupRules: combat.combatMatchupRules, ratingsRules: combat.ratingsRules }) : null;
+    const moveCardOptions = { registries, combatMatchupRules: combat.combatMatchupRules,
+      combatExpansionVersion: combat.combatExpansionVersion, stanceRules: combat.stanceRules };
+    const learning = combat.enemyKnowledge ? projectEnemyKnowledge(def, combat.enemyKnowledge.owners.player?.knowledge.enemies[def.id], { ...moveCardOptions, ratingsRules: combat.ratingsRules }) : null;
     const currentMoveId = intent.moveId;
     const skills = learning ? null : Object.entries(def.moves || {}).map(([moveId, move]) => ({
       name: words(moveId),
@@ -910,7 +912,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         active: true,
       },
       skillLabel: 'Move set',
-      moveCards: learning ? learning.moveCards : enemyMoveCards(def, { enemy: entity, preview: intent, registries, combatMatchupRules: combat.combatMatchupRules }),
+      moveCards: learning ? learning.moveCards : enemyMoveCards(def, { ...moveCardOptions, enemy: entity, preview: intent }),
       skills,
       // The stance an enemy's telegraph set reads only as far as its intent does.
       statuses: [...[intent.hidden ? null : combatStanceRow(v), preparedEvadeRow(v)].filter(Boolean), ...statusDetails(entity)],

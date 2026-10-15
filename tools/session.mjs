@@ -823,6 +823,7 @@ export function createSession({ registries, seedString, endless = false, restore
       combatExpansionRules: c.combatExpansionRules, combatStatusRules: c.combatStatusRules,
       ...([1, 2].includes(c.breakMeterVersion) ? { breakMeterVersion: c.breakMeterVersion } : {}),
       ...(c.combatMatchupRules ? { combatMatchupRules: structuredClone(c.combatMatchupRules) } : {}),
+      ...(c.stanceRules ? { stanceRules: structuredClone(c.stanceRules) } : {}),
       ...(c.enemyKnowledge ? { enemyKnowledge: { version: 1, rules: structuredClone(c.enemyKnowledge.rules),
         owners: structuredClone(c.enemyKnowledge.owners) } } : {}),
       receiptSeq: ++combatReceiptSeq,

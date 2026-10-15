@@ -2,6 +2,14 @@ import { stanceRules } from '../content/stanceRules.js';
 import { combatProfileFor } from './combatCardProfile.js';
 
 export function stanceRulesFor(ctx) { return { ...stanceRules, ...(ctx?.stanceRules || ctx?.registries?.balance?.stanceRules || {}) }; }
+
+// Shared by execution and read-only move cards; authored pressure always wins.
+export function enemySmashFallbackPoise(move, profile, ctx) {
+  if (ctx?.combatExpansionVersion !== 2 || profile?.maneuver !== 'smash'
+    || !(move.damage != null || move.effects?.some(effect => effect.op === 'damage'))
+    || move.effects?.some(effect => effect.op === 'poiseDamage')) return null;
+  return stanceRulesFor(ctx).fallbackPoise;
+}
 export function stanceOf(carrier, entity = null) {
   if (!carrier) return null;
   const profile = carrier.combatProfile || (carrier.camp ? carrier : combatProfileFor(carrier));

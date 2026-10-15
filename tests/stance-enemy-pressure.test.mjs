@@ -2,7 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { createCombat } from '../src/engine/combat.js';
+import { createCombat, dispatch } from '../src/engine/combat.js';
+import { createCoopCombat, endTurn } from '../src/engine/coopCombat.js';
+import { enemyMoveCards } from '../src/model/enemyMoveCards.js';
+import { learnedEnemyMoveCards } from '../src/model/enemyKnowledgeView.js';
+import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { createRng } from '../src/engine/rng.js';
 import { expandedEnemyMove, primeEnemyCounter } from '../src/engine/combatCardTactics.js';
 import { enqueueExpandedAction } from '../src/engine/combatExpansionActions.js';
@@ -61,4 +65,56 @@ test('enemy Smash fallback is configured, idempotent and excludes support-only c
   const authored = expandedEnemyMove(enemy, { ...move, effects: [{ op: 'poiseDamage', target: 'player', amount: 4 }] }, 'heldBlade', combat);
   assert.deepEqual(authored.effects.filter(effect => effect.op === 'poiseDamage'), [{ op: 'poiseDamage', target: 'player', amount: 4 }]);
   assert.equal(move.effects?.some(effect => effect.op === 'poiseDamage') || false, false, 'projection does not mutate authored content');
+});
+
+for (const coop of [false, true]) for (const die of [1, 20]) {
+  test(`${coop ? 'co-op' : 'solo'} charging Smash gates fallback Poise with its ${die === 1 ? 'miss' : 'hit'}`, () => {
+    const move = { intent: 'attack', damage: 10, weight: 1,
+      tags: ['camp:physical', 'maneuver:smash', 'range:melee', 'targeting:single'],
+      delay: { turns: 1, whileCharging: { effects: [{ op: 'damage', target: 'player', amount: 2 }] } } };
+    const reg = createRegistries({ ...contentBundle,
+      enemies: contentBundle.enemies.map(def => def.id === 'fellWarden'
+        ? { ...def, firstMove: 'heldBlade', spPool: 1, moves: { heldBlade: move } } : def),
+      enemyMoves: contentBundle.enemyMoves.map(row => row.enemyId === 'fellWarden' && row.id === 'heldBlade' ? { ...row, ...move } : row),
+    });
+    const player = { id: 'p1', classId: 'reaver', hp: 1000, maxHp: 1000,
+      mana: 20, maxMana: 20, stamina: 20, maxStamina: 20, energyMax: 20, drawPerTurn: 0, deck: [], combatExpansionVersion: 2 };
+    const options = { registries: reg, rng: createRng(811), combatExpansionVersion: 2,
+      reactionRulesVersion: 1, enemyIds: ['fellWarden'] };
+    const combat = coop ? createCoopCombat({ ...options, players: [player] }) : createCombat({ ...options, player });
+    combat.stanceRules = { fallbackPoise: 7 };
+    const target = coop ? combat.players.get('p1').entity : combat.player;
+    target.statuses = {}; target.block = target.barrier = 0;
+    target.evasion = 0; target.combatStance = { camp: 'physical', maneuver: 'attack', range: 'melee' };
+    delete target.combatCounter;
+    target.poiseMeter = { value: 0, max: 1000 };
+    if (target.persistentWard) target.persistentWard.value = 0;
+    combat.enemies[0].plannedMoves = [];
+    primeAccuracyRolls(combat, { die });
+    const before = combat.eventLog.length;
+    if (coop) endTurn(combat, 'p1'); else dispatch(combat, { type: 'endTurn' });
+    const events = combat.eventLog.slice(before);
+    const live = coop ? combat.players.get('p1').entity : combat.player;
+    assert.ok(combat.enemies[0].pendingMove, 'the real turn committed the charging stage');
+    assert.equal(events.filter(event => ['attackHit', 'attackMissed'].includes(event.type)).length, 1, 'one decision gates the whole charging payload');
+    assert.equal(live.poiseMeter.value, die === 1 ? 0 : 9, 'a hit applies 7 fallback plus 2 ordinary hit pressure; a miss applies neither');
+    assert.equal(events.some(event => event.type === 'hpLost' && event.targetId === live.id), die === 20);
+  });
+}
+
+test('enemy move cards show configured fallback pressure without changing legacy or knowledge privacy', () => {
+  const def = registries.enemies.get('fellWarden');
+  for (const fallbackPoise of [3, 7]) {
+    const options = { registries, combatExpansionVersion: 2, stanceRules: { fallbackPoise } };
+    const card = enemyMoveCards(def, options).find(row => row.moveId === 'heldBlade');
+    assert.match(card.detail, new RegExp(`${fallbackPoise} base Poise damage`));
+    for (const stage of [4, 5]) assert.match(learnedEnemyMoveCards(def, stage, options).find(row => row.moveId === 'heldBlade').detail,
+      new RegExp(`${fallbackPoise} base Poise damage`));
+    assert.doesNotMatch(learnedEnemyMoveCards(def, 3, options).find(row => row.moveId === 'heldBlade').detail, /Poise|7|3/);
+  }
+  assert.doesNotMatch(enemyMoveCards(def).find(row => row.moveId === 'heldBlade').detail, /base Poise damage/);
+  const authored = { ...def, moves: { heldBlade: { ...def.moves.heldBlade, effects: [{ op: 'poiseDamage', target: 'player', amount: 4 }] } } };
+  const card = enemyMoveCards(authored, { combatExpansionVersion: 2, stanceRules: { fallbackPoise: 7 } })[0];
+  assert.match(card.detail, /4 base Poise damage/);
+  assert.doesNotMatch(card.detail, /7 base Poise damage/);
 });

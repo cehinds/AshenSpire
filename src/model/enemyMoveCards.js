@@ -3,6 +3,7 @@ import { enemyMoveDamage } from './state.js';
 import { combatProfileFor, combatProfileTags } from './combatCardProfile.js';
 import { combatMatchups } from '../content/combatMatchups.js';
 import { variableIntentDamage } from './intentDamage.js';
+import { enemySmashFallbackPoise } from './stanceRules.js';
 const words = (value) => String(value || '').replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/[_-]/g, ' ').replace(/^./, (c) => c.toUpperCase());
 
 function effectText(effect, registries) {
@@ -13,13 +14,15 @@ function effectText(effect, registries) {
   }
   if (effect.op === 'heal') return `Heal ${target} for ${effect.amount}`;
   if (effect.op === 'block') return `Give ${target} ${effect.amount} base Block`;
+  if (effect.op === 'poiseDamage') return `${effect.amount} base Poise damage to ${target}`;
   if (effect.op === 'addCard') return `Add ${registries?.cards?.get(effect.card)?.name || words(effect.card)} to ${words(effect.pile)}${effect.position ? ` (${effect.position})` : ''}`;
   // Unknown future operations remain visible without invented effect semantics.
   return `${words(effect.op)}: ${JSON.stringify(Object.fromEntries(Object.entries(effect).filter(([key]) => key !== 'op')))}`;
 }
 
 /** No RNG, mutation, selection or engine dispatch; preview must come from previewIntent. */
-export function enemyMoveCards(def, { enemy = null, preview = null, registries = null, combatMatchupRules = null } = {}) {
+export function enemyMoveCards(def, { enemy = null, preview = null, registries = null, combatMatchupRules = null,
+  combatExpansionVersion = enemy?.combatExpansionVersion || 1, stanceRules = null } = {}) {
   return Object.entries(def.moves || {}).map(([moveId, move]) => {
     const profile = combatProfileFor({ ...move, enemyId: def.id, moveId });
     const combatTags = combatProfileTags(profile, registries);
@@ -41,6 +44,8 @@ export function enemyMoveCards(def, { enemy = null, preview = null, registries =
     if (damage != null) pieces.push(`${sequence ? `${sequence.text} (${sequence.totalDamage} total)` : `${damage}${hits > 1 ? ` × ${hits}` : ''}`} ${liveDamage ? 'preview damage before Block' : 'base damage'}`);
     if (move.block != null) pieces.push(`${move.block} base Block`);
     pieces.push(...(move.effects || []).map((effect) => effectText(effect, registries)));
+    const fallback = enemySmashFallbackPoise(move, profile, { combatExpansionVersion, stanceRules, registries });
+    if (fallback != null) pieces.push(`${fallback} base Poise damage to player`);
     if (move.delay) {
       pieces.push(`Delayed ${move.delay.turns} turn${move.delay.turns === 1 ? '' : 's'}`);
       if (move.delay.whileCharging?.block != null) pieces.push(`${move.delay.whileCharging.block} base Block while charging`);
