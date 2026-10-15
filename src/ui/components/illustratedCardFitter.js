@@ -1,8 +1,8 @@
 import {resetCardLayout,applyCardLayouts} from './cardLayout.js';
 const ruleGeometry = new WeakMap();
 
-// Search every text in one batch. Complete effects use the authored readable
-// floor, then borrow artwork height; names and costs keep their line budgets.
+// Search every text in one batch. Ordinary effects keep three physical lines
+// and their authored panel; Information owns the complete reading.
 export function fitIllustratedCards(cards) {
   const faces=[];
   for(const card of cards){const face=card?.querySelector('.illustrated-card-face');if(face)faces.push(face);}
@@ -15,9 +15,10 @@ export function fitIllustratedCards(cards) {
     for(const text of face.querySelectorAll('.ic-text[data-auto-fit="true"]')){
       const rules=text.dataset.cardBinding==='rules';
       const layer=text.parentElement;
-      // Face lines fit inside their data-max-lines budget (5, or 3 at hand rest).
+      // The same budget applies at rest, selected, in catalogues and enlarged.
       const faceLines=text.dataset.faceLines==='true';
-      const row={face,text,layer,scale,rules,lines:rules?(faceLines?Number(text.dataset.maxLines)||5:Infinity):Number(text.dataset.maxLines)||1};
+      const row={face,text,layer,scale,rules,bounded:faceLines,lines:rules?(faceLines?Number(text.dataset.maxLines)||3:Infinity):Number(text.dataset.maxLines)||1};
+      if(faceLines)for(const clause of text.querySelectorAll('[data-face-clause]'))clause.style.display='';
       if(rules){
         row.rankInset=0;
         row.panel=face.querySelector('[data-component="panel"]');
@@ -35,7 +36,7 @@ export function fitIllustratedCards(cards) {
         }
         text.style.display='block';
       }
-      row.low=rules?Math.max(Math.min(11,widths[i]/12),22*scale,Number(text.dataset.minFont)*scale):Number(text.dataset.minFont)*scale;
+      row.low=faceLines?Math.max(8,18*scale):rules?Math.max(Math.min(11,widths[i]/12),22*scale,Number(text.dataset.minFont)*scale):Number(text.dataset.minFont)*scale;
       row.high=Math.max(row.low,Number(text.dataset.maxFont)*scale);
       texts.push(row);
     }
@@ -68,9 +69,23 @@ export function fitIllustratedCards(cards) {
   }
   for(const row of search)row.result=row.lo;
   for(const row of texts){row.text.style.fontSize=row.result+'px';row.text.style.webkitLineClamp=row.rules?'unset':String(row.lines);row.text.dataset.fittedFont=String(row.result/row.scale);}
+  // If a narrow face cannot hold both whole clauses at the readable floor,
+  // move its secondary clause to Information. Never clip half a condition or
+  // grow the panel into artwork. A resize restores and remeasures both.
+  const bounded=texts.filter(row=>row.bounded);
+  for(const row of bounded){
+    const clauses=[...row.text.querySelectorAll('[data-face-clause]')];
+    const available=Math.min(row.boxHeight,row.result*1.25*row.lines)+1;
+    row.omitSecondary=row.text.scrollHeight>available||row.text.scrollWidth>row.text.clientWidth+1;
+    if(row.omitSecondary&&clauses.length>1){clauses.at(-1).style.display='none';row.face.dataset.faceOmitted='true';}
+    row.face.dataset.rulesExpanded='false';
+    row.face.dataset.rulesDense='false';
+    row.face.dataset.rulesNarrowFit=String(row.omitSecondary);
+    row.text.dataset.rulesComplete=String(!row.omitSecondary);
+  }
   // Measure the whole batch before expanding any panel. No per-card search or
   // layout loop, and a resize starts from authored geometry rather than drift.
-  const rules=texts.filter(row=>row.rules),narrow=[];
+  const rules=texts.filter(row=>row.rules&&!row.bounded),narrow=[];
   // Dense rules keep the same readable text floor with the taller base bay.
   // Tighten only their artwork rail before measuring the expansion boundary.
   for(const row of rules)row.dense=row.text.scrollHeight>row.boxHeight*1.5;

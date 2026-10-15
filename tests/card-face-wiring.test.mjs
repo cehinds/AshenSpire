@@ -2,12 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
-import { renderCard } from '../src/ui/components/card.js';
+import { renderCard, cardDetailHtml, setHandFaceBudget } from '../src/ui/components/card.js';
 import { applyCardTraits } from '../src/content/traitProjection.js';
 import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 
-// Every card view reads one face text: the shared cardFaceLines model, one <span class="face-line"> per line.
+// Every ordinary face uses the same bounded projection; Information stays complete.
 const reg = createRegistries(contentBundle);
 const previewOf = cardId => ({ combatExpansionVersion: 2, cost: 1, manaCost: 0, tokens: {}, values: [],
   // The card the engine plays: resolved (action costs derived, SPEC §4.3a), then projected for combat.
@@ -34,12 +34,12 @@ function trackInnerHtml(dom) {
   return markup;
 }
 
-test('a card without a preview renders face lines starting with Inflict', () => withKitDom(dom => {
+test('a card without a preview renders whole clauses starting with Deal', () => withKitDom(dom => {
   const markup = trackInnerHtml(dom);
   const el = renderCard(reg, { cardId: 'bashingBlow' }, { inspection: false });
   const lines = faceLinesOf(markup.get(el));
   assert.ok(lines.length >= 1, 'at least one .face-line');
-  assert.match(textOf(lines[0]), /^Inflict /);
+  assert.match(textOf(lines[0]), /^Deal /);
 }));
 
 test('the same card with a preview gives the same line text when the numbers are equal', () => withKitDom(dom => {
@@ -51,29 +51,23 @@ test('the same card with a preview gives the same line text when the numbers are
   assert.deepEqual(previewed.map(textOf), plain.map(textOf));
 }));
 
-test('with faceLineLimit 3 a card with more than three lines marks lines 4+ data-face-extra', () => withKitDom(dom => {
+test('all authored faces keep at most two clauses even with a legacy hand limit', () => withKitDom(dom => {
   const markup = trackInnerHtml(dom);
-  const cardId = reg.cards.all().map(card => card.id).find(id => {
-    const el = renderCard(reg, { cardId: id }, { inspection: false });
-    return faceLinesOf(markup.get(el)).length > 3;
-  });
-  assert.ok(cardId, 'a card with more than three face lines exists in content');
-  const lines = faceLinesOf(markup.get(renderCard(reg, { cardId }, { inspection: false, faceLineLimit: 3 })));
-  assert.ok(lines.length > 3);
-  lines.forEach((line, i) => {
-    if (i < 3) assert.doesNotMatch(line.attrs, /data-face-extra/, `line ${i + 1} stays visible`);
-    else assert.match(line.attrs, /data-face-extra="true"/, `line ${i + 1} is marked extra`);
-  });
+  for (const card of reg.cards.all()) {
+    const html = markup.get(renderCard(reg, { cardId: card.id }, { inspection: false, faceLineLimit: 3 }));
+    const lines = faceLinesOf(html);
+    assert.ok(lines.length >= 1 && lines.length <= 2, card.id);
+    assert.doesNotMatch(html, /data-face-extra/, card.id);
+    assert.match(html, /data-max-lines="3" data-face-lines="true"/, card.id);
+  }
 }));
 
-test('the hand hides detail lines until the card is selected; other views show them', () => withKitDom(dom => {
+test('hand and catalogue share the same concise clauses; secondary details remain in Information', () => withKitDom(dom => {
   const markup = trackInnerHtml(dom);
   const lines = opts => faceLinesOf(markup.get(renderCard(reg, { cardId: 'sanctuaryCleanse' }, { inspection: false, ...opts })));
-  const detail = list => list.filter(line => /data-face-kind="detail"/.test(line.attrs));
-  assert.ok(detail(lines({})).length && detail(lines({})).every(line => !/data-face-extra/.test(line.attrs)), 'a non-hand view shows Usable through');
-  const hand = detail(lines({ faceLineLimit: 3 }));
-  assert.ok(hand.length, 'the hand keeps the detail line for selection');
-  assert.ok(hand.every(line => /data-face-extra="true"/.test(line.attrs)), 'and hides it at rest');
+  assert.deepEqual(lines({}).map(textOf), lines({ faceLineLimit: 3 }).map(textOf));
+  assert.ok(lines({}).every(line => !/Usable through/.test(textOf(line))));
+  assert.match(cardDetailHtml(reg, { cardId: 'sanctuaryCleanse' }), /Sleep/);
 }));
 
 test('a hit that is magic with a physical tag names only its leading type on the face', () => withKitDom(dom => {
@@ -82,18 +76,21 @@ test('a hit that is magic with a physical tag names only its leading type on the
   assert.doesNotMatch(textOf(lines[0]), /·/);
 }));
 
-test('inspecting a hand card shows the full face, detail lines included', () => withKitDom(dom => {
+test('enlarged faces retain the same budget and selection never permits five lines', () => withKitDom(dom => {
   const markup = trackInnerHtml(dom);
-  const src = renderCard.toString();
-  assert.match(src, /level: 'inspect', faceLineLimit: undefined/, 'the inspect face does not inherit the hand limit');
-  const kinds = faceLinesOf(markup.get(renderCard(reg, { cardId: 'sanctuaryCleanse' }, { inspection: false, level: 'inspect' })))
-    .map(line => /data-face-kind="(\w+)"/.exec(line.attrs)[1]);
-  assert.ok(kinds.includes('detail'));
+  const ref = { cardId: 'sanctuaryCleanse' };
+  const normal = renderCard(reg, ref, { inspection: false });
+  const enlarged = renderCard(reg, ref, { inspection: false, level: 'inspect' });
+  assert.deepEqual(faceLinesOf(markup.get(normal)).map(textOf), faceLinesOf(markup.get(enlarged)).map(textOf));
+  const rules = { dataset: {} }, host = { querySelector: () => rules };
+  setHandFaceBudget(host, false); assert.equal(rules.dataset.maxLines, '3');
+  setHandFaceBudget(host, true); assert.equal(rules.dataset.maxLines, '3');
 }));
 
-test('a combat face the shared model refuses shows the authored rules, not the looser summary', () => withKitDom(dom => {
+test('complex fallback cards also use bounded whole authored clauses', () => withKitDom(dom => {
   const markup = trackInnerHtml(dom);
   const html = markup.get(renderCard(reg, { cardId: 'shieldGuardian' }, { inspection: false, preview: previewOf('shieldGuardian') }));
-  assert.doesNotMatch(html, /class="face-line"/);
+  assert.match(html, /class="face-line"/);
+  assert.ok(faceLinesOf(html).length <= 2);
   assert.doesNotMatch(html, /Add 1 Enter: Bulwark to hand/);
 }));

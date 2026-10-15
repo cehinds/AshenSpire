@@ -12,7 +12,7 @@ import { configureTooltipGlossary, decorateKeywords } from './tooltipGlossary.js
 // computeTokenBindings. No math happens here.
 
 import { resolveCard, relicPropertyRules } from '../../model/registries.js';
-import { playingCardModel, playingCardDefinition, playingCardClasses, staticCardTokens, combatCardType, combatCardDamageLabel } from '../../model/playingCard.js';
+import { playingCardModel, playingCardDefinition, playingCardClasses, staticCardTokens, combatCardType } from '../../model/playingCard.js';
 import { cardFields, resolveCardLevel } from '../../model/cardFields.js';
 import { cardShape } from '../models/CardSizeModel.js';
 import { litCard } from './cardSelection.js';
@@ -39,6 +39,7 @@ import { ashenBlightCardLabel } from './ashenBlight.js';
 import { ACTION_SIGILS, SCHOOL_SIGILS, cardSigilIdentity } from '../../content/combatSigils.js';
 import { compactCardRules, sigilExplanationHtml } from './combatSigilView.js';
 import { cardFaceLines } from '../../model/cardFaceText.js';
+import { cardFaceProjection, FACE_EFFECT_LINES } from '../../model/cardFaceProjection.js';
 import { spellDefenseSplit } from '../../model/spellDefense.js';
 
 // WCI3: rarity at the start of the band, the owned count at the end, each only
@@ -178,12 +179,6 @@ export function renderCard(registries, ref, opts = {}) {
   model.sideTags = cardSideTags(model, def, registries, opts.preview || null);
   // The combat hand's range chip (opts.range), by the same rule the deck editor uses.
   model.range = opts.range ? combatCardRange(def) : null;
-  // When the shared face model refuses a card, the authored clauses (family
-  // limits, charge and payment constraints) stay complete on the face, led by
-  // the damage label in an expanded combat view.
-  const fallbackDamageLabel = expanded
-    && (def.effects?.some(effect => effect.op === 'damage') || def.counterPayload?.hp)
-    ? combatCardDamageLabel(def, opts.preview, registries) : '';
   const damageWords = model.tags.filter(tag => tag.id.startsWith('damage:')).map(tag => tag.label);
   const accessibleLabel = [model.name, ACTION_SIGILS[model.sigils.action].label,
     model.sigils.school && `${SCHOOL_SIGILS[model.sigils.school].label} school`,
@@ -295,10 +290,6 @@ export function renderCard(registries, ref, opts = {}) {
   // (cardFaceText.js); a weight-priced card adds its pricing note as a detail line.
   const faceLines = cardFaceLines(def, opts.preview || null, registries);
   if (faceLines && def.weightClassPriced) faceLines.push({ kind: 'detail', html: 'Cost reflects your current weight' });
-  // The combat hand passes faceLineLimit: lines past it stay in the DOM, hidden until the card is selected.
-  const faceLineLimit = Number.isFinite(opts.faceLineLimit) ? opts.faceLineLimit : null;
-  // In the hand, detail lines (a partial chance, usable-through, pricing) wait for selection: hidden at rest, shown when selected.
-  const extraLine = (line, i) => faceLineLimit !== null && (i >= faceLineLimit || (line.kind === 'detail' && i > 0));
   const paint = (at) => {
     const artwork = illustratedArtwork(ref, model.id, {large:at==='inspect',equipmentArt:equipmentPainting,
       definition:def,registries});
@@ -306,11 +297,10 @@ export function renderCard(registries, ref, opts = {}) {
     const authoredRules = def.weightClassPriced
       ? fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences).replace(/ Light:.*$/,'')+' Cost reflects your current weight.'
       : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences);
-    const rulesHtml = faceLines
-      ? compactCardRules(faceLines.map((line, i) => `<span class="face-line" data-face-kind="${line.kind}"${extraLine(line, i) ? ' data-face-extra="true"' : ''}>${line.html}</span>`).join(''))
-      // A face the shared model refused keeps the authored rules, never the looser summary.
-      : compactCardRules(`${fallbackDamageLabel ? `${esc(fallbackDamageLabel)}: ` : ''}${authoredRules}`);
-    el.dataset.faceLines = faceLines ? String(faceLines.length) : '';
+    const projection = cardFaceProjection(def, { lines: faceLines, authoredHtml: authoredRules, registries });
+    const rulesHtml = compactCardRules(projection.clauses.map((line, i) => `<span class="face-line" data-face-kind="${line.kind}" data-face-clause="${i}">${i ? '; ' : ''}${line.html}</span>`).join(''));
+    el.dataset.faceLines = String(projection.clauses.length);
+    el.dataset.faceOmitted = String(projection.omitted);
     el.innerHTML = illustratedCardHtml(model,{
       // The printed price is live; the full weight table stays in Information.
       rules: rulesHtml,
@@ -442,11 +432,11 @@ export function renderCard(registries, ref, opts = {}) {
 const pendingFits = new Set();
 let fitFrame = 0;
 
-// The combat hand shows three face lines at rest and five when selected.
+// Selection changes the card's size, never the ordinary effect budget.
 export function setHandFaceBudget(el, selected) {
   const rules = el?.querySelector?.('.ic-text[data-face-lines="true"]');
   if (!rules) return;
-  rules.dataset.maxLines = selected ? '5' : '3';
+  rules.dataset.maxLines = String(FACE_EFFECT_LINES);
   scheduleCardFits([el]);
 }
 
