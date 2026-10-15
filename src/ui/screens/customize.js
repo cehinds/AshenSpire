@@ -1,3 +1,4 @@
+import { mountGameProfileCreation } from '../components/gameProfileCreation.js';
 import { masteryClassSummary } from '../components/classMastery.js';
 import { compactEquipmentDetails } from '../components/compactEquipmentDetails.js';
 import { renderCollectibleCard } from '../components/collectibleCard.js';
@@ -104,8 +105,10 @@ function showNode(node, on) {
 }
 
 export function mountCustomize(app, {
+  gameProfile = null, fixedClasses = null, classAvailable = null,
   registries, meta = {}, defaultSeedString, onBack, onStart, onSettings = null, onQuit = null, catalog = false, shotPose = null, slot = null,
 }) {
+  if (fixedClasses) return mountGameProfileCreation(app, { profile: gameProfile, classes: fixedClasses, available: classAvailable, defaultSeedString, onStart, onBack });
   const creationCardRules = { combatExpansionVersion: 2, reactionRulesVersion: 2, breakMeterVersion: 2 };
   const renderCard = (registries, ref, opts = {}) => renderCardFace(registries, ref, { ...opts, rules: creationCardRules });
   // A new screen must never inherit another card's selection or spent tap.
