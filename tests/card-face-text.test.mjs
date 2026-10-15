@@ -222,3 +222,22 @@ test('ordinary summaries use honest authored or inspection fallback for risky sc
   const latePayment = { ...base, effects: [{ op: 'gainSp', amount: 2 }, { op: 'loseHp', amount: 2 }] };
   assert.equal(cardFaceSummary(latePayment, null, reg).lines[0].html, 'Inspect for full effects.');
 });
+
+test('authored fallback counts effect clauses instead of sentences, preserving complete two-effect Powers', async () => {
+  const { cardFaceSummary } = await import('../src/model/cardFaceText.js');
+  const lethal = card('lethalDose');
+  assert.equal(lethal.textTemplate.split(/(?<=[.!?])\s+/).length, 2, 'the shipped regression has only two sentences');
+  assert.equal(cardFaceSummary(lethal, null, reg).lines[0].html, 'Inspect for full effects.', 'damage, removal and Exhaust are three effects');
+  assert.equal(cardFaceLines(lethal, null, reg), null, 'the full reading retains canonical authored rules');
+  const power = reg.cards.get('rallyingStandard');
+  const summary = cardFaceSummary(power, null, reg);
+  assert.equal(summary.lines[0].html, power.textTemplate, 'gain and take remain together with their turn trigger');
+  assert.equal(summary.omitted, false);
+  assert.equal(cardFaceSummary(card('rallyingStandard'), null, reg).lines[0].html, 'Inspect for full effects.', 'projected Exhaust is a third rule even when omitted from authored prose');
+  const three = { ...power, textTemplate: 'At turn start, gain 1 Strength and draw 1 card, then take 1 damage.' };
+  assert.equal(cardFaceSummary(three, null, reg).lines[0].html, 'Inspect for full effects.');
+  const missingRestriction = { ...power, keywords: ['exhaust'], textTemplate: 'Gain 1 Strength.' };
+  assert.equal(cardFaceSummary(missingRestriction, null, reg).lines[0].html, 'Inspect for full effects.');
+  const wholeRestriction = { ...power, keywords: ['exhaust'], textTemplate: 'Gain 1 Strength. Exhaust.' };
+  assert.deepEqual(cardFaceSummary(wholeRestriction, null, reg).lines.map(line => line.html), ['Gain 1 Strength.', 'Exhaust.']);
+});
