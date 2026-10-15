@@ -6,7 +6,7 @@ Status: documentation only; all paths, schemas and bindings below are illustrati
 
 The kernel is generic infrastructure: transactions, deterministic queue execution, RNG services, registry construction, hashing and bounded execution. It contains no heroes, HP, attacks or Ashen content. Versioned contracts define typed commands, operations, values, state ownership and adapter capabilities.
 
-The always-installed foundation supplies minimal gameplay providers: HP, baseline attack/pass actions, targets, enemy response/AI fallback, outcomes, activity launcher, log, inspect and basic presentation with procedural stand-ins. These providers are not user switches. Technical scheduling belongs to the kernel; gameplay turn policy belongs to the foundation/provider binding and feature contributions. The full Ashen profile permits multiple SP/MP card plays and End Turn. One baseline command advances the technical fallback opportunity; that is not a product one-card-per-turn rule.
+The game-neutral always-installed foundation supplies minimal gameplay providers: HP, baseline attack/pass actions, targets, enemy response/AI fallback, outcomes, activity launcher, log, inspect and basic presentation with procedural stand-ins. These providers are not user switches. Foundation declares mandatory fallback presentation contracts and target geometry; the web adapter renders procedural lowpoly stand-ins. Browser objects and rendering code stay outside portable gameplay. Technical scheduling belongs to the kernel; gameplay turn policy belongs to the foundation/provider binding and feature contributions. The full Ashen profile permits multiple SP/MP card plays and End Turn. One baseline command advances the technical fallback opportunity; that is not a product one-card-per-turn rule.
 
 Modules are reusable feature implementations and declarative rules. Bundles are data-only module selections, exact pins, settings and pack references. Packs contain game definitions. The public name ashen.core@1.0.0 resolves to the Ashen bundle; it does not name a monolithic executable core module. No second implementation of cards, HP or progression belongs in that bundle.
 
@@ -78,7 +78,7 @@ Extend the existing Workbench through its ctx API. Reuse tools/content-build.mjs
 }
 ```
 
-This inherits the full declared Ashen profile. Missing bundled entries inherit; missing nonbundled entries are off; false disables; true uses module defaults plus bundle settings; an object merges module defaults, bundle settings and author overrides. Objects merge recursively; arrays/scalars replace. No extra enable flag is added. RFC 6902 removal deletes an authored override, allowing inheritance to return; it cannot delete package/bundle defaults. Unknown settings fail with paths. $comment is metadata excluded from gameplay hashes.
+This is the only public author entry shape and inherits the full declared Ashen profile. JSON examples contain no // comments; use legal $comment metadata for annotations. Missing bundled entries inherit; missing nonbundled entries are off; false disables; true uses module defaults plus bundle settings; an object merges module defaults, bundle settings and author overrides. Objects merge recursively; arrays/scalars replace. No extra enable flag is added. RFC 6902 removal deletes an authored override, allowing inheritance to return; it cannot delete package/bundle defaults. Unknown settings fail with paths. $comment is metadata excluded from gameplay hashes.
 
 A module manifest and settings excerpt might be:
 
@@ -138,6 +138,8 @@ An abbreviated data-only bundle might be:
   }
 }
 ```
+
+Bundle manifests, module manifests and exact-pin catalogs are internal package-author formats, not alternative public author entry shapes. Edit cards.json to change an Ashen card, a module rules.json to change reusable behavior, defaults.json to change reusable module defaults, and game.json modules overrides to change one game configuration. Edit bundle settings only to change the versioned Ashen preset; publish/review that version deliberately.
 
 The bundle excerpt intentionally omits other required core-selected modules; it is not a complete playable fixture. The implemented full bundle must select every provider needed for CORE-SPEC acceptance. Tags/groups select definitions or refer to declared behaviors. They never activate feature modules. Simple include lists are permitted; authors need not construct tag queries for a small explicit selection. Required unresolved references, including pending advanced values, fail executable compilation rather than becoming invented defaults.
 
@@ -202,3 +204,13 @@ Bindings are compiled once per resolved configuration; each runtime gets separat
 rules.json is portable declarative behavior interpreted against versioned contracts. runtime.mjs is optional: either a host interpreter implementation of a declared portable contract or an explicitly native extension. It is not silently portable merely because its manifest serializes. Export rejects required native behavior unsupported by the target; never omit functions and claim completeness. Data-only bundles and packs cannot contain runtime functions.
 
 Each module and pack guide documents schema/defaults, inherited settings/provenance, recipes, ownership/lifetime, disabled fallback, dependency/integration behavior, validation and portability. Give a new-module handoff checklist: catalog/pin registration, state owner, public operations, off behavior, authored variants, UI contributions, guide and behavioral cases. Explain pending advanced values and how compilation refuses them. Preserve every CORE-SPEC requirement, including class unlock ledger, rest-only Strategize deck editing, one atomic rest service, full recovery, fixed appearances and confirmed class/hand rules. Architecture acceptance supplements those gameplay tests rather than replacing them.
+
+## Review recommendations incorporated
+
+| Recommendation | Decision |
+| --- | --- |
+| Separate infrastructure from gameplay | Generic kernel, game-neutral always-installed foundation, reusable modules and data-only game bundle/packs. |
+| Avoid duplicate state | One owner per capability, compiled bindings, foundation HP decorated rather than copied. |
+| Keep authoring practical | One small public entry; internal manifests/pins; direct includes; clear card/rule/default/override edit locations. |
+| Preserve portability | Declarative rules plus explicit native capability boundary; web renderer outside gameplay. |
+| Limit migration risk | Slice-sized ownership transfer, legacy compatibility adapter, no bulk scaffolding or duplicate editor. |
