@@ -3658,6 +3658,7 @@ let openVisit = null;
 
 function showRest(openPanel = null, locationId = null) {
   if (isConfiguredRun(run) && gameModule(run, 'rest')) {
+    audio.music('rest');
     const record = !run.journey && !run.legacyDungeon ? openRestRecord(run, { multiUse: false }) : null;
     const visit = beginGameProfileRest(run, `${run.actNumber}:${run.mapNodeId}`);
     persist();
@@ -3675,9 +3676,8 @@ function showRest(openPanel = null, locationId = null) {
         onDone: () => commit('strategize', { draft }), onCancel: () => showRest(),
       });
     };
-    return mountRest(app, { registries, run, meta: saves.loadMeta(), onDone: leave,
-      gameProfileRest: { visit, smithFree: gameContent(run, 'rests')?.smith?.free === true, smithCandidates: smithingPlan(registries, run).candidates,
-        attributeIds: Object.keys(run.attributes || {}), onStrategize: strategize,
+    return mountRest(app, { registries, run, meta: saves.loadMeta(), onDone: leave, hud: roomHud(() => showRest()),
+      gameProfileRest: { visit, onStrategize: strategize,
         onCommit: commit, onLeave: leave } });
   }
   if (locationId) restLocationId = locationId;

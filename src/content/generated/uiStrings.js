@@ -10529,5 +10529,152 @@ export const uiStrings = [
     "short": "Import JSON",
     "full": "Import JSON",
     "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.service.strategize",
+    "extends": "",
+    "short": "Strategize",
+    "full": "Strategize",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.service.smith",
+    "extends": "",
+    "short": "Smith",
+    "full": "Smith",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.service.levelUp",
+    "extends": "",
+    "short": "Level Up",
+    "full": "Level Up",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.description.strategize",
+    "extends": "",
+    "short": "Edit your deck. Confirming fully restores your pools and flasks.",
+    "full": "Edit your deck. Confirming fully restores your pools and flasks.",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.description.smith",
+    "extends": "",
+    "short": "Review one equipment upgrade. Confirming fully restores your pools and flasks.",
+    "full": "Review one equipment upgrade. Confirming fully restores your pools and flasks.",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.description.levelUp",
+    "extends": "",
+    "short": "Assign one earned attribute point. Confirming fully restores your pools and flasks.",
+    "full": "Assign one earned attribute point. Confirming fully restores your pools and flasks.",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.spent",
+    "extends": "",
+    "short": "Your choice here is spent.",
+    "full": "Your choice here is spent.",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.noSmith",
+    "extends": "",
+    "short": "No owned equipment has an available upgrade.",
+    "full": "No owned equipment has an available upgrade.",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.noLevel",
+    "extends": "",
+    "short": "No earned attribute point is available.",
+    "full": "No earned attribute point is available.",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.chooseOne",
+    "extends": "",
+    "short": "Choose one service. Confirming restores HP and any active MP and SP pools and refills healing and MP flasks.",
+    "full": "Choose one service. Confirming restores HP and any active MP and SP pools and refills healing and MP flasks.",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.complete",
+    "extends": "",
+    "short": "{service} completed. Your choice here is spent.",
+    "full": "{service} completed. Your choice here is spent.",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.smithConsequence",
+    "extends": "",
+    "short": "Review the upgrade before confirming. One upgrade completes this visit and fully restores your pools and flasks.",
+    "full": "Review the upgrade before confirming. One upgrade completes this visit and fully restores your pools and flasks.",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.completesVisit",
+    "extends": "",
+    "short": "COMPLETES THIS VISIT",
+    "full": "COMPLETES THIS VISIT",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.smithDecision",
+    "extends": "",
+    "short": "and completes this visit with full pool and flask recovery",
+    "full": "and completes this visit with full pool and flask recovery",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.levelNote",
+    "extends": "",
+    "short": "Choose one attribute for one earned point. Existing points cannot be reduced. Confirming completes this visit.",
+    "full": "Choose one attribute for one earned point. Existing points cannot be reduced. Confirming completes this visit.",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.levelConfirm",
+    "extends": "",
+    "short": "Assign point and recover",
+    "full": "Assign point and recover",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.pool.hp",
+    "extends": "",
+    "short": "HP",
+    "full": "HP",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.pool.mp",
+    "extends": "",
+    "short": "MP",
+    "full": "MP",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.pool.sp",
+    "extends": "",
+    "short": "SP",
+    "full": "SP",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.pool.healingFlask",
+    "extends": "",
+    "short": "Healing flasks",
+    "full": "Healing flasks",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.pool.mpFlask",
+    "extends": "",
+    "short": "MP flasks",
+    "full": "MP flasks",
+    "tip": ""
   }
 ];
