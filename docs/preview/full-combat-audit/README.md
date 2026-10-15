@@ -1,5 +1,7 @@
 # Full combat audit preview
 
+[Post-promotion follow-up](accepted-stance-followup.md) records the accepted-stance preview fix, trusted-pointer hardening and fresh configured-defaults card matrices. The original card matrices used raw authored registries with ratings disabled; compiler/loader provenance and game settings are separate. Original gallery/source identities below remain historical.
+
 The eight original gallery images below show the integrated compiled game at source `368140ce27`, build `0.7.1.1530`, production commit `60e89f5ff8c4763552e62ebaf08830e26461b5b9`. Packed browser HTML SHA-256: `1d63824ea3d6df48d2909b31b595e48d63e46e2d4322f74e868371b92792c319`; art is pinned `hd-assets-v23`. The browser HTML uses matching linked art. The standalone download uses the same production source with media embedded and therefore has a different byte hash. The images retain their original identity; later integration `eccdfe210380b12b7b9ec380f83b59bada881690` includes upstream runtime and HUD changes and needs separately identified validation.
 
 The desktop menu and phone menu show primary **Quit** in the main list. Actual mouse and touch tests invoked it, handled a browser-blocked window close, then used **Return to title** successfully. Desktop also tested an allowed popup close. Both devices recorded zero browser errors. The Settings card sample is created only when its folded Preview is opened; card value projection uses a per-operation tag index and preserves independent pre-change value receipts.
