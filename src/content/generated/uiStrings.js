@@ -10375,5 +10375,47 @@ export const uiStrings = [
     "short": "Equipment upgrade: no currency cost.",
     "full": "Equipment upgrade: no currency cost.",
     "tip": ""
+  },
+  {
+    "id": "shop.bar.combatCards",
+    "extends": "",
+    "short": "Combat cards",
+    "full": "Combat card offers.",
+    "tip": ""
+  },
+  {
+    "id": "quit.title",
+    "extends": "",
+    "short": "THE EMBER GUTTERS",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "quit.message",
+    "extends": "",
+    "short": "The game has stopped. You may close this window.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.configured.buy",
+    "extends": "",
+    "short": "Buy this item?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.configured.buy.message",
+    "extends": "",
+    "short": "Spend {cost} of your {cinders} cinders ({left} left). The item joins your collection.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.review.starterDeck",
+    "extends": "",
+    "short": "Starting deck",
+    "full": "",
+    "tip": ""
   }
 ];
