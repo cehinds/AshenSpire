@@ -300,3 +300,15 @@ test('pages: PR announcements derive from the final collector manifest', () => {
   const prFetch = pages.slice(pages.indexOf('- name: Fetch each open pull request'), pages.indexOf('- name: Collect current feature'));
   assert.doesNotMatch(prFetch, /echo "comment_targets=/);
 });
+
+test('pages: deployment checks final public preview targets after publishing', () => {
+  const assemble = jobBlock(pages, 'assemble');
+  assert.match(assemble, /preview_targets: \$\{\{ steps\.feature_previews\.outputs\.preview_targets \}\}/);
+  assert.match(assemble, /\[\.previews\[\] \| \{dir: \.dir, sha: \.sha\}\]/);
+  const deploy = jobBlock(pages, 'deploy');
+  assert.ok(deploy.indexOf('uses: actions/deploy-pages@v4') < deploy.indexOf('run: node tools/check-feature-pages.mjs'));
+  assert.match(deploy, /PAGES_URL: \$\{\{ steps\.deployment\.outputs\.page_url \}\}/);
+  assert.match(deploy, /PREVIEW_TARGETS: \$\{\{ needs\.assemble\.outputs\.preview_targets \}\}/);
+  assert.match(deploy, /persist-credentials: false/);
+  assert.match(deploy, /sparse-checkout: tools\/check-feature-pages\.mjs/);
+});
