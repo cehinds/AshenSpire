@@ -1,5 +1,30 @@
 # AshenSpire
 
+<!-- feature-preview:start -->
+## Feature preview — JSON-driven game profiles
+
+The same runtime supports two authored configurations. **Product core** includes its required bundled modules and keeps optional gameplay packages off where the core has a fallback. **Current game** preserves the full legacy configuration.
+
+- **Product core:** [Play on Pages (publication pending)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-modules/latest/) · [exact standalone artifact](https://github.com/cehinds/AshenSpire/actions/runs/38701086476/artifacts/11955653884) · [build run](https://github.com/cehinds/AshenSpire/actions/runs/38701086476)
+- **Current game:** [Play on Pages (publication pending)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-current-preview/latest/) · [exact standalone artifact](https://github.com/cehinds/AshenSpire/actions/runs/38701086793/artifacts/11956237379) · [build run](https://github.com/cehinds/AshenSpire/actions/runs/38701086793)
+
+The combat captures below are from build 0.7.1.1538, digest `4c1356f8c0`. Capture details, including title and rest screens, are in [the profile evidence folder](docs/preview/features/json-game-modules/README.md).
+
+**Product core — combat**
+
+| Mobile · 390×844 | Desktop · 1440×900 | Wide · 1920×1080 | Tablet · 820×1180 |
+| --- | --- | --- | --- |
+| ![Product core mobile combat](docs/preview/features/json-game-modules/core/mobile-combat.png) | ![Product core desktop combat](docs/preview/features/json-game-modules/core/desktop-combat.png) | ![Product core wide combat](docs/preview/features/json-game-modules/core/wide-combat.png) | ![Product core tablet combat](docs/preview/features/json-game-modules/core/tablet-combat.png) |
+
+**Current game — combat**
+
+| Mobile · 390×844 | Desktop · 1440×900 | Wide · 1920×1080 | Tablet · 820×1180 |
+| --- | --- | --- | --- |
+| ![Current game mobile combat](docs/preview/features/json-game-modules/current/mobile-combat.png) | ![Current game desktop combat](docs/preview/features/json-game-modules/current/desktop-combat.png) | ![Current game wide combat](docs/preview/features/json-game-modules/current/wide-combat.png) | ![Current game tablet combat](docs/preview/features/json-game-modules/current/tablet-combat.png) |
+
+The current profile's 390-pixel combat capture is visually crowded. Public Pages availability and the existing release gallery were not verified in this pass; the local standalone captures and successful build artifacts are verified.
+<!-- feature-preview:end -->
+
 A browser roguelike: build a character, explore a seeded world, and fight with cards.
 
 > **AI-made game.** The original game code, design, writing, artwork and music
@@ -50,16 +75,6 @@ Dev/Test can contain newer features. Select an image to view its full size.
 ![Phone combat with enemy intentions, cards and turn controls](docs/preview/releases/0.7.1.1060/combat-phone.png)
 
 </details>
-
-### JSON-driven game profile previews
-
-The same tested runtime can start as either the optional-module-free product core or the current Ashen Spire configuration. These preview branches differ only in their authored default profile JSON. GitHub Actions completed both builds; GitHub Pages publication is still pending, so the play links may not resolve until its deployment finishes.
-
-- [Play product core](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-modules/latest/) · [Core build run](https://github.com/cehinds/AshenSpire/actions/runs/38701086476)
-- [Play current game](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-current-preview/latest/) · [Current build run](https://github.com/cehinds/AshenSpire/actions/runs/38701086793)
-- [Profile screenshots and capture details](docs/preview/features/json-game-modules/README.md)
-
-The screenshots record both fresh and saved-run title menus, combat, and rest at desktop, wide, tablet, and phone sizes.
 
 ## Features
 
