@@ -58,7 +58,8 @@ function applyService(registries, draft, service, payload) {
   }
   if (service === 'levelUp') withGameProfileService(draft, service, () => applyLevelUp(registries, draft, payload.attributeId));
   if (service === 'smith') {
-    withGameProfileService(draft, service, () => commitSmithing(registries, draft, payload.itemRef));
+    if (rules.smith?.tiersPerService !== 1) throw new Error('Smith requires an authored single-tier service policy');
+    withGameProfileService(draft, service, () => commitSmithing(registries, draft, payload.itemRef, undefined, { free: rules.smith.free === true }));
     rederivePools(registries, draft, 'Smith equipment upgrade');
   }
   draft.hp = draft.maxHp;
