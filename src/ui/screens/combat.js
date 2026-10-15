@@ -1,3 +1,4 @@
+import { bindCombatantInspectionGesture } from '../components/combatantInspectionGesture.js';
 import { enemyActionPose } from '../../model/enemyActionPose.js';
 import { ratingValue, ratingDamageMultiplier } from '../../model/combatRatings.js';
 import { openCollectibleInspection } from '../components/collectibleCard.js';
@@ -498,7 +499,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const handOverlay = $('.hand-overlay');
   const handPages = [$('.hand-prev'), $('.hand-next')];
 
+  const inspectionGestures = new Map();
   function selectCombatant(id) {
+    if (id !== selectedCombatantId) for (const gesture of inspectionGestures.values()) gesture.cancel();
     if (id && !getEntity(combat, id)?.alive) return;
     selectedCombatantId = id;
     selectCombatantInfo(combatEl, id);
@@ -1691,6 +1694,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const row = $('.enemy-row');
     const present = new Set(combat.enemies.map(enemy => enemy.id));
     for (const [id, record] of enemyFrames) if (!present.has(id)) {
+      inspectionGestures.get(id)?.release(); inspectionGestures.delete(id);
       stageFor(record.box)?.dispose?.(); record.box.remove(); enemyFrames.delete(id);
     }
     const targeting = selected || selectedFlask != null;
@@ -1704,6 +1708,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (record && record.key !== artKey) { stageFor(record.box)?.dispose?.(); record.box.remove(); record = null; }
       const renderKey = JSON.stringify([artKey, enemy, dv(enemy), combat.player, targeting, selectedCombatantId, living.map(e => e.id), disp ? disp.arcaneEvents : recentArcaneEvents, readSettings()]);
       if (record?.renderKey === renderKey) continue;
+      inspectionGestures.get(enemy.id)?.cancel();
       const leading = [];
       // WCO1: Inspect above the intent; the intent shows per the overlay config.
       if (enemy.alive) leading.push(combatantInfo(def.name, opener => openCombatantDoor(combatantSubject('enemy', enemy), opener)), intentVisible('enemy') ? intentEl(enemy) : null);
@@ -1716,12 +1721,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // The nameplate is a LabelStack: the name, and under it what kind of
       // thing it is (its stature reads from the frame, so the hint is the tags).
       const nm = labelStack({ label: def.name, attrs: { class: 'nm' } });
-      // With no card/flask selected, the name opens the full read directly;
-      // the separate side core selects the fighter's contextual explanation.
-      // During targeting both retain the existing card/flask commit behavior.
-      // (Sprite, intent and HP select; the name never only selects —
-      // docs/combat-target-pointer-behavior.md.)
-      // Stop bubbling so the name never invokes the frame's handler as well.
+      // The HUD always reads; the sprite remains the targeting surface.
+      // Capture delegation below also protects intent, meters and statuses
+      // from committing an armed action when the player asks for inspection.
       if (enemy.alive) {
         nm.classList.add('nm-inspect');
         nm.setAttribute('role', 'button');
@@ -1731,9 +1733,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const openThisRead = (event) => {
         event.stopPropagation();
         if (!getEntity(combat, enemy.id)?.alive) return;
-        if (selected) playCard(selected, enemy.id);
-        else if (selectedFlask != null) useFlask(selectedFlask, enemy.id);
-        else openCombatantDoor(combatantSubject('enemy', enemy), nm);
+        openCombatantDoor(combatantSubject('enemy', enemy), nm);
       };
       nm.addEventListener('click', openThisRead);
       nm.addEventListener('keydown', (event) => {
@@ -1756,15 +1756,23 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       box.dataset.stature = statureFor(registries, def.id);
       if (!record) {
         wireCombatantContext(box, combatantSubject('enemy', enemy));
-        box.addEventListener('click', (event) => {
-          event.stopPropagation();
+        const activate = () => {
           if (!getEntity(combat, enemy.id)?.alive) return;
           if (selected) playCard(selected, enemy.id);
           else if (selectedFlask != null) useFlask(selectedFlask, enemy.id);
-          else if (!selfArm) {
-            selectCombatant(enemy.id);
-          }
-        });
+          else if (!selfArm) selectCombatant(enemy.id);
+        };
+        box.addEventListener('click', event => { event.stopPropagation(); activate(); });
+        inspectionGestures.get(enemy.id)?.release();
+        inspectionGestures.set(enemy.id, bindCombatantInspectionGesture(box, {
+          isSelected: () => selectedCombatantId === enemy.id,
+          canInspect: () => !!getEntity(combat, enemy.id)?.alive,
+          canActivate: () => !busy && !selfArm && !!getEntity(combat, enemy.id)?.alive,
+          open: opener => openCombatantDoor(combatantSubject('enemy', getEntity(combat, enemy.id)), opener),
+          activate,
+          holdMs: registries.balance.ui.holdConfirm.steps.normal,
+          movePx: registries.balance.ui.holdConfirm.settleSlopPx,
+        }));
         box.addEventListener('pointerenter', () => getEntity(combat, enemy.id)?.alive && (selected || selectedFlask != null)
           && pendingTargetPlan().legalIds.includes(enemy.id) && box.classList.add('hover-target'));
         box.addEventListener('pointerleave', () => box.classList.remove('hover-target'));
@@ -3077,6 +3085,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         stageFor(combatEl.querySelector('.player-zone'))?.dispose?.();
         for (const record of enemyFrames.values()) stageFor(record.box)?.dispose?.();
         enemyFrames.clear();
+        for (const gesture of inspectionGestures.values()) gesture.release();
+        inspectionGestures.clear();
         removeEventListener('keydown', keyHandler);
         battlefieldStage.release();
         formationMovement?.release();
