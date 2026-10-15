@@ -123,16 +123,17 @@ export function resolveGameAuthor(author, catalog) {
     ...Object.entries(modules).filter(([,v]) => v).flatMap(([id]) => catalog.modules[id].artifacts),
     ...bundle.manifest.packs.flatMap(ref => catalog.packs[`${ref.id}@${ref.version}`].artifacts)];
   const profile = {id:bundle.manifest.profileId,formatVersion:1,author:source,modules,content,
-    foundation:{...catalog.foundation,mode:bundle.manifest.foundationMode,attackDamage:5},
+    foundation:{...catalog.foundation,mode:bundle.manifest.foundationMode},
     contracts:catalog.contracts,schemas,provenance,
-    lock:{formatVersion:1,core:source.core,artifacts:artifacts.sort((a,b)=>a.path < b.path ? -1 : a.path > b.path ? 1 : 0),runtimeABI:catalog.contracts.runtimeABI,numericPolicy:catalog.contracts.numericPolicy},
+    lock:{formatVersion:1,core:source.core,artifacts:artifacts.sort((a,b)=>a.path < b.path ? -1 : a.path > b.path ? 1 : 0),runtimeABI:catalog.contracts.runtimeABI,numericPolicy:catalog.contracts.numericPolicy,runtimeHash:catalog.runtimeHash},
     portability:{portable:false,requiredCapabilities:['ashen.legacy-adapter@1'],reason:'Host gameplay adapter; no portable rules VM is claimed.'}};
   profile.hash = gameDigest(profile);
   return freezeGameData(profile);
 }
-export function validateResolvedGameProfile(snapshot) {
+export function validateResolvedGameProfile(snapshot, supportedRuntimeHash) {
   const value = dataClone(snapshot), hash = value.hash; delete value.hash;
   if (typeof hash !== 'string' || gameDigest(value) !== hash) fail('$/hash', 'profile snapshot digest mismatch');
+  if (supportedRuntimeHash && value.lock?.runtimeHash !== supportedRuntimeHash) fail('$/lock/runtimeHash', 'unsupported runtime artifact snapshot; preserve original save and use its matching build');
   if (value.formatVersion !== 1 || !record(value.modules) || !record(value.schemas)) fail('$', 'invalid profile snapshot envelope');
   for (const [id, settings] of Object.entries(value.modules)) if (settings !== false) {
     if (!value.schemas[id]) fail(`$/modules/${id}`, 'missing pinned settings schema');

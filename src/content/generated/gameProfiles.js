@@ -19,7 +19,8 @@ export const gameProfileCatalog = {
     ],
     "turnPolicy": "oneActionFallback",
     "gameplayImplementation": "legacy-adapter",
-    "portable": false
+    "portable": false,
+    "attackDamage": 5
   },
   "modules": {
     "advanced-ui": {
@@ -2678,6 +2679,30 @@ export const gameProfileCatalog = {
             ],
             "textTemplate": " Gain {block} Block.",
             "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+          },
+          {
+            "id": "core.evade",
+            "name": "Evade",
+            "class": "colorless",
+            "rarity": "common",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "skill",
+            "icon": "↝",
+            "keywords": [],
+            "effects": [],
+            "tags": [
+              "camp:physical",
+              "maneuver:defend",
+              "classification.skill"
+            ],
+            "stanceTrigger": {
+              "stance": "evade"
+            },
+            "textTemplate": "Evade the next attack; a failed dodge takes double damage.",
+            "flavor": "Core adapter fixture. Evade is available in rewards, never starter."
           }
         ],
         "starterDeck": {
@@ -3012,6 +3037,28 @@ export const gameProfileCatalog = {
               "staminaCost": 1,
               "manaCost": 0
             }
+          },
+          "core.evade": {
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            },
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            }
           }
         },
         "shops": {
@@ -3036,7 +3083,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/cards.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:273c669a5bb9ec675d26490ea7799cb956dd0ef39802bf7cbfec4afda39458be"
+          "hash": "sha256:b424c45dbb15273252760e525f781091bd0b6861be562b2c94747c8d59f1d25a"
         },
         {
           "path": "games/ashenspire/packs/core/starterDeck.json",
@@ -3084,7 +3131,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/resourceVariants.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:ba5d1b0af898660fb55ba07e053c19efdbe83b30ee640cb8bb840b7ebb5eaf74"
+          "hash": "sha256:613b821d19f103febfde23db9edcd0496c14520c727e6e00e798e4aeb85375b0"
         },
         {
           "path": "games/ashenspire/packs/core/shops.json",
@@ -3106,7 +3153,7 @@ export const gameProfileCatalog = {
       "path": "engine/kernel/gameConfig.js",
       "id": "ashen.runtime",
       "version": "1.0.0",
-      "hash": "sha256:265054ebd68a176c5a22a5c78bcd9b3e86562328e42b4db80a35ee3d6c3666b1"
+      "hash": "sha256:b4b38b3a2c558484eecd59b79d276d84282e297adba243a6c8ea4fb5bbcf5de4"
     },
     {
       "path": "engine/contracts/game-profile.json",
@@ -3118,11 +3165,4789 @@ export const gameProfileCatalog = {
       "path": "engine/foundation/foundation.json",
       "id": "ashen.runtime",
       "version": "1.0.0",
-      "hash": "sha256:d088f943d538b0183b0b0a6462ad0950dc473ea738497c455e8b04da360118e9"
+      "hash": "sha256:51418d8e770d82e93ca197b2dd509df13e3e43f7978d47d849e1c16210b7a74c"
+    },
+    {
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "path": "src/** (excluding generated gameProfiles/changelog)",
+      "hash": "sha256:b6ae47f1e82543c82d11d181bec41693c97801f36449c0769b91ebec6d87e402"
     }
-  ]
+  ],
+  "runtimeSources": [
+    {
+      "path": "src/buildversion.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:709246822d10d690faacac1cbf7c061addf4e099cbee6247bcc81a53ff64e1d3"
+    },
+    {
+      "path": "src/config/authored.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:30aee7075e284c3254c9b3708a687e8a3f09fc6e07737f7ae2948d63ac9883fb"
+    },
+    {
+      "path": "src/config/generated/ui.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:5544f964346a4fe3890fbeea7381260c4d65e75d1afdae1f3ec8ffae81f60184"
+    },
+    {
+      "path": "src/content/actionAnimations.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:137eb2a07dfe782fdcfb16730515d82bb576f1296d586db6fee466ee07714d04"
+    },
+    {
+      "path": "src/content/actionCosts.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:d75bd0f83ded2d17b869b09841c0543eff670718deedc111065fc36e2ac2a9eb"
+    },
+    {
+      "path": "src/content/aiDisclosure.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:52925b88d70138646db2fa234717e0b54263bbc676add9b5eeb7ba9b2da16903"
+    },
+    {
+      "path": "src/content/alternativeCardAnimations.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a31ba56bc80435769dc86b9b77837bc00c2b80d4a86aaf819fdc957e8e98a456"
+    },
+    {
+      "path": "src/content/alternativeSelectedStances.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a11f3e3ff68331d7e838390232895c099c65c6d89751084c58de080df1a71e9f"
+    },
+    {
+      "path": "src/content/alternativeStances.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a3ac9f278d846d70f035dc18692fb93b2cc5278533e6f323bdb3679fd2b7e3c5"
+    },
+    {
+      "path": "src/content/ashenBlight.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:726cf2c39c83f95358ac28c3e2436854484ca66101c7c62f0e51a2182889f4a4"
+    },
+    {
+      "path": "src/content/attributes.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:8a7493e6f1dd58ca7c0ccb167731b4c2e541d6eb4d269aabfa1192261f4b691d"
+    },
+    {
+      "path": "src/content/balance.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:35be2f0a9a55f298ec9226a8c9b90b63673b8e11dc9e929bf463ffac74c66210"
+    },
+    {
+      "path": "src/content/bookArt.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:df35dd769fa61fb3e772eafb3545da8625e3f8a4a8f4812ba9e84aeee1254290"
+    },
+    {
+      "path": "src/content/bookArtPresets.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:bf88910304ac38325f86fff55d57ab460e8e4c8f5e48aa3989dc5aa1f9fe71ad"
+    },
+    {
+      "path": "src/content/bossDestinations.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:4e1674b6c36d14cb710f3c02b6353fb7c0926096d52e6aba1e1af6103dddb4dd"
+    },
+    {
+      "path": "src/content/card-layout.json",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:acd8c4f83b10b9daa397afa144772662706f196a9f4363211093a32bd56c03aa"
+    },
+    {
+      "path": "src/content/cardComponents.generated.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:7bba2d5822477d9a19bdd3799924decef51eababe0ad89a56e7fc5bb42fef35a"
+    },
+    {
+      "path": "src/content/cards/armaments.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:17aa459e529c1ff92c41326e526aa40c1047703bd4935af84225e2fe7fdccc67"
+    },
+    {
+      "path": "src/content/cards/colorless.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:0119c9ea71e83ed277294b39dafd056e65e0a83cf6df3bb9d52bbc6a05c09ee6"
+    },
+    {
+      "path": "src/content/cards/coop.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:62a9c4b0ecd0c0b0b3059468c094a02ca82115b623ce20a22e50dbda60bdf9c6"
+    },
+    {
+      "path": "src/content/cards/corrupted.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:5ea44798244890e7e5b0c49c7a6a5d6474140a8a086b65e50beae6a9dd7495d5"
+    },
+    {
+      "path": "src/content/cards/herald.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:3eabcf704192266c1b3e5906b39d4ecfd39280604d6294c8609749ae8ea4aa00"
+    },
+    {
+      "path": "src/content/cards/reaver.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:df2ac55c76c8fa924ff7ec7f8ac88b854a3c602f077d1b0d3004e526b05f2ea7"
+    },
+    {
+      "path": "src/content/cards/rogue.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:6df20f5a7d1c9fb1414dcf17bceec300f14873b2eb90d9940e66044678c7c6c8"
+    },
+    {
+      "path": "src/content/cards/starseer.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:57447de82f7fd1750cad636cc93b773a687a308dead336e13dde986001e688e8"
+    },
+    {
+      "path": "src/content/changelog.generated.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:d9df95d2f1f411f2002dd44ee89302e6e64cf5017878fe9460b60e22745a1123"
+    },
+    {
+      "path": "src/content/classArtAnchors.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:0f6411e2cee55881d65649a797e6e055074197d76965418b4f7a39a6d5b3262d"
+    },
+    {
+      "path": "src/content/classSkillFeats.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:9ef15b2830fc7838b28b474f362b6fbab1bcf24ce64af262e2a0cbd1f4dfcf21"
+    },
+    {
+      "path": "src/content/classSmashAnimations.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:b743ae516fcd8add6d5aa21c95dfad9ec32cfbed4d58a0d4a3e1a47817fc2803"
+    },
+    {
+      "path": "src/content/classes.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:2849ad6aa753fca25de52a0908f4621efd1e798edc3a7d734ad951f6ec1c901c"
+    },
+    {
+      "path": "src/content/combatCardTraits.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:29f7efa1fa1dd457376e3c9652a69c4b5bd7b8f4818cddd512ae2c96e988a0ed"
+    },
+    {
+      "path": "src/content/combatDefenseEffects.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f2522a136d8b7044cd05fa96412078379b7b897e2718d004e7fca14a1bb9911f"
+    },
+    {
+      "path": "src/content/combatEffectActivation.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:fdad9ef41d03a7d9d67831def82d8aeb0972c0bfa92cc879fa41f25644270fc0"
+    },
+    {
+      "path": "src/content/combatEffectAnchors.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:617acefe3d5abfb0eed6645469fc6c55b589baec6cdbaa49e3846607540a7a92"
+    },
+    {
+      "path": "src/content/combatEffectArt.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:6f82731f0d5ba8cb096834baf4088e3dc8b25f8cc2810bce4af65c6f057f3ce3"
+    },
+    {
+      "path": "src/content/combatEffectPresentation.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:e0ab7f65cf204dff5a34b262c99746ca80e50385f365f871f2f446413771d341"
+    },
+    {
+      "path": "src/content/combatEffectRules.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:310dfc309c16443231da56378e3113f5f0ec786743b94d2cc5b007dd05b9af41"
+    },
+    {
+      "path": "src/content/combatExpansionCards.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:79f731cb353c6c508f6c3b2a508c7479c9fb4caefa28b80f36165c3e93fb390b"
+    },
+    {
+      "path": "src/content/combatExpansionCombos.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:48eac788cedd2198f4cd43a24b6902c99c1c87302c6bf9d704f80a385bb4fff1"
+    },
+    {
+      "path": "src/content/combatExpansionEquipment.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:239ee98168b6e88a8260a0384b6b595a42c8900504b607f8ac9051b3eba2dc8e"
+    },
+    {
+      "path": "src/content/combatExpansionLore.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:1775a27d3d811646bc4e99eadf8b9408dd6a693ca8629f8acc517684bf9afcde"
+    },
+    {
+      "path": "src/content/combatExpansionMartial.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:390a94cc9c01a4389bebc58ca5521b8ac726baa28ddf75f9f7b7585441a66ec4"
+    },
+    {
+      "path": "src/content/combatFeel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a8505605a5a00e6b121c61e52ab1714fc361b6e6057def6e4530ccfd8feb08cc"
+    },
+    {
+      "path": "src/content/combatMatchups.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:7efdf2c1109fdef737151b034fe3e57b4ec19cdbe890715052c2bf5dc20a5611"
+    },
+    {
+      "path": "src/content/combatPoseStates.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:9331eb8b328910f95f7e21d789802cbe88e9c1db5348db8948d2622179ed03e1"
+    },
+    {
+      "path": "src/content/combatRounds.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:00427d1a1f34874af6caf0740c40cc5d7859c7c38f812f35becb03a5039796fa"
+    },
+    {
+      "path": "src/content/combatRules.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:919b79aea042316c64287ec9ce4b2178555204a5acb98a298d35099ea3293bed"
+    },
+    {
+      "path": "src/content/combatSigils.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:32d33604417f4a0f4e28842540cdf1bbb477f9442e8fef963c59b4ec403b3b4b"
+    },
+    {
+      "path": "src/content/combatStatusRules.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:4eb3638b693505984b8377c3a5b7b4cdb6afb50ba3314ff4196121703d2230d3"
+    },
+    {
+      "path": "src/content/companions.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:4767cc67d34919ac66cea13605ccc9e4014d2a9126d22629c6608547ddae4bf6"
+    },
+    {
+      "path": "src/content/consumables.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:3b5cb7455fdda393d5260e726c823079d9fcaa2bde7e7d56b64f014ab1641a53"
+    },
+    {
+      "path": "src/content/counterReturnRules.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:e08f039e14221cab592f1dad5fd93aab706916eaa63347cb433f7b2c556b4a7a"
+    },
+    {
+      "path": "src/content/customMods.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:ae3c183c4b06c9c95c6b33fbcf0a161cc7e40e6fe549f11df62b0c33ff10cd53"
+    },
+    {
+      "path": "src/content/deckRules.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a08011540fb58e0798b2ada03217b902a0bce626bbbd5bb0598de952328261c9"
+    },
+    {
+      "path": "src/content/defeatedArt.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:4598b6569f23b9afbb900b5d2c4273ea72db434244e21dd7249ab30306130bee"
+    },
+    {
+      "path": "src/content/derivedStats.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:67894e1f646757d2d5aabdb261692bc716e147ad67222435559d20f4db414dc1"
+    },
+    {
+      "path": "src/content/encounters/marches.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:1006abd0a6075869ff64c3e49a43fc381f8a92638cc3d95856ef2ab72ba62a27"
+    },
+    {
+      "path": "src/content/encounters/reach.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:352eb602576def6d71d29f1a2dcd46f7ae54b0559c46353d5b4271061524e704"
+    },
+    {
+      "path": "src/content/encounters/weald.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:52a6ed4fb06497d06a07c1158663889714d72c335035161591e7d97ef205344d"
+    },
+    {
+      "path": "src/content/enemies/act1.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:272b4b5ca74c62aa17da8586d32024a2c7cb8a515f94df8ac57c94afe7765a36"
+    },
+    {
+      "path": "src/content/enemies/act2.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:e9220a30c7e9fcc9725625d78a235056883e0cfa345a386fe4e41f1de94e09fb"
+    },
+    {
+      "path": "src/content/enemies/act3.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:7943bc7346407a4346ae9c7b60a09052bb6cf1ba1d088512fc581ff82c319fb7"
+    },
+    {
+      "path": "src/content/enemyArt.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:beb73ccbe77ac74bf53265e68b7dd26186e6d59fef2451294fc07bfbf281f0ab"
+    },
+    {
+      "path": "src/content/enemyExpansion.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:83517fa9ccd9bc257601446ed7e00cfc39710ec85a7e13aac08aef28f0d63a9d"
+    },
+    {
+      "path": "src/content/enemyKnowledge.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:c4e335c050d2f11e3cecc6e0292a75b02d08b394a39bab11f5970ed74dd0ca3a"
+    },
+    {
+      "path": "src/content/enemyStanceSprites.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:d18007ea1cacf94f3a09bb202aebcffcce5b7e3488b0bf40778137fd09a624b3"
+    },
+    {
+      "path": "src/content/enemyStateArt.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:130bf45c8be8e2ac271fb3dedf365eb335013301679cba7ceae0e7dd6799caa8"
+    },
+    {
+      "path": "src/content/environments.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:8ba71a80078db16d8579263af2b4a988ade2a764ad26c4c670dcb26020113c9b"
+    },
+    {
+      "path": "src/content/equipment.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:90829a99d8eb60b59c369f7484ce7a3cf8ed62773488bc5181ebeda53b74c3dc"
+    },
+    {
+      "path": "src/content/eventArt.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:5f068115dd032a37d5dcc0718843566d7d2ef961970a91ab3dde2b39854af355"
+    },
+    {
+      "path": "src/content/events.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:05dfcf29a2b96f422bb4ff5eb04730743e40e46946c4fe5a159cb885a2c09c34"
+    },
+    {
+      "path": "src/content/feats.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:54dc09dae8f1510fcc85e26a1dfa50986fbe7f26999f3345e0113204ef9bcbf4"
+    },
+    {
+      "path": "src/content/flasks.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:53cb00debec48ff9182a4e26b89df989282fb05649f8fa8a04941c97e556461d"
+    },
+    {
+      "path": "src/content/footerLayout.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:e3e247745c12e37ea0f48c7d48a0e9616c4974d65fc188e85d2464ef82e9aa3a"
+    },
+    {
+      "path": "src/content/formationPositioningPresets.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:b3232004bddc1c07a0f148d9640120260cec8eaca8c453ac91dad426321ee6fe"
+    },
+    {
+      "path": "src/content/generated/armouryUi.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:9dea59a52a4bc5d6394b8f432a928ed0be2b86b95ad167db35774a899d48cdfc"
+    },
+    {
+      "path": "src/content/generated/basicCardProfiles.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:d6c4c2685183e6764b4fa136e211b770a405f54d0d3b8419336a71b46c384845"
+    },
+    {
+      "path": "src/content/generated/cardEquipmentExceptions.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:6f764a5c17f9208aa62e0c940a7fdc45315ab1a9b4657fa91da7ece929a79b98"
+    },
+    {
+      "path": "src/content/generated/cardExposure.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:c5c843b7abd0aabb2d61e47d64b8b3f14c7bca2963f0dc11d8f19b24a0f9fa10"
+    },
+    {
+      "path": "src/content/generated/characterCreation.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:ba913ec05a8504f3dd19c1d55b64da1cc5a90e15c49f8ec1fd223d315936d319"
+    },
+    {
+      "path": "src/content/generated/classMastery.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a9ccb24f2153cb494359a1a4eb2023d74d5e56c691f7d25cbc541ac68eba55ce"
+    },
+    {
+      "path": "src/content/generated/classTree.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:e6eb988f1649948fbfaadc21517323ee253c02740eb60fa3f68907edfe4a077d"
+    },
+    {
+      "path": "src/content/generated/equipMods.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:9d376fb7bd8118576b5186bfbea67a7cd2b982639f6bcd3b05f6c84bae664cbf"
+    },
+    {
+      "path": "src/content/generated/equipSlots.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:88c5fbbcc4a486b32d1eaac726af67370d74e0175427aeb99f34fc7d3117f1b0"
+    },
+    {
+      "path": "src/content/generated/equipTargets.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:8debce5d7568489c5434537d39a34a50d1ec7156d583a4032096c5937c1b383a"
+    },
+    {
+      "path": "src/content/generated/equipmentGrants.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f8b83e23b732ed05bfaee8c1772db2dd814bb026c987f80538fa6d8ed36af573"
+    },
+    {
+      "path": "src/content/generated/equipmentRequirements.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:86cda40fd73aa143b20d16642817d31d39d6efd24694118bd512bebe9cdc9a9f"
+    },
+    {
+      "path": "src/content/generated/familyNodes.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:66fdcfe24c155ab28d6f4dcf704265bfea9227b8b7c1575e6a0fdcf89a097026"
+    },
+    {
+      "path": "src/content/generated/itemUpgradeChanges.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f5c96ca19e722b4184bf78ee283d02e859acc27b7b6ab3c2ddd193f19df23370"
+    },
+    {
+      "path": "src/content/generated/legacyDungeons.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a20e56fe57655ee9c0c53757c60814d625e7aeab55ea513a5ce30336678cc6e0"
+    },
+    {
+      "path": "src/content/generated/locationPresentation.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a7fec82930ed2064abd65b6f924616af44c592ac802663d2dc3ff9fc4dec995d"
+    },
+    {
+      "path": "src/content/generated/nodeEffects.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:c6a54eb022ae4f8db4d33a568f3fd46b6a81d1fd2c8d38b2c82be99852c3496f"
+    },
+    {
+      "path": "src/content/generated/nodeRelations.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:acba3c36eab97e8d225977c0febb182de6077081f02a2780bd3427d5ad8269fd"
+    },
+    {
+      "path": "src/content/generated/nodeTerms.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:113cb18af516b29c3e0213f5d7f740f382ce99646e600afa6cb9628c14445931"
+    },
+    {
+      "path": "src/content/generated/nodeVariables.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:19347c86071862de55df37198be0fa0f464be424f61d91de3c1665b8ab042955"
+    },
+    {
+      "path": "src/content/generated/nodes.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:9acc1621d24e8c196aafc5582bc8f85a54aee9518e55dc12ede70606287eb3f8"
+    },
+    {
+      "path": "src/content/generated/outfits.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:951af945db49f1b984894acbffec72d7b696d82ac13d0a7d2cacd424e2f39022"
+    },
+    {
+      "path": "src/content/generated/propertyRuleEffects.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:cca0e38e728172ae4edf34ab774f2b59e026e0972b5395a73946a148de451a3c"
+    },
+    {
+      "path": "src/content/generated/propertyRules.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:c57153d56b7ea18f1e91b897368c71c0793bbb4b819a5cc89c47a21655742937"
+    },
+    {
+      "path": "src/content/generated/speakers.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:9a133823d3fa6fb364036147e39fd97bfdbdcc2454451970d243602acecc57d1"
+    },
+    {
+      "path": "src/content/generated/startingKits.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:0fd7b43e2912e6ffdd6f194b69168281f2c496d88535b94aca1eb807c5dfa4bd"
+    },
+    {
+      "path": "src/content/generated/tagDomains.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:ca01d48e5ac784433629e7a6cfe7415b2b3ea208de4d183c545c44b688c7849e"
+    },
+    {
+      "path": "src/content/generated/tagFamilies.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:4ee9ea4109e0c6e82c51490791e85e8518d6c7eb55a9159e2d42b5ca2c8c19fa"
+    },
+    {
+      "path": "src/content/generated/tagFamilyDomains.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:82ea85f002f28634f441768abbe6a549c143fde5effcf3d70563fe3a488ab5a5"
+    },
+    {
+      "path": "src/content/generated/tagging.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:1a6bff2b6cc223b7eec94c963d9ae6643870a1115cdef4b68dfead75c3559aad"
+    },
+    {
+      "path": "src/content/generated/tags.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:b1ae58c3daa140cf24f4ee52fb3d27425f74392e4ce3ec4eb86602b24f1dee36"
+    },
+    {
+      "path": "src/content/generated/uiStrings.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:60ddc12742a6b35c54199698a9238c9f8d9ff42e29830b757f176e893f1fbbef"
+    },
+    {
+      "path": "src/content/generated/unlocks.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:c2d9982de08336112db171ce4c25ba7ffc76a4e39149bd9a590c74dfc62c1e1e"
+    },
+    {
+      "path": "src/content/generated/variableBindings.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:382d13a1b1321ab1b319fa097696e0cd59f149981b62654739870b3010738f4b"
+    },
+    {
+      "path": "src/content/generated/weaponCardPackages.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:67692311d9c672cea563e898a7a402132308ec328b15b63c3e41af1c3cd02ad0"
+    },
+    {
+      "path": "src/content/generated/weapons.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:229381ed59929e84514d0c035ace8aec01dc20c3df37486735ff3e4e12903499"
+    },
+    {
+      "path": "src/content/generated/worldAtlas.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:b8112f522034fb0ea2cc9e67da63cc8df0e8a22f52270a469d1457807a3f8697"
+    },
+    {
+      "path": "src/content/handRules.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:ce10ae7a90d4162c66e37dc61c5a6ddb7ab2d29da4843d4101c3e840b0f03ef3"
+    },
+    {
+      "path": "src/content/haptics.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:67426f416394ac0948ceca4338a70befb7da4d8a59c3be614eca8a800717333c"
+    },
+    {
+      "path": "src/content/index.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:190bbf8377671c9efed1b4936343639d804d11361d1f87996c6fc3e8f40d7b28"
+    },
+    {
+      "path": "src/content/keepsakeArt.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:def4ecb56aa86bdcac58d1aa343a67fb752474ee68719df8fd48d83452fdbed4"
+    },
+    {
+      "path": "src/content/keepsakes.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:5119a249a71869e49cf8758c946b99fb58ca2dc1de66901948c116625a95d9df"
+    },
+    {
+      "path": "src/content/keywords.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:9986862fd2a33f43b8dd1140b5b941cceb501c34458d39503147d48b8ea362f8"
+    },
+    {
+      "path": "src/content/localMapPresentation.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:1539bf774270c9b3953f8cd9656c9bbb9a77f4a585c82a2fe51f5d63792d6d1f"
+    },
+    {
+      "path": "src/content/locationScenes.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:9bae1d6d3ec9086b223ed82486248a945e41df28fe89ba0297d551c7d5e1a003"
+    },
+    {
+      "path": "src/content/mapArt.generated.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:6fffe4c81f59e3e0d3233c295d67f5abbe0ba3b911bf754de59d95a7296d3dcf"
+    },
+    {
+      "path": "src/content/mapPresentation.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:70442fead8e55917b0b6d86799a05b7c1ad7ad4d86abcc9a9846252abfc738dd"
+    },
+    {
+      "path": "src/content/mapconfig.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:94d32fdb8ede8881a7769feab31a1125b56b2c64beff19c13bbec6fdb2d94c05"
+    },
+    {
+      "path": "src/content/music.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:3438b9ab272278192d10f8d298ea24b1ec198edecab940b73260329b5fa3adcf"
+    },
+    {
+      "path": "src/content/offlinePlay.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:dd9e56672efe5afa26a05fc9f7a2959445b3162de1aba901fe19352429b43fcb"
+    },
+    {
+      "path": "src/content/packTwins.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:4322939687a929376d139177bd81b7ca152b447a89acd18e48a82d9eb191c3f8"
+    },
+    {
+      "path": "src/content/paintedOutfits.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:d1b613a86e21561b45402be0d314a83b38e96e0f6d3b9e466bf7bae466fb93a8"
+    },
+    {
+      "path": "src/content/playerAttackSprites.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:5308835a4d4db7813cc5adc83d2bb59ffd67f8258bb68ffd2a907a2f65d50262"
+    },
+    {
+      "path": "src/content/playerCounterSweepSprites.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:3b47063203bad847ba9e2fe8ca9922367f3da4a06e9e95d3a3317ff79c02ee1c"
+    },
+    {
+      "path": "src/content/playerHurtFrames.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:71c716bfc56b1231340e08bc4ea63498e6549366c90e5374b5ff166d07913bd6"
+    },
+    {
+      "path": "src/content/poseEffectArt.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f2a43d7dac0f8c65bc15810c1903eb5084d56ca2e74a17fb2d36f335be332abd"
+    },
+    {
+      "path": "src/content/poseSprites.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:e6a2b43aba833cae417a47b9011cef1545e42032014c67bfd10dec284dba568c"
+    },
+    {
+      "path": "src/content/progression/cardFamilies.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:281fe75cad2b36499ee9e7a607973e7d71dbff88d51585e52fc96f0d69dcd843"
+    },
+    {
+      "path": "src/content/progression/cardLore.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:412268daecb07c5c651ec331fa01bc7415364c37a8d6c3c3529a10f7a77672f8"
+    },
+    {
+      "path": "src/content/progression/cardRecipeText.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:51bf5a93b4f7047e94554218038abe25abe47d911674391dc48a62fc15714b79"
+    },
+    {
+      "path": "src/content/progression/cards.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:1fb804a367bede722bc63829619281effbd3425bfed7b38df451298341972415"
+    },
+    {
+      "path": "src/content/progression/feats.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:6004d8616b23337593327a2ac3a074f40d87db837958aa2d69ed584cdd842b1e"
+    },
+    {
+      "path": "src/content/progression/gear.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:b440be1b823fd9aa998e4f73e36ffb51768eafb6afd1ca42920808ce209c170c"
+    },
+    {
+      "path": "src/content/progression/lessons.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:7352724529717c32d8bb7f312c955642eeccbbafa405e48b27e6982992b48e91"
+    },
+    {
+      "path": "src/content/progression/relics.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:bb85b1317afcdec7e89419ef0a12a73ea2ea8afc5bfdd666ced3c0a881f8bcc1"
+    },
+    {
+      "path": "src/content/progression/rules.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:c9882ea355b33337244729bc1d38b93f012d3b25c118fe4403aaf3cee08912c2"
+    },
+    {
+      "path": "src/content/progression/unlocks.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:b2f1115d4d87ffbcc4e13aa20d9eefc83edfdcd4c5ae1929e8e290211fb0f9f1"
+    },
+    {
+      "path": "src/content/propertyRules.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:993442b706a9789995df1a66a0109553fed339d31945b67f365dceb403a39020"
+    },
+    {
+      "path": "src/content/prototypes/combatBuilds.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:541ebf74eadcce53a2aae14af4e1e2f77623a34473d4da1c84e2e413b05876da"
+    },
+    {
+      "path": "src/content/prototypes/combatEquipment.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:e7acb64db379bfa4f15d1b344c2b46560f65770523e5c34602287e5261c00166"
+    },
+    {
+      "path": "src/content/readinessPoseArt.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:0e83d33172baad77aa1ebfd45a32d610419a159c5d21c75f798b320d476adfaf"
+    },
+    {
+      "path": "src/content/recoveryRules.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:dfa0613f23c513bcd0c84191b57d45556e3345118263a8b4095c14067c513591"
+    },
+    {
+      "path": "src/content/relics.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:8b80ac7acd55209655f5665abcbcb4ee82f2eae13586c6efd7322ebccf347256"
+    },
+    {
+      "path": "src/content/resources.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:7309e706750e4690f6c3d9a744d5e33226f4e6621634f83a1c154444e7bdf729"
+    },
+    {
+      "path": "src/content/retiredNames.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:610e1b893f14a74cd4bfa69fe7811766077c3f454fc9863cfa1fefad7da38f03"
+    },
+    {
+      "path": "src/content/scripts.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:cbe9ea4591a611f1b6bb16f972d7f07d51152c1a38f400792e174f8aed22598c"
+    },
+    {
+      "path": "src/content/seats.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:8ec0c4cffbdadc79073bdcc420c25afa9ff750bb3d0322a725fca2d847c07755"
+    },
+    {
+      "path": "src/content/settingsDefaults.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:b040fbf14f8f7587ea05ebf9932776e4e899039f029e1ac1cb8894aa4076eb6c"
+    },
+    {
+      "path": "src/content/sfx.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f73a0202f558faafbe70eb8568f3cc40658b7bbf7105188e5d72903ac0b4ba14"
+    },
+    {
+      "path": "src/content/sharedOutfitArt.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:08f62988e899dcf5bf1a0c72e509ee6a66322ff008c299deae6a4553aac7f9d5"
+    },
+    {
+      "path": "src/content/shops.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:c7cc6210eba0e98e44b9a2c1861a0c2d25b638368218ba35e12e94cfc6f56c0f"
+    },
+    {
+      "path": "src/content/sigils.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:ef6e9d28951ccfebcbc5c504a967e395d9e3ecdf7998d22a5a280b7ebe8a45ab"
+    },
+    {
+      "path": "src/content/skillFeats.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:ddc118a1ab4cb0412577cae91a0e353278688f9204c5e3f969e4e1ab9f43679b"
+    },
+    {
+      "path": "src/content/speakerArt.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:bd6dbf57c3335bff9099a46d4345d5c966eeacbf7ac4574485b2e8b554af4a88"
+    },
+    {
+      "path": "src/content/spellDefenseRules.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:bdab313ab22104d43a3ac6ba63fd2bb44c0dc56f8830a163dabf80a5eae25f71"
+    },
+    {
+      "path": "src/content/staminaOrb.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:ef6160c3bc583b5427ad1661b41672d053acb0102f06432f906f1170bd5683ec"
+    },
+    {
+      "path": "src/content/stanceRules.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f8a887ab456b1f6baa08c501d8e23325bb8c46d5307da5a692bedd9580d20d87"
+    },
+    {
+      "path": "src/content/stances.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a533ea9fc13f04bf749dfc945345a07e3f69bf701a5af1bde544d4a9cfbb7116"
+    },
+    {
+      "path": "src/content/statuses.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:9e86698b53144c9a61f0628f8e618288190ce6d19e6ca78ad13d64d5292483ce"
+    },
+    {
+      "path": "src/content/surveyQuestLore.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:342a584c83f4aa5d69d2e9de2aad1c300be6be019b66979170a3d2b2a22460e8"
+    },
+    {
+      "path": "src/content/tags.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:7237877ba96cc6b22697227eca1be4de074bda201619d962e40d9f97e5a73118"
+    },
+    {
+      "path": "src/content/tooltipHelp.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:21f4d4575437e656ddcb36784782216a61cf25ad59c1f34301960de3cbb29847"
+    },
+    {
+      "path": "src/content/traitProjection.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a909fe9817b5420d1b827a26c3d4fbc50190f53eacfff78c207d3a80b29e2658"
+    },
+    {
+      "path": "src/content/wireframeUi.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:ac0bcfc3f9edb5f6d51c35f46f1c5976093cd8055d9f481b902296dea24a7270"
+    },
+    {
+      "path": "src/dev/armamentKitPreview.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:b7d7e8660d4ae4ee0ca063894e4ee1d1ff28b14782d404961a3dc34a813f91d2"
+    },
+    {
+      "path": "src/dev/worldAtlasPreview.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:849157fe405e534a8903470ce835453760f46336cb3b4d92ab9cc12ab2245a5c"
+    },
+    {
+      "path": "src/engine/abilityRiders.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:285ee241ccfad660135ae100c49695e41a17c0cd8177b4dcd1171fb1d12592dd"
+    },
+    {
+      "path": "src/engine/actions.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:ea47423ecd53d6efc7879d5ec721afe36a75524a060d3aa0b7f0b59e432d4e4c"
+    },
+    {
+      "path": "src/engine/actmap.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:85892859b5b02f05ec225b5ca7c5e73b409542fed084b3b5f4fd92c5f66b5bef"
+    },
+    {
+      "path": "src/engine/ashenBlight.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:ea8692d84687efceeb5348fdf3718a5e242fec1a3c989fcd73f0660cd6464870"
+    },
+    {
+      "path": "src/engine/browserSave.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:15372ce722d6cdc2e01ac4bf9e4ccc38f891b3ad6e9fe0982b3da066d1ec4611"
+    },
+    {
+      "path": "src/engine/combat.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:8a0ec38ae78e0287467e469c6ac8defe0d221f813eea787f42f4c3b0a152bcef"
+    },
+    {
+      "path": "src/engine/combatAvoidance.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:3ef3497685b6b958845befcb4b538aa580d2a915e3bf6dc0542fcb9a422cec51"
+    },
+    {
+      "path": "src/engine/combatCardTactics.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:2df3c9b7685a1263cf12cba824666b4197dbb922dacec0e5877546c7d4e3bd0e"
+    },
+    {
+      "path": "src/engine/combatCardTraitMath.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a16180ce941971b658c95cff3aa8f6214b9acdfa82b0dbaf37fcae16c64f9003"
+    },
+    {
+      "path": "src/engine/combatDamagePreview.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:6c94eb2e534c8530289b4d4c98ad39924b6158459ff8297cc1aa3eb100056ad4"
+    },
+    {
+      "path": "src/engine/combatExpansion.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:cb37786512c5d48f8ef4f15b6413ddcde80a2803b7a90718c7484be58481bfda"
+    },
+    {
+      "path": "src/engine/combatExpansionActions.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:c52552f99de0e9e5a219daee3ebe3f54487b880198d13e7d3dcca95361130805"
+    },
+    {
+      "path": "src/engine/combatExpansionCombos.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:8d5ef76ec2353a8853087c9cf0690e6478ab99c4e720435c9bc77897fc43c470"
+    },
+    {
+      "path": "src/engine/combatExpansionEquipment.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:c235c993e05047d7e9bb845e8e3c6e0d4ab6a86f8e2c7e520bfb9516381cc994"
+    },
+    {
+      "path": "src/engine/combatExpansionProjection.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f7a834d946d9f1c3fee9df5ac86b42ef2df0f46135cbfd347657ed0017b44125"
+    },
+    {
+      "path": "src/engine/combatExpansionSave.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f76324061aef1f8ab4812b0b48300db07b66ea0e54645c0ceed9deddc174a8e4"
+    },
+    {
+      "path": "src/engine/combatMatchups.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:68fe7a0392cc337d43a51b50b9d2df9639b050f405f3c6e15b947300e85bd298"
+    },
+    {
+      "path": "src/engine/combatPools.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:bd13731407b988ad6c6a4bc9654d157be7fa21f1c8dcd92087b80f717553cffa"
+    },
+    {
+      "path": "src/engine/combatPrototype.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f2007071655ce2d8c2858e81634ee5b383196fe71aa2205d8394d3753aab5024"
+    },
+    {
+      "path": "src/engine/combatRatings.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:352b4c5b10c9fc4996ab3659f5c9292ea68b1047e5baf77af707a17350ce1aa4"
+    },
+    {
+      "path": "src/engine/combatReactions.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:c96aa4512f56b6cb2671366c512ce1d5444c53e3f8a5d7c5e7027f3a815d0462"
+    },
+    {
+      "path": "src/engine/combatRounds/resolver.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:1fd2f0ed9e7d7f5372fa757be33b79008cb028c916a0d13f4896eb2896fcfbc4"
+    },
+    {
+      "path": "src/engine/combatRounds/round.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:216c5b6dfa439009eeb77c7fdd1d6ed2558a789b3eea8bad443694491b0da80f"
+    },
+    {
+      "path": "src/engine/combatRounds/stance.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:1851fca8333b9a30a0a3e1648d4f10834043a3122cdf53d1cf5dbd68c4cf20df"
+    },
+    {
+      "path": "src/engine/combatRounds/timeline.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:86270d11016302b2bc176639b6f5111c032bac0dadc961f8996a4b32004c93f1"
+    },
+    {
+      "path": "src/engine/combatRoundsAdapter.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:9d480ceadb6d0e33cb73294cfcacc024fe83057729a1577a0c5c16c8aa14c141"
+    },
+    {
+      "path": "src/engine/combatRules.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:e2c44f13b13025c126308f43b1332aa46688c51bf09a3537d09efbc2f72fe911"
+    },
+    {
+      "path": "src/engine/combatSnapshot.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:4bdc3fb7c86ab8bb2a6a78f6782fdf4cf197bc3f46136cd8e802664de8811a3d"
+    },
+    {
+      "path": "src/engine/combatStatusControl.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:9d76be0da14c92c16af6b311881da0a6f43401e2624943a3cb9c8eed1647040b"
+    },
+    {
+      "path": "src/engine/coopCombat.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:b19d30f16fc075de4742424e0a13a49b8df4175802c58dd895a510b5ee0551f9"
+    },
+    {
+      "path": "src/engine/coopCombatSnapshot.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f05608d6a8c0e8892c76b7c3c90023e74d1d16031638d00f90510ab8df01c609"
+    },
+    {
+      "path": "src/engine/counterReturn.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:6fb8eb09244baf61e852f13775f1697115fbdefa87efc397c31b3e09f10a0860"
+    },
+    {
+      "path": "src/engine/encounters.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:963c02e91f7392b861d0f4787b1c9f81b2a91b98b8780b124b6cc98a927e7bca"
+    },
+    {
+      "path": "src/engine/enemyKnowledge.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:9d4901ba2ac2bd33f560fb6505b792eb510656e64bc218a1d8ff872690a5375a"
+    },
+    {
+      "path": "src/engine/enemyKnowledgeSave.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:2ffbcf790c96fd3f1b53e3fe8be53bab096e222c346bcea5daef27e5f34fd72e"
+    },
+    {
+      "path": "src/engine/enemyReactions.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:eed4af6dc07aabf9d0d748fddae239c789249516abc92dd5f9691169f0248f75"
+    },
+    {
+      "path": "src/engine/handRules.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:fe1c87caef5d0acbdcb657f19abf09a4379a003218687a29a68b268f27668b9b"
+    },
+    {
+      "path": "src/engine/locations.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:abfe0fb0a61dc208cfd961986dd2ebfea46ea5b28eb59daa6bff39192c31baee"
+    },
+    {
+      "path": "src/engine/mapgen.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:aa92298e3ed7ca146373ea649f6405372b8aaa1999f97211ea1a841f324700be"
+    },
+    {
+      "path": "src/engine/normalPreview.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:347d6324c85bc3fbcf33737fca2664d4e488ac5ac17bb4894eecd7cf38680016"
+    },
+    {
+      "path": "src/engine/profileStorageOwner.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:56b56af2de420e9f922fdf9cb85438e4124abe0d77f78cc131720455aad093fe"
+    },
+    {
+      "path": "src/engine/properties.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:1186ad917abe307b00110ca3376b466c3108e0d11026162ed7005fe8ede22b17"
+    },
+    {
+      "path": "src/engine/quests.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:e107c7e5898a1ce2bc68b302e09baf7088ce5a21ab08edd768c11fbafd55661b"
+    },
+    {
+      "path": "src/engine/reactionState.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:7032439c65bdb584ddad6a0c070cec96702b9499f49e727f61279ced289d3386"
+    },
+    {
+      "path": "src/engine/rng.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:af0805fedd23818b3c4110d94e810fd75cf1b38e68c6687ba51de31b2ab08103"
+    },
+    {
+      "path": "src/engine/runCombat.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:7a2d58bdfd388779444b89dbdea956cf27fc290efec4493b28e4598584c2e986"
+    },
+    {
+      "path": "src/engine/save.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:d5e049b41f3a490d7325d03622d2b43c54bbd612784946bd2a503922e3238641"
+    },
+    {
+      "path": "src/engine/saveTransfer.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:eee487cdfd14360478559ca7e84ad8087c8dad02eb74e4203ecd9ec3ccbb5d38"
+    },
+    {
+      "path": "src/engine/shopKinds.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:291487cb4b287b6365c0d29c443587e3b1371ee751e40764554910eb4bb7e16a"
+    },
+    {
+      "path": "src/engine/skillXp.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:52bf966f734c1086123ad516a0321b3b3d80ef3618bd0ff938f6405e378f1c60"
+    },
+    {
+      "path": "src/engine/sourceRewardBonuses.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:8d8274eb04361557994f4f4282efc845efc2eb32fb1b1a4dd3b3e9e862a25d84"
+    },
+    {
+      "path": "src/engine/stanceHit.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:d24c2779c693053a3db5a89f23c4dfb3ede06f9636a27035865024aeaf7c7928"
+    },
+    {
+      "path": "src/engine/statuses.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:c9ce0100a27cbe938ca1a492317a0133d84f36c91db7d5ad532964cc2d654a01"
+    },
+    {
+      "path": "src/engine/triggers.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:28f584893ad1cefc05ae548105d2008ac84762006b7acdb9512cb7a85120182f"
+    },
+    {
+      "path": "src/framework/bridge.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:70fe609376f3c36a93d1d23556b9114cde251715a5ee530301459523d2fc9da6"
+    },
+    {
+      "path": "src/framework/candidate.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:7607baba7f6cabf74b7d8f070d1be3f9d640e56a7ff871280745ea5f00262ea0"
+    },
+    {
+      "path": "src/framework/compiler.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:9bff5b277b9d6807ce84512bee5928cdc17adaea8069b4ed230e87fb1df6bb5d"
+    },
+    {
+      "path": "src/framework/confirmationRule.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:eacbe802145b114d4ccf0bea7d55c21b580af7d272d2bd7922288006cdac6ec2"
+    },
+    {
+      "path": "src/framework/costs.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:88aeceef6314f6acbc3b4efd0f8339cf9be0087684a7092d4ea5660898870ea3"
+    },
+    {
+      "path": "src/framework/data/assets.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:378e068c49d822afa7da9506fa1179f51d2a8c0d5e1f2057e2c2d3ddec7a4975"
+    },
+    {
+      "path": "src/framework/data/confirmationPolicies.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a412be1932e6b72a43944ff5a087c533652d1fb50f84a991325f5fdfcc9b40bb"
+    },
+    {
+      "path": "src/framework/data/entities.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:9ebb9ae110e415620ead0542a31e58642b89119787365e68ab682a675307222b"
+    },
+    {
+      "path": "src/framework/data/mechanics.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:7f6c8ff205a192c228070dc37c56bf10d8bd5e691a5024e1ebfdf35c7f0cf84f"
+    },
+    {
+      "path": "src/framework/data/properties.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:ae1ea389dbe3a02d27ff3dc7d12302e565c2c8ed845c7024b03f95946964dc1f"
+    },
+    {
+      "path": "src/framework/data/relations.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a3eb8c7efa6ffc9545e1ca0a5fb1d191faf861d747621fee7183c873f34b3733"
+    },
+    {
+      "path": "src/framework/data/terms.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a959763511b2ccd1ea1df112e496eaf95fdbc15b9851f080c87aecd89d2c0e49"
+    },
+    {
+      "path": "src/framework/data/theme.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:106832804712b9d7ad6e13144a83b1b3b3cc7ddd565461244e82037ea8577a22"
+    },
+    {
+      "path": "src/framework/deck.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:750022dc6e74f8201ed7bf02c3881371d771468a2972f5b38d2a51b57e6932c2"
+    },
+    {
+      "path": "src/framework/deckComposition.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:16745b66b0692a8e8d2ebffb81b313cdbd937b75aafdb172a0cbb48649184889"
+    },
+    {
+      "path": "src/framework/importer.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:65d9f529b0ce4e6cee49119fc7500b947cce972a92c3bda27884d866888afc6d"
+    },
+    {
+      "path": "src/framework/index.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:4120cfda9a8a425829883bf325e88ddd1603500a764308d2a67e497e044fdb3b"
+    },
+    {
+      "path": "src/framework/inheritance.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:6d4a93c37f9456f48af9ff313b81c019ac3b63147f85bcdefac39189df920166"
+    },
+    {
+      "path": "src/framework/lifecycle.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:b342afc3d24c691f1ac8ed808ec05bf1a8e73a30dcfa1a3501ad8b58bc98a11b"
+    },
+    {
+      "path": "src/framework/optionDecision.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:dde78d9d232b80a53201ca5480827d24c7005e23725a450812ce28b97846795a"
+    },
+    {
+      "path": "src/framework/presentation/components.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f00be5e48b4ef45402c042536f6940052450007cef26be7a4a6a08e8e316bf58"
+    },
+    {
+      "path": "src/framework/presentation/confirmation.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:326c18fc75ae666eae49adef39de813cb9933bf631d3992fee8f1b85f3dd8559"
+    },
+    {
+      "path": "src/framework/presentation/fitText.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:8c7d13825ceb35e8f673740f7845eff9355e9a187e6c375b44002994a64bd470"
+    },
+    {
+      "path": "src/framework/presentation/tooltip.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:af189c89865f7076a5d0931d1e5048b9cc7ea3bda16da592483c751cfff3d97a"
+    },
+    {
+      "path": "src/framework/registries.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:152311e3d7c6ed46117b4b5c1839cfba441beba5f0f0d4f332e99d5afe217016"
+    },
+    {
+      "path": "src/framework/resources.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:2fe0d7ebde5afaa8b3620a0f6b23b3995d53d973a9621c0250e295d2f2638749"
+    },
+    {
+      "path": "src/framework/schema.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:2253cd6964418211ca98e89f1916ba9b1b5de33f8a8e6be52707bf64834e51f0"
+    },
+    {
+      "path": "src/framework/statusSemantics.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:1a9739615201bf85a63a5e6ad8c56b6679d1a1f7ee40f46fd071036c9cab75c3"
+    },
+    {
+      "path": "src/framework/termOverlay.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:972196f411eafe4184ed43c507e68dbe547c6a88ab695fe40cb09bca4c4c9d1f"
+    },
+    {
+      "path": "src/framework/validate.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f5fe70d8316b92f54c2e1dc89c2cccda8654be0e977a779bfb0a63ba06739aa9"
+    },
+    {
+      "path": "src/framework/weight.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:da8b03a5b8ebb5ee3ff0fd50dbf5e7734c5a8bb21b11feb1bc857e7fdef7593c"
+    },
+    {
+      "path": "src/main.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:bd8a7dd59473f8efcb5dc96c27b50f53a422adb315d7a0c7732b2d7fa0fada0c"
+    },
+    {
+      "path": "src/model/abilityDraftReceipts.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:05ffdd6ebceb056ea93b9cc18e369a662a27eeabe1725c75f9b2a1106ecf9f9f"
+    },
+    {
+      "path": "src/model/abilityGrades.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:cbe4c3445f77edc2ff6fb138a4dd770ff327ddf4a04ecef8245bf3134808ea13"
+    },
+    {
+      "path": "src/model/abilityOffers.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:16fc67988dbc67a461636187459e1d11a17a6d074501ba0cde71bcda57796623"
+    },
+    {
+      "path": "src/model/abilitySkillActivation.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:caf9f84d2cdc66b40533bef7978e80d9e0525e5b4225b15553d1149928b8ff8d"
+    },
+    {
+      "path": "src/model/actionAnimation.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:527a00ab23651d176b0c851c28a98868677e031555b601d79f758a90e09154ab"
+    },
+    {
+      "path": "src/model/actionCosts.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:c43d2b14ef1622478a6fb076a4ea31aa00e48f4a63692c3125326f06b91c1202"
+    },
+    {
+      "path": "src/model/advancedConfig.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a28c6142d0d0268b7b3d2eadee30373e065de762760f571d1c440a0f9f533a88"
+    },
+    {
+      "path": "src/model/alternativeCardAnimation.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:753aa282798e43061a5c5843f2a754b7b7a652a6a1cc10af5756bbfe46306ccb"
+    },
+    {
+      "path": "src/model/alternativeStance.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:3a099b83ee302781d2bceb6f2abc5756c9e904054336f86a38039d239ef435e7"
+    },
+    {
+      "path": "src/model/armamentTrading.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:9a3df08b8ec443a2167831b4a4d5c7f4fdfbf3cbe926a5ed7a191c0999073e49"
+    },
+    {
+      "path": "src/model/armouryLayout.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f6f7ffd353c1f08413f6792edbd9a4a1140006762b58da22444f65b5ee959a6e"
+    },
+    {
+      "path": "src/model/ashenBlight.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:ba959b296f3f3690934d17822602f5452fd1c260f4f260fe4e5c63100550ded9"
+    },
+    {
+      "path": "src/model/attackCardDamage.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:0ff1b72895151ead0a62edd338da3c80a1c84daaab306fb760ddc3f85c416dc1"
+    },
+    {
+      "path": "src/model/attackTags.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:9abbf31c148a08daa32768f6134534fbd459a816700ab901008278d406d11f88"
+    },
+    {
+      "path": "src/model/attributes.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:4feacc466545eea504af6a69c15bed9a00a4d63b329d90d2d9805a9a4731e8b4"
+    },
+    {
+      "path": "src/model/balanceNotes.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:cd8513082f1621a2890e929885a8a082a2513a732fb08b6f2e5a918a256421c1"
+    },
+    {
+      "path": "src/model/blacksmith.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:99e5181fe49e862bf8ded848d0fcf9ac13c3bf6ef319c37ebb32ec7fc7cd8c31"
+    },
+    {
+      "path": "src/model/blockPresentation.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:76fcec82d3b4586c0ca2d2926083129737249b3ce8b9c83b63e28d25df3c445b"
+    },
+    {
+      "path": "src/model/bookBonusRewards.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:af23df82b63d176c8b94a72b6574a0dc8a3f4c2984e6e0bf3148e73f88fc2663"
+    },
+    {
+      "path": "src/model/bookLearning.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:0b9b27680690ab2497710eeee842563c0e14329e96c8674de39d9c10d69ace6b"
+    },
+    {
+      "path": "src/model/bossDestinationLabels.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:d2ff4f98e39ef96909216a7d60424c93a63236a4f0abac5c91e90026ebea8f25"
+    },
+    {
+      "path": "src/model/breakMeter.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:e74c594e85869b727a6fe561cfbbc32790a4da01bf1cf492587b00fda08f2e1f"
+    },
+    {
+      "path": "src/model/cardAppearance.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:71020630f1be000189f5441e6858e3aa4dd37e86a11a166d32d7c5e0ebfac83f"
+    },
+    {
+      "path": "src/model/cardChoices.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:8ffce56dd4b9eb2d58ce45b8dac25a5359fc6f2ecff76af6590e7ac63d5989a4"
+    },
+    {
+      "path": "src/model/cardClassification.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:ac0a8e534b394ccff0e2a336ca731e0721e7d7e6b702d043858ccfdd239165fe"
+    },
+    {
+      "path": "src/model/cardExtraction.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:e1a8913c3feb2e44ca890ea9f4c92e1f939da7ec58f0bb233acdda21034ea370"
+    },
+    {
+      "path": "src/model/cardFaceText.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:7ea1ef7714abcae697100c197c7788316ec6c38e8c926f3ce5997efd5ecc546c"
+    },
+    {
+      "path": "src/model/cardFields.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:02f6f52bf65126094c059ccfb3819c8a861ed7bbb93f9f576f82d8b85713f7ae"
+    },
+    {
+      "path": "src/model/cardInstanceIdentity.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:6bb03803456a273a850619bf4d945d4b199c0fcf8446fe9277b872dc7dfa96b4"
+    },
+    {
+      "path": "src/model/cardLayoutDocument.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:040e0c302df916d790e7ad0328efbb98469e11546b3f8c8e6c9530a762cc98af"
+    },
+    {
+      "path": "src/model/cardMounts.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:221009847e99508e3f066a6b683741e2374c27dfcb21b478e0ae5bc60de1089e"
+    },
+    {
+      "path": "src/model/cardRemoval.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:dd70d624a1aea7d62203e21054b1cf73b37321f1ec155a7cf2ed4114da0325fd"
+    },
+    {
+      "path": "src/model/cardTagExplanation.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:ae8eea12e4572bf344f4f3a4133d4d1f550d55fbde2dbb399c3152801a6ec451"
+    },
+    {
+      "path": "src/model/cardTargets.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:fe10b51887f99ef8a7c99e201b865b4da55b49db87510be068cb69a5dcd76117"
+    },
+    {
+      "path": "src/model/characterCreation.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:d24a5e8ec9b8644cc9979361a2c1790bbb51211c3cf19173a08030cd8e3d68a1"
+    },
+    {
+      "path": "src/model/classCard.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:7854a3d48404f588a4a0e7bba6a44c7f8213ab91542fb3a995a0981ed2746193"
+    },
+    {
+      "path": "src/model/classLibrary.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:c6fc22d973cfeb92f3d60f077b4914c034632d2d60d91895d43c5800253d6a48"
+    },
+    {
+      "path": "src/model/classLibraryState.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:880359038bdad1e1526a668c0e4afcdcf514c6b459538ca6fe31aa6a6ea51093"
+    },
+    {
+      "path": "src/model/classMastery.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:966807754c42f2b3cf4ff7a1ba70122187380fc683417b10665b4fb998eaa73c"
+    },
+    {
+      "path": "src/model/classMasteryContent.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:94f3d75484a9c446f2bfb7715b3dad684e18cb2e14e164ab6bb0263c6574de37"
+    },
+    {
+      "path": "src/model/classMasteryProfile.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:10bd3a7b256f4eda2a1ae628ff6ce13bd09a44ec72964dfa6b2e8e3edc212b07"
+    },
+    {
+      "path": "src/model/classMasteryRun.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:c4e16342133b62e32a54ba41fe04590575d5f24708ae756cb9de2ba1518e0af2"
+    },
+    {
+      "path": "src/model/classMilestoneOffers.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:2388cb1d0891157d4af69bbf9d5b0201c51a6cb597e5f2f1c8716f2de5151ca8"
+    },
+    {
+      "path": "src/model/classMilestones.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f08ba0b27b57189d8ecf27edf70dda5fc1b443bf2b464ea35373c3922e5e968f"
+    },
+    {
+      "path": "src/model/classRespec.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:3f1813ab84f14ba713c2a11ddbdf940990d611ee611963dfda5882653dbb1d80"
+    },
+    {
+      "path": "src/model/classRespecResources.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f42b261cd4c0b0e443dabd3a1e64b9df2c3ff79f6f9530d834ec4f716f7c2d92"
+    },
+    {
+      "path": "src/model/classRewardProvenance.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f33adb6fbb599ab06f464b1a15a1e6769f7e12b24455b81ea9b5b74c592d1aca"
+    },
+    {
+      "path": "src/model/classSkillFeatDescription.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:52b0cb6e48c5c0f8c8864427f10dcf5e8ce16bbad511e9976c9683f27fe6a04b"
+    },
+    {
+      "path": "src/model/classSmashAnimations.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:b06c232c46813a0c9c7bcf12973f9171988c391a9d8063a44220e35be0f88949"
+    },
+    {
+      "path": "src/model/classSwap.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:00ef2c05914749d14c95f59275668412a771905b95168e9651f431ffa5770b81"
+    },
+    {
+      "path": "src/model/classTree.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:dc139f0408ca21e8b90b27fc3c1bc74c28921dd7ff1f9ea9331f98f57c09906a"
+    },
+    {
+      "path": "src/model/combatAnimation.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:20a248a4585fc217fc6d3412e8368e40c758b9963853060f841fdf44d8b14603"
+    },
+    {
+      "path": "src/model/combatCardEffects.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:06bbaf8b9704119c19f73e49b2a651e339f51c22ab797bdd2707ba5d589088d9"
+    },
+    {
+      "path": "src/model/combatCardProfile.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:55828e4973bcdbeb078f07c26ead380a840981d69c0b2976af38d77c7d088c43"
+    },
+    {
+      "path": "src/model/combatEffectEvents.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a68a5ae081a1eb4ae1889b44f849e788e3ba0dfae52f45938ce84481432e7833"
+    },
+    {
+      "path": "src/model/combatEffects.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:d3189fffb9dbf9b0a7b973f47b4fb8dbaf595930740ffcf37a2679025d17e9b0"
+    },
+    {
+      "path": "src/model/combatExpansionRules.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:37a46eb9effe6869e572f8b8ba3f8deff25034d21f8e6232bd45d3f4fc2aa677"
+    },
+    {
+      "path": "src/model/combatExpansionStarter.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:09c816d226544b91cef3e7f89e58f4fb4b4bb598c5928763d7c5903a0aebfe40"
+    },
+    {
+      "path": "src/model/combatIntentVisibility.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:d820c5f66910b337be9906f87a29dffbd7b6d677805e0d89a0e9e31b6f431ef6"
+    },
+    {
+      "path": "src/model/combatLog.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:3295f5e2c4d44c09e3389452dab3ce794f064dbb7f0e8a9ff7edf22c7ba5e2b6"
+    },
+    {
+      "path": "src/model/combatPose.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:ef4ae2f46502aaed49f0ad6191fceb06ed345669f5d0678ecd0ff8838d539c1c"
+    },
+    {
+      "path": "src/model/combatPower.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:d2b0d0b2a59ada8f6adbd075fb6a10c9ce4b45e808226e8a11989ecc008dc06d"
+    },
+    {
+      "path": "src/model/combatRanges.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:10c57bcf1db33763f48ac6042969850fed16b497c24da8bd3813206f59b4f9e4"
+    },
+    {
+      "path": "src/model/combatRatings.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:fe3052b7465b0685490737a1df3edd859267b6ba87aca9aa5d2ef2b1d8fc7f89"
+    },
+    {
+      "path": "src/model/combatReactionState.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:44d1bd15b0d35b764bcfe591b961331d7fef30bd8ca18d6b9104d071bb7416e0"
+    },
+    {
+      "path": "src/model/combatRounds.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:0b6e08b7501de55f06ad61fd1f6354124ed6a1bd10c8969b5092b04b329f0fc7"
+    },
+    {
+      "path": "src/model/combatRules.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:fa38c6572700669cc3592d6097db8c92f4e4a8854920806794a39d2043ce525d"
+    },
+    {
+      "path": "src/model/combatSnapshot.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:bf80de63459a5a8c084859f053a8f55b13803dedceb6ec4e60bf36f450519b2f"
+    },
+    {
+      "path": "src/model/combatStatusState.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:bf2d73dbee56e55074166ab3fc14bc5acabeccf4025bce90c5141a4bc3adea93"
+    },
+    {
+      "path": "src/model/combatTacticsDisplay.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:273c963ca5c226afb8dfc5ef58dc42b740e566632b0880ee1e0063cf6872e8eb"
+    },
+    {
+      "path": "src/model/combatTacticsRules.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:e39886f5cbe00b68f1437a0dcd9aa4e43d2fa0a267b849fb43700f40617c52ce"
+    },
+    {
+      "path": "src/model/combatWeaponPresentation.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:0d0963c095d89b35a5e54d72c95ce95ff6db6ed2a7d9c4bd279ac76840b53f37"
+    },
+    {
+      "path": "src/model/combatWeight.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:cbbf9133ff3db1a90928449a7a91f52ca9e3708e3067a8b5098f850cc619ba84"
+    },
+    {
+      "path": "src/model/consequence.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:1234afc10bf7782fe02257a14cd8f1c659c57cbd2954ede9917de373fed02712"
+    },
+    {
+      "path": "src/model/consumables.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:e5d9e2cf678a7bec65c8b97b63d4865b47916304cac0bdceb3bcc66df7dd4bd3"
+    },
+    {
+      "path": "src/model/coopProgression.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:1c8e6772b952b3b7705adf783db6deb97a36a05f0c3e7edaaea77df17af43f20"
+    },
+    {
+      "path": "src/model/creationBrief.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:0691d42411d63ce9e0c7e6d6115790c31a2b8034c0fe769626f416e1b437c8d3"
+    },
+    {
+      "path": "src/model/deckCopyLimit.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:701e779a18ccc4a5d656acea563c7f65c7307b75eeeb2e811b4a2fc012713405"
+    },
+    {
+      "path": "src/model/deckRules.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:9af71b995e38cd2722b174583eb51b68bde419208a4d4ebf6bde79ffb6dfd42e"
+    },
+    {
+      "path": "src/model/deferredProgression.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:da20f4370807283101034031018a9e1bbbdd3ac68cec166e613d18deae308d8f"
+    },
+    {
+      "path": "src/model/derivedStats.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:34cc3a5e363d72588c8dbe326c456482eb7ed2f16058d4ed207a3e835ea2c8e7"
+    },
+    {
+      "path": "src/model/disclosure.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:ac6814f6ad91f596a3f13b6be97974a9465ed87673ccebdcf2cae7b79bf80aad"
+    },
+    {
+      "path": "src/model/displayAppearance.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f48404b1f145c70c9ac9d8a6758921b57acde6d7c4975c372431bb5cb569f8cf"
+    },
+    {
+      "path": "src/model/encounterTier.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:2572beb8b1604b78c41f24cb604525dd77fb2e6cca54a2df23a4f6e4354059b5"
+    },
+    {
+      "path": "src/model/enemyActionPose.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:d0e199c96984ad198942883cfce90aebae215b042ca89a1497f3d4af86afc5c4"
+    },
+    {
+      "path": "src/model/enemyIntentKnowledge.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:c62dc2edc00da2b51f2d8a47c14d970ab92c49a4fd3b724fed51bdcd8dc4f170"
+    },
+    {
+      "path": "src/model/enemyKnowledgeCombat.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:33fed846ff8051d41391747e7764691d22dd5d6a1b4ae2a4aef954cf17d444a9"
+    },
+    {
+      "path": "src/model/enemyKnowledgeProfile.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:1493bf463ad99dc902f26c8fc24dcba9272fcaeb12119b978566edad05198a9b"
+    },
+    {
+      "path": "src/model/enemyKnowledgeRules.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:127345beffbdd074511bcc0f8a49aa7c2b78b1f87af7eb2286f2034b94b204e3"
+    },
+    {
+      "path": "src/model/enemyKnowledgeRun.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:00f0d4522222f8c437ac3d7ec5b342c779edd95cd7422a10734e211345c40fcb"
+    },
+    {
+      "path": "src/model/enemyKnowledgeView.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:70f22ded31a480a69910665258c366a9053a5bca3c29ad8d6c6070778b199150"
+    },
+    {
+      "path": "src/model/enemyMoveCards.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:48796a0fb2bc40cc12a9b3a9d4f80fcc15d2101f6da0331042a7ba9029c2fbc9"
+    },
+    {
+      "path": "src/model/enemyMoveSources.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a097de7ae148a974a7b74f80d9eeb2344ddfa1f9be07f91ed1ecdc0d7618d6b2"
+    },
+    {
+      "path": "src/model/enemyStancePose.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:8c60bad18d16db4c5195f2a0b92c703809969a553cd64b7f46b3f450e435cd4b"
+    },
+    {
+      "path": "src/model/environmentArt.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:34691ae4cdab43c3e915ec6ddbcc752b6f6b91bd3f51874c4f10f7f519f96ce8"
+    },
+    {
+      "path": "src/model/equipPickerTable.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a6d506fdaa9d2274ddde08b7110bb2f1c6b4a75c33c97dbf8093869f68a6829c"
+    },
+    {
+      "path": "src/model/equipmentAnimation.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:3bf11641bc283bc34f316177171206144a9554d23ca0a6448b44d5c0cdf1b4fe"
+    },
+    {
+      "path": "src/model/equipmentArt.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f8496330a4f7c3f0e7a810a1a00859c25a040468a90f622ef71781bcc614ecda"
+    },
+    {
+      "path": "src/model/equipmentCard.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:aeabeaba928d7da6feb4716b9aeb087c91d7e2c7de3f613e0e5e563aafa464f8"
+    },
+    {
+      "path": "src/model/equipmentCombatProfile.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:31018ec7489875b7eabd7bf4a83c5090c01c04f390443105771eebdb468e3f20"
+    },
+    {
+      "path": "src/model/equipmentPresentation.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a70d191e1db52448feaced6471599587449da386ef11cf047476396d083385b4"
+    },
+    {
+      "path": "src/model/equipmentUi.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:da7eafe1b81c166177929aa4331bba29b9534c7f459a51236e4595ca183fda97"
+    },
+    {
+      "path": "src/model/feats.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a35d4e8d6b860e71ce9042c04c977ed796bed0a4917509af6972e93a62a4f17a"
+    },
+    {
+      "path": "src/model/flaskActions.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:dbb9ea7da0ead3d9dc4418566a998144d59066fc6269031b64ef6ef2381f9015"
+    },
+    {
+      "path": "src/model/flaskgrowth.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:d21a551b9ea20b4a8b2a3b96b206955b3367f5e083eb081d8244a092be348e28"
+    },
+    {
+      "path": "src/model/floorplan.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:1efc02957bb961e1de25c09e1ad194fd28a38ce4f1a825a6a9b98c4d6fdaca7f"
+    },
+    {
+      "path": "src/model/formationGroups.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:823cc345ce3db24aec19ba961539ca382074db8ebda22e0fb4669c37ecf5ca9c"
+    },
+    {
+      "path": "src/model/formationLayout.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:d1065fcc1ebff0f764982c1e1f4251d36bec1e88a7e697de99e98f1fbe253a24"
+    },
+    {
+      "path": "src/model/formationMovement.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:8ace6d4eabdf9c769e7a2c2259acb3267545744e0e87c9d7a0bfaf49abc2ad96"
+    },
+    {
+      "path": "src/model/formulas.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:51fbbb6ffcad8042dad38080950ab434381710d84629607a9e1e25bb1495df32"
+    },
+    {
+      "path": "src/model/friendlyTargets.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:9b50fe149933eb97b7c37885e4302ea2d3c18d07fcf6b1e6424c7be9549b561c"
+    },
+    {
+      "path": "src/model/gameProfile.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:95084336438f6addc14e9f71751192f0ce6b7407136728b1cd296ba0f7f14f2c"
+    },
+    {
+      "path": "src/model/gracerefill.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:5dc7a0f79dc992426e244240e60d1842c9778e336246276a2d3b7d0eac520b09"
+    },
+    {
+      "path": "src/model/handRules.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:39926cd3f21bfb5cb6dff0c2c7619222b01fbb232b0730d6fd63889168507360"
+    },
+    {
+      "path": "src/model/healLedger.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:186074123d7a3fd99b35cc49764c299d3720dfbdf40dafad7456af6793b2f720"
+    },
+    {
+      "path": "src/model/initialProgression.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:6895aa0e84cb5aad7df624396a4c62e270fa71333bbd3b082eb1f8db95a726e3"
+    },
+    {
+      "path": "src/model/intentDamage.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:7fabf859aed323dd9d16cff8cd0817b97d76f9ec4675037fb6e366c0d00abe47"
+    },
+    {
+      "path": "src/model/inventoryPresentation.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:fcdd6a9a7eb6a7770b348ac847c7b688f22dc953de4781ffd396b5907c895a03"
+    },
+    {
+      "path": "src/model/itemUpgrades.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:cf838be0e939d3289b047f474337a8206a5ba37e36df4feb91d1bda7f2a65064"
+    },
+    {
+      "path": "src/model/legacyDungeon.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:d45d29a9a99cbfe3b9b16ad4526080db9afc18edf39d35820d6d74cbaf49da47"
+    },
+    {
+      "path": "src/model/levels.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:544c10d9456dfaf7f0e16f7e44e10dc658d507a847b74f4c0f2b09016b89577e"
+    },
+    {
+      "path": "src/model/levelup.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:4043577a613fc8c33efc75917ef485948ec27743053ca1a33ba9db530a59e28c"
+    },
+    {
+      "path": "src/model/loadout.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:9a48a68ce237fc57f95e34b46608dc15a09d96b96e88bc9fedf96127ab7de3fa"
+    },
+    {
+      "path": "src/model/locationPresentation.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:824f02c42b38aff289a713ae833d59971c80be7ae8ca8e321e651f2477e40764"
+    },
+    {
+      "path": "src/model/locations.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:18a4b4ed40ed9374ffdce05f08b8b3e12086d0bb66e319cea0be3feb426dd88a"
+    },
+    {
+      "path": "src/model/mapReferences.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:856a5c57aa905ec4c8f930b01a5d3d0eb34969b1f0ee164f59aa4753a6c971fe"
+    },
+    {
+      "path": "src/model/mapknowledge.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:4eec90a62a06220886cb1f028d98a56c9f0cc3569af8a10fe2938b48de9ccd7b"
+    },
+    {
+      "path": "src/model/mapview.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:19e26d5afa02eb8ab045c633c73d52b18ac1e8e6025dc6ebfe5c8da9b21ef889"
+    },
+    {
+      "path": "src/model/marketAdditions.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f1d8220015d66a9952600703c9c0a0ae80d3f211b2f4ff1bf2f21cd23b616fbf"
+    },
+    {
+      "path": "src/model/marketStock.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:b01a3358c9ee42280a83a6cbe622526eaeb1ed432c86ddd5a95386559cb76cac"
+    },
+    {
+      "path": "src/model/master.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:166a3969d11c75cc459d0d51ab5166c885540cb35eeff80878c85e17dc0d7b5e"
+    },
+    {
+      "path": "src/model/offlineDownload.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:133574a28950506b378b82cc973a672fece3e7dde2efe80309461c238ce523cc"
+    },
+    {
+      "path": "src/model/paintedOutfitArt.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:0c31c25c5be0ac6549b547fb8953591243f477132747f00ebbd0202fef017892"
+    },
+    {
+      "path": "src/model/perception.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:6467edb7bbfc508b47718ea5753aa4ba124bbc053694f370a42ad3dec9cd4ebe"
+    },
+    {
+      "path": "src/model/playerAttackSprites.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:45e630e0421ea173c67abaafb537d994e880f3b6e8fae5aebf1f278c7aaf21bc"
+    },
+    {
+      "path": "src/model/playingCard.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:2cd4a61e3b768efc0ff24b7d1ac6d8a6c757463f3746dda74248eb1a1badd6ed"
+    },
+    {
+      "path": "src/model/presentationPoseCatalog.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:49a4c48ec451bae9c2216b88c0dc9de04a3d917150546c08b8fa64ea30980e1a"
+    },
+    {
+      "path": "src/model/presentationSequence.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:8f79f9beb5a5f69f764f24f24dc1ba6362af94979f6ad0602bb749e68550bc8e"
+    },
+    {
+      "path": "src/model/progression.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a41672c93b1fa35e37dd129ef5d9ebfec9d60db39b32aa94a76586e222e1933a"
+    },
+    {
+      "path": "src/model/progressionContent.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:1655285bb54f1d0a9d311125e6b74c50395886f671e6c4e7295292935476c370"
+    },
+    {
+      "path": "src/model/prologue.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:9dc0f24fe6ddb38b187e036a17e9f23f275c329b31ed35289a9d6b739dc25d58"
+    },
+    {
+      "path": "src/model/prologueTiming.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:af4aaca594bcbcfa9b7c21d63a41779f3f2057abfcbd79bd7741d27bd6a0aa6a"
+    },
+    {
+      "path": "src/model/propertyRuleBindings.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:086e22884ada9b1933fb011a67b3e213ca38c10bc0828082519b4daf04d9d699"
+    },
+    {
+      "path": "src/model/quests.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:4e18422672b445c009d9dd35872a8e22ebb2470608f6f72dcfc994b18edd709f"
+    },
+    {
+      "path": "src/model/ratingFormula.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:be3446178916cd8c85b45ba45861e7ddbf61a7fa627e79a45ce840bcd7f183db"
+    },
+    {
+      "path": "src/model/recoveryRules.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:398c3a0d5521664a27b0ac81afa6486974eebc6e6b7f80094d4e75466f2843fe"
+    },
+    {
+      "path": "src/model/registries.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:e70aa8dbfb4ebf45762fad02ecb16a9f09eb92430ace9210e79e330fa23b1847"
+    },
+    {
+      "path": "src/model/relicArt.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:fb3a2d0f23672e89d9a18bf815de22c0ed05369d474f3c6c5d9d79a16a7cb95f"
+    },
+    {
+      "path": "src/model/relicModifiers.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:6b740909097f7a39569ac38c6370e13560ea34acdf810a78b1d4d82b0cd71320"
+    },
+    {
+      "path": "src/model/resources.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:2483ee626f6a4e2c1b4c71ebfc24d46f8c17e4711f1a6565b32a55218207454b"
+    },
+    {
+      "path": "src/model/restRevisit.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:ce5f35b87d94e73b7d6929fd95a904a83c5082ae019b4c0fcbcd262e837ff900"
+    },
+    {
+      "path": "src/model/rewardOdds.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:14f3b8157e47e299f6d275bd56b1d47fcba56c76e1fad0deec58b5a06843bb49"
+    },
+    {
+      "path": "src/model/rewardSourcePolicy.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:3e10a9164a1369242089b810e76d1ccbb8963124bdc935659f1c2849e1c18086"
+    },
+    {
+      "path": "src/model/rewardXpPresentation.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:5b249b5010f100e9d2ed32ba0ec5f498aeb4934f16aef2e4a808e829a3b98909"
+    },
+    {
+      "path": "src/model/rewardplan.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:d26e1d3abb3417660423ff4a50b57d6207d5494a9c25b3c69b009c73d6334cfe"
+    },
+    {
+      "path": "src/model/rewardprogress.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:c55afec06025ee1d9973cf751653d95bc4ceebef4469df22294026b40c13e732"
+    },
+    {
+      "path": "src/model/runCompletion.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:2d23203516fed384b95fd60f3f110e72999ed37e0a9f116fa6e330b7408c1f12"
+    },
+    {
+      "path": "src/model/runStart.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:152a7f9938068fd9c3302f44502532eb2fadb5d41ac19fca91e0e96e0b39e3ca"
+    },
+    {
+      "path": "src/model/schemas.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:445234034c7bd1b855ff9508ea3e96582934955634fa60ced64bc7983c302266"
+    },
+    {
+      "path": "src/model/seats.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a33e2607cbc41fca408ec4dde7b29f53e0faa9493528f37f4571fd398073072b"
+    },
+    {
+      "path": "src/model/secondbeat.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:967587215167b2dfe03da97fbf75da4b81d68f611f14b0f19613e9c66adf59c9"
+    },
+    {
+      "path": "src/model/selectedWeaponSequences.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:52d6d812901399b10655dfbcf890e7b314b855040d775c2d1fe4499574c90c89"
+    },
+    {
+      "path": "src/model/selectedWeaponStances.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:ba43742d65c30eafb06d2da79f0b41568e50be4339682d283e8800e8d8bb97bb"
+    },
+    {
+      "path": "src/model/serviceCombat.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:be16c47eec9985731112bddc4010140ff40947b371abee59d0a59079b1838dd1"
+    },
+    {
+      "path": "src/model/settingOverrides.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:fa07d0ca7c6b18321ec6d697ba6f1b7ab3fdc421493fd01c52a976e292700026"
+    },
+    {
+      "path": "src/model/settingsDefaults.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:73228dc9bbcf9efff79265be9c56e9e6d4b0491f20fa202d985a36fd7ab5a779"
+    },
+    {
+      "path": "src/model/settingsSync.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:2231a744b9a63e6d5e95103eb816c9b3f9cd1a2ea16c1a1a535a943ea00ac12e"
+    },
+    {
+      "path": "src/model/shopKinds.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:6f66234d6b2fcd580b98f241fba3c86ce40ebbf3027027cc4237647234750202"
+    },
+    {
+      "path": "src/model/sigils.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:55c482f6b725458d21a81b9aa6c200b18033e7978a60d04a7b44f13f8a1d33a4"
+    },
+    {
+      "path": "src/model/skills.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:d21685f920dbd1242f26702e30b7c7bd456183e27980a772de4b997721fe4499"
+    },
+    {
+      "path": "src/model/smithing.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:837a15b929c12aceb08a22f5d67b170e70f663f30de760e3feb4ee085bc8d5fa"
+    },
+    {
+      "path": "src/model/smithingRules.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:2ff67853c259896ff2bbe378e339dfbcbd154ad5ece33514bf722c3353cb3be4"
+    },
+    {
+      "path": "src/model/spellDefense.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:2ba6b4d36686e3289cbd637124348572b15434578790bd2f83f04deb16e59fea"
+    },
+    {
+      "path": "src/model/spriteStyle.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:c5dd9c74e31588cf5e0b3382b430038c7364a736dc19b46ce746a81860e514f0"
+    },
+    {
+      "path": "src/model/stanceRules.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:fd2048ce9165a6e9e3414342fba269614146b3f65848cd95744b4cbbfdf1555e"
+    },
+    {
+      "path": "src/model/startingAbilities.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:8a8f9d7f222df21625ce644383dd2e6da475d9d0e380025c392ef910557fcbd5"
+    },
+    {
+      "path": "src/model/startingEquipmentPreview.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:9051c8f7eb5a96fdeb9b99574335ce26b05aba070771575b3c3ce66cdfc25efd"
+    },
+    {
+      "path": "src/model/startingKits.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:64162fd33dc90cfc66f6ae3d7db4a44b5f11a8806b3ab00372dc13d8a1acc00f"
+    },
+    {
+      "path": "src/model/startingStatConfig.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:83e3be415f0a82de05c4ceb0dddc0c0a696c460bebc04ad1646652b570323d46"
+    },
+    {
+      "path": "src/model/statProjection.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:13a4ba5120b073ce8bd97813312a7ce79607abab8fa38a6732689d00aeea237f"
+    },
+    {
+      "path": "src/model/statRows.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:c9bde92ec544beb5db9cef66968f0003720b9422a36dee7ba990bd651e921c8c"
+    },
+    {
+      "path": "src/model/state.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:ccccbcb9ac2a39d0b6767a7a654d66f0d329d3de942486172fd2ef09aefa9a94"
+    },
+    {
+      "path": "src/model/tagService.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:461263587173ea7dea63322c922db20522b46ae685a0aff3db171cd2a21ee866"
+    },
+    {
+      "path": "src/model/tags.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:8a3d2c8421f59936a69626f052edd9d3df72e592de1c879cf9a9069262e82458"
+    },
+    {
+      "path": "src/model/tokens.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:3bbce91825701b00d1af0641a14d544b693e28ea40e043e5d91c69b030908943"
+    },
+    {
+      "path": "src/model/tooltipSettings.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a72c3ca7664aad53c436c0822bf30a91dc6fe9068286923b78176d8cfacf93cc"
+    },
+    {
+      "path": "src/model/tree.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:7042f96c6959f8163546996fe1e72da9a61e81cb3beb0c8a90f2ddce36d66494"
+    },
+    {
+      "path": "src/model/turnStamina.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:74c3dd2d746aed66b165feb6f089816220bccc500062ccd01c83b21ad0a9e10b"
+    },
+    {
+      "path": "src/model/unlocks.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:b0c23e3d1376216c99016c9f014ebfed723d48607e451d0111d50ce15abeac6f"
+    },
+    {
+      "path": "src/model/upcasting.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:d472373d0d6917562ed12df3c45ddbd376f517f68e80e542f43801553f720230"
+    },
+    {
+      "path": "src/model/validate.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:b2b6d936eca8547688307e33cef2afc1fda2b19449fd4441d2c1ff2702712232"
+    },
+    {
+      "path": "src/model/victoryXpPresentation.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f4e1acfd35fdc91dab5e5cbbc9cda43bcea9d0cae0e5c3b12a480b413f392bab"
+    },
+    {
+      "path": "src/model/worldAtlas.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:0050d7a1eb4bcfe3e189524acddcd2470b44045f78c98c5ce74b4706ff6130ef"
+    },
+    {
+      "path": "src/model/xpCurve.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:4a8330ef5b2ca00972cf324d772d82961164374faa518db8a5d06c382fd78cf3"
+    },
+    {
+      "path": "src/model/zipStream.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:d2ac9e02e9208c9ccfe0952367887c709f92a06524d67e25e98fc2e2782b8e04"
+    },
+    {
+      "path": "src/model/zones.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:9787056414abdb0ec2ce2d3226d2085cd1b5bdabf9c779b5adb7d5f2cb676262"
+    },
+    {
+      "path": "src/net/lan.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a145ad601048936823b7d7e680c27a0ffbd9e821f5ebf1bde41202aa89f4291a"
+    },
+    {
+      "path": "src/services/cardActions.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:99e6002443d68b7c6d1732393f0af37435c25bac3a0a29e28508a621cb67e4a5"
+    },
+    {
+      "path": "src/ui/alternativeArt.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:c71b70ae6f6c67b1eb9a6e00e194a1abec0c8d6c2430d6783d903ac3d2eb379e"
+    },
+    {
+      "path": "src/ui/alternativeArtCatalog.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:7ac467b7f0ba354552006168085dc5925dfb83713ec324689a18547336a24856"
+    },
+    {
+      "path": "src/ui/alternativeAuraRenderer.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:4bf7eb5a97659e941b6125c01dbe3be5b7610526443835f0b2a956bf1b6c4a53"
+    },
+    {
+      "path": "src/ui/alternativeCardStage.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:55d4b08b82bdcdb30bca2a9d3a772f688ecd2fd5edf58680c0da9fa5c3a02ded"
+    },
+    {
+      "path": "src/ui/alternativeStanceStage.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:337118db0827daac8f994976ba107fcc424248058d304ff64b3a2ab380d8cf96"
+    },
+    {
+      "path": "src/ui/animationPace.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:22a68cf5fe32d5b44c3979aacdd058d3c27880d9e3a75ad0cd8da0682bedb112"
+    },
+    {
+      "path": "src/ui/artFallback.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:643b1849fe8a6b7e1d65eafe91b9f086caa4ffc352965b38255e0504c3a5ab16"
+    },
+    {
+      "path": "src/ui/artTier.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:6f372168b3ce26ed1d2958e18f4059bfc5c3492915f3b38158e919d9f10a4a0a"
+    },
+    {
+      "path": "src/ui/assetPacks.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:92d1c0f0024375b3d9e6a62ffbae174dfebc47b100ce3cbb37e1416902ffe47f"
+    },
+    {
+      "path": "src/ui/assetmap.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:39b148bffe49f9356751d4d9cc07da9a6dd5d6adf293ff879641b1fce16d857b"
+    },
+    {
+      "path": "src/ui/assets.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:60b67595b339b8c9825860d424bc2c4adad416dff21f278312629d183a2629d5"
+    },
+    {
+      "path": "src/ui/audio.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:e7105b2dfdc02cbdeb08ccfb87cb9036d8dc2c3ee09717aff3cd2cd9fbacd286"
+    },
+    {
+      "path": "src/ui/bootArt.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:8707d1ccee00e2d7fb419c44f92b393c2270c964487d1e8f587ad81ad95e7cc5"
+    },
+    {
+      "path": "src/ui/buildChannel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:c20a9e3ce19a19165d072482b13ea0fcbf494f9c07459726904b31e807505c62"
+    },
+    {
+      "path": "src/ui/cardArtComposition.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:48af8be6f4d9e0da483a7766d3d5c66062c02365595e613d1c828f0a34f490a3"
+    },
+    {
+      "path": "src/ui/cardArtLayers.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:98f7e06cb9a60461db63ecad980079489a413d1612e310f79507924a74aaf2d8"
+    },
+    {
+      "path": "src/ui/cardArtStyle.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:89841de36a411f9f68e0a4916002aee4b13a7c31017bcad8a86a0b693182740e"
+    },
+    {
+      "path": "src/ui/cardArtwork.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f75a953c5962023f0d5a62ba47460c6f248f7623d00ec159574c9e5b20b4ddb1"
+    },
+    {
+      "path": "src/ui/cardDragEnd.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:941c9d958e26f6a69ee881aa5e5d61149daf664b00c9b87706aea89f33a5a392"
+    },
+    {
+      "path": "src/ui/cardEffectLayers.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:171928308f7e78024f60a826f8b180493f6602b25f8b7f339dcf6fd44b8a91b3"
+    },
+    {
+      "path": "src/ui/catalog/creationCatalogLinks.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:ba9d320db3b59a2b20e0f3b144d241551a0bf4004e931a6f52e491f43eb0d5af"
+    },
+    {
+      "path": "src/ui/catalog/creationSpecimens.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:7fd4fac5a5d5a8338ab3e21c0daeef000b5b9e50473e159b0bda5cc2b257c7d3"
+    },
+    {
+      "path": "src/ui/combatAura.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:223a3bda341eeecf77bc9844eb2c3049ee4c0e2a870445fe8ba323773db5860c"
+    },
+    {
+      "path": "src/ui/combatEffectDirection.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:aa2de213b54f0d0daed89fb0ee2c82180d6694a8d7fa2512a89b39d50e9aa804"
+    },
+    {
+      "path": "src/ui/combatEffectSprites.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:734f7f6279179a6b0c9adaabc88fa29e2d667d3c7252b0c337e6892bf7bde5fe"
+    },
+    {
+      "path": "src/ui/combatantEffectLayers.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:8d5c04a4e59eea0a4a17400f8b4a4bed660a2b0abb6b5ba4ebfba49747a19872"
+    },
+    {
+      "path": "src/ui/components/actRouteStrip.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:969118742e0ad4ec2b3178c72ac676a1de9f0361e1dd2241c5aa7893a9d8258d"
+    },
+    {
+      "path": "src/ui/components/arcaneExposure.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:4cd4b892a102369874274ffc78986807c1f33dc7ae52d9be7e53cbfba2c9e510"
+    },
+    {
+      "path": "src/ui/components/armamentRadial.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:92214aa963cd1964e8b99a122fc5c7f7919724ea932f4d97ab0d69dd85af1617"
+    },
+    {
+      "path": "src/ui/components/armouryComponents.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:ede391085d94e188da9ec55c40fbdaa4a954bb91e459430bef4d06f5b98312fd"
+    },
+    {
+      "path": "src/ui/components/artLoadNotice.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:10cbbf37475e22fb5c02ee5a30802b5f9bda9a364f4971519373b0dc699f427a"
+    },
+    {
+      "path": "src/ui/components/ashenBlight.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f73de10bc6ccd241e950b975cb13d8eb8f9fd5acc2bf09e0409b6ecf3e5f065e"
+    },
+    {
+      "path": "src/ui/components/authoredMapArt.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:6b364667f82d0750c9124668916c223e1bbb319a2c648f027bef8e2e0dd6a561"
+    },
+    {
+      "path": "src/ui/components/battlefieldStage.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:0d55767cb38f752dc3752e9deeaf53ff6c3fbbabba52c8e6eb3e60320aba78fb"
+    },
+    {
+      "path": "src/ui/components/bookArt.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f1006e44546cdb6ee308dd3543a9ea72985f1ee0a71963b3b36b129feb0cd026"
+    },
+    {
+      "path": "src/ui/components/bookLearning.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:08af7b33af001bc92d25d477bff1b765e76735d11bee8ba48d22476b66132de2"
+    },
+    {
+      "path": "src/ui/components/bootArtStatus.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:156074298d3cb520409be2270aa8f3d3f33977333a0bc385db515eb2e289080b"
+    },
+    {
+      "path": "src/ui/components/buildstamp.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:0337b2ace9aac726bf7f2ddcb9a72bc1e34332d9d2bc3c6eca05bfdf0646bb41"
+    },
+    {
+      "path": "src/ui/components/card.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:abcd3bbcb985db88fa829ae31bec9403ed0fabe3b1a1b5c1b9ba0bb4f5ef113b"
+    },
+    {
+      "path": "src/ui/components/cardAppearance.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:ac5a14c7939ddc6ddf2358f75aea2c5963f8cede953c81a3e351c361cbd80a1f"
+    },
+    {
+      "path": "src/ui/components/cardChoiceModal.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:d74112c432c60bd61ce95395b1a232779c74086ba1fc17624cb00db4d0fb227c"
+    },
+    {
+      "path": "src/ui/components/cardInspection.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a085adec88b7b3698c6fdb0d005a1e95e7da79090a3c1281419d0f977d8a5d48"
+    },
+    {
+      "path": "src/ui/components/cardLayout.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:824aed7e2c8a361e1ba7c88818ee6754a9d0739cc05d8b16219d18946707ea01"
+    },
+    {
+      "path": "src/ui/components/cardSelection.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:22c2e60a5eafa1539d74847dc0053f64c80b27da8dbb618615f5f48ce7955632"
+    },
+    {
+      "path": "src/ui/components/cardShelf.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f26ce13e2c530169e9f78a22cfdd98f2429d80ecfd3857ff426b0d3693ec8c99"
+    },
+    {
+      "path": "src/ui/components/cardTagSymbols.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:99ba7a9a728bd274ff78eea448cb22cd2842713c5f2d8dee08d3f6c3d1999fe4"
+    },
+    {
+      "path": "src/ui/components/choiceBody.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:8eb83c638d3195139e8678e5d49f6c27d595cc6155c5f6ae5de3b4f21514afa6"
+    },
+    {
+      "path": "src/ui/components/classMastery.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:b08012bd4354b33f3bf3e32c1b8fe98b7030ec5f63f7ca1b0a39976edb04bc9a"
+    },
+    {
+      "path": "src/ui/components/classRespec.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:c9ccea5ac8e5f881dcec099c96006d86adfb623f832d29d1c6bac37f6e33b5a5"
+    },
+    {
+      "path": "src/ui/components/collectibleCard.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:c76c4c74dab7faf1fe0d4519c71dc4552e917155585382453363c8d1619ddaef"
+    },
+    {
+      "path": "src/ui/components/combatAbilities.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:cf07f1779cb429f6b01de994970569a23867ffe746bea7b7df139127960a602a"
+    },
+    {
+      "path": "src/ui/components/combatActionRow.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:ae03852ec4703df425b4bacd7e586c8be9328a98ae5fca8e391906a5f155b4db"
+    },
+    {
+      "path": "src/ui/components/combatHealth.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a824ee649ff7d878b2e3490941640f1da872739b45ea95ccd555a4c61e202dc4"
+    },
+    {
+      "path": "src/ui/components/combatLayout.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:fd7ebfc4b0ad8d5f0fcd4f85bf0a52c4d91dd46a6893a287c5bbc9151bd30bed"
+    },
+    {
+      "path": "src/ui/components/combatLogModal.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:3df117c213e6df6f3366ab649d4b48de3fce837b6642eb250ff57dc306dd217c"
+    },
+    {
+      "path": "src/ui/components/combatRoundsScreen.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:40b104b808419a6120e38123528a2601dc460cde6e70d31bcbd1f20c63fe4f8b"
+    },
+    {
+      "path": "src/ui/components/combatSigilView.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:2051a1d207ee78a5f55cb8abd066ba71e9a22124d6ea1ad1804ef353c6e5c01e"
+    },
+    {
+      "path": "src/ui/components/combatSpriteGeometry.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:9ad213c271aecc0532cd1a9d45cf39a451169711e851af9ce19cf07bda0f2d71"
+    },
+    {
+      "path": "src/ui/components/combatTools.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:3d87e8364a4124c3ca608cfd9a4efb5749b150b60bf07ba99139a6259995b2c8"
+    },
+    {
+      "path": "src/ui/components/combatantFrame.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:0bde91d3a2984989512e6d44850a5edb74df41832513459f2c3eea88a53190c9"
+    },
+    {
+      "path": "src/ui/components/combatantInspector.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f5f4afd5e921d8e642ae166bc96a97aec49e988c1e773f9907bd0428caf08626"
+    },
+    {
+      "path": "src/ui/components/combatantOverhead.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:159b54da751cc422703ceacc182f70e4d357ccdf9798be2baaeb1763332a7d23"
+    },
+    {
+      "path": "src/ui/components/compactEquipmentDetails.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:87111ed04378227d87cc9f179e436120bbae819370178f6fc05c90740026ab2f"
+    },
+    {
+      "path": "src/ui/components/confirmationModal.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:b2333fdd3964b3fe74f396c49fe9dbfe7bb4dc78511b29691d9eebd4618e2b88"
+    },
+    {
+      "path": "src/ui/components/coopProgressionDoor.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:240a8d90f017b34171d4b2a81ee9a5047833257165d53c276232a48e51c96946"
+    },
+    {
+      "path": "src/ui/components/coopUpcastControl.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:580b8dd8530c200e6fedb228a46de3141cdcf5504e6add1bcb6cdd0a111f7419"
+    },
+    {
+      "path": "src/ui/components/coopXpProgression.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:116f2f650593f13c5fb8ae7a1c92873ebea59ffea17fb118a7464ef7531a205f"
+    },
+    {
+      "path": "src/ui/components/creationCards.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:e48dd11b82b26f1a2a163b1a33ed0245eb6c02596e7118e837605bc5c43012f8"
+    },
+    {
+      "path": "src/ui/components/creationFeatArt.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:25e2331e869d540dc1106043fb4e67b24f0391596a9f895bc64700a29fff5c02"
+    },
+    {
+      "path": "src/ui/components/creationInfoLayer.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:31cc806d4329bf84ffd33c4ba0675d681bb3b8fa0c8ab5df451e4867c70eb88c"
+    },
+    {
+      "path": "src/ui/components/creationPageParts.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:66fba7f9ae525c802768462a3c52be78654fa8e9d38854458b3cc18aebc7db96"
+    },
+    {
+      "path": "src/ui/components/creationPreviewDetails.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:e0f2b72bd79398e8d0e4881fcbe002a38cad0bc94b63c8f9d9ee746ab1ade30d"
+    },
+    {
+      "path": "src/ui/components/debugChrome.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:ca9963407b8fe0f175f9347abc101517ee9c7558b24cc6b51ea3620ccf34a137"
+    },
+    {
+      "path": "src/ui/components/deckCardAnimationPreview.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:13d146f21f1f864e5be4ffaec7d0ebbf76a7c1553068851d5d84367190a3d63f"
+    },
+    {
+      "path": "src/ui/components/dialogueStage.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:6b03bce7ebb5cedbb4d55ccdc3b5a3aeeda23ae03fd8804dd6b2e68e8434d893"
+    },
+    {
+      "path": "src/ui/components/discardChoiceModal.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:4ae5563749e8ba25811d56681655dd21e8ec20ed21b6cc39a478acd2f55b10a2"
+    },
+    {
+      "path": "src/ui/components/disclosure.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:e769c6005cfd12ec817a3446ed14991328f04e40b5fcf65436d1316d1bf81625"
+    },
+    {
+      "path": "src/ui/components/emptyHandCard.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:e98f0b352c7ce1be0fbb4ca29acabe81c861c6b6bd1c98b2134142d158c87d8e"
+    },
+    {
+      "path": "src/ui/components/enemyKnowledge.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:424f137edb6329ff488b66d5432291361fb0463c93173cdc65796da02a4b74eb"
+    },
+    {
+      "path": "src/ui/components/enemyMoveCards.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:33deb693d92808867b5b6c0fdae4bac696a77ef905d1ef5170540fa08dd8fe45"
+    },
+    {
+      "path": "src/ui/components/enemyTargetPicker.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:d4d8583c683062e209adbe3a6fcfd816bd90574dc6f8e284ab0d141ad3a83b4a"
+    },
+    {
+      "path": "src/ui/components/engravedIcon.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:bfa959f23e539b10d75868142f8da60b1e53eef005ce253c5bf2a3a8d38daf8b"
+    },
+    {
+      "path": "src/ui/components/environmentArt.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:95208ef03d33a736452846bc007bc1b5ec73b0c5903e219025bfb6ed8f7c612c"
+    },
+    {
+      "path": "src/ui/components/equipmentCard.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:d749ca4498e27c5b33cf3fa7b93f8e3470790f849f7e3880e9ece891cda08c12"
+    },
+    {
+      "path": "src/ui/components/equipmentReceipts.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:96ed7b4bd121216bea5587c6c0359080fd5bd41b4c1ec0e729550fdef9266a6f"
+    },
+    {
+      "path": "src/ui/components/flask.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:4d03136c0dc87cb0f48dee69b90b50af86b3215c890f95adf083839dc65f3d7c"
+    },
+    {
+      "path": "src/ui/components/flickPractice.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f07aefc4a900f1e17ea160122d05a06b5df12ee027d5f96a6aef04254d426a30"
+    },
+    {
+      "path": "src/ui/components/foldGlyph.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f4aa79a4d038d13774224d849bce3043ffb3428e59ded97d3c308aad7c290c5d"
+    },
+    {
+      "path": "src/ui/components/footerArt.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:9c5fbf592b453d6effc3ec627ed9080b945ae3402f6c81eecf1e21613edbd7a1"
+    },
+    {
+      "path": "src/ui/components/formationGrid.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:813127b9411879215696b9dcccd2a566968a8663c1def9f7b2d5e4948e03ad35"
+    },
+    {
+      "path": "src/ui/components/formationMovement.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:e0243765086ab160a076e30a5d4cb0399139dfeff401fa50c3c45921ac4919a1"
+    },
+    {
+      "path": "src/ui/components/formationPositioning.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:de81651c7e95ca413946b097b7ee6bdb03f95f0bb62fcf6d92994eae7b98aa28"
+    },
+    {
+      "path": "src/ui/components/formationSettings.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:3b4502c213b8f9bf7a0a6d881c491bd85418f68829860d00e89640268df246b4"
+    },
+    {
+      "path": "src/ui/components/friendlyTargets.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:7bf36443965c6a2d02e3e4276a76ed1c22c5bf5b5935cae05575b223e6427d68"
+    },
+    {
+      "path": "src/ui/components/hand.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:cef0e575813de5f25a099f8230e357ad484ce7fb325b08433e7927e046e8e65c"
+    },
+    {
+      "path": "src/ui/components/handDiscard.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a801b9af43e09c460dae8f5f4b03eaa9bc6c138c623f456684d66233fbfe767a"
+    },
+    {
+      "path": "src/ui/components/handInspectionOverlay.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:2daa19d809da2490dd8005f365da24c11d3bfc714f8008ea905bbdeee11611bc"
+    },
+    {
+      "path": "src/ui/components/hints.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:81f580f15c3615ac26ef7426b2259c996828c039e80163ea5364716fc0556dba"
+    },
+    {
+      "path": "src/ui/components/holdbeat.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:20072f3d555f7a6b2e489970011d1a3e3f888910f76696008d0aeb7a673a3be1"
+    },
+    {
+      "path": "src/ui/components/holdconfirm.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:476dab5aa34bcb6c692ed9bdb35e01eac33952e360fb748e4101e1fe15ef6b11"
+    },
+    {
+      "path": "src/ui/components/hudQuickSettings.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:65cdf103ecd51110c192caafc3ce4ef52d6f845031aed61584cf321f6acb16a9"
+    },
+    {
+      "path": "src/ui/components/hudmeta.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:ae63b98cfd7ba77528e7b682035d79d50c6a5007bb5b8e55e9c1d56691bef399"
+    },
+    {
+      "path": "src/ui/components/iconTray.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:6905a0e824e1ef338df7dc27ad01993eac8778003a433b8121ae02b103c1c243"
+    },
+    {
+      "path": "src/ui/components/illustratedBackground.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:8f4f86b482695792bca4e99a2df4de1f9d1819c888feb6e08fac5b9453ea20d0"
+    },
+    {
+      "path": "src/ui/components/illustratedCard.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:5669bd0c1814a7bae6058abc9e0ea8168f3ef0444c48da892bd7646109645d8f"
+    },
+    {
+      "path": "src/ui/components/illustratedCardFitter.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:851d4d4ec49f34623963772addc42fdf64a4d79a1b3f4c510847b9ae0509072a"
+    },
+    {
+      "path": "src/ui/components/intentIcon.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:bafeb0e514d804345fcecba35844568a0d52e389d3953f608bc2e14d641a7db6"
+    },
+    {
+      "path": "src/ui/components/intro.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:80529a3dfc6ac933f127f00e2fce95c9c1f1dfd3591166011f5e56ba967b1026"
+    },
+    {
+      "path": "src/ui/components/localMapCamera.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f316aa7e7d31f2b9d53d310982e5adeda736e1c44efb9aa11aee544cd0880cd3"
+    },
+    {
+      "path": "src/ui/components/loreLine.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:6293507a625322886ac066d9061099336cd7b8e9dfceb3d7034f7e02f169e485"
+    },
+    {
+      "path": "src/ui/components/mapDetail.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:51deb71f3a02063c678d52e0bff7eda101ff05503c1238a388fe7ea3521c511e"
+    },
+    {
+      "path": "src/ui/components/mapFog.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:04c4a44157d750a230c6976534d1b58b8717751d1a05a8b9e05edd33ed6a97b8"
+    },
+    {
+      "path": "src/ui/components/mapHeader.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f8b62b0479920d7f25a6c969da41e81700d5fb1968750e85b526fb35ca4b7376"
+    },
+    {
+      "path": "src/ui/components/mapNodeInk.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:b667555f6811571b18792eb216b089d89d7463da0739e6d290015cd50c1b1402"
+    },
+    {
+      "path": "src/ui/components/mapboard.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:c96e24c3474b74fb29778d41004e2f6bd9548e867fbc881e742e419affd087d8"
+    },
+    {
+      "path": "src/ui/components/menuComponents.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:407b10659cb5191044413056aeebac83a07d9c2720a6a00c114e83958dfae50f"
+    },
+    {
+      "path": "src/ui/components/merchantOffer.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:ca19a5cb089b6f32954f0dd522259348959862b2e0fb1592e08b3642a2b8abee"
+    },
+    {
+      "path": "src/ui/components/modalShell.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:7c7becd3fd6f96489d7332c30a7df55e59e803de602a033031d7063d829940db"
+    },
+    {
+      "path": "src/ui/components/mountServiceModal.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:62ceb7d5cb5baa06752c5860dafd8f44984a9ffea6beb65f45c9fff83ed22407"
+    },
+    {
+      "path": "src/ui/components/offlinePlay.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:789bfc287232a3e72e20aa35a3967e941d00a5fd20daf383fc9fd39677a2732a"
+    },
+    {
+      "path": "src/ui/components/optionDecision.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:5aef440c6a76c18680f4f5ca678d8002b12ac30718cab02a1d7a118fc4d0bb15"
+    },
+    {
+      "path": "src/ui/components/overlay.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:eb396769eb3631527640a68d1628bee69d78e05e0b53ec961ae2b8bc0e29e904"
+    },
+    {
+      "path": "src/ui/components/piles.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:c3cad0bb1b970c8f2cd9cf0f41980cf8579961fff67624b11882d276fe4cb9f9"
+    },
+    {
+      "path": "src/ui/components/progressionCards.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:203868901a53e6b69c34fd6751a0b4d39fa1cf298527100dfc5e066fa4a72c7b"
+    },
+    {
+      "path": "src/ui/components/quicknav.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a3de70120d5142b04b5accbfeadcd841449a00715abf6f18ecccb87f639fe4da"
+    },
+    {
+      "path": "src/ui/components/reactionChoiceModal.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f16a36f0bbf74f2accfb7d524cf02aa7b4b4ae988c365f436a318e9bab2f07ac"
+    },
+    {
+      "path": "src/ui/components/reactionNote.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:71813a92f279c472b85b1c49e8915ea77b55ce3c1ff3f7cf7e30e06732a4357a"
+    },
+    {
+      "path": "src/ui/components/refusal.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:dce589e5a5d1c0d6624aeaa2b21c2fba52c82ad6389cad737a0267432017f3e7"
+    },
+    {
+      "path": "src/ui/components/relicRail.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:fc30a21cc683f41129efb5176ff00cd5d544ce4e8326dd4be64ba75288fe1b29"
+    },
+    {
+      "path": "src/ui/components/resbars.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:51011174a58776ed42e54cd948031bde1ccbc5d098981c30f9e69dbb50071ef9"
+    },
+    {
+      "path": "src/ui/components/runHud.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:1385c58e418bb6efce9df728f11a9eebcf04c4da9a11c3324f9a967d5f89bbcf"
+    },
+    {
+      "path": "src/ui/components/runPotions.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:d2d73c7476cdc588195860193320815bdad73dad36ce53e661de155849dd91e2"
+    },
+    {
+      "path": "src/ui/components/saveSlotSelector.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:4ad4b2f871413ebd0e8bdcb30473dffd709e0f42ea66db2df04665f7b446f94f"
+    },
+    {
+      "path": "src/ui/components/sceneBackdrop.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:2fcc39ba2722ee5a5c6bda89283e01a0ac13c6f5e810304c5617aa6d0c3c7951"
+    },
+    {
+      "path": "src/ui/components/scenePainting.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:949a04aeb8167ffd0973a1ac0a646207897f70e0565c81bd5c0a7a5036968938"
+    },
+    {
+      "path": "src/ui/components/seedfield.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:cab28333d037708b968e0e04ee33f95ace849cbaddad596f06d9baefbe945dab"
+    },
+    {
+      "path": "src/ui/components/servicePortrait.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:aecc58e66a898949f50e3ceaec3d176093d90cdceaf92f4351b85998baa926f4"
+    },
+    {
+      "path": "src/ui/components/settingsDefaultsChoice.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:4eac575baa076634d6079baa9ea5cd88ba1461a24e54ef9bdd9af40a7ff3f177"
+    },
+    {
+      "path": "src/ui/components/settingsPreview.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:5a1837ddef4b0ccd494a2912b343c051673e463e0a20e2efb8bc90cb0ea5fe44"
+    },
+    {
+      "path": "src/ui/components/settingsSync.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a393b04c73877c0e7b836ee4b7ed00309b0e8ae766e0f24fe65d00d4cdf9031d"
+    },
+    {
+      "path": "src/ui/components/skillBookOffer.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:1f8ece032cb478882d58bf06f43b41a3302b9b803363847c78ff786ba28b008a"
+    },
+    {
+      "path": "src/ui/components/smithUpgradeModal.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:895d306b28e79547db96d1ec7ec0a97454a9272b32554374d399d12445f11aa6"
+    },
+    {
+      "path": "src/ui/components/staminaOrb.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:7fdbd86ac5dcc7d3d37133c992ed04eaae92131e602717f43dd38e05808497ef"
+    },
+    {
+      "path": "src/ui/components/startupGate.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:eb29fb90c1b7a0844209fe615a072284dd8d39ea1d4b423afed73418cd36fc8c"
+    },
+    {
+      "path": "src/ui/components/statAllocationCard.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:8ff20bb254f18091b696a5884635768a487bc23da5ebe73fd7e9a19a95124d4d"
+    },
+    {
+      "path": "src/ui/components/stature.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:fb4d728e7fe9e7286430b0e323b11db5b470786e2a7d965a891ae0d76f740c76"
+    },
+    {
+      "path": "src/ui/components/tooltip.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:2c53ba44779243c6d1e1d58d97eb50c85658c7070e709928c3df65dbd47b99f9"
+    },
+    {
+      "path": "src/ui/components/tooltipGlossary.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:6f03e96ac0d02c01739067df3d87834db3b9b5d7d3f65941ad799db0cbb5aeaa"
+    },
+    {
+      "path": "src/ui/components/trayComponents.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:899c57bbedef13a9c6853103ac76e3851aeb20f86ecd38ec450ae67827f9e6b6"
+    },
+    {
+      "path": "src/ui/components/tutorial.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:d0686f69eac22992a622c2497529707ed1d2c982106fd33674508a4138ca86e3"
+    },
+    {
+      "path": "src/ui/components/uiComponents.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:3b6c50b568dc9fe7ec546f2fbe1c7ec5d623766c4317d402e2ca3f84e166a570"
+    },
+    {
+      "path": "src/ui/components/upcastChoice.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f69a9f388bb47e156fcf8d9340eaa608ede2ce9781b8d5bbe6c65ea830853cbe"
+    },
+    {
+      "path": "src/ui/components/upright.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:1d91f88d542531e8f6a4c7cb254634d73ecea71e6f2bb47a9d0072bd34621212"
+    },
+    {
+      "path": "src/ui/components/veil.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:b413e4a65370b0694f7e4f2b7f950c9ed653edc791c4b1f2f1374cdf034634d3"
+    },
+    {
+      "path": "src/ui/components/victoryBeat.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:63211f5d7835d07b133ba1bf52b347057902d9835f826f850f23e16aeabcc4c2"
+    },
+    {
+      "path": "src/ui/components/w1Workspace.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:0445d07db6e17cb12967cfeaff2e2ecf13a02f8aebaef9adfb3a702cbad4d6c3"
+    },
+    {
+      "path": "src/ui/debuglog.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:61f56268377743f57effeff0d3012d0882c82c0017c85a7422fef666deb4ec03"
+    },
+    {
+      "path": "src/ui/deckReadingArt.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:c9833aa91a5d6f506f1552a19162a157cd11fd3de995d5f2b21ceabfeba5b57e"
+    },
+    {
+      "path": "src/ui/deckReadingOutlines.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:6591825024fdbc0e8002b3533b42c8e8c3d965d44c39b2e388b951c4ab1d0458"
+    },
+    {
+      "path": "src/ui/defaultCardArtwork.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:19c175df4d57f5a975f1c91ebf5a1b4c97bbc78e1a91e4efa87691900d333bda"
+    },
+    {
+      "path": "src/ui/displayAppearance.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:2ea006e269e794e0c3a553551faa375654d4a7c548f702b94bc0e10cb9cedeff"
+    },
+    {
+      "path": "src/ui/enemyExpansionStage.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f44ed43bf0e610d901091161dc13d89fddba274df4a3d14edba9057f6e7894f4"
+    },
+    {
+      "path": "src/ui/enemyPoseStage.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:037f70afe9136210e90002686df3a78b76e4ef286c7e249a331b8e8e00ae3902"
+    },
+    {
+      "path": "src/ui/enemyStates.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:6c4d0cecec4e3280bb1ff88e52ef9e87bc887655474c2aff8751b2d620f10b15"
+    },
+    {
+      "path": "src/ui/extendedCardArtwork.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:15d5a15cca24743b3b910ff18b7d6b15cf977bbbcaf1d322af32742f32b622e8"
+    },
+    {
+      "path": "src/ui/fx.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:1cacd805557ae2dbd81a3a415b2f2ed25b19e1ea56a222fdb1e41b41e71afae7"
+    },
+    {
+      "path": "src/ui/gesture.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:cf8e9c8c92203628c7aa87f04bf149ae4903fc552d61673134a2cf8ec9ae4fa6"
+    },
+    {
+      "path": "src/ui/handAxis.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:2fd8c5fb558ad3f3d3110a029bf702cb557e25dfcef87d656edce8fe5bbd3091"
+    },
+    {
+      "path": "src/ui/haptics.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:70312af1ef9b7f746956310f4e1cc731ba8a736ddb206b37d97928eaccdeda91"
+    },
+    {
+      "path": "src/ui/highResArt.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:639d25bd10ef87a29d6241fdd645d5f27387ad0b3875cac9622f8a95270450dd"
+    },
+    {
+      "path": "src/ui/imageHints.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:7b5f938802ad09e0181bcd87928d3a1eb219f8e913ce4e3b7cc4da7449ccc99f"
+    },
+    {
+      "path": "src/ui/input.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:0db8b2f526244c39d5ade74c7f95c8392d7fe4a04d27c4fcf16b07c2e0d1f45b"
+    },
+    {
+      "path": "src/ui/kit/categoryNav.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:1bc723de06e33db345302eadc43cc6e87d82f2bd2cbe0ccc80f6d1a0ef07bd19"
+    },
+    {
+      "path": "src/ui/kit/index.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:2e8d7553fe062331c7f545dbafa654fb3815b84de8edf8cd9ebf7eba76eca5c3"
+    },
+    {
+      "path": "src/ui/modalState.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:afdb0bbb2692d964c7f2ee0aaf0939816893993613a38ccef24cba402cab0439"
+    },
+    {
+      "path": "src/ui/models/ActRouteModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:7c2b428119f1ad61e147325f6ee05cd69b2634d83f9cf6b911a0d0343d57b67e"
+    },
+    {
+      "path": "src/ui/models/AdvancedSettingsGroups.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:969858d136732d19655aeebb74600c3e80fc14369d4878f9f1364b81f81c98f8"
+    },
+    {
+      "path": "src/ui/models/AlternativeEnemyTargetGridModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:cd02ddda44839e1d2ae4142d948862bcec56a502df145888652d859fcc03f40b"
+    },
+    {
+      "path": "src/ui/models/AlternativeFormationModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:050c61acda17ae35539f44b723444289a65fb616b6fe9e06bb3ee17640cfd83c"
+    },
+    {
+      "path": "src/ui/models/ArmouryModels.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a5fd9da3e073a8953f0364ca220ebf71500737924af1ef053271ebfde539ac48"
+    },
+    {
+      "path": "src/ui/models/ArmouryWorkspaceModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f95a9292cadc447eb09143a7c6a377102ae80c0dbdf45dceb05f8eea071b4c97"
+    },
+    {
+      "path": "src/ui/models/ArtLoadNoticeModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:670f49501dfea09be08ce1f45971e6f0a2efb619a9c166619dcf8672882066d3"
+    },
+    {
+      "path": "src/ui/models/AtlasCameraModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:259e636947a914f8617238071932edf6854218e5416af1e0e25695a60a91876a"
+    },
+    {
+      "path": "src/ui/models/AtlasSelectionModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:811b48a5a9c6db4f5d740dd356fe20bdac9291f985dcf15d6cd953b279e0a74d"
+    },
+    {
+      "path": "src/ui/models/BattlefieldStageModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a5874f76979ea420407e75eafede0e9b49c95b15d373498b127cd6495ff93ce1"
+    },
+    {
+      "path": "src/ui/models/BehaviorModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:c687eeca0948404b327c758a5e36146678b4cd4f214286141daa1b3d88ccb586"
+    },
+    {
+      "path": "src/ui/models/BootArtStatusModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:61d09ff3e8a168bd74b302fe1ebddb221f5dc42d5cca63b93a3f9234f1ce02cd"
+    },
+    {
+      "path": "src/ui/models/ButtonSizeModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:e6c24bdbf73a88ddcd823b3a94d44d294b302b41d6940772c1e9cfa0846dcfb7"
+    },
+    {
+      "path": "src/ui/models/CardSizeModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:181391724a4d9804dfe94ba55430d51482ceffbddd7c176bb4d38007d9c58889"
+    },
+    {
+      "path": "src/ui/models/CategoryNavModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:66203fd94aa9cc7111331999319f292fe4c0b0354d1d1af4e23808c00c363289"
+    },
+    {
+      "path": "src/ui/models/CharacterSheetModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:d0016364f7741b7deed1515f2f34f65ed6013b989f5c2a527317e71c65a03595"
+    },
+    {
+      "path": "src/ui/models/ChoiceBodyModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:72597905fea41901d1be02702ce63744a590c96093012757b5815211298c6c1e"
+    },
+    {
+      "path": "src/ui/models/CombatCardView.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:2ed9d948ca301c9ee6eb15be486ebb08ab776763531036bcc5179b92655b064d"
+    },
+    {
+      "path": "src/ui/models/CombatCompositionModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a14d5ed9798cd8a740306a721892a274b5454d34c59130c7d5256175d170c897"
+    },
+    {
+      "path": "src/ui/models/CombatFormationModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:654cf853854df9337f78ddcd40bc284d531eab516d6fd614d8dc539b486a4a5f"
+    },
+    {
+      "path": "src/ui/models/CombatHealthModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:6f3b95a0b44c3e6898c948c4b8b960b2f726716ace81f6004a8eddcacf56c1e5"
+    },
+    {
+      "path": "src/ui/models/CombatIntentModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f3f615f83fd2b41e38cedb76d0329376ddd63e0961f6d73e4256fc167c3cf748"
+    },
+    {
+      "path": "src/ui/models/CombatLayout.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:b0f47d1b8ed0340cf38906c70392e60ce8d686d6cf9dff9b62d265cc5d283f53"
+    },
+    {
+      "path": "src/ui/models/CombatOverheadModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:fdc1dc498ca8e250900bdf608678ba95507cd9c96e4c34ac770a43dba26a28ab"
+    },
+    {
+      "path": "src/ui/models/CombatOverlayModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:7548d77ada86535fd3b85a34661688403f7ae1a03caf9306a03ce3e66b3643a7"
+    },
+    {
+      "path": "src/ui/models/CombatRoundsScreenModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:346a71f0223ed266362558b7a29caf875bc6217492efcdfc5966bb3ef1b9e056"
+    },
+    {
+      "path": "src/ui/models/CombatSnapshotCardCosts.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a2b2aecf9214af511f723233a37864533532fbdbd8423a822b7748df6e6c3a0d"
+    },
+    {
+      "path": "src/ui/models/CombatSpriteScaleModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:371e28938e76ac622aa06584c9029618e9ee0b738b159a233f3b561125a815ea"
+    },
+    {
+      "path": "src/ui/models/CombatToolsModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:48880e7c5fb707c0d1c6321b17eaba4d6684dd358550a555fb8013e7a1551aae"
+    },
+    {
+      "path": "src/ui/models/CombatantInspectorModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:e45af46672f9d3b29dab03e4570e08591c86d8ea10a9e4de0f3d60aa6af41cbe"
+    },
+    {
+      "path": "src/ui/models/CombatantInspectorSections.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:80713c3eeb8f914a8d945c80b87c17b1da35304b4c03f990183010846b3ec492"
+    },
+    {
+      "path": "src/ui/models/CombatantMeterModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:92c3d6a77fddfebad469224366960811b25c6b23cdb892a9e73aa14db94b0fac"
+    },
+    {
+      "path": "src/ui/models/CombatantStackModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:167c7c7f07456406765d0919e76a19bf82a55aec529d03af5d442ee3876bfeda"
+    },
+    {
+      "path": "src/ui/models/CompendiumModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:5492ed6464ac9b0d6f41ca2cc7e2c4f9de5a9ffe9e91ee0b73d3de11fc8ee377"
+    },
+    {
+      "path": "src/ui/models/ComponentModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:1f3348fa1ca9303b968ab6bc3dc22aff9ac5e0f9737e85fbba7ea8f92b7e764a"
+    },
+    {
+      "path": "src/ui/models/ConfirmationReviewModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:40d51d873c8fe054b6d5a95ae63cf5884f1c328c0d309808d61a8a6db8c4eb32"
+    },
+    {
+      "path": "src/ui/models/ControlAppearance.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:c4ee4363e44231d17266e815805783656ebd9f1f3c1b96a5009a8a5802e1e2d0"
+    },
+    {
+      "path": "src/ui/models/CoopHitPreviewModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:9e379efdc58d725e44b165b81c4e895e85201e7e33f7ce6f1ee8d0f99518ef9a"
+    },
+    {
+      "path": "src/ui/models/CoopIntentModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:ae41e5e77d6405dd7de478edf1fb680b012970ed95c5e5ac48e29e81b73d934f"
+    },
+    {
+      "path": "src/ui/models/CreationFeatBrowserModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:07fd14675e1b071ced268b23db20e70137eb04fa35afff0907d3bcc58a8ae161"
+    },
+    {
+      "path": "src/ui/models/CreationWorkspaceModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:920fe782720b216e7ed1d3e150a78d452e93fdfbde2b0013812b66c1d63103a4"
+    },
+    {
+      "path": "src/ui/models/DeckEditorModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:76164c63756ddc389262a3a5063acbdf1aade2ab884bc0663216cbcd2349acef"
+    },
+    {
+      "path": "src/ui/models/DialogueModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:50781b0824970f2a65077bc1008da4c58c2481b45568c3a726847a3b1afac54b"
+    },
+    {
+      "path": "src/ui/models/EnemyTargetGridModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:6c42a83f45a34ac8e4dc03a945955ef9e428dd1452eda2c4e7fe62205d8ee192"
+    },
+    {
+      "path": "src/ui/models/FooterLayoutModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:1afbcd54e813558e8b1e8197275ea38828ef5d7e9e8f02c8368fc4ea9a09bc9e"
+    },
+    {
+      "path": "src/ui/models/FormFactorModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:8d20672e9a2afc515272f6446aa5f0b0c47ddab9345771c78dd8771e5265e2cb"
+    },
+    {
+      "path": "src/ui/models/FormationGridModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:e3d5151b524750a4d57a51f6e24d9f54ef9e7207342246451f4ed2e0ee2476ee"
+    },
+    {
+      "path": "src/ui/models/HandLayout.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:44f346de6c32aa0f846eb0f5916bf7870cfb1520cb32b1b49f52d5336961c83d"
+    },
+    {
+      "path": "src/ui/models/HudLayoutOffsetModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:c07616932fbaf50017676404ed31d6a315e1df2c2610ddbe215f3f7baed77cca"
+    },
+    {
+      "path": "src/ui/models/HudPrimitiveModels.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:2fd786da61274bac352d98d2b3559264e85d9f43972d3c5dca9018540442eeb5"
+    },
+    {
+      "path": "src/ui/models/HudQuickSettingsModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:c48d48a6e4ef65a76c5022bfa6ca3e18c29d6ddc0c6325e542c0b1f3769923f8"
+    },
+    {
+      "path": "src/ui/models/HudVisibilityModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:823383ec1c05159cbb22364b69abc260917d4998bfd7795747123572a1861d47"
+    },
+    {
+      "path": "src/ui/models/IconTrayModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:14d921bb491582c09eda54f63e705928cf2dee21bf1fdbd52cdbe1e4cb261e58"
+    },
+    {
+      "path": "src/ui/models/IdentityModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:9e0961e6c4e605ae9ee15ccc313975aced76e46642f60148076a91716ef45802"
+    },
+    {
+      "path": "src/ui/models/InspectControlModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:b9767ed475fb026d2f8685c32f5cbb14c2023b060b7a9c3734c7e05253e4869b"
+    },
+    {
+      "path": "src/ui/models/InventoryBeltModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:53b7f1be62ebf2cede58725ca5ebbdad176db273c4303f1d15ca4114ffbdebb2"
+    },
+    {
+      "path": "src/ui/models/LevelPacePreviewModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a7a851f9a33022ef93516e9229de945424e7a88dc2e0345d887571fc786717b6"
+    },
+    {
+      "path": "src/ui/models/LocalMapCameraModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:b530b27be95ac3c0db0b56798b881f8335a2e0cd265d932b5de62bcac9d86aac"
+    },
+    {
+      "path": "src/ui/models/LocalServiceModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:6711d27f30c3374356b61b2eb9357efe3c4a6478f526c672e32dc6df34e0b693"
+    },
+    {
+      "path": "src/ui/models/LoreTypeModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:262728a14b00c3caa65420244d068dad8adf5fd9ff99f735f371d0af822e512b"
+    },
+    {
+      "path": "src/ui/models/MapDetailModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:4ae1bb80d31f726b8c6448ec99fb1252311f08e098b2433d5bb1c8ca13fc9e7a"
+    },
+    {
+      "path": "src/ui/models/MapHeaderLayout.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:d66334cb5214d7ea24eb1b4ae5e074da7078a7102181586efa45e811349bc3e2"
+    },
+    {
+      "path": "src/ui/models/MapSelectionModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:4f29d6233f4e0236d90ed768552d0e55d3ee5e2f6908ebc3fa873eccedff4841"
+    },
+    {
+      "path": "src/ui/models/MenuModels.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:4c1cd9c812934bc2cc2f6fd3369761758c21c3e7597c36bc9e3d1b2e7ab1c5ec"
+    },
+    {
+      "path": "src/ui/models/MountServiceModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:14af8266fc835370692f98fa163d6de591bffb9a9b3b8f204559a626c8f79cb7"
+    },
+    {
+      "path": "src/ui/models/PileViewerModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f53d7baf5f084be1497576d5d06e39fbd80babe1e7f9006ea3666f1bb21aa984"
+    },
+    {
+      "path": "src/ui/models/PlayedCombatCard.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:d4e1e04683505ab7813aacb76f9e99d956b9a084467e36dcd706aadbd8991fc5"
+    },
+    {
+      "path": "src/ui/models/PlayerArtworkModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:c60efe2b00a79308bb10159438735e17370900176da361a271fd6696f3429d4d"
+    },
+    {
+      "path": "src/ui/models/PlayerDetailsPlacementModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:e951d51fd113bef2a781b17e024cc60b2c5f3f31471d04e1a8ee0594f339d90b"
+    },
+    {
+      "path": "src/ui/models/PortraitCropModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f07cc048a2244aaaf4f5adeec27dc8a90f1cea645266b7cdb4bcba0d8b32f5be"
+    },
+    {
+      "path": "src/ui/models/PossessionVariantModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:05d9df4542674b843b7d2acd01e8f37b91fbe6595989f0598b7a501f604ebfcb"
+    },
+    {
+      "path": "src/ui/models/PotionContentsModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:fb10b0829892277d5c6c3abadb5bee2f126b80f3f39aea75e1e3651ce3a3c82a"
+    },
+    {
+      "path": "src/ui/models/PotionInspectionModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:d10531f74153e033e9a5ab7115b51f4098ecb478d63f9500999b8ac610f9ff69"
+    },
+    {
+      "path": "src/ui/models/PreviewMemoModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:fe706ffe28d599e492d32836a25fe2cf2354b0853e23b4277869d1d586fde8d2"
+    },
+    {
+      "path": "src/ui/models/ProfileWorkspaceModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:7fe44c65fd11d431db90c26ca67b1af1e89150dff4764d405a35bf9812da4dae"
+    },
+    {
+      "path": "src/ui/models/ProgressionInspectionModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:dcda19c312f6851eb11f2ddda826c3b352dd096ffec712fb0414e014a748e0fa"
+    },
+    {
+      "path": "src/ui/models/QuestBoardModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:737fa6eaa4ab1f2cb540a5b0d9b0f3c1b626c6bed599bcf8d689830e680a14d2"
+    },
+    {
+      "path": "src/ui/models/QuickAccessPanelModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:3dad09be49a382bab151a9c948b0ffd6431c7252eb10bf7650637850fa6e127d"
+    },
+    {
+      "path": "src/ui/models/RunHeaderModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:fc942da5e638dd1b621bcf2533ff2e996c547dc9b47b45fff92c56824531f298"
+    },
+    {
+      "path": "src/ui/models/RunHudLayerModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:ac1da504842222ea79a462f302fb40616562f06faf0a95ceac69aaa833998c09"
+    },
+    {
+      "path": "src/ui/models/RunPotionModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:179e43933d40883c5d37325162dedfd10bca561e08a9cf24b0e40060d54a56d8"
+    },
+    {
+      "path": "src/ui/models/SaveSlotSelectionModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:6b7342ebc6249212e8b5d12f789ae6d0f882474b2e1532b5f68e81ed88b3db7f"
+    },
+    {
+      "path": "src/ui/models/SaveStatusModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:1e4355887003100a047f660d197a4802c9971ca2420aa542e1aba34157198f96"
+    },
+    {
+      "path": "src/ui/models/SceneLayerModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:c096d48568be21837e9c3f7a26bfc5e1b0deae37299b201257eee47623bc386a"
+    },
+    {
+      "path": "src/ui/models/SelectionEffectModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:6f37811a8a80ce7bb5fb1b840cb776a2421f805a14f500d7c0bd716ab835003a"
+    },
+    {
+      "path": "src/ui/models/SettingsWorkspaceModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f30e6a4cd259a6fbf6624e699e8f6fb06aca2a43ae87d87c64104a03597c71b8"
+    },
+    {
+      "path": "src/ui/models/ShopWorkspaceModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:173aa367fdfe5b5e838c17926331bb63a6c4437892cee789082e879906da36be"
+    },
+    {
+      "path": "src/ui/models/SmithSelectionModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:4ae69e7171bc939bd427c006ed954a46ed51aa2d3fe598d81870c93679644d4a"
+    },
+    {
+      "path": "src/ui/models/SmithWorkspaceModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:1800bbf36959d83ce05af261f4bebde00e5bbc586c1ba90eb83af97b4215d0ce"
+    },
+    {
+      "path": "src/ui/models/StaminaOrbModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:58b5d94edaed5710a6c6bb1c5929669242f0b8a282624dfa20db88a4c956eb03"
+    },
+    {
+      "path": "src/ui/models/StartupGateModels.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:1f7fa9c3e4c79f3584ddb0132784adb904fa7ae9646d6fc4b03e32be9fc0e595"
+    },
+    {
+      "path": "src/ui/models/StatsPreviewModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:58909d4707bc16f163f3607530417ca06abc4d9d4d12b21631707e659359e643"
+    },
+    {
+      "path": "src/ui/models/SurveyQuestModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:b058e3158b5079d6b6b619bbc30a443161c7e88355eb93122e0fe10d90fad721"
+    },
+    {
+      "path": "src/ui/models/TargetLayerModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:b63e1fd925ac4f0c2f8500bf8afd5c82fd416b1e77eae6701fccf2f8e5b74ae7"
+    },
+    {
+      "path": "src/ui/models/TooltipPlacementModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:3a63d1fff73c0d2f2e46f8c88e924779131f301d1ed251dac6cfee8e532a838d"
+    },
+    {
+      "path": "src/ui/models/TouchFlickModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:59131e448350d7a7a128b07f31126c3c9c17f20e2593074c265165978fbdea16"
+    },
+    {
+      "path": "src/ui/models/TrayModels.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:c578feb1d5d2b20aaeb077c16e82ad25959ae6c2ca1974213ce10b49b61b3945"
+    },
+    {
+      "path": "src/ui/models/UiComponentId.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:6651469b0ff1e70d3e57d572d2c84da918bd2916fa7f1041358e8c2d95b2e814"
+    },
+    {
+      "path": "src/ui/models/VitalsPanelModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:1483730d841ad17931ac40ba0bc222687812929730a992e0588c94669675f6ef"
+    },
+    {
+      "path": "src/ui/models/WireframeChoiceModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:81508ab98b4e4d15a30e568d0c1da6f76a14f4bb2e7d51afe1408e5d7b7a5da2"
+    },
+    {
+      "path": "src/ui/models/WorkspaceModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:093d29b3d7ed2beb082c99a69cb9e2c476ea502b30c8aa4f285b906a0d4ffe25"
+    },
+    {
+      "path": "src/ui/models/deckEditorCosts.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:7fe5edb50e1544be5c0dfcf818d126158225f4ab9343d190f604023c6e953e31"
+    },
+    {
+      "path": "src/ui/models/targetCellAssignment.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a1ba99336abeb72a8ff88cad090f91255d5f606b5e1c9a886e40ac4de23ab8d7"
+    },
+    {
+      "path": "src/ui/models/targetDirectPlacement.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:be28585265050c841ddb31b15961309e168979f10dbd1ef8f45cb6e12c06d197"
+    },
+    {
+      "path": "src/ui/motion.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:253d0c77807d5bac7cea7e4246e418bdd5fcb4234826ad56d4d7a1fd8f2438f1"
+    },
+    {
+      "path": "src/ui/offlineInstall.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f81831c7651fcf4556d0f0fbf900ef4a5c51833bff95b524d02aeaf32acd52c5"
+    },
+    {
+      "path": "src/ui/offlineZipFlow.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:d9b0c9abe1ff910a2c6e880dc7a01a22bc0cd9846a45ff9d77bec256dbab1d63"
+    },
+    {
+      "path": "src/ui/paintedOutfits.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:cbd9f781b2203e2b5e81370da989645f7e4acb65b35ac6d7c6b825c035a5ae61"
+    },
+    {
+      "path": "src/ui/performance.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:46f4397fc750d2b7f6bb56ccba93dd6a7cd5052cef6da292c53c4754359f8944"
+    },
+    {
+      "path": "src/ui/presentationSequence.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:5b3fb78da8940f78aed7a17f5398328fc6c7d4a8fd4976fe5b667f44d5a88b03"
+    },
+    {
+      "path": "src/ui/previews/itemCards.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:3fc537850c94509a67e6d67b3ba2872dffd3d6934efd24af28066547fcabdfbe"
+    },
+    {
+      "path": "src/ui/previews/tooltipReview.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:6d192f67aeb1e1c0e0fc5ed299c4d80c60baf26da2d65f100f0ac01fa58b08fc"
+    },
+    {
+      "path": "src/ui/previews/tooltipReviewEntry.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:2ae103f0824067281033aeaf9a4ea88f6e10763b77cdff05f3b7cb66d3568106"
+    },
+    {
+      "path": "src/ui/previews/tooltipReviewScene.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:aab3f738beeaa154e82c27e19d8b22f43fdbb8d960bb62ea1bea6938f723106e"
+    },
+    {
+      "path": "src/ui/previews/weaponCards.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:4e723edfff2808e2be5c24c9b3c4cfd81ad2eac524c4533718fa9b361dc6f09c"
+    },
+    {
+      "path": "src/ui/prologueCharacter.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:22beaa4834f7a053f58d5df1b210da37861464c40ed88e4aada46d8f206d1b0e"
+    },
+    {
+      "path": "src/ui/reaverAttack.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a44e797ced5e28ebef44b046c44e1edf99bf7c1b3a0f2884b4debe5aaa2b5e65"
+    },
+    {
+      "path": "src/ui/sceneConfig.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:400395180ebdbaf7bf942a90f6983fe874f0d492644c7f96ac7069242d255eb1"
+    },
+    {
+      "path": "src/ui/screens/about.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:bf8c327bed85121e041737a867d17906752fe5c224cdac200c7c156dc1ed964d"
+    },
+    {
+      "path": "src/ui/screens/bestiary.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:5b493a32814ec74877f8ed6b5d776537e47406041d8f94d97f4d25acf65b4b62"
+    },
+    {
+      "path": "src/ui/screens/blacksmith.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:bee51e205abda80e8acb38374de437bd27e0462b43d9a6c4c01492dab106ffca"
+    },
+    {
+      "path": "src/ui/screens/characterSheet.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:d1c3774016f4f9762623a0de13b34c50a8838e76b2a7e059043b140c7e72b06e"
+    },
+    {
+      "path": "src/ui/screens/combat.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:4b4ba9b357dda933e1cbe987ac36973030fcdc2262047e81840f620c62836538"
+    },
+    {
+      "path": "src/ui/screens/combatTest.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:e53b14dd287c886cb201b87344a5d1e89a24aaacbddf34d84d15a7c5c67854ac"
+    },
+    {
+      "path": "src/ui/screens/compendium.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:cdc49080ee13aa3aa2548137b58112089a943d07abfabf8cd62213f707415b38"
+    },
+    {
+      "path": "src/ui/screens/controls.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:9beb4e68fe7641b94e88ffbb09f503f05291ecd568f5352b74387b519fad6270"
+    },
+    {
+      "path": "src/ui/screens/coop.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f0d35fd8520975193d49348329d9d3c812ecd5599b893d0b5d3814642d10cba3"
+    },
+    {
+      "path": "src/ui/screens/customRun.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:8df732d31d0fb4be62d7b9ad81ea5a813bb349fd34540aba9f406fb6fa33122a"
+    },
+    {
+      "path": "src/ui/screens/customize.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:232b872f4693f5062f813f90a7d5101e3b4dbb7ab876a6d1ec97259e7345ac81"
+    },
+    {
+      "path": "src/ui/screens/deckEditor.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:276b7d27662c7122e70cdca5b3d1e0a8bb876161ca35850583464727f95f9ed2"
+    },
+    {
+      "path": "src/ui/screens/dialogue.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:d5ebbbc96640a2d4765f0f823ac3bb2a89c46322caa3109a456bd2d9e1a9867c"
+    },
+    {
+      "path": "src/ui/screens/draft.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:e68c61b5f1c5e565156ec27389f1ff53961377f2317c6fc2724773dda4d4f332"
+    },
+    {
+      "path": "src/ui/screens/equipment.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f4413bac767cef485d4325cf99db9fc0c1f88ccabf0d298c49071d05baa1d67d"
+    },
+    {
+      "path": "src/ui/screens/event.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:801583531cc2529d197e74f05394e186a9d3c46b80c6daa618e814ee9e2e1a33"
+    },
+    {
+      "path": "src/ui/screens/gameover.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:3c2851a472f7f464d3203d4c00db33092f6715ad8c20e348d995496fad8a2e65"
+    },
+    {
+      "path": "src/ui/screens/history.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:82ced6d8591d5eb442aa409d4665cbcf11e3a4f00e1c675db984097a7d838b8f"
+    },
+    {
+      "path": "src/ui/screens/legacyDungeon.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:3390b567911884ebea0d35183884a3020df3c4fd98e32d54e9b6cabf4dea00e2"
+    },
+    {
+      "path": "src/ui/screens/lobby.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:d41e8a1b335c480a65abd0f8ae6939ae8352420ed8d53657093504b6a641776b"
+    },
+    {
+      "path": "src/ui/screens/map.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:afefcd419f1be2f9e6eecf4d34e239f94f0c4538b08f0121183f861ce2a2e8d1"
+    },
+    {
+      "path": "src/ui/screens/master.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:ea92457e3985a5d934ae2a9fd9322db805ada68f92137b8aa85b10f0f11bdefc"
+    },
+    {
+      "path": "src/ui/screens/profileArchive.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:e900512ebf8b8e324a98df18cc0a82a36ae542c36e7df82dd0613f30d2943da5"
+    },
+    {
+      "path": "src/ui/screens/profileNotice.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:e7bcff4d54a9e145de860c201d5e6aaf02ce4e34a482fc6b2576f2912b1a9e08"
+    },
+    {
+      "path": "src/ui/screens/prologue.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:9fae243298f2afca5792195e439ba371ca36e640399178ab150dc77bd24c5095"
+    },
+    {
+      "path": "src/ui/screens/prologueSceneEditor.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:82d04232fd27032ee670088962bc2aefdb15ee602dec5744075e5a405ced9839"
+    },
+    {
+      "path": "src/ui/screens/questBoard.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:852d010212438451ddd824fab47f85a1fc38989099ea0ee7f86fd01db78cc816"
+    },
+    {
+      "path": "src/ui/screens/rest.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a15f8e676be32b896277fe9bd3250b373b2d303fa4c4792b7e850e3889993ad8"
+    },
+    {
+      "path": "src/ui/screens/reward.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:46d7090429db2bf1a259a278f8a230f2776e027975d99537140772ed72dffec9"
+    },
+    {
+      "path": "src/ui/screens/settings.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:3628fd9d1eac0792446f951911ef88a28c4d8de7417390aeff66766c0885738c"
+    },
+    {
+      "path": "src/ui/screens/shop.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:b7b6b4eddbf40dc9e3f78586769717ac8f584d97feb6078181697b3184af24aa"
+    },
+    {
+      "path": "src/ui/screens/smithServices.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f5885a6086cb549c766f3a5f20a21289541d46eec09384ab1cf2ae087433dfd6"
+    },
+    {
+      "path": "src/ui/screens/title.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:66e28534fdc638b86c197a2bf31a82e60bd0c82252332cb757a71a34336378b6"
+    },
+    {
+      "path": "src/ui/screens/worldAtlas.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:7497aedef5de02314f6bc3202f869ab22a4ab03613cfff5e1854ccbbfee28ae3"
+    },
+    {
+      "path": "src/ui/services/PoseAnimator.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:b710cae2ecaa6493338f31c926973da94b5d18231293e3021d17c13e6cc967ac"
+    },
+    {
+      "path": "src/ui/services/TraySizeService.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:a0b19b054e08ad292c1036e123b03a31653a7d1e86c622fbf8f71115e244a10a"
+    },
+    {
+      "path": "src/ui/services/posePreloads.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:540382f4e596756fbcaeb5eeefdf02c274143a00dcac8f5789d8ec9d61bec0ce"
+    },
+    {
+      "path": "src/ui/services/saveJsonFile.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f288d884c1624252c601761052d58ca34f5b68a910c800e3c65bde440e9604f7"
+    },
+    {
+      "path": "src/ui/sfx.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:12a732701ea135bdc076e278f0ea368369fada895165ab7a2148e11febedc734"
+    },
+    {
+      "path": "src/ui/sha256.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:07448a911ac4916167077fc18ea328041ba044c97b7c8301c3b8ff72743c60b1"
+    },
+    {
+      "path": "src/ui/strings.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:c19bf6dd309f1cef8bde88583e978d3ec009bcbf8aac62a7b1bd51e43625eaa5"
+    },
+    {
+      "path": "src/ui/surfaces.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:281aa7918334f045fa74f89c1264d3f72fba4c1dac9eb88a2ea615a1b5a45ddf"
+    },
+    {
+      "path": "src/ui/uiContent.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:942a3c43c06364217c8071f0621c9cfc7d43b64b653b9e8f0d51b2a1760fbe77"
+    },
+    {
+      "path": "src/ui/viewModels/RunHudViewModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:6fa17682b77f5f8b43353ec14503d73f1c0512b19c4393653f9a3ee2f389dccd"
+    },
+    {
+      "path": "src/ui/whenNoOverlay.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:ff47c6c0a2a75db5b75e20794ab4771cf38a81cdf511db14077d1d5a99dd7f04"
+    },
+    {
+      "path": "src/ui/wireframeChoices.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:23af16d4e9c9f6d88fe655d32ecf1a688b47df39f9e3a1d6d193ce63923593ab"
+    }
+  ],
+  "runtimeHash": "sha256:dc57af811c287628f1c85260b54a082a85aba9734b29de1740b085a85e162f83"
 };
 export const gameProfileAuthors = {
+  "default": {
+    "formatVersion": 1,
+    "core": "ashen.core@1.0.0",
+    "modules": {}
+  },
   "core": {
     "formatVersion": 1,
     "core": "ashen.core@1.0.0",
