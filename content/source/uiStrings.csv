@@ -1566,3 +1566,4 @@ gameProfile.selector.copy3,,Import game configuration JSON,Import game configura
 gameProfile.combat.attackTarget,,Attack target,Attack target,
 gameProfile.combat.attack,,Attack,Attack,
 gameProfile.combat.unreadIntent,,Unread,Unread,
+gameProfile.rest.smithFree,,Equipment upgrade: no currency cost.,Equipment upgrade: no currency cost.,

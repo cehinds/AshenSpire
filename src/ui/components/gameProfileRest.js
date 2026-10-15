@@ -1,6 +1,6 @@
 import { t } from '../strings.js';
 // Presentation only. The run-owned transaction validates and consumes services.
-export function mountGameProfileRest(app, { visit, smithCandidates, attributeIds, onStrategize, onCommit, onLeave }) {
+export function mountGameProfileRest(app, { visit, smithFree = false, smithCandidates, attributeIds, onStrategize, onCommit, onLeave }) {
   app.replaceChildren();
   const screen = document.createElement('section'); screen.className = 'screen rest-screen';
   screen.style.cssText = 'padding:2rem;max-width:48rem;margin:auto;display:flex;flex-direction:column;gap:1rem';
@@ -13,6 +13,7 @@ export function mountGameProfileRest(app, { visit, smithCandidates, attributeIds
   strategize.disabled = !!visit.service; strategize.onclick = () => invoke(onStrategize);
   const smithSelect = document.createElement('select'); smithSelect.setAttribute('aria-label', t('gameProfile.rest.copy6'));
   for (const row of smithCandidates) smithSelect.append(new Option(row.itemName || row.name || row.itemRef, row.itemRef));
+  const smithQuote = document.createElement('p'); smithQuote.textContent = smithFree ? t('gameProfile.rest.smithFree') : '';
   const smith = document.createElement('button'); smith.textContent = t('gameProfile.rest.copy3');
   smith.disabled = !!visit.service || !smithCandidates.length;
   smith.onclick = () => invoke(() => onCommit('smith', { itemRef: smithSelect.value }));
@@ -22,5 +23,5 @@ export function mountGameProfileRest(app, { visit, smithCandidates, attributeIds
   level.disabled = !!visit.service;
   level.onclick = () => invoke(() => onCommit('levelUp', { attributeId: attribute.value }));
   const leave = document.createElement('button'); leave.textContent = t('gameProfile.rest.copy5'); leave.onclick = onLeave;
-  screen.append(title, explanation, strategize, smithSelect, smith, attribute, level, status, leave); app.append(screen);
+  screen.append(title, explanation, strategize, smithSelect, smithQuote, smith, attribute, level, status, leave); app.append(screen);
 }

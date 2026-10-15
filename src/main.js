@@ -3697,7 +3697,7 @@ function showRest(openPanel = null, locationId = null) {
       });
     };
     return mountRest(app, { registries, run, meta: saves.loadMeta(), onDone: leave,
-      gameProfileRest: { visit, smithCandidates: smithingPlan(registries, run).candidates,
+      gameProfileRest: { visit, smithFree: gameContent(run, 'rests')?.smith?.free === true, smithCandidates: smithingPlan(registries, run).candidates,
         attributeIds: Object.keys(run.attributes || {}), onStrategize: strategize,
         onCommit: commit, onLeave: leave } });
   }
