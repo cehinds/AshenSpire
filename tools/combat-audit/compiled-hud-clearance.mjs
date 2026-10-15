@@ -11,7 +11,7 @@ const out = resolve(process.env.QA_OUTPUT); mkdirSync(out, { recursive: true });
 const html = await (await fetch(url)).text();
 const report = { url, started: new Date().toISOString(), htmlSha256: createHash('sha256').update(html).digest('hex'),
   source: html.match(/const SOURCE = '([^']+)'/)?.[1], ordinal: html.match(/const ORDINAL = '([^']+)'/)?.[1],
-  fixture: 'Production compiled screenshot route and renderer; deterministic protection values are data fixtures, selected-player and paid spell input are actual mouse/touch. Not an earned campaign.',
+  fixture: 'Production compiled screenshot route and renderer; deterministic protection values and moving the existing canonical Star Spark instance into hand are data fixtures; selected-player and paid spell input are actual mouse/touch. Not an earned campaign.',
   views: [], errors: [], passed: false };
 assert.equal(report.htmlSha256, expected); assert.equal(report.source, process.env.QA_EXPECT_SOURCE); assert.equal(report.ordinal, process.env.QA_EXPECT_ORDINAL);
 assert.ok(html.includes('--hp-value-line:'), 'compiled CSS contains the upstream selected HP reservation');
@@ -30,7 +30,15 @@ try {
       await page.goto(`${url}?shot=combat&shotClass=starseer&shotExpansion=ward`, { waitUntil: 'domcontentloaded', timeout: 60000 });
       await page.locator('.end-turn:not([disabled])').waitFor({ timeout: 60000 });
       await page.evaluate(() => {
-        const p = window.__combat.player;
+        const c = window.__combat, p = c.player;
+        // Move an existing canonical instance; do not invent a card or play it
+        // through a function. This check measures selected-HUD input geometry.
+        if (!c.piles.hand.some(card => card.cardId === 'starSpark')) {
+          const pile = ['draw', 'discard'].find(pile => c.piles[pile].some(card => card.cardId === 'starSpark'));
+          if (!pile) throw Error('canonical shot deck lacks Star Spark');
+          const index = c.piles[pile].findIndex(card => card.cardId === 'starSpark');
+          c.piles.hand.push(c.piles[pile].splice(index, 1)[0]);
+        }
         p.block = 12; p.wardBlock = 3; p.barrier = 4;
         p.persistentWard = { value: 5, max: 5 }; p.persistentPoise = { value: 4, max: 20 }; p.poiseMeter = { value: 4, max: 20 };
         p.statuses = { ...p.statuses, evade: { stacks: 2 } };
