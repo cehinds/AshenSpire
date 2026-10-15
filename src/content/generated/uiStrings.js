@@ -10249,5 +10249,159 @@ export const uiStrings = [
     "short": "Missed",
     "full": "",
     "tip": ""
+  },
+  {
+    "id": "status.lifecycle.stackTotal",
+    "extends": "",
+    "short": "stack total",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "status.lifecycle.buildup",
+    "extends": "",
+    "short": "build-up",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "status.lifecycle.effectValue",
+    "extends": "",
+    "short": "effect value",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "status.lifecycle.add",
+    "extends": "",
+    "short": "",
+    "full": "Reapplying adds to the {value}.",
+    "tip": ""
+  },
+  {
+    "id": "status.lifecycle.refresh",
+    "extends": "",
+    "short": "",
+    "full": "Reapplying keeps the higher {value}.",
+    "tip": ""
+  },
+  {
+    "id": "status.lifecycle.unique",
+    "extends": "",
+    "short": "",
+    "full": "Does not stack; reapplying keeps one active instance.",
+    "tip": ""
+  },
+  {
+    "id": "status.lifecycle.noDecay",
+    "extends": "",
+    "short": "",
+    "full": "No automatic turn-end decay; effects may still consume or remove it.",
+    "tip": ""
+  },
+  {
+    "id": "status.lifecycle.onConsume",
+    "extends": "",
+    "short": "",
+    "full": "No automatic turn-end decay; consumed by its stated trigger.",
+    "tip": ""
+  },
+  {
+    "id": "status.lifecycle.perTurnEnd",
+    "extends": "",
+    "short": "",
+    "full": "The {value} decreases by 1 at the end of its owner's turn; removed at zero.",
+    "tip": ""
+  },
+  {
+    "id": "status.lifecycle.timer",
+    "extends": "",
+    "short": "",
+    "full": "Turn timer: {duration} owner turn ends. Reapplying resets the timer.",
+    "tip": ""
+  },
+  {
+    "id": "status.lifecycle.turnStart",
+    "extends": "",
+    "short": "start of the owner's turn",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "status.lifecycle.turnEnd",
+    "extends": "",
+    "short": "end of the owner's turn",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "status.lifecycle.applicationTimer",
+    "extends": "",
+    "short": "",
+    "full": "Application timer: {duration} ticks at the {clock}; each application expires at zero.",
+    "tip": ""
+  },
+  {
+    "id": "status.lifecycle.keepTimer",
+    "extends": "",
+    "short": "",
+    "full": "Reapplying keeps the existing timer.",
+    "tip": ""
+  },
+  {
+    "id": "status.lifecycle.resetTimer",
+    "extends": "",
+    "short": "",
+    "full": "Reapplying resets the timer.",
+    "tip": ""
+  },
+  {
+    "id": "status.lifecycle.foundation.add",
+    "extends": "",
+    "short": "",
+    "full": "Reapplying adds to the {value} up to {cap}.",
+    "tip": ""
+  },
+  {
+    "id": "status.lifecycle.foundation.refresh",
+    "extends": "",
+    "short": "",
+    "full": "Reapplying keeps the existing {value} up to {cap}.",
+    "tip": ""
+  },
+  {
+    "id": "status.lifecycle.foundation.replace",
+    "extends": "",
+    "short": "",
+    "full": "Reapplying replaces the {value} with the incoming value up to {cap}.",
+    "tip": ""
+  },
+  {
+    "id": "status.lifecycle.foundation.unique",
+    "extends": "",
+    "short": "",
+    "full": "Does not stack; reapplying replaces the active instance.",
+    "tip": ""
+  },
+  {
+    "id": "status.lifecycle.foundation.strongest",
+    "extends": "",
+    "short": "",
+    "full": "The strongest source supplies the {value} up to {cap}; reapplying from that source replaces its application.",
+    "tip": ""
+  },
+  {
+    "id": "status.lifecycle.foundation.independent",
+    "extends": "",
+    "short": "",
+    "full": "Different sources add to the {value} up to {cap}; reapplying from the same source replaces its application.",
+    "tip": ""
+  },
+  {
+    "id": "card.face.inspectEffect",
+    "extends": "",
+    "short": "Inspect full effect",
+    "full": "",
+    "tip": ""
   }
 ];
