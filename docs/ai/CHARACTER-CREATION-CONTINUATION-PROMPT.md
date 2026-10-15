@@ -1,13 +1,14 @@
 # Character creation — continuation prompt
 
-## Current Review character stat card follow-up
+## Current Review character stats follow-up
 
-The user requested the opened Review character stat card use the equipment-card dimensions. Current local build is **0.7.1.1520 / `a12edfdd78`**, source `6d88c4d641fbd870beb5a8c25f6390636c9a2bbd`; remote equivalent is `b0d1dc0f258fcd5d3e166072aa11cc75a6019301`. Standalone SHA-256: `50da976c929e0dc4af4c983f90babd7b6db6c0a20fa0363ea6584de3d744321b`.
+The user clarified the gap is inside the Character card. The card now shows all 16 glance stats instead of hiding five behind an ellipsis, while preserving its shared 2:3 equipment-card dimensions. Current local build is **0.7.1.1520 / `ee6988101d`**, source `c749675356517618d102789f8ea79965cdefad4e`; remote equivalent is `cc488b619aab56de823dc2e50e1060a3534c2fda`.
 
-- Four actual opened Review screenshots and four structural PNG wireframes are in `docs/preview/features/update-character-creation/review-character-card/`, with a small source/hash capture record and zero recorded capture errors.
-- Current CI run `38696812396`, job `116295197508`, passed at exact digest `a12edfdd78`; backup artifact `11954500967`. Pages run `38696977562` is pending; public hosting verification for this revision is pending. Do not apply the prior public HTTP success receipt to this new revision.
-- README leads with these four new views. The existing 36-view matrix at `652574f013` remains prior compact-layout evidence, with its original source and manifest intact.
-- Evidence is prepared for root review/publication. Earlier completed compact-layout delivery and its limitations are historical context below.
+- Final four-size Starseer / Battle Mage captures, matching wireframes and a desktop card closeup are recorded in `docs/preview/features/update-character-creation/review-character-card/`. Capture date: 2026-10-15 (America/Anchorage).
+- Current CI run `38754284560`, job `116488453653`, passed at digest `ee6988101d`; backup artifact `11982198573`. Standalone SHA-256: `3f7ba1098cfc6bdc986a64c607c8660633f0015e185b504d425cec10142b229a`. Public hosting verification for this new revision is pending.
+- Prior `a12edfdd78` delivery passed public verification in run `38723725136`, job `116395824345`; that receipt does not verify the new stats revision.
+- The existing 36-view matrix at `652574f013` remains prior compact-layout evidence, with its original source and manifest intact. Earlier delivery records below are historical context.
+
 
 
 Copy the prompt below into the next chat when ready to continue.
