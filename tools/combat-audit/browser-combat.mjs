@@ -17,6 +17,9 @@ export function assertResumeIdentity(report, current) {
 export function isDirectInvocation(entrypoint, moduleUrl) {
   return !!entrypoint && resolve(entrypoint) === resolve(fileURLToPath(moduleUrl));
 }
+export function compiledRelease(html) {
+  return html.match(/const coreContentBundle = \{[\s\S]*?\n\s*version: '([^']+)'/)?.[1];
+}
 
 async function main() {
 const sourceRoot = resolve(process.env.QA_REFERENCE_SOURCE || fileURLToPath(new URL('../../src/', import.meta.url)));
@@ -110,7 +113,8 @@ const html = await (await fetch(url)).text();
 const htmlSha256 = createHash('sha256').update(html).digest('hex');
 if (process.env.QA_EXPECT_HTML_SHA256) assert.equal(htmlSha256, process.env.QA_EXPECT_HTML_SHA256, 'compiled HTML byte identity');
 const build = { source: html.match(/const SOURCE = '([a-f0-9]+)'/)?.[1], ordinal: html.match(/const ORDINAL = '(\d+)'/)?.[1] };
-const release = html.match(/const RELEASE = '([^']+)'/)?.[1];
+// RELEASE is contentBundle.version, not a literal in buildversion.js.
+const release = compiledRelease(html);
 const artifact = { sha256: htmlSha256, bytes: Buffer.byteLength(html), edition: html.match(/const EDITION = '([^']+)'/)?.[1],
   runPath: html.match(/const RUN_PATH = '([^']+)'/)?.[1], version: release && `${release}.${build.ordinal}` };
 for (const [env, field] of [['QA_EXPECT_EDITION', 'edition'], ['QA_EXPECT_RUN_PATH', 'runPath'], ['QA_EXPECT_VERSION', 'version']])
@@ -516,6 +520,11 @@ async function runCase(page, device, classId, row) {
     if (row.deniedRecovery) entry.input = { ...entry.input, refusalEvidence: structuredClone(entry.input), refusal: null, recoveredAtNextTurn: true };
     if (row.sampleAnimation) await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     entry.after = await receipt(page);
+    if (row.category === 'spell-target-regression') {
+      assert.ok(entry.after.events.some(e => e.type === 'damageDealt' && e.sourceId === entry.after.actual.player.id
+        && e.targetId === 'e1' && e.cardInstanceId === row.instanceId && e.amount > 0), 'this paid spell actually damages the selected canonical enemy');
+      assert.ok(entry.after.actual.enemies.find(enemy => enemy.id === 'e1').hp < entry.before.hp[0], 'selected enemy health decreased');
+    }
     if (row.category?.endsWith('counter-return')) assert.ok(entry.after.events.some(e => e.type === 'combatCounterTriggered' && e.cardInstanceId === row.instanceId), 'the real incoming action triggers this prepared Counter return');
     if (row.successfulEvade) {
       assert.ok(entry.after.events.some(e => e.type === 'attackMissed' && e.targetId === entry.after.actual.player.id && e.evadeAttempted && e.hit === false), 'the seeded incoming attack genuinely misses an active evade');
@@ -621,7 +630,7 @@ try {
       for (const card of cards) {
         const variants = ['base', ...(card.upgraded ? ['upgraded'] : [])].filter(v => !variantFilter || variantFilter === v);
         for (const variant of variants) {
-          const row = { cardId: card.id, variant, category: arg('category') || 'card', figureTarget: card.id.length % 2 === 0, curated,
+          const row = { cardId: card.id, variant, category: arg('category') || 'card', figureTarget: arg('figure-target') === 'true' || arg('category') === 'spell-target-regression' || card.id.length % 2 === 0, curated,
             ...(arg('enemy') ? { enemyIds: arg('enemy').split(',') } : {}), endTurn: arg('end-turn') === 'true',
             sampleAnimation: pace === 'normal' && variant === 'base' && ['strike','defend','starSpark','guardCounter','sweepingBlow','crimsonCleave','quickstep','bindingParry','ricochet','cometFragment','litany','bloodPact','bashingBlow','evasiveGuard','wardingStar','nockAndWait','progression-falling-constellation'].includes(card.id) };
           let baseEntry = completedCase(device, classId, row);
@@ -669,6 +678,7 @@ try {
           { cardId: 'strike', enemyIds: ['wanderingSoldier'], category: 'victory-reward', victory: true },
         ];
         for (const row of rows.filter(row => !arg('category') || arg('category').split(',').includes(row.category))) {
+          if (mode === 'enemies' && completedCase(device, classId, { ...row, variant: 'base' })) continue;
           if (!await runCase(page, device, classId, { ...row, variant: 'base', sampleAnimation: pace === 'normal', figureTarget: true })) { await page.close(); page = await boot(context, classId); }
           else if (row.victory) {
             const entry = report.cases.at(-1);
