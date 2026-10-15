@@ -1,0 +1,24 @@
+{
+  "type": "object",
+  "properties": {
+    "mode": {
+      "enum": [
+        "legacy",
+        "configured"
+      ]
+    },
+    "fixedClassAppearance": {
+      "type": "boolean"
+    },
+    "fallback": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "required": [
+    "mode",
+    "fixedClassAppearance",
+    "fallback"
+  ],
+  "additionalProperties": false
+}

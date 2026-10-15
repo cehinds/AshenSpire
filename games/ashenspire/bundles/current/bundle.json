@@ -1,0 +1,177 @@
+{
+  "id": "ashen.current",
+  "version": "1.0.0",
+  "profileId": "current",
+  "foundationMode": "legacy",
+  "modules": {
+    "cards": {
+      "version": "1.0.0",
+      "settings": {
+        "mode": "legacy"
+      }
+    },
+    "resources": {
+      "version": "1.0.0",
+      "settings": {
+        "mode": "legacy"
+      }
+    },
+    "stats": {
+      "version": "1.0.0",
+      "settings": {
+        "mode": "legacy"
+      }
+    },
+    "defenses": {
+      "version": "1.0.0",
+      "settings": {
+        "mode": "legacy"
+      }
+    },
+    "stances": {
+      "version": "1.0.0",
+      "settings": {
+        "mode": "legacy"
+      }
+    },
+    "effects": {
+      "version": "1.0.0",
+      "settings": {
+        "mode": "legacy"
+      }
+    },
+    "statuses": {
+      "version": "1.0.0",
+      "settings": {
+        "mode": "legacy"
+      }
+    },
+    "equipment": {
+      "version": "1.0.0",
+      "settings": {
+        "mode": "legacy"
+      }
+    },
+    "class-selection": {
+      "version": "1.0.0",
+      "settings": {
+        "mode": "legacy"
+      }
+    },
+    "progression": {
+      "version": "1.0.0",
+      "settings": {
+        "mode": "legacy"
+      }
+    },
+    "routes": {
+      "version": "1.0.0",
+      "settings": {
+        "mode": "legacy"
+      }
+    },
+    "rest": {
+      "version": "1.0.0",
+      "settings": {
+        "mode": "legacy"
+      }
+    },
+    "shops": {
+      "version": "1.0.0",
+      "settings": {
+        "mode": "legacy"
+      }
+    },
+    "rewards": {
+      "version": "1.0.0",
+      "settings": {
+        "mode": "legacy"
+      }
+    },
+    "art": {
+      "version": "1.0.0",
+      "settings": {
+        "mode": "legacy"
+      }
+    },
+    "animation": {
+      "version": "1.0.0",
+      "settings": {
+        "mode": "legacy"
+      }
+    },
+    "intent": {
+      "version": "1.0.0",
+      "settings": {
+        "mode": "legacy"
+      }
+    },
+    "reactions": {
+      "version": "1.0.0",
+      "settings": {
+        "mode": "legacy"
+      }
+    },
+    "character-creation": {
+      "version": "1.0.0",
+      "settings": {
+        "mode": "legacy"
+      }
+    },
+    "damage-types": {
+      "version": "1.0.0",
+      "settings": {
+        "mode": "legacy"
+      }
+    },
+    "posture": {
+      "version": "1.0.0",
+      "settings": {
+        "mode": "legacy"
+      }
+    },
+    "dungeons": {
+      "version": "1.0.0",
+      "settings": {
+        "mode": "legacy"
+      }
+    },
+    "quests": {
+      "version": "1.0.0",
+      "settings": {
+        "mode": "legacy"
+      }
+    },
+    "dialogue": {
+      "version": "1.0.0",
+      "settings": {
+        "mode": "legacy"
+      }
+    },
+    "audio": {
+      "version": "1.0.0",
+      "settings": {
+        "mode": "legacy"
+      }
+    },
+    "advanced-ui": {
+      "version": "1.0.0",
+      "settings": {
+        "mode": "legacy"
+      }
+    },
+    "multiplayer": {
+      "version": "1.0.0",
+      "settings": {
+        "mode": "legacy"
+      }
+    }
+  },
+  "packs": [],
+  "legacySources": [
+    "src/content/index.js",
+    "content/source",
+    "content/config",
+    "content/framework"
+  ]
+}

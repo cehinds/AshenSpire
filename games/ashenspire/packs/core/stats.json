@@ -1,0 +1,23 @@
+{
+  "handBase": 4,
+  "handAttribute": "intelligence",
+  "attributePointTotal": 6,
+  "levelGains": {
+    "strength": {
+      "ar": 1
+    },
+    "dexterity": {
+      "dr": 1
+    },
+    "constitution": {
+      "hp": 10
+    },
+    "wisdom": {
+      "mp": 1
+    },
+    "intelligence": {
+      "draw": 1
+    }
+  },
+  "secondaryPolicy": "legacyAdapter"
+}

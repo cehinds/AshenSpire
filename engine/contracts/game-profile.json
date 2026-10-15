@@ -1,0 +1,9 @@
+{
+  "id": "ashen.game-profile",
+  "version": "1.0.0",
+  "formatVersion": 1,
+  "runtimeABI": "ashen.runtime@1",
+  "canonicalEncoding": "ashen.canonical-json@1",
+  "hashAlgorithm": "sha256",
+  "numericPolicy": "ashen.adapter-numbers@1"
+}

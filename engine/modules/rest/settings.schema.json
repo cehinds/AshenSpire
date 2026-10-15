@@ -1,0 +1,68 @@
+{
+  "type": "object",
+  "properties": {
+    "mode": {
+      "enum": [
+        "legacy",
+        "configured"
+      ]
+    },
+    "servicesPerVisit": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000
+    },
+    "services": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "allowEmptyStrategize": {
+      "type": "boolean"
+    },
+    "recovery": {
+      "type": "object",
+      "properties": {
+        "hp": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sp": {
+          "type": "string",
+          "minLength": 1
+        },
+        "mp": {
+          "type": "string",
+          "minLength": 1
+        },
+        "healingFlasks": {
+          "type": "string",
+          "minLength": 1
+        },
+        "mpFlasks": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "hp",
+        "sp",
+        "mp",
+        "healingFlasks",
+        "mpFlasks"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "mode",
+    "servicesPerVisit",
+    "services",
+    "allowEmptyStrategize",
+    "recovery"
+  ],
+  "additionalProperties": false
+}
