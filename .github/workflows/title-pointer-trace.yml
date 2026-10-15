@@ -1,0 +1,32 @@
+name: audit title pointer trace
+on:
+  push:
+    branches: ['worker/FullCombatAudit/title-pointer-trace']
+    paths: ['.github/workflows/title-pointer-trace.yml', 'tools/combat-audit/trace-title-pointer.mjs']
+permissions:
+  contents: read
+jobs:
+  trace:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      ASHEN_ART_SOURCE: cache
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          lfs: false
+      - uses: ./.github/actions/setup-node
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: all
+      - uses: ./.github/actions/which-browser
+      - name: Observe the trusted whole-run pointer path
+        run: node tools/combat-audit/trace-title-pointer.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: title-pointer-trace-${{ github.sha }}
+          path: outputs/title-pointer/
+          if-no-files-found: error
+          retention-days: 14
