@@ -1,0 +1,69 @@
+name: combat audit public metadata recovery
+
+on:
+  push:
+    branches: ['worker/FullCombatAudit/hosted-replay']
+    paths: ['.github/workflows/combat-audit-public-metadata.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  public-metadata:
+    if: github.ref == 'refs/heads/worker/FullCombatAudit/hosted-replay'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          sparse-checkout: tools/check-feature-pages.mjs
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - name: Check public targets without redeployment or game download
+        env:
+          PREVIEW_TARGETS: '[{"dir":"Feature/AddSubClasses","sha":"9e89c5bc0bf6edf380031c7cd65b2a9036b1c04a"},{"dir":"Feature/json-game-current-preview","sha":"a330ee2486fc3391590d116d13d4fd521073b65f"},{"dir":"Feature/json-game-modules","sha":"ec08a6ca98c42f8fc2e9494df84274869652f7b4"},{"dir":"Feature/updateCharacterCreation","sha":"b0d1dc0f258fcd5d3e166072aa11cc75a6019301"},{"dir":"feature/FullCombatAudit","sha":"d2d02a91fdf59dcd2012aa38a9e86be18e03ac44"},{"dir":"feature/PrSweepHandoff","sha":"c230d951c64b7a3c86d707f90e9ec1235b82299c"},{"dir":"feature/combat-enemy-hold","sha":"ef938a2252d051e3a0d8cfd7c51bfba618f03945"}]'
+        run: |
+          node --input-type=module <<'NODE'
+          import { mkdirSync, writeFileSync } from 'node:fs';
+          import { checkFeaturePages } from './tools/check-feature-pages.mjs';
+          const baseUrl = 'https://cehinds.github.io/AshenSpire/';
+          const targets = JSON.parse(process.env.PREVIEW_TARGETS);
+          const report = { workflowCommit: process.env.GITHUB_SHA, failedPublicationRun: 38704151264, targets, attempts: [], passed: false };
+          mkdirSync('_public-metadata', { recursive: true });
+          try {
+            for (let attempt = 1; attempt <= 12; attempt++) {
+              const row = { at: new Date().toISOString() }; report.attempts.push(row);
+              try {
+                const response = await fetch(baseUrl, { cache: 'no-store', signal: AbortSignal.timeout(10000) });
+                if (!response.ok) throw Error('Index HTTP ' + response.status);
+                const index = await response.text();
+                const cards = index.split('<section class="card"><h3>').slice(1).map(section => ({
+                  branch: section.split('</h3>')[0],
+                  commit: section.split('https://github.com/cehinds/AshenSpire/commit/')[1]?.slice(0, 40) || null,
+                }));
+                row.actual = targets.map(t => ({ branch: t.dir, expected: t.sha, actual: cards.find(c => c.branch === t.dir)?.commit || null }));
+                await checkFeaturePages({ baseUrl, targets, attempts: 1 });
+                report.passed = true; break;
+              } catch (error) {
+                row.error = error.message;
+                if (attempt < 12) await new Promise(done => setTimeout(done, 15000));
+              }
+            }
+            if (!report.passed) process.exitCode = 1;
+          } finally {
+            report.finished = new Date().toISOString();
+            writeFileSync('_public-metadata/public-metadata.json', JSON.stringify(report, null, 2) + '\n');
+            console.log(JSON.stringify(report, null, 2));
+          }
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: public-metadata-recovery-${{ github.sha }}
+          path: _public-metadata/
+          retention-days: 14
+          if-no-files-found: warn
