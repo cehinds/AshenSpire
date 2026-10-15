@@ -21,7 +21,7 @@ export function markCombatantInspectionSurfaces(frame, { playback = false } = {}
 // Reading gestures arbitrate before any child targeting/tooltip listener.
 // The caller owns activation and live eligibility; this module owns timers.
 export function bindCombatantInspectionGesture(frame, {
-  isSelected, canInspect, canActivate = canInspect, open, activate,
+  isSelected, canInspect, canActivate = canInspect, open, activate, onPress = () => {},
   holdMs = 600, movePx = 8, doubleClickMs = 500,
 } = {}) {
   let pending = null, hold = null, abort = null, suppressed = false, released = false, pressedHud = null;
@@ -44,6 +44,8 @@ export function bindCombatantInspectionGesture(frame, {
       if (isSelected()) inspect(frame);
       return;
     }
+    // Keyboard/button activation has no pointer click sequence to arbitrate.
+    if (event.detail === 0) return;
     if (isSelected()) {
       consume(event); clearPending();
       pending = setTimeout(() => {
@@ -55,6 +57,7 @@ export function bindCombatantInspectionGesture(frame, {
   const doubleClick = event => { consume(event); clearPending(); };
   const pointerDown = event => {
     if (event.button > 0 || event.isPrimary === false || event.target.closest('.combatant-info') || !canInspect()) return;
+    onPress();
     clearPending(); clearHold(); abort?.(); suppressed = false;
     pressedHud = event.target.closest(HUD);
     const x = event.clientX, y = event.clientY;

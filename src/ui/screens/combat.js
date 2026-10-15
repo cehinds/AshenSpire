@@ -501,8 +501,16 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const handPages = [$('.hand-prev'), $('.hand-next')];
 
   const inspectionGestures = new Map();
+  const pickerInspectionGestures = new Map();
+  function cancelEnemyInspection(id) {
+    inspectionGestures.get(id)?.cancel();
+    pickerInspectionGestures.get(id)?.cancel();
+  }
   function selectCombatant(id, { preserveInspection = false } = {}) {
-    if (preserveInspection || id !== selectedCombatantId) for (const gesture of inspectionGestures.values()) gesture.cancel();
+    if (preserveInspection || id !== selectedCombatantId) {
+      for (const gesture of inspectionGestures.values()) gesture.cancel();
+      for (const gesture of pickerInspectionGestures.values()) gesture.cancel();
+    }
     if (id && !getEntity(combat, id)?.alive) return;
     selectedCombatantId = id;
     if (!preserveInspection) lastReadingSelection = id;
@@ -709,22 +717,41 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         frame.classList.remove('hover-target', 'gp-focus');
       } else frame.removeAttribute('aria-disabled');
     });
-    renderEnemyTargetPicker($('.field'), {
+    for (const gesture of pickerInspectionGestures.values()) gesture.release();
+    pickerInspectionGestures.clear();
+    const activateTarget = id => {
+      if (busy || combat.phase !== 'player' || combat.result || !pendingTargetPlan().legalIds.includes(id)) return;
+      if (selected) playCard(selected, id);
+      else if (selectedFlask != null) useFlask(selectedFlask, id);
+    };
+    const picker = renderEnemyTargetPicker($('.field'), {
       targets: layer.eligibleIds.map(id => {
         const enemy = getEntity(combat, id);
         return { id, name: registries.enemies.get(enemy.enemyId).name, hp: enemy.hp, maxHp: enemy.maxHp };
       }),
       disabled: busy || enemyPlayback || combat.phase !== 'player' || !!combat.result,
-      onActivate: id => {
-        if (busy || combat.phase !== 'player' || combat.result || !pendingTargetPlan().legalIds.includes(id)) return;
-        if (selected) playCard(selected, id);
-        else if (selectedFlask != null) useFlask(selectedFlask, id);
-      },
+      onActivate: activateTarget,
       onPreview: id => {
         combatEl.querySelectorAll('.combatant.enemy').forEach(frame => frame.classList.toggle('hover-target',
           frame.dataset.eid === id && layer.eligibleIds.includes(id)));
       },
     });
+    // The armed target picker overlays the sprite but lives outside its
+    // frame. Give this real hit surface the same inspection arbitration.
+    for (const button of picker?.querySelectorAll('.enemy-target-button') || []) {
+      const id = button.dataset.eid;
+      button.setAttribute('data-combat-read-only', '');
+      pickerInspectionGestures.set(id, bindCombatantInspectionGesture(button, {
+        isSelected: () => (selectedCombatantId || lastReadingSelection) === id,
+        canInspect: () => !!getEntity(combat, id)?.alive,
+        canActivate: () => !busy && !combat.result && combat.phase === 'player' && pendingTargetPlan().legalIds.includes(id),
+        onPress: () => cancelEnemyInspection(id),
+        open: opener => { cancelEnemyInspection(id); openCombatantDoor(combatantSubject('enemy', getEntity(combat, id)), opener); },
+        activate: () => activateTarget(id),
+        holdMs: registries.balance.ui.holdConfirm.steps.normal,
+        movePx: registries.balance.ui.holdConfirm.settleSlopPx,
+      }));
+    }
   }
 
   // Selection changes presentation only; every input waits for confirmation.
@@ -1772,7 +1799,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           isSelected: () => (selectedCombatantId || lastReadingSelection) === enemy.id,
           canInspect: () => !!getEntity(combat, enemy.id)?.alive,
           canActivate: () => !busy && !selfArm && !!getEntity(combat, enemy.id)?.alive,
-          open: opener => openCombatantDoor(combatantSubject('enemy', getEntity(combat, enemy.id)), opener),
+          onPress: () => cancelEnemyInspection(enemy.id),
+          open: opener => { cancelEnemyInspection(enemy.id); openCombatantDoor(combatantSubject('enemy', getEntity(combat, enemy.id)), opener); },
           activate,
           holdMs: registries.balance.ui.holdConfirm.steps.normal,
           movePx: registries.balance.ui.holdConfirm.settleSlopPx,
@@ -3094,6 +3122,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         enemyFrames.clear();
         for (const gesture of inspectionGestures.values()) gesture.release();
         inspectionGestures.clear();
+        for (const gesture of pickerInspectionGestures.values()) gesture.release();
+        pickerInspectionGestures.clear();
         removeEventListener('keydown', keyHandler);
         battlefieldStage.release();
         formationMovement?.release();

@@ -89,7 +89,7 @@ for (const screen of ['combat', 'coop']) {
       : source.match(/const inspectCard = \(\) => (selectCombatant\([^;]+;)/)[1];
     const state = new Function(`
       let selectedCombatantId=null,lastReadingSelection=null,armedFriendlyCard=null;
-      const inspectionGestures=new Map(), combatEl={}, app={}, snap=null;
+      const inspectionGestures=new Map(),pickerInspectionGestures=new Map(), combatEl={}, app={}, snap=null;
       const getEntity=()=>({alive:true}),combat={},selectCombatantInfo=()=>{};
       ${writer}
       return { select:selectCombatant, arm:()=>{${arming}}, selected:()=>selectedCombatantId,
@@ -129,3 +129,26 @@ test('HUD read-only markers reach the timeline skip guard while a blank stage re
   const blank = document.createElement('div'); assert.equal(wouldFlush({ target: blank }), true);
   markCombatantInspectionSurfaces(frame); assert.equal(frame.querySelector('.sprite').attributes.has('data-combat-read-only'), false);
 }));
+
+test('overlay first click cannot activate after a second frame click or hold inspects the same enemy', t => {
+  const f = fixture(t);
+  const frame = new EventTarget(); frame.isConnected = true; frame.closest = () => null;
+  const overlay = new EventTarget(); overlay.isConnected = true; overlay.closest = () => null;
+  const gestures = new Map(); let plays = 0, inspections = 0;
+  const cancelBoth = () => { for (const gesture of gestures.values()) gesture.cancel(); };
+  for (const surface of [overlay, frame]) gestures.set(surface, bindCombatantInspectionGesture(surface, {
+    isSelected: () => true, canInspect: () => true, activate: () => plays++, onPress: cancelBoth,
+    open: () => { cancelBoth(); inspections++; },
+  }));
+  f.emit(overlay, 'click'); f.tick(100); f.emit(frame, 'click', { detail: 2 }); f.tick(700);
+  assert.deepEqual({ plays, inspections }, { plays: 0, inspections: 1 });
+  f.emit(overlay, 'click'); f.tick(100); f.emit(frame, 'pointerdown'); f.tick(600); f.emit(f.win, 'pointerup'); f.emit(frame, 'click'); f.tick(700);
+  assert.deepEqual({ plays, inspections }, { plays: 0, inspections: 2 });
+  for (const gesture of gestures.values()) gesture.release();
+});
+
+
+test('keyboard target activation keeps its existing immediate button behavior', t => {
+  const f = fixture(t); assert.equal(f.emit(f.frame, 'click', { detail: 0 }).defaultPrevented, false);
+  f.tick(700); assert.deepEqual(f.counts(), { plays: 0, inspections: 0 });
+});
