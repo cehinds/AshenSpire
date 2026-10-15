@@ -1,0 +1,49 @@
+{
+  "mode": "configured",
+  "include": [
+    "attack",
+    "smash",
+    "defend",
+    "counter",
+    "sweep",
+    "prepared",
+    "evade"
+  ],
+  "matchups": {
+    "attack": [
+      "smash",
+      "prepared"
+    ],
+    "counter": [
+      "smash",
+      "attack"
+    ],
+    "smash": [
+      "defend",
+      "prepared"
+    ],
+    "sweep": [
+      "counter",
+      "evade"
+    ],
+    "prepared": [
+      "defend",
+      "counter"
+    ]
+  },
+  "advantageMultiplier": 1.25,
+  "evadeFailureMultiplier": 2,
+  "accuracyPolicy": "chance",
+  "staggerPolicy": "legacyAdapter",
+  "accuracyBase": 0.75,
+  "accuracyWeight": 0.02,
+  "minimumHitChance": 0.05,
+  "maximumHitChance": 0.95,
+  "accuracyStat": "ar",
+  "evasionStat": "dr",
+  "staggerOnAdvantage": true,
+  "staggerManeuvers": [
+    "smash"
+  ],
+  "staggerLimitPerTargetPerRound": 1
+}

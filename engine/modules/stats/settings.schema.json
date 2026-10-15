@@ -1,0 +1,26 @@
+{
+  "type": "object",
+  "properties": {
+    "mode": {
+      "enum": [
+        "legacy",
+        "configured"
+      ]
+    },
+    "attributePointTotal": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000
+    },
+    "secondaryPolicy": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "required": [
+    "mode",
+    "attributePointTotal",
+    "secondaryPolicy"
+  ],
+  "additionalProperties": false
+}

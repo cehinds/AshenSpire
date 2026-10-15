@@ -1,0 +1,17 @@
+{
+  "servicesPerVisit": 1,
+  "services": [
+    "strategize",
+    "smith",
+    "levelUp"
+  ],
+  "recovery": {
+    "hp": "full",
+    "sp": "full",
+    "mp": "full",
+    "healingFlasks": "full",
+    "mpFlasks": "full"
+  },
+  "deckEditingService": "strategize",
+  "allowEmptyStrategize": true
+}

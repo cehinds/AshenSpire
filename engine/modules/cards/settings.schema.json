@@ -1,0 +1,67 @@
+{
+  "type": "object",
+  "properties": {
+    "mode": {
+      "enum": [
+        "legacy",
+        "configured"
+      ]
+    },
+    "roundShuffle": {
+      "type": "string",
+      "minLength": 1
+    },
+    "retainHand": {
+      "type": "boolean"
+    },
+    "handBase": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000
+    },
+    "handAttribute": {
+      "type": "string",
+      "minLength": 1
+    },
+    "turnPolicy": {
+      "type": "string",
+      "minLength": 1
+    },
+    "freeCommandLimit": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000
+    },
+    "editorEnabled": {
+      "type": "boolean"
+    },
+    "editorWhere": {
+      "type": "string",
+      "minLength": 1
+    },
+    "faceMaxEffects": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000
+    },
+    "faceMaxLines": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000
+    }
+  },
+  "required": [
+    "mode",
+    "roundShuffle",
+    "retainHand",
+    "handBase",
+    "handAttribute",
+    "turnPolicy",
+    "freeCommandLimit",
+    "editorEnabled",
+    "editorWhere",
+    "faceMaxEffects",
+    "faceMaxLines"
+  ],
+  "additionalProperties": false
+}

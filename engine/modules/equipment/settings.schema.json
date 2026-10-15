@@ -1,0 +1,28 @@
+{
+  "type": "object",
+  "properties": {
+    "mode": {
+      "enum": [
+        "legacy",
+        "configured"
+      ]
+    },
+    "editorEnabled": {
+      "type": "boolean"
+    },
+    "editorWhere": {
+      "type": "string",
+      "minLength": 1
+    },
+    "fixedAppearance": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "mode",
+    "editorEnabled",
+    "editorWhere",
+    "fixedAppearance"
+  ],
+  "additionalProperties": false
+}
