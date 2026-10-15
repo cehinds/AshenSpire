@@ -520,6 +520,11 @@ async function runCase(page, device, classId, row) {
     if (row.deniedRecovery) entry.input = { ...entry.input, refusalEvidence: structuredClone(entry.input), refusal: null, recoveredAtNextTurn: true };
     if (row.sampleAnimation) await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     entry.after = await receipt(page);
+    if (row.category === 'spell-target-regression') {
+      assert.ok(entry.after.events.some(e => e.type === 'damageDealt' && e.sourceId === entry.after.actual.player.id
+        && e.targetId === 'e1' && e.cardInstanceId === row.instanceId && e.amount > 0), 'this paid spell actually damages the selected canonical enemy');
+      assert.ok(entry.after.actual.enemies.find(enemy => enemy.id === 'e1').hp < entry.before.hp[0], 'selected enemy health decreased');
+    }
     if (row.category?.endsWith('counter-return')) assert.ok(entry.after.events.some(e => e.type === 'combatCounterTriggered' && e.cardInstanceId === row.instanceId), 'the real incoming action triggers this prepared Counter return');
     if (row.successfulEvade) {
       assert.ok(entry.after.events.some(e => e.type === 'attackMissed' && e.targetId === entry.after.actual.player.id && e.evadeAttempted && e.hit === false), 'the seeded incoming attack genuinely misses an active evade');
@@ -625,7 +630,7 @@ try {
       for (const card of cards) {
         const variants = ['base', ...(card.upgraded ? ['upgraded'] : [])].filter(v => !variantFilter || variantFilter === v);
         for (const variant of variants) {
-          const row = { cardId: card.id, variant, category: arg('category') || 'card', figureTarget: card.id.length % 2 === 0, curated,
+          const row = { cardId: card.id, variant, category: arg('category') || 'card', figureTarget: arg('figure-target') === 'true' || card.id.length % 2 === 0, curated,
             ...(arg('enemy') ? { enemyIds: arg('enemy').split(',') } : {}), endTurn: arg('end-turn') === 'true',
             sampleAnimation: pace === 'normal' && variant === 'base' && ['strike','defend','starSpark','guardCounter','sweepingBlow','crimsonCleave','quickstep','bindingParry','ricochet','cometFragment','litany','bloodPact','bashingBlow','evasiveGuard','wardingStar','nockAndWait','progression-falling-constellation'].includes(card.id) };
           let baseEntry = completedCase(device, classId, row);
