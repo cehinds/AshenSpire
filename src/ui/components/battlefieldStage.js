@@ -15,7 +15,7 @@ import { targetOutline } from '../models/TargetLayerModel.js';
 import { fitSceneBackdrop } from './sceneBackdrop.js';
 import { battlefieldBackdropConfig } from '../models/SceneLayerModel.js';
 import { presentationConfig } from '../../model/advancedConfig.js';
-import { alternativeCombatComposition, combatComposition as classicCombatComposition, combatSceneryGround, combatStandingGround, stableHandAnchor, combatArtworkKey, stableCombatArtwork } from '../models/CombatCompositionModel.js';
+import { alternativeCombatComposition, combatComposition as classicCombatComposition, combatSceneryGround, combatStandingGround, stableHandAnchor, combatArtworkKey, stableCombatArtwork, combatFloorShadowWidth } from '../models/CombatCompositionModel.js';
 import { alternativeFormation, fitAlternativeSprites } from '../models/AlternativeFormationModel.js';
 import { perspectiveCellContains } from '../models/AlternativeFormationModel.js';
 import { playerDetailsPlacement } from '../models/PlayerDetailsPlacementModel.js';
@@ -310,11 +310,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       player.dataset.playerHudGap = String(art.top - leading.getBoundingClientRect().bottom);
     }
   }
-  // Owner (2026-10-11): each combatant's floor shadow is as wide as its health
-  // bar. The bar is read at rest: a selected player's bar widens into the
-  // reading panel, so its last resting width holds and the shadow stays put.
-  // Sprite and bar are both scaled by any selection transform, so their ratio
-  // is the shadow's width as a share of the figure.
+  // Ground the resting figure even when its HUD is compact. Neither selected
+  // bar expansion nor selection's artwork growth changes the shadow footprint.
   function syncFloorShadows() {
     for (const frame of field.querySelectorAll('.combatant')) {
       const sprite = frame.querySelector('.sprite'), bar = frame.querySelector('.combat-health-meter');
@@ -324,8 +321,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         if (barWidth > 0) frame.dataset.healthBarWidth = String(barWidth);
       }
       const barWidth = Number(frame.dataset.healthBarWidth), spriteWidth = sprite.getBoundingClientRect().width;
-      if (!(barWidth > 0 && spriteWidth > 0)) continue;
-      sprite.style.setProperty('--floor-shadow-width', `${(barWidth / spriteWidth * 100).toFixed(2)}%`);
+      const shadowWidth = combatFloorShadowWidth(barWidth, Number(frame.dataset.spriteVisibleWidth));
+      if (!(shadowWidth > 0 && spriteWidth > 0)) continue;
+      sprite.style.setProperty('--floor-shadow-width', `${(shadowWidth / spriteWidth * 100).toFixed(2)}%`);
     }
   }
   // Every living enemy's Inspect hangs above its intent. The default spot is
@@ -771,6 +769,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       frame.dataset.combatantScale = '1';
       frame.dataset.spriteRatio = String(ratio);
       frame.dataset.spriteVisibleHeight = String(visibleHeight);
+      frame.dataset.spriteVisibleWidth = String(actor.visibleWidth * fitted.scale);
       // Keep the 44 px target on the clickable frame, above neighbouring art.
       // It does not change the dimensions read by the sprite fitter.
       frame.classList.toggle('enemy-target-hitbox', frame.classList.contains('enemy'));
