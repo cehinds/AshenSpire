@@ -131,10 +131,10 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // combat root's mirror (combatLayout) can lag a debounced change.
       const formFactor = document.documentElement.dataset.formFactor || handEl.closest('.combat')?.dataset.formFactor || null;
       const desktop = formFactor === 'desktop';
-      // The compact toolbar occupies a 30px compact row at the top of the hand.
+      // The compact toolbar occupies a 44px touch row at the top of the hand.
       // Keep four physical pixels between that row and the resting card fan.
-      // Desktop measures the live 36px tool row and keeps the same four physical
-      // px beneath it; phone, tablet and widescreen keep the 34px constant.
+      // Desktop measures the live tool row and keeps the same four physical
+      // px beneath it; phone, tablet and widescreen keep the 48px reserve.
       const toolsRow = desktop ? handEl.closest('.combat')?.querySelector('.combat-tools') : null;
       const measuredRow = toolsRow ? toolsRow.getBoundingClientRect().height : 0;
       // Desktop keeps its tools in the screen corners (combatTools.js), so the
@@ -160,8 +160,14 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       });
       // On a phone the selected card's lift rises over the tool row (it paints
       // above the row), so no empty lift band separates the row from the fan.
+      const profileStyle = getComputedStyle(handEl);
+      const profile = {
+        min: parseFloat(profileStyle.getPropertyValue('--combat-profile-card-min-px')),
+        max: parseFloat(profileStyle.getPropertyValue('--combat-profile-card-max-px')),
+      };
       const plan = handLayout({ width: handEl.clientWidth, height: handEl.clientHeight - toolsHeight,
-        count: cards.length, rem, zoom, compact, controlsHeight, controlled, headroom: compact ? toolsHeight : 0 });
+        count: cards.length, rem, zoom, compact, controlsHeight, controlled, headroom: compact ? toolsHeight : 0,
+        profile: Object.values(profile).every(Number.isFinite) ? profile : null });
       handEl.dataset.wireframeHand = 'true';
       handEl.style.setProperty('--hand-card-zoom', '1');
       handEl.style.setProperty('--hand-span', plan.span + 'px');

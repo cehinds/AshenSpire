@@ -2,8 +2,10 @@
 // returns the bands it writes. Tests use this to exercise the path a browser
 // takes (data-form-factor on <html> -> wireCombatLayout -> allocateCombatBands)
 // instead of calling allocateCombatBands with a hand-built argument list.
+import { readFileSync } from 'node:fs';
 import { wireCombatLayout } from '../../src/ui/components/combatLayout.js';
 
+const profiles = readFileSync(new URL('../../styles/combat-profiles.css', import.meta.url), 'utf8');
 const GLOBALS = ['document', 'getComputedStyle', 'requestAnimationFrame', 'cancelAnimationFrame', 'ResizeObserver', 'MutationObserver'];
 
 class InertObserver {
@@ -18,7 +20,9 @@ function withFakes(documentElement, fn) {
   for (const key of GLOBALS) original[key] = Object.getOwnPropertyDescriptor(globalThis, key);
   const define = (key, value) => Object.defineProperty(globalThis, key, { configurable: true, value });
   define('document', { documentElement });
-  define('getComputedStyle', () => ({ fontSize: '16px', paddingLeft: '0px', paddingRight: '0px' }));
+  const block = profiles.match(new RegExp(`data-form-factor='${documentElement.dataset.formFactor}'[^}]+`))?.[0] || '';
+  define('getComputedStyle', () => ({ fontSize: '16px', paddingLeft: '0px', paddingRight: '0px',
+    getPropertyValue: key => block.match(new RegExp(`${key}:\\s*([^;]+)`))?.[1] || '' }));
   define('requestAnimationFrame', () => 0);
   define('cancelAnimationFrame', () => {});
   define('ResizeObserver', InertObserver);

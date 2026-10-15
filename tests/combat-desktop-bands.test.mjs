@@ -28,21 +28,22 @@ test('the stacked plan on a tall host takes the phone shares, the footer at its 
 
 // Driven through the real caller (wireCombatLayout with data-form-factor), so
 // these fail if combatLayout.js still hands a form factor to the band plan.
-test('at 1280x720 (UI zoom 0.99) desktop takes the phone shares of the viewport', () => {
+test('at 1280x720 the desktop profile preserves its physical bands', () => {
   const zoom = 0.99, width = 1280 / zoom, height = 720 / zoom;
   const bands = planCombatLayout({ formFactor: 'desktop', width, height, zoom });
-  assert.ok(near(bands.hud, height * .10), `hud ${bands.hud}`);
-  assert.ok(near(bands.hand, height * .30), `hand ${bands.hand}`);
-  assert.ok(bands.battlefield >= height * .55 - 92 / zoom, `battlefield ${bands.battlefield}`);
+  assert.ok(near(bands.hud * zoom, 112), `hud ${bands.hud}`);
+  assert.ok(bands.hand * zoom >= 350, `hand ${bands.hand}`);
+  assert.ok(bands.battlefield * zoom >= 130, `battlefield ${bands.battlefield}`);
+  assert.equal(bands.arrangement, 'rails', 'short landscape retains the existing rails escape');
   assert.equal(bands.supported, true);
 });
 
-test('at 1920x1080 (UI zoom 1.48) the desktop battlefield is the scene band, larger than the retired 50%', () => {
+test('at 1920x1080 the desktop profile keeps a useful battlefield', () => {
   const zoom = 1.48, width = 1920 / zoom, height = 1080 / zoom;
   const bands = planCombatLayout({ formFactor: 'desktop', width, height, zoom });
-  assert.ok(near(bands.hud, height * .10), `hud ${bands.hud}`);
-  assert.ok(near(bands.hand, height * .30), `hand ${bands.hand}`);
-  assert.ok(bands.battlefield / height > .5, `battlefield share ${bands.battlefield / height}`);
+  assert.ok(near(bands.hud * zoom, 112), `hud ${bands.hud}`);
+  assert.ok(near(bands.hand * zoom, 350), `hand ${bands.hand}`);
+  assert.ok(bands.battlefield / height > .4, `battlefield share ${bands.battlefield / height}`);
   assert.equal(bands.supported, true);
 });
 
