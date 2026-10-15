@@ -454,6 +454,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   let selectedFlask = null; // flask slot index awaiting a target
   let selfArm = null; // self/buff card armed for a confirm (keyboard/gamepad)
   let selectedCombatantId = null; // contextual reading selection; never combat targeting
+  let lastReadingSelection = null; // survives arming solely to arbitrate inspection gestures
   let heldTurnHand = null;
   let enemyPlayback = false;
   let busy = false; // animating / resolving
@@ -500,10 +501,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const handPages = [$('.hand-prev'), $('.hand-next')];
 
   const inspectionGestures = new Map();
-  function selectCombatant(id) {
-    if (id !== selectedCombatantId) for (const gesture of inspectionGestures.values()) gesture.cancel();
+  function selectCombatant(id, { preserveInspection = false } = {}) {
+    if (preserveInspection || id !== selectedCombatantId) for (const gesture of inspectionGestures.values()) gesture.cancel();
     if (id && !getEntity(combat, id)?.alive) return;
     selectedCombatantId = id;
+    if (!preserveInspection) lastReadingSelection = id;
     selectCombatantInfo(combatEl, id);
   }
 
@@ -618,7 +620,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     want.forEach(target => setAim(target.el, target.kind));
   }
   combatEl.addEventListener('cardinspectionselect', event => {
-    selectCombatant(null);
+    selectCombatant(null, { preserveInspection: true });
     const id = event.target.closest('.hand .card')?.dataset.instanceId;
     if (id && id !== selected && id !== selfArm && (selected || selfArm || selectedFlask != null)) {
       selected = null; selectedFlask = null; selfArm = null;
@@ -728,7 +730,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // Selection changes presentation only; every input waits for confirmation.
   function syncCardSelection() {
     const active = selected || selfArm;
-    if (active) selectCombatant(null);
+    if (active) selectCombatant(null, { preserveInspection: true });
     if (!active) combatEl.querySelectorAll('.hand .inspection-selected').forEach(card => { card.classList.remove('inspection-selected', 'inspection-info-visible'); card.removeAttribute('aria-current'); });
     combatEl.querySelectorAll('.hand .card').forEach(card => {
       const on = card.dataset.instanceId === active;
@@ -1195,6 +1197,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     $('.field').dataset.playerCell = combat.player.formationCell || '';
     hideTooltip();
     if (selected || selfArm || selectedFlask != null) selectedCombatantId = null;
+    if (lastReadingSelection && lastReadingSelection !== 'player' && !combat.enemies.some(enemy => enemy.id === lastReadingSelection && enemy.alive)) lastReadingSelection = null;
     if (selectedCombatantId && selectedCombatantId !== 'player' && !combat.enemies.some((enemy) => enemy.id === selectedCombatantId && enemy.alive)) selectedCombatantId = null;
     renderPlayer();
     renderEnemies();
@@ -1765,7 +1768,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         box.addEventListener('click', event => { event.stopPropagation(); activate(); });
         inspectionGestures.get(enemy.id)?.release();
         inspectionGestures.set(enemy.id, bindCombatantInspectionGesture(box, {
-          isSelected: () => selectedCombatantId === enemy.id,
+          isSelected: () => (selectedCombatantId || lastReadingSelection) === enemy.id,
           canInspect: () => !!getEntity(combat, enemy.id)?.alive,
           canActivate: () => !busy && !selfArm && !!getEntity(combat, enemy.id)?.alive,
           open: opener => openCombatantDoor(combatantSubject('enemy', getEntity(combat, enemy.id)), opener),
@@ -2418,7 +2421,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         if (cancelledCard) focusElement(cancelledCard);
         else focusHandDefault();
       }
-      if (selectedCombatantId) {
+      if (selectedCombatantId || lastReadingSelection) {
         selectCombatant(null);
       }
       return;

@@ -342,19 +342,21 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   }
   let selectedEnemy = null;
   let selectedCombatantId = null;
+  let lastReadingSelection = null; // inspection identity survives card/flask arming
   const inspectionGestures = new Set();
   function clearInspectionGestures() {
     for (const gesture of inspectionGestures) gesture.release();
     inspectionGestures.clear();
   }
-  function selectCombatant(id) {
-    if (id !== selectedCombatantId) for (const gesture of inspectionGestures) gesture.cancel();
+  function selectCombatant(id, { preserveInspection = false } = {}) {
+    if (preserveInspection || id !== selectedCombatantId) for (const gesture of inspectionGestures) gesture.cancel();
     if (id && armedFriendlyCard && snap?.scene.kind === 'combat') {
       const actor = snap.scene.players.find(player => player.id === me);
       const card = actor?.hand.find(entry => entry.instanceId === armedFriendlyCard);
       if (!card || !friendlyTargetPlan(cardDef(card), me, snap.scene.players).legalIds.includes(id)) return;
     }
     selectedCombatantId = id;
+    if (!preserveInspection) lastReadingSelection = id;
     selectCombatantInfo(app, id);
   }
   function wireCombatantContext(box, name) {
@@ -374,7 +376,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   const dismissCombatant = event => {
     if (!event.target.closest('.combatant, .hand, .combatant-door, .modal')) selectCombatant(null);
   };
-  const inspectCard = () => selectCombatant(null);
+  const inspectCard = () => selectCombatant(null, { preserveInspection: true });
   app.addEventListener('click', dismissCombatant);
   app.addEventListener('cardinspectionselect', inspectCard);
   let armedFlask = null; // non-offensive flask slot awaiting a throw seat
@@ -921,7 +923,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   const wireLeave = () => { const b = app.querySelector('#coop-leave'); if (b) b.addEventListener('click', () => { teardown(); conn.close(); onLeave(); }); };
 
   function render() {
-    if (snap?.scene?.kind !== 'combat') clearInspectionGestures();
+    if (snap?.scene?.kind !== 'combat') { clearInspectionGestures(); lastReadingSelection = null; }
     closeClassRespec({silent:true});
     if (!snap) return;
     if(['combat','complete','lobby'].includes(snap.scene.kind))disposeProgression();
@@ -1191,6 +1193,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       || document.activeElement?.closest?.('.coop-seat[data-friendly-target]'))?.dataset.seat || null;
     let restoreFriendlyCardFocus = null;
     const living = sc.enemies.filter((e) => e.hp > 0);
+    if (lastReadingSelection && ![...living, ...sc.players.filter(p => p.alive)].some(e => e.id === lastReadingSelection)) lastReadingSelection = null;
     if (selectedCombatantId && ![...living, ...sc.players.filter(p => p.alive)].some(e => e.id === selectedCombatantId)) selectedCombatantId = null;
     if (armedFlask != null || armedFriendlyCard) selectedCombatantId = null;
     if (selectedEnemy == null || !living.find((e) => e.id === selectedEnemy)) selectedEnemy = living[0] ? living[0].id : null;
@@ -1378,7 +1381,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         nm.setAttribute('role', 'button'); nm.tabIndex = 0;
         nm.setAttribute('aria-label', `Inspect ${def.name}`);
         inspectionGestures.add(bindCombatantInspectionGesture(box, {
-          isSelected: () => selectedCombatantId === e.id,
+          isSelected: () => (selectedCombatantId || lastReadingSelection) === e.id,
           canInspect: () => !disposed && !!snap?.scene?.enemies?.find(enemy => enemy.id === e.id && enemy.hp > 0),
           canActivate: () => !busy() && !armedFriendlyCard && !!snap?.scene?.enemies?.find(enemy => enemy.id === e.id && enemy.hp > 0),
           open: opener => openCombatantInfo(e, def.name, def, opener),
