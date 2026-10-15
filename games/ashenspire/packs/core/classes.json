@@ -14,7 +14,8 @@
       "leftHand": null
     },
     "specialCardId": "core.reaverSpecial",
-    "maxHp": 84
+    "maxHp": 84,
+    "description": "Strength-focused fighter with a greatsword and heavy attacks."
   },
   {
     "id": "starseer",
@@ -31,7 +32,8 @@
       "leftHand": null
     },
     "specialCardId": "core.starseerSpecial",
-    "maxHp": 72
+    "maxHp": 72,
+    "description": "Intelligence-focused caster with a sceptre and Star Spark."
   },
   {
     "id": "rogue",
@@ -48,7 +50,8 @@
       "leftHand": "dagger"
     },
     "specialCardId": "core.rogueSpecial",
-    "maxHp": 74
+    "maxHp": 74,
+    "description": "Dexterity-focused fighter with two daggers and Quick Guard."
   },
   {
     "id": "herald",
@@ -65,6 +68,7 @@
       "leftHand": null
     },
     "specialCardId": "core.heraldSpecial",
-    "maxHp": 78
+    "maxHp": 78,
+    "description": "Wisdom-focused fighter with a sceptre and Lasting Resolve."
   }
 ]
