@@ -1,4 +1,3 @@
-import { mountGameProfileCreation } from '../components/gameProfileCreation.js';
 import { masteryClassSummary } from '../components/classMastery.js';
 import { compactEquipmentDetails } from '../components/compactEquipmentDetails.js';
 import { renderCollectibleCard } from '../components/collectibleCard.js';
@@ -105,10 +104,12 @@ function showNode(node, on) {
 }
 
 export function mountCustomize(app, {
-  gameProfile = null, fixedClasses = null, classAvailable = null, profileStarterCount = null, profileClassUnlocks = false,
+  gameProfile = null, fixedClasses = null, classAvailable: profileClassAvailable = null, profileStarterCount = null, profileClassUnlocks = false,
   registries, meta = {}, defaultSeedString, onBack, onStart, onSettings = null, onQuit = null, catalog = false, shotPose = null, slot = null,
 }) {
-  if (fixedClasses) return mountGameProfileCreation(app, { profile: gameProfile, classes: fixedClasses, available: classAvailable, starterCount: profileStarterCount, classUnlocks: profileClassUnlocks, defaultSeedString, onStart, onBack });
+  const fixedCreation = Boolean(fixedClasses);
+  const eligibleClass = id => fixedCreation ? profileClassAvailable(id) : classAvailable(registries.unlocks, id, meta);
+  const flowCategories = () => fixedCreation ? ['class', 'review'] : creationFlowCategories(registries, state.classId);
   const creationCardRules = { combatExpansionVersion: 2, reactionRulesVersion: 2, breakMeterVersion: 2 };
   const renderCard = (registries, ref, opts = {}) => renderCardFace(registries, ref, { ...opts, rules: creationCardRules });
   // A new screen must never inherit another card's selection or spent tap.
@@ -127,7 +128,7 @@ export function mountCustomize(app, {
   // meeting the same logical id on a later surface handed that surface a card
   // already one beat in: its first touch acted instead of selecting.
   const defaults = quickStartRunConfig(registries);
-  const firstClass = registries.classes.get(defaults.classId);
+  const firstClass = registries.classes.get(fixedCreation ? fixedClasses.find(row => eligibleClass(row.id))?.id || fixedClasses[0].id : defaults.classId);
   const creationLayout = registries.characterCreation.layout || {};
   const visibleModes = creationModeViews(registries);
   // Start with the authored ready-to-play choices. Players can keep pressing
@@ -265,7 +266,7 @@ export function mountCustomize(app, {
     // W1c Review: the seed and journey, the destination slot, and a concise
     // summary of identity, loadout and derived values (filled on arrival).
     review: el('section', { id: 'cz-seed-panel', class: 'as-pane flush cz-stage', dataset: { stage: 'review' } }, [
-      journeyRow, seedRow,
+      fixedCreation ? null : journeyRow, seedRow,
       slot == null ? null : row({ tag: 'div', setting: true, className: 'cc-destination-row', labelNode: labelStack({ label: t('creation.review.destination'), hint: t('creation.review.destination.hint') }), trail: el('span', { class: 'as-status cc-destination', text: t('creation.review.slot', { slot }) }) }),
       el('div', { id: 'cz-review-summary', class: 'as-stack cc-review' }),
       el('p', { class: 'cc-review-feats', text: t('creation.feats.none') }),
@@ -276,7 +277,7 @@ export function mountCustomize(app, {
   // one at a time inside the W1 pane below.
   const flow = el('div', { class: 'cz-flow cz-disc' }, catalog ? Object.values(stages) : []);
   const authoredCategories = creationCategories();
-  let categories = creationFlowCategories(registries, state.classId);
+  let categories = flowCategories();
   for (const id of authoredCategories) {
     if (!stages[id]) throw new Error(`creation behavior.categories names '${id}', which is not a stage this screen draws (${Object.keys(stages).join(', ')})`);
   }
@@ -530,7 +531,7 @@ export function mountCustomize(app, {
   function resetClassChoices() {
     const kit = baseKit();
     state.startingKitId = kit.id;
-    state.startingHands = { leftHand: kit.leftHand || null, rightHand: kit.rightHand || null };
+    state.startingHands = { leftHand: kit.leftHand || null, rightHand: kit.rightHand || null, ...(fixedClasses?.find(row => row.id === state.classId)?.loadout || {}) };
     state.startingSlotChoices = {};
     state.startingAbilityIds = [];
     const armour = armourChoices();
@@ -545,7 +546,7 @@ export function mountCustomize(app, {
   // ---- what each step still needs ------------------------------------------
   // One reason per step, read by that step's Continue AND by Begin, so the
   // foot and the section can never disagree about what is missing.
-  function classProblem() { return state.classChosen ? null : t('creation.reason.class'); }
+  function classProblem() { return state.classChosen && eligibleClass(state.classId) ? null : t('creation.reason.class'); }
   function modeProblem() { return state.attributeMode ? null : t('creation.reason.statMode'); }
   function keepsakeProblem() { return state.keepsakeId ? null : t('creation.reason.keepsake'); }
   function armourProblem() { return state.startingArmourId ? null : t('creation.reason.armour'); }
@@ -555,8 +556,9 @@ export function mountCustomize(app, {
   function abilitiesProblem() { return startingAbilityProblem(registries, previewRun(), state.startingAbilityIds, meta.settings || {}); }
   function equipmentProblem() { return armourProblem() || handsProblem() || (startingAbilityPlan(registries, previewRun(), meta.settings || {})?.skillId === 'combatManeuvers' ? abilitiesProblem() : null); }
   function spellsProblem() { return startingAbilityPlan(registries, previewRun(), meta.settings || {})?.skillId === 'item:magic-focus' ? abilitiesProblem() : null; }
-  function flowProblem() { return classProblem() || characterProblem() || equipmentProblem() || abilitiesProblem(); }
+  function flowProblem() { if (fixedCreation) return classProblem(); return classProblem() || characterProblem() || equipmentProblem() || abilitiesProblem(); }
   function refreshAbilitySelection() {
+    if (fixedCreation) { state.startingAbilityIds = []; return null; }
     const plan = startingAbilityPlan(registries, previewRun(), meta.settings || {});
     // A point-allocation draft is not committed: Cancel must retain the
     // previously legal picks. Its close handler rechecks after apply/restore.
@@ -598,6 +600,7 @@ export function mountCustomize(app, {
   function statsProblem() { return allocationProblem() || handsProblem(); }
 
   function previewRun() {
+    if (fixedCreation) return createRunState({ seed: 0, classId: state.classId, registries, gameProfile, profileMeta: meta });
     // Validate the live allocation independently of weapon requirements.
     // An incomplete draft previews from its OWN mode's class preset — not
     // from some other mode's, which is what the retired `STANDARD` alias
@@ -989,13 +992,13 @@ export function mountCustomize(app, {
     classBox.dataset.view = state.classChoiceView;
     // Plan phase 5c: a class card the profile has not earned is listed locked,
     // with its unlock's hint; every shipped class is free until a row gates it.
-    const cards = registries.classes.all().map((cls) => classChoiceCard(cls, {
+    const cards = (fixedCreation ? fixedClasses.map(row => registries.classes.get(row.id)) : registries.classes.all()).map((cls) => classChoiceCard(cls, {
       selected: state.classChosen && cls.id === state.classId,
       expanded: !catalog && creationClassPreview() === 'unfold',
       visual: classGlyph(cls.id),
       mastery: masteryClassSummary(registries, meta, cls.id),
-      locked: !classAvailable(registries.unlocks, cls.id, meta),
-      hint: classAvailable(registries.unlocks, cls.id, meta) ? null : (classUnlockRow(registries.unlocks, cls.id) || {}).hint || null,
+      locked: !eligibleClass(cls.id),
+      hint: eligibleClass(cls.id) ? null : (classUnlockRow(registries.unlocks, cls.id) || {}).hint || null,
       onChoose: () => {
         if (state.classChosen && state.classId === cls.id) return;
         state.classId = cls.id; state.classChosen = true; resetClassChoices();
@@ -1018,7 +1021,7 @@ export function mountCustomize(app, {
         state.classId = id; resetClassChoices(); renderClassPreview(); fitStage();
       });
     }
-    for (const cls of LOCKED_CLASSES) cards.push(classChoiceCard(cls, { locked: true, visual: classGlyph(cls.id) }));
+    if (!fixedCreation) for (const cls of LOCKED_CLASSES) cards.push(classChoiceCard(cls, { locked: true, visual: classGlyph(cls.id) }));
     classBox.replaceChildren(...cards);
     renderViewToggles();
     // The cards are new nodes; in unfold mode the chosen one opens again.
@@ -1528,7 +1531,10 @@ export function mountCustomize(app, {
       face: { label: 'Show calculations', value: 'Card packages, requirements and poise' },
       reveal: { node: receiptBody },
     }], { structure: 'details' });
-    host.replaceChildren(cards, calculations);
+    if (fixedCreation) {
+      const deck = el('div', { class: 'card-shelf cc-starter-deck', 'aria-label': t('creation.review.starterDeck') }, run.deck.map(ref => renderCard(registries, ref, { level: 'glance' })));
+      host.replaceChildren(cards, deck);
+    } else host.replaceChildren(cards, calculations);
   }
   function renderEquipmentSummary() {
     fillSummary();
@@ -1867,7 +1873,7 @@ export function mountCustomize(app, {
   let current = categories[0];
   const categoryLabel = (id) => t(`creation.category.${id}`);
   refreshCreationNavigation = () => {
-    categories = creationFlowCategories(registries, state.classId);
+    categories = flowCategories();
     for (const item of railItems) showNode(item, categories.includes(item.dataset.member));
     categoryNavItems.splice(0, categoryNavItems.length, ...railItems.filter(item => categories.includes(item.dataset.member)));
     if (!catalog) activate(categories.includes(current) ? current : 'feats');
@@ -2000,7 +2006,7 @@ export function mountCustomize(app, {
   start.addEventListener('click', async () => {
     if (startPending || beginProblem()) return;
     startPending = true; start.disabled = true;
-    try { await onStart({
+    try { await onStart(fixedCreation ? { classId: state.classId, seedString: seedInput.value.trim(), gameProfile } : {
       classId: state.classId,
       seedString: seedInput.value.trim(),
       journeyProfile: journeySelect.value || null,
