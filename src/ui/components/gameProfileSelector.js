@@ -21,7 +21,7 @@ export function mountGameProfileSelector(host, { profile, importedProfile = null
   const status = document.createElement('span');
   status.setAttribute('role', 'status');
   status.style.cssText = 'width:100%;font-size:.8rem;overflow-wrap:anywhere;text-align:center';
-  status.textContent = `Configuration ${profile.id} · ${profile.hash.slice(0, 12)} · new runs only`;
+  status.textContent = `${importedProfile?.hash === profile.hash ? 'Imported configuration' : profile.id === 'core' ? 'Ashen core' : 'Current game'} · applies to this new run`;
   const apply = async value => {
     try { await onSelect(value); }
     catch (error) { status.textContent = error.message; select.value = importedProfile?.hash === profile.hash ? 'imported' : profile.id; }
