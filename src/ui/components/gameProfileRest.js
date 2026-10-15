@@ -84,7 +84,7 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
     const modal = mountSmithUpgradeModal(app, makeModel(), {
       registries, meta, returnFocusElement: app.querySelector('#smith-opt'),
       onSelect: itemRef => { selected = itemRef; modal.update(makeModel()); },
-      onBack: () => { screen.inert = false; },
+      onBack: () => { screen.inert = false; app.querySelector('#smith-opt')?.focus({ preventScroll: true }); },
       onConfirm: itemRef => { screen.inert = false; commit('smith', { itemRef }); },
     });
   };

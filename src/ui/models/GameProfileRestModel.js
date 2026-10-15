@@ -23,6 +23,7 @@ export function gameProfileRestModel(registries, run, visit) {
     const result = id === 'smith' ? [...smithPreviews.values()].find(row => row.available) || [...smithPreviews.values()][0] || { available: false, reason: t('gameProfile.rest.noSmith') }
       : id === 'levelUp' ? attributes.find(row => row.available) || attributes[0] || { available: false, reason: t('gameProfile.rest.noLevel') }
       : attempt(id);
+    if (id === 'levelUp' && !visit.service && !result.available && !(run.level?.unspentPoints > 0)) result.reason = t('gameProfile.rest.noLevel');
     return { ...result, id, title: t(`gameProfile.rest.service.${id}`), description: t(`gameProfile.rest.description.${id}`) };
   });
   return { services, smith, smithPreviews, attributes };

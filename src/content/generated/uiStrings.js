@@ -10676,5 +10676,12 @@ export const uiStrings = [
     "short": "MP flasks",
     "full": "MP flasks",
     "tip": ""
+  },
+  {
+    "id": "creation.class.unlockNextRun",
+    "extends": "",
+    "short": "Play 1 game to unlock.",
+    "full": "Play 1 game to unlock.",
+    "tip": ""
   }
 ];
