@@ -49,22 +49,22 @@
 :root .combat[data-layout='formation'] .turn-ribbon {
   font-size: calc(18px / var(--ui-zoom,1)); min-height: calc(28px / var(--ui-zoom,1));
 }
-:root .combat[data-layout='formation'] .combatant .meters .as-meter[data-res='hp'] .m-value {
-  font-size: calc(14px / var(--ui-zoom,1));
-}
 :root .combat[data-layout='formation'] .combatant .meters .as-meter[data-res='hp'] .bar { min-height: calc(18px / var(--ui-zoom,1)); }
 :root .combat[data-layout='formation'] .combatant .status-chip { font-size: calc(14px / var(--ui-zoom,1)); }
 :root .combat[data-layout='formation'] .combatant:not(.context-selected) .intent {
   min-height: calc(32px / var(--ui-zoom,1)); font-size: calc(20px / var(--ui-zoom,1));
 }
-:root .combat[data-layout='formation'] .combatant .combat-health-row {
+/* State tokens outrank the compact idle/detail defaults. The health meter
+   and its narrow current-only pseudo-element read this same value. */
+:root[data-form-factor] .combat[data-layout='formation'] .combatant:not(.context-selected):not(.selected-target) .combat-health-row,
+:root[data-form-factor] .combat[data-layout='formation'] .combatant:is(.context-selected,.selected-target) .combat-health-row {
   --health-row-h: calc(12px / var(--ui-zoom,1));
   --combatant-value-text: calc(14px / var(--ui-zoom,1));
+  height: auto; min-height: calc(32px / var(--ui-zoom,1));
   padding-bottom: calc(18px / var(--ui-zoom,1));
 }
-:root .combat[data-layout='formation'] .combatant .combat-health-meter .m-value { font-size: calc(14px / var(--ui-zoom,1)); }
-:root .combat[data-layout='formation'] .icon-tray .as-pip > .as-pill,
-:root .combat[data-layout='formation'] .status-overflow-more,
+:root[data-form-factor] .combat[data-layout='formation'] .icon-tray .as-pip > .as-pill,
+:root[data-form-factor] .combat[data-layout='formation'] .status-overflow-more,
 :root .combat[data-layout='formation'] .footer-compact-label { font-size: calc(14px / var(--ui-zoom,1)); }
 :root[data-form-factor='desktop'] .combat[data-layout='formation'][data-combat-arrangement='rails'] .combat-tools {
   top: calc(100% - var(--w4-band-context)) !important; bottom: auto;

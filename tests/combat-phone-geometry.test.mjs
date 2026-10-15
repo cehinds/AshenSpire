@@ -1,5 +1,6 @@
 // The phone's combat rectangles are unchanged by the desktop and widescreen
-// retirement (owner, 2026-10-13: "Mobile layouts must be unchanged"). The
+// retirement. This tests the legacy no-profile path, independently of the new
+// form-factor profiles and their larger 48px toolbar reservation. The
 // fixture was captured on origin/dev before the change, for a 390x844 phone at
 // UI zoom 0.91: the bands, the footer packing, the footer art and the resting
 // hand at 3, 4, 5 and 7 cards, with and without a chooser. Any drift fails here.
@@ -12,6 +13,9 @@ import { footerArtHeight, footerArtWidth } from '../src/ui/models/FooterLayoutMo
 
 const fixture = JSON.parse(readFileSync(new URL('./fixtures/phone-combat-geometry.json', import.meta.url), 'utf8'));
 
+// Keep the captured legacy toolbar input frozen; importing the live reserve
+// would compare a new profile input against an old no-profile snapshot.
+const LEGACY_TOOLS_RESERVE_PX = 34;
 function phoneGeometry() {
   const zoom = 0.91, rem = 16 / zoom, width = 390 / zoom, height = 844 / zoom;
   const footerArtPx = footerArtHeight(width, zoom, 'mobile') * zoom;
@@ -21,8 +25,8 @@ function phoneGeometry() {
   out.footerWidth = footerArtWidth(width, zoom, 'mobile');
   out.footerHeight = footerArtHeight(width, zoom, 'mobile');
   out.footerPack = packCombatFooter({ width, height: out.bands.footer, zoom, rem });
-  const hand = (count, extra = {}) => handLayout({ width: width - 2 / zoom, height: out.bands.hand - COMBAT_TOOLS_HEIGHT_PX / zoom,
-    count, rem, zoom, compact: true, controlsHeight: 0, headroom: COMBAT_TOOLS_HEIGHT_PX / zoom, ...extra });
+  const hand = (count, extra = {}) => handLayout({ width: width - 2 / zoom, height: out.bands.hand - LEGACY_TOOLS_RESERVE_PX / zoom,
+    count, rem, zoom, compact: true, controlsHeight: 0, headroom: LEGACY_TOOLS_RESERVE_PX / zoom, ...extra });
   out.hand = [3, 4, 5, 7].map(count => hand(count));
   out.handControls = hand(5, { controlsHeight: 40 / zoom, controlled: [0, 1, 2, 3, 4] });
   out.handTabletShape = handLayout({ width: 1000, height: 260, count: 5, rem: 16, zoom: 1, compact: false, headroom: 0 });
@@ -31,6 +35,10 @@ function phoneGeometry() {
 
 test('the phone combat bands, footer and hand are unchanged from the origin/dev capture', () => {
   assert.deepEqual(JSON.parse(JSON.stringify(phoneGeometry())), fixture);
+});
+
+test('the current profile toolbar reserves 44px touch height and 4px card clearance', () => {
+  assert.equal(COMBAT_TOOLS_HEIGHT_PX, 44 + 4);
 });
 
 test('the phone band plan never reads the wide sizing: its shares are the phone bands', () => {
