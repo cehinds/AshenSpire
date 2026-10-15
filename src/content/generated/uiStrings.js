@@ -10368,5 +10368,12 @@ export const uiStrings = [
     "short": "Unread",
     "full": "Unread",
     "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.smithFree",
+    "extends": "",
+    "short": "Equipment upgrade: no currency cost.",
+    "full": "Equipment upgrade: no currency cost.",
+    "tip": ""
   }
 ];
