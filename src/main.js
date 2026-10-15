@@ -1,3 +1,4 @@
+import { beginGameProfileRest, createGameProfileRestDraft, commitGameProfileRest } from './model/gameProfileRest.js';
 import { resolveGameProfile, gameModule, gameContent, applyGameProfileToContent } from './model/gameProfile.js';
 import { isConfiguredRun, gameProfileClassAvailable } from './model/gameProfileRun.js';
 import { rollPendingAbilityOffers } from './model/abilityOffers.js';
@@ -228,7 +229,9 @@ if (!validation.ok) {
   }
 }
 
-let selectedGameProfile = resolveGameProfile(new URLSearchParams(location.search).get('gameProfile') || 'current');
+const profileQuery = new URLSearchParams(location.search);
+const askedGameProfile = profileQuery.get('gameProfile') || profileQuery.get('wb.gameProfile') || 'current';
+let selectedGameProfile = resolveGameProfile(askedGameProfile.trim().startsWith('{') ? JSON.parse(askedGameProfile) : askedGameProfile);
 let registryGameProfile = selectedGameProfile;
 let registries = createRegistries(applyGameProfileToContent(contentBundle, registryGameProfile));
 let xpCombat = null;
@@ -2290,7 +2293,7 @@ async function finishRun(victory) {
   const owned = () => run === finishedRun && activeSlot === finishedSlot;
   const checkpoint = () => {
     if (!owned()) throw new Error('The active run changed while completion was pending.');
-    if (!shotState) refreshRunClassMastery(finishedRun, saves.loadMeta(), finishedRegistries);
+    if (!shotState && !isConfiguredRun(finishedRun)) refreshRunClassMastery(finishedRun, saves.loadMeta(), finishedRegistries);
     stampSkillBonuses(finishedRegistries, finishedRun);
     saves.saveRun(finishedRun, finishedRng, finishedSlot);
   };
@@ -3609,6 +3612,26 @@ let restLocationId = 'shrine';
 let openVisit = null;
 
 function showRest(openPanel = null, locationId = null) {
+  if (isConfiguredRun(run) && gameModule(run, 'rest')) {
+    const visit = beginGameProfileRest(run, `${run.actNumber}:${run.mapNodeId}`);
+    persist();
+    const leave = () => { markRestLeft(run); persist(); showMap(); };
+    const commit = (service, payload) => {
+      commitGameProfileRest(registries, run, service, payload);
+      persist(); showRest();
+    };
+    const strategize = () => {
+      const draft = createGameProfileRestDraft(run);
+      mountDeckEditor(document.body, {
+        registries, run: draft, settings: saves.loadMeta().settings || {},
+        onDone: () => commit('strategize', { draft }), onCancel: () => showRest(),
+      });
+    };
+    return mountRest(app, { registries, run, meta: saves.loadMeta(), onDone: leave,
+      gameProfileRest: { visit, smithCandidates: smithingPlan(registries, run).candidates,
+        attributeIds: Object.keys(run.attributes || {}), onStrategize: strategize,
+        onCommit: commit, onLeave: leave } });
+  }
   if (locationId) restLocationId = locationId;
   audio.music('rest');
   const healMult = run.custom && activeMods(run.custom).lessHealing ? registries.balance.customMods.lessHealingMult : 1;
