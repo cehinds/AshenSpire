@@ -61,7 +61,7 @@ const ATTRS = ['data-hold', 'data-hold-progress'];
  * means no ticks and a commit that still lands: turning the train off is a
  * tuning decision the row is allowed to express.
  */
-export function installHoldBeat({ root = document, at = [], play = (id) => sfx.play(id) } = {}) {
+export function installHoldBeat({ root = document, at = [], play = (id) => sfx.play(id, { registeredSamplesOnly: true }) } = {}) {
   // Copy, and drop anything the validator would have refused. The validator is
   // the loud gate (model/validate.js, balance.ui.holdBeat); this is the quiet
   // one, and it exists because a beat that THROWS mid-hold takes the fill's

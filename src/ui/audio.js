@@ -14,7 +14,7 @@ import { balance } from '../content/balance.js';
 import { MUSIC_MANIFEST, SCALES, BEDS, MUSIC_TRACK_FALLBACK } from '../content/music.js';
 import { SFX_MANIFEST, SFX_RECIPES, resolveRecipe } from '../content/sfx.js';
 import { MUSIC_SILENCE_WORD } from '../model/schemas.js';
-import { assetUrl } from './assetmap.js';
+import { assetUrl, hasAsset } from './assetmap.js';
 
 // Default levels for a profile that has never touched the sliders — one source,
 // shared with ui/screens/settings.js.
@@ -125,7 +125,11 @@ export function initAudio(settings = {}) {
   // on #46). Own-property reads only — an inherited key is a missing entry.
   const own = (table, id) => (Object.prototype.hasOwnProperty.call(table, id) ? table[id] : undefined);
 
-  function sfx(id) {
+  // `registeredSamplesOnly` is for procedural feedback whose ids intentionally
+  // compose family recipes (the hold beat). It skips guessed convention
+  // filenames when no sample is registered, while manifest, packed, and inline
+  // samples still take precedence.
+  function sfx(id, { registeredSamplesOnly = false } = {}) {
     if (state.muted || state.sfxVol <= 0) return;
     resume();
     // A CUE THAT ARRIVES AFTER THE THING IT REPORTS IS A LIE, SO IT IS DROPPED.
@@ -149,10 +153,13 @@ export function initAudio(settings = {}) {
     // MUSIC IS DELIBERATELY NOT DROPPED — a bed that starts a beat late is a
     // bed, not a report about an event, and music() keeps its own path.
     if (ctx.state !== 'running') return;
-    const sample = assetUrl(own(SFX_MANIFEST, id) || `assets/sfx/${encodeURIComponent(id)}.ogg`);
-    if (playCachedSample(sample, sfxBus)) return;
+    const declaredPath = own(SFX_MANIFEST, id);
+    const conventionPath = `assets/sfx/${encodeURIComponent(id)}.ogg`;
+    const samplePath = declaredPath || conventionPath;
+    const sample = !registeredSamplesOnly || declaredPath || hasAsset(samplePath) ? assetUrl(samplePath) : null;
+    if (sample && playCachedSample(sample, sfxBus)) return;
     synthSfx(id);
-    warmSample(sample);
+    if (sample) warmSample(sample);
   }
 
   const now = () => ctx.currentTime;

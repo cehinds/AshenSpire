@@ -79,6 +79,11 @@ export function assetUrl(path) {
   return (highRes && highRes.get(path)) || (builtIn && builtIn.get(path)) || ASSET_MAP[path] || path;
 }
 
+/** True when an asset path is backed by a registered source or inline payload. */
+export function hasAsset(path) {
+  return !!path && !!((highRes && highRes.has(path)) || (builtIn && builtIn.has(path)) || ASSET_MAP[path]);
+}
+
 /**
  * True when this build carries its own art inline (the light single file, and
  * older inline builds). A web edition is not inlined; builtInSource() says
