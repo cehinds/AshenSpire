@@ -49,6 +49,10 @@ try {
     const viewport = shot.phone ? { width: 390, height: 844 } : { width: 1440, height: 1000 };
     const context = await browser.newContext({ viewport, deviceScaleFactor: 1, hasTouch: !!shot.phone });
     const page = await context.newPage();
+    // The public game's ~15 MB response exceeds Chrome's default inspector
+    // resource cache; retain those actual navigation bytes for the hash proof.
+    const cdp = await context.newCDPSession(page);
+    await cdp.send('Network.enable', { maxResourceBufferSize: 64 * 1024 * 1024, maxTotalBufferSize: 128 * 1024 * 1024 });
     const row = { ...shot, viewport, deviceScaleFactor: 1, at: new Date().toISOString(), requestedUrl: exactUrl + shot.query };
     report.captures.push(row);
     page.on('pageerror', error => report.runtimeErrors.push({ shot: shot.name, message: error.message }));
