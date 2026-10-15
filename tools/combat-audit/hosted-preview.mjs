@@ -119,7 +119,7 @@ async function main() {
     // Read it through this same session: Playwright's separate session retains
     // Chrome's smaller defaults, even after this Network.enable call.
     const network = await context.newCDPSession(page);
-    await network.send('Network.enable', { maxResourceBufferSize: 128 * 1024 * 1024, maxTotalBufferSize: 256 * 1024 * 1024 });
+    await network.send('Network.enable', { maxResourceBufferSize: 256 * 1024 * 1024, maxTotalBufferSize: 512 * 1024 * 1024 });
     const [loadedBytes, response] = await Promise.all([
       observedResponseBytes(network, BUILD_URL),
       page.goto(HOSTED_URL, { waitUntil: 'domcontentloaded', timeout: 45000 }),
