@@ -1,10 +1,35 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { publicPreviewIdentity, assertCompatiblePublicBuild, loadEligiblePublicPreview, HOSTED_URL } from '../tools/combat-audit/hosted-preview.mjs';
+import { EventEmitter } from 'node:events';
+import { publicPreviewIdentity, assertCompatiblePublicBuild, loadEligiblePublicPreview, observedResponseBytes, HOSTED_URL } from '../tools/combat-audit/hosted-preview.mjs';
 
 const commit = 'a'.repeat(40), head = 'b'.repeat(40);
 const html = "const SOURCE = '368140ce27'; const ORDINAL = '1530'; const coreContentBundle = {\n  version: '0.7.1'\n}";
 const site = `<section class="card"><h3>feature/FullCombatAudit</h3><a href="https://github.com/cehinds/AshenSpire/commit/${commit}">commit</a></section>`;
+test('actual browser bytes come from the matching completed request in the buffered CDP session', async () => {
+  const network = new EventEmitter();
+  network.send = async (method, args) => {
+    assert.equal(method, 'Network.getResponseBody');
+    assert.equal(args.requestId, 'actual-build');
+    return { body: Buffer.from('actual browser bytes').toString('base64'), base64Encoded: true };
+  };
+  const bytes = observedResponseBytes(network, HOSTED_URL + 'build.txt');
+  network.emit('Network.responseReceived', { requestId: 'other', response: { url: HOSTED_URL, status: 200 } });
+  network.emit('Network.loadingFinished', { requestId: 'other' });
+  network.emit('Network.responseReceived', { requestId: 'actual-build', response: { url: HOSTED_URL + 'build.txt', status: 200 } });
+  network.emit('Network.loadingFinished', { requestId: 'actual-build' });
+  assert.equal((await bytes).toString(), 'actual browser bytes');
+  assert.equal(network.listenerCount('Network.responseReceived'), 0);
+});
+test('actual response capture rejects failed requests and bounded timeouts', async () => {
+  const network = new EventEmitter();
+  const failed = observedResponseBytes(network, HOSTED_URL);
+  network.emit('Network.responseReceived', { requestId: 'failed', response: { url: HOSTED_URL, status: 200 } });
+  network.emit('Network.loadingFailed', { requestId: 'failed', errorText: 'net::ERR_FAILED' });
+  await assert.rejects(failed, /request failed: net::ERR_FAILED/);
+  await assert.rejects(observedResponseBytes(network, HOSTED_URL, 1), /Timed out reading actual browser response/);
+  assert.equal(network.listenerCount('Network.loadingFinished'), 0);
+});
 test('hosted proof pins real branch metadata and complete compiled identity', () => {
   const identity = publicPreviewIdentity(html, site);
   assert.equal(HOSTED_URL, 'https://cehinds.github.io/AshenSpire/branches/feature/FullCombatAudit/latest/');
