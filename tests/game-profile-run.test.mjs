@@ -106,3 +106,15 @@ test('profile completion ledger persists independently from bounded history and 
  const restored=save.loadMeta();assert.deepEqual(restored.gameProfileUnlocks,meta.gameProfileUnlocks);
  assert.throws(()=>gameProfileCompletedRunMeta(profile,restored,{finishId:'quit'}),/terminal/);
 });
+
+
+test('two CON increases add one authored SP, and Smith commits an equipment tier before full recovery',async()=>{
+ const run=fresh();visit(run);run.level.unspentPoints=2;const initial=run.maxStamina;
+ commitGameProfileRest(reg,run,'levelUp',{attributeId:'constitution'});
+ run.mapNodeId='n6_0';beginGameProfileRest(run,'1:n6_0');commitGameProfileRest(reg,run,'levelUp',{attributeId:'constitution'});
+ assert.equal(run.maxStamina,initial+1);
+ const smith=fresh();visit(smith);smith.smithingStones=999;smith.hp=1;
+ const {smithingPlan}=await import('../src/model/smithing.js');const candidate=smithingPlan(reg,smith).candidates.find(row=>row.affordable);
+ assert.ok(candidate);commitGameProfileRest(reg,smith,'smith',{itemRef:candidate.itemRef});
+ assert.equal(smith.itemUpgradeLevels[candidate.itemRef],candidate.nextLevel);assert.equal(smith.hp,smith.maxHp);
+});
