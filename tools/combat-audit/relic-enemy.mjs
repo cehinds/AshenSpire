@@ -5,6 +5,7 @@
 import { loadAuditRuntime } from './runtime.mjs';
 import { makeAuditCombat, setAuditHand, settleAuditChoices } from './fixtures.mjs';
 import { combatStatusRules } from '../../src/content/combatStatusRules.js';
+import { execFileSync } from 'node:child_process';
 
 let api = null;
 
@@ -12,6 +13,22 @@ const CARD = 'strike';
 const CLASSES = ['reaver', 'starseer', 'herald', 'rogue'];
 const MAX_QUEUE = 512;
 const MAX_TURNS = 8;
+
+// Select a deterministic, legal hit result without bypassing the combat RNG or
+// dispatch path. This only advances the fixture counter to the next favorable
+// public attack roll; the engine still resolves accuracy, range and damage.
+function primeNextD20Hit(combat) {
+  const counters = combat.rng.getCounters();
+  const search = api.createRng(combat.rng.seed, counters);
+  for (let attempt = 0; attempt < 100; attempt++) {
+    const start = search.getCounters().combatAvoidance || 0;
+    if (search.int('combatAvoidance', 1, 20) >= 2) {
+      combat.rng.restoreCounters({ ...counters, combatAvoidance: start });
+      return;
+    }
+  }
+  throw new Error('Could not prime a legal attack hit in the fixture RNG stream');
+}
 
 function playerFor(classId, relicIds = [], deckSize = 80) {
   return {
@@ -589,14 +606,21 @@ function auditStatusModifierConsumers(registries, silencedProof) {
   const play = (statusId, cardId, targetStatus = false) => {
     const execute = withStatus => {
       const combat = makeAuditCombat(api, { classId: 'reaver', enemyIds: ['wanderingSoldier'], seed: 7314 }).combat;
-      const enemy = combat.enemies[0]; enemy.hp = enemy.maxHp = 10000; enemy.block = 0;
+      const enemy = combat.enemies[0]; enemy.hp = enemy.maxHp = 10000; enemy.block = 0; enemy.barrier = 0;
+      // Fix the fixture at a valid hit without bypassing stance/range/attack
+      // resolution. Seed 7314 rolls a 2; Evasion 0 makes the legal melee hit
+      // land, so a missing damage packet remains a real consumer failure.
+      enemy.evasion = 0;
+      primeNextD20Hit(combat);
       if (withStatus) api.applyStatus(combat, targetStatus ? enemy : combat.player, statusId, 1);
-      setAuditHand(combat, [{ cardId, instanceId: `modifier:${statusId}:${withStatus}` }]);
-      api.dispatch(combat, { type: 'playCard', cardInstanceId: `modifier:${statusId}:${withStatus}`, ...(cardId === 'strike' ? { targetId: enemy.id } : {}) });
+      const instanceId = `modifier:${statusId}:${withStatus}`;
+      setAuditHand(combat, [{ cardId, instanceId }]);
+      api.dispatch(combat, { type: 'playCard', cardInstanceId: instanceId, ...(cardId === 'strike' ? { targetId: enemy.id } : {}) });
       settleAuditChoices(api, combat);
       return cardId === 'strike'
-        ? combat.eventLog.filter(event => event.type === 'damageDealt' && event.targetId === enemy.id).map(event => event.incoming)
-        : combat.eventLog.filter(event => event.type === 'blockGained' && event.targetId === combat.player.id && event.source !== 'defendStance').map(event => event.amount);
+        ? combat.eventLog.filter(event => event.type === 'damageDealt' && event.targetId === enemy.id && event.cardInstanceId === instanceId).map(event => event.incoming)
+        : combat.eventLog.filter(event => event.type === 'blockGained' && event.targetId === combat.player.id
+          && event.cardInstanceId === instanceId && !event.triggeredBy).map(event => event.amount);
     };
     return { baseline: execute(false), observed: execute(true) };
   };
@@ -622,7 +646,7 @@ function auditStatusModifierConsumers(registries, silencedProof) {
   for (const id of ['dexterity', 'frail', 'slowed']) {
     const value = registries.statuses.get(id).modifiers[id === 'dexterity' ? 'blockAdd' : 'blockGainedMult'];
     const action = play(id, 'defend');
-    const baseline = action.baseline[0], observed = action.observed[0];
+    const baseline = action.baseline.reduce((sum, amount) => sum + amount, 0), observed = action.observed.reduce((sum, amount) => sum + amount, 0);
     const expected = id === 'dexterity' ? baseline + value : Math.floor(baseline * value);
     addRow(id, id === 'dexterity' ? 'blockAdd' : 'blockGainedMult', { baseline, observed, expected, ok: observed === expected });
   }
@@ -931,21 +955,47 @@ export function auditEncounterClassMatrix() {
       const endTurnSettled = !combat.pendingReaction && !combat.pendingAbilityDiscard && combat.queue.length === 0
         && (combat.phase === 'player' || (combat.phase === 'ended' && ['victory', 'defeat'].includes(combat.result)));
       let targetDeaths = 0;
+      const targetProbes = [];
       if (endTurnSettled && !combat.result) {
         const alive = combat.enemies.filter(enemy => enemy.alive);
         for (let i = 0; i < alive.length; i++) {
-          const enemy = alive[i]; enemy.hp = 1; enemy.block = 0;
-          setAuditHand(combat, [{ cardId: 'strike', instanceId: `audit:${encounter.id}:${classId}:${i}` }]);
-          api.dispatch(combat, { type: 'playCard', cardInstanceId: `audit:${encounter.id}:${classId}:${i}`, targetId: enemy.id });
+          const enemy = alive[i];
+          const enemyStanceBeforeFixture = structuredClone(enemy.combatStance ?? null);
+          enemy.hp = 1; enemy.block = 0;
+          enemy.evasion = 0;
+          const instanceId = `audit:${encounter.id}:${classId}:${i}`;
+          const hpBefore = enemy.hp;
+          primeNextD20Hit(combat);
+          setAuditHand(combat, [{ cardId: 'crawlingShot', instanceId }]);
+          const enemyStanceAtDispatch = structuredClone(enemy.combatStance ?? null);
+          const enemyStanceUnchangedBeforeDispatch = JSON.stringify(enemyStanceBeforeFixture) === JSON.stringify(enemyStanceAtDispatch);
+          const probeStart = combat.eventLog.length;
+          api.dispatch(combat, { type: 'playCard', cardInstanceId: instanceId, targetId: enemy.id });
           settleAuditChoices(api, combat);
+          const probeEvents = combat.eventLog.slice(probeStart);
+          const targetPlan = probeEvents.find(event => event.type === 'cardPreparing' && event.cardInstanceId === instanceId && event.targetId === enemy.id);
+          const payment = probeEvents.find(event => event.type === 'cardPlayed' && event.cardInstanceId === instanceId && event.targetId === enemy.id
+            && event.cardId === 'crawlingShot' && event.energySpent > 0 && event.staminaSpent > 0);
+          const hitReceipt = probeEvents.find(event => event.type === 'attackHit' && event.targetId === enemy.id && event.range === 'reach');
+          const damageReceipt = probeEvents.find(event => event.type === 'damageDealt' && event.cardInstanceId === instanceId
+            && event.targetId === enemy.id && event.amount > 0);
+          const paidTargetPlan = !!targetPlan && !!payment;
+          const attackResolved = !!hitReceipt && !!damageReceipt;
+          const paid = !!payment;
           if (!enemy.alive) targetDeaths++;
+          targetProbes.push({ targetId: enemy.id, enemyId: enemy.enemyId, cardId: 'crawlingShot', targetPlan: !!targetPlan,
+            enemyStanceBeforeFixture, enemyStanceAtDispatch, enemyStanceUnchangedBeforeDispatch,
+            paid, energyPaid: payment?.energySpent || 0, staminaPaid: payment?.staminaSpent || 0,
+            hitRange: hitReceipt?.range || null, requiredRange: hitReceipt?.requiredRange || null,
+            damage: damageReceipt?.amount || 0, hpBefore, hpAfter: enemy.hp, died: !enemy.alive });
+          if (!(paidTargetPlan && attackResolved && paid && enemy.hp < hpBefore && enemyStanceUnchangedBeforeDispatch)) throw new Error(`Encounter probe ${encounter.id}/${classId}/${enemy.id} lacked a paid ranged hit with its authored enemy stance intact`);
           if (combat.result) break;
         }
       }
       const victorySettled = combat.result === 'victory' && combat.phase === 'ended' && !combat.queue.length && !combat.pendingReaction;
       const expectedDeathCount = enemyIds.length;
       const result = endTurnSettled && targetDeaths === expectedDeathCount && victorySettled ? 'covered' : 'missing';
-      scenarios.push({ encounterId: encounter.id, classId, enemyCount: enemyIds.length, endTurnSettled, turnReceipts,
+      scenarios.push({ encounterId: encounter.id, classId, enemyCount: enemyIds.length, endTurnSettled, turnReceipts, targetProbes,
         targetDeaths, expectedDeathCount, victory: combat.result, victorySettled, state: { phase: combat.phase, turn: combat.turn, pendingReaction: !!combat.pendingReaction, queue: combat.queue.length }, result });
     } catch (error) {
       scenarios.push({ encounterId: encounter.id, classId, result: 'missing', error: error.message });
@@ -957,6 +1007,7 @@ export function auditEncounterClassMatrix() {
 
 export async function runRelicEnemyAudit(mode = 'native') {
   api = await loadAuditRuntime(mode);
+  const sourceRevision = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
   const registries = api.registries;
   const relics = auditRelics(registries);
   const statuses = auditStatuses(registries);
@@ -966,7 +1017,7 @@ export async function runRelicEnemyAudit(mode = 'native') {
   const taggedVulnerabilities = auditTaggedVulnerabilities(registries);
   const enemies = auditEnemyMoves();
   const encounters = auditEncounterClassMatrix();
-  return { counts: { relics: relics.ids, relicPropertyCarriers: relics.propertyRelics, relicRules: relics.branches, relicBranchesCovered: relics.covered,
+  return { sourceRevision, loader: mode, counts: { relics: relics.ids, relicPropertyCarriers: relics.propertyRelics, relicRules: relics.branches, relicBranchesCovered: relics.covered,
     relicConditionalFalseControls: relics.conditionalNegativeControls, relicGatedBranches: relics.gatedBranches, relicGatedBranchesCovered: relics.gatedBranchesCovered,
     relicPassives: relics.passiveIds, relicPassiveDeclarations: relics.passiveDeclarations,
     relicPassiveEffects: relics.passiveEffects, relicPassiveEffectsCovered: relics.passiveEffectsCovered,
