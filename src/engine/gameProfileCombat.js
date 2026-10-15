@@ -12,7 +12,7 @@ export function configuredModule(subject, id) {
   return rule?.mode === 'configured' ? rule : null;
 }
 export function configuredStance(carrier) {
-  const raw = carrier?.combatProfile?.maneuver || carrier?.maneuver
+  const raw = carrier?.stanceTrigger?.stance || carrier?.combatProfile?.maneuver || carrier?.maneuver
     || (carrier?.cardTags || carrier?.tags || []).find(tag => tag.startsWith('maneuver:'))?.slice(9);
   return ({ casting: 'prepared', cast: 'prepared', spell: 'prepared', ranged: 'attack' })[raw] || raw || 'neutral';
 }
@@ -82,6 +82,9 @@ export function profileCardCosts(ctx, def) {
   const authored = def.resourceCosts || def.costs || {};
   const sp = authored.sp ?? def.staminaCost ?? (typeof def.cost === 'number' ? def.cost : 0);
   const mp = authored.mp ?? def.manaCost ?? 0;
+  if ((!include.includes('sp') && sp > 0) || (!include.includes('mp') && mp > 0)) {
+    throw new Error(`Card ${def.id || 'unknown'} requires an authored disabled-resource variant`);
+  }
   return { energy: include.includes('sp') ? Math.max(0, sp) : 0,
     stamina: include.includes('sp') ? Math.max(0, sp) : 0,
     mana: include.includes('mp') ? Math.max(0, mp) : 0 };

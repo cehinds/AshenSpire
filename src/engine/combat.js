@@ -317,7 +317,8 @@ export function createCombat({
   combat._emitEvent = emitEvent;
   // The skill tracks listen to the same bus (plan phase 4a); the receipt they
   // write lives on the combat and reaches the run only through applySkillXp.
-  attachSkillXp(combat);
+  if (!configuredCombat(combat)) attachSkillXp(combat);
+  else combat.skillXp = {};
   combat.enqueue = (action) => combat.queue.push(action);
   combat.nextInstanceId = () => `gen${++combat._idCounter}`;
   if (combatExpansionVersion === 2) {
@@ -375,6 +376,10 @@ export function createCombat({
       enemy.ratings = { ar: 0, dr: 0, pr: 0, ...values };
       for (const id of combat.breakMeterVersion === 1 ? ['poise'] : ['poise', 'ward']) enemy[id + 'Meter'] = { value: 0, max: Math.max(1, values[id]), growths: 0 };
     }
+  }
+  if (configuredCombat(combat)) {
+    combat.player.ratings = { ar: 0, dr: 0, pr: 0, ward: 0, poise: poiseMax, ...(player.ratings || {}) };
+    combat.player.attributes = { ...(player.attributes || {}) };
   }
   if (combatExpansionVersion === 2) {
     for (const entity of [combat.player, ...combat.enemies]) {
@@ -1031,6 +1036,7 @@ function buildIntent(move, moveId, enemy = null, combat = null) {
  */
 export function dispatch(combat, intent) {
   if (combat.gameProfile) freezeProfile(combat.gameProfile);
+  if (configuredCombat(combat)) combat.emit = (type, payload) => combat._emitEvent(combat, type, payload);
   if (!combat._foundationTransaction && (configuredCombat(combat) || combat.combatExpansionVersion === 2 || combat.foundation || ['playCard', 'unqueueCard', 'chooseDiscard'].includes(intent.type))) return F.foundationTransaction(combat, (candidate) => dispatch(candidate, intent), { advanceAction: intent.type === 'chooseDiscard' ? !combat.reactionResume : !['predictIntent', 'chooseReaction', 'setReactions'].includes(intent.type) });
   if (combat.result) throw new Error('Combat is over');
   combat._buffer = [];
@@ -2220,7 +2226,9 @@ function finishAbilityPlay(combat) {
   // Expanded Powers carry Exhaust; legacy Powers without it leave play.
   // The destination is the framework's call; this engine moves the card.
   if (!combat.result) {
-    const destination = combat.registries.framework.afterPlayDestination(def);
+    const destination = configuredCombat(combat)
+      ? (def.keywords?.includes('exhaust') ? 'EXHAUST_PILE' : def.type === 'power' ? 'REMOVED_FROM_PLAY' : 'DISCARD_PILE')
+      : combat.registries.framework.afterPlayDestination(def);
     if (destination === 'EXHAUST_PILE') {
       combat.piles.exhaust.push(inst);
       combat.emit('cardExhausted', { cardInstanceId: inst.instanceId, cardId: inst.cardId, reason: 'played' });
@@ -2355,7 +2363,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
   const displayClaims = priceReceipt.selfFunded ? claimedCharges(combat, inst.instanceId) : null;
   const displayCosts = displayClaims?.size
     ? resolvedCardPriceReceipt(combat, def, displayClaims).display : priceReceipt.display;
-  const shownCost = combat.combatExpansionVersion === 2 ? paidCosts.energy : isX ? p.energy : effectiveCost(combat, def);
+  const shownCost = configuredCombat(combat) || combat.combatExpansionVersion === 2 ? paidCosts.energy : isX ? p.energy : effectiveCost(combat, def);
   const target = targetId != null ? findEntity(combat, targetId) : null;
   const living = combat.enemies.filter((e) => e.alive);
 
