@@ -20,7 +20,7 @@ async function open(profile='core',host='desktop',extra='') {
  await page.locator('.rest-door').waitFor();return page;
 }
 async function frame(page) {
- for(const selector of ['.rest-screen','.rest-door','.rest-choices','.rest-consequences','#shrine-leave']) assert.ok(await page.locator(selector).isVisible(),`${selector} visible`);
+ for(const selector of ['.rest-screen','.rest-door','.rest-choices','.rest-consequences','#shrine-leave','.room-header','.polish-scene-painting','.rest-traveler-foreground']) assert.ok(await page.locator(selector).isVisible(),`${selector} visible`);
  const bounds=await page.locator('.rest-door').boundingBox();const viewport=page.viewportSize();
  assert.ok(bounds.x>=-1 && bounds.x+bounds.width<=viewport.width+1,'rest choicebody fits host');
 }
@@ -31,7 +31,10 @@ function recovered(row) {
  assert.equal(row.flaskCharges.manaCurrent,row.flaskCharges.mana);
 }
 async function spent(page,service) {
- await page.waitForFunction(value=>window.__restStateForShot().live.visit?.service===value,service);
+ try { await page.waitForFunction(value=>window.__restStateForShot().live.visit?.service===value,service); } catch(error) {
+  console.log('Uncommitted service',service,await snapshot(page),await page.locator('[role=alert],#deck-editor-refusal').allTextContents());
+  await page.screenshot({path:resolve(output,'failure.png')});throw error;
+ }
  const state=await snapshot(page);recovered(state.live);recovered(state.saved);
  assert.deepEqual(state.saved,state.live,'committed state survives actual save/load roundtrip');
  for(const id of ['strategize-opt','smith-opt','level-opt']) assert.equal(await page.locator(`#${id}`).getAttribute('aria-disabled'),'true');
@@ -47,7 +50,7 @@ async function behavior() {
  assert.equal(await unavailable.locator('#level-opt').getAttribute('aria-disabled'),'true');
  assert.ok((await unavailable.locator('#level-opt p').innerText()).trim().length>5,'unavailable Level explains its reason');
  await unavailable.close();
- for(const service of ['strategize','smith','levelUp']) {
+ for(const service of (process.env.REST_UI_SERVICE ? process.env.REST_UI_SERVICE.split(',') : ['strategize','smith','levelUp'])) {
   const page=await open('core','desktop','&shotRestPoints=1');const before=await snapshot(page);
   assert.ok(before.live.hp<before.live.maxHp);assert.equal(before.live.flaskCharges.hpCurrent,0);
   if(service==='strategize') {
@@ -85,10 +88,13 @@ async function behavior() {
 }
 try {
  if(!process.env.REST_UI_CAPTURE_ONLY) await behavior();
+ if(!process.env.REST_UI_BEHAVIOR_ONLY) {
  for(const host of Object.keys(hosts)) {
   const page=await open('core',host,'&shotRestPoints=1');await frame(page);
   await page.screenshot({path:resolve(output,`${host}-rest.png`)});
   await page.locator('#smith-opt').click();await page.locator('.smith-upgrade-modal').waitFor();
+  await page.locator('.smith-candidate-card').first().click();
+  await page.locator('.smith-upgrade-modal .rest-recovery').waitFor();
   await page.screenshot({path:resolve(output,`${host}-smith.png`)});
   await page.keyboard.press('Escape');await page.locator('.smith-upgrade-modal').waitFor({state:'detached'});
   await page.locator('#level-opt').click();await page.locator('.cc-stat-modal').waitFor();
@@ -98,6 +104,19 @@ try {
  }
  const reference=await open('current');await frame(reference);
  await reference.screenshot({path:resolve(output,'current-desktop-rest.png')});await reference.close();
+ const creation=await browser.newPage({viewport:{width:1440,height:900},reducedMotion:'reduce'});
+ creation.on('pageerror',error=>errors.push(error.message));
+ await creation.goto(`${base}${entry}?shot=title&gameProfile=core`);
+ await creation.locator('#new-game').click();await creation.locator('[data-slot-pick="2"]').click();
+ await creation.getByRole('button',{name:'Create character',exact:true}).click();
+ await creation.getByRole('button',{name:'Start',exact:true}).click();
+ assert.deepEqual(await creation.locator('.cz-class').evaluateAll(nodes=>nodes.map(node=>node.dataset.class)),['reaver','starseer']);
+ assert.equal(await creation.locator('.cz-class.locked').getAttribute('data-class'),'starseer');
+ await creation.screenshot({path:resolve(output,'desktop-class.png')});
+ await creation.locator('#cz-next').click();
+ assert.equal(await creation.locator('.cc-starter-deck .card').count(),10);
+ await creation.screenshot({path:resolve(output,'desktop-review.png')});await creation.close();
+ }
  assert.deepEqual(errors,[],'no page errors');
- console.log(`Rest shared-frame browser captures passed: ${output}`);
+ console.log(`Rest UI browser checks passed${process.env.REST_UI_BEHAVIOR_ONLY ? '' : `; captures: ${output}`}`);
 } finally {await browser.close();}
