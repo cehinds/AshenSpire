@@ -1,5 +1,5 @@
 import { beginGameProfileRest, createGameProfileRestDraft, commitGameProfileRest } from './model/gameProfileRest.js';
-import { resolveGameProfile, gameModule, gameContent, applyGameProfileToContent } from './model/gameProfile.js';
+import { resolveGameProfile, gameModule, gameContent, applyGameProfileToContent, bindGameProfileRegistries } from './model/gameProfile.js';
 import { isConfiguredRun, gameProfileClassAvailable } from './model/gameProfileRun.js';
 import { rollPendingAbilityOffers } from './model/abilityOffers.js';
 import { openRestRecord, recordRestConsumed, markRestLeft, restRevisitNodeId, clearRestRevisitOnTravel } from './model/restRevisit.js';
@@ -233,7 +233,7 @@ const profileQuery = new URLSearchParams(location.search);
 const askedGameProfile = profileQuery.get('gameProfile') || profileQuery.get('wb.gameProfile') || 'current';
 let selectedGameProfile = resolveGameProfile(askedGameProfile.trim().startsWith('{') ? JSON.parse(askedGameProfile) : askedGameProfile);
 let registryGameProfile = selectedGameProfile;
-let registries = createRegistries(applyGameProfileToContent(contentBundle, registryGameProfile));
+let registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, registryGameProfile)), registryGameProfile);
 let xpCombat = null;
 configureTooltipGlossary(registries);
 setClassGlyphs(registries.classes.all()); // class sigils are data (class defs)
@@ -254,6 +254,7 @@ function rebuildRegistries(configuration = {}, masteryRun = null, gameProfile = 
   } else {
     registries = createRegistries(configured);
   }
+  registries = bindGameProfileRegistries(registries, gameProfile);
   if (!isConfiguredRun(gameProfile)) registries = registriesForClassMastery(registries, masteryRun);
   configureTooltipGlossary(registries);
   setClassGlyphs(registries.classes.all());
@@ -2353,6 +2354,8 @@ function showCustomize(slot = 1, catalog = false) {
   mountCustomize(app, {
     gameProfile: selectedGameProfile,
     fixedClasses: isConfiguredRun(selectedGameProfile) ? gameContent(selectedGameProfile, 'classes') : null,
+    profileStarterCount: (() => { const starter = gameContent(selectedGameProfile, 'starterDeck'); return starter ? Object.values(starter.shared || {}).reduce((sum, count) => sum + count, 0) + (starter.classSpecificCopies || 0) : null; })(),
+    profileClassUnlocks: gameModule(selectedGameProfile, 'progression')?.classUnlocks === true,
     classAvailable: id => gameProfileClassAvailable(selectedGameProfile, saves.loadMeta(), id),
     registries,
     meta: saves.loadMeta(),
