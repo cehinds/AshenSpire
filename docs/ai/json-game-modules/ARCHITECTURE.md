@@ -174,13 +174,13 @@ Combat is a composed capability pipeline, not a duplicate state-owning mega-modu
 | resources:false | Foundation HP preserved; SP/MP/Actions absent; explicit authored cost/scaling variants or content exclusion. |
 | stats:false or equipment:false | Authored baseline stat/loadout providers; no duplicate inventory or attribute state. |
 | defenses:false / stances:false | Damage passthrough / neutral stance; no stale modifiers. |
-| progression:false | Static run progression and declared profile policy; preserve permanent ledger bytes, never erase unlocks. |
+| progression:false | Static run progression and explicit new-run profile policy; generic storage persists the progression-owned ledger. Preserve earned classes and ledger bytes; never implicitly relock or erase them. |
 | routes:false or dungeons:false | Foundation activities keep independently enabled services reachable. |
 | class-selection:false | Authored default eligible hero; optional character creation is not auto-enabled. |
 | art:false / animation:false | Usable stand-ins/basic presentation, same targeting geometry; mechanics unchanged. |
 | multiplayer:false | Single-player host binding. |
 
-Every supported built-in override combination requires authored fallback/eligibility variants. Custom malformed references may fail validation. Disabled resources never mean ignoring arbitrary resource-dependent branches. Canonical content remains intact; projections record exclusions and variants without silent identity changes.
+Built-in supported combinations, including each module explicitly off, require tested authored fallback/eligibility variants; this is not a promise for arbitrary combinations. Hiding a widget never disables its mechanic. Custom malformed references may fail validation. Disabled resources never mean ignoring arbitrary resource-dependent branches. Canonical content remains intact; projections record exclusions and variants without silent identity changes.
 
 ```text
 entry = validateEntry(readAuthorJSON())
