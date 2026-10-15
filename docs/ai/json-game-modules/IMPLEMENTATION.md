@@ -70,6 +70,21 @@ Acceptance: core-only browser and headless games reach outcomes; attack/pass and
 
 ## 4. Package ownership and module catalog
 
+The following is a **future target map**, not a tree that currently exists. Introduce paths only for an implemented slice; do not bulk scaffold them or move legacy files merely to match this map.
+
+| Proposed path | Responsibility |
+| --- | --- |
+| engine/kernel/ | Generic registries, transactions, scheduling and composition. |
+| engine/contracts/ | Versioned ABI, bounded rules VM, numeric policies and RNG contracts. |
+| engine/core/ | Required playable baseline; core.json, core.schema.json, core.mjs, core.md, core.content.json, core.ui.json, core.standins.json and core.cases.json. |
+| engine/modules/<id>/ | Optional feature packages using the template below. |
+| engine/games/ashenspire/ | game.json, generated game.lock.json, game.md and authored presets/, groups/ and packs/. |
+| engine/tools/ | Proposed resolver, configuration and export commands; executable names remain undefined until implemented. |
+| engine/adapters/web/ and engine/adapters/headless/ | Browser presentation/input and headless host integration. |
+| engine/verification/ | Shared contract, numeric, replay and portability conformance vectors. |
+
+Extend the existing Workbench through workbench/modules/<configuration>/ and its existing ctx API; do not build a second application or duplicate editor. Existing src/content compilation inputs remain canonical through a compatibility adapter until each migration explicitly selects its single authored owner. Never leave both the legacy and replacement trees editable as competing sources of truth.
+
 Proposed package organization is:
 
 ```text
