@@ -42,3 +42,9 @@ The shared frame retains its existing scrolling behavior: desktop choice and rec
 - No browser page errors occurred.
 
 The script accepts `REST_UI_BASE` and `REST_UI_ENTRY=AshenSpire.html` for a local standalone server. `REST_UI_CAPTURE_ONLY=1` refreshes screenshots; `REST_UI_BEHAVIOR_ONLY=1` runs service transactions without a gallery refresh.
+
+## Final validation scope
+
+Profile/save checks passed (101 tests before the additional explicit basic-policy case); the final Rest/Strategize model group passed all six cases. The configured class probe passed all four unlock stages, and the source browser suite passed pointer and keyboard checks on the locked card. Shared UI contracts passed 22/22 checks and 73/73 mutation selftests.
+
+The broad repository runner was stopped during its lengthy balance corpus; it is not reported as fully passing. Its outdated Settings and Rest composition assertions were corrected and verified separately. The additional Pages iframe browser stage waited on its startup gate and was stopped; that opaque iframe stage remains unverified in this environment. The standalone artifact flows and captures above passed. Successful CI build artifacts and Pages publication status are linked from the root README.
