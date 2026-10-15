@@ -11,6 +11,7 @@
     "rests": "rests.json",
     "rewards": "rewards.json",
     "provisionalPolicies": "provisionalPolicies.json",
-    "resourceVariants": "resourceVariants.json"
+    "resourceVariants": "resourceVariants.json",
+    "shops": "shops.json"
   }
 }
