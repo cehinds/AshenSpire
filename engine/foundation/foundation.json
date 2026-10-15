@@ -1,0 +1,12 @@
+{
+  "id": "ashen.foundation",
+  "version": "1.0.0",
+  "hpOwner": "foundation",
+  "baselineActions": [
+    "attack",
+    "pass"
+  ],
+  "turnPolicy": "oneActionFallback",
+  "gameplayImplementation": "legacy-adapter",
+  "portable": false
+}

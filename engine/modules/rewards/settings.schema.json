@@ -1,0 +1,27 @@
+{
+  "type": "object",
+  "properties": {
+    "mode": {
+      "enum": [
+        "legacy",
+        "configured"
+      ]
+    },
+    "offerCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000
+    },
+    "takeCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000
+    }
+  },
+  "required": [
+    "mode",
+    "offerCount",
+    "takeCount"
+  ],
+  "additionalProperties": false
+}

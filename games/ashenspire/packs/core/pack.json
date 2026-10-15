@@ -1,0 +1,16 @@
+{
+  "id": "ashen.core-content",
+  "version": "1.0.0",
+  "content": {
+    "classes": "classes.json",
+    "cards": "cards.json",
+    "starterDeck": "starterDeck.json",
+    "stats": "stats.json",
+    "classUnlocks": "classUnlocks.json",
+    "routes": "routes.json",
+    "rests": "rests.json",
+    "rewards": "rewards.json",
+    "provisionalPolicies": "provisionalPolicies.json",
+    "resourceVariants": "resourceVariants.json"
+  }
+}

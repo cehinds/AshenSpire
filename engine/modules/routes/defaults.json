@@ -1,0 +1,7 @@
+{
+  "mode": "configured",
+  "acts": 3,
+  "prebossNodes": 7,
+  "restsPerAct": 2,
+  "hideUnknownNodes": true
+}

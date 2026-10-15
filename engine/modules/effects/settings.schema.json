@@ -1,0 +1,40 @@
+{
+  "type": "object",
+  "properties": {
+    "mode": {
+      "enum": [
+        "legacy",
+        "configured"
+      ]
+    },
+    "damageModel": {
+      "type": "string",
+      "minLength": 1
+    },
+    "elements": {
+      "type": "boolean"
+    },
+    "spellRanks": {
+      "type": "boolean"
+    },
+    "attackRatingWeight": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "defenseRatingWeight": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    }
+  },
+  "required": [
+    "mode",
+    "damageModel",
+    "elements",
+    "spellRanks",
+    "attackRatingWeight",
+    "defenseRatingWeight"
+  ],
+  "additionalProperties": false
+}
