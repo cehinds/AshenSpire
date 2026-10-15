@@ -16,13 +16,17 @@ const BUILD_URL = new URL('build.txt', HOSTED_URL).href;
 const sha256 = text => createHash('sha256').update(text).digest('hex');
 const commitPattern = /^[0-9a-f]{40}$/;
 
-export function publicPreviewIdentity(html, site) {
+export function publicPreviewCommit(site) {
   const card = site.match(/<section class="card"><h3>feature\/FullCombatAudit<\/h3>([\s\S]*?)<\/section>/)?.[1];
   const commit = card?.match(/https:\/\/github\.com\/cehinds\/AshenSpire\/commit\/([0-9a-f]{40})/)?.[1];
+  assert.ok(commitPattern.test(commit || ''), 'public branch listing identifies the preview source commit');
+  return commit;
+}
+export function publicPreviewIdentity(html, site) {
+  const commit = publicPreviewCommit(site);
   const source = html.match(/const SOURCE = '([0-9a-f]{10})'/)?.[1];
   const ordinal = html.match(/const ORDINAL = '(\d+)'/)?.[1];
   const release = compiledRelease(html);
-  assert.ok(commitPattern.test(commit || ''), 'public branch listing identifies the preview source commit');
   assert.ok(source && ordinal && release, 'public build carries complete source/version identity');
   return { commit, source, ordinal: Number(ordinal), version: `${release}.${ordinal}`, htmlSha256: sha256(html) };
 }
@@ -31,6 +35,20 @@ export async function assertCompatiblePublicBuild(identity, { expectedCommit, ex
   assert.equal(identity.source, expectedSource, 'public build matches the checkout production source digest');
   assert.ok(await freshBuild(api, 'cehinds/AshenSpire', identity.commit, expectedCommit),
     'public build commit is current or differs only by documentation under the existing Pages eligibility rule');
+}
+export async function loadEligiblePublicPreview({ fetchText, api, expectedCommit, expectedSource }) {
+  assert.ok(commitPattern.test(expectedCommit), 'expected checkout commit is a full SHA');
+  // Poll the small trusted metadata first. An old route can retain an ~80 MB
+  // build, which must not be downloaded every minute while publication catches up.
+  const [site, wrapper] = await Promise.all([fetchText(SITE_URL), fetchText(HOSTED_URL)]);
+  assert.match(wrapper, /<iframe id="preview"/, 'public route is the actual trusted preview wrapper');
+  const commit = publicPreviewCommit(site);
+  assert.ok(await freshBuild(api, 'cehinds/AshenSpire', commit, expectedCommit),
+    'public build commit is current or differs only by documentation under the existing Pages eligibility rule');
+  const html = await fetchText(BUILD_URL);
+  const identity = publicPreviewIdentity(html, site);
+  assert.equal(identity.source, expectedSource, 'public build matches the checkout production source digest');
+  return { identity, wrapperSha256: sha256(wrapper) };
 }
 async function main() {
   const out = resolve(process.env.HOSTED_PREVIEW_OUT || '_hosted-preview'); mkdirSync(out, { recursive: true });
@@ -52,16 +70,13 @@ async function main() {
   try {
     while (true) {
       try {
-        const [html, site, wrapper] = await Promise.all([fetchText(BUILD_URL), fetchText(SITE_URL), fetchText(HOSTED_URL)]);
-        assert.match(wrapper, /<iframe id="preview"/, 'public route is the actual trusted preview wrapper');
-        const identity = publicPreviewIdentity(html, site);
-        await assertCompatiblePublicBuild(identity, { expectedCommit, expectedSource, api });
-        report.identity = identity; report.wrapperSha256 = sha256(wrapper); break;
+        const published = await loadEligiblePublicPreview({ fetchText, api, expectedCommit, expectedSource });
+        report.identity = published.identity; report.wrapperSha256 = published.wrapperSha256; break;
       } catch (error) {
         report.attempts.push({ at: new Date().toISOString(), message: error.message });
         console.log(`Waiting for eligible public preview: ${error.message}`);
         if (Date.now() >= deadline) throw error;
-        await new Promise(done => setTimeout(done, Math.min(30000, deadline - Date.now())));
+        await new Promise(done => setTimeout(done, Math.min(60000, deadline - Date.now())));
       }
     }
     const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');

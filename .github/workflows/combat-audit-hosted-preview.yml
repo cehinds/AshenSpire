@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     # Trusted Pages assembly can take 45 minutes after the feature build; the
     # previous 12-minute proof wait expired before its route was published.
-    timeout-minutes: 65
+    timeout-minutes: 70
     steps:
       - uses: actions/checkout@v5
         with:
