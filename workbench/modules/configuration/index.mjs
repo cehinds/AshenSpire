@@ -26,6 +26,7 @@ export default {
     const report = $('.gc-report');
     let baseHash = null;
     let loadedPath = '';
+    let loadedText = '';
     let validated = null;
     let busy = false;
 
@@ -44,12 +45,17 @@ export default {
     }
     async function load(path = pathSelect.value) {
       if (busy) return;
+      if (textarea.value !== loadedText && !globalThis.confirm('Discard the unsaved profile edits?')) {
+        if (loadedPath) pathSelect.value = loadedPath;
+        return;
+      }
       busy = true;
       setStatus('Loading…');
       report.hidden = true;
       try {
         const file = await ctx.api(`files/read?path=${encodeURIComponent(path)}`);
         textarea.value = file.text;
+        loadedText = file.text;
         baseHash = file.hash;
         loadedPath = path;
         pathSelect.value = path;
@@ -99,6 +105,7 @@ export default {
         const result = await ctx.api('files/save', { changes: [{ path, text: textarea.value, baseHash }] });
         baseHash = result.files[0]?.hash || baseHash;
         loadedPath = path;
+        loadedText = textarea.value;
         setStatus(`Saved ${path}; rebuilding generated profile data…`, 'success');
         ctx.preview.reloadAfterBuild([path], sentAt);
       } catch (error) {
@@ -126,6 +133,7 @@ export default {
         report.hidden = true;
         setStatus(`Imported ${file.name}; validate before saving or previewing.`);
       } catch (error) { setStatus(`Import failed: ${error.message}`, 'error'); }
+      finally { $('.gc input[type=file]').value = ''; }
     }
     function preview(value) {
       ctx.preview.setOverride('gameProfile', value);
