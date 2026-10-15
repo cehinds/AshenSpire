@@ -1,8 +1,9 @@
 # Continue the JSON game modules work
 
 Use this handoff with [CORE-SPEC.md](CORE-SPEC.md),
+[ARCHITECTURE.md](ARCHITECTURE.md),
 [IMPLEMENTATION.md](IMPLEMENTATION.md), and [PSEUDOCODE.md](PSEUDOCODE.md). The
-core specification is the latest product authority for this proposal. Existing
+core specification is the product authority; ARCHITECTURE is the structural authority. Existing
 runtime behavior still comes from the live checkout and `SPEC.md` until code
 changes land.
 
@@ -12,7 +13,8 @@ changes land.
 Continue the AshenSpire JSON-driven modular game work. First run
 `git status --short --branch` and `git log -1 --oneline --decorate`. Read
 CLAUDE.md, CONTRIBUTING.md, DEVELOPER.md and SPEC.md, then
-`docs/ai/json-game-modules/README.md`, `CORE-SPEC.md`, `IMPLEMENTATION.md`,
+`docs/ai/json-game-modules/README.md`, `CORE-SPEC.md`, `ARCHITECTURE.md`,
+`IMPLEMENTATION.md`,
 `PSEUDOCODE.md` and `CONTINUE.md`. Treat the latest live user instruction as
 authoritative and preserve all existing changes. Continue work already
 authorized in this session without asking for that authorization again.
@@ -39,7 +41,13 @@ the user-facing core or product acceptance. Implement incrementally with a
 behavior-preserving adapter.
 Make the full Ashen core usable first; then prove optional modules can be
 independently omitted while supported combinations remain playable. Do not move
-all legacy code into core at once.
+all legacy code into core at once. Kernel is infrastructure only; always-installed
+engine/foundation owns minimal gameplay and the sole authoritative HP provider.
+Resources decorates HP and owns SP/MP/Actions. Follow ARCHITECTURE: Ashen data-only
+bundle in games/ashenspire/bundles/core, definitions in games/ashenspire/packs/core,
+reusable mechanics in engine/modules. No engine/core/core.mjs monolith.
+Class selection is core; optional character creation is off. Tags/groups select
+declared references without hidden module activation.
 
 Workers commit and push to their own
 `origin/worker/json-game-modules/<task>` branches. The integrator reviews and

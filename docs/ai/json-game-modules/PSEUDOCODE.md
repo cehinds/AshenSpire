@@ -8,6 +8,15 @@ scope and delivery sequence in [IMPLEMENTATION.md](IMPLEMENTATION.md); record wo
 and resume instructions in [CONTINUE.md](CONTINUE.md). Integration is restricted to
 `Feature/json-game-modules`; do not promote to `dev`, `test`, `main`, or a release.
 
+[ARCHITECTURE.md](ARCHITECTURE.md) governs structure; CORE-SPEC governs product
+rules. Use the architecture document for the proposed tree: data-only Ashen bundle
+at `games/ashenspire/bundles/core`, Ashen definitions at
+`games/ashenspire/packs/core`, reusable mechanics at `engine/modules`, and gameplay
+foundation at `engine/foundation`. Do not collapse these into `engine/core/core.mjs`.
+Class selection is core; optional character creation is off. Progression may keep
+run-level and profile-unlock subdomains under one module. Tags/groups resolve
+declared references without implicitly activating modules.
+
 ## 1. Distinguish the full core bundle from the technical fallback
 
 The product core `ashen.core@1.0.0` selects the **full core bundle**, not a
@@ -15,7 +24,8 @@ one-attack demo. [CORE-SPEC.md](CORE-SPEC.md) owns its class, loadout, card, res
 combat, progression, route, rest, reward and presentation specifications, including
 pending decisions. Read that sibling before implementing a policy or filling in a
 number. The bundle declares feature modules and exact package pins explicitly;
-the runtime kernel supplies their shared contracts and technical fallbacks.
+the generic kernel supplies infrastructure contracts, while always-installed
+engine/foundation supplies the minimal gameplay and technical fallback providers.
 
 The full profile defines four classes; a new player profile can select only Reaver.
 Complete runs unlock the other classes in CORE-SPEC order, on victory or defeat.
@@ -50,6 +60,7 @@ in inspection; they cannot silently replace the specified card-turn model.
 ```text
 type CorePhase = launch | activity | playerTurn | enemyTurn | victory | death
 type TransactionStatus = COMMITTED | REJECTED | SUSPENDED
+// Historical name: foundation gameplay state, never generic kernel state.
 CoreState = {
   phase, cycle, hero, activity: {id, kind, enemies, localState, enemyCursor},
   outcome, turn: {ownerId, policyId, opportunitiesRemaining?, freeCommandsRemaining},
@@ -295,7 +306,7 @@ resolve(authorSource, pinnedCatalog):
     true: enable merge(module.defaults, bundle.overrides)
     object: enable merge(module.defaults, bundle.overrides, author.object)
   selected = enabledFeatureIDs(effective)
-  packages = [coreBundle.kernel] + selected.map(requireExactBundleOrCatalogPin)
+  packages = [runtime.kernel, runtime.foundation] + selected.map(requireExactBundleOrCatalogPin)
   record expansion, value provenance and all bundle pins
   close bundled technical dependencies with typed version checks
   assert selected feature IDs unchanged by technical closure
@@ -335,6 +346,10 @@ plain host `JSON.stringify` is not a cross-engine specification. Keep source,
 config, resolved-game and save-state hashes distinct. Freeze configuration for a
 run. Every registry, bridge and cache is scoped by immutable runtime instance and
 resolved hash, not a mutable process singleton.
+
+Foundation owns authoritative HP state/provider exactly once. The resources module
+uses/decorates that provider and owns SP/MP/Actions; registering a second HP owner
+is a provider-arbitration error. Foundation remains installed when resources is off.
 
 ## 4. Project content with honest fallbacks
 

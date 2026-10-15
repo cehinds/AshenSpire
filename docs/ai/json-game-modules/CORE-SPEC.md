@@ -2,6 +2,8 @@
 
 **Status: documentation only; proposed runtime, schemas and game configuration are not implemented.** This file defines the requested future core. Existing gameplay and the repository-wide `SPEC.md` are unchanged. The documentation baseline was `49c5781fe`; the surveyed live source baseline was `3d40c190983069eec8d8a2370fb3f229ac376290`. Obtain the active branch head with `git log -1 --oneline --decorate`; neither baseline is a claim about the current tip.
 
+[ARCHITECTURE.md](ARCHITECTURE.md) is the structural authority for the proposed file/module boundaries; this file is the product authority for rules and defaults. Read both before implementation.
+
 Authority for this work is: **latest live user instructions → this CORE-SPEC → consistent [IMPLEMENTATION.md](IMPLEMENTATION.md) and [PSEUDOCODE.md](PSEUDOCODE.md)**. [README.md](README.md) indexes delivery status; [CONTINUE.md](CONTINUE.md) carries the next-session handoff. Resolve conflicting planning text by updating these documents. Future source changes must reconcile the repository specification explicitly; this document does not silently change live behavior or authorize source edits now.
 
 Workers commit and push only their own `worker/json-game-modules/<task>` branches. The integrator alone integrates and pushes `Feature/json-game-modules`. **No merge or promotion to `dev`, `test`, `release` or `main` until a future explicit owner instruction.** No new top-level AGENTS file, runtime/schema implementation, game configuration deployment or GitHub messages belong to this documentation task.
@@ -24,7 +26,9 @@ Labels below matter: **Confirmed** means requested by the owner or an already ac
 
 ## Bundle, kernel and toggles
 
-**Confirmed:** The kernel is generic infrastructure: contracts, deterministic scheduling/RNG, registries, transactions, validation and host adapters. The product core is a versioned bundle of declared feature modules and their settings/content. All features required by the core rules below ship selected by that bundle. A core-only request therefore means the full specified game, including cards and progression; a minimal attack/pass harness alone fails product acceptance.
+**Confirmed:** The kernel is generic infrastructure: contracts, deterministic scheduling/RNG, registries, transactions, validation and host adapters. Always-installed `engine/foundation` owns minimal gameplay providers; the kernel owns infrastructure only. The product core is a data-only bundle of declared feature modules and their settings/content at `games/ashenspire/bundles/core`, with Ashen definitions at `games/ashenspire/packs/core` and reusable mechanics at `engine/modules`. Follow ARCHITECTURE rather than introducing an `engine/core/core.mjs` gameplay monolith. All features required by the core rules below ship selected by that bundle. A core-only request therefore means the full specified game, including cards and progression; a minimal attack/pass harness alone fails product acceptance.
+
+Foundation is the single authoritative HP owner. Resources uses/decorates that HP provider and owns SP/MP/Actions, without a second HP state. Class selection belongs to the core bundle; optional character creation is off. Progression may own separate run-level and profile-unlock subdomains without changing their confirmed rules. Tags/groups select declared references and never activate hidden modules.
 
 The public author entry shape remains:
 
