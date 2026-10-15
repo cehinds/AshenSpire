@@ -4,6 +4,9 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { combatStatusRules } from '../src/content/combatStatusRules.js';
 import { cardDetailHtml } from '../src/ui/components/card.js';
+import { createCombat, previewCard } from '../src/engine/combat.js';
+import { createRng } from '../src/engine/rng.js';
+import { applyStatus } from '../src/engine/statuses.js';
 
 const reg = createRegistries(contentBundle);
 const effect = (status, op = 'applyStatus') => ({ op, target: 'self', status, stacks: 1, amount: 1 });
@@ -43,6 +46,33 @@ test('visible status details use the actual classic, expanded and custom cap con
     crimsonBlight: { ...combatStatusRules.statuses.crimsonBlight, cap: 5 } } };
   const preview = { cost: 1, manaCost: 0, combatExpansionVersion: 2, combatStatusRules: custom };
   assert.match(details(def, { preview, rules: { combatExpansionVersion: 1 } }), /up to 5/);
+});
+
+test('real engine previews carry detached custom status rules through the hand’s preview-only route', () => {
+  const custom = structuredClone(combatStatusRules);
+  custom.statuses.crimsonBlight.cap = 5;
+  const combat = createCombat({ registries: reg, rng: createRng(91),
+    combatExpansionVersion: 2, combatExpansionRules: { statuses: custom },
+    player: { classId: 'herald', hp: 80, maxHp: 80, energyMax: 20, maxStamina: 20,
+      stamina: 20, maxMana: 20, mana: 20, drawPerTurn: 3, relicIds: [],
+      deck: Array.from({ length: 5 }, (_, i) => ({ instanceId: 'status-preview-' + i, cardId: 'contagion' })) },
+    enemyIds: ['wanderingSoldier'] });
+  applyStatus(combat, combat.enemies[0], 'crimsonBlight', 9, combat.player);
+  assert.equal(combat.enemies[0].statuses.crimsonBlight.stacks, 5, 'actual execution uses custom cap');
+  const instance = combat.piles.hand[0], preview = previewCard(combat, instance.instanceId);
+  assert.equal(preview.combatStatusRules.statuses.crimsonBlight.cap, 5);
+  assert.equal(preview.foundation, !!combat.foundation);
+  const html = cardDetailHtml(reg, instance, { preview });
+  const section = html.match(/<section class="inspection-status-details">([\s\S]*?)<\/section>/)[1];
+  assert.match(section, /stack total up to 5/);
+  assert.doesNotMatch(section, /stack total up to 3/);
+  preview.combatStatusRules.statuses.crimsonBlight.cap = 99;
+  assert.equal(combat.combatExpansionRules.statuses.statuses.crimsonBlight.cap, 5, 'UI metadata cannot mutate the combat snapshot');
+  const override = structuredClone(custom);
+  override.statuses.crimsonBlight.cap = 7;
+  combat.combatStatusRules = override;
+  assert.equal(previewCard(combat, instance.instanceId).combatStatusRules.statuses.crimsonBlight.cap, 7,
+    'preview follows the engine’s explicit-rule precedence');
 });
 
 test('unstamped definitions name both rule sets; a v2 definition supplies known context', () => {
