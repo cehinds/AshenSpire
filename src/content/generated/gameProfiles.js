@@ -3055,7 +3055,161 @@ export const gameProfileCatalog = {
             "weaponArts",
             "potions",
             "armor"
-          ]
+          ],
+          "equipmentGroups": {
+            "straightSwords": {
+              "family": "armament",
+              "allTags": [
+                "item:blade"
+              ],
+              "members": [
+                "straightSword"
+              ]
+            },
+            "shields": {
+              "family": "armament",
+              "allTags": [
+                "item:shield"
+              ],
+              "members": [
+                "buckler",
+                "kiteShield",
+                "towerShield",
+                "roundShield",
+                "spikedShield"
+              ]
+            },
+            "scepters": {
+              "family": "armament",
+              "allTags": [
+                "item:magic-focus"
+              ],
+              "members": [
+                "boneSceptre",
+                "emberlightSceptre"
+              ]
+            },
+            "bows": {
+              "family": "armament",
+              "allTags": [
+                "item:blade"
+              ],
+              "members": [
+                "shortbow"
+              ]
+            },
+            "greatswords": {
+              "family": "armament",
+              "allTags": [
+                "item:blade"
+              ],
+              "members": [
+                "greatsword"
+              ]
+            },
+            "daggers": {
+              "family": "armament",
+              "allTags": [
+                "item:blade"
+              ],
+              "members": [
+                "dagger",
+                "parryDagger"
+              ]
+            },
+            "robes": {
+              "family": "armour",
+              "allTags": [
+                "item:armor"
+              ],
+              "members": [
+                "starseer:default",
+                "starseer:eclipse",
+                "starseer:starlit",
+                "starseer:astral",
+                "starseer:rimeweave",
+                "reaver:riteVestments",
+                "starseer:riteVestments",
+                "rogue:riteVestments",
+                "herald:riteVestments"
+              ]
+            },
+            "lightArmor": {
+              "family": "armour",
+              "allTags": [
+                "item:armor"
+              ],
+              "members": [
+                "rogue:default",
+                "rogue:nightveil",
+                "rogue:duelist",
+                "rogue:shadow",
+                "rogue:waywatcher",
+                "herald:emberhabit",
+                "reaver:nightweave",
+                "reaver:gutterLeathers",
+                "starseer:nightweave",
+                "starseer:gutterLeathers",
+                "rogue:nightweave",
+                "rogue:gutterLeathers",
+                "herald:nightweave",
+                "herald:gutterLeathers"
+              ]
+            },
+            "mediumArmor": {
+              "family": "armour",
+              "allTags": [
+                "item:armor"
+              ],
+              "members": [
+                "reaver:default",
+                "reaver:vigil",
+                "reaver:oathsworn",
+                "herald:default",
+                "herald:ossuary",
+                "herald:pilgrim"
+              ]
+            },
+            "heavyArmor": {
+              "family": "armour",
+              "allTags": [
+                "item:armor"
+              ],
+              "members": [
+                "reaver:warden",
+                "reaver:bastion",
+                "reaver:wayfarerPlate",
+                "starseer:wayfarerPlate",
+                "rogue:wayfarerPlate",
+                "herald:wayfarerPlate"
+              ]
+            }
+          },
+          "eligibility": {
+            "weapons": {
+              "groups": [
+                "straightSwords",
+                "shields",
+                "scepters",
+                "bows",
+                "greatswords",
+                "daggers"
+              ]
+            },
+            "armor": {
+              "groups": [
+                "robes",
+                "lightArmor",
+                "mediumArmor",
+                "heavyArmor"
+              ]
+            },
+            "weaponArts": {
+              "cardIds": [
+                "core.reaverSpecial"
+              ]
+            }
+          }
         },
         "provisionalPolicies": {
           "status": "adapter-provisional",
@@ -3356,7 +3510,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/rewards.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:de615f325186601e662053f0f45189d4051f33aa4eb0789615dca176ab8099a0"
+          "hash": "sha256:1f48daac4730f5a4161a413124d681d0614644777bc1ff6ed3624db50274c65d"
         },
         {
           "path": "games/ashenspire/packs/core/provisionalPolicies.json",
@@ -3408,7 +3562,7 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "path": "src/** (excluding generated gameProfiles/changelog)",
-      "hash": "sha256:98835b89a3e3ae005328a50c51b23496f4ebcf79d8a6a3e627faddc1d5315ad2"
+      "hash": "sha256:3382e907abeb267b78ed73600f6bdabfb4c014dfe3527a155f9a515ec570cd54"
     }
   ],
   "runtimeSources": [
@@ -5636,7 +5790,7 @@ export const gameProfileCatalog = {
       "path": "src/model/gameProfileRewards.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:545e7b052892139699d6475935ed09be736041babe8c7a9164c2bd3ccf95c424"
+      "hash": "sha256:c83fc23809cc1a7df01aa0371bf92d3a19003517dc6dda5139ed58cc43a13d24"
     },
     {
       "path": "src/model/gameProfileRun.js",
@@ -5708,7 +5862,7 @@ export const gameProfileCatalog = {
       "path": "src/model/loadout.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:5045821382d2ec31740d8b6842356881b9af58f0d562268a4c30710ce2f3e60c"
+      "hash": "sha256:7485965b56e956b531ad8eca5ccd619d164bfd0b4bd98b0ecf548ae39312ba1f"
     },
     {
       "path": "src/model/locationPresentation.js",
@@ -8231,7 +8385,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:23af16d4e9c9f6d88fe655d32ecf1a688b47df39f9e3a1d6d193ce63923593ab"
     }
   ],
-  "runtimeHash": "sha256:972c3ece7227c8e5072fdb5f4f13d18079d7a5d49dc2e1eafe8056a8b63321c7"
+  "runtimeHash": "sha256:60c103330ddb93cd73055fceeabe5b7efc854e77f5f779a195d722965c2f430b"
 };
 export const gameProfileAuthors = {
   "default": {
