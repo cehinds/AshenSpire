@@ -1,4 +1,4 @@
-import { configuredCombat, setProfileStance } from './gameProfileCombat.js';
+import { configuredCombat, configuredModule, setProfileStance } from './gameProfileCombat.js';
 import { removeStatus } from './statuses.js';
 import { stanceOf, sameStance, stanceEntryBonuses, stanceRulesFor } from '../model/stanceRules.js';
 import { syncWardMaximum } from './combatPools.js';
@@ -431,7 +431,7 @@ function preparedCounter(ctx, target, carrier, options) {
   if (!counter?.charges || (carrier?.combatReaction && carrier.manualCounterSerial !== counter.serial) || restrictions(ctx, target, options).counterDisabled) return null;
   const stance = target.combatStance?.maneuver;
   const authoredCounter = counter.carrier?.combatProfile?.maneuver === 'counter';
-  if (stance !== 'counter' && !(stance === 'evade' && authoredCounter)) return null;
+  if (!(configuredCombat(ctx) && !configuredModule(ctx, 'stances')) && stance !== 'counter' && !(stance === 'evade' && authoredCounter)) return null;
   if ((target.combatOwnerCycle || 0) >= counter.expiresOnOwnerCycle) return null;
   return counter;
 }
@@ -483,6 +483,17 @@ export function previewTacticalAction(ctx, source, target, carrier, contacts = [
   const covered = profiles.map((profile, index) => counterCoverageMatches(counter?.coverage, profile, profile.effect || 'damage')
     && (profile.effect === 'status' ? number(contacts[index].pressure ?? contacts[index].amount) > 0 : number(contacts[index].amount) > 0));
   const eligible = !!counter && covered.some(Boolean);
+  // Configured profiles retain preparation/coverage and action grouping, while
+  // their single damage provider owns stance, accuracy, Block and Poise.
+  if (configuredCombat(ctx)) {
+    const amounts = contacts.map(contact => contact.effect ? 0 : number(contact.amount));
+    return { version: 2, targetKey: targetKey(ctx, target), profile: normalizedProfile(carrier), profiles,
+      amount: amounts.reduce((sum, value) => sum + value, 0), amounts,
+      counterEligible: eligible, counter: eligible ? structuredClone(counter) : null, covered,
+      counterDisabledAtStart: Boolean(control.counterDisabled), avoidance: { chance: 0 },
+      hpLoss: 0, blocked: 0, wardResisted: 0, statusAccepted: 0, statusResisted: 0,
+      avoided: false, connected: true, completed: false };
+  }
   const counterAttack = attackHitPreview(ctx, source, target, carrier, { additionalTargets: options.additionalTargets ?? carrier?.additionalTargets ?? 0, evadeDisabled: control.evadeDisabled });
   const multiplier = profiles.map(profile => stanceMultiplier(ctx, target, profile, counterAttack));
   const weighted = contacts.map((contact, index) => contact.effect === 'status' ? 0 : number(contact.amount) * multiplier[index]);
@@ -525,6 +536,14 @@ export function beginTacticalAction(ctx, source, target, carrier, contacts = [],
   if (options.receipt?.begun) return options.receipt;
   const receipt = previewTacticalAction(ctx, source, target, carrier, contacts, options);
   receipt.begun = true;
+  if (configuredCombat(ctx)) {
+    if (receipt.counterEligible) {
+      target.combatCounter.charges = 0;
+      ctx.emit?.('combatCounterConsumed', { ...eventCarrier(target, receipt.counter.carrier),
+        sourceId: target.id, targetId: source?.id, serial: receipt.counter.serial });
+    }
+    return receipt;
+  }
   const control = restrictions(ctx, target, options);
   const counterAttack = resolveAttackHit(ctx, source, target, carrier, { additionalTargets: options.additionalTargets ?? carrier?.additionalTargets ?? 0, evadeDisabled: control.evadeDisabled, suppressOutcomeEvent: true });
   if (counterAttack) receipt.counterAttack = counterAttack;

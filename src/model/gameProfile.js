@@ -30,8 +30,6 @@ export function projectGameCard(subject,idOrInstance) {
   }
   const chosen = alternate ? {...dataClone(def),...dataClone(alternate)} : dataClone(def);
   chosen.kindIds = ['classification.' + chosen.type];
-  // Configured authored effects resolve on play; legacy Counter replies do not.
-  chosen.combatEffectsTiming = 'immediate';
   chosen.resourceCosts = {sp:chosen.staminaCost || 0,mp:chosen.manaCost || 0};
   return freezeGameData(chosen);
 }

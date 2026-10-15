@@ -287,6 +287,16 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
   const chance = profileDamageReceipt(ctx, source, target, base, carrier);
   const receipt = profileDamageReceipt(ctx, source, target, base, carrier,
     { roll: chance.hitChance < 1 ? ctx.rng.float(configuredModule(ctx, 'stances')?.accuracyStream || 'combatAvoidance') : null });
+  const tactical = carrier?.expansionContact?.receipt;
+  if (tactical) {
+    // Replace the planned estimate with the executed receipt. No second defense
+    // pass or legacy avoidance roll may change the configured contact.
+    const index = carrier.expansionContact.index;
+    tactical.amount += receipt.amount - (tactical.amounts[index] || 0);
+    tactical.amounts[index] = receipt.amount;
+    Matchups.recordTacticalContact(tactical, { hpLoss: receipt.hpLoss, blocked: receipt.blocked });
+    if (receipt.evaded) tactical.avoided = true;
+  }
   const before = target.block || 0;
   target.block = receipt.blockRemaining;
   target.hp -= receipt.hpLoss;
@@ -411,6 +421,7 @@ export function spendSilencedStack(ctx, target) {
 }
 
 export function prepareExpandedDefense(ctx, target, receipt, carrier) {
+  if (configuredCombat(ctx)) return;
   if (receipt.defendedAmounts) return;
   // Force hits that meet a Silenced target's stacks: their Force (Arcane) part is negated before any defence.
   receipt.silencedImmune = silencedForceContacts(ctx, target, receipt.profiles);

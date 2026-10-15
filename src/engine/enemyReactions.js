@@ -1,3 +1,4 @@
+import { configuredModule } from './gameProfileCombat.js';
 // Enemy reactions (docs/combat-card-traits-contract.md, "Enemy reactions").
 // A reaction move is an enemy move with `reaction: { on, minIncoming, chance }`.
 // openEnemyWindow asks decideEnemyReaction for each enemy in roster order and commits
@@ -202,7 +203,7 @@ export function openEnemyWindow(ctx, group, reactionWindow, pushed, hooks) {
   group.enemyWindows = index + 1;
   const targetPlayerId = reactionWindow === 'playerAction' ? playerRootSeat(ctx, group) : pushed.ownerId;
   if (!targetPlayerId) return [];
-  const cap = ctx.reactionRules.stack.maxDepth;
+  const cap = configuredModule(ctx, 'reactions')?.chainLimit ?? ctx.reactionRules.stack.maxDepth;
   const pushedEntries = [];
   for (const enemy of ctx.enemies) {
     const stacked = ctx.reactionStack?.groupKey === group.key ? ctx.reactionStack.entries : [];

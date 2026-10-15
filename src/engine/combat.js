@@ -165,7 +165,10 @@ export function createCombat({
 }) {
   if (configuredCombat({ gameProfile })) {
     // Keep the existing orchestrator; new profile providers replace legacy v2 extras.
-    combatExpansionVersion = 1; reactionRulesVersion = null; ratingsRules = null;
+    combatExpansionVersion = 2;
+    const reactions = configuredModule({ gameProfile }, 'reactions');
+    reactionRulesVersion = reactions && reactions.chainLimit > 0 ? 2 : null;
+    ratingsRules = null;
     ruleset = null; combatRounds = null; normalPreview = null; recoveryRules = null;
   }
   // New expanded fights carry reaction rules version 2; null (saved or explicit) stays without reactions.
@@ -322,13 +325,13 @@ export function createCombat({
   combat.enqueue = (action) => combat.queue.push(action);
   combat.nextInstanceId = () => `gen${++combat._idCounter}`;
   if (combatExpansionVersion === 2) {
-    Object.assign(combat.player, expandedEquipmentProjection(registries, combat.loadout, combat.player.classId, combat.combatExpansionRules.equipment));
+    if (!configuredCombat(combat)) Object.assign(combat.player, expandedEquipmentProjection(registries, combat.loadout, combat.player.classId, combat.combatExpansionRules.equipment));
     combat.player.ashenBlight = structuredClone(player.ashenBlight || createAshenBlightState());
     combat.player.attributes = structuredClone(player.attributes || {});
     combat.combatControlRestrictions = entity => Control.controlRestrictions(combat, entity);
     combat.player.combatExpansionVersion = 2;
     combat.player.baseResourceMaxima = structuredClone(player.baseResourceMaxima || { maxHp: player.maxHp, maxMana: player.maxMana || 0, maxStamina: player.maxStamina || player.energyMax || 0 });
-    combat.attributes = settleExpandedPools(combat, combat.player).attributes;
+    if (!configuredCombat(combat)) combat.attributes = settleExpandedPools(combat, combat.player).attributes;
     combat.restorationModifierPercent = (entity, kind) => Blight.ashenBlightRestorationPercent(combat, entity, kind, String(entity.combatOwnerCycle || 0));
   }
 
@@ -364,7 +367,7 @@ export function createCombat({
         damageMult: enemyDamageMult,
       })
     );
-    if (combatExpansionVersion === 2) Object.assign(combat.enemies.at(-1), expandedEnemyProjection(enemyId, combat.combatExpansionRules.equipment));
+    if (combatExpansionVersion === 2 && !configuredCombat(combat)) Object.assign(combat.enemies.at(-1), expandedEnemyProjection(enemyId, combat.combatExpansionRules.equipment));
     combat.emit('enemySpawned', { targetId: `e${i + 1}`, enemyId });
   });
 
@@ -383,8 +386,8 @@ export function createCombat({
   }
   if (combatExpansionVersion === 2) {
     for (const entity of [combat.player, ...combat.enemies]) {
-      Control.initializePersistentWard(entity, persistentWardMaximum(combat, entity));
-      Control.initializePersistentPoise(entity, persistentPoiseMaximum(combat, entity));
+      Control.initializePersistentWard(entity, configuredCombat(combat) ? 0 : persistentWardMaximum(combat, entity));
+      Control.initializePersistentPoise(entity, configuredCombat(combat) ? 0 : persistentPoiseMaximum(combat, entity));
       entity.barrier = 0;
     }
   }
@@ -434,7 +437,7 @@ export function createCombat({
     combat.piles.draw = orderedDrawPile(rng.shuffle('shuffle', deck), isInnate);
   }
 
-  if (combatExpansionVersion === 2) {
+  if (combatExpansionVersion === 2 && !configuredCombat(combat)) {
     refreshExpandedLoadout(combat, combat.player, { refreshPoise: false });
     const entry = Blight.rollAshenBlightEncounter(combat, combat.player, combatKey);
     if (entry.terminal) { combat.turn = 1; combat.player.alive = false; combat.player.hp = 0; combat.phase = 'ended'; combat.result = 'defeat'; combat.emit('ashenBlightLost', { targetId: combat.player.id, reason: 'encounter' }); return combat; }
@@ -911,7 +914,7 @@ function enemyMoveActions(combat, enemy, move, moveId, carrier) {
       target: enemy, card: carrier, meta: { moveId } });
   }
   for (const eff of move.effects || []) {
-    if (configuredCombat(combat) || carrier.combatProfile.maneuver !== 'counter' || !['damage', 'poiseDamage', ...(combat.combatExpansionVersion === 2 ? ['wardDamage'] : [])].includes(eff.op)) actions.push({ effect: eff, source: enemy, owner: enemy, target: combat.player, card: carrier, meta: { moveId } });
+    if (carrier.combatProfile.maneuver !== 'counter' || !['damage', 'poiseDamage', ...(combat.combatExpansionVersion === 2 ? ['wardDamage'] : [])].includes(eff.op)) actions.push({ effect: eff, source: enemy, owner: enemy, target: combat.player, card: carrier, meta: { moveId } });
   }
   return actions;
 }
@@ -968,8 +971,7 @@ function presentIntent(combat, enemy, def, moveId) {
     delete enemy.intentRevealed;
   } else if (enemy.intent.combatProfile.camp) enemy.intentRevealed = combat.rng.float('enemyIntentVisibility') >= hiddenIntentChance(combat.attributes || {}, combat.combatIntentRules || {});
   else delete enemy.intentRevealed;
-  if (configuredCombat(combat)) setProfileStance(combat, enemy, enemyMoveCarrier(enemy, def.moves[moveId], moveId, combat));
-  else primeEnemyCounter(combat, enemy, def.moves[moveId], moveId);
+  primeEnemyCounter(combat, enemy, def.moves[moveId], moveId);
 }
 
 // The weighted pick (SPEC §4.6). `maxSp` is the SP left in the enemy's pool: a move that costs more is not picked
@@ -1764,8 +1766,7 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
   if (charges.keys.length) combat.emit('cardChargeConsumed', { keys: charges.keys, cardId: inst.cardId, sourceId: p.id });
   combat.pendingAbilityPlay = { instance: inst, ref: cardRef, kind, printedManaCost: def.manaCost || 0, targetId: target?.id || null, before };
   const charged = new Set();
-  const tacticalEffects = configuredCombat(combat) ? chargedEffects
-    : prepareTacticalCard(combat, p, target, cardRef, chargedEffects, meta, { damageBonus: charges.damage + charges.damageEffect, poiseBonus: charges.break });
+  const tacticalEffects = prepareTacticalCard(combat, p, target, cardRef, chargedEffects, meta, { damageBonus: charges.damage + charges.damageEffect, poiseBonus: charges.break });
   if (configuredCombat(combat)) {
     const limit = configuredModule(combat, 'cards')?.freeCommandLimit ?? 32;
     if ((combat.gameProfileCommands || 0) >= limit) throw new Error('Turn work budget reached; End Turn remains available');
@@ -2442,6 +2443,12 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
       if (bonusIndex < 0) bonusIndex = chargedEffects.findIndex(effect => effect.op === 'damage');
       const bonus = Math.max(0, charges.damage + charges.damageEffect);
       counterPreviews.set(key, replies.map((reply, effectIndex) => {
+        if (configuredCombat(combat)) {
+          const result = previewDamageHits(combat, p, resolvedTarget,
+            (reply?.value || 0) + (effectIndex === bonusIndex ? bonus : 0),
+            action.card.tags || [], { ...action.card, combatReaction: true, counterReturnAttack: true }, reply?.hits || 0);
+          return result;
+        }
         const hitDamages = Array.from({ length: reply?.hits || 0 }, () => reply.value);
         if (effectIndex === bonusIndex && bonus) {
           if (!hitDamages.length) hitDamages.push(0);
@@ -2477,7 +2484,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
           entry.sourceBuildup = structuredClone(carrier.resolvedSource.buildup || []);
           attackTags = carrier.tags;
         }
-        const isCounterReply = !configuredCombat(combat) && action.card.combatProfile?.maneuver === 'counter';
+        const isCounterReply = action.card.combatProfile?.maneuver === 'counter';
         entry.hits = isCounterReply
           ? previewCounter(primary, i).hitDamages.length
           : evalPreview(combat, action, eff.hits != null ? eff.hits : 1, primary);
@@ -2486,7 +2493,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
         for (const e of living) {
           const result = isCounterReply
             ? previewCounter(e, i)
-            : combat.combatExpansionVersion === 2 ? expandedPreview(e, i)
+            : !configuredCombat(combat) && combat.combatExpansionVersion === 2 ? expandedPreview(e, i)
             : previewDamageHits(combat, p, e,
               evalPreview(combat, action, eff.amount, e) + (action.meta.abilityChargeDamage || 0) + (action.meta.abilityChargeDamageEffect || 0),
               attackTags, carrier, entry.hits, damagePreviewStates.get(e.id));
