@@ -6587,15 +6587,14 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 .customize.cc-design-workspace #cz-review-summary .cc-summary-slot { gap:calc(4px / var(--ui-zoom,1)); }
 .customize.cc-design-workspace #cz-review-summary .cc-summary-slot > .as-eyebrow { font-size:calc(14px / var(--ui-zoom,1)); letter-spacing:.025em; }
 .customize.cc-design-workspace #cz-review-summary .cc-summary-slot > :is(.card,.equipment-poker-card,.cc-summary-empty) { width:100%; max-width:100%; height:auto; min-width:0; aspect-ratio:var(--card-ratio,5/7); margin:0; }
-.customize.cc-design-workspace #cz-review-summary .cc-summary-slot[data-summary-slot="character"] { grid-column:1 / -1; }
-.customize.cc-design-workspace #cz-review-summary .cc-summary-character { width:100%; max-width:none; aspect-ratio:auto; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,2fr); gap:var(--cc-space); padding:var(--cc-space); }
-.customize.cc-design-workspace #cz-review-summary .cc-summary-eyebrow { font-size:var(--cc-body-font); letter-spacing:0; text-transform:none; }
-.customize.cc-design-workspace #cz-review-summary .cc-summary-name { grid-column:1; font-size:calc(20px / var(--ui-zoom,1)); }
-.customize.cc-design-workspace #cz-review-summary .cc-summary-character > .as-hairline { display:none; }
-.customize.cc-design-workspace #cz-review-summary .cc-summary-stats { grid-column:2; grid-template-columns:repeat(3,minmax(0,1fr)); gap:calc(4px / var(--ui-zoom,1)) var(--cc-space); }
-.customize.cc-design-workspace #cz-review-summary .cc-summary-stats:first-of-type { grid-row:1; }
-.customize.cc-design-workspace #cz-review-summary .cc-summary-stats:last-child { grid-row:2; margin-top:0; }
-.customize.cc-design-workspace #cz-review-summary .cc-summary-stats > .as-statpair { font-size:var(--cc-body-font); }
+/* Character uses one ordinary portrait card slot, just like its loadout.
+   The Review ratio token is shared with the adjacent equipment faces. */
+.customize.cc-design-workspace #cz-review-summary .cc-summary-character { width:100%; max-width:none; aspect-ratio:var(--card-ratio,5/7); display:flex; flex-direction:column; gap:calc(4px / var(--ui-zoom,1)); padding:calc(8px / var(--ui-zoom,1)); }
+.customize.cc-design-workspace #cz-review-summary .cc-summary-eyebrow { font-size:calc(14px / var(--ui-zoom,1)); line-height:1.2; letter-spacing:0; text-transform:none; }
+.customize.cc-design-workspace #cz-review-summary .cc-summary-name { font-size:calc(18px / var(--ui-zoom,1)); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.customize.cc-design-workspace #cz-review-summary .cc-summary-stats { grid-template-columns:repeat(2,minmax(0,1fr)); gap:calc(4px / var(--ui-zoom,1)) calc(8px / var(--ui-zoom,1)); }
+.customize.cc-design-workspace #cz-review-summary .cc-summary-stats > .as-statpair { font-size:calc(14px / var(--ui-zoom,1)); line-height:1.2; }
+.customize.cc-design-workspace #cz-review-summary .cc-summary-stats :is(.sp-k,.sp-v) { font-size:inherit; line-height:inherit; letter-spacing:0; }
 .customize.cc-design-workspace #cz-review-summary .cc-subclass-deck > .cc-part-body { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,calc(240px / var(--ui-zoom,1))),1fr)); gap:var(--cc-space); align-items:start; }
 .customize.cc-design-workspace #cz-review-summary .cc-subclass-deck-group + .cc-subclass-deck-group { margin-top:0; }
 .customize.cc-design-workspace #cz-review-summary .cc-subclass-deck-cards { grid-template-columns:minmax(0,1fr); gap:calc(4px / var(--ui-zoom,1)); }
@@ -6604,10 +6603,6 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 .customize.cc-design-workspace #cz-review-summary .cc-subclass-deck-card .engraved-icon { grid-column:3; grid-row:1; }
 @media(max-width:600px) {
  .customize.cc-design-workspace #cz-review-summary .cc-summary-cards { grid-template-columns:repeat(2,minmax(0,1fr)); }
- .customize.cc-design-workspace #cz-review-summary .cc-summary-character { grid-template-columns:minmax(0,1fr); }
- .customize.cc-design-workspace #cz-review-summary .cc-summary-stats { grid-column:1; }
- .customize.cc-design-workspace #cz-review-summary .cc-summary-stats:first-of-type,
- .customize.cc-design-workspace #cz-review-summary .cc-summary-stats:last-child { grid-row:auto; }
  .customize.cc-design-workspace :is(#cz-equipment-panel,.cc-equipment-fold,.cc-equipment-header,.cc-equipment-header select,.cc-equip-group,.cc-card-selectors,.poker-equipment-choice) { min-width:0; max-width:100%; box-sizing:border-box; }
  .customize.cc-design-workspace .cc-equipment-header > b { font-size:var(--cc-body-font); }
  .customize.cc-design-workspace #cz-equipment-count { white-space:normal; flex:0 1 auto; }
