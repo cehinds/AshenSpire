@@ -51,6 +51,7 @@ export function applyGameProfileToContent(baseBundle,profileOrAuthor = 'current'
     // Existing registry schemas use tags through the tagging relation table.
     const raw=additions.map(({tags,resourceCosts,kindIds,...def})=>def);
     bundle.cards=[...(bundle.cards||[]).filter(def=>!raw.some(row=>row.id===def.id)),...raw];
+    bundle.equipment = {...bundle.equipment, cardExposure:[...(bundle.equipment?.cardExposure || []), ...raw.filter(def => def.effects.some(effect => effect.op === 'damage')).map(def => ({cardId:def.id,damageSchool:def.damageSchool,exposureBuildupPerHit:def.exposureBuildupPerHit}))]};
     bundle.tagging=[...(bundle.tagging||[]),...additions.flatMap(def=>(def.tags||[]).map(tagId=>({family:'card',objectId:def.id,tagId})))];
   }
   if(gameModule(profile,'class-selection')) {
