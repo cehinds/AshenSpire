@@ -8,5 +8,6 @@
   ],
   "turnPolicy": "oneActionFallback",
   "gameplayImplementation": "legacy-adapter",
-  "portable": false
+  "portable": false,
+  "attackDamage": 5
 }

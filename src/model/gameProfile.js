@@ -11,7 +11,7 @@ export function resolveGameProfile(idOrAuthor = 'current') {
   if (idOrAuthor?.hash) return validateGameProfileSnapshot(idOrAuthor);
   return resolveGameAuthor(idOrAuthor,gameProfileCatalog);
 }
-export function validateGameProfileSnapshot(profile) { return validateResolvedGameProfile(profile); }
+export function validateGameProfileSnapshot(profile) { return validateResolvedGameProfile(profile,gameProfileCatalog.runtimeHash); }
 function subjectProfile(subject) { return subject?.gameProfile || (subject?.formatVersion === 1 && subject?.modules ? subject : null); }
 export function gameModule(subject,id) { return subjectProfile(subject)?.modules?.[id] || null; }
 export function gameContent(subject,key) { return subjectProfile(subject)?.content?.[key]; }
