@@ -16,13 +16,41 @@
     },
     "fixedAppearance": {
       "type": "boolean"
+    },
+    "requirementsPolicy": {
+      "enum": [
+        "none",
+        "legacy"
+      ]
+    },
+    "upgradeBonuses": {
+      "type": "object",
+      "properties": {
+        "weaponARPerTier": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        "armorDRPerTier": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        }
+      },
+      "required": [
+        "weaponARPerTier",
+        "armorDRPerTier"
+      ],
+      "additionalProperties": false
     }
   },
   "required": [
     "mode",
     "editorEnabled",
     "editorWhere",
-    "fixedAppearance"
+    "fixedAppearance",
+    "requirementsPolicy",
+    "upgradeBonuses"
   ],
   "additionalProperties": false
 }

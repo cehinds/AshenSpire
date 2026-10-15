@@ -1,5 +1,30 @@
 # AshenSpire
 
+<!-- feature-preview:start -->
+## Feature preview — JSON-driven game profiles
+
+The same runtime supports two authored configurations. **Product core** includes its required bundled modules and keeps optional gameplay packages off where the core has a fallback. **Current game** preserves the full legacy configuration.
+
+- **Product core:** [Play on Pages (publication pending)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-modules/latest/) · [exact standalone artifact](https://github.com/cehinds/AshenSpire/actions/runs/38701086476/artifacts/11955653884) · [build run](https://github.com/cehinds/AshenSpire/actions/runs/38701086476)
+- **Current game:** [Play on Pages (publication pending)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-current-preview/latest/) · [exact standalone artifact](https://github.com/cehinds/AshenSpire/actions/runs/38701086793/artifacts/11956237379) · [build run](https://github.com/cehinds/AshenSpire/actions/runs/38701086793)
+
+The combat captures below are from build 0.7.1.1538, digest `4c1356f8c0`. Capture details, including title and rest screens, are in [the profile evidence folder](docs/preview/features/json-game-modules/README.md).
+
+**Product core — combat**
+
+| Mobile · 390×844 | Desktop · 1440×900 | Wide · 1920×1080 | Tablet · 820×1180 |
+| --- | --- | --- | --- |
+| ![Product core mobile combat](docs/preview/features/json-game-modules/core/mobile-combat.png) | ![Product core desktop combat](docs/preview/features/json-game-modules/core/desktop-combat.png) | ![Product core wide combat](docs/preview/features/json-game-modules/core/wide-combat.png) | ![Product core tablet combat](docs/preview/features/json-game-modules/core/tablet-combat.png) |
+
+**Current game — combat**
+
+| Mobile · 390×844 | Desktop · 1440×900 | Wide · 1920×1080 | Tablet · 820×1180 |
+| --- | --- | --- | --- |
+| ![Current game mobile combat](docs/preview/features/json-game-modules/current/mobile-combat.png) | ![Current game desktop combat](docs/preview/features/json-game-modules/current/desktop-combat.png) | ![Current game wide combat](docs/preview/features/json-game-modules/current/wide-combat.png) | ![Current game tablet combat](docs/preview/features/json-game-modules/current/tablet-combat.png) |
+
+The current profile's 390-pixel combat capture is visually crowded. Public Pages availability and the existing release gallery were not verified in this pass; the local standalone captures and successful build artifacts are verified.
+<!-- feature-preview:end -->
+
 A browser roguelike: build a character, explore a seeded world, and fight with cards.
 
 > **AI-made game.** The original game code, design, writing, artwork and music
@@ -27,7 +52,7 @@ build number and link to its history. Play and HTML follow that channel's latest
 · [Installation guide](desktop/windows/README.md).
 The chooser identifies the selected game build; its installer can be newer than the hosted Test badge.
 
-**Feature branches:** every `feature/*`, `fix/*` or `chore/*` branch with an open pull request into `dev`, named with ASCII letters, digits, `.`, `_`, `-` and `/` only, has a build at `https://cehinds.github.io/AshenSpire/branches/<branch>/latest/`, which plays in a sandbox and does not keep progress (open ones are listed on [All builds](https://cehinds.github.io/AshenSpire/)); the pull request links it.
+**Feature branches:** pushed `Feature/*`, `feature/*`, `fix/*` and `chore/*` branches are built on push and publish to `https://cehinds.github.io/AshenSpire/branches/<branch>/latest/` when the Pages workflow completes; a pull request is not required. Branch previews play in a sandbox and do not keep progress. The build is also available from its [Actions run](https://github.com/cehinds/AshenSpire/actions/workflows/feature-preview.yml).
 
 [All builds](https://cehinds.github.io/AshenSpire/) · [Workbench](https://cehinds.github.io/AshenSpire/workbench/) · [ZIP artifacts](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml) · [Changelog](CHANGELOG.md).
 Publication can lag source changes. For ZIPs, open a successful run and download its named build artifact.

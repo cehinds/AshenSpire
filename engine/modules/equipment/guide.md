@@ -60,3 +60,21 @@ node tools/game-config.mjs check
 ```
 
 For runtime changes, use the focused tests in `tests/game-profile-run.test.mjs` and the matching module tests. A passing resolver check proves schema/resolution only, not that every host behavior is covered by browser acceptance.
+Core policy defaults that remain provisional are listed in the core pack guide. Disabling this feature never activates another optional feature; the runtime adapter must provide a legal fallback or report incompatible custom content.
+
+`requirementsPolicy` is `none` for the provisional core six-point preset: items
+have no attribute minimums, including starting gear after it is unequipped.
+`legacy` retains existing item attribute gates. This policy affects the content
+projection before validation and registry construction; ownership, slot fit and
+combat timing still apply. The current bundle keeps its legacy content unchanged.
+
+Configured `upgradeBonuses` defaults to `weaponARPerTier: 1` and
+`armorDRPerTier: 1` as a provisional rule. AR uses the highest upgrade tier among
+currently active equipped non-shield armaments. DR uses the highest tier among
+currently equipped body armor and shields. Tiers within either group do not add
+together; the two groups contribute independently. Stored and inactive equipment
+contributes nothing, and swapping to unupgraded gear removes that group's bonus.
+The stats module must be enabled; stats off means no equipment upgrade rating
+bonus. Current/legacy profiles retain their existing upgrade behavior. The shared
+rating receipt drives UI, combat and preview; core effect weights convert the
+rating increases to real damage/block, rather than modifying core card instances.

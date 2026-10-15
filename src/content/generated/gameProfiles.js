@@ -950,7 +950,12 @@ export const gameProfileCatalog = {
         "mode": "configured",
         "editorEnabled": true,
         "editorWhere": "noncombat",
-        "fixedAppearance": true
+        "fixedAppearance": true,
+        "requirementsPolicy": "none",
+        "upgradeBonuses": {
+          "weaponARPerTier": 1,
+          "armorDRPerTier": 1
+        }
       },
       "schema": {
         "type": "object",
@@ -970,13 +975,41 @@ export const gameProfileCatalog = {
           },
           "fixedAppearance": {
             "type": "boolean"
+          },
+          "requirementsPolicy": {
+            "enum": [
+              "none",
+              "legacy"
+            ]
+          },
+          "upgradeBonuses": {
+            "type": "object",
+            "properties": {
+              "weaponARPerTier": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000
+              },
+              "armorDRPerTier": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000
+              }
+            },
+            "required": [
+              "weaponARPerTier",
+              "armorDRPerTier"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
           "mode",
           "editorEnabled",
           "editorWhere",
-          "fixedAppearance"
+          "fixedAppearance",
+          "requirementsPolicy",
+          "upgradeBonuses"
         ],
         "additionalProperties": false
       },
@@ -991,13 +1024,13 @@ export const gameProfileCatalog = {
           "path": "engine/modules/equipment/defaults.json",
           "id": "equipment",
           "version": "1.0.0",
-          "hash": "sha256:5b7d0a170fd033c0a89ab8aa24ac5f2c0bce7756351d85dd7d3e76cd55732dc7"
+          "hash": "sha256:dc63c25d206a0942e5d6513e8f0277864bef5c447f5d95a0c43380fe76d92b24"
         },
         {
           "path": "engine/modules/equipment/settings.schema.json",
           "id": "equipment",
           "version": "1.0.0",
-          "hash": "sha256:aa3ddeb23e6c55fbe704f83886521eab74e4f71ebf6a0719ca126dbbcbf692b5"
+          "hash": "sha256:636d8a109bac8a492fc1d26109713251ed0ac938645dbd0305e87cf5c4ab2aaf"
         }
       ]
     },
@@ -3022,7 +3055,161 @@ export const gameProfileCatalog = {
             "weaponArts",
             "potions",
             "armor"
-          ]
+          ],
+          "equipmentGroups": {
+            "straightSwords": {
+              "family": "armament",
+              "allTags": [
+                "item:blade"
+              ],
+              "members": [
+                "straightSword"
+              ]
+            },
+            "shields": {
+              "family": "armament",
+              "allTags": [
+                "item:shield"
+              ],
+              "members": [
+                "buckler",
+                "kiteShield",
+                "towerShield",
+                "roundShield",
+                "spikedShield"
+              ]
+            },
+            "scepters": {
+              "family": "armament",
+              "allTags": [
+                "item:magic-focus"
+              ],
+              "members": [
+                "boneSceptre",
+                "emberlightSceptre"
+              ]
+            },
+            "bows": {
+              "family": "armament",
+              "allTags": [
+                "item:blade"
+              ],
+              "members": [
+                "shortbow"
+              ]
+            },
+            "greatswords": {
+              "family": "armament",
+              "allTags": [
+                "item:blade"
+              ],
+              "members": [
+                "greatsword"
+              ]
+            },
+            "daggers": {
+              "family": "armament",
+              "allTags": [
+                "item:blade"
+              ],
+              "members": [
+                "dagger",
+                "parryDagger"
+              ]
+            },
+            "robes": {
+              "family": "armour",
+              "allTags": [
+                "item:armor"
+              ],
+              "members": [
+                "starseer:default",
+                "starseer:eclipse",
+                "starseer:starlit",
+                "starseer:astral",
+                "starseer:rimeweave",
+                "reaver:riteVestments",
+                "starseer:riteVestments",
+                "rogue:riteVestments",
+                "herald:riteVestments"
+              ]
+            },
+            "lightArmor": {
+              "family": "armour",
+              "allTags": [
+                "item:armor"
+              ],
+              "members": [
+                "rogue:default",
+                "rogue:nightveil",
+                "rogue:duelist",
+                "rogue:shadow",
+                "rogue:waywatcher",
+                "herald:emberhabit",
+                "reaver:nightweave",
+                "reaver:gutterLeathers",
+                "starseer:nightweave",
+                "starseer:gutterLeathers",
+                "rogue:nightweave",
+                "rogue:gutterLeathers",
+                "herald:nightweave",
+                "herald:gutterLeathers"
+              ]
+            },
+            "mediumArmor": {
+              "family": "armour",
+              "allTags": [
+                "item:armor"
+              ],
+              "members": [
+                "reaver:default",
+                "reaver:vigil",
+                "reaver:oathsworn",
+                "herald:default",
+                "herald:ossuary",
+                "herald:pilgrim"
+              ]
+            },
+            "heavyArmor": {
+              "family": "armour",
+              "allTags": [
+                "item:armor"
+              ],
+              "members": [
+                "reaver:warden",
+                "reaver:bastion",
+                "reaver:wayfarerPlate",
+                "starseer:wayfarerPlate",
+                "rogue:wayfarerPlate",
+                "herald:wayfarerPlate"
+              ]
+            }
+          },
+          "eligibility": {
+            "weapons": {
+              "groups": [
+                "straightSwords",
+                "shields",
+                "scepters",
+                "bows",
+                "greatswords",
+                "daggers"
+              ]
+            },
+            "armor": {
+              "groups": [
+                "robes",
+                "lightArmor",
+                "mediumArmor",
+                "heavyArmor"
+              ]
+            },
+            "weaponArts": {
+              "cardIds": [
+                "core.reaverSpecial"
+              ]
+            }
+          }
         },
         "provisionalPolicies": {
           "status": "adapter-provisional",
@@ -3038,7 +3225,9 @@ export const gameProfileCatalog = {
             "Herald power behavior is a provisional card fixture; persistent stacking needs the runtime adapter.",
             "Rest positions [2,6] and generic shop price10 are provisional source-configured fixtures.",
             "Stance advantage multiplier1.25 and one Smash advantage stagger per target/round are provisional.",
-            "Smith upgrades exactly one equipment tier for free as the one rest service; the foregone Strategize/Level Up is its visit budget. Free Smith is provisional until an explicit upgrade economy is authored."
+            "Smith upgrades exactly one equipment tier for free as the one rest service; the foregone Strategize/Level Up is its visit budget. Free Smith is provisional until an explicit upgrade economy is authored.",
+            "Equipment attribute requirementsPolicy defaults to none for six-total core attributes; ownership, slot fit and timing remain enforced. Explicit legacy restores old minima. This is provisional until core item requirements are balanced.",
+            "Configured equipment upgrades give AR from the highest active non-shield armament tier and DR from the highest active armor/shield tier, at one point per tier each; tiers do not stack within a group. Stats off disables these bonuses. This provisional policy drives shared UI/combat/preview ratings."
           ]
         },
         "resourceVariants": {
@@ -3321,13 +3510,13 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/rewards.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:de615f325186601e662053f0f45189d4051f33aa4eb0789615dca176ab8099a0"
+          "hash": "sha256:1f48daac4730f5a4161a413124d681d0614644777bc1ff6ed3624db50274c65d"
         },
         {
           "path": "games/ashenspire/packs/core/provisionalPolicies.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:ca2763de1d4d4c1879f384f2c6a61d2a93f5b96f96e9bd9665bcc2b916329a00"
+          "hash": "sha256:cb69cd1e3006172b1956bb54f425fab1bc5d22c576898ad4ece9abe72c9c8aeb"
         },
         {
           "path": "games/ashenspire/packs/core/resourceVariants.json",
@@ -3373,7 +3562,7 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "path": "src/** (excluding generated gameProfiles/changelog)",
-      "hash": "sha256:505462048bfe2798b2f8f03870f82b51ab6c025902b2836611111a3822e8f01e"
+      "hash": "sha256:3382e907abeb267b78ed73600f6bdabfb4c014dfe3527a155f9a515ec570cd54"
     }
   ],
   "runtimeSources": [
@@ -4677,7 +4866,7 @@ export const gameProfileCatalog = {
       "path": "src/engine/runCombat.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:b8dd236cf44b4ec9765dbde3c0c316afc8a7c105d1fd79cac8ddf5af216e1ac2"
+      "hash": "sha256:2738e8d854cc71a19b7b75edf767426fbd51961d2f581e96d4518facddd0a309"
     },
     {
       "path": "src/engine/save.js",
@@ -5301,7 +5490,7 @@ export const gameProfileCatalog = {
       "path": "src/model/combatRatings.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:fe3052b7465b0685490737a1df3edd859267b6ba87aca9aa5d2ef2b1d8fc7f89"
+      "hash": "sha256:2ffa12e23efe9fc68419661f1cca01c08b971dc0e801c8dbf4e66271f261e23f"
     },
     {
       "path": "src/model/combatReactionState.js",
@@ -5589,7 +5778,7 @@ export const gameProfileCatalog = {
       "path": "src/model/gameProfile.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:7d4c63a1e55472b8728e5254602f260402ec6eb82e7f6e35a4f089bb426df055"
+      "hash": "sha256:f1bbc2f22d19a3f50415761dbe73b0ae53b2580bda03b96cd6f8257b65e04018"
     },
     {
       "path": "src/model/gameProfileRest.js",
@@ -5601,13 +5790,13 @@ export const gameProfileCatalog = {
       "path": "src/model/gameProfileRewards.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:545e7b052892139699d6475935ed09be736041babe8c7a9164c2bd3ccf95c424"
+      "hash": "sha256:c83fc23809cc1a7df01aa0371bf92d3a19003517dc6dda5139ed58cc43a13d24"
     },
     {
       "path": "src/model/gameProfileRun.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:ca64c4d412bb7b205dd9465f4ac927eba0e8f832906a92d9c95bc20bd83a5ce4"
+      "hash": "sha256:c9178f8c7bddd5fcb2fcb2642c03ac52356e590272a2df92603bf5de9849b0c9"
     },
     {
       "path": "src/model/gracerefill.js",
@@ -5673,7 +5862,7 @@ export const gameProfileCatalog = {
       "path": "src/model/loadout.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:5045821382d2ec31740d8b6842356881b9af58f0d562268a4c30710ce2f3e60c"
+      "hash": "sha256:7485965b56e956b531ad8eca5ccd619d164bfd0b4bd98b0ecf548ae39312ba1f"
     },
     {
       "path": "src/model/locationPresentation.js",
@@ -8196,7 +8385,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:23af16d4e9c9f6d88fe655d32ecf1a688b47df39f9e3a1d6d193ce63923593ab"
     }
   ],
-  "runtimeHash": "sha256:49e1c9173db1ab107cee0789d7fe143044d4aa662814b00db5de0fcbac63607f"
+  "runtimeHash": "sha256:60c103330ddb93cd73055fceeabe5b7efc854e77f5f779a195d722965c2f430b"
 };
 export const gameProfileAuthors = {
   "default": {

@@ -12,6 +12,8 @@
     "Herald power behavior is a provisional card fixture; persistent stacking needs the runtime adapter.",
     "Rest positions [2,6] and generic shop price10 are provisional source-configured fixtures.",
     "Stance advantage multiplier1.25 and one Smash advantage stagger per target/round are provisional.",
-    "Smith upgrades exactly one equipment tier for free as the one rest service; the foregone Strategize/Level Up is its visit budget. Free Smith is provisional until an explicit upgrade economy is authored."
+    "Smith upgrades exactly one equipment tier for free as the one rest service; the foregone Strategize/Level Up is its visit budget. Free Smith is provisional until an explicit upgrade economy is authored.",
+    "Equipment attribute requirementsPolicy defaults to none for six-total core attributes; ownership, slot fit and timing remain enforced. Explicit legacy restores old minima. This is provisional until core item requirements are balanced.",
+    "Configured equipment upgrades give AR from the highest active non-shield armament tier and DR from the highest active armor/shield tier, at one point per tier each; tiers do not stack within a group. Stats off disables these bonuses. This provisional policy drives shared UI/combat/preview ratings."
   ]
 }
