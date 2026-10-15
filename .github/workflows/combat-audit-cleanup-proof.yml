@@ -14,13 +14,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
-      EXPECTED_SOURCE_SHA: '399dd69762d25b02a44c87658647873861fe2bac'
-      EXPECTED_README_BLOB: 'e82cde2b00cf5f9252a4ee9d6ab6501030f39202'
-      CLEANUP_PROOF_PHASE: 'preflight'
+      EXPECTED_SOURCE_SHA: '9c826f0a9e38545b738f12a40bdd856f4983e305'
+      EXPECTED_README_BLOB: '007260f7188033374838dfe56134cd187198947e'
+      CLEANUP_PROOF_PHASE: 'final'
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: '399dd69762d25b02a44c87658647873861fe2bac'
+          ref: '9c826f0a9e38545b738f12a40bdd856f4983e305'
           persist-credentials: false
           fetch-depth: 1
           sparse-checkout-cone-mode: false
@@ -83,7 +83,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: official-feature-cleanup-preflight-399dd69762d25b02a44c87658647873861fe2bac
+          name: official-feature-cleanup-final-9c826f0a9e38545b738f12a40bdd856f4983e305
           path: cleanup-proof/
           if-no-files-found: error
           retention-days: 14
