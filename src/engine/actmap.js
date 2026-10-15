@@ -128,33 +128,55 @@ export function drawSeatOrder(registries, rng, { firstSeat = null } = {}) {
 }
 
 
-// A compact seeded core route. Display identity and actual resolution are separate.
+// Configured length counts depths, not the alternatives offered at each depth.
+// Mandatory rest depths merge every lane, so every route visits each rest once.
 export function buildGameProfileActMap(registries, rng, seat, tier, { history = [] } = {}) {
   const rules = gameContent(registries, 'routes');
   if (!rules || tier < 1 || tier > rules.acts) throw new Error('Configured route tier is out of range');
   const count = rules.prebossNodes;
-  if (!Number.isInteger(count) || count < rules.restsPerAct) throw new Error('Invalid configured route length');
+  const columns = rules.branchColumns;
+  if (!Number.isInteger(count) || count < 1 || count < rules.restsPerAct) throw new Error('Invalid configured route length');
+  if (!Number.isInteger(columns) || columns < 2 || columns > 5) throw new Error('Invalid configured branchColumns');
   const restFloors = rules.restFloors;
   if (!Array.isArray(restFloors)) throw new Error('Configured route requires authored restFloors');
-  if (new Set(restFloors).size !== rules.restsPerAct || restFloors.some(n=>n<1||n>count)) throw new Error('Invalid configured rest floors');
-  const nodes = {};
-  const seenEvents = [];
+  if (restFloors.length !== rules.restsPerAct || new Set(restFloors).size !== rules.restsPerAct || restFloors.some(n => !Number.isInteger(n) || n < 1 || n > count)) throw new Error('Invalid configured rest floors');
+  const displayTypes = { fight: 'monster', event: 'event', elite: 'elite', treasure: 'treasure', shop: 'merchant', rest: 'shrine', boss: 'boss' };
+  const hidden = new Set(rules.hiddenTypes);
+  const alternatives = [...new Set([...(rules.hiddenTypes || []), ...(rules.visibleTypes || [])])].filter(type => !['rest', 'boss'].includes(type));
+  if (!alternatives.length || alternatives.some(type => !displayTypes[type])) throw new Error('Invalid configured route node types');
+  const hideUnknown = gameModule(registries, 'routes').hideUnknownNodes;
+  const nodes = {}, layers = [], seenEvents = [];
   for (let floor = 1; floor <= count; floor++) {
-    const id = `n${floor}_0`;
-    const actual = restFloors.includes(floor) ? 'rest' : rng.pick('map', ['fight','event','elite','treasure','shop']);
-    const type = actual === 'rest' ? 'shrine' : actual === 'elite' ? 'elite' : 'event';
-    const node = { id, floor, col: 0, type, actualType: actual, next: [floor === count ? 'boss' : `n${floor+1}_0`] };
-    if (type === 'event') {
-      node.resolved = actual === 'event' ? resolveUnknownNode({ ...registries, mapConfig: () => ({ unknownWeights: { event: 1 } }) }, rng, { seenEvents, tier, history }) : { kind: actual === 'shop' ? 'merchant' : actual };
-      if (node.resolved.kind === 'event') seenEvents.push(node.resolved.eventId);
+    const rest = restFloors.includes(floor);
+    const layer = [];
+    for (let lane = 0; lane < (rest ? 1 : columns); lane++) {
+      const id = `n${floor}_${lane}`;
+      const actual = rest ? 'rest' : rng.pick('map', alternatives);
+      const type = hideUnknown && hidden.has(actual) ? 'event' : displayTypes[actual];
+      const node = { id, floor, col: rest ? (columns - 1) / 2 : lane, type, actualType: actual, next: [] };
+      if (type === 'event') {
+        node.resolved = actual === 'event' ? resolveUnknownNode({ ...registries, mapConfig: () => ({ unknownWeights: { event: 1 } }) }, rng, { seenEvents, tier, history }) : { kind: actual === 'shop' ? 'merchant' : actual };
+        if (node.resolved.kind === 'event') seenEvents.push(node.resolved.eventId);
+      }
+      nodes[id] = node;
+      layer.push(id);
     }
-    nodes[id] = node;
+    layers.push(layer);
   }
-  const pool = registries.encounters.all().filter(enc=>enc.pool==='boss' && encounterFitsSeat(enc,{seat,tier,finalTier:rules.acts}));
+  const pool = registries.encounters.all().filter(enc => enc.pool === 'boss' && encounterFitsSeat(enc, { seat, tier, finalTier: rules.acts }));
   if (!pool.length) throw new Error(`Configured route has no boss for ${seat}/${tier}`);
   const boss = rng.pick('map', pool);
-  nodes.boss = { id:'boss',floor:count+1,col:0,type:'boss',actualType:'boss',next:[],encounterId:boss.id,label:bossDestinationLabel(registries,boss.id) };
-  return { nodes,startIds:['n1_0'],shrineId:`n${restFloors.at(-1)}_0`,bossId:'boss',bossIds:['boss'],floors:count+1,columns:1,gameProfileHash:registries.gameProfile.hash };
+  nodes.boss = { id: 'boss', floor: count + 1, col: (columns - 1) / 2, type: 'boss', actualType: 'boss', next: [], encounterId: boss.id, label: bossDestinationLabel(registries, boss.id) };
+  layers.push(['boss']);
+  for (let depth = 0; depth < layers.length - 1; depth++) {
+    const current = layers[depth], next = layers[depth + 1];
+    for (const id of current) {
+      // Singleton rests/bosses merge or fan out; other depths connect adjacent
+      // lanes, including a straight continuation for every incoming lane.
+      nodes[id].next = next.filter(target => current.length === 1 || next.length === 1 || Math.abs(nodes[id].col - nodes[target].col) <= 1);
+    }
+  }
+  return { nodes, startIds: layers[0], shrineId: restFloors.length ? `n${Math.max(...restFloors)}_0` : null, bossId: 'boss', bossIds: ['boss'], floors: count + 1, columns, gameProfileHash: registries.gameProfile.hash };
 }
 
 

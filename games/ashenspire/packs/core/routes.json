@@ -17,5 +17,6 @@
   "restFloors": [
     2,
     6
-  ]
+  ],
+  "branchColumns": 3
 }
