@@ -153,7 +153,7 @@
 :root .combat[data-layout='formation'] .player .combatant-leading > .combatant-info {
   position: absolute; right: auto; bottom: auto;
 }
-@media (max-height: 480px) and (min-width: 600px) {
+@container game-viewport (max-height: 480px) and (min-width: 600px) {
   :root .combat[data-layout='formation'] .combat-tools {
     right: auto; left: calc(8px / var(--ui-zoom,1)); grid-template-columns: 1fr;
   }
@@ -408,7 +408,7 @@
   --combatant-value-text: calc(11px / var(--ui-zoom,1));
   height: var(--health-row-h); min-height: var(--health-row-h);
 }
-@media (max-width: 320px) {
+@container game-viewport (max-width: 320px) {
   :root .combat[data-compact-combat='true'] .player.context-selected .combatant-leading { width: calc(146px / var(--ui-zoom,1)); }
   :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud { display: grid; grid-template-columns: 1fr 1fr; column-gap: calc(4px / var(--ui-zoom,1)); }
   :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud .nm {
