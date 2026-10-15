@@ -1332,6 +1332,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     panning = true;
     sx = ev.clientX;
     sy = ev.clientY;
+    const dragScale = scroll.getBoundingClientRect().width / scroll.offsetWidth || 1;
     sl = scroll.scrollLeft;
     st = scroll.scrollTop;
     scroll.classList.add('grabbing');
@@ -1344,8 +1345,8 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     trackGesture(ev, {
       onMove: (mv) => {
         if (!panning || mv.pointerId !== activePointerId) return;
-        scroll.scrollLeft = sl - (mv.clientX - sx);
-        scroll.scrollTop = st - (mv.clientY - sy);
+        scroll.scrollLeft = sl - (mv.clientX - sx) / dragScale;
+        scroll.scrollTop = st - (mv.clientY - sy) / dragScale;
       },
       onEnd: (end) => {
         if (end.pointerId !== activePointerId) return;

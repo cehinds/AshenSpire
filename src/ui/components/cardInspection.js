@@ -1,3 +1,4 @@
+import { logicalViewport } from '../viewViewport.js';
 import { openModal } from './modalShell.js';
 import { hideTooltip } from './tooltip.js';
 import { decorateKeywords } from './tooltipGlossary.js';
@@ -68,7 +69,7 @@ function doorStackBelowPx() {
   if (!Number.isFinite(inspect) || inspect <= 0) return cardDoorStackBelowPx();
   return inspect + doorReadableMinPx();
 }
-// MEASURE THE DOOR, NOT THE WINDOW. This compared `window.innerWidth`, and the
+// MEASURE THE DOOR, NOT THE WINDOW. This compared `logicalViewport().width`, and the
 // door is not the window: the reading modal is `size: 'lg'`, capped at 76rem,
 // so at a 1440px viewport the layout is 748px whatever the screen does. While
 // the inspect width was authored-only that gap was merely conservative and I
@@ -118,7 +119,7 @@ function decideCardDoorShape(widthPx, layout = document.querySelector('.card-ins
 function applyCardDoorShape() {
   const slimmest = narrowestDoorWidth();
   if (slimmest) decideCardDoorShape(slimmest.width, slimmest.node);
-  else decideCardDoorShape(window.innerWidth, null);
+  else decideCardDoorShape(logicalViewport().width, null);
 }
 // A DOOR CAN HOLD MORE THAN ONE LAYOUT, AND THE FIRST VERSION OF THIS WATCHED
 // THE WRONG ONE. `disconnect()` before `observe()` meant only the most recently

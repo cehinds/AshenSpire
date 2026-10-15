@@ -155,7 +155,7 @@ export function mountCombatantInspector(host, model, { onToggle = null } = {}) {
   host.hidden = false;
   host.className = `combatant-inspector-host ${model.properties.edge}`;
   host.style.setProperty('--combatant-inspector-width-rem', String(model.tokens.widthRem));
-  host.style.setProperty('--combatant-inspector-mobile-vw', `${model.tokens.mobileWidthViewportPct}vw`);
+  host.style.setProperty('--combatant-inspector-mobile-vw', `calc(${model.tokens.mobileWidthViewportPct} * var(--view-vw, 1vw))`);
   host.setAttribute('aria-label', model.accessibility.label);
   markUiComponent(host, model.component, model.variant);
 

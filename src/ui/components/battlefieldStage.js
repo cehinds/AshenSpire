@@ -1,3 +1,4 @@
+import { logicalViewport } from '../viewViewport.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { anchorLocalBox, uiZoom, VIEWPORT_ORIGIN } from '../fx.js';
 import { combatFormation } from '../models/CombatFormationModel.js';
@@ -157,8 +158,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   field.dataset.actionClearanceViewportPct = String(model.tokens.actionClearanceViewportPct);
   field.dataset.centerHeightRatio = String(model.tokens.centerHeightRatio);
   field.setAttribute('aria-label', model.accessibility.label);
-  field.style.setProperty('--battlefield-hud-clearance', `calc(${model.tokens.hudClearanceViewportPct}vh / var(--ui-zoom, 1))`);
-  field.style.setProperty('--battlefield-action-clearance', `calc(${model.tokens.actionClearanceViewportPct}vh / var(--ui-zoom, 1))`);
+  field.style.setProperty('--battlefield-hud-clearance', `calc(${model.tokens.hudClearanceViewportPct} * var(--view-vh, 1vh) / var(--ui-zoom, 1))`);
+  field.style.setProperty('--battlefield-action-clearance', `calc(${model.tokens.actionClearanceViewportPct} * var(--view-vh, 1vh) / var(--ui-zoom, 1))`);
   field.style.setProperty('--combatant-stage-center', `${model.tokens.centerPct}%`);
 
   let frameRequest = 0;
@@ -179,7 +180,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       const width = box.clientWidth - 8 / zoom;
       if (width <= 0) continue;
       const style = getComputedStyle(label);
-      const maximum = (label.closest('.player.context-selected') && window.innerWidth > 320 ? 12 : 11) / zoom;
+      const maximum = (label.closest('.player.context-selected') && logicalViewport().width > 320 ? 12 : 11) / zoom;
       labelMeasure.font = `${style.fontWeight} ${maximum}px ${style.fontFamily}`;
       const measured = labelMeasure.measureText(label.textContent).width;
       label.style.fontSize = `${Math.max(8 / zoom, maximum * Math.min(1, width / Math.max(1, measured)))}px`;
@@ -479,7 +480,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     }
     const plan = combatFormation({ width: fieldRect.width, height: fieldRect.height,
       presentation,
-      footerClearance: window.innerHeight <= 480 && window.innerWidth >= 600 ? 48 : 0,
+      footerClearance: logicalViewport().height <= 480 && logicalViewport().width >= 600 ? 48 : 0,
       friends: frames.filter(f => f.classList.contains('player')).map(f => f.dataset.eid),
       enemies: frames.filter(f => f.classList.contains('enemy')).map(f => f.dataset.eid) });
     if (!classicAppearance()) alternativeFormation(plan, fieldRect.width, fieldRect.height, document.documentElement.dataset.layout === 'narrow');
@@ -605,9 +606,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     });
     const solo = actors.filter(actor => actor.side === 'player').length === 1 && !combat.classList.contains('coop');
     combat.dataset.composition = 'option-c';
-    combat.dataset.waistOverlap = String(solo && window.innerHeight > 480);
+    combat.dataset.waistOverlap = String(solo && logicalViewport().height > 480);
     // Short landscape needs a lower foot line to reserve the full intent row.
-    if (classicAppearance() && window.innerHeight <= 480) for (const actor of actors) {
+    if (classicAppearance() && logicalViewport().height <= 480) for (const actor of actors) {
       actor.slot = { ...actor.slot, fitGround: fieldRect.height - 24, ground: fieldRect.height - 24 };
     }
     const fitFormation = () => {
@@ -617,7 +618,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         perspectiveGrid: !classicAppearance(),
         handTop: handAnchor?.key === handLayoutKey ? handAnchor.top : null,
         handLeft: handAnchor?.key === handLayoutKey ? handAnchor.left : 0,
-        solo: solo && window.innerHeight > 480,
+        solo: solo && logicalViewport().height > 480,
         sizes: classicAppearance()
           ? fitCombatSprites({ width: fieldRect.width, height: fieldRect.height, actors,
             minHeight: narrow ? fieldRect.height * NARROW_MIN_HEIGHT_FRACTION : 0 })

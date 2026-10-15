@@ -1,3 +1,4 @@
+import { logicalViewport, viewViewportBox } from '../viewViewport.js';
 import { characterSheetModel } from '../models/CharacterSheetModel.js';
 import { skillTrackButton } from './characterSheet.js';
 import { characterStatsButton, progressionTip } from '../components/progressionCards.js';
@@ -831,7 +832,7 @@ export function mountEquipment(host, {
   // `panel.dataset.responsive` and the pane observer below asks it again to tell
   // a real breakpoint crossing from a height-only resize; a second copy of the
   // comparison is how those two answers would drift.
-  const responsiveMode = () => typeof window !== 'undefined' && window.innerWidth <= layout.responsive.breakpoint ? 'phone' : 'desktop';
+  const responsiveMode = () => typeof window !== 'undefined' && logicalViewport().width <= layout.responsive.breakpoint ? 'phone' : 'desktop';
   let paneObserver = null;
   let paneFrame = 0;
   let inventoryDisclosure = null;
@@ -2090,8 +2091,8 @@ export function mountEquipment(host, {
         if (!card.isConnected || !card.open) return;
         // Focus must not scroll before closing the old card has settled layout.
         if (document.activeElement !== head) head.focus({ preventScroll: true });
-        let top = 0;
-        let bottom = window.innerHeight;
+        let top = viewViewportBox().top;
+        let bottom = viewViewportBox().bottom;
         for (let parent = card.parentElement; parent; parent = parent.parentElement) {
           if (!/(auto|scroll|hidden|clip)/.test(getComputedStyle(parent).overflowY)) continue;
           const rect = parent.getBoundingClientRect();

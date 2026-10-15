@@ -1,3 +1,4 @@
+import { matchViewMedia } from '../viewViewport.js';
 import { el, button } from '../kit/index.js';
 import { createPaintedStage } from '../paintedOutfits.js';
 import { createAlternativeCardStage } from '../alternativeCardStage.js';
@@ -43,7 +44,7 @@ export function deckCardAnimationPreview({ registries, run, ref, paused = false,
   const toggle = button({ label: t(paused ? 'deckEditor.animation.play' : 'deckEditor.animation.pause'), className: 'deck-editor-animation-toggle' });
   const caption = el('span', { text: t('deckEditor.animation') });
   root.append(host, el('div', { class: 'deck-editor-animation-controls' }, [caption, toggle]));
-  const desktop = typeof matchMedia === 'function' ? matchMedia('(min-width: 1001px)') : null;
+  const desktop = typeof matchMedia === 'function' ? matchViewMedia('(min-width: 1001px)') : null;
   const reducedMotion = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
   let stage = null, playback = null, frames = [], tick = null, lastTime = null, elapsed = 0, index = -1, disposed = false;
   let userPaused = paused || reducedMotionRequested();
