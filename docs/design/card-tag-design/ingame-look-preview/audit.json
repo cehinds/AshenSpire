@@ -10,7 +10,7 @@
       "loaded": true
     },
     {
-      "src": "assets/cards/extended/card-crystalBarrier-1024.webp",
+      "src": "assets/cards/library/magical-defend-05-1024.webp",
       "loaded": true
     },
     {
@@ -46,7 +46,7 @@
       "loaded": true
     },
     {
-      "src": "assets/cards/extended/card-slimed-1024.webp",
+      "src": "assets/cards/library/magical-attack-05-1024.webp",
       "loaded": true
     },
     {
@@ -82,7 +82,7 @@
       "loaded": true
     },
     {
-      "src": "assets/cards/extended/card-sacredHarvest-1024.webp",
+      "src": "assets/cards/library/magical-attack-03-1024.webp",
       "loaded": true
     },
     {
@@ -118,7 +118,7 @@
       "loaded": true
     },
     {
-      "src": "assets/cards/extended/card-envenomCard-1024.webp",
+      "src": "assets/cards/library/physical-attack-02-1024.webp",
       "loaded": true
     },
     {
@@ -154,7 +154,7 @@
       "loaded": true
     },
     {
-      "src": "assets/cards/extended/card-afterimageCard-1024.webp",
+      "src": "assets/cards/library/magical-defend-04-1024.webp",
       "loaded": true
     },
     {
@@ -190,7 +190,7 @@
       "loaded": true
     },
     {
-      "src": "assets/cards/extended/card-astralInsight-1024.webp",
+      "src": "assets/cards/library/magical-defend-05-1024.webp",
       "loaded": true
     },
     {
@@ -221,56 +221,56 @@
   "rules": [
     {
       "text": "Gain Persistent Block 4, Barrier 4",
-      "font": "29.748px",
-      "lines": 1.990049751243781,
+      "font": "24.0564px",
+      "lines": 1.9953110191051031,
       "overflow": false,
-      "width": 233,
-      "contentWidth": 233,
+      "width": 191,
+      "contentWidth": 191,
       "physicalLines": 2
     },
     {
       "text": "Inflict Greased 3",
-      "font": "29.748px",
-      "lines": 0.9950248756218905,
+      "font": "24.0564px",
+      "lines": 0.9976555095525516,
       "overflow": false,
-      "width": 233,
-      "contentWidth": 233,
+      "width": 191,
+      "contentWidth": 191,
       "physicalLines": 1
     },
     {
       "text": "Deal weapon + ? Divine damage",
-      "font": "29.748px",
-      "lines": 1.990049751243781,
+      "font": "24.0564px",
+      "lines": 1.9953110191051031,
       "overflow": false,
-      "width": 233,
-      "contentWidth": 233,
+      "width": 191,
+      "contentWidth": 191,
       "physicalLines": 2
     },
     {
       "text": "Inflict Poison 1",
-      "font": "29.748px",
-      "lines": 0.9950248756218905,
+      "font": "24.0564px",
+      "lines": 0.9976555095525516,
       "overflow": false,
-      "width": 233,
-      "contentWidth": 233,
+      "width": 191,
+      "contentWidth": 191,
       "physicalLines": 1
     },
     {
       "text": "Gain Mirrors 1",
-      "font": "29.748px",
-      "lines": 0.9950248756218905,
+      "font": "24.0564px",
+      "lines": 0.9976555095525516,
       "overflow": false,
-      "width": 233,
-      "contentWidth": 233,
+      "width": 191,
+      "contentWidth": 191,
       "physicalLines": 1
     },
     {
       "text": "Gain Foresight 1",
-      "font": "29.748px",
-      "lines": 0.9950248756218905,
+      "font": "24.0564px",
+      "lines": 0.9976555095525516,
       "overflow": false,
-      "width": 233,
-      "contentWidth": 233,
+      "width": 191,
+      "contentWidth": 191,
       "physicalLines": 1
     }
   ],
