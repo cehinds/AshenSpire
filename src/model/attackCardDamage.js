@@ -57,10 +57,26 @@ export function cardIsMagical(face) {
   return (face?.manaCost || 0) > 0;
 }
 
-function authoredCardTags(bundle, cardId) {
-  return (bundle.tagging || [])
-    .filter((row) => row?.family === 'card' && row.objectId === cardId)
-    .map((row) => row.tagId);
+function cardMetadata(bundle) {
+  const schools = profileSchools(bundle);
+  let tags;
+  return {
+    schools,
+    get tags() {
+      if (tags) return tags;
+      // Empty card tables never read tagging. Build on the first card lookup,
+      // once per operation, preserving order, duplicates and empty tag ids.
+      const rows = (bundle.tagging || []).filter((row) => row?.family === 'card');
+      tags = new Map();
+      for (const row of rows) {
+        // The original lookup used strict equality: NaN never matches itself.
+        if (Number.isNaN(row.objectId)) continue;
+        if (!tags.has(row.objectId)) tags.set(row.objectId, []);
+        tags.get(row.objectId).push(row.tagId);
+      }
+      return tags;
+    },
+  };
 }
 
 function numericBaseline(effects, op) {
@@ -266,10 +282,10 @@ export function projectAttackCardDamageBundle(source = {}) {
     if (!configs?.[name]) throw new Error(`balance.damage.${name} is required`);
   }
 
-  const schools = profileSchools(materialized);
+  const metadata = cardMetadata(materialized);
   const cards = (materialized.cards || []).map((card) => {
-    const tags = authoredCardTags(materialized, card.id);
-    return projectCard(card, configs, tags, alternateSchool(card, tags, schools));
+    const tags = metadata.tags.get(card.id) || [];
+    return projectCard(card, configs, tags, alternateSchool(card, tags, metadata.schools));
   });
 
   return {
@@ -278,16 +294,15 @@ export function projectAttackCardDamageBundle(source = {}) {
   };
 }
 
-function eligibleCards(bundle, configName) {
+function eligibleCards(bundle, configName, metadata) {
   const eligible = [];
   // A NUMERIC amount, because that is all projectOperation moves.
   const has = (card, op) => [card.effects, card.upgrade?.effects]
     .some((effects) => (effects || []).some((effect) => effect.op === op && typeof effect.amount === 'number'));
-  const schools = profileSchools(bundle);
   for (const card of bundle.cards || []) {
-    const tags = authoredCardTags(bundle, card.id);
+    const tags = metadata.tags.get(card.id) || [];
     const authored = cardIsMagical({ ...card, tags });
-    const other = alternateSchool(card, tags, schools);
+    const other = alternateSchool(card, tags, metadata.schools);
     const sides = other ? [authored, !authored] : [authored];
     const fits = (magical) => (
       (configName === 'attackCards' && card.type === 'attack' && !magical && has(card, 'damage'))
@@ -318,9 +333,10 @@ function defaultCardBonus(bundle, row, configName, config) {
 export function materializeCardValueBonuses(source = {}) {
   const damage = source.balance?.damage;
   if (!damage) return source;
+  const metadata = cardMetadata(source);
   const materializedDamage = Object.fromEntries(VALUE_CONFIGS.map((configName) => {
     const config = damage[configName] || {};
-    const defaults = Object.fromEntries(eligibleCards(source, configName)
+    const defaults = Object.fromEntries(eligibleCards(source, configName, metadata)
       .map((row) => [row.id, defaultCardBonus(source, row, configName, config)]));
     const statusDefaults = Object.fromEntries((source.statuses || []).map((status) => [status.id, 0]));
     return [configName, {
@@ -366,6 +382,7 @@ export function attackCardDamageConfigProblems(bundle = {}) {
   }
   bundle = materializeCardValueBonuses(bundle);
   const knownStatuses = new Set((bundle.statuses || []).map((status) => status.id));
+  let metadata;
 
   for (const configName of VALUE_CONFIGS) {
     const configPath = `balance.damage.${configName}`;
@@ -406,7 +423,7 @@ export function attackCardDamageConfigProblems(bundle = {}) {
       }
     }
 
-    const eligible = new Set(eligibleCards(bundle, configName).map((row) => row.id));
+    const eligible = new Set(eligibleCards(bundle, configName, metadata ||= cardMetadata(bundle)).map((row) => row.id));
 
     const bonuses = config.cardBonuses;
     if (!bonuses || typeof bonuses !== 'object' || Array.isArray(bonuses)) {

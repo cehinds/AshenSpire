@@ -132,6 +132,7 @@ export function mountTitle(app, {
         // Co-op is parked (owner, 2026-10-12): content/config/ui/screens/title.json
         // behavior.coopEnabled hides Forsaken Together until it returns.
         ...(onLan && uiConfig.screens.title.behavior.coopEnabled ? [entry('Forsaken Together', 'lan', { id: 'lan-play' })] : []),
+        entry('Quit', 'quit', { id: 'quit-game' }),
       ],
       attrs: { 'data-component': UI.titleBrandLockup },
     });
@@ -173,7 +174,6 @@ export function mountTitle(app, {
       ...(onCustom ? [entry('Custom climb', 'custom', { id: 'custom-run' })] : []),
       ...(onProfile ? [entry('Profile', 'profile', { id: 'profile' })] : []),
       ...(onOffline ? [entry(offlinePlay.title, 'offline', { id: 'download-game' })] : []),
-      entry('Quit', 'quit', { id: 'quit-game' }),
     ];
     for (const item of moreEntries) more.append(el('button', { type: 'button', class: 'as-btn', ...item.attrs }, item.label));
     menu.append(more);

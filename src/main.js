@@ -157,6 +157,7 @@ import { refreshCardDoorShape } from './ui/components/cardInspection.js';
 import { setSpritesEnabled, classGlyph, setClassGlyphs } from './ui/assets.js';
 import { mountLobby } from './ui/screens/lobby.js';
 import { mountCoop } from './ui/screens/coop.js';
+import { mountQuitScreen } from './ui/quitGame.js';
 import { lanInfo } from './net/lan.js';
 import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum, playEventCues } from './ui/fx.js';
 import { sfx } from './ui/sfx.js';
@@ -2102,29 +2103,12 @@ function showCompendium() {
 // graceful "safe to close" screen; in a standalone/launcher window the close
 // succeeds. Any in-progress run is persisted first, so nothing is lost.
 function quitGame() {
-  if (run) persist();
+  const savedRun = !!run;
+  // Use the existing save failure/retry door; a failed save must keep the run.
+  if (run && saveNow({ returnFocusElement: document.activeElement }) === false) return;
   audio.stopMusic();
   run = null;
-  app.innerHTML = `
-    <div class="screen farewell">
-      <h1 class="title-big">THE EMBER GUTTERS</h1>
-      <p class="subtitle" style="text-align:center">Your climb is saved. You may close this window.</p>
-      <button class="subtle" id="farewell-back" data-back>Return to title</button>
-    </div>`;
-  const closeTimer = setTimeout(() => {
-    try {
-      window.close();
-    } catch (e) {
-      /* browser blocked it — the farewell screen stands in */
-    }
-  }, 120);
-  const back = app.querySelector('#farewell-back');
-  if (back) {
-    back.addEventListener('click', () => {
-      clearTimeout(closeTimer); // changed their mind before the window closed
-      showCollapsedTitle();
-    });
-  }
+  mountQuitScreen(app, { savedRun, onBack: showCollapsedTitle });
 }
 
 // The in-run overlay keeps only Settings and Controls. Armoury owns inventory,
