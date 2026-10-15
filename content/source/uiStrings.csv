@@ -1571,3 +1571,4 @@ status.lifecycle.foundation.replace,,,Reapplying replaces the {value} with the i
 status.lifecycle.foundation.unique,,,Does not stack; reapplying replaces the active instance.,
 status.lifecycle.foundation.strongest,,,The strongest source supplies the {value} up to {cap}; reapplying from that source replaces its application.,
 status.lifecycle.foundation.independent,,,Different sources add to the {value} up to {cap}; reapplying from the same source replaces its application.,
+card.face.inspectEffect,,Inspect full effect,,

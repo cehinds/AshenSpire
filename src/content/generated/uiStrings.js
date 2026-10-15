@@ -10396,5 +10396,12 @@ export const uiStrings = [
     "short": "",
     "full": "Different sources add to the {value} up to {cap}; reapplying from the same source replaces its application.",
     "tip": ""
+  },
+  {
+    "id": "card.face.inspectEffect",
+    "extends": "",
+    "short": "Inspect full effect",
+    "full": "",
+    "tip": ""
   }
 ];
