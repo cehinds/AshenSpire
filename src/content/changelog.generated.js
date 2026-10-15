@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1978",
+    "date": "2026-10-15",
+    "group": "2026-10-15",
+    "summary": "Combat fades cover fighters, and player targets stay clear of Health",
+    "detail": "Screen fades now cover idle and selected fighters while target selection, cards and the combat HUD remain above them. When the perspective view places the player behind the hand, its transparent 44px target moves clear of its own Health strip without changing the artwork, Health position or selected fighter size.",
+    "build": "0.7.1.1533",
+    "pullRequest": 1978,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1978"
+  },
+  {
     "id": "pr-1996",
     "date": "2026-10-15",
     "group": "2026-10-15",
