@@ -25,8 +25,10 @@ overrides disable normal action providers; it must not redefine the user-facing
 core. `ashen.fallback@1.0.0` is an optional internal test fixture reference only:
 users do not need to switch core references to disable modules.
 
-The kernel preserves action execution, targets, baseline stats, damage, activities,
-presentation fallback, outcomes/restart and saving. Routes/dungeons select
+The runtime's core fallback providers own playable action execution, targets,
+baseline stats, damage, activities, procedural presentation and outcomes/restart.
+The generic kernel supplies transaction, registration, persistence and scheduling
+contracts; it does not itself contain that gameplay. Routes/dungeons select
 activities; they do not own the only launcher. A shop can register an activity
 without routes. Disabled equipment/progression uses declared baseline stats, and
 disabled or missing art uses procedural low-poly stand-ins. Disabling a module
@@ -405,25 +407,31 @@ CORE-SPEC. There is no seven-per-attribute baseline or separate class-bonus pass
 Keep the hand-base and INT contribution distinct in receipts.
 
 ```text
+constructStatProvider(profile, retainedSourceFormulas):
+  replace corresponding legacy primary terms once with core primary mappings
+  preserve other hidden formula terms and their source/version/dependency receipts
+  validate no duplicate primary path; compile immutable provider into runtime lock
+  require resolved SP formula and current-HP/resource carry policies where needed
+
 applyAllocatedLevelPoint(candidate, attributeId):
   require rest level-up service active and unspent earned point available
   policy = lock.progression.attributeDeltaPolicy.require(attributeId)
   before = snapshot current/max resources and dependency receipts
   increment selected primary attribute; decrement unspent point
-  replace corresponding old primary formula term with the core contribution
-  apply specified AR/DR/HP/MP/draw contribution exactly once, never add atop old term
-  recompute other hidden stats/SP through source-traced retained formula providers
+  after = lock.statProvider.recompute(candidate.attributes)  // once
+  verify specified primary delta and secondary/hidden contribution receipts
+  // No formula mutation or separate flat primary gain during allocation.
   reconcile current pools using explicit deficit/carry policy from profile
   preserve unrelated deck/currency/progress and emit public allocation facts
 
 makeRewardOffer(candidate, earnedReward):
-  eligible = project six reward-category pools against enabled capabilities
-  choose weighted categories/items without replacement as policy requires
-  persist offer IDs and RNG receipt; retry displays reuse same offers
   offerCount = requireResolvedPolicy(coreSpec.reward.offerCount)
   takePolicy = requireResolvedPolicy(coreSpec.reward.takePolicy)
-  // Three offers/take one is a recommendation, not a confirmed constant.
+  // Three usual offers confirmed; take one remains a recommendation.
+  eligible = project six reward-category pools against enabled capabilities
   validate count, positive eligible weight and fallback for empty categories
+  sample offerCount weighted categories/items under resolved replacement policy
+  persist offer IDs, takePolicy and RNG receipt; retry displays reuse same offers
   return public offers; selection spends claim token once in a transaction
 
 restCommand(candidate, request):
@@ -465,8 +473,8 @@ old scaling. Intended level gains per act do not establish an XP curve or an
 unambiguous final level.
 
 The route generator reads the three-act profile: validate pre-boss node count and
-the boss endpoint independently, distinct act bosses, visible rest/elite/boss
-anchors, and actual activity types behind question marks. Visibility changes only
+the boss endpoint independently, distinct act bosses, two visible rest anchors
+per act plus visible elite/boss anchors, and actual activity types behind question marks. Visibility changes only
 the map view, never its resolved type. Shops, treasure, events, fights and rests
 all use transactional activity services even without the route module.
 
@@ -554,15 +562,21 @@ because the adapter can execute those systems. Their old receipts remain legacy
 parity fixtures, not new default policy.
 
 ```text
-resolveDamage(action, target, pipeline, numericPolicy):
-  evaluate authored unified damage/formulas and source-traced stat contributions
-  resolve selected accuracy/evasion rule against the target's declared stance
-  resolve matchup edge from authored stance relation table
-  apply configured stages in compiled order using resolved numeric policy
-  apply Block and resolved pure-Poise mitigation policy at declared stages
-  apply successful evade's all-damage dodge or failed evade's double-damage rule
-  spend HP through delta commands; execute authored status/DoT/interrupt riders
-  produce internal receipts; public projection later strips private information
+resolveDamage(action, target, compiledGraph, numericPolicy):
+  require all activation, ordering, scope and numeric policies resolved
+  frame = create damage frame from action, target and candidate read-only views
+  for stage in compiledGraph.orderedStages:
+    execute stage exactly once per its declared hit/action scope
+    collect validated delta commands and internal receipts
+  return internal receipts; public projection later strips private information
+
+// Responsibilities registered as graph stages, not extra calls after traversal:
+// authored damage/formulas and source-traced AR/DR contributions;
+// accuracy/hit/evade decisions and directed stance-matchup resolution;
+// successful evade's all-damage dodge / failed evade's double-damage effect;
+// Block and pure-Poise mitigation; HP deltas; status/DoT/interrupt riders.
+// Explicit edges decide their sequence; reject duplicate responsibility ownership
+// or unresolved noncommuting order. Never apply Block/Poise/Evade a second time.
 ```
 
 CORE-SPEC owns the directed stance edges (including Prepare), not an inferred
