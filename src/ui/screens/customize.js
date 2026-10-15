@@ -1,3 +1,4 @@
+import { uiZoom } from '../fx.js';
 import { masteryClassSummary } from '../components/classMastery.js';
 import { compactEquipmentDetails } from '../components/compactEquipmentDetails.js';
 import { renderCollectibleCard } from '../components/collectibleCard.js';
@@ -1843,7 +1844,7 @@ export function mountCustomize(app, {
     // The model owns the authored column count at each pane width.
     const applyColumns = () => {
       const rootStyle = getComputedStyle(document.documentElement);
-      const zoom = parseFloat(rootStyle.getPropertyValue('--ui-zoom')) || 1;
+      const zoom = uiZoom();
       const columns = creationAttributeColumns({ hostWidthPx: paneHost.getBoundingClientRect().width / zoom, rootFontPx: parseFloat(rootStyle.fontSize) });
       customizeScreen.style.setProperty('--creation-attribute-columns', String(columns));
     };

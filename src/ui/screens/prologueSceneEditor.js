@@ -1,3 +1,4 @@
+import { matchViewMedia } from '../viewViewport.js';
 import { openModal } from '../kit/index.js';
 import { mountPrologue } from './prologue.js';
 import { placePrologueCharacter, prologueCharacterDimensions, prologueTravellerGeometry, prologueTravellerHeightForWidth, prologueTravellerResizeScale } from '../prologueCharacter.js';
@@ -56,7 +57,7 @@ export function openPrologueSceneEditor(settings, onChange, { sceneId = null, ta
   const first = prologueSequence(initial)[0];
   let selected = initial.scenes.some(scene => scene.id === sceneId) ? sceneId : initial.scenes[first]?.id;
   let path = 'crownfall';
-  let layout = matchMedia('(max-width: 760px) and (orientation: portrait)').matches ? 'mobile' : 'desktop';
+  let layout = matchViewMedia('(max-width: 760px) and (orientation: portrait)').matches ? 'mobile' : 'desktop';
   let group = tab;
   let cleanup = null;
   let refreshTimer = null;

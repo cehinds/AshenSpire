@@ -1,3 +1,4 @@
+import { viewViewportBox } from '../viewViewport.js';
 // src/ui/components/tooltip.js — ONE tooltip service: one panel per level,
 // one placer, one timing machine (kit §08 Tooltips, §09 Three tiers).
 //
@@ -28,7 +29,7 @@
 // The public entry points below are the ones 23 surfaces already call; their
 // shape is unchanged so nothing had to be re-wired to inherit the machine.
 
-import { placeAnchored, viewportLocalBox, anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
+import { placeAnchored, viewportLocalBox, anchorLocalBox, VIEWPORT_ORIGIN, uiZoom } from '../fx.js';
 import {
   tooltipPlacementIntent, TOOLTIP_RUNGS, tooltipWireframe, tooltipArrow, tooltipArrowSize,
 } from '../models/TooltipPlacementModel.js';
@@ -249,7 +250,7 @@ function fitRung(el, pinned) {
  */
 function pointArrow(t, placed, anchor) {
   const root = getComputedStyle(document.documentElement);
-  const zoom = parseFloat(root.getPropertyValue('--ui-zoom')) || 1;
+  const zoom = uiZoom();
   const rootFontPx = parseFloat(root.fontSize) || 16;
   const arrow = tooltipArrow(placed, anchorLocalBox(VIEWPORT_ORIGIN, anchor), tooltipArrowSize({ zoom, rootFontPx }));
   t.dataset.arrow = arrow.edge;
@@ -367,8 +368,10 @@ function showWith(html, anchor, clear = null, intent = 'above', appearance = nul
   t.setAttribute('aria-hidden', 'false');
   fitRung(t, appearance?.rung);
   if (appearance?.maxHeightRatio) t.style.maxHeight = `${Math.max(0, room.height * appearance.maxHeightRatio)}px`;
+  const frame = viewViewportBox();
+  const relativeAnchor = { width: anchor.width, height: anchor.height, left: anchor.left - frame.left, top: anchor.top - frame.top };
   const resolvedIntent = placementModel
-    ? tooltipPlacementIntent(anchor, { width: innerWidth, height: innerHeight }, placementModel, {
+    ? tooltipPlacementIntent(relativeAnchor, frame, placementModel, {
       narrow: document.documentElement.dataset.layout === 'narrow',
     })
     : intent;

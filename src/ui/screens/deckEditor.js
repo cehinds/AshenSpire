@@ -1,3 +1,4 @@
+import { matchViewMedia } from '../viewViewport.js';
 import { progressionTip } from '../components/progressionCards.js';
 // src/ui/screens/deckEditor.js — the deck editor (SPEC §14.1 UX), mounted over
 // whatever opened it: the Armoury or an eligible Rest screen.
@@ -237,7 +238,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     if (open && inspector) { inspector.parentNode.insertBefore(inspectPane(), inspector); inspector.remove(); }
     syncPanes();
     syncInert();
-    if (open && typeof matchMedia === 'function' && matchMedia('(max-width: 1000px)').matches) {
+    if (open && typeof matchMedia === 'function' && matchViewMedia('(max-width: 1000px)').matches) {
       focusNode(panel.querySelector('[data-focus-key="inspect-back"]'));
     }
   }
@@ -327,7 +328,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // inert (out of the tab order and the focus cursor) and hidden from assistive
   // tech. The inspector itself is never inert.
   function syncInert() {
-    const phone = typeof matchMedia === 'function' && matchMedia('(max-width: 1000px)').matches;
+    const phone = typeof matchMedia === 'function' && matchViewMedia('(max-width: 1000px)').matches;
     const hide = mobileView === 'inspect' && phone;
     for (const node of panel.querySelectorAll('[data-pane], .deck-editor-toolbar')) {
       if (hide) { node.setAttribute('inert', ''); node.inert = true; node.setAttribute('aria-hidden', 'true'); }
@@ -920,7 +921,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // order chip is then the only way to it), so pane switching does nothing
   // there for an unordered deck.
   function switchPane(step) {
-    if (!model.ordered && typeof matchMedia === 'function' && matchMedia('(max-width: 1000px)').matches) return false;
+    if (!model.ordered && typeof matchMedia === 'function' && matchViewMedia('(max-width: 1000px)').matches) return false;
     const at = DECK_PANES.indexOf(pane);
     pane = DECK_PANES[(at + step + DECK_PANES.length) % DECK_PANES.length];
     mobileView = pane;
@@ -1066,7 +1067,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
 
   // A window that narrows to phone width while the deck pane stands leaves it:
   // on a phone an unordered deck has no deck pane to stand in.
-  const phoneQuery = typeof matchMedia === 'function' ? matchMedia('(max-width: 1000px)') : null;
+  const phoneQuery = typeof matchMedia === 'function' ? matchViewMedia('(max-width: 1000px)') : null;
   const onPhoneChange = (ev) => {
     if (ev?.matches && !model.ordered) {
       // An open inspection stays open; its Back goes to the library list.

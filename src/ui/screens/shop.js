@@ -1,3 +1,4 @@
+import { uiZoom } from '../fx.js';
 import { removeOwnedRelic } from '../../model/classRewardProvenance.js';
 import { bindCardInspection } from '../components/cardInspection.js';
 import { wireCardShelf } from '../components/cardShelf.js';
@@ -975,7 +976,7 @@ export function wireShopLayout(root) {
     const rem = parseFloat(style.fontSize) || 16;
     // The short landscape HUD is absolute. Reserve its measured bottom before
     // sizing the scrollable pane, so the merchant's close button stays exposed.
-    const zoom = Number(style.getPropertyValue('--ui-zoom')) || 1;
+    const zoom = uiZoom();
     const clearance = hud ? Math.max(0, hud.getBoundingClientRect().bottom - root.getBoundingClientRect().top) / zoom + 8 / zoom : 0;
     root.style.setProperty('--merchant-hud-clearance', `${clearance}px`);
     // How wide a resting card is ACTUALLY drawn. `--card-w-glance` is what

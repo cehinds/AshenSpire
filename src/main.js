@@ -1,4 +1,4 @@
-import { applyViewViewport } from './ui/viewViewport.js';
+import { applyViewViewport, resolveViewViewport } from './ui/viewViewport.js';
 import { screenshotRoutePath } from './ui/models/ScreenshotFixtureModel.js';
 import { t } from './ui/strings.js';
 import { gameProfileRewardOffers, claimGameProfileReward, gameProfileShopStock, purchaseGameProfileShopOffer } from './model/gameProfileRewards.js';
@@ -830,7 +830,7 @@ function applyCardSizeSettings(settings) {
   // and a tool all keep asking one question. Redeclaring `--card-w-glance`
   // inside a media query would have been the later-rule-wins shape that has
   // already produced three defects in this component.
-  const resting = restingWidthPx(window.innerWidth, levels);
+  const resting = restingWidthPx(resolveViewViewport(settings.viewPreset, window.innerWidth, window.innerHeight).width, levels);
   document.documentElement.style.setProperty('--card-w-glance', `${resting}px`);
   // The shelf floors its tracks at a legible width; that floor cannot stand
   // above the resting card it floors, so it is re-projected against the width

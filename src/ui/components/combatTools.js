@@ -1,3 +1,4 @@
+import { viewViewportBox } from '../viewViewport.js';
 import { button, el } from '../kit/index.js';
 import { childModel } from '../models/ComponentModel.js';
 import { combatLogHeight, combatLogSnapSize, combatLogDragScale, COMBAT_LOG_SIZES } from '../models/CombatToolsModel.js';
@@ -93,7 +94,7 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
   const snapHeights = () => {
     const menuBottom = [...combatEl.querySelectorAll('.topbar button')].reduce((max, node) => Math.max(max, node.getBoundingClientRect().bottom), 0);
     const space = { cardHeight: combatEl.querySelector('.hand .card')?.getBoundingClientRect().height || 250,
-      viewportHeight: window.visualViewport?.height || innerHeight, dockTop: root.getBoundingClientRect().top - 6,
+      viewportHeight: viewViewportBox().height, dockTop: root.getBoundingClientRect().top - 6,
       menuBottom, gap: parseFloat(getComputedStyle(root).getPropertyValue('--combat-tools-gap')) || 8 };
     return Object.fromEntries(COMBAT_LOG_SIZES.map(size => [size, combatLogHeight({ ...space, size })]));
   };
@@ -105,7 +106,7 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
     if (event.button !== 0 || drag) return;
     suppressClick = false;
     const heights = snapHeights();
-    const dragScale = combatLogDragScale({ heights, viewportHeight: window.visualViewport?.height || innerHeight,
+    const dragScale = combatLogDragScale({ heights, viewportHeight: viewViewportBox().bottom,
       handleBottom: root.getBoundingClientRect().bottom });
     const gesture = drag = { pointerId: event.pointerId, y: event.clientY, active: false,
       open: state.open, size: state.size, height: state.open ? heights[state.size] : heights.Small, heights };
@@ -161,8 +162,8 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
     // 'field' (the default) spans the hand's full row, as it always has.
     // 'hand' spans only the card band: the first card's left edge to the last
     // card's right edge, never narrower than the two tools need.
-    let width = Math.max(0, (handBox?.width || innerWidth) - 12);
-    let left = (handBox?.right || innerWidth) - width - 6;
+    let width = Math.max(0, (handBox?.width || viewViewportBox().width) - 12);
+    let left = (handBox?.right || viewViewportBox().right) - width - 6;
     const band = span === 'hand' ? cardBand(hand) : null;
     if (band && handBox) {
       const minWidth = Math.min(handBox.width - 12, TOOLS_MIN_WIDTH * zoom);

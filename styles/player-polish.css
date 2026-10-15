@@ -238,7 +238,7 @@ body.hi-contrast :is(.modal, .as-detailcard, .as-option, .card, .shop-frame, .as
 .title-screen .ember { position:absolute; z-index:0; pointer-events:none; }
 .title-screen .title-more { position:relative; color:var(--parchment); font-size:1.2rem; }
 .title-more summary { cursor:pointer; min-height:var(--tap-floor); display:flex; align-items:center; justify-content:center; }
-.title-more[open] { background-color:var(--bg); border:1px solid var(--gold); padding:.8rem; position:absolute; bottom:6rem; width:min(95%,44rem); left:50%; transform:translateX(-50%); max-height:40vh; overflow:auto; z-index:5; }
+.title-more[open] { background-color:var(--bg); border:1px solid var(--gold); padding:.8rem; position:absolute; bottom:6rem; width:min(95%,44rem); left:50%; transform:translateX(-50%); max-height:calc(40 * var(--view-vh, 1vh)); overflow:auto; z-index:5; }
 .title-more > button { display:block; width:100%; margin-top:.5rem; }
 .title-screen .tm-foot { margin-top:1rem; font-size:.95rem; letter-spacing:.1em; }
 .title-screen .build-stamp { position:absolute; bottom:1rem; left:0; width:100%; pointer-events:none; }
@@ -417,7 +417,7 @@ main:has(> .rest-screen) > .shared-hud .hud-vitals-panel { max-width:28rem; padd
 :root[data-layout='narrow'] .title-screen .title-traveler { width:36%; height:32%; left:1%; top:5%; bottom:auto; }
 :root[data-layout='narrow'] .title-screen .title-menu > li:nth-child(n+3) { width:88%; }
 :root[data-layout='narrow'] :is(.combat,main:has(>.shop-workspace),main:has(>.rest-screen)) > .shared-hud > .hud-top { grid-template-columns:14rem 1fr auto; }
-:root[data-layout='narrow'] .shop-workspace:not(.master-workspace) { padding:30vh 1rem 1rem; }
+:root[data-layout='narrow'] .shop-workspace:not(.master-workspace) { padding:calc(30 * var(--view-vh, 1vh)) 1rem 1rem; }
 :root[data-layout='narrow'] .shop-workspace:not(.master-workspace) .shop-frame { width:100%; }
 :root[data-layout='narrow'] .merchant-workspace .shop-railitem { display:none; }
 :root[data-layout='narrow'] .shop-category-select { display:block; width:100%; min-height:44px; background:#17130f; color:var(--parchment); padding:.5rem; border:1px solid var(--gold); }
@@ -465,7 +465,7 @@ body.reduced-motion .shop-workspace .shop-pane { animation:none; }
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card-upcast-controls select { min-width:calc(88px / var(--ui-zoom,1)); }
 /* Keep room for a readable face between two real44px pagers on compact
    phones. Labels remain visible; the Reaction track wraps below its label. */
-@media (max-width:359px) {
+@container game-viewport (max-width:359px) {
  :root .combat[data-layout='formation'] .combat-tools { --combat-tools-physical-width:112; }
  :root .combat[data-layout='formation'] .combat-tools .reaction-switch { flex-wrap:wrap; justify-content:center; }
 }
@@ -656,7 +656,7 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 :root[data-layout='narrow'] .merchant-workspace .shop-frame .modal-head { grid-template-columns:minmax(0,1fr) auto auto; gap:8px; }
 :root[data-layout='narrow'] .merchant-workspace .shop-frame .modal-head-status { grid-column:2; grid-row:1; font-size:11px; }
 :root[data-layout='narrow'] .merchant-workspace .shop-frame .modal-close { grid-column:3; }
-@media (max-height:500px) {
+@container game-viewport (max-height:500px) {
  :root .shop-workspace.merchant-workspace { padding-top:max(1rem,var(--merchant-hud-clearance,0px)); }
  :root .shop-workspace.merchant-workspace .merchant-category-dock { grid-template-columns:repeat(6,minmax(0,1fr)); max-height:calc(44px / var(--ui-zoom,1)); }
 }
