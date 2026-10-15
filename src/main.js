@@ -1,3 +1,10 @@
+import { gameProfileRewardOffers, claimGameProfileReward, gameProfileShopStock, purchaseGameProfileShopOffer } from './model/gameProfileRewards.js';
+import { mountGameProfileOffers } from './ui/components/gameProfileOffers.js';
+import { profileStarterCount } from './ui/models/GameProfileTitleModel.js';
+import { mountGameProfileSelector } from './ui/components/gameProfileSelector.js';
+import { beginGameProfileRest, createGameProfileRestDraft, commitGameProfileRest } from './model/gameProfileRest.js';
+import { resolveGameProfile, gameModule, gameContent, applyGameProfileToContent, bindGameProfileRegistries } from './model/gameProfile.js';
+import { isConfiguredRun, gameProfileClassAvailable } from './model/gameProfileRun.js';
 import { rollPendingAbilityOffers } from './model/abilityOffers.js';
 import { openRestRecord, recordRestConsumed, markRestLeft, restRevisitNodeId, clearRestRevisitOnTravel } from './model/restRevisit.js';
 import { queueInitialProgression } from './model/initialProgression.js';
@@ -226,25 +233,34 @@ if (!validation.ok) {
   }
 }
 
-let registries = createRegistries(contentBundle);
+const profileQuery = new URLSearchParams(location.search);
+const askedGameProfile = profileQuery.get('gameProfile') || profileQuery.get('wb.gameProfile') || globalThis.__ASHEN_GAME_PROFILE_PREVIEW__ || 'default';
+let selectedGameProfile = resolveGameProfile(askedGameProfile.trim().startsWith('{') ? JSON.parse(askedGameProfile) : askedGameProfile);
+let importedGameProfile = askedGameProfile.trim().startsWith('{') ? selectedGameProfile : null;
+let registryGameProfile = selectedGameProfile;
+let registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, registryGameProfile)), registryGameProfile);
 let xpCombat = null;
 configureTooltipGlossary(registries);
 setClassGlyphs(registries.classes.all()); // class sigils are data (class defs)
 
-function rebuildRegistries(configuration = {}, masteryRun = null) {
-  const configured = configuredContentBundle(contentBundle, configuration);
+function rebuildRegistries(configuration = {}, masteryRun = null, gameProfile = registryGameProfile) {
+  registryGameProfile = gameProfile;
+  const authored = applyGameProfileToContent(contentBundle, gameProfile);
+  const configured = isConfiguredRun(gameProfile) ? authored : configuredContentBundle(authored, configuration);
   const result = validateContent(configured);
-  const structuralProblems = advancedConfigStructuralProblems(contentBundle, configuration?.overrides || configuration);
+  const structuralProblems = isConfiguredRun(gameProfile) ? [] : advancedConfigStructuralProblems(contentBundle, configuration?.overrides || configuration);
   if (!result.ok || structuralProblems.length) {
     const first = structuralProblems[0] || `${result.errors[0].path}: ${result.errors[0].msg}`;
     const message = `Game configuration unchanged: ${first} Authored defaults remain active until the values form a valid configuration.`;
     console.warn('[advanced-config]', message, result.errors, structuralProblems);
     if (typeof document !== 'undefined') showSettingsNotice(message, 'game-config');
+    if (isConfiguredRun(gameProfile)) throw new Error(`Invalid game profile ${gameProfile.id}: ${first}`);
     registries = createRegistries(contentBundle);
   } else {
     registries = createRegistries(configured);
   }
-  registries = registriesForClassMastery(registries, masteryRun);
+  registries = bindGameProfileRegistries(registries, gameProfile);
+  if (!isConfiguredRun(gameProfile)) registries = registriesForClassMastery(registries, masteryRun);
   configureTooltipGlossary(registries);
   setClassGlyphs(registries.classes.all());
   return registries;
@@ -1141,6 +1157,7 @@ function randomSeedString() {
 
 const runStartOwner = createRunStartOwner();
 function newRun(config) {
+  config = { ...config, gameProfile: config.gameProfile || selectedGameProfile };
   const asked = config.seedString || randomSeedString();
   const why = seedProblem(asked);
   if (why) {
@@ -1171,7 +1188,7 @@ function newRun(config) {
   });
 }
 
-function beginPreparedRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, journeyProfile = null, slot = 1, skipOpening = false, quickStart = false }) {
+function beginPreparedRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, journeyProfile = null, slot = 1, skipOpening = false, quickStart = false, gameProfile = selectedGameProfile }) {
   resetArmouryTraySession();
   // THE CATCH THAT USED TO BE HERE IS GONE, and it is the whole point of the
   // change. It read:
@@ -1238,10 +1255,10 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
   // The Arcane matrix is a legacy-run visual fixture. It deliberately carries
   // the old Exposure states; the pose must also carry their older rules.
   if (legacyArcaneShot) delete configSnapshot.breakMeterVersion;
-  rebuildRegistries(configSnapshot);
+  rebuildRegistries(configSnapshot, null, gameProfile);
   run = createRunState({
     seed, classId, registries, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes,
-    profileMeta: saves.loadMeta(), combatExpansionVersion, enemyKnowledgeVersion, reactionRulesVersion,
+    gameProfile, profileMeta: saves.loadMeta(), combatExpansionVersion, enemyKnowledgeVersion, reactionRulesVersion,
   });
   run.advancedConfigSnapshot = configSnapshot;
   run.seedString = seedToString(seed);
@@ -1249,7 +1266,7 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
   run.customization = customization || { name: 'Forsaken', glyph: '⚔', tint: 'gold' };
   run.custom = custom || { ascension: 0, mods: {}, deckMode: 'standard' };
   if (quickStart) run.quickStart = true;
-  if (!shotState) {
+  if (!shotState && !isConfiguredRun(run)) {
     openRunClassMastery(registries, run, saves.loadMeta(), { receiptId: crypto.randomUUID() });
     openRunEnemyKnowledge(run, { receiptId: run.classMasteryState.receiptId, bankable: true });
     registries = registriesForClassMastery(registries, run);
@@ -1266,7 +1283,7 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
   run.seatOrder = drawSeatOrder(registries, rng, { firstSeat: run.custom.firstSeat || null });
 
   // Keepsake: a one-time bundle of run-level effects (content/keepsakes.js).
-  const keepsake = (registries.characterCreation.keepsakes || []).find((k) => k.id === keepsakeId);
+  const keepsake = !isConfiguredRun(run) && (registries.characterCreation.keepsakes || []).find((k) => k.id === keepsakeId);
   if (keepsake && keepsake.effects.length) {
     executeRunEffects({ run, registries, rng }, keepsake.effects);
   }
@@ -1305,7 +1322,7 @@ function startClimb({ skipOpening = false } = {}) {
   if (isPoolDeckMode(run)) stampDeck(registries, run, undefined, { adoptEquipmentBonuses: false, reconcileEquipmentPools: false });
   run.mapGraph = run.journey ? journeyGraph(run.journey) : buildActMap(registries, rng, currentSeat(), contentAct(), runMapShape(), { history: run.history });
   if (run.journey) syncWorldPosition();
-  if (!skipOpening && (!shotState || shotState === 'prologue') && shouldPlayPrologue(saves.loadMeta().settings, saves.loadMeta().settings?.prologueSeen === true)) {
+  if (!isConfiguredRun(run) && !skipOpening && (!shotState || shotState === 'prologue') && shouldPlayPrologue(saves.loadMeta().settings, saves.loadMeta().settings?.prologueSeen === true)) {
     run.prologue = { version: PROLOGUE_STATE_VERSION, status: 'pending', scene: 0 };
   }
   persist();
@@ -1414,19 +1431,27 @@ function refusedRunLanding(slot) {
 let terminalResume = null;
 function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } = {}) {
   if (terminalResume) return terminalResume;
-  const liveRegistries = registries;
+  const liveRegistries = registries, liveGameProfile = registryGameProfile;
   const refused = () => {
     if (registries !== liveRegistries) {
       registries = liveRegistries;
+      registryGameProfile = liveGameProfile;
       configureTooltipGlossary(registries);
       setClassGlyphs(registries.classes.all());
     }
     return onRefused(slot);
   };
-  const authoredRegistries = createRegistries(contentBundle);
+  let savedGameProfile;
+  try { savedGameProfile = saves.peekRunGameProfile(slot); }
+  catch (error) {
+    showSettingsNotice(`Saved game configuration could not be restored: ${error.message}`, 'profile');
+    return refused();
+  }
+  const loadGameProfile = savedGameProfile || resolveGameProfile('current');
+  const authoredRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, loadGameProfile)), loadGameProfile);
   let loaded = saves.loadRun(authoredRegistries, slot);
   if (!loaded) return refused();
-  rebuildRegistries(loaded.advancedConfigSnapshot || { schemaVersion: 1, overrides: {} });
+  rebuildRegistries(loaded.advancedConfigSnapshot || { schemaVersion: 1, overrides: {} }, null, loadGameProfile);
   loaded = saves.loadRun(registries, slot);
   if (!loaded) return refused();
   // The load is certain from here; a caller that must tear down what the
@@ -1435,8 +1460,8 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   resetArmouryTraySession();
   activeSlot = slot;
   run = loaded;
-  refreshRunClassMastery(run, saves.loadMeta(), registries);
-  registries = registriesForClassMastery(registries, run);
+  if (!isConfiguredRun(run)) refreshRunClassMastery(run, saves.loadMeta(), registries);
+  if (!isConfiguredRun(run)) registries = registriesForClassMastery(registries, run);
   if (run.journey) syncWorldPosition();
   rng = createRng(run.seed, run.streamCounters);
   // A snapshot still carrying the retired ×20 Cinder key: the bundle above
@@ -1468,12 +1493,16 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   }
   if (run.combatPendingOutcome) {
     const pending = run.combatPendingOutcome;
-    const ended = restoreCombatSnapshot({ registries, rng, snapshot: pending.snapshot });
+    const ended = restoreCombatSnapshot({ registries, rng, expectedGameProfile: run.gameProfile, snapshot: pending.snapshot });
     const encounter = combatEncounterFor(registries, run, { nodeId: pending.nodeId, encounterId: pending.encounterId });
     return resumeTerminal(() => onCombatEnd(pending.result, ended, encounter));
   }
   if (pendingPrologueScene(run) !== null) return showPrologue();
-  if (run.pendingReward) {
+  if (run.gameProfilePendingReward) {
+    showGameProfileReward();
+  } else if (run.gameProfileOpenShop) {
+    showShop();
+  } else if (run.pendingReward) {
     mountPendingReward();
   } else if (run.combatEntered && run.combatEntered.encounterId) {
     // Current saves resume the exact committed turn. Older saves that only
@@ -1751,6 +1780,7 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
     showStartupGate();
     return;
   }
+  rebuildRegistries(saves.loadMeta().settings || {}, null, selectedGameProfile);
   const slots = saveSlotRecords();
   mountTitle(app, {
     slots,
@@ -2024,7 +2054,7 @@ function showArmoury(request = '', returnTo = showMap) {
     },
     onClose: returnTo,
     onEditDeck: deckDoors().armoury ? () => showDeckEditor(returnTo, true) : null,
-    onProgression: () => showCharacterProgression(() => showArmoury({ destination: 'character' }, returnTo)),
+    onProgression: isConfiguredRun(run) ? null : () => showCharacterProgression(() => showArmoury({ destination: 'character' }, returnTo)),
     onCharacterSheet: (opener, tab, onClose, onRewards) => showCharacterSheet(opener, { tab, onClose, onRewards,
       onRespec: classRespecAvailability(registries, run).ok ? () => showClassRespec(() => showArmoury({ destination: 'character' }, returnTo)) : null }),
     onClassRespec: classRespecAvailability(registries, run).ok ? () => showClassRespec(() => showArmoury({ destination: 'character' }, returnTo)) : null,
@@ -2047,8 +2077,8 @@ function showCharacterSheet(opener, options = {}) {
     ...options,
     offers: {
       statPoints: settingOn(settings, 'rewardLevelStatPoints'),
-      feats: settingOn(settings, 'rewardLevelFeats'),
-      classTree: settingOn(settings, 'rewardLevelClassTree'),
+      feats: !isConfiguredRun(run) && settingOn(settings, 'rewardLevelFeats'),
+      classTree: !isConfiguredRun(run) && settingOn(settings, 'rewardLevelClassTree'),
       levelCards: settingOn(settings, 'rewardLevelCards'),
       pointsPerLevel: resolveLevelUpValue(settings),
     },
@@ -2061,6 +2091,7 @@ function showCharacterSheet(opener, options = {}) {
 // Rest screen of a place carrying `deckEdit`, and none with deck editing off.
 // Every door here is out of combat; the fight's Armoury gets none.
 function deckDoors(services = null) {
+  if (isConfiguredRun(run)) return { armoury: false, rest: false };
   return deckEditorDoors({ settings: saves.loadMeta().settings || {}, inCombat: false, services });
 }
 
@@ -2271,14 +2302,14 @@ async function finishRun(victory) {
   const owned = () => run === finishedRun && activeSlot === finishedSlot;
   const checkpoint = () => {
     if (!owned()) throw new Error('The active run changed while completion was pending.');
-    if (!shotState) refreshRunClassMastery(finishedRun, saves.loadMeta(), finishedRegistries);
+    if (!shotState && !isConfiguredRun(finishedRun)) refreshRunClassMastery(finishedRun, saves.loadMeta(), finishedRegistries);
     stampSkillBonuses(finishedRegistries, finishedRun);
     saves.saveRun(finishedRun, finishedRng, finishedSlot);
   };
-  const resultRecord = runResult(victory);
+  const resultRecord = { ...runResult(victory), gameProfile: finishedRun.gameProfile, runId: finishedRun.runId };
   return commitRunFinishAsync(finishedRun, {
     victory,
-    finishId: finishedRun.classMasteryState?.receiptId || crypto.randomUUID(),
+    finishId: finishedRun.runId || finishedRun.classMasteryState?.receiptId || crypto.randomUUID(),
     checkpoint,
     bank: async () => {
       const knowledge = saves.bankEnemyKnowledge ? await saves.bankEnemyKnowledge(finishedRun) : { ok: true };
@@ -2326,9 +2357,39 @@ async function showFinishedRun(victory) {
   });
 }
 
-function showCustomize(slot = 1, catalog = false) {
-  rebuildRegistries(saves.loadMeta().settings || {});
+function showCustomize(slot = 1, catalog = false, profileChosen = false) {
+  if (!profileChosen && !catalog) {
+    app.replaceChildren();
+    const pane = document.createElement('section'); pane.className = 'screen game-profile-setup';
+    pane.style.cssText = 'max-width:44rem;padding:2rem;margin:auto;display:flex;flex-direction:column;gap:1rem';
+    const title = document.createElement('h1'); title.textContent = 'New Game';
+    const copy = document.createElement('p'); copy.textContent = 'Choose your game rules before selecting a class. Existing saves keep their own rules.';
+    const controls = document.createElement('div');
+    const renderSelector = () => {
+      controls.replaceChildren();
+      mountGameProfileSelector(controls, { profile: selectedGameProfile, importedProfile: importedGameProfile, onSelect: value => {
+        const profile = value === 'imported' ? importedGameProfile : resolveGameProfile(value);
+        if (typeof value === 'object') importedGameProfile = profile;
+        rebuildRegistries(saves.loadMeta().settings || {}, null, profile);
+        selectedGameProfile = profile; renderSelector();
+      } });
+    };
+    renderSelector();
+    const next = document.createElement('button'); next.textContent = 'Choose class'; next.onclick = () => showCustomize(slot, false, true);
+    const back = document.createElement('button'); back.textContent = 'Back'; back.onclick = () => showTitle();
+    pane.append(title, copy, controls, next, back); app.append(pane); return;
+  }
+  rebuildRegistries(saves.loadMeta().settings || {}, null, selectedGameProfile);
+  if (isConfiguredRun(selectedGameProfile) && !gameModule(selectedGameProfile, 'class-selection')) {
+    const defaultClass = gameContent(selectedGameProfile, 'classes')[0];
+    return startRunInSlot({ classId: defaultClass.id, seedString: randomSeedString(), gameProfile: selectedGameProfile }, slot);
+  }
   mountCustomize(app, {
+    gameProfile: selectedGameProfile,
+    fixedClasses: isConfiguredRun(selectedGameProfile) ? gameContent(selectedGameProfile, 'classes') : null,
+    profileStarterCount: gameModule(selectedGameProfile, 'cards') ? profileStarterCount(gameContent(selectedGameProfile, 'starterDeck')) : 0,
+    profileClassUnlocks: gameModule(selectedGameProfile, 'progression')?.classUnlocks === true,
+    classAvailable: id => gameProfileClassAvailable(selectedGameProfile, saves.loadMeta(), id),
     registries,
     meta: saves.loadMeta(),
     // A ?shot= boot gets a fixed seed so the field photographs identically on
@@ -2456,8 +2517,21 @@ function remountMapIfShowing(changed) {
 }
 
 function showMap(opts) {
-  if (run.classMasteryState?.initialTreeTiers?.length) return mountInitialClassMastery(app, { registries, run, onPersist: persist, onDone: () => showMap(opts), onBack: showTitle });
-  queueInitialProgression(registries,rng,run,{meta:saves.loadMeta(),onPersist:persist});
+  if (run.mapGraph?.activityLauncher) {
+    app.replaceChildren();
+    const screen = document.createElement('section'); screen.className = 'screen game-profile-activities';
+    screen.style.cssText = 'max-width:42rem;margin:auto;padding:2rem;display:flex;flex-direction:column;gap:1rem';
+    const title = document.createElement('h1'); title.textContent = 'Choose an activity'; screen.append(title);
+    for (const id of run.mapGraph.startIds) {
+      const node = run.mapGraph.nodes[id], control = document.createElement('button');
+      control.textContent = node.label || ({ monster: 'Fight', shrine: 'Rest', merchant: 'Shop', boss: 'Challenge boss' })[node.type] || node.type;
+      control.onclick = () => enterNode(id); screen.append(control);
+    }
+    const menu = document.createElement('button'); menu.textContent = 'Menu'; menu.onclick = () => showOverlay(); screen.append(menu);
+    app.append(screen); return;
+  }
+  if (!isConfiguredRun(run) && run.classMasteryState?.initialTreeTiers?.length) return mountInitialClassMastery(app, { registries, run, onPersist: persist, onDone: () => showMap(opts), onBack: showTitle });
+  if (!isConfiguredRun(run)) queueInitialProgression(registries,rng,run,{meta:saves.loadMeta(),onPersist:persist});
   // Quick start previews its first fight after the required tree choice.
   // Enter still confirms travel, and every other reachable route can be chosen.
   const suggested = run.quickStart && !run.mapNodeId && !run.journey && !run.legacyDungeon
@@ -2702,6 +2776,10 @@ function enterNode(nodeId) {
       // small rest and no services. A shrine node is the Shrine.
       return showRest(null, node.type === 'event' ? CAMP_LOCATION : 'shrine');
     case 'merchant': {
+      if (isConfiguredRun(run)) {
+        if (!gameModule(run, 'shops')) { persist(); return showMap(); }
+        run.gameProfileOpenShop = `${run.actNumber}:${nodeId}`; persist(); return showShop();
+      }
       // A classic merchant rolls its kind first (SPEC §14.2, `shopOffers`); the
       // shipped weights make every one a market with every shelf out, drawing
       // nothing new, so a seed's shelves are what they always were.
@@ -2720,6 +2798,7 @@ function enterNode(nodeId) {
       return showShop();
     }
     case 'treasure': {
+      if (isConfiguredRun(run)) return beginGameProfileReward({ source: 'combat', after: 'map' });
       const relicId = rollRelicReward(registries, rng, run.relics);
       const armamentId = rollDrop('treasure');
       // Treasure pays Smithing Stones through the combat door's faucet (SPEC
@@ -2837,6 +2916,7 @@ function leaveLegacyDungeon() {
 }
 
 function openLegacyEntrance(encounterId, nodeId) {
+  if (isConfiguredRun(run) && !gameModule(run, 'dungeons')) return false;
   const def = dungeonForEncounter(encounterId);
   if (!def) return false;
   beginDungeon(run, def, nodeId); persist(); showMap(); return true;
@@ -2882,7 +2962,7 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
   audio.music(enc.pool === 'boss' ? 'boss' : enc.pool === 'elite' ? 'elite' : 'combat');
   const cm = combatMods(enc.pool, enc);
   const entryRng = run.combatExpansionVersion === 2 && !savedSnapshot ? createRng(rng.seed, rng.getCounters()) : rng;
-  const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot, fallbackAttackSlotCount: run.equipmentAttackSlotCount, fallbackRemovedAttackSlotIds: run.removedAttackSlotIds, fallbackDerivedStatRuleSnapshot: run.derivedStatRuleSnapshot, fallbackAttributeMode: run.attributeMode, fallbackPoolDeck: isPoolDeckMode(run) }) : createRunCombat({
+  const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, expectedGameProfile: run.gameProfile, snapshot: savedSnapshot, fallbackAttackSlotCount: run.equipmentAttackSlotCount, fallbackRemovedAttackSlotIds: run.removedAttackSlotIds, fallbackDerivedStatRuleSnapshot: run.derivedStatRuleSnapshot, fallbackAttributeMode: run.attributeMode, fallbackPoolDeck: isPoolDeckMode(run) }) : createRunCombat({
     registries,
     rng: entryRng,
     run,
@@ -3095,32 +3175,33 @@ async function onCombatEnd(result, combat, enc) {
   const pendingBefore = pendingLevelCount(registries, run);
   // Every level waits for its press (SPEC §13.4o): XP is always banked, and the
   // reward door's Level up claims it. No setting applies a level on its own.
-  const manualLevelUp = true;
+  const manualLevelUp = !isConfiguredRun(run);
   // THE SKILL TRACKS ARE PAID HERE, ONCE (plan phase 4a): the fight kept a
   // receipt of every hit, block, evade and buildup by track; the run's ledger
   // takes it now, win or loss, and climbs whatever the XP buys.
-  const trackReceipt = skillXpReceipt(combat);
+  const configuredProgression = isConfiguredRun(run);
+  const trackReceipt = configuredProgression ? {} : skillXpReceipt(combat);
   for (const [skillId, amount] of Object.entries(trackReceipt)) {
     const kind = skillKindOf(registries, skillId);
     const bonus = kind === 'armour' ? 'armourXp' : 'weaponXp';
     trackReceipt[skillId] = Math.floor(amount * featMultiplier(run, bonus));
   }
-  applySkillXp(registries, run, trackReceipt, { bank: manualLevelUp });
+  if (!configuredProgression) applySkillXp(registries, run, trackReceipt, { bank: manualLevelUp });
   // The class track (plan phase 5b) is paid by the run's owner, who knows
   // the door's pool: a won fight, more for a boss; a lost one nothing.
-  const classAward = awardClassXp(registries, run, { victory: result === 'victory', pool: enc.pool, bank: manualLevelUp, multiplier: featMultiplier(run, 'classXp') });
+  const classAward = configuredProgression ? null : awardClassXp(registries, run, { victory: result === 'victory', pool: enc.pool, bank: manualLevelUp, multiplier: featMultiplier(run, 'classXp') });
   // Character XP is paid now; the level and its stat points wait for the blue
   // Level Up button. Excess XP remains on the ledger after each claim.
   const xpReceipt = combatXpReceipt(registries, {
     victory: result === 'victory', pool: enc.pool, enemies: combat.enemies,
     characterMultiplier: featMultiplier(run, 'characterXp'),
   });
-  const levelXp = xpReceipt.total;
+  const levelXp = isConfiguredRun(run) && gameModule(run, 'progression')?.characterLevels !== true ? 0 : xpReceipt.total;
   const levelAward = manualLevelUp
     ? bankLevelXp(registries, run, levelXp)
     : awardLevelXp(registries, run, levelXp, {
-      pointsPerLevel: resolveLevelUpValue(saves.loadMeta().settings),
-      grantStats: settingOn(saves.loadMeta().settings, 'rewardLevelStatPoints'),
+      pointsPerLevel: configuredProgression ? gameModule(run, 'progression')?.attributePointsPerLevel || 0 : resolveLevelUpValue(saves.loadMeta().settings),
+      grantStats: configuredProgression ? !!gameModule(run, 'stats') : settingOn(saves.loadMeta().settings, 'rewardLevelStatPoints'),
     });
   const levelsEarned = manualLevelUp
     ? Math.max(0, levelAward.pendingLevelUps - pendingBefore)
@@ -3136,7 +3217,7 @@ async function onCombatEnd(result, combat, enc) {
   const levelChoices = rollLevelChoices(levelsEarned);
   // A weapon swapped mid-fight stays swapped: combat works on copies of the
   // deck's instances, so the run's own copies need the new numbers stamped in.
-  stampDeck(registries, run, undefined, { adoptEquipmentBonuses: combat.equipmentChanged });
+  if (!configuredProgression) stampDeck(registries, run, undefined, { adoptEquipmentBonuses: combat.equipmentChanged });
 
   if (result !== 'victory') {
     audio.stopMusic();
@@ -3159,11 +3240,19 @@ async function onCombatEnd(result, combat, enc) {
   run.combatEntered = null;
   // The claim id is the one this door has always written (smithingRewardId);
   // a partial rewardChancePct rolls once on the `smith` stream (SPEC §15.3).
-  const smithingStoneReceipt = grantSmithingReward(registries, run, enc.pool, smithingRewardId(run, enc.pool), rng);
+  const smithingStoneReceipt = isConfiguredRun(run) ? null : grantSmithingReward(registries, run, enc.pool, smithingRewardId(run, enc.pool), rng);
   // The Stone, its idempotent claim, the cleared combat receipt, every RNG
   // counter used to roll the offer, and the offer itself cross one persistence
   // boundary below. A reload therefore resumes the reward menu instead of
   // losing either the Stone or the other spoils.
+
+  if (configuredProgression) {
+    run.cinders += Math.floor(rollRuneReward(registries, rng, enc.pool, run.relics));
+    const boss = enc.pool === 'boss';
+    if (boss) run.bossesBeaten = [...new Set([...(run.bossesBeaten || []), ...enc.enemies])];
+    if (boss && run.actNumber >= (gameModule(run, 'routes')?.acts || 3)) return showFinishedRun(true);
+    return beginGameProfileReward({ source: 'combat', after: boss ? 'advanceAct' : 'map', levelOffers: levelsEarned });
+  }
 
   if (enc.pool === 'boss') {
     run.bossesBeaten = run.bossesBeaten || [];
@@ -3184,8 +3273,8 @@ async function onCombatEnd(result, combat, enc) {
     // could give, in which case it pays out instead of dropping nothing.
     const bossArmament = rollDrop('boss');
     const drops = registries.balance.equipment.drops || {};
-    const bossDrafts = settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts('boss', manualLevelUp) : [];
-    const bossClassDrafts = settingOn(saves.loadMeta().settings, 'rewardBattleClassDrafts') ? rollClassDrafts(manualLevelUp) : [];
+    const bossDrafts = !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts('boss', manualLevelUp) : [];
+    const bossClassDrafts = !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleClassDrafts') ? rollClassDrafts(manualLevelUp) : [];
     // A boss offers up to balance.rewards.bossRelicChoices relics to pick ONE
     // from; one relic (or none) keeps the single relicId shape.
     const bossRelics = rollRelicChoices(registries, rng, run.relics, { rarities: ['boss'], count: Math.max(1, registries.balance.rewards.bossRelicChoices ?? 3) });
@@ -3194,9 +3283,9 @@ async function onCombatEnd(result, combat, enc) {
       cinders: Math.floor(rollRuneReward(registries, rng, 'boss', run.relics) * featMultiplier(run, 'cinders')) + (bossArmament ? 0 : drops.consolationCinders || 0),
       classDrafts: bossClassDrafts,
       skillDrafts: bossDrafts,
-      skillRankUps: settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillRankUps(manualLevelUp) : [],
-      skillAttributes: settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillAttributes(manualLevelUp) : [],
-      skillFeats: settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillFeats(manualLevelUp) : [],
+      skillRankUps: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillRankUps(manualLevelUp) : [],
+      skillAttributes: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillAttributes(manualLevelUp) : [],
+      skillFeats: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillFeats(manualLevelUp) : [],
       ...rollCardRows('boss', levelsEarned),
       ...(bossRelics.length > 1 ? { relicChoices: bossRelics } : { relicId: bossRelics[0] ?? null }),
       ...sigilOffer('boss'),
@@ -3212,16 +3301,16 @@ async function onCombatEnd(result, combat, enc) {
   }
 
   // Skill and class level rewards are independent of the combat card roll.
-  const drafts = settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts(enc.pool, manualLevelUp) : [];
-  const classDrafts = settingOn(saves.loadMeta().settings, 'rewardBattleClassDrafts') ? rollClassDrafts(manualLevelUp) : [];
+  const drafts = !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts(enc.pool, manualLevelUp) : [];
+  const classDrafts = !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleClassDrafts') ? rollClassDrafts(manualLevelUp) : [];
   const rewards = {
     title: victoryTitle(enc),
     cinders: Math.floor(rollRuneReward(registries, rng, enc.pool, run.relics) * featMultiplier(run, 'cinders')),
     classDrafts,
     skillDrafts: drafts,
-    skillRankUps: settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillRankUps(manualLevelUp) : [],
-    skillAttributes: settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillAttributes(manualLevelUp) : [],
-    skillFeats: settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillFeats(manualLevelUp) : [],
+    skillRankUps: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillRankUps(manualLevelUp) : [],
+    skillAttributes: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillAttributes(manualLevelUp) : [],
+    skillFeats: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillFeats(manualLevelUp) : [],
     ...rollCardRows(enc.pool, levelsEarned),
     flaskId: rollFlaskDrop(registries, rng, run),
     relicId: enc.pool === 'elite' ? rollRelicReward(registries, rng, run.relics) : null,
@@ -3264,6 +3353,7 @@ function rollCardRows(pool, levelUps) {
 }
 
 function rollLevelChoices(levelsEarned) {
+  if (isConfiguredRun(run)) return [];
   const settings = saves.loadMeta().settings || {};
   const offerFeats = settingOn(settings, 'rewardLevelFeats');
   const offerClassTree = settingOn(settings, 'rewardLevelClassTree');
@@ -3525,6 +3615,7 @@ function mountPendingReward(checkpoint = run.pendingReward, returnTo = null) {
 }
 
 function showCharacterProgression(returnTo) {
+  if (isConfiguredRun(run)) return showCharacterSheet(null, { onClose: returnTo });
   if (run.pendingReward) return mountPendingReward();
   const settings = saves.loadMeta().settings || {};
   const rewards = mergeProgressionRewards(run.deferredProgression, {
@@ -3587,6 +3678,29 @@ let restLocationId = 'shrine';
 let openVisit = null;
 
 function showRest(openPanel = null, locationId = null) {
+  if (isConfiguredRun(run) && gameModule(run, 'rest')) {
+    const record = !run.journey && !run.legacyDungeon ? openRestRecord(run, { multiUse: false }) : null;
+    const visit = beginGameProfileRest(run, `${run.actNumber}:${run.mapNodeId}`);
+    persist();
+    const leave = () => { markRestLeft(run); persist(); showMap(); };
+    const commit = (service, payload) => {
+      commitGameProfileRest(registries, run, service, payload);
+      if (record) recordRestConsumed(run, service);
+      persist(); showRest();
+    };
+    const strategize = () => {
+      if (!gameModule(run, 'cards')) return commit('strategize', {});
+      const draft = createGameProfileRestDraft(run);
+      mountDeckEditor(document.body, {
+        registries, run: draft, settings: saves.loadMeta().settings || {},
+        onDone: () => commit('strategize', { draft }), onCancel: () => showRest(),
+      });
+    };
+    return mountRest(app, { registries, run, meta: saves.loadMeta(), onDone: leave,
+      gameProfileRest: { visit, smithFree: gameContent(run, 'rests')?.smith?.free === true, smithCandidates: smithingPlan(registries, run).candidates,
+        attributeIds: Object.keys(run.attributes || {}), onStrategize: strategize,
+        onCommit: commit, onLeave: leave } });
+  }
   if (locationId) restLocationId = locationId;
   audio.music('rest');
   const healMult = run.custom && activeMods(run.custom).lessHealing ? registries.balance.customMods.lessHealingMult : 1;
@@ -3690,7 +3804,42 @@ function showRest(openPanel = null, locationId = null) {
   });
 }
 
+function beginGameProfileReward({ source = 'combat', after = 'map', levelOffers = 0 } = {}) {
+  if (!gameModule(run, 'rewards')) { persist(); return after === 'advanceAct' ? advanceAct() : showMap(); }
+  const offerId = `${run.actNumber}:${run.mapNodeId}:${source}`;
+  gameProfileRewardOffers(registries, run, rng, { offerId, source });
+  run.gameProfilePendingReward = { offerId, source, after, levelOffers };
+  persist(); return showGameProfileReward();
+}
+
+function showGameProfileReward() {
+  const pending = run.gameProfilePendingReward;
+  const offer = run.gameProfileRewardOffers[pending.offerId];
+  mountGameProfileOffers(app, { registries, run, offer, title: pending.source === 'level' ? 'Level reward' : 'Victory rewards',
+    onTake: index => { claimGameProfileReward(registries, run, pending.offerId, index); persist(); showGameProfileReward(); },
+    onContinue: () => {
+      delete run.gameProfilePendingReward; persist();
+      if (pending.levelOffers > 0) {
+        const offerId = `${pending.offerId}:level:${pending.levelOffers}`;
+        gameProfileRewardOffers(registries, run, rng, { offerId, source: 'level' });
+        run.gameProfilePendingReward = { ...pending, offerId, source: 'level', levelOffers: pending.levelOffers - 1 };
+        persist(); return showGameProfileReward();
+      }
+      if (pending.after === 'advanceAct') return advanceAct();
+      showMap();
+    } });
+}
+
 function showShop() {
+  if (isConfiguredRun(run)) {
+    if (!gameModule(run, 'shops')) return showMap();
+    const shopId = run.gameProfileOpenShop || `${run.actNumber}:${run.mapNodeId}`;
+    run.gameProfileOpenShop = shopId;
+    const offer = gameProfileShopStock(registries, run, rng, { shopId }); persist();
+    return mountGameProfileOffers(app, { registries, run, offer, title: 'Shop',
+      onTake: index => { purchaseGameProfileShopOffer(registries, run, shopId, index); persist(); showShop(); },
+      onContinue: () => { delete run.gameProfileOpenShop; persist(); showMap(); } });
+  }
   if (run.journey?.activeService) {
     const state = run.journey.serviceStates[run.journey.activeService.pointId];
     // After a JSON reload these are distinct objects; reconnect the canonical stock.
@@ -4410,6 +4559,15 @@ if (shotState === 'combat-test') {
     const evId = shotParams.get('shotEvent') || 'graveOfTheNameless';
     showEvent(evId);
   } else if (shotState === 'rest' || shotState === 'smith') {
+    if (isConfiguredRun(run)) {
+      const node = Object.values(run.mapGraph.nodes).find(row => row.type === 'shrine');
+      if (!node) throw new Error('Configured rest screenshot requires an authored rest node');
+      run.mapNodeId = node.id; run.floor = node.floor;
+      run.path = Object.values(run.mapGraph.nodes).filter(row => row.floor <= node.floor).map(row => row.id);
+      if (shotParams.get('shotRestState') === 'wounded') { run.hp = Math.max(1, Math.floor(run.maxHp * .6)); run.mana = 0; run.stamina = 0; }
+      if (shotState === 'smith') run.smithingStones = Math.max(1, run.smithingStones || 0);
+      persist(); showRest(); return;
+    }
     // A REACH STATE, not the denominator. Constantine could not scroll the
     // Smith grid on a phone; the reason nobody caught it is that the Shrine is
     // one of seven player-facing screens no instrument we own can open, so

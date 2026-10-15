@@ -1,12 +1,6 @@
 # JSON game modules: implementation pseudocode
 
-**Status: documentation blueprint only.** None of the interfaces, module loader,
-update requests, portable runtime, or verification procedures below is implemented
-by this document. Existing gameplay is unchanged; the compatibility legacy adapter
-is a future implementation step, not a component supplied here. Follow the
-scope and delivery sequence in [IMPLEMENTATION.md](IMPLEMENTATION.md); record work
-and resume instructions in [CONTINUE.md](CONTINUE.md). Integration is restricted to
-`Feature/json-game-modules`; do not promote to `dev`, `test`, `main`, or a release.
+**Status: algorithm target, not executable API documentation.** The repository now has a profile resolver, CLI, schemas, generated lock and selected host adapters. The pseudocode below sketches the broader portable runtime and acceptance contract; it is not proof that these algorithms, interfaces or cross-engine conformance are implemented. The current adapter requires `ashen.legacy-adapter@1`. Follow [CONTINUE.md](CONTINUE.md) for current evidence and next steps; use [IMPLEMENTATION.md](IMPLEMENTATION.md) for remaining target gates. Work remains on `Feature/json-game-modules`; do not promote to `dev`, `test`, `main` or a release.
 
 [ARCHITECTURE.md](ARCHITECTURE.md) governs structure; CORE-SPEC governs product
 rules. Use the architecture document for the proposed tree: data-only Ashen bundle
@@ -235,12 +229,7 @@ recursively before execution and gameplay hashing. Preserve array order. Reject
 functions, undefined, nonfinite numbers, cycles, prototype-bearing objects, and
 unknown executable fields at the data door.
 
-Each cohesive feature package owns its manifest, config/state schemas,
-implementation, author guide, content, UI adapter, and integration cases. Helpers
-are not separate user toggles. A sample manifest contract follows; package paths
-and interfaces are proposed, not existing files. Its sample plugin defaults are
-illustrative; they do not settle the full core's remaining Poise activation/stage
-policy or copy the bundle's settings:
+Each cohesive feature package is intended to own its manifest, schemas, implementation, author guide and cases; the current catalog has manifests/config schemas/defaults/guides, while full state schemas and portable operation implementations are still target work. Helpers are not separate user toggles. The following manifest contract is illustrative and is not a second schema for existing files. Its sample defaults do not settle any product policy:
 
 ```json
 {
@@ -269,13 +258,7 @@ policy or copy the bundle's settings:
 }
 ```
 
-This is the proposed `module.json`; its paths follow ARCHITECTURE's uniform
-module-folder convention. Resolve referenced `settings.schema.json`, `defaults.json`
-and `rules.json` before validation/merge; state/UI/cases use `state.schema.json`,
-`ui.json` and `cases.json`, with author instructions in `guide.md`. `runtime.mjs`
-is optional for a module needing host implementation; rules-only modules omit the
-entrypoint. Ashen definitions come from declared game packs, not a hidden module
-content path. No such files are created by this blueprint. The settings schema
+This is a target `module.json` example, not the exact current manifest schema. Current module manifests already reference `settings.schema.json`, `defaults.json` and `guide.md`; the broader rules/state/UI/cases and portable runtime contract remains future work. Ashen definitions belong in declared game packs, not hidden module content. The settings schema
 uses unique arrays of nonempty string IDs for include/order, never a fixed built-in
 enum. Defaults must resolve a declared policy without settling pending core order. Defense IDs are registry-validated strings, not a closed four-ID enum:
 authors can define additional defenses using supported behavior contracts. Require
@@ -823,8 +806,7 @@ reject cleanly. Run migrations transactionally against a copy; activate a new sa
 only after schema, reference, queue and hash checks pass. Retain original saves and
 old artifacts for rollback and still-pinned runs.
 
-These two request formats are proposed data contracts, not existing tools or CLI
-commands:
+These request formats sketch a future portable config-update API. The current CLI has `apply` for a validated author JSON file; it does not implement these request objects or a Workbench update endpoint:
 
 ```json
 {
@@ -984,5 +966,4 @@ Verification below is a future acceptance procedure, not a claim of executed tes
 
 Stop on a failing semantic gate and retain its smallest reproducible fixture.
 Document unsupported combinations explicitly; never silently trim features until
-an example passes. No gameplay approval, runtime implementation, or cross-engine
-conformance is implied by this planning document.
+an example passes. This pseudocode does not itself prove gameplay acceptance, complete runtime implementation or cross-engine conformance. The host-adapter work that does exist is tracked separately in the current handoff; treat each unverified algorithm here as target behavior until exercised by a real test.

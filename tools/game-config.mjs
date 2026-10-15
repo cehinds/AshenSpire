@@ -64,7 +64,7 @@ function main(args) {
   while(args.length) { const arg=args.shift();if(arg==='--portable')options.portable=true;else if(['--input','--out'].includes(arg)){if(!args.length||args[0].startsWith('--'))throw new Error(`${arg} requires a path`);options[arg.slice(2)]=args.shift();}else throw new Error(`Unknown argument ${arg}`); }
   if(!['validate','build','check','export','apply'].includes(command))throw new Error('Usage: game-config.mjs validate|build|check|export|apply [--input PATH] [--out PATH] [--portable]');
   const inputText=options.input?readFileSync(resolve(options.input),'utf8'):null;
-  const author=inputText?JSON.parse(inputText):json('games/ashenspire/game.json');
+  const author=inputText !== null ? JSON.parse(inputText) : json('games/ashenspire/game.json');
   const catalog=loadGameProfileCatalog();
   const profile=resolveGameAuthor(author,catalog);
   if(options.portable&&!profile.portability.portable)throw new Error(`Unsupported required capability: ${profile.portability.requiredCapabilities.join(', ')}`);

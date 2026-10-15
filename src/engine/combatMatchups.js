@@ -1,3 +1,4 @@
+import { configuredCombat, setProfileStance } from './gameProfileCombat.js';
 import { removeStatus } from './statuses.js';
 import { stanceOf, sameStance, stanceEntryBonuses, stanceRulesFor } from '../model/stanceRules.js';
 import { syncWardMaximum } from './combatPools.js';
@@ -295,6 +296,7 @@ function restrictions(ctx, entity, options = {}) {
 
 /** Called only for an accepted play/telegraph; support preserves posture. */
 export function setCombatStance(ctx, entity, carrier) {
+  if (configuredCombat(ctx)) { setProfileStance(ctx, entity, carrier); return entity?.combatStance; }
   if (!combatExpansionEnabled(ctx) || !entity) return null;
   const profile = normalizedProfile(carrier);
   if (!profile.maneuver || profile.stanceTrigger === false) return entity.combatStance || null;

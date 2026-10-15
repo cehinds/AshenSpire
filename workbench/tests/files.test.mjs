@@ -53,6 +53,9 @@ test('allowlist: editable sources only; traversal, generated files, .git and oth
   assert.equal(ok.status, 200);
   assert.deepEqual(Object.keys(await ok.json()).sort(), ['hash', 'kind', 'path', 'text']);
   assert.equal(allowedKind('content/config/ui/tokens.json'), 'json');
+  assert.equal(allowedKind('games/ashenspire/game.json'), 'json');
+  assert.equal(allowedKind('games/ashenspire/presets/current.json'), 'json');
+  assert.equal(allowedKind('games/ashenspire/packs/core/pack.json'), null, 'module and pack implementation files are not editable in this Workbench');
   assert.equal(allowedKind('styles/main.css'), 'css');
   assert.equal(allowedKind('src/engine/rules.js'), 'js');
 });

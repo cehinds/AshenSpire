@@ -1,3 +1,4 @@
+import { mountGameProfileRest } from '../components/gameProfileRest.js';
 // src/ui/screens/rest.js — a location's Rest screen: Rest, and the services
 // the place carries (SPEC §7.1, §13.4j; what a Rest restores is the location's
 // tag set, engine/locations.js — this screen states no number of its own)
@@ -112,9 +113,10 @@ function locationTitle(locationId) {
   return t('rest.title');
 }
 
-export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false, services = null, hud = null, visit = null, questBoard = null, deckEditor = null, revisit = null, onConsumed = null }) {
+export function mountRest(app, { gameProfileRest = null, registries, run, meta, onDone, onReallocate = null, onLevelUp = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false, services = null, hud = null, visit = null, questBoard = null, deckEditor = null, revisit = null, onConsumed = null }) {
   // E13's multi-use Shrine: an action re-opens the same screen (with what was
   // already taken recorded) instead of leaving; LEAVE is the one way out.
+  if (gameProfileRest) return mountGameProfileRest(app, gameProfileRest);
   const remount = (extra = {}) => mountRest(app, {
     registries, run, meta, onDone, onReallocate, onLevelUp, healMult, refill, openPanel: null, multiUse, rested, services, hud, visit, questBoard, deckEditor, revisit, onConsumed, ...extra,
   });

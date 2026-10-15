@@ -1791,7 +1791,7 @@ export function mountEquipment(host, {
         const plan = inventoryFooterPlan({ target, actionLabel, eligibility }).primary;
         // The footer runs the same act, through the same hold, as the card.
         if (plan) footerPlans.set(row.key, { ...plan, act, explicit: !!armament, holdMs: cardClass.holdAction ? holdDuration : 0 });
-      } else if (row.classCard && !inCombat) {
+      } else if (row.classCard && !inCombat && run.gameProfile?.foundation?.mode !== 'configured') {
         const equipped = !run.classUnequipped && run.class === row.id;
         const label = equipped ? 'Unequip class' : 'Equip class';
         const act = () => { equipClassCard(registries, run, equipped ? null : row.id, { inCombat }); commit(); };
@@ -1799,7 +1799,7 @@ export function mountEquipment(host, {
         actionButton.title = run.pendingReward ? 'Finish the pending reward before changing class cards.' : '';
         actionButton.addEventListener('click', (event) => { event.stopPropagation(); act(); });
         if (!run.pendingReward) footerPlans.set(row.key, { label, kind: 'class', act, holdMs: 0 });
-      } else if (row.read && !inCombat) {
+      } else if (row.read && !inCombat && run.gameProfile?.foundation?.mode !== 'configured') {
         // SPEC §14.3: a skill book is read here, out of combat only — one
         // awardSkillXp on its track (model/consumables.js), then one fewer.
         const label = t('armoury.consumable.read');
@@ -2206,7 +2206,7 @@ export function mountEquipment(host, {
     // A run always has its own class ladder (skillProgressRows refuses a class
     // the registry does not know, rather than returning a list without it), so
     // there is no empty case to draw here and none is pretended.
-    const skillRows = skillProgressRows(registries, run);
+    const skillRows = run.gameProfile?.foundation?.mode === 'configured' ? [] : skillProgressRows(registries, run);
     // A ledger row whose track the content no longer declares cannot become a
     // bar — it has no label — but it may be holding drafts, so it is SAID
     // rather than dropped, the way a saved view the table no longer declares
@@ -2223,7 +2223,7 @@ export function mountEquipment(host, {
     progressionTip(progression, 'Open progression');
     progression.addEventListener('click', () => openProgression(progression, 'skills'));
     if (!onCharacterSheet) progression.addEventListener('click', () => skills.hidden = !skills.hidden);
-    const skillSection = el('section', { class: 'character-skill-section' }, [progression, skills]);
+    const skillSection = el('section', { class: 'character-skill-section' }, run.gameProfile?.foundation?.mode === 'configured' ? [] : [progression, skills]);
     box.querySelector('.combatPowerCard').after(skillSection);
     box.appendChild(informationCard({
       id: 'equipmentReceiptsCard',

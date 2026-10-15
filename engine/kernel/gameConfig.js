@@ -122,10 +122,14 @@ export function resolveGameAuthor(author, catalog) {
   for (const [id, module] of Object.entries(catalog.modules)) {
     const entry = Object.hasOwn(source.modules,id) ? source.modules[id] : undefined, bundled = bundle.manifest.modules[id];
     if (entry !== undefined && entry !== false && entry !== true && !record(entry)) fail(`$/modules/${id}`, 'expected false, true or settings object');
+    if (bundle.manifest.foundationMode === 'legacy' && entry === false && bundled) fail(`$/modules/${id}`, 'legacy adapter cannot disable this feature through game.json; use the configured core or existing legacy settings');
     if (entry === false || (entry === undefined && !bundled)) { modules[id] = false; continue; }
     if (bundled && bundled.version !== module.manifest.version) fail(`$/modules/${id}`, 'exact module version unavailable');
     const defaults = mergeGameSettings(module.defaults, bundled?.settings || {});
     modules[id] = record(entry) ? mergeGameSettings(defaults, entry) : defaults;
+    if (bundle.manifest.foundationMode === 'legacy' && record(entry)) {
+      for (const key of Object.keys(entry)) if (!(key in defaults) || canonicalGameJSON(modules[id][key]) !== canonicalGameJSON(defaults[key])) fail(`$/modules/${id}/${key}`, 'legacy adapter does not consume game.json setting overrides; use the configured core or existing legacy settings');
+    }
     if (modules[id].mode !== bundle.manifest.foundationMode) fail(`$/modules/${id}/mode`, 'mode must match selected bundle adapter; select the core or current bundle explicitly');
     if (modules[id].mode === 'configured' && !module.manifest.configuredAdapter) fail(`$/modules/${id}`, 'configured adapter not implemented for this feature');
     validateGameSchema(modules[id], module.schema, `$/modules/${id}`); schemas[id] = module.schema;

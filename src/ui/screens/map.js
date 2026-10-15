@@ -1,3 +1,4 @@
+import { gameModule } from '../../model/gameProfile.js';
 // src/ui/screens/map.js — the act map SCREEN (SPEC §7.1, mockup: map-screen.svg)
 //
 // THE BOARD IS NOT HERE ANY MORE. Geometry, edges, nodes, fog, the camera, the
@@ -141,8 +142,9 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   const reachable = new Set(mapAdapter?.reachable || (current ? map.nodes[current].next : map.startIds));
   // A left classic rest site stays enterable until a new node is chosen (owner, 2026-10-12).
   if (!mapAdapter && revisitId && map.nodes[revisitId]) reachable.add(revisitId);
-  const reveal = passiveFlag(registries, run.relics, 'revealUnknown');
-  const mode = mapAdapter?.mode || resolveMapMode(meta);
+  const configuredRoutes = gameModule(run, 'routes')?.mode === 'configured';
+  const reveal = configuredRoutes ? false : passiveFlag(registries, run.relics, 'revealUnknown');
+  const mode = configuredRoutes ? 'path' : mapAdapter?.mode || resolveMapMode(meta);
   const fog = mode === 'fog';
 
   const atEntrance = !current;

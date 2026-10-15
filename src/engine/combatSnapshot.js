@@ -1,3 +1,5 @@
+import { validateGameProfileSnapshot } from '../model/gameProfile.js';
+import { freezeProfile, configuredCombat } from './gameProfileCombat.js';
 // src/engine/combatSnapshot.js — CombatSnapshotService.
 //
 // A save is a committed combat state, not a replay instruction. Registries,
@@ -48,6 +50,7 @@ export function serializeCombatSnapshot(combat) {
   }
   const snapshot = structuredClone({
     version: COMBAT_SNAPSHOT_VERSION,
+    ...(combat.gameProfile ? { gameProfile: combat.gameProfile, gameProfileCommands: combat.gameProfileCommands || 0, gameProfileInterrupts: combat.gameProfileInterrupts || {} } : {}),
     ...(combat.combatExpansionVersion === 2 ? { combatExpansionVersion: 2, combatExpansionRules: combat.combatExpansionRules, combatKey: combat.combatKey,
       expansionActionSerial: combat.expansionActionSerial || 0, pendingExpansionActions: combat.pendingExpansionActions || 0, allocatedAttributes: combat.allocatedAttributes } : {}),
     ...(combat.combatMatchupRules ? { combatMatchupRules: combat.combatMatchupRules } : {}),
@@ -154,14 +157,17 @@ function restoredPoolDeck(saved, fallback) {
   return saved === true || fallback === true;
 }
 
-export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttackSlotCount, fallbackRemovedAttackSlotIds, fallbackDerivedStatRuleSnapshot, fallbackAttributeMode, fallbackPoolDeck }) {
+export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttackSlotCount, fallbackRemovedAttackSlotIds, fallbackDerivedStatRuleSnapshot, fallbackAttributeMode, fallbackPoolDeck, expectedGameProfile = null }) {
   // A fight saved before the range rename reads melee/reach/ranged (combatRanges.js);
   // the caller's object is left as saved.
   const saved = structuredClone(snapshot);
   bringRangesForward(saved);
   assertCombatSnapshot(saved);
+  if (saved.gameProfile) validateGameProfileSnapshot(saved.gameProfile);
+  if (expectedGameProfile && saved.gameProfile?.hash !== expectedGameProfile.hash) throw new Error('Combat game profile does not match the run configuration');
   if (saved.foundation) validateFoundationSnapshot(saved.foundation);
   const combat = {
+    ...(saved.gameProfile ? { gameProfile: freezeProfile(saved.gameProfile), gameProfileCommands: saved.gameProfileCommands || 0, gameProfileInterrupts: saved.gameProfileInterrupts || {} } : {}),
     registries,
     rng,
     ...(saved.combatExpansionVersion === 2 ? { combatExpansionVersion: 2, combatExpansionRules: saved.combatExpansionRules, combatKey: saved.combatKey,
@@ -251,7 +257,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   combat._emitEvent = emitEvent;
   // The one listener createCombat hooks on the bus, hooked again here: the
   // raw emitter alone would record no XP for the rest of the restored fight.
-  attachSkillXp(combat);
+  if (!configuredCombat(combat)) attachSkillXp(combat);
   combat.enqueue = (action) => combat.queue.push(action);
   for (const key of ['reactionRulesVersion', 'reactionRules', 'reactionStack', 'foundationNextSerial', 'reactionCursor', 'reactionHandCleanup', 'pendingReaction', 'reactionResume', 'enemyReactionRolls', 'reactionRootPlay']) {
     if (saved[key] !== undefined) combat[key] = saved[key];
@@ -288,7 +294,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   // exactly as a fresh fight would (stampPlayerPoiseMax clamps the value).
   if (combat.ratingsRules) {
     refreshCombatRatings(combat);
-  } else if (combat.player && combat.loadout) {
+  } else if (!configuredCombat(combat) && combat.player && combat.loadout) {
     stampPlayerPoiseMax(combat.player, playerPoiseThresholdReceipt(registries, {
       loadout: combat.loadout, relics: combat.player.relicIds || [], class: combat.player.classId,
       itemUpgradeLevels: combat.itemUpgradeLevels || {}, attributes: combat.attributes || null,

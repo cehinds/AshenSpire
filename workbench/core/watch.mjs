@@ -44,6 +44,7 @@ function walk(dir, out = new Map()) {
  */
 export const BUILD_OUTPUTS = {
   'tools/content-build.mjs': ['src/content/generated/', 'src/framework/data/'],
+  'tools/game-config.mjs': ['src/content/generated/gameProfiles.js', 'games/ashenspire/game.lock.json'],
   'tools/framework-data-build.mjs': ['src/framework/data/'],
   'tools/config-build.mjs': ['src/config/generated/'],
   'tools/card-components.mjs': ['src/content/cardComponents.generated.js'],
@@ -315,9 +316,11 @@ export function buildsFor(files, root) {
   const framework = files.some((f) => /^content\/framework\//.test(f));
   const config = files.some((f) => /^content\/config\//.test(f));
   const cardLayout = files.includes('src/content/card-layout.json');
+  const gameProfiles = files.some((f) => /^games\/ashenspire\/(?:game\.json|presets\/current\.json)$/.test(f));
   const steps = [];
   if (framework && fs.existsSync(path.join(root, 'tools/framework-data-build.mjs'))) steps.push('tools/framework-data-build.mjs');
   if (config) steps.push('tools/config-build.mjs');
+  if (gameProfiles && fs.existsSync(path.join(root, 'tools/game-config.mjs'))) steps.push('tools/game-config.mjs build');
   if (content) steps.push('tools/content-build.mjs');
   if (cardLayout && fs.existsSync(path.join(root, 'tools/card-components.mjs'))) steps.push('tools/card-components.mjs');
   return steps;

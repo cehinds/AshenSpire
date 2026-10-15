@@ -1,3 +1,5 @@
+import { foundationStandin } from '../components/foundationStandin.js';
+import { gameModule } from '../../model/gameProfile.js';
 import { combatWeaponProfilesFor } from '../../model/combatWeaponPresentation.js';
 import { attackHitPreview, effectiveEvasion } from '../../engine/stanceHit.js';
 import { enemyActionPose } from '../../model/enemyActionPose.js';
@@ -158,6 +160,17 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // One preview per (card, target, ranks) until the fight next changes: see
   // PreviewMemoModel. The fight changes only through dispatch and the Classic
   // cell normalisation below.
+  const configuredArt = run.gameProfile?.foundation?.mode === 'configured';
+  const profileArt = (render, options) => {
+    if (configuredArt && !gameModule(run, 'art')) return foundationStandin(options);
+    const figure = render();
+    if (configuredArt) figure.addEventListener('error', () => figure.replaceChildren(foundationStandin(options)), { capture: true, once: true });
+    return figure;
+  };
+  const profilePlayerSprite = (customization, classId, armourId, presentation) => profileArt(
+    () => playerSprite(customization, classId, configuredArt ? 'default' : armourId, presentation), { enemy: false });
+  const profileEnemySprite = (definition, entity) => profileArt(
+    () => enemySprite(definition, entity), { enemy: true, width: registries.balance.ui.spriteTiers[definition.size || 'medium'].w, height: registries.balance.ui.spriteTiers[definition.size || 'medium'].h });
   const previewMemo = createPreviewMemo({ combat, preview: enginePreviewCard, dispatch: engineDispatch });
   const { dispatch, previewCard } = previewMemo;
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
@@ -874,7 +887,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
 
     const def = registries.enemies.get(entity.enemyId);
-    const intent = disp?.ents[entity.id]?.intentPreview || previewIntent(combat, entity.id);
+    const intent = configuredArt && !gameModule(run, 'intent') ? { hidden: true, label: t('gameProfile.combat.unreadIntent') } : disp?.ents[entity.id]?.intentPreview || previewIntent(combat, entity.id);
     const moveCardOptions = { registries, combatMatchupRules: combat.combatMatchupRules,
       combatExpansionVersion: combat.combatExpansionVersion, stanceRules: combat.stanceRules };
     const learning = combat.enemyKnowledge ? projectEnemyKnowledge(def, combat.enemyKnowledge.owners.player?.knowledge.enemies[def.id], { ...moveCardOptions, ratingsRules: combat.ratingsRules }) : null;
@@ -936,12 +949,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function inspectorPreviewSprite(subject) {
     if (subject.role === 'player') {
       const figure = figureSpec(registries, run.loadout, run.class);
-      return playerSprite(run.customization || {}, run.class, figure.armourId, { animation: equipmentAnimationForLoadout(registries, run.loadout, run.class), view: 'portrait' });
+      return profilePlayerSprite(run.customization || {}, run.class, figure.armourId, { animation: equipmentAnimationForLoadout(registries, run.loadout, run.class), view: 'portrait' });
     }
     const enemy = combat.enemies.find((e) => e.id === subject.entityId);
     if (!enemy) return null;
     const def = registries.enemies.get(enemy.enemyId);
-    return enemySprite(enemyAppearance[def.id] ? { ...def, id: enemyAppearance[def.id] } : def, enemySpriteState(enemy));
+    return profileEnemySprite(enemyAppearance[def.id] ? { ...def, id: enemyAppearance[def.id] } : def, enemySpriteState(enemy));
   }
 
   function openCombatantDoor(subject, opener = document.activeElement) {
@@ -976,6 +989,33 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     refreshCombatantContext(box, subject);
     box.addEventListener('focus', () => { if (box.matches(':focus-visible')) selectCombatant(box.dataset.eid); });
     box.addEventListener('gpfocus', event => { if (event.target === box) selectCombatant(box.dataset.eid); });
+    if (configuredArt) {
+      let holdTimer = null, origin = null, inspected = false;
+      const cancelHold = () => { clearTimeout(holdTimer); holdTimer = null; };
+      const inspectTarget = () => {
+        const entity = getEntity(combat, box.dataset.eid);
+        if (!entity) return;
+        selectCombatant(box.dataset.eid);
+        openCombatantDoor(combatantSubject(entity.kind === 'player' ? 'player' : 'enemy', entity), box);
+      };
+      box.addEventListener('pointerdown', event => {
+        if (event.button !== 0) return;
+        cancelHold(); inspected = false; origin = { x: event.clientX, y: event.clientY };
+        holdTimer = setTimeout(() => { if (box.isConnected) { inspected = true; inspectTarget(); } }, 600);
+      });
+      box.addEventListener('pointermove', event => {
+        if (origin && Math.hypot(event.clientX - origin.x, event.clientY - origin.y) > 8) cancelHold();
+      });
+      box.addEventListener('pointerup', cancelHold);
+      box.addEventListener('pointercancel', cancelHold);
+      box.addEventListener('click', event => {
+        if (inspected) { inspected = false; event.preventDefault(); event.stopImmediatePropagation(); return; }
+        if (!selected && selectedFlask == null && selectedCombatantId === box.dataset.eid
+          && event.target.closest('.combatant-mini-hud, .meters') && !event.target.closest('button')) {
+          event.preventDefault(); event.stopImmediatePropagation(); inspectTarget();
+        }
+      }, true);
+    }
     box.addEventListener('keydown', event => {
       if (event.target !== box || !['Enter', ' '].includes(event.key)) return;
       event.preventDefault(); box.click();
@@ -1706,7 +1746,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       entityId: 'player',
       leading: [combatantInfo(combatantSubject('player', p).name, opener => openCombatantDoor(combatantSubject('player', p), opener))],
       classNames: [selfArm ? 'armed' : '', selectedCombatantId === 'player' ? 'context-selected' : ''],
-      sprite: existing ? null : playerSprite(run.customization || {}, run.class, figure.armourId, { animation, view: 'combat', selectedWeaponProfile: selectedProfile(), classSmashProfile: smashProfile() }),
+      sprite: existing ? null : profilePlayerSprite(run.customization || {}, run.class, figure.armourId, { animation, view: 'combat', selectedWeaponProfile: selectedProfile(), classSmashProfile: smashProfile() }),
       name: markMeterRow(labelStack({ label: `${run.customization?.name || runClassIdentity(registries, run).name} · Lv ${characterLevel(run)}`, attrs: { class: 'nm' } }), 'name'),
       meters: meterBars(p),
       trailing,
@@ -1787,7 +1827,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (record?.renderKey === renderKey) continue;
       const leading = [];
       // WCO1: Inspect above the intent; the intent shows per the overlay config.
-      if (enemy.alive) leading.push(combatantInfo(def.name, opener => openCombatantDoor(combatantSubject('enemy', enemy), opener)), intentVisible('enemy') ? intentEl(enemy) : null);
+      if (enemy.alive) leading.push(combatantInfo(def.name, opener => openCombatantDoor(combatantSubject('enemy', enemy), opener)), (run.gameProfile?.foundation?.mode !== 'configured' || gameModule(run, 'intent')) && intentVisible('enemy') ? intentEl(enemy) : null);
       // Target-number badge for keyboard targeting (SPEC §7.3).
       if (enemy.alive && targeting) {
         const idx = living.indexOf(enemy);
@@ -1827,7 +1867,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         entityId: enemy.id,
         classNames: [dv(enemy).alive ? '' : 'dead', eligibleTargets.includes(enemy.id) ? 'targetable' : '', selectedCombatantId === enemy.id ? 'context-selected' : ''],
         leading,
-        sprite: record ? null : enemySprite(enemyAppearance[def.id] ? { ...def, id: enemyAppearance[def.id] } : def, enemySpriteState(enemy)),
+        sprite: record ? null : profileEnemySprite(enemyAppearance[def.id] ? { ...def, id: enemyAppearance[def.id] } : def, enemySpriteState(enemy)),
         name: markMeterRow(nm, 'name'),
         meters: meterBars(enemy),
         trailing: [statusRow(enemy)],
@@ -2031,6 +2071,28 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function renderControls() {
+    if (combat.gameProfile?.foundation?.mode === 'configured' && !gameModule(combat, 'cards')) {
+      let actions = combatEl.querySelector('.foundation-actions');
+      if (!actions) {
+        actions = document.createElement('div'); actions.className = 'foundation-actions';
+        actions.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:1rem;z-index:6;pointer-events:auto';
+        const target = document.createElement('select'); target.setAttribute('aria-label', t('gameProfile.combat.attackTarget'));
+        const attack = document.createElement('button'); attack.textContent = t('gameProfile.combat.attack'); attack.className = 'as-btn foundation-attack';
+        attack.onclick = () => {
+          if (busy || combat.result || combat.phase !== 'player') return;
+          disp = takeSnapshot();
+          try {
+            const out = dispatch(combat, { type: 'basicAttack', targetId: target.value });
+            busy = true; afterDispatch(out.events);
+          } catch (error) { disp = null; console.warn('[combat] attack rejected:', error.message); render(); }
+        };
+        actions.append(target, attack); $('.hand-overlay').append(actions);
+      }
+      const target = actions.querySelector('select'), selectedTarget = target.value;
+      target.replaceChildren(...combat.enemies.filter(enemy => enemy.alive).map(enemy => new Option(registries.enemies.get(enemy.enemyId).name, enemy.id)));
+      if ([...target.options].some(option => option.value === selectedTarget)) target.value = selectedTarget;
+      actions.querySelector('button').disabled = busy || !!combat.result || combat.phase !== 'player';
+    }
     // The bound key (or pad button) rides on the End Turn button itself, so the
     // shortcut is discoverable without reading the hint bar. Tracks rebinds.
     const etKey = hasGamepad() ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn');

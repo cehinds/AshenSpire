@@ -8,7 +8,7 @@ import { icon } from '../ui/icons.mjs';
 
 test('every module id loads and default-exports a mount()', async () => {
   const ids = MODULES.map((m) => m.id);
-  assert.deepEqual(ids, ['data', 'layout', 'motion', 'entities', 'assets', 'review']);
+  assert.deepEqual(ids, ['data', 'configuration', 'layout', 'motion', 'entities', 'assets', 'review']);
   assert.equal(new Set(ids).size, ids.length, 'ids are unique');
   for (const m of MODULES) {
     assert.ok(m.label && m.blurb, `${m.id} has a label and blurb`);
@@ -17,6 +17,16 @@ test('every module id loads and default-exports a mount()', async () => {
     const mod = await m.load();
     assert.equal(typeof mod.default.mount, 'function', `${m.id} exports mount`);
   }
+});
+
+test('Game Configuration is a native authoring module with file import/export and shared resolver validation', async () => {
+  const mod = await MODULES.find((m) => m.id === 'configuration').load();
+  assert.equal(typeof mod.default.mount, 'function');
+  const src = await import('node:fs/promises').then((fs) => fs.readFile(new URL('../modules/configuration/index.mjs', import.meta.url), 'utf8'));
+  assert.match(src, /game-profile\/validate/);
+  assert.match(src, /files\/save/);
+  assert.match(src, /data-action="import"/);
+  assert.match(src, /data-action="export"/);
 });
 
 test('Motion Studio is a real module: a library, a game-rendered stage and an inspector, not the placeholder', async () => {

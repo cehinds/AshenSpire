@@ -1,3 +1,4 @@
+import { projectGameCard } from './gameProfile.js';
 // src/model/playingCard.js — what a playing card IS, with no opinion about
 // how it looks.
 //
@@ -287,6 +288,8 @@ export function staticCardTokens(def) {
 export function playingCardDefinition(registries, ref, { preview = null, definition = null, rules = null } = {}) {
   if (preview?.resolvedDefinition) return preview.resolvedDefinition;
   if (definition) return definition;
+  const configured = projectGameCard(rules?.gameProfile ? rules : registries, ref);
+  if (configured) return configured;
   const def = rules?.breakMeterVersion == null
     ? resolveCard(registries, ref) : resolveCard(registries, ref, rules.breakMeterVersion);
   if (rules?.combatExpansionVersion !== 2) return def;

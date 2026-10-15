@@ -213,7 +213,11 @@ function compileDir(srcDir, outDir, { write } = {}) {
     }
   }
   const orphans = existsSync(outDir)
-    ? readdirSortedSync(outDir).filter((f) => f.endsWith('.js') && !produced.has(f))
+    ? readdirSortedSync(outDir).filter((f) => f.endsWith('.js') && !produced.has(f)
+      // This exact output belongs to tools/game-config.mjs; its separate check
+      // validates source JSON, runtime pins and freshness before the HTML bundler.
+      // Do not exempt the filename in arbitrary output trees or other JS files.
+      && !(resolve(outDir) === OUT && f === 'gameProfiles.js'))
     : [];
   return { results, stale, orphans, parsed };
 }
@@ -881,6 +885,9 @@ async function selftest() {
       writeFileSync(join(o, 'ghost.js'), 'export const ghost = [];\n');
       const r = compileDir(d, o, { write: false });
       ok(r.orphans.length === 1 && r.orphans[0] === 'ghost.js', `K11 [S2 m4] generated module whose source is gone — 'ghost.js' reported as orphan (a second copy nothing syncs)`);
+      writeFileSync(join(o, 'gameProfiles.js'), 'export const unrelated = [];\n');
+      const scoped = compileDir(d, o, { write: false });
+      ok(scoped.orphans.includes('gameProfiles.js'), 'K11-profile [S2 m4] gameProfiles.js is still an orphan outside its exact separately owned repository output');
     }
     // asset cases (S3)
     {
