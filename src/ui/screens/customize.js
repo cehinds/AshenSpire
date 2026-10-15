@@ -1692,12 +1692,24 @@ export function mountCustomize(app, {
       refs: creationDraftStartingDeck(registries, run, state.startingAbilityIds, meta.settings || {}),
     });
     let deckReceipt = deck;
+    let loadoutReceipt = cards;
     if (host.id === 'cz-review-summary') {
-      // The loadout stays visible; the already inspectable deck is a native
-      // disclosure with its canonical count and source breakdown on the face.
       deckReceipt = collapsedStartingDeck(deck, 'review');
+      loadoutReceipt = el('div', { class: 'cc-review-loadout cz-disc' });
+      const gear = [armour?.name, armament(state.startingHands.rightHand)?.name || 'Empty Hand',
+        state.startingHands.leftHand ? armament(state.startingHands.leftHand)?.name : null, relic?.name].filter(Boolean);
+      mountDisclosure(loadoutReceipt, [{ key: 'review-loadout', kind: 'pick', disclosure: 'face',
+        face: { label: `${state.name || 'Forsaken'} · ${classAndSubclassSummary()}`, value: gear.join(' · ') },
+        reveal: { node: cards },
+      }], { structure: 'details' });
+      const details = loadoutReceipt.querySelector('details');
+      details.open = deckDisclosureOpen.get('review-loadout') || false;
+      details.addEventListener('toggle', () => {
+        deckDisclosureOpen.set('review-loadout', details.open);
+        if (details.open) scheduleCardFits(cards.querySelectorAll('.card'));
+      });
     }
-    host.replaceChildren(cards, deckReceipt, calculations);
+    host.replaceChildren(loadoutReceipt, deckReceipt, calculations);
   }
   function renderEquipmentSummary() {
     fillSummary();
@@ -2076,12 +2088,20 @@ export function mountCustomize(app, {
     equipmentTools.hidden = id !== 'equipment';
     if (id === 'review') {
       fillSummary($('#cz-review-summary'));
-      $('#cz-review-edit').replaceChildren(...categories.filter(category => category !== 'review').map(category => {
+      const editButtons = categories.filter(category => category !== 'review').map(category => {
         const edit = button({ label: t('creation.review.edit', { category: categoryLabel(category) }), weight: 'secondary' });
         edit.dataset.creationEdit = category;
         edit.addEventListener('click', () => { activate(category); const target = openInside[category]?.() || paneHost.querySelector('button:not([disabled]), input, select'); if (target) queueMicrotask(() => focusElement(target)); });
         return edit;
-      }));
+      });
+      const editFold = el('details', { class: 'cc-review-edit-fold' }, [
+        el('summary', { text: 'Edit choices' }),
+        el('div', { class: 'cc-review-edit-choices' }, editButtons),
+      ]);
+      editFold.open = deckDisclosureOpen.get('review-edit') || false;
+      editFold.addEventListener('toggle', () => deckDisclosureOpen.set('review-edit', editFold.open));
+      $('#cz-review-edit').replaceChildren(editFold);
+      for (const hint of stages.review.querySelectorAll('.ls-hint')) hint.title = hint.textContent;
     }
     // Begin's refresh too: its visible reason follows it in and out of view.
     updateStartRefusal();

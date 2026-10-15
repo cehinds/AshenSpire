@@ -6838,3 +6838,13 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
     font-size: calc(18px / var(--ui-zoom, 1));
   }
 }
+
+/* Review keeps the full loadout and its inspectors behind one receipt row. */
+.customize.cc-design-workspace .cc-review-loadout .disc-face { display:flex; align-items:center; flex-wrap:nowrap; gap:var(--cc-space); }
+.customize.cc-design-workspace .cc-review-loadout .disc-face > .ob { flex:0 0 45%; width:45%; min-width:0; }
+.customize.cc-design-workspace .cc-review-loadout .disc-face :is(.on,.disc-name,.disc-value) { display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.customize.cc-design-workspace .cc-review-loadout .disc-face > .r-trail { flex:1 1 0; min-width:0; max-width:none; overflow:hidden; }
+.customize.cc-design-workspace #cz-review-edit { display:block; }
+.customize.cc-design-workspace .cc-review-edit-fold > summary { min-height:var(--cc-control-floor); padding:var(--cc-space); box-sizing:border-box; color:var(--gold); cursor:pointer; border:1px solid var(--line,#786443); }
+.customize.cc-design-workspace .cc-review-edit-choices { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,calc(180px / var(--ui-zoom,1))),1fr)); gap:var(--cc-space); padding-block:var(--cc-space); }
+.customize.cc-design-workspace #cz-seed-panel .ls-hint { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
