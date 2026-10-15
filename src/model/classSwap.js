@@ -1,3 +1,4 @@
+import { gameModule } from './gameProfile.js';
 // src/model/classSwap.js — the class swap (plan phase 5c, proposal §4).
 //
 // "Class swap ships in v1 as an event or boss drop, never a menu. Swapping
@@ -28,6 +29,7 @@ import { stampDeck } from './loadout.js';
  * lost. Armaments are the run's and stay.
  */
 export function swapRunClass(registries, run, classId, { preserveProgress = false } = {}) {
+  if (gameModule(run, 'class-selection')?.mode === 'configured') throw new Error('Configured classes stay fixed for the run; choose an unlocked class when starting a new run');
   if (!registries.classes.has(classId)) throw new Error(`swapClass: unknown class '${classId}'`);
   const from = run.class;
   const fromLevel = skillLevel(run, classSkillId(from));
