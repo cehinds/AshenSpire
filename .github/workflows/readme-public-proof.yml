@@ -1,0 +1,33 @@
+name: audit README public routes
+
+on:
+  push:
+    branches: ['worker/FullCombatAudit/readme-public-proof']
+    paths: ['.github/workflows/readme-public-proof.yml', 'tools/combat-audit/readme-public-proof.mjs']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-routes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          sparse-checkout: tools/combat-audit/readme-public-proof.mjs
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - name: Check public README targets and published Release identity
+        run: node tools/combat-audit/readme-public-proof.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: readme-public-route-proof-${{ github.sha }}
+          path: readme-public-route-proof.json
+          if-no-files-found: error
+          retention-days: 14
