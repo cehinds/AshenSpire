@@ -1,3 +1,5 @@
+import { gameModule } from './gameProfile.js';
+import { gameProfileServiceActive } from './gameProfileRun.js';
 // src/model/levelup.js — THE CHARACTER LEVEL (plan phase 6, proposal §10).
 //
 // A level is EARNED, not bought. The run keeps one ledger, `run.level =
@@ -406,6 +408,7 @@ export function levelUpBudget(registries, run) {
  * run's own snapshot with the deficit carried.
  */
 export function applyLevelUp(registries, run, attributeId) {
+  if (gameModule(run, 'rest')?.mode === 'configured' && !gameProfileServiceActive(run, 'levelUp')) throw new Error('Configured level allocation requires a committed rest service');
   const plan = levelUpPlan(registries, run);
   const ids = plan.attributes.map((a) => a.id);
   if (!ids.includes(attributeId)) {
