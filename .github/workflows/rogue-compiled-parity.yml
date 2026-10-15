@@ -49,3 +49,4 @@ jobs:
           path: _rogue-parity/
           if-no-files-found: error
           retention-days: 14
+# Retry uses proven256/512MiB same-session inspection bounds; no input semantics changed.
