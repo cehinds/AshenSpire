@@ -20,11 +20,11 @@ function world(modules = {}) {
 }
 const fighter = (id, extra = {}) => ({ id, kind: id === 'player' ? 'player' : 'enemy', hp: 80, maxHp: 80,
   alive: true, block: 0, statuses: {}, ratings: { ar: 2, dr: 1, poise: 0 }, ...extra });
-function live(modules = {}, selectedProfile = null) {
+function live(modules = {}, selectedProfile = null, moves = null) {
   const gameProfile = selectedProfile || profile(modules);
-  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, gameProfile)), gameProfile);
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(moves ? { ...contentBundle, enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier' ? { ...enemy, id: 'profileTestSoldier', firstMove: 'slash', attributes: { strength: 0, dexterity: 0, constitution: 0, wisdom: 0, intelligence: 0 }, moves } : enemy) } : contentBundle, gameProfile)), gameProfile);
   const deck = Array.from({ length: 10 }, (_, i) => ({ instanceId: `core-${i}`, cardId: i < 6 ? 'core.strike' : 'core.defend', upgraded: false }));
-  const combat = createCombat({ registries, rng: createRng(311), gameProfile, enemyIds: ['wanderingSoldier'],
+  const combat = createCombat({ registries, rng: createRng(311), gameProfile, enemyIds: [moves ? 'profileTestSoldier' : 'wanderingSoldier'],
     player: { classId: 'reaver', maxHp: 100, hp: 100, maxStamina: 10, stamina: 10, maxMana: 5, mana: 5,
       energyMax: 10, drawPerTurn: 5, poiseMax: 4, attributes: { intelligence: 1, strength: 2, dexterity: 1 }, deck } });
   return { combat, registries };
@@ -98,6 +98,7 @@ test('configured live combat permits multiple SP-priced cards then refreshes who
   assert.equal(combat.player.stamina, 8); assert.equal(combat.piles.discard.length, 2);
   const ids = Object.values(combat.piles).flat().map(card => card.instanceId).sort();
   dispatch(combat, { type: 'endTurn' });
+  while (combat.pendingReaction) answerReaction(combat);
   assert.equal(combat.piles.hand.length, 5); assert.equal(combat.piles.discard.length, 0);
   assert.deepEqual(Object.values(combat.piles).flat().map(card => card.instanceId).sort(), ids);
 });
@@ -208,7 +209,7 @@ test('failed configured transaction rolls back a consumed accuracy draw and HP',
 });
 
 test('work budget rejects another free card atomically while End Turn remains legal', () => {
-  const { combat } = live({ resources: false, cards: { freeCommandLimit: 1 } });
+  const { combat } = live({ resources: false, cards: { freeCommandLimit: 1 }, reactions: false });
   const targetId = combat.enemies[0].id;
   dispatch(combat, { type: 'playCard', cardInstanceId: combat.piles.hand[0].instanceId, targetId });
   const before = serializeCombatSnapshot(combat);
@@ -240,7 +241,7 @@ test('configured attack card faces match executed receipts across Block Poise an
     { block: 100, poise: 5, maneuver: 'defend' },
     { block: 0, poise: 5, maneuver: 'prepared' },
   ]) {
-    for (const cardId of ['core.strike', 'core.smash', 'core.counter', 'core.sweep']) {
+    for (const cardId of ['core.strike', 'core.smash', 'core.sweep']) {
       const { combat } = live();
       combat.player.ratings.ar = 2;
       const target = combat.enemies[0]; target.hp = target.maxHp = 1000;
@@ -258,15 +259,136 @@ test('configured attack card faces match executed receipts across Block Poise an
   }
 });
 
-test('configured Counter targets its immediate enemy effect while legacy Counter remains deferred', async () => {
+test('configured Counter keeps damage deferred and targets its support', async () => {
   const { immediateCardEffects } = await import('../src/model/combatCardEffects.js');
   const { cardTargetPlan } = await import('../src/model/cardTargets.js');
   const def = projectGameCard(profile(), 'core.counter');
   const enemy = fighter('e1'), player = fighter('player');
-  assert.equal(def.combatEffectsTiming, 'immediate');
-  assert.equal(cardTargetPlan(def, player.id, [enemy], [player], { solo: true }).mode, 'enemy');
-  assert.equal(immediateCardEffects(def).some(effect => effect.op === 'damage'), true);
-  const { combatEffectsTiming, ...legacy } = def;
-  assert.equal(immediateCardEffects(legacy).some(effect => effect.op === 'damage'), false);
-  assert.equal(cardTargetPlan(legacy, player.id, [enemy], [player], { solo: true }).mode, 'friendly');
+  assert.equal(immediateCardEffects(def).some(effect => effect.op === 'damage'), false);
+  assert.equal(cardTargetPlan(def, player.id, [enemy], [player], { solo: true }).mode, 'friendly');
+});
+
+const counterMoves = {
+  slash: { intent: 'attack', damage: 1, hits: 2, weight: 1,
+    tags: ['camp:physical', 'maneuver:attack', 'range:melee', 'targeting:single'] },
+};
+const answerReaction = (combat, cardId = null) => dispatch(combat, { type: 'chooseReaction',
+  offerId: combat.pendingReaction.id,
+  optionId: cardId ? combat.pendingReaction.options.find(option => option.cardId === cardId)?.id : null });
+const addCounter = combat => combat.piles.hand.push({ instanceId: 'deferred-counter', cardId: 'core.counter', upgraded: false });
+
+test('core Counter arms on play, then returns once after a fully blocked attack', () => {
+  const { combat } = live({ reactions: false }, null, counterMoves);
+  addCounter(combat);
+  const enemy = combat.enemies[0], hp = enemy.hp;
+  const played = dispatch(combat, { type: 'playCard', cardInstanceId: 'deferred-counter' });
+  assert.ok(combat.player.combatCounter);
+  assert.equal(enemy.hp, hp);
+  assert.equal(played.events.filter(event => event.type === 'damageDealt').length, 0);
+  const ended = dispatch(combat, { type: 'endTurn' });
+  const replies = ended.events.filter(event => event.type === 'damageDealt' && event.sourceId === 'player');
+  assert.equal(replies.length, 1, 'the prepared reply is neither immediate nor duplicated for multiple contacts');
+  assert.equal(ended.events.filter(event => event.type === 'combatCounterTriggered').length, 1);
+  assert.equal(ended.events.filter(event => event.type === 'damageDealt' && event.sourceId === enemy.id).length, 2);
+  assert.ok(enemy.hp < hp);
+});
+
+test('core incoming attacks offer paid Counter reactions and save/resume the same contact plan', () => {
+  const { combat, registries } = live({}, null, counterMoves);
+  addCounter(combat);
+  const hp = combat.enemies[0].hp;
+  const begun = dispatch(combat, { type: 'endTurn' });
+  assert.ok(combat.pendingReaction?.options.some(option => option.cardId === 'core.counter'));
+  assert.equal(begun.events.filter(event => event.type === 'damageDealt').length, 0);
+  const snapshot = serializeCombatSnapshot(combat);
+  const restored = restoreCombatSnapshot({ registries, snapshot, rng: createRng(combat.rng.seed, combat.rng.getCounters()), expectedGameProfile: combat.gameProfile });
+  const a = answerReaction(combat, 'core.counter');
+  const b = answerReaction(restored, 'core.counter');
+  assert.deepEqual(a, b);
+  while (combat.pendingReaction) {
+    const next = answerReaction(combat), replay = answerReaction(restored);
+    assert.deepEqual(next, replay);
+    a.events.push(...next.events);
+  }
+  assert.deepEqual(serializeCombatSnapshot(combat), serializeCombatSnapshot(restored));
+  assert.equal(a.events.filter(event => event.type === 'combatCounterTriggered').length, 1);
+  assert.equal(a.events.filter(event => event.type === 'damageDealt' && event.sourceId === 'player').length, 1);
+  assert.equal(combat.player.stamina, 10, 'next player turn refreshes the paid reaction resource');
+  assert.ok(combat.enemies[0].hp < hp);
+});
+
+test('reactions module off suppresses windows and preferences while prepared Counter still works', () => {
+  for (const modules of [{ reactions: false }, { reactions: { chainLimit: 0 } }]) {
+    const { combat } = live(modules, null, counterMoves);
+    addCounter(combat);
+    const out = dispatch(combat, { type: 'endTurn' });
+    assert.equal(combat.pendingReaction, undefined);
+    assert.equal(combat.reactionStack, undefined);
+    assert.equal(out.events.filter(event => event.type === 'damageDealt' && event.sourceId === 'player').length, 0);
+    assert.throws(() => dispatch(combat, { type: 'setReactions', enabled: true }), /unavailable/);
+  }
+});
+
+test('core reaction chains obey the authored chain limit and preserve paid resources', () => {
+  for (const chainLimit of [1, 2]) {
+    const { combat } = live({ reactions: { chainLimit } }, null, counterMoves);
+    combat.piles.hand = [0, 1, 2].map(i => ({ instanceId: `reaction-defend-${i}`, cardId: 'core.defend', upgraded: false }));
+    dispatch(combat, { type: 'endTurn' });
+    let reactions = 0;
+    const events = [];
+    while (combat.pendingReaction) {
+      assert.ok(reactions < 4, 'the saved cap ends the stack');
+      events.push(...answerReaction(combat, 'core.defend').events);
+      reactions++;
+    }
+    assert.equal(reactions, chainLimit);
+    assert.equal(events.filter(event => event.type === 'cardPlayed' && event.cardId === 'core.defend').length, chainLimit);
+    assert.equal(events.filter(event => event.type === 'damageDealt' && event.sourceId === combat.enemies[0].id).length, 2);
+  }
+});
+
+test('configured enemy reaction triggers pause a player root and resolve it once', () => {
+  const moves = { ...counterMoves, riposte: { intent: 'attack', damage: 1,
+    reaction: { on: ['playerAction'], minIncoming: 1, chance: 1 },
+    tags: ['camp:physical', 'maneuver:attack', 'range:melee', 'targeting:single'] } };
+  const { combat } = live({}, null, moves);
+  addCounter(combat);
+  const strike = combat.piles.hand.find(card => card.cardId === 'core.strike');
+  const before = combat.enemies[0].hp;
+  const out = dispatch(combat, { type: 'playCard', cardInstanceId: strike.instanceId, targetId: combat.enemies[0].id });
+  assert.equal(out.events.filter(event => event.type === 'combatEnemyReactionStacked').length, 1);
+  assert.ok(combat.pendingReaction);
+  const end = answerReaction(combat);
+  assert.equal(end.events.filter(event => event.type === 'damageDealt' && event.sourceId === 'player').length, 1);
+  assert.ok(combat.enemies[0].hp < before);
+  assert.equal(combat.pendingReaction, undefined);
+});
+
+test('core Counter loses coverage after changing stance while stances-off keeps the card mechanic', () => {
+  for (const cardId of ['core.strike', 'core.defend']) {
+    const { combat } = live({ reactions: false }, null, counterMoves);
+    addCounter(combat);
+    dispatch(combat, { type: 'playCard', cardInstanceId: 'deferred-counter' });
+    const next = combat.piles.hand.find(card => card.cardId === cardId);
+    dispatch(combat, { type: 'playCard', cardInstanceId: next.instanceId, ...(cardId === 'core.strike' ? { targetId: combat.enemies[0].id } : {}) });
+    const out = dispatch(combat, { type: 'endTurn' });
+    assert.equal(out.events.filter(event => event.type === 'combatCounterTriggered').length, 0);
+  }
+  const { combat } = live({ reactions: false, stances: false }, null, counterMoves);
+  addCounter(combat);
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'deferred-counter' });
+  const out = dispatch(combat, { type: 'endTurn' });
+  assert.equal(out.events.filter(event => event.type === 'combatCounterTriggered').length, 1);
+});
+
+test('configured Counter face shows its eventual unified return receipt', () => {
+  const { combat } = live({ reactions: false }, null, counterMoves);
+  addCounter(combat);
+  combat.player.ratings.ar = 2;
+  const enemy = combat.enemies[0];
+  const shown = previewCard(combat, 'deferred-counter', enemy.id).values.find(value => value.op === 'damage').value;
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'deferred-counter' });
+  const out = dispatch(combat, { type: 'endTurn' });
+  const reply = out.events.find(event => event.type === 'damageDealt' && event.sourceId === 'player');
+  assert.equal(shown, reply.amount);
 });
