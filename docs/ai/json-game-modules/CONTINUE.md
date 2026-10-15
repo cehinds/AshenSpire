@@ -1,207 +1,249 @@
 # Continue the JSON game modules work
 
-This is a handoff for the next AI session. It records product decisions and a
-safe first task; it grants no additional authority. Continue work already
-authorized in the active session without asking the user to authorize it again.
-A live user instruction to continue or implement this plan authorizes its next
-bounded slice.
+Use this handoff with [CORE-SPEC.md](CORE-SPEC.md),
+[IMPLEMENTATION.md](IMPLEMENTATION.md), and [PSEUDOCODE.md](PSEUDOCODE.md). The
+core specification is the latest product authority for this proposal. Existing
+runtime behavior still comes from the live checkout and `SPEC.md` until code
+changes land.
 
 ## Paste-ready continuation prompt
 
 ```text
-Continue the AshenSpire JSON-driven modular game work from the current feature
-branch and these handoff docs. First read CLAUDE.md, CONTRIBUTING.md,
-DEVELOPER.md, SPEC.md, then docs/ai/json-game-modules/README.md,
-IMPLEMENTATION.md, PSEUDOCODE.md and this file. Treat the live user's latest
-instructions as authoritative. This saved prompt grants no additional
-authority; continue work already authorized in the active session without asking
-for the same authorization again. A live user instruction to continue or
-implement this plan authorizes its next bounded slice.
+Continue the AshenSpire JSON-driven modular game work. First run
+`git status --short --branch` and `git log -1 --oneline --decorate`. Read
+CLAUDE.md, CONTRIBUTING.md, DEVELOPER.md and SPEC.md, then
+`docs/ai/json-game-modules/README.md`, `CORE-SPEC.md`, `IMPLEMENTATION.md`,
+`PSEUDOCODE.md` and `CONTINUE.md`. Treat the latest live user instruction as
+authoritative and preserve all existing changes. Continue work already
+authorized in this session without asking for that authorization again.
 
-Before coding, run `git status --short --branch` and `git log -1 --oneline
---decorate`; preserve existing user changes. Workers commit and push only to
-their own `origin/worker/json-game-modules/<task>` branches. The integrator
-reviews and integrates onto `Feature/json-game-modules`, then pushes that feature
-branch. Do not merge/promote to dev, test, release or main unless the owner
-explicitly instructs you later. The architecture is future work: verify each
-stated source path and behavior against the current checkout before relying on it.
+The current implementation baseline is still
+3d40c190983069eec8d8a2370fb3f229ac376290. No modular runtime has been built or
+verified. Start with one bounded source inventory: compare the proposed full
+four-class Ashen core bundle with live authored data and runtime behavior, then
+freeze the actual source/ownership map and only the contracts needed for the
+core manifest, class selection, ten-card starter deck and first combat slice.
+Verify every path and behavior against the current checkout. Do not scaffold the
+full package catalog or invent executable CLI commands.
 
-Start with one bounded task: map the current live source/content/runtime seams
-and compare them with the proposed module contract; report the actual paths,
-ownership, mutable state and compatibility risks. Then freeze only the minimal
-interfaces and representative JSON examples needed for a core-only playable
-browser slice with a behavior-preserving legacy adapter. Do not scaffold the
-whole proposed module catalog. Make the core-only game playable first. Add one
-optional cards module that can be turned on and off, and verify both modes. Keep
-changes small and reviewable. Stop and report any conflict between the design,
-live sources, or user instructions before widening scope.
+The product core is the full playable four-class Ashen bundle specified in
+CORE-SPEC.md, not the minimal attack/pass harness. A technical fallback host
+fixture may support infrastructure tests; it is not the user-facing core or
+product acceptance. Implement incrementally with a behavior-preserving adapter.
+Make the full Ashen core usable first; then prove optional modules can be
+independently omitted while supported combinations remain playable. Do not move
+all legacy code into core at once.
+
+Workers commit and push to their own
+`origin/worker/json-game-modules/<task>` branches. The integrator reviews and
+integrates onto `Feature/json-game-modules`, then pushes that feature branch.
+Do not merge or promote to dev, test, release or main until a later explicit
+owner instruction. Make small, reviewable commits. Do not invent a commit SHA;
+read it from `git log` after committing.
 ```
 
-## Current status and next bounded work
+## Current status and bounded next task
 
-At the baseline `3d40c190983069eec8d8a2370fb3f229ac376290`, the game is a mature,
-playable monolith with content compilers, framework data, a Workbench and an
-engine exporter. The modular JSON architecture, generic module kernel, package
-catalog, JSON authoring/editor flow and core-only game do not yet exist. A prior
-planning effort had two review rounds approved with corrections; the later
-playable-core correction was approved with changes. Do not recast those reviews
-as implementation or runtime verification.
+The gameplay source baseline remains
+`3d40c190983069eec8d8a2370fb3f229ac376290`; the previous handoff docs commit is
+`49c5781fe`. The feature branch was created from the gameplay baseline. No PR
+exists and no feature preview has been verified. This work updates planning
+material only; do not imply the new core or modules are implemented.
 
-Next do a **read-only source inventory** on the current feature head. Confirm
-where actions, turn ownership, player/enemy state, damage, resources, activities,
-saves, screens and content are actually defined. Trace the concrete dependency
-and import paths; identify which current behaviors a compatibility adapter must
-preserve. Record exact files and the smallest headless/browser checks that cover
-those seams. Then freeze the first interfaces and example JSON. Implement a
-thin **core-only playable vertical slice** as authorized in the active session.
-Add one complete cards package with defaults, schema, runtime implementation,
-guide, content, UI, state integration and test cases; prove cards can be disabled while core
-attack/pass remain useful. A coherent SP/block/equipment interaction can follow
-after that slice works.
+First map the proposed full Ashen bundle against live authored data and runtime
+source. Trace class definitions, cards/loadout, weapons/armor, stats, combat
+rounds and stances, activities/routes, rewards, saves, UI and generated content.
+Identify owners, mutable state, imports/dependencies, legacy behavior and the
+smallest useful test coverage. Then freeze the source map and minimal
+versioned contracts for a core manifest, class selector, starter deck and first
+combat vertical slice. Keep the design specified in `CORE-SPEC.md` as the
+product target; record remaining unknowns instead of filling them with invented
+rules. Do not scaffold all runtime packages or build a generic empty engine.
 
-Do not start by moving all legacy code into a `core` folder, creating every
-proposed package, or pursuing engine purity. Preserve existing behavior through
-an adapter/preset while extraction proceeds incrementally.
+The four-class product core and the technical fallback fixture are distinct:
 
-## Product decisions to preserve
-
-- **The core alone is playable.** It includes a default player and enemy, HP,
-  direct attack and pass, target selection, a player/enemy response loop, a core
-action opportunity budget independent of optional SP/MP/Actions, a simple enemy
-  decision, victory/defeat/restart, a basic activity menu, inspection, low-poly
-  procedural stand-ins, and save support. An empty host or engine shell fails
+- The product core selects Reaver, Rogue, Starseer or Herald, uses the specified
+  default stats and ten-card starting deck, and supports the in-scope combat,
+  gear, rest and activity interactions. It is the acceptance target.
+- A fallback-only technical host (`ashen.fallback@1.0.0`) may provide a player,
+  enemy, direct attack and pass when testing module-loader infrastructure. It is
+  not a user-selectable core bundle and does not satisfy core gameplay
   acceptance.
-- Optional packages are full, coherent modules: defaults/configuration,
-  schema, implementation, author guide, content, UI, state ownership and
-  integrations, plus cases where relevant. A switch must exercise real
-  composition, not just hide a tab.
-- Canonical author input is one object, for example
-  `{"formatVersion":1,"core":"ashen.core@1.0.0","modules":{"cards":true,"resources":{"include":["sp","mp"]},"defenses":{"include":["block","poise"],"order":["block","poise"]},"stances":{"include":["attack","counter","sweep","defend"]},"art":false}}`.
-  Missing/false disables an optional module; true uses defaults; an object
-  enables it and overrides settings. Do not add a parallel enable list. Merge
-  objects recursively; replace arrays and scalars; use explicit RFC 6902 patch
-  operations for source edits and removals. `$comment` is author metadata,
-  retained in source but omitted from the gameplay hash.
-- Optional feature switches do not implicitly load another optional gameplay
-  package. Technical prerequisites may bundle, but must not activate unrelated
-  rules/content. Integrations declare the module that owns them and their
-  version/conditional requirements. Core exposes stable providers for actions,
-  targets, stats, damage, activity and presentation.
-- Cards off: core attack/pass still work. Defenses off: damage passes through.
-  Stances off: neutral stance works. Equipment and stats retain a useful
-  baseline. Maps/dungeons off: core activities remain. Shops, rewards and
-  quests must still offer meaningful choices without their usual route. Missing,
-  disabled or failed art uses core low-poly stand-ins with the same hitboxes,
-  targets and inspection affordances.
-- Disabled resources require explicit content fallback or availability filtering,
-  especially for MP spend-all/scaling cards. Never silently make every card free
-  or delete effects that depend on the resource. Preserve original definitions;
-  derive a projection and report exclusions. Built-in starter content must make
-  each supported combination playable; invalid arbitrary custom content should
-  produce clear validation errors.
-- Module state is isolated per runtime instance. Commands, events, pipelines,
-  ordering, numeric policy and RNG are typed and versioned. Rollback covers state,
-  queued work and RNG. Events are committed facts; host side effects use a
-  deduplicated outbox.
-- Distinguish portable rules/data from native code. An export must reject a
-  required unsupported code module; it must not pretend portability by silently
-  dropping functions.
-- A save pins the exact resolved lockfile and gameplay hash, including module
-  artifact hashes, module ABI versions and numeric policy. A toggle or module
-  version change starts a new run by default; v1 does not live-unload
-  packages. Save migration is explicit and tested separately from configuration
-  migration and module upgrades.
 
-The proposed package catalog covers optional feature families, including
-cards, resources, defenses, stances and effects/statuses. See the
-implementation contract for the complete package boundary. Do not create module
-folders or scaffold the entire catalog during the initial slice.
+## Canonical author configuration and resolution
 
-## Repository entrypoints to inspect
+The author document keeps one shape, for example:
 
-Verify these against the live checkout; they are orientation points, not proof of
-the proposed design:
+```json
+{
+  "formatVersion": 1,
+  "core": "ashen.core@1.0.0",
+  "modules": {
+    "cards": true,
+    "resources": { "include": ["sp", "mp"] },
+    "defenses": { "include": ["block", "poise"], "order": ["block", "poise"] },
+    "stances": { "include": ["attack", "counter", "sweep", "defend"] },
+    "art": false
+  }
+}
+```
 
-- Authored input: `content/source/nodes.csv`,
+Here `core` selects a declared full bundle of core modules and settings; it is
+not the minimal technical fixture. Resolve an author document as follows:
+
+- A module included in the selected core bundle inherits that bundle's settings
+  when absent from `modules`.
+- A module outside the bundle is disabled when absent; `false` explicitly
+  disables it.
+- `true` enables the module using module defaults and selected-bundle defaults.
+- An object enables it and resolves module defaults, then bundle defaults, then
+  author values. Objects merge recursively; arrays and scalars replace.
+- Do not implicitly activate another optional gameplay package beyond the
+  explicitly selected core bundle. Technical prerequisites may bundle without
+  activating unrelated features.
+- Report resolved values and provenance. Pin the exact lockfile and resolved
+  gameplay hash, including module/package artifact hashes, ABI versions and
+  numeric policy, into the run/save compatibility identity.
+
+Use explicit RFC 6902 operations for source edits and removal semantics.
+`$comment` is source metadata and excluded from the gameplay hash. Keep original
+definitions; make a validated derived projection and report exclusions. When a
+resource is disabled, use authored fallback content or availability filtering;
+do not silently zero costs or strip dependent effects. Built-in supported
+combinations must remain playable, while invalid custom content receives clear
+validation errors.
+
+## Product decisions from the core specification
+
+`CORE-SPEC.md` owns full detail. Preserve these decisions when summarizing or
+implementing them:
+
+- Four classes are in the product core: Reaver, Rogue, Starseer, Herald. There
+  is no attribute-creation flow. Default six-stat profiles are Reaver
+  STR2/DEX1/CON1/WIS1/INT1; Starseer STR1/DEX1/CON1/WIS1/INT2; Rogue
+  STR1/DEX2/CON1/WIS1/INT1; Herald STR1/DEX1/CON1/WIS2/INT1.
+- The ten-card opening deck is 3 Strike, 3 Defend, 1 Counter, 1 Smash,
+  1 Sweep and 1 class-specific card. Deck and equipment editors are on; deck
+  editing is available only at rest spots. Full rounds reshuffle and draw fresh;
+  hand retention is off. Deck growth through rewards is allowed. Equipment
+  editor timing is unrestricted by the user; a safe non-combat surface is a
+  recommendation, not a settled requirement.
+- Hand size is base 4 + INT: 5 for most classes and 6 for Starseer. Primary
+  stat gains are STR +1 AR, DEX +1 DR, CON +10 HP, WIS +1 MP, INT +1 draw.
+  Other resource formulas and thresholds remain unspecified. Do not invent
+  them; use canonical authored content as the fallback for resource caps.
+- Core values include HP, SP, MP, AR, DR, Accuracy, Evasion, Block and Poise.
+  The only-confirmed Poise rule is damage taken equals
+  `max(floor(damage * 0.75), 1)` while the effect applies: this is 25% less
+  damage, not 75% mitigation. The old absorb/deplete/carryover-to-stagger rule
+  is not approved. Guard at zero does not create damage. Active policy and
+  high-value details remain open in CORE-SPEC; do not guess them.
+- Stances are attack, defend, smash, sweep, counter, evade and prepare. Preserve
+  confirmed edges: attack > smash/prepare; counter > smash/attack; smash >
+  defend/prepare; sweep > counter/evade; prepare > defend/counter. Evade is
+  accuracy-based and fully avoids or applies 2x damage as specified there.
+  Damage is unified: no elements, rank, spell, feat or skill-XP systems.
+- The run spans three acts, each with seven pre-boss nodes and a distinct boss.
+  Activity types include events, fights, elites, treasure, shops and rests. Rest
+  interactions include HP/SP recovery, healing, MP flask refill, level
+  allocation and card upgrades; a direct MP refill is not established. Rewards
+  include weapons, relics, combat cards, weapon-art spots, potions and armor;
+  usually offer three choices and take one. Keep unsettled route-visibility,
+  reward and level-up details in CORE-SPEC; do not add guessed rules.
+- Deck editing is available only at rest spots. Equipment editing is enabled
+  without a settled timing restriction; a safe non-combat surface is only a
+  recommendation. Inspect by holding a target or tapping an already-selected
+  target HUD. Normal click and `i` are not the
+  default inspect action. Card faces show 2–3 total simple effect lines; inspect
+  reveals details. Preserve the combat log.
+- Reaver uses a greatsword, Starseer a scepter, Rogue two daggers, Herald a
+  scepter. Allowed weapons: straight swords, shields, scepters, bows, greatswords
+  and daggers. Armor: robes, light, medium and heavy. Gear does not alter the
+  stable base animation keys: attack, smash, defend, counter, sweep, cast,
+  evade, hit, hurt, status, defeated and staggered. Missing/off art uses
+  low-poly fallback with identical geometry and interactions.
+- Character level, attributes and card rewards provide 1–2 choices per act and
+  3–6 level-ups; exact XP math is not settled. Do not add XP thresholds or other
+  formulas without source/spec support.
+
+This handoff does not override or amend the live `SPEC.md`. Resolve conflicts
+between this proposed product target, `CORE-SPEC.md`, and live implementation by
+recording the exact discrepancy and checking the current user direction, not by
+silently mixing rules.
+
+## Repository survey entrypoints
+
+These are initial probes; confirm actual paths and imports on the current
+checkout, especially because generated modules and branches can differ:
+
+- Authored data: `content/source/nodes.csv`,
   `content/source/nodeRelations.csv`, `content/source/nodeEffects.json`,
   `content/source/characterCreation.json`,
-  `content/source/worldAtlas.json`,
-  `content/source/legacyDungeons.json`, and
+  `content/source/worldAtlas.json`, `content/source/legacyDungeons.json`, and
   `content/framework/mechanics.json`.
-- Existing runtime seams: `src/engine/actions.js`, `src/model/formulas.js`,
+- Runtime seams: `src/engine/actions.js`, `src/model/formulas.js`,
   `src/model/combatCardProfile.js`, `src/model/loadout.js`, `src/model/state.js`,
-  and the live framework bridge/registries. In particular, inspect global
-  singleton installation and registries before designing per-runtime isolation.
-- Existing builders and export: `tools/content-build.mjs`,
-  `tools/framework-data-build.mjs`, `tools/config-build.mjs`, and
-  `tools/engine-export.mjs`. Current authoring compiles JSON/CSV into generated
-  modules; engine export is downstream packaging, not a module authoring/apply
-  workflow.
-- Workbench integration: `workbench/tools.json` and `workbench/README.md`.
-  Add a new HTML tool there if one is eventually built. `docs/tag-model/README.md`
-  is a proposal, not evidence of a live module editor/runtime.
+  plus framework bridge/registries. Trace imports and who owns mutable state;
+  inspect global singleton installation before proposing isolated runtimes.
+- Build/export: `tools/content-build.mjs`,
+  `tools/framework-data-build.mjs`, `tools/config-build.mjs` and
+  `tools/engine-export.mjs`. Existing builders compile authored JSON/CSV to
+  generated modules. Engine export packages data; it is not module authoring,
+  apply or runtime loading.
+- Workbench: `workbench/tools.json` and `workbench/README.md`. A future HTML
+  authoring tool belongs in the Workbench registry. `docs/tag-model/README.md`
+  is a proposal, not a live module system.
 
-Some named model and framework paths may move between branches or be generated;
-use `git ls-tree`, `rg --files`, and imports from current entrypoints to establish
-the current source of truth. Avoid treating generated output as the authored
-source.
+## Proposed tool flow; commands do not exist yet
 
-## Proposed author workflow (not available yet)
+Keep existing commands distinct from these proposed verbs:
 
-The suggested future loop is:
+1. `validate` performs read-only schema, reference, dependency, provenance and
+   supported-combination checks.
+2. `preview` composes an isolated temporary bundle and runs the selected
+   gameplay configuration without mutating authored sources.
+3. `apply` explicitly validates and atomically updates authored module/config
+   files, then runs existing builders and checks.
+4. `export` writes deterministic data, schemas, package versions, artifact
+   hashes, ABI and numeric-policy metadata; rejects required unsupported native
+   code rather than dropping it.
+5. Workers push reviewable commits to worker branches. The integrator reviews
+   and integrates onto `Feature/json-game-modules`, then pushes it. Feature
+   build and Pages publication are asynchronous; verify the live preview before
+   claiming it works.
 
-1. `validate`: read-only JSON/schema/reference/dependency and combination checks.
-2. `preview`: compile in an isolated temporary workspace and run the actual game
-   with a selected combination; no authored source mutation.
-3. `apply`: explicit, validated, atomic update to authored module/config source,
-   then existing builders/checks.
-4. `export`: deterministic package/content bundle with schema, version and hash;
-   reject unsupported native code requirements.
-5. `push`: workers push reviewed commits to their own worker branches; the
-   integrator reviews and integrates them onto `Feature/json-game-modules` and
-   pushes that branch. Its CI preview is asynchronous and must be confirmed
-   before calling it published.
+## Delivery and acceptance checklist
 
-No CLI with these commands exists at this baseline. Keep existing commands and
-proposed commands visibly distinct in docs and UI.
-
-## Delivery rules and checks
-
-- User's current release boundary is strict: workers commit and push to their
-  own `origin/worker/json-game-modules/<task>` branches; the integrator reviews
-  and integrates onto `Feature/json-game-modules` and pushes that feature branch.
-  No dev/test/release/main merge or promotion until an explicit later owner
-  instruction. This overrides the standing contrary promotion workflow in
-  `CLAUDE.md` and `CONTRIBUTING.md`.
-- Workers use separate `worker/json-game-modules/<task>` branches/worktrees.
-  The main session manages, reviews and integrates their work into the feature
-  branch. Use the requested worker model guidance (GPT-6.1 Sol medium/low and
-  GPT-6 Luna; Luna 6.1 is unavailable) and read-only reviewers; do not create
-  chats or message people.
-- Inspect `git status` before edits and before staging. Do not discard user
-  changes. Use small commits with subject ≤72 characters and push each worker
-  commit to that worker's branch promptly. The integrator merges worker commits
-  onto the feature branch and pushes it. Never invent a commit SHA; obtain the
-  current SHA from `git log` after commit.
-- Documentation-only changes need link checks and `git diff --check`; do not run
-  source tests/builds for docs-only edits. For source changes, choose targeted
-  suites from `DEVELOPER.md`, then the repo's documented fast checks and touched
-  discovered shards. The standard broader command is
-  `node tests/run-node.mjs --no-selftests --no-discovered`. `node tools/launch.mjs
-  --build-only` and `node tools/plantsites.mjs --check` may be relevant for source
-  changes; inspect current docs and scripts for stamp/generated-file handling
-  before invoking anything that writes. Do not commit generated HTML.
-- For runtime acceptance, test core-only and each supported optional-module
-  combination, including every module disabled, each module enabled, and
-  targeted pair/higher-order invariants. Verify legal actions, turn advancement,
-  outcomes, save/load and config validation. Run two isolated instances with the
-  same seed and prove equal traces with no shared singleton/global bridge state.
-  Keep legacy numeric behavior in trace comparisons during adapter extraction.
-- For visible UI changes, capture fresh screenshots and provide a verified
-  playable preview. The `Feature/**` workflow builds the exact branch commit;
-  Pages publication happens later through a workflow run. README's old
-  PR-required wording is stale and should not be repeated. Do not claim preview
-  success until the live link is tested.
-- No PR has been created. If a PR is needed later, it targets the
-  `Feature/json-game-modules` parent branch while the release boundary holds; do
-  not promote branches under this handoff.
+- Release boundary: workers push only their own
+  `origin/worker/json-game-modules/<task>` branches. Integrator alone integrates
+  to and pushes `Feature/json-game-modules`. No merge or promotion to `dev`,
+  `test`, `release` or `main` without a later explicit owner instruction. This
+  overrides contrary standing text in `CLAUDE.md`/`CONTRIBUTING.md`.
+- Keep work small and preserve user changes. Check `git status` before editing
+  and staging. Commit each focused step, subject ≤72 characters; push to the
+  correct worker branch. Never invent a SHA. The main session reviews/integrates
+  onto the Feature parent and pushes it.
+- No PR exists. If one is needed later, target `Feature/json-game-modules` while
+  this boundary holds. Do not promote branches under this handoff.
+- Documentation-only updates require relative-link review after sibling docs
+  are integrated and `git diff --check`; do not run source builds or tests. For
+  later code, use targeted tests from `DEVELOPER.md`, documented fast checks and
+  touched discovered shards. Inspect generated-file/stamp behavior before any
+  writing check; never commit generated HTML.
+- Future full-product acceptance must cover all four classes, default stats and
+  ten-card opening deck; deck editing at rest spots only; equipment editing
+  enabled without a user-imposed timing restriction; supported stance edges,
+  class gear, damage, rewards, rest actions,
+  distinct act bosses and saves. Exercise module resolution with missing,
+  false, true and object values, nested overrides, provenance/hash stability,
+  and supported combinations. Verify the full core remains playable as
+  features are omitted. The technical fallback fixture is only an
+  infrastructure test, never product-core acceptance.
+- Keep resolved saves locked to the exact lockfile and gameplay hash, package
+  artifacts, ABI and numeric policy. Test deterministic traces for two isolated
+  runtime instances; no shared mutable singleton state. Save/config/module
+  migrations stay explicit and separate.
+- Visible UI work needs real screenshots and a verified preview. `Feature/**`
+  builds the exact branch commit; Pages publishes later. No preview is verified
+  by this handoff. Root README still contains stale PR-required wording; update
+  it only with a verified preview and captures when there are visible changes.
