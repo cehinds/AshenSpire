@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-15
 
-- **Quit is the final main menu entry, and blocked browser exits explain what happened** ([#1990](https://github.com/cehinds/AshenSpire/pull/1990), `0.7.1.1531`). Quit saves the run before leaving. When the browser refuses to close the tab, a visible message lets you return to the game. Settings defers preparing its sample card until you open the preview, and card-value calculation indexes tags once per operation. The combat audit now inventories cards from the registries and checks paid effects and next-turn recovery through native and compiled engines.
+- **Quit is the final main menu entry, and blocked browser exits explain what happened** ([#1990](https://github.com/cehinds/AshenSpire/pull/1990), `0.7.1.1533`). Quit saves the run before leaving. When the browser refuses to close the tab, a visible message lets you return to the game. Settings defers preparing its sample card until you open the preview, and card-value calculation indexes tags once per operation. The combat audit now inventories cards from the registries and checks paid effects and next-turn recovery through native and compiled engines.
+- **Combat stances keep their damage, pressure and hit feedback consistent** ([#1996](https://github.com/cehinds/AshenSpire/pull/1996), `0.7.1.1533`). Smash gains its failed-Evade bonus when a retained Evade stack attempts the dodge after a stance change. Enemy Counters and damaging Smash moves receive the configured fallback Poise damage when none is authored, while support-only charging stages stay harmless. Paced combat keeps the correct Evasion rating, and co-op prevention shows one Missed callout.
 
 ## 2026-10-14
 

@@ -804,9 +804,10 @@ function startDelayedMove(combat, enemy, move, moveId) {
   }
   if (wc.barrier != null) combat.enqueue({ effect: { op: 'gainBarrier', target: 'self', amount: wc.barrier },
     source: enemy, owner: enemy, target: enemy, card: carrier, meta: { moveId, preparing: true } });
-  for (const eff of wc.effects || []) {
-    combat.enqueue({ effect: eff, source: enemy, owner: enemy, target: combat.player, card: carrier, meta: { moveId, preparing: true } });
-  }
+  const chargingActions = (wc.effects || []).map(effect => ({ effect, source: enemy, owner: enemy,
+    target: combat.player, card: carrier, meta: { moveId, preparing: true } }));
+  // Keep charging damage, statuses and generated pressure on one hit receipt.
+  if (chargingActions.length) enqueueExpandedAction(combat, chargingActions, { source: enemy, target: combat.player, carrier });
   enemy.pendingMove = {
     moveId,
     resolveOnTurn: combat.turn + (move.delay.turns != null ? move.delay.turns : 1),

@@ -5,7 +5,7 @@ import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { stanceRatingBonus } from '../src/model/stanceRules.js';
 import { combatProfileFor } from '../src/model/combatCardProfile.js';
 import { applyCombatExpansionMartial, combatExpansionMartialOverlay } from '../src/content/combatExpansionMartial.js';
-import { tacticalCarrier, prepareTacticalCard, primeEnemyCounter } from '../src/engine/combatCardTactics.js';
+import { tacticalCarrier, prepareTacticalCard, primeEnemyCounter, expandedEnemyMove } from '../src/engine/combatCardTactics.js';
 import { matchupRiderEffects, beginTacticalAction, setCombatStance, armCombatCounter,
   recordTacticalContact, completeTacticalAction } from '../src/engine/combatMatchups.js';
 import { combatExpansionEntityProblems } from '../src/model/combatTacticsRules.js';
@@ -148,14 +148,40 @@ test('Shield Bash is Counter with authored Block and Poise instead of immediate 
   assert.equal(def.ratingId, 'dr');
 });
 
-test('enemy partial Counter payload normalizes all lanes and uses the registered Barrier opcode', () => {
+for (const { name, fallback, poise, effects, expected } of [
+  { name: 'absent Poise gets the default', expected: 3 },
+  { name: 'absent Poise gets the configured fallback', fallback: 7, expected: 7 },
+  { name: 'zero configured fallback stays zero', fallback: 0, expected: 0 },
+  { name: 'authored positive Poise is not inflated', fallback: 7, poise: 5, expected: 5 },
+  { name: 'zero numeric payload has no Poise damage', fallback: 7, poise: 0, expected: 7 },
+  { name: 'authored zero Poise opcode suppresses fallback', fallback: 7,
+    effects: [{ op: 'poiseDamage', target: 'player', amount: 0 }], expected: 0 },
+]) test(`enemy partial Counter: ${name}, retaining Ward and Barrier`, () => {
   const f = fixture(), move = { tags: ['camp:spell', 'maneuver:counter', 'counter:spell'],
-    counterPayload: { ward: 2 }, barrier: 5 };
+    counterPayload: { ward: 2, ...(poise !== undefined ? { poise } : {}) }, barrier: 5,
+    ...(effects ? { effects } : {}) };
+  const before = structuredClone(move);
+  if (fallback !== undefined) f.ctx.stanceRules = { fallbackPoise: fallback };
   f.source.enemyId = 'fixture'; f.source.intent = { moveId: 'counter' };
   primeEnemyCounter(f.ctx, f.source, move, 'counter');
-  assert.deepEqual(f.source.combatCounter.payload, { hp: 0, poise: 0, ward: 2 });
-  assert.equal(f.queue.find(action => !action.meta?.stanceEntry).effect.op, 'gainBarrier');
+  assert.deepEqual(f.source.combatCounter.payload, { hp: 0, poise: expected, ward: 2 });
+  const support = f.queue.filter(action => !action.meta?.stanceEntry && !action.meta?.stanceRestore);
+  assert.deepEqual(support.map(action => action.effect), [{ op: 'gainBarrier', target: 'self', amount: 5 }]);
+  assert.equal(f.source.intent.counterDefensePrimed, true);
   assert.deepEqual(combatExpansionEntityProblems(f.source), []);
+  assert.deepEqual(move, before, 'Counter preparation preserves the authored partial payload');
+});
+
+test('support-only enemy Defense Barrier receives no Counter or fallback pressure', () => {
+  const f = fixture(), move = { tags: ['camp:spell', 'maneuver:defend'], barrier: 5 };
+  f.ctx.stanceRules = { fallbackPoise: 7 };
+  f.source.enemyId = 'fixture';
+  const projected = expandedEnemyMove(f.source, move, 'guard', f.ctx);
+  assert.equal(projected.barrier, 5);
+  assert.deepEqual(projected.effects, []);
+  primeEnemyCounter(f.ctx, f.source, move, 'guard');
+  assert.equal(f.source.combatCounter, undefined);
+  assert.equal(f.queue.some(action => action.effect.op === 'poiseDamage'), false);
 });
 
 test('v2 typed riders author gauge buildup and suppress duplication of printed pressure', () => {

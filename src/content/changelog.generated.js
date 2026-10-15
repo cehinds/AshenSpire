@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-15",
     "summary": "Quit is the final main menu entry, and blocked browser exits explain what happened",
     "detail": "Quit saves the run before leaving. When the browser refuses to close the tab, a visible message lets you return to the game. Settings defers preparing its sample card until you open the preview, and card-value calculation indexes tags once per operation. The combat audit now inventories cards from the registries and checks paid effects and next-turn recovery through native and compiled engines.",
-    "build": "0.7.1.1531",
+    "build": "0.7.1.1533",
     "pullRequest": 1990,
     "url": "https://github.com/cehinds/AshenSpire/pull/1990"
+  },
+  {
+    "id": "pr-1996",
+    "date": "2026-10-15",
+    "group": "2026-10-15",
+    "summary": "Combat stances keep their damage, pressure and hit feedback consistent",
+    "detail": "Smash gains its failed-Evade bonus when a retained Evade stack attempts the dodge after a stance change. Enemy Counters and damaging Smash moves receive the configured fallback Poise damage when none is authored, while support-only charging stages stay harmless. Paced combat keeps the correct Evasion rating, and co-op prevention shows one Missed callout.",
+    "build": "0.7.1.1533",
+    "pullRequest": 1996,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1996"
   },
   {
     "id": "pr-1995",
