@@ -59,10 +59,10 @@ test('removing the art (state none) never closes the intake: it must stay open t
 test('pages: a failed or cancelled feature, fix or chore preview still runs assemble and deploy', () => {
   const prefix = "startsWith(github.event.workflow_run.head_branch, 'feature/') || startsWith(github.event.workflow_run.head_branch, 'fix/') || startsWith(github.event.workflow_run.head_branch, 'chore/')";
   const assemble = jobBlock(pages, 'assemble');
-  assert.ok(assemble.includes(`(github.event.workflow_run.name == 'dev preview' && github.event.workflow_run.head_branch != 'dev' && (github.event.workflow_run.conclusion == 'success' || ${prefix}))`), 'assemble admits branch previews on any conclusion');
+  assert.ok(assemble.includes(`((github.event.workflow_run.name == 'feature preview' || github.event.workflow_run.name == 'dev preview') && github.event.workflow_run.head_branch != 'dev' && (github.event.workflow_run.name == 'feature preview' || github.event.workflow_run.conclusion == 'success' || ${prefix}))`), 'assemble admits branch previews on any conclusion');
   const deploy = jobBlock(pages, 'deploy');
   assert.ok(deploy.includes(`github.event.workflow_run.conclusion == 'success'\n              || startsWith(github.event.workflow_run.head_branch, 'feature/')`), 'deploy admits them');
-  assert.ok(pages.includes(`(github.event.workflow_run.name == 'dev preview' && github.event.workflow_run.head_branch != 'dev' && (github.event.workflow_run.conclusion == 'success' || ${prefix}))`), 'the Report step mirrors the deploy guard');
+  assert.ok(pages.includes(`((github.event.workflow_run.name == 'feature preview' || github.event.workflow_run.name == 'dev preview') && github.event.workflow_run.head_branch != 'dev' && (github.event.workflow_run.name == 'feature preview' || github.event.workflow_run.conclusion == 'success' || ${prefix}))`), 'the Report step mirrors the deploy guard');
   // alternative/ previews keep the success-only rule: the workflow_run filter lists them, the guard does not admit them.
   assert.doesNotMatch(prefix, /alternative/);
 });
@@ -192,6 +192,9 @@ function evalGh(expr, ctx) {
 }
 
 const CASES = [
+  ['feature preview succeeds without PR', { event: 'workflow_run', wr: { name: 'feature preview', head_branch: 'Feature/x', conclusion: 'success' } }, true, true, true],
+  ['feature preview failure removes stale build', { event: 'workflow_run', wr: { name: 'feature preview', head_branch: 'Feature/x', conclusion: 'failure' } }, true, true, true],
+  ['feature preview cancellation removes stale build', { event: 'workflow_run', wr: { name: 'feature preview', head_branch: 'Feature/x', conclusion: 'cancelled' } }, true, true, true],
   // [name, context, assemble, deploy, PUBLISH_REQUESTED]
   ['build-stamp on dev succeeds: dev publishes', { event: 'workflow_run', wr: { name: 'build-stamp', head_branch: 'dev', conclusion: 'success' } }, true, true, true],
   ['build-stamp on dev fails: nothing publishes', { event: 'workflow_run', wr: { name: 'build-stamp', head_branch: 'dev', conclusion: 'failure' } }, false, false, false],
@@ -222,7 +225,7 @@ test('pages: pages-builds runs on build-stamp completing on dev, with the workfl
   assert.equal(name, 'build-stamp');
   const on = pages.slice(pages.indexOf('\non:'), pages.indexOf('\nconcurrency:'));
   const wr = on.slice(on.indexOf('  workflow_run:'));
-  assert.match(wr, /^    workflows: \[build-stamp, dev preview\]$/m, 'workflow_run names build-stamp and dev preview');
+  assert.match(wr, /^    workflows: \[build-stamp, dev preview, feature preview\]$/m, 'workflow_run names build-stamp and dev preview');
   assert.match(wr, /^    branches: \['dev', /m, 'the workflow_run branch list admits dev');
   assert.match(wr, /^    types: \[completed\]$/m);
 });
@@ -232,7 +235,7 @@ test('pages: each guard admits the build-stamp completion on dev only on success
     const expr = jobIf(job);
     assert.match(expr, /github\.event\.workflow_run\.name == 'build-stamp'/, `${job} names build-stamp`);
     assert.match(expr, /github\.event\.workflow_run\.head_branch == 'dev'/, `${job} requires head_branch dev for build-stamp`);
-    assert.match(expr, /github\.event\.workflow_run\.name == 'dev preview'\s*&&\s*github\.event\.workflow_run\.head_branch != 'dev'/, `${job} excludes dev preview on dev`);
+    assert.match(expr, /github\.event\.workflow_run\.name == 'dev preview'\)\s*&&\s*github\.event\.workflow_run\.head_branch != 'dev'/, `${job} excludes dev preview on dev`);
   }
   for (const [name, ctx, assemble, deploy, publish] of CASES) {
     if (ctx.event === 'push' || ctx.event === 'pull_request_target') continue;
@@ -284,4 +287,16 @@ test('pages: the art token is gated on a protected ref AND, for a workflow_run, 
 
 test('pages: the checkout of a workflow_run run is dev, so it builds the stamped commit', () => {
   assert.match(pages, /ref: \$\{\{ \(github\.event_name == 'workflow_run' \|\| github\.event_name == 'pull_request_target'\) && 'dev' \|\| github\.ref \}\}/);
+});
+
+
+test('pages: PR announcements derive from the final collector manifest', () => {
+  assert.match(jobBlock(pages, 'assemble'), /comment_targets: \$\{\{ steps\.feature_previews\.outputs\.comment_targets \}\}/);
+  const collector = pages.slice(pages.indexOf('- name: Collect current feature'), pages.indexOf('- name: Assemble the site'));
+  assert.match(collector, /id: feature_previews/);
+  assert.ok(collector.indexOf('node tools/collect-feature-previews.mjs') < collector.indexOf('targets=$(jq'));
+  assert.match(collector, /\.previews\[\] \| select\(\.pr > 0\)/);
+  assert.match(collector, /"\$out\/previews\.json"/);
+  const prFetch = pages.slice(pages.indexOf('- name: Fetch each open pull request'), pages.indexOf('- name: Collect current feature'));
+  assert.doesNotMatch(prFetch, /echo "comment_targets=/);
 });
