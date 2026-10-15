@@ -19,9 +19,9 @@
 export const sfx = {
   sink: null, // future audio layer plugs in here; null = silent (v1)
   recent: [], // last fired hook ids (bounded), for verification
-  play(id) {
+  play(id, options = undefined) {
     this.recent.push(id);
     if (this.recent.length > 32) this.recent.shift();
-    if (this.sink) this.sink(id);
+    if (this.sink) this.sink(id, options);
   },
 };

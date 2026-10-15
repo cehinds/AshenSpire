@@ -401,7 +401,7 @@ if (!settingsChoicePending) {
 let settingsChoiceChecked = !!shotState;
 rebuildRegistries(activeSettings);
 const audio = initAudio(activeSettings);
-sfx.sink = (id) => audio.sfx(id);
+sfx.sink = (id, options) => audio.sfx(id, options);
 // Haptics have their own seam (ui/haptics.js), played by the call sites that
 // mean card play, damage taken and turn start; a moment with a pattern in
 // content/haptics.js vibrates unless Settings → Audio → Haptics is off (read

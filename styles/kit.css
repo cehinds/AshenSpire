@@ -1050,7 +1050,7 @@ input[type="range"] { min-height: var(--tap-floor); }
   display: grid; grid-template-columns: minmax(0, calc(var(--inspector-preview-fraction, .38) * 100%)) minmax(0, 1fr);
   gap: 1rem; flex: 1 1 auto; min-height: 0; align-items: start;
 }
-.combatant-door .combatant-inspector-details { display: flex; flex-direction: column; gap: 1.4rem; min-height: 0; max-height: 100%; overflow-y: auto; overflow-x: hidden; }
+.combatant-door .combatant-inspector-details { display: flex; flex-direction: column; gap: 1.4rem; min-width: 0; min-height: 0; max-height: 100%; overflow-y: auto; overflow-x: hidden; }
 .combatant-door .combatant-inspector-preview { display: grid; gap: .5rem; min-width: 0; align-content: start; }
 .combatant-door .combatant-inspector-art { display: grid; place-items: end center; aspect-ratio: 3 / 4; overflow: hidden; }
 .combatant-door .combatant-inspector-art > * { max-width: 100%; max-height: 100%; }
@@ -2919,7 +2919,7 @@ body.pad-mode .as-keycap.float { display: none; }
    host at the field's edge); these say only how tight the reading is. */
 .combatant-inspector-summary { display: grid; gap: 0.55rem; }
 .combatant-inspector-resources { gap: 0.45rem; }
-.combatant-inspector-section { margin-top: 0.7rem; }
+.combatant-inspector-section { margin-top: 0.7rem; min-width: 0; max-width: 100%; }
 .combatant-abilities > summary, .combatant-ability > summary { cursor: pointer; padding-block: 0.4rem; }
 .combatant-abilities > summary { display: list-item; list-style-position: inside; }
 .combatant-ability { border-bottom: 1px solid var(--line); padding-block: 0.25rem; }
@@ -2927,7 +2927,7 @@ body.pad-mode .as-keycap.float { display: none; }
 .combatant-ability > .as-prose { margin: 0.2rem 0 0.65rem; }
 .combatant-abilities summary:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
 .combatant-inspector-section > .as-hairline { margin: 0.35rem 0 0.2rem; }
-.combatant-inspector-row { padding-inline: 0; white-space: normal; align-items: flex-start; }
+.combatant-inspector-row { padding-inline: 0; white-space: normal; align-items: flex-start; min-width: 0; max-width: 100%; }
 .combatant-inspector-row > .r-label { flex: 0 1 auto; }
 .combatant-inspector-row > .as-status { text-align: right; }
 /* A pip: a round badge with a glyph and a count, for statuses in a row. */
@@ -3352,11 +3352,15 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
   flex: 0 0 auto; width: max-content; min-width: 10%; max-width: 30%;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+.combatant-door .combatant-inspector-row:has(> .as-status) > .r-label {
+  white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere;
+}
 :is(.modal, .as-tip) div.as-row:not(.character-info-head):has(> .r-label) > .as-status,
 .combatant-inspector-row > .as-status {
   flex: 1 1 0; min-width: 0; margin-left: 0; font-size: inherit; line-height: inherit;
   white-space: normal; overflow-wrap: anywhere; overflow: visible; text-overflow: clip; text-align: left;
 }
+.combatant-door .combatant-inspector-row > .as-status { max-width: 100%; }
 :is(.modal, .as-tip) .as-statrow { align-items: flex-start; font-size: max(1.4rem, calc(15px / var(--ui-zoom, 1))); }
 :is(.modal, .as-tip) .as-statrow > .sr-id { flex: 0 0 auto; width: max-content; min-width: 10%; max-width: 30%; }
 :is(.modal, .as-tip) .as-statrow .sr-name { font-size: inherit; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

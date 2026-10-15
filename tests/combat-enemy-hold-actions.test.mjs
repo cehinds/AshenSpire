@@ -200,6 +200,11 @@ test('enemy hold labels and tokenized notes resolve through authored UI strings'
   assert.equal(tFull('combat.enemyHold.closeActions', { enemy: 'Imp' }), 'Close actions for Imp');
 });
 
+test('combat hold beat uses its authored synth recipe without probing an absent sample', () => {
+  const beat = readFileSync(new URL('../src/ui/components/holdbeat.js', import.meta.url), 'utf8');
+  assert.match(beat, /sfx\.play\(id, \{ registeredSamplesOnly: true \}\)/);
+});
+
 test('combatant frame Enter yields to captured holds and ignores repeats while Space keeps tap fallback', () => {
   const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
   const wiringAt = source.indexOf('function wireCombatantContext(box, subject)');

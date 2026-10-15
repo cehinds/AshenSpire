@@ -223,7 +223,7 @@ async function runner() {
     fetches: [...fetches], decodes, starts,
     synthPeaks: gains.filter((value) => value > 0.01), logs: [...logs],
   });
-  const run = async ({ name, id, manifest = null, inlined = null, mode = 'ok', badDecode = false }) => {
+  const run = async ({ name, id, manifest = null, inlined = null, mode = 'ok', badDecode = false, registeredSamplesOnly = false }) => {
     delete SFX_MANIFEST[id];
     const convention = `assets/sfx/${encodeURIComponent(id)}.ogg`;
     delete ASSET_MAP[convention];
@@ -233,12 +233,12 @@ async function runner() {
     fetches = []; decodes = 0; starts = 0; logs.length = 0;
     const engine = initAudio({ musicVolume: 50, sfxVolume: 50, muteAudio: false });
     gains.length = 0;
-    engine.sfx(id);
+    engine.sfx(id, registeredSamplesOnly ? { registeredSamplesOnly: true } : undefined);
     const firstImmediate = snapshot();
     await wait(30);
     const afterWarm = snapshot();
     gains.length = 0;
-    engine.sfx(id);
+    engine.sfx(id, registeredSamplesOnly ? { registeredSamplesOnly: true } : undefined);
     const secondImmediate = snapshot();
     await wait(5);
     const afterSecond = snapshot();
@@ -252,6 +252,15 @@ async function runner() {
   await run({ name: 'stalled-fetch-stays-immediate', id: 'cardPlay', mode: 'stalled' });
   await run({ name: 'known-good-later-play', id: 'heal' });
   await run({ name: 'missing-stays-immediate', id: 'hit', mode: 'missing' });
+  await run({ name: 'registered-sample-only-skips-absent-sample', id: 'holdCommit_combat-enemy-actions', registeredSamplesOnly: true });
+  await run({
+    name: 'registered-sample-only-keeps-inlined-sample', id: 'holdCommit_combat-enemy-actions', registeredSamplesOnly: true,
+    inlined: 'data:audio/ogg;base64,T2dnUw==',
+  });
+  await run({
+    name: 'registered-sample-only-keeps-manifest-sample', id: 'holdCommit_combat-enemy-actions', registeredSamplesOnly: true,
+    manifest: 'custom/sfx/hold-commit.ogg',
+  });
   await run({ name: 'decode-falls-back-and-names-url', id: 'block', badDecode: true });
   await run({ name: 'manifest-override', id: 'nodeTravel', manifest: 'custom/sfx/travel.wav' });
   await run({
@@ -323,6 +332,23 @@ function evaluateRuntime(report) {
   check(missing.secondImmediate.fetches.length === 1 && missing.secondImmediate.decodes === 0
       && missing.secondImmediate.starts === 0,
     'missing sample caches unavailable and is not fetched twice', JSON.stringify(missing.secondImmediate));
+
+  const registeredOnly = by['registered-sample-only-skips-absent-sample'];
+  check(registeredOnly.firstImmediate.fetches.length === 0 && registeredOnly.firstImmediate.synthPeaks.includes(0.3)
+      && registeredOnly.firstImmediate.starts === 0 && registeredOnly.secondImmediate.fetches.length === 0
+      && registeredOnly.secondImmediate.synthPeaks.includes(0.3),
+    'registered-sample-only feedback uses the authored family recipe without probing an absent optional sample', JSON.stringify(registeredOnly));
+
+  for (const name of ['registered-sample-only-keeps-inlined-sample', 'registered-sample-only-keeps-manifest-sample']) {
+    const registeredSynthOnly = by[name];
+    const expectedPath = registeredSynthOnly.inlined || registeredSynthOnly.manifest;
+    check(registeredSynthOnly.firstImmediate.fetches.length === 1
+        && registeredSynthOnly.firstImmediate.fetches[0] === expectedPath
+        && registeredSynthOnly.firstImmediate.synthPeaks.includes(0.3)
+        && registeredSynthOnly.secondImmediate.starts === 1
+        && registeredSynthOnly.secondImmediate.synthPeaks.length === 0,
+      `registered-sample-only feedback honors its registered sample (${name})`, JSON.stringify(registeredSynthOnly));
+  }
 
   const decode = by['decode-falls-back-and-names-url'];
   check(decode.firstImmediate.synthPeaks.includes(0.4)
