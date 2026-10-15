@@ -1581,7 +1581,7 @@ export function mountCustomize(app, {
     }
     return el('div', { class: 'cc-summary-stats', role: 'list', 'aria-label': ariaLabel }, pairs);
   }
-  function characterSummaryCard(run, projection, inspection = false) {
+  function characterSummaryCard(run, projection, inspection = false, completeGlance = false) {
     const cls = registries.classes.get(state.classId);
     const name = state.name || 'Forsaken';
     const attributes = orderedAttributes(registries).map((def) => ({
@@ -1599,14 +1599,14 @@ export function mountCustomize(app, {
       'aria-label': `${name} character card`,
       dataset: { summaryLevel: inspection ? 'inspect' : 'glance' },
     }, [
-      el('span', { class: 'cc-summary-eyebrow', text: classAndSubclassSummary() }),
+      el('span', { class: 'cc-summary-eyebrow', text: classAndSubclassSummary(), title: classAndSubclassSummary() }),
       el('p', { class: 'cc-summary-name', text: name }),
       hairline(),
       characterSummaryGrid(attributes, 'Primary stats', inspection ? { expanded: true } : undefined),
       hairline(),
       characterSummaryGrid(resources, 'Derived resources', inspection
         ? { expanded: true }
-        : { limit: 6 }),
+        : { limit: completeGlance ? Infinity : 6 }),
     ]);
     if (!inspection) {
       bindCardInspection(card, {
@@ -1647,7 +1647,7 @@ export function mountCustomize(app, {
     const summaryCard = { interactive: false, level: 'glance', surface: 'creation' };
     const armament = (id) => registries.equipment.armaments.find((row) => row.id === id) || null;
     const slots = [
-      { key: 'character', label: 'Character', node: characterSummaryCard(run, projection) },
+      { key: 'character', label: 'Character', node: characterSummaryCard(run, projection, false, host.id === 'cz-review-summary') },
     ];
     const armour = registries.equipment.armour.find((row) => row.classId === state.classId && row.id === state.startingArmourId);
     slots.push({ key: 'armour', label: 'Armour', node: armour
