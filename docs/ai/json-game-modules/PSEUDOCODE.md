@@ -251,16 +251,8 @@ policy or copy the bundle's settings:
   "runtimeABI": "ashen.runtime@1",
   "configVersion": 1,
   "stateVersion": 1,
-  "defaults": { "include": ["block", "poise"], "order": ["block", "poise"] },
-  "configSchema": {
-    "type": "object",
-    "properties": {
-      "include": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
-      "order": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
-    },
-    "required": ["include", "order"],
-    "additionalProperties": false
-  },
+  "defaults": { "$ref": "./defaults.json" },
+  "configSchema": { "$ref": "./settings.schema.json" },
   "requires": [{ "kind": "core", "capability": "damage.pipeline", "version": "1" }],
   "provides": [{ "capability": "damage.defenseStages", "version": "1", "mode": "contribution" }],
   "technicalDependencies": [],
@@ -268,18 +260,24 @@ policy or copy the bundle's settings:
     { "id": "defenses.stanceProtection", "owner": "defenses", "version": 1,
       "whenEnabled": ["defenses", "stances"], "requiresCapabilities": ["stance.entry@1"] }
   ],
-  "entrypoints": { "implementation": "./defenses.mjs" },
-  "ui": ["./defenses.ui.json"],
-  "guide": "./defenses.md",
-  "stateSchema": { "$ref": "./defenses.schema.json#/$defs/state" },
-  "content": ["./defenses.content.json"],
-  "integrationCases": ["./defenses.cases.json"]
+  "entrypoints": { "implementation": "./runtime.mjs" },
+  "ui": ["./ui.json"],
+  "guide": "./guide.md",
+  "stateSchema": { "$ref": "./state.schema.json" },
+  "rules": { "$ref": "./rules.json" },
+  "integrationCases": ["./cases.json"]
 }
 ```
 
-These proposed paths are relative to the module folder; `defenses.schema.json`
-contains its config schema and `$defs.state`. No such files are created by this
-blueprint. Defense IDs are registry-validated strings, not a closed four-ID enum:
+This is the proposed `module.json`; its paths follow ARCHITECTURE's uniform
+module-folder convention. Resolve referenced `settings.schema.json`, `defaults.json`
+and `rules.json` before validation/merge; state/UI/cases use `state.schema.json`,
+`ui.json` and `cases.json`, with author instructions in `guide.md`. `runtime.mjs`
+is optional for a module needing host implementation; rules-only modules omit the
+entrypoint. Ashen definitions come from declared game packs, not a hidden module
+content path. No such files are created by this blueprint. The settings schema
+uses unique arrays of nonempty string IDs for include/order, never a fixed built-in
+enum. Defaults must resolve a declared policy without settling pending core order. Defense IDs are registry-validated strings, not a closed four-ID enum:
 authors can define additional defenses using supported behavior contracts. Require
 `order` to contain exactly the selected registered defense IDs once, each with a
 supported stage implementation; schema alone is insufficient. Technical
@@ -306,7 +304,11 @@ resolve(authorSource, pinnedCatalog):
     true: enable merge(module.defaults, bundle.overrides)
     object: enable merge(module.defaults, bundle.overrides, author.object)
   selected = enabledFeatureIDs(effective)
-  packages = [runtime.kernel, runtime.foundation] + selected.map(requireExactBundleOrCatalogPin)
+  selectedPacks = resolveExactDeclaredPackArtifacts(coreBundle.packs, effective)
+  // Pack/tag/group references never select undeclared feature modules.
+  packages = [runtime.kernel, runtime.foundation, coreBundle.artifact]
+             + selected.map(requireExactBundleOrCatalogPin) + selectedPacks
+  // Runtime artifacts are independently pinned; the data-only bundle owns no kernel binary.
   record expansion, value provenance and all bundle pins
   close bundled technical dependencies with typed version checks
   assert selected feature IDs unchanged by technical closure
