@@ -21,6 +21,7 @@ const grantIn = (run,id) => Object.values(run.classMilestones).flatMap(row => Ob
 const itemPiece = (reg,ref) => ref.startsWith('armament/') ? reg.equipment.armaments.find(piece => piece.id === ref.slice(9)) : reg.equipment.armour.find(piece => `armor/${piece.classId}/${piece.id}` === ref);
 
 export function classRespecAvailability(registries,run) {
+  if (run.gameProfile?.foundation?.mode === 'configured') return {ok:false,reason:'Class rebuilding is unavailable in this fixed-class ruleset.'};
   if (!expandedProgression(run)) return {ok:false,reason:'This run uses the earlier class rules.'};
   if (registries.balance.progression?.respec?.enabled === false) return {ok:false,reason:'Class respec is disabled in this run’s rules.'};
   if (run.classUnequipped) return {ok:false,reason:'Equip a class before rebuilding it.'};
