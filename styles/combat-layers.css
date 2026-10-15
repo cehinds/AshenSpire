@@ -412,12 +412,12 @@
   :root .combat[data-compact-combat='true'] .player.context-selected .combatant-leading { width: calc(146px / var(--ui-zoom,1)); }
   :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud { display: grid; grid-template-columns: 1fr 1fr; column-gap: calc(4px / var(--ui-zoom,1)); }
   :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud .nm {
-    grid-column: 1; grid-row: 1; height: calc(12px / var(--ui-zoom,1));
+    grid-column: 1 / -1; grid-row: 1; height: calc(12px / var(--ui-zoom,1));
     font-size: calc(9px / var(--ui-zoom,1)); line-height: calc(12px / var(--ui-zoom,1));
   }
   :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud .meters { display: contents; }
-  :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud .combat-health-row { grid-column: 2; grid-row: 1; min-width: 0; }
-  :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud [data-meter-row='resource'] { grid-row: 2; min-width: 0; }
+  :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud .combat-health-row { grid-column: 1 / -1; grid-row: 2; min-width: 0; }
+  :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud [data-meter-row='resource'] { grid-row: 3; min-width: 0; }
 }
 
 
