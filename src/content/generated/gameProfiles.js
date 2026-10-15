@@ -2348,7 +2348,8 @@ export const gameProfileCatalog = {
           "rests": "rests.json",
           "rewards": "rewards.json",
           "provisionalPolicies": "provisionalPolicies.json",
-          "resourceVariants": "resourceVariants.json"
+          "resourceVariants": "resourceVariants.json",
+          "shops": "shops.json"
         }
       },
       "content": {
@@ -2444,10 +2445,13 @@ export const gameProfileCatalog = {
             ],
             "tags": [
               "camp:physical",
-              "maneuver:attack"
+              "maneuver:attack",
+              "classification.attack"
             ],
             "textTemplate": "Deal {damage} damage.",
-            "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+            "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
           },
           {
             "id": "core.defend",
@@ -2470,7 +2474,8 @@ export const gameProfileCatalog = {
             ],
             "tags": [
               "camp:physical",
-              "maneuver:defend"
+              "maneuver:defend",
+              "classification.skill"
             ],
             "textTemplate": " Gain {block} Block.",
             "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
@@ -2496,10 +2501,13 @@ export const gameProfileCatalog = {
             ],
             "tags": [
               "camp:physical",
-              "maneuver:counter"
+              "maneuver:counter",
+              "classification.attack"
             ],
             "textTemplate": "Deal {damage} damage.",
-            "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+            "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
           },
           {
             "id": "core.smash",
@@ -2522,10 +2530,13 @@ export const gameProfileCatalog = {
             ],
             "tags": [
               "camp:physical",
-              "maneuver:smash"
+              "maneuver:smash",
+              "classification.attack"
             ],
             "textTemplate": "Deal {damage} damage.",
-            "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+            "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
           },
           {
             "id": "core.sweep",
@@ -2548,10 +2559,13 @@ export const gameProfileCatalog = {
             ],
             "tags": [
               "camp:physical",
-              "maneuver:sweep"
+              "maneuver:sweep",
+              "classification.attack"
             ],
             "textTemplate": "Deal {damage} damage.",
-            "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+            "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
           },
           {
             "id": "core.reaverSpecial",
@@ -2574,10 +2588,13 @@ export const gameProfileCatalog = {
             ],
             "tags": [
               "camp:physical",
-              "maneuver:smash"
+              "maneuver:smash",
+              "classification.attack"
             ],
             "textTemplate": "Deal {damage} damage.",
-            "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+            "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
           },
           {
             "id": "core.starseerSpecial",
@@ -2600,10 +2617,13 @@ export const gameProfileCatalog = {
             ],
             "tags": [
               "camp:spell",
-              "maneuver:casting"
+              "maneuver:casting",
+              "classification.attack"
             ],
             "textTemplate": "Deal {damage} damage.",
-            "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+            "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
           },
           {
             "id": "core.rogueSpecial",
@@ -2626,7 +2646,8 @@ export const gameProfileCatalog = {
             ],
             "tags": [
               "camp:physical",
-              "maneuver:defend"
+              "maneuver:defend",
+              "classification.skill"
             ],
             "textTemplate": " Gain {block} Block.",
             "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
@@ -2652,7 +2673,8 @@ export const gameProfileCatalog = {
             ],
             "tags": [
               "camp:physical",
-              "maneuver:defend"
+              "maneuver:defend",
+              "classification.power"
             ],
             "textTemplate": " Gain {block} Block.",
             "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
@@ -2784,10 +2806,12 @@ export const gameProfileCatalog = {
             "Starseer uses the existing boneSceptre ID as a valid scepter adapter.",
             "Poise applies while positive after Block; it reduces positive residual damage by 25% without depletion.",
             "Evade uses seeded hit chance clamp(0.75 + (AR-DR)*0.02, 0.05, 0.95); failure doubles damage. Rating contributions and ordering are provisional.",
-            "Stance advantage multiplier 1 preserves authored relationship without inventing a damage bonus.",
+            "Stance advantage multiplier 1.25, bounded Smash stagger and Prepared interruption are provisional adapter policies.",
             "Equipment editor noncombat timing, reward take-one, free-work and reaction limits are provisional.",
             "SP recovery delegates to the existing turn-start adapter; exact SP growth remains legacy.",
-            "Herald power behavior is a provisional card fixture; persistent stacking needs the runtime adapter."
+            "Herald power behavior is a provisional card fixture; persistent stacking needs the runtime adapter.",
+            "Rest positions [2,6] and generic shop price10 are provisional source-configured fixtures.",
+            "Stance advantage multiplier1.25 and one Smash advantage stagger per target/round are provisional."
           ]
         },
         "resourceVariants": {
@@ -2989,6 +3013,10 @@ export const gameProfileCatalog = {
               "manaCost": 0
             }
           }
+        },
+        "shops": {
+          "offerCount": 3,
+          "price": 10
         }
       },
       "artifacts": [
@@ -2996,7 +3024,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/pack.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:e782ef57e4d6464cc27ca38e2476d2a12f60b05513efb5339264ab06d57b9ebd"
+          "hash": "sha256:c8d7eedd366830005c1d7f717259de8655682c961b54d034b4de0ea470545cf8"
         },
         {
           "path": "games/ashenspire/packs/core/classes.json",
@@ -3008,7 +3036,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/cards.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:c2de0b5786e4313ede1954e398bb16738c97ad6c7e6be44ca2c1f213e2b760a3"
+          "hash": "sha256:273c669a5bb9ec675d26490ea7799cb956dd0ef39802bf7cbfec4afda39458be"
         },
         {
           "path": "games/ashenspire/packs/core/starterDeck.json",
@@ -3050,13 +3078,19 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/provisionalPolicies.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:48259983225afba4964c93ce8969cc7794b385dd314da6d99378e086eb3dbda2"
+          "hash": "sha256:5d2712b0677f52bc53940dc1f58d9f94b624fab82dab378a787e673af3261310"
         },
         {
           "path": "games/ashenspire/packs/core/resourceVariants.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
           "hash": "sha256:ba5d1b0af898660fb55ba07e053c19efdbe83b30ee640cb8bb840b7ebb5eaf74"
+        },
+        {
+          "path": "games/ashenspire/packs/core/shops.json",
+          "id": "ashen.core-content",
+          "version": "1.0.0",
+          "hash": "sha256:ba77194603609da10b1f2960d5f5784e1256cabb2fb99e22d909a27e86bbca8c"
         }
       ]
     }
@@ -3072,7 +3106,7 @@ export const gameProfileCatalog = {
       "path": "engine/kernel/gameConfig.js",
       "id": "ashen.runtime",
       "version": "1.0.0",
-      "hash": "sha256:26e7fcccd491045d41d16a7aa4f51d9625db2c3eaa3d56cd93676b8137ad50f6"
+      "hash": "sha256:265054ebd68a176c5a22a5c78bcd9b3e86562328e42b4db80a35ee3d6c3666b1"
     },
     {
       "path": "engine/contracts/game-profile.json",
