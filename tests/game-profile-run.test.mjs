@@ -118,3 +118,10 @@ test('two CON increases add one authored SP, and Smith commits an equipment tier
  assert.ok(candidate);commitGameProfileRest(reg,smith,'smith',{itemRef:candidate.itemRef});
  assert.equal(smith.itemUpgradeLevels[candidate.itemRef],candidate.nextLevel);assert.equal(smith.hp,smith.maxHp);
 });
+
+
+test('actual core loadRun validates pinned birth gear instead of legacy baseline and preserves deck',()=>{
+ const run=fresh();visit(run);const save=createSaveManager(createMemoryStorage());save.saveRun(run,null);
+ const restored=save.loadRun(reg);assert.ok(restored,JSON.stringify(save.runStatus()));
+ assert.equal(restored.loadout.sets.rightHand[0],'greatsword');assert.equal(restored.deck.length,10);assert.equal(restored.gameProfile.hash,profile.hash);
+});

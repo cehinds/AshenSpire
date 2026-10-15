@@ -1,3 +1,4 @@
+import { gameModule, gameContent } from '../model/gameProfile.js';
 import { validateResolvedGameProfile } from '../../engine/kernel/gameConfig.js';
 import { migrateAbilityGrades } from '../model/abilityGrades.js';
 // src/engine/save.js — run persistence with schema + content versioning
@@ -803,7 +804,17 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
           });
         }
         normalizeRunAttributes(run, registries);
-        validateRunStartingKit(run, registries, this.loadMeta(), { legacy: run.migratedFromRunSchemaVersion === 1 });
+        if (gameModule(run, 'class-selection')?.mode === 'configured') {
+          // A configured birth kit is pinned by the class pack, not the legacy
+          // baseline kit sharing its UI identity. Current equipment may differ.
+          const birth = run.startingKitSnapshot;
+          const fixed = gameContent(run, 'classes')?.find(row => row.id === birth?.classId)?.loadout;
+          if (!fixed || birth.id !== run.startingKitId || birth.classId !== run.class
+            || ['rightHand', 'leftHand'].some(hand => (birth[hand] || null) !== (fixed[hand] || null))) {
+            throw new Error('Configured starting kit disagrees with the pinned class loadout');
+          }
+          for (const id of Object.values(fixed).filter(Boolean)) if (!(registries.equipment.armaments || []).some(row => row.id === id)) throw new Error(`Configured starting kit has unknown armament '${id}'`);
+        } else validateRunStartingKit(run, registries, this.loadMeta(), { legacy: run.migratedFromRunSchemaVersion === 1 });
       } catch (e) {
         const reason = e && e.message ? e.message : 'corrupt save';
         const archiveId = archive(json, reason, slot);
