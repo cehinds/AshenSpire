@@ -3,5 +3,9 @@
   "acts": 3,
   "prebossNodes": 7,
   "restsPerAct": 2,
-  "hideUnknownNodes": true
+  "hideUnknownNodes": true,
+  "restFloors": [
+    2,
+    6
+  ]
 }

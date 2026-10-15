@@ -8,43 +8,54 @@
       ]
     },
     "servicesPerVisit": {
-      "type": "integer",
-      "minimum": 0,
-      "maximum": 1000000
+      "enum": [
+        1
+      ]
     },
     "services": {
       "type": "array",
       "uniqueItems": true,
       "items": {
-        "type": "string",
-        "minLength": 1
-      }
+        "enum": [
+          "strategize",
+          "smith",
+          "levelUp"
+        ]
+      },
+      "minItems": 1
     },
     "allowEmptyStrategize": {
-      "type": "boolean"
+      "enum": [
+        true
+      ]
     },
     "recovery": {
       "type": "object",
       "properties": {
         "hp": {
-          "type": "string",
-          "minLength": 1
+          "enum": [
+            "full"
+          ]
         },
         "sp": {
-          "type": "string",
-          "minLength": 1
+          "enum": [
+            "full"
+          ]
         },
         "mp": {
-          "type": "string",
-          "minLength": 1
+          "enum": [
+            "full"
+          ]
         },
         "healingFlasks": {
-          "type": "string",
-          "minLength": 1
+          "enum": [
+            "full"
+          ]
         },
         "mpFlasks": {
-          "type": "string",
-          "minLength": 1
+          "enum": [
+            "full"
+          ]
         }
       },
       "required": [

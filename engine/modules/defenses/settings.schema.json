@@ -29,8 +29,9 @@
       "maximum": 1000000
     },
     "poiseRounding": {
-      "type": "string",
-      "minLength": 1
+      "enum": [
+        "floor"
+      ]
     },
     "minimumPositiveDamage": {
       "type": "integer",
@@ -38,15 +39,20 @@
       "maximum": 1000000
     },
     "poiseActive": {
-      "type": "string",
-      "minLength": 1
+      "enum": [
+        "positive",
+        "always"
+      ]
     },
     "blockScope": {
-      "type": "string",
-      "minLength": 1
+      "enum": [
+        "all"
+      ]
     },
     "poiseDepletes": {
-      "type": "boolean"
+      "enum": [
+        false
+      ]
     }
   },
   "required": [

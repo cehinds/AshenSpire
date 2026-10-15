@@ -9,5 +9,14 @@
     "kind": "legacy-adapter",
     "portable": false
   },
-  "guide": "guide.md"
+  "guide": "guide.md",
+  "configuredAdapter": false,
+  "instances": [
+    "physical",
+    "magic"
+  ],
+  "unsupportedConfiguredInstances": [
+    "physical",
+    "magic"
+  ]
 }
