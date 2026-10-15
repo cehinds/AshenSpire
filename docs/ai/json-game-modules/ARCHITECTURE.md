@@ -26,6 +26,7 @@ engine/
     module.json
     settings.schema.json
     defaults.json
+    state.schema.json          # required when module owns state
     guide.md
     rules.json
     runtime.mjs                 # only when justified below
@@ -33,38 +34,38 @@ engine/
     ui.json                    # optional UI contributions
     cases.json                 # meaningful behavior cases
     integrations/<other>.json  # only actual integrations
-  games/ashenspire/
-    game.json
-    game.lock.json             # generated, reproducible committed metadata
-    guide.md
-    bundles/core/
-      bundle.json
-      guide.md
-    packs/core/
-      pack.json
-      classes.json
-      cards.json
-      equipment.json
-      stances.json
-      policies.json
-      routes.json
-      rest.json
-      rewards.json
-      tags.json
-      groups.json
-      presentation.json
-      guide.md
-    presets/
-    art/
   tools/
   adapters/web/
   adapters/headless/
   verification/
+games/ashenspire/
+  game.json
+  game.lock.json             # generated, reproducible committed metadata
+  guide.md
+  bundles/core/
+    bundle.json
+    guide.md
+  packs/core/
+    pack.json
+    classes.json
+    cards.json
+    equipment.json
+    stances.json
+    policies.json
+    routes.json
+    rest.json
+    rewards.json
+    tags.json
+    groups.json
+    presentation.json
+    guide.md
+  presets/
+  art/
 build/game-config/ashenspire/   # generated exports/reports, ignored
 workbench/modules/<configuration>/
 ```
 
-This is a responsibility map, not a bulk file-creation checklist. Optional files are omitted when unused. The canonical lock is engine/games/ashenspire/game.lock.json: generated deterministically, reviewed and committed as reproducible metadata. Exports and compilation reports belong under ignored build/game-config/ashenspire/. Do not maintain a second editable lock there. Runtime artifacts never become a parallel authored source.
+This is a responsibility map, not a bulk file-creation checklist. Optional files are omitted when unused. The canonical lock is games/ashenspire/game.lock.json: generated deterministically, reviewed and committed as reproducible metadata. Exports and compilation reports belong under ignored build/game-config/ashenspire/. Do not maintain a second editable lock there. Runtime artifacts never become a parallel authored source.
 
 Extend the existing Workbench through its ctx API. Reuse tools/content-build.mjs and tools/config-build.mjs through a future compatibility adapter while migrating small slices. For each moved definition, designate exactly one authored owner. Existing sources remain canonical until that slice explicitly transfers ownership; do not make both trees independently editable.
 
@@ -152,7 +153,7 @@ The bundle excerpt intentionally omits other required core-selected modules; it 
 | resources | Core-selected: SP/MP and optional Actions pools; decorates foundation HP without owning duplicate HP. |
 | stats | Core-selected: attributes and derived-stat contributions through typed contracts. |
 | defenses | Core-selected block/poise; barrier/ward remain optional instances; owns defense state and operations. |
-| stances, reactions, posture | Core-selected as needed for seven stances, response behavior, stagger and interrupt; separate namespaces and explicit integration. |
+| stances, reactions | Core-selected for seven stances, response behavior, stagger and interrupt; separate namespaces and explicit integration. |
 | effects, statuses | Core-selected enhanced operation/status behavior; foundation direct damage remains available independently. |
 | equipment | Core-selected: inventory ownership, loadouts, equip/editor operations and gear upgrades; no sprite swapping. Other packages issue typed grant/upgrade requests. |
 | class-selection | Core-selected fixed class chooser with model/host/UI unlock guards; no attribute creation. |
@@ -161,7 +162,7 @@ The bundle excerpt intentionally omits other required core-selected modules; it 
 | rest | Core-selected service/visit policy and durable service token; invokes card/equipment/progression capabilities and coordinates atomic recovery. |
 | rewards, shops | Core-selected eligibility, offer/claim or purchase policies; use typed inventory/card grants rather than writing their state. |
 | animation, art/presentation | Core-selected profile presentation where specified; fixed look, required animation facts and optional authored assets fall back to foundation stand-ins. |
-| damage-types, intent, dungeons, quests, dialogue, audio, advanced-ui, multiplayer | Later extensions unless explicitly selected by a reviewed bundle revision; no implicit activation. |
+| posture, damage-types, intent, dungeons, quests, dialogue, audio, advanced-ui, multiplayer | Later extensions unless explicitly selected by a reviewed bundle revision; no implicit activation. |
 | character-creation | Optional later extension, off by default; not the fixed class selector. |
 
 Combat is a composed capability pipeline, not a duplicate state-owning mega-module. Enemy AI uses foundation planning plus declared profile policies and enabled behavior contributions. Do not invent toggles for every helper, log panel or editor file. Any needed new capability has a named owner before integration. Inventory belongs to equipment; cards own card collections; cross-family rewards use their respective public commands.
@@ -193,7 +194,10 @@ assertExactlyOneStateOwnerPerCapability(providers)
 assertNoImplicitOptionalFeatureActivation(selection, providers)
 content = projectPacks(bundle.packs, settings, explicitVariants)
 validateAllRequiredRefsAndExecutableValues(content, providers)
-lock = canonicalLock(bundle, modules, contracts, provenance, hashes)
+packClosure = resolveAndHashAllReferencedPackArtifacts(content)
+lock = canonicalLock(kernelPinAndHash, foundationPinAndHash, bundle,
+                     modules, contracts, packClosure, definitionsHash,
+                     provenance, hashes)
 return isolatedRuntimeFactory(providers, content, lock)
 ```
 
@@ -201,7 +205,7 @@ Bindings are compiled once per resolved configuration; each runtime gets separat
 
 ## Portability and guides
 
-rules.json is portable declarative behavior interpreted against versioned contracts. runtime.mjs is optional: either a host interpreter implementation of a declared portable contract or an explicitly native extension. It is not silently portable merely because its manifest serializes. Export rejects required native behavior unsupported by the target; never omit functions and claim completeness. Data-only bundles and packs cannot contain runtime functions.
+rules.json is portable declarative behavior interpreted against versioned contracts. runtime.mjs is optional: either a host interpreter implementation of a declared portable contract or an explicitly native extension. It is not silently portable merely because its manifest serializes. Export rejects required native behavior unsupported by the target; never omit functions and claim completeness. Data-only bundles and packs cannot contain runtime functions or register executable providers; they only select and configure declared capabilities/definitions.
 
 Each module and pack guide documents schema/defaults, inherited settings/provenance, recipes, ownership/lifetime, disabled fallback, dependency/integration behavior, validation and portability. Give a new-module handoff checklist: catalog/pin registration, state owner, public operations, off behavior, authored variants, UI contributions, guide and behavioral cases. Explain pending advanced values and how compilation refuses them. Preserve every CORE-SPEC requirement, including class unlock ledger, rest-only Strategize deck editing, one atomic rest service, full recovery, fixed appearances and confirmed class/hand rules. Architecture acceptance supplements those gameplay tests rather than replacing them.
 
