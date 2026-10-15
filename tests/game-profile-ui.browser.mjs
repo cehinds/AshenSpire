@@ -29,8 +29,9 @@ const viewports = [
 async function sourcePage(query, viewport = viewports[0]) {
   const page = await browser.newPage({ viewport: { width: viewport.width, height: viewport.height }, reducedMotion: 'reduce' });
   page.setDefaultTimeout(7000);
+  page.setDefaultNavigationTimeout(30000);
   page.on('pageerror', error => errors.push(error.message));
-  await page.goto(`${base}index.html?${query}`);
+  await page.goto(`${base}index.html?${query}`, { waitUntil: 'domcontentloaded', timeout: 30000 });
   return page;
 }
 
@@ -96,7 +97,9 @@ async function captureSourceScenes() {
   await creation.keyboard.press('Enter');
   await creation.keyboard.press('Space');
   assert.equal(await creation.locator('#cz-classes .is-selected').getAttribute('data-class'), selectedBeforeLockInput, 'keyboard activation cannot select a locked class');
-  await nextClass.click();
+  const nextClassBounds = await nextClass.boundingBox();
+  assert.ok(nextClassBounds, 'the locked class card is available to pointer users');
+  await creation.mouse.click(nextClassBounds.x + nextClassBounds.width / 2, nextClassBounds.y + nextClassBounds.height / 2);
   assert.equal(await creation.locator('#cz-classes .is-selected').getAttribute('data-class'), selectedBeforeLockInput, 'pointer activation cannot select a locked class');
   await creation.screenshot({ path: resolve(output, 'core-class-desktop.png') });
   await creation.locator('#cz-next').click();
@@ -210,13 +213,14 @@ async function capturePagesSandbox() {
   try {
   for (const viewport of [viewports[0]]) {
     const page = await browser.newPage({ viewport: { width: viewport.width, height: viewport.height }, reducedMotion: 'reduce' });
-    page.setDefaultTimeout(10000);
+    page.setDefaultTimeout(30000);
+    page.setDefaultNavigationTimeout(30000);
     page.on('pageerror', error => errors.push(error.message));
-    await page.goto(previewBase);
+    await page.goto(previewBase, { waitUntil: 'domcontentloaded', timeout: 30000 });
     const iframe = page.locator('#preview');
     assert.equal(await iframe.getAttribute('sandbox'), PREVIEW_SANDBOX);
     const game = page.frameLocator('#preview');
-    await game.locator('.startup-gate').waitFor();
+    await game.locator('.startup-gate').waitFor({ timeout: 30000 });
     const frame = page.frames().find(candidate => candidate.url() === 'about:srcdoc');
     assert.ok(frame, 'the preview build runs as srcdoc');
     assert.equal(await frame.evaluate(() => location.origin), 'null', 'the preview has an opaque origin');

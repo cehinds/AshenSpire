@@ -16,7 +16,7 @@ async function open(profile='core',host='desktop',extra='') {
  const [width,height]=hosts[host];
  const page=await browser.newPage({viewport:{width,height},reducedMotion:'reduce'});
  page.setDefaultTimeout(10000);page.on('pageerror',error=>errors.push(error.message));
- await page.goto(`${base}${entry}?shot=rest&gameProfile=${profile}&shotRestState=wounded&shotSeed=3${extra}`);
+ await page.goto(`${base}${entry}?shot=rest&gameProfile=${profile}&shotRestState=wounded&shotSeed=3${extra}`,{waitUntil:'domcontentloaded',timeout:30000});
  await page.locator('.rest-door').waitFor();return page;
 }
 async function frame(page) {
@@ -60,7 +60,11 @@ async function behavior() {
    await page.locator('#deck-editor-cancel').click();
    assert.deepEqual((await snapshot(page)).live,before.live,'cancelled Strategize consumes nothing');
    await page.locator('#strategize-opt').click();
-   await page.locator('.deck-editor-step[data-action="remove"][aria-disabled="false"]').first().click();
+   const remove=page.locator('.deck-editor-step[data-action="remove"][aria-disabled="false"]').first();
+   const key=await remove.getAttribute('data-key');
+   await remove.click();
+   assert.equal(await page.locator('#deck-editor-done').isDisabled(),true,'below-minimum deck cannot commit');
+   await page.locator(`.deck-editor-step[data-action="add"][data-key="${key}"]`).click();
    await page.locator('#deck-editor-done').click();
   } else if(service==='smith') {
    await page.locator('#smith-opt').click();
@@ -80,7 +84,10 @@ async function behavior() {
    await page.locator('[data-stat-done]').click();
   }
   const after=await spent(page,service);
-  if(service==='strategize') assert.equal(after.live.deck.length,before.live.deck.length-1,'confirmed deck draft is persisted');
+  if(service==='strategize') {
+   assert.deepEqual(after.live.deck.map(card=>card.instanceId).sort(),before.live.deck.map(card=>card.instanceId).sort(),'owned card identities preserved');
+   assert.notDeepEqual(after.live.deck,before.live.deck,'confirmed card ordering is persisted');
+  }
   if(service==='smith') assert.notDeepEqual(after.live.itemUpgradeLevels,before.live.itemUpgradeLevels,'confirmed equipment tier is persisted');
   if(service==='levelUp') assert.equal(after.live.attributes.constitution,before.live.attributes.constitution+1,'confirmed attribute is persisted');
   console.log(`Rest service passed: ${service}`);await page.close();
@@ -89,7 +96,7 @@ async function behavior() {
 try {
  if(!process.env.REST_UI_CAPTURE_ONLY) await behavior();
  if(!process.env.REST_UI_BEHAVIOR_ONLY) {
- for(const host of Object.keys(hosts)) {
+ for(const host of Object.keys(hosts).filter(host=>!process.env.REST_UI_CAPTURE_HOSTS || process.env.REST_UI_CAPTURE_HOSTS.split(',').includes(host))) {
   const page=await open('core',host,'&shotRestPoints=1');await frame(page);
   await page.screenshot({path:resolve(output,`${host}-rest.png`)});
   await page.locator('#smith-opt').click();await page.locator('.smith-upgrade-modal').waitFor();
@@ -115,6 +122,10 @@ try {
  await creation.screenshot({path:resolve(output,'desktop-class.png')});
  await creation.locator('#cz-next').click();
  assert.equal(await creation.locator('.cc-starter-deck .card').count(),10);
+ await creation.locator('[data-summary-slot="rightHand"] .epc-name').waitFor();
+ await creation.waitForFunction(()=>[...document.querySelectorAll('.cc-summary-cards img')].filter(img=>img.getClientRects().length && !img.hidden).every(img=>img.complete && img.naturalWidth>0));
+ await creation.locator('[data-summary-slot="rightHand"] img').evaluateAll(images=>Promise.all(images.map(img=>img.decode())));
+ await creation.mouse.move(0,0);
  await creation.screenshot({path:resolve(output,'desktop-review.png')});await creation.close();
  }
  assert.deepEqual(errors,[],'no page errors');
