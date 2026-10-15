@@ -230,6 +230,7 @@ jobs:
     outputs:
       # Compact JSON array of {pr, dir} for every PR whose preview is in the site this run.
       comment_targets: ${{ steps.feature_previews.outputs.comment_targets }}
+      preview_targets: ${{ steps.feature_previews.outputs.preview_targets }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -462,6 +463,8 @@ jobs:
           # Branch builds without a PR never become PR comment targets.
           targets=$(jq -c '[.previews[] | select(.pr > 0) | {pr: (.pr | tostring), dir: .dir}]' "$out/previews.json")
           echo "comment_targets=$targets" >> "$GITHUB_OUTPUT"
+          previews=$(jq -c '[.previews[] | {dir: .dir, sha: .sha}]' "$out/previews.json")
+          echo "preview_targets=$previews" >> "$GITHUB_OUTPUT"
           {
             echo "### Feature-branch builds"
             echo
@@ -701,6 +704,18 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+      - uses: actions/checkout@v5
+        with:
+          # Read only the trusted delivery checker, never a feature checkout.
+          ref: ${{ (github.event_name == 'workflow_run' || github.event_name == 'pull_request_target') && 'dev' || github.ref }}
+          persist-credentials: false
+          sparse-checkout: tools/check-feature-pages.mjs
+          sparse-checkout-cone-mode: false
+      - name: Verify public feature preview delivery
+        env:
+          PAGES_URL: ${{ steps.deployment.outputs.page_url }}
+          PREVIEW_TARGETS: ${{ needs.assemble.outputs.preview_targets }}
+        run: node tools/check-feature-pages.mjs
       # The publication's own receipt, so the run that published says so rather
       # than leaving the assemble job's summary as the last word on it.
       - name: Record the publication
