@@ -5,10 +5,19 @@
 
 The same runtime supports two authored configurations. **Product core** includes its required bundled modules and keeps optional gameplay packages off where the core has a fallback. **Current game** preserves the full legacy configuration.
 
-- **Product core:** [Play on Pages (publication pending)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-modules/latest/) · [standalone artifact](https://github.com/cehinds/AshenSpire/actions/runs/38757871534/artifacts/11985005463) · [build run](https://github.com/cehinds/AshenSpire/actions/runs/38757871534)
-- **Current game:** [Play on Pages (publication pending)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-current-preview/latest/) · [standalone artifact](https://github.com/cehinds/AshenSpire/actions/runs/38758036149/artifacts/11984102705) · [build run](https://github.com/cehinds/AshenSpire/actions/runs/38758036149)
+- **Product core:** [Play on Pages (publication pending)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-modules/latest/) · [latest build run](https://github.com/cehinds/AshenSpire/actions/runs/38808828137)
+- **Current game:** [Play on Pages (publication pending)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-current-preview/latest/) · [latest build run](https://github.com/cehinds/AshenSpire/actions/runs/38808849439)
 
-The latest source builds are core `4f27e2913` (runtime `81f6402182`) and current `627a256b7`. Fresh core captures show the entrance, class and review steps, branched map and merchant across four viewport sizes. [Capture details and the full image set](docs/preview/features/json-game-modules/README.md).
+Game rules and JSON imports now live in **Settings → General → Game rules**. New Game goes directly to character creation. **Settings → General → Display** offers Auto, Desktop (1440×900), Mobile (390×844), Widescreen (1920×1080), and Tablet (1024×768); switching views keeps the active fight and fits the selected layout inside the current window.
+
+The latest CI source revisions are core `7c3e48537` and current `3c048f38e`; their builds and Pages publication are pending. Fresh local Settings captures from source `90c21acf0` (build `0.7.1.1534`) are recorded in [the Settings update evidence](docs/preview/features/json-game-modules/settings-update/README.md).
+
+| Desktop · 1440×900 | Wide · 1920×1080 | Tablet · 1024×768 | Mobile · 390×844 |
+| --- | --- | --- | --- |
+| ![Desktop Display settings](docs/preview/features/json-game-modules/settings-update/desktop.png) | ![Wide Display settings](docs/preview/features/json-game-modules/settings-update/wide.png) | ![Tablet Display settings](docs/preview/features/json-game-modules/settings-update/tablet.png) | ![Mobile Display settings](docs/preview/features/json-game-modules/settings-update/mobile.png) |
+
+<details>
+<summary>Historical gallery — earlier configured flow before the Settings update</summary>
 
 **Product core — configured flow**
 
@@ -18,7 +27,9 @@ The latest source builds are core `4f27e2913` (runtime `81f6402182`) and current
 | Map | ![Core route map on mobile](docs/preview/features/json-game-modules/final-core/mobile-map.png) | ![Core route map on desktop](docs/preview/features/json-game-modules/final-core/desktop-map.png) | ![Core route map wide](docs/preview/features/json-game-modules/final-core/wide-map.png) | ![Core route map on tablet](docs/preview/features/json-game-modules/final-core/tablet-map.png) |
 | Shop | ![Core merchant on mobile](docs/preview/features/json-game-modules/final-core/mobile-shop.png) | ![Core merchant on desktop](docs/preview/features/json-game-modules/final-core/desktop-shop.png) | ![Core merchant wide](docs/preview/features/json-game-modules/final-core/wide-shop.png) | ![Core merchant on tablet](docs/preview/features/json-game-modules/final-core/tablet-shop.png) |
 
-The route map fits all four viewports. These local captures used the embedded low-resolution terrain fallback because detail tiles were not available from the local preview server; the map artwork appears soft. The branch build’s Pages workflow is still running, so the links above identify CI artifacts and queued preview URLs, not a verified Pages deployment.
+The route map fits all four viewports. These local captures used the embedded low-resolution terrain fallback because detail tiles were not available from the local preview server; the map artwork appears soft. At the time of these earlier captures, Pages publication had not been verified. This historical gallery does not establish the status of the current preview links above.
+
+</details>
 
 The previous core/current combat captures remain in the [profile evidence folder](docs/preview/features/json-game-modules/README.md); the current profile’s mobile combat layout remains visually dense.
 <!-- feature-preview:end -->
@@ -52,7 +63,7 @@ The chooser identifies the selected game build; its installer can be newer than 
 
 **Feature branches:** pushed `Feature/*`, `feature/*`, `fix/*` and `chore/*` branches are built on push and publish to `https://cehinds.github.io/AshenSpire/branches/<branch>/latest/` when the Pages workflow completes; a pull request is not required. Branch previews play in a sandbox and do not keep progress. The build is also available from its [Actions run](https://github.com/cehinds/AshenSpire/actions/workflows/feature-preview.yml).
 
-**JSON profile verification (not a published preview):** source branches are [`Feature/json-game-modules`](https://github.com/cehinds/AshenSpire/tree/Feature/json-game-modules) and [`Feature/json-game-current-preview`](https://github.com/cehinds/AshenSpire/tree/Feature/json-game-current-preview). Final source build `0.7.1.1539` (digest `f6930be11b`, source `ec08a6ca9`) passed the configured CI gates; its [core-profile artifact](https://github.com/cehinds/AshenSpire/actions/runs/38703926669/artifacts/11957243379) is available. Current-default JSON build `0.7.1.1535` (digest `e83c1c0ad6`, source `a330ee248`) has its [CI artifact](https://github.com/cehinds/AshenSpire/actions/runs/38703962043/artifacts/11957851105). These artifacts are for verification and do not mean a playable preview was deployed. Profile implementation status and limitations are in [the JSON modules handoff](docs/ai/json-game-modules/README.md). Gallery captures remain from build 1,538 before final nonvisual fixes; they were not recaptured for 1,539.
+**JSON profile development:** source branches are [`Feature/json-game-modules`](https://github.com/cehinds/AshenSpire/tree/Feature/json-game-modules) and [`Feature/json-game-current-preview`](https://github.com/cehinds/AshenSpire/tree/Feature/json-game-current-preview). Current build and preview status appears in the feature block above. [Implementation notes and limitations](docs/ai/json-game-modules/README.md) · [Historical profile evidence](docs/preview/features/json-game-modules/README.md).
 
 [All builds](https://cehinds.github.io/AshenSpire/) · [Workbench](https://cehinds.github.io/AshenSpire/workbench/) · [ZIP artifacts](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml) · [Changelog](CHANGELOG.md).
 Publication can lag source changes. For ZIPs, open a successful run and download its named build artifact.
