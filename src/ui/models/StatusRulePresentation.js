@@ -15,15 +15,13 @@ function standardDurationText(decay) {
 }
 
 function standardStackingText(statusDef) {
+  const timedExpiry = statusDef.decay && typeof statusDef.decay === 'object'
+    && positiveInteger(statusDef.decay.duration);
+  const reapplyText = timedExpiry ? ' Reapplying resets the duration.' : '';
   switch (statusDef.stackMode) {
-    case 'add': return 'Applications add stacks.';
-    case 'refresh': {
-      const base = 'Keeps the higher stack count.';
-      return statusDef.decay && typeof statusDef.decay === 'object' && positiveInteger(statusDef.decay.duration)
-        ? `${base} Reapplying resets the duration.`
-        : base;
-    }
-    case 'unique': return 'Remains at 1 stack.';
+    case 'add': return `Applications add stacks.${reapplyText}`;
+    case 'refresh': return `Keeps the higher stack count.${reapplyText}`;
+    case 'unique': return `Remains at 1 stack.${reapplyText}`;
     default: return null;
   }
 }
@@ -37,17 +35,23 @@ function foundationDurationText(rule) {
   return `Applications expire after ${rule.duration} turns at the ${point} of their owner’s turn.`;
 }
 
+function hasFoundationTimedExpiry(rule) {
+  const clock = rule.clock || 'ownerTurnEnd';
+  return positiveInteger(rule.duration) && ['ownerTurnStart', 'ownerTurnEnd'].includes(clock);
+}
+
 function foundationStackingText(rule) {
   if (!known(rule.mode)) return null;
   const cap = rule.cap === undefined ? 99 : rule.cap;
   if (!positiveInteger(cap)) return null;
+  const timedExpiry = hasFoundationTimedExpiry(rule);
   const capText = ` Capped at ${cap}.`;
   switch (rule.mode) {
-    case 'add': return `Applications add together.${capText}`;
-    case 'refresh': return `Keeps the higher application value.${capText}${rule.refresh === false ? ' Reapplication keeps the existing expiry.' : ' Reapplication resets the expiry.'}`;
-    case 'replace': return `Each application replaces the previous one.${capText}`;
-    case 'strongest': return `Uses the strongest active application.${capText}`;
-    case 'independent': return `Applications remain separate and add together.${capText}`;
+    case 'add': return `Applications add together.${capText}${timedExpiry ? (rule.refresh === false ? ' Reapplication keeps the existing expiry.' : ' Reapplication resets the expiry.') : ''}`;
+    case 'refresh': return `Keeps the existing value on reapplication.${capText}${timedExpiry ? (rule.refresh === false ? ' Reapplication keeps the existing expiry.' : ' Reapplication resets the expiry.') : ''}`;
+    case 'replace': return `Replaces prior applications with the latest value.${capText}${timedExpiry ? ' Reapplication starts a fresh expiry.' : ''}`;
+    case 'strongest': return `Uses the strongest application, with each source replacing its own prior value.${capText}${timedExpiry ? ' A source’s reapplication starts a fresh expiry.' : ''}`;
+    case 'independent': return `Adds values across sources; each source’s reapplication replaces its prior value.${capText}${timedExpiry ? ' A source’s reapplication starts a fresh expiry.' : ''}`;
     case 'unique': return 'Keeps one application.';
     default: return null;
   }
