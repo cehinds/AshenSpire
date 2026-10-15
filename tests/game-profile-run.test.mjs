@@ -188,3 +188,24 @@ test('configured upgrade groups take highest active tiers without summing and ho
  run.loadout.sets.leftHand[0]='kiteShield';run.itemUpgradeLevels['armament/kiteShield']=2;run.itemUpgradeLevels[`armor/reaver/${run.loadout.sets.armor[0]}`]=1;const totals=gameProfileRatingReceipt(reg,run).totals;assert.equal(totals.ar,base.ar+3);assert.equal(totals.dr,base.dr+2);
  const custom=resolveGameProfile({formatVersion:1,core:'ashen.core@1.0.0',modules:{equipment:{upgradeBonuses:{weaponARPerTier:2,armorDRPerTier:3}}}}),r=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,custom)),custom),other=createRunState({seed:1,classId:'reaver',registries:r});const initial=gameProfileRatingReceipt(r,other).totals.ar;other.itemUpgradeLevels['armament/greatsword']=1;assert.equal(gameProfileRatingReceipt(r,other).totals.ar,initial+2);
 });
+
+
+test('all four unlocked core classes instantiate exact kits and decks, construct combat and load actual saves',async()=>{
+ const {createRunCombat}=await import('../src/engine/runCombat.js');
+ const meta={gameProfileUnlocks:{[profile.id]:{completedRunIds:['one','two','three']}}};
+ const hands={reaver:['greatsword',null],starseer:['boneSceptre',null],rogue:['dagger','dagger'],herald:['boneSceptre',null]};
+ for(const [classId,expected] of Object.entries(hands)){
+  const run=createRunState({seed:17,classId,registries:reg,profileMeta:meta});assert.equal(run.deck.length,10,classId);
+  assert.deepEqual([run.loadout.sets.rightHand[0],run.loadout.sets.leftHand[0]],expected,classId);
+  stampDeck(reg,run);assert.equal(run.deck.length,10,classId);
+  const combat=createRunCombat({registries:reg,run,rng:createRng(17),enemyIds:['wanderingSoldier']});assert.ok(combat.enemies[0].alive,classId);assert.equal(combat.piles.hand.length,classId==='starseer'?6:5,classId);
+  const save=createSaveManager(createMemoryStorage());save.saveRun(run,null);const restored=save.loadRun(reg);assert.ok(restored,`${classId}: ${JSON.stringify(save.runStatus())}`);assert.equal(restored.deck.length,10,classId);assert.deepEqual([restored.loadout.sets.rightHand[0],restored.loadout.sets.leftHand[0]],expected,classId);
+ }
+});
+
+test('legacy duplicate equipped-armament validation and normalization remain in force',async()=>{
+ const {buildEquippedWeaponCardPlan,normalizeArmamentLocations}=await import('../src/model/loadout.js');
+ const legacy=createRegistries(contentBundle),run=createRunState({seed:17,classId:'rogue',registries:legacy});run.loadout.sets.rightHand[0]='dagger';run.loadout.sets.leftHand[0]='dagger';
+ assert.throws(()=>buildEquippedWeaponCardPlan(legacy,run.loadout,run.class),/distinct equipment-instance identity/);
+ normalizeArmamentLocations(legacy,run.loadout);assert.equal(run.loadout.sets.leftHand[0],null);
+});
