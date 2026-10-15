@@ -63,6 +63,12 @@ Raw final reports remain local and untracked at `/workspace/scratch/rogue-projec
 
 These are the same bounded card/payment/refusal contracts, separately executed after the Counter change. They do not prove every effect amount or close the historical conditional gaps. The first configured reports and earlier b349 Rogue browser proof keep their original source identities.
 
+## Configured audit command boundary
+
+Configured defaults are supported only for the full variant matrix against the default Wandering Soldier/Gilded Knight pair, or the refusal matrix. Configured base-only, all-enemy, conditional, Counter-lifecycle and deferred-condition combinations are rejected before loader/execution, with no silent raw fallback. Historical raw semantic audits retain their original assertions and scope.
+
+The independently reviewed [scope guard a11a093](https://github.com/cehinds/AshenSpire/commit/a11a093a94cee2029512d0715c24e07dee544b01) changes input validation/help only; the validated variant/refusal execution loops and all gameplay are unchanged. **19/19** focused native/bundled boundary, runtime and existing raw-oracle checks pass. The earlier matrix reports keep their actual executed audit-tool hashes, and the compiled proof remains bound to the unchanged 5be game/receipt bytes. This guard does not establish configured semantic coverage for the rejected modes.
+
 ## Trusted-pointer hardening
 
 Test merge `21b2484b9610b8cdca3d3dd5dbc0c0860d13d324` had one actual failed gate: [full-run job 116346385499](https://github.com/cehinds/AshenSpire/actions/runs/38712270350/job/116346385499) timed out at the new-slot decision door with zero console errors. Its boundary job propagated that failure; all other Test gates passed. Promotion was not considered complete.
