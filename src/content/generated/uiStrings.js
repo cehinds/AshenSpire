@@ -10249,5 +10249,124 @@ export const uiStrings = [
     "short": "Missed",
     "full": "",
     "tip": ""
+  },
+  {
+    "id": "gameProfile.creation.copy1",
+    "extends": "",
+    "short": "Choose your class",
+    "full": "Choose your class",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.creation.copy2",
+    "extends": "",
+    "short": "Begin the climb",
+    "full": "Begin the climb",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.creation.copy3",
+    "extends": "",
+    "short": "Back",
+    "full": "Back",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.creation.copy4",
+    "extends": "",
+    "short": "Run seed",
+    "full": "Run seed",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.copy1",
+    "extends": "",
+    "short": "Rest",
+    "full": "Rest",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.copy2",
+    "extends": "",
+    "short": "Strategize · Edit deck",
+    "full": "Strategize · Edit deck",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.copy3",
+    "extends": "",
+    "short": "Smith · Upgrade equipment",
+    "full": "Smith · Upgrade equipment",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.copy4",
+    "extends": "",
+    "short": "Level Up · Allocate earned point",
+    "full": "Level Up · Allocate earned point",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.copy5",
+    "extends": "",
+    "short": "Continue",
+    "full": "Continue",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.copy6",
+    "extends": "",
+    "short": "Equipment to upgrade",
+    "full": "Equipment to upgrade",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.copy7",
+    "extends": "",
+    "short": "Attribute to increase",
+    "full": "Attribute to increase",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.selector.copy1",
+    "extends": "",
+    "short": "New game:",
+    "full": "New game:",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.selector.copy2",
+    "extends": "",
+    "short": "New game configuration",
+    "full": "New game configuration",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.selector.copy3",
+    "extends": "",
+    "short": "Import game configuration JSON",
+    "full": "Import game configuration JSON",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.combat.attackTarget",
+    "extends": "",
+    "short": "Attack target",
+    "full": "Attack target",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.combat.attack",
+    "extends": "",
+    "short": "Attack",
+    "full": "Attack",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.combat.unreadIntent",
+    "extends": "",
+    "short": "Unread",
+    "full": "Unread",
+    "tip": ""
   }
 ];
