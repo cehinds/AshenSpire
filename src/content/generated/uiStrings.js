@@ -10417,5 +10417,12 @@ export const uiStrings = [
     "short": "Starting deck",
     "full": "",
     "tip": ""
+  },
+  {
+    "id": "reward.configured.note",
+    "extends": "",
+    "short": "Choose {count}. Cards join your collection; edit your deck at Strategize.",
+    "full": "",
+    "tip": ""
   }
 ];
