@@ -552,7 +552,8 @@ const PROBE = `(() => {
         ? proxyStyle : getComputedStyle(c, '::after');
       const tx = r.left + parseFloat(targetStyle.left) * z, ty = r.top + parseFloat(targetStyle.top) * z;
       const halfWidth = parseFloat(targetStyle.width) * z / 2, halfHeight = parseFloat(targetStyle.height) * z / 2;
-      // Waist-overlap players expose their artwork; their plate is hidden.
+      // Waist-overlap players keep their independently packed proxy; their
+      // artwork remains another selection route.
       // A core that packing explicitly gave up (data-core-obstructed) takes no
       // input by design; that enemy is reached through its artwork.
       const hasPlate = targetStyle.display !== 'none' && targetStyle.content !== 'none'

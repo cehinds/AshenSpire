@@ -34,11 +34,11 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-15
 
-- **Combat fades cover fighters, and player targets stay clear of Health** ([#1978](https://github.com/cehinds/AshenSpire/pull/1978), `0.7.1.1529`). Screen fades now cover idle and selected fighters while target selection, cards and the combat HUD remain above them. When the perspective view places the player behind the hand, its transparent 44px target moves clear of its own Health strip without changing the artwork, Health position or selected fighter size.
+- **Combat fades cover fighters, and player targets stay clear of Health** ([#1978](https://github.com/cehinds/AshenSpire/pull/1978), `0.7.1.1531`). Screen fades now cover idle and selected fighters while target selection, cards and the combat HUD remain above them. When the perspective view places the player behind the hand, its transparent 44px target moves clear of its own Health strip without changing the artwork, Health position or selected fighter size.
 
 ## 2026-10-14
 
-- **Windows checks use the installed artwork converter** ([#1995](https://github.com/cehinds/AshenSpire/pull/1995), `0.7.1.1529`). Development-process fix only, nothing in the game changes. Class Smash export tests now use the exact Python interpreter with pinned Pillow installed, so Windows cannot accidentally run the test with a different Python lacking the image library.
+- **Windows checks use the installed artwork converter** ([#1995](https://github.com/cehinds/AshenSpire/pull/1995), `0.7.1.1531`). Development-process fix only, nothing in the game changes. Class Smash export tests now use the exact Python interpreter with pinned Pillow installed, so Windows cannot accidentally run the test with a different Python lacking the image library.
 
 - **Stances, Evade and hit previews share their combat rules** ([#1984](https://github.com/cehinds/AshenSpire/pull/1984), `0.7.1.1529`). Same-stance cards use the configured SP discount, stance ratings stay active without stacking, and Defense restores Poise and Ward with protection overflow. Smash, Counter and Sweep apply their matchup and range rules. Evade stacks, explicit Target bypasses and exact hit previews use the same hit calculation, while the combat HUD and hit labels show the result.
 - **Starseer spells resolve against Gilded Knight again** ([#1985](https://github.com/cehinds/AshenSpire/pull/1985), `0.7.1.1527`). Targeting Gilded Knight with Staff Magic Strike or Star Spark no longer rejects the play in standalone HTML builds. Its guard reaction resolves, spell costs and damage commit, and the next spell remains usable. The shared reaction pause check now initializes without a circular import.
