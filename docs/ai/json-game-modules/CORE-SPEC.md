@@ -188,7 +188,7 @@ Combat log is retained and consumes committed facts only. It must not leak conce
 
 ## Run, rests and rewards
 
-**Confirmed:** Three acts; each act has seven pre-boss nodes followed by one boss, with a different boss in each act. Two rest stops are visible; elites and bosses are visible; other route nodes display `?` while their actual authored type remains one of event, fight, elite, treasure, shop or rest. The generator must preserve actual types for resolution without leaking hidden ones through inspect/log/UI. The scope of the two-rest constraint (each act versus run total) needs an explicit generator rule if not settled elsewhere; do not add an elite-count quota. Suggested: place the final rest before each boss rather than treating that placement as confirmed.
+**Confirmed:** Three acts; each act has seven pre-boss nodes followed by one boss, with a different boss in each act. Two rest stops per act are visible; elites and bosses are visible; other route nodes display `?` while their actual authored type remains one of event, fight, elite, treasure, shop or rest. The generator must preserve actual types for resolution without leaking hidden ones through inspect/log/UI. The two-visible-rest-stops-per-act count is confirmed; do not add an elite-count quota. Suggested: place the final rest before each boss rather than treating that placement as confirmed.
 
 Rests allow resting, leveling up and card upgrades. Rest restores HP and SP and refills healing flasks and MP flasks. **Pending:** directly restoring current MP is not explicitly requested; MP-flask refill does not imply full MP restoration. Costs, number of upgrades per visit and interaction/order among rest/level/upgrade are not specified. Suggested: one card upgrade per rest; no invented currency cost or unlimited upgrades as default. Card upgrades are independent of removed spell ranks.
 
@@ -231,7 +231,7 @@ These are **future acceptance requirements**, not tests already run:
 - [ ] Attribute increase vectors prove STR→AR, DEX→DR, CON→HP, WIS→MP, INT→draw benefits. Secondary dependencies, SP thresholds/combinations, flooring, caps and old snapshot restoration have explicit vectors; no guessed starting derived totals.
 - [ ] Seven stance identities and exactly the five directed advantage rows are authored. Tests cover ties/unlisted pairs and decided advantage consequences without invented reverse edges.
 - [ ] Evade success deals zero; failure doubles eligible damage under a declared accuracy rule/stage order. Poise takes max(floor(incomingDamage * .75), 1) while active, under the declared positive/zero eligibility and stage policy without old absorption/break coupling. Separate stagger rules and animation states are tested.
-- [ ] Seeded routes satisfy three acts, seven pre-boss nodes plus a distinct boss per act, approved rest counts/placement and visibility. Hidden node types/plans never leak through log or inspect.
+- [ ] Seeded routes satisfy three acts, seven pre-boss nodes plus a distinct boss per act, two visible rest stops per act, approved placement and visibility. Hidden node types/plans never leak through log or inspect.
 - [ ] Rest restores HP/SP and both flask types; approved direct-MP behavior, upgrade limit/cost and level cadence are explicit. Rewards cover all six categories and the approved offer/claim policy.
 - [ ] Press-hold target and press already-selected target HUD open inspect. Ordinary selection does not become unintended inspect; release/cancel behavior works. Log reports committed facts and preserves concealment.
 - [ ] Equipment changes gameplay while core sprites stay fixed. All requested families/actions are represented; art disabled/missing/failed preserves target geometry and interaction.
@@ -246,7 +246,7 @@ Open decisions to resolve before freezing deployable defaults:
 | Poise | Nominal high value, activation/duration, stage order and zero/positive-hit eligibility; confirmed taken-damage formula stays fixed. |
 | Stances / stagger / Evade | Advantage consequences, neutral/tied pairs, evade accuracy/scope/order, separately authored stagger triggers/duration. |
 | Equipment | Editor enabled; exact timing/cost, starting armor and item/card identities. |
-| Rests | Two per act versus run if unresolved; direct MP restoration; upgrade count/cost and service ordering. |
+| Rests | Placement of the confirmed two visible stops per act; direct MP restoration; upgrade count/cost and service ordering. |
 | Level cadence | “Floor” means act? Three to six gains versus final levels; timing/start level/curve. |
 | Rewards / deck limits | Three offers choose one recommendation; exceptions, taking policy, deck bounds, owned collection versus active-deck grant policy. Manual editing is already rest-only. |
 
