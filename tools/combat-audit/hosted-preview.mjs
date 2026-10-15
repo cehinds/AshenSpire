@@ -50,6 +50,38 @@ export async function loadEligiblePublicPreview({ fetchText, api, expectedCommit
   assert.equal(identity.source, expectedSource, 'public build matches the checkout production source digest');
   return { identity, wrapperSha256: sha256(wrapper) };
 }
+export function observedResponseBytes(network, url, timeout = 45000) {
+  return new Promise((done, reject) => {
+    let observed;
+    const cleanup = () => {
+      clearTimeout(timer);
+      network.off('Network.responseReceived', response);
+      network.off('Network.loadingFinished', finished);
+      network.off('Network.loadingFailed', failed);
+    };
+    const fail = error => { cleanup(); reject(error); };
+    const response = event => {
+      if (event.response.url !== url) return;
+      if (event.response.status !== 200) return fail(new Error(`Observed HTTP ${event.response.status}: ${url}`));
+      observed = event.requestId;
+    };
+    const finished = async event => {
+      if (!observed || event.requestId !== observed) return;
+      try {
+        const result = await network.send('Network.getResponseBody', { requestId: observed });
+        const bytes = Buffer.from(result.body, result.base64Encoded ? 'base64' : 'utf8');
+        cleanup(); done(bytes);
+      } catch (error) { fail(error); }
+    };
+    const failed = event => {
+      if (observed && event.requestId === observed) fail(new Error(`Observed build request failed: ${event.errorText}`));
+    };
+    const timer = setTimeout(() => fail(new Error(`Timed out reading actual browser response: ${url}`)), timeout);
+    network.on('Network.responseReceived', response);
+    network.on('Network.loadingFinished', finished);
+    network.on('Network.loadingFailed', failed);
+  });
+}
 async function main() {
   const out = resolve(process.env.HOSTED_PREVIEW_OUT || '_hosted-preview'); mkdirSync(out, { recursive: true });
   const expectedCommit = process.env.EXPECTED_COMMIT || execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
@@ -83,12 +115,13 @@ async function main() {
     owner = await launchBrowser({ prefix: 'hp-' }); browser = await chromium.connectOverCDP(owner.wsUrl);
     const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
     page = await context.newPage(); page.on('pageerror', error => report.errors.push(error.message));
-    // Keep the actual ~80 MB wrapper response available for the SHA check.
-    // Chrome's default inspector cache can evict it before Response.text().
+    // Keep the actual ~80 MB build response in this session's bounded cache.
+    // Read it through this same session: Playwright's separate session retains
+    // Chrome's smaller defaults, even after this Network.enable call.
     const network = await context.newCDPSession(page);
     await network.send('Network.enable', { maxResourceBufferSize: 128 * 1024 * 1024, maxTotalBufferSize: 256 * 1024 * 1024 });
-    const [fetchedBuild, response] = await Promise.all([
-      page.waitForResponse(response => response.url() === BUILD_URL && response.ok(), { timeout: 45000 }),
+    const [loadedBytes, response] = await Promise.all([
+      observedResponseBytes(network, BUILD_URL),
       page.goto(HOSTED_URL, { waitUntil: 'domcontentloaded', timeout: 45000 }),
     ]);
     assert.ok(response.ok(), 'actual hosted Play route loads');
@@ -96,7 +129,6 @@ async function main() {
     assert.equal(page.url(), HOSTED_URL, 'proof remains on the fixed public Play route');
     const frameElement = page.locator('#preview'); await frameElement.waitFor();
     assert.equal(await frameElement.getAttribute('sandbox'), 'allow-scripts allow-pointer-lock allow-popups');
-    const loadedBytes = await fetchedBuild.text();
     assert.equal(sha256(loadedBytes), report.identity.htmlSha256, 'the wrapper actually executes the identified public build bytes');
     const frame = page.frameLocator('#preview');
     await frame.locator('.startup-gate').waitFor({ timeout: 45000 });
