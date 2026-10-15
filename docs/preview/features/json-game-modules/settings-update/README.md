@@ -2,7 +2,7 @@
 
 Captured 2026-10-15 UTC with Chromium at host sizes 1440×900, 1920×1080, 1024×768, and 390×844. These fresh images replace no historical evidence; earlier galleries remain labeled as historical in the root README.
 
-The final capture pass used the locally served standalone `AshenSpire.html` built from source `90c21acf0`, displaying build **0.7.1.1534**, runtime digest **200a7df16c**. Artifact SHA-256: `18ad55a340d0eca952243c8b5987daf8bb6d9cab57a210d1657d30625f1555ff`. Local artifact evidence does not establish a published Pages deployment. Current artifact and publication links are maintained in the root README feature block.
+The final capture pass used the locally served standalone `AshenSpire.html` built from source `90c21acf0`, displaying build **0.7.1.1534**, source digest **200a7df16c**. Artifact SHA-256: `18ad55a340d0eca952243c8b5987daf8bb6d9cab57a210d1657d30625f1555ff`. Local artifact evidence does not establish a published Pages deployment. Current artifact and publication links are maintained in the root README feature block.
 
 | Host | Title menu | Display / View mode | Game rules |
 | --- | --- | --- | --- |
