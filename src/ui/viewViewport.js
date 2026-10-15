@@ -57,6 +57,9 @@ export function applyViewViewport(preset, width, height, root = document.documen
 // Geometric media queries follow the chosen game view. Pointer, motion and
 // other browser capabilities continue to use native matchMedia directly.
 export function matchViewMedia(query, win = window) {
+  // Minimal DOM hosts (including headless renderer tests) have no game frame.
+  // Preserve their native query and listener contract rather than inventing size.
+  if (!win.document?.documentElement) return (win.matchMedia || globalThis.matchMedia)(query);
   const matches = () => {
     const { width, height } = logicalViewport(win);
     return query.split(/\s+and\s+/).every(part => {
