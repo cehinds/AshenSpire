@@ -77,7 +77,7 @@ test('normal Smithing quotes keep their authored cost and affordability', () => 
 });
 
 test('Strategize exposes only authored basics and rejects the legacy attack mint before mutation', async () => {
-  const { deckEditorModel, openDeckEdit } = await import('../src/ui/models/DeckEditorModel.js');
+  const { deckEditorModel, openDeckEdit, deckVariantKey } = await import('../src/ui/models/DeckEditorModel.js');
   const { createGameProfileRestDraft } = await import('../src/model/gameProfileRest.js');
   const { gameContent } = await import('../src/model/gameProfile.js');
   const { run } = fixture();
@@ -95,10 +95,13 @@ test('Strategize exposes only authored basics and rejects the legacy attack mint
   assert.equal(session.remove(removed.instanceId).ok, true);
   assert.equal(draft.deck.length, run.deck.length - 1);
   assert.equal(draft.sideboard.some(card => card.instanceId === removed.instanceId), true);
+  assert.equal(session.add(`card:${deckVariantKey(removed)}`).ok, true);
+  assert.equal(draft.deck.at(-1).instanceId, removed.instanceId);
   assert.equal(session.confirm().ok, true);
   commitGameProfileRest(registries, run, 'strategize', { draft });
-  assert.equal(run.deck.length, before.deck.length - 1);
-  assert.equal(run.sideboard.some(card => card.instanceId === removed.instanceId), true);
+  assert.equal(run.deck.length, before.deck.length);
+  assert.equal(run.deck.at(-1).instanceId, removed.instanceId);
+  assert.equal(run.sideboard.some(card => card.instanceId === removed.instanceId), false);
   assert.equal(run.hp, run.maxHp);
   assert.equal(run.gameProfileRestVisits[run.gameProfileRestVisitId].service, 'strategize');
 });
