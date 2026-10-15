@@ -387,5 +387,36 @@
       "tests/quit-game.test.mjs": 4
     },
     "focusedOracleEscapeQuitLogSha256": "9272706627b6c0f24a9e75eca9e0be1ecb0cc4e8d6f594dfb806f7d086c4ef7d"
+  },
+  "resumedValidation": {
+    "dateUTC": "2026-10-15",
+    "productionCommit": "c54c4728ad2f4c59eea0753ebca6d1f996a0c5af",
+    "integratedDevCommit": "3d40c190983069eec8d8a2370fb3f229ac376290",
+    "ordinal": 1533,
+    "command": "node --test tests/combat-expansion-martial.test.mjs tests/coop-callouts.test.mjs tests/stance-enemy-pressure.test.mjs tests/stance-evade-matchup.test.mjs tests/stance-paced-hud.test.mjs tests/check-feature-pages.test.mjs tests/stance-hit.test.mjs tests/stance-evade-mode.test.mjs tests/enemy-knowledge-model.test.mjs tests/enemy-knowledge-disclosure.test.mjs tests/combat-audit-runtime.test.mjs tests/combat-audit-cards.test.mjs tests/combat-audit-card-condition-contracts.test.mjs tests/combat-audit-card-effect-contracts.test.mjs tests/combat-audit-conditional-family-contracts.test.mjs",
+    "files": [
+      "tests/combat-expansion-martial.test.mjs",
+      "tests/coop-callouts.test.mjs",
+      "tests/stance-enemy-pressure.test.mjs",
+      "tests/stance-evade-matchup.test.mjs",
+      "tests/stance-paced-hud.test.mjs",
+      "tests/check-feature-pages.test.mjs",
+      "tests/stance-hit.test.mjs",
+      "tests/stance-evade-mode.test.mjs",
+      "tests/enemy-knowledge-model.test.mjs",
+      "tests/enemy-knowledge-disclosure.test.mjs",
+      "tests/combat-audit-runtime.test.mjs",
+      "tests/combat-audit-cards.test.mjs",
+      "tests/combat-audit-card-condition-contracts.test.mjs",
+      "tests/combat-audit-card-effect-contracts.test.mjs",
+      "tests/combat-audit-conditional-family-contracts.test.mjs"
+    ],
+    "tests": 107,
+    "passed": 107,
+    "failed": 0,
+    "skipped": 0,
+    "logSha256": "31e7a42ff242ef76b96e2a360a674d4b2ae7c4c729b141c2da4dcb20f4f59b3e",
+    "rawLog": "scratch/full-combat-audit/resume-c54-targeted-tests.log (untracked)",
+    "claim": "Focused source checks only. Full matrices and compiled browser360 retain their original source identities; fresh compiled-browser and hosted proof remain pending."
   }
 }
