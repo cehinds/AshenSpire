@@ -1,6 +1,6 @@
 # JSON game modules: implementation instructions
 
-Status: implementation instructions delivered; gameplay changes are **not implemented**. This document describes proposed future development, not a claim that the proposed paths, schemas, CLI or runtime exist. Read [PSEUDOCODE.md](PSEUDOCODE.md) for algorithm sketches and [CONTINUE.md](CONTINUE.md) for continuation and handoff instructions. The parent README records delivery status. [CORE-SPEC.md](CORE-SPEC.md) is the canonical product-core specification: use its confirmed requirements, recommendations and open questions without copying unresolved numbers into implementation defaults. This revision supersedes the earlier minimal attack/pass product definition; runtime/source implementation remains pending.
+Status: implementation instructions delivered; gameplay changes are **not implemented**. This document describes proposed future development, not a claim that the proposed paths, schemas, CLI or runtime exist. Read [PSEUDOCODE.md](PSEUDOCODE.md) for algorithm sketches and [CONTINUE.md](CONTINUE.md) for continuation and handoff instructions. The parent README records delivery status. [ARCHITECTURE.md](ARCHITECTURE.md) defines the refined layer boundaries, state-owner catalog and illustrative manifest/pack formats. [CORE-SPEC.md](CORE-SPEC.md) is the canonical product-core specification: use its confirmed requirements, recommendations and open questions without copying unresolved numbers into implementation defaults. This revision supersedes the earlier minimal attack/pass product definition; runtime/source implementation remains pending.
 
 ## Authority and working boundary
 
@@ -40,7 +40,7 @@ This selects the complete four-class, ten-card Ashen core bundle, not the intern
   "core": "ashen.core@1.0.0",
   "modules": {
     "cards": true,
-    "resources": { "include": ["hp", "sp", "mp"] },
+    "resources": { "include": ["sp", "mp"] },
     "defenses": { "include": ["block", "poise"], "order": ["block", "poise"] },
     "stances": { "include": ["attack", "counter", "smash", "sweep", "prepare", "evade", "defend"] },
     "art": false
@@ -60,7 +60,7 @@ Keep the generic kernel separate from the product bundle. The kernel owns typed 
 
 Begin with the four-class core manifest and a ten-card baseline scene, then a typed combat slice through live source seams and a future compatibility adapter; the full adapter is not implemented yet. Retain the legacy preset and entry path. An internal minimal attack/pass scene can prove transactions, targeting, enemy response, outcomes and saves before the product bundle is complete. Optionally name that fixture ashen.fallback@1.0.0; it is a technical fixture, not the current product core or default author example.
 
-The technical runtime must always have attack/pass fallback actions. Its fallback policy ends a turn opportunity after one baseline command independently of SP, MP or Actions. The full Ashen profile permits multiple card plays using SP/MP followed by End Turn; the fallback policy does not impose one card per product turn. Providers for action, target, stats, damage, navigation and presentation remain stable when features are explicitly disabled. Disabled stats/equipment use baseline values, defenses pass damage through, stances are neutral, and hidden intent leaves enemy planning active. Disabled routes/dungeons expose core activities; independently enabled shops, quests and dialogue remain reachable through that launcher. Creation explicitly disabled supplies the authored default hero; progression explicitly disabled is static.
+The always-installed foundation, separate from the generic kernel, owns HP, attack/pass, targets, fallback enemy response/outcomes, launcher and basic log/inspect/presentation. Each capability has one authoritative state owner compiled into provider bindings once. The technical runtime must always have attack/pass fallback actions. Its fallback policy ends a turn opportunity after one baseline command independently of SP, MP or Actions. The full Ashen profile permits multiple card plays using SP/MP followed by End Turn; the fallback policy does not impose one card per product turn. Providers for action, target, stats, damage, navigation and presentation remain stable when features are explicitly disabled. Disabled stats/equipment use baseline values, defenses pass damage through, stances are neutral, and hidden intent leaves enemy planning active. Disabled routes/dungeons expose core activities; independently enabled shops, quests and dialogue remain reachable through that launcher. Fixed class selection explicitly disabled supplies the authored default eligible hero; optional character creation remains off unless selected; progression explicitly disabled is static.
 
 Required product acceptance includes class selection with four defined fixed loadouts rather than attribute creation, initially permitting only unlocked Reaver, a rest-only deck editor and an enabled equipment editor with a separate timing policy, attributes and level allocation, gear/relic/card rewards, the three-service rest menu, a one-channel damage model, seven stance interactions, stagger/interrupt, simple card resolution, log, inspect, fixed appearance and the specified animations. Detailed amounts, sequencing and unresolved decisions belong to CORE-SPEC.md. Do not invent SP formulas, costs, durations or missing benefits to fill schema fields.
 
@@ -68,40 +68,13 @@ Art disabled, missing or load-failed must show stand-ins using identical hitboxe
 
 ## 4. Package ownership and module catalog
 
-The following is a **future target map**, not a tree that currently exists. Introduce paths only for an implemented slice; do not bulk scaffold them or move legacy files merely to match this map.
+Use [ARCHITECTURE.md](ARCHITECTURE.md) for the full proposed hierarchy and ownership catalog. These paths are unimplemented; introduce only the slice being delivered, without bulk scaffolding. Generic infrastructure lives in engine/kernel/ and versioned contracts in engine/contracts/. Always-installed minimal gameplay lives in engine/foundation/, not the kernel or a user toggle. Reusable features live in engine/modules/<id>/ with module.json, settings.schema.json, defaults.json, guide.md and rules.json. Include state.schema.json whenever a module owns state, and content/ui/cases/integrations only where used. runtime.mjs is optional for an explicit native extension or host interpreter implementation; portability requires the declared contract, not JavaScript serialization.
 
-| Proposed path | Responsibility |
-| --- | --- |
-| engine/kernel/ | Generic registries, transactions, scheduling and composition. |
-| engine/contracts/ | Versioned ABI, bounded rules VM, numeric policies and RNG contracts. |
-| engine/core/ | Versioned declared Ashen module bundle and baseline assets/contracts; core.json, core.schema.json, core.mjs, core.md, core.content.json, core.ui.json, core.standins.json and core.cases.json. |
-| engine/modules/<id>/ | Optional feature packages using the template below. |
-| engine/games/ashenspire/ | game.json, generated game.lock.json, game.md and authored presets/, groups/ and packs/. |
-| engine/tools/ | Proposed resolver, configuration and export commands; executable names remain undefined until implemented. |
-| engine/adapters/web/ and engine/adapters/headless/ | Browser presentation/input and headless host integration. |
-| engine/verification/ | Shared contract, numeric, replay and portability conformance vectors. |
+The public ashen.core@1.0.0 resolves to data-only games/ashenspire/bundles/core/bundle.json selecting module pins, settings and pack references. Game definitions live in packs/core/; fixed class selection is class-selection, while character-creation is a later optional feature off by default. Rest is an explicit core-selected module. Its policy coordinates cards' deck editor, equipment's inventory/upgrades/editor and progression's earned allocation without taking ownership of their state. Run progression and permanent profile unlocks have separate namespaces and lifetimes even under the progression package. Foundation owns baseline log/inspect and enemy response; do not fragment helpers into toggles.
 
-Extend the existing Workbench through workbench/modules/<configuration>/ and its existing ctx API; do not build a second application or duplicate editor. Existing src/content compilation inputs remain canonical through a compatibility adapter until each migration explicitly selects its single authored owner. Never leave both the legacy and replacement trees editable as competing sources of truth.
+The canonical generated lock is games/ashenspire/game.lock.json, committed reproducible metadata. Generated exports/reports go to ignored build/game-config/ashenspire/. Tools, web/headless adapters and conformance vectors use engine/tools/, engine/adapters/ and engine/verification/. Extend workbench/modules/<configuration>/ through the existing ctx API. Existing src/content inputs remain canonical through a future compatibility adapter until each migration explicitly transfers its single authored owner; never keep two editable authoritative trees.
 
-Proposed package organization is:
-
-```text
-engine/modules/<id>/
-  <id>.json
-  <id>.schema.json
-  <id>.mjs
-  <id>.md
-  <id>.content.json
-  <id>.ui.json
-  <id>.cases.json
-  integrations/<other>.json
-```
-
-These paths are future architecture, not existing commands or files. The manifest owns identity/version, settings defaults, contract/capability declarations, content/UI/state contributions and integration declarations. Each module owns its implementation, schema, guide and meaningful behavior cases. Include content, UI and integration files only when used; do not force empty placeholders. Family subfolders organize packages without changing IDs or becoming user-facing toggles.
-
-User switches are cohesive feature packages: cards, resources, stats, damage-types, defenses, stances, reactions, posture, intent, effects, statuses, equipment, character-creation, progression, routes, dungeons, shops, rewards, quests, dialogue, art, animation, audio, advanced-ui and multiplayer. Internal helper files are not switches. Technical helper dependencies can resolve and bundle automatically; optional feature integrations run only when their participating user features are enabled.
-
-Resources is one generic pool package with independently selectable hp, sp, mp and actions instances; the Ashen bundle selects its CORE-SPEC pools and Actions remains independently configurable. Defenses is one generic defense package with block, barrier, ward and poise instances, explicit ordering and applicability. Do not reproduce the same mechanism as several bespoke implementations. Effects and statuses extend minimal core operations rather than becoming required dependencies for every direct attack.
+Resources owns SP/MP/optional Actions and decorates foundation HP through its public capability; it never creates another HP pool, and disabling resources cannot remove HP. Any legacy HP selector becomes an alias to that foundation capability. Defenses provides selectable block/barrier/ward/poise instances with declared applicability and ordering, without freezing unresolved numeric or damage-stage policies here. Tags/groups select content or declared behavior references, never enable features; easy include lists remain supported. Pending advanced values and required unresolved references fail executable compilation.
 
 Typed pipeline stages declare input/output, ordering, ownership and allowed mutations. Modules cannot write another module's state. State contributions live under namespaced keys. Cross-feature behavior uses conditional integration contracts and commands/facts, with a designated owner and adapter version. Scheduler and rules execution have bounded work limits and named errors for unsupported operations.
 
@@ -123,9 +96,9 @@ Acceptance: inherited full-core starters and new games with cards explicitly on/
 
 Wave A covers resources, defenses and equipment. Reuse loadout grant-source assembly and existing profile resolution through adapters. Test separate SP/MP/Actions inclusion and ordered block/barrier/ward/poise. Verify optional stats, damage-types and equipment each fall back to baseline values without leaking incompatible references.
 
-Wave B covers stances, reactions, posture, intent, enhanced effects and statuses. Implement the seven CORE-SPEC stance identities and confirmed matchup rules, plus stagger/interrupt, while distinguishing mechanic enablement from visibility. Hiding intent does not disable enemy AI. Hiding stance widgets does not disable stance calculations. Test reaction chain limits, rollback and deterministic ordering with more than one integration active.
+Wave B covers stances, reactions, enhanced effects and statuses; posture and intent remain later extensions off by default. Implement the seven CORE-SPEC stance identities and confirmed matchup rules, plus stagger/interrupt, while distinguishing mechanic enablement from visibility. Hiding intent does not disable enemy AI. Hiding stance widgets does not disable stance calculations. Test reaction chain limits, rollback and deterministic ordering with more than one integration active.
 
-Wave C covers character creation, progression, routes, dungeons, shops, rewards, quests and dialogue. The bundle inherits fixed class selection, progression and routes. Explicitly disabling creation chooses the default hero; disabling progression stays static; disabling routes/dungeons returns to core activities. Migrate atlas profiles, classic-map shapes and dungeon graphs as separate content concepts. Build three acts with seven preboss nodes and one boss per act as specified in CORE-SPEC.md; preserve explicit bosses and seeded constraints. Apply its node-visibility and two-visible-rest requirements rather than guessing a replacement rule. Shops expose authored count/options rather than only layout. Shops, quests and dialogue must remain reachable when enabled alone.
+Wave C first covers class-selection, rest, progression, routes, shops and rewards; dungeons, quests and dialogue are later optional integrations. Optional character-creation remains separate and off by default. The bundle inherits fixed class selection, progression and routes. Explicitly disabling class-selection chooses the default eligible hero; disabling progression stays static; disabling routes/dungeons returns to core activities. Migrate atlas profiles, classic-map shapes and dungeon graphs as separate content concepts. Build three acts with seven preboss nodes and one boss per act as specified in CORE-SPEC.md; preserve explicit bosses and seeded constraints. Apply its node-visibility and two-visible-rest requirements rather than guessing a replacement rule. Shops expose authored count/options rather than only layout. Shops, quests and dialogue must remain reachable when enabled alone.
 
 The progression module owns a permanent, versioned profile unlock ledger, separate from each run's locked configuration and character-level progression. Four classes are defined, but only Reaver is initially unlocked. Each full run completed by a committed terminal win or defeat unlocks exactly the next class: Starseer, then Rogue, then Herald. A run using any unlocked class counts; do not require a win or the previously unlocked class. Encounter wins, XP/levels, starting a run, quitting, abandoning or restarting without a terminal outcome do not count. Class unlocks are an explicit progression exception beyond character levels; they do not enable feats or skill XP.
 
