@@ -273,6 +273,9 @@ test('a content/config change runs the config compiler before the reload; a fail
   assert.deepEqual(buildsFor(['content/source/a.csv', 'content/framework/new.json', 'content/config/ui/tokens.json'], root),
     ['tools/framework-data-build.mjs', 'tools/config-build.mjs', 'tools/content-build.mjs'], 'framework mirrors and config before the content compiler');
   assert.deepEqual(buildsFor(['content/source/a.csv'], root), ['tools/content-build.mjs']);
+  await fs.writeFile(path.join(root, 'tools/game-config.mjs'), '');
+  assert.deepEqual(buildsFor(['games/ashenspire/game.json'], root), ['tools/game-config.mjs build']);
+  assert.deepEqual(buildsFor(['games/ashenspire/presets/current.json'], root), ['tools/game-config.mjs build']);
   await fs.rm(path.join(root, 'tools/framework-data-build.mjs'));
   const { app } = await boot(t, root);
   nextEvent.onOpen = async () => { await new Promise((r) => setTimeout(r, 300)); await fs.writeFile(path.join(root, 'content/config/ui/tokens.json'), '{}\n'); };

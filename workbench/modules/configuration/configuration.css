@@ -1,0 +1,32 @@
+.gc { height: 100%; min-height: 0; display: flex; flex-direction: column; gap: 12px; padding: 18px; color: var(--as-text, #eee8dd); }
+.gc-head, .gc-bar, .gc-foot, .gc-actions, .gc-profiles, .gc-preview { display: flex; align-items: center; gap: 8px; }
+.gc-head { justify-content: space-between; align-items: flex-start; }
+.gc-head h2 { margin: 0 0 4px; font-size: 20px; }
+.gc-head p { margin: 0; color: var(--as-muted, #b7aea1); }
+.gc-profiles, .gc-actions, .gc-preview { flex-wrap: wrap; }
+.gc-bar { justify-content: space-between; align-items: flex-end; flex-wrap: wrap; padding: 10px; border: 1px solid var(--as-line, #47413a); border-radius: 8px; background: var(--as-panel, #201d19); }
+.gc-source { display: grid; gap: 5px; font-size: 12px; color: var(--as-muted, #b7aea1); }
+.gc-source select { min-width: 310px; max-width: 100%; }
+.gc select, .gc textarea { color: inherit; background: #15130f; border: 1px solid var(--as-line, #47413a); border-radius: 5px; }
+.gc select { padding: 7px 9px; }
+.gc-editor-label { font-weight: 600; }
+.gc textarea { flex: 1; width: 100%; min-height: 280px; resize: vertical; box-sizing: border-box; padding: 14px; font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; tab-size: 2; }
+.gc textarea:focus, .gc select:focus { outline: 2px solid var(--as-accent, #d9a64b); outline-offset: 1px; }
+.gc-foot { justify-content: space-between; align-items: flex-start; flex-wrap: wrap; }
+.gc-status { min-height: 22px; color: var(--as-muted, #b7aea1); }
+.gc-status[data-kind="success"] { color: #99d19b; }
+.gc-status[data-kind="error"] { color: #f09288; }
+.gc-report { overflow: auto; max-height: 190px; padding: 12px 14px; border: 1px solid var(--as-line, #47413a); border-radius: 7px; background: var(--as-panel, #201d19); }
+.gc-report[hidden] { display: none; }
+.gc-report-head { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+.gc-report code, .gc-report-head span { color: var(--as-muted, #b7aea1); }
+.gc-report ul { margin: 8px 0 0; padding-left: 20px; }
+.gc-report li { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0; }
+@media (max-width: 760px) {
+  .gc { padding: 12px; }
+  .gc-head { flex-direction: column; }
+  .gc-bar { align-items: stretch; }
+  .gc-source, .gc-source select { min-width: 0; width: 100%; }
+  .gc-actions .btn, .gc-preview .btn { flex: 1 1 auto; }
+  .gc textarea { min-height: 50vh; }
+}
