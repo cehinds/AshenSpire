@@ -170,7 +170,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const profilePlayerSprite = (customization, classId, armourId, presentation) => profileArt(
     () => playerSprite(customization, classId, configuredArt ? 'default' : armourId, presentation), { enemy: false });
   const profileEnemySprite = (definition, entity) => profileArt(
-    () => enemySprite(definition, entity), { enemy: true, boss: definition.size === 'boss' });
+    () => enemySprite(definition, entity), { enemy: true, width: registries.balance.ui.spriteTiers[definition.size || 'medium'].w, height: registries.balance.ui.spriteTiers[definition.size || 'medium'].h });
   const previewMemo = createPreviewMemo({ combat, preview: enginePreviewCard, dispatch: engineDispatch });
   const { dispatch, previewCard } = previewMemo;
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a

@@ -1,3 +1,5 @@
+import { gameModule } from '../../model/gameProfile.js';
+import { foundationStandin } from './foundationStandin.js';
 import { t } from '../strings.js';
 import { classSprite, tintCss } from '../assets.js';
 // Fixed-loadout selection reuses the normal start callback and run model guard.
@@ -21,7 +23,7 @@ export function mountGameProfileCreation(app, { profile, classes, available, sta
     for (const button of choices.children) button.setAttribute('aria-pressed', String(button.dataset.classId === selected));
     const row = classes.find(row => row.id === selected);
     portrait.replaceChildren();
-    if (row) portrait.append(classSprite(row.id, tintCss('gold'), '⚔', 'gold', 'classic'));
+    if (row) portrait.append(gameModule(profile, 'art') ? classSprite(row.id, tintCss('gold'), '⚔', 'gold', 'classic') : foundationStandin());
     summary.textContent = row ? `${row.name} · ${Object.entries(row.attributes || {}).map(([key, value]) => `${key} ${value}`).join(' · ')} · ${Object.values(row.loadout || {}).filter(Boolean).join(' / ')}` : 'No eligible class is available.';
     start.disabled = !row;
   };
