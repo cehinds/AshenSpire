@@ -185,4 +185,5 @@ export function trackGesture(startEv, { onMove, onEnd } = {}) {
   window.addEventListener('pointermove', move, true);
   window.addEventListener('pointerup', up, true);
   window.addEventListener('pointercancel', cancel, true);
+  return abort;
 }

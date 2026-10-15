@@ -1,3 +1,4 @@
+import { bindCombatantInspectionGesture } from '../components/combatantInspectionGesture.js';
 import { enemyActionPose } from '../../model/enemyActionPose.js';
 import {mountClassRespec,closeClassRespec,isClassRespecOpen,classRespecOptionName} from '../components/classRespec.js';
 import {abilityDraftChoice} from '../../model/abilityDraftReceipts.js';
@@ -341,7 +342,13 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   }
   let selectedEnemy = null;
   let selectedCombatantId = null;
+  const inspectionGestures = new Set();
+  function clearInspectionGestures() {
+    for (const gesture of inspectionGestures) gesture.release();
+    inspectionGestures.clear();
+  }
   function selectCombatant(id) {
+    if (id !== selectedCombatantId) for (const gesture of inspectionGestures) gesture.cancel();
     if (id && armedFriendlyCard && snap?.scene.kind === 'combat') {
       const actor = snap.scene.players.find(player => player.id === me);
       const card = actor?.hand.find(entry => entry.instanceId === armedFriendlyCard);
@@ -841,6 +848,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   }, 120);
 
   function teardown() {
+    clearInspectionGestures();
     releaseAppearance();
     disposed = true;
     reactionShell?.dismiss();
@@ -913,6 +921,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   const wireLeave = () => { const b = app.querySelector('#coop-leave'); if (b) b.addEventListener('click', () => { teardown(); conn.close(); onLeave(); }); };
 
   function render() {
+    if (snap?.scene?.kind !== 'combat') clearInspectionGestures();
     closeClassRespec({silent:true});
     if (!snap) return;
     if(['combat','complete','lobby'].includes(snap.scene.kind))disposeProgression();
@@ -1044,8 +1053,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   }
 
   function infoEl(entity, name, def = null) {
-    return combatantInfo(name, opener => {
-        const resources = [
+    return combatantInfo(name, opener => openCombatantInfo(entity, name, def, opener));
+  }
+
+  function openCombatantInfo(entity, name, def = null, opener = document.activeElement) {
+    const resources = [
         { label: 'HP', value: entity.hp, max: entity.maxHp },
         { label: 'MP', value: entity.mana, max: entity.maxMana },
           { label: 'Poise', value: entity.poiseMeter?.value, max: entity.poiseMeter?.max },
@@ -1091,7 +1103,6 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         body: host => host.replaceChildren(...combatantDetailBody(subject, { heading: false })),
         onClose: () => { combatantDoor = null; },
       });
-    });
   }
 
 
@@ -1173,6 +1184,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   }
 
   function renderCombat() {
+    clearInspectionGestures();
     const sc = snap.scene;
     const focusedTool = combatTools?.focusedTool();
     const focusedFriendlySeat = (app.querySelector('.coop-seat[data-friendly-target].gp-focus')
@@ -1363,6 +1375,17 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       box.appendChild(statusRow(e.statuses));
       if (!dead) {
         wireCombatantContext(box, def.name);
+        nm.setAttribute('role', 'button'); nm.tabIndex = 0;
+        nm.setAttribute('aria-label', `Inspect ${def.name}`);
+        inspectionGestures.add(bindCombatantInspectionGesture(box, {
+          isSelected: () => selectedCombatantId === e.id,
+          canInspect: () => !disposed && !!snap?.scene?.enemies?.find(enemy => enemy.id === e.id && enemy.hp > 0),
+          canActivate: () => !busy() && !armedFriendlyCard && !!snap?.scene?.enemies?.find(enemy => enemy.id === e.id && enemy.hp > 0),
+          open: opener => openCombatantInfo(e, def.name, def, opener),
+          activate: () => { if (!activateEnemyTarget(e.id)) render(); },
+          holdMs: registries.balance.ui.holdConfirm.steps.normal,
+          movePx: registries.balance.ui.holdConfirm.settleSlopPx,
+        }));
         box.addEventListener('click', () => {
           if (armedFriendlyCard) return;
           if (!activateEnemyTarget(e.id)) render();
