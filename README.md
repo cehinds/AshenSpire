@@ -5,16 +5,33 @@
 
 The same runtime supports two authored configurations. **Product core** includes its required bundled modules and keeps optional gameplay packages off where the core has a fallback. **Current game** preserves the full legacy configuration.
 
-- **Product core:** [Play on Pages (publication pending)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-modules/latest/) · [standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38809056393/artifacts/12008230781) · [successful build run](https://github.com/cehinds/AshenSpire/actions/runs/38809056393)
-- **Current game:** [Play on Pages (publication pending)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-current-preview/latest/) · [standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38809060402/artifacts/12007706722) · [successful build run](https://github.com/cehinds/AshenSpire/actions/runs/38809060402)
+- **Product core:** [Play on Pages (publication pending)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-modules/latest/) · [standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38824467486/artifacts/12014905501) · [successful build run](https://github.com/cehinds/AshenSpire/actions/runs/38824467486)
+- **Current game:** [Play on Pages (publication pending)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-current-preview/latest/) · [standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38824501533/artifacts/12014322113) · [successful build run](https://github.com/cehinds/AshenSpire/actions/runs/38824501533)
+
+Core Rest now uses the original full game's painted Shrine, run HUD, recovery preview, and service cards. Strategize, Smith, and Level Up open their existing review surfaces; cancelling keeps the visit untouched, and one confirmed service refills HP, MP, SP, and both flask pools. Class selection shows unlocked classes and the next class to earn; a fresh run shows Reaver and locked Starseer.
+
+Core source `056668011` and current-profile source `f90fea869` have successful CI builds. Pages publication remains pending. Fresh local captures below use source `bed684518`, build `0.7.1.1534`, runtime `1c863b4f85`. [Rest restoration and browser evidence](docs/preview/features/json-game-modules/rest-ui/README.md).
+
+| Desktop · 1440×900 | Wide · 1920×1080 | Tablet · 1024×768 | Mobile · 390×844 |
+| --- | --- | --- | --- |
+| ![Core Rest on desktop](docs/preview/features/json-game-modules/rest-ui/desktop-rest.png) | ![Core Rest wide](docs/preview/features/json-game-modules/rest-ui/wide-rest.png) | ![Core Rest on tablet](docs/preview/features/json-game-modules/rest-ui/tablet-rest.png) | ![Core Rest on mobile](docs/preview/features/json-game-modules/rest-ui/mobile-rest.png) |
+
+| Progressive class selection | Reaver review |
+| --- | --- |
+| ![Reaver and next locked Starseer](docs/preview/features/json-game-modules/rest-ui/desktop-class.png) | ![Reaver starter deck review](docs/preview/features/json-game-modules/rest-ui/desktop-review.png) |
+
+<details>
+<summary>Earlier Settings update and capture provenance</summary>
 
 Game rules and JSON imports now live in **Settings → General → Game rules**. New Game goes directly to character creation. **Settings → General → Display** offers Auto, Desktop (1440×900), Mobile (390×844), Widescreen (1920×1080), and Tablet (1024×768); switching views keeps the active fight and fits the selected layout inside the current window.
 
-The latest CI source revisions are core `eaa1581b9` and current `74804f13b`; both builds passed, and Pages publication is queued. Fresh local Settings captures from source `90c21acf0` (build `0.7.1.1534`) are recorded in [the Settings update evidence](docs/preview/features/json-game-modules/settings-update/README.md). Later changes preserve headless coordinate helpers and refine the capture script; the photographed interface is unchanged.
+For this earlier Settings update, CI source revisions were core `eaa1581b9` and current `74804f13b`; both builds passed at the time of this record. Fresh local Settings captures from source `90c21acf0` (build `0.7.1.1534`) are recorded in [the Settings update evidence](docs/preview/features/json-game-modules/settings-update/README.md). Later changes preserve headless coordinate helpers and refine the capture script; the photographed interface is unchanged.
 
 | Desktop · 1440×900 | Wide · 1920×1080 | Tablet · 1024×768 | Mobile · 390×844 |
 | --- | --- | --- | --- |
 | ![Desktop Display settings](docs/preview/features/json-game-modules/settings-update/desktop.png) | ![Wide Display settings](docs/preview/features/json-game-modules/settings-update/wide.png) | ![Tablet Display settings](docs/preview/features/json-game-modules/settings-update/tablet.png) | ![Mobile Display settings](docs/preview/features/json-game-modules/settings-update/mobile.png) |
+
+</details>
 
 <details>
 <summary>Historical gallery — earlier configured flow before the Settings update</summary>
