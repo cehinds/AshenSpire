@@ -673,6 +673,7 @@ try {
           { cardId: 'strike', enemyIds: ['wanderingSoldier'], category: 'victory-reward', victory: true },
         ];
         for (const row of rows.filter(row => !arg('category') || arg('category').split(',').includes(row.category))) {
+          if (mode === 'enemies' && completedCase(device, classId, { ...row, variant: 'base' })) continue;
           if (!await runCase(page, device, classId, { ...row, variant: 'base', sampleAnimation: pace === 'normal', figureTarget: true })) { await page.close(); page = await boot(context, classId); }
           else if (row.victory) {
             const entry = report.cases.at(-1);
