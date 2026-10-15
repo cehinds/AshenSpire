@@ -1,9 +1,10 @@
 # Continue the JSON game modules work
 
 This is a handoff for the next AI session. It records product decisions and a
-safe first task; it does not authorize implementation by itself. The live user
-must continue or authorize implementation in the active task before source work
-begins.
+safe first task; it grants no additional authority. Continue work already
+authorized in the active session without asking the user to authorize it again.
+A live user instruction to continue or implement this plan authorizes its next
+bounded slice.
 
 ## Paste-ready continuation prompt
 
@@ -12,16 +13,18 @@ Continue the AshenSpire JSON-driven modular game work from the current feature
 branch and these handoff docs. First read CLAUDE.md, CONTRIBUTING.md,
 DEVELOPER.md, SPEC.md, then docs/ai/json-game-modules/README.md,
 IMPLEMENTATION.md, PSEUDOCODE.md and this file. Treat the live user's latest
-instructions as authoritative. Do not infer implementation authorization from
-this saved prompt; proceed with source changes only if the live user has
-continued/authorized that work.
+instructions as authoritative. This saved prompt grants no additional
+authority; continue work already authorized in the active session without asking
+for the same authorization again. A live user instruction to continue or
+implement this plan authorizes its next bounded slice.
 
 Before coding, run `git status --short --branch` and `git log -1 --oneline
---decorate`; preserve any existing user changes. Work only on
-Feature/json-game-modules and push commits only to origin/Feature/json-game-modules.
-Do not merge/promote to dev, test, release or main unless the owner explicitly
-instructs you later. The architecture is future work: verify each stated source
-path and behavior against the current checkout before relying on it.
+--decorate`; preserve existing user changes. Workers commit and push only to
+their own `origin/worker/json-game-modules/<task>` branches. The integrator
+reviews and integrates onto `Feature/json-game-modules`, then pushes that feature
+branch. Do not merge/promote to dev, test, release or main unless the owner
+explicitly instructs you later. The architecture is future work: verify each
+stated source path and behavior against the current checkout before relying on it.
 
 Start with one bounded task: map the current live source/content/runtime seams
 and compare them with the proposed module contract; report the actual paths,
@@ -30,8 +33,8 @@ interfaces and representative JSON examples needed for a core-only playable
 browser slice with a behavior-preserving legacy adapter. Do not scaffold the
 whole proposed module catalog. Make the core-only game playable first. Add one
 optional cards module that can be turned on and off, and verify both modes. Keep
-changes small, reviewable and pushed promptly. Stop and report any conflict
-between the design, live sources, or user instructions before widening scope.
+changes small and reviewable. Stop and report any conflict between the design,
+live sources, or user instructions before widening scope.
 ```
 
 ## Current status and next bounded work
@@ -103,8 +106,9 @@ action opportunity budget independent of optional SP/MP/Actions, a simple enemy
 - Distinguish portable rules/data from native code. An export must reject a
   required unsupported code module; it must not pretend portability by silently
   dropping functions.
-- A save locks the run's resolved config hash and module versions. A toggle or
-  module version change starts a new run by default; v1 does not live-unload
+- A save pins the exact resolved lockfile and gameplay hash, including module
+  artifact hashes, module ABI versions and numeric policy. A toggle or module
+  version change starts a new run by default; v1 does not live-unload
   packages. Save migration is explicit and tested separately from configuration
   migration and module upgrades.
 
@@ -153,26 +157,31 @@ The suggested future loop is:
    then existing builders/checks.
 4. `export`: deterministic package/content bundle with schema, version and hash;
    reject unsupported native code requirements.
-5. `push`: commit the reviewed source on the feature branch; its CI preview is
-   asynchronous and must be confirmed before calling it published.
+5. `push`: workers push reviewed commits to their own worker branches; the
+   integrator reviews and integrates them onto `Feature/json-game-modules` and
+   pushes that branch. Its CI preview is asynchronous and must be confirmed
+   before calling it published.
 
 No CLI with these commands exists at this baseline. Keep existing commands and
 proposed commands visibly distinct in docs and UI.
 
 ## Delivery rules and checks
 
-- User's current release boundary is strict: commit, push and integrate only on
-  `origin/Feature/json-game-modules`; no dev/test/release/main merge or promotion
-  until an explicit later owner instruction. This overrides the standing
-  contrary promotion workflow in `CLAUDE.md` and `CONTRIBUTING.md`.
+- User's current release boundary is strict: workers commit and push to their
+  own `origin/worker/json-game-modules/<task>` branches; the integrator reviews
+  and integrates onto `Feature/json-game-modules` and pushes that feature branch.
+  No dev/test/release/main merge or promotion until an explicit later owner
+  instruction. This overrides the standing contrary promotion workflow in
+  `CLAUDE.md` and `CONTRIBUTING.md`.
 - Workers use separate `worker/json-game-modules/<task>` branches/worktrees.
   The main session manages, reviews and integrates their work into the feature
   branch. Use the requested worker model guidance (GPT-6.1 Sol medium/low and
   GPT-6 Luna; Luna 6.1 is unavailable) and read-only reviewers; do not create
   chats or message people.
 - Inspect `git status` before edits and before staging. Do not discard user
-  changes. Use small commits, subject ≤72 characters, and push each commit to
-  the designated feature branch promptly. Never invent a commit SHA; obtain the
+  changes. Use small commits with subject ≤72 characters and push each worker
+  commit to that worker's branch promptly. The integrator merges worker commits
+  onto the feature branch and pushes it. Never invent a commit SHA; obtain the
   current SHA from `git log` after commit.
 - Documentation-only changes need link checks and `git diff --check`; do not run
   source tests/builds for docs-only edits. For source changes, choose targeted
@@ -193,5 +202,6 @@ proposed commands visibly distinct in docs and UI.
   Pages publication happens later through a workflow run. README's old
   PR-required wording is stale and should not be repeated. Do not claim preview
   success until the live link is tested.
-- There is no PR created for this work. Do not create one unless the live user
-  asks; do not promote branches under this handoff.
+- No PR has been created. If a PR is needed later, it targets the
+  `Feature/json-game-modules` parent branch while the release boundary holds; do
+  not promote branches under this handoff.

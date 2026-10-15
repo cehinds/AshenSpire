@@ -1,8 +1,8 @@
 # JSON-driven game modules — continuation index
 
-**Status: architecture and implementation are not yet present.** The files in
-this directory are planning and handoff material only. No gameplay, module
-loader, module schema, editor or JSON authoring CLI has been implemented or
+**Status: design documents delivered; runtime implementation pending.** These
+files define and hand off a future architecture. No gameplay module loader,
+runtime module schema, editor or JSON authoring CLI has been implemented or
 verified. The live gameplay baseline is unchanged from `3d40c190983069eec8d8a2370fb3f229ac376290`.
 
 The request began on `Feature/json-game-modules`, created and pushed from that
@@ -20,16 +20,17 @@ Read these together:
 - [Continuation handoff](CONTINUE.md) — paste-ready instructions, bounded next
   task, source survey, delivery rules and verification checklist.
 
-All three files describe a future design. Paths, APIs, schemas, commands and
-acceptance checks in them are proposals unless they are explicitly identified as
-existing repository entrypoints. Do not treat a handoff prompt as new authority
-to implement or publish the feature: continue implementation only when the live
-user authorizes it in the active task.
+The design is future work; paths, APIs, schemas, commands and acceptance checks
+are proposals unless explicitly identified as existing repository entrypoints.
+This handoff grants no additional authority. Continue actions already authorized
+in the active session without requesting that authorization again; a live user
+instruction to continue or implement this plan authorizes its next bounded slice.
 
-The owner has explicitly set this release boundary: work may be committed,
-pushed and integrated only on `origin/Feature/json-game-modules`. Do not merge
-or promote to `dev`, `test`, `release` or `main` until the owner gives a future
-explicit instruction. That current instruction overrides the standing
+The owner has explicitly set this release boundary: workers commit and push to
+their own `origin/worker/json-game-modules/<task>` branches; the integrator
+reviews and integrates onto `Feature/json-game-modules` and pushes that feature
+branch. Do not merge or promote to `dev`, `test`, `release` or `main` until the
+owner gives a future explicit instruction. This overrides the standing
 merge/promotion text in `CLAUDE.md` and `CONTRIBUTING.md`.
 
 **Handoff date:** October 14, 2026 (America/Anchorage). For current status and
