@@ -52,10 +52,10 @@ where actions, turn ownership, player/enemy state, damage, resources, activities
 saves, screens and content are actually defined. Trace the concrete dependency
 and import paths; identify which current behaviors a compatibility adapter must
 preserve. Record exact files and the smallest headless/browser checks that cover
-those seams. Then freeze the first interfaces and example JSON, and implement a
-thin **core-only playable vertical slice** as authorized in the active session. Add one complete
-cards package with defaults, schema, runtime implementation, guide, content,
-UI, state integration and test cases; prove cards can be disabled while core
+those seams. Then freeze the first interfaces and example JSON. Implement a
+thin **core-only playable vertical slice** as authorized in the active session.
+Add one complete cards package with defaults, schema, runtime implementation,
+guide, content, UI, state integration and test cases; prove cards can be disabled while core
 attack/pass remain useful. A coherent SP/block/equipment interaction can follow
 after that slice works.
 
