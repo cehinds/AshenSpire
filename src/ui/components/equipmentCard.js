@@ -10,7 +10,7 @@ import { cardLevelWidthCss } from '../models/CardSizeModel.js';
 import { configureTooltipGlossary, decorateKeywords, inspectionTag } from './tooltipGlossary.js';
 import { metadataFooter } from '../models/IdentityModel.js';
 import { loreLine } from './loreLine.js';
-import { possessionVariant } from '../models/PossessionVariantModel.js';
+import { possessionVariant, possessionEffectSummary } from '../models/PossessionVariantModel.js';
 import { t } from '../strings.js';
 import { selectionRevealDelayMs } from '../models/SelectionEffectModel.js';
 
@@ -76,6 +76,40 @@ function applyCardTokens(card, tokens) {
  * level there: the creation picker shows rarity while you are choosing, the
  * combat hand does not show it at all.
  */
+const possessionSummaryObservers = new WeakMap();
+function fitPossessionSummary(card) {
+  possessionSummaryObservers.get(card)?.disconnect();
+  const summary = card.querySelector('.epc-effect-summary');
+  if (!summary || typeof globalThis.getComputedStyle !== 'function') return;
+  const clauses = [...summary.children];
+  const fit = () => {
+    summary.querySelector('.epc-summary-cue')?.remove();
+    for (const clause of clauses) clause.hidden = false;
+    if (!summary.isConnected || !summary.clientWidth) return;
+    const style = getComputedStyle(summary);
+    const lineHeight = Number.parseFloat(style.lineHeight);
+    if (!Number.isFinite(lineHeight)) return;
+    const bay = summary.parentElement;
+    const budget = Math.min(lineHeight * 3, bay.clientHeight || Infinity);
+    const overflow = () => summary.scrollHeight > budget + 1 || summary.scrollWidth > summary.clientWidth + 1;
+    if (overflow() && clauses.length > 1) clauses.at(-1).hidden = true;
+    if (overflow()) {
+      for (const clause of clauses) clause.hidden = true;
+      const cue = document.createElement('span');
+      cue.className = 'epc-summary-cue';
+      cue.textContent = 'Inspect for full effects.';
+      summary.append(cue);
+    }
+  };
+  if (typeof ResizeObserver === 'function') {
+    const observer = new ResizeObserver(fit);
+    observer.observe(summary.parentElement);
+    possessionSummaryObservers.set(card, observer);
+  }
+  if (typeof requestAnimationFrame === 'function') requestAnimationFrame(fit);
+  else fit();
+}
+
 export function renderEquipmentCard(registries, piece, { interactive = true, presentation = null, inspection = true, owned = null, level = null, surface = 'none', identity: identityOverride = null } = {}) {
   configureTooltipGlossary(registries);
   const model = presentation || equipmentCardModel(registries, piece);
@@ -167,12 +201,17 @@ export function renderEquipmentCard(registries, piece, { interactive = true, pre
     explanations.length = 0;
     const visible = new Set(cardFields(at, { surface }).visible);
     const facts = variant?.lines
-      ? `<span class="epc-facts" data-layout="lines"${rowsAttr(variant.regions.facts)}>${variant.lines.map((row, index) => `<span class="epc-line" data-wireframe-row="${esc(row.id)}"${row.tint ? ` style="--line-tint:${esc(row.tint)}"` : ''}${index >= face.lines ? ' hidden' : ''} ${tip(row.text, row.explanation, 'effect')}>${esc(row.text)}</span>`).join('')}</span>`
+      ? `<span class="epc-facts" data-layout="lines"${rowsAttr(variant.regions.facts)}>${variant.lines.map((row, index) => `<span class="epc-line" data-wireframe-row="${esc(row.id)}"${row.tint ? ` style="--line-tint:${esc(row.tint)}"` : ''}${at !== 'inspect' ? ' hidden' : ''} ${tip(row.text, row.explanation, 'effect')}>${esc(row.text)}</span>`).join('')}</span>`
       : `<span class="epc-facts"${rowsAttr(variant?.regions.facts)}>${model.facts.map(f => `<span class="epc-fact" ${tip(model.cardKind ? f.value : `${f.label}: ${f.value}`, f.explanation, model.cardKind ? 'tag' : 'fact')}><strong>${esc(f.label === 'DR' && f.value > 0 ? `+${f.value}` : f.value)}</strong>${esc(surface === 'creation' ? ({ Attack: 'AR', Defense: 'DR', Weight: 'Wt' }[f.label] || f.label) : f.label)}</span>`).join('')}</span>`;
     const entries = variant?.entries || model.bonuses;
-    const effectsAttrs = variant ? `${rowsAttr(variant.regions.effects)} data-entries="${Math.min(entries.length, face.effects) > 1 ? 'many' : 'one'}"${entries.length > face.effects ? ' data-more' : ''}` : '';
-    const effects = entries.map((b, index) => `<span class="epc-bonus"${index >= face.effects ? ' hidden' : ''} ${tip(b.label, b.explanation, 'effect')}>${esc(b.label)}</span>`).join('')
-      || `<span>${esc(model.armor ? 'No additional bonuses' : variant?.empty || 'No additional bonuses')}</span>`;
+    const fullEffects = at === 'inspect';
+    const summary = possessionEffectSummary(entries, face);
+    const effectsAttrs = `${rowsAttr(variant?.regions.effects)} data-effect-mode="${fullEffects ? 'full' : 'summary'}"${fullEffects ? '' : ' data-effect-line-budget="3"'} data-entries="${(fullEffects ? entries.length : summary.length) > 1 ? 'many' : 'one'}"`;
+    // Canonical entries own the tips, including omitted clauses. Summary text
+    // is presentation only, so the inspection never inherits its shorter copy.
+    const canonical = entries.map(b => `<span class="epc-bonus"${fullEffects ? '' : ' hidden'} ${tip(b.label, b.explanation, 'effect')}>${esc(b.label)}</span>`).join('');
+    const effects = fullEffects ? canonical || `<span>${esc(variant?.empty || 'No additional bonuses')}</span>`
+      : `${canonical}<span class="epc-effect-summary">${summary.map(label => `<span class="epc-bonus">${esc(label)}</span>`).join('')}</span>`;
     // A REGION THIS LEVEL DOES NOT SAY IS NOT IN THE MARKUP AT ALL. Not
     // `display:none` and not `hidden`: the row solver has already given its
     // pixels away (equipmentCardTokens' `omit`), so an element left behind would
@@ -191,7 +230,7 @@ export function renderEquipmentCard(registries, piece, { interactive = true, pre
       ${region('type', `<span class="epc-type"${rowsAttr(variant?.regions.type)}><span ${tip(model.armor ? model.type : model.type.split(' · ')[0], model.typeExplanation)}>${esc(model.type)}</span><span class="epc-requirement" ${tip(requirement, model.requirementExplanation, requirementRole)}>${esc(requirement)}</span></span>`)}
       ${region('facts', facts)}
       ${region('tags', `<span class="epc-tags ec-tags">${model.tags.map(t => `<span class="epc-tag" ${tip(t.label, t.explanation)}>${esc(t.label)}</span>`).join('')}</span>`)}
-      ${region('effects', `<span class="epc-effects ec-mods"${effectsAttrs}><span class="epc-heading">${esc(variant?.heading || model.effectsLabel || 'Equipment bonuses')}</span>${effects}</span>`)}
+      ${region('effects', `<span class="epc-effects ec-mods"${effectsAttrs}>${fullEffects ? `<span class="epc-heading">${esc(variant?.heading || model.effectsLabel || 'Equipment bonuses')}</span>` : ''}${effects}</span>`)}
       ${region('flavor', `<span class="epc-flavor" ${tip(model.flavor, model.flavor, 'flavor')}>${esc(model.flavor)}</span>`)}
       ${region('footer', `<span class="epc-footer" data-identity-part="metadata">${metaSlot('start', band.start)}${metaSlot('end', band.end)}</span>`)}
     </span>`;
@@ -201,6 +240,7 @@ export function renderEquipmentCard(registries, piece, { interactive = true, pre
     card.dataset.level = at;
     applyCardTokens(card, tokensFor(at));
     card.dataset.cardLevel = at;
+    fitPossessionSummary(card);
     card.style.setProperty('--epc-level-w', cardLevelWidthCss(at));
     swapOnError(card.querySelector('img'), () => Object.assign(document.createElement('span'), { textContent: piece.icon || '◆' }));
     card.querySelectorAll('[data-card-tip]').forEach(target => {

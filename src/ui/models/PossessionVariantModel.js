@@ -36,6 +36,21 @@ function faceCount(value, name) {
   return value;
 }
 
+// Face copy selects whole authored clauses; inspection retains the original entries.
+// A long conditional stays behind the reading door rather than losing its gate.
+export function possessionEffectSummary(entries, { effects = 2 } = {}) {
+  const clauses = [];
+  for (const entry of entries || []) {
+    const text = String(entry.label || '').replace(/\s+/g, ' ').trim();
+    for (const clause of text.split(/(?<=[.!?])\s+(?=[A-Z])/)) {
+      if (!clause || clause.length > 72 || /[;\n]/.test(clause)) break;
+      clauses.push(clause);
+      if (clauses.length >= Math.min(2, effects)) return Object.freeze(clauses);
+    }
+  }
+  return Object.freeze(clauses.length ? clauses : ['Inspect for full effects.']);
+}
+
 const resourceRow = (registries, id) => (registries?.resources?.all?.() || resourceTable)
   .find((row) => row.id === id || row.source === id) || null;
 const statusName = (registries, id) => (registries?.statuses?.get?.(id) || statusTable.find((row) => row.id === id))?.name || null;
@@ -93,7 +108,7 @@ export function consumablePurposes(flask, registries = null) {
 
 export function possessionVariant(registries, item, { kind, bonuses = [], attributeRequirement = null, charges = null } = {}, config = wireframeUi.possession) {
   if (!KINDS.includes(kind)) throw new Error(`possession: unknown kind '${kind}'`);
-  const face = { lines: faceCount(config?.faceLines, 'faceLines'), effects: faceCount(config?.faceEffects, 'faceEffects') };
+  const face = { lines: faceCount(config?.faceLines, 'faceLines'), effects: Math.min(2, faceCount(config?.faceEffects, 'faceEffects')) };
   const omitted = [];
   const omit = (id, reason, part = null) => omitted.push({ id, part, reason });
   const rows = kind === 'equipment' ? equipmentRows(registries, item, { bonuses, attributeRequirement }, omit)
