@@ -8,6 +8,8 @@ The desktop menu and phone menu show primary **Quit** in the main list. Actual m
 | --- | --- |
 | Desktop primary menu | [Menu](menu-desktop.png) |
 | Phone primary menu, Quit reachable | [Menu](menu-phone.png) |
+| Wide primary menu | [Menu](menu-wide.png) |
+| Tablet primary menu | [Menu](menu-tablet.png) |
 | Reaver, paid Bashing Blow action | [Action](reaver-action.png) |
 | Starseer, paid Bashing Blow action | [Action](starseer-action.png) |
 | Rogue, paid Bashing Blow action on phone | [Action](rogue-action-phone.png) |
@@ -15,6 +17,8 @@ The desktop menu and phone menu show primary **Quit** in the main list. Actual m
 
 The four-class gallery uses ordinary class HP, resource pools and canonical default character art, not the large engine-audit capability pools. The full gallery verifies selection, a paid action and return to the supported held pose for all four classes on desktop and phone (8/8 cases). The selected Herald frame is selection evidence; the gallery's separate paid-action frame and receipt establish dispatch.
 
-Current critical browser validation completes360 distinct cases, including264 all-enemy/class/device rows. The separately packaged standalone also passes the original Star Spark → Gilded Knight mouse/touch spell-target path, followed by end turn and a paid next-turn action. Its SHA-256 is `586c07905d157e2a77a2877c727c7c0751665c335c78f4c1ece4a9564dbc9f98`. No runtime errors or unexpected network failures were recorded.
+Current critical browser validation completes 360 distinct cases, including 264 all-enemy/class/device rows. The separately packaged standalone also passes the original Star Spark → Gilded Knight mouse/touch spell-target path, followed by end turn and a paid next-turn action. Its SHA-256 is `586c07905d157e2a77a2877c727c7c0751665c335c78f4c1ece4a9564dbc9f98`. No runtime errors or unexpected network failures were recorded.
 
-[Coverage and reproduction](../../../tools/combat-audit/README.md) distinguish current production evidence from the earlier immutable baseline and name remaining state combinations. Bulk raw JSON and the remaining gallery frames remain in local scratch; the reproduction commands can generate them for artifact upload. The downloadable preview is published by the repository preview workflow; [PR1990](https://github.com/cehinds/AshenSpire/pull/1990) carries the verified artifact link when available. Local port4414 is a QA server, not a published preview.
+[Four-view capture record](VIEWPORT-CAPTURES.md) names exact viewport sizes and dates.
+
+[Coverage and reproduction](../../../tools/combat-audit/README.md) distinguish current production evidence from the earlier immutable baseline and name remaining state combinations. Bulk raw JSON and the remaining gallery frames remain in local scratch; the reproduction commands can generate them for artifact upload. The downloadable preview is published by the repository preview workflow; [PR 1990](https://github.com/cehinds/AshenSpire/pull/1990) carries the verified artifact link when available. Local port 4414 is a QA server, not a published preview.

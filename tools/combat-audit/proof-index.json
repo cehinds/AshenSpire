@@ -374,6 +374,18 @@
     "focusedOracleEscapeQuitTests": 92,
     "focusedOracleEscapeQuitPassed": 92,
     "remainingSparseArtPrerequisiteFailures": 8,
-    "claim": "Full run was red; later focused proofs repair16 assertions, authoritative exact-head CI is required. No tests skipped or weakened."
+    "claim": "Full run was red; later focused proofs repair16 assertions, authoritative exact-head CI is required. No tests skipped or weakened.",
+    "focusedOracleEscapeQuitCommand": "node --test tests/card-value-tag-index.test.mjs tests/escape-back.test.mjs tests/quit-game.test.mjs",
+    "focusedOracleEscapeQuitFiles": [
+      "tests/card-value-tag-index.test.mjs",
+      "tests/escape-back.test.mjs",
+      "tests/quit-game.test.mjs"
+    ],
+    "focusedOracleEscapeQuitPerFile": {
+      "tests/card-value-tag-index.test.mjs": 61,
+      "tests/escape-back.test.mjs": 27,
+      "tests/quit-game.test.mjs": 4
+    },
+    "focusedOracleEscapeQuitLogSha256": "9272706627b6c0f24a9e75eca9e0be1ecb0cc4e8d6f594dfb806f7d086c4ef7d"
   }
 }
