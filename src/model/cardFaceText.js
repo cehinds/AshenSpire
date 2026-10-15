@@ -68,6 +68,15 @@ const plainText = html => String(html).replace(/<[^>]*>/g, '').replace(/&(?:amp|
   entity => ({ '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'" })[entity]);
 const sentence = html => /[.!?]$/.test(plainText(html).trim()) ? html : `${html}.`;
 const oneClause = html => !/[;]|[.!?]\s+\S/.test(plainText(html));
+// Literal fallback has no effect projection to count. Count its explicit rule
+// verbs, including payments and keywords, rather than treating a sentence as
+// one effect ("deal …, then remove …" is already two). Unknown prose keeps the
+// inspection cue; this deliberately prefers omission over a misleading cut.
+const AUTHORED_ACTION = /\b(?:deal|inflict|gain|draw|discard|exhaust|retain|ethereal|unplayable|heal|restore|recover|take|pay|lose|remove|apply|enter|prepare|return|reduce|increase|decrease|double|triple|copy|add|create|shuffle|upgrade|transform|consume|convert|trigger|evade|dodge|prevent|negate|reflect|repeat)\b/gi;
+function authoredClauseCount(text) {
+  return [...text.matchAll(AUTHORED_ACTION)].length;
+}
+
 
 /** At most two complete effect clauses for an ordinary face, never a text cut. */
 export function cardFaceSummary(def, preview = null, registries = null) {
@@ -80,8 +89,12 @@ export function cardFaceSummary(def, preview = null, registries = null) {
     // of guessing values or taking a potentially misleading first sentence.
     const authored = String(def.textTemplate || '').trim();
     const clauses = authored.split(/(?<=[.!?])\s+/).filter(Boolean);
+    const effectClauses = authoredClauseCount(authored);
+    const hidesRestriction = ['exhaust', 'ethereal', 'unplayable'].some(keyword =>
+      (def.keywords || []).includes(keyword) && !new RegExp(`\\b${keyword}\\b`, 'i').test(authored));
     if (!authored || /[{}<>;]/.test(authored) || authored.length > SUMMARY_CHAR_BUDGET
-      || clauses.length > 2 || preview?.values?.length || def.ashenBlightCost
+      || clauses.length > 2 || effectClauses < 1 || effectClauses > 2 || hidesRestriction
+      || preview?.values?.length || def.ashenBlightCost
       || (def.effects || []).some(effect => effect.op === 'loseHp')) return inspectionCue();
     return { lines: clauses.map(html => ({ kind: 'detail', html: sentence(esc(html)) })), omitted: false };
   }
