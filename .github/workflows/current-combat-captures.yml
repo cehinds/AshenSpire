@@ -1,0 +1,80 @@
+name: final stamped combat captures
+on:
+  push:
+    branches: ['worker/FullCombatAudit/final-combat-captures']
+    paths: ['.github/workflows/current-combat-captures.yml']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  capture:
+    if: github.ref == 'refs/heads/worker/FullCombatAudit/final-combat-captures'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            tools/browser.mjs
+            tools/combat-audit/current-combat-captures.mjs
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          repository: cehinds/AshenSpire
+          run-id: '38711098039'
+          artifact-ids: '11960154709'
+          path: _stamped-standalone
+          merge-multiple: true
+      - run: npm install --no-save --package-lock=false playwright
+      - name: Capture actual paid input and native stage frames
+        run: node tools/combat-audit/current-combat-captures.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: stamped-1537-reaver-${{ github.sha }}
+          path: |
+            _combat-captures/reaver/
+            _combat-captures/reaver-combat.png
+          if-no-files-found: warn
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: stamped-1537-rogue-${{ github.sha }}
+          path: |
+            _combat-captures/rogue/
+            _combat-captures/rogue-combat.png
+          if-no-files-found: warn
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: stamped-1537-starseer-${{ github.sha }}
+          path: |
+            _combat-captures/starseer/
+            _combat-captures/starseer-combat.png
+          if-no-files-found: warn
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: stamped-1537-herald-${{ github.sha }}
+          path: |
+            _combat-captures/herald/
+            _combat-captures/herald-combat.png
+          if-no-files-found: warn
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: stamped-1537-capture-index-${{ github.sha }}
+          path: |
+            _combat-captures/index.html
+            _combat-captures/manifest.json
+          if-no-files-found: error
+          retention-days: 14
