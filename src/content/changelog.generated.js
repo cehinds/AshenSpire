@@ -4,13 +4,23 @@
 export const GENERATED_CHANGELOG = Object.freeze([
   {
     "id": "pr-1978",
-    "date": "2026-10-14",
-    "group": "2026-10-14",
+    "date": "2026-10-15",
+    "group": "2026-10-15",
     "summary": "Combat fades cover fighters, and player targets stay clear of Health",
     "detail": "Screen fades now cover idle and selected fighters while target selection, cards and the combat HUD remain above them. When the perspective view places the player behind the hand, its transparent 44px target moves clear of its own Health strip without changing the artwork, Health position or selected fighter size.",
     "build": "0.7.1.1529",
     "pullRequest": 1978,
     "url": "https://github.com/cehinds/AshenSpire/pull/1978"
+  },
+  {
+    "id": "pr-1995",
+    "date": "2026-10-14",
+    "group": "2026-10-14",
+    "summary": "Windows checks use the installed artwork converter",
+    "detail": "Development-process fix only, nothing in the game changes. Class Smash export tests now use the exact Python interpreter with pinned Pillow installed, so Windows cannot accidentally run the test with a different Python lacking the image library.",
+    "build": "0.7.1.1529",
+    "pullRequest": 1995,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1995"
   },
   {
     "id": "pr-1984",

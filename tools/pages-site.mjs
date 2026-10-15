@@ -908,9 +908,9 @@ export function publishBranchPreviews(outDir, previews) {
 
 export function branchPreviewSection(previews) {
   const head = '<h2 id="branch-builds">Feature branch builds</h2>';
-  if (!previews.length) return `${head}\n<p>No open pull request into <code>dev</code> has a playable build right now.</p>`;
-  const cards = previews.map((p) => `<section class="card"><h3>${esc(p.branch)}</h3><p class="role">open pull request${p.pr ? ` #${p.pr}` : ''} into dev</p>${p.sha ? `<p class="meta">commit <a href="${REPO_URL}/commit/${p.sha}">${p.sha.slice(0, 10)}</a></p>` : ''}<a class="play" href="branches/${esc(p.path)}/latest/">Sandboxed preview of ${esc(p.branch)}</a> <a href="branches/${esc(p.path)}/latest/${PREVIEW_BUILD_FILE}" download="${esc(p.file)}">Download build</a></section>`).join('\n');
-  return `${head}\n<p>Each open pull request into <code>dev</code> has its newest build here, played in a sandbox that does not keep progress. A build leaves this page when its pull request merges or closes.</p>\n<div class="grid">${cards}</div>`;
+  if (!previews.length) return `${head}\n<p>No feature branch has a playable build right now.</p>`;
+  const cards = previews.map((p) => `<section class="card"><h3>${esc(p.branch)}</h3><p class="role">${p.pr ? `open pull request #${p.pr} into dev` : 'feature branch build'}</p>${p.sha ? `<p class="meta">commit <a href="${REPO_URL}/commit/${p.sha}">${p.sha.slice(0, 10)}</a></p>` : ''}<a class="play" href="branches/${esc(p.path)}/latest/">Sandboxed preview of ${esc(p.branch)}</a> <a href="branches/${esc(p.path)}/latest/${PREVIEW_BUILD_FILE}" download="${esc(p.file)}">Download build</a></section>`).join('\n');
+  return `${head}\n<p>Current feature, fix and chore branch builds appear here, played in a sandbox that does not keep progress. Only builds matching current code are published.</p>\n<div class="grid">${cards}</div>`;
 }
 
 export function rootIndex(branchData, generatedAt, otherPages, previews = null) {
