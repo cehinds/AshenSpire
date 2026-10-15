@@ -887,7 +887,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
 
     const def = registries.enemies.get(entity.enemyId);
-    const intent = disp?.ents[entity.id]?.intentPreview || previewIntent(combat, entity.id);
+    const intent = configuredArt && !gameModule(run, 'intent') ? { hidden: true, label: 'Unread' } : disp?.ents[entity.id]?.intentPreview || previewIntent(combat, entity.id);
     const moveCardOptions = { registries, combatMatchupRules: combat.combatMatchupRules,
       combatExpansionVersion: combat.combatExpansionVersion, stanceRules: combat.stanceRules };
     const learning = combat.enemyKnowledge ? projectEnemyKnowledge(def, combat.enemyKnowledge.owners.player?.knowledge.enemies[def.id], { ...moveCardOptions, ratingsRules: combat.ratingsRules }) : null;
