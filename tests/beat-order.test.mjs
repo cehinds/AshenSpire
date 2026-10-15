@@ -83,7 +83,7 @@ test('a player attack: contact at impact, then stance, reaction, number, bars', 
     assert.equal(timeOf(trace, 'settle'), TOTAL, 'the swing settles at totalMs');
     assert.equal(timeOf(trace, 'reaction:e1'), TOTAL, 'the reaction follows the return to stance');
     assert.equal(timeOf(trace, 'float:-4'), TOTAL + reactionMs, 'the number waits reactionMs');
-    assert.equal(timeOf(trace, 'bars'), TOTAL + reactionMs, 'the bars follow the number');
+    assert.equal(timeOf(trace, 'bars'), TOTAL + reactionMs + ANIM_SPEEDS.normal.popupDwellMs, 'the bars wait for readable popup dwell');
   });
 });
 
@@ -105,7 +105,7 @@ test('a multi-hit beat: every contact in the swing, then reaction and number per
     assert.deepEqual(order(trace), ['contact', 'contact', 'settle', 'reaction:e1', 'float:-3', 'reaction:e1', 'float:-4', 'bars']);
     const { stepMs, reactionMs } = ANIM_SPEEDS.normal;
     assert.equal(trace.filter((e) => e.what === 'contact')[1].at, IMPACT + stepMs, 'contacts stay stepMs apart');
-    assert.equal(trace.filter((e) => e.what === 'reaction:e1')[1].at, TOTAL + reactionMs + stepMs, 'the next hit reacts a step after the last number');
+    assert.equal(trace.filter((e) => e.what === 'reaction:e1')[1].at, Math.max(TOTAL, IMPACT + 2 * stepMs) + reactionMs + Math.max(stepMs, ANIM_SPEEDS.normal.popupDwellMs), 'the next hit waits for the previous popup');
   });
 });
 
@@ -157,7 +157,7 @@ test('beatOrder impact keeps the older order: reaction and number at impact, bar
     finish();
     assert.deepEqual(order(trace), ['contact', 'reaction:e1', 'float:-4', 'settle', 'bars']);
     assert.equal(timeOf(trace, 'float:-4'), IMPACT);
-    assert.equal(timeOf(trace, 'bars'), TOTAL);
+    assert.equal(timeOf(trace, 'bars'), IMPACT + ANIM_SPEEDS.normal.popupDwellMs);
   });
 });
 
@@ -210,5 +210,39 @@ test('an opted-in actor acknowledges its contact even when no hit-stop or outcom
     run([{type:'cardPlayed',cardType:'attack',cardId:'strike',cardInstanceId:'empty',targetId:'e1'}],{
       animateActor:()=>({impactMs:100,totalMs:300,contact:()=>trace.push({what:'ack',at:Date.now()}),cancel(){}}),
     });finish();assert.equal(timeOf(trace,'ack'),100);
+  });
+});
+
+
+test('normal popup stays readable before HUD commit and the next action waits for meters', t => {
+  drive(t, ({trace,run,finish}) => {
+    run([...playerHit(4), {type:'enemyMoveStarted',sourceId:'e1',kind:'attack'},
+      {type:'damageDealt',sourceId:'e1',targetId:'player',amount:2,blocked:0}]);
+    finish();
+    const number=timeOf(trace,'float:-4'),bars=timeOf(trace,'bars');
+    assert.equal(bars-number,550,'receipt HUD waits for the entire popup dwell');
+    const swings=trace.filter(e=>e.what==='swing');
+    assert.ok(swings[1].at-bars>=420,'meter transition has its own inter-action breath');
+  });
+});
+
+test('fast keeps the prior immediate popup-to-HUD shortcut', t => {
+  drive(t, ({trace,run,finish}) => {
+    setAnimSpeed('fast');run(playerHit(4));finish();
+    assert.equal(timeOf(trace,'bars'),timeOf(trace,'float:-4'));
+  });
+});
+
+
+test('skip during popup dwell flushes once and cancels delayed receipt work', t => {
+  drive(t, ({dom,trace,run,tick,finish}) => {
+    run(playerHit(4));tick(TOTAL + ANIM_SPEEDS.normal.reactionMs + 20);
+    assert.equal(timeOf(trace,'bars'),undefined);
+    globalThis.dispatchEvent(new dom.Event('pointerdown'));
+    globalThis.dispatchEvent(new dom.Event('pointerup'));tick(1);finish();
+    const count=trace.filter(e=>e.what==='bars').length;
+    tick(10000);
+    assert.equal(trace.filter(e=>e.what==='bars').length,count,'canceled popup dwell cannot commit again');
+    assert.equal(count,1);
   });
 });

@@ -2,7 +2,7 @@ import { playCombatEffect, clearCombatEffects } from './combatEffectSprites.js';
 import { combatEffectForEvent } from '../model/combatEffectEvents.js';
 // src/ui/fx.js — feedback effects (SPEC §7.4)
 //
-// Rules: every animation ≤300 ms; queued events play ≤80 ms apart; a click
+// Presentation pace is shared by actions, reactions and receipt commits; a click
 // skips to end-state; every HP hit shakes ≤4 px by the HP it cost, and a
 // big hit holds the two figures briefly (content/combatFeel.js); Bleed bursts and
 // Staggers get the loud treatment (they're the theme).
@@ -371,7 +371,9 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
     { pad: 6 }
   );
   el.style.left = `${at.left + half}px`;
-  setTimeout(() => el.remove(), 600);
+  const lifetime = reducedMotionRequested() ? 600 : ANIM_SPEEDS[getAnimSpeed()]?.floatMs || 600;
+  el.style.animationDuration = `${lifetime}ms`;
+  setTimeout(() => el.remove(), lifetime);
   return el;
 }
 
@@ -544,7 +546,7 @@ export function callout(layer, anchor, forId, kind) {
   el.setAttribute('aria-hidden', 'true');
   el.textContent = t(def.string);
   if (def.colour) el.style.color = def.colour;
-  const ms = getAnimSpeed() === 'instant' ? CALLOUT_INSTANT_MS : CALLOUT_MS;
+  const ms = getAnimSpeed() === 'instant' ? CALLOUT_INSTANT_MS : Math.max(CALLOUT_MS, (reducedMotionRequested() ? 0 : ANIM_SPEEDS[getAnimSpeed()]?.popupDwellMs || 0) + 450);
   el.style.setProperty('--fx-callout-ms', `${ms}ms`);
   // Not started yet: the layout plans it (start Infinity until then).
   const item = { el, kind, arrival: calloutArrival++, start: Infinity, end: undefined, lane: 0, timer: null };
@@ -997,7 +999,8 @@ export function playTimeline(events, ctx, done) {
     ? beats.filter((beat) => beat.kind === 'attack')
       .reduce((ms, beat) => ms + speed.stanceLeadMs + beat.events.reduce((total,event)=>total + budgetRead(() => ctx.reactionTimingForReceipt?.(event,speed), speed.reactionMs) + speed.stepMs,0), 0)
     : 0;
-  const budget = COMBAT_TIMING.watchdogBaseMs + sequentialMs + beats.length * (speed.beatMs + actorBudgetMs + 4 * speed.stepMs);
+  const popupBudgetMs = beats.reduce((total, beat) => total + beat.events.length * (speed.popupDwellMs || 0), 0);
+  const budget = COMBAT_TIMING.watchdogBaseMs + sequentialMs + popupBudgetMs + beats.length * (speed.beatMs + actorBudgetMs + 4 * speed.stepMs);
   const watchdog = setTimeout(() => {
     dbg.watchdog = (dbg.watchdog || 0) + 1;
     console.warn('[fx] watchdog forced timeline completion');
@@ -1053,6 +1056,7 @@ export function playTimeline(events, ctx, done) {
     const actorEl = beat.actorId ? ctx.anchorFor(beat.actorId) : null;
     // Stance first: an attacker caught mid-pose (a hurt frame, an unfinished
     // action) returns to its stance, and holds it a moment, before it swings.
+    let popupEndAt = 0;
     let stanceLead = false;
     if (sequential && actorEl) {
       const stage = stageFor(actorEl);
@@ -1179,6 +1183,7 @@ export function playTimeline(events, ctx, done) {
             hitStop = holdMs;
           }
           safe(() => v(ctx));
+          if (!sequential) popupEndAt = Date.now() + (speed.popupDwellMs || 0);
           markContact(event.type);
           // Sequential: the damage buzz waits for the number (below).
           if (!sequential && !damageCued.has(beatIndex) && playerLostHp(event, ctx.isLocalPlayer)) {
@@ -1191,6 +1196,10 @@ export function playTimeline(events, ctx, done) {
         }
         let reactionEndAt = 0;
         const applyBeat = () => {
+          if (finished) return;
+          if (flushed) { nextBeat(); return; }
+          const popupRemaining = popupEndAt - Date.now();
+          if (popupRemaining > 0) { schedule(applyBeat, popupRemaining); return; }
           cueBeat(beatIndex);
           safe(() => playBeatCues(beat.events, { isLocalPlayer: ctx.isLocalPlayer, damageBuzz: !damageCued.has(beatIndex) }));
           // 3) HUD updates for this beat, 4) inter-beat breath. Painted actor
@@ -1235,6 +1244,7 @@ export function playTimeline(events, ctx, done) {
                 return;
               }
               traceBeat('numbers', event.type);
+              popupEndAt = Date.now() + (speed.popupDwellMs || 0);
               if (parts.numbers) safe(() => parts.numbers(ctx));
               if (!damageCued.has(beatIndex) && playerLostHp(event, ctx.isLocalPlayer)) {
                 damageCued.add(beatIndex);
@@ -1243,17 +1253,18 @@ export function playTimeline(events, ctx, done) {
               // The bars follow in the next task, so the number is laid out
               // and painted before the beat's re-render, not after it.
               if (ri >= reactions.length) schedule(applyBeat, 0);
-              else schedule(stepR, Math.max(speed.stepMs,reactionEndAt-Date.now()));
+              else schedule(stepR, Math.max(speed.stepMs,reactionEndAt-Date.now(),popupEndAt-Date.now()));
             };
             // The callout shows with the reaction and waits for nothing.
             const said = () => {
               if (!parts.callout) return;
               traceBeat('callout', event.type);
               safe(() => parts.callout(ctx));
+              popupEndAt = Date.now() + (speed.popupDwellMs || 0);
             };
             if (!parts.reaction && !parts.numbers) {
               said();
-              stepR();
+              schedule(stepR, Math.max(0,popupEndAt-Date.now()));
               return;
             }
             if (!parts.reaction) {
