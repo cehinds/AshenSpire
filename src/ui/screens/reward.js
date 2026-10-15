@@ -1,3 +1,4 @@
+import { mountRewardDoor } from '../components/rewardDoor.js';
 import { getFeatDescription } from '../../model/classSkillFeatDescription.js';
 import {abilityDraftChoice} from '../../model/abilityDraftReceipts.js';
 import { masteryUnlockName } from '../../model/classMasteryRun.js';
@@ -74,7 +75,7 @@ import { pickClassNode } from '../../model/classTree.js';
 import { chooseFeat, featById } from '../../model/feats.js';
 import { nodeTokens } from '../../model/tree.js';
 import { breakPropertyRule } from '../../model/breakMeter.js';
-import { el, modalHead, modalFooter, button, meter } from '../kit/index.js';
+import { el, modalFooter, button, meter } from '../kit/index.js';
 // Every sentence this screen says is a row in content/source/uiStrings.csv.
 import { t, tFull, tTip } from '../strings.js';
 import { reasonWhenDisabled } from '../components/refusal.js';
@@ -842,33 +843,9 @@ export function mountRewards(app, {
   // they were bound to has moved on even though the element is the same.
   let doorView = 0;
   const doorOwner = {};
-  function door({ eyebrow, title, body, foot, attrs = {}, status = null }) {
+  function door(options) {
     doorView += 1;
-    const head = modalHead({ eyebrow, title, closeLabel: t('reward.close'), extras: status });
-    head.querySelector('.modal-close').hidden = true;
-    const content = [head, el('div', { class: 'modal-body reward-body' }, body), foot];
-    const open = app.querySelector('.reward-veil .reward-door');
-    if (open && open.rewardDoorOwner === doorOwner) {
-      for (const key of ['rewardDetail', 'victoryCompact', 'rewardLevel']) {
-        open.removeAttribute(`data-${key.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}`);
-        delete open.dataset[key];
-      }
-      const { dataset = {}, ...rest } = attrs;
-      Object.assign(open.dataset, { size: 'md' }, dataset);
-      for (const [key, value] of Object.entries(rest)) open.setAttribute(key, value);
-      open.setAttribute('aria-label', title);
-      open.replaceChildren(...content.filter(Boolean));
-      return open;
-    }
-    app.querySelector('.reward-veil')?.remove();
-    if (!app.firstElementChild) app.appendChild(el('div', { class: 'screen reward-backdrop' }));
-    const modal = el('section', {
-      class: 'modal reward-door', dataset: { size: 'md' }, role: 'dialog', 'aria-modal': 'true', 'aria-label': title, ...attrs,
-    }, content);
-    modal.rewardDoorOwner = doorOwner;
-    const veil = el('div', { class: 'modal-veil reward-veil' }, modal);
-    app.appendChild(veil);
-    return modal;
+    return mountRewardDoor(app, { owner: doorOwner, ...options });
   }
   function grantCinders() {
     const row = plan.rows.find((r) => r.kind === 'cinders');
