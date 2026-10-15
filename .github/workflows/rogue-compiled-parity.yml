@@ -50,3 +50,4 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 # Retry uses proven256/512MiB same-session inspection bounds; no input semantics changed.
+# Face contract:6×2 before defense; accepted guarded HP receipts are1+1.
