@@ -4,6 +4,7 @@ import { markArtPlaceholder } from './artFallback.js';
 import { armourById } from '../content/equipment.js';
 import { classicAppearance } from './displayAppearance.js';
 import { reducedMotionRequested } from './motion.js';
+import { alternativeBackdropFit } from './models/AlternativeBackdropModel.js';
 
 /* ALTERNATIVE_ART_START */
 const alternativeArtMap = {};
@@ -116,22 +117,11 @@ export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground
   const key = narrow ? 'phone' : 'desktop';
   const device = scene.devices[key];
   const svg = backdrop.querySelector('svg');
-  const scale = Math.max(width / device.width, height / device.height);
-  // Combat follows the fitted enemies while keeping the floor canvas beneath
-  // the entire battlefield; moving it farther up exposes its lower edge.
-  // Other callers (dialogue) keep their own floor line.
-  // `standGround`, when given, is the farthest-back foot line: the camera never
-  // frames so low that those feet rise above the scene's standing area.
-  const standingTop = device.standingArea?.y ?? device.groundAnchor;
-  const framed = Number.isFinite(standGround)
-    ? Math.min(ground, standGround + (device.groundAnchor - standingTop) * device.height * scale) : ground;
-  const cameraGround = coverFloor
-    ? Math.max(framed, height - (1 - device.groundAnchor) * device.height * scale) : framed;
+  const fit = alternativeBackdropFit(device, { width, height, fieldTop, ground, standGround, coverFloor });
   const top = document.documentElement.dataset.wireframeSceneFloor === 'off'
-    ? fieldTop + (height - device.height * scale) / 2
-    : fieldTop + cameraGround - device.groundAnchor * device.height * scale;
+    ? fieldTop + (height - fit.height) / 2 : fit.top;
   svg.setAttribute('viewBox', `0 0 ${device.width} ${device.height}`);
-  svg.style.cssText = `width:${device.width * scale}px;height:${device.height * scale}px;left:${(width - device.width * scale) / 2}px;top:${top}px`;
+  svg.style.cssText = `width:${fit.width}px;height:${fit.height}px;left:${fit.left}px;top:${top}px`;
   backdrop.dataset.device = key;
   [...svg.querySelectorAll(':scope > .alternative-scene-layer')].forEach((group, index) => {
     const layer = combatSceneLayers(device)[index];

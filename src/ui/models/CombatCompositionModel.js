@@ -21,6 +21,12 @@ export function stableCombatArtwork(previous, key, sizes) {
   return previous?.key === key ? previous : { key, sizes: sizes.map(size => ({ ...size })) };
 }
 
+// Resting, fitted artwork owns the grounding footprint. A compact health bar
+// must not reduce a large fighter to a tiny circle; wider bars still win.
+export function combatFloorShadowWidth(healthBarWidth, visibleWidth) {
+  return Math.max(healthBarWidth || 0, (visibleWidth || 0) * .8);
+}
+
 // The line the backdrop camera frames its ground anchor on. A fit may carry
 // its own `sceneryGround` (a short portrait phone keeps the near-row framing,
 // with its horizon and landmark in view, while its enemies stand further back).
