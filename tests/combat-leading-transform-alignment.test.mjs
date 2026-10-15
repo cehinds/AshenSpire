@@ -35,8 +35,9 @@ test('captured phone zoom preserves one transform while real horizontal alignmen
 });
 
 test('the former painted-bound assignment reproduces the captured double translation',()=>{
-  const old=alignment.replace('const hostLeft = parseFloat(leadingHost.style.left) || 0;',
+  const old=alignment.replace('const hostLeft = parseFloat(move.leadingHost.style.left) || 0;',
     'const hostLeft = anchorLocalBox(leadingHost.offsetParent || leadingHost.parentElement, leadingHost).left;');
+  assert.notEqual(old,alignment,'original painted-bound regression must be planted');
   const host={transformX:96.5421,style:{left:'-0.01px',translate:'0 -1.4029px',transform:'translate(96.5421px,72.0909px)'}};
   apply(host,0,.0191,old);
   assert.ok(Math.abs(parseFloat(host.style.left)-96.5321)<1e-9,'the old loop writes the transformed box back into layout left');

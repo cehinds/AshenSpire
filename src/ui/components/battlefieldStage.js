@@ -1034,7 +1034,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       const { leadingHost, dx, dy } = move;
       // placeLeading writes layout px. Painted bounds include the host's own
       // transform, which must not be applied again through layout left.
-      const hostLeft = parseFloat(leadingHost.style.left) || 0;
+      const hostLeft = parseFloat(move.leadingHost.style.left) || 0;
       const hostShiftY = parseFloat(leadingHost.style.translate.split(' ')[1]) || 0;
       leadingHost.style.left = `${hostLeft + dx}px`;
       leadingHost.style.translate = `0 ${hostShiftY + dy}px`;
