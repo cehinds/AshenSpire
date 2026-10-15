@@ -1,0 +1,40 @@
+name: audit published Release gallery
+
+on:
+  push:
+    branches: ['worker/FullCombatAudit/readme-public-proof']
+    paths: ['.github/workflows/release-gallery-proof.yml', 'tools/combat-audit/release-gallery-proof.mjs']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  published-gallery:
+    if: github.ref == 'refs/heads/worker/FullCombatAudit/readme-public-proof'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            tools/browser.mjs
+            tools/combat-audit/release-gallery-proof.mjs
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - name: Install browser adapter
+        run: npm install --no-save --package-lock=false playwright
+      - name: Capture the actual fixed public Release build
+        env:
+          EXPECTED_RELEASE_ORDINAL: '1517'
+        run: node tools/combat-audit/release-gallery-proof.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: published-release-gallery-${{ github.sha }}
+          path: _release-gallery/
+          if-no-files-found: error
+          retention-days: 14
