@@ -2054,7 +2054,7 @@ function showArmoury(request = '', returnTo = showMap) {
     },
     onClose: returnTo,
     onEditDeck: deckDoors().armoury ? () => showDeckEditor(returnTo, true) : null,
-    onProgression: () => showCharacterProgression(() => showArmoury({ destination: 'character' }, returnTo)),
+    onProgression: isConfiguredRun(run) ? null : () => showCharacterProgression(() => showArmoury({ destination: 'character' }, returnTo)),
     onCharacterSheet: (opener, tab, onClose, onRewards) => showCharacterSheet(opener, { tab, onClose, onRewards,
       onRespec: classRespecAvailability(registries, run).ok ? () => showClassRespec(() => showArmoury({ destination: 'character' }, returnTo)) : null }),
     onClassRespec: classRespecAvailability(registries, run).ok ? () => showClassRespec(() => showArmoury({ destination: 'character' }, returnTo)) : null,
@@ -2077,8 +2077,8 @@ function showCharacterSheet(opener, options = {}) {
     ...options,
     offers: {
       statPoints: settingOn(settings, 'rewardLevelStatPoints'),
-      feats: settingOn(settings, 'rewardLevelFeats'),
-      classTree: settingOn(settings, 'rewardLevelClassTree'),
+      feats: !isConfiguredRun(run) && settingOn(settings, 'rewardLevelFeats'),
+      classTree: !isConfiguredRun(run) && settingOn(settings, 'rewardLevelClassTree'),
       levelCards: settingOn(settings, 'rewardLevelCards'),
       pointsPerLevel: resolveLevelUpValue(settings),
     },
@@ -3615,6 +3615,7 @@ function mountPendingReward(checkpoint = run.pendingReward, returnTo = null) {
 }
 
 function showCharacterProgression(returnTo) {
+  if (isConfiguredRun(run)) return showCharacterSheet(null, { onClose: returnTo });
   if (run.pendingReward) return mountPendingReward();
   const settings = saves.loadMeta().settings || {};
   const rewards = mergeProgressionRewards(run.deferredProgression, {

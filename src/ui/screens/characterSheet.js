@@ -154,6 +154,8 @@ function featButtons(registries, run, feats) {
 }
 
 export function openSkillInspection({ registries, run, track, opener }) {
+  const configured = run.gameProfile?.foundation?.mode === 'configured';
+  if (configured) { tab = 'character'; onRewards = null; onRespec = null; offers = { ...offers, feats: false, classTree: false }; }
   registries = characterSheetRegistries(registries, run);
   const model = skillInspection(registries, run, track);
   const cards = el('div', { class: 'progression-associated-cards' }, model.cards.map(card => renderCard(registries, { cardId: card.id, upgraded: false,
@@ -268,8 +270,10 @@ export function openCharacterSheet({ registries, run, offers = DEFAULT_LEVEL_OFF
     eyebrow: t('progression.title'), secondary: [back],
     tabs: [
       { id: 'character', label: t('progression.tab.character'), selected: tab === 'character' },
-      { id: 'skills', label: t('progression.tab.skills'), selected: tab === 'skills' },
-      { id: 'class', label: t('progression.tab.class'), selected: tab === 'class' },
+      ...(configured ? [] : [
+        { id: 'skills', label: t('progression.tab.skills'), selected: tab === 'skills' },
+        { id: 'class', label: t('progression.tab.class'), selected: tab === 'class' },
+      ]),
     ],
     onTab: (id) => state.show(id),
     showMenuButton: false, // a read-only page has no menu to offer
