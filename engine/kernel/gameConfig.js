@@ -107,6 +107,8 @@ export function resolveGameAuthor(author, catalog) {
     validateGameSchema(modules[id], module.schema, `$/modules/${id}`); schemas[id] = module.schema;
     provenance[id] = entry === undefined ? 'bundle' : 'author';
   }
+  // The authored order describes all registered channels; include selects active stages.
+  if (modules.defenses) modules.defenses.order = modules.defenses.order.filter(id => modules.defenses.include.includes(id));
   verifySettings(modules);
   let content = {};
   for (const ref of bundle.manifest.packs) {
