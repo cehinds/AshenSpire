@@ -6,6 +6,7 @@ import { loadAuditRuntime } from './runtime.mjs';
 import { makeAuditCombat, setAuditHand, settleAuditChoices } from './fixtures.mjs';
 import { combatStatusRules } from '../../src/content/combatStatusRules.js';
 import { execFileSync } from 'node:child_process';
+import { pathToFileURL } from 'node:url';
 
 let api = null;
 
@@ -1036,7 +1037,7 @@ export async function runRelicEnemyAudit(mode = 'native') {
     relics, statuses, silencedConsumerPaths, statusModifierConsumers, statusControls, taggedVulnerabilities, enemies, encounters };
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const report = await runRelicEnemyAudit(process.argv[2] || 'native');
   console.log(JSON.stringify(report, null, 2));
   if (report.relics.missing.length || report.relics.passiveMissing.length || report.statuses.missing.length || report.silencedConsumerPaths.rows.some(row => row.result !== 'covered') || report.statusModifierConsumers.missing.length || report.statusControls.missing.length || report.taggedVulnerabilities.missing.length || report.enemies.missing.length || report.enemies.reactionRows.some(row => row.result !== 'covered') || report.encounters.missing.length) process.exitCode = 1;
