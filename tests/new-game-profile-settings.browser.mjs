@@ -46,5 +46,6 @@ await page.getByRole('button',{name:'Create character',exact:true}).click();
 await page.getByRole('button',{name:'Start',exact:true}).click();
 await page.locator('.cz-railed[data-creation-stage="class"]').waitFor();
 assert.equal(await page.locator('.game-profile-setup').count(),0);
+assert.equal(await page.evaluate(() => Object.hasOwn(JSON.parse(localStorage.getItem('sote_meta_v1')).settings, 'undefined')), false, 'custom profile choices never write an undefined settings key');
 assert.deepEqual(errors,[]);console.log('new-game-profile-settings browser: PASS; invalid import, author persistence, explicit preview priority and direct class selection');
 } finally {await browser.close();server.server.close();}
