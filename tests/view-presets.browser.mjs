@@ -26,6 +26,7 @@ async function choose(page, preset) {
   const select = page.locator('select[data-key="viewPreset"]');
   await select.click();
   await select.selectOption(preset);
+  await select.press('Tab');
   await page.waitForFunction(value => document.documentElement.dataset.viewPreset === value, preset);
   const dimensions = await page.evaluate(() => {
     const root = document.documentElement;
@@ -121,7 +122,7 @@ try {
   assert.equal(await pan.evaluate(node => node.classList.contains('grabbing')), false);
   await map.close();
   }
-  for (const host of Object.keys(hosts)) {
+  for (const host of Object.keys(hosts).filter(host => !process.env.VIEW_PRESETS_CAPTURE_HOST || host === process.env.VIEW_PRESETS_CAPTURE_HOST)) {
     const page = await pageFor('core', 'title', host);
     await page.locator('.title-menu').waitFor();
     const widths = await page.locator('.title-menu [data-title-action]').evaluateAll(nodes => nodes.map(n => n.getBoundingClientRect().width));
