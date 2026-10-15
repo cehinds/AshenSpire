@@ -8,14 +8,19 @@ runtime baseline; it does not mean the modular implementation exists.
 
 The previous handoff documentation was committed as `49c5781fe`. The current
 continuation work is documentation only. No PR has been created, and no feature
-preview has been verified. A past GitHub API query returned `Forbidden`; a
-branch push by itself does not establish that Pages deployed a preview.
+preview has been verified. Current profile progression makes only Reaver
+selectable initially, then unlocks Starseer, Rogue and Herald after unique
+completed full runs. Each rest visit offers one service—Strategize, Smith
+or Level Up—and the chosen service fully restores HP/MP/SP and both flask
+types. A past GitHub API query returned `Forbidden`; a branch push by itself
+does not establish that Pages deployed a preview.
 
 Check branch/status and this page’s status/release boundary first, then read the
 documents in this order:
 
 1. [Current source and core specification](CORE-SPEC.md) — current source
-   inventory and the latest decisions for the playable Ashen core bundle.
+   inventory and the latest decisions for the playable Ashen core bundle,
+   profile class unlocks and one-service rest flow.
 2. [Implementation contract](IMPLEMENTATION.md) — module boundary, optional
    package behavior, compatibility and acceptance criteria.
 3. [Pseudocode and package examples](PSEUDOCODE.md) — proposed data shapes,
