@@ -1,0 +1,66 @@
+name: feature preview
+
+# Build the feature's own HEAD, without requiring a merge with dev or a PR.
+# Documentation-only evidence updates keep the existing tested build available.
+on:
+  push:
+    branches: ['[Ff][Ee][Aa][Tt][Uu][Rr][Ee]/**', '[Ff][Ii][Xx]/**', '[Cc][Hh][Oo][Rr][Ee]/**']
+    paths-ignore:
+      - README.md
+      - CONTRIBUTING.md
+      - 'docs/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: feature-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      ASHEN_ART_SOURCE: cache
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: ./.github/actions/setup-node
+      # All pinned packs are public; feature code receives no art-repository token.
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: all
+      - name: Build branch HEAD
+        run: node tools/launch.mjs --build-only
+      - name: Collect standalone and provenance
+        run: |
+          node --input-type=module <<'NODE'
+          import { mkdirSync, copyFileSync, readFileSync, writeFileSync, appendFileSync } from 'node:fs';
+          const directory = 'feature-preview';
+          mkdirSync(directory, { recursive: true });
+          copyFileSync('AshenSpire.html', `${directory}/AshenSpire.html`);
+          copyFileSync('buildordinal.json', `${directory}/buildordinal.json`);
+          const stamp = JSON.parse(readFileSync('buildordinal.json', 'utf8'));
+          const version = `${stamp.release}.${stamp.ordinal}`;
+          const instructions = [
+            '# AshenSpire feature preview', '',
+            `Branch: ${process.env.GITHUB_REF_NAME}`,
+            `Source commit: ${process.env.GITHUB_SHA}`,
+            `Build: ${version}`, '',
+            'Download this artifact ZIP and extract it, then double-click AshenSpire.html to play in your browser.',
+            'The HTML is self-contained; no server or separate art download is required.',
+            'This is a feature test build. The normal integration and promotion checks still apply.', '',
+          ].join('\n');
+          writeFileSync(`${directory}/README.md`, instructions);
+          appendFileSync(process.env.GITHUB_STEP_SUMMARY, instructions);
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: feature-preview-${{ github.sha }}
+          path: feature-preview/
+          if-no-files-found: error
+          retention-days: 14

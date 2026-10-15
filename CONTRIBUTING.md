@@ -34,7 +34,7 @@ worker/<topic>/<task> (local) ──► worker/<topic>/<task> (origin) ──►
 | `dev` | Default integration branch. All feature PRs target `dev`. A `feature/*`, `chore/*` or `fix/*` PR merges once it is reviewed by another agent or session, conflicts are resolved and fast checks are green; the session merges it itself (rule 6, standing approval, owner, 2026-10-13). |
 | `alternative/dev`, `alternative/test` | Frozen historical branches (owner, 2026-10-09). Their approved combat perspective is now the default on regular `dev` and `test`. Bring all new work to `dev`; do not push, merge, sync or dispatch branch-writing jobs to either retired branch. Existing named variants retain their separate rules below. |
 | `test` | Where the heavy CI runs: every push to `test` runs the long suites. Sessions promote `dev` here with a `dev` → `test` PR they merge themselves (rule 6). Only `dev` promotions land here, and `release` is promoted from `test` (owner only, through a pinned `rc/<version>` branch). If `test` is ever deleted, `restore-test-branch.yml` recreates it from `release`, so a fix that landed only on `release` must be merged back into `dev` (a `release` → `dev` PR) before the next promotion; then every heavy run tests what `dev` holds; balance experiments go on their own `experiment/<topic>` branch cut from `dev` (cherry-pick winners back), never on `test`. Force-pushes allowed only on a `feature/*` branch only you have pushed to (a rebase onto `dev`); nowhere else. |
-| `feature/<topic>` | One unit of work, branched from `dev`. Prefix milestone work with it, e.g. `feature/m1-combat-slice`, `feature/m2-map-gen`. `fix/*` and `chore/*` branches follow the same rules. While a PR into `dev` is open, CI publishes the branch's build at `https://cehinds.github.io/AshenSpire/branches/<branch>/latest/` as a sandboxed preview: it runs in an iframe without same-origin access, and progress is not kept. The build is served as text, never as a page on the site. It is replaced on each push and removed when the PR merges or closes. |
+| `feature/<topic>` | One unit of work, branched from `dev`. Prefix milestone work with it, e.g. `feature/m1-combat-slice`, `feature/m2-map-gen`. `fix/*` and `chore/*` branches follow the same rules. After a successful feature build, CI publishes the current branch at `https://cehinds.github.io/AshenSpire/branches/<branch>/latest/` as a sandboxed preview: it runs in an iframe without same-origin access, and progress is not kept. The build is served as text, never as a page on the site. It is refreshed after successful code builds; stale previews are omitted. No open PR is required. |
 
 ## Commits & PRs
 
@@ -42,6 +42,60 @@ worker/<topic>/<task> (local) ──► worker/<topic>/<task> (origin) ──►
 - PRs into `dev` include: what changed, how it was verified (which tests / manual steps), and a screenshot or GIF for UI changes.
 - UI changes also include the [component catalog](docs/component-catalog.html) in the PR/merge summary. Update the catalog and its visual miniature when a component ID, model, renderer, composition, or reuse surface changes.
 - Balance number changes cite the reasoning. There is no win-rate target (owner rulings D1 and D16 in docs/FINISH.md), and every balance number stays configurable.
+
+### Feature branch previews
+
+Every feature change must have a working test-build link and screenshots near
+the top of the feature branch's root README, directly after `# AshenSpire`.
+Keep this feature-specific evidence inside one removable block:
+
+```markdown
+<!-- feature-preview:start -->
+## Feature preview — <feature name>
+
+[Play this feature build](<verified GitHub Pages build URL>)
+
+<Brief description connecting the change to the build and captures.>
+
+| Mobile | Desktop | Wide | Tablet |
+| --- | --- | --- | --- |
+| ![Mobile: describe change](docs/preview/features/<feature>/mobile.png) | ![Desktop: describe change](docs/preview/features/<feature>/desktop.png) | ![Wide: describe change](docs/preview/features/<feature>/wide.png) | ![Tablet: describe change](docs/preview/features/<feature>/tablet.png) |
+<!-- feature-preview:end -->
+```
+
+Code pushes to feature/fix/chore branches (case-insensitive) run
+`.github/workflows/feature-preview.yml`, building the exact branch commit.
+After a successful build, GitHub Pages publishes a browser-playable preview at
+`https://cehinds.github.io/AshenSpire/branches/<branch>/latest/` using the exact
+branch spelling. An open PR is not required. Put this verified **Play** link
+first in the feature README; keep the successful run's artifact as an optional
+download backup. Verify the deployed game loads the change before presenting
+the link as working.
+
+Pages serves feature builds inside a sandboxed frame; browser progress is not
+persistent. A successful build remains eligible after README, CONTRIBUTING or
+docs-only changes. Code changes require a fresh successful build; stale builds
+are removed on the next publication. Artifacts expire after 14 days, so renew
+an expired preview with a manual feature workflow dispatch. GitHub sign-in is
+required only for artifact downloads, not for playing the Pages preview.
+
+Capture and inspect real mobile, desktop, wide and tablet views of the change.
+Track their files in `docs/preview/features/<feature>/`. Include a capture record
+there naming the feature, source commit, full build version/digest, capture
+date, viewport sizes and playable URL so the images are associated with the
+change. Explicitly stage only intended files with `git add -f -- <paths>`.
+The existing release screenshot gallery remains separate and must still be
+verified under [README screenshots](#readme-screenshots).
+
+Run `node tools/feature-preview.mjs --check` to validate marker pairing and
+placement; manually verify the link, four captures and capture record.
+**Before merging into `dev`, remove the feature block and its feature artifact
+folder.** Run `node tools/feature-preview.mjs --remove`, then remove only
+`docs/preview/features/<feature>/` for the completed feature. The helper refuses
+malformed or duplicate markers and strips only the marked block; release
+screenshots, AI disclosures and `readme-sync` blocks must remain intact. Keep
+this shared protocol, helper and feature-preview workflow after promotion. This is mandatory merge
+cleanup, even when the feature's preview is useful during review.
 
 ### README screenshots
 
