@@ -1,7 +1,7 @@
 // Exactly one committed configured service per persisted visit. No arrival grant.
 import { withGameProfileService } from './gameProfileRun.js';
 import { gameModule, gameContent } from './gameProfile.js';
-import { applyLevelUp } from './levelup.js';
+import { applyLevelUp, rederivePools } from './levelup.js';
 import { commitSmithing } from './smithing.js';
 import { refillFlaskCharges } from './gracerefill.js';
 import { syncZones } from './state.js';
@@ -57,7 +57,10 @@ function applyService(registries, draft, service, payload) {
     }
   }
   if (service === 'levelUp') withGameProfileService(draft, service, () => applyLevelUp(registries, draft, payload.attributeId));
-  if (service === 'smith') withGameProfileService(draft, service, () => commitSmithing(registries, draft, payload.itemRef));
+  if (service === 'smith') {
+    withGameProfileService(draft, service, () => commitSmithing(registries, draft, payload.itemRef));
+    rederivePools(registries, draft, 'Smith equipment upgrade');
+  }
   draft.hp = draft.maxHp;
   draft.mana = draft.maxMana;
   draft.stamina = draft.maxStamina;

@@ -134,8 +134,8 @@ export function buildGameProfileActMap(registries, rng, seat, tier, { history = 
   if (!rules || tier < 1 || tier > rules.acts) throw new Error('Configured route tier is out of range');
   const count = rules.prebossNodes;
   if (!Number.isInteger(count) || count < rules.restsPerAct) throw new Error('Invalid configured route length');
-  // Provisional spacing is authored in content when supplied; otherwise evenly spaced.
-  const restFloors = rules.restFloors || Array.from({ length: rules.restsPerAct }, (_,i) => Math.floor((i+1)*count/(rules.restsPerAct+1)));
+  const restFloors = rules.restFloors;
+  if (!Array.isArray(restFloors)) throw new Error('Configured route requires authored restFloors');
   if (new Set(restFloors).size !== rules.restsPerAct || restFloors.some(n=>n<1||n>count)) throw new Error('Invalid configured rest floors');
   const nodes = {};
   const seenEvents = [];
