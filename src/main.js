@@ -1441,7 +1441,12 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
     }
     return onRefused(slot);
   };
-  const savedGameProfile = saves.peekRunGameProfile(slot);
+  let savedGameProfile;
+  try { savedGameProfile = saves.peekRunGameProfile(slot); }
+  catch (error) {
+    showSettingsNotice(`Saved game configuration could not be restored: ${error.message}`, 'profile');
+    return refused();
+  }
   const loadGameProfile = savedGameProfile || resolveGameProfile('current');
   const authoredRegistries = createRegistries(applyGameProfileToContent(contentBundle, loadGameProfile));
   let loaded = saves.loadRun(authoredRegistries, slot);
@@ -2375,10 +2380,14 @@ function showCustomize(slot = 1, catalog = false, profileChosen = false) {
     pane.append(title, copy, controls, next, back); app.append(pane); return;
   }
   rebuildRegistries(saves.loadMeta().settings || {}, null, selectedGameProfile);
+  if (isConfiguredRun(selectedGameProfile) && !gameModule(selectedGameProfile, 'class-selection')) {
+    const defaultClass = gameContent(selectedGameProfile, 'classes')[0];
+    return startRunInSlot({ classId: defaultClass.id, seedString: randomSeedString(), gameProfile: selectedGameProfile }, slot);
+  }
   mountCustomize(app, {
     gameProfile: selectedGameProfile,
     fixedClasses: isConfiguredRun(selectedGameProfile) ? gameContent(selectedGameProfile, 'classes') : null,
-    profileStarterCount: profileStarterCount(gameContent(selectedGameProfile, 'starterDeck')),
+    profileStarterCount: gameModule(selectedGameProfile, 'cards') ? profileStarterCount(gameContent(selectedGameProfile, 'starterDeck')) : 0,
     profileClassUnlocks: gameModule(selectedGameProfile, 'progression')?.classUnlocks === true,
     classAvailable: id => gameProfileClassAvailable(selectedGameProfile, saves.loadMeta(), id),
     registries,
