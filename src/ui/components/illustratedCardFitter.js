@@ -18,7 +18,12 @@ export function fitIllustratedCards(cards) {
       // The same budget applies at rest, selected, in catalogues and enlarged.
       const faceLines=text.dataset.faceLines==='true';
       const row={face,text,layer,scale,rules,bounded:faceLines,lines:rules?(faceLines?Number(text.dataset.maxLines)||3:Infinity):Number(text.dataset.maxLines)||1};
-      if(faceLines)for(const clause of text.querySelectorAll('[data-face-clause]'))clause.style.display='';
+      if(faceLines){
+        row.clauses=[...text.querySelectorAll('[data-face-clause]')];
+        row.fallback=text.querySelector('[data-face-fallback]');
+        for(const clause of row.clauses)clause.style.display='';
+        if(row.fallback)row.fallback.style.display='none';
+      }
       if(rules){
         row.rankInset=0;
         row.panel=face.querySelector('[data-component="panel"]');
@@ -73,14 +78,24 @@ export function fitIllustratedCards(cards) {
   // move its secondary clause to Information. Never clip half a condition or
   // grow the panel into artwork. A resize restores and remeasures both.
   const bounded=texts.filter(row=>row.bounded);
+  const overBudget=row=>row.text.scrollHeight>Math.min(row.boxHeight,row.result*1.25*row.lines)+1
+    ||row.text.scrollWidth>row.text.clientWidth+1;
+  // Separate batch reads and writes, including the second measurement. A
+  // primary clause can still exceed either three lines or a short rank bay
+  // after the secondary clause has gone (observed at 120/124px shelves).
+  for(const row of bounded)row.omitSecondary=overBudget(row);
+  for(const row of bounded)if(row.omitSecondary&&row.clauses.length>1)row.clauses.at(-1).style.display='none';
+  for(const row of bounded)row.needsFallback=overBudget(row);
   for(const row of bounded){
-    const clauses=[...row.text.querySelectorAll('[data-face-clause]')];
-    const available=Math.min(row.boxHeight,row.result*1.25*row.lines)+1;
-    row.omitSecondary=row.text.scrollHeight>available||row.text.scrollWidth>row.text.clientWidth+1;
-    if(row.omitSecondary&&clauses.length>1){clauses.at(-1).style.display='none';row.face.dataset.faceOmitted='true';}
+    if(row.needsFallback&&row.fallback){
+      for(const clause of row.clauses)clause.style.display='none';
+      row.fallback.style.display='inline';
+    }
+    if(row.omitSecondary||row.needsFallback)row.face.dataset.faceOmitted='true';
     row.face.dataset.rulesExpanded='false';
     row.face.dataset.rulesDense='false';
     row.face.dataset.rulesNarrowFit=String(row.omitSecondary);
+    row.face.dataset.rulesFallback=String(row.needsFallback);
     row.text.dataset.rulesComplete=String(!row.omitSecondary);
   }
   // Measure the whole batch before expanding any panel. No per-card search or

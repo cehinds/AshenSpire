@@ -299,7 +299,8 @@ export function renderCard(registries, ref, opts = {}) {
       : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences);
     const projection = cardFaceProjection(def, { lines: faceLines, authoredHtml: authoredRules, registries,
       effects: opts.preview?.chargedEffects || def.effects || [] });
-    const rulesHtml = compactCardRules(projection.clauses.map((line, i) => `<span class="face-line" data-face-kind="${line.kind}" data-face-clause="${i}">${line.html.replace(/\.$/, '')}.</span>`).join(' '));
+    const rulesHtml = compactCardRules(projection.clauses.map((line, i) => `<span class="face-line" data-face-kind="${line.kind}" data-face-clause="${i}">${line.html.replace(/\.$/, '')}.</span>`).join(' '))
+      + `<span data-face-fallback style="display:none">${esc(t('card.face.inspectEffect'))}.</span>`;
     el.dataset.faceLines = String(projection.clauses.length);
     el.dataset.faceOmitted = String(projection.omitted);
     el.innerHTML = illustratedCardHtml(model,{

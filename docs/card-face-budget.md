@@ -24,8 +24,12 @@ rules where their behavior differs.
 The renderer wraps clauses together rather than assigning one block per
 semantic row. The fitter measures three physical lines and can omit a whole
 secondary clause on a narrow face. It cannot expand this panel into artwork
-or use a line clamp to cut a condition in half. A resize restores both clauses
-before measuring again. The existing Information control opens all details.
+or use a line clamp to cut a condition in half. After removing a secondary
+clause it measures again. If the primary still exceeds three lines or the
+rules layer's height at the readable floor, the entire effect area says
+**Inspect full effect**. No partial condition remains visible. A resize
+restores both clauses and hides that fallback before measuring again. The
+existing Information control opens all details.
 
 `tests/card-face-projection.test.mjs` covers all authored cards at base,
 upgraded, rank 1 and rank 5, live values, probabilities, payments and complex

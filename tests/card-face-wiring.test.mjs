@@ -50,6 +50,8 @@ test('a card without a preview renders whole clauses starting with Deal', () => 
   const lines = faceLinesOf(markup.get(el));
   assert.ok(lines.length >= 1, 'at least one .face-line');
   assert.match(textOf(lines[0]), /^Deal /);
+  assert.match(markup.get(el), /<span data-face-fallback style="display:none">Inspect full effect\.<\/span>/,
+    'the fitter has a localized whole-rule alternative at narrow sizes');
   assert.ok(lines.every(line => !textOf(line).startsWith(';')), 'separators never lead a wrapped clause');
   assert.ok(lines.every(line => textOf(line).trimEnd().endsWith('.')), 'periods stay attached to the preceding clause');
 }));
