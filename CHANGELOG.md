@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-15
+
+- **Combat stances keep their damage, pressure and hit feedback consistent** ([#1996](https://github.com/cehinds/AshenSpire/pull/1996), `0.7.1.1531`). Smash gains its failed-Evade bonus when a retained Evade stack attempts the dodge after a stance change. Enemy Counters and damaging Smash moves receive the configured fallback Poise damage when none is authored, while support-only charging stages stay harmless. Paced combat keeps the correct Evasion rating, and co-op prevention shows one Missed callout.
+
 ## 2026-10-14
 
 - **Windows checks use the installed artwork converter** ([#1995](https://github.com/cehinds/AshenSpire/pull/1995), `0.7.1.1531`). Development-process fix only, nothing in the game changes. Class Smash export tests now use the exact Python interpreter with pinned Pillow installed, so Windows cannot accidentally run the test with a different Python lacking the image library.

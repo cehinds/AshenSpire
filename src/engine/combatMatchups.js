@@ -445,7 +445,7 @@ function stanceMultiplier(ctx, target, profile, hit) {
   const incoming = profile.maneuver === 'counter' ? { maneuver: 'counter' } : stanceOf({ combatProfile: profile });
   if (!incoming) return 1;
   const cfg = stanceRulesFor(ctx);
-  if (incoming.maneuver === 'smash' && (['defend', 'casting'].includes(stance?.maneuver) || (stance?.maneuver === 'evade' && hit?.evadeAttempted))) return cfg.smashMultiplier;
+  if (incoming.maneuver === 'smash' && (['defend', 'casting'].includes(stance?.maneuver) || hit?.evadeAttempted)) return cfg.smashMultiplier;
   if (incoming.maneuver === 'counter' && (['attack', 'smash'].includes(stance?.maneuver) || hit?.evadeAttempted)) return cfg.counterMultiplier;
   if (incoming.maneuver === 'sweep' && stance?.maneuver === 'counter') return cfg.sweepCounterMultiplier;
   return 1;
