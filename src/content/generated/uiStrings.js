@@ -10317,7 +10317,7 @@ export const uiStrings = [
     "id": "status.lifecycle.timer",
     "extends": "",
     "short": "",
-    "full": "Turn timer: {duration} owner turn ends. Reapplying resets the timer.",
+    "full": "Turn timer: {duration} owner turn ends. Successful reapplication resets the timer.",
     "tip": ""
   },
   {
@@ -10402,6 +10402,34 @@ export const uiStrings = [
     "extends": "",
     "short": "Inspect full effect",
     "full": "",
+    "tip": ""
+  },
+  {
+    "id": "status.lifecycle.classic",
+    "extends": "",
+    "short": "",
+    "full": "Classic combat: {detail}",
+    "tip": ""
+  },
+  {
+    "id": "status.lifecycle.expanded",
+    "extends": "",
+    "short": "",
+    "full": "Expanded combat: {detail}",
+    "tip": ""
+  },
+  {
+    "id": "status.lifecycle.expandedStacking",
+    "extends": "",
+    "short": "",
+    "full": "Reapplying adds to the stack total up to {cap}; an application at the cap adds nothing.",
+    "tip": ""
+  },
+  {
+    "id": "status.lifecycle.expandedTimer",
+    "extends": "",
+    "short": "",
+    "full": "Reapplication resets the timer only when at least one stack is added; an application at the cap leaves the timer unchanged.",
     "tip": ""
   }
 ];
