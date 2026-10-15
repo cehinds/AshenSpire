@@ -1050,7 +1050,12 @@ export const CATEGORY_ORDER = ['General', 'Accessibility', 'Advanced'];
 // plus a branch in `generalGroups`. They were four separate `['Display',
 // 'Audio']` literals before Combat existed, which is four places for a fifth
 // group to be forgotten in.
-export const GENERAL_GROUPS = ['Display', 'Combat', 'Audio', 'Game rules'];
+// Custom sections declare their stored keys for group reset and Reset all.
+// Their controls own validation and persistence rather than ordinary row widgets.
+export const CUSTOM_GENERAL_GROUPS = Object.freeze({
+  'Game rules': Object.freeze(['newGameProfile', 'importedGameProfile']),
+});
+export const GENERAL_GROUPS = ['Display', 'Combat', 'Audio', ...Object.keys(CUSTOM_GENERAL_GROUPS)];
 
 /** The General group a stored value names, or the first one. Never undefined:
  *  a bag written by an older build can hold a group this one dropped. */
@@ -1560,7 +1565,8 @@ export function resetKeys(settings, onChange, keys, label = 'Reset', { promoted 
 
 /** allResettableKeys() → every stored key Reset all puts back, inert retired ones included. */
 export function allResettableKeys() {
-  return [...ROWS, ...INERT_CONFIG_ROWS].filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key);
+  return [...ROWS, ...INERT_CONFIG_ROWS].filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key)
+    .concat(Object.values(CUSTOM_GENERAL_GROUPS).flat());
 }
 
 /** confirmResetAll(onConfirm, returnFocusElement) — the danger confirmation both Reset-all doors open. */
@@ -2427,7 +2433,7 @@ function shownCategories(saves) {
  * animation") is a claim about which NAME holds which ROW, and that claim is
  * only worth anything if something reads it back. */
 export function generalGroups(category) {
-  if (category === 'Game rules') return new Map([[t('gameProfile.settings.title'), []]]);
+  if (Object.hasOwn(CUSTOM_GENERAL_GROUPS, category)) return new Map([[categoryLabel(category), CUSTOM_GENERAL_GROUPS[category].map(key => ({ key }))]]);
   const groups = new Map();
   for (const row of categoryHandler(category).rows) {
     const key = row.key;
@@ -2644,7 +2650,7 @@ export function categoryHtml(cat, settings, saves, previewAttributes = null, pre
     const rows = topics.get(topic);
     const preview = settingsPreviewShown(cat, selected) ? settingsPreviewHtml(settings) : '';
     const firstFullscreen = selected === 'Display' && rows[0]?.key === 'fullscreen';
-    const rowHtml = rows.map(row => settingsRowHtml(settings, row));
+    const rowHtml = Object.hasOwn(CUSTOM_GENERAL_GROUPS, selected) ? [] : rows.map(row => settingsRowHtml(settings, row));
     // On a phone the expanded preview can fill the visible pane. Keep the
     // first Display control ahead of it so Fullscreen is reachable on entry.
     const body = selected === 'Game rules' ? '<div data-game-profile-settings></div>' : firstFullscreen
@@ -3312,7 +3318,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
           return topics.get(settings[`settingsGeneralTopic.${section}`]) || topics.values().next().value;
         })()
         : (groups.find(group => group.id === selected) || groups[0])?.rows || [];
-      const keys = rows.filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key);
+      const keys = button.dataset.resetConfig === 'all' ? allResettableKeys()
+        : rows.filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key);
       const label = button.dataset.resetConfig === 'all' ? 'All settings reset' : filtering() ? 'Results reset' : 'Group reset';
       const fromMenu = !!button.closest('.set-options');
       headerTools.querySelector('details').open = false;
