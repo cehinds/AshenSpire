@@ -185,7 +185,7 @@ export function mountCustomize(app, {
   let refreshCharacterFaces = () => {};
   let refreshSpriteFaces = () => {};
   let refreshEquipmentFaces = () => {};
-  const refreshFaces = () => { refreshSectionFaces(); refreshCharacterFaces(); refreshSpriteFaces(); refreshEquipmentFaces(); };
+  const refreshFaces = () => { refreshSectionFaces(); refreshCharacterFaces(); refreshSpriteFaces(); refreshEquipmentFaces(); refreshStageHeader(); };
   // Every gated Continue re-reads its step when the start refusal does: one
   // call site per state change, and the gates cannot fall behind Begin.
   const gateRefreshers = [];
@@ -318,6 +318,22 @@ export function mountCustomize(app, {
     closeLabel: t('common.back'),
   });
   const close = head.querySelector('.modal-close');
+  const sectionCaption = el('span', { class: 'cc-header-section' });
+  const sectionDetail = el('span', { class: 'cc-header-detail' });
+  const sectionContext = el('span', { class: 'cc-header-context' }, [sectionCaption, sectionDetail]);
+  const abilityProgressNodes = new Map();
+  if (!catalog) head.querySelector('h2').replaceChildren(el('span', { class: 'cc-header-base', text: t('creation.title') }), el('span', { class: 'cc-header-separator', text: ' — ' }), sectionContext);
+  function refreshStageHeader() {
+    if (catalog) return;
+    sectionCaption.textContent = categoryLabel(current);
+    const progress = abilityProgressNodes.get(current);
+    const hint = current === 'subclass' ? t('creation.subclass.hint')
+      : current === 'feats' ? t('creation.feats.availability')
+        : current === 'keepsake' ? registries.relics.get(state.startingRelicId)?.name || '' : '';
+    sectionDetail.replaceChildren(...(progress ? [el('span', { class: 'cc-header-colon', text: ': ' }), progress] : hint ? [el('span', { text: `: ${hint}` })] : []));
+    sectionDetail.hidden = !progress && !hint;
+    head.querySelector('h2').title = `${t('creation.title')} — ${categoryLabel(current)}${hint ? `: ${hint}` : ''}`;
+  }
   // View controls remain interactive catalog specimens; the live header
   // reserves its single row for the title, portrait, menu and close.
   const classTools = el('div', { id: 'cz-class-view-toggle', class: 'cz-head-tool' });
@@ -455,6 +471,7 @@ export function mountCustomize(app, {
   // screen. renderEquipment rebuilds the detail pane on every choice, so a
   // fold with no memory is one a player has to re-open after every tap.
   const packageOpen = new Map();
+  const deckDisclosureOpen = new Map();
   let equipmentSectionViews = [];
   let equipmentNodes = new Map();
   let equipmentFold = null;
@@ -681,6 +698,7 @@ export function mountCustomize(app, {
       const node = registries.nodes.find(row => row.id === id);
       const picked = scoped.chosen.includes(id);
       const choice = optionCard({ name: node?.label || id, description: creationTraitDescription(registries, id), selected: picked, className: 'cc-subclass-trait' });
+      choice.title = `${node?.label || id}: ${creationTraitDescription(registries, id)}`;
       choice.dataset.creationTrait = id;
       choice.setAttribute('aria-pressed', String(picked));
       choice.addEventListener('click', () => {
@@ -701,12 +719,26 @@ export function mountCustomize(app, {
     }
   }
 
+  function collapsedStartingDeck(deck, context = 'subclass') {
+    const receipt = el('div', { class: 'cc-review-deck cz-disc' });
+    const heading = deck.querySelector('.cc-panel-heading');
+    mountDisclosure(receipt, [{ key: 'starting-deck', kind: 'pick', disclosure: 'face',
+      face: { label: heading.querySelector('h3').textContent,
+        value: heading.querySelector('.as-subtitle')?.textContent || '' },
+      reveal: { node: deck },
+    }], { structure: 'details' });
+    const details = receipt.querySelector('details');
+    details.open = deckDisclosureOpen.get(context) || false;
+    details.addEventListener('toggle', () => deckDisclosureOpen.set(context, details.open));
+    return receipt;
+  }
   function renderStartingDeck() {
     const run = previewRun();
     const settings = meta.settings || {};
-    $('#cz-starting-deck-host').replaceChildren(createCreationStartingDeck({ registries, run, settings,
+    const deck = createCreationStartingDeck({ registries, run, settings,
       refs: creationDraftStartingDeck(registries, run, state.startingAbilityIds, settings),
-    }));
+    });
+    $('#cz-starting-deck-host').replaceChildren(catalog ? deck : collapsedStartingDeck(deck));
   }
   function classAndSubclassSummary() {
     const cls = registries.classes.get(state.classId);
@@ -800,6 +832,8 @@ export function mountCustomize(app, {
         const unfold = classUnfold({ cls, sprite, resources, relic,
           visual: classGlyph(cls.id), onRelicInspect: inspectRelic,
           summary: creationClassTileSummary(registries, run, projection, creationDraftStartingDeck(registries, run, state.startingAbilityIds, meta.settings || {})) });
+        for (const label of unfold.querySelectorAll('.cc-unfold-armament,.cc-unfold-description,.cc-unfold-playstyle'))
+          label.title = label.getAttribute('aria-label') || label.textContent;
         card.classList.add('unfolded');
         card.append(unfold);
       }
@@ -1104,6 +1138,7 @@ export function mountCustomize(app, {
     // Before a pick the preview pane follows the pointer, so it is never a
     // portrait of a class nobody chose; a pick pins it.
     for (const card of cards) {
+      for (const copy of card.querySelectorAll('.od,.om')) copy.title = copy.textContent;
       const id = card.dataset.class;
       if (!id || card.classList.contains('locked')) continue;
       card.addEventListener('pointerenter', () => {
@@ -1139,13 +1174,17 @@ export function mountCustomize(app, {
   function renderStartingAbility(section, { stage, next = null } = {}) {
     const box = options([], { id: stage === 'spells' ? 'cz-spell-choices' : stage === 'maneuvers' ? 'cz-maneuver-choices' : 'cz-startingAbilities', class: 'cc-card-selectors cc-choice-collection', dataset: { view: state.equipmentChoiceView } });
     const node = el('section', { class: 'cc-equip-group cc-starting-abilities', dataset: { abilityStep: stage, ...(stage === 'equipment' ? { equipmentSection: section.id } : {}) } }, box);
-    const progress = el('p', { class: 'cc-ability-progress', 'aria-live': 'polite' });
+    const progressFull = el('span', { class: 'cc-ability-progress-full' });
+    const progressCompact = el('span', { class: 'cc-ability-progress-compact', 'aria-hidden': 'true' });
+    const progress = el('span', { class: 'cc-ability-progress', 'aria-live': 'polite' }, [progressFull, progressCompact]);
     node.prepend(progress);
     const elementCapReached = () => (section.maxElementPicks || 0) > 0
       && state.startingAbilityIds.filter(id => section.elementIds.includes(id)).length >= section.maxElementPicks;
     const refresh = () => {
-      progress.textContent = t('creation.abilities.progress', { chosen: state.startingAbilityIds.length, count: section.count, rank: section.rank });
-      if (elementCapReached()) progress.textContent += ` · ${t('creation.abilities.elementCap', { max: section.maxElementPicks })}`;
+      progressFull.textContent = t('creation.abilities.progress', { chosen: state.startingAbilityIds.length, count: section.count, rank: section.rank });
+      if (elementCapReached()) progressFull.textContent += ` · ${t('creation.abilities.elementCap', { max: section.maxElementPicks })}`;
+      progressCompact.textContent = `${state.startingAbilityIds.length}/${section.count}`;
+      progress.title = progressFull.textContent;
       for (const entry of box.children) {
         const picked = state.startingAbilityIds.includes(entry.dataset.cardId);
         entry.querySelector('.card').classList.toggle('selected', picked);
@@ -1203,22 +1242,25 @@ export function mountCustomize(app, {
 
   function renderSpells() {
     spellGateRefreshers = [];
+    abilityProgressNodes.delete('spells');
+    abilityProgressNodes.delete('maneuvers');
     const plan = refreshAbilitySelection();
     const spellsHeading = creationPageHeading({ title: t('creation.spells.title') });
-    $('#cz-spells-heading').replaceChildren(spellsHeading);
+    $('#cz-spells-heading').replaceChildren(...(catalog ? [spellsHeading] : []));
     const host = $('#cz-starting-spells');
     host.replaceChildren(plan?.skillId === 'item:magic-focus'
       ? renderStartingAbility(plan, { stage: 'spells' })
       : flavour(t('creation.spells.unavailable')));
     const spellProgress = host.querySelector('.cc-ability-progress');
-    if (spellProgress) spellsHeading.append(spellProgress);
+    if (spellProgress) { abilityProgressNodes.set('spells', spellProgress); if (catalog) spellsHeading.append(spellProgress); }
     scheduleCardFits(host.querySelectorAll('.card'));
     const maneuversHeading = creationPageHeading({ title: t('creation.category.maneuvers') });
-    $('#cz-maneuvers-heading').replaceChildren(maneuversHeading);
+    $('#cz-maneuvers-heading').replaceChildren(...(catalog ? [maneuversHeading] : []));
     const martial = $('#cz-starting-maneuvers');
     martial.replaceChildren(...(plan?.skillId === 'combatManeuvers' ? [renderStartingAbility(plan, { stage: 'maneuvers' })] : []));
     const maneuverProgress = martial.querySelector('.cc-ability-progress');
-    if (maneuverProgress) maneuversHeading.append(maneuverProgress);
+    if (maneuverProgress) { abilityProgressNodes.set('maneuvers', maneuverProgress); if (catalog) maneuversHeading.append(maneuverProgress); }
+    refreshStageHeader();
     scheduleCardFits(martial.querySelectorAll('.card'));
   }
 
@@ -1249,6 +1291,14 @@ export function mountCustomize(app, {
       const showDetails = piece => {
         detailPane.dataset.previewItem = piece.id || 'empty-hand';
         detailPane.replaceChildren(compactEquipmentDetails(piece.name, (section.kind === 'relic' ? renderCollectibleCard(registries, piece, 'Relic', { interactive: false, inspection: false }) : renderEquipmentCard(registries, piece, { interactive: false, inspection: false, presentation: piece.emptyHand ? EMPTY_HAND_PRESENTATION : null })).explanations));
+        if (section.kind === 'relic') {
+          const compact = detailPane.firstElementChild;
+          const heading = compact.querySelector('.cc-item-heading');
+          const summary = el('summary', { class: 'cc-item-heading' }, [...heading.childNodes]);
+          heading.remove();
+          const rules = el('details', { class: 'cc-relic-rules' }, [summary, ...compact.childNodes]);
+          compact.replaceChildren(rules);
+        }
         if (section.kind === 'hand') {
           const hands = selectStartingHand(state.startingHands, section.slot, piece.id);
           const preview = startingEquipmentPreview(registries, previewRun(), hands, section.slot);
@@ -1645,13 +1695,7 @@ export function mountCustomize(app, {
     if (host.id === 'cz-review-summary') {
       // The loadout stays visible; the already inspectable deck is a native
       // disclosure with its canonical count and source breakdown on the face.
-      deckReceipt = el('div', { class: 'cc-review-deck cz-disc' });
-      const heading = deck.querySelector('.cc-panel-heading');
-      mountDisclosure(deckReceipt, [{ key: 'review-starting-deck', kind: 'pick', disclosure: 'face',
-        face: { label: heading.querySelector('h3').textContent,
-          value: heading.querySelector('.as-subtitle')?.textContent || '' },
-        reveal: { node: deck },
-      }], { structure: 'details' });
+      deckReceipt = collapsedStartingDeck(deck, 'review');
     }
     host.replaceChildren(cards, deckReceipt, calculations);
   }
@@ -2015,6 +2059,7 @@ export function mountCustomize(app, {
     paneHost.replaceChildren(stages[id]);
     paneHost.scrollTop = 0;
     selectRailItem(member);
+    refreshStageHeader();
     if (id === 'attributes') characterFold.open('primary');
     if (id === 'equipment' && !equipmentFold?.openKey) openEquipmentSection(equipmentSectionViews[0]?.id);
     if (id === 'spells' || id === 'maneuvers') renderSpells();
