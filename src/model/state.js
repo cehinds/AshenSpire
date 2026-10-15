@@ -1,3 +1,6 @@
+import { validateResolvedGameProfile } from '../../engine/kernel/gameConfig.js';
+import { gameModule, gameContent } from './gameProfile.js';
+import { isConfiguredRun, gameProfileAttributes, gameProfileClassAvailable, gameProfileStatOptions, initializeGameProfileRun } from './gameProfileRun.js';
 import { startingAbilityRefs } from './startingAbilities.js';
 import { coopProgressionProblems } from './coopProgression.js';
 import {abilityDraftClaimProblems} from './abilityDraftReceipts.js';
@@ -112,7 +115,8 @@ export const MAX_CARD_RANK = 99;
 // bump is what makes an OLDER build refuse-and-keep such a save rather than
 // read it and drop the choice; a 23 save has no relic choices, so 23 → 24 is a
 // no-op at the migration door.
-export const RUN_SCHEMA_VERSION = 24;
+// 25: pinned game profile, durable run ID and configured service receipts.
+export const RUN_SCHEMA_VERSION = 25;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 export function createIdGen(prefix = 'i') {
@@ -142,6 +146,8 @@ export function createRunState({
   seed,
   classId,
   registries,
+  gameProfile = registries.gameProfile,
+  runId = undefined,
   combatExpansionVersion = 2,
   enemyKnowledgeVersion = 1,
   reactionRulesVersion = combatExpansionVersion === 2 ? 2 : null,
@@ -159,18 +165,28 @@ export function createRunState({
   if (![1, 2].includes(combatExpansionVersion)) throw new Error('combatExpansionVersion must be 1 or 2');
   if (![null, 1].includes(enemyKnowledgeVersion)) throw new Error('enemyKnowledgeVersion must be 1 or null');
   if (![null, 1, 2].includes(reactionRulesVersion) || (reactionRulesVersion >= 1 && combatExpansionVersion !== 2)) throw new Error('Reaction rules require an expanded run');
+  const profileSubject = { gameProfile };
+  const configured = isConfiguredRun(profileSubject);
+  if (configured) enemyKnowledgeVersion = null;
+  if (!gameProfileClassAvailable(profileSubject, profileMeta, classId)) throw new Error(`Class '${classId}' is locked in this profile`);
+  const fixedAttributes = configured ? gameProfileAttributes(profileSubject, classId) : null;
+  if (configured && !fixedAttributes) throw new Error(`Configured class '${classId}' has no attributes`);
+  if (configured && requestedAttributes && Object.entries(fixedAttributes).some(([key,value]) => requestedAttributes[key] !== value)) throw new Error('Configured creation uses fixed attributes');
+  derivedStatOptions = gameProfileStatOptions(profileSubject, derivedStatOptions);
   const classDef = registries.classes.get(classId);
   const selectedAttributeMode = attributeMode === undefined
     ? defaultCreationModeId(registries)
     : attributeMode;
-  const attributes = requestedAttributes === undefined
+  const attributes = fixedAttributes ? structuredClone(fixedAttributes) : requestedAttributes === undefined
     ? classAttributePreset(registries, classId, selectedAttributeMode)
     : normalizeRunAttributes({ class: classId, attributeMode: selectedAttributeMode, attributes: requestedAttributes }, registries).attributes;
   const attributeModeSnapshot = creationModeSnapshot(registries, selectedAttributeMode);
+  if (configured) Object.assign(attributeModeSnapshot, { baseline: 1, bonusPool: Object.values(fixedAttributes).reduce((a,b)=>a+b,0)-5, minimum: 1, maximum: Math.max(...Object.values(fixedAttributes)) });
   const idGen = createIdGen('rc');
   const baseStartingKit = resolveStartingKit(registries, classId, startingKitId, profileMeta);
-  const hands = resolveCreationHands(registries, classId, startingHands, baseStartingKit, profileMeta);
-  const startingKit = { ...baseStartingKit, ...hands, ...(startingHands ? { customized: true } : {}) };
+  const hands = resolveCreationHands(registries, classId, configured ? undefined : startingHands, baseStartingKit, profileMeta);
+  const fixedHands = configured ? gameContent(profileSubject, 'classes')?.find(row => row.id === classId)?.loadout : null;
+  const startingKit = { ...baseStartingKit, ...hands, ...(startingHands ? { customized: true } : {}), ...(fixedHands || {}) };
   const startingRelic = resolveCreationRelic(registries, classId, startingRelicId, profileMeta);
   // E5 (#250): the set the run begins wearing. Resolved against the same
   // profile meta the kit above is — absent, the class's free set, which is
@@ -198,6 +214,7 @@ export function createRunState({
   const equipmentPoolBonuses = Object.fromEntries(EQUIPMENT_POOL_FIELDS.map((field) => [field, startingRunMods[field]]));
   const oldMaxHp = classDef.maxHp + equipmentPoolBonuses.maxHp;
   const run = {
+    ...(gameProfile ? { gameProfile: structuredClone(gameProfile), runId: runId || globalThis.crypto.randomUUID() } : {}),
     combatExpansionVersion,
     ...([1, 2].includes(reactionRulesVersion) ? { reactionRulesVersion, ...(reactionRulesVersion === 2 ? { reactionRules: reactionRulesSnapshot() } : {}) } : {}),
     ...(combatExpansionVersion === 2 ? { ashenBlight: createAshenBlightState(), combatExpansionRules: createCombatExpansionRuleSnapshot() } : {}),
@@ -350,7 +367,8 @@ export function createRunState({
   // deck exists — and "bound cards are dealt first, in sourceOrder" is a
   // statement about the deck a run BEGINS with, not about later arrivals.
   orderStartingDeck(registries, run);
-  ensureExpandedStarterCoverage(registries, run);
+  if (!configured) ensureExpandedStarterCoverage(registries, run);
+  initializeGameProfileRun(registries, run, { profileMeta });
   // The growth chain binds from birth: a starting relic carrying a
   // balance.flaskGrowth row grows the maximum before the first node.
   syncFlaskGrowth(registries, run);
@@ -670,6 +688,9 @@ export function initializeRunDerivedStats(run, registries, {
  * are allowed through untouched — this is a floor, not a whitelist.
  */
 export const RUN_SHAPE = [
+  { key: 'gameProfile', type: 'object', optional: true },
+  { key: 'runId', type: 'string', optional: true },
+  { key: 'gameProfileRestVisits', type: 'object', optional: true },
   { key: 'contentVersion', type: 'string' },
   { key: 'seed', type: 'number' },
   { key: 'streamCounters', type: 'object' },
@@ -950,6 +971,11 @@ export function levelProblems(level) {
 
 export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils, preTrainingPool = preConsumables, preAttunedSigils = preTrainingPool } = {}) {
   const problems = [];
+  if (run.gameProfile) {
+    try { validateResolvedGameProfile(run.gameProfile); } catch (error) { problems.push(`gameProfile: ${error.message}`); }
+    if (typeof run.runId !== 'string' || !run.runId) problems.push('Configured run requires a durable runId');
+  } else if (run.runId || run.gameProfileRestVisits) problems.push('Profile-owned fields require a pinned gameProfile');
+
   if (run.combatExpansionVersion !== undefined && ![1, 2].includes(run.combatExpansionVersion)) problems.push('combatExpansionVersion must be 1 or 2 when present');
   if (run.reactionRulesVersion !== undefined && (![1, 2].includes(run.reactionRulesVersion) || run.combatExpansionVersion !== 2)) problems.push('Reaction rules require an expanded run');
   if (run.reactionRulesVersion === 2) problems.push(...reactionRulesProblems(run.reactionRules).map(problem => `reactionRules: ${problem}`));
@@ -1709,7 +1735,7 @@ export function migrateRunSchema(run) {
   // (engine/save.js, the POOL-BUILT DECK block), reading this version from
   // migratedFromRunSchemaVersion. A Standard run has nothing to migrate.
   // v23 → v24: no relic choices could be written before (SPEC §6); nothing to fill.
-  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
+  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
     throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: ${Array.from({ length: RUN_SCHEMA_VERSION }, (_, index) => index + 1).join(', ')})`);
   }
   if (run.combatExpansionVersion === 2) {
