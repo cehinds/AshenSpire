@@ -1,3 +1,4 @@
+import { loadableTitleSlots } from '../models/GameProfileTitleModel.js';
 // src/ui/screens/title.js — folded title menu with load/new slot modal.
 //
 // The title owns layout and interaction state; save-slot content stays in the
@@ -65,7 +66,7 @@ export function mountTitle(app, {
   // every read goes through currentSlots and occupied() rather than the mount's
   // argument.
   let currentSlots = slots;
-  const occupied = () => currentSlots.filter(({ summary }) => !!summary);
+  const occupied = () => loadableTitleSlots(currentSlots);
   let modal = null;
   let selectedSlot = null;
   let newReviewSlot = null; // the slot the New Game decision door is asking about
@@ -118,20 +119,11 @@ export function mountTitle(app, {
       name: 'ASHEN SPIRE',
       subtitle: 'A roguelike deckbuilder',
       entries: [
-        entry('Continue', 'continue', { className: 'slot-continue', disabled: continueSlot == null, reason: t('title.continue.reason') }),
-        // FINISH §6: the one-press route to a first card play, with authored
-        // defaults (content/source/characterCreation.json `quickStart`).
-        ...(onQuickStart ? [entry(t('title.quickstart'), 'quick-start', { id: 'quick-start', className: 'slot-quick' })] : []),
-        entry('Load', 'load', { id: 'load-game' }),
-        entry('Begin the climb', 'new', { id: 'new-game', className: 'slot-new' }),
-        ...(onHistory ? [entry('Run history', 'history', { id: 'run-history' })] : []),
-        // #armaments remains the compatibility anchor for the existing watched probe.
-        entry('Compendium', 'collection', { id: 'armaments' }),
-        ...(onBestiary ? [entry('Bestiary', 'bestiary', { id: 'bestiary' })] : []),
+        ...(continueSlot == null ? [] : [entry('Continue', 'continue', { className: 'slot-continue' })]),
+        entry('New Game', 'new', { id: 'new-game', className: 'slot-new' }),
+        ...(continueSlot == null ? [] : [entry('Load Game', 'load', { id: 'load-game' })]),
         entry('Settings', 'settings', { id: 'settings' }),
-        // Co-op is parked (owner, 2026-10-12): content/config/ui/screens/title.json
-        // behavior.coopEnabled hides Forsaken Together until it returns.
-        ...(onLan && uiConfig.screens.title.behavior.coopEnabled ? [entry('Forsaken Together', 'lan', { id: 'lan-play' })] : []),
+        entry('Exit', 'quit', { id: 'quit-game' }),
       ],
       attrs: { 'data-component': UI.titleBrandLockup },
     });
@@ -166,17 +158,6 @@ export function mountTitle(app, {
       resume.insertAdjacentHTML('afterbegin', engravedIconHtml('journey'));
       resume.insertAdjacentHTML('beforeend', engravedIconHtml('next'));
     }
-    // These secondary doors invoke the host's existing navigation callbacks.
-    const more = el('details', { class: 'title-more' }, [el('summary', {}, 'More')]);
-    const moreEntries = [
-      entry('Load a climb', 'load', { id: 'load-game' }),
-      ...(onCustom ? [entry('Custom climb', 'custom', { id: 'custom-run' })] : []),
-      ...(onProfile ? [entry('Profile', 'profile', { id: 'profile' })] : []),
-      ...(onOffline ? [entry(offlinePlay.title, 'offline', { id: 'download-game' })] : []),
-      entry('Quit', 'quit', { id: 'quit-game' }),
-    ];
-    for (const item of moreEntries) more.append(el('button', { type: 'button', class: 'as-btn', ...item.attrs }, item.label));
-    menu.append(more);
     const tagline = document.createElement('p');
     tagline.className = 'tm-foot title-tagline';
     tagline.dataset.component = UI.titleTagline;

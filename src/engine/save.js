@@ -1,3 +1,4 @@
+import { validateResolvedGameProfile } from '../../engine/kernel/gameConfig.js';
 import { migrateAbilityGrades } from '../model/abilityGrades.js';
 // src/engine/save.js — run persistence with schema + content versioning
 // (SPEC §3.12)
@@ -632,10 +633,31 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
      * relic/flask id that no longer resolves against the current registries.
      * A schemaVersion NEWER than this build is refused and left in the slot.
      */
+    // Read the pinned selection before reference validation. Never mutates,
+    // migrates or archives a slot; the caller must resolve/verify the snapshot.
+    peekRunGameProfile(slot = 1) {
+      const json = storage.getItem(runKey(slot));
+      if (!json) return null;
+      const snapshot = JSON.parse(json).gameProfile;
+      return snapshot ? validateResolvedGameProfile(snapshot) : null;
+    },
+
     loadRun(registries, slot = 1) {
       const json = storage.getItem(runKey(slot));
       if (!json) {
         runStatusRecord = { state: 'none', reason: `slot ${slot} is empty`, ledger: null };
+        return null;
+      }
+      // Profile mismatch is recoverable: preserve the original bytes instead
+      // of archiving a slot against the wrong content registry.
+      try {
+        const pinned = JSON.parse(json).gameProfile;
+        if (pinned) {
+          validateResolvedGameProfile(pinned);
+          if (registries.gameProfile?.hash !== pinned.hash) throw new Error('Pinned game profile does not match the load registry');
+        }
+      } catch (error) {
+        runStatusRecord = { state: 'profile-mismatch', reason: error.message, ledger: null };
         return null;
       }
       // A run written by a NEWER build: refuse AND PRESERVE, the run-side twin
