@@ -35,10 +35,20 @@ export function mountCreationInfoLayer(root) {
     const detailHeading = owner.closest('#cz-keepsake-panel')
       ?.querySelector('.cc-equipment-details .cc-item-heading');
     const headingBox = detailHeading?.getBoundingClientRect();
-    const left = Math.max(8, Math.min(innerWidth - size.width - 8, headingBox
+    let left = Math.max(8, Math.min(innerWidth - size.width - 8, headingBox
       ? headingBox.right - size.width : box.left + (box.width - size.width) / 2));
-    const top = Math.max(8, headingBox
+    let top = Math.max(8, headingBox
       ? headingBox.top + (headingBox.height - size.height) / 2 : box.top - size.height - 8);
+    if (!headingBox && owner.closest('.cc-ability-choice') && top < pane.top + 8) {
+      const art = (owner.querySelector('.art,[data-component="art"]') || owner).getBoundingClientRect();
+      const artTop = Math.max(art.top, pane.top + 8);
+      const artBottom = Math.min(art.bottom, pane.bottom - 8);
+      const artLeft = Math.max(art.left, gallery.left, 8);
+      const artRight = Math.min(art.right, gallery.right, innerWidth - 8);
+      if (artRight - artLeft < size.width || artBottom - artTop < size.height) { close(); return; }
+      left = artRight - size.width;
+      top = artTop + (artBottom - artTop - size.height) / 2;
+    }
     const position = anchorLocalBox(VIEWPORT_ORIGIN, { left, top, width: size.width, height: size.height });
     control.style.left = `${position.left}px`;
     control.style.top = `${position.top}px`;
