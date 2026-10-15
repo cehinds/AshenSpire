@@ -1,3 +1,4 @@
+import { gameModule, gameContent } from '../model/gameProfile.js';
 // src/engine/actmap.js — the ONE act-boot path: generate the act's map, then
 // pre-roll every unknown (?) node (EldenSpire#54).
 //
@@ -61,6 +62,7 @@ export function buildActMap(registries, rng, seat, tier, mapShape = null, { hist
   if (typeof seat !== 'string' || !seat) throw new Error(`buildActMap: a seat id is required, got ${JSON.stringify(seat)} (SPEC §13.2)`);
   if (!Number.isInteger(tier) || tier < 1) throw new Error(`buildActMap: tier must be a positive integer, got ${JSON.stringify(tier)}`);
   registries.seats.get(seat); // an unknown seat throws by name here, before any draw
+  if (gameModule(registries, 'routes')?.mode === 'configured') return buildGameProfileActMap(registries, rng, seat, tier, { history });
   const authored = registries.mapConfig(tier);
   const shaped = applyRunShape(authored, mapShape, MAP_SHAPE_LIMITS);
   if (shaped.errors.length) {
@@ -122,4 +124,34 @@ export function drawSeatOrder(registries, rng, { firstSeat = null } = {}) {
   const at = drawn.indexOf(firstSeat);
   if (at < 0) throw new Error(`drawSeatOrder: unknown first seat '${firstSeat}'`);
   return [...drawn.slice(at), ...drawn.slice(0, at)];
+}
+
+
+// A compact seeded core route. Display identity and actual resolution are separate.
+export function buildGameProfileActMap(registries, rng, seat, tier, { history = [] } = {}) {
+  const rules = gameContent(registries, 'routes');
+  if (!rules || tier < 1 || tier > rules.acts) throw new Error('Configured route tier is out of range');
+  const count = rules.prebossNodes;
+  if (!Number.isInteger(count) || count < rules.restsPerAct) throw new Error('Invalid configured route length');
+  // Provisional spacing is authored in content when supplied; otherwise evenly spaced.
+  const restFloors = rules.restFloors || Array.from({ length: rules.restsPerAct }, (_,i) => Math.floor((i+1)*count/(rules.restsPerAct+1)));
+  if (new Set(restFloors).size !== rules.restsPerAct || restFloors.some(n=>n<1||n>count)) throw new Error('Invalid configured rest floors');
+  const nodes = {};
+  const seenEvents = [];
+  for (let floor = 1; floor <= count; floor++) {
+    const id = `n${floor}_0`;
+    const actual = restFloors.includes(floor) ? 'rest' : rng.pick('map', ['fight','event','elite','treasure','shop']);
+    const type = actual === 'rest' ? 'shrine' : actual === 'elite' ? 'elite' : 'event';
+    const node = { id, floor, col: 0, type, actualType: actual, next: [floor === count ? 'boss' : `n${floor+1}_0`] };
+    if (type === 'event') {
+      node.resolved = actual === 'event' ? resolveUnknownNode({ ...registries, mapConfig: () => ({ unknownWeights: { event: 1 } }) }, rng, { seenEvents, tier, history }) : { kind: actual === 'shop' ? 'merchant' : actual };
+      if (node.resolved.kind === 'event') seenEvents.push(node.resolved.eventId);
+    }
+    nodes[id] = node;
+  }
+  const pool = registries.encounters.all().filter(enc=>enc.pool==='boss' && encounterFitsSeat(enc,{seat,tier,finalTier:rules.acts}));
+  if (!pool.length) throw new Error(`Configured route has no boss for ${seat}/${tier}`);
+  const boss = rng.pick('map', pool);
+  nodes.boss = { id:'boss',floor:count+1,col:0,type:'boss',actualType:'boss',next:[],encounterId:boss.id,label:bossDestinationLabel(registries,boss.id) };
+  return { nodes,startIds:['n1_0'],shrineId:`n${restFloors.at(-1)}_0`,bossId:'boss',bossIds:['boss'],floors:count+1,columns:1,gameProfileHash:registries.gameProfile.hash };
 }
