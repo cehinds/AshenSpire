@@ -3863,51 +3863,57 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     });
   });
 
-  container.querySelectorAll('.set-choice-select').forEach(select => {
-    select.addEventListener('change', () => {
-      const wasAt = select.getBoundingClientRect().top;
-      settings[select.dataset.key] = select.value;
-      onChange({ [select.dataset.key]: select.value });
-      if (select.dataset.key.startsWith('gameConfig.')) reportAdvancedProblems();
-      else refreshGates(container, settings);
-      refreshApplied(container, settings);
-      refreshConditionNotes(container, settings);
-      anchorPressed(container, select, wasAt);
+  // Display settings apply after durable persistence, so derived readouts must
+  // wait for onChange. A pane can be closed or replaced while that promise runs.
+  const commitChoice = async (control, value) => {
+    const key = control.dataset.key;
+    const choices = control.matches('.choice') ? [...control.parentElement.querySelectorAll('.choice')] : [control];
+    if (control.disabled) return;
+    const disabled = choices.map(choice => choice.disabled);
+    const hadValue = Object.hasOwn(settings, key);
+    const previous = settings[key];
+    const previousSeed = settings[SEED_KEY];
+    const wasAt = control.getBoundingClientRect().top;
+    choices.forEach(choice => { choice.disabled = true; });
+    settings[key] = value;
+    let result;
+    try { result = await onChange({ [key]: value }); }
+    catch (error) {
+      result = { ok: false };
+      if (lifecycleSentinel.isConnected && control.isConnected) showSettingsNotice(error.message);
+    }
+    if (result?.ok === false) {
+      if (hadValue) settings[key] = previous; else delete settings[key];
+      if (previousSeed === undefined) delete settings[SEED_KEY]; else settings[SEED_KEY] = previousSeed;
+    }
+    // Both guards matter: the overlay keeps its container when another tab
+    // replaces the Settings controls; a modal can instead detach everything.
+    if (!lifecycleSentinel.isConnected || !control.isConnected || !container.contains(control)) return;
+    const row = ROWS.find(row => row.key === key);
+    const selected = settings[key] ?? rowDefault(row);
+    choices.forEach((choice, index) => {
+      choice.disabled = disabled[index];
+      if (choice.matches('.choice')) {
+        const on = String(selected) === choice.dataset.val;
+        choice.classList.toggle('on', on);
+        choice.setAttribute('aria-pressed', String(on));
+      } else choice.value = String(selected);
     });
+    markModified(container, settings, { [key]: settings[key] });
+    syncHeaderState();
+    if (key.startsWith('gameConfig.')) reportAdvancedProblems();
+    else refreshGates(container, settings);
+    refreshApplied(container, settings);
+    refreshConditionNotes(container, settings);
+    anchorPressed(container, control, wasAt);
+  };
+
+  container.querySelectorAll('.set-choice-select[data-key]').forEach(select => {
+    select.addEventListener('change', () => commitChoice(select, select.value));
   });
 
-  container.querySelectorAll('.choice').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      // SUNNA'S FLOOR: a control that changes layout must still be under the
-      // finger that changed it. Read where the pressed chip is BEFORE the change
-      // lands, so the anchor below has something to aim at.
-      const wasAt = btn.getBoundingClientRect().top;
-      btn.parentElement.querySelectorAll('.choice').forEach((b) => {
-        b.classList.toggle('on', b === btn);
-        b.setAttribute('aria-pressed', String(b === btn));
-      });
-      settings[btn.dataset.key] = btn.dataset.val;
-      onChange({ [btn.dataset.key]: btn.dataset.val });
-      if (btn.dataset.key.startsWith('gameConfig.')) reportAdvancedProblems();
-      else refreshGates(container, settings);
-      // AFTER onChange, which is what applies the zoom. Reading before it would
-      // report the previous value and the readout would always be one click
-      // behind — a display that lies more quietly than the one it replaced.
-      //
-      // Unconditional, over every slot on the panel. The old `if (key ===
-      // 'uiScale')` was the row's identity written a second time in the wiring,
-      // and the second row with a derived line under it would have been a
-      // second clause. There are at most two slots on a panel; asking both is
-      // cheaper than remembering which one moved.
-      refreshApplied(container, settings);
-      // ANCHOR LAST, and the order is load-bearing — it cost me a measurement.
-      // I anchored straight after onChange first, and the 44 step still lost the
-      // finger by 16.25 device px: the cost line above had not gone silent yet,
-      // so the anchor aimed at a layout that was one paragraph taller than the
-      // one the player ends up looking at. Everything that moves the page in
-      // response to this press has to have moved before the correction is read.
-      anchorPressed(container, btn, wasAt);
-    });
+  container.querySelectorAll('.choice').forEach(btn => {
+    btn.addEventListener('click', () => commitChoice(btn, btn.dataset.val));
   });
 
   container.querySelectorAll('.toggle[data-key]').forEach((btn) => {
