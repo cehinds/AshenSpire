@@ -463,7 +463,7 @@
       "method": "sha256(sorted repository path + NUL + exact bytes + NUL); all src/**/*.js, index.html, tools/bundle.mjs",
       "sha256": "41611221b35af8948bc8223e6b4a24138ad36b5fccd0f01fb50e6d524fea7162"
     },
-    "sourceScope": "Tested before PR2017 receipt generation; the later derived changelog changes source identity but leaves the tested combat and audit modules unchanged.",
+    "sourceScope": "These first configured reports tested the 8aa gameplay/c35 tooling candidate before the derived PR2017 receipt. At b3498d02bd148af6cf0849e13b4ef58c3fc1b743, only derived changelog text changed beyond that tested product source. The subsequent Counterstrike support-preview fix is a separate source-bound phase in counterstrikeFollowup.",
     "rawEvidenceDirectory": "/workspace/scratch/rogue-projection/configured-matrix (untracked local reports, not an uploaded artifact)",
     "commands": [
       "node tools/combat-audit/cards.mjs --all-variants --configured-defaults",
@@ -570,5 +570,17 @@
       }
     ],
     "scope": "Canonical variants, payment/refusal atomicity, recovery and follow-up play only; this does not replace the historical conditional/effect matrices or prove all effect amounts, RNG states, settings overrides or browser inputs."
+  },
+  "counterstrikeFollowup": {
+    "gameplayCommit": "2eae12d09b8c265b3d11531d5f05b1a0acb88ec0",
+    "reviewedFiles": [
+      "src/engine/combat.js",
+      "src/engine/combatCardTactics.js",
+      "tests/spell-defense.test.mjs",
+      "tests/combat-preview-stance-parity.test.mjs"
+    ],
+    "generatedReceiptBlob": "c09ed1a5a1e17452f15db7a3a668ccad1e805b03",
+    "evidenceRecord": "docs/preview/full-combat-audit/accepted-stance-followup.md",
+    "scope": "Shared accepted-card preparation is projected on detached state without arming a live Counter. Final configured matrix metadata and compiled Rogue/Counter evidence are separately source-bound in the evidence record; the earlier configured reports above are not relabeled."
   }
 }

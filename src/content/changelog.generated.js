@@ -7,7 +7,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-10-15",
     "group": "2026-10-15",
     "summary": "Card previews use the stance the card will enter",
-    "detail": "Rogue Piercing Flurry now previews both damage hits with its accepted Attack rating before play. Previewing a card leaves the live fight and its resources unchanged. Combat audit tools distinguish configured new-run defaults from raw authored fixtures, and the real-browser full-run check avoids unnecessarily scrolling visible controls before clicking.",
+    "detail": "Rogue Piercing Flurry now previews both damage hits with its accepted Attack rating before play. Spell Counter previews include their Counterstrike protection boost. Previewing a card leaves the live fight and its resources unchanged. Combat audit tools distinguish configured new-run defaults from raw authored fixtures, and the real-browser full-run check avoids unnecessarily scrolling visible controls before clicking.",
     "build": "0.7.1.1537",
     "pullRequest": 2017,
     "url": "https://github.com/cehinds/AshenSpire/pull/2017"
