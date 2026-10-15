@@ -27,9 +27,9 @@ export function assertImmediateContracts(def, events, instanceId) {
   }
   return { covered, uncovered };
 }
-export async function auditCards({ mode = 'native', allEnemies = false, allVariants = false } = {}) {
-  const api = await loadAuditRuntime(mode), inventory = auditInventory(api.registries);
-  const report = { mode, inventory: { cards: inventory.cardIds.length, classes: inventory.classes.length, candidates: inventory.variants.length },
+export async function auditCards({ mode = 'native', configuration = 'raw-authored', allEnemies = false, allVariants = false } = {}) {
+  const api = await loadAuditRuntime(mode, { configuration }), inventory = auditInventory(api.registries);
+  const report = { mode, configuration: api.configuration, source: api.source, inventory: { cards: inventory.cardIds.length, classes: inventory.classes.length, candidates: inventory.variants.length },
     resourceDeltaChecks: 0, played: [], rejected: [], fixtureGaps: [], failures: [], contracts: {}, uncovered: {} };
   // First sweep isolates authored base definitions. Grades, carriers and upcast
   // conditions are separate coverage and are deliberately not claimed here.
@@ -136,9 +136,9 @@ function proveConditionalMutation(api, c, effect, chosen, inst, before, events, 
     }
   }
 }
-export async function auditConditionalCards({ mode = 'native' } = {}) {
-  const api = await loadAuditRuntime(mode), inventory = auditInventory(api.registries);
-  const report = { mode, verified: [], uncovered: [], failures: [] };
+export async function auditConditionalCards({ mode = 'native', configuration = 'raw-authored' } = {}) {
+  const api = await loadAuditRuntime(mode, { configuration }), inventory = auditInventory(api.registries);
+  const report = { mode, configuration: api.configuration, source: api.source, verified: [], uncovered: [], failures: [] };
   const eventTypes = { damage: 'damageDealt', block: 'blockGained', heal: 'healed', applyStatus: 'statusApplied', draw: 'cardDrawn', gainBarrier: 'barrierGained' };
   const seen = new Set();
   for (const variant of inventory.variants.filter(v => !v.instance.upgraded && !v.instance.profileId && v.upcastTier === undefined)) {
@@ -199,8 +199,8 @@ export async function auditConditionalCards({ mode = 'native' } = {}) {
   }
   return report;
 }
-export async function auditCounterLifecycle({ mode = 'native' } = {}) {
-  const api = await loadAuditRuntime(mode), cases = [];
+export async function auditCounterLifecycle({ mode = 'native', configuration = 'raw-authored' } = {}) {
+  const api = await loadAuditRuntime(mode, { configuration }), cases = [];
   for (const scenario of ['eligible-blocked', 'eligible-unblocked', 'ineligible-spell', 'declined']) {
     const { combat: c } = makeAuditCombat(api, { classId: 'reaver', enemyIds: [scenario === 'ineligible-spell' ? 'mirrorScribe' : 'wanderingSoldier'],
       instance: { cardId: 'guardCounter', abilityRank: 0 }, relicIds: [] });
@@ -237,10 +237,10 @@ export async function auditCounterLifecycle({ mode = 'native' } = {}) {
     assert.equal(api.reactionPaused(c), false);
     cases.push({ scenario, returns: returns.length, consumed: consumed.length, choices: choices.length });
   }
-  return { mode, cases, failures: [] };
+  return { mode, configuration: api.configuration, source: api.source, cases, failures: [] };
 }
-export async function auditDeferredConditions({ mode = 'native' } = {}) {
-  const api = await loadAuditRuntime(mode), rows = [];
+export async function auditDeferredConditions({ mode = 'native', configuration = 'raw-authored' } = {}) {
+  const api = await loadAuditRuntime(mode, { configuration }), rows = [];
   const instances = [
     { cardId: 'guardCounter', legacyAbility: true, upgraded: false },
     { cardId: 'guardCounter', legacyAbility: true, upgraded: true },
@@ -304,7 +304,7 @@ export async function auditDeferredConditions({ mode = 'native' } = {}) {
     rows.push({ instance, condition, truth, prepared: expected, returnHp: returned[0].amount, returnPoise: returned[0].poiseDamage,
       ...(instance.legacyAbility ? { complementaryCondition: { p: 'not', pred: condition } } : {}) });
   }
-  return { mode, rows, failures: [] };
+  return { mode, configuration: api.configuration, source: api.source, rows, failures: [] };
 }
 // Save service covers committed model state; add transient queue and RNG.
 // Derived preview caches are intentionally excluded: they are not gameplay state.
@@ -313,9 +313,9 @@ export function auditStateSnapshot(api, c) {
     queue: c.queue.map(({ source, owner, target, ...action }) => ({ ...action, sourceId: source?.id, ownerId: owner?.id, targetId: target?.id })),
     buffer: c._buffer, pendingExpansionActions: c.pendingExpansionActions });
 }
-export async function auditRefusals({ mode = 'native' } = {}) {
-  const api = await loadAuditRuntime(mode), inventory = auditInventory(api.registries);
-  const report = { mode, rejected: [], acceptedEmptyPools: [], failures: [] };
+export async function auditRefusals({ mode = 'native', configuration = 'raw-authored' } = {}) {
+  const api = await loadAuditRuntime(mode, { configuration }), inventory = auditInventory(api.registries);
+  const report = { mode, configuration: api.configuration, source: api.source, rejected: [], acceptedEmptyPools: [], failures: [] };
   const variants = inventory.variants.filter(v => !v.instance.upgraded && !v.instance.profileId && !v.instance.legacyAbility && v.upcastTier === undefined && (v.instance.abilityRank === undefined || v.instance.abilityRank === 0));
   for (const variant of variants) for (const scenario of ['wrong-side', 'empty-pools']) {
     const key = `${variant.key}/${scenario}`;
@@ -369,7 +369,8 @@ export async function auditRefusals({ mode = 'native' } = {}) {
   return report;
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const report = process.argv.includes('--deferred-conditions') ? await auditDeferredConditions({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native' }) : process.argv.includes('--refusals') ? await auditRefusals({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native' }) : process.argv.includes('--counter-lifecycle') ? await auditCounterLifecycle({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native' }) : process.argv.includes('--conditions') ? await auditConditionalCards({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native' }) : await auditCards({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native', allEnemies: process.argv.includes('--all-enemies'), allVariants: process.argv.includes('--all-variants') });
+  const configuration = process.argv.includes('--configured-defaults') ? 'configured-defaults' : 'raw-authored';
+  const report = process.argv.includes('--deferred-conditions') ? await auditDeferredConditions({ configuration, mode: process.argv.includes('--bundled') ? 'bundled' : 'native' }) : process.argv.includes('--refusals') ? await auditRefusals({ configuration, mode: process.argv.includes('--bundled') ? 'bundled' : 'native' }) : process.argv.includes('--counter-lifecycle') ? await auditCounterLifecycle({ configuration, mode: process.argv.includes('--bundled') ? 'bundled' : 'native' }) : process.argv.includes('--conditions') ? await auditConditionalCards({ configuration, mode: process.argv.includes('--bundled') ? 'bundled' : 'native' }) : await auditCards({ configuration, mode: process.argv.includes('--bundled') ? 'bundled' : 'native', allEnemies: process.argv.includes('--all-enemies'), allVariants: process.argv.includes('--all-variants') });
   console.log(JSON.stringify(report));
   if (report.failures.length || (report.fixtureGaps?.length || 0)) process.exitCode = 1;
 }
