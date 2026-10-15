@@ -31,6 +31,10 @@ try {
     assert.deepEqual(await page.locator('.title-menu [data-title-action]').evaluateAll(rows => rows.map(row => row.dataset.titleAction)), ['continue', 'new', 'load', 'settings', 'quit']);
     assert.equal(await page.locator('.title-screen .game-profile-selector').count(), 0);
     await page.screenshot({ path: resolve(output, `${profile}-title.png`) });
+    await page.locator('.slot-continue').click();
+    await page.waitForSelector('.mapscreen');
+    await page.goto(`${base}index.html?shot=title&gameProfile=${profile}`);
+    await page.waitForSelector('#new-game');
     await openNew(page);
     const selector = page.getByLabel('New game configuration');
     assert.equal(await selector.inputValue(), profile);

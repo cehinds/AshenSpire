@@ -1448,7 +1448,7 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
     return refused();
   }
   const loadGameProfile = savedGameProfile || resolveGameProfile('current');
-  const authoredRegistries = createRegistries(applyGameProfileToContent(contentBundle, loadGameProfile));
+  const authoredRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, loadGameProfile)), loadGameProfile);
   let loaded = saves.loadRun(authoredRegistries, slot);
   if (!loaded) return refused();
   rebuildRegistries(loaded.advancedConfigSnapshot || { schemaVersion: 1, overrides: {} }, null, loadGameProfile);
