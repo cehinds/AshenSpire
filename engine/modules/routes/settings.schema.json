@@ -9,21 +9,30 @@
     },
     "acts": {
       "type": "integer",
-      "minimum": 0,
-      "maximum": 1000000
+      "minimum": 1,
+      "maximum": 3
     },
     "prebossNodes": {
       "type": "integer",
-      "minimum": 0,
-      "maximum": 1000000
+      "minimum": 1,
+      "maximum": 100
     },
     "restsPerAct": {
       "type": "integer",
       "minimum": 0,
-      "maximum": 1000000
+      "maximum": 100
     },
     "hideUnknownNodes": {
       "type": "boolean"
+    },
+    "restFloors": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 1000
+      }
     }
   },
   "required": [
@@ -31,7 +40,8 @@
     "acts",
     "prebossNodes",
     "restsPerAct",
-    "hideUnknownNodes"
+    "hideUnknownNodes",
+    "restFloors"
   ],
   "additionalProperties": false
 }

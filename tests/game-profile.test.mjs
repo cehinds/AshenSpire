@@ -53,3 +53,14 @@ test('snapshots validate digests and pinned runtime, with no shared mutable sele
  const stale=JSON.parse(JSON.stringify(original));stale.lock.runtimeHash='sha256:unsupported';delete stale.hash;stale.hash=gameDigest(stale);assert.throws(()=>validateGameProfileSnapshot(stale),/unsupported runtime artifact/);
  assert.equal(resolveGameProfile('current').foundation.mode,'legacy');assert.equal(original.foundation.mode,'configured');
 });
+
+test('unsupported configured instances, future modules and adapter modes fail closed',()=>{
+ for(const modules of [{resources:{include:['hp','actions']}},{defenses:{include:['ward'],order:['ward']}},{multiplayer:true},{cards:{mode:'legacy'}},{rest:{recovery:{hp:'none'}}}])assert.throws(()=>resolveGameProfile(author(modules)),/unsupported|not implemented|mode must match|expected one of/);
+ const legacy=resolveGameProfile({formatVersion:1,core:'ashen.current@1.0.0',modules:{resources:{include:['hp','sp','mp','actions']},defenses:{include:['block','ward'],order:['block','ward']}}});assert.equal(legacy.foundation.mode,'legacy');
+});
+test('author settings and pack policies resolve to the same consumed values',()=>{
+ const p=resolveGameProfile(author({cards:{handBase:2},routes:{acts:2,prebossNodes:8,restsPerAct:2,restFloors:[3,7]},shops:{options:4,price:12},rewards:{offerCount:4,takeCount:2}}));
+ assert.equal(gameContent(p,'stats').handBase,2);assert.equal(gameContent(p,'startingHands').reaver,3);
+ assert.equal(gameContent(p,'routes').acts,2);assert.equal(gameContent(p,'routes').prebossNodes,8);assert.deepEqual(gameContent(p,'routes').restFloors,[3,7]);
+ assert.deepEqual(gameContent(p,'shops'),{offerCount:4,price:12});assert.equal(gameContent(p,'rewards').takeCount,2);
+});

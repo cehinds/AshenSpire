@@ -64,6 +64,7 @@ export function validateGameSchema(value, schema, path = '$') {
     }
   } else if (type === 'array') {
     if (!Array.isArray(value)) fail(path, 'expected array');
+    if (value.length < (schema.minItems || 0) || value.length > (schema.maxItems ?? Infinity)) fail(path, 'array length outside permitted range');
     if (schema.uniqueItems && new Set(value.map(canonicalGameJSON)).size !== value.length) fail(path, 'duplicate array item');
     value.forEach((item, i) => validateGameSchema(item, schema.items || {}, `${path}/${i}`));
   } else if (type === 'string' && (typeof value !== 'string' || value.length < (schema.minLength || 0))) fail(path, 'expected nonempty string');
@@ -74,17 +75,37 @@ export function validateGameSchema(value, schema, path = '$') {
 }
 function verifyContent(content) {
   if (!content.classes) return;
+  if (!Array.isArray(content.classes) || !Array.isArray(content.cards) || !record(content.starterDeck)) fail('$/content', 'missing typed classes/cards/starterDeck');
+  const classIDs = new Set(content.classes.map(row => row.id));
+  if (classIDs.size !== content.classes.length) fail('$/content/classes', 'duplicate class ID');
+  for (const row of content.classes) {
+    const values = Object.values(row.attributes || {});
+    if (values.length !== 5 || values.some(n => !Number.isSafeInteger(n) || n < 0) || values.reduce((a,b)=>a+b,0) !== content.stats.attributePointTotal) fail(`$/content/classes/${row.id}/attributes`, 'invalid fixed attribute allocation');
+    if (!Number.isSafeInteger(row.maxHp) || row.maxHp < 1) fail(`$/content/classes/${row.id}/maxHp`, 'expected positive HP');
+  }
+  for (const row of content.cards) {
+    for (const key of ['cost','staminaCost','manaCost']) if (!Number.isSafeInteger(row[key]) || row[key] < 0) fail(`$/content/cards/${row.id}/${key}`, 'expected nonnegative integer price');
+    for (const [i,effect] of (row.effects || []).entries()) if ((effect.amount !== undefined || ['damage','block'].includes(effect.op)) && (typeof effect.amount !== 'number' || !Number.isFinite(effect.amount) || effect.amount < 0)) fail(`$/content/cards/${row.id}/effects/${i}/amount`, 'expected nonnegative finite adapter amount');
+  }
   const cards = new Set(content.cards.map(card => card.id));
   if (cards.size !== content.cards.length) fail('$/content/cards', 'duplicate card ID');
   for (const row of content.classes) if (!cards.has(row.specialCardId)) fail(`$/content/classes/${row.id}/specialCardId`, 'unresolved card reference');
   for (const row of content.starterDeck.shared) if (!cards.has(row.card) || !Number.isSafeInteger(row.copies) || row.copies < 1) fail('$/content/starterDeck/shared', 'invalid starter card reference/count');
 }
-function verifySettings(modules) {
+function verifySettings(modules, instances = {}) {
   const defenses = modules.defenses;
   if (defenses && (defenses.include.length !== defenses.order.length || defenses.include.some(id => !defenses.order.includes(id)))) fail('$/modules/defenses/order', 'must contain selected defenses exactly once');
-  for (const [id, available] of [['resources',['hp','sp','mp','actions']],['defenses',['block','poise','barrier','ward']],['stances',['attack','smash','defend','counter','sweep','prepared','evade']],['damage-types',['physical','magic']]]) {
-    if (modules[id] && modules[id].include.some(key => !available.includes(key))) fail(`$/modules/${id}/include`, 'unresolved instance reference');
+  for (const [id, registry] of Object.entries(instances)) {
+    const settings = modules[id]; if (!settings) continue;
+    if (settings.include?.some(key => !registry.ids.includes(key))) fail(`$/modules/${id}/include`, 'unresolved instance reference');
+    if (settings.mode === 'configured' && settings.include?.some(key => registry.unsupported.includes(key))) fail(`$/modules/${id}/include`, 'unsupported configured instance; the legacy adapter is required');
   }
+  if (modules.routes?.mode === 'configured') {
+    const {restFloors,restsPerAct,prebossNodes} = modules.routes;
+    if (restFloors.length !== restsPerAct || restFloors.some(n=>n>prebossNodes)) fail('$/modules/routes/restFloors', 'must provide one valid preboss position per rest');
+  }
+  if (modules.rest?.mode === 'configured' && !modules.rest.services.includes('strategize')) fail('$/modules/rest/services', 'Strategize recovery fallback is required by this adapter');
+  if (modules.rewards && modules.rewards.takeCount > modules.rewards.offerCount) fail('$/modules/rewards/takeCount', 'cannot exceed offerCount');
   if (modules.stances && modules.stances.minimumHitChance > modules.stances.maximumHitChance) fail('$/modules/stances/minimumHitChance','must not exceed maximumHitChance');
 }
 export function resolveGameAuthor(author, catalog) {
@@ -95,7 +116,8 @@ export function resolveGameAuthor(author, catalog) {
   if (!record(source.modules)) fail('$/modules', 'expected module map');
   const bundle = catalog.bundles[source.core];
   if (!bundle) fail('$/core', 'unknown exact bundle pin');
-  const modules = {}, schemas = {}, provenance = {};
+  const modules = {}, schemas = {}, provenance = {}, instances = {};
+  for (const [id,module] of Object.entries(catalog.modules)) if (module.manifest.instances) instances[id] = {ids:module.manifest.instances,unsupported:module.manifest.unsupportedConfiguredInstances || []};
   for (const id of Object.keys(source.modules)) if (!catalog.modules[id]) fail(`$/modules/${id}`, 'unknown module ID');
   for (const [id, module] of Object.entries(catalog.modules)) {
     const entry = Object.hasOwn(source.modules,id) ? source.modules[id] : undefined, bundled = bundle.manifest.modules[id];
@@ -104,18 +126,37 @@ export function resolveGameAuthor(author, catalog) {
     if (bundled && bundled.version !== module.manifest.version) fail(`$/modules/${id}`, 'exact module version unavailable');
     const defaults = mergeGameSettings(module.defaults, bundled?.settings || {});
     modules[id] = record(entry) ? mergeGameSettings(defaults, entry) : defaults;
+    if (modules[id].mode !== bundle.manifest.foundationMode) fail(`$/modules/${id}/mode`, 'mode must match selected bundle adapter; select the core or current bundle explicitly');
+    if (modules[id].mode === 'configured' && !module.manifest.configuredAdapter) fail(`$/modules/${id}`, 'configured adapter not implemented for this feature');
     validateGameSchema(modules[id], module.schema, `$/modules/${id}`); schemas[id] = module.schema;
     provenance[id] = entry === undefined ? 'bundle' : 'author';
   }
   // The authored order describes all registered channels; include selects active stages.
   if (modules.defenses) modules.defenses.order = modules.defenses.order.filter(id => modules.defenses.include.includes(id));
-  verifySettings(modules);
+  verifySettings(modules, instances);
   let content = {};
   for (const ref of bundle.manifest.packs) {
     const pack = catalog.packs[`${ref.id}@${ref.version}`];
     if (!pack) fail('$/core/packs', `unresolved exact pack ${ref.id}@${ref.version}`);
     for (const [key,value] of Object.entries(pack.content)) { if (key in content) fail(`$/content/${key}`, 'duplicate pack content key'); content[key] = dataClone(value); }
   }
+  for (const binding of bundle.manifest.policyBindings || []) {
+    if (!modules[binding.module]) continue;
+    const policy = content[binding.content];
+    if (!record(policy)) fail(`$/content/${binding.content}`, 'unresolved policy binding');
+    const policyDefaults = {};
+    for (const [field, setting] of Object.entries(binding.settings)) {
+      if (!(field in policy)) fail(`$/content/${binding.content}/${field}`, 'unresolved setting binding');
+      policyDefaults[setting] = policy[field];
+    }
+    const module = catalog.modules[binding.module], authorEntry = source.modules[binding.module];
+    const base = mergeGameSettings(mergeGameSettings(module.defaults, policyDefaults), bundle.manifest.modules[binding.module]?.settings || {});
+    // Preserve other resolved settings if the same module has more than one binding.
+    for (const setting of Object.values(binding.settings)) modules[binding.module][setting] = record(authorEntry) && setting in authorEntry ? mergeGameSettings({value:base[setting]},{value:authorEntry[setting]}).value : base[setting];
+    validateGameSchema(modules[binding.module], module.schema, `$/modules/${binding.module}`);
+    for (const [field, setting] of Object.entries(binding.settings)) policy[field] = dataClone(modules[binding.module][setting]);
+  }
+  verifySettings(modules, instances);
   verifyContent(content);
   if (content.classes) {
     content.classAttributes = Object.fromEntries(content.classes.map(row => [row.id, row.attributes]));
@@ -126,7 +167,7 @@ export function resolveGameAuthor(author, catalog) {
     ...bundle.manifest.packs.flatMap(ref => catalog.packs[`${ref.id}@${ref.version}`].artifacts)];
   const profile = {id:bundle.manifest.profileId,formatVersion:1,author:source,modules,content,
     foundation:{...catalog.foundation,mode:bundle.manifest.foundationMode},
-    contracts:catalog.contracts,schemas,provenance,
+    contracts:catalog.contracts,schemas,provenance,instances,
     lock:{formatVersion:1,core:source.core,artifacts:artifacts.sort((a,b)=>a.path < b.path ? -1 : a.path > b.path ? 1 : 0),runtimeABI:catalog.contracts.runtimeABI,numericPolicy:catalog.contracts.numericPolicy,runtimeHash:catalog.runtimeHash},
     portability:{portable:false,requiredCapabilities:['ashen.legacy-adapter@1'],reason:'Host gameplay adapter; no portable rules VM is claimed.'}};
   profile.hash = gameDigest(profile);
@@ -141,6 +182,6 @@ export function validateResolvedGameProfile(snapshot, supportedRuntimeHash) {
     if (!value.schemas[id]) fail(`$/modules/${id}`, 'missing pinned settings schema');
     validateGameSchema(settings,value.schemas[id],`$/modules/${id}`);
   }
-  verifySettings(value.modules); verifyContent(value.content);
+  verifySettings(value.modules, value.instances); verifyContent(value.content);
   return freezeGameData({...value,hash});
 }
