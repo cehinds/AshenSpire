@@ -58,7 +58,7 @@ export function applyGameProfileToContent(baseBundle,profileOrAuthor = 'current'
     bundle.classes=(bundle.classes||[]).map(def=>{
       const row=gameContent(profile,'classes').find(item=>item.id===def.id);
       if(!row)return def;
-      return {...def,maxHp:row.maxHp,...(gameModule(profile,'cards')?.mode === 'configured' ? {cardPool:[...new Set([...(def.cardPool||[]),row.specialCardId])],startingSignatureCard:row.specialCardId} : {})};
+      return {...def,maxHp:row.maxHp,...(row.description === undefined ? {} : {description:row.description}),...(gameModule(profile,'cards')?.mode === 'configured' ? {cardPool:[...new Set([...(def.cardPool||[]),row.specialCardId])],startingSignatureCard:row.specialCardId} : {})};
     });
   }
   if(gameModule(profile,'equipment')?.requirementsPolicy === 'none' && bundle.equipment) {
