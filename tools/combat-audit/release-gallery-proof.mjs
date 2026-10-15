@@ -52,6 +52,13 @@ try {
     // The public game's ~15 MB response exceeds Chrome's default inspector
     // resource cache; retain those actual navigation bytes for the hash proof.
     const cdp = await context.newCDPSession(page);
+    const completed = new Set(), failed = new Map();
+    let documentRequestId;
+    cdp.on('Network.responseReceived', event => {
+      if (event.type === 'Document' && event.response.url === exactUrl + shot.query) documentRequestId = event.requestId;
+    });
+    cdp.on('Network.loadingFinished', event => completed.add(event.requestId));
+    cdp.on('Network.loadingFailed', event => failed.set(event.requestId, event.errorText));
     await cdp.send('Network.enable', { maxResourceBufferSize: 64 * 1024 * 1024, maxTotalBufferSize: 128 * 1024 * 1024 });
     const row = { ...shot, viewport, deviceScaleFactor: 1, at: new Date().toISOString(), requestedUrl: exactUrl + shot.query };
     report.captures.push(row);
@@ -62,8 +69,18 @@ try {
       const response = await page.goto(row.requestedUrl, { waitUntil: 'domcontentloaded', timeout: 90000 });
       assert.equal(response.status(), 200, 'actual public game navigation succeeds');
       assert.equal(page.url(), row.requestedUrl, 'actual executed route remains the fixed published build');
-      const bytes = await response.body(); row.htmlSha256 = digest(bytes); row.htmlBytes = bytes.length;
-      if (exact.pageSha256) assert.equal(row.htmlSha256, exact.pageSha256, 'browser executes exact published page bytes');
+      const bodyDeadline = Date.now() + 30000;
+      while (!documentRequestId || !completed.has(documentRequestId)) {
+        if (failed.has(documentRequestId)) throw Error(`navigation body failed: ${failed.get(documentRequestId)}`);
+        assert.ok(Date.now() < bodyDeadline, 'actual navigation body finishes on the observed CDP session');
+        await new Promise(done => setTimeout(done, 50));
+      }
+      const observed = await cdp.send('Network.getResponseBody', { requestId: documentRequestId });
+      const bytes = Buffer.from(observed.body, observed.base64Encoded ? 'base64' : 'utf8');
+      row.bodyTransport = { method: 'Network.getResponseBody', requestId: documentRequestId, sameBufferedSession: true };
+      row.htmlSha256 = digest(bytes); row.htmlBytes = bytes.length;
+      assert.match(exact.pageSha256, /^[a-f0-9]{64}$/, 'published pack provides its page hash');
+      assert.equal(row.htmlSha256, exact.pageSha256, 'browser executes exact published page bytes');
       const html = bytes.toString('utf8');
       const stamp = name => html.match(new RegExp(`const ${name} = '([^']*)'`))?.[1];
       row.embedded = { source: stamp('SOURCE'), ordinal: Number(stamp('ORDINAL')), edition: stamp('EDITION'), runPath: stamp('RUN_PATH'), built: stamp('BUILT') };
