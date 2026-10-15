@@ -1,7 +1,5 @@
 name: Player HUD clearance evidence
 on:
-  push:
-    branches: [fix/combat-player-hud-clearance]
   pull_request:
     branches: [dev]
     paths: ['styles/**', 'src/ui/**', 'src/model/blockPresentation.js', 'content/hud-layout/**', 'tools/player-hud-clearance-qa.mjs', '.github/workflows/player-hud-clearance.yml']
@@ -9,27 +7,8 @@ concurrency:
   group: player-hud-${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 permissions:
-  contents: write
+  contents: read
 jobs:
-  generate:
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          ref: ${{ github.ref_name }}
-          lfs: false
-      - uses: ./.github/actions/setup-node
-      - run: node tools/about-changelog.mjs --write
-      - name: Commit generated changelog projection
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/content/changelog.generated.js
-          if ! git diff --cached --quiet; then
-            git commit -m "Generate player HUD changelog receipt"
-            git push
-          fi
   capture:
     runs-on: ubuntu-latest
     timeout-minutes: 15
