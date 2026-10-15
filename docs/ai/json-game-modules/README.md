@@ -1,53 +1,36 @@
-# JSON-driven game modules — continuation index
+# JSON-driven Ashen Spire modules
 
-**Status: design documents delivered; runtime implementation pending.** The
-modular runtime, module schemas, editor and JSON authoring/apply tools are future
-work. Existing gameplay remains unchanged from source baseline
-`3d40c190983069eec8d8a2370fb3f229ac376290`. `SPEC.md` still describes the live
-runtime baseline; it does not mean the modular implementation exists.
+**Status: partial implementation on `Feature/json-game-modules`; browser acceptance remains in progress.** The repository now has a versioned profile resolver, generated artifact lock, core/current presets, an Ashen content pack, source-backed run/combat adapters and authoring CLI. It is still a host adapter that requires `ashen.legacy-adapter@1`; this is not yet the full engine-neutral runtime/portable rules VM the original goal calls for. The current configured profile and original legacy profile are separate entry paths.
 
-The previous handoff documentation was committed as `49c5781fe`. The current
-continuation work is documentation only. No PR has been created, and no feature
-preview has been verified. Current profile progression makes only Reaver
-selectable initially, then unlocks Starseer, Rogue and Herald after unique
-completed full runs. Each rest visit offers one service—Strategize, Smith
-or Level Up—and the chosen service fully restores HP/MP/SP and both flask
-types. A past GitHub API query returned `Forbidden`; a branch push by itself
-does not establish that Pages deployed a preview.
+The user-facing profile starts with four fixed classes, a ten-card starter, route progression, one-service rests, shops and rewards. New profiles begin with Reaver; unique terminal wins or defeats unlock Starseer, Rogue, then Herald. The title offers five choices when a valid save exists (Continue, New Game, Load Game, Settings, Exit); Continue chooses the newest eligible save, and Continue/Load disappear when no eligible save exists. Rest offers one of Strategize, Smith or Level Up and then restores HP/SP/MP and both flask types. Manual deck editing is Strategize-only.
 
-Check branch/status and this page’s status/release boundary first, then read the
-documents in this order:
+## Start here
 
-1. [Current source and core specification](CORE-SPEC.md) — current source
-   inventory and the latest decisions for the playable Ashen core bundle,
-   profile class unlocks and one-service rest flow.
-2. [Structural architecture](ARCHITECTURE.md) — generic kernel infrastructure,
-   foundation gameplay providers, reusable mechanics and Ashen data boundaries.
-3. [Implementation contract](IMPLEMENTATION.md) — module boundary, optional
-   package behavior, compatibility and acceptance criteria.
-4. [Pseudocode and package examples](PSEUDOCODE.md) — proposed data shapes,
-   composition and runtime flows.
-5. [Continuation handoff](CONTINUE.md) — paste-ready prompt, bounded next task,
-   author workflow and delivery checks.
+- [Game author guide](../../../games/ashenspire/guide.md): the small `game.json`, feature switches, validation/build/export commands and limitations.
+- [Core pack guide](../../../games/ashenspire/packs/core/guide.md): classes, cards, routes, rests, rewards and shops.
+- [Core product specification](CORE-SPEC.md): user-confirmed mechanics and unresolved/provisional values.
+- [Architecture](ARCHITECTURE.md): kernel, always-on foundation, module and game/content boundaries.
+- [Implementation contract](IMPLEMENTATION.md): runtime ownership, resolver/update/save contracts and acceptance criteria.
+- [Pseudocode](PSEUDOCODE.md): transaction, operation and deterministic-flow sketches.
+- [Continuation handoff](CONTINUE.md): actual current status and next bounded verification task.
+- [Per-module guides](../../../engine/modules): schemas, defaults, author examples, enabled/disabled behavior and adapter limits.
 
-CORE-SPEC is the product authority; ARCHITECTURE is the structural authority.
-Class selection is core, optional character creation is off, and tags/groups select
-declared references without hidden module activation.
+The one author entry shape is:
 
-These documents specify future work. Proposed paths, APIs, schemas, commands and
-checks must be verified against the current checkout unless explicitly marked
-as existing entrypoints. Continue actions already authorized in the active
-session without requesting the same authorization again; this handoff grants no
-additional authority. A live instruction to continue or implement this plan
-authorizes its next bounded slice.
+```json
+{
+  "formatVersion": 1,
+  "core": "ashen.core@1.0.0",
+  "modules": {}
+}
+```
 
-The owner has explicitly set the release boundary: workers commit and push to
-their own `origin/worker/json-game-modules/<task>` branches; the integrator
-reviews and integrates onto `Feature/json-game-modules` and pushes that branch.
-Do not merge or promote to `dev`, `test`, `release` or `main` until a later
-explicit owner instruction. This overrides the standing contrary instructions
-in `CLAUDE.md` and `CONTRIBUTING.md`.
+Omitted bundled modules inherit their bundle settings. `false` disables; `true` selects bundle/default settings; an object recursively overrides settings and arrays replace. The `current` preset selects the existing legacy behavior. Catalog presence does not guarantee a configured adapter: unsupported future module selections and instances must fail closed.
 
-**Handoff date:** October 14, 2026 (America/Anchorage). For current branch tip
-and task status, run `git status --short --branch` and
-`git log -1 --oneline --decorate`; never reuse a stale SHA.
+## Runtime and release boundary
+
+The resolver generates `src/content/generated/gameProfiles.js` and `games/ashenspire/game.lock.json`; do not edit these outputs directly. Each run carries an immutable resolved profile and lock hash. New profile settings affect new runs; saved runs stay pinned and this version does not hot-unload modules. Save schema is v25. A profile/runtime mismatch refuses the load without rewriting the stored save.
+
+Focused headless tests have passed for run profile behavior, title save selection, starter/combat profiles and individual cards/resources/defenses/stances/routes/class-selection-off combat flows. These checks do not prove full product completion. Desktop/mobile browser parity, a complete profile run through win/defeat/restart/save, and portable export conformance are still outstanding. No deployed preview is claimed.
+
+The owner has authorized implementation on the feature branch. Workers use isolated `worker/json-game-modules/*` branches; integrate only to `Feature/json-game-modules`. Do not promote or open a PR to dev, test, release or main without later explicit instruction. Continue already authorized work without asking for the same permission again.

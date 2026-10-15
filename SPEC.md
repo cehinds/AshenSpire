@@ -3248,3 +3248,19 @@ Each item is one PR into `dev`, written test-first, carrying a receipt (and no b
 3. **The levelling preview and cap** (§15.2).
 4. **Crafting drops** (§15.3). The refined-stone field is `smithingStonesRefined`, the name §14 migrates, and this PR adds it if §14.4 has not landed yet.
 5. **Legendary sigils** (§15.4). This one is after §14 step 5 (which adds `sigils` and `sigilSlots`), and adds only `attunedSigils`, one schema bump on top of §14's last schema at the time it lands.
+
+## 16. Versioned JSON game profile (Feature/json-game-modules addendum, 2026-10-15)
+
+This addendum describes the configured Ashen profile branch. It does not change the existing legacy game rules or silently reinterpret prior sections as JSON-backed behavior. The author entry is `games/ashenspire/game.json`; the `ashen.core@1.0.0` bundle selects a four-class run with cards, HP/SP/MP, fixed class loadouts, configured combat, routes, rests, shops and rewards. `games/ashenspire/presets/current.json` selects the original legacy behavior.
+
+The small entry shape is `{ "formatVersion": 1, "core": "ashen.core@1.0.0", "modules": {} }`. A missing module included by the selected bundle inherits its selection and settings; a missing non-bundled module is off. `false` disables, `true` uses resolved bundle/default settings, and an object recursively overrides them; arrays replace the inherited array. Resolver schemas reject unknown properties, invalid IDs and unsupported configured modules or instances. Tags, cards and content references do not implicitly enable modules.
+
+The configured core has Reaver, Starseer, Rogue and Herald with exactly six starting attribute points each. Reaver starts with STR 2; Starseer with INT 2; Rogue with DEX 2; Herald with WIS 2; every other attribute is 1. Each has a fixed loadout and ten-card starter: three Strike, three Defend, one Counter, one Smash, one Sweep and one class special. The opening hand is 4 + INT. Only Reaver is initially selectable; each unique terminal full-run win or defeat unlocks Starseer, Rogue and Herald in order. The profile uses unified damage, Block then Poise, and the seven directed stance advantages recorded in `docs/ai/json-game-modules/CORE-SPEC.md`.
+
+Configured runs use deterministic three-act routes with seven pre-boss nodes and a boss per act. A rest visit commits exactly one of Strategize, Smith or Level Up; Strategize is the only manual deck-editing service. The chosen service restores full HP, SP, MP and both healing and MP flask pools. Equipment editing has an independent policy. Shop and reward content comes from the selected core pack.
+
+Each new run snapshots its resolved profile, runtime artifacts and hash. Save schema v25 preserves that pin; a profile/runtime mismatch refuses to load without overwriting the stored save. Editing game.json or rebuilding the current lock affects new runs and does not hot-unload or migrate an existing run. Any future save migration requires a separately tested, explicit atomic procedure.
+
+The JSON resolver, host adapter and author CLI are implemented in slices on the feature branch. Their export currently requires `ashen.legacy-adapter@1` and is not a portable rules VM or complete engine-neutral gameplay package. The legacy preset remains the compatibility path. Full browser acceptance is still in progress. Numeric balance settings called provisional in the core product specification or `games/ashenspire/packs/core/provisionalPolicies.json` remain provisional even though working JSON currently supplies values; they are not additional permanent product approvals.
+
+For current usage and checks, see `games/ashenspire/guide.md`; product rules and unresolved choices live in `docs/ai/json-game-modules/CORE-SPEC.md`. The implementation status and next acceptance work are tracked in `docs/ai/json-game-modules/README.md` and `CONTINUE.md`.

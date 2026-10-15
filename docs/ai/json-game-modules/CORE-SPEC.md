@@ -1,14 +1,14 @@
 # Current product core specification
 
-**Status: documentation only; proposed runtime, schemas and game configuration are not implemented.** This file defines the requested future core. Existing gameplay and the repository-wide `SPEC.md` are unchanged. The documentation baseline was `49c5781fe`; the surveyed live source baseline was `3d40c190983069eec8d8a2370fb3f229ac376290`. Obtain the active branch head with `git log -1 --oneline --decorate`; neither baseline is a claim about the current tip.
+**Status: product authority with a partial host-adapter implementation.** The Ashen core profile, module schemas, source pack, generated lock and selected run/combat/rest/shop/reward adapters now exist on `Feature/json-game-modules`. The entire game-neutral architecture, portable rule execution and full browser acceptance do not. This document defines the user-approved product target, distinguishes confirmed requirements from suggestions/pending rules, and must not be replaced by provisional JSON defaults. The legacy sections of repository `SPEC.md` remain the behavior authority for `ashen.current`; its additive profile section links this target. Historical source hashes are omitted intentionally; inspect the current branch tip before verifying code.
 
-[ARCHITECTURE.md](ARCHITECTURE.md) is the structural authority for the proposed file/module boundaries; this file is the product authority for rules and defaults. Read both before implementation.
+[ARCHITECTURE.md](ARCHITECTURE.md) describes the target boundaries; this file is the product authority for rules and confirmed requirements. Current per-feature settings and source data are linked by the module and pack guides. If the host adapter uses a provisional choice, label it as provisional rather than treating the implementation as a product decision.
 
 Authority for this work is: **latest live user instructions → this CORE-SPEC → consistent [IMPLEMENTATION.md](IMPLEMENTATION.md) and [PSEUDOCODE.md](PSEUDOCODE.md)**. [README.md](README.md) indexes delivery status; [CONTINUE.md](CONTINUE.md) carries the next-session handoff. Resolve conflicting planning text by updating these documents. Future source changes must reconcile the repository specification explicitly; this document does not silently change live behavior or authorize source edits now.
 
 Workers commit and push only their own `worker/json-game-modules/<task>` branches. The integrator alone integrates and pushes `Feature/json-game-modules`. **No merge or promotion to `dev`, `test`, `release` or `main` until a future explicit owner instruction.** No new top-level AGENTS file, runtime/schema implementation, game configuration deployment or GitHub messages belong to this documentation task.
 
-Labels below matter: **Confirmed** means requested by the owner or an already accepted recommendation; **Suggested** means a recommendation requiring a later decision before becoming a requirement; **Pending** means the wording leaves a material choice unresolved. Proposed JSON illustrates future authoring, not an available schema or deployable configuration.
+Labels below matter: **Confirmed** means requested by the owner or an already accepted recommendation; **Suggested** means a recommendation requiring a later decision before becoming a requirement; **Pending** means the wording leaves a material choice unresolved. JSON excerpts illustrate intent; executable settings live in the module schemas and core pack. Provisional working values are not promoted to confirmed gameplay by being present in JSON.
 
 ## Superseded decisions
 
@@ -81,7 +81,7 @@ Attack/pass, turn opportunities independent of optional resources, target select
 
 Canonical spelling is Herald; “Harold” in the earlier request refers to that class.
 
-Proposed fixed-stat data excerpt (all values confirmed; schema still proposed):
+Authored counterpart: `games/ashenspire/packs/core/classes.json` and `stats.json`. This excerpt records confirmed values; edit the source files, not this example:
 
 ```json
 {
@@ -158,7 +158,7 @@ At round end, reshuffle the entire deck; do not retain the previous hand. **Conf
 
 Accepted readable-card guidance: at most two effects and approximately two to three total display lines on the face; inspect provides detail. Authored effects can include damage, status, block, Poise interaction and evasion. Buffs are statuses. Those categories do not authorize automatic legacy Poise break behavior. Costs and class-special effects are not invented here.
 
-Proposed content excerpt (illustrative vocabulary, not the runtime schema):
+Illustrative content excerpt; use the actual current pack schema and examples for executable data:
 
 ```json
 {
@@ -187,7 +187,7 @@ Proposed content excerpt (illustrative vocabulary, not the runtime schema):
 }
 ```
 
-This excerpt deliberately omits card IDs, costs, deck limits and collection-to-active-deck reward policy. It is not deployable until the actual schema/content and pending decisions exist.
+This excerpt deliberately omits card IDs, costs, deck limits and collection-to-active-deck reward policy. It remains illustrative; the actual authored card/deck content is in the core pack, and unresolved policies remain unresolved.
 
 ## Combat, Poise and presentation
 
@@ -229,7 +229,7 @@ The earlier full-SP restoration remains in effect; the new instruction does not 
 
 Apply full recovery against final resource maxima after the service, including any maximum-HP/MP/SP changes caused by Level Up. Keep Strategize usable without making an edit, so a player with no earned level or upgradeable equipment can still recover. Suggested eligibility policy: disable unavailable Level Up/Smith services with a clear reason while retaining Strategize; exact XP and equipment upgrade requirements remain to be authored.
 
-Proposed service excerpt (illustrative vocabulary, not a runtime schema):
+Illustrative service excerpt; the current executable policy is in `games/ashenspire/packs/core/rests.json` and the rest module schema:
 
 ```json
 {
@@ -252,7 +252,7 @@ Proposed service excerpt (illustrative vocabulary, not a runtime schema):
 }
 ```
 
-The excerpt deliberately omits equipment-upgrade amount/cost and eligibility policies and is not deployable configuration.
+The excerpt deliberately omits equipment-upgrade amount/cost and eligibility policies; consult the current source pack and retain those details as unresolved rather than inventing values.
 
 
 The owner targets one to two attribute level-ups per “floor,” three to six total levels. **Pending:** interpret “floor” as act (giving one to two per act), and distinguish three to six level gains from final character levels. Starting level, XP curve, grant timing and any off-by-one conversion must be explicit before implementation; no curve is authorized by these numbers alone.
