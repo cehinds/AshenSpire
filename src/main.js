@@ -2907,6 +2907,7 @@ function leaveLegacyDungeon() {
 }
 
 function openLegacyEntrance(encounterId, nodeId) {
+  if (isConfiguredRun(run) && !gameModule(run, 'dungeons')) return false;
   const def = dungeonForEncounter(encounterId);
   if (!def) return false;
   beginDungeon(run, def, nodeId); persist(); showMap(); return true;
@@ -3165,7 +3166,7 @@ async function onCombatEnd(result, combat, enc) {
   const pendingBefore = pendingLevelCount(registries, run);
   // Every level waits for its press (SPEC §13.4o): XP is always banked, and the
   // reward door's Level up claims it. No setting applies a level on its own.
-  const manualLevelUp = true;
+  const manualLevelUp = !isConfiguredRun(run);
   // THE SKILL TRACKS ARE PAID HERE, ONCE (plan phase 4a): the fight kept a
   // receipt of every hit, block, evade and buildup by track; the run's ledger
   // takes it now, win or loss, and climbs whatever the XP buys.
@@ -3186,12 +3187,12 @@ async function onCombatEnd(result, combat, enc) {
     victory: result === 'victory', pool: enc.pool, enemies: combat.enemies,
     characterMultiplier: featMultiplier(run, 'characterXp'),
   });
-  const levelXp = xpReceipt.total;
+  const levelXp = isConfiguredRun(run) && gameModule(run, 'progression')?.characterLevels !== true ? 0 : xpReceipt.total;
   const levelAward = manualLevelUp
     ? bankLevelXp(registries, run, levelXp)
     : awardLevelXp(registries, run, levelXp, {
-      pointsPerLevel: resolveLevelUpValue(saves.loadMeta().settings),
-      grantStats: settingOn(saves.loadMeta().settings, 'rewardLevelStatPoints'),
+      pointsPerLevel: configuredProgression ? gameModule(run, 'progression')?.attributePointsPerLevel || 0 : resolveLevelUpValue(saves.loadMeta().settings),
+      grantStats: configuredProgression ? !!gameModule(run, 'stats') : settingOn(saves.loadMeta().settings, 'rewardLevelStatPoints'),
     });
   const levelsEarned = manualLevelUp
     ? Math.max(0, levelAward.pendingLevelUps - pendingBefore)
@@ -3237,6 +3238,7 @@ async function onCombatEnd(result, combat, enc) {
   // losing either the Stone or the other spoils.
 
   if (configuredProgression) {
+    run.cinders += Math.floor(rollRuneReward(registries, rng, enc.pool, run.relics));
     const boss = enc.pool === 'boss';
     if (boss) run.bossesBeaten = [...new Set([...(run.bossesBeaten || []), ...enc.enemies])];
     if (boss && run.actNumber >= (gameModule(run, 'routes')?.acts || 3)) return showFinishedRun(true);
