@@ -4,7 +4,10 @@ on:
     branches: [fix/combat-player-hud-clearance]
   pull_request:
     branches: [dev]
-    paths: ['styles/combat-layers.css', 'tools/player-hud-clearance-qa.mjs', '.github/workflows/player-hud-clearance.yml']
+    paths: ['styles/**', 'src/ui/**', 'src/model/blockPresentation.js', 'content/hud-layout/**', 'tools/player-hud-clearance-qa.mjs', '.github/workflows/player-hud-clearance.yml']
+concurrency:
+  group: player-hud-${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
 permissions:
   contents: write
 jobs:
