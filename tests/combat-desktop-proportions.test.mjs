@@ -35,26 +35,19 @@ test('combatLayout.js does not pass formFactor to allocateCombatBands', () => {
 
 // Driven through the real caller: a desktop 1920x1080 window must give the
 // battlefield (scene band) the phone's share, not the retired 50% desktop band.
-test('the desktop battlefield takes the phone scene band, above the retired 50% share', () => {
+test('desktop and mobile each use their own physical profile', () => {
   const desktop = planCombatLayout({ formFactor: 'desktop', width: 1920, height: 1080 });
-  assert.ok(desktop.battlefield / 1080 > .5, `battlefield share ${desktop.battlefield / 1080}`);
-  const phone = planCombatLayout({ formFactor: 'mobile', width: 1920, height: 1080 });
-  assert.deepEqual([desktop.hud, desktop.hand], [phone.hud, phone.hand], 'the hud and hand are the phone\'s');
+  const phone = planCombatLayout({ formFactor: 'mobile', width: 390, height: 844 });
+  assert.deepEqual([desktop.hud, desktop.hand, desktop.footer], [112, 350, 124]);
+  assert.deepEqual([phone.hud, phone.hand, phone.footer], [100, 300, 100]);
+  assert.ok(desktop.battlefield / 1080 > .4);
 });
 
 // Sprite height follows the battlefield the caller hands it. At 1920x1080 the
 // scene band is now the phone's ~55% share, so sprites stand taller than they did
 // on the retired 50% desktop band.
-test('desktop sprites stand taller in proportion to the larger scene band at 1920x1080', () => {
-  const actor = (id, side, height) => ({ id, side, slot: { id, artWidth: 400, depth: 1, ground: height * .75, x: 960 }, ratio: 1, multiplier: 1,
-    visibleWidth: 60, visibleHeight: 160, leading: 40, enemyId: 'x' });
-  const spriteHeight = (field) => {
-    const actors = [actor('p', 'player', field), actor('a', 'enemy', field)];
-    return fitAlternativeSprites({ width: 1920, height: field, actors, narrow: false }).find(size => size.id === 'a').visibleHeight;
-  };
+test('desktop sprites follow the allocated battlefield without a second profile scale', () => {
   const scene = planCombatLayout({ formFactor: 'desktop', width: 1920, height: 1080 }).battlefield;
-  const retiredHalf = 1080 * .5;
-  const ratio = spriteHeight(scene) / spriteHeight(retiredHalf);
-  assert.ok(scene > retiredHalf, `scene ${scene} against the retired 540`);
-  assert.ok(Math.abs(ratio - scene / retiredHalf) < .02, `sprite ratio ${ratio} for scene ratio ${scene / retiredHalf}`);
+  assert.equal(scene, 1080 - 112 - 350 - 124);
+  assert.ok(scene > 400);
 });

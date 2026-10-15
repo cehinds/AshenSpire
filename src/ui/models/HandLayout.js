@@ -1,14 +1,13 @@
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { uiConfig } from '../../config/generated/ui.js';
 
-// The combat hand reserves a 30px compact row plus four physical pixels of
+// The combat hand reserves a 44px touch row plus four physical pixels of
 // separation before card geometry begins. Keep the band allocator and the
 // renderer on the same physical floor.
-export const COMBAT_TOOLS_HEIGHT_PX = 34;
-// The desktop tool row is 36 physical px (styles/combat-layers.css), so its
-// reserve is that row plus the same four px. hand.js measures the live row and
+export const COMBAT_TOOLS_HEIGHT_PX = 48;
+// Every profile uses the same physical touch floor. hand.js measures the live row and
 // uses this only when the row cannot be measured.
-export const COMBAT_TOOLS_DESKTOP_HEIGHT_PX = 40;
+export const COMBAT_TOOLS_DESKTOP_HEIGHT_PX = 48;
 const compactCard = uiConfig.scenes.w4a.sizing.compactCombat;
 
 // Presentation order is local, keyed by instance, and never mutates a pile.
@@ -32,7 +31,7 @@ export function moveHandInstance(order, id, slot) {
 // Every form factor takes this one plan: the card is sized by the hand band
 // (the face fills the band less the lift, arc and insets), and the phone's
 // compact path keeps its own readable floor and cap.
-export function handLayout({ width, height, count, rem = 16, zoom = 1, compact = false, controlsHeight = 0, controlled = null, headroom = 0 }, config = wireframeUi.hand) {
+export function handLayout({ width, height, count, rem = 16, zoom = 1, compact = false, controlsHeight = 0, controlled = null, headroom = 0, profile = null }, config = wireframeUi.hand) {
   let inset = config.verticalInsetRem * rem;
   const lift = config.selectedLiftRem * rem;
   const liftReserve = Math.max(0, lift - headroom);
@@ -56,7 +55,9 @@ export function handLayout({ width, height, count, rem = 16, zoom = 1, compact =
   const fanCount = Math.max(1, Math.min(count, requested));
   const readableWidth = (width - gutter * 2) / (1 + (fanCount - 1) * compactCard.cardVisibleFraction + spread * 2);
   // The non-phone face fills the band up to the shared cap (hand.maxWidthRem).
-  const cardWidth = compact
+  const cardWidth = profile
+    ? Math.max(profile.min / zoom, Math.min(profile.max / zoom, available * wireframeUi.card.ratio))
+    : compact
     // Phone cards fill the band between a readable floor and a cap, both in
     // physical px (content/config/ui/scenes/w4a-combat.json, compactCombat).
     ? Math.max(compactCard.cardMinWidthPx / zoom, Math.min(compactCard.cardMaxWidthPx / zoom, readableWidth, available * wireframeUi.card.ratio))

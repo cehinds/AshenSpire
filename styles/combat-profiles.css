@@ -1,0 +1,76 @@
+/* Each HUD form factor owns a physical sizing profile. The adapter converts
+   these pixels through the UI zoom once; content count never sizes a band. */
+:root[data-form-factor='mobile'] .combat[data-layout='formation'] {
+  --combat-profile-hud-px: 100; --combat-profile-hand-px: 300; --combat-profile-footer-px: 100;
+  --combat-profile-card-min-px: 148; --combat-profile-card-max-px: 160;
+  --combat-profile-footer-width-px: 390; --combat-profile-label-px: 14;
+}
+:root[data-form-factor='tablet'] .combat[data-layout='formation'] {
+  --combat-profile-hud-px: 104; --combat-profile-hand-px: 330; --combat-profile-footer-px: 124;
+  --combat-profile-card-min-px: 168; --combat-profile-card-max-px: 184;
+  --combat-profile-footer-width-px: 640; --combat-profile-label-px: 14;
+}
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] {
+  --combat-profile-hud-px: 112; --combat-profile-hand-px: 350; --combat-profile-footer-px: 124;
+  --combat-profile-card-min-px: 192; --combat-profile-card-max-px: 208;
+  --combat-profile-footer-width-px: 600; --combat-profile-label-px: 15;
+}
+:root[data-form-factor='widescreen'] .combat[data-layout='formation'] {
+  --combat-profile-hud-px: 124; --combat-profile-hand-px: 440; --combat-profile-footer-px: 148;
+  --combat-profile-card-min-px: 220; --combat-profile-card-max-px: 236;
+  --combat-profile-footer-width-px: 720; --combat-profile-label-px: 16;
+}
+/* Tools are pinned to the allocated band, independent of the scroll arrows,
+   card envelope, hand count, and the selected card's lift. */
+:root .combat[data-layout='formation'] .combat-tools {
+  left: calc(12px / var(--ui-zoom,1)) !important;
+  right: calc(12px / var(--ui-zoom,1)) !important; width: auto !important;
+  top: calc(100% - var(--w4-band-context) - var(--w4-band-footer)) !important;
+  min-height: calc(44px / var(--ui-zoom,1));
+}
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] .combat-tools {
+  top: auto !important; bottom: calc(var(--w4-band-footer) / 2 - 22px / var(--ui-zoom,1));
+}
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-tools > button {
+  height: calc(44px / var(--ui-zoom,1)); min-height: calc(44px / var(--ui-zoom,1));
+  font-size: calc(var(--combat-profile-label-px) * 1px / var(--ui-zoom,1));
+}
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-tools .reaction-switch-track {
+  width: calc(84px / var(--ui-zoom,1)); height: calc(26px / var(--ui-zoom,1));
+}
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-tools .reaction-switch-value { font-size: calc(14px / var(--ui-zoom,1)); }
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-tools .reaction-switch-thumb { width: calc(20px / var(--ui-zoom,1)); height: calc(20px / var(--ui-zoom,1)); }
+/* The footer uses the hand dock's material across its entire width. */
+:root .combat[data-layout='formation'] > .hand-area { background: #100f0d; }
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art] {
+  background: transparent; background-image: none; box-shadow: none;
+  max-width: 100%; --footer-art-width: min(100%, calc(var(--combat-profile-footer-width-px) * 1px / var(--ui-zoom,1))) !important;
+}
+:root .combat[data-layout='formation'] .turn-ribbon {
+  font-size: calc(18px / var(--ui-zoom,1)); min-height: calc(28px / var(--ui-zoom,1));
+}
+:root .combat[data-layout='formation'] .combatant .meters .as-meter[data-res='hp'] .m-value {
+  font-size: calc(14px / var(--ui-zoom,1));
+}
+:root .combat[data-layout='formation'] .combatant .meters .as-meter[data-res='hp'] .bar { min-height: calc(18px / var(--ui-zoom,1)); }
+:root .combat[data-layout='formation'] .combatant .status-chip { font-size: calc(14px / var(--ui-zoom,1)); }
+:root .combat[data-layout='formation'] .combatant:not(.context-selected) .intent {
+  min-height: calc(32px / var(--ui-zoom,1)); font-size: calc(20px / var(--ui-zoom,1));
+}
+:root .combat[data-layout='formation'] .combatant .combat-health-row {
+  --health-row-h: calc(12px / var(--ui-zoom,1));
+  --combatant-value-text: calc(14px / var(--ui-zoom,1));
+  padding-bottom: calc(18px / var(--ui-zoom,1));
+}
+:root .combat[data-layout='formation'] .combatant .combat-health-meter .m-value { font-size: calc(14px / var(--ui-zoom,1)); }
+:root .combat[data-layout='formation'] .icon-tray .as-pip > .as-pill,
+:root .combat[data-layout='formation'] .status-overflow-more,
+:root .combat[data-layout='formation'] .footer-compact-label { font-size: calc(14px / var(--ui-zoom,1)); }
+:root[data-form-factor='desktop'] .combat[data-layout='formation'][data-combat-arrangement='rails'] .combat-tools {
+  top: calc(100% - var(--w4-band-context)) !important; bottom: auto;
+}
+/* SVG text uses the footer's authored viewBox units (1144 wide). At the
+   smallest noncompact profile, 27 units paint as 14 physical pixels. */
+:root .combat[data-layout='formation'] .combat-action-row[data-footer-compact='false'] .footer-art-face text:is([data-footer-binding='drawLabel'],[data-footer-binding='discard'],[data-footer-binding='exhaust'],[data-footer-binding='potions']) {
+  font-size: 27px; transform: none;
+}

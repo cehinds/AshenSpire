@@ -52,11 +52,21 @@ export function allocateSceneBands({ width, height, zoom = 1, rem = 16 } = {}, l
 // yields height to the battlefield, but only down to one minimum-width card
 // with its lift, arc and insets. Card faces, text and targets keep their
 // minimums. A host that still cannot fit is reported, not squeezed.
-export function allocateCombatBands({ width, height, zoom = 1, rem = 16, footerArtPx = 0, compact = false }, config = wireframeUi) {
+export function allocateCombatBands({ width, height, zoom = 1, rem = 16, footerArtPx = 0, compact = false, profile = null }, config = wireframeUi) {
   let stacked;
   let handShare;
   let footerShare;
-  if (compact) {
+  if (profile) {
+    const hud = profile.hud / zoom;
+    const hand = profile.hand / zoom;
+    const footer = profile.footer / zoom;
+    const minimumBattlefield = config.formation.minimumSpritePx / zoom + config.formation.detailReserveRem * rem;
+    const battlefield = Math.max(0, height - hud - hand - footer);
+    stacked = Object.freeze({ hud, battlefield, hand, footer, minimumBattlefield,
+      arrangement: 'stacked', rails: null, supported: battlefield >= minimumBattlefield });
+    handShare = hand / height;
+    footerShare = footer / height;
+  } else if (compact) {
     const compactConfig = uiConfig.scenes.w4a.sizing.compactCombat;
     const physicalHeight = height * zoom;
     const hud = Math.max(compactConfig.hudMinimumPx, physicalHeight * compactConfig.hudHeightFraction) / zoom;

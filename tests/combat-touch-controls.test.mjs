@@ -5,6 +5,7 @@ import { COMBAT_TOOLS_HEIGHT_PX } from '../src/ui/models/HandLayout.js';
 
 const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const css = read('../styles/combat-layers.css');
+const profiles = read('../styles/combat-profiles.css');
 const battlefield = read('../src/ui/components/battlefieldStage.js');
 const hand = read('../src/ui/components/hand.js');
 const tools = read('../src/ui/components/combatTools.js');
@@ -35,10 +36,10 @@ test('compact geometry reserves the measured controls and overhead gaps', () => 
   assert.match(hand, /const toolsHeight = toolsPhysical \/ zoom;/);
   assert.match(hand, /!desktop \? COMBAT_TOOLS_HEIGHT_PX/, 'only the desktop form factor measures its tool row');
   const dockOffset = Number(tools.match(/top: \(handBox\?\.top \|\| 0\) \+ (\d+)/)?.[1] ?? (tools.includes('top: handBox?.top || 0') || tools.includes('const dockTop = handBox?.top || 0;') ? 0 : NaN));
-  const toolHeight = Number(css.match(/\.combat-tools > button\s*\{[^}]*height:\s*calc\((\d+)px \/ var\(--ui-zoom,1\)\)/s)?.[1]);
+  const toolHeight = Number(profiles.match(/\.combat-tools > button\s*\{[^}]*height:\s*calc\((\d+)px \/ var\(--ui-zoom,1\)\)/s)?.[1]);
   assert([reserve, dockOffset, toolHeight].every(Number.isFinite), 'all toolbar dimensions must be accounted for');
-  assert.equal(toolHeight, 30, 'approved compact toolbar height');
-  assert.equal(reserve, 34, 'the compact fan reserves the toolbar and its clearance');
+  assert.equal(toolHeight, 44, 'toolbar meets the physical touch floor');
+  assert.equal(reserve, 48, 'the compact fan reserves the toolbar and its clearance');
   assert(reserve >= dockOffset + toolHeight + 4, 'card reservation must include toolbar offset, height and clearance');
 });
 
