@@ -3585,7 +3585,7 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "path": "src/** (excluding generated gameProfiles/changelog)",
-      "hash": "sha256:97d09f143f7b6734a82a583a3718a5c3cabff7dffff74efc1d52e89aad8cd90c"
+      "hash": "sha256:f2cf0ff27a9cbaa38f251fb7ae361b2f92852350252cddd52345b20c9242ff61"
     }
   ],
   "runtimeSources": [
@@ -8411,7 +8411,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/viewViewport.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:0dacd94ea19fd1cf0b4d8d522ba0566c826877db14fdf508d5e00e24d86b44ec"
+      "hash": "sha256:42191ba19b9f791271a36c93781319a6cca11ffd0f2d8b50f70c9befee882038"
     },
     {
       "path": "src/ui/whenNoOverlay.js",
@@ -8426,7 +8426,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:23af16d4e9c9f6d88fe655d32ecf1a688b47df39f9e3a1d6d193ce63923593ab"
     }
   ],
-  "runtimeHash": "sha256:b7cf51fffbcc0baa396f7b00499a241609c0fa2e23bfda46cbab04b000aa2356"
+  "runtimeHash": "sha256:b275a474f58a10b42d22fa72d52cc9205e766d3460ab83b9f1b9e0897c6d8c7a"
 };
 export const gameProfileAuthors = {
   "default": {
