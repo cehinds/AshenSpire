@@ -4558,6 +4558,15 @@ if (shotState === 'combat-test') {
     const evId = shotParams.get('shotEvent') || 'graveOfTheNameless';
     showEvent(evId);
   } else if (shotState === 'rest' || shotState === 'smith') {
+    if (isConfiguredRun(run)) {
+      const node = Object.values(run.mapGraph.nodes).find(row => row.type === 'shrine');
+      if (!node) throw new Error('Configured rest screenshot requires an authored rest node');
+      run.mapNodeId = node.id; run.floor = node.floor;
+      run.path = Object.values(run.mapGraph.nodes).filter(row => row.floor <= node.floor).map(row => row.id);
+      if (shotParams.get('shotRestState') === 'wounded') { run.hp = Math.max(1, Math.floor(run.maxHp * .6)); run.mana = 0; run.stamina = 0; }
+      if (shotState === 'smith') run.smithingStones = Math.max(1, run.smithingStones || 0);
+      persist(); showRest(); return;
+    }
     // A REACH STATE, not the denominator. Constantine could not scroll the
     // Smith grid on a phone; the reason nobody caught it is that the Shrine is
     // one of seven player-facing screens no instrument we own can open, so
