@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "core": {
-      "hash": "sha256:7c16dbd6a9ff8909bb6a14bb59d6035a7a74733da2a5be5a8ecee2a46ed3af2a",
+      "hash": "sha256:ff9b86fcf3b3b68694be8dbabc09835fd95ea1cb08159c7ad58a01f74430cc73",
       "formatVersion": 1,
       "core": "ashen.core@1.0.0",
       "artifacts": [
@@ -388,7 +388,7 @@
           "path": "games/ashenspire/packs/core/provisionalPolicies.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:56039c2fc1a68d42d0a9e9843272657c9c13bf7cadabc0c12174cf5a19026d79"
+          "hash": "sha256:5d2712b0677f52bc53940dc1f58d9f94b624fab82dab378a787e673af3261310"
         },
         {
           "path": "games/ashenspire/packs/core/resourceVariants.json",

@@ -6,7 +6,7 @@
     "Starseer uses the existing boneSceptre ID as a valid scepter adapter.",
     "Poise applies while positive after Block; it reduces positive residual damage by 25% without depletion.",
     "Evade uses seeded hit chance clamp(0.75 + (AR-DR)*0.02, 0.05, 0.95); failure doubles damage. Rating contributions and ordering are provisional.",
-    "Stance advantage multiplier 1 preserves authored relationship without inventing a damage bonus.",
+    "Stance advantage multiplier 1.25, bounded Smash stagger and Prepared interruption are provisional adapter policies.",
     "Equipment editor noncombat timing, reward take-one, free-work and reaction limits are provisional.",
     "SP recovery delegates to the existing turn-start adapter; exact SP growth remains legacy.",
     "Herald power behavior is a provisional card fixture; persistent stacking needs the runtime adapter.",
