@@ -5,7 +5,7 @@ import { createRegistries, relicPropertyRules } from '../src/model/registries.js
 import { equipmentCardModel } from '../src/model/equipmentCard.js';
 import { wireframeUi } from '../src/content/wireframeUi.js';
 import {
-  possessionVariant, equipmentKind, relicEffectModes, consumablePurposes,
+  possessionVariant, equipmentKind, relicEffectModes, consumablePurposes, possessionEffectSummary,
 } from '../src/ui/models/PossessionVariantModel.js';
 
 const r = createRegistries(contentBundle);
@@ -150,4 +150,15 @@ test('the face budget comes from wireframeUi.possession and refuses a bad value'
   assert.ok(Object.isFrozen(variant) && Object.isFrozen(variant.lines[0]));
   assert.throws(() => possessionVariant(r, r.relics.get('feralEye'), { kind: 'relic' }, { faceLines: 0, faceEffects: 2 }), /faceLines/);
   assert.throws(() => possessionVariant(r, {}, { kind: 'card' }), /unknown kind/);
+});
+
+
+test('possession summaries select at most two whole short clauses without clipping conditions', () => {
+  const full = 'Max HP +10. Your first attack each combat also deals 4 Poise damage.';
+  assert.deepEqual(possessionEffectSummary([{ label: full }]), ['Max HP +10.', 'Your first attack each combat also deals 4 Poise damage.']);
+  const conditional = 'If an enemy has been hit by an attack this turn and you still have Block remaining, gain 2 Strength.';
+  assert.deepEqual(possessionEffectSummary([{ label: conditional }]), ['Inspect for full effects.']);
+  assert.deepEqual(possessionEffectSummary([{ label: 'Max HP +10.' }, { label: '+1 starting Strength' }, { label: 'Draw 1 card.' }]), ['Max HP +10.', '+1 starting Strength']);
+  assert.equal(full, 'Max HP +10. Your first attack each combat also deals 4 Poise damage.');
+  assert.equal(possessionVariant(r, r.relics.get('feralEye'), { kind: 'relic' }, { faceLines: 8, faceEffects: 8 }).face.effects, 2);
 });
