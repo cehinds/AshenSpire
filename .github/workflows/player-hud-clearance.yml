@@ -6,8 +6,27 @@ on:
     branches: [dev]
     paths: ['styles/combat-layers.css', 'tools/player-hud-clearance-qa.mjs', '.github/workflows/player-hud-clearance.yml']
 permissions:
-  contents: read
+  contents: write
 jobs:
+  generate:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.ref_name }}
+          lfs: false
+      - uses: ./.github/actions/setup-node
+      - run: node tools/about-changelog.mjs --write
+      - name: Commit generated changelog projection
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/content/changelog.generated.js
+          if ! git diff --cached --quiet; then
+            git commit -m "Generate player HUD changelog receipt"
+            git push
+          fi
   capture:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -39,7 +58,7 @@ jobs:
           node --input-type=module <<'NODE'
           import { existsSync, readdirSync, readFileSync } from 'node:fs';
           const dir='outputs/player-hud';
-          if(existsSync(dir)) for(const f of readdirSync(dir).filter(f=>f.endsWith('.jpg'))) {
+          if(existsSync(dir)) for(const f of readdirSync(dir).filter(f=>['mobile.jpg','desktop.jpg','small.jpg'].includes(f))) {
             console.log('HUD_IMAGE_START '+f);
             const data=readFileSync(dir+'/'+f).toString('base64');
             for(let i=0;i<data.length;i+=16000) console.log('HUD_IMAGE_DATA '+data.slice(i,i+16000));
