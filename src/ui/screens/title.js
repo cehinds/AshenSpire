@@ -13,7 +13,6 @@ import { t, tFull } from '../strings.js';
 import { saveSlotSelectionModel } from '../models/SaveSlotSelectionModel.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { focusElement } from '../input.js';
-import { assetUrl } from '../assetmap.js';
 import { engravedIconHtml } from '../components/engravedIcon.js';
 import { registerModal } from '../modalState.js';
 
@@ -360,8 +359,6 @@ export function mountTitle(app, {
     // modal veil under the menu panel.
     app.innerHTML = `
       <div class="screen title-screen">
-        <div class="title-landscape" aria-hidden="true"></div>
-        <img class="title-traveler" src="${assetUrl('assets/player-polish/illustrations/title-traveler.webp')}" alt="" aria-hidden="true">
         <div class="tower-hall" aria-hidden="true"><div class="tower-interior-city"></div><div class="tower-door-frame"></div></div>
         ${Array.from({ length: 7 }, (_, i) => `<span class="ember" style="left:${8 + ((i * 13.7) % 84)}%;animation-delay:${(i * 1.7) % 9}s;animation-duration:${7 + (i % 4) * 2}s"></span>`).join('')}
         ${menuHtml()}
@@ -372,8 +369,7 @@ export function mountTitle(app, {
     const root = app.querySelector('.title-screen');
     const replayScene = () => {
       if (document.body.classList.contains('reduced-motion') || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-      root.querySelector('.title-landscape')?.animate([{ opacity: .35, transform: 'scale(1.04)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 1400, easing: 'ease-out' });
-      root.querySelector('.title-traveler')?.animate([{ opacity: 0, transform: 'translateX(-18px)' }, { opacity: 1, transform: 'translateX(0)' }], { duration: 1000, easing: 'ease-out' });
+      root.querySelector('.tower-hall')?.animate([{ opacity: .6 }, { opacity: 1 }], { duration: 600, easing: 'ease-out' });
     };
     root.querySelector('.tower-preview-replay')?.addEventListener('click', replayScene);
     // The scene plays on the first render of this mount only; the Replay button
