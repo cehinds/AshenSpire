@@ -15,6 +15,7 @@
 import { attachTooltip, esc } from './tooltip.js';
 import { t } from '../strings.js';
 import { relicIcon } from '../assets.js';
+import { engravedIcon } from './engravedIcon.js';
 import { keepsakeArtAsset } from '../../content/keepsakeArt.js';
 import { assetUrl } from '../assetmap.js';
 import { swapOnError } from '../artFallback.js';
@@ -186,18 +187,24 @@ export function booleanSettingToggle(label, value, onChoose) {
 }
 
 /** A class: an OptionCard — Glyph, Title·S, prose, and a StatePill when it is still locked. */
-export function classChoiceCard(cls, { selected = false, locked = false, expanded = false, visual = null, onChoose = null, hint = null, mastery = null } = {}) {
+export function classChoiceCard(cls, { selected = false, locked = false, lockIcon = false, expanded = false, visual = null, onChoose = null, hint = null, mastery = null } = {}) {
   const preview = selected && expanded && !locked;
+  const lockedBadge = lockIcon && locked && hint
+    ? el('span', { class: 'as-pill class-unlock-hint', style: 'display:inline-flex;align-items:center;gap:.35em;text-transform:none;letter-spacing:normal' }, [
+      Object.assign(engravedIcon('lock'), { style: 'width:1em;height:1em' }),
+      el('span', { text: hint }),
+    ])
+    : locked && hint ? pill({ label: hint }) : locked && cls.milestone ? pill({ label: `Arrives in ${cls.milestone}` }) : null;
   const card = optionCard({
     name: cls.name,
     description: cls.description,
     meta: mastery || '',
     // A locked card wears the unlock's own hint (plan phase 5c) or, for a
     // class not yet shipped, the milestone it arrives in.
-    badge: locked && hint ? pill({ label: hint }) : locked && cls.milestone ? pill({ label: `Arrives in ${cls.milestone}` }) : null,
+    badge: lockedBadge,
     selected, disabled: locked, tag: locked ? 'div' : preview ? 'article' : 'button',
     className: `class-pick cz-class${selected ? ' chosen' : ''}${locked ? ' locked' : ''}`,
-    attrs: { dataset: { class: cls.id }, ...(preview ? { 'aria-label': t('creation.preview.selectedClass', { name: cls.name }), tabindex: '-1' } : {}) },
+    attrs: { dataset: { class: cls.id }, ...(lockIcon && locked ? { role: 'group', tabindex: '0', 'aria-label': `${cls.name}. ${hint || t('creation.feats.locked')}` } : {}), ...(preview ? { 'aria-label': t('creation.preview.selectedClass', { name: cls.name }), tabindex: '-1' } : {}) },
   });
   card.prepend(el('span', { class: 'og', 'aria-hidden': 'true' }, visualNode(visual)));
   if (!locked && !preview && onChoose) card.addEventListener('click', onChoose);
