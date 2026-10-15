@@ -35,7 +35,8 @@ export const gameProfileCatalog = {
           "kind": "legacy-adapter",
           "portable": false
         },
-        "guide": "guide.md"
+        "guide": "guide.md",
+        "configuredAdapter": false
       },
       "defaults": {
         "mode": "configured",
@@ -65,7 +66,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/advanced-ui/module.json",
           "id": "advanced-ui",
           "version": "1.0.0",
-          "hash": "sha256:1e0c6c5243961f733b33f88d7f1c3f1b9e2fc56b1527652827b9913c05fb4136"
+          "hash": "sha256:48ac4705e8ed0189c89c4372d3a32ebba14a233fd9decb0835eb09fb33d8cd0b"
         },
         {
           "path": "engine/modules/advanced-ui/defaults.json",
@@ -93,7 +94,8 @@ export const gameProfileCatalog = {
           "kind": "legacy-adapter",
           "portable": false
         },
-        "guide": "guide.md"
+        "guide": "guide.md",
+        "configuredAdapter": true
       },
       "defaults": {
         "mode": "configured",
@@ -123,7 +125,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/animation/module.json",
           "id": "animation",
           "version": "1.0.0",
-          "hash": "sha256:70acf099701fe2effd7c5aca1037b238db8172b4266ac593bfb8a0a6b2bf37a0"
+          "hash": "sha256:79e8e9bc51d549f17f6d719e1cb858028cc785f463ac6cc9985d95a87ca31e06"
         },
         {
           "path": "engine/modules/animation/defaults.json",
@@ -151,7 +153,8 @@ export const gameProfileCatalog = {
           "kind": "legacy-adapter",
           "portable": false
         },
-        "guide": "guide.md"
+        "guide": "guide.md",
+        "configuredAdapter": true
       },
       "defaults": {
         "mode": "configured",
@@ -187,7 +190,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/art/module.json",
           "id": "art",
           "version": "1.0.0",
-          "hash": "sha256:ecee1b58d04c285dbea675d2b8be1daf1cad535fe807aa90e932a609276715e0"
+          "hash": "sha256:e7661c78233026a7c55e5fc46b208518af9036cb9b065ab4e7e3737f24f36a69"
         },
         {
           "path": "engine/modules/art/defaults.json",
@@ -215,7 +218,8 @@ export const gameProfileCatalog = {
           "kind": "legacy-adapter",
           "portable": false
         },
-        "guide": "guide.md"
+        "guide": "guide.md",
+        "configuredAdapter": false
       },
       "defaults": {
         "mode": "configured",
@@ -245,7 +249,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/audio/module.json",
           "id": "audio",
           "version": "1.0.0",
-          "hash": "sha256:bee4ddbd38e7443afc98968560aab9cf6d84ce705eb94523bb641a5299eb98aa"
+          "hash": "sha256:8ee1f4081ac608454c258853550b587a1819c701b51d373a2e4e483966997a05"
         },
         {
           "path": "engine/modules/audio/defaults.json",
@@ -273,7 +277,8 @@ export const gameProfileCatalog = {
           "kind": "legacy-adapter",
           "portable": false
         },
-        "guide": "guide.md"
+        "guide": "guide.md",
+        "configuredAdapter": true
       },
       "defaults": {
         "mode": "configured",
@@ -298,11 +303,14 @@ export const gameProfileCatalog = {
             ]
           },
           "roundShuffle": {
-            "type": "string",
-            "minLength": 1
+            "enum": [
+              "entireDeck"
+            ]
           },
           "retainHand": {
-            "type": "boolean"
+            "enum": [
+              false
+            ]
           },
           "handBase": {
             "type": "integer",
@@ -310,12 +318,14 @@ export const gameProfileCatalog = {
             "maximum": 1000000
           },
           "handAttribute": {
-            "type": "string",
-            "minLength": 1
+            "enum": [
+              "intelligence"
+            ]
           },
           "turnPolicy": {
-            "type": "string",
-            "minLength": 1
+            "enum": [
+              "multiCard"
+            ]
           },
           "freeCommandLimit": {
             "type": "integer",
@@ -326,8 +336,9 @@ export const gameProfileCatalog = {
             "type": "boolean"
           },
           "editorWhere": {
-            "type": "string",
-            "minLength": 1
+            "enum": [
+              "strategize"
+            ]
           },
           "faceMaxEffects": {
             "type": "integer",
@@ -360,7 +371,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/cards/module.json",
           "id": "cards",
           "version": "1.0.0",
-          "hash": "sha256:d3fc04369c8dd6ea0580231271ce9efac16b74dc08ae2629e0c302c9e1b587d8"
+          "hash": "sha256:710a8bdf00cd088a952dab9b647e4c4cb76e38d66f9100713ddfdc412eee9d74"
         },
         {
           "path": "engine/modules/cards/defaults.json",
@@ -372,7 +383,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/cards/settings.schema.json",
           "id": "cards",
           "version": "1.0.0",
-          "hash": "sha256:157b752e7007217b1c2e134c7bcd808a9312f1a506ca218eaf39566dd064c802"
+          "hash": "sha256:303d94c63ad695ffdfa91230f7de3b99ded763b818e101ce7c748d1327eaaed9"
         }
       ]
     },
@@ -388,7 +399,8 @@ export const gameProfileCatalog = {
           "kind": "legacy-adapter",
           "portable": false
         },
-        "guide": "guide.md"
+        "guide": "guide.md",
+        "configuredAdapter": false
       },
       "defaults": {
         "mode": "configured",
@@ -418,7 +430,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/character-creation/module.json",
           "id": "character-creation",
           "version": "1.0.0",
-          "hash": "sha256:8be2fc8cb2d597216031069797e26bced81845e0f0542694d62336af1d192d8f"
+          "hash": "sha256:b51036ccc6ad15a23dd09032a3808a0f1a990e4dca435911698c0292dd7051ee"
         },
         {
           "path": "engine/modules/character-creation/defaults.json",
@@ -446,7 +458,8 @@ export const gameProfileCatalog = {
           "kind": "legacy-adapter",
           "portable": false
         },
-        "guide": "guide.md"
+        "guide": "guide.md",
+        "configuredAdapter": true
       },
       "defaults": {
         "mode": "configured",
@@ -487,7 +500,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/class-selection/module.json",
           "id": "class-selection",
           "version": "1.0.0",
-          "hash": "sha256:e33c9af96068171c2e2aec8b94d34c99b23ed97f13a6b6703819a2cc25883524"
+          "hash": "sha256:0f64c4f548aad89fcda29c05dffc6ceaa806303f0e2a5973dca6e6f80f594c3c"
         },
         {
           "path": "engine/modules/class-selection/defaults.json",
@@ -515,7 +528,16 @@ export const gameProfileCatalog = {
           "kind": "legacy-adapter",
           "portable": false
         },
-        "guide": "guide.md"
+        "guide": "guide.md",
+        "configuredAdapter": false,
+        "instances": [
+          "physical",
+          "magic"
+        ],
+        "unsupportedConfiguredInstances": [
+          "physical",
+          "magic"
+        ]
       },
       "defaults": {
         "mode": "configured",
@@ -553,7 +575,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/damage-types/module.json",
           "id": "damage-types",
           "version": "1.0.0",
-          "hash": "sha256:6cb34fe8e48a9ea643b5748421c1d489cc2c67c223af14459f8077497d6dbeb5"
+          "hash": "sha256:65176a3e5df51de710abfb65aa9736b40ef48e7ea5c5834951f64aa805969791"
         },
         {
           "path": "engine/modules/damage-types/defaults.json",
@@ -581,7 +603,18 @@ export const gameProfileCatalog = {
           "kind": "legacy-adapter",
           "portable": false
         },
-        "guide": "guide.md"
+        "guide": "guide.md",
+        "configuredAdapter": true,
+        "instances": [
+          "block",
+          "poise",
+          "ward",
+          "barrier"
+        ],
+        "unsupportedConfiguredInstances": [
+          "ward",
+          "barrier"
+        ]
       },
       "defaults": {
         "mode": "configured",
@@ -631,8 +664,9 @@ export const gameProfileCatalog = {
             "maximum": 1000000
           },
           "poiseRounding": {
-            "type": "string",
-            "minLength": 1
+            "enum": [
+              "floor"
+            ]
           },
           "minimumPositiveDamage": {
             "type": "integer",
@@ -640,15 +674,20 @@ export const gameProfileCatalog = {
             "maximum": 1000000
           },
           "poiseActive": {
-            "type": "string",
-            "minLength": 1
+            "enum": [
+              "positive",
+              "always"
+            ]
           },
           "blockScope": {
-            "type": "string",
-            "minLength": 1
+            "enum": [
+              "all"
+            ]
           },
           "poiseDepletes": {
-            "type": "boolean"
+            "enum": [
+              false
+            ]
           }
         },
         "required": [
@@ -669,7 +708,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/defenses/module.json",
           "id": "defenses",
           "version": "1.0.0",
-          "hash": "sha256:d9c632dfbd4d94e2a59ccbc7b0ba7492acf96f02da705550710da006d6989013"
+          "hash": "sha256:d0425f59be5d8ff7c1742f47839303390aa1b8af79ccd20ef30c6d730a9923df"
         },
         {
           "path": "engine/modules/defenses/defaults.json",
@@ -681,7 +720,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/defenses/settings.schema.json",
           "id": "defenses",
           "version": "1.0.0",
-          "hash": "sha256:c212c3f24a8017a70acf42b5ae529f337866445ce3aa602768f5af3be61707ba"
+          "hash": "sha256:edd1651a32bdb25d7a06cd440c8f0be5a1f7a0e2baa537cf9c5020f145610bfe"
         }
       ]
     },
@@ -697,7 +736,8 @@ export const gameProfileCatalog = {
           "kind": "legacy-adapter",
           "portable": false
         },
-        "guide": "guide.md"
+        "guide": "guide.md",
+        "configuredAdapter": false
       },
       "defaults": {
         "mode": "configured",
@@ -727,7 +767,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/dialogue/module.json",
           "id": "dialogue",
           "version": "1.0.0",
-          "hash": "sha256:b0c494e8e9d3b0ac449bc57658c6aa1afc66d941fdafa64551d6efebf40db687"
+          "hash": "sha256:a2b4ddf1ac5cd2176ba1ffd92127bed1eea642fd0603ed2bb7e577a0251a8825"
         },
         {
           "path": "engine/modules/dialogue/defaults.json",
@@ -755,7 +795,8 @@ export const gameProfileCatalog = {
           "kind": "legacy-adapter",
           "portable": false
         },
-        "guide": "guide.md"
+        "guide": "guide.md",
+        "configuredAdapter": false
       },
       "defaults": {
         "mode": "configured",
@@ -785,7 +826,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/dungeons/module.json",
           "id": "dungeons",
           "version": "1.0.0",
-          "hash": "sha256:bbef883b17bae5d94b632cd951747161e48f113b1f378dcd158c4a2f59ea4110"
+          "hash": "sha256:82c8b8eea81efc9226bebc4e433f895dc1d53b43f335957bdf3bf19f5a9cad9c"
         },
         {
           "path": "engine/modules/dungeons/defaults.json",
@@ -813,7 +854,8 @@ export const gameProfileCatalog = {
           "kind": "legacy-adapter",
           "portable": false
         },
-        "guide": "guide.md"
+        "guide": "guide.md",
+        "configuredAdapter": true
       },
       "defaults": {
         "mode": "configured",
@@ -833,14 +875,19 @@ export const gameProfileCatalog = {
             ]
           },
           "damageModel": {
-            "type": "string",
-            "minLength": 1
+            "enum": [
+              "unified"
+            ]
           },
           "elements": {
-            "type": "boolean"
+            "enum": [
+              false
+            ]
           },
           "spellRanks": {
-            "type": "boolean"
+            "enum": [
+              false
+            ]
           },
           "attackRatingWeight": {
             "type": "number",
@@ -868,7 +915,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/effects/module.json",
           "id": "effects",
           "version": "1.0.0",
-          "hash": "sha256:966d061ecedfbb5082d962f17f4e596cca40591290a1bb64ceecabf3aea439be"
+          "hash": "sha256:fb388ecb86677ab12db290b14e4f070e0c14d18a03b3bb27791a5933dc9941ed"
         },
         {
           "path": "engine/modules/effects/defaults.json",
@@ -880,7 +927,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/effects/settings.schema.json",
           "id": "effects",
           "version": "1.0.0",
-          "hash": "sha256:cc0adebde96842eeb9ffbcb307ad3a3974452545a92c4e84d432ae83ecfc0c1c"
+          "hash": "sha256:43176f8062b8704544432bea6ab795470f40c3bb84651796a4d5c4dfb321ee3a"
         }
       ]
     },
@@ -896,7 +943,8 @@ export const gameProfileCatalog = {
           "kind": "legacy-adapter",
           "portable": false
         },
-        "guide": "guide.md"
+        "guide": "guide.md",
+        "configuredAdapter": true
       },
       "defaults": {
         "mode": "configured",
@@ -937,7 +985,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/equipment/module.json",
           "id": "equipment",
           "version": "1.0.0",
-          "hash": "sha256:0c90c0934c0e73b82787875c97b92b4684926d79eefe4f8d637c39ed9dd972e9"
+          "hash": "sha256:9bd9e1269633f884d5fa2db8f3f78493164c47066c89c2fb650792d5930f0e8f"
         },
         {
           "path": "engine/modules/equipment/defaults.json",
@@ -965,7 +1013,8 @@ export const gameProfileCatalog = {
           "kind": "legacy-adapter",
           "portable": false
         },
-        "guide": "guide.md"
+        "guide": "guide.md",
+        "configuredAdapter": true
       },
       "defaults": {
         "mode": "configured",
@@ -995,7 +1044,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/intent/module.json",
           "id": "intent",
           "version": "1.0.0",
-          "hash": "sha256:10d3b308a18c59e1378bc362088b89f55d8bb0fae56efb89695f03052d0f2634"
+          "hash": "sha256:ceef1dce723111b1760c97daea509136ea5203819c1194c3b0b6f3ff7b383a10"
         },
         {
           "path": "engine/modules/intent/defaults.json",
@@ -1023,7 +1072,8 @@ export const gameProfileCatalog = {
           "kind": "legacy-adapter",
           "portable": false
         },
-        "guide": "guide.md"
+        "guide": "guide.md",
+        "configuredAdapter": false
       },
       "defaults": {
         "mode": "configured",
@@ -1053,7 +1103,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/multiplayer/module.json",
           "id": "multiplayer",
           "version": "1.0.0",
-          "hash": "sha256:491756ca3459f1a2faed48f58db9731a42908ee2f6b1a266c1cd2e3c019b48bb"
+          "hash": "sha256:d32ccca6560ec141126f0811449a90b7506bfff07dec88fc1a3333623d9e263b"
         },
         {
           "path": "engine/modules/multiplayer/defaults.json",
@@ -1081,7 +1131,8 @@ export const gameProfileCatalog = {
           "kind": "legacy-adapter",
           "portable": false
         },
-        "guide": "guide.md"
+        "guide": "guide.md",
+        "configuredAdapter": false
       },
       "defaults": {
         "mode": "configured",
@@ -1111,7 +1162,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/posture/module.json",
           "id": "posture",
           "version": "1.0.0",
-          "hash": "sha256:e419075dddb75f4e6837b42281ff5469e8119846fd89c7d7363a0fea241683f2"
+          "hash": "sha256:ea641991ceffc575a98a74c606bcf4969a87c8910c5aeae1d250a430c5162b3a"
         },
         {
           "path": "engine/modules/posture/defaults.json",
@@ -1139,7 +1190,8 @@ export const gameProfileCatalog = {
           "kind": "legacy-adapter",
           "portable": false
         },
-        "guide": "guide.md"
+        "guide": "guide.md",
+        "configuredAdapter": true
       },
       "defaults": {
         "mode": "configured",
@@ -1181,7 +1233,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/progression/module.json",
           "id": "progression",
           "version": "1.0.0",
-          "hash": "sha256:c95424a9e60fcfa03ed51f1140a1f0aff70130fb6f5d09bb8df096c3eee70d1b"
+          "hash": "sha256:a446aa0e3283a7840d941aedec5552024c52cc44f54db9242cdde41953d013cd"
         },
         {
           "path": "engine/modules/progression/defaults.json",
@@ -1209,7 +1261,8 @@ export const gameProfileCatalog = {
           "kind": "legacy-adapter",
           "portable": false
         },
-        "guide": "guide.md"
+        "guide": "guide.md",
+        "configuredAdapter": false
       },
       "defaults": {
         "mode": "configured",
@@ -1239,7 +1292,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/quests/module.json",
           "id": "quests",
           "version": "1.0.0",
-          "hash": "sha256:1935369e44f4c17a5194cbb4e4b2cd20cc790645072a8a013d948d63b7cc2b66"
+          "hash": "sha256:8b7d9996a3b1210122a1ee11f9bcfae9697d340150f968c4aedb5bf6abbe7fc5"
         },
         {
           "path": "engine/modules/quests/defaults.json",
@@ -1267,7 +1320,8 @@ export const gameProfileCatalog = {
           "kind": "legacy-adapter",
           "portable": false
         },
-        "guide": "guide.md"
+        "guide": "guide.md",
+        "configuredAdapter": true
       },
       "defaults": {
         "mode": "configured",
@@ -1299,7 +1353,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/reactions/module.json",
           "id": "reactions",
           "version": "1.0.0",
-          "hash": "sha256:8841df2ce83f760232165207276e45da5f4b7643718773a6a97631d2f3f72f85"
+          "hash": "sha256:bb63109395b746af3b288c48ab6307747c0547ae769db459d2ea4ce2b43cbbf5"
         },
         {
           "path": "engine/modules/reactions/defaults.json",
@@ -1327,7 +1381,17 @@ export const gameProfileCatalog = {
           "kind": "legacy-adapter",
           "portable": false
         },
-        "guide": "guide.md"
+        "guide": "guide.md",
+        "configuredAdapter": true,
+        "instances": [
+          "hp",
+          "sp",
+          "mp",
+          "actions"
+        ],
+        "unsupportedConfiguredInstances": [
+          "actions"
+        ]
       },
       "defaults": {
         "mode": "configured",
@@ -1357,12 +1421,14 @@ export const gameProfileCatalog = {
             }
           },
           "costPolicy": {
-            "type": "string",
-            "minLength": 1
+            "enum": [
+              "authoredVariants"
+            ]
           },
           "recovery": {
-            "type": "string",
-            "minLength": 1
+            "enum": [
+              "turnStart"
+            ]
           }
         },
         "required": [
@@ -1378,7 +1444,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/resources/module.json",
           "id": "resources",
           "version": "1.0.0",
-          "hash": "sha256:531797c8f12417497fc4bca95e4b3013088c9ead06ba011585cd1d675aa0ac63"
+          "hash": "sha256:62a07b2b31a9803703d2f831a52a449d8d0d04fa7918cd5031ffcb5f66c29a5b"
         },
         {
           "path": "engine/modules/resources/defaults.json",
@@ -1390,7 +1456,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/resources/settings.schema.json",
           "id": "resources",
           "version": "1.0.0",
-          "hash": "sha256:25b2764af2418855649e2bdf2a3a8a2de8ff68c28205df65528da7bdf31016ea"
+          "hash": "sha256:32342570152263a82093d3cabfbc909309180ad38e44708b1db0866653cf451a"
         }
       ]
     },
@@ -1406,7 +1472,8 @@ export const gameProfileCatalog = {
           "kind": "legacy-adapter",
           "portable": false
         },
-        "guide": "guide.md"
+        "guide": "guide.md",
+        "configuredAdapter": true
       },
       "defaults": {
         "mode": "configured",
@@ -1435,43 +1502,54 @@ export const gameProfileCatalog = {
             ]
           },
           "servicesPerVisit": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 1000000
+            "enum": [
+              1
+            ]
           },
           "services": {
             "type": "array",
             "uniqueItems": true,
             "items": {
-              "type": "string",
-              "minLength": 1
-            }
+              "enum": [
+                "strategize",
+                "smith",
+                "levelUp"
+              ]
+            },
+            "minItems": 1
           },
           "allowEmptyStrategize": {
-            "type": "boolean"
+            "enum": [
+              true
+            ]
           },
           "recovery": {
             "type": "object",
             "properties": {
               "hp": {
-                "type": "string",
-                "minLength": 1
+                "enum": [
+                  "full"
+                ]
               },
               "sp": {
-                "type": "string",
-                "minLength": 1
+                "enum": [
+                  "full"
+                ]
               },
               "mp": {
-                "type": "string",
-                "minLength": 1
+                "enum": [
+                  "full"
+                ]
               },
               "healingFlasks": {
-                "type": "string",
-                "minLength": 1
+                "enum": [
+                  "full"
+                ]
               },
               "mpFlasks": {
-                "type": "string",
-                "minLength": 1
+                "enum": [
+                  "full"
+                ]
               }
             },
             "required": [
@@ -1498,7 +1576,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/rest/module.json",
           "id": "rest",
           "version": "1.0.0",
-          "hash": "sha256:29f068fa8dd5570d2c3358a25ff4ee8c46b5eddf96e21fcbac38c5bac2d06306"
+          "hash": "sha256:a1d159efb65d77893efc36efa56c710463898ccdc68d7785d8b40297e472b8a8"
         },
         {
           "path": "engine/modules/rest/defaults.json",
@@ -1510,7 +1588,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/rest/settings.schema.json",
           "id": "rest",
           "version": "1.0.0",
-          "hash": "sha256:bfb143b324fda872c682320ae63632c156d215c1076edde8b671b2608a455689"
+          "hash": "sha256:a9cb5d01aebb4a95a239cec8d85b00e91da190ea7722c6b963a688237dd35eac"
         }
       ]
     },
@@ -1526,7 +1604,8 @@ export const gameProfileCatalog = {
           "kind": "legacy-adapter",
           "portable": false
         },
-        "guide": "guide.md"
+        "guide": "guide.md",
+        "configuredAdapter": true
       },
       "defaults": {
         "mode": "configured",
@@ -1565,7 +1644,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/rewards/module.json",
           "id": "rewards",
           "version": "1.0.0",
-          "hash": "sha256:26ac11b84c80bd88e94b489d0a9d718a2bc2ba5babad7ab9b3dc7a00fcb02ca9"
+          "hash": "sha256:2b3179d32ebc9925727042caadbb3809bb31bb7b2e2a62036f47e2c9a57cab9f"
         },
         {
           "path": "engine/modules/rewards/defaults.json",
@@ -1593,14 +1672,19 @@ export const gameProfileCatalog = {
           "kind": "legacy-adapter",
           "portable": false
         },
-        "guide": "guide.md"
+        "guide": "guide.md",
+        "configuredAdapter": true
       },
       "defaults": {
         "mode": "configured",
         "acts": 3,
         "prebossNodes": 7,
         "restsPerAct": 2,
-        "hideUnknownNodes": true
+        "hideUnknownNodes": true,
+        "restFloors": [
+          2,
+          6
+        ]
       },
       "schema": {
         "type": "object",
@@ -1613,21 +1697,30 @@ export const gameProfileCatalog = {
           },
           "acts": {
             "type": "integer",
-            "minimum": 0,
-            "maximum": 1000000
+            "minimum": 1,
+            "maximum": 3
           },
           "prebossNodes": {
             "type": "integer",
-            "minimum": 0,
-            "maximum": 1000000
+            "minimum": 1,
+            "maximum": 100
           },
           "restsPerAct": {
             "type": "integer",
             "minimum": 0,
-            "maximum": 1000000
+            "maximum": 100
           },
           "hideUnknownNodes": {
             "type": "boolean"
+          },
+          "restFloors": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000
+            }
           }
         },
         "required": [
@@ -1635,7 +1728,8 @@ export const gameProfileCatalog = {
           "acts",
           "prebossNodes",
           "restsPerAct",
-          "hideUnknownNodes"
+          "hideUnknownNodes",
+          "restFloors"
         ],
         "additionalProperties": false
       },
@@ -1644,19 +1738,19 @@ export const gameProfileCatalog = {
           "path": "engine/modules/routes/module.json",
           "id": "routes",
           "version": "1.0.0",
-          "hash": "sha256:c490a22a6f704fdf42f4ffba1f74946f19ffddb082ab8d1e1f89a1152d5c9b78"
+          "hash": "sha256:8971537d7e74af44936b3d9a7b0c0062abb735985ed5ef5d0ac257e70893ce80"
         },
         {
           "path": "engine/modules/routes/defaults.json",
           "id": "routes",
           "version": "1.0.0",
-          "hash": "sha256:01cd71f391ef6e82a42cd7abc5c2d4e085ed276d8b3bdad26fed3ccd228d48b9"
+          "hash": "sha256:e978453b94c8be6f9180f6211158d16c26cb5a82f656ffd8da119ee57b38d3fe"
         },
         {
           "path": "engine/modules/routes/settings.schema.json",
           "id": "routes",
           "version": "1.0.0",
-          "hash": "sha256:27fcafd108a02766ee6da46763b8b83414f8d00ecf6ce1412b8ae610107bae59"
+          "hash": "sha256:9e105d279f4f264dce525d5f757913462e78eeb17105ddb4d232413f23e2b51c"
         }
       ]
     },
@@ -1672,11 +1766,13 @@ export const gameProfileCatalog = {
           "kind": "legacy-adapter",
           "portable": false
         },
-        "guide": "guide.md"
+        "guide": "guide.md",
+        "configuredAdapter": true
       },
       "defaults": {
         "mode": "configured",
-        "options": 3
+        "options": 3,
+        "price": 10
       },
       "schema": {
         "type": "object",
@@ -1691,11 +1787,17 @@ export const gameProfileCatalog = {
             "type": "integer",
             "minimum": 0,
             "maximum": 1000000
+          },
+          "price": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
           }
         },
         "required": [
           "mode",
-          "options"
+          "options",
+          "price"
         ],
         "additionalProperties": false
       },
@@ -1704,19 +1806,19 @@ export const gameProfileCatalog = {
           "path": "engine/modules/shops/module.json",
           "id": "shops",
           "version": "1.0.0",
-          "hash": "sha256:ed7a3fe07590810d685c505b488942d320bbcc826c20252ba550b5e7e323d81a"
+          "hash": "sha256:b488cde7a547b59ef0e127c51562f696cf60b27b7745ddae8d528bd0ce5e3624"
         },
         {
           "path": "engine/modules/shops/defaults.json",
           "id": "shops",
           "version": "1.0.0",
-          "hash": "sha256:f803a639c7c88d15270d36488ea21e4e64d90532bc7e8da806932e71f149337d"
+          "hash": "sha256:6b138e2472373c84b4074f668dba4dfab22d9ad5af894e60e067d43bea974e1b"
         },
         {
           "path": "engine/modules/shops/settings.schema.json",
           "id": "shops",
           "version": "1.0.0",
-          "hash": "sha256:8f64f073c8195f5680190808cb682b338eeff96def538e289b56e0ab00eefc0d"
+          "hash": "sha256:b997b20e7344c52165b9fe737b4a46bf0c2a38636d25b173fcbb1aa3cbb34bba"
         }
       ]
     },
@@ -1732,7 +1834,18 @@ export const gameProfileCatalog = {
           "kind": "legacy-adapter",
           "portable": false
         },
-        "guide": "guide.md"
+        "guide": "guide.md",
+        "configuredAdapter": true,
+        "instances": [
+          "attack",
+          "smash",
+          "defend",
+          "counter",
+          "sweep",
+          "prepared",
+          "evade"
+        ],
+        "unsupportedConfiguredInstances": []
       },
       "defaults": {
         "mode": "configured",
@@ -1822,8 +1935,9 @@ export const gameProfileCatalog = {
             "maximum": 1000000
           },
           "accuracyPolicy": {
-            "type": "string",
-            "minLength": 1
+            "enum": [
+              "chance"
+            ]
           },
           "staggerPolicy": {
             "type": "string",
@@ -1907,7 +2021,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/stances/module.json",
           "id": "stances",
           "version": "1.0.0",
-          "hash": "sha256:bdcefef6e68d6f61817f23583e0e6fbf195e3d8569f55007c808d925068dac7c"
+          "hash": "sha256:976faaed95a3570160528b6f40ef9a423c0e4e069145b2e2db684c3f8a95181d"
         },
         {
           "path": "engine/modules/stances/defaults.json",
@@ -1919,7 +2033,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/stances/settings.schema.json",
           "id": "stances",
           "version": "1.0.0",
-          "hash": "sha256:247f7882dd5c50a39fadbdba0e6e1afd8db645356799e0a1e859302d62030d5c"
+          "hash": "sha256:3943ef0e8dc60053928dfbd362b3866447f0a5128ed1f940d9d52e407bcffccf"
         }
       ]
     },
@@ -1935,7 +2049,8 @@ export const gameProfileCatalog = {
           "kind": "legacy-adapter",
           "portable": false
         },
-        "guide": "guide.md"
+        "guide": "guide.md",
+        "configuredAdapter": true
       },
       "defaults": {
         "mode": "configured",
@@ -1957,8 +2072,9 @@ export const gameProfileCatalog = {
             "maximum": 1000000
           },
           "secondaryPolicy": {
-            "type": "string",
-            "minLength": 1
+            "enum": [
+              "legacyAdapter"
+            ]
           }
         },
         "required": [
@@ -1973,7 +2089,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/stats/module.json",
           "id": "stats",
           "version": "1.0.0",
-          "hash": "sha256:6dd7a116ad9b6bb67f24f4a9605dfd9a46e36b4450c0e40ec4227319fbb278d2"
+          "hash": "sha256:5f28c85e82a9cb6c2f503395e1805458d2aecc0e23d579dd4b4b31fa25b5b030"
         },
         {
           "path": "engine/modules/stats/defaults.json",
@@ -1985,7 +2101,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/stats/settings.schema.json",
           "id": "stats",
           "version": "1.0.0",
-          "hash": "sha256:da176820bb881e2f29859df7d2990e4c940afdf599d970c6c0703c0c1dd8c963"
+          "hash": "sha256:01b38c7a9122893202de8baa8bc4d331868a2751c4cb2f30ae9349a0e7627fe2"
         }
       ]
     },
@@ -2001,7 +2117,8 @@ export const gameProfileCatalog = {
           "kind": "legacy-adapter",
           "portable": false
         },
-        "guide": "guide.md"
+        "guide": "guide.md",
+        "configuredAdapter": true
       },
       "defaults": {
         "mode": "configured",
@@ -2031,7 +2148,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/statuses/module.json",
           "id": "statuses",
           "version": "1.0.0",
-          "hash": "sha256:5f17badae12cef9b83f22734fb815f143917dec13b40b2e22c5d5f6a60594462"
+          "hash": "sha256:97c16e00fa7280437363f39bca0a6b9f060f8d60c2dfb69e7b14148d689aabc1"
         },
         {
           "path": "engine/modules/statuses/defaults.json",
@@ -2135,6 +2252,60 @@ export const gameProfileCatalog = {
             "version": "1.0.0",
             "path": "../../packs/core/pack.json"
           }
+        ],
+        "policyBindings": [
+          {
+            "content": "routes",
+            "module": "routes",
+            "settings": {
+              "acts": "acts",
+              "prebossNodes": "prebossNodes",
+              "restsPerAct": "restsPerAct",
+              "restFloors": "restFloors"
+            }
+          },
+          {
+            "content": "rests",
+            "module": "rest",
+            "settings": {
+              "servicesPerVisit": "servicesPerVisit",
+              "services": "services",
+              "allowEmptyStrategize": "allowEmptyStrategize",
+              "recovery": "recovery"
+            }
+          },
+          {
+            "content": "rewards",
+            "module": "rewards",
+            "settings": {
+              "offerCount": "offerCount",
+              "takeCount": "takeCount"
+            }
+          },
+          {
+            "content": "shops",
+            "module": "shops",
+            "settings": {
+              "offerCount": "options",
+              "price": "price"
+            }
+          },
+          {
+            "content": "stats",
+            "module": "cards",
+            "settings": {
+              "handBase": "handBase",
+              "handAttribute": "handAttribute"
+            }
+          },
+          {
+            "content": "stats",
+            "module": "stats",
+            "settings": {
+              "attributePointTotal": "attributePointTotal",
+              "secondaryPolicy": "secondaryPolicy"
+            }
+          }
         ]
       },
       "artifacts": [
@@ -2142,7 +2313,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/bundles/core/bundle.json",
           "id": "ashen.core",
           "version": "1.0.0",
-          "hash": "sha256:bafceb2dbb59977d0bf1992eb6e8de30e28e5f101bc9f6e9714b151bcb8c25fd"
+          "hash": "sha256:efb4afaaa322964dbd7baaec3311adac256dafe372f13f26f7fca6f3c6b429d4"
         }
       ]
     },
@@ -3154,7 +3325,7 @@ export const gameProfileCatalog = {
       "path": "engine/kernel/gameConfig.js",
       "id": "ashen.runtime",
       "version": "1.0.0",
-      "hash": "sha256:f4ebf5988190d79506f654c658154abce768a133c7288e17329630874ae52346"
+      "hash": "sha256:5016b80aacad3005a3eec0e96cadd6f095e8959352d43c9e3a9a94d023af0070"
     },
     {
       "path": "engine/contracts/game-profile.json",
@@ -3172,7 +3343,7 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "path": "src/** (excluding generated gameProfiles/changelog)",
-      "hash": "sha256:eecfff1e79ecf53bfe4f85c293bf3ed9dac7a55e3eb7a1c77b91294071f199a4"
+      "hash": "sha256:702d3734441ecef07ab9cf7a027a86ef4b72be2e4846453bb82d4ba01446f3fd"
     }
   ],
   "runtimeSources": [
@@ -4716,7 +4887,7 @@ export const gameProfileCatalog = {
       "path": "src/main.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:ceb1cf27ed164b99dcaaf409c13a974c7a89944200c91fd516a84f2e95406e31"
+      "hash": "sha256:eaa749e7dfdee6c43d26de322175f7f568126fcc037fcded570a260d741ea4c3"
     },
     {
       "path": "src/model/abilityDraftReceipts.js",
@@ -5550,7 +5721,7 @@ export const gameProfileCatalog = {
       "path": "src/model/playingCard.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:2cd4a61e3b768efc0ff24b7d1ac6d8a6c757463f3746dda74248eb1a1badd6ed"
+      "hash": "sha256:16261b76c375042534a6d60fa96e9ad282ea9a2c44c0896733e207388663cccb"
     },
     {
       "path": "src/model/presentationPoseCatalog.js",
@@ -6156,7 +6327,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/components/card.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:275d96eff817a0f465c3aa8cb924cd00178115e9a3ea213b404739a07fdc26a8"
+      "hash": "sha256:c1ad30d1be9f64d4bca24f463418040fe89c13b73cd3a483990f64a49928633a"
     },
     {
       "path": "src/ui/components/cardAppearance.js",
@@ -7746,7 +7917,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/screens/combat.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:75522a328244feb3ef392cdede241fd4aa379af21cc871cd6a02bddcf2fde413"
+      "hash": "sha256:cfea7e7293321ded53ac2d5ceb5948b1e609ce8f4c32efffc411200971d741d2"
     },
     {
       "path": "src/ui/screens/combatTest.js",
@@ -7914,7 +8085,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/screens/title.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:19f40221308073381ba4fab6eb1d475471884ceb2174dc76e45b75b1c5855a10"
+      "hash": "sha256:b08a54cb7d061891b006d6a7c001f4cc8217a171059199d3a18f10de7e5b31df"
     },
     {
       "path": "src/ui/screens/worldAtlas.js",
@@ -7995,7 +8166,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:23af16d4e9c9f6d88fe655d32ecf1a688b47df39f9e3a1d6d193ce63923593ab"
     }
   ],
-  "runtimeHash": "sha256:06340807993694bf30bbfe2ec56172def1e956582e787e14e2c4d1cbeb613bea"
+  "runtimeHash": "sha256:d33386918de7946fc4688f0caf8331f1dc5735e629580eac0425b1a531f49f61"
 };
 export const gameProfileAuthors = {
   "default": {
