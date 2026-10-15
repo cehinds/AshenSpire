@@ -1,3 +1,4 @@
+import { configuredCombat, profileDamageReceipt } from './gameProfileCombat.js';
 import { computeAttackDamage } from './actions.js';
 import { prepareMatchupHit, matchupRules, hitRiders } from './combatMatchups.js';
 import { reconcileWardBlock } from '../model/blockPresentation.js';
@@ -23,6 +24,20 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
   const local = state || damagePreviewState(ctx, target);
   const { defender, previewCtx, targetKey } = local;
   const attack = { ...carrier, combatRiderTargets: local.combatRiderTargets };
+  if (configuredCombat(ctx)) {
+    const receipts = [];
+    for (let hit = 0; hit < Math.max(0, Math.floor(hits)); hit++) {
+      const receipt = profileDamageReceipt(previewCtx, source, defender, base, carrier);
+      receipts.push(receipt);
+      if (defender) defender.block = receipt.blockRemaining;
+    }
+    return { damage: receipts[0]?.amount || 0, hits: receipts.length,
+      hitDamages: receipts.map(receipt => receipt.amount),
+      totalDamage: receipts.reduce((sum, receipt) => sum + receipt.amount, 0),
+      hpLoss: receipts.reduce((sum, receipt) => sum + receipt.hpLoss, 0),
+      hitChance: receipts[0]?.hitChance ?? 1, uncertain: receipts.some(receipt => receipt.uncertain),
+      hpLossBounds: [receipts.reduce((sum, receipt) => sum + receipt.hpLossBounds[0], 0), receipts.reduce((sum, receipt) => sum + receipt.hpLossBounds[1], 0)] };
+  }
   const rules = matchupRules(ctx);
   const hitDamages = [];
   for (let hit = 0; hit < Math.max(0, Math.floor(hits)); hit++) {

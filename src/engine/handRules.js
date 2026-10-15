@@ -1,9 +1,12 @@
+import { configuredCombat, configuredModule, refreshProfileRound, profileHandSize } from './gameProfileCombat.js';
+import { projectGameCard } from '../model/gameProfile.js';
 import { handDrawCount, handRow, scaledCards } from '../model/handRules.js';
 import { resolveCard } from '../model/registries.js';
 import { orderedReturn } from '../model/deckRules.js';
 
 /** Return only ordinary unplayed cards; played/forced discards stay discarded. */
 export function returnUnplayedCards(ctx, cards) {
+  if (configuredCombat(ctx) && refreshProfileRound(ctx, cards)) return;
   if (ctx.handRules?.shuffleHand) {
     refreshHandIntoDraw(ctx, cards);
     return;
@@ -35,6 +38,7 @@ function refreshHandIntoDraw(ctx, cards) {
 }
 
 export function turnDrawCount(ctx, opening = ctx.turn === 1) {
+  if (configuredCombat(ctx)) { ctx.handMax = profileHandSize(ctx); return ctx.handMax; }
   const rules = ctx.handRules;
   if (!rules) return ctx.drawPerTurn ?? ctx.player.drawPerTurn;
   const draw = handDrawCount(rules, ctx.attributes, { handSize: ctx.piles.hand.length, opening, replacements: ctx.pendingDiscardDraw || 0, level: ctx.characterLevel });
@@ -44,6 +48,10 @@ export function turnDrawCount(ctx, opening = ctx.turn === 1) {
 }
 
 export function endTurnCardFate(ctx, card) {
+  if (configuredCombat(ctx)) {
+    const def = projectGameCard(ctx, card) || resolveCard(ctx.registries, card);
+    return (def.keywords || []).includes('ethereal') ? 'exhaust' : 'discard';
+  }
   if (ctx.combatExpansionVersion === 2 && ctx.player.combatRetainedCards?.includes(card.instanceId)) return 'keep';
   const def = resolveCard(ctx.registries, card);
   const fate = ctx.foundation && def.effects.some(e => e.op === 'dodgeRoll') ? 'keep' : ctx.registries.framework.endTurnFate(def);
@@ -51,6 +59,7 @@ export function endTurnCardFate(ctx, card) {
 }
 
 export function discardChoicePlan(ctx) {
+  if (configuredCombat(ctx)) return { cards: [], minimum: 0, maximum: 0, prompt: false };
   if (!ctx.handRules) return { cards: [], minimum: 0, maximum: 0, prompt: false };
   // A card queued on the Combat Rounds Preview (SPEC §4.11) leaves the hand in the round's commit, which
   // runs before the live turn-end hand rules. It is therefore not kept and not owed a discard here.
