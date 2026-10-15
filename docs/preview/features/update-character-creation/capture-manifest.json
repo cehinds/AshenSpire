@@ -1,11 +1,19 @@
 {
   "branch": "Feature/updateCharacterCreation",
-  "sourceCommit": "eb5937f97c9fe51b2bf12cf949adff689c29514b",
+  "sourceCommit": "f6801043c9d9762550a7a3ff28cba7fc346fee81",
+  "remoteBuildSource": "b5ac91a039e38e7ed2b8bc01770b14ed29b94a9f",
+  "sourceTree": "9124302fb4c26347d21269b9a69db273d99349d3",
   "version": "0.7.1.1520",
-  "digest": "1ad05d6483",
-  "workflowRun": "https://github.com/cehinds/AshenSpire/actions/runs/38654072847",
-  "testBuild": "https://github.com/cehinds/AshenSpire/actions/runs/38654072847/artifacts/11935887981",
+  "digest": "652574f013",
+  "workflowRun": "https://github.com/cehinds/AshenSpire/actions/runs/38659839311",
+  "testBuild": "https://cehinds.github.io/AshenSpire/branches/Feature/updateCharacterCreation/latest/",
   "capturedDate": "2026-10-14",
+  "captureTimeZone": "America/Anchorage",
+  "publicVerification": {
+    "run": "https://github.com/cehinds/AshenSpire/actions/runs/38676827571",
+    "job": "https://github.com/cehinds/AshenSpire/actions/runs/38676827571/job/116243897791",
+    "result": "Passed: public index/source, sandbox wrapper, loader and nonempty game file"
+  },
   "notes": [
     "Browse poses; Review has unselected traits, so Begin is disabled.",
     "Spells are caster-only; Combat Maneuvers show the martial path.",
@@ -22,7 +30,7 @@
       "screenshot": "class-desktop-1440x900.png",
       "wireframeSvg": "class-desktop-1440x900.svg",
       "wireframePng": "class-desktop-1440x900-wireframe.png",
-      "screenshotSha256": "a0423bb97aebe867306619d5d330b1fdaf1a3919d528e9ff17c7859ca91cc35c"
+      "screenshotSha256": "9f677f14967e496eae7521e096dcccd82e0cabd43474c51274813f3d3dc24a53"
     },
     {
       "menu": "subclass",
@@ -33,7 +41,7 @@
       "screenshot": "subclass-desktop-1440x900.png",
       "wireframeSvg": "subclass-desktop-1440x900.svg",
       "wireframePng": "subclass-desktop-1440x900-wireframe.png",
-      "screenshotSha256": "475876fe50c28acc932a2fd8f1253994ec5d6172477116119df1606f168bd32b"
+      "screenshotSha256": "fb5e5e6739bea23f8a44eceecc7db2d91ff86724ceb220ccf930f3b532e339b8"
     },
     {
       "menu": "attributes",
@@ -44,7 +52,7 @@
       "screenshot": "attributes-desktop-1440x900.png",
       "wireframeSvg": "attributes-desktop-1440x900.svg",
       "wireframePng": "attributes-desktop-1440x900-wireframe.png",
-      "screenshotSha256": "f0c292bb70df86cd5e3360789590b8edbafcfa8a0281949d9f90e35a15dc32f7"
+      "screenshotSha256": "450b5601bb9d6dc5dcb7ef183585e22a8c39aea3ed89c1582ef962078b714014"
     },
     {
       "menu": "feats",
@@ -55,7 +63,7 @@
       "screenshot": "feats-desktop-1440x900.png",
       "wireframeSvg": "feats-desktop-1440x900.svg",
       "wireframePng": "feats-desktop-1440x900-wireframe.png",
-      "screenshotSha256": "7c8ff4be14b2c677481044b5dfec4f67d7fafaf47bfa8df33fcb88faa9ad9b05"
+      "screenshotSha256": "a697af067d25cfef625c8a0109026484e1f9c7ebeeca901e9e5727fc307b1d28"
     },
     {
       "menu": "maneuvers",
@@ -66,7 +74,7 @@
       "screenshot": "maneuvers-desktop-1440x900.png",
       "wireframeSvg": "maneuvers-desktop-1440x900.svg",
       "wireframePng": "maneuvers-desktop-1440x900-wireframe.png",
-      "screenshotSha256": "8ea983fee6fe4b9130d9145f2a88bd2ec1c8ac773a257e71a2d1206668ba70b0"
+      "screenshotSha256": "73d5598f9c914977b49dc248d9c72b5236f936b398c1d5c2b0a04324fda83157"
     },
     {
       "menu": "equipment",
@@ -77,7 +85,7 @@
       "screenshot": "equipment-desktop-1440x900.png",
       "wireframeSvg": "equipment-desktop-1440x900.svg",
       "wireframePng": "equipment-desktop-1440x900-wireframe.png",
-      "screenshotSha256": "5e3c7acb4d39864c9b45b43a81dbf245222d6da2c7ddc8a31b5de86896e496a3"
+      "screenshotSha256": "a3e464d463224b06a3b530ddfead6d4277c78d7d6b281333699bfecfaf189065"
     },
     {
       "menu": "keepsake",
@@ -88,7 +96,7 @@
       "screenshot": "keepsake-desktop-1440x900.png",
       "wireframeSvg": "keepsake-desktop-1440x900.svg",
       "wireframePng": "keepsake-desktop-1440x900-wireframe.png",
-      "screenshotSha256": "e4777546d79d98c4df30a6ed7fc0548f31c34cab83466125122c6510d245a344"
+      "screenshotSha256": "30d29de9b4759b7a7ce5d18875737747690b9af7d3040ed59ff0d1bf49ca6ead"
     },
     {
       "menu": "review",
@@ -99,7 +107,7 @@
       "screenshot": "review-desktop-1440x900.png",
       "wireframeSvg": "review-desktop-1440x900.svg",
       "wireframePng": "review-desktop-1440x900-wireframe.png",
-      "screenshotSha256": "7a0561c3fb7befd18dbe5aea0e6ce69f204b46436dd89cb2525b893ccd8cb48c"
+      "screenshotSha256": "7e165c0fc4293c975dfe07df28d2356585daf0ce509ffdba22010c780b9d4743"
     },
     {
       "menu": "spells",
@@ -110,7 +118,7 @@
       "screenshot": "spells-desktop-1440x900.png",
       "wireframeSvg": "spells-desktop-1440x900.svg",
       "wireframePng": "spells-desktop-1440x900-wireframe.png",
-      "screenshotSha256": "9fdeeac79c0e6acf0c5a07eab0c378dc4b9bcabca6628199a8d67d6229c58f15"
+      "screenshotSha256": "c5b8418d3680e4e0da4e3f7121228bddd1349c1d0fa33e2483bb6ac098d8b704"
     },
     {
       "menu": "class",
@@ -121,7 +129,7 @@
       "screenshot": "class-tablet-1024x768.png",
       "wireframeSvg": "class-tablet-1024x768.svg",
       "wireframePng": "class-tablet-1024x768-wireframe.png",
-      "screenshotSha256": "3e6d58e9a4cecc316128e8b72f5bd0e30efff45ce13d36a6839d95c92fd779d8"
+      "screenshotSha256": "7bcc350ce02b129c1070b8f674e48f56d83b01624cf202ec1d9931e20b245317"
     },
     {
       "menu": "subclass",
@@ -132,7 +140,7 @@
       "screenshot": "subclass-tablet-1024x768.png",
       "wireframeSvg": "subclass-tablet-1024x768.svg",
       "wireframePng": "subclass-tablet-1024x768-wireframe.png",
-      "screenshotSha256": "44ece3dd43bd336d61c5825eb06a4f1c9a7078aad9eb3c6283992e59ab680a57"
+      "screenshotSha256": "98bfcc01710dc0c7973f9387e838881d2796b3ec5625bd63d4eadc74b20421fc"
     },
     {
       "menu": "attributes",
@@ -143,7 +151,7 @@
       "screenshot": "attributes-tablet-1024x768.png",
       "wireframeSvg": "attributes-tablet-1024x768.svg",
       "wireframePng": "attributes-tablet-1024x768-wireframe.png",
-      "screenshotSha256": "3a22402ae8b117282c4bd2729e45302eeef3a96fc0be2d6e7118c98c4961f523"
+      "screenshotSha256": "768da0bda1d25316913c9ff797a0526c4fc96854884eb82a2a703e3343ec9d5c"
     },
     {
       "menu": "feats",
@@ -154,7 +162,7 @@
       "screenshot": "feats-tablet-1024x768.png",
       "wireframeSvg": "feats-tablet-1024x768.svg",
       "wireframePng": "feats-tablet-1024x768-wireframe.png",
-      "screenshotSha256": "d15a65f6c0174aeec35a9e1d7ebcf7cce4759968773d15f86e3fbf10950b945f"
+      "screenshotSha256": "dce1eba3a269e5c405dc5477e015dd7065ad5fd63d06e346370ecee65c3bea33"
     },
     {
       "menu": "maneuvers",
@@ -165,7 +173,7 @@
       "screenshot": "maneuvers-tablet-1024x768.png",
       "wireframeSvg": "maneuvers-tablet-1024x768.svg",
       "wireframePng": "maneuvers-tablet-1024x768-wireframe.png",
-      "screenshotSha256": "c3292036a956231d9b75df9b9e496b83eb338da0b130d7018c631ebb8a9e903b"
+      "screenshotSha256": "f7735dfdb4680121bad39c27d8a5ebca25c31ee925c653d702bc8e9ad5ef3b8a"
     },
     {
       "menu": "equipment",
@@ -176,7 +184,7 @@
       "screenshot": "equipment-tablet-1024x768.png",
       "wireframeSvg": "equipment-tablet-1024x768.svg",
       "wireframePng": "equipment-tablet-1024x768-wireframe.png",
-      "screenshotSha256": "33f8334feb9da1cae23ac5e0831f0cec23628b14541b5fe03d2129fcea1de768"
+      "screenshotSha256": "8c931dcca97b35aaf4f9f627736e01406ee7a15d58882b09483e1c01a20a6b7a"
     },
     {
       "menu": "keepsake",
@@ -187,7 +195,7 @@
       "screenshot": "keepsake-tablet-1024x768.png",
       "wireframeSvg": "keepsake-tablet-1024x768.svg",
       "wireframePng": "keepsake-tablet-1024x768-wireframe.png",
-      "screenshotSha256": "00195dd6a5b1f3992f547bae39cc2ae8ddedaab089b24f66000e8d926daaf049"
+      "screenshotSha256": "447ef92de791627c186f0cfdad552f4a57efa033977ed8fd6b7c558512011ea8"
     },
     {
       "menu": "review",
@@ -198,7 +206,7 @@
       "screenshot": "review-tablet-1024x768.png",
       "wireframeSvg": "review-tablet-1024x768.svg",
       "wireframePng": "review-tablet-1024x768-wireframe.png",
-      "screenshotSha256": "dd163ce2dfa549f0c4c408d8f494f5f0782e2bf12766cadd83938aa9930c8991"
+      "screenshotSha256": "48707660dddcb700dc6e1fe31c8ae0d0dfd8b071b1e99033771525ab0824e69f"
     },
     {
       "menu": "spells",
@@ -209,7 +217,7 @@
       "screenshot": "spells-tablet-1024x768.png",
       "wireframeSvg": "spells-tablet-1024x768.svg",
       "wireframePng": "spells-tablet-1024x768-wireframe.png",
-      "screenshotSha256": "08816d3b4715afbd7ad5e57a6bbd9a839259afe4ea5747996d72a92a75183008"
+      "screenshotSha256": "164f36f7261356220e4fdc3e9dd7c957702532e7441ff4f004a405e8cc1d6435"
     },
     {
       "menu": "class",
@@ -220,7 +228,7 @@
       "screenshot": "class-mobile-390x844.png",
       "wireframeSvg": "class-mobile-390x844.svg",
       "wireframePng": "class-mobile-390x844-wireframe.png",
-      "screenshotSha256": "0f71a2503e2540b54883d4220a9780bc428cedeba7b7cec026187cf1bfb01f9d"
+      "screenshotSha256": "ca51724301353efd13a275382c6c41fe3a696f4eaaaa466083a876972ebd720a"
     },
     {
       "menu": "subclass",
@@ -231,7 +239,7 @@
       "screenshot": "subclass-mobile-390x844.png",
       "wireframeSvg": "subclass-mobile-390x844.svg",
       "wireframePng": "subclass-mobile-390x844-wireframe.png",
-      "screenshotSha256": "9252470210de510b01d6b2c2181bb1c89b3da119c47275f1b33e83c095d57fab"
+      "screenshotSha256": "d0f0f784867c79235f6189df737b867eb4179684af41ee94dde1d578ca6b5d4d"
     },
     {
       "menu": "attributes",
@@ -242,7 +250,7 @@
       "screenshot": "attributes-mobile-390x844.png",
       "wireframeSvg": "attributes-mobile-390x844.svg",
       "wireframePng": "attributes-mobile-390x844-wireframe.png",
-      "screenshotSha256": "bf5137adf941adf7b3a25bc5cf441a68f0a92e2270c67651f2738f14657da36a"
+      "screenshotSha256": "fbdae53225f1c0613ff023ac12b251e8f234a12086bbc1376e9672be5c335925"
     },
     {
       "menu": "feats",
@@ -253,7 +261,7 @@
       "screenshot": "feats-mobile-390x844.png",
       "wireframeSvg": "feats-mobile-390x844.svg",
       "wireframePng": "feats-mobile-390x844-wireframe.png",
-      "screenshotSha256": "45dd9a729f24261f79fdff016b3cf9fbd66a121da58881ec354492779c3927fc"
+      "screenshotSha256": "aa6d1fe7587f51d3911e0ab22b29c1cd9e00ca2c456606b3ddc12465ba1c2f4a"
     },
     {
       "menu": "maneuvers",
@@ -264,7 +272,7 @@
       "screenshot": "maneuvers-mobile-390x844.png",
       "wireframeSvg": "maneuvers-mobile-390x844.svg",
       "wireframePng": "maneuvers-mobile-390x844-wireframe.png",
-      "screenshotSha256": "dc9a5a7329c53a77878ccf4c979b4a4c0518a6101c54b72a6323b00ccb057602"
+      "screenshotSha256": "f5db677db01a61c26cc544bee580d627f935c73c803e3733f28f47619a806b48"
     },
     {
       "menu": "equipment",
@@ -275,7 +283,7 @@
       "screenshot": "equipment-mobile-390x844.png",
       "wireframeSvg": "equipment-mobile-390x844.svg",
       "wireframePng": "equipment-mobile-390x844-wireframe.png",
-      "screenshotSha256": "b6edabf8e9a7e361b18bfacb9571ef174eea73320d7ba83ae68625dba0729a98"
+      "screenshotSha256": "5a1208f2bc04e80a48cab1e929fd7d57aa16b3740063161332253703d5030a0b"
     },
     {
       "menu": "keepsake",
@@ -286,7 +294,7 @@
       "screenshot": "keepsake-mobile-390x844.png",
       "wireframeSvg": "keepsake-mobile-390x844.svg",
       "wireframePng": "keepsake-mobile-390x844-wireframe.png",
-      "screenshotSha256": "03d04c2079183d0cfea0a3ebbff4b294c7064d683bc8fbcdea877f0eee4d068f"
+      "screenshotSha256": "aa6925b1e1914217e64c25fbab8f372e65c07f3e6f6dbdab703e5970023ffad0"
     },
     {
       "menu": "review",
@@ -297,7 +305,7 @@
       "screenshot": "review-mobile-390x844.png",
       "wireframeSvg": "review-mobile-390x844.svg",
       "wireframePng": "review-mobile-390x844-wireframe.png",
-      "screenshotSha256": "7aea9fdd74942d6c2a04bf4c170fabc0e78eceb9c9a2b17d7674d3b41ece1e4d"
+      "screenshotSha256": "51b29db5cc702e2d3a5a8a04e7a79b85d311114baf2aeb1a654637e0c5f4b618"
     },
     {
       "menu": "spells",
@@ -308,7 +316,7 @@
       "screenshot": "spells-mobile-390x844.png",
       "wireframeSvg": "spells-mobile-390x844.svg",
       "wireframePng": "spells-mobile-390x844-wireframe.png",
-      "screenshotSha256": "b4ad2b0d4546f37119091baab5516e72207e98ad90ed91f36955f57c43e05ece"
+      "screenshotSha256": "b5b55b27db9cbd624e2431bbdce9d9a19cdb362496c5fe827784a063ce5ed6c2"
     },
     {
       "menu": "class",
@@ -319,7 +327,7 @@
       "screenshot": "class-wide-1920x1080.png",
       "wireframeSvg": "class-wide-1920x1080.svg",
       "wireframePng": "class-wide-1920x1080-wireframe.png",
-      "screenshotSha256": "3d48ac7a04636e2549e6539d7b5e6214a4b5437e65099bce3adf5957deb4cfbb"
+      "screenshotSha256": "d9dca48cf8e645e7124dc20916b1448d29ff30882d1bac9a43d7f2a691867819"
     },
     {
       "menu": "subclass",
@@ -330,7 +338,7 @@
       "screenshot": "subclass-wide-1920x1080.png",
       "wireframeSvg": "subclass-wide-1920x1080.svg",
       "wireframePng": "subclass-wide-1920x1080-wireframe.png",
-      "screenshotSha256": "e1582f35c45a24e7756d97d1367ddd33c5ac18b0503cdf237f6131bcbd9138fd"
+      "screenshotSha256": "1c47a844db07fbbef63f3efe77477b4e48f8a9ae888bf12317353a2730f7fe1e"
     },
     {
       "menu": "attributes",
@@ -341,7 +349,7 @@
       "screenshot": "attributes-wide-1920x1080.png",
       "wireframeSvg": "attributes-wide-1920x1080.svg",
       "wireframePng": "attributes-wide-1920x1080-wireframe.png",
-      "screenshotSha256": "b8beef15bc60a273ff6b09d6520d9e60ac78d9d124f5d4da5d348fc446cf925b"
+      "screenshotSha256": "ebc8f5b3e03da5dadb865b95b347d21b6517b859edb025c2253200bc17bdc934"
     },
     {
       "menu": "feats",
@@ -352,7 +360,7 @@
       "screenshot": "feats-wide-1920x1080.png",
       "wireframeSvg": "feats-wide-1920x1080.svg",
       "wireframePng": "feats-wide-1920x1080-wireframe.png",
-      "screenshotSha256": "5b37918c946efae7fe4f16d97fafaab0c113dd0acab74161af8ec0ff58de658f"
+      "screenshotSha256": "25c26269b50c44d624cf876f6e8ad1521fc8f9649e148ffc6e65064072027f58"
     },
     {
       "menu": "maneuvers",
@@ -363,7 +371,7 @@
       "screenshot": "maneuvers-wide-1920x1080.png",
       "wireframeSvg": "maneuvers-wide-1920x1080.svg",
       "wireframePng": "maneuvers-wide-1920x1080-wireframe.png",
-      "screenshotSha256": "26ea792b7ccec668fe3a3abed09213562d75fd5aa3ac0633d1a368ca529e7ac4"
+      "screenshotSha256": "002ea6f5ccd2e7eeb1117ab0d43932d6901d36e368d22cada981bdbf341e2769"
     },
     {
       "menu": "equipment",
@@ -374,7 +382,7 @@
       "screenshot": "equipment-wide-1920x1080.png",
       "wireframeSvg": "equipment-wide-1920x1080.svg",
       "wireframePng": "equipment-wide-1920x1080-wireframe.png",
-      "screenshotSha256": "764ab8049db1fa599553c1d09c4182219beceb30255b8f1cdb1cf1eff973cc75"
+      "screenshotSha256": "2002d1ff92d83c472206fc318e3b6b7c37d52b808d35a7c461824b79586bd031"
     },
     {
       "menu": "keepsake",
@@ -385,7 +393,7 @@
       "screenshot": "keepsake-wide-1920x1080.png",
       "wireframeSvg": "keepsake-wide-1920x1080.svg",
       "wireframePng": "keepsake-wide-1920x1080-wireframe.png",
-      "screenshotSha256": "6a57e56f82890621c08f03396b9367d9b0ed1b9a613685a2334f0f5b613408b1"
+      "screenshotSha256": "c9ded7bdc4e506b82041488e351ae11097bb25b0e31ae79ed506998f9d55c226"
     },
     {
       "menu": "review",
@@ -396,7 +404,7 @@
       "screenshot": "review-wide-1920x1080.png",
       "wireframeSvg": "review-wide-1920x1080.svg",
       "wireframePng": "review-wide-1920x1080-wireframe.png",
-      "screenshotSha256": "03ae742e6b59ca8e51aaa623de7cb13404fbf901c61f754114b9b7101431d8be"
+      "screenshotSha256": "b3a5de31931b79a892ffd7247957f7e09b3427564eb13b47e1f79b6a63933012"
     },
     {
       "menu": "spells",
@@ -407,7 +415,7 @@
       "screenshot": "spells-wide-1920x1080.png",
       "wireframeSvg": "spells-wide-1920x1080.svg",
       "wireframePng": "spells-wide-1920x1080-wireframe.png",
-      "screenshotSha256": "e367e8bca3625d230d2438aab38b632d36cb5e5a128f797a005fc8df23939b08"
+      "screenshotSha256": "8df032c43245a387376fdafa51de30c18ecb0cb360b4967c2a7d4077a65947b8"
     }
   ]
 }

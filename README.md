@@ -3,21 +3,21 @@
 <!-- feature-preview:start -->
 ## Feature preview — compact character creation
 
-**[Download and try this feature build](https://github.com/cehinds/AshenSpire/actions/runs/38654072847/artifacts/11935887981)** · [Build run](https://github.com/cehinds/AshenSpire/actions/runs/38654072847) · [All 36 screenshots and wireframes](docs/preview/features/update-character-creation/README.md)
+**[Play this feature build](https://cehinds.github.io/AshenSpire/branches/Feature/updateCharacterCreation/latest/)** · [Build run](https://github.com/cehinds/AshenSpire/actions/runs/38659839311) · [All 36 screenshots and wireframes](docs/preview/features/update-character-creation/README.md)
 
-Extract the build ZIP and open **AshenSpire.html**. GitHub sign-in is required for workflow artifact downloads; artifacts are kept for 14 days.
+Public delivery verified by [GitHub HTTP checks](https://github.com/cehinds/AshenSpire/actions/runs/38676827571/job/116243897791). Press **Enter** on the startup screen to begin. Feature previews are sandboxed; progress is not saved. [Download backup](https://github.com/cehinds/AshenSpire/actions/runs/38659839311/artifacts/11938781737).
 
-- Tighter spacing and fonts; repeated subtitles removed.
+- Compact heading rows; counts and instructions beside titles.
 - Locked feats cannot be selected; spell choices recheck eligibility.
-- Compact Review with all eleven starting cards available to inspect.
+- Mobile class sprites sit beside text; long details and Review cards fold closed.
 
-Captured **0.7.1.1520 / `1ad05d6483`**, source `eb5937f97c` — 2026-10-14.
+Captured **0.7.1.1520 / `652574f013`**, source `f6801043c9` — 2026-10-14 (America/Anchorage).
 
 | Mobile · 390 × 844 | Tablet · 1024 × 768 |
 | --- | --- |
-| ![Mobile compact feats with locked requirements](docs/preview/features/update-character-creation/feats-mobile-390x844.png) | ![Tablet compact feats with locked requirements](docs/preview/features/update-character-creation/feats-tablet-1024x768.png) |
+| ![Mobile Review with folded details](docs/preview/features/update-character-creation/review-mobile-390x844.png) | ![Tablet compact Class rows](docs/preview/features/update-character-creation/class-tablet-1024x768.png) |
 | Desktop · 1440 × 900 | Widescreen · 1920 × 1080 |
-| ![Desktop compact feat choices](docs/preview/features/update-character-creation/feats-desktop-1440x900.png) | ![Widescreen compact feat choices](docs/preview/features/update-character-creation/feats-wide-1920x1080.png) |
+| ![Desktop one-line subclass traits](docs/preview/features/update-character-creation/subclass-desktop-1440x900.png) | ![Widescreen starting spells with shared header](docs/preview/features/update-character-creation/spells-wide-1920x1080.png) |
 
 [Mobile gallery](docs/preview/features/update-character-creation/README.md#mobile) · [Desktop gallery](docs/preview/features/update-character-creation/README.md#desktop) · [Wide gallery](docs/preview/features/update-character-creation/README.md#wide) · [Tablet gallery](docs/preview/features/update-character-creation/README.md#tablet)
 

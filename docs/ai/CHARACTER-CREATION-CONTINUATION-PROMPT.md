@@ -10,8 +10,8 @@ Keep updates short and in checkboxes/bullets. Show actual game screenshots and
 playable builds; avoid long explanations. Work locally first, publish worker
 branches, then integrate into the feature branches through reviewed PRs.
 
-The previous user instruction was **stop, save a handoff, and merge current work
-to origin feature**. Do not start new implementation until I ask to resume.
+The user authorized **continue** on 2026-10-14 (America/Anchorage). The prior stop request is historical.
+Hosting and final evidence delivery are complete with this documentation update. Do not rerun completed UI implementation; follow the next user request.
 
 ## Repository and current source
 
@@ -24,7 +24,7 @@ to origin feature**. Do not start new implementation until I ask to resume.
   `b5ac91a039e38e7ed2b8bc01770b14ed29b94a9f` through PR #2006.
 - Production source tree: `9124302fb4c26347d21269b9a69db273d99349d3`.
 - Local capture source: `f6801043c9d9762550a7a3ff28cba7fc346fee81`, same tree.
-- Handoff-only commits may follow that source. Inspect origin before continuing.
+- Current documentation-only descendant: `13a117814`; it does not relabel the built source. Inspect origin before publication.
 - Do not merge the whole character feature into dev just to publish a preview.
 
 ## Completed
@@ -48,7 +48,7 @@ to origin feature**. Do not start new implementation until I ask to resume.
 - [x] Class-switch count receipt: Spells 1/2 → Class with no count →
   Reaver Maneuvers 0/1 → Starseer Spells 0/2; exactly one active counter.
 
-## Hosting is implemented, but delivery verification is unfinished
+## Hosting and public HTTP delivery are verified
 
 - Pages publisher: dev PR #1997, with source/artifact freshness checks and
   opaque-origin sandbox wrappers. Feature builds no longer require an open PR.
@@ -56,16 +56,15 @@ to origin feature**. Do not start new implementation until I ask to resume.
 - Post-deployment public HTTP checks: dev PR #2004. These check the branch/source
   index entry, sandbox wrapper, loader and nonempty plain-text game without
   downloading/executing feature HTML in the privileged job.
-- Intended Play URL:
+- Verified Play URL:
   `https://cehinds.github.io/AshenSpire/branches/Feature/updateCharacterCreation/latest/`.
-- Latest feature build at stop: run `38659839311`, source `b5ac91a...`, queued.
-- Public Pages publication and its HTTP verification were not confirmed.
-- Local public-browser attempts failed before HTTP with
-  `ERR_TUNNEL_CONNECTION_FAILED`; do not claim this proves a site 404 or a working Play link.
-- Do not bypass proxy/network settings. Use the GitHub runner’s public checks
-  and deployment receipt. A local sandbox mirror can verify game interaction.
-- The feature README still links the older download-only artifact that the user
-  could not use. Replace it with a verified Play link when delivery succeeds.
+- Feature build [38659839311](https://github.com/cehinds/AshenSpire/actions/runs/38659839311) succeeded at source `b5ac91a039e38e7ed2b8bc01770b14ed29b94a9f`; backup artifact [11938781737](https://github.com/cehinds/AshenSpire/actions/runs/38659839311/artifacts/11938781737).
+- Pages [run 38676827571, deploy job 116243897791](https://github.com/cehinds/AshenSpire/actions/runs/38676827571/job/116243897791) passed **Verify public feature preview delivery**. Its log confirms four public HTTP targets, including this feature and exact source `b5ac91a039e38e7ed2b8bc01770b14ed29b94a9f`.
+- Historical local public-browser attempts failed before HTTP with
+  `ERR_TUNNEL_CONNECTION_FAILED`. The runner receipt verifies delivery; it does
+  not claim that local interactive public-browser playtesting succeeded.
+- Do not bypass proxy/network settings. Sandbox startup → title menu with Enter is verified separately from public HTTP delivery. Pointer automation timed out; the later slot/character flow was not completed through that wrapper probe.
+- README/gallery now lead with the verified Play link and contain the final four-size evidence.
 
 ## Final local build and evidence
 
@@ -76,7 +75,7 @@ to origin feature**. Do not start new implementation until I ask to resume.
 - Stamp: `/workspace/scratch/feature-pages-preview/build-stamp-final.json`.
 - Captures: `/workspace/scratch/feature-pages-preview/screenshots-0.7.1.1520-652574f013/`.
   There are 36 PNG screenshots and a manifest with zero recorded errors;
-  final wireframes and final visual review were not completed at stop.
+  all 36 PNG wireframes and 36 structural SVGs are complete and visually reviewed.
 - Four sizes: mobile 390×844, tablet 1024×768, desktop 1440×900, wide 1920×1080.
 - Nine views: class, subclass, attributes, feats, spells, maneuvers, equipment,
   keepsake, review. Reaver supplies martial views; Starseer supplies spells.
@@ -86,22 +85,20 @@ to origin feature**. Do not start new implementation until I ask to resume.
   It uses actual captured geometry, including the new header and disclosures.
 - Historical captures `1ad05d6483`, `7b7e9a674f`, and `7edceca157` are superseded.
 - Local sandbox mirror prepared at
-  `/workspace/scratch/feature-pages-preview/hosted-mirror/`; not playtested yet.
+  `/workspace/scratch/feature-pages-preview/hosted-mirror/`. Exact-build startup → title menu with Enter is verified. Pointer automation timed out; do not claim a completed mouse/slot/character flow from that probe.
 - The requested Windows `D:/repos/.codex/outputs/...` location is not mounted here.
 
-## When asked to resume
+## On the next continuation
 
-1. Check origin and build/deployment status; do not rerun completed UI work.
-2. Verify the final public feature route and its source through the deployment’s
-   HTTP check; playtest the sandboxed game if browser access is available.
-3. Finish/review the 36 final wireframes and four-size screenshots. Preserve the
-   build digest/source association; do not relabel historical images.
-4. Refresh `docs/preview/features/update-character-creation/` and the removable
-   feature block near the top of README with Play first, screenshots and gallery.
-   The tracked gallery still shows `1ad05d6483`; it is not the final build.
-5. Merge evidence/docs through origin worker and feature branches. Keep the
-   shared guide/helper, but remove feature-only README/gallery content before
-   eventual promotion to dev. Do not alter the normal release gallery.
+1. Read the next user request and inspect origin. Hosting/source verification and
+   the 36 final screenshots plus matching wireframes have been delivered; do not
+   repeat implementation or replace them with historical captures.
+2. The verified Play link and complete gallery are near the top of the feature
+   README. The gallery is `docs/preview/features/update-character-creation/`.
+3. Keep the shared delivery guide/helper. Remove the feature-only README block
+   and gallery before eventual promotion to dev; preserve the release gallery.
+4. Any new UI change needs fresh four-size evidence associated with its own
+   tested source/digest. Follow worker → origin worker → feature integration.
 
 Known existing issue: DOM focus and gamepad cursor can differ; Enter follows the
 gamepad cursor. Matched baseline/current probes reproduced it before this pass.
