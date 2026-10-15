@@ -1,3 +1,4 @@
+import { deriveStat } from './derivedStats.js';
 // Profile-selected run policies. Legacy profiles never enter these branches.
 import { gameModule, gameContent } from './gameProfile.js';
 
@@ -86,3 +87,40 @@ export function withGameProfileService(run, service, operation) {
   try { return operation(); } finally { services.delete(run); }
 }
 export const gameProfileServiceActive = (run, service) => services.get(run) === service;
+
+
+// One configured receipt shared by character inspection and combat creation.
+// Read equipped active slots every time: a swap must never leave a cached bonus.
+export function gameProfileRatingReceipt(registries, run) {
+  if (!isConfiguredRun(run)) return null;
+  const ids = ['ar','dr','pr','ward','poise'];
+  const totals = Object.fromEntries(ids.map(id => [id,0]));
+  const attributeReceipts = {};
+  const stats = gameModule(run,'stats')?.mode === 'configured';
+  if (stats) for (const id of ids) {
+    const table = run.derivedStatRuleSnapshot?.rules || registries.derivedStatRules;
+    const receipt = deriveStat(table,id,{attributes:run.attributes,classDef:registries.classes.get(run.class),level:run.level?.level || 1});
+    attributeReceipts[id] = receipt; totals[id] = receipt.value;
+  }
+  const sources = [{name:'Attributes',kind:'attribute',...totals}];
+  const policy = gameModule(run,'equipment')?.upgradeBonuses;
+  if (stats && policy && run.loadout) {
+    let weaponTier = 0, armorTier = 0;
+    const tier = ref => Number.isSafeInteger(run.itemUpgradeLevels?.[ref]) && run.itemUpgradeLevels[ref] > 0 ? run.itemUpgradeLevels[ref] : 0;
+    for (const [slot,sets] of Object.entries(run.loadout.sets || {})) {
+      const id = sets[run.loadout.active?.[slot] || 0];
+      if (!id) continue;
+      if (slot === 'armor') armorTier = Math.max(armorTier,tier(`armor/${run.class}/${id}`));
+      else {
+        const piece = registries.equipment.armaments.find(row => row.id === id);
+        if (!piece) continue;
+        if (piece.kind === 'shield') armorTier = Math.max(armorTier,tier(`armament/${id}`));
+        else weaponTier = Math.max(weaponTier,tier(`armament/${id}`));
+      }
+    }
+    const ar = weaponTier * policy.weaponARPerTier, dr = armorTier * policy.armorDRPerTier;
+    totals.ar += ar; totals.dr += dr;
+    sources.push({name:'Equipped upgrade tiers',kind:'equipment',sourceId:'configured-upgrades',ar,dr,pr:0,ward:0,poise:0,weaponTier,armorTier});
+  }
+  return {totals,sources,attributeReceipts};
+}

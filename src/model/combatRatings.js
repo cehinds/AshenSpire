@@ -1,3 +1,4 @@
+import { gameProfileRatingReceipt } from './gameProfileRun.js';
 import { stanceRatingBonus } from './stanceRules.js';
 import { equippedPieces } from './loadout.js';
 import { resolveUpgradedRelic } from './itemUpgrades.js';
@@ -493,6 +494,8 @@ function ratingLevelOf(run) {
 }
 
 export function ratingReceipt(registries, run, config) {
+  const configured = gameProfileRatingReceipt(registries,run);
+  if (configured) return configured;
   const totals = Object.fromEntries(ratingIds.map(id => [id, 0]));
   const sources = [];
   const attributeReceipts = {};
