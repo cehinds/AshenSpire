@@ -13,5 +13,9 @@
     "mpFlasks": "full"
   },
   "deckEditingService": "strategize",
-  "allowEmptyStrategize": true
+  "allowEmptyStrategize": true,
+  "smith": {
+    "free": true,
+    "tiersPerService": 1
+  }
 }

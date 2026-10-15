@@ -11,6 +11,7 @@
     "CON contributes 0.5 SP per point: CON1 to CON3 adds one max SP. Other secondary floors remain legacy; combined-contribution rounding is provisional.",
     "Herald power behavior is a provisional card fixture; persistent stacking needs the runtime adapter.",
     "Rest positions [2,6] and generic shop price10 are provisional source-configured fixtures.",
-    "Stance advantage multiplier1.25 and one Smash advantage stagger per target/round are provisional."
+    "Stance advantage multiplier1.25 and one Smash advantage stagger per target/round are provisional.",
+    "Smith upgrades exactly one equipment tier for free as the one rest service; the foregone Strategize/Level Up is its visit budget. Free Smith is provisional until an explicit upgrade economy is authored."
   ]
 }

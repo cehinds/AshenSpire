@@ -125,3 +125,15 @@ test('actual core loadRun validates pinned birth gear instead of legacy baseline
  const restored=save.loadRun(reg);assert.ok(restored,JSON.stringify(save.runStatus()));
  assert.equal(restored.loadout.sets.rightHand[0],'greatsword');assert.equal(restored.deck.length,10);assert.equal(restored.gameProfile.hash,profile.hash);
 });
+
+
+test('core Smith is a free single-tier service without stones, with paid override honored',async()=>{
+ const run=fresh();visit(run);assert.equal(run.smithingStones,0);
+ const {smithingPlan}=await import('../src/model/smithing.js');const item=smithingPlan(reg,run).candidates[0];assert.ok(item);
+ commitGameProfileRest(reg,run,'smith',{itemRef:item.itemRef});assert.equal(run.itemUpgradeLevels[item.itemRef],1);assert.equal(run.smithingStones,0);
+ assert.throws(()=>commitGameProfileRest(reg,run,'smith',{itemRef:item.itemRef}),/spent/);
+ const paid=resolveGameProfile({formatVersion:1,core:'ashen.core@1.0.0',modules:{rest:{smith:{free:false,tiersPerService:1}}}});
+ const r=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,paid)),paid);
+ const next=createRunState({seed:1,classId:'reaver',registries:r});next.mapGraph=buildActMap(r,createRng(1),next.seatOrder[0],1);next.mapNodeId='n2_0';beginGameProfileRest(next);
+ const before=JSON.stringify(next);assert.throws(()=>commitGameProfileRest(r,next,'smith',{itemRef:item.itemRef}),/Insufficient/);assert.equal(JSON.stringify(next),before);
+});

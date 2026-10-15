@@ -66,6 +66,25 @@
         "mpFlasks"
       ],
       "additionalProperties": false
+    },
+    "smith": {
+      "type": "object",
+      "properties": {
+        "free": {
+          "type": "boolean"
+        },
+        "tiersPerService": {
+          "type": "integer",
+          "enum": [
+            1
+          ]
+        }
+      },
+      "required": [
+        "free",
+        "tiersPerService"
+      ],
+      "additionalProperties": false
     }
   },
   "required": [
@@ -73,7 +92,8 @@
     "servicesPerVisit",
     "services",
     "allowEmptyStrategize",
-    "recovery"
+    "recovery",
+    "smith"
   ],
   "additionalProperties": false
 }
