@@ -65,7 +65,7 @@ build/game-config/ashenspire/   # generated exports/reports, ignored
 workbench/modules/<configuration>/
 ```
 
-This is a responsibility map, not a bulk file-creation checklist. Optional files are omitted when unused. The canonical lock is games/ashenspire/game.lock.json: generated deterministically, reviewed and committed as reproducible metadata. Exports and compilation reports belong under ignored build/game-config/ashenspire/. Do not maintain a second editable lock there. Runtime artifacts never become a parallel authored source.
+This is a responsibility map, not a bulk file-creation checklist. Optional files are omitted when unused. The canonical lock is games/ashenspire/game.lock.json: generated deterministically, reviewed and committed as reproducible metadata. Exports and compilation reports belong under ignored build/game-config/ashenspire/. Do not maintain a second editable lock there. Runtime artifacts never become a parallel authored source. The lock records every runtime component, module, bundle and pack ID, exact version and artifact hash, plus contract and numeric-policy versions.
 
 Extend the existing Workbench through its ctx API. Reuse tools/content-build.mjs and tools/config-build.mjs through a future compatibility adapter while migrating small slices. For each moved definition, designate exactly one authored owner. Existing sources remain canonical until that slice explicitly transfers ownership; do not make both trees independently editable.
 
@@ -102,6 +102,8 @@ A module manifest and settings excerpt might be:
   "include": ["sp", "mp"]
 }
 ```
+
+Reusable module content supplies optional generic defaults/examples; Ashen-specific IDs belong only in game packs. IDs must be unique and namespaced. Reject duplicates unless an explicit versioned override declares the replacement; import order never chooses a winner.
 
 These fields illustrate the intended separation, not an already accepted executable manifest schema. HP is always preserved and owned by foundation.hp. Resources may decorate its public interface but cannot create another authoritative HP pool. SP, MP and optional Actions state belong to resources. An HP-facing compatibility selector, if retained during migration, references foundation HP rather than enabling/disabling a second instance.
 
@@ -161,11 +163,13 @@ The bundle excerpt intentionally omits other required core-selected modules; it 
 | routes | Core-selected route state and navigation policy; foundation launcher remains fallback. |
 | rest | Core-selected service/visit policy and durable service token; invokes card/equipment/progression capabilities and coordinates atomic recovery. |
 | rewards, shops | Core-selected eligibility, offer/claim or purchase policies; use typed inventory/card grants rather than writing their state. |
-| animation, art/presentation | Core-selected profile presentation where specified; fixed look, required animation facts and optional authored assets fall back to foundation stand-ins. |
+| animation, art | Core-selected profile presentation where specified; fixed look, required animation facts and optional authored assets fall back to foundation stand-ins. |
 | posture, damage-types, intent, dungeons, quests, dialogue, audio, advanced-ui, multiplayer | Later extensions unless explicitly selected by a reviewed bundle revision; no implicit activation. |
 | character-creation | Optional later extension, off by default; not the fixed class selector. |
 
 Combat is a composed capability pipeline, not a duplicate state-owning mega-module. Enemy AI uses foundation planning plus declared profile policies and enabled behavior contributions. Do not invent toggles for every helper, log panel or editor file. Any needed new capability has a named owner before integration. Inventory belongs to equipment; cards own card collections; cross-family rewards use their respective public commands.
+
+Proposed public module keys selected by the Ashen core are cards, resources, stats, defenses, stances, reactions, effects, statuses, equipment, class-selection, progression, routes, rest, rewards, shops, animation and art. Later optional keys are posture, damage-types, intent, dungeons, quests, dialogue, audio, advanced-ui, multiplayer and character-creation. These are proposed package IDs, not a second enable registry. There is no presentation, combat, inspect or editor helper toggle: basic presentation/inspect/log belong to foundation, combat is composition, and editors belong to cards/equipment with rest access policy.
 
 ## Explicit disabling and provider compilation
 
