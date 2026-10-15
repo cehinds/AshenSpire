@@ -1490,6 +1490,10 @@ export const gameProfileCatalog = {
           "mp": "full",
           "healingFlasks": "full",
           "mpFlasks": "full"
+        },
+        "smith": {
+          "free": true,
+          "tiersPerService": 1
         }
       },
       "schema": {
@@ -1560,6 +1564,25 @@ export const gameProfileCatalog = {
               "mpFlasks"
             ],
             "additionalProperties": false
+          },
+          "smith": {
+            "type": "object",
+            "properties": {
+              "free": {
+                "type": "boolean"
+              },
+              "tiersPerService": {
+                "type": "integer",
+                "enum": [
+                  1
+                ]
+              }
+            },
+            "required": [
+              "free",
+              "tiersPerService"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -1567,7 +1590,8 @@ export const gameProfileCatalog = {
           "servicesPerVisit",
           "services",
           "allowEmptyStrategize",
-          "recovery"
+          "recovery",
+          "smith"
         ],
         "additionalProperties": false
       },
@@ -1582,13 +1606,13 @@ export const gameProfileCatalog = {
           "path": "engine/modules/rest/defaults.json",
           "id": "rest",
           "version": "1.0.0",
-          "hash": "sha256:5f1b3d8fbeeff88f2eb950c905ec5c63e998f7030768e0491caad4d2f6e6ac60"
+          "hash": "sha256:9aee31ce73dc9b403580e4310603a808fbf68d846e88265e9f00089cc0de3058"
         },
         {
           "path": "engine/modules/rest/settings.schema.json",
           "id": "rest",
           "version": "1.0.0",
-          "hash": "sha256:a9cb5d01aebb4a95a239cec8d85b00e91da190ea7722c6b963a688237dd35eac"
+          "hash": "sha256:d878cd4e3fce8df7a4bc241a7ae9ddad3708830a826cc4e2b30b6c2b6cfa857a"
         }
       ]
     },
@@ -2271,7 +2295,8 @@ export const gameProfileCatalog = {
               "servicesPerVisit": "servicesPerVisit",
               "services": "services",
               "allowEmptyStrategize": "allowEmptyStrategize",
-              "recovery": "recovery"
+              "recovery": "recovery",
+              "smith": "smith"
             }
           },
           {
@@ -2313,7 +2338,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/bundles/core/bundle.json",
           "id": "ashen.core",
           "version": "1.0.0",
-          "hash": "sha256:efb4afaaa322964dbd7baaec3311adac256dafe372f13f26f7fca6f3c6b429d4"
+          "hash": "sha256:4d21a49a5797e9baa19e010183e2cf6798fbf1f01b9ec511473f422afd854e79"
         }
       ]
     },
@@ -2981,7 +3006,11 @@ export const gameProfileCatalog = {
             "mpFlasks": "full"
           },
           "deckEditingService": "strategize",
-          "allowEmptyStrategize": true
+          "allowEmptyStrategize": true,
+          "smith": {
+            "free": true,
+            "tiersPerService": 1
+          }
         },
         "rewards": {
           "offerCount": 3,
@@ -3008,7 +3037,8 @@ export const gameProfileCatalog = {
             "CON contributes 0.5 SP per point: CON1 to CON3 adds one max SP. Other secondary floors remain legacy; combined-contribution rounding is provisional.",
             "Herald power behavior is a provisional card fixture; persistent stacking needs the runtime adapter.",
             "Rest positions [2,6] and generic shop price10 are provisional source-configured fixtures.",
-            "Stance advantage multiplier1.25 and one Smash advantage stagger per target/round are provisional."
+            "Stance advantage multiplier1.25 and one Smash advantage stagger per target/round are provisional.",
+            "Smith upgrades exactly one equipment tier for free as the one rest service; the foregone Strategize/Level Up is its visit budget. Free Smith is provisional until an explicit upgrade economy is authored."
           ]
         },
         "resourceVariants": {
@@ -3285,7 +3315,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/rests.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:bfefe718bc5e9d260ec49dcdb4dd3f25dcc6ad638bda18ed8178f4916d1be76b"
+          "hash": "sha256:032ed2eb1ee19b6349d453eb1c846bf3ac7eb4399f91ceecd5c6cdf785acde85"
         },
         {
           "path": "games/ashenspire/packs/core/rewards.json",
@@ -3297,7 +3327,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/provisionalPolicies.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:6d2a223bfce52355f1eddc01b4288f01c2361be19361a6ef3100d9ff9c6f992c"
+          "hash": "sha256:ca2763de1d4d4c1879f384f2c6a61d2a93f5b96f96e9bd9665bcc2b916329a00"
         },
         {
           "path": "games/ashenspire/packs/core/resourceVariants.json",
@@ -3343,7 +3373,7 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "path": "src/** (excluding generated gameProfiles/changelog)",
-      "hash": "sha256:2c1cab0582d56095ad51041421b831280ce32dce6072f1e9715ae5865d8d5067"
+      "hash": "sha256:71cfed126faac0014cc4bd33f006544a430cc82bb2ba669eeb0cf9bb01e7730f"
     }
   ],
   "runtimeSources": [
@@ -5565,7 +5595,7 @@ export const gameProfileCatalog = {
       "path": "src/model/gameProfileRest.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:c6459d9a7438597efbb727d841b56fee24a2d9fcf84b80f6e6c2fed7b2fbd70f"
+      "hash": "sha256:a7b90e5491799a0695f33f5bdb0f3720ab8c4d7bfad63f18d27df74879615dc9"
     },
     {
       "path": "src/model/gameProfileRewards.js",
@@ -8166,7 +8196,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:23af16d4e9c9f6d88fe655d32ecf1a688b47df39f9e3a1d6d193ce63923593ab"
     }
   ],
-  "runtimeHash": "sha256:63cda4caad3868a561fd60522f3e7eecc9391fd6ff1fb9e9f1dc888283e33d00"
+  "runtimeHash": "sha256:6b83f0afcd125c443a298a614bc5ca697dec0cb0af1966813c544e0642664db5"
 };
 export const gameProfileAuthors = {
   "default": {
