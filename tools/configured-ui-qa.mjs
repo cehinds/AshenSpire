@@ -23,13 +23,22 @@ try {
  const shop=!!app.querySelector('.merchant-workspace'), offers=app.querySelectorAll('.merchant-offer').length;
  const rewards=gameProfileRewardOffers(reg,run,createRng(6),{offerId:'qa-reward'});
  const before=JSON.stringify(run.deck); let claims=0;
- mountGameProfileOffers(app,{registries:reg,run,offer:rewards,title:'Victory rewards',onTake(index){claims++;claimGameProfileReward(reg,run,'qa-reward',index);},onContinue(){}});
+ const underlying=app.firstElementChild;
+ const rewardOptions={registries:reg,run,offer:rewards,title:'Victory rewards',onTake(index){claims++;claimGameProfileReward(reg,run,'qa-reward',index);},onContinue(){}};
+ mountGameProfileOffers(app,rewardOptions);
+ const firstDoor=app.querySelector('.reward-door');
+ mountGameProfileOffers(app,{...rewardOptions,offer:structuredClone(rewards)});
+ const sameDoor=firstDoor===app.querySelector('.reward-door');
  const disabledBefore=app.querySelector('#reward-card-confirm').disabled;
  app.querySelector('.reward-choice-button').click();
  const selected=app.querySelectorAll('.reward-choice-button.is-chosen').length;
  app.querySelector('#reward-card-confirm').click();
+ const preservesUnderlying=app.contains(underlying);
  const rewardDoor=!!app.querySelector('.reward-door'), deckUnchanged=before===JSON.stringify(run.deck), claimed=run.gameProfileRewardOffers['qa-reward'].taken.length;
- return {rewardDoor,disabledBefore,selected,claims,claimed,deckUnchanged,classStage,count,review,deckCount,strengths,locked,startedKeys:Object.keys(started).sort(),shop,offers};
+ mountGameProfileOffers(app,{...rewardOptions,offer:{...rewards,id:'another-reward'}});
+ const differentDoor=firstDoor!==app.querySelector('.reward-door');
+ const serializable=JSON.stringify(run).includes('rewardDoorOwner')===false;
+ return {sameDoor,differentDoor,serializable,preservesUnderlying,rewardDoor,disabledBefore,selected,claims,claimed,deckUnchanged,classStage,count,review,deckCount,strengths,locked,startedKeys:Object.keys(started).sort(),shop,offers};
  });
- assert.equal(result.classStage,'class'); assert.equal(result.count,'2'); assert.equal(result.review,'review'); assert.equal(result.deckCount,10); assert.match(result.strengths,/2/); assert.equal(result.locked,3); assert.deepEqual(result.startedKeys,['classId','gameProfile','seedString']); assert.equal(result.shop,true); assert.equal(result.offers,3); assert.equal(result.rewardDoor,true); assert.equal(result.disabledBefore,true); assert.equal(result.selected,1); assert.equal(result.claims,1); assert.equal(result.claimed,1); assert.equal(result.deckUnchanged,true); console.log('Configured creation, merchant and reward UI contracts passed.');
+ assert.equal(result.classStage,'class'); assert.equal(result.count,'2'); assert.equal(result.review,'review'); assert.equal(result.deckCount,10); assert.match(result.strengths,/2/); assert.equal(result.locked,3); assert.deepEqual(result.startedKeys,['classId','gameProfile','seedString']); assert.equal(result.shop,true); assert.equal(result.offers,3); assert.equal(result.sameDoor,true); assert.equal(result.differentDoor,true); assert.equal(result.serializable,true); assert.equal(result.preservesUnderlying,true); assert.equal(result.rewardDoor,true); assert.equal(result.disabledBefore,true); assert.equal(result.selected,1); assert.equal(result.claims,1); assert.equal(result.claimed,1); assert.equal(result.deckUnchanged,true); console.log('Configured creation, merchant and reward UI contracts passed.');
 } finally {await browser.close();server.close();}
