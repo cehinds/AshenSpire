@@ -1,3 +1,4 @@
+import { mountGameProfileSelector } from './ui/components/gameProfileSelector.js';
 import { beginGameProfileRest, createGameProfileRestDraft, commitGameProfileRest } from './model/gameProfileRest.js';
 import { resolveGameProfile, gameModule, gameContent, applyGameProfileToContent, bindGameProfileRegistries } from './model/gameProfile.js';
 import { isConfiguredRun, gameProfileClassAvailable } from './model/gameProfileRun.js';
@@ -230,7 +231,7 @@ if (!validation.ok) {
 }
 
 const profileQuery = new URLSearchParams(location.search);
-const askedGameProfile = profileQuery.get('gameProfile') || profileQuery.get('wb.gameProfile') || 'current';
+const askedGameProfile = profileQuery.get('gameProfile') || profileQuery.get('wb.gameProfile') || globalThis.__ASHEN_GAME_PROFILE_PREVIEW__ || 'current';
 let selectedGameProfile = resolveGameProfile(askedGameProfile.trim().startsWith('{') ? JSON.parse(askedGameProfile) : askedGameProfile);
 let registryGameProfile = selectedGameProfile;
 let registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, registryGameProfile)), registryGameProfile);
@@ -1770,13 +1771,6 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
   const slots = saveSlotRecords();
   mountTitle(app, {
     slots,
-    gameProfile: selectedGameProfile,
-    onGameProfile: value => {
-      const resolved = resolveGameProfile(value);
-      rebuildRegistries(saves.loadMeta().settings || {}, null, resolved);
-      selectedGameProfile = resolved;
-      showTitle({ skipStartup: true });
-    },
     reopen,
     // The delete beat rides the shared machinery now: the armer reads the
     // dial from meta.settings and the table from the registries.
@@ -2084,6 +2078,7 @@ function showCharacterSheet(opener, options = {}) {
 // Rest screen of a place carrying `deckEdit`, and none with deck editing off.
 // Every door here is out of combat; the fight's Armoury gets none.
 function deckDoors(services = null) {
+  if (isConfiguredRun(run)) return { armoury: false, rest: false };
   return deckEditorDoors({ settings: saves.loadMeta().settings || {}, inCombat: false, services });
 }
 
@@ -2349,7 +2344,27 @@ async function showFinishedRun(victory) {
   });
 }
 
-function showCustomize(slot = 1, catalog = false) {
+function showCustomize(slot = 1, catalog = false, profileChosen = false) {
+  if (!profileChosen && !catalog) {
+    app.replaceChildren();
+    const pane = document.createElement('section'); pane.className = 'screen game-profile-setup';
+    pane.style.cssText = 'max-width:44rem;padding:2rem;margin:auto;display:flex;flex-direction:column;gap:1rem';
+    const title = document.createElement('h1'); title.textContent = 'New Game';
+    const copy = document.createElement('p'); copy.textContent = 'Choose your game rules before selecting a class. Existing saves keep their own rules.';
+    const controls = document.createElement('div');
+    const renderSelector = () => {
+      controls.replaceChildren();
+      mountGameProfileSelector(controls, { profile: selectedGameProfile, onSelect: value => {
+        const profile = resolveGameProfile(value);
+        rebuildRegistries(saves.loadMeta().settings || {}, null, profile);
+        selectedGameProfile = profile; renderSelector();
+      } });
+    };
+    renderSelector();
+    const next = document.createElement('button'); next.textContent = 'Choose class'; next.onclick = () => showCustomize(slot, false, true);
+    const back = document.createElement('button'); back.textContent = 'Back'; back.onclick = () => showTitle();
+    pane.append(title, copy, controls, next, back); app.append(pane); return;
+  }
   rebuildRegistries(saves.loadMeta().settings || {}, null, selectedGameProfile);
   mountCustomize(app, {
     gameProfile: selectedGameProfile,
@@ -3127,16 +3142,17 @@ async function onCombatEnd(result, combat, enc) {
   // THE SKILL TRACKS ARE PAID HERE, ONCE (plan phase 4a): the fight kept a
   // receipt of every hit, block, evade and buildup by track; the run's ledger
   // takes it now, win or loss, and climbs whatever the XP buys.
-  const trackReceipt = skillXpReceipt(combat);
+  const configuredProgression = isConfiguredRun(run);
+  const trackReceipt = configuredProgression ? {} : skillXpReceipt(combat);
   for (const [skillId, amount] of Object.entries(trackReceipt)) {
     const kind = skillKindOf(registries, skillId);
     const bonus = kind === 'armour' ? 'armourXp' : 'weaponXp';
     trackReceipt[skillId] = Math.floor(amount * featMultiplier(run, bonus));
   }
-  applySkillXp(registries, run, trackReceipt, { bank: manualLevelUp });
+  if (!configuredProgression) applySkillXp(registries, run, trackReceipt, { bank: manualLevelUp });
   // The class track (plan phase 5b) is paid by the run's owner, who knows
   // the door's pool: a won fight, more for a boss; a lost one nothing.
-  const classAward = awardClassXp(registries, run, { victory: result === 'victory', pool: enc.pool, bank: manualLevelUp, multiplier: featMultiplier(run, 'classXp') });
+  const classAward = configuredProgression ? null : awardClassXp(registries, run, { victory: result === 'victory', pool: enc.pool, bank: manualLevelUp, multiplier: featMultiplier(run, 'classXp') });
   // Character XP is paid now; the level and its stat points wait for the blue
   // Level Up button. Excess XP remains on the ledger after each claim.
   const xpReceipt = combatXpReceipt(registries, {
@@ -3212,8 +3228,8 @@ async function onCombatEnd(result, combat, enc) {
     // could give, in which case it pays out instead of dropping nothing.
     const bossArmament = rollDrop('boss');
     const drops = registries.balance.equipment.drops || {};
-    const bossDrafts = settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts('boss', manualLevelUp) : [];
-    const bossClassDrafts = settingOn(saves.loadMeta().settings, 'rewardBattleClassDrafts') ? rollClassDrafts(manualLevelUp) : [];
+    const bossDrafts = !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts('boss', manualLevelUp) : [];
+    const bossClassDrafts = !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleClassDrafts') ? rollClassDrafts(manualLevelUp) : [];
     // A boss offers up to balance.rewards.bossRelicChoices relics to pick ONE
     // from; one relic (or none) keeps the single relicId shape.
     const bossRelics = rollRelicChoices(registries, rng, run.relics, { rarities: ['boss'], count: Math.max(1, registries.balance.rewards.bossRelicChoices ?? 3) });
@@ -3222,9 +3238,9 @@ async function onCombatEnd(result, combat, enc) {
       cinders: Math.floor(rollRuneReward(registries, rng, 'boss', run.relics) * featMultiplier(run, 'cinders')) + (bossArmament ? 0 : drops.consolationCinders || 0),
       classDrafts: bossClassDrafts,
       skillDrafts: bossDrafts,
-      skillRankUps: settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillRankUps(manualLevelUp) : [],
-      skillAttributes: settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillAttributes(manualLevelUp) : [],
-      skillFeats: settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillFeats(manualLevelUp) : [],
+      skillRankUps: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillRankUps(manualLevelUp) : [],
+      skillAttributes: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillAttributes(manualLevelUp) : [],
+      skillFeats: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillFeats(manualLevelUp) : [],
       ...rollCardRows('boss', levelsEarned),
       ...(bossRelics.length > 1 ? { relicChoices: bossRelics } : { relicId: bossRelics[0] ?? null }),
       ...sigilOffer('boss'),
@@ -3240,16 +3256,16 @@ async function onCombatEnd(result, combat, enc) {
   }
 
   // Skill and class level rewards are independent of the combat card roll.
-  const drafts = settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts(enc.pool, manualLevelUp) : [];
-  const classDrafts = settingOn(saves.loadMeta().settings, 'rewardBattleClassDrafts') ? rollClassDrafts(manualLevelUp) : [];
+  const drafts = !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts(enc.pool, manualLevelUp) : [];
+  const classDrafts = !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleClassDrafts') ? rollClassDrafts(manualLevelUp) : [];
   const rewards = {
     title: victoryTitle(enc),
     cinders: Math.floor(rollRuneReward(registries, rng, enc.pool, run.relics) * featMultiplier(run, 'cinders')),
     classDrafts,
     skillDrafts: drafts,
-    skillRankUps: settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillRankUps(manualLevelUp) : [],
-    skillAttributes: settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillAttributes(manualLevelUp) : [],
-    skillFeats: settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillFeats(manualLevelUp) : [],
+    skillRankUps: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillRankUps(manualLevelUp) : [],
+    skillAttributes: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillAttributes(manualLevelUp) : [],
+    skillFeats: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillFeats(manualLevelUp) : [],
     ...rollCardRows(enc.pool, levelsEarned),
     flaskId: rollFlaskDrop(registries, rng, run),
     relicId: enc.pool === 'elite' ? rollRelicReward(registries, rng, run.relics) : null,
@@ -3292,6 +3308,7 @@ function rollCardRows(pool, levelUps) {
 }
 
 function rollLevelChoices(levelsEarned) {
+  if (isConfiguredRun(run)) return [];
   const settings = saves.loadMeta().settings || {};
   const offerFeats = settingOn(settings, 'rewardLevelFeats');
   const offerClassTree = settingOn(settings, 'rewardLevelClassTree');
