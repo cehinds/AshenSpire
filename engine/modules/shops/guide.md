@@ -1,9 +1,9 @@
 # `shops` module guide
 
-Set the number of shop choices and authored shop stock/price.
+Show authored merchant stock and complete purchases through a review step.
 
 **Status:** Listed in `ashen.core@1.0.0`.
-Runtime scope: Configured shop option count and authored stock/price transactions.
+Runtime scope: Configured offers, stock availability and prices, purchase review of cost/current balance, transaction confirmation, and leaving the merchant while preserving the run.
 
 ## Authoring example
 
@@ -46,7 +46,7 @@ The referenced pack JSON is gameplay authoring data; it is not executable module
 
 ## Disable behavior, portability and checks
 
-A disabled shop is omitted; it does not activate routes or another reward source.
+A configured purchase opens a review showing the selected offer, price, current cinders and remaining balance before confirmation. The offer is taken only after confirmation; unavailable or already-taken stock cannot be purchased. Leaving the shop returns to the run's journey without resetting the hero, deck or currency. A disabled shop is omitted; it does not activate routes or another reward source.
 
 The current export requires `ashen.legacy-adapter@1`; it is host-dependent and does not claim a portable rules VM. Unsupported configured modules or values should fail validation rather than silently omit their behavior.
 

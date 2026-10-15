@@ -47,7 +47,7 @@ try {
       await page.getByRole('button', { name: 'Choose class', exact: true }).click();
       assert.equal(await page.getByRole('button', { name: 'Starseer · Locked', exact: true }).isDisabled(), true);
       await page.getByRole('button', { name: 'Begin the climb', exact: true }).click();
-      assert.equal(await page.locator('.map-node').count(), 6, 'imported route override changes real map generation');
+      assert.equal(await page.locator('.map-node').count(), 12, 'five pre-boss depths branch into 12 nodes with two shared rests and the boss');
     }
     await page.close();
   }
