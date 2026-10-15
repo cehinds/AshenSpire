@@ -8201,7 +8201,7 @@ export const gameProfileCatalog = {
 export const gameProfileAuthors = {
   "default": {
     "formatVersion": 1,
-    "core": "ashen.core@1.0.0",
+    "core": "ashen.current@1.0.0",
     "modules": {}
   },
   "core": {
