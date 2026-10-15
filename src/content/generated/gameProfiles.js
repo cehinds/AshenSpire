@@ -2806,7 +2806,7 @@ export const gameProfileCatalog = {
             "Starseer uses the existing boneSceptre ID as a valid scepter adapter.",
             "Poise applies while positive after Block; it reduces positive residual damage by 25% without depletion.",
             "Evade uses seeded hit chance clamp(0.75 + (AR-DR)*0.02, 0.05, 0.95); failure doubles damage. Rating contributions and ordering are provisional.",
-            "Stance advantage multiplier 1 preserves authored relationship without inventing a damage bonus.",
+            "Stance advantage multiplier 1.25, bounded Smash stagger and Prepared interruption are provisional adapter policies.",
             "Equipment editor noncombat timing, reward take-one, free-work and reaction limits are provisional.",
             "SP recovery delegates to the existing turn-start adapter; exact SP growth remains legacy.",
             "Herald power behavior is a provisional card fixture; persistent stacking needs the runtime adapter.",
@@ -3078,7 +3078,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/provisionalPolicies.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:56039c2fc1a68d42d0a9e9843272657c9c13bf7cadabc0c12174cf5a19026d79"
+          "hash": "sha256:5d2712b0677f52bc53940dc1f58d9f94b624fab82dab378a787e673af3261310"
         },
         {
           "path": "games/ashenspire/packs/core/resourceVariants.json",
