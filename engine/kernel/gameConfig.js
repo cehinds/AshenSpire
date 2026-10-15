@@ -125,7 +125,7 @@ export function resolveGameAuthor(author, catalog) {
   const profile = {id:bundle.manifest.profileId,formatVersion:1,author:source,modules,content,
     foundation:{...catalog.foundation,mode:bundle.manifest.foundationMode,attackDamage:5},
     contracts:catalog.contracts,schemas,provenance,
-    lock:{formatVersion:1,core:source.core,artifacts:artifacts.sort((a,b)=>a.path.localeCompare(b.path)),runtimeABI:catalog.contracts.runtimeABI,numericPolicy:catalog.contracts.numericPolicy},
+    lock:{formatVersion:1,core:source.core,artifacts:artifacts.sort((a,b)=>a.path < b.path ? -1 : a.path > b.path ? 1 : 0),runtimeABI:catalog.contracts.runtimeABI,numericPolicy:catalog.contracts.numericPolicy},
     portability:{portable:false,requiredCapabilities:['ashen.legacy-adapter@1'],reason:'Host gameplay adapter; no portable rules VM is claimed.'}};
   profile.hash = gameDigest(profile);
   return freezeGameData(profile);

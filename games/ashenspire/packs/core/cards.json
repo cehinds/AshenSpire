@@ -20,10 +20,13 @@
     ],
     "tags": [
       "camp:physical",
-      "maneuver:attack"
+      "maneuver:attack",
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage.",
-    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "core.defend",
@@ -46,7 +49,8 @@
     ],
     "tags": [
       "camp:physical",
-      "maneuver:defend"
+      "maneuver:defend",
+      "classification.skill"
     ],
     "textTemplate": " Gain {block} Block.",
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
@@ -72,10 +76,13 @@
     ],
     "tags": [
       "camp:physical",
-      "maneuver:counter"
+      "maneuver:counter",
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage.",
-    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "core.smash",
@@ -98,10 +105,13 @@
     ],
     "tags": [
       "camp:physical",
-      "maneuver:smash"
+      "maneuver:smash",
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage.",
-    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "core.sweep",
@@ -124,10 +134,13 @@
     ],
     "tags": [
       "camp:physical",
-      "maneuver:sweep"
+      "maneuver:sweep",
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage.",
-    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "core.reaverSpecial",
@@ -150,10 +163,13 @@
     ],
     "tags": [
       "camp:physical",
-      "maneuver:smash"
+      "maneuver:smash",
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage.",
-    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "core.starseerSpecial",
@@ -176,10 +192,13 @@
     ],
     "tags": [
       "camp:spell",
-      "maneuver:casting"
+      "maneuver:casting",
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage.",
-    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "core.rogueSpecial",
@@ -202,7 +221,8 @@
     ],
     "tags": [
       "camp:physical",
-      "maneuver:defend"
+      "maneuver:defend",
+      "classification.skill"
     ],
     "textTemplate": " Gain {block} Block.",
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
@@ -228,7 +248,8 @@
     ],
     "tags": [
       "camp:physical",
-      "maneuver:defend"
+      "maneuver:defend",
+      "classification.power"
     ],
     "textTemplate": " Gain {block} Block.",
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
