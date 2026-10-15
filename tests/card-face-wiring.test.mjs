@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
-import { renderCard } from '../src/ui/components/card.js';
+import { renderCard, cardDetailHtml } from '../src/ui/components/card.js';
 import { applyCardTraits } from '../src/content/traitProjection.js';
 import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
@@ -115,3 +115,33 @@ test('an ordinary simple attack retains its complete Deal verb', () => withKitDo
   const el = renderCard(reg, { cardId: 'bashingBlow' }, { inspection: false, level: 'glance' });
   assert.match(textOf(faceLinesOf(markup.get(el))[0]), /^Deal \d+ Blunt damage\./);
 }));
+
+
+test('full inspection explains canonical Burn, Strength, Concealed and Stoneskin rules only in its details', () => withKitDom(dom => {
+  const markup = trackInnerHtml(dom);
+  const base = resolveCard(reg, { cardId: 'warcry' });
+  const definition = { ...base, effects: ['burn', 'strength', 'concealed', 'stoneskin'].map(status => ({ op: 'applyStatus', target: 'self', status, stacks: 1, duration: 99 })) };
+  const html = cardDetailHtml(reg, { cardId: 'warcry' }, { definition, rules: { combatExpansionVersion: 2 } });
+  for (const id of ['burn', 'strength', 'concealed', 'stoneskin']) assert.match(html, new RegExp(`data-status-rule="${id}"`));
+  assert.match(html, /Burn:<\/strong> Loses 1 stack/);
+  assert.match(html, /Strength:<\/strong> No timed expiry.*Applications add stacks/);
+  assert.match(html, /Concealed:<\/strong> Expires after 2 owner turns.*Keeps the higher stack count.*Reapplying resets/);
+  assert.match(html, /Stoneskin:<\/strong> Expires after 2 owner turns.*Remains at 1 stack/);
+  assert.doesNotMatch(html, /after 99 owner turns/, 'effect duration is not an engine-supported override');
+  const ordinary = renderCard(reg, { cardId: 'warcry' }, { definition, inspection: false, level: 'glance' });
+  assert.doesNotMatch(markup.get(ordinary), /inspection-status-rules|data-status-rule/);
+}));
+
+test('inspection follows only reachable Power status hooks and respects actual foundation context', () => {
+  const html = cardDetailHtml(reg, { cardId: 'rallyingStandard' });
+  assert.match(html, /data-status-rule="strength"/);
+  assert.equal((html.match(/data-status-rule="strength"/g) || []).length, 1);
+  assert.doesNotMatch(html, /data-status-rule="stoneskin"/);
+  const original = reg.statuses.get('strength');
+  const custom = { ...reg, statuses: { ...reg.statuses, get: id => id === 'strength' ? { ...original, stacking: { mode: 'add', cap: 7, duration: 3 } } : reg.statuses.get(id) } };
+  const standard = cardDetailHtml(custom, { cardId: 'warcry' }, { rules: { combatExpansionVersion: 2 } });
+  const foundation = cardDetailHtml(custom, { cardId: 'warcry' }, { rules: { foundation: { rules: {} } } });
+  assert.doesNotMatch(standard, /Capped at 7/);
+  assert.match(foundation, /Capped at 7/);
+  assert.match(foundation, /Applications expire after 3 turns/);
+});

@@ -38,6 +38,7 @@ import { ashenBlightCardLabel } from './ashenBlight.js';
 import { ACTION_SIGILS, SCHOOL_SIGILS, cardSigilIdentity } from '../../content/combatSigils.js';
 import { compactCardRules, sigilExplanationHtml } from './combatSigilView.js';
 import { cardFaceLines, cardFaceSummary } from '../../model/cardFaceText.js';
+import { statusRulePresentation } from '../models/StatusRulePresentation.js';
 import { spellDefenseSplit } from '../../model/spellDefense.js';
 
 // WCI3: rarity at the start of the band, the owned count at the end, each only
@@ -380,7 +381,8 @@ export function renderCard(registries, ref, opts = {}) {
     open: opener => {
       const details = document.createElement('div');
       const liveCosts = model.hasPreview ? model.costs : null;
-      details.innerHTML = opts.tooltipFn ? sigilExplanationHtml(model.sigils) + opts.tooltipFn() : cardTooltip(registries, def, model.tokens, liveCosts, model.damageSequences);
+      details.innerHTML = opts.tooltipFn ? sigilExplanationHtml(model.sigils) + opts.tooltipFn() : cardTooltip(registries, def, model.tokens, liveCosts, model.damageSequences, opts);
+      if (opts.tooltipFn) details.innerHTML += cardStatusRulesHtml(registries, def, opts);
       decorateKeywords(details);
       // AUTHORED FLAVOUR REACHES THE PLAYER, at the level that promises
       // everything. The note above the regions used to say a playing card
@@ -637,15 +639,45 @@ function glossaryEntry(registries, kind, id) {
   return { name: display.name, tooltip: statusTooltipText(display) };
 }
 
+// Only follow explicit status edges reachable from this card, including a
+// Power carrier's triggered buffs. Never infer rules from the ordinary face.
+function cardStatusRulesHtml(registries, def, opts) {
+  const source = registries.statuses;
+  if (!source?.get) return '';
+  const visited = new Set(), rows = [];
+  const foundation = Boolean(opts.rules?.foundation);
+  const visitEffects = effects => {
+    for (const effect of effects || []) {
+      if (['applyStatus', 'buildup', 'removeStatus'].includes(effect.op) && typeof effect.status === 'string') visitStatus(effect.status);
+      for (const key of ['effects', 'do', 'onEnter']) if (Array.isArray(effect[key])) visitEffects(effect[key]);
+      for (const hook of effect.hooks || []) visitEffects(hook.do);
+    }
+  };
+  const visitStatus = id => {
+    if (visited.has(id) || source.has?.(id) === false) return;
+    visited.add(id);
+    const status = source.get(id);
+    if (!status) return;
+    const words = registries.frameworkTerms?.withStatusWords?.(status) || status;
+    const { durationText, stackingText } = statusRulePresentation(status, { foundation });
+    const rules = [durationText, stackingText].filter(Boolean);
+    if (rules.length) rows.push(`<div class="combat-rule-hint" data-status-rule="${esc(id)}"><strong>${esc(words.name || id)}:</strong> ${rules.map(esc).join(' ')}</div>`);
+    visitEffects(status.onEnter);
+    for (const hook of status.hooks || []) visitEffects(hook.do);
+  };
+  visitEffects(def.effects);
+  return rows.length ? `<section class="inspection-status-rules" aria-label="Status duration and stacking">${rows.join('')}</section>` : '';
+}
+
 /** W1h: the read-only reading a pile viewer shows beside its collection —
  *  the same body the card's own inspect door and tooltip use. */
 export function cardDetailHtml(registries, ref, opts = {}) {
   const def = playingCardDefinition(registries, ref, opts);
   const model = playingCardModel(registries, ref, { ...opts, definition: def });
-  return cardTooltip(registries, def, model.tokens, model.hasPreview ? model.costs : null, model.damageSequences);
+  return cardTooltip(registries, def, model.tokens, model.hasPreview ? model.costs : null, model.damageSequences, opts);
 }
 
-function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences = []) {
+function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences = [], opts = {}) {
   // Cost numbers come from the framework profile (or the preview's already
   // resolved live costs, when the card is in play) and the resource words from
   // TermRegistry — same rendered string, one authority for both.
@@ -682,6 +714,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
       html += '<div class="combat-rule-hint">Reaction Sweep resolves before the incoming attack. Killing, staggering or controlling its attacker can interrupt it; otherwise the attack resumes.</div>';
   }
   html += `<div class="ctext">${fillTemplate(def, tokens, null, damageSequences)}</div>`;
+  html += cardStatusRulesHtml(registries, def, opts);
   // Nested keyword + status tooltips (SPEC §7.3).
   const lines = [];
   for (const kw of def.keywords || []) {
