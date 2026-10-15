@@ -99,7 +99,7 @@
   background-image:linear-gradient(90deg, #0d0b0838, #0d0b0870), url('../assets/player-polish/scenes/spire-vista-desktop.webp');
   background-size:cover; background-position:center; background-repeat:no-repeat;
 }
-.title-screen .tower-hall { display:none; }
+.title-screen .tower-hall { display:block; }
 .title-screen::before { background:linear-gradient(180deg, #0d0b0820, #0d0b0870); }
 .title-screen .as-titlemenu {
   margin-inline:6% auto; width:46%; max-width:64rem;
