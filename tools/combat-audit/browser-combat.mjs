@@ -612,7 +612,7 @@ async function runCase(page, device, classId, row) {
     if (row.pressureCase) {
       entry.hud = await page.locator('.combatant.player .combat-health-evade').getAttribute('aria-label');
       entry.expectedEvasion = await page.evaluate(async source => (await import(source + 'engine/stanceHit.js')).effectiveEvasion(window.__combat, window.__combat.player), source);
-      assert.equal(entry.hud, `Evasion ${entry.expectedEvasion}`, 'settled paced HUD matches canonical actor Evasion');
+      assert.equal(entry.hud, `Evade ${entry.expectedEvasion}`, 'settled paced HUD matches canonical actor Evasion');
       await page.screenshot({ path: resolve(out, `${device}-${row.category}.png`) });
     }
     entry.audioNodes = page.__auditAudioNodes.slice(audioStart);
