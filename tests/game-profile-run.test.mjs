@@ -137,3 +137,13 @@ test('core Smith is a free single-tier service without stones, with paid overrid
  const next=createRunState({seed:1,classId:'reaver',registries:r});next.mapGraph=buildActMap(r,createRng(1),next.seatOrder[0],1);next.mapNodeId='n2_0';beginGameProfileRest(next);
  const before=JSON.stringify(next);assert.throws(()=>commitGameProfileRest(r,next,'smith',{itemRef:item.itemRef}),/Insufficient/);assert.equal(JSON.stringify(next),before);
 });
+
+
+test('configured class cards cannot swap or unequip the fixed run class',async()=>{
+ const run=fresh(),before=JSON.stringify(run);
+ const {equipClassCard}=await import('../src/model/classLibrary.js');const {swapRunClass}=await import('../src/model/classSwap.js');
+ assert.throws(()=>equipClassCard(reg,run,null),/fixed for the run/);
+ assert.throws(()=>equipClassCard(reg,run,'starseer'),/fixed for the run/);
+ assert.throws(()=>swapRunClass(reg,run,'herald'),/fixed for the run/);
+ assert.equal(JSON.stringify(run),before);
+});
