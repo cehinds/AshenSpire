@@ -160,6 +160,7 @@ const report = previousReport || { url, source, sourceRoot, build, artifact, htm
     'Source-engine oracle parity proves compiled input and effect resolution match canonical source. Independent intended-effect/conditional trigger contracts are reported by the engine audit.',
     'Relic/status registries are inventoried here; exhaustive relic/status activation belongs to the engine audit.',
   ] };
+if (mode === 'resume-stances') report.fixture += ' Resume stance fixtures set fallbackPoise=7, canonical prepared Counter or delayed Held Blade state, and retained Evade outside Evade stance. RNG outcomes use searched saved counters. Counter preparation is setup through the canonical source helper before the measured input; the triggering paid Attack is compiled UI input. HUD assertion covers settled canonical Evasion, not every intermediate playback beat.';
 if (resumePath) {
   report.runs ||= [{ pace: report.pace, started: report.started }];
   report.runs.push({ pace, started: new Date().toISOString(), resumedFrom: resumePath });
@@ -265,6 +266,56 @@ async function fixture(page, row) {
     else if (stance === c.player.stanceId) c.player.stanceId = null;
     if (row.activeControl) c.player.statuses[row.activeControl] = { stacks: 1 };
     if (row.victory) { c.enemies = c.enemies.slice(0, 1); c.enemies[0].hp = 1; }
+    if (row.pressureCase) {
+      // Isolated setup before measured input; live compiled listeners/functions
+      // remain untouched. Counter preparation uses its canonical source helper.
+      const enemy = c.enemies[0];
+      c.stanceRules = { ...c.stanceRules, fallbackPoise: 7 };
+      if (row.pressureCase === 'counter') {
+        const { primeEnemyCounter } = await import(source + 'engine/combatCardTactics.js');
+        const { executeAction } = await import(source + 'engine/actions.js');
+        delete enemy.combatCounterReturnedCycle;
+        primeEnemyCounter(c, enemy, c.registries.enemies.get('gildedKnight').moves.parry, 'parry');
+        for (let n = 0; c.queue.length; n++) {
+          if (n > 100) throw new Error('Canonical Counter fixture did not settle');
+          executeAction(c, c.queue.shift());
+        }
+        enemy.block = 1000; enemy.wardBlock = 0; enemy.evasion = 0;
+        c.player.block = c.player.wardBlock = 0; c.player.evasion = 0;
+        c.player.statuses = {};
+        c.player.ratings = { ...c.player.ratings, poise: 1000 };
+        c.player.poiseMeter = { value: 0, max: 1000 };
+        c.player.persistentPoise = { value: 0, max: 1000 };
+      } else if (row.pressureCase === 'enemy-smash') {
+        enemy.pendingMove = { moveId: 'heldBlade', resolveOnTurn: 1 };
+        enemy.plannedMoves = []; enemy.planDue = false;
+        c.player.block = c.player.wardBlock = 0; c.player.evasion = 0; c.player.statuses = {};
+        c.player.ratings = { ...c.player.ratings, poise: 1000 };
+        c.player.poiseMeter = { value: 0, max: 1000 };
+        c.player.persistentPoise = { value: 0, max: 1000 };
+      } else {
+        enemy.block = enemy.wardBlock = 0; enemy.evasion = 0;
+        enemy.statuses = { evade: { stacks: 1 } };
+        enemy.combatStance = { camp: 'physical', maneuver: 'sweep', range: 'melee' };
+        enemy.ratings = { ...enemy.ratings, poise: 1000 };
+        enemy.poiseMeter = { value: 0, max: 1000 };
+        enemy.persistentPoise = { value: 0, max: 1000 };
+      }
+      // Search serialized RNG counters instead of replacing RNG behavior.
+      const { createRng } = await import(source + 'engine/rng.js');
+      const counters = c.rng.getCounters(), search = createRng(c.rng.seed, counters);
+      let streak = 0, start;
+      for (let n = 0; n < 100000; n++) {
+        const before = search.getCounters().combatAvoidance;
+        if (search.int('combatAvoidance', 1, 20) === row.die) {
+          if (!streak) start = before;
+          if (++streak === (row.pressureCase === 'counter' ? 2 : 1)) {
+            c.rng.restoreCounters({ ...counters, combatAvoidance: start }); break;
+          }
+        } else streak = 0;
+        if (n === 99999) throw new Error('Seeded pressure outcome unavailable');
+      }
+    }
     const def = resolveCombatCard(c, inst, row.upcastTier ? { upcastTier: row.upcastTier } : {});
     let preview = previewCard(c, inst.instanceId, undefined, row.upcastTier);
     if (preview.costIsX && !row.deniedCost) { c.player.energy = 3; preview = previewCard(c, inst.instanceId, undefined, row.upcastTier); }
@@ -299,7 +350,7 @@ async function fixture(page, row) {
     if (row.sampleAnimation) requestAnimationFrame(sample);
     return { ...window.__auditStart, refused, preview: { needsTarget: preview.needsTarget, cost: preview.cost, manaCost: preview.manaCost, staminaCost: preview.staminaCost }, choice, plan,
       effects: def.effects, tags: def.cardTags || def.tags, attack: def.attack, upcastTiers: def.upcast?.unlockedTiers || [], knowledge: !!c.enemyKnowledge, rng: c.rng.getCounters(),
-      instance: inst, loadout: c.loadout };
+      instance: inst, loadout: c.loadout, pressure: row.pressureCase ? { player: structuredClone(c.player), enemy: structuredClone(c.enemies[0]) } : null };
   }, { source, row });
 }
 
@@ -450,6 +501,7 @@ async function endTurnAndPlayNext(page, device, row) {
   await page.waitForSelector('.end-turn:not([disabled])', { timeout: 30000 });
   assert.equal(await page.evaluate(() => window.__combat.turn), 2, 'enemy turn completes into player turn two');
   assert.equal(await page.locator('.hand .card.selected,.hand .card.armed').count(), 0, 'end turn clears targeting');
+  const beforeNext = await page.evaluate(() => ({ player: structuredClone(window.__combat.player), enemies: structuredClone(window.__combat.enemies), eventCount: window.__combat.eventLog.length }));
   const recovered = [];
   for (let i = 0; i < 9; i++) {
     const recovery = await page.evaluate(async source => {
@@ -484,7 +536,7 @@ async function endTurnAndPlayNext(page, device, row) {
   if (next.choice) await tap(page, page.locator(`.card-choice [data-choice="${next.choice}"]`), device);
   await page.waitForFunction(id => window.__combat.eventLog.some(e => e.type === 'cardPlayed' && e.cardInstanceId === id), next.instanceId, { timeout: 10000 });
   choices.push(...await finishPending(page, device));
-  return { discardIds, choices, recovered, next };
+  return { discardIds, choices, recovered, next, beforeNext };
 }
 
 async function runCase(page, device, classId, row) {
@@ -525,6 +577,22 @@ async function runCase(page, device, classId, row) {
         && e.targetId === 'e1' && e.cardInstanceId === row.instanceId && e.amount > 0), 'this paid spell actually damages the selected canonical enemy');
       assert.ok(entry.after.actual.enemies.find(enemy => enemy.id === 'e1').hp < entry.before.hp[0], 'selected enemy health decreased');
     }
+    if (row.pressureCase === 'counter') {
+      assert.equal(entry.before.pressure.enemy.combatCounter.payload.poise, 7, 'configured fallback primes canonical Counter');
+      assert.ok(entry.after.events.some(event => event.type === 'combatCounterTriggered'), 'real paid Attack triggers prepared canonical Counter');
+      assert.ok(entry.after.actual.player.poiseMeter.value > entry.before.pressure.player.poiseMeter.value, 'landed return fills player Poise');
+    } else if (row.pressureCase === 'enemy-smash') {
+      assert.ok(entry.after.events.some(event => event.type === 'attackHit' && event.sourceId === 'e1'), 'canonical delayed Smash actually lands');
+      assert.ok(entry.enemyTurn.beforeNext.player.hp < entry.before.pressure.player.hp, 'canonical enemy Smash damages player HP');
+      assert.ok(entry.enemyTurn.beforeNext.player.poiseMeter.value > entry.before.pressure.player.poiseMeter.value, 'canonical enemy Smash fills player Poise');
+    } else if (row.pressureCase === 'retained-evade') {
+      const hit = entry.after.events.find(event => ['attackHit', 'attackMissed'].includes(event.type) && event.targetId === 'e1');
+      assert.ok(hit?.evadeAttempted, 'retained Evade is genuinely attempted outside Evade stance');
+      assert.equal(hit.hit, row.die === 20, 'seeded actual hit/miss matches fixture');
+      const enemy = entry.after.actual.enemies[0], before = entry.before.pressure.enemy;
+      assert.equal(enemy.hp < before.hp, row.die === 20, 'Smash HP damage shares hit decision');
+      assert.equal(enemy.poiseMeter.value > before.poiseMeter.value, row.die === 20, 'Smash pressure shares hit decision');
+    }
     if (row.category?.endsWith('counter-return')) assert.ok(entry.after.events.some(e => e.type === 'combatCounterTriggered' && e.cardInstanceId === row.instanceId), 'the real incoming action triggers this prepared Counter return');
     if (row.successfulEvade) {
       assert.ok(entry.after.events.some(e => e.type === 'attackMissed' && e.targetId === entry.after.actual.player.id && e.evadeAttempted && e.hit === false), 'the seeded incoming attack genuinely misses an active evade');
@@ -540,6 +608,12 @@ async function runCase(page, device, classId, row) {
     if (row.profileId || row.curated) {
       assert.equal(entry.after.stage?.animationSetId, `class-cards-${classId}`, 'equipped profile retains default class artwork');
       assert.deepEqual(entry.after.stage.alternateWeaponPoses, [], 'alternate weapon animation families stay disabled');
+    }
+    if (row.pressureCase) {
+      entry.hud = await page.locator('.combatant.player .combat-health-evade').getAttribute('aria-label');
+      entry.expectedEvasion = await page.evaluate(async source => (await import(source + 'engine/stanceHit.js')).effectiveEvasion(window.__combat, window.__combat.player), source);
+      assert.equal(entry.hud, `Evasion ${entry.expectedEvasion}`, 'settled paced HUD matches canonical actor Evasion');
+      await page.screenshot({ path: resolve(out, `${device}-${row.category}.png`) });
     }
     entry.audioNodes = page.__auditAudioNodes.slice(audioStart);
     for (const failure of report.networkFailures.slice(networkStart)) {
@@ -641,6 +715,19 @@ try {
           if (variant === 'base' && (!variantFilter || variantFilter === 'all')) for (const upcastTier of baseEntry.before?.upcastTiers || []) {
             const upcast = { ...row, variant: `upcast-${upcastTier}`, upcastTier, sampleAnimation: false };
             if (!completedCase(device, classId, upcast) && !await runCase(page, device, classId, upcast)) { await page.close(); page = await boot(context, classId); }
+          }
+        }
+      }
+      if (mode === 'resume-stances') {
+        const rows = [
+          { cardId: 'strike', enemyIds: ['gildedKnight'], pressureCase: 'counter', die: 20, category: 'configured-enemy-counter-pressure' },
+          { cardId: 'strike', enemyIds: ['fellWarden'], pressureCase: 'enemy-smash', die: 20, endTurn: true, category: 'configured-enemy-smash-pressure' },
+          ...[1, 20].map(die => ({ cardId: 'bashingBlow', enemyIds: ['wanderingSoldier'], pressureCase: 'retained-evade', die,
+            category: `retained-evade-smash-${die === 20 ? 'hit' : 'miss'}` })),
+        ];
+        for (const row of rows) {
+          if (!await runCase(page, device, classId, { ...row, variant: 'base', figureTarget: true, sampleAnimation: false })) {
+            await page.close(); page = await boot(context, classId);
           }
         }
       }
