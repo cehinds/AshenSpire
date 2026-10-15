@@ -1,24 +1,25 @@
 # Character creation continuation handoff
 
-Updated 2026-10-15. Current integrated code: `b5ac91a039e38e7ed2b8bc01770b14ed29b94a9f`.
+Updated 2026-10-14 (America/Anchorage). Current integrated code: `b5ac91a039e38e7ed2b8bc01770b14ed29b94a9f`.
 Captured production source: `f6801043c9d9762550a7a3ff28cba7fc346fee81`; both have
 source tree `9124302fb4c26347d21269b9a69db273d99349d3`.
 Current artifact: **0.7.1.1520 / `652574f013`**. Never identify a preview by ordinal
 alone: local previews share 1520. Older `1ad05d6483` and `7b7e9a674f` captures are historical.
 
-## Stop and continuation status
+## Current continuation status
 
-The user explicitly stopped work on 2026-10-15 and requested a handoff plus merge to origin feature.
-**Do not resume implementation or testing without a new request.**
+The user authorized continuation on 2026-10-14 (America/Anchorage). The previous stop request is
+historical and no longer blocks completion of hosting verification and evidence.
 Use [the continuation prompt](CHARACTER-CREATION-CONTINUATION-PROMPT.md).
 
-- All current game source is merged into origin `Feature/updateCharacterCreation` at `b5ac91a039e38e7ed2b8bc01770b14ed29b94a9f` via #2006.
+- All current game source is merged into origin `Feature/updateCharacterCreation` at `b5ac91a039e38e7ed2b8bc01770b14ed29b94a9f` via #2006. Current documentation-only descendant: `13a117814`; this does not relabel the built source.
 - Final local production artifact: **0.7.1.1520 / `652574f013`**, SHA-256 `20c5fd7db59de53faa7e0debe9a243d875d59ecbe9ecf32718e5174df7b73eea`, 78,151,638 bytes.
-- Final capture directory contains 36 PNG screenshots and a manifest with zero recorded errors. Final wireframes and visual review are pending.
-- Tracked README/gallery still show the older `1ad05d6483` evidence and download link. They have **not** been refreshed to the final build.
-- GitHub feature run `38659839311` was queued at stop. Public Pages publication/HTTP verification is pending; do not call the URL verified.
-- The public-site browser probe failed with `ERR_TUNNEL_CONNECTION_FAILED` before HTTP. This is a local proxy limitation, not evidence of a Pages 404.
-- Persistent public HTTP checks merged into dev via #2004. They must pass after publication; no manual workflow rerun was requested.
+- Feature build [38659839311](https://github.com/cehinds/AshenSpire/actions/runs/38659839311) succeeded; backup artifact [11938781737](https://github.com/cehinds/AshenSpire/actions/runs/38659839311/artifacts/11938781737).
+- Public Pages delivery is verified: [run 38676827571, deploy job 116243897791](https://github.com/cehinds/AshenSpire/actions/runs/38676827571/job/116243897791), step **Verify public feature preview delivery**, succeeded. Its log reports four public HTTP targets passed, including `Feature/updateCharacterCreation` at source `b5ac91a039e38e7ed2b8bc01770b14ed29b94a9f`.
+- Verified Play URL: https://cehinds.github.io/AshenSpire/branches/Feature/updateCharacterCreation/latest/ . This is runner HTTP verification; the earlier local browser proxy failure did not establish a site failure or interactive browser success.
+- Final evidence is refreshed: 36 screenshots, 36 wireframe PNGs and 36 structural SVGs, all at digest `652574f013`. Visual review found no header overlap or document overflow; Review has zero vertical scroll range at all four sizes. README now leads with the verified Play link and links the full gallery. Independent Sol review approved hashes, dimensions, provenance, links and unchanged release README content.
+- Local sandbox mirror loaded the exact build and advanced from the startup gate to the title menu with Enter within six seconds. Pointer automation timed out, and the subsequent slot/character flow was not completed in that wrapper probe; do not claim a full click-flow pass. Direct creation-screen checks and the final capture matrix remain the separate UI evidence.
+- Persistent public HTTP checks merged into dev via #2004 and have now passed after publication. No gameplay/CSS implementation changes are needed for this evidence completion.
 
 ## Shared header and compact rows
 
@@ -32,7 +33,8 @@ Use [the continuation prompt](CHARACTER-CREATION-CONTINUATION-PROMPT.md).
 - [x] First-row spell information control stays inside card art instead of covering navigation.
 - [x] 36 focused tests passed for the shared-header pass; 11 screen tests passed for the Review follow-up. Sol source review approved both. Live counters, disclosures and 44px inspector target were verified.
 - [x] Review loadout and edit choices fold closed; phone Review has zero vertical scroll range, with all original cards, eleven deck inspectors and seven edit controls retained.
-- [ ] Public Pages deployment and final four-size capture publication verified (update this after deployment).
+- [x] Public Pages deployment and source-specific public HTTP delivery verified (run `38676827571`).
+- [x] Final four-size screenshots and wireframes refreshed; visual and provenance review passed. Evidence-only publication is integrated with this document.
 
 Code PRs: [#2001](https://github.com/cehinds/AshenSpire/pull/2001) worker to AddSubClasses,
 then [#2002](https://github.com/cehinds/AshenSpire/pull/2002) to updateCharacterCreation.
@@ -44,7 +46,7 @@ The shared Pages publisher merged into dev through [#1997](https://github.com/ce
 The persistent delivery guide and README cleanup helper merged through [#2000](https://github.com/cehinds/AshenSpire/pull/2000).
 Feature branches no longer require an open PR for Pages hosting. The primary link should be:
 `https://cehinds.github.io/AshenSpire/branches/Feature/updateCharacterCreation/latest/`.
-Verify it opens the intended build before presenting it as ready. Artifact downloads are backups.
+The successful public HTTP receipt above verifies delivery of the intended source. Artifact downloads are backups.
 Only exact source builds or proven documentation-only descendants qualify; changed code without a fresh
 successful build is omitted. The trusted dev publisher keeps the existing channels and serves feature HTML
 as text inside an opaque-origin sandbox. No persistent progress is promised in that preview.

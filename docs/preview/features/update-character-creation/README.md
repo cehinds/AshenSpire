@@ -1,10 +1,10 @@
 # Character creation — feature preview
 
-[Download the test build](https://github.com/cehinds/AshenSpire/actions/runs/38654072847/artifacts/11935887981) · [Build run](https://github.com/cehinds/AshenSpire/actions/runs/38654072847)
+[Play the test build](https://cehinds.github.io/AshenSpire/branches/Feature/updateCharacterCreation/latest/) · [Build run](https://github.com/cehinds/AshenSpire/actions/runs/38659839311)
 
-Captured build **0.7.1.1520 / 1ad05d6483**, source `eb5937f97c9fe51b2bf12cf949adff689c29514b`. 36 actual screenshots and 36 matching structural wireframes.
+Captured build **0.7.1.1520 / 652574f013**, source `f6801043c9d9762550a7a3ff28cba7fc346fee81`. 36 actual screenshots and 36 matching structural wireframes.
 
-Compact spacing and readable controls; locked feats are disabled with visible requirements. Spell offers are filtered by eligibility, and activation rejects stale offers. Review keeps its eleven-card deck behind an inspectable disclosure.
+Shared section header, one-line related choices, compact mobile class rows and folded Review details; locked feats are disabled with visible requirements. Spell offers are filtered by eligibility, and activation rejects stale offers. Review keeps its eleven-card deck behind an inspectable disclosure.
 
 <a id="mobile"></a>
 
