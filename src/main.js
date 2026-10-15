@@ -1,3 +1,4 @@
+import { t } from './ui/strings.js';
 import { gameProfileRewardOffers, claimGameProfileReward, gameProfileShopStock, purchaseGameProfileShopOffer } from './model/gameProfileRewards.js';
 import { mountGameProfileOffers } from './ui/components/gameProfileOffers.js';
 import { profileStarterCount } from './ui/models/GameProfileTitleModel.js';
@@ -126,7 +127,7 @@ import { mountRewards } from './ui/screens/reward.js';
 import { mountRest } from './ui/screens/rest.js';
 import { mountDeckEditor } from './ui/screens/deckEditor.js';
 import { deckEditorDoors } from './ui/models/DeckEditorModel.js';
-import { mountShop } from './ui/screens/shop.js';
+import { mountShop, mountConfiguredShop } from './ui/screens/shop.js';
 import { mountEvent } from './ui/screens/event.js';
 import { mountGameOver } from './ui/screens/gameover.js';
 import { victoryBeat } from './ui/components/victoryBeat.js';
@@ -2134,28 +2135,18 @@ function showCompendium() {
 // succeeds. Any in-progress run is persisted first, so nothing is lost.
 function quitGame() {
   if (run) persist();
+  closeOverlay();
+  dropLanLink();
   audio.stopMusic();
+  audio.setVolumes({ muteAudio: true });
+  sfx.sink = null;
   run = null;
-  app.innerHTML = `
-    <div class="screen farewell">
-      <h1 class="title-big">THE EMBER GUTTERS</h1>
-      <p class="subtitle" style="text-align:center">Your climb is saved. You may close this window.</p>
-      <button class="subtle" id="farewell-back" data-back>Return to title</button>
-    </div>`;
-  const closeTimer = setTimeout(() => {
-    try {
-      window.close();
-    } catch (e) {
-      /* browser blocked it — the farewell screen stands in */
-    }
-  }, 120);
-  const back = app.querySelector('#farewell-back');
-  if (back) {
-    back.addEventListener('click', () => {
-      clearTimeout(closeTimer); // changed their mind before the window closed
-      showCollapsedTitle();
-    });
-  }
+  app.replaceChildren();
+  const screen = document.createElement('div'); screen.className = 'screen farewell';
+  const heading = document.createElement('h1'); heading.className = 'title-big'; heading.textContent = t('quit.title');
+  const message = document.createElement('p'); message.className = 'subtitle'; message.textContent = t('quit.message');
+  screen.append(heading, message); app.append(screen);
+  try { window.close(); } catch { /* Browser tabs may only be closed by their opener. */ }
 }
 
 // The in-run overlay keeps only Settings and Controls. Armoury owns inventory,
@@ -3836,9 +3827,10 @@ function showShop() {
     const shopId = run.gameProfileOpenShop || `${run.actNumber}:${run.mapNodeId}`;
     run.gameProfileOpenShop = shopId;
     const offer = gameProfileShopStock(registries, run, rng, { shopId }); persist();
-    return mountGameProfileOffers(app, { registries, run, offer, title: 'Shop',
+    audio.music('shop');
+    return mountConfiguredShop(app, { registries, run, offer, meta: saves.loadMeta(), hud: roomHud(showShop),
       onTake: index => { purchaseGameProfileShopOffer(registries, run, shopId, index); persist(); showShop(); },
-      onContinue: () => { delete run.gameProfileOpenShop; persist(); showMap(); } });
+      onLeave: () => { delete run.gameProfileOpenShop; persist(); showMap(); } });
   }
   if (run.journey?.activeService) {
     const state = run.journey.serviceStates[run.journey.activeService.pointId];

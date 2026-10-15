@@ -37,11 +37,11 @@ test('terminal wins and defeats each unlock one class, durable dedupe survives h
  assert.equal(gameProfileClassAvailable(profile,{},'herald'),false);
 });
 
-test('seeded route has seven preboss nodes, exactly two visible rests, and replay stability',()=>{
+test('seeded route has seven branching preboss depths, two mandatory rests, and replay stability',()=>{
  const run=fresh();let prior;
  for(let tier=1;tier<=3;tier++){
   const map=buildActMap(reg,createRng(100+tier),run.seatOrder[tier-1],tier);
-  assert.equal(Object.keys(map.nodes).length,8);assert.equal(Object.values(map.nodes).filter(n=>n.type==='shrine').length,2);
+  assert.ok(Object.keys(map.nodes).length > 8);assert.equal(map.floors,8);assert.equal(map.columns,3);assert.equal(Object.values(map.nodes).filter(n=>n.type==='shrine').length,2);
   assert.equal(map.nodes.boss.floor,8);assert.notEqual(map.nodes.boss.encounterId,prior);prior=map.nodes.boss.encounterId;
   assert.deepEqual(map,buildActMap(reg,createRng(100+tier),run.seatOrder[tier-1],tier));
   for(const n of Object.values(map.nodes))if(!['rest','elite','boss'].includes(n.actualType))assert.equal(n.type,'event');
