@@ -9,5 +9,15 @@
     "kind": "legacy-adapter",
     "portable": false
   },
-  "guide": "guide.md"
+  "guide": "guide.md",
+  "configuredAdapter": true,
+  "instances": [
+    "hp",
+    "sp",
+    "mp",
+    "actions"
+  ],
+  "unsupportedConfiguredInstances": [
+    "actions"
+  ]
 }

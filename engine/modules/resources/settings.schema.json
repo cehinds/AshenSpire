@@ -16,12 +16,14 @@
       }
     },
     "costPolicy": {
-      "type": "string",
-      "minLength": 1
+      "enum": [
+        "authoredVariants"
+      ]
     },
     "recovery": {
-      "type": "string",
-      "minLength": 1
+      "enum": [
+        "turnStart"
+      ]
     }
   },
   "required": [

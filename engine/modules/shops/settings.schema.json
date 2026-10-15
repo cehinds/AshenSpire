@@ -11,11 +11,17 @@
       "type": "integer",
       "minimum": 0,
       "maximum": 1000000
+    },
+    "price": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000
     }
   },
   "required": [
     "mode",
-    "options"
+    "options",
+    "price"
   ],
   "additionalProperties": false
 }

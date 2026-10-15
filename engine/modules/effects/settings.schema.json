@@ -8,14 +8,19 @@
       ]
     },
     "damageModel": {
-      "type": "string",
-      "minLength": 1
+      "enum": [
+        "unified"
+      ]
     },
     "elements": {
-      "type": "boolean"
+      "enum": [
+        false
+      ]
     },
     "spellRanks": {
-      "type": "boolean"
+      "enum": [
+        false
+      ]
     },
     "attackRatingWeight": {
       "type": "number",

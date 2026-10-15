@@ -83,5 +83,59 @@
       "version": "1.0.0",
       "path": "../../packs/core/pack.json"
     }
+  ],
+  "policyBindings": [
+    {
+      "content": "routes",
+      "module": "routes",
+      "settings": {
+        "acts": "acts",
+        "prebossNodes": "prebossNodes",
+        "restsPerAct": "restsPerAct",
+        "restFloors": "restFloors"
+      }
+    },
+    {
+      "content": "rests",
+      "module": "rest",
+      "settings": {
+        "servicesPerVisit": "servicesPerVisit",
+        "services": "services",
+        "allowEmptyStrategize": "allowEmptyStrategize",
+        "recovery": "recovery"
+      }
+    },
+    {
+      "content": "rewards",
+      "module": "rewards",
+      "settings": {
+        "offerCount": "offerCount",
+        "takeCount": "takeCount"
+      }
+    },
+    {
+      "content": "shops",
+      "module": "shops",
+      "settings": {
+        "offerCount": "options",
+        "price": "price"
+      }
+    },
+    {
+      "content": "stats",
+      "module": "cards",
+      "settings": {
+        "handBase": "handBase",
+        "handAttribute": "handAttribute"
+      }
+    },
+    {
+      "content": "stats",
+      "module": "stats",
+      "settings": {
+        "attributePointTotal": "attributePointTotal",
+        "secondaryPolicy": "secondaryPolicy"
+      }
+    }
   ]
 }

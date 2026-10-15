@@ -8,11 +8,14 @@
       ]
     },
     "roundShuffle": {
-      "type": "string",
-      "minLength": 1
+      "enum": [
+        "entireDeck"
+      ]
     },
     "retainHand": {
-      "type": "boolean"
+      "enum": [
+        false
+      ]
     },
     "handBase": {
       "type": "integer",
@@ -20,12 +23,14 @@
       "maximum": 1000000
     },
     "handAttribute": {
-      "type": "string",
-      "minLength": 1
+      "enum": [
+        "intelligence"
+      ]
     },
     "turnPolicy": {
-      "type": "string",
-      "minLength": 1
+      "enum": [
+        "multiCard"
+      ]
     },
     "freeCommandLimit": {
       "type": "integer",
@@ -36,8 +41,9 @@
       "type": "boolean"
     },
     "editorWhere": {
-      "type": "string",
-      "minLength": 1
+      "enum": [
+        "strategize"
+      ]
     },
     "faceMaxEffects": {
       "type": "integer",

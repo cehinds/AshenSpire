@@ -29,3 +29,8 @@ test('unresolved pack/class card references fail before a game can start',()=>{
  const {catalog,authors}=compileGameProfiles(),changed=JSON.parse(JSON.stringify(catalog));changed.packs['ashen.core-content@1.0.0'].content.classes[0].specialCardId='missing';
  assert.throws(()=>resolveGameAuthor(authors.core,changed),/unresolved card reference/);
 });
+
+test('pack policies supply bundle defaults rather than being shadowed by generic defaults',()=>{
+ const {catalog,authors}=compileGameProfiles(),changed=JSON.parse(JSON.stringify(catalog));changed.packs['ashen.core-content@1.0.0'].content.routes.acts=2;
+ const profile=resolveGameAuthor(authors.core,changed);assert.equal(profile.modules.routes.acts,2);assert.equal(profile.content.routes.acts,2);
+});

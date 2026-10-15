@@ -9,5 +9,16 @@
     "kind": "legacy-adapter",
     "portable": false
   },
-  "guide": "guide.md"
+  "guide": "guide.md",
+  "configuredAdapter": true,
+  "instances": [
+    "block",
+    "poise",
+    "ward",
+    "barrier"
+  ],
+  "unsupportedConfiguredInstances": [
+    "ward",
+    "barrier"
+  ]
 }
