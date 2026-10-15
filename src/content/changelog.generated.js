@@ -4,13 +4,23 @@
 export const GENERATED_CHANGELOG = Object.freeze([
   {
     "id": "pr-1978",
-    "date": "2026-10-14",
-    "group": "2026-10-14",
+    "date": "2026-10-15",
+    "group": "2026-10-15",
     "summary": "Inspect or play from an enemy hold, with clearer combat targets and fades",
-    "detail": "Holding an enemy interaction opens inspection directly when no card is selected. With a card selected, Inspect, Play, Back and Exit let you read the enemy or deliberately play a legal card; inspection and closing preserve your selection, while short taps retain their existing action. The same hold works through pointer, keyboard and controller interaction. Screen fades cover idle and selected fighters while target selection, cards and the combat HUD remain above them. Transparent targets avoid Health and neighbouring controls without changing fighter artwork or size. Formation tiles that cannot move the player stay out of keyboard navigation; enabling movement restores usable tiles.",
-    "build": "0.7.1.1529",
+    "detail": "Holding an enemy interaction opens inspection directly when no card is selected. With a card selected, Inspect, Play, Back and Exit let you read the enemy or deliberately play a legal card; inspection and closing preserve your selection, while short taps retain their existing action. The same hold works through pointer, keyboard and controller interaction. Screen fades cover idle and selected fighters while target selection, cards and the combat HUD remain above them. When the perspective view places the player behind the hand, its independently packed transparent 44px target moves clear of its own Health strip and neighbouring controls without changing fighter artwork, Health position or selected fighter size. Formation tiles that cannot move the player stay out of keyboard navigation; enabling movement restores usable tiles.",
+    "build": "0.7.1.1531",
     "pullRequest": 1978,
     "url": "https://github.com/cehinds/AshenSpire/pull/1978"
+  },
+  {
+    "id": "pr-1995",
+    "date": "2026-10-14",
+    "group": "2026-10-14",
+    "summary": "Windows checks use the installed artwork converter",
+    "detail": "Development-process fix only, nothing in the game changes. Class Smash export tests now use the exact Python interpreter with pinned Pillow installed, so Windows cannot accidentally run the test with a different Python lacking the image library.",
+    "build": "0.7.1.1531",
+    "pullRequest": 1995,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1995"
   },
   {
     "id": "pr-1984",
