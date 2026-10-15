@@ -1,3 +1,4 @@
+import { gameModule } from '../../model/gameProfile.js';
 import { combatWeaponProfilesFor } from '../../model/combatWeaponPresentation.js';
 import { attackHitPreview, effectiveEvasion } from '../../engine/stanceHit.js';
 import { enemyActionPose } from '../../model/enemyActionPose.js';
@@ -1787,7 +1788,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (record?.renderKey === renderKey) continue;
       const leading = [];
       // WCO1: Inspect above the intent; the intent shows per the overlay config.
-      if (enemy.alive) leading.push(combatantInfo(def.name, opener => openCombatantDoor(combatantSubject('enemy', enemy), opener)), intentVisible('enemy') ? intentEl(enemy) : null);
+      if (enemy.alive) leading.push(combatantInfo(def.name, opener => openCombatantDoor(combatantSubject('enemy', enemy), opener)), (run.gameProfile?.foundation?.mode !== 'configured' || gameModule(run, 'intent')) && intentVisible('enemy') ? intentEl(enemy) : null);
       // Target-number badge for keyboard targeting (SPEC §7.3).
       if (enemy.alive && targeting) {
         const idx = living.indexOf(enemy);

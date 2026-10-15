@@ -11,7 +11,7 @@ export function mountGameProfileRest(app, { visit, smithCandidates, attributeIds
   const strategize = document.createElement('button'); strategize.textContent = 'Strategize · Edit deck';
   strategize.disabled = !!visit.service; strategize.onclick = () => invoke(onStrategize);
   const smithSelect = document.createElement('select'); smithSelect.setAttribute('aria-label', 'Equipment to upgrade');
-  for (const row of smithCandidates) smithSelect.append(new Option(row.name || row.itemRef, row.itemRef));
+  for (const row of smithCandidates) smithSelect.append(new Option(row.itemName || row.name || row.itemRef, row.itemRef));
   const smith = document.createElement('button'); smith.textContent = 'Smith · Upgrade equipment';
   smith.disabled = !!visit.service || !smithCandidates.length;
   smith.onclick = () => invoke(() => onCommit('smith', { itemRef: smithSelect.value }));

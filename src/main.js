@@ -254,7 +254,7 @@ function rebuildRegistries(configuration = {}, masteryRun = null, gameProfile = 
   } else {
     registries = createRegistries(configured);
   }
-  registries = registriesForClassMastery(registries, masteryRun);
+  if (!isConfiguredRun(gameProfile)) registries = registriesForClassMastery(registries, masteryRun);
   configureTooltipGlossary(registries);
   setClassGlyphs(registries.classes.all());
   return registries;
@@ -1450,7 +1450,7 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   activeSlot = slot;
   run = loaded;
   if (!isConfiguredRun(run)) refreshRunClassMastery(run, saves.loadMeta(), registries);
-  registries = registriesForClassMastery(registries, run);
+  if (!isConfiguredRun(run)) registries = registriesForClassMastery(registries, run);
   if (run.journey) syncWorldPosition();
   rng = createRng(run.seed, run.streamCounters);
   // A snapshot still carrying the retired ×20 Cinder key: the bundle above
@@ -3613,11 +3613,13 @@ let openVisit = null;
 
 function showRest(openPanel = null, locationId = null) {
   if (isConfiguredRun(run) && gameModule(run, 'rest')) {
+    const record = !run.journey && !run.legacyDungeon ? openRestRecord(run, { multiUse: false }) : null;
     const visit = beginGameProfileRest(run, `${run.actNumber}:${run.mapNodeId}`);
     persist();
     const leave = () => { markRestLeft(run); persist(); showMap(); };
     const commit = (service, payload) => {
       commitGameProfileRest(registries, run, service, payload);
+      if (record) recordRestConsumed(run, service);
       persist(); showRest();
     };
     const strategize = () => {
