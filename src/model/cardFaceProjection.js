@@ -25,14 +25,14 @@ const clauseCount = html => plain(html).split(/[.;]\s+(?=[A-Z(])|,\s+(?=(?:Draw|
 function authoredClauses(html) {
   const sentences = html.split(/(?<=[.!?])\s+(?=[A-Z(])/), out = [];
   for (const sentence of sentences) {
-    if (/^(?:\(|It |This |That |In expanded combat,)/.test(sentence) && out.length) out[out.length - 1] += ' ' + sentence;
+    if (/^(?:\(|It |This |That |In expanded combat,|Once per turn\b|Once per combat\b)/.test(sentence) && out.length) out[out.length - 1] += ' ' + sentence;
     else out.push(sentence);
   }
   return out.map(html => ({ kind: 'effect', html: shorten(html) }));
 }
 
 /** At most two whole qualified clauses; omitted facts remain in Information. */
-export function cardFaceProjection(def, { lines = null, authoredHtml = '', registries = null } = {}) {
+export function cardFaceProjection(def, { lines = null, authoredHtml = '', registries = null, effects = def.effects || [] } = {}) {
   let candidates = lines ? lines.map(line => ({ ...line,
     // Entry bonuses and the Defend restore are stance explanations, outside
     // the ordinary effect budget. Their complete reading stays in Information.
@@ -43,14 +43,29 @@ export function cardFaceProjection(def, { lines = null, authoredHtml = '', regis
   if (!candidates.length) candidates = authoredClauses(authoredHtml);
   const keywordOnly = line => /^(?:Exhaust|Retain|Ethereal|Innate|Unplayable)(?:, (?:Exhaust|Retain|Ethereal|Innate|Unplayable))*$/.test(plain(line.html));
   if (candidates.some(line => !keywordOnly(line))) candidates = candidates.filter(line => !keywordOnly(line));
-  // Probability is part of an application, not an optional extra line. A
-  // status candidate must never look guaranteed when its effect has a chance.
+  // Attach probability to its own status amount. A grouped row may mix a
+  // guaranteed application with a chance-based buildup; a row-wide suffix
+  // would falsely make both uncertain. Ambiguous repeated grants stay in
+  // Information rather than borrowing another grant's probability.
   if (lines) candidates = candidates.map(line => {
-    const chances = (def.effects || []).filter(effect => effect.op === 'buildup' && effect.chance !== undefined && effect.chance < 100)
-      .filter(effect => plain(line.html).includes(registries?.statuses?.get?.(effect.status)?.name || effect.status))
-      .map(effect => `${effect.chance}% chance`);
-    return { ...line, html: shorten(line.html) + (chances.length ? ` (${esc([...new Set(chances)].join(', '))})` : '') };
-  });
+    let html = shorten(line.html);
+    const chanceIds = new Set(effects.filter(effect => ['buildup', 'applyStatus'].includes(effect.op)
+      && effect.chance !== undefined && effect.chance < 100).map(effect => effect.status));
+    for (const id of chanceIds) {
+      const name = esc(registries?.statuses?.get?.(id)?.name || id);
+      if (!html.includes(name)) continue;
+      const sources = effects.filter(effect => ['buildup', 'applyStatus'].includes(effect.op) && effect.status === id);
+      const chances = new Set(sources.map(effect => effect.chance ?? 100));
+      if (chances.size !== 1) return null;
+      const chance = [...chances][0];
+      const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const amount = new RegExp(`${escapedName}\\s+(?:<span\\b[^>]*>)*\\d+(?:<\\/span>)*(?=[\\s,.(]|$)`, 'g');
+      if (!amount.test(html)) return null;
+      amount.lastIndex = 0;
+      html = html.replace(amount, match => `${match} (${esc(chance)}% chance)`);
+    }
+    return { ...line, html };
+  }).filter(Boolean);
   // A payment cannot disappear while its payoff remains. Include authored
   // Ashen Blight payments too: those costs are intentionally outside effects.
   const authored = authoredClauses(authoredHtml);

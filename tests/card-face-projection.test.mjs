@@ -13,7 +13,8 @@ const defOf = (cardId, extra = {}) => playingCardDefinition(reg, { cardId, ...ex
 const project = (def, preview = null) => {
   const tokens = { ...staticCardTokens(def), ...preview?.tokens };
   const authoredHtml = def.textTemplate.replace(/\{([\w.]+)\}/g, (match, key) => tokens[key] ?? match);
-  return cardFaceProjection(def, { lines: cardFaceLines(def, preview, reg), authoredHtml, registries: reg });
+  return cardFaceProjection(def, { lines: cardFaceLines(def, preview, reg), authoredHtml, registries: reg,
+    effects: preview?.chargedEffects || def.effects });
 };
 
 test('every authored base, upgrade and rank projects whole short clauses without changing definitions', () => {
@@ -56,6 +57,28 @@ test('a chosen conditional status keeps its probability attached', () => {
     { kind: 'detail', html: 'Burn: 40% chance' },
   ], registries: reg });
   assert.equal(projection.clauses[0].html, 'If target has Block: Apply Burn 4 (40% chance)');
+});
+
+test('a standalone once-per-turn qualifier stays with Clear Head’s conditional bonus', () => {
+  const projection = project(defOf('clearHead'));
+  const text = projection.clauses.map(line => plain(line.html)).join('; ');
+  assert.match(text, /Clear 1 Dazed/);
+  if (/Advantage/.test(text)) assert.match(text, /Advantage\. Once per turn/);
+  assert.match(cardDetailHtml(reg, { cardId: 'clearHead' }, { rules }), /Once per turn/);
+});
+
+test('Waking Nightmare’s chance qualifies Sleep only; Confused remains guaranteed', () => {
+  const text = project(defOf('wakingNightmare')).clauses.map(line => plain(line.html)).join('; ');
+  assert.match(text, /Confused 3, Sleep 4 \(50% chance\)/);
+  assert.doesNotMatch(text, /Confused 3 \(50%/);
+});
+
+test('a chance-bearing live charged effect keeps its own probability', () => {
+  const def = defOf('strike');
+  const added = { op: 'buildup', target: 'enemy', status: 'sleep', amount: 4, chance: 50 };
+  const projection = project(def, { chargedEffects: [...def.effects, added] });
+  const text = projection.clauses.map(line => plain(line.html)).join('; ');
+  assert.match(text, /Sleep 4 \(50% chance\)/);
 });
 
 test('payments lead their payoff and long qualified riders move whole to Information', () => {

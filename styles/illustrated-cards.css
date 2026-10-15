@@ -85,4 +85,5 @@
 }
 :root .illustrated-card-face .card-rank-text {position:relative;z-index:1;}
 /* Whole clauses wrap together within one three-line effect budget. */
-:root .illustrated-card .face-line {display:inline;}
+:root .illustrated-card .ic-text[data-face-lines="true"][data-card-binding="rules"] {white-space:normal;}
+:root .illustrated-card .ic-text[data-face-lines="true"][data-card-binding="rules"] .face-line {display:inline;white-space:normal;}

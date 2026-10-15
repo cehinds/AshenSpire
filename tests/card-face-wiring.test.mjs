@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { renderCard, cardDetailHtml, setHandFaceBudget } from '../src/ui/components/card.js';
@@ -23,6 +24,15 @@ function faceLinesOf(html) {
   });
 }
 const textOf = line => line.html.replace(/<[^>]+>/g, '');
+
+test('bounded clauses override the expanded-combat block rule and collapse separator whitespace', () => {
+  const css = readFileSync(new URL('../styles/illustrated-cards.css', import.meta.url), 'utf8');
+  // The old generic .face-line selector lost to kit.css's expanded-card
+  // selector. These bounded selectors carry both attributes and the root,
+  // so they win even when kit.css loads later. Browser QA measures wrapping.
+  assert.match(css, /:root \.illustrated-card \.ic-text\[data-face-lines="true"\]\[data-card-binding="rules"\] \{white-space:normal;\}/);
+  assert.match(css, /:root \.illustrated-card \.ic-text\[data-face-lines="true"\]\[data-card-binding="rules"\] \.face-line \{display:inline;white-space:normal;\}/);
+});
 
 // Records the markup each element is given, the way the other renderCard tests do.
 function trackInnerHtml(dom) {
