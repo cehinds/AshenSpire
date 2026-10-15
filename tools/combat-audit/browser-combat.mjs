@@ -630,7 +630,7 @@ try {
       for (const card of cards) {
         const variants = ['base', ...(card.upgraded ? ['upgraded'] : [])].filter(v => !variantFilter || variantFilter === v);
         for (const variant of variants) {
-          const row = { cardId: card.id, variant, category: arg('category') || 'card', figureTarget: arg('figure-target') === 'true' || card.id.length % 2 === 0, curated,
+          const row = { cardId: card.id, variant, category: arg('category') || 'card', figureTarget: arg('figure-target') === 'true' || arg('category') === 'spell-target-regression' || card.id.length % 2 === 0, curated,
             ...(arg('enemy') ? { enemyIds: arg('enemy').split(',') } : {}), endTurn: arg('end-turn') === 'true',
             sampleAnimation: pace === 'normal' && variant === 'base' && ['strike','defend','starSpark','guardCounter','sweepingBlow','crimsonCleave','quickstep','bindingParry','ricochet','cometFragment','litany','bloodPact','bashingBlow','evasiveGuard','wardingStar','nockAndWait','progression-falling-constellation'].includes(card.id) };
           let baseEntry = completedCase(device, classId, row);
