@@ -72,7 +72,7 @@ async function captureSourceScenes() {
   }
 
   // Reach both real stages of configured creation. This is the menu route,
-  // including save-slot and game-profile selection, rather than a DOM fixture.
+  // including the save-slot selection, rather than a DOM fixture.
   const creation = await sourcePage('gameProfile=core');
   await creation.waitForSelector('.startup-gate');
   await creation.locator('.startup-gate').click();
@@ -81,9 +81,7 @@ async function captureSourceScenes() {
   await creation.locator('[data-slot-pick="2"]').click();
   await creation.getByRole('button', { name: 'Create character', exact: true }).click();
   await creation.getByRole('button', { name: 'Start', exact: true }).click();
-  const profileSelect = creation.getByLabel('New game configuration');
-  assert.equal(await profileSelect.inputValue(), 'core');
-  await creation.getByRole('button', { name: 'Choose class', exact: true }).click();
+  assert.equal(await creation.locator('.game-profile-setup').count(), 0, 'New Game goes directly to class selection');
   assert.equal(await creation.locator('.cz-railed').getAttribute('data-creation-stage'), 'class');
   assert.equal(await creation.locator('.cz-class.locked').count(), 3, 'new profiles can select Reaver while the other three classes remain locked');
   await creation.screenshot({ path: resolve(output, 'core-class-desktop.png') });
@@ -102,10 +100,8 @@ async function captureSourceScenes() {
   // render six depths and twelve nodes.
   const imported = await sourcePage('shot=title&gameProfile=core');
   await imported.waitForSelector('#new-game');
-  await imported.locator('#new-game').click();
-  await imported.locator('[data-slot-pick="2"]').click();
-  await imported.getByRole('button', { name: 'Create character', exact: true }).click();
-  await imported.getByRole('button', { name: 'Start', exact: true }).click();
+  await imported.locator('#settings').click();
+  await imported.getByLabel('General section', { exact: true }).selectOption('Game rules');
   const importedSelector = imported.getByLabel('New game configuration');
   const routeOverride = { formatVersion: 1, core: 'ashen.core@1.0.0', modules: { routes: { prebossNodes: 5, restFloors: [2, 4] } } };
   await imported.getByLabel('Import game configuration JSON').setInputFiles({
@@ -115,7 +111,12 @@ async function captureSourceScenes() {
   assert.equal(await importedSelector.inputValue(), 'imported');
   await importedSelector.selectOption('current');
   await importedSelector.selectOption('imported');
-  await imported.getByRole('button', { name: 'Choose class', exact: true }).click();
+  await imported.getByRole('button', { name: 'Done and Save', exact: true }).click();
+if (await imported.getByRole('button', { name: 'Not now', exact: true }).isVisible()) await imported.getByRole('button', { name: 'Not now', exact: true }).click();
+  await imported.locator('#new-game').click();
+  await imported.locator('[data-slot-pick="2"]').click();
+  await imported.getByRole('button', { name: 'Create character', exact: true }).click();
+  await imported.getByRole('button', { name: 'Start', exact: true }).click();
   assert.equal(await imported.locator('.cz-class.locked').count(), 3);
   await imported.locator('#cz-next').click();
   await imported.locator('#cz-start').click();
@@ -132,7 +133,6 @@ async function captureSourceScenes() {
     await customize.locator('[data-slot-pick="2"]').click();
     await customize.getByRole('button', { name: 'Create character', exact: true }).click();
     await customize.getByRole('button', { name: 'Start', exact: true }).click();
-    await customize.getByRole('button', { name: 'Choose class', exact: true }).click();
     assert.equal(await customize.locator('.cz-railed').getAttribute('data-creation-stage'), 'class');
     await customize.screenshot({ path: resolve(output, `core-class-${viewport.name}.png`) });
     await customize.locator('#cz-next').click();

@@ -1,0 +1,50 @@
+// PLAYWRIGHT_MODULE=/path/to/playwright CHROME=/usr/bin/chromium node tests/new-game-profile-settings.browser.mjs
+import assert from 'node:assert/strict';
+import { serve } from '../tools/serve.mjs';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const server = await serve({root:process.cwd(),port:0,open:false,quiet:true});
+const browser = await chromium.launch({executablePath:process.env.CHROME || '/usr/bin/chromium',args:['--no-sandbox']});
+const page = await browser.newPage({viewport:{width:1280,height:800}});
+const errors=[];page.on('pageerror',e=>errors.push(e.message));
+try {
+await page.goto(server.url+'index.html?gameProfile=core');
+await page.locator('.startup-gate').click();
+await page.locator('#settings').click();
+await page.getByLabel('General section',{exact:true}).selectOption('Game rules');
+assert.equal(await page.getByLabel('New game configuration',{exact:true}).inputValue(),'core');
+await page.getByLabel('New game configuration',{exact:true}).selectOption('current');
+await page.waitForFunction(() => document.querySelector('.game-profile-selector select')?.value === 'current');
+// A reproducible preview URL takes precedence over an opposite saved choice.
+await page.goto(server.url+'index.html?gameProfile=core');
+await page.locator('.startup-gate').click();
+await page.locator('#settings').click();
+await page.getByLabel('General section',{exact:true}).selectOption('Game rules');
+assert.equal(await page.getByLabel('New game configuration',{exact:true}).inputValue(),'core');
+await page.getByLabel('New game configuration',{exact:true}).selectOption('current');
+await page.waitForFunction(() => document.querySelector('.game-profile-selector select')?.value === 'current');
+await page.getByLabel('Import game configuration JSON').setInputFiles({name:'bad.json',mimeType:'application/json',buffer:Buffer.from('{')});
+await page.getByRole('status').filter({hasText:'Configuration not applied:'}).waitFor();
+assert.equal(await page.getByLabel('New game configuration',{exact:true}).inputValue(),'current');
+const author={formatVersion:1,core:'ashen.core@1.0.0',modules:{routes:{prebossNodes:5,restFloors:[2,4]}}};
+await page.getByLabel('Import game configuration JSON').setInputFiles({name:'custom.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(author))});
+await page.waitForFunction(()=>document.querySelector('.game-profile-selector select')?.value==='imported');
+await page.getByRole('button',{name:'Done and Save',exact:true}).click();
+if (await page.getByRole('button', { name: 'Not now', exact: true }).isVisible()) await page.getByRole('button', { name: 'Not now', exact: true }).click();
+await page.goto(server.url+'index.html');
+await page.locator('.startup-gate').click();
+await page.locator('#settings').click();
+await page.getByLabel('General section',{exact:true}).selectOption('Game rules');
+assert.equal(await page.getByLabel('New game configuration',{exact:true}).inputValue(),'imported');
+if (process.env.GAME_PROFILE_SETTINGS_SCREENSHOT) await page.screenshot({path:process.env.GAME_PROFILE_SETTINGS_SCREENSHOT});
+await page.getByRole('button',{name:'Done and Save',exact:true}).click();
+if (await page.getByRole('button', { name: 'Not now', exact: true }).isVisible()) await page.getByRole('button', { name: 'Not now', exact: true }).click();
+await page.locator('#new-game').click();
+await page.locator('[data-slot-pick="2"]').click();
+await page.getByRole('button',{name:'Create character',exact:true}).click();
+await page.getByRole('button',{name:'Start',exact:true}).click();
+await page.locator('.cz-railed[data-creation-stage="class"]').waitFor();
+assert.equal(await page.locator('.game-profile-setup').count(),0);
+assert.deepEqual(errors,[]);console.log('new-game-profile-settings browser: PASS; invalid import, author persistence, explicit preview priority and direct class selection');
+} finally {await browser.close();server.server.close();}

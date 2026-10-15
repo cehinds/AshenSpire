@@ -1,3 +1,4 @@
+import { mountGameProfileSettings } from '../components/gameProfileSelector.js';
 import { previewPrologue } from './prologue.js';
 import { openPrologueSceneEditor } from './prologueSceneEditor.js';
 // src/ui/screens/settings.js — settings controls (SPEC §7)
@@ -525,6 +526,10 @@ const ROWS = [
   { cat: 'Display', key: CARD_ART_STYLE_KEY, type: 'choice', def: CARD_ART_SIMPLE,
     choices: CARD_ART_STYLE_CHOICES, label: t('settings.row.cardArtStyle'),
     note: tFull('settings.row.cardArtStyle') },
+  { cat: 'Display', key: 'viewPreset', type: 'choice', def: 'auto', dropdown: true,
+    choices: ['auto', 'desktop', 'mobile', 'widescreen', 'tablet'],
+    choiceLabels: Object.fromEntries(['auto', 'desktop', 'mobile', 'widescreen', 'tablet'].map(id => [id, t(`settings.viewPreset.${id}`)])),
+    label: t('settings.row.viewPreset'), note: tFull('settings.row.viewPreset') },
   { cat: 'Display', key: 'uiScale', type: 'choice', def: 'Auto',
     choices: ['Auto', 'S', 'M', 'L', 'XL'], label: t('settings.row.uiScale'), applied: appliedHtml,
     note: tFull('settings.row.uiScale') },
@@ -1045,7 +1050,12 @@ export const CATEGORY_ORDER = ['General', 'Accessibility', 'Advanced'];
 // plus a branch in `generalGroups`. They were four separate `['Display',
 // 'Audio']` literals before Combat existed, which is four places for a fifth
 // group to be forgotten in.
-export const GENERAL_GROUPS = ['Display', 'Combat', 'Audio'];
+// Custom sections declare their stored keys for group reset and Reset all.
+// Their controls own validation and persistence rather than ordinary row widgets.
+export const CUSTOM_GENERAL_GROUPS = Object.freeze({
+  'Game rules': Object.freeze(['newGameProfile', 'importedGameProfile']),
+});
+export const GENERAL_GROUPS = ['Display', 'Combat', 'Audio', ...Object.keys(CUSTOM_GENERAL_GROUPS)];
 
 /** The General group a stored value names, or the first one. Never undefined:
  *  a bag written by an older build can hold a group this one dropped. */
@@ -1056,7 +1066,7 @@ export function generalGroup(settings) {
 
 // W1a names the first category Display, as its id already is. (It read "Game"
 // from f17d9a2e; restoring that is one entry here.)
-const CATEGORY_LABELS = {};
+const CATEGORY_LABELS = { 'Game rules': t('gameProfile.settings.title') };
 
 function categoryLabel(cat) {
   return CATEGORY_LABELS[cat] || cat;
@@ -1555,7 +1565,8 @@ export function resetKeys(settings, onChange, keys, label = 'Reset', { promoted 
 
 /** allResettableKeys() → every stored key Reset all puts back, inert retired ones included. */
 export function allResettableKeys() {
-  return [...ROWS, ...INERT_CONFIG_ROWS].filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key);
+  return [...ROWS, ...INERT_CONFIG_ROWS].filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key)
+    .concat(Object.values(CUSTOM_GENERAL_GROUPS).flat());
 }
 
 /** confirmResetAll(onConfirm, returnFocusElement) — the danger confirmation both Reset-all doors open. */
@@ -2422,6 +2433,7 @@ function shownCategories(saves) {
  * animation") is a claim about which NAME holds which ROW, and that claim is
  * only worth anything if something reads it back. */
 export function generalGroups(category) {
+  if (Object.hasOwn(CUSTOM_GENERAL_GROUPS, category)) return new Map([[categoryLabel(category), CUSTOM_GENERAL_GROUPS[category].map(key => ({ key }))]]);
   const groups = new Map();
   for (const row of categoryHandler(category).rows) {
     const key = row.key;
@@ -2638,14 +2650,14 @@ export function categoryHtml(cat, settings, saves, previewAttributes = null, pre
     const rows = topics.get(topic);
     const preview = settingsPreviewShown(cat, selected) ? settingsPreviewHtml(settings) : '';
     const firstFullscreen = selected === 'Display' && rows[0]?.key === 'fullscreen';
-    const rowHtml = rows.map(row => settingsRowHtml(settings, row));
+    const rowHtml = Object.hasOwn(CUSTOM_GENERAL_GROUPS, selected) ? [] : rows.map(row => settingsRowHtml(settings, row));
     // On a phone the expanded preview can fill the visible pane. Keep the
     // first Display control ahead of it so Fullscreen is reachable on entry.
-    const body = firstFullscreen
+    const body = selected === 'Game rules' ? '<div data-game-profile-settings></div>' : firstFullscreen
       ? `<div class="set-card-list">${rowHtml[0]}${preview}${rowHtml.slice(1).join('')}</div>`
       : `${preview}<div class="set-card-list">${rowHtml.join('')}</div>`;
     return '<div class="set-general-pickers">'
-      + (groups.length > 1 ? `<select class="set-general-select" data-general-select aria-label="General section">${groups.map(group => `<option${group === selected ? ' selected' : ''}>${group}</option>`).join('')}</select>` : '')
+      + (groups.length > 1 ? `<select class="set-general-select" data-general-select aria-label="General section">${groups.map(group => `<option value="${esc(group)}"${group === selected ? ' selected' : ''}>${esc(categoryLabel(group))}</option>`).join('')}</select>` : '')
       + (topics.size > 1 ? `<select class="set-general-select" data-general-topic aria-label="${cat} option group">${[...topics.keys()].map(label => `<option${label === topic ? ' selected' : ''}>${label}</option>`).join('')}</select>` : '')
       + `</div>${body}`;
   }
@@ -2801,7 +2813,7 @@ export function restoreView(root, view) {
  * its place in the ring all follow from that one list.
  */
 const MARKS_MODIFIED = Symbol('marks modified rows');
-export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onOffline = null, headerTools = null, previewAttributes = null, previewLevel = null, previewClassId = null }) {
+export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onOffline = null, headerTools = null, previewAttributes = null, previewLevel = null, previewClassId = null, gameProfile = null }) {
   panelSettings = settings;
   if (!onChange[MARKS_MODIFIED]) {
     const report = onChange;
@@ -2937,7 +2949,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     // the pane it lives in is rebuilt, or stay put when it cannot be applied.
     if (!applyPendingFormationSettings(container)) return;
     const panel = container.querySelector('.set-panel');
-    if (!panel) { renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId }); return; }
+    if (!panel) { renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile }); return; }
     const scroll = keepScroll ? panel.scrollTop : 0;
     const outer = keepScroll ? panel.parentElement?.scrollTop || 0 : 0;
     // A tab switch starts at the top on purpose, so only a keepScroll repaint
@@ -3030,6 +3042,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     }
   }
   const wire = () => {
+  const profileHost = container.querySelector('[data-game-profile-settings]');
+  if (profileHost && !profileHost.childElementCount) mountGameProfileSettings(profileHost, { settings, onChange, gameProfile });
   mountFormationSettings(container, settings, onChange, formationLayoutRows());
   mountSettingsPreview(container, settings, onChange);
   placeAdvancedNavigation();
@@ -3060,13 +3074,13 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   container.querySelector('[data-general-select]')?.addEventListener('change', event => {
     settings.settingsGeneralCategory = event.target.value;
     onChange({ settingsGeneralCategory: event.target.value });
-    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
+    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile });
   });
   container.querySelector('[data-general-topic]')?.addEventListener('change', event => {
     const key = `settingsGeneralTopic.${current === 'Accessibility' ? 'Accessibility' : generalGroup(settings)}`;
     settings[key] = event.target.value;
     onChange({ [key]: event.target.value });
-    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
+    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile });
   });
   const syncTopicPicker = () => {
     const picker = container.querySelector('.set-topic-select');
@@ -3304,13 +3318,14 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
           return topics.get(settings[`settingsGeneralTopic.${section}`]) || topics.values().next().value;
         })()
         : (groups.find(group => group.id === selected) || groups[0])?.rows || [];
-      const keys = rows.filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key);
+      const keys = button.dataset.resetConfig === 'all' ? allResettableKeys()
+        : rows.filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key);
       const label = button.dataset.resetConfig === 'all' ? 'All settings reset' : filtering() ? 'Results reset' : 'Group reset';
       const fromMenu = !!button.closest('.set-options');
       headerTools.querySelector('details').open = false;
       const run = async () => {
         await resetKeys(settings, onChange, keys, label);
-        renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
+        renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile });
       };
       // The menu is closed by now, so Cancel returns focus to its ⋮ summary.
       if (button.dataset.resetConfig === 'all') confirmResetAll(run, fromMenu ? headerTools.querySelector('.set-options summary') : button); else run();
@@ -3377,7 +3392,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       if (value === undefined) delete settings[key]; else settings[key] = value;
     }
     if ((await onChange(changes))?.ok === false) { showSettingsNotice('Settings could not be saved.'); return; }
-    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
+    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile });
     // A re-render replaces the button that was pressed, so reordering three
     // places from the keyboard meant hunting for the arrow again after each
     // press. The same control on the same scene takes the focus back.
@@ -3434,7 +3449,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         dragging?.classList.remove('set-scene-dragging');
         const moved = !dropped && dragging;
         dragging = null;
-        if (moved) renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
+        if (moved) renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile });
       });
       item.addEventListener('dragover', event => {
         if (!dragging || dragging === item) return;
@@ -3575,7 +3590,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   container.querySelectorAll('[data-btn="resetAllSettings"]').forEach((btn) => {
     btn.addEventListener('click', () => confirmResetAll(async () => {
       await resetKeys(settings, onChange, allResettableKeys(), 'All settings reset');
-      renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
+      renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile });
       container.querySelector('[data-btn="resetAllSettings"]')?.focus({ preventScroll: true });
     }, btn));
   });
@@ -3644,7 +3659,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         if (result?.ok === false) throw new Error('Settings could not be saved.');
         Object.assign(settings, saved);
         dropUndoOffer(); // an imported configuration replaces what an Undo was taken from
-        renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
+        renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile });
         showSettingsNotice(`Loaded ${Object.keys(changes).length} settings. Existing saved runs are unchanged.${warnings.length ? ` ${warnings.join(' ')}` : ''}`);
       } catch (error) {
         showSettingsNotice(`Import failed: ${error.message}`);
@@ -4126,7 +4141,7 @@ function settingsHeaderTools() {
 // #1213 promises Download & saves "from Title or Settings", and only one of
 // those two was telling the truth. It is forwarded now, and lands in the same
 // one-row bar the in-run overlay uses.
-export function openSettings({ meta, onChange, saves = null, onOffline = null, previewAttributes = null, previewLevel = null, previewClassId = null }) {
+export function openSettings({ meta, onChange, saves = null, onOffline = null, previewAttributes = null, previewLevel = null, previewClassId = null, gameProfile = null }) {
   const settings = meta.settings || (meta.settings = {});
   // ONE DOOR-OPENER (kit §09): the shell owns veil, head, foot and dismissal;
   // this surface owns only the body, which is the NavRail + Pane it always was.
@@ -4143,7 +4158,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
     title: t('settings.title'),
     closeLabel: t('settings.close'),
     bodyClassName: 'set-body',
-    body: (host) => { rendered = renderSettings(host, { settings, onChange, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId }); },
+    body: (host) => { rendered = renderSettings(host, { settings, onChange, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile }); },
     secondary: pageDebug() ? [load] : [],
     primary: done,
     footSize: 'short',
@@ -4168,7 +4183,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
       if ((await onChange(saved))?.ok === false) throw new Error('Settings could not be saved.');
       Object.assign(settings, saved);
       dropUndoOffer(); // an imported configuration replaces what an Undo was taken from
-      rendered = renderSettings(door.body, { settings, onChange, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
+      rendered = renderSettings(door.body, { settings, onChange, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile });
       showSettingsNotice(warnings.length ? `Settings loaded. ${warnings.join(' ')}` : 'Settings loaded.');
     } catch (error) { showSettingsNotice(`Import failed: ${error.message}`); }
   });

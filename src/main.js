@@ -1,9 +1,10 @@
+import { applyViewViewport, resolveViewViewport } from './ui/viewViewport.js';
 import { screenshotRoutePath } from './ui/models/ScreenshotFixtureModel.js';
 import { t } from './ui/strings.js';
 import { gameProfileRewardOffers, claimGameProfileReward, gameProfileShopStock, purchaseGameProfileShopOffer } from './model/gameProfileRewards.js';
 import { mountGameProfileOffers } from './ui/components/gameProfileOffers.js';
 import { profileStarterCount } from './ui/models/GameProfileTitleModel.js';
-import { mountGameProfileSelector } from './ui/components/gameProfileSelector.js';
+import { readNewGameProfile } from './ui/components/gameProfileSelector.js';
 import { beginGameProfileRest, createGameProfileRestDraft, commitGameProfileRest } from './model/gameProfileRest.js';
 import { resolveGameProfile, gameModule, gameContent, applyGameProfileToContent, bindGameProfileRegistries } from './model/gameProfile.js';
 import { isConfiguredRun, gameProfileClassAvailable } from './model/gameProfileRun.js';
@@ -238,7 +239,6 @@ if (!validation.ok) {
 const profileQuery = new URLSearchParams(location.search);
 const askedGameProfile = profileQuery.get('gameProfile') || profileQuery.get('wb.gameProfile') || globalThis.__ASHEN_GAME_PROFILE_PREVIEW__ || 'default';
 let selectedGameProfile = resolveGameProfile(askedGameProfile.trim().startsWith('{') ? JSON.parse(askedGameProfile) : askedGameProfile);
-let importedGameProfile = askedGameProfile.trim().startsWith('{') ? selectedGameProfile : null;
 let registryGameProfile = selectedGameProfile;
 let registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, registryGameProfile)), registryGameProfile);
 let xpCombat = null;
@@ -396,6 +396,10 @@ function bringStoredProfileForward(meta) {
 }
 let activeMeta = saves.loadMeta();
 let activeSettings = bringStoredProfileForward(activeMeta);
+// Explicit preview URLs remain reproducible; otherwise use the saved rules for future runs.
+if (!profileQuery.has('gameProfile') && !profileQuery.has('wb.gameProfile') && !globalThis.__ASHEN_GAME_PROFILE_PREVIEW__) {
+  selectedGameProfile = readNewGameProfile(activeSettings, selectedGameProfile);
+}
 // THE OWNER'S PROMOTED DEFAULTS (src/content/settingsDefaults.js, written by
 // tools/settings-defaults.mjs). A key the player never set starts there, and a
 // key still at an earlier promotion's value follows a new one; a key the
@@ -693,8 +697,9 @@ function resolveLayout(uiScale, vw, vh) {
 function applyUiScale(settings) {
   const viewport = window.visualViewport;
   const visibleHeight = viewport && viewport.scale === 1 ? viewport.height : window.innerHeight;
-  document.documentElement.style.setProperty('--visible-height', visibleHeight + 'px');
-  const { zoom, narrow, compact, short } = resolveLayout(settings.uiScale, window.innerWidth, visibleHeight);
+  const view = applyViewViewport(settings.viewPreset, window.innerWidth, visibleHeight);
+  document.documentElement.style.setProperty('--visible-height', view.height + 'px');
+  const { zoom, narrow, compact, short } = resolveLayout(settings.uiScale, view.width, view.height);
   // Set as a CSS var so base.css can compensate the body's width/height for the
   // zoom (avoids the zoom×100vh overflow). Any leftover inline zoom is cleared.
   document.body.style.zoom = '';
@@ -711,7 +716,7 @@ function applyUiScale(settings) {
   // stage observe this attribute and re-measure when it changes.
   // Thresholds: balance.ui.uiScale.formFactor.
   document.documentElement.setAttribute('data-form-factor',
-    formFactorFor(window.innerWidth, window.innerHeight, UI.uiScale.formFactor));
+    view.preset === 'auto' ? formFactorFor(view.width, view.height, UI.uiScale.formFactor) : view.preset);
   // Publish the short/refusal value from that same decider for layout consumers too.
   // This is not another short-screen predicate: CSS reads the answer computed
   // above, just as it reads `data-layout`. In particular, combat may let its
@@ -727,7 +732,7 @@ function applyUiScale(settings) {
   // a gate nobody believes the second time.
   const turned = typeof window === 'undefined'
     ? { short: true }
-    : resolveLayout(settings.uiScale, window.innerHeight, window.innerWidth);
+    : resolveLayout(settings.uiScale, view.height, view.width);
   // AND ONE CAPABILITY QUERY, FOR THE WORDS ONLY. "Turn your phone upright" read
   // on an 800x410 DESKTOP WINDOW is a false instruction, and a screen that tells
   // you one wrong thing is a screen you stop reading. `(pointer: coarse)` is NOT
@@ -828,7 +833,7 @@ function applyCardSizeSettings(settings) {
   // and a tool all keep asking one question. Redeclaring `--card-w-glance`
   // inside a media query would have been the later-rule-wins shape that has
   // already produced three defects in this component.
-  const resting = restingWidthPx(window.innerWidth, levels);
+  const resting = restingWidthPx(resolveViewViewport(settings.viewPreset, window.innerWidth, window.innerHeight).width, levels);
   document.documentElement.style.setProperty('--card-w-glance', `${resting}px`);
   // The shelf floors its tracks at a legible width; that floor cannot stand
   // above the resting card it floors, so it is re-projected against the width
@@ -879,8 +884,8 @@ function applyDisplaySettings(settings) {
   document.documentElement.style.setProperty('--selection-color', advancedPresentation.selectionColor);
   document.documentElement.dataset.formationGrid = String(advancedPresentation.showFormationGrid);
   const rootStyle = document.documentElement.style;
-  rootStyle.setProperty('--settings-window-width', `${advancedPresentation.settingsWidthPercent}vw`);
-  rootStyle.setProperty('--settings-window-height', `${advancedPresentation.settingsHeightPercent}dvh`);
+  rootStyle.setProperty('--settings-window-width', `calc(${advancedPresentation.settingsWidthPercent} * var(--view-vw, 1vw))`);
+  rootStyle.setProperty('--settings-window-height', `calc(${advancedPresentation.settingsHeightPercent} * var(--view-vh, 1dvh))`);
   document.documentElement.dataset.playerSpawnRow = advancedPresentation.playerSpawnRow;
   document.documentElement.dataset.enemySpawnRow = advancedPresentation.enemySpawnRow;
   document.documentElement.dataset.playerSpawnColumn = advancedPresentation.playerSpawnColumn;
@@ -1935,6 +1940,7 @@ async function persistSettingsChange(changed) {
     showSettingsNotice(QUARANTINE_NOTICE);
     return res;
   }
+  if (Object.hasOwn(changed, 'newGameProfile')) selectedGameProfile = readNewGameProfile(activeSettings, resolveGameProfile(askedGameProfile.trim().startsWith('{') ? JSON.parse(askedGameProfile) : askedGameProfile));
   applyDisplaySettings(activeSettings);
   refreshHudQuickSettings(app, activeSettings);
   remountMapIfShowing(changed);
@@ -1987,6 +1993,7 @@ function showSettings() {
     previewClassId: run?.class || null,
     onChange: persistSettingsChange,
     onOffline: showOfflinePlay,
+    gameProfile: { read: () => selectedGameProfile },
   });
 }
 
@@ -2006,6 +2013,7 @@ function refreshAfterImport() {
     && needsSettingsChoice(activeMeta, BUILD_VERSION, settingsRows(), promotionFor(SETTINGS_DEFAULTS, promotionDebug()).values);
   if (!settingsChoicePending) seedPromotedDefaults(activeMeta, settings);
   applyRestoredSettings(settings);
+  selectedGameProfile = readNewGameProfile(settings, resolveGameProfile(askedGameProfile.trim().startsWith('{') ? JSON.parse(askedGameProfile) : askedGameProfile));
   rebuildRegistries(activeSettings);
   settingsChoiceChecked = true;
   // The Settings door (opened from the title's Download & saves path) still shows the old profile.
@@ -2349,28 +2357,7 @@ async function showFinishedRun(victory) {
   });
 }
 
-function showCustomize(slot = 1, catalog = false, profileChosen = false) {
-  if (!profileChosen && !catalog) {
-    app.replaceChildren();
-    const pane = document.createElement('section'); pane.className = 'screen game-profile-setup';
-    pane.style.cssText = 'max-width:44rem;padding:2rem;margin:auto;display:flex;flex-direction:column;gap:1rem';
-    const title = document.createElement('h1'); title.textContent = 'New Game';
-    const copy = document.createElement('p'); copy.textContent = 'Choose your game rules before selecting a class. Existing saves keep their own rules.';
-    const controls = document.createElement('div');
-    const renderSelector = () => {
-      controls.replaceChildren();
-      mountGameProfileSelector(controls, { profile: selectedGameProfile, importedProfile: importedGameProfile, onSelect: value => {
-        const profile = value === 'imported' ? importedGameProfile : resolveGameProfile(value);
-        if (typeof value === 'object') importedGameProfile = profile;
-        rebuildRegistries(saves.loadMeta().settings || {}, null, profile);
-        selectedGameProfile = profile; renderSelector();
-      } });
-    };
-    renderSelector();
-    const next = document.createElement('button'); next.textContent = 'Choose class'; next.onclick = () => showCustomize(slot, false, true);
-    const back = document.createElement('button'); back.textContent = 'Back'; back.onclick = () => showTitle();
-    pane.append(title, copy, controls, next, back); app.append(pane); return;
-  }
+function showCustomize(slot = 1, catalog = false) {
   rebuildRegistries(saves.loadMeta().settings || {}, null, selectedGameProfile);
   if (isConfiguredRun(selectedGameProfile) && !gameModule(selectedGameProfile, 'class-selection')) {
     const defaultClass = gameContent(selectedGameProfile, 'classes')[0];

@@ -1,3 +1,4 @@
+import { logicalViewport } from '../viewViewport.js';
 // W4b MAP HEADER — the DOM half of `ui/models/MapHeaderLayout.js`.
 //
 // A map screen opts in by drawing the run HUD with `layout: 'map-compact'`
@@ -16,11 +17,11 @@ export const MAP_HEADER_LAYOUT = 'map-compact';
 
 export function readMapHeaderViewport(win = window) {
   const viewport = win.visualViewport;
-  const height = viewport && viewport.scale === 1 ? viewport.height : win.innerHeight;
+  const { width, height } = logicalViewport(win);
   // The player's tap size (balance.ui.tapSize, written as --tap-target) is the
   // floor's row; absent, the model falls back to its configured 44.
   const tap = Number.parseFloat(win.getComputedStyle(win.document.documentElement).getPropertyValue('--tap-target'));
-  return { viewportWidthPx: win.innerWidth, viewportHeightPx: height, targetPx: Number.isFinite(tap) ? tap : null };
+  return { viewportWidthPx: width, viewportHeightPx: height, targetPx: Number.isFinite(tap) ? tap : null };
 }
 
 export function applyMapHeaderLayout(hud, layout) {

@@ -1,3 +1,4 @@
+import { viewScale, viewViewportBox } from './viewViewport.js';
 import { playCombatEffect, clearCombatEffects } from './combatEffectSprites.js';
 import { combatEffectForEvent } from '../model/combatEffectEvents.js';
 // src/ui/fx.js — feedback effects (SPEC §7.4)
@@ -58,7 +59,11 @@ const rectOf = (o) => (o && typeof o.getBoundingClientRect === 'function' ? o.ge
 
 // The containing block of a `position: fixed` element is the viewport itself,
 // whatever it is nested in — origin (0, 0), so only the zoom separates the spaces.
-export const VIEWPORT_ORIGIN = { left: 0, top: 0, width: 0, height: 0 };
+export const VIEWPORT_ORIGIN = {
+  get left() { return viewViewportBox().left; },
+  get top() { return viewViewportBox().top; },
+  width: 0, height: 0,
+};
 
 /**
  * The page's `--ui-zoom`. Reading it is a computed-style read, which flushes
@@ -66,7 +71,7 @@ export const VIEWPORT_ORIGIN = { left: 0, top: 0, width: 0, height: 0 };
  * item reads it once, before its writes, and passes it as `zoom`.
  */
 export function uiZoom() {
-  return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
+  return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) * viewScale() || 1;
 }
 
 export function anchorLocalBox(layer, anchor, { zoom } = {}) {
@@ -92,7 +97,7 @@ export function anchorLocalBox(layer, anchor, { zoom } = {}) {
  * it as visual px and convert, never write it into a local-space property raw.
  */
 export function viewportLocalBox() {
-  return anchorLocalBox(VIEWPORT_ORIGIN, { left: 0, top: 0, width: innerWidth, height: innerHeight });
+  return anchorLocalBox(VIEWPORT_ORIGIN, viewViewportBox());
 }
 
 /**

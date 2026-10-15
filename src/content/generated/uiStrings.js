@@ -10424,5 +10424,110 @@ export const uiStrings = [
     "short": "Choose {count}. Cards join your collection; edit your deck at Strategize.",
     "full": "",
     "tip": ""
+  },
+  {
+    "id": "gameProfile.settings.title",
+    "extends": "",
+    "short": "Game rules",
+    "full": "Game rules",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.settings.current",
+    "extends": "",
+    "short": "Current game",
+    "full": "Current game",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.settings.core",
+    "extends": "",
+    "short": "Ashen core",
+    "full": "Ashen core",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.settings.imported",
+    "extends": "",
+    "short": "Imported configuration",
+    "full": "Imported configuration",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.settings.future",
+    "extends": "",
+    "short": "{profile} · applies to future new games. Existing runs keep their rules.",
+    "full": "{profile} · applies to future new games. Existing runs keep their rules.",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.settings.invalid",
+    "extends": "",
+    "short": "Configuration not applied: {error}",
+    "full": "Configuration not applied: {error}",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.settings.saveFailed",
+    "extends": "",
+    "short": "Game rules could not be saved.",
+    "full": "Game rules could not be saved.",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.settings.fileTooLarge",
+    "extends": "",
+    "short": "Choose a JSON file smaller than 1 MB.",
+    "full": "Choose a JSON file smaller than 1 MB.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.viewPreset",
+    "extends": "",
+    "short": "View mode",
+    "full": "Choose a layout for this device. Auto follows the window size.",
+    "tip": ""
+  },
+  {
+    "id": "settings.viewPreset.auto",
+    "extends": "",
+    "short": "Auto",
+    "full": "Auto",
+    "tip": ""
+  },
+  {
+    "id": "settings.viewPreset.desktop",
+    "extends": "",
+    "short": "Desktop",
+    "full": "Desktop",
+    "tip": ""
+  },
+  {
+    "id": "settings.viewPreset.mobile",
+    "extends": "",
+    "short": "Mobile",
+    "full": "Mobile",
+    "tip": ""
+  },
+  {
+    "id": "settings.viewPreset.widescreen",
+    "extends": "",
+    "short": "Widescreen",
+    "full": "Widescreen",
+    "tip": ""
+  },
+  {
+    "id": "settings.viewPreset.tablet",
+    "extends": "",
+    "short": "Tablet",
+    "full": "Tablet",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.settings.import",
+    "extends": "",
+    "short": "Import JSON",
+    "full": "Import JSON",
+    "tip": ""
   }
 ];
