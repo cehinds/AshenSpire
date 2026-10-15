@@ -3,6 +3,30 @@ import assert from 'node:assert/strict';
 import { loadAuditRuntime } from '../tools/combat-audit/runtime.mjs';
 import { auditInventory } from '../tools/combat-audit/inventory.mjs';
 import { makeAuditCombat, setAuditHand, applyAuditScenario, setAuditPredicate } from '../tools/combat-audit/fixtures.mjs';
+for (const mode of ['native', 'bundled']) test(`${mode}: explicit configured defaults match new-run configuration without changing raw fixtures`, async () => {
+  const raw = await loadAuditRuntime(mode);
+  const configured = await loadAuditRuntime(mode, { configuration: 'configured-defaults' });
+  assert.equal(raw.configuration.mode, 'raw-authored');
+  assert.equal(raw.configuration.snapshot, null);
+  assert.equal(raw.configuration.ratingsEnabled, false);
+  assert.equal(configured.configuration.ratingsEnabled, true);
+  assert.equal(configured.configuration.breakMeterVersion, 2);
+  assert.equal(configured.configuration.snapshot.ratingsVersion, 1);
+  assert.equal(configured.configuration.snapshot.breakMeterVersion, 2);
+  assert.match(configured.source.auditFiles['tests/helpers/production-bundle.mjs'], /^[a-f0-9]{64}$/);
+  assert.equal(JSON.stringify(configured.configuration.snapshot.overrides), '{}');
+  assert.equal(JSON.stringify(auditInventory(configured.registries)), JSON.stringify(auditInventory(raw.registries)),
+    'the settings mode preserves the four classes and every canonical variant candidate');
+  for (const api of [raw, configured]) {
+    const { combat, run } = makeAuditCombat(api, { classId: 'rogue', instance: { cardId: 'strike' } });
+    assert.equal(Boolean(combat.ratingsRules), api.configuration.ratingsEnabled, 'fixture retains the selected ratings rules');
+    assert.equal(combat.combatExpansionVersion, 2);
+    assert.equal(combat.breakMeterVersion, 2);
+    if (api.configuration.snapshot) assert.equal(JSON.stringify(run.advancedConfigSnapshot), JSON.stringify(api.configuration.snapshot),
+      'reported configuration is the complete snapshot carried by this new v2 run');
+  }
+  await assert.rejects(loadAuditRuntime(mode, { configuration: 'unknown' }), /Unknown audit configuration/);
+});
 for (const mode of ['native', 'bundled']) test(`${mode}: registry inventory and DTO fixtures retain live combat methods`, async () => {
   const api = await loadAuditRuntime(mode);
   const inventory = auditInventory(api.registries);
