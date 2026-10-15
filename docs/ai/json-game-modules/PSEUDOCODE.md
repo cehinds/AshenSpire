@@ -8,6 +8,15 @@ scope and delivery sequence in [IMPLEMENTATION.md](IMPLEMENTATION.md); record wo
 and resume instructions in [CONTINUE.md](CONTINUE.md). Integration is restricted to
 `Feature/json-game-modules`; do not promote to `dev`, `test`, `main`, or a release.
 
+[ARCHITECTURE.md](ARCHITECTURE.md) governs structure; CORE-SPEC governs product
+rules. Use the architecture document for the proposed tree: data-only Ashen bundle
+at `games/ashenspire/bundles/core`, Ashen definitions at
+`games/ashenspire/packs/core`, reusable mechanics at `engine/modules`, and gameplay
+foundation at `engine/foundation`. Do not collapse these into `engine/core/core.mjs`.
+Class selection is core; optional character creation is off. Progression may keep
+run-level and profile-unlock subdomains under one module. Tags/groups resolve
+declared references without implicitly activating modules.
+
 ## 1. Distinguish the full core bundle from the technical fallback
 
 The product core `ashen.core@1.0.0` selects the **full core bundle**, not a
@@ -15,7 +24,8 @@ one-attack demo. [CORE-SPEC.md](CORE-SPEC.md) owns its class, loadout, card, res
 combat, progression, route, rest, reward and presentation specifications, including
 pending decisions. Read that sibling before implementing a policy or filling in a
 number. The bundle declares feature modules and exact package pins explicitly;
-the runtime kernel supplies their shared contracts and technical fallbacks.
+the generic kernel supplies infrastructure contracts, while always-installed
+engine/foundation supplies the minimal gameplay and technical fallback providers.
 
 The full profile defines four classes; a new player profile can select only Reaver.
 Complete runs unlock the other classes in CORE-SPEC order, on victory or defeat.
@@ -50,6 +60,7 @@ in inspection; they cannot silently replace the specified card-turn model.
 ```text
 type CorePhase = launch | activity | playerTurn | enemyTurn | victory | death
 type TransactionStatus = COMMITTED | REJECTED | SUSPENDED
+// Historical name: foundation gameplay state, never generic kernel state.
 CoreState = {
   phase, cycle, hero, activity: {id, kind, enemies, localState, enemyCursor},
   outcome, turn: {ownerId, policyId, opportunitiesRemaining?, freeCommandsRemaining},
@@ -240,35 +251,33 @@ policy or copy the bundle's settings:
   "runtimeABI": "ashen.runtime@1",
   "configVersion": 1,
   "stateVersion": 1,
-  "defaults": { "include": ["block", "poise"], "order": ["block", "poise"] },
-  "configSchema": {
-    "type": "object",
-    "properties": {
-      "include": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
-      "order": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
-    },
-    "required": ["include", "order"],
-    "additionalProperties": false
-  },
-  "requires": [{ "kind": "core", "capability": "damage.pipeline", "version": "1" }],
+  "defaults": { "$ref": "./defaults.json" },
+  "configSchema": { "$ref": "./settings.schema.json" },
+  "requires": [{ "kind": "foundation", "capability": "damage.pipeline", "version": "1" }],
   "provides": [{ "capability": "damage.defenseStages", "version": "1", "mode": "contribution" }],
   "technicalDependencies": [],
   "integrations": [
     { "id": "defenses.stanceProtection", "owner": "defenses", "version": 1,
       "whenEnabled": ["defenses", "stances"], "requiresCapabilities": ["stance.entry@1"] }
   ],
-  "entrypoints": { "implementation": "./defenses.mjs" },
-  "ui": ["./defenses.ui.json"],
-  "guide": "./defenses.md",
-  "stateSchema": { "$ref": "./defenses.schema.json#/$defs/state" },
-  "content": ["./defenses.content.json"],
-  "integrationCases": ["./defenses.cases.json"]
+  "entrypoints": { "implementation": "./runtime.mjs" },
+  "ui": ["./ui.json"],
+  "guide": "./guide.md",
+  "stateSchema": { "$ref": "./state.schema.json" },
+  "rules": { "$ref": "./rules.json" },
+  "integrationCases": ["./cases.json"]
 }
 ```
 
-These proposed paths are relative to the module folder; `defenses.schema.json`
-contains its config schema and `$defs.state`. No such files are created by this
-blueprint. Defense IDs are registry-validated strings, not a closed four-ID enum:
+This is the proposed `module.json`; its paths follow ARCHITECTURE's uniform
+module-folder convention. Resolve referenced `settings.schema.json`, `defaults.json`
+and `rules.json` before validation/merge; state/UI/cases use `state.schema.json`,
+`ui.json` and `cases.json`, with author instructions in `guide.md`. `runtime.mjs`
+is optional for a module needing host implementation; rules-only modules omit the
+entrypoint. Ashen definitions come from declared game packs, not a hidden module
+content path. No such files are created by this blueprint. The settings schema
+uses unique arrays of nonempty string IDs for include/order, never a fixed built-in
+enum. Defaults must resolve a declared policy without settling pending core order. Defense IDs are registry-validated strings, not a closed four-ID enum:
 authors can define additional defenses using supported behavior contracts. Require
 `order` to contain exactly the selected registered defense IDs once, each with a
 supported stage implementation; schema alone is insufficient. Technical
@@ -295,7 +304,11 @@ resolve(authorSource, pinnedCatalog):
     true: enable merge(module.defaults, bundle.overrides)
     object: enable merge(module.defaults, bundle.overrides, author.object)
   selected = enabledFeatureIDs(effective)
-  packages = [coreBundle.kernel] + selected.map(requireExactBundleOrCatalogPin)
+  selectedPacks = resolveExactDeclaredPackArtifacts(coreBundle.packs, effective)
+  // Pack/tag/group references never select undeclared feature modules.
+  packages = [runtime.kernel, runtime.foundation, coreBundle.artifact]
+             + selected.map(requireExactBundleOrCatalogPin) + selectedPacks
+  // Runtime artifacts are independently pinned; the data-only bundle owns no kernel binary.
   record expansion, value provenance and all bundle pins
   close bundled technical dependencies with typed version checks
   assert selected feature IDs unchanged by technical closure
@@ -303,7 +316,12 @@ resolve(authorSource, pinnedCatalog):
   validate root/settings schemas and manifest/package/schema reference closure
   validate candidate definition shapes without requiring inactive capabilities
   activate explicitly owned compatible integrations for selected pairs
-  providers = arbitrateCapabilities(packages, integrations)
+  executableProviders = runtime.foundation + selectedModuleImplementations
+  // Kernel supplies infrastructure; data-only bundles/packs never register providers.
+  // packages is the combined pinned artifact closure, not an executable registry.
+  dataClosure = validateDataReferences(coreBundle, selectedPacks, effective)
+  providers = arbitrateCapabilities(executableProviders, compatibleIntegrationImplementations)
+  // Only declared implementation contributions register; data rules are validated inputs.
   definitions = projectDefinitions(settings, providers)
   validate all active projection references, operations and capabilities
   report inactive definitions/variants and eligibility reasons separately
@@ -335,6 +353,10 @@ plain host `JSON.stringify` is not a cross-engine specification. Keep source,
 config, resolved-game and save-state hashes distinct. Freeze configuration for a
 run. Every registry, bridge and cache is scoped by immutable runtime instance and
 resolved hash, not a mutable process singleton.
+
+Foundation owns authoritative HP state/provider exactly once. The resources module
+uses/decorates that provider and owns SP/MP/Actions; registering a second HP owner
+is a provider-arbitration error. Foundation remains installed when resources is off.
 
 ## 4. Project content with honest fallbacks
 

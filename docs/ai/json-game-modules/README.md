@@ -21,12 +21,18 @@ documents in this order:
 1. [Current source and core specification](CORE-SPEC.md) — current source
    inventory and the latest decisions for the playable Ashen core bundle,
    profile class unlocks and one-service rest flow.
-2. [Implementation contract](IMPLEMENTATION.md) — module boundary, optional
+2. [Structural architecture](ARCHITECTURE.md) — generic kernel infrastructure,
+   foundation gameplay providers, reusable mechanics and Ashen data boundaries.
+3. [Implementation contract](IMPLEMENTATION.md) — module boundary, optional
    package behavior, compatibility and acceptance criteria.
-3. [Pseudocode and package examples](PSEUDOCODE.md) — proposed data shapes,
+4. [Pseudocode and package examples](PSEUDOCODE.md) — proposed data shapes,
    composition and runtime flows.
-4. [Continuation handoff](CONTINUE.md) — paste-ready prompt, bounded next task,
+5. [Continuation handoff](CONTINUE.md) — paste-ready prompt, bounded next task,
    author workflow and delivery checks.
+
+CORE-SPEC is the product authority; ARCHITECTURE is the structural authority.
+Class selection is core, optional character creation is off, and tags/groups select
+declared references without hidden module activation.
 
 These documents specify future work. Proposed paths, APIs, schemas, commands and
 checks must be verified against the current checkout unless explicitly marked
