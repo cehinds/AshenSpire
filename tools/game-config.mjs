@@ -26,7 +26,7 @@ export function loadGameProfileCatalog() {
     for (const entry of readdirSync(resolve(ROOT,dir),{withFileTypes:true}).sort((a,b)=>a.name < b.name ? -1 : 1)) {
       const path=dir+'/'+entry.name;
       if(entry.isDirectory())visitRuntime(path);
-      else if(!['src/content/generated/gameProfiles.js','src/content/changelog.js','src/content/generated/changelog.js'].includes(path))runtimeSources.push(artifact(path,'ashen.source-runtime','1.0.0'));
+      else if(!['src/content/generated/gameProfiles.js','src/content/changelog.js','src/content/changelog.generated.js','src/content/generated/changelog.js'].includes(path))runtimeSources.push(artifact(path,'ashen.source-runtime','1.0.0'));
     }
   };
   visitRuntime('src');

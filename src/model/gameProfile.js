@@ -46,19 +46,19 @@ function cloneLegacy(value,seen = new Map()) {
 export function applyGameProfileToContent(baseBundle,profileOrAuthor = 'current') {
   const profile = resolveGameProfile(profileOrAuthor), bundle=cloneLegacy(baseBundle);
   if(profile.foundation.mode === 'legacy') return bundle;
-  if(gameModule(profile,'cards')) {
+  if(gameModule(profile,'cards')?.mode === 'configured') {
     const additions=gameContent(profile,'cards').map(def=>projectGameCard(profile,def.id));
     // Existing registry schemas use tags through the tagging relation table.
     const raw=additions.map(({tags,resourceCosts,kindIds,...def})=>def);
     bundle.cards=[...(bundle.cards||[]).filter(def=>!raw.some(row=>row.id===def.id)),...raw];
-    bundle.equipment = {...bundle.equipment, cardExposure:[...(bundle.equipment?.cardExposure || []), ...raw.filter(def => def.effects.some(effect => effect.op === 'damage')).map(def => ({cardId:def.id,damageSchool:def.damageSchool,exposureBuildupPerHit:def.exposureBuildupPerHit}))]};
-    bundle.tagging=[...(bundle.tagging||[]),...additions.flatMap(def=>(def.tags||[]).map(tagId=>({family:'card',objectId:def.id,tagId})))];
+    bundle.equipment = {...bundle.equipment, cardExposure:[...(bundle.equipment?.cardExposure || []).filter(row=>!raw.some(def=>def.id===row.cardId)), ...raw.filter(def => def.effects.some(effect => effect.op === 'damage')).map(def => ({cardId:def.id,damageSchool:def.damageSchool,exposureBuildupPerHit:def.exposureBuildupPerHit}))]};
+    bundle.tagging=[...(bundle.tagging||[]).filter(row=>row.family!=='card'||!raw.some(def=>def.id===row.objectId)),...additions.flatMap(def=>(def.tags||[]).map(tagId=>({family:'card',objectId:def.id,tagId})))];
   }
   if(gameModule(profile,'class-selection')) {
     bundle.classes=(bundle.classes||[]).map(def=>{
       const row=gameContent(profile,'classes').find(item=>item.id===def.id);
       if(!row)return def;
-      return {...def,maxHp:row.maxHp,cardPool:[...new Set([...(def.cardPool||[]),row.specialCardId])],startingSignatureCard:row.specialCardId};
+      return {...def,maxHp:row.maxHp,...(gameModule(profile,'cards')?.mode === 'configured' ? {cardPool:[...new Set([...(def.cardPool||[]),row.specialCardId])],startingSignatureCard:row.specialCardId} : {})};
     });
   }
   if(Array.isArray(bundle.resources)) {

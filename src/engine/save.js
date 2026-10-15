@@ -650,8 +650,9 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
       }
       // Profile mismatch is recoverable: preserve the original bytes instead
       // of archiving a slot against the wrong content registry.
+      let pinned = null;
+      try { pinned = JSON.parse(json).gameProfile; } catch { /* Legacy malformed JSON follows the existing archive path below. */ }
       try {
-        const pinned = JSON.parse(json).gameProfile;
         if (pinned) {
           validateResolvedGameProfile(pinned);
           if (registries.gameProfile?.hash !== pinned.hash) throw new Error('Pinned game profile does not match the load registry');

@@ -18,6 +18,7 @@ test('bundle inheritance, explicit off/defaults and deep overrides use one contr
  const changed=resolveGameProfile(author({cards:{handBase:2},resources:{include:['sp']}}));assert.equal(changed.modules.cards.handBase,2);assert.equal(changed.modules.cards.turnPolicy,'multiCard');assert.deepEqual(changed.modules.resources.include,['sp']);assert.notEqual(changed.hash,core.hash);
  assert.deepEqual(mergeGameSettings({x:{a:1,b:2},list:[1,2]},{x:{b:7},list:[3]}),{x:{a:1,b:7},list:[3]});
  assert.equal(gameModule({gameProfile:changed},'cards'),changed.modules.cards);
+ assert.deepEqual(resolveGameProfile(author({defenses:{include:['block']}})).modules.defenses.order,['block']);
 });
 test('invalid author shapes and settings fail at exact paths',()=>{
  for(const [value,path]of [[{...author({}),surprise:true},'$/surprise'],[author({typo:true}),'$/modules/typo'],[author({cards:2}),'$/modules/cards'],[author({cards:{handBase:NaN}}),'$/modules/cards/handBase'],[author({cards:{handBase:-1}}),'$/modules/cards/handBase'],[author({cards:{handBase:1.5}}),'$/modules/cards/handBase'],[author({cards:{handbase:4}}),'$/modules/cards/handbase'],[author({resources:{include:['sp','ghost']}}),'$/modules/resources/include'],[author({defenses:{include:['block'],order:['poise']}}),'$/modules/defenses/order'],[{...author({}),core:'ashen.core@latest'},'$/core']])assert.throws(()=>resolveGameProfile(value),e=>e.path===path);
@@ -42,6 +43,8 @@ test('current remains a cloned legacy bundle; configured projection passes real 
  const before=contentBundle.cards.length,projected=applyGameProfileToContent(contentBundle,core);
  assert.equal(contentBundle.cards.length,before);assert.equal(projected.cards.length,before+gameContent(core,'cards').length);
  const result=validateContent(projected);assert.equal(result.ok,true,JSON.stringify(result.errors));
+ const twice=validateContent(applyGameProfileToContent(projected,core));assert.equal(twice.ok,true,JSON.stringify(twice.errors));
+ const withoutCards=validateContent(applyGameProfileToContent(contentBundle,author({cards:false})));assert.equal(withoutCards.ok,true,JSON.stringify(withoutCards.errors));
  const reg=bindGameProfileRegistries(createRegistries(projected),core);assert.equal(reg.cards.get('core.strike').name,'Strike');assert.equal(reg.gameProfile.hash,core.hash);
 });
 test('snapshots validate digests and pinned runtime, with no shared mutable selector',()=>{
