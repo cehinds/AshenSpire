@@ -1,4 +1,5 @@
 import { stanceRules } from '../content/stanceRules.js';
+import { cardPreparationCategory } from './cardClassification.js';
 import { combatProfileFor } from './combatCardProfile.js';
 
 export function stanceRulesFor(ctx) { return { ...stanceRules, ...(ctx?.stanceRules || ctx?.registries?.balance?.stanceRules || {}) }; }
@@ -20,15 +21,19 @@ export function enemyCounterPoiseDamage(move, profile, ctx) {
 }
 export function stanceOf(carrier, entity = null) {
   if (!carrier) return null;
-  const profile = carrier.combatProfile || (carrier.camp ? carrier : combatProfileFor(carrier));
-  if (profile.stanceTrigger === false || !profile.maneuver) return null;
+  const tags = carrier.cardTags ?? carrier.tags;
+  const normalized = tags ? { ...carrier, cardTags: tags.map(tag => typeof tag === 'string' ? tag : tag.id) } : carrier;
+  const profile = carrier.combatProfile || (carrier.camp ? carrier : combatProfileFor(normalized));
+  if (profile.stanceTrigger === false) return null;
+  const preparation = cardPreparationCategory(carrier);
+  if (!preparation && !profile.maneuver) return null;
   const camp = ['spell', 'spells', 'magic', 'magical'].includes(profile.camp) ? 'spell' : 'physical';
-  let maneuver = profile.maneuver;
+  let maneuver = preparation ? 'casting' : profile.maneuver;
   if (maneuver === 'defense' || maneuver === 'block') maneuver = 'defend';
   if (maneuver === 'spell' || maneuver === 'cast') maneuver = 'casting';
   const evade = profile.evade && profile.evadeEligible !== false
     && (!profile.evade.whileStatus || profile.evadeEligible === true || entity?.statuses?.[profile.evade.whileStatus]?.stacks > 0);
-  if ((evade && ['defend', 'counter'].includes(maneuver)) || maneuver === 'evade') maneuver = 'evade';
+  if (!preparation && ((evade && ['defend', 'counter'].includes(maneuver)) || maneuver === 'evade')) maneuver = 'evade';
   if (camp === 'spell' && !['defend', 'counter', 'evade'].includes(maneuver)
     && (profile.range || (profile.projectile || maneuver === 'ranged' ? 'ranged' : 'melee')) !== 'melee') maneuver = 'casting';
   if (maneuver === 'ranged') maneuver = 'attack';
