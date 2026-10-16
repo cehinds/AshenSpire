@@ -1632,7 +1632,8 @@ function runOpcode(ctx, action, eff) {
       for(const enemy of resolveTargets(ctx,action,eff.target)) {if(enemy.kind!=='enemy') continue;enemy.proposalIntentRevealedUntil=ctx.turn+Math.max(1,Math.min(10,evalNum(ctx,action,eff.amount,1)));enemy.intentRevealed=true;ctx.emit('intentRevealed',{targetId:enemy.id,until:enemy.proposalIntentRevealedUntil,burdenCards:(enemy.burdenPiles?.hand || []).map(c=>c.cardId),burdenCounts:Object.fromEntries(Object.entries(enemy.burdenPiles || {}).map(([k,v])=>[k,v.length]))});}break;
     case 'modifyCards':
     case 'moveCards': {
-      moveCards(ctx, action, evalNum(ctx, action, eff.amount, 1));
+      const resolved=eff.changes?.hideTurns && typeof eff.changes.hideTurns==='object' ? {...action,effect:{...eff,changes:{...eff.changes,hideTurns:Math.min(10,Math.max(1,evalNum(ctx,action,eff.changes.hideTurns,1)))}}} : action;
+      moveCards(ctx, resolved, evalNum(ctx, action, eff.amount, 1));
       break;
     }
     case 'draw': {
