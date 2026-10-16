@@ -37,7 +37,7 @@ Required order: restore/verify art access → reviewed art PR and normal CI → 
 
 ## Related card presentation relay
 
-[Live CardPreview gallery](https://cehinds.github.io/AshenSpire/branches/Feature/CardPreview/latest/) is a separate published visual exploration: **6 featured designs plus 70 proposals**, including Simple, centered title fade, 2–3 title lines, and inspection. Parent review verified CI run [38855179710](https://github.com/cehinds/AshenSpire/actions/runs/38855179710) and published-byte hash prefix `f402…`; this handoff does not claim a fresh fetch from the restricted environment.
+[Live CardPreview gallery](https://cehinds.github.io/AshenSpire/branches/Feature/CardPreview/latest/) is a separate published visual exploration: **6 featured designs plus 70 proposals**, including Simple art, the correct dark title fade, centered effect text limited to 2–3 lines, and inspection. Parent review verified CI run [38855179710](https://github.com/cehinds/AshenSpire/actions/runs/38855179710) and published-byte hash prefix `f402…`; this handoff does not claim a fresh fetch from the restricted environment.
 
 Use these as visual proposals for shared card presentation, **not mechanics authority**. Do not overwrite newer MP balancing or decisions owned by the other chat. The rest worker branch does not contain the separate CardPreview implementation; reconcile that effort’s own source and current contracts before reuse.
 
