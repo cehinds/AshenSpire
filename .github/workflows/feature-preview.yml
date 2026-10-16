@@ -35,7 +35,8 @@ jobs:
         with:
           packs: all
       - name: Run game profile and save migration checks
-        run: node --test tests/game-profile-*.test.mjs tests/save-migration.test.mjs
+        # These tests compile/mutate generated profile artifacts; serialize to avoid races.
+        run: node --test --test-concurrency=1 tests/game-profile-*.test.mjs tests/save-migration.test.mjs
       - name: Check compiled JSON game profiles
         run: node tools/game-config.mjs check
       - name: Build branch HEAD

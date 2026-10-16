@@ -41,7 +41,9 @@ test('resource-off cards select explicit authored alternatives and retain card i
 test('current remains a cloned legacy bundle; configured projection passes real validation',()=>{
  const core=resolveGameProfile('core'),legacy=applyGameProfileToContent(contentBundle,'current');assert.notEqual(legacy,contentBundle);assert.notEqual(legacy.cards,contentBundle.cards);assert.equal(legacy.cards.length,contentBundle.cards.length);
  const before=contentBundle.cards.length,projected=applyGameProfileToContent(contentBundle,core);
- assert.equal(contentBundle.cards.length,before);assert.equal(projected.cards.length,before+gameContent(core,'cards').length);
+ assert.equal(contentBundle.cards.length,before);
+ const expectedIds=new Set([...contentBundle.cards,...gameContent(core,'cards')].map(card=>card.id));
+ assert.equal(projected.cards.length,expectedIds.size);assert.deepEqual(new Set(projected.cards.map(card=>card.id)),expectedIds);
  const result=validateContent(projected);assert.equal(result.ok,true,JSON.stringify(result.errors));
  const twice=validateContent(applyGameProfileToContent(projected,core));assert.equal(twice.ok,true,JSON.stringify(twice.errors));
  const withoutCards=validateContent(applyGameProfileToContent(contentBundle,author({cards:false})));assert.equal(withoutCards.ok,true,JSON.stringify(withoutCards.errors));

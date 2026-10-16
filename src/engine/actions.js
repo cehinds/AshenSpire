@@ -1386,7 +1386,7 @@ function plannedStatusTargets(ctx, action, eff) {
 
 function runOpcode(ctx, action, eff) {
   if(eff.op==='addCinders' && ctx.player && !ctx.run) {
-    const amount=Math.max(0,evalNum(ctx,action,eff.amount,0));ctx.proposalRewards ||= {cinders:0};ctx.proposalRewards.cinders+=amount;ctx.emit('cindersChanged',{amount,total:ctx.proposalRewards.cinders,combatReward:true});return;
+    const amount=Math.max(0,evalNum(ctx,action,eff.amount,0));ctx.proposalRewards ||= {cinders:0};ctx.proposalRewards.cinders+=amount;if(ctx.playerKey){ctx.proposalRewards.byPlayer ||= {};ctx.proposalRewards.byPlayer[ctx.playerKey]=(ctx.proposalRewards.byPlayer[ctx.playerKey] || 0)+amount;}ctx.emit('cindersChanged',{amount,total:ctx.proposalRewards.cinders,combatReward:true});return;
   }
   if (RUN_OPCODES.includes(eff.op)) {
     runRunOpcode(ctx, action, eff);

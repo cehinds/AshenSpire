@@ -135,16 +135,17 @@
     "effects": [
       {
         "op": "damage",
-        "target": "enemy",
+        "target": "allEnemies",
         "amount": 4
       }
     ],
     "tags": [
       "camp:physical",
       "maneuver:sweep",
-      "classification.attack"
+      "classification.attack",
+      "targeting:area"
     ],
-    "textTemplate": "Deal {damage} damage.",
+    "textTemplate": "Deal {damage} damage to ALL enemies.",
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0

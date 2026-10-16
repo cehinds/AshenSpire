@@ -1,3 +1,4 @@
+import { formationOccupancy } from '../../model/formationOccupancy.js';
 import { projectEnemyBurdenHand } from '../models/EnemyBurdenModel.js';
 import { hasCardChoice, zoneCandidates } from '../../engine/cardZones.js';
 import { foundationStandin } from '../components/foundationStandin.js';
@@ -1261,6 +1262,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // ---------- rendering ----------
   function renderCombatantStage({ fit = true } = {}) {
     $('.field').dataset.playerCell = combat.player.formationCell || '';
+    $('.field').dataset.formationPolicy = JSON.stringify(combat.formationPolicy || null);
+    $('.field').dataset.formationOccupancy = JSON.stringify(formationOccupancy(combat));
     hideTooltip();
     if (selected || selfArm || selectedFlask != null) selectedCombatantId = null;
     if (selectedCombatantId && selectedCombatantId !== 'player' && !combat.enemies.some((enemy) => enemy.id === selectedCombatantId && enemy.alive)) selectedCombatantId = null;

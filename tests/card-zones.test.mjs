@@ -1,4 +1,4 @@
-import { executeAction } from '../src/engine/actions.js';
+import { executeAction, applyAttackDamage } from '../src/engine/actions.js';
 import { resolveGameProfile } from '../src/model/gameProfile.js';
 import { setProfileStance,profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
 import { trimCombatStances } from '../src/engine/concurrentStances.js';
@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch, previewCard, cardPlayCosts, previewIntent } from '../src/engine/combat.js';
-import { createCoopCombat, playCard, chooseDiscard, endTurn, previewCoopCard } from '../src/engine/coopCombat.js';
+import { createCoopCombat, playCard, chooseDiscard, endTurn, previewCoopCard, coopOutcome } from '../src/engine/coopCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { applyStatus, removeStatus, advanceStatusClock, getStacks } from '../src/engine/statuses.js';
@@ -186,4 +186,19 @@ test('MP-only configured growth does not reintroduce disabled Stamina through ac
  combat.gameProfile=resolveGameProfile({formatVersion:1,core:'ashen.core@1.0.0',modules:{resources:{include:['hp','mp']}}});
  const id=combat.piles.hand[0].instanceId;assert.equal(cardPlayCosts(combat,id).stamina,0);play(combat);
  const next=combat.piles.hand[0].instanceId;assert.equal(cardPlayCosts(combat,next).stamina,0);assert.equal(cardPlayCosts(combat,next).mana,2);
+});
+
+test('co-op Transmute receipts credit the acting seat without sharing or dropping Cinders',()=>{
+ const combat=fixture([{op:'addCinders',amount:10}],{coop:true});
+ for(const seat of ['a','b'])playCard(combat,seat,combat.players.get(seat).piles.hand[0].instanceId);
+ assert.deepEqual(coopOutcome(combat).earnedCinders,{a:10,b:10});assert.equal(combat.proposalRewards.cinders,20);
+});
+
+test('co-op guard redirects to the actual protecting teammate and consumes only that seat status',()=>{
+ const combat=fixture([{op:'block',amount:1,target:'self'}],{coop:true});
+ combat.registries={...combat.registries,proposalStatusRules:{weak:{behaviors:[{kind:'guard',amountPerStack:4,consumeStacks:1}]}}};
+ const a=combat.players.get('a').entity,b=combat.players.get('b').entity;b.statuses.weak={stacks:3};const beforeA=a.hp,beforeB=b.hp;
+ applyAttackDamage(combat,combat.enemies[0],a,12,[],{combatProfile:{camp:'physical',maneuver:'attack',range:'melee'}});
+ let n=0;while(combat.queue.length){assert.ok(n++<100);executeAction(combat,combat.queue.shift());}
+ assert.equal(a.hp,beforeA);assert.equal(b.hp,beforeB-12);assert.equal(b.statuses.weak.stacks,2);assert.equal(a.statuses.weak,undefined);
 });

@@ -151,7 +151,7 @@ test('actual core run hands the same pin and derived AR/DR to the live combat fa
   assert.deepEqual(combat.skillXp, {}, 'configured core does not gain legacy skill XP');
 });
 
-test('current profile keeps absent-profile combat traces and snapshot state unchanged', async () => {
+test('current profile adds only formation metadata while preserving absent-profile combat traces and state', async () => {
   const { createRunState } = await import('../src/model/state.js');
   const { createRunCombat } = await import('../src/engine/runCombat.js');
   const current = resolveGameProfile('current');
@@ -161,10 +161,25 @@ test('current profile keeps absent-profile combat traces and snapshot state unch
   const selectedRun = structuredClone(run); selectedRun.gameProfile = current;
   const absent = createRunCombat({ registries, run: absentRun, rng: createRng(177), enemyIds: ['wanderingSoldier'] });
   const selected = createRunCombat({ registries, run: selectedRun, rng: createRng(177), enemyIds: ['wanderingSoldier'] });
-  const omitPin = snapshot => { const { gameProfile, gameProfileCommands, gameProfileInterrupts, ...rest } = snapshot; return rest; };
-  assert.deepEqual(omitPin(serializeCombatSnapshot(selected)), serializeCombatSnapshot(absent));
+  const assertParity = () => {
+    const selectedSnapshot = serializeCombatSnapshot(selected), absentSnapshot = serializeCombatSnapshot(absent);
+    assert.deepEqual(selectedSnapshot.formationPolicy, current.modules.formation);
+    assert.equal(selectedSnapshot.player.formationCell, 'C1');
+    assert.deepEqual(selectedSnapshot.enemies.map(enemy => enemy.formationCell), ['A4']);
+    assert.equal(absentSnapshot.formationPolicy, undefined);
+    assert.equal(absentSnapshot.player.formationCell, undefined);
+    assert(absentSnapshot.enemies.every(enemy => enemy.formationCell === undefined));
+    // Remove exactly the profile pin and its asserted positional metadata.
+    // Every combat value, pile, receipt and event remains an exact comparison.
+    const { gameProfile, gameProfileCommands, gameProfileInterrupts, formationPolicy, ...state } = selectedSnapshot;
+    const { formationCell, ...player } = state.player;
+    const enemies = state.enemies.map(({ formationCell, ...enemy }) => enemy);
+    assert.deepEqual({ ...state, player, enemies }, absentSnapshot);
+    assert.deepEqual(selected.rng.getCounters(), absent.rng.getCounters());
+  };
+  assertParity();
   assert.deepEqual(dispatch(selected, { type: 'endTurn' }), dispatch(absent, { type: 'endTurn' }));
-  assert.deepEqual(omitPin(serializeCombatSnapshot(selected)), serializeCombatSnapshot(absent));
+  assertParity();
 });
 
 test('a real run with only cards disabled gets attack/pass rather than stale starter cards', async () => {

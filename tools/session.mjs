@@ -1,3 +1,4 @@
+import { formationOccupancy } from '../src/model/formationOccupancy.js';
 import { projectEnemyBurdenHand } from '../src/ui/models/EnemyBurdenModel.js';
 import {rollPendingAbilityOffers} from '../src/model/abilityOffers.js';
 import { enemyStanceCategory } from '../src/model/enemyStancePose.js';
@@ -827,6 +828,8 @@ export function createSession({ registries, seedString, endless = false, restore
       ...(c.stanceRules ? { stanceRules: structuredClone(c.stanceRules) } : {}),
       ...(c.enemyKnowledge ? { enemyKnowledge: { version: 1, rules: structuredClone(c.enemyKnowledge.rules),
         owners: structuredClone(c.enemyKnowledge.owners) } } : {}),
+      formationPolicy: c.formationPolicy || null,
+      formationOccupancy: formationOccupancy(c),
       receiptSeq: ++combatReceiptSeq,
       opening,
       events,
@@ -998,6 +1001,7 @@ export function createSession({ registries, seedString, endless = false, restore
       if (c.enemyKnowledge?.owners[m.id]) reconcileCombatKnowledge(m.run, c, m.id);
       const s = outcome.survivors[m.id];
       if (!s) continue;
+      m.run.cinders=(m.run.cinders || 0)+(outcome.earnedCinders?.[m.id] || 0);
       m.run.hp = s.downed ? 0 : Math.max(0, s.hp);
       if (s.ashenBlight) m.run.ashenBlight = structuredClone(s.ashenBlight);
       if (s.blightTerminal) { m.alive = false; m.catchup.length = 0; }

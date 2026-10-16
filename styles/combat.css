@@ -1801,3 +1801,48 @@
 .combat-log-entries li { border-bottom:1px solid #b4925438; padding:3px 0; }
 @media (prefers-reduced-motion:no-preference) { .combat-log-panel:not([hidden]) { animation:combat-log-open 120ms ease-out; } }
 @keyframes combat-log-open { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
+
+/* Approved original composition: preserve groups, enlarge readable content. */
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] {
+  background: #211d16;
+  grid-template-rows: var(--w4-band-hud) minmax(0,1fr) calc(var(--w4-band-context) + var(--w4-band-footer));
+}
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] > .hand-area {
+  background: #211d16;
+  grid-template-rows: minmax(0,1fr) var(--w4-band-footer);
+}
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] .combat-action-row { background: none !important; box-shadow: none; }
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] .alternative-card-fade { display: none; }
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] .combatant-mini-hud { zoom: var(--combat-mini-hud-scale,1.8); }
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] .combat-tools { font-size: calc(17px / var(--ui-zoom,1)); }
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] .turn-ribbon { font-size: calc(18px / var(--ui-zoom,1)); }
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] .combatant .combatant-mini-hud {
+  width: calc(112px / var(--ui-zoom,1)); flex: none;
+}
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] .combatant.enemy .combatant-card > :is(.meters,.nm) {
+  width: calc(104px * var(--combat-enemy-hud-scale,1.8) / var(--ui-zoom,1));
+}
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] .combatant.enemy:not(.context-selected) .combat-health-row {
+  --health-row-h: calc(7px * var(--combat-enemy-hud-scale,1.8) / var(--ui-zoom,1));
+  --combatant-hp-h: var(--health-row-h);
+  --combatant-value-text: calc(10px * var(--combat-enemy-hud-scale,1.8) / var(--ui-zoom,1));
+  padding-bottom: calc(12px * var(--combat-enemy-hud-scale,1.8) / var(--ui-zoom,1));
+}
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] .combatant.enemy:not(.context-selected) .combat-health-meter .m-value {
+  font-size: calc(10px * var(--combat-enemy-hud-scale,1.8) / var(--ui-zoom,1));
+}
+
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] .combatant.player .combatant-leading {
+  width: calc(112px * var(--combat-mini-hud-scale,1.8) / var(--ui-zoom,1));
+}
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] .combatant.enemy .intent { zoom: var(--combat-enemy-hud-scale,1.8); }
+/* A compact face keeps its prose inside the parchment; Inspect retains all lines. */
+:root .combat .hand .card .ic-layer[data-component='rules'] { overflow: hidden; }
+/* The real artwork/HUD and bounded 44px core remain targets. A second,
+   footer-wide transparent proxy would steal artwork in the next depth band. */
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] .combatant.enemy.enemy-target-hitbox::after {
+  pointer-events: none;
+}
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] .enemy .combatant-leading > .statuses:empty {
+  display: none;
+}
