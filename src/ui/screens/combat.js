@@ -1,3 +1,5 @@
+import { mountCombatTargetHud } from '../components/combatTargetHud.js';
+import { projectCombatIntent } from '../models/CombatIntentProjectionModel.js';
 import { formationOccupancy } from '../../model/formationOccupancy.js';
 import { projectEnemyBurdenHand } from '../models/EnemyBurdenModel.js';
 import { hasCardChoice, zoneCandidates } from '../../engine/cardZones.js';
@@ -29,7 +31,7 @@ import { playCardEffectLayers } from '../cardEffectLayers.js';
 // Renders strictly from combat state; animates from dispatch events. Every
 // number displayed comes from previewCard / previewIntent — no math here.
 
-import { dispatch as engineDispatch, previewCard as enginePreviewCard, previewIntent, getEntity, cardChoicePlan, previewCardHit } from '../../engine/combat.js';
+import { dispatch as engineDispatch, previewCard as enginePreviewCard, getEntity, cardChoicePlan, previewCardHit } from '../../engine/combat.js';
 import { createPreviewMemo } from '../models/PreviewMemoModel.js';
 import { decorateCombatRoundsScreen } from '../components/combatRoundsScreen.js';
 import { targetedEnemyId } from '../models/CombatRoundsScreenModel.js';
@@ -277,6 +279,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // player surface, plus every enemy for the under-model one) rather than typed.
   // Once per mount: it is a fact about the content, not about the frame.
   const resDomains = resourceDomains(registries);
+  const targetHud = mountCombatTargetHud(combatEl);
   const battlefieldStage = wireBattlefieldStage($('.field'), battlefieldStageModel(registries.balance.ui.combatantStage));
   const combatLayout = wireCombatLayout(combatEl);
   let playerRest = 'idle';
@@ -526,12 +529,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (id && !getEntity(combat, id)?.alive) return;
     selectedCombatantId = id;
     selectCombatantInfo(combatEl, id);
+    updateTargetHud();
   }
 
   // A blank press dismisses only the floating explanation. The edge inspector
   // is a separately owned Folding Tray and remains until its label is folded.
   combatEl.addEventListener('click', (event) => {
-    if (event.target.closest('.combatant, .combatant-inspector-host')) return;
+    if (event.target.closest('.combatant, .combatant-inspector-host, .target-hud-layer')) return;
     selectCombatant(null);
   });
 
@@ -717,6 +721,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const plan = pendingTargetPlan(dragInstanceId || selected || selfArm);
     const layer = targetLayer({ armed: armed && plan.mode === 'enemy', enemies: combat.enemies });
     combatEl.dataset.targetLayer = layer.active ? 'armed' : 'idle';
+    updateTargetHud(armed ? plan.legalIds : []);
     combatEl.querySelectorAll('.combatant').forEach(frame => {
       const id = frame.classList.contains('player') ? combat.player.id : frame.dataset.eid;
       const alive = !!getEntity(combat, id)?.alive;
@@ -729,7 +734,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       } else frame.removeAttribute('aria-disabled');
     });
     renderEnemyTargetPicker($('.field'), {
-      targets: layer.eligibleIds.map(id => {
+      targets: (combatEl.dataset.targetHud === 'true' ? [] : layer.eligibleIds).map(id => {
         const enemy = getEntity(combat, id);
         return { id, name: registries.enemies.get(enemy.enemyId).name, hp: enemy.hp, maxHp: enemy.maxHp };
       }),
@@ -891,7 +896,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
 
     const def = registries.enemies.get(entity.enemyId);
-    const intent = configuredArt && !gameModule(run, 'intent') ? { hidden: true, label: t('gameProfile.combat.unreadIntent') } : disp?.ents[entity.id]?.intentPreview || previewIntent(combat, entity.id);
+    const intent = configuredArt && !gameModule(run, 'intent') ? { hidden: true, label: t('gameProfile.combat.unreadIntent') } : disp?.ents[entity.id]?.intentPreview || projectCombatIntent(combat, entity.id);
     const moveCardOptions = { registries, combatMatchupRules: combat.combatMatchupRules,
       combatExpansionVersion: combat.combatExpansionVersion, stanceRules: combat.stanceRules };
     const learning = combat.enemyKnowledge ? projectEnemyKnowledge(def, combat.enemyKnowledge.owners.player?.knowledge.enemies[def.id], { ...moveCardOptions, ratingsRules: combat.ratingsRules }) : null;
@@ -1045,7 +1050,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     return {
       id: e.id,
       kind: e.kind,
-      ...(e.kind === 'enemy' ? { intentPreview: previewIntent(combat, e.id), presentationStance: enemyStanceCategory(e.intent) } : {}),
+      ...(e.kind === 'enemy' ? { intentPreview: projectCombatIntent(combat, e.id), presentationStance: enemyStanceCategory(e.intent) } : {}),
       hp: e.hp,
       mana: e.mana,
       block: e.block,
@@ -1113,7 +1118,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           // Unused Evade charges expire as the player's turn starts.
           if (disp.ents.player) disp.ents.player.combatEvade = null;
           for (const enemy of combat.enemies) if (disp.ents[enemy.id]) {
-            disp.ents[enemy.id].intentPreview = previewIntent(combat, enemy.id);
+            disp.ents[enemy.id].intentPreview = projectCombatIntent(combat, enemy.id);
             disp.ents[enemy.id].presentationStance = enemyStanceCategory(enemy.intent);
           }
           break;
@@ -1258,6 +1263,24 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         }
       }
     }
+  }
+
+  // Detail presentation consumes the exact paced values used by the overhead
+  // HUD. Eligibility comes from the real card plan, not a living-enemy shortcut.
+  function updateTargetHud(eligibleIds = null) {
+    const active = findInst(selected || selfArm);
+    const activeDef = active && resolveCombatCard(combat, active, { upcastRanks: upcastRanksByCard.get(active.instanceId) });
+    const action = activeDef ? kindForCard(activeDef) : heldKinds.get() || RESTING_PLAYER_ACTION;
+    const combatants = [combat.player, ...combat.enemies].filter(entity => dv(entity).alive !== false).map(entity => {
+      const role = entity.kind === 'enemy' ? 'enemy' : 'player';
+      const intent = role === 'enemy' ? configuredArt && !gameModule(run, 'intent')
+        ? { hidden: true, label: t('gameProfile.combat.unreadIntent') }
+        : disp?.ents[entity.id]?.intentPreview || projectCombatIntent(combat, entity.id) : null;
+      return { id: entity.id, role, name: role === 'enemy' ? registries.enemies.get(entity.enemyId).name : run.customization?.name || runClassIdentity(registries, run).name,
+        intent, action: role === 'player' ? action : null, key: JSON.stringify([dv(entity), intent, role === 'player' && action]),
+        createMeters: () => meterBars(entity), createStatuses: () => statusRow(entity, { inspection: true }) };
+    });
+    targetHud.update({ combatants, eligibleIds: eligibleIds || (selected || selfArm || selectedFlask != null ? pendingTargetPlan().legalIds : []), focusedId: selectedCombatantId });
   }
 
   // ---------- rendering ----------
@@ -1430,7 +1453,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     });
   }
 
-  function statusRow(entity) {
+  function statusRow(entity, { inspection = false } = {}) {
     // The status row is THE shared icon tray (components/iconTray.js) — the
     // reference the relic rail and the Potions minis inherit: one round Pip per
     // effect, its count a round StatePill on the corner, one row that never
@@ -1441,7 +1464,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // make the pips dead patches on a target.
     const row = iconTray({ label: t('iconTray.status'), attrs: { class: 'statuses' } });
     markUiComponent(row, UI.statusEffectTray, entity.kind);
-    const armed = () => !!(selected || selectedFlask != null || selfArm);
+    const armed = () => !inspection && !!(selected || selectedFlask != null || selfArm);
     const plan = entity.kind === 'enemy' ? procDisplayPlan(entity) : { bars: [], pips: [] };
     // Expanded combat: a prepared Evade (Dodge Roll, Quickstep) is a pip with
     // its charge count, in the card rail's own Evade symbol.
@@ -1802,7 +1825,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // The intent is one StatePill in the fact's own tone, glyph first — the kit's
   // `pill.lg` (uiContent.js intentBadge picks the tone and the words).
   function intentEl(enemy) {
-    return combatantIntent(disp?.ents[enemy.id]?.intentPreview || previewIntent(combat, enemy.id), () => {
+    return combatantIntent(disp?.ents[enemy.id]?.intentPreview || projectCombatIntent(combat, enemy.id), () => {
       const intent = combatantSubject('enemy', enemy).intent;
       return `<div class="tt-title">Intent: ${esc(intent.name)}</div>${esc(intent.detail)}`;
     }, registries, { onTarget: () => {
@@ -2775,6 +2798,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           // only thing that happens next is the spoils door. Close it, disable
           // it, and refuse the actions even if something re-opens it.
           fightOver = true;
+          targetHud.release();
           closeQuickNav();
           if (menuBtn) { menuBtn.disabled = true; menuBtn.setAttribute('aria-disabled', 'true'); }
           removeEventListener('keydown', keyHandler);
@@ -3231,6 +3255,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         for (const record of enemyFrames.values()) stageFor(record.box)?.dispose?.();
         enemyFrames.clear();
         removeEventListener('keydown', keyHandler);
+        targetHud.release();
         battlefieldStage.release();
         formationMovement?.release();
         combatLayout.release();
