@@ -20,5 +20,10 @@
       "draw": 1
     }
   },
-  "secondaryPolicy": "legacyAdapter"
+  "secondaryPolicy": "legacyAdapter",
+  "poolBasesByClass": {
+    "reaver": {
+      "mana": 0
+    }
+  }
 }
