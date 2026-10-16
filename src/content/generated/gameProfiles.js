@@ -15387,7 +15387,7 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "path": "src/** (excluding generated gameProfiles/changelog)",
-      "hash": "sha256:4577de08d6e1ef925d88563a60f8a399ebf6570a45b76019bf00557e73f0b553"
+      "hash": "sha256:2377d3f87c31a4f5fbc84765abe529fd53f7c7b2142c9de619c3e1e0a044fb40"
     }
   ],
   "runtimeSources": [
@@ -15407,7 +15407,7 @@ export const gameProfileCatalog = {
       "path": "src/config/generated/ui.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:5b9ee52fd5cabc19fafa24a53529c787f1939ff50552e1c35cdec393c2da8533"
+      "hash": "sha256:45a44ad399ae4aac2c162e09b5bc00bb7f7cc115d8e0d8abdc54b3791fb9b3b3"
     },
     {
       "path": "src/content/actionAnimations.js",
@@ -18533,7 +18533,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/components/combatLayout.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:fd7ebfc4b0ad8d5f0fcd4f85bf0a52c4d91dd46a6893a287c5bbc9151bd30bed"
+      "hash": "sha256:053e1b41240ce12fa8eb9fee95b1a67098d8842a78e65011580874ebcebe73fe"
     },
     {
       "path": "src/ui/components/combatLogModal.js",
@@ -18563,7 +18563,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/components/combatTools.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:a48ec3c2ba3a2edf0efb21f3ad4b81ddd2e584e314f7213af24bd244f6d1be7f"
+      "hash": "sha256:720f31155815b1231022d1a0f5acaff3a05dd44c65d340521ae9a2f7bb8f96aa"
     },
     {
       "path": "src/ui/components/combatantFrame.js",
@@ -18809,7 +18809,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/components/hand.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:fdeebdf5fff94e1dbaf10d03f7c503448059cca53bb98c50d8b5400934f23052"
+      "hash": "sha256:ddcb39a3d2c31108e5bd63c06288d958ca7ebc6b3fad15384a8084029d1fec5e"
     },
     {
       "path": "src/ui/components/handDiscard.js",
@@ -19554,6 +19554,12 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "hash": "sha256:fe3cffdeb9af8ddf8677d0cd971245f9522a6449f41666abf1b0f36f1dcf0446"
+    },
+    {
+      "path": "src/ui/models/DesktopCombatFooter.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:5e5691dad5f8b5ac69127a0c7380445519521d85d3694c5074951dbebe6d2ef9"
     },
     {
       "path": "src/ui/models/DialogueModel.js",
@@ -20336,7 +20342,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:23af16d4e9c9f6d88fe655d32ecf1a688b47df39f9e3a1d6d193ce63923593ab"
     }
   ],
-  "runtimeHash": "sha256:2e15f5f2fc1067d3860036cfbd7264c4e8a5d5ef84db602f1bb201e176475267"
+  "runtimeHash": "sha256:0cd606b1c170dbcee61a12a705a098ac3f87a2ac5e1ce39679f3e6ec05f02375"
 };
 export const gameProfileAuthors = {
   "default": {
