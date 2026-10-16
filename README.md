@@ -5,8 +5,14 @@
 
 The same runtime supports two authored configurations. **Product core** includes its required bundled modules and keeps optional gameplay packages off where the core has a fallback. **Current game** preserves the full legacy configuration.
 
-- **Product core:** [Play on Pages (latest publication unverified)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-modules/latest/) · [standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38952859060/artifacts/12070010032) · [successful build run](https://github.com/cehinds/AshenSpire/actions/runs/38952859060)
-- **Current game:** [Play on Pages (latest publication unverified)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-current-preview/latest/) · [standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38952896396/artifacts/12068894262) · [successful build run](https://github.com/cehinds/AshenSpire/actions/runs/38952896396)
+- **Product core:** [Play on Pages (latest publication unverified)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-modules/latest/) · [standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38956660452/artifacts/12071135711) · [successful build run](https://github.com/cehinds/AshenSpire/actions/runs/38956660452)
+- **Current game:** [Play on Pages (latest publication unverified)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-current-preview/latest/) · [standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38956718201/artifacts/12071195797) · [successful build run](https://github.com/cehinds/AshenSpire/actions/runs/38956718201)
+
+Desktop and widescreen now use the approved **B footer fade**, exposing the battlefield behind the cards while preserving the existing header fade and all control positions. [Fresh screenshots and verification](docs/preview/features/json-game-modules/footer-fade/README.md) · [Original wireframes A–G](docs/preview/features/json-game-modules/footer-fade-proposals/README.md).
+
+[Review targeting HUD wireframes](docs/preview/features/json-game-modules/target-hud-proposals/README.md) — proposed enemy lane order, overhead intent, selected target panels, and card-target previews. These diagrams await approval; they do not change gameplay.
+
+The deck editor’s animation sprite now sits lower so the head clears the preview border, while retaining its size and the description layout. [Fresh headroom screenshots](docs/preview/features/json-game-modules/deck-headroom/README.md).
 
 The battlefield grid now uses thin, translucent lines and a saved **Grid** checkbox directly above Combat Log. Core’s unused middle row stays visible without enabling placement. [Grid screenshots and verification](docs/preview/features/json-game-modules/grid/README.md).
 
