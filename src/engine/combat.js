@@ -1,3 +1,4 @@
+import { proposalCardPlan, applyProposalPlan, proposalTurn, proposalRetained } from './proposalStatusRuntime.js';
 import { beginEnemyBurdens, endEnemyBurdens, allowBurdenMove } from './enemyBurdens.js';
 import { selectCardVariant } from './cardBehavior.js';
 import { chooseZoneCards, hasCardChoice, returnHiddenCards } from './cardZones.js';
@@ -558,7 +559,7 @@ function startPlayerTurn(combat) {
   // (2) Lose all block — unless modified (generic 'retainBlock' modifier;
   // a 'blockCap' modifier clamps what is kept).
   if (!S.getFlag(combat, p, 'retainBlock')) {
-    p.block = Math.min(p.block, passiveMax(combat.registries, p.relicIds, 'retainBlockUpTo', propertyMountsOf(combat, p)));
+    p.block = Math.min(p.block, Math.max(proposalRetained(combat,p),passiveMax(combat.registries, p.relicIds, 'retainBlockUpTo', propertyMountsOf(combat, p))));
   } else {
     const cap = S.getCap(combat, p, 'blockCap');
     if (cap != null) p.block = Math.min(p.block, cap);
@@ -594,6 +595,7 @@ function startPlayerTurn(combat) {
 
   // playerTurnStart triggers + owner-relative status/stance hooks.
   combat.emit('playerTurnStart', { turn: combat.turn });
+  proposalTurn(combat,p,'start');
   fireOwnerHooks(combat, p, 'ownerTurnStart');
   drainQueue(combat);
   if (combat.combatExpansionVersion === 2 && !combat.result) {
@@ -609,6 +611,7 @@ function endPlayerTurn(combat, discardIds = []) {
 
   // (4) playerTurnEnd triggers first…
   combat.emit('playerTurnEnd', { turn: combat.turn });
+  proposalTurn(combat,p,'end');
   fireOwnerHooks(combat, p, 'ownerTurnEnd');
   drainQueue(combat);
   if (combat.result) return;
@@ -700,6 +703,7 @@ function enemyTurnStart(combat) {
 function enemyOwnerTurnStart(combat, enemy) {
   beginEnemyBurdens(combat,enemy,Rounds.enemyPool(combat.registries.enemies.get(enemy.enemyId)));
   Reactions.revealActor(combat, enemy);
+  proposalTurn(combat,enemy,'start');
   fireOwnerHooks(combat, enemy, 'ownerTurnStart');
   drainQueue(combat);
   if (combat.result || !enemy.alive) return;
@@ -806,6 +810,7 @@ function enemyPhase(combat) {
     // player applied to an enemy tick down at the ENEMY's turn end).
     if (enemy.alive) {
       endEnemyBurdens(combat,enemy);
+      proposalTurn(combat,enemy,'end');
       fireOwnerHooks(combat, enemy, 'ownerTurnEnd');
       drainQueue(combat);
       if (combat.result) return;
@@ -856,7 +861,7 @@ function startDelayedMove(combat, enemy, move, moveId) {
 // `roundEntry`: the move resolves a Combat Rounds timeline entry, whose reaction point was the round prompt (SPEC
 // §4.11), so its group is marked roundSettled and the live reaction window does not open for it again.
 function executeMovePayload(combat, enemy, move, moveId, { roundEntry = false, roundPoiseMultiplier = combat.roundPoiseMultiplier } = {}) {
-  if (!allowBurdenMove(combat,enemy,Rounds.enemyMoveSp(move,{enemy,moveId,combat}))) return;
+  if (!allowBurdenMove(combat,enemy,Rounds.enemyMoveSp(move,{enemy,moveId,combat}),move)) return;
   move = expandedEnemyMove(enemy, move, moveId, combat);
   // movesHistory records ROLLS (maxConsecutive reads it); a roll a stagger
   // cancels never happens. This is what did — the inspector's history.
@@ -1441,7 +1446,15 @@ export function resolvedCardPlayCosts(combat, def, claimed = null) {
 
 // Restore cards show their full discounted price, although their own restore
 // funds part of the payment. Keep both amounts before payment clamps to zero.
-function resolvedCardPriceReceipt(combat, def, claimed = null) {
+function resolvedCardPriceReceipt(combat,def,claimed=null) {
+ const result=baseCardPriceReceipt(combat,def,claimed),status=proposalCardPlan(combat,combat.player,def);
+ if(status.staminaTax || status.manaTax) {
+  result.paid={...result.paid,energy:result.paid.energy+status.staminaTax,stamina:result.paid.stamina+status.staminaTax,mana:result.paid.mana+status.manaTax};
+  result.display={...result.display,action:result.display.action+status.staminaTax,stamina:result.display.stamina+status.staminaTax,mana:result.display.mana+status.manaTax};
+ }
+ return result;
+}
+function baseCardPriceReceipt(combat, def, claimed = null) {
   if (configuredCombat(combat)) {
     const paid = profileCardCosts(combat, def);
     return { paid, display: { action: paid.energy, stamina: paid.stamina, mana: paid.mana }, selfFunded: false };
@@ -1646,6 +1659,8 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
   const inst = combat.piles.hand[idx];
   let def = resolveCombatCard(combat, inst, { upcastTier, upcastRanks });
   const kws = def.keywords || [];
+  const statusPlan=proposalCardPlan(combat,p,def);
+  if(!statusPlan.allowed) throw F.playRefusal(statusPlan.refusal,'controlled');
   if (!Control.controlGate(combat, p, def).allowed) throw F.playRefusal('Recover from the active control statuses before playing cards', 'controlled');
   if (p.ashenBlight?.milestones?.some(row => row.path === null)) throw new Error('Choose the pending Ashen Blight feat first');
   const chosen = assertCardChoice(cardChoice(combat.registries, def, p.classId), choice);
@@ -1795,6 +1810,7 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
     expandedActions.push(action);
   }
   enqueueExpandedAction(combat, expandedActions, { source: p, target, carrier: cardRef });
+  applyProposalPlan(combat,statusPlan,p,target,cardRef);
   if (!configuredCombat(combat)) enqueueCounterWard(combat, p, cardRef, meta);
   combat.emit('cardPlayed', {
     ...before, abilityKind: cardRef.abilityKind, printedManaCost: def.manaCost || 0, sourceId: p.id,

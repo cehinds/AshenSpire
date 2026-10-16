@@ -3,10 +3,11 @@
 import { evalPredicate } from './triggers.js';
 export function projectCardBehavior(ctx, instance, def) {
   let result=def;
+  if(def.playLimit && (ctx.player.abilityRiders?.cardUsesCombat?.[instance.cardId] || 0)>=def.playLimit) result={...result,keywords:[...new Set([...(result.keywords || []),'unplayable'])]};
   const changes=instance.proposalChanges;
-  if (changes) result={...result,...(changes.range ? {range:changes.range,combatProfile:{...result.combatProfile,range:changes.range}} : {}),...(changes.maneuver ? {combatProfile:{...result.combatProfile,maneuver:changes.maneuver,...(changes.range ? {range:changes.range} : {})}} : {}),...(changes.retain ? {keywords:[...new Set([...(result.keywords || []),'retain'])]} : {})};
+  if (changes) result={...result,...(changes.range ? {range:changes.range,combatProfile:{...result.combatProfile,range:changes.range}} : {}),...(changes.maneuver ? {combatProfile:{...result.combatProfile,maneuver:changes.maneuver,...(changes.range ? {range:changes.range} : {})}} : {}),...(changes.retain && (changes.retainUntilTurn ?? ctx.turn)>=ctx.turn ? {keywords:[...new Set([...(result.keywords || []),'retain'])]} : {})};
   if (def.costGrowth) {
-    const growth=def.costGrowth, plays=ctx.player.abilityRiders?.sameCardPlays?.[instance.cardId] || 0;
+    const growth=def.costGrowth, plays=ctx.player.abilityRiders?.cardUsesCombat?.[instance.cardId] || 0;
     const steps=Math.min(growth.max ?? 3,Math.floor(plays/(growth.perUse || 1)));
     const stamina=typeof result.cost==='number' ? Math.max(0,result.cost+steps*(growth.stamina || 0)) : result.cost;
     result={...result,cost:stamina,staminaCost:stamina,manaCost:Math.max(0,(result.manaCost || 0)+steps*(growth.mana || 0))};

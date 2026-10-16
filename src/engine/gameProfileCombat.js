@@ -1,3 +1,4 @@
+import { proposalHitPlan, proposalTargetPlan } from './proposalStatusRuntime.js';
 // Configured combat adapter. All rules are scoped to the saved resolved profile;
 // a missing/current profile leaves the existing interpreter untouched.
 import { gameModule, gameContent } from '../model/gameProfile.js';
@@ -38,7 +39,7 @@ function hasPoise(target) {
 
 // Pure probability/receipt math: execution supplies a transactional RNG roll. No RNG,
 // source mutation, legacy elemental/rank riders, or protection-pool depletion.
-export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { roll = null } = {}) {
+export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { roll = null, proposal = true } = {}) {
   const effects = configuredModule(ctx, 'effects');
   const stances = configuredModule(ctx, 'stances');
   const defenses = configuredModule(ctx, 'defenses');
@@ -46,14 +47,17 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   const defending = configuredStance(target?.combatStance);
   const advantage = !!stances?.include?.includes(attacking)
     && !!stances?.matchups?.[attacking]?.includes(defending);
-  const raw = Math.max(0, Math.floor(base + rating(source, 'ar') * (effects?.attackRatingWeight || 0)));
+  let raw = Math.max(0, Math.floor(base + rating(source, 'ar') * (effects?.attackRatingWeight || 0)));
+  if(proposal && target) raw=proposalHitPlan(ctx,source,target,raw,carrier).amount;
   let amount = Math.max(0, Math.floor(raw * (advantage ? stances.advantageMultiplier ?? 1 : 1)));
   const evade = stances?.include?.includes('evade') && defending === 'evade';
-  const hitChance = evade ? Math.max(stances.minimumHitChance ?? 0.05,
+  const targeting=proposalTargetPlan(ctx,source,target,carrier);
+  let hitChance = evade ? Math.max(stances.minimumHitChance ?? 0.05,
     Math.min(stances.maximumHitChance ?? 0.95, (stances.accuracyBase ?? 0.75)
       + (rating(source, stances.accuracyStat || 'ar') - rating(target, stances.evasionStat || 'dr'))
         * (stances.accuracyWeight ?? 0.02))) : 1;
-  const evaded = !!evade && roll !== null && roll >= hitChance;
+  hitChance=targeting.unavoidable ? 1 : Math.max(0.05,Math.min(1,hitChance+targeting.accuracyDelta/100));
+  const evaded = roll !== null && roll >= hitChance;
   if (evaded) amount = 0;
   else if (evade) amount = Math.floor(amount * (stances.evadeFailureMultiplier ?? 2));
   let blocked = 0, poiseMitigated = 0;
@@ -80,7 +84,7 @@ export function profileCardCosts(ctx, def) {
   const resources = configuredModule(ctx, 'resources');
   const include = resources?.include || [];
   const authored = def.resourceCosts || def.costs || {};
-  const sp = authored.sp ?? def.staminaCost ?? (typeof def.cost === 'number' ? def.cost : 0);
+  const sp = def.cost==='X' && include.includes('sp') ? Math.max(0,ctx.player?.stamina ?? ctx.player?.energy ?? 0) : authored.sp ?? def.staminaCost ?? (typeof def.cost === 'number' ? def.cost : 0);
   const mp = authored.mp ?? def.manaCost ?? 0;
   if ((!include.includes('sp') && sp > 0) || (!include.includes('mp') && mp > 0)) {
     throw new Error(`Card ${def.id || 'unknown'} requires an authored disabled-resource variant`);
