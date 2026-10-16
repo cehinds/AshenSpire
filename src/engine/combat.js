@@ -1,3 +1,4 @@
+import { chooseZoneCards, hasCardChoice } from './cardZones.js';
 import { configuredCombat, configuredModule, setProfileStance, profileCardCosts, profileHandSize, profileFallbackDamage, freezeProfile } from './gameProfileCombat.js';
 import { decayStanceRoundStart } from './combatMatchups.js';
 import { previewCardAttackHit } from './stanceHit.js';
@@ -502,7 +503,7 @@ function drainQueue(combat) {
         else delete combat.roundPoiseMultiplier;
       }
     }
-    if (combat.pendingAbilityDiscard) return;
+    if (hasCardChoice(combat)) return;
     endCheck(combat);
     if (combat.result) {
       combat.queue.length = 0;
@@ -1039,12 +1040,12 @@ function buildIntent(move, moveId, enemy = null, combat = null) {
 export function dispatch(combat, intent) {
   if (combat.gameProfile) freezeProfile(combat.gameProfile);
   if (configuredCombat(combat)) combat.emit = (type, payload) => combat._emitEvent(combat, type, payload);
-  if (!combat._foundationTransaction && (configuredCombat(combat) || combat.combatExpansionVersion === 2 || combat.foundation || ['playCard', 'unqueueCard', 'chooseDiscard'].includes(intent.type))) return F.foundationTransaction(combat, (candidate) => dispatch(candidate, intent), { advanceAction: intent.type === 'chooseDiscard' ? !combat.reactionResume : !['predictIntent', 'chooseReaction', 'setReactions'].includes(intent.type) });
+  if (!combat._foundationTransaction && (configuredCombat(combat) || combat.combatExpansionVersion === 2 || combat.foundation || ['playCard', 'unqueueCard', 'chooseDiscard', 'chooseCards'].includes(intent.type))) return F.foundationTransaction(combat, (candidate) => dispatch(candidate, intent), { advanceAction: ['chooseDiscard','chooseCards'].includes(intent.type) ? !combat.reactionResume : !['predictIntent', 'chooseReaction', 'setReactions'].includes(intent.type) });
   if (combat.result) throw new Error('Combat is over');
   combat._buffer = [];
   try {
     if (combat.pendingReaction && intent.type !== 'chooseReaction') throw new Error('Answer the pending reaction first');
-    if (intent.type !== 'chooseDiscard') R.assertNoAbilityChoice(combat);
+    if (!['chooseDiscard','chooseCards'].includes(intent.type)) R.assertNoAbilityChoice(combat);
     switch (intent.type) {
       case 'setReactions':
         Reactions.setReactionsEnabled(combat, combat.player, intent.enabled);
@@ -1074,6 +1075,12 @@ export function dispatch(combat, intent) {
         refreshCombatRatings(combat);
         break;
       }
+      case 'chooseCards':
+        chooseZoneCards(combat, intent.cardInstanceIds);
+        drainQueue(combat);
+        finishAbilityPlay(combat);
+        if (Reactions.restoreReactionQueue(combat) || combat.reactionCursor) resumeEnemyTurn(combat);
+        break;
       case 'chooseDiscard':
         R.chooseAbilityDiscard(combat, intent.cardInstanceIds);
         drainQueue(combat);
@@ -1474,7 +1481,7 @@ function preparedPlayCosts(combat, inst, def, claimed, targetId, { afterQueued =
   if (!combat.result && combat.player?.alive && combat.player.hp > 0
     && combat.enemies?.some(enemy => enemy.alive && enemy.hp > 0)
     && combat._emitEvent === emitEvent && Array.isArray(combat.queue) && combat.queue.length === 0
-    && !combat.pendingAbilityDiscard && !combat._abilityAction && !combat._emitDepth
+    && !hasCardChoice(combat) && !combat._abilityAction && !combat._emitDepth
     && !combat._foundationTransaction && !combat._foundationAncestry?.length
     && !hasEventTriggers(combat, 'cardPreparing', { cardTags: def.cardTags || def.tags || [] })) return playCosts(projectedQueuePricing(combat, inst, afterQueued), def, claimed);
   return playCosts(preparingPreview(combat, inst, def, targetId, { afterQueued }), def, claimed);
@@ -1562,7 +1569,7 @@ export function cardNeedsEnemyTargetNow(combat, cardInstanceId) {
   if (!combat.result && combat.player?.alive && combat.player.hp > 0
     && combat.enemies?.some(enemy => enemy.alive && enemy.hp > 0)
     && combat._emitEvent === emitEvent && Array.isArray(combat.queue) && combat.queue.length === 0
-    && !combat.pendingAbilityDiscard && !combat._abilityAction && !combat._emitDepth
+    && !hasCardChoice(combat) && !combat._abilityAction && !combat._emitDepth
     && !combat._foundationAncestry?.length && !hasEventTriggers(combat, 'cardPreparing', { cardTags: def.cardTags || def.tags || [] })) {
     const enemyAvailable = combat.enemies.some(enemy => enemy.alive);
     const charges = R.matchingAbilityCharges(combat.player, {
@@ -1580,7 +1587,7 @@ export function cardNeedsEnemyTargetNow(combat, cardInstanceId) {
 // Charges the player already holds are not spent here: the queue's claims already share those out.
 function preparingPreview(combat, inst, def, targetId, { afterQueued = false } = {}) {
   const clone = F.candidateState(combat, { detached: true });
-  if (clone.pendingAbilityDiscard) { clone.queue = []; return clone; }
+  if (hasCardChoice(clone)) { clone.queue = []; return clone; }
   // A reaction choice waiting on the live fight (a round reaction is priced while its offer is open) would hold the
   // preview's trigger effects back (beforeReactionAction); the detached preview prices the card as it will play.
   delete clone.pendingReaction;
@@ -2264,7 +2271,7 @@ function completeEndTurn(combat, discardIds) {
 }
 
 function resumeEnemyTurn(combat) {
-  if (combat.pendingAbilityDiscard || combat.reactionResume) return;
+  if (hasCardChoice(combat) || combat.reactionResume) return;
   if (!combat.reactionCursor) { drainQueue(combat); finishAbilityPlay(combat); return; }
   enemyPhase(combat);
   if (combat.result || Reactions.reactionPaused(combat)) return;

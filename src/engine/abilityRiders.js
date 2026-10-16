@@ -1,3 +1,4 @@
+import { hasCardChoice } from './cardZones.js';
 // Shared data-driven ability riders. State is per entity and bounded to a turn;
 // it is saved with the combat entity, never reconstructed from a growing log.
 import { ABILITY_TURN_METRICS } from '../model/schemas.js';
@@ -197,12 +198,12 @@ export function chooseAbilityDiscard(ctx, ids) {
 }
 
 export function assertNoAbilityChoice(ctx) {
-  if (ctx.pendingAbilityDiscard) throw new Error('Choose the cards to discard before taking another action');
+  if (hasCardChoice(ctx)) throw new Error('Choose the cards to discard before taking another action');
 }
 
 export function abilityResolved(ctx) {
   const play = ctx.pendingAbilityPlay;
-  if (!play || ctx.pendingAbilityDiscard) return null;
+  if (!play || hasCardChoice(ctx)) return null;
   delete ctx.pendingAbilityPlay;
   ctx.emit('cardResolved', { ...play.before, cardInstanceId: play.instance.instanceId, cardId: play.instance.cardId, cardType: play.kind, cardTags: play.ref.authoredTags || play.ref.tags || [], abilityKind: play.ref.abilityKind, printedManaCost: play.printedManaCost, targetId: play.targetId, sourceId: ctx.player.id, ...(ctx.playerKey ? { sourcePlayerId: ctx.playerKey, playerId: ctx.playerKey } : {}), magicalResolved: play.ref.abilityKind === 'spell' });
   return play;
