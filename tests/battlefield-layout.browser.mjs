@@ -212,12 +212,18 @@ try {
         await p.mouse.down();
         await p.waitForTimeout(750);
         await p.mouse.up();
-        await p.evaluate(
-          () =>
-            new Promise((r) =>
-              requestAnimationFrame(() => requestAnimationFrame(r)),
-            ),
+        // Wait for the real targeting affordance, rather than assuming that
+        // two animation frames finish the held-card action and stage refit.
+        await p.waitForFunction(() =>
+          document.querySelector('.combat')?.dataset.targetLayer === 'armed' &&
+          document.querySelector('.hand .card.selected')?.dataset.cardId === 'strike',
         );
+        await p.waitForFunction(() => {
+          const actor = document.querySelector('.combatant.enemy[data-visual-band="C"]');
+          const art = actor?.querySelector('.sprite')?.getBoundingClientRect();
+          return art && document.elementFromPoint(art.x + art.width / 2, art.y + art.height / 2)
+            ?.closest('[data-eid]')?.dataset.eid === actor.dataset.eid;
+        });
         await clickArt();
         await p.waitForFunction(
           (hp) => window.__combat.enemies.find((e) => e.id === "e7").hp < hp,

@@ -881,7 +881,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       // and its visible footer may then shift by at most one physical target.
       lockX: true, size: footerSize, maxShiftX: 44,
       obstacles: [...readFooterObstacles(),
-        ...boxes.flatMap((box, index) => placed[index].frame.classList.contains('player') ? [] : box.controls)].map(rect => ({
+        ...boxes.flatMap((box, index) => placed[index].frame.classList.contains('player') ? [] : box.controls),
+        ...placed.map(({ frame, sprite }) => ({ ...currentSpriteArtBounds(sprite, refresh), ownerId: frame.dataset.eid }))].map(rect => ({
+        ownerId: rect.ownerId,
         left: rect.left - fieldRect.left, right: rect.right - fieldRect.left,
         top: rect.top - fieldRect.top, bottom: rect.bottom - fieldRect.top,
       })),
@@ -1108,8 +1110,14 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         if (style.display === 'none' || style.pointerEvents === 'none') return null;
         const x = box.left + parseFloat(style.left) * zoom - fieldRect.left;
         const y = box.top + parseFloat(style.top) * zoom - fieldRect.top;
-        return Number.isFinite(x) && Number.isFinite(y)
-          ? { ownerId:frame.dataset.eid, x, y, left:x-22, right:x+22, top:y-22, bottom:y+22 } : null;
+        if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+        // Aiming can promote an enemy to context-selected after its idle core
+        // was packed. Its auxiliary square still cannot cover another actor.
+        if (frame.classList.contains('enemy') && stealsArtwork({ id: frame.dataset.eid, x, y })) {
+          frame.dataset.coreObstructed = 'true';
+          return null;
+        }
+        return { ownerId:frame.dataset.eid, x, y, left:x-22, right:x+22, top:y-22, bottom:y+22 };
       }).filter(Boolean);
     const near = (a, b) => Math.abs(a.x-b.x) < 44 && Math.abs(a.y-b.y) < 44;
     if (idleCores.some((core, i) => core.y > core.art.bottom - fieldRect.top || stealsArtwork(core) || fixedCores.some(fixed => near(core, fixed))
