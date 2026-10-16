@@ -183,9 +183,10 @@ export function combatSnapshotProblems(snapshot) {
   }
   if (snapshot.ratingAttributeScale !== undefined && (!Number.isFinite(snapshot.ratingAttributeScale) || snapshot.ratingAttributeScale <= 0)) problems.push('ratingAttributeScale must be positive');
   if (snapshot.pendingDiscardDraw !== undefined && (!Number.isInteger(snapshot.pendingDiscardDraw) || snapshot.pendingDiscardDraw < 0 || snapshot.pendingDiscardDraw > 99)) problems.push('pendingDiscardDraw must be an integer from 0 to 99');
-  if (snapshot.pendingAbilityDiscard !== undefined) {
-    const pending = snapshot.pendingAbilityDiscard;
-    if (!record(pending) || !Number.isInteger(pending.count) || pending.count < 1 || pending.count > (snapshot.piles?.hand?.length || 0)) problems.push('pendingAbilityDiscard requires a valid hand count');
+  if (snapshot.pendingAbilityDiscard !== undefined || snapshot.pendingCardChoice !== undefined) {
+    const pending = snapshot.pendingAbilityDiscard || snapshot.pendingCardChoice;
+    if (!record(pending) || !Number.isInteger(pending.count) || pending.count < 1 || pending.count > (snapshot.pendingCardChoice ? (snapshot.piles?.[pending.effect?.from]?.length || 0) : (snapshot.piles?.hand?.length || 0))) problems.push('pendingAbilityDiscard requires a valid hand count');
+    if (snapshot.pendingCardChoice && (!Array.isArray(pending.candidateIds) || pending.candidateIds.length < pending.count || new Set(pending.candidateIds).size !== pending.candidateIds.length || pending.candidateIds.some(id => !(snapshot.piles?.[pending.effect?.from] || []).some(c => c.instanceId === id)))) problems.push('pendingCardChoice requires eligible unique cards');
     if (!record(snapshot.pendingAbilityPlay)) problems.push('pendingAbilityDiscard requires its paid card');
     else problems.push(...cardProblems(snapshot.pendingAbilityPlay.instance, 'pendingAbilityPlay.instance'));
     if (!Array.isArray(snapshot.abilityQueue) || snapshot.abilityQueue.some(action => !record(action) || !record(action.effect) || !nonEmptyString(action.effect.op))) problems.push('abilityQueue must contain queued effects');

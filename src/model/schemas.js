@@ -59,6 +59,7 @@ export const COMBAT_OPCODES = Object.freeze([
   'applyStatus',
   'removeStatus',
   'grantCardCharge',
+  'moveCards',
   'draw',
   'discard',
   'exhaust',
@@ -131,6 +132,7 @@ export const EVENTS = Object.freeze([
   'enemyActorTurnStarted', 'combatReactionOffered', 'combatReactionChosen',
   // SPEC §4.10: why no reaction was offered; a Smash broke physical Guard.
   'combatReactionUnavailable', 'combatGuardBroken',
+  'cardMoved',
   'cardDrawn',
   'cardPlayed',
   'cardPreparing',
@@ -542,6 +544,7 @@ export const EFFECT_SPECS = Object.freeze({
   applyStatus: { allowed: ['status', 'stacks'], required: ['status'], refs: { status: 'statuses' } },
   removeStatus: { allowed: ['status', 'amount'], required: ['status'], refs: { status: 'statuses' } },
   grantCardCharge: { allowed: ['key', 'cardType', 'cardTag', 'abilityKind', 'damage', 'damageScope', 'manaDiscount', 'block', 'heal', 'break', 'buildup', 'buildupStatus'], required: ['key'], refs: { buildupStatus: 'statuses' } },
+  moveCards: { allowed: ['from','to','selection','position','look','transformTo'], required: ['from','to','amount'], refs: { transformTo: 'cards' } },
   draw: { allowed: [], required: ['amount'], refs: {} },
   discard: { allowed: ['random', 'choose'], required: [], refs: {} },
   exhaust: { allowed: ['random'], required: [], refs: {} },

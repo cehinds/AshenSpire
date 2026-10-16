@@ -1,3 +1,4 @@
+import { hasCardChoice, chooseZoneCards } from './cardZones.js';
 import { decayStanceRoundStart } from './combatMatchups.js';
 import { combatMatchups, combatIntent, combatExpansionMatchups } from '../content/combatMatchups.js';
 import { ownRestoreFunds } from '../model/actionCosts.js';
@@ -509,7 +510,7 @@ export function leaveCombat(C, playerId) {
     return;
   }
   if (!connectedCount(C)) { C.phase = 'suspended'; return; }
-  if (C.pendingAbilityDiscard) return;
+  if (hasCardChoice(C)) return;
   maybeEndPlayerPhase(C);
 }
 
@@ -537,7 +538,7 @@ function drainQueue(C) {
     if (seatId) setActive(C, C.players.get(seatId));
     Reactions.startQueuedEnemy(C, action);
     A.executeAction(C, action);
-    if (C.pendingAbilityDiscard) return;
+    if (hasCardChoice(C)) return;
     endCheck(C);
     if (C.result) { C.queue.length = 0; return; }
   }
@@ -1030,7 +1031,7 @@ export function chooseReaction(C, playerId, intent) {
 }
 
 function resumeReaction(C) {
-  if (C.pendingAbilityDiscard || C.reactionResume || C.phase === 'suspended') return;
+  if (hasCardChoice(C) || C.reactionResume || C.phase === 'suspended') return;
   if (!C.reactionCursor) { drainQueue(C); finishAbilityPlay(C); return; }
   enemyPhase(C);
   if (C.result || Reactions.reactionPaused(C)) return;
@@ -1039,13 +1040,13 @@ function resumeReaction(C) {
 
 export function chooseDiscard(C, playerId, cardInstanceIds) {
   if (!C._foundationTransaction) return F.foundationTransaction(C, candidate => chooseDiscard(candidate, playerId, cardInstanceIds), { advanceAction: !C.reactionResume });
-  if (C.pendingAbilityDiscard?.playerId !== playerId) throw new Error('This discard choice belongs to another player');
+  if ((C.pendingAbilityDiscard || C.pendingCardChoice)?.playerId !== playerId) throw new Error('This discard choice belongs to another player');
   const P = C.players.get(playerId);
   if (!P) throw new Error('Unknown player');
   setActive(C, P);
   C._buffer = [];
   try {
-    R.chooseAbilityDiscard(C, cardInstanceIds);
+    if (C.pendingCardChoice) chooseZoneCards(C,cardInstanceIds); else R.chooseAbilityDiscard(C, cardInstanceIds);
     drainQueue(C);
     finishAbilityPlay(C);
     if (Reactions.restoreReactionQueue(C) || C.reactionCursor) resumeReaction(C);

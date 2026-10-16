@@ -1,3 +1,4 @@
+import { moveCards, hasCardChoice } from './cardZones.js';
 import { configuredCombat, configuredModule, profileDamageReceipt } from './gameProfileCombat.js';
 // src/engine/actions.js — effect-DSL opcode implementations (SPEC §3.4)
 //
@@ -1334,7 +1335,7 @@ export function executeAction(ctx, action) {
       if (action.meta) action.meta.expansionExecutionRepeat = r;
       runOpcode(ctx, action, eff);
       spendSilencedForEffect(ctx, action, eff);
-      if (ctx.result || ctx.pendingAbilityDiscard) return;
+      if (ctx.result || hasCardChoice(ctx)) return;
     }
   } finally { if (previous) ctx._abilityAction = previous; else delete ctx._abilityAction; }
 }
@@ -1585,6 +1586,10 @@ function runOpcode(ctx, action, eff) {
         for (const field of ['damage', 'manaDiscount', 'block', 'heal', 'break', 'buildup']) if (eff[field] !== undefined) charge[field] = Math.max(0, evalNum(ctx, action, eff[field], 0, target));
         grantAbilityCharge(target, charge);
       }
+      break;
+    }
+    case 'moveCards': {
+      moveCards(ctx, action, evalNum(ctx, action, eff.amount, 1));
       break;
     }
     case 'draw': {
