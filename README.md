@@ -5,8 +5,14 @@
 
 The same runtime supports two authored configurations. **Product core** includes its required bundled modules and keeps optional gameplay packages off where the core has a fallback. **Current game** preserves the full legacy configuration.
 
-- **Product core:** [Play on Pages (latest publication unverified)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-modules/latest/) · [standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38917569924/artifacts/12052941982) · [successful build run](https://github.com/cehinds/AshenSpire/actions/runs/38917569924)
-- **Current game:** [Play on Pages (latest publication unverified)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-current-preview/latest/) · [standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38917656053/artifacts/12052679950) · [successful build run](https://github.com/cehinds/AshenSpire/actions/runs/38917656053)
+- **Product core:** [Play on Pages (latest publication unverified)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-modules/latest/) · [standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38953953766/artifacts/12070470683) · [successful build run](https://github.com/cehinds/AshenSpire/actions/runs/38953953766)
+- **Current game:** [Play on Pages (latest publication unverified)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-current-preview/latest/) · [standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38953971025/artifacts/12069821640) · [successful build run](https://github.com/cehinds/AshenSpire/actions/runs/38953971025)
+
+[Review footer fade wireframes A–G](docs/preview/features/json-game-modules/footer-fade-proposals/README.md) — design proposals awaiting approval.
+
+The deck editor’s animation sprite now sits lower so the head clears the preview border, while retaining its size and the description layout. [Fresh headroom screenshots](docs/preview/features/json-game-modules/deck-headroom/README.md).
+
+The battlefield grid now uses thin, translucent lines and a saved **Grid** checkbox directly above Combat Log. Core’s unused middle row stays visible without enabling placement. [Grid screenshots and verification](docs/preview/features/json-game-modules/grid/README.md).
 
 Desktop now uses the approved D layout with a wider fan, larger cards, a lower background, and three fixed footer groups. Cinders are visible, Core Settings follow enabled modules, rewards support reversible review, and Skills/Spells/Powers use Prepare. Core starters retain ten cards with two Defends, one Counter, and Draw. [Latest screenshots and verified builds](docs/preview/features/json-game-modules/desktop-footer/README.md).
 
