@@ -97,8 +97,30 @@ function perspectiveGridComposition({ sizes, actors, width }) {
     // Keep idle fitting, uniform pose scale, and domain cell addresses intact.
     const halfWidth = actor.visibleWidth * size.scale / 2;
     const x = Math.max(halfWidth + 6, Math.min(width - halfWidth - 6, actor.slot.x));
-    return { ...size, x, ground: actor.slot.ground };
+    const foot = actor.side === 'enemy' && actor.slot.box ? insetPerspectiveFootprint(actor.slot,
+      { width: halfWidth * 2, height: (actor.boxHeight ?? actor.visibleHeight ?? 150) * size.scale * .08 }) : { x, ground: actor.slot.ground };
+    return { ...size, ...foot };
   });
+}
+
+// Constrain the shadow's complete bounding envelope inside its skewed cell.
+// The active kit draws an 8%-high ellipse centred on the sprite's foot.
+// Its full bounding envelope, rather than only its centre, owns this cell.
+// Moving the anchor never refits artwork.
+export function insetPerspectiveFootprint(slot, { width, height = 12, inset = 1 }) {
+  const box = slot.box;
+  if (!box) return { x: slot.x, ground: slot.ground };
+  const above = height / 2, below = height / 2;
+  const ground = Math.max(box.top + above + inset,
+    Math.min(box.top + box.height - below - inset, slot.ground));
+  const skew = box.skew || 0;
+  const centreAt = y => box.left + box.width / 2 + skew * (box.top + box.height / 2 - y);
+  const half = width / 2 + inset;
+  const low = Math.max(centreAt(ground - above), centreAt(ground + below)) - box.width / 2 + half;
+  const high = Math.min(centreAt(ground - above), centreAt(ground + below)) + box.width / 2 - half;
+  // Extremely wide custom art may exceed a cell. Preserve its authored size
+  // and centre it rather than silently shrinking it to satisfy presentation.
+  return { x: low <= high ? Math.max(low, Math.min(high, slot.x)) : (low + high) / 2, ground };
 }
 
 // The pre-grid composition: a spacious field (above 300 px) spreads its back

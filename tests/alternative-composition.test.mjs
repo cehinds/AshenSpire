@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { combatSpriteGeometry } from '../src/ui/components/combatSpriteGeometry.js';
 import { combatArtworkKey } from '../src/ui/models/CombatCompositionModel.js';
-import { alternativeCombatComposition, combatStandingGround, SPACIOUS_RIBBON_RESERVE } from '../src/ui/models/CombatCompositionModel.js';
+import { insetPerspectiveFootprint, alternativeCombatComposition, combatStandingGround, SPACIOUS_RIBBON_RESERVE } from '../src/ui/models/CombatCompositionModel.js';
 import { alternativeFormation, fitAlternativeSprites } from '../src/ui/models/AlternativeFormationModel.js';
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
 import { alternativeEnemyTargetGrid } from '../src/ui/models/AlternativeEnemyTargetGridModel.js';
@@ -157,3 +157,22 @@ test('a tablet spacious field keeps its own depth rows (no shared desktop line)'
   assert.notEqual(fit[1].ground, fit[2].ground, 'tablet enemies keep their slot depth');
 });
 
+
+test('enemy foot and full shadow envelope stay inside the owning skewed cell without scaling art', () => {
+  for (const [width,height,narrow] of [[1440,441,false],[1920,600,false],[390,426,true]]) {
+    const plan=alternativeFormation(combatFormation({width,height,presentation:{perspectiveGrid:true},friends:['p'],enemies:['a','b','c','d','e','f']}),width,height,narrow);
+    for (const slot of plan.slots.filter(slot=>slot.side==='enemy')) {
+      const shadowWidth=Math.min(slot.box.width*.65,152), scale=narrow?.45:.8;
+      const foot=insetPerspectiveFootprint(slot,{width:shadowWidth,height:12*scale});
+      for(const x of [foot.x-shadowWidth/2,foot.x+shadowWidth/2]) {
+        for(const y of [foot.ground-6*scale,foot.ground+6*scale]) {
+          const centre=slot.box.left+slot.box.width/2+slot.box.skew*(slot.box.top+slot.box.height/2-y);
+          assert(y>=slot.box.top && y<=slot.box.top+slot.box.height);
+          assert(Math.abs(x-centre)<slot.box.width/2,`${slot.cell} shadow stays inside its cell`);
+        }
+      }
+      const [fit]=alternativeCombatComposition({actors:[{slot,side:'enemy',visibleWidth:shadowWidth}],sizes:[{id:slot.id,scale:1,visibleHeight:158,multiplier:1}],width,perspectiveGrid:true});
+      assert.equal(fit.scale,1);assert.equal(fit.visibleHeight,158);
+    }
+  }
+});
