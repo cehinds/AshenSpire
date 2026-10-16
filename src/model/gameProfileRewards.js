@@ -26,7 +26,7 @@ function equipmentGroupMembers(registries, rules, category, family) {
 }
 function pools(registries, run) {
   const definitions = gameContent(run,'cards') || [];
-  const cards = definitions.filter(card=>card.class==='colorless'||card.class===run.class);
+  const cards = definitions.filter(card => (card.class === 'colorless' || card.class === run.class) && !['special', 'status'].includes(card.rarity) && card.type !== 'status');
   const rules = gameContent(run,'rewards');
   const equipment = !!gameModule(run,'equipment'), hasCards=!!gameModule(run,'cards');
   const weapons = equipment ? equipmentGroupMembers(registries,rules,'weapons','armament') : new Set();

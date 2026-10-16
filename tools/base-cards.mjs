@@ -3,6 +3,10 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
+import { validateEffects, validateFormula, validatePredicate } from '../src/model/validate.js';
+import { statuses } from '../src/content/statuses.js';
+import { stances } from '../src/content/stances.js';
+import { TAGS } from '../src/content/tags.js';
 import { fileURLToPath } from 'node:url';
 export const BASE_CARD_PACK = 'games/ashenspire/packs/base-cards';
 export const BASE_CARD_OUTPUT = 'src/content/generated/baseCards.js';
@@ -42,8 +46,26 @@ export function loadBaseCardPack(root = ROOT) {
   const statusSource = read('statuses.json');
   return { rows, groups, variants, statusSource };
 }
+export function validateBaseCardEffects({ rows, statusSource }) {
+  const errors = [], context = {
+    err: (path, message) => errors.push(`${path}: ${message}`),
+    ids: { cards:new Set(rows.map(row => row.definition.id)), statuses:new Set([...statuses, ...statusSource.statuses].map(row => row.id)), stances:new Set(stances.map(row => row.id)), scripts:new Set() },
+    tagIds:new Set(TAGS.map(row => row.id)), nodeIds:new Set(TAGS.map(row => row.id)),
+  };
+  for (const { definition: card } of rows) {
+    validateEffects(card.effects, card.id, context);
+    if (card.targetLimit !== undefined) validateFormula(card.targetLimit, `${card.id}.targetLimit`, context);
+    for (const [i, variant] of (card.effectVariants || []).entries()) {
+      validatePredicate(variant.if, `${card.id}.effectVariants[${i}].if`, context);
+      validateEffects(variant.effects, `${card.id}.effectVariants[${i}].effects`, context);
+    }
+  }
+  if (errors.length) throw new Error(errors.join('\n'));
+}
 export function compileBaseCards(root = ROOT) {
-  const { rows, groups, statusSource } = loadBaseCardPack(root);
+  const pack = loadBaseCardPack(root);
+  validateBaseCardEffects(pack);
+  const { rows, groups, statusSource } = pack;
   const values = {
     baseCardDefinitions: rows.map(row => row.definition),
     baseCardTagging: rows.flatMap(row => row.tags.map(tagId => ({ family: 'card', objectId: row.definition.id, tagId }))),

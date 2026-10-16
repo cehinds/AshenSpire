@@ -1,3 +1,4 @@
+import { baseCardPresentation } from '../../content/generated/baseCards.js';
 import { gameModule } from '../../model/gameProfile.js';
 import { stanceOf, stanceEntryBonuses, stanceRulesFor, stanceRatingBonus } from '../../model/stanceRules.js';
 import { cardSideTags } from './cardTagSymbols.js';
@@ -295,7 +296,7 @@ export function renderCard(registries, ref, opts = {}) {
   // ONE TEXT FOR EVERY VIEW. The face lines are the shared model's output
   // (cardFaceText.js); a weight-priced card adds its pricing note as a detail line.
   const faceRules = gameModule(registries, 'cards');
-  const allFaceLines = cardFaceLines(def, opts.preview || null, registries);
+  const allFaceLines = baseCardPresentation[def.id] ? null : cardFaceLines(def, opts.preview || null, registries);
   const faceLines = allFaceLines && registries.gameProfile?.foundation?.mode === 'configured' && opts.level !== 'inspect'
     ? allFaceLines.slice(0, Math.min(faceRules?.faceMaxEffects ?? Infinity, faceRules?.faceMaxLines ?? Infinity)) : allFaceLines;
   if (faceLines && def.weightClassPriced) faceLines.push({ kind: 'detail', html: 'Cost reflects your current weight' });
@@ -304,7 +305,8 @@ export function renderCard(registries, ref, opts = {}) {
   // In the hand, detail lines (a partial chance, usable-through, pricing) wait for selection: hidden at rest, shown when selected.
   const extraLine = (line, i) => faceLineLimit !== null && (i >= faceLineLimit || (line.kind === 'detail' && i > 0));
   const paint = (at) => {
-    const artwork = illustratedArtwork(ref, model.id, {large:at==='inspect',equipmentArt:equipmentPainting,
+    const visualCardId = baseCardPresentation[model.id]?.canonicalCardRef;
+    const artwork = illustratedArtwork(visualCardId ? { cardId: visualCardId } : ref, visualCardId || model.id, {large:at==='inspect',equipmentArt:equipmentPainting,
       definition:def,registries});
     const kept = el.children?[...el.children].filter(node=>node?.dataset?.cardPainted!=='1'):[];
     const authoredRules = def.weightClassPriced
@@ -579,7 +581,7 @@ export function cardPlainText(registries, ref, opts = {}) {
   const model = opts.preview ? playingCardModel(registries, ref, { ...opts, definition: def })
     : { tokens: staticTokens(def), damageSequences: [] };
   const lines = opts.rules?.combatExpansionVersion === 2 || opts.preview?.combatExpansionVersion === 2
-    ? cardFaceLines(def, opts.preview || null, registries) : null;
+    ? (baseCardPresentation[def.id] ? null : cardFaceLines(def, opts.preview || null, registries)) : null;
   // Plain string work only: no DOM, so it runs the same headless and in a
   // browser. Tags go first; &amp; is decoded last so "&amp;lt;" stays literal.
   return String(lines ? lines.map(line => line.html).join(' · ') : fillTemplate(def, model.tokens, null, model.damageSequences))

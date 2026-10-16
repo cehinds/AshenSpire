@@ -25,7 +25,7 @@ export const baseCardDefinitions = [
         "stacks": 4
       }
     ],
-    "textTemplate": "Gain Persistent Block 4 and Persistent Barrier 4.",
+    "textTemplate": "Gain Persistent Block {base.persistent-block} and Persistent Barrier {base.persistent-barrier}.",
     "icon": "✦",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
   },
@@ -48,7 +48,7 @@ export const baseCardDefinitions = [
         "stacks": 3
       }
     ],
-    "textTemplate": "Apply Greased 3: fire detonates the coating.",
+    "textTemplate": "Apply Greased {base.greased}: fire detonates the coating.",
     "icon": "✦",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
     "damageSchool": "fire"
@@ -68,7 +68,15 @@ export const baseCardDefinitions = [
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 36
+        "amount": {
+          "f": "metric",
+          "metric": "weaponDamage",
+          "of": "self",
+          "per": 3
+        },
+        "attack": {
+          "source": "weapon"
+        }
       },
       {
         "op": "damage",
@@ -76,13 +84,17 @@ export const baseCardDefinitions = [
         "amount": 6,
         "tags": [
           "school:divine"
-        ]
+        ],
+        "attack": {
+          "source": "spell",
+          "damageType": "sacred"
+        }
       }
     ],
-    "textTemplate": "Deal 36 weapon damage and 6 Sacred damage.",
+    "textTemplate": "Deal {damage} weapon damage and {damage.2} Sacred damage.",
     "icon": "✦",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
-    "damageSchool": "sacred",
+    "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
   {
@@ -101,13 +113,13 @@ export const baseCardDefinitions = [
         "op": "applyStatus",
         "target": "enemy",
         "status": "base.poison",
-        "stacks": 1
+        "stacks": 5
       }
     ],
-    "textTemplate": "Apply Poison 1.",
+    "textTemplate": "Apply {base.poison} Poison: 15 total Necrotic damage as it decays.",
     "icon": "✦",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
-    "damageSchool": "necrotic"
+    "damageSchool": "magic"
   },
   {
     "id": "base.blight",
@@ -125,10 +137,10 @@ export const baseCardDefinitions = [
         "op": "applyStatus",
         "target": "enemy",
         "status": "base.blight",
-        "stacks": 1
+        "stacks": 12
       }
     ],
-    "textTemplate": "Apply Blight 1.",
+    "textTemplate": "Apply Blight {base.blight}: lethal when its stacks reach current HP.",
     "icon": "✦",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
   },
@@ -151,7 +163,7 @@ export const baseCardDefinitions = [
         "stacks": 1
       }
     ],
-    "textTemplate": "Apply Weak 1.",
+    "textTemplate": "Apply Weak {base.weak}.",
     "icon": "✦",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
   },
@@ -174,7 +186,7 @@ export const baseCardDefinitions = [
         "stacks": 1
       }
     ],
-    "textTemplate": "Apply Charm 1.",
+    "textTemplate": "Apply Charm {base.charm}.",
     "icon": "✦",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
   },
@@ -197,7 +209,7 @@ export const baseCardDefinitions = [
         "stacks": 1
       }
     ],
-    "textTemplate": "Apply Bind 1.",
+    "textTemplate": "Apply Bind {base.bind}.",
     "icon": "✦",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
   },
@@ -223,10 +235,11 @@ export const baseCardDefinitions = [
         "op": "addBurden",
         "target": "enemy",
         "card": "base.restrained-status-card",
-        "count": 1
+        "count": 1,
+        "pile": "hand"
       }
     ],
-    "textTemplate": "Apply Restrained 1. Add a Restrained burden to the enemy hand.",
+    "textTemplate": "Apply Restrained {base.restrained}. Add a Restrained burden to the enemy hand.",
     "icon": "✦",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
   },
@@ -246,10 +259,14 @@ export const baseCardDefinitions = [
         "op": "applyStatus",
         "target": "self",
         "status": "base.foresight",
-        "stacks": 1
+        "stacks": 3
+      },
+      {
+        "op": "draw",
+        "amount": 2
       }
     ],
-    "textTemplate": "Gain Foresight 1.",
+    "textTemplate": "Gain {base.foresight} Foresight and draw {draw} cards.",
     "icon": "✦",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
   },
@@ -272,7 +289,7 @@ export const baseCardDefinitions = [
         "stacks": 1
       }
     ],
-    "textTemplate": "Gain Evade 1.",
+    "textTemplate": "Gain Evade {base.evade}.",
     "icon": "🛡",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
   },
@@ -295,7 +312,7 @@ export const baseCardDefinitions = [
         "stacks": 1
       }
     ],
-    "textTemplate": "Gain Intangible 1.",
+    "textTemplate": "Gain Intangible {base.intangible}.",
     "icon": "✦",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
   },
@@ -318,7 +335,7 @@ export const baseCardDefinitions = [
         "stacks": 1
       }
     ],
-    "textTemplate": "Gain Mirrors 1.",
+    "textTemplate": "Gain Mirrors {base.mirrors}.",
     "icon": "✦",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
   },
@@ -341,7 +358,7 @@ export const baseCardDefinitions = [
         "stacks": 2
       }
     ],
-    "textTemplate": "Enchant your weapon with Fire for 2 turns.",
+    "textTemplate": "Enchant your weapon with Fire for {base.elemental-weapon} turns.",
     "icon": "✦",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
     "damageSchool": "fire"
@@ -364,7 +381,11 @@ export const baseCardDefinitions = [
         "amount": 2,
         "tags": [
           "school:fire"
-        ]
+        ],
+        "attack": {
+          "source": "spell",
+          "damageType": "fire"
+        }
       },
       {
         "op": "removeStatus",
@@ -377,10 +398,11 @@ export const baseCardDefinitions = [
         "status": "base.greased"
       }
     ],
-    "textTemplate": "Take 2 Fire damage. Remove Poison and Greased.",
+    "textTemplate": "Take {damage} Fire damage. Remove Poison and Greased.",
     "icon": "✦",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
-    "damageSchool": "fire"
+    "damageSchool": "fire",
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "base.divine-cleanse",
@@ -413,7 +435,7 @@ export const baseCardDefinitions = [
     "textTemplate": "Remove Weak, Bind and Restrained.",
     "icon": "✦",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
-    "damageSchool": "sacred"
+    "damageSchool": "holy"
   },
   {
     "id": "base.necrotic-heal",
@@ -434,10 +456,10 @@ export const baseCardDefinitions = [
         "stacks": 2
       }
     ],
-    "textTemplate": "Convert incoming Necrotic damage to healing for 2 turns.",
+    "textTemplate": "Convert incoming Necrotic damage to healing for {base.necrotic-healing} turns.",
     "icon": "✦",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
-    "damageSchool": "necrotic"
+    "damageSchool": "magic"
   },
   {
     "id": "base.divine-harm",
@@ -458,10 +480,10 @@ export const baseCardDefinitions = [
         "stacks": 2
       }
     ],
-    "textTemplate": "Convert the enemy’s Sacred healing into damage for 2 turns.",
+    "textTemplate": "Convert the enemy’s Sacred healing into damage for {base.divine-harm} turns.",
     "icon": "✦",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
-    "damageSchool": "sacred"
+    "damageSchool": "holy"
   },
   {
     "id": "base.shuffle-hand",
@@ -488,7 +510,7 @@ export const baseCardDefinitions = [
         "amount": 3
       }
     ],
-    "textTemplate": "Shuffle up to 3 random hand cards into draw. Draw 3.",
+    "textTemplate": "Shuffle up to {draw} random hand cards into draw. Draw 3.",
     "icon": "🛡",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
   },
@@ -506,7 +528,7 @@ export const baseCardDefinitions = [
     "effects": [
       {
         "op": "moveCards",
-        "amount": 999,
+        "amount": 100,
         "from": "draw",
         "to": "draw",
         "selection": "random",
@@ -534,7 +556,7 @@ export const baseCardDefinitions = [
         "amount": 2
       }
     ],
-    "textTemplate": "Draw 2 cards.",
+    "textTemplate": "Draw {draw} cards.",
     "icon": "🛡",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
   },
@@ -595,9 +617,9 @@ export const baseCardDefinitions = [
     "name": "Read Intent",
     "class": "colorless",
     "rarity": "uncommon",
-    "cost": 0,
+    "cost": 1,
     "costRule": "fixed",
-    "staminaCost": 0,
+    "staminaCost": 1,
     "manaCost": 1,
     "type": "skill",
     "keywords": [],
@@ -779,7 +801,7 @@ export const baseCardDefinitions = [
         "amount": 8
       }
     ],
-    "textTemplate": "Heal 8 HP. Exhaust.",
+    "textTemplate": "Heal {heal} HP. Exhaust.",
     "icon": "🛡",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
   },
@@ -803,7 +825,7 @@ export const baseCardDefinitions = [
         "amount": 10
       }
     ],
-    "textTemplate": "Gain 10 Block. Ethereal.",
+    "textTemplate": "Gain {block} Block. Ethereal.",
     "icon": "🛡",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
   },
@@ -826,7 +848,7 @@ export const baseCardDefinitions = [
         "stacks": 2
       }
     ],
-    "textTemplate": "Gain 2 Strength for this combat.",
+    "textTemplate": "Gain {strength} Strength for this combat.",
     "icon": "🛡",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
   },
@@ -853,7 +875,7 @@ export const baseCardDefinitions = [
         "amount": 12
       }
     ],
-    "textTemplate": "All allies lose 3 HP. Gain 12 Block.",
+    "textTemplate": "All allies lose {loseHp} HP. Gain {block} Block.",
     "icon": "🛡",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
   },
@@ -899,7 +921,7 @@ export const baseCardDefinitions = [
         }
       }
     ],
-    "textTemplate": "Deal 6 damage +2 per distinct negative status on the target.",
+    "textTemplate": "Deal {damage} damage, scaling with distinct negative statuses.",
     "icon": "⚔",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
     "damageSchool": "physical",
@@ -934,7 +956,7 @@ export const baseCardDefinitions = [
         }
       }
     ],
-    "textTemplate": "Deal 6 damage plus half the HP lost this turn.",
+    "textTemplate": "Deal {damage} damage, scaling with HP lost this turn.",
     "icon": "⚔",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
     "damageSchool": "physical",
@@ -969,7 +991,7 @@ export const baseCardDefinitions = [
         }
       }
     ],
-    "textTemplate": "Gain 4 Block +2 per distinct card type played this turn.",
+    "textTemplate": "Gain {block} Block, scaling with distinct types played this turn.",
     "icon": "🛡",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
   },
@@ -991,7 +1013,7 @@ export const baseCardDefinitions = [
         "amount": 8
       }
     ],
-    "textTemplate": "Deal 8 damage. Costs +1 SP per prior play this combat (maximum +3).",
+    "textTemplate": "Deal {damage} damage. Costs +1 SP per prior play this combat (maximum +3).",
     "icon": "⚔",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
     "damageSchool": "physical",
@@ -1032,7 +1054,7 @@ export const baseCardDefinitions = [
         }
       }
     ],
-    "textTemplate": "Deal 6 damage +3 per prior play this combat.",
+    "textTemplate": "Deal {damage} damage, increasing each time this card is played.",
     "icon": "⚔",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
     "damageSchool": "physical",
@@ -1059,7 +1081,7 @@ export const baseCardDefinitions = [
         }
       }
     ],
-    "textTemplate": "Spend all remaining SP. Deal 6 damage per SP paid.",
+    "textTemplate": "Spend all remaining SP. Deal {damage} damage.",
     "icon": "✦",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
     "damageSchool": "physical",
@@ -1083,7 +1105,7 @@ export const baseCardDefinitions = [
         "amount": 8
       }
     ],
-    "textTemplate": "Spend all remaining SP. Deal 8 damage to up to X enemies.",
+    "textTemplate": "Spend all remaining SP. Deal {damage} damage to up to X enemies.",
     "icon": "✦",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
     "damageSchool": "physical",
@@ -1106,16 +1128,30 @@ export const baseCardDefinitions = [
     "keywords": [],
     "effects": [
       {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "base.conceal",
+        "stacks": 2
+      },
+      {
         "op": "modifyCards",
-        "amount": 2,
         "from": "hand",
+        "amount": {
+          "f": "stacks",
+          "status": "base.conceal",
+          "of": "self"
+        },
         "selection": "choose",
         "changes": {
-          "hideTurns": 2
+          "hideTurns": {
+            "f": "stacks",
+            "status": "base.conceal",
+            "of": "self"
+          }
         }
       }
     ],
-    "textTemplate": "Hide up to 2 hand cards for 2 turns.",
+    "textTemplate": "Gain {base.conceal} Conceal. Hide X hand cards for X turns, where X is your Conceal stacks.",
     "icon": "✦",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
   },
@@ -1134,10 +1170,10 @@ export const baseCardDefinitions = [
       {
         "op": "enterStance",
         "target": "enemy",
-        "stance": "brace"
+        "maneuver": "defend"
       }
     ],
-    "textTemplate": "Force the enemy into Brace.",
+    "textTemplate": "Force the enemy into Defend.",
     "icon": "✦",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
   },
@@ -1160,7 +1196,7 @@ export const baseCardDefinitions = [
         "stacks": 1
       }
     ],
-    "textTemplate": "Gain 1 Many Forms: hold up to 2 stances until next turn.",
+    "textTemplate": "Gain {base.many-forms} Many Forms: hold up to 2 stances until next turn.",
     "icon": "🛡",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
   },
@@ -1182,7 +1218,7 @@ export const baseCardDefinitions = [
         "amount": 6
       }
     ],
-    "textTemplate": "Smash: deal 12 damage. Otherwise gain 6 Block.",
+    "textTemplate": "Smash: deal 12 damage. Otherwise gain {damage} Block.",
     "icon": "⚔",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
     "damageSchool": "physical",
@@ -1200,7 +1236,7 @@ export const baseCardDefinitions = [
             "amount": 12
           }
         ],
-        "textTemplate": "Deal 12 damage."
+        "textTemplate": "Deal {damage} damage."
       },
       {
         "if": {
@@ -1214,7 +1250,7 @@ export const baseCardDefinitions = [
             "amount": 6
           }
         ],
-        "textTemplate": "Gain 6 Block."
+        "textTemplate": "Gain {block} Block."
       }
     ]
   },
@@ -1236,7 +1272,7 @@ export const baseCardDefinitions = [
         "amount": 12
       }
     ],
-    "textTemplate": "If MP was paid, deal 12 damage; otherwise gain 8 Block.",
+    "textTemplate": "If MP was paid, deal {damage} damage; otherwise gain 8 Block.",
     "icon": "✦",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
     "damageSchool": "physical",
@@ -1255,7 +1291,7 @@ export const baseCardDefinitions = [
             "amount": 12
           }
         ],
-        "textTemplate": "Deal 12 damage."
+        "textTemplate": "Deal {damage} damage."
       },
       {
         "if": {
@@ -1269,7 +1305,7 @@ export const baseCardDefinitions = [
             "amount": 8
           }
         ],
-        "textTemplate": "Gain 8 Block."
+        "textTemplate": "Gain {block} Block."
       }
     ]
   },
@@ -1292,10 +1328,10 @@ export const baseCardDefinitions = [
       },
       {
         "op": "enterStance",
-        "choose": "classStance"
+        "choose": "maneuver"
       }
     ],
-    "textTemplate": "Deal 8 damage, then choose a class stance.",
+    "textTemplate": "Deal {damage} damage, then choose a maneuver stance.",
     "icon": "⚔",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
     "damageSchool": "physical",
@@ -1372,7 +1408,7 @@ export const baseCardDefinitions = [
         "stacks": 1
       }
     ],
-    "textTemplate": "Gain 1 extra weapon action this turn.",
+    "textTemplate": "Gain {base.extra-weapon} extra weapon action this turn.",
     "icon": "🛡",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
   },
@@ -1395,7 +1431,7 @@ export const baseCardDefinitions = [
         "stacks": 1
       }
     ],
-    "textTemplate": "Gain 1 extra shield action this turn.",
+    "textTemplate": "Gain {base.extra-shield} extra shield action this turn.",
     "icon": "🛡",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
   },
@@ -1418,7 +1454,7 @@ export const baseCardDefinitions = [
         "stacks": 1
       }
     ],
-    "textTemplate": "Prepare one automatic counterattack.",
+    "textTemplate": "Prepare one automatic counterattack. base.auto-counter: {base.auto-counter}.",
     "icon": "🛡",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
   },
@@ -1441,7 +1477,7 @@ export const baseCardDefinitions = [
         "stacks": 1
       }
     ],
-    "textTemplate": "Prepare one automatic sweep.",
+    "textTemplate": "Prepare one automatic sweep. base.auto-sweep: {base.auto-sweep}.",
     "icon": "🛡",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
   },
@@ -1464,7 +1500,7 @@ export const baseCardDefinitions = [
         "stacks": 1
       }
     ],
-    "textTemplate": "Reflect eligible incoming damage for 1 turn.",
+    "textTemplate": "Reflect eligible incoming damage for {base.reflect} turn.",
     "icon": "✦",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
   },
@@ -1492,7 +1528,7 @@ export const baseCardDefinitions = [
         "amount": 8
       }
     ],
-    "textTemplate": "Gain 8 Block and guard allies for 1 turn.",
+    "textTemplate": "Gain {block} Block and guard allies for {base.guard-allies} turn.",
     "icon": "🛡",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
   },
@@ -1517,12 +1553,11 @@ export const baseCardDefinitions = [
         "position": "top"
       },
       {
-        "op": "restoreMana",
-        "target": "self",
-        "amount": 2
+        "op": "addCinders",
+        "amount": 10
       }
     ],
-    "textTemplate": "Exhaust a chosen hand card. Restore 2 MP.",
+    "textTemplate": "Exhaust a chosen hand card. Gain {addCinders} cinders.",
     "icon": "🛡",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
   },
@@ -1531,9 +1566,9 @@ export const baseCardDefinitions = [
     "name": "Spell Scroll",
     "class": "colorless",
     "rarity": "uncommon",
-    "cost": 0,
+    "cost": 1,
     "costRule": "fixed",
-    "staminaCost": 0,
+    "staminaCost": 1,
     "manaCost": 1,
     "type": "skill",
     "keywords": [
@@ -1541,24 +1576,23 @@ export const baseCardDefinitions = [
     ],
     "effects": [
       {
-        "op": "applyStatus",
-        "target": "self",
-        "status": "base.foresight",
-        "stacks": 1
+        "op": "castLinkedSpell",
+        "card": "base.foresight"
       }
     ],
-    "textTemplate": "Cast Foresight. Exhaust this scroll.",
+    "textTemplate": "Cast Foresight. One play per combat; exhaust this scroll.",
     "icon": "✦",
-    "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+    "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+    "playLimit": 1
   },
   {
     "id": "base.gain-resource",
     "name": "Resource Gain",
     "class": "colorless",
     "rarity": "uncommon",
-    "cost": 0,
+    "cost": 1,
     "costRule": "fixed",
-    "staminaCost": 0,
+    "staminaCost": 1,
     "manaCost": 1,
     "type": "skill",
     "keywords": [],
@@ -1566,10 +1600,10 @@ export const baseCardDefinitions = [
       {
         "op": "restoreStamina",
         "target": "self",
-        "amount": 2
+        "amount": 3
       }
     ],
-    "textTemplate": "Restore 2 SP.",
+    "textTemplate": "Restore {restoreStamina} SP.",
     "icon": "✦",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
   },
@@ -1592,7 +1626,7 @@ export const baseCardDefinitions = [
         "stacks": 2
       }
     ],
-    "textTemplate": "Give an ally 2 Strength for this combat.",
+    "textTemplate": "Give an ally {strength} Strength for this combat.",
     "icon": "🛡",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
   },
@@ -1636,7 +1670,7 @@ export const baseCardDefinitions = [
         "amount": 8
       }
     ],
-    "textTemplate": "Deal 8 Poise damage.",
+    "textTemplate": "Deal {poiseDamage} Poise damage.",
     "icon": "🛡",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
   },
@@ -1690,7 +1724,7 @@ export const baseCardDefinitions = [
         }
       }
     ],
-    "textTemplate": "Deal 6 damage. In Smash stance, deal 6 more.",
+    "textTemplate": "Deal {damage} damage. In Smash stance, deal {damage.2} more.",
     "icon": "⚔",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
     "damageSchool": "physical",
@@ -1715,7 +1749,7 @@ export const baseCardDefinitions = [
         "stacks": 2
       }
     ],
-    "textTemplate": "Become untargetable without a perception check for 2 turns.",
+    "textTemplate": "Become untargetable without a perception check for {base.veil} turns.",
     "icon": "✦",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
   },
@@ -1743,7 +1777,7 @@ export const baseCardDefinitions = [
         "amount": 6
       }
     ],
-    "textTemplate": "Gain 6 Block. Retain Block for 1 turn.",
+    "textTemplate": "Gain {block} Block. Retain Block for {base.retain-block} turn.",
     "icon": "🛡",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
   },
@@ -1761,10 +1795,10 @@ export const baseCardDefinitions = [
     "effects": [
       {
         "op": "enterStance",
-        "choose": "classStance"
+        "choose": "maneuver"
       }
     ],
-    "textTemplate": "Immediately choose a class stance.",
+    "textTemplate": "Immediately choose a maneuver stance.",
     "icon": "🛡",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
   },
@@ -1821,7 +1855,7 @@ export const baseCardDefinitions = [
         "amount": 3
       }
     ],
-    "textTemplate": "Strike 3 times for 4 damage. Deal 3 Ward and 3 Poise damage total.",
+    "textTemplate": "Strike {hits} times for {damage} damage. Deal {poiseDamage} Ward and 3 Poise damage total.",
     "icon": "⚔",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
     "damageSchool": "physical",
@@ -1871,7 +1905,14 @@ export const baseCardDefinitions = [
     "burden": {
       "skipActions": 0,
       "staminaTax": 1,
-      "manaTax": 0
+      "manaTax": 0,
+      "ranges": [
+        "melee",
+        "reach"
+      ],
+      "cardTypes": [
+        "attack"
+      ]
     }
   },
   {
@@ -1892,7 +1933,7 @@ export const baseCardDefinitions = [
         "amount": 6
       }
     ],
-    "textTemplate": "Deal 6 damage.",
+    "textTemplate": "Deal {damage} damage.",
     "icon": "⚔",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
@@ -1915,7 +1956,7 @@ export const baseCardDefinitions = [
         "amount": 12
       }
     ],
-    "textTemplate": "Deal 12 damage.",
+    "textTemplate": "Deal {damage} damage.",
     "icon": "⚔",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
@@ -3091,7 +3132,7 @@ export const baseCardPresentation = {
     "sourceFaceLines": [
       "Gain Persistent Block 4, Barrier 4"
     ],
-    "textTemplate": "Gain Persistent Block 4 and Persistent Barrier 4."
+    "textTemplate": "Gain Persistent Block {base.persistent-block} and Persistent Barrier {base.persistent-barrier}."
   },
   "base.greased": {
     "canonicalCardRef": "ironSkin",
@@ -3101,37 +3142,37 @@ export const baseCardPresentation = {
     "sourceFaceLines": [
       "Inflict Greased 3"
     ],
-    "textTemplate": "Apply Greased 3: fire detonates the coating."
+    "textTemplate": "Apply Greased {base.greased}: fire detonates the coating."
   },
   "base.divine-strike": {
     "canonicalCardRef": "greatswordSunderingHew",
     "faceLines": [
-      "Deal 36 weapon damage and 6 Sacred damage."
+      "Deal 3× equipped weapon damage plus 6 Sacred damage."
     ],
     "sourceFaceLines": [
       "Deal weapon + ? Divine damage"
     ],
-    "textTemplate": "Deal 36 weapon damage and 6 Sacred damage."
+    "textTemplate": "Deal {damage} weapon damage and {damage.2} Sacred damage."
   },
   "base.poison": {
     "canonicalCardRef": "ironSkin",
     "faceLines": [
-      "Apply Poison 1."
+      "Apply Poison 5: 15 total Necrotic damage as it decays."
     ],
     "sourceFaceLines": [
       "Inflict Poison 1"
     ],
-    "textTemplate": "Apply Poison 1."
+    "textTemplate": "Apply {base.poison} Poison: 15 total Necrotic damage as it decays."
   },
   "base.blight": {
     "canonicalCardRef": "ironSkin",
     "faceLines": [
-      "Apply Blight 1."
+      "Apply Blight 12: lethal when its stacks reach current HP."
     ],
     "sourceFaceLines": [
       "Inflict Blight 1"
     ],
-    "textTemplate": "Apply Blight 1."
+    "textTemplate": "Apply Blight {base.blight}: lethal when its stacks reach current HP."
   },
   "base.weak": {
     "canonicalCardRef": "ironSkin",
@@ -3141,7 +3182,7 @@ export const baseCardPresentation = {
     "sourceFaceLines": [
       "Inflict Weak 1"
     ],
-    "textTemplate": "Apply Weak 1."
+    "textTemplate": "Apply Weak {base.weak}."
   },
   "base.charm": {
     "canonicalCardRef": "ironSkin",
@@ -3151,7 +3192,7 @@ export const baseCardPresentation = {
     "sourceFaceLines": [
       "Inflict Charm 1"
     ],
-    "textTemplate": "Apply Charm 1."
+    "textTemplate": "Apply Charm {base.charm}."
   },
   "base.bind": {
     "canonicalCardRef": "ironSkin",
@@ -3161,7 +3202,7 @@ export const baseCardPresentation = {
     "sourceFaceLines": [
       "Inflict Bind 1"
     ],
-    "textTemplate": "Apply Bind 1."
+    "textTemplate": "Apply Bind {base.bind}."
   },
   "base.restrained": {
     "canonicalCardRef": "ironSkin",
@@ -3171,17 +3212,17 @@ export const baseCardPresentation = {
     "sourceFaceLines": [
       "Inflict Restrained 1"
     ],
-    "textTemplate": "Apply Restrained 1. Add a Restrained burden to the enemy hand."
+    "textTemplate": "Apply Restrained {base.restrained}. Add a Restrained burden to the enemy hand."
   },
   "base.foresight": {
     "canonicalCardRef": "ironSkin",
     "faceLines": [
-      "Gain Foresight 1."
+      "Gain Foresight 3 (+6 Perception). Draw 2 cards."
     ],
     "sourceFaceLines": [
       "Gain Foresight 1"
     ],
-    "textTemplate": "Gain Foresight 1."
+    "textTemplate": "Gain {base.foresight} Foresight and draw {draw} cards."
   },
   "base.evade": {
     "canonicalCardRef": "dodgeRoll",
@@ -3191,7 +3232,7 @@ export const baseCardPresentation = {
     "sourceFaceLines": [
       "Gain Evade 1"
     ],
-    "textTemplate": "Gain Evade 1."
+    "textTemplate": "Gain Evade {base.evade}."
   },
   "base.intangible": {
     "canonicalCardRef": "ironSkin",
@@ -3201,7 +3242,7 @@ export const baseCardPresentation = {
     "sourceFaceLines": [
       "Gain Intangible 1"
     ],
-    "textTemplate": "Gain Intangible 1."
+    "textTemplate": "Gain Intangible {base.intangible}."
   },
   "base.mirrors": {
     "canonicalCardRef": "ironSkin",
@@ -3211,7 +3252,7 @@ export const baseCardPresentation = {
     "sourceFaceLines": [
       "Gain Mirrors 1"
     ],
-    "textTemplate": "Gain Mirrors 1."
+    "textTemplate": "Gain Mirrors {base.mirrors}."
   },
   "base.elemental-weapon": {
     "canonicalCardRef": "ironSkin",
@@ -3222,7 +3263,7 @@ export const baseCardPresentation = {
       "Enchant weapon: ?",
       "Add ? elemental effect"
     ],
-    "textTemplate": "Enchant your weapon with Fire for 2 turns."
+    "textTemplate": "Enchant your weapon with Fire for {base.elemental-weapon} turns."
   },
   "base.fire-cleanse": {
     "canonicalCardRef": "ironSkin",
@@ -3233,7 +3274,7 @@ export const baseCardPresentation = {
       "Cleanse ? with fire",
       "Resolve fire interaction ?"
     ],
-    "textTemplate": "Take 2 Fire damage. Remove Poison and Greased."
+    "textTemplate": "Take {damage} Fire damage. Remove Poison and Greased."
   },
   "base.divine-cleanse": {
     "canonicalCardRef": "ironSkin",
@@ -3255,7 +3296,7 @@ export const baseCardPresentation = {
       "Convert necrotic to healing",
       "Restore ? health"
     ],
-    "textTemplate": "Convert incoming Necrotic damage to healing for 2 turns."
+    "textTemplate": "Convert incoming Necrotic damage to healing for {base.necrotic-healing} turns."
   },
   "base.divine-harm": {
     "canonicalCardRef": "ironSkin",
@@ -3266,7 +3307,7 @@ export const baseCardPresentation = {
       "Convert divine to harm",
       "Suffer ? damage"
     ],
-    "textTemplate": "Convert the enemy’s Sacred healing into damage for 2 turns."
+    "textTemplate": "Convert the enemy’s Sacred healing into damage for {base.divine-harm} turns."
   },
   "base.shuffle-hand": {
     "canonicalCardRef": "ironSkin",
@@ -3276,7 +3317,7 @@ export const baseCardPresentation = {
     "sourceFaceLines": [
       "Shuffle ? hand cards"
     ],
-    "textTemplate": "Shuffle up to 3 random hand cards into draw. Draw 3."
+    "textTemplate": "Shuffle up to {draw} random hand cards into draw. Draw 3."
   },
   "base.shuffle-deck": {
     "canonicalCardRef": "ironSkin",
@@ -3296,7 +3337,7 @@ export const baseCardPresentation = {
     "sourceFaceLines": [
       "Draw ? cards"
     ],
-    "textTemplate": "Draw 2 cards."
+    "textTemplate": "Draw {draw} cards."
   },
   "base.retain": {
     "canonicalCardRef": "ironSkin",
@@ -3402,7 +3443,7 @@ export const baseCardPresentation = {
       "Resolve effect ?",
       "Exhaust this card"
     ],
-    "textTemplate": "Heal 8 HP. Exhaust."
+    "textTemplate": "Heal {heal} HP. Exhaust."
   },
   "base.ethereal": {
     "canonicalCardRef": "ironSkin",
@@ -3413,7 +3454,7 @@ export const baseCardPresentation = {
       "Resolve effect ?",
       "Ethereal"
     ],
-    "textTemplate": "Gain 10 Block. Ethereal."
+    "textTemplate": "Gain {block} Block. Ethereal."
   },
   "base.stat-buff": {
     "canonicalCardRef": "honedEdge",
@@ -3424,7 +3465,7 @@ export const baseCardPresentation = {
       "Increase ? stat",
       "By ? for ?"
     ],
-    "textTemplate": "Gain 2 Strength for this combat."
+    "textTemplate": "Gain {strength} Strength for this combat."
   },
   "base.drain-allies": {
     "canonicalCardRef": "ironSkin",
@@ -3435,7 +3476,7 @@ export const baseCardPresentation = {
       "Drain allies: ?",
       "Gain ?"
     ],
-    "textTemplate": "All allies lose 3 HP. Gain 12 Block."
+    "textTemplate": "All allies lose {loseHp} HP. Gain {block} Block."
   },
   "base.scale-negative-status": {
     "canonicalCardRef": "strike",
@@ -3446,7 +3487,7 @@ export const baseCardPresentation = {
       "Deal ? damage",
       "Scale with afflictions"
     ],
-    "textTemplate": "Deal 6 damage +2 per distinct negative status on the target."
+    "textTemplate": "Deal {damage} damage, scaling with distinct negative statuses."
   },
   "base.scale-damage-taken": {
     "canonicalCardRef": "strike",
@@ -3457,7 +3498,7 @@ export const baseCardPresentation = {
       "Deal ? damage",
       "Scale with damage taken"
     ],
-    "textTemplate": "Deal 6 damage plus half the HP lost this turn."
+    "textTemplate": "Deal {damage} damage, scaling with HP lost this turn."
   },
   "base.growth-per-type": {
     "canonicalCardRef": "ironSkin",
@@ -3468,7 +3509,7 @@ export const baseCardPresentation = {
       "Gain ? per type played",
       "Track types: ?"
     ],
-    "textTemplate": "Gain 4 Block +2 per distinct card type played this turn."
+    "textTemplate": "Gain {block} Block, scaling with distinct types played this turn."
   },
   "base.cost-per-use": {
     "canonicalCardRef": "strike",
@@ -3479,7 +3520,7 @@ export const baseCardPresentation = {
       "Resolve effect ?",
       "Cost changes per use: ?"
     ],
-    "textTemplate": "Deal 8 damage. Costs +1 SP per prior play this combat (maximum +3)."
+    "textTemplate": "Deal {damage} damage. Costs +1 SP per prior play this combat (maximum +3)."
   },
   "base.damage-per-use": {
     "canonicalCardRef": "strike",
@@ -3490,7 +3531,7 @@ export const baseCardPresentation = {
       "Deal ? damage",
       "Changes per use: ?"
     ],
-    "textTemplate": "Deal 6 damage +3 per prior play this combat."
+    "textTemplate": "Deal {damage} damage, increasing each time this card is played."
   },
   "base.pay-x-effect": {
     "canonicalCardRef": "strike",
@@ -3501,7 +3542,7 @@ export const baseCardPresentation = {
       "Pay X: ? resource",
       "Scale effect with X"
     ],
-    "textTemplate": "Spend all remaining SP. Deal 6 damage per SP paid."
+    "textTemplate": "Spend all remaining SP. Deal {damage} damage."
   },
   "base.pay-x-targets": {
     "canonicalCardRef": "strike",
@@ -3512,28 +3553,28 @@ export const baseCardPresentation = {
       "Pay X: ? resource",
       "Affect X targets"
     ],
-    "textTemplate": "Spend all remaining SP. Deal 8 damage to up to X enemies."
+    "textTemplate": "Spend all remaining SP. Deal {damage} damage to up to X enemies."
   },
   "base.hide-cards": {
     "canonicalCardRef": "ironSkin",
     "faceLines": [
-      "Hide up to 2 hand cards for 2 turns."
+      "Gain Conceal 2. Hide X cards for X turns, equal to your stacks."
     ],
     "sourceFaceLines": [
       "Hide X cards",
       "For X turns"
     ],
-    "textTemplate": "Hide up to 2 hand cards for 2 turns."
+    "textTemplate": "Gain {base.conceal} Conceal. Hide X hand cards for X turns, where X is your Conceal stacks."
   },
   "base.force-stance": {
     "canonicalCardRef": "ironSkin",
     "faceLines": [
-      "Force the enemy into Brace."
+      "Force the enemy into Defend."
     ],
     "sourceFaceLines": [
       "Force stance: ?"
     ],
-    "textTemplate": "Force the enemy into Brace."
+    "textTemplate": "Force the enemy into Defend."
   },
   "base.multi-stance": {
     "canonicalCardRef": "ironSkin",
@@ -3543,7 +3584,7 @@ export const baseCardPresentation = {
     "sourceFaceLines": [
       "Hold multiple stances"
     ],
-    "textTemplate": "Gain 1 Many Forms: hold up to 2 stances until next turn."
+    "textTemplate": "Gain {base.many-forms} Many Forms: hold up to 2 stances until next turn."
   },
   "base.current-stance-variant": {
     "canonicalCardRef": "strike",
@@ -3553,7 +3594,7 @@ export const baseCardPresentation = {
     "sourceFaceLines": [
       "Active stance effect: ?"
     ],
-    "textTemplate": "Smash: deal 12 damage. Otherwise gain 6 Block."
+    "textTemplate": "Smash: deal 12 damage. Otherwise gain {damage} Block."
   },
   "base.paid-resource-variant": {
     "canonicalCardRef": "strike",
@@ -3563,18 +3604,18 @@ export const baseCardPresentation = {
     "sourceFaceLines": [
       "Active paid effect: ?"
     ],
-    "textTemplate": "If MP was paid, deal 12 damage; otherwise gain 8 Block."
+    "textTemplate": "If MP was paid, deal {damage} damage; otherwise gain 8 Block."
   },
   "base.attack-then-defend": {
     "canonicalCardRef": "strike",
     "faceLines": [
-      "Deal 8 damage, then choose a class stance."
+      "Deal 8 damage, then choose a maneuver stance."
     ],
     "sourceFaceLines": [
       "Deal ? damage",
       "Choose defense stance"
     ],
-    "textTemplate": "Deal 8 damage, then choose a class stance."
+    "textTemplate": "Deal {damage} damage, then choose a maneuver stance."
   },
   "base.modify-card-stance": {
     "canonicalCardRef": "ironSkin",
@@ -3606,7 +3647,7 @@ export const baseCardPresentation = {
     "sourceFaceLines": [
       "Gain ? weapon action"
     ],
-    "textTemplate": "Gain 1 extra weapon action this turn."
+    "textTemplate": "Gain {base.extra-weapon} extra weapon action this turn."
   },
   "base.extra-shield": {
     "canonicalCardRef": "ironSkin",
@@ -3616,7 +3657,7 @@ export const baseCardPresentation = {
     "sourceFaceLines": [
       "Gain ? shield action"
     ],
-    "textTemplate": "Gain 1 extra shield action this turn."
+    "textTemplate": "Gain {base.extra-shield} extra shield action this turn."
   },
   "base.auto-counter": {
     "canonicalCardRef": "ironSkin",
@@ -3626,7 +3667,7 @@ export const baseCardPresentation = {
     "sourceFaceLines": [
       "Prepare auto-counter ?"
     ],
-    "textTemplate": "Prepare one automatic counterattack."
+    "textTemplate": "Prepare one automatic counterattack. base.auto-counter: {base.auto-counter}."
   },
   "base.auto-sweep": {
     "canonicalCardRef": "ironSkin",
@@ -3636,7 +3677,7 @@ export const baseCardPresentation = {
     "sourceFaceLines": [
       "Prepare auto-sweep ?"
     ],
-    "textTemplate": "Prepare one automatic sweep."
+    "textTemplate": "Prepare one automatic sweep. base.auto-sweep: {base.auto-sweep}."
   },
   "base.reflect": {
     "canonicalCardRef": "ironSkin",
@@ -3647,7 +3688,7 @@ export const baseCardPresentation = {
       "Reflect eligible hits",
       "Return ? damage"
     ],
-    "textTemplate": "Reflect eligible incoming damage for 1 turn."
+    "textTemplate": "Reflect eligible incoming damage for {base.reflect} turn."
   },
   "base.guard-allies": {
     "canonicalCardRef": "ironSkin",
@@ -3658,39 +3699,39 @@ export const baseCardPresentation = {
       "Guard ? allies",
       "Absorb ? damage"
     ],
-    "textTemplate": "Gain 8 Block and guard allies for 1 turn."
+    "textTemplate": "Gain {block} Block and guard allies for {base.guard-allies} turn."
   },
   "base.transmute": {
     "canonicalCardRef": "ironSkin",
     "faceLines": [
-      "Exhaust a chosen hand card. Restore 2 MP."
+      "Exhaust a chosen hand card. Gain 10 cinders."
     ],
     "sourceFaceLines": [
       "Convert target: ?",
       "Yield: ?"
     ],
-    "textTemplate": "Exhaust a chosen hand card. Restore 2 MP."
+    "textTemplate": "Exhaust a chosen hand card. Gain {addCinders} cinders."
   },
   "base.one-use-scroll": {
     "canonicalCardRef": "ironSkin",
     "faceLines": [
-      "Cast Foresight. Exhaust this scroll."
+      "Cast Foresight. One play per combat; exhaust this scroll."
     ],
     "sourceFaceLines": [
       "Cast linked spell",
       "Consume scroll"
     ],
-    "textTemplate": "Cast Foresight. Exhaust this scroll."
+    "textTemplate": "Cast Foresight. One play per combat; exhaust this scroll."
   },
   "base.gain-resource": {
     "canonicalCardRef": "ironSkin",
     "faceLines": [
-      "Restore 2 SP."
+      "Restore 3 SP for a net gain of 2 SP."
     ],
     "sourceFaceLines": [
       "Gain ? resource"
     ],
-    "textTemplate": "Restore 2 SP."
+    "textTemplate": "Restore {restoreStamina} SP."
   },
   "base.buff-ally": {
     "canonicalCardRef": "ironSkin",
@@ -3700,7 +3741,7 @@ export const baseCardPresentation = {
     "sourceFaceLines": [
       "Buff ally: ?"
     ],
-    "textTemplate": "Give an ally 2 Strength for this combat."
+    "textTemplate": "Give an ally {strength} Strength for this combat."
   },
   "base.break-ward": {
     "canonicalCardRef": "ironSkin",
@@ -3720,7 +3761,7 @@ export const baseCardPresentation = {
     "sourceFaceLines": [
       "Break ? Poise"
     ],
-    "textTemplate": "Deal 8 Poise damage."
+    "textTemplate": "Deal {poiseDamage} Poise damage."
   },
   "base.generate-smash": {
     "canonicalCardRef": "ironSkin",
@@ -3740,7 +3781,7 @@ export const baseCardPresentation = {
     "sourceFaceLines": [
       "Deal ? damage"
     ],
-    "textTemplate": "Deal 6 damage. In Smash stance, deal 6 more."
+    "textTemplate": "Deal {damage} damage. In Smash stance, deal {damage.2} more."
   },
   "base.perception-untargetable": {
     "canonicalCardRef": "ironSkin",
@@ -3750,7 +3791,7 @@ export const baseCardPresentation = {
     "sourceFaceLines": [
       "Untargetable unless perceived"
     ],
-    "textTemplate": "Become untargetable without a perception check for 2 turns."
+    "textTemplate": "Become untargetable without a perception check for {base.veil} turns."
   },
   "base.retain-block": {
     "canonicalCardRef": "ironSkin",
@@ -3760,17 +3801,17 @@ export const baseCardPresentation = {
     "sourceFaceLines": [
       "Retain ? Block"
     ],
-    "textTemplate": "Gain 6 Block. Retain Block for 1 turn."
+    "textTemplate": "Gain {block} Block. Retain Block for {base.retain-block} turn."
   },
   "base.immediate-stance-transition": {
     "canonicalCardRef": "ironSkin",
     "faceLines": [
-      "Immediately choose a class stance."
+      "Immediately choose a maneuver stance."
     ],
     "sourceFaceLines": [
       "Play; change stance: ?"
     ],
-    "textTemplate": "Immediately choose a class stance."
+    "textTemplate": "Immediately choose a maneuver stance."
   },
   "base.stagger-status-card": {
     "canonicalCardRef": "ironSkin",
@@ -3790,7 +3831,7 @@ export const baseCardPresentation = {
     "sourceFaceLines": [
       "Strike ? times for ?"
     ],
-    "textTemplate": "Strike 3 times for 4 damage. Deal 3 Ward and 3 Poise damage total."
+    "textTemplate": "Strike {hits} times for {damage} damage. Deal {poiseDamage} Ward and 3 Poise damage total."
   },
   "base.paralysis-status-card": {
     "canonicalCardRef": "ironSkin",
@@ -3817,14 +3858,14 @@ export const baseCardPresentation = {
     "faceLines": [
       "Deal 6 damage."
     ],
-    "textTemplate": "Deal 6 damage."
+    "textTemplate": "Deal {damage} damage."
   },
   "base.smash": {
     "canonicalCardRef": "strike",
     "faceLines": [
       "Deal 12 damage."
     ],
-    "textTemplate": "Deal 12 damage."
+    "textTemplate": "Deal {damage} damage."
   }
 };
 export const baseCardStatuses = [
@@ -4059,6 +4100,14 @@ export const baseCardStatuses = [
     "stackMode": "add",
     "decay": "none",
     "tooltip": "Each stack permits one additional concurrent stance. Two stacks allow three total stances. Lose one stack at the next turn start."
+  },
+  {
+    "id": "base.conceal",
+    "name": "Conceal",
+    "icon": "◒",
+    "stackMode": "add",
+    "decay": "none",
+    "tooltip": "Each stack increases cards hidden and their hidden duration by one. Lose one stack at owner turn start."
   }
 ];
 export const baseCardStatusRules = {
@@ -4068,7 +4117,10 @@ export const baseCardStatusRules = {
         "statuses",
         "defenses"
       ],
-      "elements": []
+      "elements": [],
+      "protections": [
+        "block"
+      ]
     },
     "decay": null,
     "behaviors": [
@@ -4086,7 +4138,10 @@ export const baseCardStatusRules = {
         "statuses",
         "defenses"
       ],
-      "elements": []
+      "elements": [],
+      "protections": [
+        "barrier"
+      ]
     },
     "decay": null,
     "behaviors": [
@@ -4589,7 +4644,10 @@ export const baseCardStatusRules = {
         "statuses",
         "defenses"
       ],
-      "elements": []
+      "elements": [],
+      "protections": [
+        "block"
+      ]
     },
     "decay": {
       "phase": "start",
@@ -4666,8 +4724,31 @@ export const baseCardStatusRules = {
     "behaviors": [
       {
         "kind": "stanceCapacity",
-        "additionalPerStack": 1
+        "additionalPerStack": 1,
+        "maxStances": 2,
+        "defensePriority": [
+          "counter",
+          "defend",
+          "evade",
+          "casting",
+          "attack",
+          "smash",
+          "sweep"
+        ]
       }
     ]
+  },
+  "base.conceal": {
+    "requires": {
+      "modules": [
+        "statuses"
+      ],
+      "elements": []
+    },
+    "decay": {
+      "phase": "start",
+      "stacks": 1
+    },
+    "behaviors": []
   }
 };
