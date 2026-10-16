@@ -4223,6 +4223,11 @@ if (shotState) {
       deckIDs: (row.deck || []).map(card => card.cardId),
       sideboardIDs: (row.sideboard || []).map(card => card.cardId),
       cinders: row.cinders,
+      loadout: row.loadout,
+      flasks: row.flasks,
+      relics: row.relics,
+      sigils: row.sigils,
+      consumables: row.consumables,
       pendingReward: row.gameProfilePendingReward || row.pendingReward || null,
       offers: row.gameProfileRewardOffers || null,
     }) : null;
@@ -4715,6 +4720,12 @@ if (shotState === 'combat-test') {
     }
     showShop();
   } else if (shotState === 'reward') {
+    if (shotParams.get('shotReward') === 'configured') {
+      if (!isConfiguredRun(run)) throw new Error('Configured reward shot requires a configured game profile.');
+      // Enter the production offer/save/renderer callbacks; do not pose an
+      // alternate UI or grant a preselected option for this reach state.
+      beginGameProfileReward({ source: 'combat', after: 'map' });
+    } else {
     // A REACH STATE for the reward MENU (E11/#256), the same shape and reason
     // as `?shot=rest` and `?shot=shop` above: a screen without a ?shot= state
     // is a screen no instrument owns — release-shots derives its denominator
@@ -4826,6 +4837,7 @@ if (shotState === 'combat-test') {
         rewards: shotOffer,
         onDone: () => { rewardDoneCount++; showMap(); },
       });
+    }
     }
   } else if (shotState === 'combat' || shotState === 'fx') {
     // `?shotMaxPoise=<n>` — STAND AT A DIFFERENT STAGGER THRESHOLD. Unlike the
