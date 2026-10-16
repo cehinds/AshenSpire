@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { combatSpriteGeometry } from '../src/ui/components/combatSpriteGeometry.js';
 import { combatArtworkKey } from '../src/ui/models/CombatCompositionModel.js';
-import { alternativeCombatComposition, combatStandingGround, SPACIOUS_RIBBON_RESERVE } from '../src/ui/models/CombatCompositionModel.js';
+import { insetPerspectiveFootprint, alternativeCombatComposition, combatStandingGround, SPACIOUS_RIBBON_RESERVE } from '../src/ui/models/CombatCompositionModel.js';
 import { alternativeFormation, fitAlternativeSprites } from '../src/ui/models/AlternativeFormationModel.js';
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
 import { alternativeEnemyTargetGrid } from '../src/ui/models/AlternativeEnemyTargetGridModel.js';
@@ -116,7 +116,8 @@ test('a 130px field keeps short enemies readable on their distinct foot anchors'
   for (const size of enemies) {
     const actor = actors.find(candidate => candidate.slot.id === size.id);
     assert.ok(size.visibleHeight >= actor.slot.box.height - 1e-9, 'the overhead union cannot collapse the body');
-    assert.equal(size.ground, actor.slot.ground, 'the body stays on its cell shadow');
+    assert.equal(size.ground, insetPerspectiveFootprint(actor.slot,{width:actor.visibleWidth*size.scale,
+      height:actor.visibleHeight*size.scale*.08}).ground, 'the body stays on its inset cell shadow');
   }
   assert.equal(new Set(enemies.map(size => size.ground)).size, 2, 'the two enemy ranks keep distinct foot lines');
 });
@@ -157,3 +158,29 @@ test('a tablet spacious field keeps its own depth rows (no shared desktop line)'
   assert.notEqual(fit[1].ground, fit[2].ground, 'tablet enemies keep their slot depth');
 });
 
+
+test('enemy foot and full shadow envelope stay inside the owning skewed cell without scaling art', () => {
+  for (const [width,height,narrow] of [[1440,441,false],[1920,600,false],[390,426,true]]) {
+    const plan=alternativeFormation(combatFormation({width,height,presentation:{perspectiveGrid:true},friends:['p'],enemies:['a','b','c','d','e','f']}),width,height,narrow);
+    for (const slot of plan.slots.filter(slot=>slot.side==='enemy')) {
+      const shadowWidth=Math.min(slot.box.width*.65,152), scale=narrow?.45:.8;
+      const foot=insetPerspectiveFootprint(slot,{width:shadowWidth,height:12*scale});
+      for(const x of [foot.x-shadowWidth/2,foot.x+shadowWidth/2]) {
+        for(const y of [foot.ground-6*scale,foot.ground+6*scale]) {
+          const centre=slot.box.left+slot.box.width/2+slot.box.skew*(slot.box.top+slot.box.height/2-y);
+          assert(y>=slot.box.top && y<=slot.box.top+slot.box.height);
+          assert(Math.abs(x-centre)<=slot.box.width/2-6+1e-9,`${slot.cell} shadow stays inside its cell`);
+        }
+      }
+      const [fit]=alternativeCombatComposition({actors:[{slot,side:'enemy',visibleWidth:shadowWidth}],sizes:[{id:slot.id,scale:1,visibleHeight:158,multiplier:1}],width,perspectiveGrid:true});
+      assert.equal(fit.scale,1);assert.equal(fit.visibleHeight,158);
+    }
+  }
+});
+
+test('impossibly wide custom footprints report the limit without silently shrinking artwork', () => {
+  const slot={x:90,ground:30,box:{left:0,top:0,width:100,height:60,skew:.5}};
+  const foot=insetPerspectiveFootprint(slot,{width:200,height:12});
+  assert.equal(foot.footprintFits,false);
+  assert.equal(foot.x,50,'impossible footprint remains centred in its owning cell');
+});

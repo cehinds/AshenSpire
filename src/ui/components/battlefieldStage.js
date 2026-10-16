@@ -198,7 +198,30 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     if (envelope?.validated) layoutState.restHandAnchor = envelope;
     return envelope;
   }
+  // The detailed-target presentation owns its side panels. Only the compact
+  // overhead follows the visible figure; selecting it never moves that figure.
+  function centerTargetOverheads() {
+    const zoom = uiZoom();
+    const rows = [...field.querySelectorAll('.combatant')].flatMap(frame => {
+      const sprite = frame.querySelector('.sprite'), leading = frame.querySelector('.combatant-leading');
+      if (!sprite || !leading) return [];
+      leading.style.left = '0px';
+      leading.style.top = 'var(--overhead-top, 0px)';
+      leading.style.translate = 'none';
+      delete frame.dataset.overheadObstructed;
+      return [{ frame, sprite, leading }];
+    });
+    const placements = rows.map(({ frame, sprite, leading }) => {
+      const art = currentSpriteArtBounds(sprite, schedule), box = leading.getBoundingClientRect();
+      const gap = field.closest('.combat')?.dataset.compactCombat === 'true' ? 4 : 14;
+      return { frame, leading, dx: ((art.left + art.right - box.left - box.right) / 2) / zoom,
+        dy: (art.top - gap - box.bottom) / zoom };
+    });
+    for (const { leading, dx, dy } of placements) leading.style.translate = `${dx}px ${dy}px`;
+  }
+
   function placePlayerHud(reserveFirst = false, targetCores = [], tick = false) {
+    if (field.closest('.combat')?.dataset.targetHud === 'true') { centerTargetOverheads(); return; }
     // A player's Inspect over the head must not hide an enemy's intent or
     // Inspect. It takes the head's left, the field's left edge, or the head's
     // right before accepting an overlap. Declared here so the placement source
@@ -403,7 +426,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     placePlayerHud(false, settledTargetCores, true);
     // A neighbour's intent that moves between refits re-picks the spot about
     // four times a second; the Inspect itself never follows the body's bob.
-    if (++inspectTick % 15 === 0) placeEnemyInspect();
+    if (++inspectTick % 15 === 0 && field.closest('.combat')?.dataset.targetHud !== 'true') placeEnemyInspect();
     // Idle breathing also moves the painted body. Keep the physical gap during
     // those CSS transforms as well as explicit attack and movement poses.
     trackingRequest = field.isConnected && field.querySelector('.combatant.player')
@@ -420,6 +443,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       wiredAppearance = displayAppearance();
     }
     combat.dataset.layout = 'formation';
+    const targetHud = combat.dataset.targetHud === 'true';
     // No combatants yet (the wiring's own call, before the first render): there
     // is nothing to fit, so do not force a layout of the half-built screen.
     const frames = [...field.querySelectorAll('.combatant[data-ui-component="combatant-frame"]')];
@@ -702,7 +726,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // Writes one readable overhead at its anchor. Called again once the
     // player's settled art and controls are measured (see below).
     const placeLeading = ({ actor, frame, leadingHost, id, x, ground, visibleHeight }, anchors) => {
-      const anchor = anchors.find(overhead => overhead.id === id);
+      const anchor = targetHud ? null : anchors.find(overhead => overhead.id === id);
       if (hudBelow(actor)) {
         // A front-rank enemy's readout hangs below its feet. Keep its preferred
         // centre on the body, but honour the packer's bounded displacement when
@@ -727,7 +751,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       // can reserve more ribbon headroom. Move only the readable controls,
       // including a packed cross-row control, clear of the ribbon.
       const overheadTop = ground - visibleHeight - overheadGap - actor.leadingHeight * zoom;
-      const overheadShift = anchor?.offsetY
+      const overheadShift = targetHud ? 0 : anchor?.offsetY
         ?? combatOverheadRibbonShift({ x: overheadX, width: actor.leadingWidth * zoom,
           top: overheadTop, bottom: overheadTop + actor.leadingHeight * zoom, ribbon, clearance: overheadGap });
       leadingHost.style.translate = actor.side === 'player' ? 'none' : `0 ${overheadShift / zoom}px`;
@@ -770,6 +794,13 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       frame.dataset.formationRole = slot.formationRole;
       frame.dataset.formationDepth = String(slot.row);
       frame.dataset.formationCell = slot.cell;
+      frame.dataset.targetHudLane = slot.lane === 0 ? 'left' : slot.lane === plan.rows - 1 ? 'right' : 'middle';
+      if (slot.box) {
+        const { left, top, width, height, skew = 0 } = slot.box;
+        frame.dataset.targetHudCellPolygon = JSON.stringify([[left + skew * height / 2, top],
+          [left + width + skew * height / 2, top], [left + width - skew * height / 2, top + height],
+          [left - skew * height / 2, top + height]]);
+      }
       frame.dataset.baseSpriteScale = String(fitted.scale);
       frame.dataset.presentationScale = String(multiplier);
       frame.dataset.formationX = String(slot.x);
@@ -813,6 +844,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     settledTargets = [];
     settledTargetCores = [];
     placePlayerHud();
+    if (!targetHud) {
     // Enemy overheads pack around the player's measured art and controls. An
     // obstacle never blocks its own owner, and the fitted artwork does not move.
     const playerObstacles = placed.filter(({ frame }) => frame.classList.contains('player')).flatMap(({ frame, sprite }) => {
@@ -1083,6 +1115,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       leadingHost.style.left = `${hostBox.left + dx}px`;
       leadingHost.style.translate = `0 ${hostShiftY + dy}px`;
     }
+    }
     // Idle names do not reserve footer rows, but their independent tap cores
     // still need separate space when two formation rows meet on a short field.
     // Move only these transparent cores; keep art and readable plates fixed.
@@ -1149,7 +1182,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const rect = combat.getBoundingClientRect();
     // Last layout write of the refit: the HUD, ribbon and intents are settled.
     // The combat box above is unchanged by the Inspect marks.
-    placeEnemyInspect();
+    if (!targetHud) placeEnemyInspect();
+    else centerTargetOverheads();
     syncFloorShadows();
     // Fit the sky from the top of the combat screen, including the HUD.
     // Extending a field-only crop upward can expose empty space above the
@@ -1177,6 +1211,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         formation: { cells: plan.cells.map(cell => ({ ground: cell.ground / zoom })), rowSpacing: plan.rowSpacing / zoom } }),
     });
     field.dataset.groundY = String(fieldRect.top + plan.ground);
+    field.dispatchEvent(new Event('battlefieldgeometrychange'));
   };
   const schedule = () => { cancelAnimationFrame(frameRequest); frameRequest = requestAnimationFrame(refresh); };
   const combatHost = field.closest('.combat');

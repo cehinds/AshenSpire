@@ -21,7 +21,7 @@ function fixture(name, modules = {}, coop = false) {
 test('current allocates a real seventh enemy to C; core uses only original enemy cells',()=>{
   const current=fixture('current').combat, core=fixture('core').combat;
   assert.equal(current.enemies[6].formationCell,'A5');
-  assert.equal(core.enemies[6].formationCell,'C3');
+  assert.equal(core.enemies[6].formationCell,'B3');
   assert.equal(new Set(formationOccupancy(current).map(row=>row.cell)).size,8);
   const dimensions=formationDimensions({perspectiveGrid:true,formationPolicy:current.formationPolicy},7);
   assert.equal(dimensions.columns,2);assert.equal(dimensions.rows,3);
@@ -79,4 +79,18 @@ test('a co-op late join receives an unoccupied stable player cell',()=>{
   const after=formationOccupancy(combat);assert.deepEqual(after.filter(row=>row.id!=='two'),before);
   assert.equal(after.find(row=>row.id==='two').cell,'B1');
   assert.doesNotThrow(()=>serializeCoopCombatSnapshot(combat));
+});
+
+test('fresh three-lane enemy allocation follows back right/left/middle then front right/middle/left', () => {
+  for (const name of ['core','current']) {
+    const policy = fixture(name).combat.formationPolicy;
+    const combat = { formationPolicy: policy, player: player(), enemies: Array.from({length:6},(_,i)=>({id:`e${i}`})) };
+    initializeFormationOccupancy(combat);
+    assert.deepEqual(combat.enemies.map(enemy=>enemy.formationCell), ['C4','A4','B4','C3','B3','A3']);
+    assert(!combat.enemies.some(enemy=>enemy.formationCell.endsWith('5')));
+    // Explicit old addresses reserve their cell before a new actor is placed.
+    combat.enemies[0].formationCell='B4';combat.enemies[2].formationCell='C4';
+    const before=formationOccupancy(combat);initializeFormationOccupancy(combat);
+    assert.deepEqual(formationOccupancy(combat),before);
+  }
 });
