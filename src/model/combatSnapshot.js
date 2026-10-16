@@ -1,3 +1,4 @@
+import { validateZoneEffect } from '../engine/cardZones.js';
 import { validateGameProfileSnapshot, projectGameCard } from './gameProfile.js';
 import { combatExpansionRulesProblems } from './combatExpansionRules.js';
 import { retiredAttackSlots } from './cardRemoval.js';
@@ -186,6 +187,11 @@ export function combatSnapshotProblems(snapshot) {
   if (snapshot.pendingAbilityDiscard !== undefined || snapshot.pendingCardChoice !== undefined) {
     const pending = snapshot.pendingAbilityDiscard || snapshot.pendingCardChoice;
     if (!record(pending) || !Number.isInteger(pending.count) || pending.count < 1 || pending.count > (snapshot.pendingCardChoice ? (snapshot.piles?.[pending.effect?.from]?.length || 0) : (snapshot.piles?.hand?.length || 0))) problems.push('pendingAbilityDiscard requires a valid hand count');
+    if (snapshot.pendingCardChoice) {
+      try { validateZoneEffect(pending.effect); } catch(error) {problems.push(`pendingCardChoice: ${error.message}`);}
+      const candidates=(snapshot.piles?.[pending.effect?.from] || []).slice(0,pending.effect?.look ?? 100000).map(c=>c.instanceId);
+      if (!['moveCards','modifyCards'].includes(pending.effect?.op) || pending.kind!=='moveCards' || pending.count>100 || (typeof pending.effect?.amount==='number' && pending.count>pending.effect.amount) || pending.candidateIds?.some(id=>!candidates.includes(id))) problems.push('pendingCardChoice has invalid selection bounds');
+    }
     if (snapshot.pendingCardChoice && (!Array.isArray(pending.candidateIds) || pending.candidateIds.length < pending.count || new Set(pending.candidateIds).size !== pending.candidateIds.length || pending.candidateIds.some(id => !(snapshot.piles?.[pending.effect?.from] || []).some(c => c.instanceId === id)))) problems.push('pendingCardChoice requires eligible unique cards');
     if (!record(snapshot.pendingAbilityPlay)) problems.push('pendingAbilityDiscard requires its paid card');
     else problems.push(...cardProblems(snapshot.pendingAbilityPlay.instance, 'pendingAbilityPlay.instance'));
@@ -285,6 +291,12 @@ export function combatSnapshotProblems(snapshot) {
   if (!record(snapshot.piles)) problems.push('piles must be an object');
   else {
     const seen = new Set();
+    for (const row of snapshot.hiddenCards || []) {
+      if (!record(row) || !Number.isSafeInteger(row.returnTurn) || row.returnTurn < snapshot.turn || row.returnTurn > snapshot.turn+10) problems.push('hiddenCards requires bounded return turn');
+      problems.push(...cardProblems(row?.card,'hiddenCards.card'));
+      if (seen.has(row?.card?.instanceId)) problems.push('duplicate hidden card');
+      seen.add(row?.card?.instanceId);
+    }
     for (const pile of SNAPSHOT_PILES) {
       const cards = snapshot.piles[pile];
       if (!Array.isArray(cards)) {
@@ -334,6 +346,8 @@ export function combatSnapshotReferenceProblems(snapshot, registries) {
     if (!known) problems.push(`itemUpgradeLevels.${itemRef} is unknown`);
     else if (level > (itemUpgradeTiers(registries, itemRef).at(-1) || 0)) problems.push(`itemUpgradeLevels.${itemRef} exceeds its highest authored tier`);
   }
+  if (snapshot.pendingCardChoice?.effect?.transformTo) has(registries.cards,snapshot.pendingCardChoice.effect.transformTo,'pendingCardChoice.transformTo');
+  for (const row of snapshot.hiddenCards || []) has(registries.cards,row.card?.cardId,'hiddenCards.cardId');
   has(registries.classes, snapshot.player?.classId, 'player.classId');
   for (const id of snapshot.player?.relicIds || []) has(registries.relics, id, 'player.relicIds');
   // SPEC §15.4 (rarity at every door): an attuned id is a known LEGENDARY.

@@ -14,9 +14,9 @@ import { computeTokenBindings, validateEffects } from '../src/model/validate.js'
 import { skillXpReceipt } from '../src/engine/skillXp.js';
 
 // The fixture pins its own Stamina and Mana: costRule 'fixed' opts it out of the cost formula (SPEC §4.3a).
-function fixture(effects, { manaCost = 0, cost = 1, coop = false, expanded = false } = {}) {
+function fixture(effects, { manaCost = 0, cost = 1, coop = false, expanded = false, definition = {} } = {}) {
   const base = createRegistries(contentBundle);
-  const card = { ...base.cards.get('defend'), gradeProfiles: undefined, abilityRank: undefined, legacyFace: undefined, name: 'Rider fixture', costRule: 'fixed', cost, manaCost, effects, upgrade: {}, abilityKind: 'spell', abilityFamily: 'fixture', cardTags: ['kind.skill', 'source:spell'] };
+  const card = { ...base.cards.get('defend'), gradeProfiles: undefined, abilityRank: undefined, legacyFace: undefined, name: 'Rider fixture', costRule: 'fixed', cost, manaCost, effects, upgrade: {}, abilityKind: 'spell', abilityFamily: 'fixture', cardTags: ['kind.skill', 'source:spell'], ...definition };
   const registries = { ...base, progressionEnabled: expanded, cards: { ...base.cards, get: id => id === 'defend' ? card : base.cards.get(id) } };
   const player = { id: 'p1', classId: 'herald', maxHp: 80, hp: 50, maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 2, relicIds: [], deck: Array.from({ length: 20 }, (_, i) => ({ instanceId: `d${i}`, cardId: 'defend', upgraded: false })) };
   const combat = coop ? createCoopCombat({ registries, rng: createRng(9), players: [{ ...player, id: 'a' }, { ...player, id: 'b' }], enemyIds: ['wanderingSoldier'] }) : createCombat({ registries, rng: createRng(9), player, enemyIds: ['wanderingSoldier'] });
@@ -46,4 +46,50 @@ test('Recall and exile recovery move existing instances; transform does not mint
   dispatch(combat,{type:'chooseCards',cardInstanceIds:['recall-me']});
   assert.equal(combat.piles.hand.find(c=>c.instanceId==='recall-me').cardId,'strike');assert.equal(combat.piles[from].filter(c=>c.instanceId==='recall-me').length,0);
  }
+});
+
+test('top-of-hand recall respects capacity and reports the actual overflow destination',()=>{
+ const combat=fixture([{op:'moveCards',from:'discard',to:'hand',amount:3,selection:'first',position:'top'}]);
+ combat.handMax=combat.piles.hand.length;
+ combat.piles.discard.push(...[0,1,2].map(i=>({instanceId:`overflow-${i}`,cardId:'defend',upgraded:false})));
+ play(combat);
+ assert.equal(combat.piles.hand.length,combat.handMax);
+ assert.equal(combat.piles.hand[0].instanceId,'overflow-0');
+ assert.deepEqual(combat.piles.discard.filter(c=>c.instanceId.startsWith('overflow')).map(c=>c.instanceId),['overflow-1','overflow-2']);
+ assert.deepEqual(combat.eventLog.filter(e=>e.reason==='handFull').map(e=>e.to),['discard','discard']);
+});
+
+test('author validation rejects invalid card-zone data rather than allowing a runtime-only failure',()=>{
+ const valid={op:'moveCards',from:'draw',to:'hand',amount:1};
+ const context=errors=>({err:(path,msg)=>errors.push({path,msg}),ids:{cards:new Set(['strike']),statuses:new Set(['weak'])},nodeIds:new Set()});
+ for(const patch of [{from:'secret'},{to:'secret'},{selection:'any'},{position:'middle'},{look:0},{amount:-1},{invented:true},{transformTo:'missing'}]){
+  const errors=[];validateEffects([{...valid,...patch}],'cards',context(errors));assert.ok(errors.length,JSON.stringify(patch));
+ }
+ const errors=[];validateEffects([valid],'cards',context(errors));assert.deepEqual(errors,[]);
+});
+test('corrupted pending choices cannot change zones, forge candidates or transform to unknown cards on load',()=>{
+ const combat=fixture([{op:'moveCards',from:'draw',to:'hand',amount:1,look:2,selection:'choose'}]);play(combat);
+ const saved=serializeCombatSnapshot(combat);
+ for(const edit of [s=>s.pendingCardChoice.effect.to='secret',s=>s.pendingCardChoice.count=99,s=>s.pendingCardChoice.candidateIds=['forged'],s=>s.pendingCardChoice.effect.transformTo='unknown-card',s=>s.pendingCardChoice.effect.amount=-1]){
+  const corrupt=structuredClone(saved);edit(corrupt);
+  assert.throws(()=>restoreCombatSnapshot({registries:combat.registries,rng:createRng(9),snapshot:corrupt}),/Malformed|Unknown|unknown|unresolved/);
+ }
+});
+
+test('modified cards retain their instance and hidden cards return after a bounded duration',()=>{
+ const combat=fixture([{op:'modifyCards',from:'hand',amount:1,selection:'choose',changes:{retain:true,hideTurns:1,maneuver:'smash',range:'reach'}}]);
+ play(combat);const id=combat.pendingCardChoice.candidateIds[0];dispatch(combat,{type:'chooseCards',cardInstanceIds:[id]});
+ assert.ok(!combat.piles.hand.some(c=>c.instanceId===id));assert.equal(combat.hiddenCards[0].card.proposalChanges.maneuver,'smash');
+ const restored=restoreCombatSnapshot({registries:combat.registries,rng:createRng(9),snapshot:serializeCombatSnapshot(combat)});
+ dispatch(restored,{type:'endTurn'});assert.ok(restored.piles.hand.some(c=>c.instanceId===id));assert.equal(restored.hiddenCards.length,0);
+});
+test('cost growth and paid-resource variants use the same actual prices and effects in preview and play',()=>{
+ const combat=fixture([{op:'block',target:'self',amount:2}],{definition:{costGrowth:{stamina:1,perUse:1,max:3},effectVariants:[{if:{p:'resourcePaid',resource:'mana',amount:1},effects:[{op:'block',target:'self',amount:7}]}]}});
+ const first=combat.piles.hand[0].instanceId;assert.equal(cardPlayCosts(combat,first).stamina,1);assert.equal(previewCard(combat,first).values[0].value,7);
+ play(combat);assert.equal(combat.player.block,7);
+ const second=combat.piles.hand[0].instanceId;assert.equal(cardPlayCosts(combat,second).stamina,2);const sp=combat.player.stamina;play(combat);assert.equal(sp-combat.player.stamina,2);
+});
+test('dynamic same-card scaling matches preview before recording the current play',()=>{
+ const combat=fixture([{op:'block',target:'self',amount:{f:'add',args:[2,{f:'metric',metric:'sameCardPlays',of:'self',per:3}]}}]);
+ for(const expected of [2,5]){const id=combat.piles.hand[0].instanceId;assert.equal(previewCard(combat,id).values[0].value,expected);const old=combat.player.block;play(combat);assert.equal(combat.player.block-old,expected);}
 });

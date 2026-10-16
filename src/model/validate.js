@@ -293,7 +293,6 @@ export function computeTokenBindings(effects) {
   (effects || []).forEach((eff, i) => {
     if (!eff || typeof eff !== 'object' || typeof eff.op !== 'string') return;
     if (!TOKENIZABLE_OPS.includes(eff.op)) return;
-    if (eff.op === 'moveCards') { try { validateZoneEffect(eff); } catch (error) { err(p, error.message); } }
     if (eff.op === 'grantCardCharge') {
       for (const field of ['damage', 'manaDiscount', 'block', 'heal', 'break', 'buildup']) if (eff[field] !== undefined) push(`charge${field[0].toUpperCase()}${field.slice(1)}`, i, field, eff.op, typeof eff[field] === 'number');
       return;
@@ -1967,6 +1966,11 @@ function collectContentProblems(bundle, errors = []) {
       err(`${path}.class`, `class '${card.class}' is neither a class id nor 'colorless'`);
     }
     validateCardTemplates(card, path, err);
+    if (card.costGrowth) {
+      for (const key of ['stamina','mana']) if (card.costGrowth[key]!==undefined && (!Number.isSafeInteger(card.costGrowth[key]) || Math.abs(card.costGrowth[key])>10)) err(`${path}.costGrowth.${key}`,'must be an integer from -10 to 10');
+      for (const key of ['perUse','max']) if (card.costGrowth[key]!==undefined && (!Number.isSafeInteger(card.costGrowth[key]) || card.costGrowth[key]<1 || card.costGrowth[key]>100)) err(`${path}.costGrowth.${key}`,'must be an integer from 1 to 100');
+    }
+    for (const [i,variant] of (card.effectVariants || []).entries()) { validatePredicate(variant.if,`${path}.effectVariants[${i}].if`,vctx);validateEffects(variant.effects,`${path}.effectVariants[${i}].effects`,vctx); }
   }
 
   const relicTagsByRelic = relicPropertyTagIndex(b);
@@ -2444,6 +2448,7 @@ export function validateEffects(effects, path, vctx) {
       return;
     }
     const spec = EFFECT_SPECS[eff.op];
+    if (['moveCards','modifyCards'].includes(eff.op)) { try { validateZoneEffect(eff); } catch (error) { err(p, error.message); } }
     if (eff.oncePerTurn !== undefined && (typeof eff.oncePerTurn !== 'string' || !eff.oncePerTurn.trim())) err(`${p}.oncePerTurn`, 'must be a non-empty family marker');
     for (const flag of ['nonlethal', 'offering', ...(eff.op === 'discard' ? ['choose'] : [])]) if (eff[flag] !== undefined && typeof eff[flag] !== 'boolean') err(`${p}.${flag}`, 'must be a boolean');
     if (eff.op === 'discard' && eff.choose && eff.random) err(p, 'chosen discard cannot also be random');
@@ -2654,6 +2659,7 @@ const PREDICATE_FIELDS = {
   enemyNegativeStatusNew: ['statuses'],
   cardAbilityKindIs: ['kind'],
   cardTargetsAllEnemies: [],
+  resourcePaid:['resource','amount'],
   inStance: ['stance'],
   hasStatus: ['of', 'status', 'atLeast', 'snapshot'],
   hasBlock: ['of', 'snapshot'],
@@ -2757,6 +2763,9 @@ export function validatePredicate(pred, path, vctx) {
     case 'classLevelAtLeast':
       if (!Number.isInteger(pred.level) || pred.level < 1) err(`${path}.level`, 'level must be a positive integer');
       break;
+    case 'resourcePaid':
+      if (!['mana','stamina'].includes(pred.resource) || !Number.isSafeInteger(pred.amount ?? 1) || (pred.amount ?? 1)<0) err(path,'resourcePaid requires mana/stamina and nonnegative amount');
+      break;
     case 'all':
     case 'any':
       if (!Array.isArray(pred.preds)) err(`${path}.preds`, `'${pred.p}' requires a preds array`);
@@ -2781,6 +2790,7 @@ const FORMULA_FIELDS = {
   blockOf: ['of', 'min', 'max'],
   hpOf: ['of', 'min', 'max'],
   cardsPlayedThisTurn: ['per', 'min', 'max'],
+  metric: ['metric','statuses','of','per','min','max'],
   traitBonus: ['base', 'pct', 'min', 'max'],
 };
 
@@ -2809,6 +2819,8 @@ export function validateFormula(value, path, vctx) {
     if (!Array.isArray(value.args)) err(`${path}.args`, `'${value.f}' requires an args array`);
     else value.args.forEach((a, i) => validateFormula(a, `${path}.args[${i}]`, vctx));
   }
+  if (value.f === 'metric' && value.statuses !== undefined && (!Array.isArray(value.statuses) || value.statuses.some(id=>!vctx.ids.statuses.has(id)))) err(`${path}.statuses`,'Unknown metric status reference');
+  if (value.f === 'metric' && !['negativeStatusTypes','negativeStatusStacks','damageTakenThisTurn','sameCardPlays','cardsPlayed','distinctTypes','manaSpent','staminaSpent'].includes(value.metric)) err(`${path}.metric`, 'Unknown combat metric');
   if (value.f === 'stacks') {
     if (typeof value.status !== 'string' || !vctx.ids.statuses.has(value.status)) {
       err(`${path}.status`, `Dangling reference: unknown status id '${value.status}'`);
