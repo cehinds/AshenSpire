@@ -15386,7 +15386,7 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "path": "src/** (excluding generated gameProfiles/changelog)",
-      "hash": "sha256:9d157d69e0a12337386d0bf461c2fc6bd091c83c5229b7c9e53d8cfdf404ef8a"
+      "hash": "sha256:79c39f33b1440a8d3a853449c808a693b7df84bff4110cf813c18051d66093bd"
     }
   ],
   "runtimeSources": [
@@ -15406,7 +15406,7 @@ export const gameProfileCatalog = {
       "path": "src/config/generated/ui.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:162ebdb8bf80e1eebd56f035e2d7ad49a739bcc50a18a6ad9fbff45210b9836a"
+      "hash": "sha256:5b9ee52fd5cabc19fafa24a53529c787f1939ff50552e1c35cdec393c2da8533"
     },
     {
       "path": "src/content/actionAnimations.js",
@@ -18400,7 +18400,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/components/battlefieldStage.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:ecd38412b5fe9160b4e45cdf73bde21cd6a1a6b39423f8ce69eb2f79ae742aed"
+      "hash": "sha256:e32d74192336d97056b3d137974b45b72c9de949aba59db104ef93adb7108b26"
     },
     {
       "path": "src/ui/components/bookArt.js",
@@ -19312,7 +19312,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/models/AlternativeFormationModel.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:ea8c7d2299297f994b6ec053d2784e10273ee66dae2d28c669fa2e9121513b07"
+      "hash": "sha256:3ac358b44dbeec5eba7e22f340f45e6716405b8501f176fba04c87d8dfc5d665"
     },
     {
       "path": "src/ui/models/ArmouryModels.js",
@@ -20317,7 +20317,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:23af16d4e9c9f6d88fe655d32ecf1a688b47df39f9e3a1d6d193ce63923593ab"
     }
   ],
-  "runtimeHash": "sha256:b7ff40dd14379061b224e8c2f69d5e4f8269520ef11c086759e800f7f284a7f5"
+  "runtimeHash": "sha256:079848bae25f4e928fed772d6449b7ffd01b4b6d52725f5e5262b862f9919303"
 };
 export const gameProfileAuthors = {
   "default": {
