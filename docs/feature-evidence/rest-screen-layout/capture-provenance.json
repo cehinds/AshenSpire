@@ -1,0 +1,70 @@
+{
+  "rendererSourceCommit": "b923f9bc5c34af0c8fa8a0ea76182047cb35ba61",
+  "note": "Captures were made from the local source worktree before committing this renderer state. Viewport-specific selectors unaffected by later changes retain the same rendered source behavior. This is source-preview evidence, not a published build.",
+  "rendererSha256": {
+    "styles/player-polish.css": "043e7ab5d809acb81fcf6d1aeed13140e167676fc1b45f6eb5b552ee5c465e49",
+    "src/ui/components/scenePainting.js": "8c45a80512a599214aa015485259a5a71beded322323de3bf25fc5df5bb1e4dd"
+  },
+  "captures": [
+    {
+      "profile": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "capturedAtUtc": "2026-10-16T04:59:42.872430+00:00",
+      "originalPngSha256": "d416a65fbcb57ec387713f508a3213f63bb5a06fb717b694528b3a3bcbb2b16f",
+      "originalFile": "after-mobile.png"
+    },
+    {
+      "profile": "tablet",
+      "viewport": {
+        "width": 834,
+        "height": 1194
+      },
+      "capturedAtUtc": "2026-10-16T05:01:04.064899+00:00",
+      "originalPngSha256": "46bfe996669ee0a8578e794e70835390d7bbbca1fa6ab4cddec6a755bd6d1f94",
+      "originalFile": "after-tablet.png"
+    },
+    {
+      "profile": "tablet-landscape",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "capturedAtUtc": "2026-10-16T05:01:17.676307+00:00",
+      "originalPngSha256": "4af4f2c9c7b531530b7ca7b1bd3a0629af20205b7fc646a8bb2f4042c28a983a",
+      "originalFile": "after-tablet-landscape.png"
+    },
+    {
+      "profile": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "capturedAtUtc": "2026-10-16T05:05:01.502576+00:00",
+      "originalPngSha256": "012318b30ace76b30f6e6d63a98081a6ede606a41a42920bb4ec9d0f67c5dda9",
+      "originalFile": "after-desktop.png"
+    },
+    {
+      "profile": "widescreen",
+      "viewport": {
+        "width": 2560,
+        "height": 1440
+      },
+      "capturedAtUtc": "2026-10-16T05:05:10.994163+00:00",
+      "originalPngSha256": "0e068158948c6fa28172f647eb68d52e4688d4b8ac51d30b7368222af8cd86c6",
+      "originalFile": "after-widescreen.png"
+    },
+    {
+      "profile": "ultrawide",
+      "viewport": {
+        "width": 3440,
+        "height": 1440
+      },
+      "capturedAtUtc": "2026-10-16T05:04:17.876475+00:00",
+      "originalPngSha256": "e7ad3790c78b0ce70cb9c40122558e7d289bcfd030ca3fed66b88d6bf9033c43",
+      "originalFile": "ultrawide-ultrawide.png"
+    }
+  ]
+}

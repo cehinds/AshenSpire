@@ -26,6 +26,8 @@ The desktop panel is 380 physical pixels wide; widescreen and ultrawide panels a
 
 ## Validation
 
+Renderer source commit: `b923f9bc5c34af0c8fa8a0ea76182047cb35ba61`. [Capture provenance](capture-provenance.json) records each actual viewport, UTC capture timestamp, original PNG hash, and renderer file hashes. Captures were taken from the local worktree immediately before the corresponding source commits; these are source previews, not published artifacts.
+
 The flow tested was wounded rest arrival → recovery/services displayed → Level up opens → Escape returns → final service scrolls fully above Continue → flask allocation expands.
 
 The four primary profiles and tablet landscape had no page errors or horizontal overflow. Level up opened in all five. Final-service scrolling and flask expansion passed on mobile, tablet landscape, and desktop. The 3440 × 1440 ultrawide retained a 400-pixel rail and 462-pixel traveler, with no overflow or runtime errors. Its floor anchor follows the actual background cover height. **Ultrawide visual acceptance remains provisional:** the available 16:9 painting still scales up under cover, cropping the skyline and enlarging its baked campfire relative to the capped traveler. There is no authored 21:9 chapel source in the repository. A faithful full-bleed 3440 × 1440 result needs an approved side extension to 2248 × 941, preserving the existing 1672 × 941 center and adding 288 pixels per side. No new art has been generated. The alternative is height-fit with dark side gutters; that preserves proportions but supplies no additional scenery. Both original high art and the canonical 720p light export loaded successfully; the light export was additionally photographed at 2560 × 1440.
