@@ -691,12 +691,25 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
  .rest-screen .shrine-option-list { gap:calc(8px / var(--ui-zoom, 1)); }
  .rest-screen .shrine-leave { font-size:calc(16px / var(--ui-zoom, 1)); min-height:calc(44px / var(--ui-zoom, 1)); }
 }
-/* Tablet retains an unobstructed upper scene and a readable stacked tray. */
-@media (min-width:600px) and (max-width:1099px) and (min-height:850px) {
- :root .rest-screen.choice-screen .rest-door { flex-basis:56%; max-height:56%; width:100%; max-width:none; }
-}
 /* True widescreen: increase scenery, keeping controls and traveler bounded. */
 @media (min-width:2000px) and (min-height:1000px) {
  :root .rest-screen.choice-screen { padding:8rem 4rem 4rem; }
  :root .rest-screen.choice-screen .rest-door { width:calc(400px / var(--ui-zoom, 1)); max-width:400px; }
+}
+
+/* Tablet: show the campsite above an intrinsic-height, scrollable tray. */
+@media (min-width:600px) and (max-width:1099px) and (min-height:650px) {
+ .rest-screen .polish-scene-painting { --rest-floor-screen:.46; }
+ .rest-screen .rest-scene-stage { --rest-stage-size:max(100cqw, 100cqh * var(--rest-floor-screen) / .70); width:var(--rest-stage-size); height:var(--rest-stage-size); left:calc((100cqw - var(--rest-stage-size)) * .42); top:calc(100cqh * var(--rest-floor-screen) - .70 * var(--rest-stage-size)); }
+ .rest-screen .modal-head-id h2 { font-size:calc(21px / var(--ui-zoom, 1)); }
+ .rest-screen :is(.as-eyebrow,.choice-head-status) { font-size:calc(12px / var(--ui-zoom, 1)); }
+ .rest-screen .shrine-leave { font-size:calc(16px / var(--ui-zoom, 1)); min-height:calc(44px / var(--ui-zoom, 1)); }
+ :root .rest-screen.choice-screen .rest-door { flex:0 1 auto; height:auto; max-height:65%; width:100%; max-width:none; }
+ .rest-screen .rest-door { font-size:calc(16px / var(--ui-zoom, 1)); }
+ .rest-screen .class-pick :is(h3,.on) { font-size:calc(18px / var(--ui-zoom, 1)); line-height:1.2; }
+ .rest-screen .class-pick :is(p,.om) { font-size:calc(16px / var(--ui-zoom, 1)); line-height:1.35; letter-spacing:normal; }
+ .rest-screen :is(.shrine-option-list,.shrine-option-grid) > .class-pick { height:auto; min-height:calc(64px / var(--ui-zoom, 1)); }
+ .rest-screen .class-pick :is(h3,p,.on,.om) { white-space:normal; overflow:visible; text-overflow:clip; -webkit-line-clamp:unset; }
+ .rest-screen .shrine-fold > summary { height:auto; min-height:calc(64px / var(--ui-zoom, 1)); }
+ .rest-screen .shrine-option-list { gap:calc(8px / var(--ui-zoom, 1)); }
 }
