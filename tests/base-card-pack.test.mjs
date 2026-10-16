@@ -11,6 +11,7 @@ import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { rollCardRewardIds } from '../src/engine/encounters.js';
 import { gameProfileRewardOffers } from '../src/model/gameProfileRewards.js';
+import { addEnemyBurden, beginEnemyBurdens, endEnemyBurdens } from '../src/engine/enemyBurdens.js';
 import { cardChoice } from '../src/model/cardChoices.js';
 import { botCardTargetId } from '../tools/simbot.mjs';
 import { cardPlainText } from '../src/ui/components/card.js';
@@ -61,6 +62,15 @@ test('all 67 authored combat cards preview and resolve through the actual curren
     assert.doesNotThrow(()=>previewCard(combat,combat.piles.hand[0].instanceId,combat.enemies[0].id),row.definition.id);
     assert.deepEqual(combat.rng.getCounters(),before,'preview must not spend RNG');
     assert.doesNotThrow(()=>play(combat),row.definition.id);
+  }
+});
+test('every admitted core combat card resolves through the unified engine with no disabled-resource variants failing',()=>{
+  for(const include of [['sp','mp'],['sp'],['mp'],[]]) {
+    const p=profile({resources:{include}}),reg=registries(p);
+    for(const card of p.content.cards.filter(row=>row.id.startsWith('base.') && row.rarity!=='special')) {
+      const combat=fixture(card.id,reg);
+      assert.doesNotThrow(()=>play(combat),`${card.id} ${include.join(',')||'none'}`);
+    }
   }
 });
 test('all three burden cards are real unplayable definitions and never normal rewards',()=>{
@@ -121,4 +131,13 @@ test('authored rule clauses and namespaced numeric tokens survive the real card 
   }
   assert.match(cardPlainText(legacy,{cardId:'base.transmute'}),/cinders/);
   assert.match(cardPlainText(legacy,{cardId:'base.one-use-scroll'}),/Foresight.*One play per combat/);
+});
+
+test('generated Paralysis burdens consume their finite skips instead of recycling permanent action denial',()=>{
+  const enemy={id:'burden-target',alive:true},skips=[];let next=0;
+  const ctx={registries:legacy,rng:createRng(9),nextInstanceId:()=>`burden-${next++}`,emit:()=>{}};
+  addEnemyBurden(ctx,enemy,'base.paralysis-status-card',2);
+  for(let turn=0;turn<3;turn++){beginEnemyBurdens(ctx,enemy,3);skips.push(!!enemy.skipNextTurn);endEnemyBurdens(ctx,enemy);enemy.skipNextTurn=false;}
+  assert.deepEqual(skips,[true,true,false]);
+  assert.equal(enemy.burdenPiles.exhaust.length,2);
 });

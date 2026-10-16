@@ -8216,10 +8216,11 @@
         "manaCost": 0,
         "type": "status",
         "keywords": [
+          "ethereal",
           "unplayable"
         ],
         "effects": [],
-        "textTemplate": "Skip your next action when drawn. Returns to the burden deck.",
+        "textTemplate": "Skip your next action when drawn. Ethereal.",
         "icon": "\ud83d\udee1",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
         "burden": {
@@ -8301,7 +8302,7 @@
       "presentation": {
         "canonicalCardRef": "ironSkin",
         "faceLines": [
-          "Skip your next action when drawn. Returns to the burden deck."
+          "Skip your next action when drawn. Ethereal."
         ],
         "sourceFaceLines": [
           "Paralysis: ?"
@@ -8319,8 +8320,8 @@
           "mana": 0,
           "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
         },
-        "chosenRules": "Skip your next action when drawn. Returns to the burden deck.",
-        "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+        "chosenRules": "Skip your next action when drawn. Ethereal.",
+        "rationale": "One drawn burden skips one action and then exhausts. Recycling a skip burden through the enemy overlay would deny every future action; finite exhaustion is the authored lifecycle default.",
         "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
       }
     },

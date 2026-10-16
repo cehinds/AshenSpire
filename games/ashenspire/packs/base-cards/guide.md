@@ -14,7 +14,7 @@ Dynamic defaults are also data: Affliction Scaling adds 2 damage per distinct na
 
 Poison applies 5 stacks, dealing 5+4+3+2+1 ongoing damage for 1 SP and 1 MP. Blight applies 12 stacks and executes when they reach current HP. Conceal grants 2 stacks, then snapshots both the number hidden and the hidden duration from those stacks. Additional stacks therefore increase both values.
 
-`statuses.json` owns status definitions, exact coefficients, triggers, decay and compatibility. Its rules distinguish Poison from Venom, Blight from legacy blights, and proposed Weak from legacy Weak. Read [the status-rule contract](../../../../docs/ai/json-game-modules/PROPOSAL-STATUS-RULES.md) before changing the behavior. Burden cards use explicit `burden` action-skip/tax metadata; they are not reward cards or empty placeholder effects.
+`statuses.json` owns status definitions, exact coefficients, triggers, decay and compatibility. Its rules distinguish Poison from Venom, Blight from legacy blights, and proposed Weak from legacy Weak. Read [the status-rule contract](../../../../docs/ai/json-game-modules/PROPOSAL-STATUS-RULES.md) before changing the behavior. Burden cards use explicit `burden` action-skip/tax metadata; they are not reward cards or empty placeholder effects. Stagger and Paralysis both exhaust after their drawn action skip, preventing recycled burdens from denying every future enemy action. Restrained taxes only melee/reach attacks while held, then exhausts.
 
 ## Groups, profiles and toggles
 
