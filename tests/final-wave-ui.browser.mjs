@@ -91,7 +91,10 @@ try {
       const errors = [];
       page.on("pageerror", (e) => errors.push(e.message));
       const key = `${profile}-${width}`;
-      if (!process.env.FINAL_UI_SKIP_REWARD) {
+      if (
+        !process.env.FINAL_UI_SKIP_REWARD &&
+        !process.env.FINAL_UI_PREVIEW_ONLY
+      ) {
         await go(
           page,
           "reward",
@@ -112,7 +115,6 @@ try {
         const before = await inventory(page);
         await page.locator(".reward-pick").first().click();
         assert.equal(await confirm.isDisabled(), false);
-        await capture(page, `${key}-reward-color-probe`);
         await tone(confirm, "green");
         await capture(page, `${key}-reward-selected`);
         await confirm.click();
@@ -179,67 +181,69 @@ try {
         await page.close();
         continue;
       }
-      await go(page, "map", profile);
-      await page.locator("[data-nodes-total]").waitFor();
-      const fog = await page.locator("[data-nodes-total]").evaluate((n) => ({
-        total: +n.dataset.nodesTotal,
-        hidden: +n.dataset.nodesHidden,
-        drawn: n.querySelectorAll(".map-node").length,
-      }));
-      assert.ok(
-        fog.hidden > 0 && fog.drawn < fog.total,
-        "fresh map defaults to fog",
-      );
-      if (profile === "current")
-        assert.equal(
-          await page
-            .locator(".shared-hud .hud-cinders-strip .hud-cinders")
-            .isVisible(),
-          true,
-          "Current Cinders visible",
+      if (!process.env.FINAL_UI_PREVIEW_ONLY) {
+        await go(page, "map", profile);
+        await page.locator("[data-nodes-total]").waitFor();
+        const fog = await page.locator("[data-nodes-total]").evaluate((n) => ({
+          total: +n.dataset.nodesTotal,
+          hidden: +n.dataset.nodesHidden,
+          drawn: n.querySelectorAll(".map-node").length,
+        }));
+        assert.ok(
+          fog.hidden > 0 && fog.drawn < fog.total,
+          "fresh map defaults to fog",
         );
-      await capture(page, `${key}-map`);
-      results.push({ profile, width, fog });
-      await go(page, "combat", profile);
-      await page.locator(".end-turn").waitFor();
-      await page.evaluate(() => document.fonts.ready);
-      await page.evaluate(
-        () =>
-          new Promise((r) =>
-            requestAnimationFrame(() => requestAnimationFrame(r)),
-          ),
-      );
-      const geometry = await page.evaluate(() => ({
-        overflow: document.documentElement.scrollWidth - innerWidth,
-        cards: [...document.querySelectorAll(".hand .card")].map((n) => {
-          const r = n.getBoundingClientRect();
-          return { top: r.top, bottom: r.bottom };
-        }),
-        footer: document.querySelector(".end-turn").getBoundingClientRect()
-          .bottom,
-        desktop: document.querySelector(".combat").dataset.desktopFooter,
-      }));
-      await capture(page, `${key}-combat-probe`);
-      assert.ok(
-        geometry.overflow <= 1 && geometry.footer <= height + 1,
-        JSON.stringify({ profile, width, height, ...geometry }),
-      );
-      assert.ok(
-        geometry.cards.every((r) => r.top >= 0 && r.bottom <= height + 1),
-      );
-      assert.equal(geometry.desktop === "true", width >= 1001);
-      await capture(page, `${key}-combat`);
-      await page.locator("#combat-menu").click();
-      if (!(await page.locator("[data-settings-host]").count()))
-        await page.locator('.qn-row[data-tab="settings"]').click();
-      await page.locator("[data-general-select]").waitFor();
-      await page.locator("[data-general-select]").selectOption("Combat");
-      if (profile === "core")
-        assert.equal(
-          await page.locator('[data-key="askToUpcastAfterTarget"]').count(),
-          0,
+        if (profile === "current")
+          assert.equal(
+            await page
+              .locator(".shared-hud .hud-cinders-strip .hud-cinders")
+              .isVisible(),
+            true,
+            "Current Cinders visible",
+          );
+        await capture(page, `${key}-map`);
+        results.push({ profile, width, fog });
+        await go(page, "combat", profile);
+        await page.locator(".end-turn").waitFor();
+        await page.evaluate(() => document.fonts.ready);
+        await page.evaluate(
+          () =>
+            new Promise((r) =>
+              requestAnimationFrame(() => requestAnimationFrame(r)),
+            ),
         );
-      await capture(page, `${key}-settings`);
+        const geometry = await page.evaluate(() => ({
+          overflow: document.documentElement.scrollWidth - innerWidth,
+          cards: [...document.querySelectorAll(".hand .card")].map((n) => {
+            const r = n.getBoundingClientRect();
+            return { top: r.top, bottom: r.bottom };
+          }),
+          footer: document.querySelector(".end-turn").getBoundingClientRect()
+            .bottom,
+          desktop: document.querySelector(".combat").dataset.desktopFooter,
+        }));
+        await capture(page, `${key}-combat-probe`);
+        assert.ok(
+          geometry.overflow <= 1 && geometry.footer <= height + 1,
+          JSON.stringify({ profile, width, height, ...geometry }),
+        );
+        assert.ok(
+          geometry.cards.every((r) => r.top >= 0 && r.bottom <= height + 1),
+        );
+        assert.equal(geometry.desktop === "true", width >= 1001);
+        await capture(page, `${key}-combat`);
+        await page.locator("#combat-menu").click();
+        if (!(await page.locator("[data-settings-host]").count()))
+          await page.locator('.qn-row[data-tab="settings"]').click();
+        await page.locator("[data-general-select]").waitFor();
+        await page.locator("[data-general-select]").selectOption("Combat");
+        if (profile === "core")
+          assert.equal(
+            await page.locator('[data-key="askToUpcastAfterTarget"]').count(),
+            0,
+          );
+        await capture(page, `${key}-settings`);
+      }
       if (width === 1440) {
         await go(
           page,
@@ -253,6 +257,21 @@ try {
               }),
             ),
         );
+        if (profile === "core") {
+          const deck = await page.evaluate(
+            () => window.__restStateForShot().live.deck,
+          );
+          assert.equal(deck.length, 10);
+          assert.equal(
+            deck.filter((c) => c.cardId === "core.defend").length,
+            2,
+          );
+          assert.equal(
+            deck.filter((c) => c.cardId === "core.counter").length,
+            1,
+          );
+          assert.equal(deck.filter((c) => c.cardId === "base.draw").length, 1);
+        }
         await page
           .locator(profile === "core" ? "#strategize-opt" : "#deck-opt")
           .click();
@@ -294,6 +313,17 @@ try {
           );
           samples.push({ ...sample, observedPoses: [...poses], expected });
         }
+        if (profile === "core") {
+          await rows
+            .filter({ hasText: /Draw 2 cards/i })
+            .first()
+            .click();
+          const detail = await page.locator(".deck-editor-rules").innerText();
+          assert.match(detail, /Skill/i);
+          assert.match(detail, /Prepare/i);
+          await capture(page, `${key}-draw-skill-prepare`);
+          results.push({ profile, width, drawClassification: detail });
+        }
         await capture(page, `${key}-deck-preview`);
         results.push({ profile, width, animation: samples });
       }
@@ -301,7 +331,7 @@ try {
       await page.close();
       console.log(`${key}: reward, fog, battlefield, Settings passed`);
     }
-  if (!process.env.FINAL_UI_REWARD_ONLY)
+  if (!process.env.FINAL_UI_REWARD_ONLY && !process.env.FINAL_UI_PREVIEW_ONLY)
     for (const profile of (
       process.env.FINAL_UI_PROFILES || "core,current"
     ).split(",")) {
