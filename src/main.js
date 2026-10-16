@@ -2163,6 +2163,7 @@ function quitGame() {
 function showOverlay(initialTab = 'settings') {
   if (!run) return;
   openOverlay({
+    gameProfile: { read: () => selectedGameProfile, active: () => run?.gameProfile || selectedGameProfile },
     onOffline: showOfflinePlay,
     registries,
     run,

@@ -20,6 +20,8 @@ test('Core hides legacy-only mechanics in groups, topics and search while retain
   for(const key of ['viewPreset','uiScale','fullscreen','musicEnabled','sfxVolume','textSize','tapFloor','reducedMotion','screenShake','playInDeckOrder']) assert(available(key,core),key);
   assert(!available('askToUpcastAfterTarget',core));assert(!available('mapMode',core));
   assert.equal(settingsSearchHits('skill',true,{}, {profile:core}).length,0);
+  assert.deepEqual(settingsSearchHits('',true,{'gameConfig.derivedStatRules.rules.ar.strength':1.5},{changedOnly:true,profile:core}),[]);
+  assert.deepEqual(settingsSearchHits('',true,{playInDeckOrder:true},{changedOnly:true,profile:core}).map(hit=>hit.row.key),['playInDeckOrder']);
   const html=categoryHtml('Advanced',{settingsAdvancedCategory:'Progression'},null,null,null,null,'',false,core);
   assert(!html.includes('data-advanced-group="Progression"'));assert(html.includes('data-advanced-group="Deck"'));
   const profileHtml=categoryHtml('General',{settingsGeneralCategory:'Game rules'},null,null,null,null,'',false,core);
@@ -66,4 +68,12 @@ test('active run capabilities win over a future new-game choice',()=>{
   assert(!available('askToUpcastAfterTarget',activeSettingsProfile(context)));
   assert.equal(activeSettingsProfile({read:()=>current}),current);
   assert(available('askToUpcastAfterTarget',activeSettingsProfile({read:()=>current})));
+});
+
+test('both standalone and in-run overlay settings receive the active profile context',()=>{
+  const main=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+  const overlay=readFileSync(new URL('../src/ui/components/overlay.js',import.meta.url),'utf8');
+  assert.match(main,/openOverlay\(\{\s+gameProfile: \{ read: \(\) => selectedGameProfile, active: \(\) => run\?\.gameProfile \|\| selectedGameProfile \}/);
+  assert.match(overlay,/settings: ctx.settings,\s+gameProfile: ctx.gameProfile,/);
+  assert.match(overlay,/onQuitWithoutSave, gameProfile,/);
 });
