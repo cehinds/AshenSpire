@@ -1874,3 +1874,11 @@
   position:absolute; width:var(--desktop-end-art-width); height:var(--desktop-end-art-height); left:50%; top:auto; bottom:0; transform:translateX(-50%);
 }
 :root .combat[data-layout='formation'][data-desktop-footer='true'] .end-turn > .hold-hint { position:absolute; bottom:0; left:0; right:0; }
+
+/* The enabled purse stays inside the existing floating header; it must not
+   create an implicit grid row and push the battlefield down. */
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .hud-info-row.hud-cinders-strip {
+  position:absolute; grid-area:auto; display:flex; top:calc(38px / var(--ui-zoom,1));
+  left:50%; transform:translateX(-50%); width:max-content; max-width:45%; margin:0;
+  justify-content:center; pointer-events:auto;
+}
