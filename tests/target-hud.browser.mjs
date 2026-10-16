@@ -41,6 +41,7 @@ try {
     for (const a of geometry.panels) {
       assert.ok(a.left >= 0 && a.top >= 0 && a.right <= width && a.bottom <= height);
       for (const b of geometry.panels) if (a !== b) assert.equal(overlap(a, b), false, `${width} panel collision ${a.id}/${b.id}`);
+      for (const sprite of geometry.sprites) assert.equal(overlap(a, sprite), false, `${width} panel covers sprite artwork`);
       for (const card of geometry.cards) assert.equal(overlap(a, card), false, `${width} panel covers a card`);
     }
     await page.screenshot({ path: resolve(out, `candidates-${width}.png`) });
