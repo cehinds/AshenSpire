@@ -1,3 +1,8 @@
+import { weaponDamageBasis } from './cardBehavior.js';
+import { MANEUVERS, trimCombatStances } from './concurrentStances.js';
+import { proposalHitPlan, proposalAfterHit, proposalTargetPlan, applyProposalPlan, proposalThreshold, proposalHealingPlan } from './proposalStatusRuntime.js';
+import { addEnemyBurden } from './enemyBurdens.js';
+import { moveCards, hasCardChoice } from './cardZones.js';
 import { configuredCombat, configuredModule, profileDamageReceipt } from './gameProfileCombat.js';
 // src/engine/actions.js — effect-DSL opcode implementations (SPEC §3.4)
 //
@@ -87,11 +92,12 @@ export function spellDamageDealtMultiplier(ctx, source, carrier) {
  * computeAttackDamage(ctx, source, target|null, base) → final integer damage.
  * Pure (no mutation). Pass target = null to preview without defender mods.
  */
-export function computeAttackDamage(ctx, source, target, base, attackTags, carrier = null, { matchups = true, beforeDefense = false } = {}) {
-  if (configuredCombat(ctx)) return profileDamageReceipt(ctx, source, target, base, carrier).amount;
+export function computeAttackDamage(ctx, source, target, base, attackTags, carrier = null, { matchups = true, beforeDefense = false, proposal = true } = {}) {
+  if (configuredCombat(ctx)) return profileDamageReceipt(ctx, source, target, base, carrier,{proposal}).amount;
   const ratedBase = base + (carrier?.skipRatingBonus ? 0 : Ratings.cardRatingBonus(ctx, source, carrier, 'damage', base));
   if (ctx.foundation) {
-    const amount = F.foundationDamage(ctx, source, target, ratedBase, carrier, attackTags || [], { beforeDefense }).amount;
+    let amount = F.foundationDamage(ctx, source, target, ratedBase, carrier, attackTags || [], { beforeDefense }).amount;
+    if(proposal && target) amount=proposalHitPlan(ctx,source,target,amount,carrier || {}).amount;
     return matchups ? Matchups.prepareMatchupHit(ctx, source, target, carrier, amount).amount : amount;
   }
   let dmg = ratedBase;
@@ -140,6 +146,7 @@ export function computeAttackDamage(ctx, source, target, base, attackTags, carri
     }
   }
   dmg = taggedBonusFloor(dmg, tagged);
+  if(proposal && target) dmg=proposalHitPlan(ctx,source,target,dmg,carrier || {}).amount;
   dmg = dmg < 0 ? 0 : dmg;
   return matchups ? Matchups.prepareMatchupHit(ctx, source, target, carrier, dmg).amount : dmg;
 }
@@ -220,6 +227,23 @@ export function rollCrit(ctx, source, tags) {
  * HP was touched), handles deaths and phase checks. Returns final damage.
  */
 export function applyAttackDamage(ctx, source, target, base, attackTags, carrier = null) {
+  if(!target?.alive)return 0;
+  const resolved=carrier || {};
+  if(resolved.expansionContact?.receipt?.avoided)return 0;
+  const decisionKey=ctx.playerIdForEntity?.(target) || target.id,decisions=resolved.proposalTargetDecisions;
+  const cached=decisions?.[decisionKey],targetPlan=cached || proposalTargetPlan(ctx,source,target,resolved,{resolve:true});
+  if(!cached) {if(decisions)decisions[decisionKey]=targetPlan;applyProposalPlan(ctx,{statusChanges:targetPlan.statusChanges},source,target,resolved);}
+  if(!targetPlan.allowed || targetPlan.avoided) {ctx.emit('proposalHitAvoided',{sourceId:source?.id,targetId:target.id,perception:!targetPlan.allowed});return 0;}
+  const raw=configuredCombat(ctx) ? profileDamageReceipt(ctx,source,target,base,resolved,{proposal:false}).raw : computeAttackDamage(ctx,source,target,base,attackTags,resolved,{matchups:false,beforeDefense:true,proposal:false});
+  const plan=proposalHitPlan(ctx,source,target,raw,resolved);
+  const hp=target.hp,eventStart=ctx.eventLog?.length || 0;
+  const amount=plan.healing>0 ? 0 : applyBaseAttackDamage(ctx,source,target,base,attackTags,resolved);
+  if(plan.healing>0) applyHeal(ctx,target,plan.healing);
+  const contact=(ctx.eventLog || []).slice(eventStart).find(event=>event.type==='damageDealt' && event.targetId===target.id);
+  if(plan.healing>0 || raw>0 && contact && !contact.evaded && !contact.immune){applyProposalPlan(ctx,plan,source,target,resolved);proposalAfterHit(ctx,source,target,raw,Math.max(0,hp-target.hp),resolved);}
+  return amount;
+}
+function applyBaseAttackDamage(ctx, source, target, base, attackTags, carrier = null) {
   if (!target || !target.alive) return 0;
   if (configuredCombat(ctx)) return applyProfileDamage(ctx, source, target, base, carrier);
   if (ctx.combatExpansionVersion === 2) return applyExpandedDamage(ctx, source, target, base, attackTags, carrier);
@@ -227,7 +251,7 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
   if (F.consumeFoundationEvade(ctx, source, target, carrier)) return 0;
   const ratedBase = base + (carrier?.skipRatingBonus ? 0 : Ratings.cardRatingBonus(ctx, source, carrier, 'damage', base));
   const receipt = ctx.foundation ? F.foundationDamage(ctx, source, target, ratedBase, carrier, attackTags || []) : null;
-  const computed = receipt ? receipt.amount : computeAttackDamage(ctx, source, target, base, attackTags, carrier, { matchups: false });
+  const computed = receipt ? proposalHitPlan(ctx,source,target,receipt.amount,carrier || {}).amount : computeAttackDamage(ctx, source, target, base, attackTags, carrier, { matchups: false });
   // A critical hit multiplies the finished blow, before Block takes its share.
   const critical = carrier && carrier.critMultiplier > 1 ? Math.floor(computed * carrier.critMultiplier) : computed;
   if (critical > computed) ctx.emit('critHit', { sourceId: source?.id, targetId: target.id, ...critSeats(ctx, source, target), multiplier: carrier.critMultiplier, amount: critical });
@@ -935,6 +959,7 @@ export function applyHeal(ctx, target, amount) {
 }
 
 function afterHpChange(ctx, target, death = {}) {
+  if(target.hp>0) proposalThreshold(ctx,target);
   // THE DEATH-PREVENTION HOOK (SPEC §14.3): the player about to drop to 0 HP
   // spends one revive token from the fight's copy of the counts and rises at
   // hpPct of max. The copy rides the combat snapshot, so a fight saved after a
@@ -1168,7 +1193,8 @@ export function resolveTargets(ctx, action, targetSpec) {
   const refs = group?.begun && generic ? action.meta?.expansionTargets?.[action.meta?.expansionExecutionRepeat || 0] : null;
   const targets = refs ? refs.map(ref => Expanded.expansionEntity(ctx, ref)).filter(entity => Expanded.expansionTargetPresent(ctx, entity))
     : resolveRawTargets(ctx, action, targetSpec);
-  return targets.filter(entity => !group?.targets?.[ctx.playerIdForEntity?.(entity) || entity.id]?.receipt?.avoided);
+  const eligible=targets.filter(entity => !group?.targets?.[ctx.playerIdForEntity?.(entity) || entity.id]?.receipt?.avoided);
+  return targetSpec==='allEnemies' && action.card?.targetLimit !== undefined ? eligible.slice(0,Math.max(0,evalNum(ctx,action,action.card.targetLimit,eligible.length))) : eligible;
 }
 
 function resolveRawTargets(ctx, action, targetSpec) {
@@ -1200,6 +1226,8 @@ function resolveRawTargets(ctx, action, targetSpec) {
       const living = livingEnemies(ctx);
       return living.length ? [ctx.rng.pick('misc', living)] : [];
     }
+    case 'allAllies':
+      return ctx.players ? [...ctx.players.values()].filter(p=>p.connected && p.entity.alive).map(p=>p.entity) : [ctx.player].filter(p=>p?.alive);
     case 'ally': {
       // Co-op: the explicitly aimed living teammate. Solo — or no pick — falls
       // back to the source, so every ally card stays fully solo-valid.
@@ -1224,6 +1252,7 @@ export function formulaCtxFor(ctx, action, primaryTarget) {
       player: ctx.player || null,
       allEnemies: livingEnemies(ctx),
     },
+    weaponDamage:weaponDamageBasis(ctx,action.source),cardId: action.card?.cardId, metricsBefore:meta.abilityBefore, manaSpent:meta.manaSpent || 0, staminaSpent:meta.staminaSpent || 0,
     energySpent: meta.energySpent != null ? meta.energySpent : 0,
     cardsPlayedThisTurn: ctx.player ? ctx.player.counters.cardsPlayedThisTurn : 0,
   };
@@ -1334,7 +1363,7 @@ export function executeAction(ctx, action) {
       if (action.meta) action.meta.expansionExecutionRepeat = r;
       runOpcode(ctx, action, eff);
       spendSilencedForEffect(ctx, action, eff);
-      if (ctx.result || ctx.pendingAbilityDiscard) return;
+      if (ctx.result || hasCardChoice(ctx)) return;
     }
   } finally { if (previous) ctx._abilityAction = previous; else delete ctx._abilityAction; }
 }
@@ -1356,6 +1385,9 @@ function plannedStatusTargets(ctx, action, eff) {
 }
 
 function runOpcode(ctx, action, eff) {
+  if(eff.op==='addCinders' && ctx.player && !ctx.run) {
+    const amount=Math.max(0,evalNum(ctx,action,eff.amount,0));ctx.proposalRewards ||= {cinders:0};ctx.proposalRewards.cinders+=amount;if(ctx.playerKey){ctx.proposalRewards.byPlayer ||= {};ctx.proposalRewards.byPlayer[ctx.playerKey]=(ctx.proposalRewards.byPlayer[ctx.playerKey] || 0)+amount;}ctx.emit('cindersChanged',{amount,total:ctx.proposalRewards.cinders,combatReward:true});return;
+  }
   if (RUN_OPCODES.includes(eff.op)) {
     runRunOpcode(ctx, action, eff);
     return;
@@ -1378,6 +1410,7 @@ function runOpcode(ctx, action, eff) {
       break;
     }
     case 'damage': {
+      action.meta ||= {};
       // hits may legitimately evaluate to 0 (X-cost at 0 energy whiffs, StS-style).
       const hits = Math.max(0, evalNum(ctx, action, eff.hits, 1));
       const attackTags = attackTagsFor(action, eff, ctx.registries);
@@ -1391,7 +1424,8 @@ function runOpcode(ctx, action, eff) {
         // triggers (e.g. stance-applied build-up) see live state.
         const plannedContacts = action.meta?.expansionContacts?.[action.meta.expansionCursor || 0];
         if (plannedContacts) action.meta.expansionCursor = (action.meta.expansionCursor || 0) + 1;
-        const targets = plannedContacts ? plannedContacts.map(contact => Expanded.expansionEntity(ctx, contact)).filter(Boolean) : resolveTargets(ctx, action, eff.target);
+        let targets = plannedContacts ? plannedContacts.map(contact => Expanded.expansionEntity(ctx, contact)).filter(Boolean) : resolveTargets(ctx, action, eff.target);
+        if(eff.target==='allEnemies' && action.card?.targetLimit!==undefined) targets=targets.slice(0,Math.max(0,evalNum(ctx,action,action.card.targetLimit,targets.length)));
         for (const t of targets) {
           if (!Expanded.expansionTargetPresent(ctx, t)) continue;
           const bonus = (action.meta?.abilityChargeDamageEffect || 0) + (h === 0 && t === targets[0] ? action.meta?.abilityChargeDamage || 0 : 0);
@@ -1400,7 +1434,7 @@ function runOpcode(ctx, action, eff) {
             damageSchool: eff.damageSchool || action.card?.damageSchool,
             tags: action.card?.tags || attackTags,
             combatProfile: Expanded.effectCarrier(action.card, eff).combatProfile,
-            combatRiderTargets,
+            combatRiderTargets,proposalTargetDecisions:action.meta ? (action.meta.proposalTargetDecisions ||= {}) : {},
             energySpent: action.meta?.energySpent || 0 };
           if (plannedContacts) {
             const contact = plannedContacts.find(row => Expanded.expansionEntity(ctx, row) === t);
@@ -1456,7 +1490,7 @@ function runOpcode(ctx, action, eff) {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         const base = evalNum(ctx, action, eff.amount, 0, t);
         // Stance entry and restoration already own their lane and exact budget.
-        if (ctx.combatExpansionVersion === 2 && (action.meta?.stanceEntry || action.meta?.stanceRestore)) {
+        if (action.card?.proposalProtectionFloor || ctx.combatExpansionVersion === 2 && (action.meta?.stanceEntry || action.meta?.stanceRestore)) {
           gainBlockAmount(ctx, t, Math.max(0, Math.floor(base)), action.card, false);
         } else gainBlock(ctx, t, base + (action.meta?.abilityChargeBlock || 0), action.card);
       }
@@ -1465,7 +1499,7 @@ function runOpcode(ctx, action, eff) {
     case 'gainBarrier': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         const base = evalNum(ctx, action, eff.amount, 0, t);
-        if (ctx.combatExpansionVersion === 2 && (action.meta?.stanceEntry || action.meta?.stanceRestore)) {
+        if (action.card?.proposalProtectionFloor || ctx.combatExpansionVersion === 2 && (action.meta?.stanceEntry || action.meta?.stanceRestore)) {
           gainBarrierAmount(ctx, t, Math.max(0, Math.floor(base)), action.card, false);
         } else gainBarrier(ctx, t, base + (action.meta?.abilityChargeBlock || 0), action.card);
       }
@@ -1562,6 +1596,7 @@ function runOpcode(ctx, action, eff) {
         const authored = evalNum(ctx, action, eff.stacks, 1, t);
         const stacks = authored + spellAuthoredStatusBonus(ctx, action, authored) + (action.meta?.abilityChargeBuildup || 0);
         statuses.applyStatus(ctx, t, eff.status, stacks, action.source);
+        proposalThreshold(ctx,t);
         if (ctx.combatExpansionVersion === 2) {
           const row = action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(t) || t.id];
           if (row?.receipt) Matchups.recordTacticalStatus(row.receipt, { accepted: stacks });
@@ -1576,6 +1611,7 @@ function runOpcode(ctx, action, eff) {
     case 'removeStatus': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         statuses.removeStatus(ctx, t, eff.status, { reason: 'consumed', ...(eff.amount !== undefined ? { amount: Math.max(0, evalNum(ctx, action, eff.amount, 0, t)) } : {}) });
+        trimCombatStances(ctx,t);
       }
       break;
     }
@@ -1585,6 +1621,22 @@ function runOpcode(ctx, action, eff) {
         for (const field of ['damage', 'manaDiscount', 'block', 'heal', 'break', 'buildup']) if (eff[field] !== undefined) charge[field] = Math.max(0, evalNum(ctx, action, eff[field], 0, target));
         grantAbilityCharge(target, charge);
       }
+      break;
+    }
+    case 'castLinkedSpell': {
+      if((action.meta?.linkedDepth || 0)>=8) throw new Error('Linked spell recursion exceeds bound');
+      const linked=ctx.registries.cards.get(eff.card);
+      for(const effect of linked.effects || []) ctx.enqueue({...action,effect,card:{...action.card,...linked,cardId:linked.id},meta:{...action.meta,linkedDepth:(action.meta?.linkedDepth || 0)+1}});
+      break;
+    }
+    case 'addBurden':
+      for(const enemy of resolveTargets(ctx,action,eff.target)) {if(enemy.kind!=='enemy') throw new Error('Burden targets enemies only');addEnemyBurden(ctx,enemy,eff.card,evalNum(ctx,action,eff.count,1),eff.pile || 'draw');}break;
+    case 'revealIntent':
+      for(const enemy of resolveTargets(ctx,action,eff.target)) {if(enemy.kind!=='enemy') continue;enemy.proposalIntentRevealedUntil=ctx.turn+Math.max(1,Math.min(10,evalNum(ctx,action,eff.amount,1)));ctx.emit('intentRevealed',{targetId:enemy.id,until:enemy.proposalIntentRevealedUntil,burdenCards:(enemy.burdenPiles?.hand || []).map(c=>c.cardId),burdenCounts:Object.fromEntries(Object.entries(enemy.burdenPiles || {}).map(([k,v])=>[k,v.length]))});}break;
+    case 'modifyCards':
+    case 'moveCards': {
+      const resolved=eff.changes?.hideTurns && typeof eff.changes.hideTurns==='object' ? {...action,effect:{...eff,changes:{...eff.changes,hideTurns:Math.min(10,Math.max(1,evalNum(ctx,action,eff.changes.hideTurns,1)))}}} : action;
+      moveCards(ctx, resolved, evalNum(ctx, action, eff.amount, 1));
       break;
     }
     case 'draw': {
@@ -1690,7 +1742,9 @@ function runOpcode(ctx, action, eff) {
         const percentage = ctx.combatExpansionVersion === 2 && nominal > 0
           ? (ctx.restorationModifierPercent?.(t, 'hp') || 0) + (eff.ashenBlightBonusPct || 0) : 0;
         const amount = Math.max(0, Math.floor(nominal * mult * (1 + percentage / 100)));
-        applyHeal(ctx, t, amount + Ratings.cardRatingBonus(ctx, action.source, action.card, 'heal', amount) + (action.meta?.abilityChargeHeal || 0));
+        const healing=proposalHealingPlan(ctx,t,amount + Ratings.cardRatingBonus(ctx, action.source, action.card, 'heal', amount) + (action.meta?.abilityChargeHeal || 0),eff.damageType || action.card || {});
+        if(healing.damage) applyLoseHp(ctx,t,healing.damage,'healingInversion');
+        applyHeal(ctx, t, healing.healing);
       }
       break;
     }
@@ -1702,6 +1756,14 @@ function runOpcode(ctx, action, eff) {
       // A chosen stance (Warrior's Vow) is the play intent's pick, validated
       // before the card was paid for (model/cardChoices.js) and carried on meta.
       const stanceId = eff.choose ? action.meta && action.meta.choice : eff.stance;
+      if(eff.maneuver || eff.choose==='maneuver') {
+        const maneuver=eff.maneuver || stanceId;if(!MANEUVERS.includes(maneuver))throw new Error('Choose a valid maneuver');
+        for(const entity of resolveTargets(ctx,action,eff.target || 'self')) {
+          const carrier={...action.card,combatProfile:{...action.card?.combatProfile,maneuver,stanceTrigger:true,range:action.card?.combatProfile?.range || 'melee',camp:action.card?.combatProfile?.camp || 'physical'}};
+          Matchups.setCombatStance(ctx,entity,carrier);
+        }
+        break;
+      }
       // BOUNDARY (#1449 review, Codex P2): only a played card supplies a
       // choice. The validator checks `choose` wherever enterStance may appear
       // (stance onEnter, status hooks, enemy moves...), but no shipped row

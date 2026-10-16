@@ -67,6 +67,8 @@ const SCHOOL_OF_PROPERTY = Object.freeze({
   'damage.physical': 'physical',
   'damage.magic': 'magic',
   'damage.arcane': 'arcane',
+  'damage.fire': 'fire',
+  'damage.holy': 'holy',
 });
 
 const KEYWORD_OF_PROPERTY = Object.freeze({
@@ -102,7 +104,7 @@ export function compareBaseline(baseline, registries, compiledById) {
     diff('manaCost', mana ? mana.amount : null);
     const keywords = compiled.properties.map((p) => KEYWORD_OF_PROPERTY[p.propertyId]).filter(Boolean).sort();
     diff('keywords', keywords);
-    const school = compiled.properties.map((p) => SCHOOL_OF_PROPERTY[p.propertyId]).find(Boolean) || null;
+    const school = compiled.properties.filter(p => !p.implied).map((p) => SCHOOL_OF_PROPERTY[p.propertyId]).find(Boolean) || null;
     diff('damageSchool', school);
     const targets = compiled.properties
       .filter((p) => p.propertyId.startsWith('targeting.') && !p.implied)

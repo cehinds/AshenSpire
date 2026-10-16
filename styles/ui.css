@@ -1935,3 +1935,64 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .class-respec-changes { margin:0; padding-left:24px; display:grid; gap:8px; }
 .class-respec-problems { color:var(--danger,#f0a08c); }
 @container game-viewport (max-width:600px) { .class-respec-slots label { align-items:stretch; flex-direction:column; } .class-respec-slots select { max-width:100%; width:100%; } }
+
+/* Reading Desk: a compact inspection column and one illustrated deck list. */
+.deck-editor.deck-editor-reading-desk {
+  width: min(120rem, calc(100vw - 3.2rem));
+  max-width: 120rem;
+  margin-inline: auto;
+  background: #211a12;
+}
+.deck-editor-reading-desk > .deck-editor-panes {
+  grid-template-columns: minmax(28rem, .85fr) minmax(0, 1.4fr);
+  gap: 2rem;
+}
+.deck-editor-reading-desk .deck-editor-inspector {
+  grid-column: 1; grid-row: 1; border-inline: 0;
+  border-right: 1px solid var(--line); padding: 0 2rem 0 0; gap: .5rem;
+}
+.deck-editor-reading-desk .deck-editor-panes > [data-pane] { grid-column: 2; grid-row: 1; }
+.deck-editor-reading-desk .deck-editor-panes[data-active="collection"] > [data-pane="deck"],
+.deck-editor-reading-desk .deck-editor-panes[data-active="deck"] > [data-pane="collection"] { display: none; }
+.deck-editor-reading-desk .deck-editor-reading { padding: .5rem; overflow-x: hidden; }
+.deck-editor-reading-desk .deck-editor-preview { display: flex; flex-direction: column; align-items: center; gap: .4rem; margin-bottom: .6rem; }
+.deck-editor.deck-editor-reading-desk .deck-editor-reading > .deck-editor-preview > .card {
+  width: min(var(--deck-preview-width, 14rem), 100%) !important;
+  max-width: 18rem; height: auto; aspect-ratio: var(--card-ratio); margin: 0 auto;
+  flex: none; pointer-events: none;
+}
+.deck-editor-reading-desk .deck-editor-preview-toggle { min-height: var(--deck-editor-target); font-size: max(1.2rem, var(--deck-min-text)); }
+.deck-editor-reading-desk .deck-editor-rules { font-size: max(1.35rem, var(--deck-min-text)); line-height: 1.45; }
+.deck-editor-reading-desk .deck-editor-rules .tt-title { font: 2.1rem Georgia, serif; margin: 0 0 .5rem; color: var(--parchment); }
+.deck-editor-reading-desk .deck-editor-rules :is(.ti-meta, .combat-rule-hint, .sigil-explanation, .card-sigil-explanation, .ctext) {
+  font-size: inherit; line-height: inherit; margin-block: .65rem;
+}
+.deck-editor-reading-desk .deck-editor-rules .ctext { display: block; max-height: none; overflow: visible; }
+.deck-editor-reading-desk .deck-editor-glossary { margin-top: 1rem; font-size: max(1.2rem, var(--deck-min-text)); }
+.deck-editor-reading-desk .deck-editor-glossary summary { cursor: pointer; color: #b7a681; padding-block: .5rem; }
+.deck-editor-reading-desk .deck-editor-selected-actions { padding: .5rem; flex: none; }
+.deck-editor-reading-desk .deck-editor-selected-reason { margin-block: .3rem .5rem; }
+.deck-editor-reading-desk .deck-editor-selected-buttons { display: flex; gap: .6rem; }
+.deck-editor-reading-desk .deck-editor-selected-buttons > button { flex: 1; font-size: max(1.2rem, var(--deck-min-text)); padding-inline: .5rem; }
+.deck-editor-reading-desk .deck-editor-mobile-tabs { display: flex; }
+.deck-editor-reading-desk .deck-editor-animation { width: 100%; max-width: 32rem; margin: 0; }
+.deck-editor-reading-desk .deck-editor-animation-stage { height: 23rem; }
+.deck-editor-reading-desk .deck-editor-animation-stage .pose-stage { height: 22rem; }
+@media (max-width: 1000px) {
+  .deck-editor.deck-editor-reading-desk { width: calc(100vw - 1.6rem); }
+  .deck-editor-reading-desk > .deck-editor-panes { display: block; }
+  .deck-editor-reading-desk .deck-editor-inspector { padding: 0; border: 0; }
+  .deck-editor-reading-desk .deck-editor-preview-toggle { display: none; }
+  .deck-editor.deck-editor-reading-desk .deck-editor-reading > .deck-editor-preview > .card { width: 12rem !important; }
+}
+@container game-viewport (max-width: 1000px) {
+  .deck-editor.deck-editor-reading-desk { width: calc(100cqw - 1.6rem); }
+  .deck-editor-reading-desk > .deck-editor-panes { display: block; }
+  .deck-editor-reading-desk .deck-editor-inspector { padding: 0; border: 0; }
+  .deck-editor-reading-desk .deck-editor-preview-toggle { display: none; }
+}
+
+/* The optional animation switch sits beside the small face, leaving the
+   vertical reading space to the card's effect and combat rules. */
+.deck-editor-reading-desk .deck-editor-preview:not(.animation-mode) { flex-direction: row; justify-content: center; align-items: flex-end; gap: 1rem; }
+.deck-editor.deck-editor-reading-desk .deck-editor-reading > .deck-editor-preview > .card { margin: 0; }

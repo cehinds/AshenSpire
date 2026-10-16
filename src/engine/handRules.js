@@ -48,6 +48,7 @@ export function turnDrawCount(ctx, opening = ctx.turn === 1) {
 }
 
 export function endTurnCardFate(ctx, card) {
+  if (card.proposalChanges?.retain && (card.proposalChanges.retainUntilTurn ?? ctx.turn)>=ctx.turn || ctx.player.combatRetainedCards?.includes(card.instanceId)) return 'keep';
   if (configuredCombat(ctx)) {
     const def = projectGameCard(ctx, card) || resolveCard(ctx.registries, card);
     return (def.keywords || []).includes('ethereal') ? 'exhaust' : 'discard';

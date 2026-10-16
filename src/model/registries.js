@@ -207,6 +207,7 @@ function stampTags(bundle) {
 export function createRegistries(contentBundle) {
   const bundle = projectAttackCardDamageBundle(resolveEnemyMoveSources(contentBundle || {}));
   const registries = {};
+  registries.proposalStatusRules = deepFreeze(bundle.proposalStatusRules || {});
 
   // The tag join, resolved once for every collection tagFamilies.csv names.
   // Everything below reads a stamped collection where one exists, so `.tags` is

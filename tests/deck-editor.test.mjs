@@ -700,7 +700,7 @@ test('Reading Desk: selection reveals inline Inspect without navigating or chang
     inspect.click();
     assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'inspect');
     assert.equal(editor.root.querySelector('.deck-editor-reading .card').dataset.cardId, 'defend');
-    assert.equal(editor.root.querySelector('.deck-editor-art-toggle input').hasAttribute('disabled'), true);
+    assert.equal(editor.root.querySelector('.deck-editor-animation'), null, 'animation is hidden until requested');
     assert.deepEqual(editState(run), before);
     editor.close();
   });
@@ -1601,6 +1601,27 @@ test('public deck group headings use canonical categories while raw filter kinds
     }
     assert.equal(JSON.stringify(run.deck.filter(card => card.instanceId.startsWith('category-'))), saved,
       'presentation does not migrate saved Counter card references');
+    editor.close();
+  });
+});
+
+
+test('Reading Desk: selecting or focusing a new row immediately replaces a previously opened inspection', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  withDom(() => {
+    const run = freshRun(), before = editState(run);
+    const editor = mountDeckEditor(document.body, { registries: REG, run });
+    const counter = editor.root.querySelector('.deck-editor-row[data-instance-id="' + run.deck.find(card => card.cardId === 'guardCounter').instanceId + '"]');
+    counter.querySelector('.deck-editor-main').click();
+    counter.querySelector('.deck-editor-inline-inspect').click();
+    assert.equal(editor.root.querySelector('.deck-editor-reading .card').dataset.cardId, 'guardCounter');
+    const defend = editor.root.querySelector('.deck-editor-tile[data-key="basic:guard"] .deck-editor-main');
+    defend.focus();
+    assert.equal(editor.root.querySelector('.deck-editor-reading .card').dataset.cardId, 'defend', 'focus updates the face without another inspection action');
+    editor.root.querySelector('.deck-editor-tile[data-key="basic:attack"] .deck-editor-main').click();
+    assert.equal(editor.root.querySelector('.deck-editor-reading .card').dataset.cardId, 'strike', 'click updates an inspection that was already open');
+    assert.equal(editor.root.querySelector('.deck-editor-animation'), null);
+    assert.deepEqual(editState(run), before);
     editor.close();
   });
 });
