@@ -73,7 +73,60 @@ export function validateGameSchema(value, schema, path = '$') {
   else if (type === 'number' && (typeof value !== 'number' || !Number.isFinite(value))) fail(path, 'expected finite number');
   if (typeof value === 'number' && (value < (schema.minimum ?? -Infinity) || value > (schema.maximum ?? Infinity))) fail(path, 'outside permitted numeric range');
 }
+// Structured adapter formulas remain finite JSON; the host's closed formula/
+// opcode validator checks their vocabulary when definitions are compiled/loaded.
+function adapterAmount(value) {
+  if (typeof value === 'number') return Number.isFinite(value) && value >= 0;
+  return record(value) && typeof value.f === 'string' && value.f.length > 0;
+}
+function appendBaseCardContent(content, modules, foundationMode) {
+  if (!content.baseCards) return;
+  const { cards, helpers = [] } = content.baseCards;
+  const rows = [...cards, ...helpers], ids = new Set();
+  for (const row of rows) {
+    const id = row.definition?.id;
+    if (!id || ids.has(id)) fail('$/content/baseCards', `duplicate or missing card ID '${id}'`);
+    ids.add(id);
+  }
+  const groupId = foundationMode === 'configured' ? 'base.core-rewards' : 'base.current-rewards';
+  const groups = content.baseCardGroups;
+  if (!groups?.[groupId]?.members) fail('$/content/baseCardGroups', `missing '${groupId}'`);
+  const admitted = new Set([...groups[groupId].members, ...groups['base.generated-helpers'].members, ...groups['base.generated-burdens'].members]);
+  const additions = [], unavailable = [];
+  const requirementsFor = (row, seen = new Set()) => {
+    if (seen.has(row.definition.id)) fail('$/content/baseCards', 'cyclic linked card requirements');
+    const nextSeen = new Set([...seen, row.definition.id]);
+    const required = { modules: [], elements: [], protections: [] };
+    const merge = requirement => { for (const key of Object.keys(required)) required[key].push(...(requirement?.[key] || [])); };
+    merge(row.requirements);
+    for (const effect of [...row.definition.effects, ...(row.definition.effectVariants || []).flatMap(variant => variant.effects)]) {
+      if (effect.op === 'applyStatus') merge(content.baseCardStatusSource.rules[effect.status]?.requires);
+      if (effect.op === 'castLinkedSpell') {
+        const linked = rows.find(other => other.definition.id === effect.card);
+        if (!linked) fail('$/content/baseCards', `unknown linked spell '${effect.card}'`);
+        merge(requirementsFor(linked, nextSeen));
+      }
+    }
+    return required;
+  };
+  for (const row of rows) {
+    const required = requirementsFor(row);
+    const missing = required.modules.filter(id => !modules[id]);
+    if (foundationMode === 'configured') {
+      if (required.elements.length && !modules.effects?.elements) missing.push('elements');
+      for (const protection of required.protections) if (!modules.defenses?.include?.includes(protection)) missing.push(`protection:${protection}`);
+    }
+    if (!admitted.has(row.definition.id) || missing.length) { unavailable.push({ id: row.definition.id, reasons: missing.length ? missing : row.requirements?.features || ['profile-group'] }); continue; }
+    additions.push({...dataClone(row.definition), tags:dataClone(row.tags)});
+  }
+  const existing = content.cards || [];
+  for (const card of additions) if (existing.some(row => row.id === card.id)) fail('$/content/cards', `duplicate card ID '${card.id}'`);
+  content.cards = [...existing, ...additions];
+  content.resourceVariants = {...(content.resourceVariants || {}), ...dataClone(content.baseCardVariants)};
+  content.baseCardAdmission = { group: groupId, admitted: additions.map(row => row.id), unavailable };
+}
 function verifyContent(content) {
+  if (content.cards && new Set(content.cards.map(card => card.id)).size !== content.cards.length) fail('$/content/cards', 'duplicate card ID');
   if (!content.classes) return;
   if (!Array.isArray(content.classes) || !Array.isArray(content.cards) || !record(content.starterDeck)) fail('$/content', 'missing typed classes/cards/starterDeck');
   const classIDs = new Set(content.classes.map(row => row.id));
@@ -84,8 +137,8 @@ function verifyContent(content) {
     if (!Number.isSafeInteger(row.maxHp) || row.maxHp < 1) fail(`$/content/classes/${row.id}/maxHp`, 'expected positive HP');
   }
   for (const row of content.cards) {
-    for (const key of ['cost','staminaCost','manaCost']) if (!Number.isSafeInteger(row[key]) || row[key] < 0) fail(`$/content/cards/${row.id}/${key}`, 'expected nonnegative integer price');
-    for (const [i,effect] of (row.effects || []).entries()) if ((effect.amount !== undefined || ['damage','block'].includes(effect.op)) && (typeof effect.amount !== 'number' || !Number.isFinite(effect.amount) || effect.amount < 0)) fail(`$/content/cards/${row.id}/effects/${i}/amount`, 'expected nonnegative finite adapter amount');
+    for (const key of ['cost','staminaCost','manaCost']) if (!(key === 'cost' && row[key] === 'X') && (!Number.isSafeInteger(row[key]) || row[key] < 0)) fail(`$/content/cards/${row.id}/${key}`, 'expected nonnegative integer price');
+    for (const [i,effect] of (row.effects || []).entries()) if ((effect.amount !== undefined || ['damage','block'].includes(effect.op)) && !adapterAmount(effect.amount)) fail(`$/content/cards/${row.id}/effects/${i}/amount`, 'expected nonnegative finite adapter amount');
   }
   if (content.stats.poolBasesByClass !== undefined) {
     if (!record(content.stats.poolBasesByClass)) fail('$/content/stats/poolBasesByClass', 'expected class pool-base map');
@@ -155,6 +208,7 @@ export function resolveGameAuthor(author, catalog) {
     if (!pack) fail('$/core/packs', `unresolved exact pack ${ref.id}@${ref.version}`);
     for (const [key,value] of Object.entries(pack.content)) { if (key in content) fail(`$/content/${key}`, 'duplicate pack content key'); content[key] = dataClone(value); }
   }
+  appendBaseCardContent(content, modules, bundle.manifest.foundationMode);
   for (const binding of bundle.manifest.policyBindings || []) {
     if (!modules[binding.module]) continue;
     const policy = content[binding.content];

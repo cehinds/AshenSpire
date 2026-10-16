@@ -242,6 +242,14 @@
       "stackMode": "add",
       "decay": "none",
       "tooltip": "Each stack permits one additional concurrent stance. Two stacks allow three total stances. Lose one stack at the next turn start."
+    },
+    {
+      "id": "base.conceal",
+      "name": "Conceal",
+      "icon": "\u25d2",
+      "stackMode": "add",
+      "decay": "none",
+      "tooltip": "Each stack increases cards hidden and their hidden duration by one. Lose one stack at owner turn start."
     }
   ],
   "rules": {
@@ -871,6 +879,19 @@
           ]
         }
       ]
+    },
+    "base.conceal": {
+      "requires": {
+        "modules": [
+          "statuses"
+        ],
+        "elements": []
+      },
+      "decay": {
+        "phase": "start",
+        "stacks": 1
+      },
+      "behaviors": []
     }
   }
 }

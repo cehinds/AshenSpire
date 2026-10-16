@@ -11,7 +11,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 3
     },
@@ -33,7 +33,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 2
     },
@@ -55,7 +55,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 3
     },
@@ -77,7 +77,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 2
     },
@@ -99,7 +99,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 2
     },
@@ -121,7 +121,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 2
     },
@@ -143,7 +143,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 2
     },
@@ -165,7 +165,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 2
     },
@@ -187,7 +187,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 2
     },
@@ -209,7 +209,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 2
     },
@@ -231,7 +231,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 1
     },
@@ -253,7 +253,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 3
     },
@@ -275,7 +275,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 3
     },
@@ -297,7 +297,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 2
     },
@@ -319,7 +319,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 2
     },
@@ -341,7 +341,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 2
     },
@@ -363,7 +363,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 2
     },
@@ -385,7 +385,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 2
     },
@@ -407,7 +407,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 1
     },
@@ -451,7 +451,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 1
     },
@@ -473,7 +473,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 1
     },
@@ -495,7 +495,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 1
     },
@@ -507,19 +507,19 @@
   },
   "base.reveal-opponent-hand": {
     "sp,mp": {
-      "cost": 0,
-      "staminaCost": 0,
+      "cost": 1,
+      "staminaCost": 1,
       "manaCost": 1
     },
     "sp": {
-      "cost": 1,
-      "staminaCost": 1,
+      "cost": 2,
+      "staminaCost": 2,
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
-      "manaCost": 1
+      "manaCost": 2
     },
     "none": {
       "cost": 0,
@@ -539,7 +539,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 1
     },
@@ -561,7 +561,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 2
     },
@@ -605,7 +605,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 2
     },
@@ -627,7 +627,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 2
     },
@@ -649,7 +649,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 2
     },
@@ -671,7 +671,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 1
     },
@@ -693,7 +693,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 1
     },
@@ -715,7 +715,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 1
     },
@@ -737,7 +737,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 1
     },
@@ -759,7 +759,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 1
     },
@@ -781,7 +781,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 1
     },
@@ -803,7 +803,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 1
     },
@@ -825,7 +825,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 1,
       "costGrowth": {
@@ -859,7 +859,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 1
     },
@@ -881,7 +881,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 1,
       "effects": [
@@ -890,7 +890,8 @@
           "target": "enemy",
           "amount": 6
         }
-      ]
+      ],
+      "textTemplate": "Deal {damage} damage to one enemy."
     },
     "none": {
       "cost": 0,
@@ -902,7 +903,8 @@
           "target": "enemy",
           "amount": 6
         }
-      ]
+      ],
+      "textTemplate": "Deal {damage} damage to one enemy."
     }
   },
   "base.pay-x-targets": {
@@ -917,7 +919,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 1,
       "effects": [
@@ -927,7 +929,8 @@
           "amount": 8
         }
       ],
-      "targetLimit": 1
+      "targetLimit": 1,
+      "textTemplate": "Deal {damage} damage to one enemy."
     },
     "none": {
       "cost": 0,
@@ -940,7 +943,8 @@
           "amount": 8
         }
       ],
-      "targetLimit": 1
+      "targetLimit": 1,
+      "textTemplate": "Deal {damage} damage to one enemy."
     }
   },
   "base.hide-cards": {
@@ -955,7 +959,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 2
     },
@@ -977,7 +981,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 2
     },
@@ -999,7 +1003,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 2
     },
@@ -1021,7 +1025,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 1
     },
@@ -1043,7 +1047,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 2
     },
@@ -1065,7 +1069,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 1
     },
@@ -1087,7 +1091,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 1
     },
@@ -1109,7 +1113,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 1
     },
@@ -1131,7 +1135,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 2
     },
@@ -1153,7 +1157,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 2
     },
@@ -1175,7 +1179,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 1
     },
@@ -1197,7 +1201,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 1
     },
@@ -1219,7 +1223,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 2
     },
@@ -1241,7 +1245,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 1
     },
@@ -1260,63 +1264,34 @@
     "sp": {
       "cost": 1,
       "staminaCost": 1,
-      "manaCost": 0,
-      "effects": [
-        {
-          "op": "moveCards",
-          "amount": 1,
-          "from": "hand",
-          "to": "exhaust",
-          "selection": "choose",
-          "position": "top"
-        },
-        {
-          "op": "restoreStamina",
-          "target": "self",
-          "amount": 2
-        }
-      ]
+      "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 1
     },
     "none": {
       "cost": 0,
       "staminaCost": 0,
-      "manaCost": 0,
-      "effects": [
-        {
-          "op": "moveCards",
-          "amount": 1,
-          "from": "hand",
-          "to": "exhaust",
-          "selection": "choose",
-          "position": "top"
-        },
-        {
-          "op": "draw",
-          "amount": 2
-        }
-      ]
+      "manaCost": 0
     }
   },
   "base.one-use-scroll": {
     "sp,mp": {
-      "cost": 0,
-      "staminaCost": 0,
+      "cost": 1,
+      "staminaCost": 1,
       "manaCost": 1
     },
     "sp": {
-      "cost": 1,
-      "staminaCost": 1,
+      "cost": 2,
+      "staminaCost": 2,
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
-      "manaCost": 1
+      "manaCost": 2
     },
     "none": {
       "cost": 0,
@@ -1326,26 +1301,27 @@
   },
   "base.gain-resource": {
     "sp,mp": {
-      "cost": 0,
-      "staminaCost": 0,
+      "cost": 1,
+      "staminaCost": 1,
       "manaCost": 1
     },
     "sp": {
-      "cost": 1,
-      "staminaCost": 1,
+      "cost": 2,
+      "staminaCost": 2,
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
-      "manaCost": 1,
+      "manaCost": 2,
       "effects": [
         {
           "op": "restoreMana",
           "target": "self",
-          "amount": 2
+          "amount": 3
         }
-      ]
+      ],
+      "textTemplate": "Restore {restoreMana} MP."
     },
     "none": {
       "cost": 0,
@@ -1356,7 +1332,8 @@
           "op": "draw",
           "amount": 1
         }
-      ]
+      ],
+      "textTemplate": "Draw {draw} card."
     }
   },
   "base.buff-ally": {
@@ -1371,7 +1348,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 1
     },
@@ -1393,7 +1370,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 2
     },
@@ -1415,7 +1392,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 1
     },
@@ -1437,7 +1414,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 1
     },
@@ -1459,7 +1436,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 1
     },
@@ -1481,7 +1458,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 2
     },
@@ -1503,7 +1480,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 1
     },
@@ -1569,7 +1546,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 2
     },
@@ -1613,7 +1590,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 1
     },
@@ -1635,7 +1612,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 1
     },
@@ -1657,7 +1634,7 @@
       "manaCost": 0
     },
     "mp": {
-      "cost": 0,
+      "cost": 1,
       "staminaCost": 0,
       "manaCost": 2
     },

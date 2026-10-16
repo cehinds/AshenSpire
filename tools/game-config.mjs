@@ -3,6 +3,7 @@
 import { readFileSync, writeFileSync, mkdirSync, renameSync, unlinkSync, existsSync, realpathSync, readdirSync } from 'node:fs';
 import { resolve, dirname, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { compileBaseCards, BASE_CARD_OUTPUT } from './base-cards.mjs';
 import { resolveGameAuthor, canonicalGameJSON, gameDigest, dataClone } from '../engine/kernel/gameConfig.js';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const GENERATED = 'src/content/generated/gameProfiles.js';
@@ -12,6 +13,7 @@ const json = path => { try { return JSON.parse(readFileSync(inside(path),'utf8')
 function artifact(path,id,version) { const text=readFileSync(inside(path),'utf8'); return {path,id,version,hash:gameDigest(path.endsWith('.json') ? canonicalGameJSON(JSON.parse(text)) : text)}; }
 function referenced(base,path) { if (typeof path !== 'string') throw new Error(`${base}: expected file reference`); return relative(ROOT,resolve(ROOT,dirname(base),path)).split(sep).join('/'); }
 export function loadGameProfileCatalog() {
+  compileBaseCards(); // validate authored effect/opcode/reference contracts before locking source packs
   const contracts = json('engine/contracts/game-profile.json'), foundation = json('engine/foundation/foundation.json');
   const catalog = {contracts,foundation,modules:{},bundles:{},packs:{},runtimeArtifacts:[]};
   for(const path of ['engine/kernel/kernel.json','engine/kernel/gameConfig.js','engine/contracts/game-profile.json','engine/foundation/foundation.json']) catalog.runtimeArtifacts.push(artifact(path,'ashen.runtime','1.0.0'));
@@ -63,6 +65,7 @@ function main(args) {
   const command=args.shift()||'validate',options={};
   while(args.length) { const arg=args.shift();if(arg==='--portable')options.portable=true;else if(['--input','--out'].includes(arg)){if(!args.length||args[0].startsWith('--'))throw new Error(`${arg} requires a path`);options[arg.slice(2)]=args.shift();}else throw new Error(`Unknown argument ${arg}`); }
   if(!['validate','build','check','export','apply'].includes(command))throw new Error('Usage: game-config.mjs validate|build|check|export|apply [--input PATH] [--out PATH] [--portable]');
+  if (command === 'build') atomicWrite(BASE_CARD_OUTPUT, compileBaseCards());
   const inputText=options.input?readFileSync(resolve(options.input),'utf8'):null;
   const author=inputText !== null ? JSON.parse(inputText) : json('games/ashenspire/game.json');
   const catalog=loadGameProfileCatalog();

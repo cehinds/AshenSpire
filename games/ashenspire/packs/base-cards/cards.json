@@ -27,8 +27,8 @@
             "stacks": 4
           }
         ],
-        "textTemplate": "Gain Persistent Block 4 and Persistent Barrier 4.",
-        "icon": "✦",
+        "textTemplate": "Gain Persistent Block {base.persistent-block} and Persistent Barrier {base.persistent-barrier}.",
+        "icon": "\u2726",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -147,8 +147,8 @@
             "stacks": 3
           }
         ],
-        "textTemplate": "Apply Greased 3: fire detonates the coating.",
-        "icon": "✦",
+        "textTemplate": "Apply Greased {base.greased}: fire detonates the coating.",
+        "icon": "\u2726",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
         "damageSchool": "fire"
       },
@@ -203,7 +203,7 @@
             "maxPhysicalLines": 3
           },
           "inspection": {
-            "fullRules": "Greased adds prone chance and melee/reach accuracy penalty. Fire hit is 100% unavoidable, deals 3× fire damage, applies Burn 3 and splashes 1.5× damage; splash basis unresolved.",
+            "fullRules": "Greased adds prone chance and melee/reach accuracy penalty. Fire hit is 100% unavoidable, deals 3\u00d7 fire damage, applies Burn 3 and splashes 1.5\u00d7 damage; splash basis unresolved.",
             "parameters": {
               "greasedStacks": 3
             },
@@ -266,7 +266,15 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 36
+            "amount": {
+              "f": "metric",
+              "metric": "weaponDamage",
+              "of": "self",
+              "per": 3
+            },
+            "attack": {
+              "source": "weapon"
+            }
           },
           {
             "op": "damage",
@@ -274,13 +282,17 @@
             "amount": 6,
             "tags": [
               "school:divine"
-            ]
+            ],
+            "attack": {
+              "source": "spell",
+              "damageType": "sacred"
+            }
           }
         ],
-        "textTemplate": "Deal 36 weapon damage and 6 Sacred damage.",
-        "icon": "✦",
+        "textTemplate": "Deal {damage} weapon damage and {damage.2} Sacred damage.",
+        "icon": "\u2726",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
-        "damageSchool": "sacred",
+        "damageSchool": "physical",
         "exposureBuildupPerHit": 0
       },
       "tags": [
@@ -358,7 +370,7 @@
       "presentation": {
         "canonicalCardRef": "greatswordSunderingHew",
         "faceLines": [
-          "Deal 36 weapon damage and 6 Sacred damage."
+          "Deal 3\u00d7 equipped weapon damage plus 6 Sacred damage."
         ],
         "sourceFaceLines": [
           "Deal weapon + ? Divine damage"
@@ -378,7 +390,7 @@
           "mana": 1,
           "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
         },
-        "chosenRules": "Deal 36 weapon damage and 6 Sacred damage.",
+        "chosenRules": "Deal 3\u00d7 equipped weapon damage plus 6 Sacred damage.",
         "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
         "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
       }
@@ -400,13 +412,13 @@
             "op": "applyStatus",
             "target": "enemy",
             "status": "base.poison",
-            "stacks": 1
+            "stacks": 5
           }
         ],
-        "textTemplate": "Apply Poison 1.",
-        "icon": "✦",
+        "textTemplate": "Apply {base.poison} Poison: 15 total Necrotic damage as it decays.",
+        "icon": "\u2726",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
-        "damageSchool": "necrotic"
+        "damageSchool": "magic"
       },
       "tags": [
         "classification.skill",
@@ -482,7 +494,7 @@
       "presentation": {
         "canonicalCardRef": "ironSkin",
         "faceLines": [
-          "Apply Poison 1."
+          "Apply Poison 5: 15 total Necrotic damage as it decays."
         ],
         "sourceFaceLines": [
           "Inflict Poison 1"
@@ -502,7 +514,7 @@
           "mana": 1,
           "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
         },
-        "chosenRules": "Apply Poison 1.",
+        "chosenRules": "Apply Poison 5: 15 total Necrotic damage as it decays.",
         "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
         "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
       }
@@ -524,11 +536,11 @@
             "op": "applyStatus",
             "target": "enemy",
             "status": "base.blight",
-            "stacks": 1
+            "stacks": 12
           }
         ],
-        "textTemplate": "Apply Blight 1.",
-        "icon": "✦",
+        "textTemplate": "Apply Blight {base.blight}: lethal when its stacks reach current HP.",
+        "icon": "\u2726",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -601,7 +613,7 @@
       "presentation": {
         "canonicalCardRef": "ironSkin",
         "faceLines": [
-          "Apply Blight 1."
+          "Apply Blight 12: lethal when its stacks reach current HP."
         ],
         "sourceFaceLines": [
           "Inflict Blight 1"
@@ -619,7 +631,7 @@
           "mana": 1,
           "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
         },
-        "chosenRules": "Apply Blight 1.",
+        "chosenRules": "Apply Blight 12: lethal when its stacks reach current HP.",
         "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
         "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
       }
@@ -644,8 +656,8 @@
             "stacks": 1
           }
         ],
-        "textTemplate": "Apply Weak 1.",
-        "icon": "✦",
+        "textTemplate": "Apply Weak {base.weak}.",
+        "icon": "\u2726",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -761,8 +773,8 @@
             "stacks": 1
           }
         ],
-        "textTemplate": "Apply Charm 1.",
-        "icon": "✦",
+        "textTemplate": "Apply Charm {base.charm}.",
+        "icon": "\u2726",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -878,8 +890,8 @@
             "stacks": 1
           }
         ],
-        "textTemplate": "Apply Bind 1.",
-        "icon": "✦",
+        "textTemplate": "Apply Bind {base.bind}.",
+        "icon": "\u2726",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -998,11 +1010,12 @@
             "op": "addBurden",
             "target": "enemy",
             "card": "base.restrained-status-card",
-            "count": 1
+            "count": 1,
+            "pile": "hand"
           }
         ],
-        "textTemplate": "Apply Restrained 1. Add a Restrained burden to the enemy hand.",
-        "icon": "✦",
+        "textTemplate": "Apply Restrained {base.restrained}. Add a Restrained burden to the enemy hand.",
+        "icon": "\u2726",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -1121,11 +1134,15 @@
             "op": "applyStatus",
             "target": "self",
             "status": "base.foresight",
-            "stacks": 1
+            "stacks": 3
+          },
+          {
+            "op": "draw",
+            "amount": 2
           }
         ],
-        "textTemplate": "Gain Foresight 1.",
-        "icon": "✦",
+        "textTemplate": "Gain {base.foresight} Foresight and draw {draw} cards.",
+        "icon": "\u2726",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -1198,7 +1215,7 @@
       "presentation": {
         "canonicalCardRef": "ironSkin",
         "faceLines": [
-          "Gain Foresight 1."
+          "Gain Foresight 3 (+6 Perception). Draw 2 cards."
         ],
         "sourceFaceLines": [
           "Gain Foresight 1"
@@ -1216,7 +1233,7 @@
           "mana": 1,
           "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
         },
-        "chosenRules": "Gain Foresight 1.",
+        "chosenRules": "Gain Foresight 3 (+6 Perception). Draw 2 cards.",
         "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
         "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
       }
@@ -1241,8 +1258,8 @@
             "stacks": 1
           }
         ],
-        "textTemplate": "Gain Evade 1.",
-        "icon": "🛡",
+        "textTemplate": "Gain Evade {base.evade}.",
+        "icon": "\ud83d\udee1",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -1358,8 +1375,8 @@
             "stacks": 1
           }
         ],
-        "textTemplate": "Gain Intangible 1.",
-        "icon": "✦",
+        "textTemplate": "Gain Intangible {base.intangible}.",
+        "icon": "\u2726",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -1476,8 +1493,8 @@
             "stacks": 1
           }
         ],
-        "textTemplate": "Gain Mirrors 1.",
-        "icon": "✦",
+        "textTemplate": "Gain Mirrors {base.mirrors}.",
+        "icon": "\u2726",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -1592,8 +1609,8 @@
             "stacks": 2
           }
         ],
-        "textTemplate": "Enchant your weapon with Fire for 2 turns.",
-        "icon": "✦",
+        "textTemplate": "Enchant your weapon with Fire for {base.elemental-weapon} turns.",
+        "icon": "\u2726",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
         "damageSchool": "fire"
       },
@@ -1714,7 +1731,11 @@
             "amount": 2,
             "tags": [
               "school:fire"
-            ]
+            ],
+            "attack": {
+              "source": "spell",
+              "damageType": "fire"
+            }
           },
           {
             "op": "removeStatus",
@@ -1727,10 +1748,11 @@
             "status": "base.greased"
           }
         ],
-        "textTemplate": "Take 2 Fire damage. Remove Poison and Greased.",
-        "icon": "✦",
+        "textTemplate": "Take {damage} Fire damage. Remove Poison and Greased.",
+        "icon": "\u2726",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
-        "damageSchool": "fire"
+        "damageSchool": "fire",
+        "exposureBuildupPerHit": 0
       },
       "tags": [
         "classification.skill",
@@ -1860,9 +1882,9 @@
           }
         ],
         "textTemplate": "Remove Weak, Bind and Restrained.",
-        "icon": "✦",
+        "icon": "\u2726",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
-        "damageSchool": "sacred"
+        "damageSchool": "holy"
       },
       "tags": [
         "classification.skill",
@@ -1982,10 +2004,10 @@
             "stacks": 2
           }
         ],
-        "textTemplate": "Convert incoming Necrotic damage to healing for 2 turns.",
-        "icon": "✦",
+        "textTemplate": "Convert incoming Necrotic damage to healing for {base.necrotic-healing} turns.",
+        "icon": "\u2726",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
-        "damageSchool": "necrotic"
+        "damageSchool": "magic"
       },
       "tags": [
         "classification.skill",
@@ -2105,10 +2127,10 @@
             "stacks": 2
           }
         ],
-        "textTemplate": "Convert the enemy’s Sacred healing into damage for 2 turns.",
-        "icon": "✦",
+        "textTemplate": "Convert the enemy\u2019s Sacred healing into damage for {base.divine-harm} turns.",
+        "icon": "\u2726",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
-        "damageSchool": "sacred"
+        "damageSchool": "holy"
       },
       "tags": [
         "classification.skill",
@@ -2182,7 +2204,7 @@
       "presentation": {
         "canonicalCardRef": "ironSkin",
         "faceLines": [
-          "Convert the enemy’s Sacred healing into damage for 2 turns."
+          "Convert the enemy\u2019s Sacred healing into damage for 2 turns."
         ],
         "sourceFaceLines": [
           "Convert divine to harm",
@@ -2203,7 +2225,7 @@
           "mana": 1,
           "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
         },
-        "chosenRules": "Convert the enemy’s Sacred healing into damage for 2 turns.",
+        "chosenRules": "Convert the enemy\u2019s Sacred healing into damage for 2 turns.",
         "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
         "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
       }
@@ -2234,8 +2256,8 @@
             "amount": 3
           }
         ],
-        "textTemplate": "Shuffle up to 3 random hand cards into draw. Draw 3.",
-        "icon": "🛡",
+        "textTemplate": "Shuffle up to {draw} random hand cards into draw. Draw 3.",
+        "icon": "\ud83d\udee1",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -2341,7 +2363,7 @@
         "effects": [
           {
             "op": "moveCards",
-            "amount": 999,
+            "amount": 100,
             "from": "draw",
             "to": "draw",
             "selection": "random",
@@ -2349,7 +2371,7 @@
           }
         ],
         "textTemplate": "Shuffle the entire draw pile.",
-        "icon": "🛡",
+        "icon": "\ud83d\udee1",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -2458,8 +2480,8 @@
             "amount": 2
           }
         ],
-        "textTemplate": "Draw 2 cards.",
-        "icon": "🛡",
+        "textTemplate": "Draw {draw} cards.",
+        "icon": "\ud83d\udee1",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -2574,7 +2596,7 @@
           }
         ],
         "textTemplate": "Choose up to 2 hand cards to retain.",
-        "icon": "🛡",
+        "icon": "\ud83d\udee1",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -2692,7 +2714,7 @@
           }
         ],
         "textTemplate": "Look at the top 3 cards. Choose their order.",
-        "icon": "🛡",
+        "icon": "\ud83d\udee1",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -2791,9 +2813,9 @@
         "name": "Read Intent",
         "class": "colorless",
         "rarity": "uncommon",
-        "cost": 0,
+        "cost": 1,
         "costRule": "fixed",
-        "staminaCost": 0,
+        "staminaCost": 1,
         "manaCost": 1,
         "type": "skill",
         "keywords": [],
@@ -2804,8 +2826,8 @@
             "amount": 1
           }
         ],
-        "textTemplate": "Reveal the enemy’s intent for 1 turn.",
-        "icon": "✦",
+        "textTemplate": "Reveal the enemy\u2019s intent for 1 turn.",
+        "icon": "\u2726",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -2874,7 +2896,7 @@
       "presentation": {
         "canonicalCardRef": "ironSkin",
         "faceLines": [
-          "Reveal the enemy’s intent for 1 turn."
+          "Reveal the enemy\u2019s intent for 1 turn."
         ],
         "sourceFaceLines": [
           "Reveal ? enemy cards",
@@ -2889,11 +2911,11 @@
       "authorDefaults": {
         "state": "editable-author-defaults",
         "costs": {
-          "stamina": 0,
+          "stamina": 1,
           "mana": 1,
           "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
         },
-        "chosenRules": "Reveal the enemy’s intent for 1 turn.",
+        "chosenRules": "Reveal the enemy\u2019s intent for 1 turn.",
         "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
         "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
       }
@@ -2921,7 +2943,7 @@
           }
         ],
         "textTemplate": "Choose a discarded card to return to hand.",
-        "icon": "🛡",
+        "icon": "\ud83d\udee1",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -3035,7 +3057,7 @@
           }
         ],
         "textTemplate": "Choose an exhausted card to return to hand.",
-        "icon": "🛡",
+        "icon": "\ud83d\udee1",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -3151,7 +3173,7 @@
           }
         ],
         "textTemplate": "Choose a hand card to exhaust.",
-        "icon": "🛡",
+        "icon": "\ud83d\udee1",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -3268,7 +3290,7 @@
           }
         ],
         "textTemplate": "Transform a chosen hand card into Strike for this combat.",
-        "icon": "✦",
+        "icon": "\u2726",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -3382,7 +3404,7 @@
           }
         ],
         "textTemplate": "Add 2 Stagger burdens to the enemy deck.",
-        "icon": "✦",
+        "icon": "\u2726",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -3501,7 +3523,7 @@
           }
         ],
         "textTemplate": "Add 2 Paralysis burdens to the enemy deck.",
-        "icon": "✦",
+        "icon": "\u2726",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -3620,8 +3642,8 @@
             "amount": 8
           }
         ],
-        "textTemplate": "Heal 8 HP. Exhaust.",
-        "icon": "🛡",
+        "textTemplate": "Heal {heal} HP. Exhaust.",
+        "icon": "\ud83d\udee1",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -3735,8 +3757,8 @@
             "amount": 10
           }
         ],
-        "textTemplate": "Gain 10 Block. Ethereal.",
-        "icon": "🛡",
+        "textTemplate": "Gain {block} Block. Ethereal.",
+        "icon": "\ud83d\udee1",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -3851,8 +3873,8 @@
             "stacks": 2
           }
         ],
-        "textTemplate": "Gain 2 Strength for this combat.",
-        "icon": "🛡",
+        "textTemplate": "Gain {strength} Strength for this combat.",
+        "icon": "\ud83d\udee1",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -3971,8 +3993,8 @@
             "amount": 12
           }
         ],
-        "textTemplate": "All allies lose 3 HP. Gain 12 Block.",
-        "icon": "🛡",
+        "textTemplate": "All allies lose {loseHp} HP. Gain {block} Block.",
+        "icon": "\ud83d\udee1",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -4110,8 +4132,8 @@
             }
           }
         ],
-        "textTemplate": "Deal 6 damage +2 per distinct negative status on the target.",
-        "icon": "⚔",
+        "textTemplate": "Deal {damage} damage, scaling with distinct negative statuses.",
+        "icon": "\u2694",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
         "damageSchool": "physical",
         "exposureBuildupPerHit": 0
@@ -4236,8 +4258,8 @@
             }
           }
         ],
-        "textTemplate": "Deal 6 damage plus half the HP lost this turn.",
-        "icon": "⚔",
+        "textTemplate": "Deal {damage} damage, scaling with HP lost this turn.",
+        "icon": "\u2694",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
         "damageSchool": "physical",
         "exposureBuildupPerHit": 0
@@ -4362,8 +4384,8 @@
             }
           }
         ],
-        "textTemplate": "Gain 4 Block +2 per distinct card type played this turn.",
-        "icon": "🛡",
+        "textTemplate": "Gain {block} Block, scaling with distinct types played this turn.",
+        "icon": "\ud83d\udee1",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -4477,8 +4499,8 @@
             "amount": 8
           }
         ],
-        "textTemplate": "Deal 8 damage. Costs +1 SP per prior play this combat (maximum +3).",
-        "icon": "⚔",
+        "textTemplate": "Deal {damage} damage. Costs +1 SP per prior play this combat (maximum +3).",
+        "icon": "\u2694",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
         "damageSchool": "physical",
         "exposureBuildupPerHit": 0,
@@ -4609,8 +4631,8 @@
             }
           }
         ],
-        "textTemplate": "Deal 6 damage +3 per prior play this combat.",
-        "icon": "⚔",
+        "textTemplate": "Deal {damage} damage, increasing each time this card is played.",
+        "icon": "\u2694",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
         "damageSchool": "physical",
         "exposureBuildupPerHit": 0
@@ -4727,8 +4749,8 @@
             }
           }
         ],
-        "textTemplate": "Spend all remaining SP. Deal 6 damage per SP paid.",
-        "icon": "✦",
+        "textTemplate": "Spend all remaining SP. Deal {damage} damage.",
+        "icon": "\u2726",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
         "damageSchool": "physical",
         "exposureBuildupPerHit": 0
@@ -4842,8 +4864,8 @@
             "amount": 8
           }
         ],
-        "textTemplate": "Spend all remaining SP. Deal 8 damage to up to X enemies.",
-        "icon": "✦",
+        "textTemplate": "Spend all remaining SP. Deal {damage} damage to up to X enemies.",
+        "icon": "\u2726",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
         "damageSchool": "physical",
         "exposureBuildupPerHit": 0,
@@ -4956,17 +4978,31 @@
         "keywords": [],
         "effects": [
           {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "base.conceal",
+            "stacks": 2
+          },
+          {
             "op": "modifyCards",
-            "amount": 2,
             "from": "hand",
+            "amount": {
+              "f": "stacks",
+              "status": "base.conceal",
+              "of": "self"
+            },
             "selection": "choose",
             "changes": {
-              "hideTurns": 2
+              "hideTurns": {
+                "f": "stacks",
+                "status": "base.conceal",
+                "of": "self"
+              }
             }
           }
         ],
-        "textTemplate": "Hide up to 2 hand cards for 2 turns.",
-        "icon": "✦",
+        "textTemplate": "Gain {base.conceal} Conceal. Hide X hand cards for X turns, where X is your Conceal stacks.",
+        "icon": "\u2726",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -4981,7 +5017,9 @@
       "requirements": {
         "elements": [],
         "features": [],
-        "modules": []
+        "modules": [
+          "statuses"
+        ]
       },
       "provenance": {
         "sourceBranch": "Feature/updateCharacterCreation",
@@ -5040,7 +5078,7 @@
       "presentation": {
         "canonicalCardRef": "ironSkin",
         "faceLines": [
-          "Hide up to 2 hand cards for 2 turns."
+          "Gain Conceal 2. Hide X cards for X turns, equal to your stacks."
         ],
         "sourceFaceLines": [
           "Hide X cards",
@@ -5059,7 +5097,7 @@
           "mana": 1,
           "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
         },
-        "chosenRules": "Hide up to 2 hand cards for 2 turns.",
+        "chosenRules": "Gain Conceal 2. Hide X cards for X turns, equal to your stacks.",
         "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
         "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
       }
@@ -5080,11 +5118,11 @@
           {
             "op": "enterStance",
             "target": "enemy",
-            "stance": "brace"
+            "maneuver": "defend"
           }
         ],
-        "textTemplate": "Force the enemy into Brace.",
-        "icon": "✦",
+        "textTemplate": "Force the enemy into Defend.",
+        "icon": "\u2726",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -5154,7 +5192,7 @@
       "presentation": {
         "canonicalCardRef": "ironSkin",
         "faceLines": [
-          "Force the enemy into Brace."
+          "Force the enemy into Defend."
         ],
         "sourceFaceLines": [
           "Force stance: ?"
@@ -5172,7 +5210,7 @@
           "mana": 1,
           "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
         },
-        "chosenRules": "Force the enemy into Brace.",
+        "chosenRules": "Force the enemy into Defend.",
         "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
         "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
       }
@@ -5197,8 +5235,8 @@
             "stacks": 1
           }
         ],
-        "textTemplate": "Gain 1 Many Forms: hold up to 2 stances until next turn.",
-        "icon": "🛡",
+        "textTemplate": "Gain {base.many-forms} Many Forms: hold up to 2 stances until next turn.",
+        "icon": "\ud83d\udee1",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -5316,8 +5354,8 @@
             "amount": 6
           }
         ],
-        "textTemplate": "Smash: deal 12 damage. Otherwise gain 6 Block.",
-        "icon": "⚔",
+        "textTemplate": "Smash: deal 12 damage. Otherwise gain {damage} Block.",
+        "icon": "\u2694",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
         "damageSchool": "physical",
         "exposureBuildupPerHit": 0,
@@ -5334,7 +5372,7 @@
                 "amount": 12
               }
             ],
-            "textTemplate": "Deal 12 damage."
+            "textTemplate": "Deal {damage} damage."
           },
           {
             "if": {
@@ -5348,7 +5386,7 @@
                 "amount": 6
               }
             ],
-            "textTemplate": "Gain 6 Block."
+            "textTemplate": "Gain {block} Block."
           }
         ]
       },
@@ -5461,8 +5499,8 @@
             "amount": 12
           }
         ],
-        "textTemplate": "If MP was paid, deal 12 damage; otherwise gain 8 Block.",
-        "icon": "✦",
+        "textTemplate": "If MP was paid, deal {damage} damage; otherwise gain 8 Block.",
+        "icon": "\u2726",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
         "damageSchool": "physical",
         "exposureBuildupPerHit": 0,
@@ -5480,7 +5518,7 @@
                 "amount": 12
               }
             ],
-            "textTemplate": "Deal 12 damage."
+            "textTemplate": "Deal {damage} damage."
           },
           {
             "if": {
@@ -5494,7 +5532,7 @@
                 "amount": 8
               }
             ],
-            "textTemplate": "Gain 8 Block."
+            "textTemplate": "Gain {block} Block."
           }
         ]
       },
@@ -5606,11 +5644,11 @@
           },
           {
             "op": "enterStance",
-            "choose": "classStance"
+            "choose": "maneuver"
           }
         ],
-        "textTemplate": "Deal 8 damage, then choose a class stance.",
-        "icon": "⚔",
+        "textTemplate": "Deal {damage} damage, then choose a maneuver stance.",
+        "icon": "\u2694",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
         "damageSchool": "physical",
         "exposureBuildupPerHit": 0
@@ -5683,7 +5721,7 @@
       "presentation": {
         "canonicalCardRef": "strike",
         "faceLines": [
-          "Deal 8 damage, then choose a class stance."
+          "Deal 8 damage, then choose a maneuver stance."
         ],
         "sourceFaceLines": [
           "Deal ? damage",
@@ -5702,7 +5740,7 @@
           "mana": 0,
           "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
         },
-        "chosenRules": "Deal 8 damage, then choose a class stance.",
+        "chosenRules": "Deal 8 damage, then choose a maneuver stance.",
         "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
         "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
       }
@@ -5731,7 +5769,7 @@
           }
         ],
         "textTemplate": "Choose a hand card. Change its maneuver to Smash this combat.",
-        "icon": "🛡",
+        "icon": "\ud83d\udee1",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -5850,7 +5888,7 @@
           }
         ],
         "textTemplate": "Choose a hand card. Change its range to Reach this combat.",
-        "icon": "🛡",
+        "icon": "\ud83d\udee1",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -5963,8 +6001,8 @@
             "stacks": 1
           }
         ],
-        "textTemplate": "Gain 1 extra weapon action this turn.",
-        "icon": "🛡",
+        "textTemplate": "Gain {base.extra-weapon} extra weapon action this turn.",
+        "icon": "\ud83d\udee1",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -6078,8 +6116,8 @@
             "stacks": 1
           }
         ],
-        "textTemplate": "Gain 1 extra shield action this turn.",
-        "icon": "🛡",
+        "textTemplate": "Gain {base.extra-shield} extra shield action this turn.",
+        "icon": "\ud83d\udee1",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -6193,8 +6231,8 @@
             "stacks": 1
           }
         ],
-        "textTemplate": "Prepare one automatic counterattack.",
-        "icon": "🛡",
+        "textTemplate": "Prepare one automatic counterattack. base.auto-counter: {base.auto-counter}.",
+        "icon": "\ud83d\udee1",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -6307,8 +6345,8 @@
             "stacks": 1
           }
         ],
-        "textTemplate": "Prepare one automatic sweep.",
-        "icon": "🛡",
+        "textTemplate": "Prepare one automatic sweep. base.auto-sweep: {base.auto-sweep}.",
+        "icon": "\ud83d\udee1",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -6421,8 +6459,8 @@
             "stacks": 1
           }
         ],
-        "textTemplate": "Reflect eligible incoming damage for 1 turn.",
-        "icon": "✦",
+        "textTemplate": "Reflect eligible incoming damage for {base.reflect} turn.",
+        "icon": "\u2726",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -6542,8 +6580,8 @@
             "amount": 8
           }
         ],
-        "textTemplate": "Gain 8 Block and guard allies for 1 turn.",
-        "icon": "🛡",
+        "textTemplate": "Gain {block} Block and guard allies for {base.guard-allies} turn.",
+        "icon": "\ud83d\udee1",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -6661,13 +6699,12 @@
             "position": "top"
           },
           {
-            "op": "restoreMana",
-            "target": "self",
-            "amount": 2
+            "op": "addCinders",
+            "amount": 10
           }
         ],
-        "textTemplate": "Exhaust a chosen hand card. Restore 2 MP.",
-        "icon": "🛡",
+        "textTemplate": "Exhaust a chosen hand card. Gain {addCinders} cinders.",
+        "icon": "\ud83d\udee1",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -6736,7 +6773,7 @@
       "presentation": {
         "canonicalCardRef": "ironSkin",
         "faceLines": [
-          "Exhaust a chosen hand card. Restore 2 MP."
+          "Exhaust a chosen hand card. Gain 10 cinders."
         ],
         "sourceFaceLines": [
           "Convert target: ?",
@@ -6755,7 +6792,7 @@
           "mana": 0,
           "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
         },
-        "chosenRules": "Exhaust a chosen hand card. Restore 2 MP.",
+        "chosenRules": "Exhaust a chosen hand card. Gain 10 cinders.",
         "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
         "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
       }
@@ -6766,9 +6803,9 @@
         "name": "Spell Scroll",
         "class": "colorless",
         "rarity": "uncommon",
-        "cost": 0,
+        "cost": 1,
         "costRule": "fixed",
-        "staminaCost": 0,
+        "staminaCost": 1,
         "manaCost": 1,
         "type": "skill",
         "keywords": [
@@ -6776,15 +6813,14 @@
         ],
         "effects": [
           {
-            "op": "applyStatus",
-            "target": "self",
-            "status": "base.foresight",
-            "stacks": 1
+            "op": "castLinkedSpell",
+            "card": "base.foresight"
           }
         ],
-        "textTemplate": "Cast Foresight. Exhaust this scroll.",
-        "icon": "✦",
-        "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+        "textTemplate": "Cast Foresight. One play per combat; exhaust this scroll.",
+        "icon": "\u2726",
+        "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+        "playLimit": 1
       },
       "tags": [
         "classification.skill",
@@ -6854,7 +6890,7 @@
       "presentation": {
         "canonicalCardRef": "ironSkin",
         "faceLines": [
-          "Cast Foresight. Exhaust this scroll."
+          "Cast Foresight. One play per combat; exhaust this scroll."
         ],
         "sourceFaceLines": [
           "Cast linked spell",
@@ -6871,11 +6907,11 @@
       "authorDefaults": {
         "state": "editable-author-defaults",
         "costs": {
-          "stamina": 0,
+          "stamina": 1,
           "mana": 1,
           "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
         },
-        "chosenRules": "Cast Foresight. Exhaust this scroll.",
+        "chosenRules": "Cast Foresight. One play per combat; exhaust this scroll.",
         "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
         "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
       }
@@ -6886,9 +6922,9 @@
         "name": "Resource Gain",
         "class": "colorless",
         "rarity": "uncommon",
-        "cost": 0,
+        "cost": 1,
         "costRule": "fixed",
-        "staminaCost": 0,
+        "staminaCost": 1,
         "manaCost": 1,
         "type": "skill",
         "keywords": [],
@@ -6896,11 +6932,11 @@
           {
             "op": "restoreStamina",
             "target": "self",
-            "amount": 2
+            "amount": 3
           }
         ],
-        "textTemplate": "Restore 2 SP.",
-        "icon": "✦",
+        "textTemplate": "Restore {restoreStamina} SP.",
+        "icon": "\u2726",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -6968,7 +7004,7 @@
       "presentation": {
         "canonicalCardRef": "ironSkin",
         "faceLines": [
-          "Restore 2 SP."
+          "Restore 3 SP for a net gain of 2 SP."
         ],
         "sourceFaceLines": [
           "Gain ? resource"
@@ -6982,11 +7018,11 @@
       "authorDefaults": {
         "state": "editable-author-defaults",
         "costs": {
-          "stamina": 0,
+          "stamina": 1,
           "mana": 1,
           "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
         },
-        "chosenRules": "Restore 2 SP.",
+        "chosenRules": "Restore 3 SP for a net gain of 2 SP.",
         "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
         "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
       }
@@ -7011,8 +7047,8 @@
             "stacks": 2
           }
         ],
-        "textTemplate": "Give an ally 2 Strength for this combat.",
-        "icon": "🛡",
+        "textTemplate": "Give an ally {strength} Strength for this combat.",
+        "icon": "\ud83d\udee1",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -7125,7 +7161,7 @@
           }
         ],
         "textTemplate": "Deal 8 Ward damage.",
-        "icon": "✦",
+        "icon": "\u2726",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -7240,8 +7276,8 @@
             "amount": 8
           }
         ],
-        "textTemplate": "Deal 8 Poise damage.",
-        "icon": "🛡",
+        "textTemplate": "Deal {poiseDamage} Poise damage.",
+        "icon": "\ud83d\udee1",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -7355,7 +7391,7 @@
           }
         ],
         "textTemplate": "Add a temporary Smash to hand.",
-        "icon": "🛡",
+        "icon": "\ud83d\udee1",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -7474,8 +7510,8 @@
             }
           }
         ],
-        "textTemplate": "Deal 6 damage. In Smash stance, deal 6 more.",
-        "icon": "⚔",
+        "textTemplate": "Deal {damage} damage. In Smash stance, deal {damage.2} more.",
+        "icon": "\u2694",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
         "damageSchool": "physical",
         "exposureBuildupPerHit": 0
@@ -7590,8 +7626,8 @@
             "stacks": 2
           }
         ],
-        "textTemplate": "Become untargetable without a perception check for 2 turns.",
-        "icon": "✦",
+        "textTemplate": "Become untargetable without a perception check for {base.veil} turns.",
+        "icon": "\u2726",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -7709,8 +7745,8 @@
             "amount": 6
           }
         ],
-        "textTemplate": "Gain 6 Block. Retain Block for 1 turn.",
-        "icon": "🛡",
+        "textTemplate": "Gain {block} Block. Retain Block for {base.retain-block} turn.",
+        "icon": "\ud83d\udee1",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -7819,11 +7855,11 @@
         "effects": [
           {
             "op": "enterStance",
-            "choose": "classStance"
+            "choose": "maneuver"
           }
         ],
-        "textTemplate": "Immediately choose a class stance.",
-        "icon": "🛡",
+        "textTemplate": "Immediately choose a maneuver stance.",
+        "icon": "\ud83d\udee1",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
@@ -7893,7 +7929,7 @@
       "presentation": {
         "canonicalCardRef": "ironSkin",
         "faceLines": [
-          "Immediately choose a class stance."
+          "Immediately choose a maneuver stance."
         ],
         "sourceFaceLines": [
           "Play; change stance: ?"
@@ -7911,7 +7947,7 @@
           "mana": 0,
           "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
         },
-        "chosenRules": "Immediately choose a class stance.",
+        "chosenRules": "Immediately choose a maneuver stance.",
         "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
         "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
       }
@@ -7933,7 +7969,7 @@
         ],
         "effects": [],
         "textTemplate": "Skip your next action when drawn. Ethereal.",
-        "icon": "🛡",
+        "icon": "\ud83d\udee1",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
         "burden": {
           "skipActions": 1,
@@ -8069,8 +8105,8 @@
             "amount": 3
           }
         ],
-        "textTemplate": "Strike 3 times for 4 damage. Deal 3 Ward and 3 Poise damage total.",
-        "icon": "⚔",
+        "textTemplate": "Strike {hits} times for {damage} damage. Deal {poiseDamage} Ward and 3 Poise damage total.",
+        "icon": "\u2694",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
         "damageSchool": "physical",
         "exposureBuildupPerHit": 0
@@ -8184,7 +8220,7 @@
         ],
         "effects": [],
         "textTemplate": "Skip your next action when drawn. Returns to the burden deck.",
-        "icon": "🛡",
+        "icon": "\ud83d\udee1",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
         "burden": {
           "skipActions": 1,
@@ -8305,12 +8341,19 @@
         ],
         "effects": [],
         "textTemplate": "Your actions cost +1 SP while this burden is held. Ethereal.",
-        "icon": "🛡",
+        "icon": "\ud83d\udee1",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
         "burden": {
           "skipActions": 0,
           "staminaTax": 1,
-          "manaTax": 0
+          "manaTax": 0,
+          "ranges": [
+            "melee",
+            "reach"
+          ],
+          "cardTypes": [
+            "attack"
+          ]
         }
       },
       "tags": [
@@ -8430,8 +8473,8 @@
             "amount": 6
           }
         ],
-        "textTemplate": "Deal 6 damage.",
-        "icon": "⚔",
+        "textTemplate": "Deal {damage} damage.",
+        "icon": "\u2694",
         "damageSchool": "physical",
         "exposureBuildupPerHit": 0
       },
@@ -8451,7 +8494,7 @@
       },
       "provenance": {
         "source": "authored-helper",
-        "reason": "Stable generated identity; Smash is 2× Strike for +1 SP."
+        "reason": "Stable generated identity; Smash is 2\u00d7 Strike for +1 SP."
       },
       "requirements": {
         "elements": [],
@@ -8489,8 +8532,8 @@
             "amount": 12
           }
         ],
-        "textTemplate": "Deal 12 damage.",
-        "icon": "⚔",
+        "textTemplate": "Deal {damage} damage.",
+        "icon": "\u2694",
         "damageSchool": "physical",
         "exposureBuildupPerHit": 0
       },
@@ -8510,7 +8553,7 @@
       },
       "provenance": {
         "source": "authored-helper",
-        "reason": "Stable generated identity; Smash is 2× Strike for +1 SP."
+        "reason": "Stable generated identity; Smash is 2\u00d7 Strike for +1 SP."
       },
       "requirements": {
         "elements": [],
