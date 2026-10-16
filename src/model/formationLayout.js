@@ -51,6 +51,16 @@ export function formationDimensions(values = {}, actorsPerSide = 0, partySize = 
   return { columns, rows };
 }
 
+// Stable gameplay addresses, ordered by the approved visual spawn priority.
+// Extra capacity extends the same ordering; saved occupants are never reassigned.
+export function perspectiveEnemyCellOrder({ rows, extraCells = [] }) {
+  const lanes = Array.from({ length: rows }, (_, i) => i);
+  const back = [rows - 1, 0, ...lanes.slice(1, -1)];
+  const front = [...lanes].reverse();
+  return [...back.map(lane => `${FORMATION_ROWS[lane]}4`),
+    ...front.map(lane => `${FORMATION_ROWS[lane]}3`), ...extraCells.map(cell => cell.cell)];
+}
+
 export function isFormationCell(cell, { columns, rows, perspective = false, extraCells = [] }, side = 'player') {
   if (typeof cell !== 'string' || !/^[A-F][1-6]$/.test(cell)) return false;
   if (perspective && side === 'enemy' && extraCells.some(extra => extra.cell === cell)) return true;
