@@ -5,7 +5,7 @@ import { anchorLocalBox, uiZoom, VIEWPORT_ORIGIN } from '../fx.js';
 import { combatFormation } from '../models/CombatFormationModel.js';
 import { isWideFormFactor } from '../models/FormFactorModel.js';
 import { COMBAT_TARGET_HIT_PX, combatOverheadAnchors, combatOverheadRibbonShift, combatTargetAnchors, combatTargetPackSize } from '../models/CombatOverheadModel.js';
-import { formationTileGeometry } from '../models/FormationGridModel.js';
+import { formationTileGeometry, perspectiveCellOutlinePath } from '../models/FormationGridModel.js';
 import { FORMATION_ROWS, formationDimensions, playerFormationCell } from '../../model/formationLayout.js';
 import { fitIconTray } from './iconTray.js';
 import { combatSpriteRatio, fitCombatSprites, NARROW_MIN_HEIGHT_FRACTION } from '../models/CombatSpriteScaleModel.js';
@@ -500,9 +500,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       grid.style.setProperty('--enemy-grid-color', presentation.enemyGridColor);
       const occupied = new Set(plan.slots.map(slot => slot.cell));
       // Offsets and edge clamping must not resize the reference tiles.
-      const activeCells = new Set(plan.cells.map(cell => cell.cell));
+      const gridCells = plan.visualCells || plan.cells;
+      const activeCells = new Set(gridCells.map(cell => cell.cell));
       for (const tile of grid.querySelectorAll('[data-cell]')) tile.hidden = !activeCells.has(tile.dataset.cell);
-      for (const cell of plan.cells) {
+      for (const cell of gridCells) {
         const tile = grid.querySelector(`[data-cell="${cell.cell}"]`);
         if (!tile) continue;
         // A perspective cell is drawn whole, its shadow at the foot anchor.
@@ -531,6 +532,11 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         tile.style.setProperty('--tile-transform', geometry.transform);
         tile.dataset.side = cell.side || (Number(cell.cell[1]) <= plan.columns ? 'player' : 'enemy');
         tile.dataset.occupied = String(occupied.has(cell.cell));
+        tile.dataset.visualBand = cell.visualBand || '';
+        tile.dataset.visualOnly = String(!!cell.visualOnly);
+        // Each shared edge is painted once, so translucent seams stay thin.
+        tile.querySelector('[data-perspective-outline]')?.setAttribute('d',
+          perspectiveCellOutlinePath(cell, plan.rows));
         tile.dataset.anchorX = String(cell.x);
         tile.dataset.anchorY = String(cell.ground);
       }

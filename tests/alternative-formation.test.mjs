@@ -136,6 +136,12 @@ test('the extra band keeps identical geometry when core occupancy is disabled', 
   assert.equal(plans[0].visualBands.length,4);
   assert.equal(plans[0].cells.some(c=>c.visualBand==='C'),false);
   assert.equal(plans[1].cells.filter(c=>c.visualBand==='C').length,3);
+  const coreVisual = plans[0].visualCells.filter(c=>c.visualBand==='C');
+  assert.equal(coreVisual.length,3);
+  assert.ok(coreVisual.every(c=>c.visualOnly));
+  assert.ok(coreVisual.every(c=>!plans[0].slots.some(slot=>slot.cell===c.cell)));
+  assert.deepEqual(coreVisual.map(c=>c.box),plans[1].visualCells.filter(c=>c.visualBand==='C').map(c=>c.box));
+  assert.equal(plans[0].visualCells.length,12);
 });
 
 test('engine occupancy is authoritative for extra combatants and saved player lanes', () => {
