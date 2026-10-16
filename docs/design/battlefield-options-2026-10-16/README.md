@@ -1,3 +1,15 @@
+# Battlefield visual preview — approval pending
+
+**Current review:** [visual-review.html](visual-review.html), [1440×900 image](visual-preview-1440.png), [1920×1080 image](visual-preview-1920.png). The openable [visual-preview.html](visual-preview.html) is a frozen browser DOM snapshot with existing embedded game artwork, repositioned by docs-only `visual-preview.js`. It has no game engine, interaction or persistence. No production source is changed.
+
+The updated wireframe has four visual depth bands across three columns. A: enemy back / top-right cell anchor. B: enemy front / bottom-left anchor. C: extra combatant row, configurable and occupiable but disabled in core (current module enabled). D: player / bottom-center anchor, leftmost cell by default. The core visual preview leaves C empty. These visual depth-band names are not changes to the existing saved formation cell/lane addresses. Exact module schema and allocation belong to implementation after visual approval.
+
+The prototype uses the normal two-enemy screenshot fixture: one back and one front, with the player in leftmost D. Ground scene art retains its proportions, shows more sky, and sits lower. Shadows follow figure widths. Original header, centered hand, utility button/toggle and stone footer arrangement are preserved. Footer and card artwork scale uniformly. Combat log/Reactions use fixed screen edges above the hand. The lower HUD background is continuous. The previous A–G layouts are rejected archive material.
+
+Validation: Chromium renders at 1440×900 and 1920×1080; all five cards and the complete original footer fit on screen; no horizontal overflow; no production source edits. This is a visual composition preview, not a gameplay test or implementation claim. The original low-resolution embedded art is retained; its existing softness is visible at desktop scale.
+
+---
+
 # Revised original battlefield layout — approval pending
 
 The owner rejected all A–G proposals because the footer was redesigned. Those files are archived proposals, not active candidates.
