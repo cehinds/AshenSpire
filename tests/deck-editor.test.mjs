@@ -19,6 +19,7 @@ import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { locationServices, locationTags } from '../src/model/locations.js';
 import { deckEditorModel, deckEditorDoors, deckVariantKey, openDeckEdit, nextFilterPreset, deckEditorView } from '../src/ui/models/DeckEditorModel.js';
+import { deckEditorCollectionRows } from '../src/ui/models/deckEditorCollectionRows.js';
 import { setKeyBindings } from '../src/ui/input.js';
 import { withModalDom as withDom } from './helpers/modal-dom.mjs';
 
@@ -444,7 +445,9 @@ test('Reading Desk: text search is off by default (owner, 2026-10-11)', async ()
     assert.equal(editor.root.querySelector('.deck-editor-search'), null, 'no collection search by default');
     assert.equal(editor.root.querySelector('[data-focus-key="deck-search"]'), null, 'no deck search by default');
     assert.equal(editor.root.querySelector('input[type="search"]'), null, 'no search input at all by default');
-    assert.ok(editor.root.querySelector('[data-focus-key="scope:all"]'), 'the All / In Deck chips stay');
+    assert.equal(editor.root.querySelector('[data-focus-key="scope:all"]'), null, 'redundant scope tabs are omitted');
+    assert.equal(editor.root.querySelector('[data-focus-key="scope:deck"]'), null);
+    assert.equal(editor.root.querySelector('[data-pane="collection"] .deck-editor-pane-title'), null, 'the header already reports the deck count');
     editor.close();
   });
 });
@@ -555,15 +558,15 @@ test('Reading Desk: thumbnail art follows the live style preference and retains 
   });
 });
 
-test('Reading Desk: In Deck hides a removed reward and Undo restores it', async () => {
+test('Reading Desk: removed cards remain available and Undo restores their deck count', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   withDom(() => {
     const run = freshRun();
     const editor = mountDeckEditor(document.body, { registries: REG, run });
     const reward = deckEditorModel({ registries: REG, run }).deck.find(row => row.cardId === 'gorefireSlash');
     editor.root.querySelector(`[data-focus-key="row-remove:${reward.groupKey}"]`).click();
-    editor.root.querySelector('[data-focus-key="scope:deck"]').click();
-    assert.equal([...editor.root.querySelectorAll('.deck-editor-tile .deck-editor-name')].some(node => node.textContent === reward.name), false);
+    const removed = editor.root.querySelector(`.deck-editor-tile[data-key="card:${deckVariantKey(reward.ref)}"]`);
+    assert.equal(removed.querySelector('.deck-editor-stepper-count').textContent, '0/1', 'owned cards remain available without another tab');
     editor.root.querySelector('.deck-editor-undo').click();
     assert.equal([...editor.root.querySelectorAll('.deck-editor-tile .deck-editor-name')].some(node => node.textContent === reward.name), true);
     editor.close();
@@ -1394,13 +1397,14 @@ test('DOM: the stepper reads in-deck / owned (∞ for a basic); its label is the
     const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
     const model = deckEditorModel({ registries: REG, run, settings: {} });
     const basic = editor.root.querySelector('.deck-editor-tile[data-key="basic:attack"] .deck-editor-stepper-count');
-    assert.equal(basic.textContent, `${model.collection.find(t => t.key === 'basic:attack').inDeck}/∞`);
+    const groupedBasic = deckEditorCollectionRows({ registries: REG, run, collection: model.collection }).find(t => t.key === 'basic:attack');
+    assert.equal(basic.textContent, `${groupedBasic.inDeck}/∞`);
     const limited = editor.root.querySelector(`.deck-editor-tile[data-key="card:${variant}"] .deck-editor-stepper-count`);
     assert.equal(limited.textContent, '1/2', 'one in the deck of two owned');
     const tile = model.collection.find(t => t.key === `card:${variant}`);
     assert.equal(limited.getAttribute('aria-label'), '1 in deck of 2 owned.', 'the label speaks the same numbers');
     assert.equal(limited.getAttribute('title'), '1 in deck of 2 owned.');
-    assert.equal(basic.getAttribute('aria-label'), `${model.collection.find(t => t.key === 'basic:attack').inDeck} in deck; unlimited copies.`);
+    assert.equal(basic.getAttribute('aria-label'), `${groupedBasic.inDeck} in deck; unlimited copies.`);
     editor.close();
   });
 });

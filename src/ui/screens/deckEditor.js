@@ -43,9 +43,10 @@ import { cardArtLayersHtml } from '../cardArtLayers.js';
 import { registerCardArtRefresh } from '../cardArtStyle.js';
 import { assetUrl } from '../assetmap.js';
 import { markArtPlaceholder } from '../artFallback.js';
-import { cardShape, cardShapeCssProperties, cardLevelWidthCss } from '../models/CardSizeModel.js';
+import { cardShapeCssProperties, cardLevelWidthCss } from '../models/CardSizeModel.js';
 import { keywordExplanations } from '../components/tooltipGlossary.js';
 import { deckCardAnimationPreview } from '../components/deckCardAnimationPreview.js';
+import { deckEditorCollectionRows } from '../models/deckEditorCollectionRows.js';
 import { deckEditorCosts, deckEditorResourceGroups } from '../models/deckEditorCosts.js';
 
 // Standard-mapping pad buttons the editor reads directly while a row is held
@@ -90,7 +91,6 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   let mobileView = 'collection';
   let inspectOrigin = 'collection';
   let filtersOpen = false;
-  let libraryScope = 'all';
   let deckQuery = '';
   let deckDisplay = 'list';
   const foldedTypes = new Set();
@@ -98,7 +98,6 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   let animationPreview = null;
   let animationPaused = false;
   let animationVisible = false;
-  let previewFitObserver = null;
 
 
   const root = el('div', { class: 'modal-veil deck-editor-veil' });
@@ -177,7 +176,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       draw();
     }, `sort:${s.id}`));
     const details = el('details', { class: 'deck-editor-tools', open: filtersOpen }, [
-      el('summary', { text: t('deckEditor.filterSort') }),
+      el('summary', { text: t('deckEditor.filters') }),
       el('div', { class: 'deck-editor-chips', role: 'group', 'aria-label': t('deckEditor.filters') }, [
         el('span', { class: 'deck-editor-chips-label', text: t('deckEditor.filters') }), ...filterChips,
       ]),
@@ -248,8 +247,6 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   }
 
   function inspectPane() {
-    previewFitObserver?.disconnect();
-    previewFitObserver = null;
     animationPreview?.dispose();
     animationPreview = null;
     const section = el('section', { class: 'deck-editor-inspector', 'aria-label': t('deckEditor.inspect') });
@@ -285,7 +282,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     // variant. Remove takes one copy: the tile's last deck copy, or this row.
     const deckCard = source === 'deck' ? run.deck.find(card => card.instanceId === row.instanceId) : null;
     const addTile = source === 'collection' ? row
-      : (deckCard ? model.collection.find(tile => tile.key === row.tileKey) : null) || null;
+      : (deckCard ? model.collection.find(tile => tile.key === row.tileKey || tile.memberKeys?.includes(row.tileKey)) : null) || null;
     const addOn = !!addTile?.addable;
     const removeOn = !!row.removable;
     const removeId = source === 'collection' ? row.removeInstanceId : row.instanceId;
@@ -308,13 +305,16 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     const showAnimation = animationVisible && (typeof matchMedia !== 'function' || matchViewMedia('(min-width: 1001px)').matches);
     if (showAnimation) animationPreview = deckCardAnimationPreview({ registries, run, ref: row.ref, paused: animationPaused,
       onPaused: paused => { animationPaused = paused; } });
-    const previewToggle = chip(t(animationVisible ? 'deckEditor.preview.card' : 'deckEditor.preview.animation'), animationVisible, () => {
-      animationVisible = !animationVisible;
+    const previewToggle = focusable(el('input', { type: 'checkbox', checked: animationVisible,
+      'aria-label': t('deckEditor.preview.animation') }), 'preview:animation');
+    previewToggle.addEventListener('change', () => {
+      animationVisible = previewToggle.checked;
       const current = panel.querySelector('.deck-editor-inspector');
       if (current) { current.parentNode.insertBefore(inspectPane(), current); current.remove(); }
       focusNode(panel.querySelector('[data-focus-key="preview:animation"]'));
-    }, 'preview:animation');
-    previewToggle.classList.add('deck-editor-preview-toggle');
+    });
+    const previewControl = el('label', { class: 'deck-editor-preview-toggle' }, [previewToggle,
+      el('span', { text: t('deckEditor.preview.animation') })]);
     const details = el('div', { class: 'deck-editor-rules' });
     details.innerHTML = cardDetailHtml(registries, row.ref, { rules: run, definition: combatDef(row) });
     // Keep the effect description before the longer combat explanations. Tags
@@ -324,9 +324,11 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     if (effectText && meta?.nextSibling) details.insertBefore(effectText, meta.nextSibling);
     const extraTags = details.querySelector('.inspection-tags');
     const sigilReference = details.querySelector('.inspection-sigils');
+    const combatReference = [...details.querySelectorAll('.combat-rule-hint')];
     const glossaryEntries = keywordExplanations(registries, rulesFor(row));
-    const glossary = extraTags || sigilReference || glossaryEntries.length ? el('details', { class: 'deck-editor-glossary' }, [
-      el('summary', { text: t('deckEditor.keywordExplanations') }),
+    const glossary = extraTags || sigilReference || combatReference.length || glossaryEntries.length ? el('details', { class: 'deck-editor-glossary' }, [
+      el('summary', { text: t('deckEditor.rulesAndKeywords') }),
+      ...combatReference,
       ...(sigilReference ? [sigilReference] : []),
       ...(extraTags ? [extraTags] : []),
       ...glossaryEntries.map(entry => el('div', { class: 'deck-editor-keyword' }, [
@@ -335,7 +337,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     ]) : null;
     section.append(
       el('div', { class: 'deck-editor-reading' }, [
-        el('div', { class: `deck-editor-preview${showAnimation ? ' animation-mode' : ''}` }, [showAnimation ? animationPreview.root : face, previewToggle]),
+        el('div', { class: `deck-editor-preview${showAnimation ? ' animation-mode' : ''}` }, [showAnimation ? animationPreview.root : face, previewControl]),
         details,
         ...(glossary ? [glossary] : []),
       ]),
@@ -344,22 +346,6 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
         el('div', { class: 'deck-editor-selected-buttons' }, [addNode, removeNode]),
       ]),
     );
-    // Spend the remaining desktop height on the face only after the full
-    // effect and combat rules have their space. Long readings keep a small
-    // reference face; ordinary cards can use a more useful 180px preview.
-    if (!showAnimation && typeof ResizeObserver === 'function') {
-      const reading = section.querySelector('.deck-editor-reading');
-      const fitPreview = () => {
-        if (!section.isConnected || matchViewMedia('(max-width: 1000px)').matches) return;
-        const available = reading.clientHeight - details.offsetHeight - (glossary?.offsetHeight || 0) - 32;
-        const width = Math.floor(Math.max(90, Math.min(180, available * cardShape().ratio)));
-        face.style.setProperty('--deck-preview-width', `${width}px`);
-      };
-      previewFitObserver = new ResizeObserver(fitPreview);
-      previewFitObserver.observe(reading);
-      previewFitObserver.observe(details);
-      if (glossary) previewFitObserver.observe(glossary);
-    }
     return section;
   }
 
@@ -534,7 +520,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   function stepperCount(tile) {
     const kept = tile.key.startsWith('kept:');
     const inDeck = tile.inDeck;
-    const owned = kept ? tile.inDeck + tile.owned : tile.owned;
+    const owned = tile.totalOwned ?? (kept ? tile.inDeck + tile.owned : tile.owned);
     return { inDeck, owned, unlimited: !!tile.unlimited };
   }
   const stepperText = (count) => (count.unlimited ? t('deckEditor.stepperCount.unlimited', { inDeck: count.inDeck })
@@ -553,7 +539,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       try { next.setSelectionRange(caret, caret); } catch { /* search selection varies by browser */ }
     });
     const list = el('div', { class: 'deck-editor-list', role: 'list' });
-    const rows = model.collection.filter(row => (libraryScope === 'all' || row.inDeck > 0) && `${row.name} ${rulesFor(row)}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
+    const rows = model.collection.filter(row => `${row.name} ${rulesFor(row)}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
     for (const tile of rows) {
       const main = focusable(el('button', {
         type: 'button', class: 'deck-editor-main', disabled: tile.equipmentEligible === false, dataset: { action: 'add', key: tile.key, illustrated: 'true' },
@@ -590,9 +576,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       ])]));
     }
     if (!rows.length) list.appendChild(el('p', { class: 'deck-editor-empty', text: t('deckEditor.empty.collection') }));
-    return paneSection('collection', `${t('deckEditor.pane.deck')} · ${model.counter.count}`, list, [
-      chip(t('deckEditor.all'), libraryScope === 'all', () => { libraryScope = 'all'; draw(); }, 'scope:all'),
-      chip(t('deckEditor.inDeck'), libraryScope === 'deck', () => { libraryScope = 'deck'; draw(); }, 'scope:deck'),
+    return paneSection('collection', '', list, [
       tools(),
       search,
     ]);
@@ -680,8 +664,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // onto the bar's own line.
   function paneSection(id, title, list, controls = []) {
     const section = el('section', {
-      class: `deck-editor-pane${pane === id ? ' active' : ''}`, dataset: { pane: id }, 'aria-label': title,
-    }, [el('div', { class: 'deck-editor-pane-bar' }, [el('h3', { class: 'deck-editor-pane-title', text: title }), ...controls]), list]);
+      class: `deck-editor-pane${pane === id ? ' active' : ''}`, dataset: { pane: id }, 'aria-label': title || t('deckEditor.pane.deck'),
+    }, [el('div', { class: 'deck-editor-pane-bar' }, [...(title ? [el('h3', { class: 'deck-editor-pane-title', text: title })] : []), ...controls]), list]);
     return section;
   }
 
@@ -817,7 +801,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
 
   function draw() {
     combatDefCache.clear();
-    model = deckEditorModel({ registries, run, settings, view });
+    const rawModel = deckEditorModel({ registries, run, settings, view });
+    model = { ...rawModel, collection: deckEditorCollectionRows({ registries, run, collection: rawModel.collection }) };
     if (!model.ordered && mobileView === 'deck') mobileView = 'collection';
     const rows = selected?.source === 'deck' ? model.deck : model.collection;
     const current = selected && rows.find(row => selectionKey(row, selected.source) === selected.key);
@@ -898,7 +883,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // ---- actions --------------------------------------------------------------
   function add(key) {
     const name = model.collection.find(row => row.key === key)?.name || '';
-    const result = session.add(key);
+    const tile = model.collection.find(row => row.key === key || row.memberKeys?.includes(key));
+    const result = session.add(tile?.addKey || key);
     notice = result.ok ? '' : result.refusal;
     success = result.ok ? t('deckEditor.added', { name }) : '';
     draw();
@@ -1091,8 +1077,6 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
 
   function close() {
     inspectObserver?.disconnect();
-    previewFitObserver?.disconnect();
-    previewFitObserver = null;
     animationPreview?.dispose();
     animationPreview = null;
     drop();
