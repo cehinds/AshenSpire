@@ -1,0 +1,27 @@
+name: card preview public check
+
+# Independent of packaging and Pages completion; checks only the approved card route.
+on:
+  push:
+    branches: ['Feature/CardPreview']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          sparse-checkout: docs/design/card-tag-design/published-card-preview/check-public-page.mjs
+          sparse-checkout-cone-mode: false
+          lfs: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify this card preview's public HTTP delivery and exact approved bytes
+        run: node docs/design/card-tag-design/published-card-preview/check-public-page.mjs
