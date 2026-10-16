@@ -180,3 +180,10 @@ test('one-use scroll limits apply to each physical instance and survive reload/r
  const index=restored.piles.exhaust.findIndex(c=>c.instanceId===ids[0]);restored.piles.hand.push(restored.piles.exhaust.splice(index,1)[0]);
  assert.throws(()=>dispatch(restored,{type:'playCard',cardInstanceId:ids[0],targetId:restored.enemies[0].id}),/unplayable/);
 });
+
+test('MP-only configured growth does not reintroduce disabled Stamina through action aliases',()=>{
+ const combat=fixture([{op:'block',target:'self',amount:2}],{cost:1,manaCost:1,definition:{resourceCosts:{sp:0,mp:1},staminaCost:0,costGrowth:{stamina:0,mana:1,max:3}}});
+ combat.gameProfile=resolveGameProfile({formatVersion:1,core:'ashen.core@1.0.0',modules:{resources:{include:['hp','mp']}}});
+ const id=combat.piles.hand[0].instanceId;assert.equal(cardPlayCosts(combat,id).stamina,0);play(combat);
+ const next=combat.piles.hand[0].instanceId;assert.equal(cardPlayCosts(combat,next).stamina,0);assert.equal(cardPlayCosts(combat,next).mana,2);
+});
