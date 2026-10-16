@@ -23,13 +23,14 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
   const note = el('p', { class: 'reward-note', text: t('reward.configured.note', { count: offer.takeCount }) });
   const status = el('p', { class: 'reward-confirm-status', role: 'alert' });
   const confirm = button({ label: t('common.confirm'), weight: 'primary', id: 'reward-card-confirm', className: 'reward-confirm', disabled: true });
-  const next = button({ label: t('reward.continue'), id: 'reward-continue' });
-  next.addEventListener('click', onContinue);
+  const next = button({ label: t('common.skip'), id: 'reward-continue', className: 'danger' });
   let selected = null;
   let pending = false;
+  let reviewing = false;
+  let completed = false;
   const choices = [];
   function select(index) {
-    if (offer.claimed !== null || offer.taken.includes(index)) return;
+    if (pending || reviewing || completed || offer.claimed !== null || offer.taken.includes(index)) return;
     selected = index;
     for (const [at, { face, control }] of choices.entries()) {
       const chosen = at === selected;
@@ -60,12 +61,43 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
     control.addEventListener('click', () => select(index));
     column.append(face, control); strip.append(column); choices.push({ face, control });
   }
-  confirm.addEventListener('click', async () => {
-    if (pending || selected === null || confirm.disabled) return;
-    pending = true; confirm.disabled = true;
-    try { await onTake(selected); }
+  next.addEventListener('click', () => {
+    if (pending || completed) return;
+    if (reviewing) {
+      reviewing = false;
+      strip.inert = false;
+      for (const column of strip.children) column.hidden = false;
+      confirm.textContent = t('common.confirm');
+      next.textContent = t('common.skip');
+      return;
+    }
+    try { onContinue(); completed = true; }
     catch (error) { status.textContent = error.message; }
-    finally { pending = false; if (app.contains(confirm)) confirm.disabled = offer.claimed !== null || offer.taken.includes(selected); }
+  });
+  confirm.addEventListener('click', async () => {
+    if (pending || completed || selected === null || confirm.disabled) return;
+    if (!reviewing) {
+      reviewing = true;
+      strip.inert = true;
+      for (const column of strip.children) column.hidden = Number(column.dataset.pickId) !== selected;
+      confirm.textContent = t('common.continue');
+      next.textContent = t('common.back');
+      return;
+    }
+    pending = true; confirm.disabled = true; next.disabled = true;
+    try {
+      if (!offer.taken.includes(selected)) await onTake(selected);
+      if (offer.claimed !== null || offer.taken.length >= Math.min(offer.takeCount, offer.options.length)) {
+        onContinue();
+        completed = true;
+      } else {
+        mountGameProfileOffers(app, { registries, run, offer, title, onTake, onContinue });
+      }
+    } catch (error) {
+      status.textContent = error.message;
+      confirm.disabled = false;
+      next.disabled = false;
+    } finally { pending = false; }
   });
   mountRewardDoor(app, { owner: presentation.owner, title, body: [note, strip, status], foot: modalFooter({ secondary: [next], primary: confirm, className: 'reward-foot reward-chooser-foot', size: 'medium' }) });
 }
