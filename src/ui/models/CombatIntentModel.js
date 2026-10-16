@@ -17,7 +17,7 @@ export function combatIntentPresentation(intent = {}) {
       stance: attacking ? 'attacking' : 'preparing', parts: [{ icon: attacking ? 'attack' : magic ? 'cast' : 'prepare', value: null }],
       damageClass: attacking ? 'physical' : magic ? 'magic' : null };
   }
-  const stance = combatIntentStance(intent);
+  const stance = intent.profile?.maneuver === 'evade' && !intent.hidden ? 'evading' : combatIntentStance(intent);
   const partial = intent.hidden === true;
   const unknown = !partial && (!intent.kind || intent.kind === 'unknown' || intent.moveId === null) && intent.kind !== 'staggered';
   if (unknown || (partial && !intent.stance && !intent.profile?.camp && !intent.profile?.maneuver)) {
@@ -36,17 +36,19 @@ export function combatIntentPresentation(intent = {}) {
     parts: [{ icon: 'prepare', value: null }], damageClass: null };
   const family = intent.kind === 'buff' ? 'buffing' : ['ranged', 'sweeping'].includes(stance) ? 'attacking'
     : stance === 'preparing' ? (intent.kind === 'buff' ? 'buffing' : 'casting') : stance;
-  const damage = intent.damage != null ? intentBadge(intent).label : null;
+  const projectedDamage = intent.projectedDamage || null;
+  const damage = projectedDamage ? projectedDamage.label : intent.damage != null ? intentBadge(intent).label : null;
   const part = (icon, value = null) => ({ icon, value: value == null ? null : String(value) });
   const counterParts = [part('counter', intent.block)];
   if (!(intent.counterPoiseDamage > 0) || intent.counterDamage > 0) counterParts.push(part('attack', intent.counterDamage));
   if (intent.counterPoiseDamage > 0) counterParts.push(part('smash', intent.counterPoiseDamage));
   const parts = family === 'countering' ? counterParts
+    : family === 'evading' ? [part('evade', intent.dodgeCharges ?? intent.evadeCharges)]
     : family === 'defending' ? [part('defend', intent.block)]
     : family === 'smashing' ? [part('smash', damage)]
     : family === 'attacking' ? [part('attack', damage)]
-    : [part(family === 'buffing' ? 'buff' : 'cast')];
-  return { visibility: 'known', title: capitalize(family), stance: family, parts, damageClass: damageClassOf(intent, family) };
+    : [part(family === 'buffing' ? 'buff' : 'cast', family === 'buffing' ? null : damage)];
+  return { visibility: 'known', title: capitalize(family), stance: family, parts, damageClass: damageClassOf(intent, family), ...(projectedDamage ? { projectedDamage } : {}) };
 }
 
 const capitalize = value => value.charAt(0).toUpperCase() + value.slice(1);
