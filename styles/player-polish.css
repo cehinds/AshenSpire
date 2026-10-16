@@ -660,3 +660,43 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
  :root .shop-workspace.merchant-workspace { padding-top:max(1rem,var(--merchant-hud-clearance,0px)); }
  :root .shop-workspace.merchant-workspace .merchant-category-dock { grid-template-columns:repeat(6,minmax(0,1fr)); max-height:calc(44px / var(--ui-zoom,1)); }
 }
+
+/* Rest viewport profiles: a portrait tray and a bounded landscape rail.
+   The authored wide painting reveals the chapel's side scenery. Its traveler
+   shares a capped coordinate system, so wider displays never inflate actors. */
+.rest-screen .rest-wide-backdrop { display:none; }
+@media (min-width:1100px) and (min-height:650px) {
+ :root .rest-screen.choice-screen { align-items:flex-end; justify-content:center; padding:6rem 2rem 2rem; }
+ :root .rest-screen.choice-screen .rest-door { width:calc(380px / var(--ui-zoom, 1)); max-width:36%; height:auto; max-height:calc(100% - 1rem); flex:0 1 auto; }
+ :root .rest-screen .choice-body-columns { grid-template-columns:minmax(0,1fr); gap:1rem; }
+ :root .rest-screen .rest-door > :is(.modal-head,.modal-foot) { min-height:0; padding:1rem 1.25rem; }
+ :root .rest-screen .rest-door > .modal-body { padding:1rem 1.25rem; }
+ .rest-screen .rest-recovery-row { padding:.35rem 0; }
+ .rest-screen .rest-recovery { margin-bottom:.5rem; }
+ .rest-screen .rest-wide-backdrop { display:block; position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:40% center; }
+ .rest-screen .rest-scene-stage { width:min(100cqh, calc(1050px / var(--ui-zoom, 1))); height:min(100cqh, calc(1050px / var(--ui-zoom, 1))); left:calc(36cqw - min(100cqh, calc(1050px / var(--ui-zoom, 1))) * .50); top:calc(62cqh - min(100cqh, calc(1050px / var(--ui-zoom, 1))) * .70); }
+ .rest-screen .rest-scene-stage > img:first-child { visibility:hidden; }
+ .rest-screen .rest-scene-stage > .rest-traveler-foreground { left:15%; width:44%; }
+ .rest-screen .class-pick :is(h3,p,.on,.om) { white-space:normal; overflow:visible; text-overflow:clip; -webkit-line-clamp:unset; }
+ .rest-screen .shrine-fold-summary { min-width:0; }
+ .rest-screen :is(.shrine-option-list,.shrine-option-grid) > .class-pick { height:auto; min-height:calc(64px / var(--ui-zoom, 1)); }
+ .rest-screen .shrine-fold > summary { height:auto; min-height:calc(64px / var(--ui-zoom, 1)); }
+ .rest-screen .rest-door { font-size:calc(16px / var(--ui-zoom, 1)); }
+ .rest-screen .class-pick { padding:calc(10px / var(--ui-zoom, 1)) calc(12px / var(--ui-zoom, 1)); gap:calc(12px / var(--ui-zoom, 1)); }
+ .rest-screen .class-pick :is(h3,.on) { font-size:calc(18px / var(--ui-zoom, 1)); line-height:1.2; }
+ .rest-screen .class-pick :is(p,.om) { font-size:calc(16px / var(--ui-zoom, 1)); line-height:1.35; letter-spacing:normal; }
+ .rest-screen .class-pick > .glyph, .rest-screen .shrine-fold > summary > .glyph { flex-basis:calc(28px / var(--ui-zoom, 1)); font-size:calc(24px / var(--ui-zoom, 1)); }
+ .rest-screen .shrine-fold { padding:0; }
+ .rest-screen .shrine-fold > summary { padding:calc(10px / var(--ui-zoom, 1)) calc(12px / var(--ui-zoom, 1)); gap:calc(12px / var(--ui-zoom, 1)); }
+ .rest-screen .shrine-option-list { gap:calc(8px / var(--ui-zoom, 1)); }
+ .rest-screen .shrine-leave { font-size:calc(16px / var(--ui-zoom, 1)); min-height:calc(44px / var(--ui-zoom, 1)); }
+}
+/* Tablet retains an unobstructed upper scene and a readable stacked tray. */
+@media (min-width:600px) and (max-width:1099px) and (min-height:850px) {
+ :root .rest-screen.choice-screen .rest-door { flex-basis:56%; max-height:56%; width:100%; max-width:none; }
+}
+/* True widescreen: increase scenery, keeping controls and traveler bounded. */
+@media (min-width:2000px) and (min-height:1000px) {
+ :root .rest-screen.choice-screen { padding:8rem 4rem 4rem; }
+ :root .rest-screen.choice-screen .rest-door { width:calc(400px / var(--ui-zoom, 1)); max-width:400px; }
+}

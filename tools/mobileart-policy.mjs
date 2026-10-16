@@ -48,6 +48,8 @@ export const POLICY = Object.freeze({
   alphaQuality: 50,
   // First match wins.
   overrides: Object.freeze([
+    // The full-viewport chapel needs scenery detail; other scenes retain 256px.
+    Object.freeze({ prefixes: Object.freeze(['player-polish/scenes/chapel-rest-desktop.webp']), maxEdge: 1280, maxHeight: 720, quality: 78, alphaQuality: 80 }),
     Object.freeze({ prefixes: Object.freeze(['ashen-crown', 'cinder-reach', 'drowned-coast', 'hollow-weald', 'pale-marches'].map(id => `environments/${id}-combat.webp`)), maxEdge: 256, maxHeight: 256, quality: 78, alphaQuality: 80 }),
     Object.freeze({ prefixes: Object.freeze(['bg/', 'environments/', 'prologue/', 'player-polish/scenes/']), maxEdge: 256, maxHeight: 256, quality: 78, alphaQuality: 80 }),
     // Full portrait cards retain 720px resolution; a small compression change

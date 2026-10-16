@@ -31,6 +31,12 @@ export function scenePainting(id) {
     foreground.src = assetUrl('assets/player-polish/illustrations/rest-traveler-fire.webp');
     foreground.alt = '';
     foreground.decoding = 'async';
+    const wideArt = document.createElement('img');
+    wideArt.className = 'rest-wide-backdrop';
+    wideArt.src = assetUrl('assets/player-polish/scenes/chapel-rest-desktop.webp');
+    wideArt.alt = '';
+    wideArt.decoding = 'async';
+    frame.appendChild(wideArt);
     stage.appendChild(art);
     stage.appendChild(foreground);
     frame.appendChild(stage);
