@@ -182,6 +182,7 @@ export function createRunCombat({
 
 /** Write what a fight leaves behind back onto the run (live onCombatEnd's first half). */
 export function runCombatEnd(run, combat) {
+  if(combat.proposalRewards && !combat.proposalRewards.settled) {run.cinders=(run.cinders || 0)+Math.max(0,combat.proposalRewards.cinders || 0);combat.proposalRewards.settled=true;}
   reconcileCombatKnowledge(run, combat);
   if (combat.combatExpansionVersion === 2) {
     run.ashenBlight = structuredClone(combat.player.ashenBlight);

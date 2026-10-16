@@ -217,7 +217,7 @@ function compileDir(srcDir, outDir, { write } = {}) {
       // This exact output belongs to tools/game-config.mjs; its separate check
       // validates source JSON, runtime pins and freshness before the HTML bundler.
       // Do not exempt the filename in arbitrary output trees or other JS files.
-      && !(resolve(outDir) === OUT && f === 'gameProfiles.js'))
+      && !(resolve(outDir) === OUT && ['gameProfiles.js', 'baseCards.js'].includes(f)))
     : [];
   return { results, stale, orphans, parsed };
 }
@@ -1141,6 +1141,11 @@ if (SELFTEST) {
   if (!CHECK) await holdForCli(ROOT, 'content-build');
   const { checkAtlasBuild } = await import('./world-atlas-data.mjs');
   await checkAtlasBuild();
+  const { compileBaseCards, BASE_CARD_OUTPUT } = await import('./base-cards.mjs');
+  const baseCards = compileBaseCards();
+  const basePath = join(ROOT, BASE_CARD_OUTPUT);
+  if (CHECK && (!existsSync(basePath) || readFileSync(basePath, 'utf8') !== baseCards)) fail('Stale base card pack; run node tools/base-cards.mjs');
+  if (!CHECK) writeFileSync(basePath, baseCards);
   let r;
   try {
     r = compileDir(SRC, OUT, { write: !CHECK });

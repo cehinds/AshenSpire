@@ -2335,6 +2335,11 @@ export const gameProfileCatalog = {
             "id": "ashen.core-content",
             "version": "1.0.0",
             "path": "../../packs/core/pack.json"
+          },
+          {
+            "id": "ashen.base-cards",
+            "version": "1.0.0",
+            "path": "../../packs/base-cards/pack.json"
           }
         ],
         "policyBindings": [
@@ -2401,7 +2406,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/bundles/core/bundle.json",
           "id": "ashen.core",
           "version": "1.0.0",
-          "hash": "sha256:000cca6e7c06ebfd9059caa00c4b49a20ba42d19188b8d53ac4a3a35c430da76"
+          "hash": "sha256:789d967a6a96bddbd9b6a5b4c84bc0c8d71a196ea4e23007fc410bda4c99e1db"
         }
       ]
     },
@@ -2575,7 +2580,13 @@ export const gameProfileCatalog = {
             }
           }
         },
-        "packs": [],
+        "packs": [
+          {
+            "id": "ashen.base-cards",
+            "version": "1.0.0",
+            "path": "../../packs/base-cards/pack.json"
+          }
+        ],
         "legacySources": [
           "src/content/index.js",
           "content/source",
@@ -2588,7 +2599,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/bundles/current/bundle.json",
           "id": "ashen.current",
           "version": "1.0.0",
-          "hash": "sha256:98c79cc2960346a6297048eb85fe64d2e5d9779da17e03649678b2ad410d9cb9"
+          "hash": "sha256:49721b1b42ec2be6780ffb22e25324e3eb356aa2fd364f99ada5c41e438eaacb"
         }
       ]
     }
@@ -3587,6 +3598,11643 @@ export const gameProfileCatalog = {
           "hash": "sha256:ba77194603609da10b1f2960d5f5784e1256cabb2fb99e22d909a27e86bbca8c"
         }
       ]
+    },
+    "ashen.base-cards@1.0.0": {
+      "manifest": {
+        "id": "ashen.base-cards",
+        "version": "1.0.0",
+        "content": {
+          "baseCards": "cards.json",
+          "baseCardGroups": "groups.json",
+          "baseCardVariants": "resourceVariants.json",
+          "baseCardSourceManifest": "sourceManifest.json",
+          "baseCardStatusSource": "statuses.json"
+        }
+      },
+      "content": {
+        "baseCards": {
+          "schemaVersion": 1,
+          "cards": [
+            {
+              "definition": {
+                "id": "base.persistent-protection",
+                "name": "Ward Armor",
+                "class": "colorless",
+                "rarity": "uncommon",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 2,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "applyStatus",
+                    "target": "self",
+                    "status": "base.persistent-block",
+                    "stacks": 4
+                  },
+                  {
+                    "op": "applyStatus",
+                    "target": "self",
+                    "status": "base.persistent-barrier",
+                    "stacks": 4
+                  }
+                ],
+                "textTemplate": "Gain Persistent Block {base.persistent-block} and Persistent Barrier {base.persistent-barrier}.",
+                "icon": "✦",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:spell",
+                "maneuver:casting"
+              ],
+              "groups": [
+                "base.current-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [
+                  "ward-channel",
+                  "damage-groups"
+                ],
+                "modules": [
+                  "statuses",
+                  "defenses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "user-explicit"
+                  },
+                  "id": "proposed:card:persistent-protection",
+                  "name": "Ward Armor",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:persistent-protection"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Gain Persistent Block 4, Barrier 4"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Gain Persistent Block 4 and Persistent Barrier 4. At owner turn start replenish each using its remaining stacks. Lose one stack per qualifying matching-damage event, with no passive per-turn loss. Qualifying threshold and damage-group mapping unresolved; physical/magical is proposed, and Barrier versus existing Ward mapping is unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:persistent-protection"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": false
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Gain Persistent Block 4 and Persistent Barrier 4."
+                ],
+                "sourceFaceLines": [
+                  "Gain Persistent Block 4, Barrier 4"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": [
+                  "ward-channel",
+                  "damage-groups"
+                ]
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 2,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Gain Persistent Block 4 and Persistent Barrier 4.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.greased",
+                "name": "Grease",
+                "class": "colorless",
+                "rarity": "uncommon",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 1,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "applyStatus",
+                    "target": "enemy",
+                    "status": "base.greased",
+                    "stacks": 3
+                  }
+                ],
+                "textTemplate": "Apply Greased {base.greased}: fire detonates the coating.",
+                "icon": "✦",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "damageSchool": "fire"
+              },
+              "tags": [
+                "classification.skill",
+                "camp:spell",
+                "maneuver:casting",
+                "school:fire"
+              ],
+              "groups": [
+                "base.current-rewards"
+              ],
+              "requirements": {
+                "elements": [
+                  "fire"
+                ],
+                "features": [
+                  "element-fire"
+                ],
+                "modules": [
+                  "statuses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "user-explicit"
+                  },
+                  "id": "proposed:card:greased",
+                  "name": "Grease",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:greased"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Inflict Greased 3"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Greased adds prone chance and melee/reach accuracy penalty. Fire hit is 100% unavoidable, deals 3× fire damage, applies Burn 3 and splashes 1.5× damage; splash basis unresolved.",
+                    "parameters": {
+                      "greasedStacks": 3
+                    },
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:greased"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": false
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Apply Greased 3: fire detonates the coating."
+                ],
+                "sourceFaceLines": [
+                  "Inflict Greased 3"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": [
+                  "element-fire"
+                ]
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 1,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Apply Greased 3: fire detonates the coating.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.divine-strike",
+                "name": "Smite",
+                "class": "colorless",
+                "rarity": "uncommon",
+                "cost": 2,
+                "costRule": "fixed",
+                "staminaCost": 2,
+                "manaCost": 1,
+                "type": "attack",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "damage",
+                    "target": "enemy",
+                    "amount": {
+                      "f": "metric",
+                      "metric": "weaponDamage",
+                      "of": "self",
+                      "per": 3
+                    },
+                    "attack": {
+                      "source": "weapon"
+                    }
+                  },
+                  {
+                    "op": "damage",
+                    "target": "enemy",
+                    "amount": 6,
+                    "tags": [
+                      "school:divine"
+                    ],
+                    "attack": {
+                      "source": "spell",
+                      "damageType": "sacred"
+                    }
+                  }
+                ],
+                "textTemplate": "Deal {damage} weapon damage and {damage.2} Sacred damage.",
+                "icon": "✦",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "damageSchool": "physical",
+                "exposureBuildupPerHit": 0
+              },
+              "tags": [
+                "classification.attack",
+                "camp:spell",
+                "maneuver:casting",
+                "school:divine"
+              ],
+              "groups": [
+                "base.current-rewards"
+              ],
+              "requirements": {
+                "elements": [
+                  "sacred"
+                ],
+                "features": [
+                  "element-sacred"
+                ],
+                "modules": [
+                  "equipment"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "user-explicit"
+                  },
+                  "id": "proposed:card:divine-strike",
+                  "name": "Smite",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:divine-strike"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Deal weapon + ? Divine damage"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Deal weapon damage plus Divine damage. Weapon contribution and Divine magnitude remain undecided.",
+                    "parameters": {
+                      "includesWeaponDamage": true,
+                      "weaponDamage": null,
+                      "divineDamage": null
+                    },
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:divine-strike"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": false
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "greatswordSunderingHew",
+                "faceLines": [
+                  "Deal 3× equipped weapon damage plus 6 Sacred damage."
+                ],
+                "sourceFaceLines": [
+                  "Deal weapon + ? Divine damage"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": [
+                  "element-sacred"
+                ]
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 2,
+                  "mana": 1,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Deal 3× equipped weapon damage plus 6 Sacred damage.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.poison",
+                "name": "Poison",
+                "class": "colorless",
+                "rarity": "uncommon",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 1,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "applyStatus",
+                    "target": "enemy",
+                    "status": "base.poison",
+                    "stacks": 5
+                  }
+                ],
+                "textTemplate": "Apply {base.poison} Poison: 15 total Necrotic damage as it decays.",
+                "icon": "✦",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "damageSchool": "magic"
+              },
+              "tags": [
+                "classification.skill",
+                "camp:spell",
+                "maneuver:casting",
+                "school:decay"
+              ],
+              "groups": [
+                "base.current-rewards"
+              ],
+              "requirements": {
+                "elements": [
+                  "necrotic"
+                ],
+                "features": [
+                  "element-necrotic"
+                ],
+                "modules": [
+                  "statuses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:poison",
+                  "name": "Poison",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:poison"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Inflict Poison 1"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Poison causes necrotic damage at turn start; magnitude and relationship to live Venom unresolved.",
+                    "parameters": {
+                      "appliedStacks": 1,
+                      "amountSource": "user-request default status stacks"
+                    },
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:poison"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Apply Poison 5: 15 total Necrotic damage as it decays."
+                ],
+                "sourceFaceLines": [
+                  "Inflict Poison 1"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": [
+                  "element-necrotic"
+                ]
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 1,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Apply Poison 5: 15 total Necrotic damage as it decays.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.blight",
+                "name": "Blight",
+                "class": "colorless",
+                "rarity": "uncommon",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 1,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "applyStatus",
+                    "target": "enemy",
+                    "status": "base.blight",
+                    "stacks": 12
+                  }
+                ],
+                "textTemplate": "Apply Blight {base.blight}: lethal when its stacks reach current HP.",
+                "icon": "✦",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:spell",
+                "maneuver:casting"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": [
+                  "statuses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:blight",
+                  "name": "Blight",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:blight"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Inflict Blight 1"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Lethal when buildup equals health; current versus maximum health unresolved.",
+                    "parameters": {
+                      "appliedStacks": 1,
+                      "damageType": "necrotic"
+                    },
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:blight"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Apply Blight 12: lethal when its stacks reach current HP."
+                ],
+                "sourceFaceLines": [
+                  "Inflict Blight 1"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 1,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Apply Blight 12: lethal when its stacks reach current HP.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.weak",
+                "name": "Weaken",
+                "class": "colorless",
+                "rarity": "uncommon",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 1,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "applyStatus",
+                    "target": "enemy",
+                    "status": "base.weak",
+                    "stacks": 1
+                  }
+                ],
+                "textTemplate": "Apply Weak {base.weak}.",
+                "icon": "✦",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:spell",
+                "maneuver:casting"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": [
+                  "statuses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:weak",
+                  "name": "Weaken",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:weak"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Inflict Weak 1"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Weak magnitude and interaction with existing live Weak require a migration decision.",
+                    "parameters": {
+                      "appliedStacks": 1,
+                      "amountSource": "user-request default status stacks"
+                    },
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:weak"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Apply Weak 1."
+                ],
+                "sourceFaceLines": [
+                  "Inflict Weak 1"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 1,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Apply Weak 1.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.charm",
+                "name": "Charm",
+                "class": "colorless",
+                "rarity": "uncommon",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 1,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "applyStatus",
+                    "target": "enemy",
+                    "status": "base.charm",
+                    "stacks": 1
+                  }
+                ],
+                "textTemplate": "Apply Charm {base.charm}.",
+                "icon": "✦",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:spell",
+                "maneuver:casting"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": [
+                  "statuses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:charm",
+                  "name": "Charm",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:charm"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Inflict Charm 1"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Charm affects accuracy; magnitude, targets and removal unresolved.",
+                    "parameters": {
+                      "appliedStacks": 1,
+                      "amountSource": "user-request default status stacks"
+                    },
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:charm"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Apply Charm 1."
+                ],
+                "sourceFaceLines": [
+                  "Inflict Charm 1"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 1,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Apply Charm 1.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.bind",
+                "name": "Bind",
+                "class": "colorless",
+                "rarity": "uncommon",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 1,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "applyStatus",
+                    "target": "enemy",
+                    "status": "base.bind",
+                    "stacks": 1
+                  }
+                ],
+                "textTemplate": "Apply Bind {base.bind}.",
+                "icon": "✦",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:spell",
+                "maneuver:casting"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": [
+                  "statuses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:bind",
+                  "name": "Bind",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:bind"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Inflict Bind 1"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Bind restricts specified card types; restricted set unresolved.",
+                    "parameters": {
+                      "appliedStacks": 1,
+                      "amountSource": "user-request default status stacks"
+                    },
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:bind"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Apply Bind 1."
+                ],
+                "sourceFaceLines": [
+                  "Inflict Bind 1"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 1,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Apply Bind 1.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.restrained",
+                "name": "Restrain",
+                "class": "colorless",
+                "rarity": "uncommon",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 1,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "applyStatus",
+                    "target": "enemy",
+                    "status": "base.restrained",
+                    "stacks": 1
+                  },
+                  {
+                    "op": "addBurden",
+                    "target": "enemy",
+                    "card": "base.restrained-status-card",
+                    "count": 1,
+                    "pile": "hand"
+                  }
+                ],
+                "textTemplate": "Apply Restrained {base.restrained}. Add a Restrained burden to the enemy hand.",
+                "icon": "✦",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:spell",
+                "maneuver:casting"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": [
+                  "statuses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:restrained",
+                  "name": "Restrain",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:restrained"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Inflict Restrained 1"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Restraint restricts reach using resource-cost cards; allowed actions and costs unresolved. Add resource-cost cards to the restrained target hand to express reach limits; exact card costs and actions unresolved.",
+                    "parameters": {
+                      "appliedStacks": 1,
+                      "generatedCardDestination": "hand",
+                      "recipient": "restrained target",
+                      "generatedCardKind": "resource-cost card",
+                      "cost": null
+                    },
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:restrained"
+                    ],
+                    "generatedCardIds": [
+                      "proposed:card:restrained-status-card"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Apply Restrained 1. Add a Restrained burden to the enemy hand."
+                ],
+                "sourceFaceLines": [
+                  "Inflict Restrained 1"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 1,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Apply Restrained 1. Add a Restrained burden to the enemy hand.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.foresight",
+                "name": "Foresight",
+                "class": "colorless",
+                "rarity": "uncommon",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 1,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "applyStatus",
+                    "target": "self",
+                    "status": "base.foresight",
+                    "stacks": 3
+                  },
+                  {
+                    "op": "draw",
+                    "amount": 2
+                  }
+                ],
+                "textTemplate": "Gain {base.foresight} Foresight and draw {draw} cards.",
+                "icon": "✦",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:spell",
+                "maneuver:casting"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": [
+                  "statuses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:foresight",
+                  "name": "Foresight",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:foresight"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Gain Foresight 1"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Foresight increases perception; perception interaction unresolved.",
+                    "parameters": {
+                      "appliedStacks": 1,
+                      "amountSource": "user-request default status stacks"
+                    },
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:foresight"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Gain Foresight 3 (+6 Perception). Draw 2 cards."
+                ],
+                "sourceFaceLines": [
+                  "Gain Foresight 1"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 1,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Gain Foresight 3 (+6 Perception). Draw 2 cards.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.evade",
+                "name": "Evade",
+                "class": "colorless",
+                "rarity": "common",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 0,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "applyStatus",
+                    "target": "self",
+                    "status": "base.evade",
+                    "stacks": 1
+                  }
+                ],
+                "textTemplate": "Gain Evade {base.evade}.",
+                "icon": "🛡",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:physical",
+                "maneuver:defend"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": [
+                  "statuses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:evade",
+                  "name": "Evade",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:evade"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Gain Evade 1"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Evade eligibility and failed-evade behavior unresolved.",
+                    "parameters": {
+                      "appliedStacks": 1,
+                      "amountSource": "user-request default status stacks"
+                    },
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:evade"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "dodgeRoll",
+                "faceLines": [
+                  "Gain Evade 1."
+                ],
+                "sourceFaceLines": [
+                  "Gain Evade 1"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Gain Evade 1.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.intangible",
+                "name": "Intangible",
+                "class": "colorless",
+                "rarity": "uncommon",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 2,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "applyStatus",
+                    "target": "self",
+                    "status": "base.intangible",
+                    "stacks": 1
+                  }
+                ],
+                "textTemplate": "Gain Intangible {base.intangible}.",
+                "icon": "✦",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:spell",
+                "maneuver:casting"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": [
+                  "statuses",
+                  "defenses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:intangible",
+                  "name": "Intangible",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:intangible"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Gain Intangible 1"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Intangibility rules, duration and damage eligibility unresolved.",
+                    "parameters": {
+                      "appliedStacks": 1,
+                      "amountSource": "user-request default status stacks"
+                    },
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:intangible"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Gain Intangible 1."
+                ],
+                "sourceFaceLines": [
+                  "Gain Intangible 1"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 2,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Gain Intangible 1.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.mirrors",
+                "name": "Mirrors",
+                "class": "colorless",
+                "rarity": "uncommon",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 2,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "applyStatus",
+                    "target": "self",
+                    "status": "base.mirrors",
+                    "stacks": 1
+                  }
+                ],
+                "textTemplate": "Gain Mirrors {base.mirrors}.",
+                "icon": "✦",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:spell",
+                "maneuver:casting"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": [
+                  "statuses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:mirrors",
+                  "name": "Mirrors",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:mirrors"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Gain Mirrors 1"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Mirrors greatly improve damage as requested. Damage coefficient, duration and targeting remain unresolved; defensive decoy semantics are not assumed.",
+                    "parameters": {
+                      "damageImprovement": null
+                    },
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:mirrors"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Gain Mirrors 1."
+                ],
+                "sourceFaceLines": [
+                  "Gain Mirrors 1"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 2,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Gain Mirrors 1.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.elemental-weapon",
+                "name": "Elemental Weapon",
+                "class": "colorless",
+                "rarity": "uncommon",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 1,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "applyStatus",
+                    "target": "self",
+                    "status": "base.elemental-weapon",
+                    "stacks": 2
+                  }
+                ],
+                "textTemplate": "Enchant your weapon with Fire for {base.elemental-weapon} turns.",
+                "icon": "✦",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "damageSchool": "fire"
+              },
+              "tags": [
+                "classification.skill",
+                "camp:spell",
+                "maneuver:casting",
+                "school:fire"
+              ],
+              "groups": [
+                "base.current-rewards"
+              ],
+              "requirements": {
+                "elements": [
+                  "fire"
+                ],
+                "features": [
+                  "element-fire"
+                ],
+                "modules": [
+                  "statuses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:elemental-weapon",
+                  "name": "Elemental Weapon",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:elemental-weapon"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Enchant weapon: ?",
+                      "Add ? elemental effect"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Spell-created or spell-enchanted elemental weapon; element, duration and stacking unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:elemental-weapon"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Enchant your weapon with Fire for 2 turns."
+                ],
+                "sourceFaceLines": [
+                  "Enchant weapon: ?",
+                  "Add ? elemental effect"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": [
+                  "element-fire"
+                ]
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 1,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Enchant your weapon with Fire for 2 turns.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.fire-cleanse",
+                "name": "Purifying Flame",
+                "class": "colorless",
+                "rarity": "uncommon",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 1,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "damage",
+                    "target": "self",
+                    "amount": 2,
+                    "tags": [
+                      "school:fire"
+                    ],
+                    "attack": {
+                      "source": "spell",
+                      "damageType": "fire"
+                    }
+                  },
+                  {
+                    "op": "removeStatus",
+                    "target": "self",
+                    "status": "base.poison"
+                  },
+                  {
+                    "op": "removeStatus",
+                    "target": "self",
+                    "status": "base.greased"
+                  }
+                ],
+                "textTemplate": "Take {damage} Fire damage. Remove Poison and Greased.",
+                "icon": "✦",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "damageSchool": "fire",
+                "exposureBuildupPerHit": 0
+              },
+              "tags": [
+                "classification.skill",
+                "camp:spell",
+                "maneuver:casting",
+                "school:fire"
+              ],
+              "groups": [
+                "base.current-rewards"
+              ],
+              "requirements": {
+                "elements": [
+                  "fire"
+                ],
+                "features": [
+                  "element-fire"
+                ],
+                "modules": [
+                  "statuses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:fire-cleanse",
+                  "name": "Purifying Flame",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:fire-cleanse"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Cleanse ? with fire",
+                      "Resolve fire interaction ?"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Fire cleansing targets and interactions unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:fire-cleanse"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Take 2 Fire damage. Remove Poison and Greased."
+                ],
+                "sourceFaceLines": [
+                  "Cleanse ? with fire",
+                  "Resolve fire interaction ?"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": [
+                  "element-fire"
+                ]
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 1,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Take 2 Fire damage. Remove Poison and Greased.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.divine-cleanse",
+                "name": "Divine Cleanse",
+                "class": "colorless",
+                "rarity": "uncommon",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 1,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "removeStatus",
+                    "target": "self",
+                    "status": "base.weak"
+                  },
+                  {
+                    "op": "removeStatus",
+                    "target": "self",
+                    "status": "base.bind"
+                  },
+                  {
+                    "op": "removeStatus",
+                    "target": "self",
+                    "status": "base.restrained"
+                  }
+                ],
+                "textTemplate": "Remove Weak, Bind and Restrained.",
+                "icon": "✦",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "damageSchool": "holy"
+              },
+              "tags": [
+                "classification.skill",
+                "camp:spell",
+                "maneuver:casting",
+                "school:divine"
+              ],
+              "groups": [
+                "base.current-rewards"
+              ],
+              "requirements": {
+                "elements": [
+                  "sacred"
+                ],
+                "features": [
+                  "element-sacred"
+                ],
+                "modules": [
+                  "statuses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:divine-cleanse",
+                  "name": "Divine Cleanse",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:divine-cleanse"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Cleanse ? statuses",
+                      "Remove ? stacks"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Divine cleansing types, targets and magnitude unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:divine-cleanse"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Remove Weak, Bind and Restrained."
+                ],
+                "sourceFaceLines": [
+                  "Cleanse ? statuses",
+                  "Remove ? stacks"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": [
+                  "element-sacred"
+                ]
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 1,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Remove Weak, Bind and Restrained.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.necrotic-heal",
+                "name": "Necrotic Renewal",
+                "class": "colorless",
+                "rarity": "uncommon",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 1,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "applyStatus",
+                    "target": "self",
+                    "status": "base.necrotic-healing",
+                    "stacks": 2
+                  }
+                ],
+                "textTemplate": "Convert incoming Necrotic damage to healing for {base.necrotic-healing} turns.",
+                "icon": "✦",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "damageSchool": "magic"
+              },
+              "tags": [
+                "classification.skill",
+                "camp:spell",
+                "maneuver:casting",
+                "school:decay"
+              ],
+              "groups": [
+                "base.current-rewards"
+              ],
+              "requirements": {
+                "elements": [
+                  "necrotic"
+                ],
+                "features": [
+                  "element-necrotic"
+                ],
+                "modules": [
+                  "statuses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:necrotic-heal",
+                  "name": "Necrotic Renewal",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:necrotic-heal"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Convert necrotic to healing",
+                      "Restore ? health"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Conversion eligibility and coefficient unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:necrotic-heal"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Convert incoming Necrotic damage to healing for 2 turns."
+                ],
+                "sourceFaceLines": [
+                  "Convert necrotic to healing",
+                  "Restore ? health"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": [
+                  "element-necrotic"
+                ]
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 1,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Convert incoming Necrotic damage to healing for 2 turns.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.divine-harm",
+                "name": "Profane Inversion",
+                "class": "colorless",
+                "rarity": "uncommon",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 1,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "applyStatus",
+                    "target": "enemy",
+                    "status": "base.divine-harm",
+                    "stacks": 2
+                  }
+                ],
+                "textTemplate": "Convert the enemy’s Sacred healing into damage for {base.divine-harm} turns.",
+                "icon": "✦",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "damageSchool": "holy"
+              },
+              "tags": [
+                "classification.skill",
+                "camp:spell",
+                "maneuver:casting",
+                "school:divine"
+              ],
+              "groups": [
+                "base.current-rewards"
+              ],
+              "requirements": {
+                "elements": [
+                  "sacred"
+                ],
+                "features": [
+                  "element-sacred"
+                ],
+                "modules": [
+                  "statuses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:divine-harm",
+                  "name": "Profane Inversion",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:divine-harm"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Convert divine to harm",
+                      "Suffer ? damage"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Divine harm conversion eligibility and coefficient unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:divine-harm"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Convert the enemy’s Sacred healing into damage for 2 turns."
+                ],
+                "sourceFaceLines": [
+                  "Convert divine to harm",
+                  "Suffer ? damage"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": [
+                  "element-sacred"
+                ]
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 1,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Convert the enemy’s Sacred healing into damage for 2 turns.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.shuffle-hand",
+                "name": "Hand Shuffle",
+                "class": "colorless",
+                "rarity": "common",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 0,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "moveCards",
+                    "amount": 3,
+                    "from": "hand",
+                    "to": "draw",
+                    "selection": "random",
+                    "position": "random"
+                  },
+                  {
+                    "op": "draw",
+                    "amount": 3
+                  }
+                ],
+                "textTemplate": "Shuffle up to {draw} random hand cards into draw. Draw 3.",
+                "icon": "🛡",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:physical",
+                "maneuver:defend"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": []
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:shuffle-hand",
+                  "name": "Hand Shuffle",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:shuffle-hand"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Shuffle ? hand cards"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Choose or random selection and destination unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:shuffle-hand"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Shuffle up to 3 random hand cards into draw. Draw 3."
+                ],
+                "sourceFaceLines": [
+                  "Shuffle ? hand cards"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Shuffle up to 3 random hand cards into draw. Draw 3.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.shuffle-deck",
+                "name": "Deck Shuffle",
+                "class": "colorless",
+                "rarity": "common",
+                "cost": 0,
+                "costRule": "fixed",
+                "staminaCost": 0,
+                "manaCost": 0,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "moveCards",
+                    "amount": 100,
+                    "from": "draw",
+                    "to": "draw",
+                    "selection": "random",
+                    "position": "random"
+                  }
+                ],
+                "textTemplate": "Shuffle the entire draw pile.",
+                "icon": "🛡",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:physical",
+                "maneuver:defend"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": []
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:shuffle-deck",
+                  "name": "Deck Shuffle",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:shuffle-deck"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Shuffle the deck"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Deck shuffle timing and selection unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:shuffle-deck"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Shuffle the entire draw pile."
+                ],
+                "sourceFaceLines": [
+                  "Shuffle the deck"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 0,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Shuffle the entire draw pile.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.draw",
+                "name": "Draw",
+                "class": "colorless",
+                "rarity": "common",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 0,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "draw",
+                    "amount": 2
+                  }
+                ],
+                "textTemplate": "Draw {draw} cards.",
+                "icon": "🛡",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:physical",
+                "maneuver:defend"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": []
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:draw",
+                  "name": "Draw",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:draw"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Draw ? cards"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Draw count, trigger and limits unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:draw"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "technique",
+                "faceLines": [
+                  "Draw 2 cards."
+                ],
+                "sourceFaceLines": [
+                  "Draw ? cards"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Draw 2 cards.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.retain",
+                "name": "Retain",
+                "class": "colorless",
+                "rarity": "common",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 0,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "modifyCards",
+                    "amount": 2,
+                    "from": "hand",
+                    "selection": "choose",
+                    "changes": {
+                      "retain": true
+                    }
+                  }
+                ],
+                "textTemplate": "Choose up to 2 hand cards to retain.",
+                "icon": "🛡",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:physical",
+                "maneuver:defend"
+              ],
+              "groups": [
+                "base.current-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [
+                  "hand-retention"
+                ],
+                "modules": []
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:retain",
+                  "name": "Retain",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:retain"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Retain ? cards"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Selection and retention duration unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:retain"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Choose up to 2 hand cards to retain."
+                ],
+                "sourceFaceLines": [
+                  "Retain ? cards"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": [
+                  "hand-retention"
+                ]
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Choose up to 2 hand cards to retain.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.scout",
+                "name": "Scout",
+                "class": "colorless",
+                "rarity": "common",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 0,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "moveCards",
+                    "amount": 3,
+                    "from": "draw",
+                    "to": "draw",
+                    "selection": "choose",
+                    "position": "top",
+                    "look": 3
+                  }
+                ],
+                "textTemplate": "Look at the top 3 cards. Choose their order.",
+                "icon": "🛡",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:physical",
+                "maneuver:defend"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": []
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:scout",
+                  "name": "Scout",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:scout"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Scout ? cards",
+                      "Reorder or return ?"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Deck, count and permitted ordering unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:scout"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Look at the top 3 cards. Choose their order."
+                ],
+                "sourceFaceLines": [
+                  "Scout ? cards",
+                  "Reorder or return ?"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Look at the top 3 cards. Choose their order.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.reveal-opponent-hand",
+                "name": "Read Intent",
+                "class": "colorless",
+                "rarity": "uncommon",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 1,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "revealIntent",
+                    "target": "enemy",
+                    "amount": 1
+                  }
+                ],
+                "textTemplate": "Reveal the enemy’s intent for 1 turn.",
+                "icon": "✦",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:spell",
+                "maneuver:casting"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": []
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:reveal-opponent-hand",
+                  "name": "Read Intent",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:reveal-opponent-hand"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Reveal ? enemy cards",
+                      "For ? turns"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Visibility scope and duration unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:reveal-opponent-hand"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Reveal the enemy’s intent for 1 turn."
+                ],
+                "sourceFaceLines": [
+                  "Reveal ? enemy cards",
+                  "For ? turns"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 1,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Reveal the enemy’s intent for 1 turn.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.recall-choose",
+                "name": "Recall",
+                "class": "colorless",
+                "rarity": "common",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 0,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "moveCards",
+                    "amount": 1,
+                    "from": "discard",
+                    "to": "hand",
+                    "selection": "choose",
+                    "position": "top"
+                  }
+                ],
+                "textTemplate": "Choose a discarded card to return to hand.",
+                "icon": "🛡",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:physical",
+                "maneuver:defend"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": []
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:recall-choose",
+                  "name": "Recall",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:recall-choose"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Choose ? cards to recall"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Choose cards from a specified source; source and destination unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:recall-choose"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Choose a discarded card to return to hand."
+                ],
+                "sourceFaceLines": [
+                  "Choose ? cards to recall"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Choose a discarded card to return to hand.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.recover-exile",
+                "name": "Exile Recovery",
+                "class": "colorless",
+                "rarity": "uncommon",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 1,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "moveCards",
+                    "amount": 1,
+                    "from": "exhaust",
+                    "to": "hand",
+                    "selection": "choose",
+                    "position": "top"
+                  }
+                ],
+                "textTemplate": "Choose an exhausted card to return to hand.",
+                "icon": "🛡",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:physical",
+                "maneuver:defend"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": []
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:recover-exile",
+                  "name": "Exile Recovery",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:recover-exile"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Recover ? exiled cards",
+                      "Choose destination ?"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Exile recovery count and destination unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:recover-exile"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Choose an exhausted card to return to hand."
+                ],
+                "sourceFaceLines": [
+                  "Recover ? exiled cards",
+                  "Choose destination ?"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 1,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Choose an exhausted card to return to hand.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.exhaust-choose",
+                "name": "Chosen Exhaust",
+                "class": "colorless",
+                "rarity": "common",
+                "cost": 0,
+                "costRule": "fixed",
+                "staminaCost": 0,
+                "manaCost": 0,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "moveCards",
+                    "amount": 1,
+                    "from": "hand",
+                    "to": "exhaust",
+                    "selection": "choose",
+                    "position": "top"
+                  }
+                ],
+                "textTemplate": "Choose a hand card to exhaust.",
+                "icon": "🛡",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:physical",
+                "maneuver:defend"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": []
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:exhaust-choose",
+                  "name": "Chosen Exhaust",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:exhaust-choose"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Choose ? cards",
+                      "Exhaust them"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Selection scope and count unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:exhaust-choose"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Choose a hand card to exhaust."
+                ],
+                "sourceFaceLines": [
+                  "Choose ? cards",
+                  "Exhaust them"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 0,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Choose a hand card to exhaust.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.transform",
+                "name": "Transform",
+                "class": "colorless",
+                "rarity": "uncommon",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 1,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "moveCards",
+                    "amount": 1,
+                    "from": "hand",
+                    "to": "hand",
+                    "selection": "choose",
+                    "position": "top",
+                    "transformTo": "base.strike"
+                  }
+                ],
+                "textTemplate": "Transform a chosen hand card into Strike for this combat.",
+                "icon": "✦",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:spell",
+                "maneuver:casting"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": []
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:transform",
+                  "name": "Transform",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:transform"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Transform ? cards",
+                      "Into ?"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Transformation pool, permanence and count unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:transform"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Transform a chosen hand card into Strike for this combat."
+                ],
+                "sourceFaceLines": [
+                  "Transform ? cards",
+                  "Into ?"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 1,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Transform a chosen hand card into Strike for this combat.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.status-card-stagger",
+                "name": "Staggering Burden",
+                "class": "colorless",
+                "rarity": "uncommon",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 1,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "addBurden",
+                    "target": "enemy",
+                    "card": "base.stagger-status-card",
+                    "count": 2
+                  }
+                ],
+                "textTemplate": "Add 2 Stagger burdens to the enemy deck.",
+                "icon": "✦",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:spell",
+                "maneuver:casting"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": []
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:status-card-stagger",
+                  "name": "Staggering Burden",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:status-card-stagger"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Add ? Stagger cards"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Stagger status-card behavior, target deck and draw/play trigger unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:status-card-stagger"
+                    ],
+                    "generatedCardIds": [
+                      "proposed:card:stagger-status-card"
+                    ],
+                    "lifecycleAlternatives": [
+                      "proposed:effect:exhaust",
+                      "proposed:effect:ethereal"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Add 2 Stagger burdens to the enemy deck."
+                ],
+                "sourceFaceLines": [
+                  "Add ? Stagger cards"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 1,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Add 2 Stagger burdens to the enemy deck.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.status-card-paralyze",
+                "name": "Paralyzing Burden",
+                "class": "colorless",
+                "rarity": "uncommon",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 1,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "addBurden",
+                    "target": "enemy",
+                    "card": "base.paralysis-status-card",
+                    "count": 2
+                  }
+                ],
+                "textTemplate": "Add 2 Paralysis burdens to the enemy deck.",
+                "icon": "✦",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:spell",
+                "maneuver:casting"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": []
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:status-card-paralyze",
+                  "name": "Paralyzing Burden",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:status-card-paralyze"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Add ? Paralysis to enemy deck"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Paralysis status-card behavior and distinction from live paralysis unresolved.",
+                    "parameters": {
+                      "destination": "deck",
+                      "recipient": "opponent",
+                      "count": null
+                    },
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:status-card-paralyze"
+                    ],
+                    "generatedCardIds": [
+                      "proposed:card:paralysis-status-card"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Add 2 Paralysis burdens to the enemy deck."
+                ],
+                "sourceFaceLines": [
+                  "Add ? Paralysis to enemy deck"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 1,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Add 2 Paralysis burdens to the enemy deck.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.exhaust",
+                "name": "Exhaust",
+                "class": "colorless",
+                "rarity": "common",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 0,
+                "type": "skill",
+                "keywords": [
+                  "exhaust"
+                ],
+                "effects": [
+                  {
+                    "op": "heal",
+                    "target": "self",
+                    "amount": 8
+                  }
+                ],
+                "textTemplate": "Heal {heal} HP. Exhaust.",
+                "icon": "🛡",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:physical",
+                "maneuver:defend"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": []
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:exhaust",
+                  "name": "Exhaust",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:exhaust"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Resolve effect ?",
+                      "Exhaust this card"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Exhaust lifecycle and recovery relationship unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:exhaust"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "fieldDressing",
+                "faceLines": [
+                  "Heal 8 HP. Exhaust."
+                ],
+                "sourceFaceLines": [
+                  "Resolve effect ?",
+                  "Exhaust this card"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Heal 8 HP. Exhaust.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.ethereal",
+                "name": "Ethereal",
+                "class": "colorless",
+                "rarity": "common",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 0,
+                "type": "skill",
+                "keywords": [
+                  "ethereal"
+                ],
+                "effects": [
+                  {
+                    "op": "block",
+                    "target": "self",
+                    "amount": 10
+                  }
+                ],
+                "textTemplate": "Gain {block} Block. Ethereal.",
+                "icon": "🛡",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:physical",
+                "maneuver:defend"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": [
+                  "defenses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:ethereal",
+                  "name": "Ethereal",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:ethereal"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Resolve effect ?",
+                      "Ethereal"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Ethereal expiration trigger and destination unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:ethereal"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Gain 10 Block. Ethereal."
+                ],
+                "sourceFaceLines": [
+                  "Resolve effect ?",
+                  "Ethereal"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Gain 10 Block. Ethereal.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.stat-buff",
+                "name": "Empower",
+                "class": "colorless",
+                "rarity": "common",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 0,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "applyStatus",
+                    "target": "self",
+                    "status": "strength",
+                    "stacks": 2
+                  }
+                ],
+                "textTemplate": "Gain {strength} Strength for this combat.",
+                "icon": "🛡",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:physical",
+                "maneuver:defend"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": [
+                  "statuses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:stat-buff",
+                  "name": "Empower",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:stat-buff"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Increase ? stat",
+                      "By ? for ?"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Buff stat, magnitude and duration unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:stat-buff"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "honedEdge",
+                "faceLines": [
+                  "Gain 2 Strength for this combat."
+                ],
+                "sourceFaceLines": [
+                  "Increase ? stat",
+                  "By ? for ?"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Gain 2 Strength for this combat.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.drain-allies",
+                "name": "Shared Sacrifice",
+                "class": "colorless",
+                "rarity": "common",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 0,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "loseHp",
+                    "target": "allAllies",
+                    "amount": 3
+                  },
+                  {
+                    "op": "block",
+                    "target": "self",
+                    "amount": 12
+                  }
+                ],
+                "textTemplate": "All allies lose {loseHp} HP. Gain {block} Block.",
+                "icon": "🛡",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:physical",
+                "maneuver:defend"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": [
+                  "defenses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:drain-allies",
+                  "name": "Shared Sacrifice",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:drain-allies"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Drain allies: ?",
+                      "Gain ?"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Drain resource, consent/targeting and benefit unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:drain-allies"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "All allies lose 3 HP. Gain 12 Block."
+                ],
+                "sourceFaceLines": [
+                  "Drain allies: ?",
+                  "Gain ?"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "All allies lose 3 HP. Gain 12 Block.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.scale-negative-status",
+                "name": "Affliction Scaling",
+                "class": "colorless",
+                "rarity": "common",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 0,
+                "type": "attack",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "damage",
+                    "target": "enemy",
+                    "amount": {
+                      "f": "add",
+                      "args": [
+                        6,
+                        {
+                          "f": "metric",
+                          "metric": "negativeStatusTypes",
+                          "of": "target",
+                          "statuses": [
+                            "weak",
+                            "vulnerable",
+                            "burn",
+                            "venom",
+                            "base.weak",
+                            "base.charm",
+                            "base.bind",
+                            "base.restrained",
+                            "base.poison",
+                            "base.blight",
+                            "base.greased"
+                          ],
+                          "per": 2
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "textTemplate": "Deal {damage} damage, scaling with distinct negative statuses.",
+                "icon": "⚔",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "damageSchool": "physical",
+                "exposureBuildupPerHit": 0
+              },
+              "tags": [
+                "classification.attack",
+                "camp:physical",
+                "maneuver:attack"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": []
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:scale-negative-status",
+                  "name": "Affliction Scaling",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:scale-negative-status"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Deal ? damage",
+                      "Scale with afflictions"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Count stacks versus types and coefficient unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:scale-negative-status"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "strike",
+                "faceLines": [
+                  "Deal 6 damage +2 per distinct negative status on the target."
+                ],
+                "sourceFaceLines": [
+                  "Deal ? damage",
+                  "Scale with afflictions"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Deal 6 damage +2 per distinct negative status on the target.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.scale-damage-taken",
+                "name": "Reprisal Growth",
+                "class": "colorless",
+                "rarity": "common",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 0,
+                "type": "attack",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "damage",
+                    "target": "enemy",
+                    "amount": {
+                      "f": "add",
+                      "args": [
+                        6,
+                        {
+                          "f": "metric",
+                          "metric": "damageTakenThisTurn",
+                          "of": "self",
+                          "per": 0.5
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "textTemplate": "Deal {damage} damage, scaling with HP lost this turn.",
+                "icon": "⚔",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "damageSchool": "physical",
+                "exposureBuildupPerHit": 0
+              },
+              "tags": [
+                "classification.attack",
+                "camp:physical",
+                "maneuver:attack"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": []
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:scale-damage-taken",
+                  "name": "Reprisal Growth",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:scale-damage-taken"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Deal ? damage",
+                      "Scale with damage taken"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Tracking window, damage basis and coefficient unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:scale-damage-taken"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "strike",
+                "faceLines": [
+                  "Deal 6 damage plus half the HP lost this turn."
+                ],
+                "sourceFaceLines": [
+                  "Deal ? damage",
+                  "Scale with damage taken"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Deal 6 damage plus half the HP lost this turn.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.growth-per-type",
+                "name": "Discipline Growth",
+                "class": "colorless",
+                "rarity": "common",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 0,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "block",
+                    "target": "self",
+                    "amount": {
+                      "f": "add",
+                      "args": [
+                        4,
+                        {
+                          "f": "metric",
+                          "metric": "distinctTypes",
+                          "of": "self",
+                          "per": 2
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "textTemplate": "Gain {block} Block, scaling with distinct types played this turn.",
+                "icon": "🛡",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:physical",
+                "maneuver:defend"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": [
+                  "defenses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:growth-per-type",
+                  "name": "Discipline Growth",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:growth-per-type"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Gain ? per type played",
+                      "Track types: ?"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Type taxonomy, reset window and growth cap unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:growth-per-type"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Gain 4 Block +2 per distinct card type played this turn."
+                ],
+                "sourceFaceLines": [
+                  "Gain ? per type played",
+                  "Track types: ?"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Gain 4 Block +2 per distinct card type played this turn.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.cost-per-use",
+                "name": "Shifting Cost",
+                "class": "colorless",
+                "rarity": "common",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 0,
+                "type": "attack",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "damage",
+                    "target": "enemy",
+                    "amount": 8
+                  }
+                ],
+                "textTemplate": "Deal {damage} damage. Costs +1 SP per prior play this combat (maximum +3).",
+                "icon": "⚔",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "damageSchool": "physical",
+                "exposureBuildupPerHit": 0,
+                "costGrowth": {
+                  "stamina": 1,
+                  "mana": 0,
+                  "perUse": 1,
+                  "max": 3
+                }
+              },
+              "tags": [
+                "classification.attack",
+                "camp:physical",
+                "maneuver:attack"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": []
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:cost-per-use",
+                  "name": "Shifting Cost",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:cost-per-use"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Resolve effect ?",
+                      "Cost changes per use: ?"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Cost direction, coefficient, minimum and reset unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:cost-per-use"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "strike",
+                "faceLines": [
+                  "Deal 8 damage. Costs +1 SP per prior play this combat (maximum +3)."
+                ],
+                "sourceFaceLines": [
+                  "Resolve effect ?",
+                  "Cost changes per use: ?"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Deal 8 damage. Costs +1 SP per prior play this combat (maximum +3).",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.damage-per-use",
+                "name": "Rising Damage",
+                "class": "colorless",
+                "rarity": "common",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 0,
+                "type": "attack",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "damage",
+                    "target": "enemy",
+                    "amount": {
+                      "f": "add",
+                      "args": [
+                        6,
+                        {
+                          "f": "metric",
+                          "metric": "sameCardPlays",
+                          "of": "self",
+                          "per": 3
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "textTemplate": "Deal {damage} damage, increasing each time this card is played.",
+                "icon": "⚔",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "damageSchool": "physical",
+                "exposureBuildupPerHit": 0
+              },
+              "tags": [
+                "classification.attack",
+                "camp:physical",
+                "maneuver:attack"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": []
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:damage-per-use",
+                  "name": "Rising Damage",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:damage-per-use"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Deal ? damage",
+                      "Changes per use: ?"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Damage direction, coefficient and reset unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:damage-per-use"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "strike",
+                "faceLines": [
+                  "Deal 6 damage +3 per prior play this combat."
+                ],
+                "sourceFaceLines": [
+                  "Deal ? damage",
+                  "Changes per use: ?"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Deal 6 damage +3 per prior play this combat.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.pay-x-effect",
+                "name": "Channel X",
+                "class": "colorless",
+                "rarity": "uncommon",
+                "cost": "X",
+                "costRule": "fixed",
+                "staminaCost": 0,
+                "manaCost": 1,
+                "type": "attack",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "damage",
+                    "target": "enemy",
+                    "amount": {
+                      "f": "energySpent",
+                      "per": 6
+                    }
+                  }
+                ],
+                "textTemplate": "Spend all remaining SP. Deal {damage} damage.",
+                "icon": "✦",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "damageSchool": "physical",
+                "exposureBuildupPerHit": 0
+              },
+              "tags": [
+                "classification.attack",
+                "camp:spell",
+                "maneuver:casting"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": []
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:pay-x-effect",
+                  "name": "Channel X",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:pay-x-effect"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Pay X: ? resource",
+                      "Scale effect with X"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Resource, effect curve and permitted X unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:pay-x-effect"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "strike",
+                "faceLines": [
+                  "Spend all remaining SP. Deal 6 damage per SP paid."
+                ],
+                "sourceFaceLines": [
+                  "Pay X: ? resource",
+                  "Scale effect with X"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 0,
+                  "mana": 1,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Spend all remaining SP. Deal 6 damage per SP paid.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.pay-x-targets",
+                "name": "Spread X",
+                "class": "colorless",
+                "rarity": "uncommon",
+                "cost": "X",
+                "costRule": "fixed",
+                "staminaCost": 0,
+                "manaCost": 1,
+                "type": "attack",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "damage",
+                    "target": "allEnemies",
+                    "amount": 8
+                  }
+                ],
+                "textTemplate": "Spend all remaining SP. Deal {damage} damage to up to X enemies.",
+                "icon": "✦",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "damageSchool": "physical",
+                "exposureBuildupPerHit": 0,
+                "targetLimit": {
+                  "f": "energySpent",
+                  "per": 1
+                }
+              },
+              "tags": [
+                "classification.attack",
+                "camp:spell",
+                "maneuver:casting"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": []
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:pay-x-targets",
+                  "name": "Spread X",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:pay-x-targets"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Pay X: ? resource",
+                      "Affect X targets"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Resource, target eligibility and limits unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:pay-x-targets"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "strike",
+                "faceLines": [
+                  "Spend all remaining SP. Deal 8 damage to up to X enemies."
+                ],
+                "sourceFaceLines": [
+                  "Pay X: ? resource",
+                  "Affect X targets"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 0,
+                  "mana": 1,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Spend all remaining SP. Deal 8 damage to up to X enemies.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.hide-cards",
+                "name": "Conceal",
+                "class": "colorless",
+                "rarity": "uncommon",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 1,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "applyStatus",
+                    "target": "self",
+                    "status": "base.conceal",
+                    "stacks": 2
+                  },
+                  {
+                    "op": "modifyCards",
+                    "from": "hand",
+                    "amount": {
+                      "f": "stacks",
+                      "status": "base.conceal",
+                      "of": "self"
+                    },
+                    "selection": "choose",
+                    "changes": {
+                      "hideTurns": {
+                        "f": "stacks",
+                        "status": "base.conceal",
+                        "of": "self"
+                      }
+                    }
+                  }
+                ],
+                "textTemplate": "Gain {base.conceal} Conceal. Hide X hand cards for X turns, where X is your Conceal stacks.",
+                "icon": "✦",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:spell",
+                "maneuver:casting"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": [
+                  "statuses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:hide-cards",
+                  "name": "Conceal",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:hide-cards"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Hide X cards",
+                      "For X turns"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Hide X cards for X turns per X stacks. Count and duration depend on stacks as requested; the exact relationship, hidden zone, visibility and return timing remain unresolved.",
+                    "parameters": {
+                      "stackDependentCount": true,
+                      "stackDependentDuration": true,
+                      "cardsPerStacksFormula": null,
+                      "turnsPerStacksFormula": null
+                    },
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:hide-cards"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Gain Conceal 2. Hide X cards for X turns, equal to your stacks."
+                ],
+                "sourceFaceLines": [
+                  "Hide X cards",
+                  "For X turns"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 1,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Gain Conceal 2. Hide X cards for X turns, equal to your stacks.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.force-stance",
+                "name": "Force Stance",
+                "class": "colorless",
+                "rarity": "uncommon",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 1,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "enterStance",
+                    "target": "enemy",
+                    "maneuver": "defend"
+                  }
+                ],
+                "textTemplate": "Force the enemy into Defend.",
+                "icon": "✦",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:spell",
+                "maneuver:casting"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": [
+                  "stances"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:force-stance",
+                  "name": "Force Stance",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:force-stance"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Force stance: ?"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Forced stance eligibility, duration and override rules unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:force-stance"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Force the enemy into Defend."
+                ],
+                "sourceFaceLines": [
+                  "Force stance: ?"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 1,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Force the enemy into Defend.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.multi-stance",
+                "name": "Many Forms",
+                "class": "colorless",
+                "rarity": "uncommon",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 1,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "applyStatus",
+                    "target": "self",
+                    "status": "base.many-forms",
+                    "stacks": 1
+                  }
+                ],
+                "textTemplate": "Gain {base.many-forms} Many Forms: hold up to 2 stances until next turn.",
+                "icon": "🛡",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:physical",
+                "maneuver:defend"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": [
+                  "statuses",
+                  "stances"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:multi-stance",
+                  "name": "Many Forms",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:multi-stance"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Hold multiple stances"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Allow multiple stances simultaneously. Stance limit, allowed combinations and exceptions to exclusivity remain undecided. This capability is separate from selecting an effect based on current stance or paid resource.",
+                    "parameters": {
+                      "simultaneousStances": true,
+                      "stanceLimit": null,
+                      "combinations": null,
+                      "exclusivityExceptions": null
+                    },
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:multi-stance"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Gain 1 Many Forms: hold up to 2 stances until next turn."
+                ],
+                "sourceFaceLines": [
+                  "Hold multiple stances"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 1,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Gain 1 Many Forms: hold up to 2 stances until next turn.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.current-stance-variant",
+                "name": "Stance Echo",
+                "class": "colorless",
+                "rarity": "common",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 0,
+                "type": "attack",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "damage",
+                    "target": "enemy",
+                    "amount": 6
+                  }
+                ],
+                "textTemplate": "Smash: deal 12 damage. Otherwise gain {damage} Block.",
+                "icon": "⚔",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "damageSchool": "physical",
+                "exposureBuildupPerHit": 0,
+                "effectVariants": [
+                  {
+                    "if": {
+                      "p": "inStance",
+                      "stance": "smash"
+                    },
+                    "effects": [
+                      {
+                        "op": "damage",
+                        "target": "enemy",
+                        "amount": 12
+                      }
+                    ],
+                    "textTemplate": "Deal {damage} damage."
+                  },
+                  {
+                    "if": {
+                      "p": "all",
+                      "preds": []
+                    },
+                    "effects": [
+                      {
+                        "op": "block",
+                        "target": "self",
+                        "amount": 6
+                      }
+                    ],
+                    "textTemplate": "Gain {block} Block."
+                  }
+                ]
+              },
+              "tags": [
+                "classification.attack",
+                "camp:physical",
+                "maneuver:attack"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": [
+                  "stances"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:current-stance-variant",
+                  "name": "Stance Echo",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:current-stance-variant"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Active stance effect: ?"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Current-stance variant resolution and inactive previews inspectable.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:current-stance-variant"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "strike",
+                "faceLines": [
+                  "Smash: deal 12 damage. Otherwise gain 6 Block."
+                ],
+                "sourceFaceLines": [
+                  "Active stance effect: ?"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Smash: deal 12 damage. Otherwise gain 6 Block.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.paid-resource-variant",
+                "name": "Resource Echo",
+                "class": "colorless",
+                "rarity": "uncommon",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 1,
+                "type": "attack",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "damage",
+                    "target": "enemy",
+                    "amount": 12
+                  }
+                ],
+                "textTemplate": "If MP was paid, deal {damage} damage; otherwise gain 8 Block.",
+                "icon": "✦",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "damageSchool": "physical",
+                "exposureBuildupPerHit": 0,
+                "effectVariants": [
+                  {
+                    "if": {
+                      "p": "resourcePaid",
+                      "resource": "mana",
+                      "amount": 1
+                    },
+                    "effects": [
+                      {
+                        "op": "damage",
+                        "target": "enemy",
+                        "amount": 12
+                      }
+                    ],
+                    "textTemplate": "Deal {damage} damage."
+                  },
+                  {
+                    "if": {
+                      "p": "all",
+                      "preds": []
+                    },
+                    "effects": [
+                      {
+                        "op": "block",
+                        "target": "self",
+                        "amount": 8
+                      }
+                    ],
+                    "textTemplate": "Gain {block} Block."
+                  }
+                ]
+              },
+              "tags": [
+                "classification.attack",
+                "camp:spell",
+                "maneuver:casting"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": []
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:paid-resource-variant",
+                  "name": "Resource Echo",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:paid-resource-variant"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Active paid effect: ?"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Resource paid selects variant; only selected variant displayed.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:paid-resource-variant"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "strike",
+                "faceLines": [
+                  "If MP was paid, deal 12 damage; otherwise gain 8 Block."
+                ],
+                "sourceFaceLines": [
+                  "Active paid effect: ?"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 1,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "If MP was paid, deal 12 damage; otherwise gain 8 Block.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.attack-then-defend",
+                "name": "Strike and Settle",
+                "class": "colorless",
+                "rarity": "common",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 0,
+                "type": "attack",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "damage",
+                    "target": "enemy",
+                    "amount": 8
+                  },
+                  {
+                    "op": "enterStance",
+                    "choose": "maneuver"
+                  }
+                ],
+                "textTemplate": "Deal {damage} damage, then choose a maneuver stance.",
+                "icon": "⚔",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "damageSchool": "physical",
+                "exposureBuildupPerHit": 0
+              },
+              "tags": [
+                "classification.attack",
+                "camp:physical",
+                "maneuver:attack"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": [
+                  "stances"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:attack-then-defend",
+                  "name": "Strike and Settle",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:attack-then-defend"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Deal ? damage",
+                      "Choose defense stance"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Attack resolves, then immediately choose a stance transition. Defensive choices are supported, but the general requested transition may select another eligible stance; eligibility unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:attack-then-defend"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "strike",
+                "faceLines": [
+                  "Deal 8 damage, then choose a maneuver stance."
+                ],
+                "sourceFaceLines": [
+                  "Deal ? damage",
+                  "Choose defense stance"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Deal 8 damage, then choose a maneuver stance.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.modify-card-stance",
+                "name": "Reframe",
+                "class": "colorless",
+                "rarity": "common",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 0,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "modifyCards",
+                    "amount": 1,
+                    "from": "hand",
+                    "selection": "choose",
+                    "changes": {
+                      "maneuver": "smash"
+                    }
+                  }
+                ],
+                "textTemplate": "Choose a hand card. Change its maneuver to Smash this combat.",
+                "icon": "🛡",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:physical",
+                "maneuver:defend"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": [
+                  "stances"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:modify-card-stance",
+                  "name": "Reframe",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:modify-card-stance"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Choose ? card",
+                      "Change its stance: ?"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Eligible card, stance, duration and costs unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:modify-card-stance"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Choose a hand card. Change its maneuver to Smash this combat."
+                ],
+                "sourceFaceLines": [
+                  "Choose ? card",
+                  "Change its stance: ?"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Choose a hand card. Change its maneuver to Smash this combat.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.modify-card-range",
+                "name": "Extend",
+                "class": "colorless",
+                "rarity": "common",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 0,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "modifyCards",
+                    "amount": 1,
+                    "from": "hand",
+                    "selection": "choose",
+                    "changes": {
+                      "range": "reach"
+                    }
+                  }
+                ],
+                "textTemplate": "Choose a hand card. Change its range to Reach this combat.",
+                "icon": "🛡",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:physical",
+                "maneuver:defend"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": []
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:modify-card-range",
+                  "name": "Extend",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:modify-card-range"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Choose ? card",
+                      "Change its range: ?"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Eligible card, range, duration and costs unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:modify-card-range"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Choose a hand card. Change its range to Reach this combat."
+                ],
+                "sourceFaceLines": [
+                  "Choose ? card",
+                  "Change its range: ?"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Choose a hand card. Change its range to Reach this combat.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.extra-weapon",
+                "name": "Extra Weapon",
+                "class": "colorless",
+                "rarity": "uncommon",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 1,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "applyStatus",
+                    "target": "self",
+                    "status": "base.extra-weapon",
+                    "stacks": 1
+                  }
+                ],
+                "textTemplate": "Gain {base.extra-weapon} extra weapon action this turn.",
+                "icon": "🛡",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:physical",
+                "maneuver:defend"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": [
+                  "statuses",
+                  "equipment"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:extra-weapon",
+                  "name": "Extra Weapon",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:extra-weapon"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Gain ? weapon action"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Extra weapon identity, action economy and duration unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:extra-weapon"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Gain 1 extra weapon action this turn."
+                ],
+                "sourceFaceLines": [
+                  "Gain ? weapon action"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 1,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Gain 1 extra weapon action this turn.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.extra-shield",
+                "name": "Extra Shield",
+                "class": "colorless",
+                "rarity": "uncommon",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 1,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "applyStatus",
+                    "target": "self",
+                    "status": "base.extra-shield",
+                    "stacks": 1
+                  }
+                ],
+                "textTemplate": "Gain {base.extra-shield} extra shield action this turn.",
+                "icon": "🛡",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:physical",
+                "maneuver:defend"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": [
+                  "statuses",
+                  "equipment"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:extra-shield",
+                  "name": "Extra Shield",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:extra-shield"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Gain ? shield action"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Extra shield identity, action economy and duration unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:extra-shield"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Gain 1 extra shield action this turn."
+                ],
+                "sourceFaceLines": [
+                  "Gain ? shield action"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 1,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Gain 1 extra shield action this turn.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.auto-counter",
+                "name": "Automatic Counter",
+                "class": "colorless",
+                "rarity": "common",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 0,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "applyStatus",
+                    "target": "self",
+                    "status": "base.auto-counter",
+                    "stacks": 1
+                  }
+                ],
+                "textTemplate": "Prepare one automatic counterattack. base.auto-counter: {base.auto-counter}.",
+                "icon": "🛡",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:physical",
+                "maneuver:defend"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": [
+                  "statuses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:auto-counter",
+                  "name": "Automatic Counter",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:auto-counter"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Prepare auto-counter ?"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Trigger, charges and interaction with existing Counter unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:auto-counter"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Prepare one automatic counterattack."
+                ],
+                "sourceFaceLines": [
+                  "Prepare auto-counter ?"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Prepare one automatic counterattack.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.auto-sweep",
+                "name": "Automatic Sweep",
+                "class": "colorless",
+                "rarity": "common",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 0,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "applyStatus",
+                    "target": "self",
+                    "status": "base.auto-sweep",
+                    "stacks": 1
+                  }
+                ],
+                "textTemplate": "Prepare one automatic sweep. base.auto-sweep: {base.auto-sweep}.",
+                "icon": "🛡",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:physical",
+                "maneuver:defend"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": [
+                  "statuses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:auto-sweep",
+                  "name": "Automatic Sweep",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:auto-sweep"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Prepare auto-sweep ?"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Trigger, charges and damage unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:auto-sweep"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Prepare one automatic sweep."
+                ],
+                "sourceFaceLines": [
+                  "Prepare auto-sweep ?"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Prepare one automatic sweep.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.reflect",
+                "name": "Reflect",
+                "class": "colorless",
+                "rarity": "uncommon",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 1,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "applyStatus",
+                    "target": "self",
+                    "status": "base.reflect",
+                    "stacks": 1
+                  }
+                ],
+                "textTemplate": "Reflect eligible incoming damage for {base.reflect} turn.",
+                "icon": "✦",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:spell",
+                "maneuver:casting"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": [
+                  "statuses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:reflect",
+                  "name": "Reflect",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:reflect"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Reflect eligible hits",
+                      "Return ? damage"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Eligibility, coefficient and damage ownership unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:reflect"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Reflect eligible incoming damage for 1 turn."
+                ],
+                "sourceFaceLines": [
+                  "Reflect eligible hits",
+                  "Return ? damage"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 1,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Reflect eligible incoming damage for 1 turn.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.guard-allies",
+                "name": "Interpose",
+                "class": "colorless",
+                "rarity": "common",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 0,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "applyStatus",
+                    "target": "self",
+                    "status": "base.guard-allies",
+                    "stacks": 1
+                  },
+                  {
+                    "op": "block",
+                    "target": "self",
+                    "amount": 8
+                  }
+                ],
+                "textTemplate": "Gain {block} Block and guard allies for {base.guard-allies} turn.",
+                "icon": "🛡",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:physical",
+                "maneuver:defend"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": [
+                  "statuses",
+                  "defenses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:guard-allies",
+                  "name": "Interpose",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:guard-allies"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Guard ? allies",
+                      "Absorb ? damage"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Coverage, redirect order, protection type and magnitude unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:guard-allies"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Gain 8 Block and guard allies for 1 turn."
+                ],
+                "sourceFaceLines": [
+                  "Guard ? allies",
+                  "Absorb ? damage"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Gain 8 Block and guard allies for 1 turn.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.transmute",
+                "name": "Transmute",
+                "class": "colorless",
+                "rarity": "common",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 0,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "moveCards",
+                    "amount": 1,
+                    "from": "hand",
+                    "to": "exhaust",
+                    "selection": "choose",
+                    "position": "top"
+                  },
+                  {
+                    "op": "addCinders",
+                    "amount": 10
+                  }
+                ],
+                "textTemplate": "Exhaust a chosen hand card. Gain {addCinders} cinders.",
+                "icon": "🛡",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:physical",
+                "maneuver:defend"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": []
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:transmute",
+                  "name": "Transmute",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:transmute"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Convert target: ?",
+                      "Yield: ?"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Targets may transmute to cinders, potions, components or scrolls; eligibility and yields unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:transmute"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Exhaust a chosen hand card. Gain 10 cinders."
+                ],
+                "sourceFaceLines": [
+                  "Convert target: ?",
+                  "Yield: ?"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Exhaust a chosen hand card. Gain 10 cinders.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.one-use-scroll",
+                "name": "Spell Scroll",
+                "class": "colorless",
+                "rarity": "uncommon",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 1,
+                "type": "skill",
+                "keywords": [
+                  "exhaust"
+                ],
+                "effects": [
+                  {
+                    "op": "castLinkedSpell",
+                    "card": "base.foresight"
+                  }
+                ],
+                "textTemplate": "Cast Foresight. One play per combat; exhaust this scroll.",
+                "icon": "✦",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "playLimit": 1
+              },
+              "tags": [
+                "classification.skill",
+                "camp:spell",
+                "maneuver:casting"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": [
+                  "statuses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:one-use-scroll",
+                  "name": "Spell Scroll",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:one-use-scroll"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Cast linked spell",
+                      "Consume scroll"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "One-use scroll references canonical spell; costs, focus bypass and scaling unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:one-use-scroll"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "entityKind": "combatCard",
+                  "namesProvisional": true
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Cast Foresight. One play per combat; exhaust this scroll."
+                ],
+                "sourceFaceLines": [
+                  "Cast linked spell",
+                  "Consume scroll"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": [],
+                "canonicalSpellId": "base.foresight",
+                "lifecycle": "One use per combat: exhausted after casting; can be recovered by Exile Recovery."
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 1,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Cast Foresight. One play per combat; exhaust this scroll.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.gain-resource",
+                "name": "Resource Gain",
+                "class": "colorless",
+                "rarity": "uncommon",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 1,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "restoreStamina",
+                    "target": "self",
+                    "amount": 3
+                  }
+                ],
+                "textTemplate": "Restore {restoreStamina} SP.",
+                "icon": "✦",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:spell",
+                "maneuver:casting"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": []
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:gain-resource",
+                  "name": "Resource Gain",
+                  "namesProvisional": true,
+                  "entityKind": "combatCard",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:gain-resource"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Gain ? resource"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Gain energy or another resource at a reasonable cost; resource, amount and cost unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:gain-resource"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ]
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Restore 3 SP for a net gain of 2 SP."
+                ],
+                "sourceFaceLines": [
+                  "Gain ? resource"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 1,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Restore 3 SP for a net gain of 2 SP.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.buff-ally",
+                "name": "Ally Empowerment",
+                "class": "colorless",
+                "rarity": "common",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 0,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "applyStatus",
+                    "target": "ally",
+                    "status": "strength",
+                    "stacks": 2
+                  }
+                ],
+                "textTemplate": "Give an ally {strength} Strength for this combat.",
+                "icon": "🛡",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:physical",
+                "maneuver:defend"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": [
+                  "statuses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:buff-ally",
+                  "name": "Ally Empowerment",
+                  "namesProvisional": true,
+                  "entityKind": "combatCard",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:buff-ally"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Buff ally: ?"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Buff an ally independently of draining allies; stat, amount and duration unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:buff-ally"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ]
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Give an ally 2 Strength for this combat."
+                ],
+                "sourceFaceLines": [
+                  "Buff ally: ?"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Give an ally 2 Strength for this combat.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.break-ward",
+                "name": "Ward Break",
+                "class": "colorless",
+                "rarity": "uncommon",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 1,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "wardDamage",
+                    "target": "enemy",
+                    "amount": 8
+                  }
+                ],
+                "textTemplate": "Deal 8 Ward damage.",
+                "icon": "✦",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:spell",
+                "maneuver:casting"
+              ],
+              "groups": [
+                "base.current-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [
+                  "ward-channel"
+                ],
+                "modules": [
+                  "defenses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:break-ward",
+                  "name": "Ward Break",
+                  "namesProvisional": true,
+                  "entityKind": "combatCard",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:break-ward"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Break ? Ward"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Ward-breaking capability, separate from ordinary health damage; magnitude and multi-hit distribution unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:break-ward"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ]
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Deal 8 Ward damage."
+                ],
+                "sourceFaceLines": [
+                  "Break ? Ward"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": [
+                  "ward-channel"
+                ]
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 1,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Deal 8 Ward damage.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.break-poise",
+                "name": "Poise Break",
+                "class": "colorless",
+                "rarity": "common",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 0,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "poiseDamage",
+                    "target": "enemy",
+                    "amount": 8
+                  }
+                ],
+                "textTemplate": "Deal {poiseDamage} Poise damage.",
+                "icon": "🛡",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:physical",
+                "maneuver:defend"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": [
+                  "defenses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:break-poise",
+                  "name": "Poise Break",
+                  "namesProvisional": true,
+                  "entityKind": "combatCard",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:break-poise"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Break ? Poise"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Poise-breaking capability; per-hit and total multi-hit damage must be distinguished, amounts unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:break-poise"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ]
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Deal 8 Poise damage."
+                ],
+                "sourceFaceLines": [
+                  "Break ? Poise"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Deal 8 Poise damage.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.generate-smash",
+                "name": "Smash Creation",
+                "class": "colorless",
+                "rarity": "common",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 0,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "addCard",
+                    "card": "base.smash",
+                    "pile": "hand",
+                    "count": 1
+                  }
+                ],
+                "textTemplate": "Add a temporary Smash to hand.",
+                "icon": "🛡",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:physical",
+                "maneuver:defend"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": []
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:generate-smash",
+                  "name": "Smash Creation",
+                  "namesProvisional": true,
+                  "entityKind": "combatCard",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:generate-smash"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Add ? Smash to hand"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Generate a Smash card in the acting character hand; generated canonical identity, count and lifecycle unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:generate-smash"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ]
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Add a temporary Smash to hand."
+                ],
+                "sourceFaceLines": [
+                  "Add ? Smash to hand"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Add a temporary Smash to hand.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.conditional-damage-bonus",
+                "name": "Conditional Strike",
+                "class": "colorless",
+                "rarity": "common",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 0,
+                "type": "attack",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "damage",
+                    "target": "enemy",
+                    "amount": 6
+                  },
+                  {
+                    "op": "damage",
+                    "target": "enemy",
+                    "amount": 6,
+                    "if": {
+                      "p": "inStance",
+                      "stance": "smash"
+                    }
+                  }
+                ],
+                "textTemplate": "Deal {damage} damage. In Smash stance, deal {damage.2} more.",
+                "icon": "⚔",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "damageSchool": "physical",
+                "exposureBuildupPerHit": 0
+              },
+              "tags": [
+                "classification.attack",
+                "camp:physical",
+                "maneuver:attack"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": [
+                  "stances"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:conditional-damage-bonus",
+                  "name": "Conditional Strike",
+                  "namesProvisional": true,
+                  "entityKind": "combatCard",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:conditional-damage-bonus"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Deal ? damage"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Damage bonus conditional on stance, card type, range or element; condition combination and coefficient unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:conditional-damage-bonus"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ]
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "strike",
+                "faceLines": [
+                  "Deal 6 damage. In Smash stance, deal 6 more."
+                ],
+                "sourceFaceLines": [
+                  "Deal ? damage"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Deal 6 damage. In Smash stance, deal 6 more.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.perception-untargetable",
+                "name": "Veil",
+                "class": "colorless",
+                "rarity": "uncommon",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 1,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "applyStatus",
+                    "target": "self",
+                    "status": "base.veil",
+                    "stacks": 2
+                  }
+                ],
+                "textTemplate": "Become untargetable without a perception check for {base.veil} turns.",
+                "icon": "✦",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:spell",
+                "maneuver:casting"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": [
+                  "statuses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:perception-untargetable",
+                  "name": "Veil",
+                  "namesProvisional": true,
+                  "entityKind": "combatCard",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:perception-untargetable"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Untargetable unless perceived"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Targeting requires passing a perception check; check formula, visibility duration and bypass rules unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:perception-untargetable"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ]
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Become untargetable without a perception check for 2 turns."
+                ],
+                "sourceFaceLines": [
+                  "Untargetable unless perceived"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 1,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Become untargetable without a perception check for 2 turns.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.retain-block",
+                "name": "Hold Block",
+                "class": "colorless",
+                "rarity": "common",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 0,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "applyStatus",
+                    "target": "self",
+                    "status": "base.retain-block",
+                    "stacks": 1
+                  },
+                  {
+                    "op": "block",
+                    "target": "self",
+                    "amount": 6
+                  }
+                ],
+                "textTemplate": "Gain {block} Block. Retain Block for {base.retain-block} turn.",
+                "icon": "🛡",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:physical",
+                "maneuver:defend"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": [
+                  "statuses",
+                  "defenses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:retain-block",
+                  "name": "Hold Block",
+                  "namesProvisional": true,
+                  "entityKind": "combatCard",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:retain-block"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Retain ? Block"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Retain Block across its normal expiration; amount, duration and interaction with Persistent Block unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:retain-block"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ]
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Gain 6 Block. Retain Block for 1 turn."
+                ],
+                "sourceFaceLines": [
+                  "Retain ? Block"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Gain 6 Block. Retain Block for 1 turn.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.immediate-stance-transition",
+                "name": "Flowing Transition",
+                "class": "colorless",
+                "rarity": "common",
+                "cost": 0,
+                "costRule": "fixed",
+                "staminaCost": 0,
+                "manaCost": 0,
+                "type": "skill",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "enterStance",
+                    "choose": "maneuver"
+                  }
+                ],
+                "textTemplate": "Immediately choose a maneuver stance.",
+                "icon": "🛡",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+              },
+              "tags": [
+                "classification.skill",
+                "camp:physical",
+                "maneuver:defend"
+              ],
+              "groups": [
+                "base.current-rewards",
+                "base.core-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": [
+                  "stances"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:immediate-stance-transition",
+                  "name": "Flowing Transition",
+                  "namesProvisional": true,
+                  "entityKind": "combatCard",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:immediate-stance-transition"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Play; change stance: ?"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Allow immediate stance transition after play; attacks may change stance, and transitions are not limited to defensive stances.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:immediate-stance-transition"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ]
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Immediately choose a maneuver stance."
+                ],
+                "sourceFaceLines": [
+                  "Play; change stance: ?"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 0,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Immediately choose a maneuver stance.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.stagger-status-card",
+                "name": "Stagger",
+                "class": "colorless",
+                "rarity": "special",
+                "cost": 0,
+                "costRule": "fixed",
+                "staminaCost": 0,
+                "manaCost": 0,
+                "type": "status",
+                "keywords": [
+                  "ethereal",
+                  "unplayable"
+                ],
+                "effects": [],
+                "textTemplate": "Skip your next action when drawn. Ethereal.",
+                "icon": "🛡",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "burden": {
+                  "skipActions": 1,
+                  "staminaTax": 0,
+                  "manaTax": 0
+                }
+              },
+              "tags": [
+                "classification.statusCard"
+              ],
+              "groups": [
+                "base.generated-burdens"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": [
+                  "statuses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:stagger-status-card",
+                  "name": "Stagger",
+                  "namesProvisional": true,
+                  "entityKind": "statusCard",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:stagger-status-card"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Stagger: ?"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Actual generated Stagger status card; lifecycle must use Exhaust OR Ethereal, selection unresolved. Trigger, effect and destination unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:stagger-status-card"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "tagAlternatives": {
+                    "operator": "exactlyOne",
+                    "tagIds": [
+                      "proposed:effect:exhaust",
+                      "proposed:effect:ethereal"
+                    ],
+                    "selected": null
+                  },
+                  "generatedByCandidateIds": [
+                    "proposed:card:status-card-stagger"
+                  ]
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Skip your next action when drawn. Ethereal."
+                ],
+                "sourceFaceLines": [
+                  "Stagger: ?"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 0,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Skip your next action when drawn. Ethereal.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.multi-hit",
+                "name": "Multiple Strikes",
+                "class": "colorless",
+                "rarity": "common",
+                "cost": 2,
+                "costRule": "fixed",
+                "staminaCost": 2,
+                "manaCost": 0,
+                "type": "attack",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "damage",
+                    "target": "enemy",
+                    "amount": 4,
+                    "hits": 3
+                  },
+                  {
+                    "op": "wardDamage",
+                    "target": "enemy",
+                    "amount": 3
+                  },
+                  {
+                    "op": "poiseDamage",
+                    "target": "enemy",
+                    "amount": 3
+                  }
+                ],
+                "textTemplate": "Strike {hits} times for {damage} damage. Deal {poiseDamage} Ward and 3 Poise damage total.",
+                "icon": "⚔",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "damageSchool": "physical",
+                "exposureBuildupPerHit": 0
+              },
+              "tags": [
+                "classification.attack",
+                "camp:physical",
+                "maneuver:attack"
+              ],
+              "groups": [
+                "base.current-rewards"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [
+                  "ward-channel"
+                ],
+                "modules": [
+                  "defenses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "AI-suggested-working-label"
+                  },
+                  "id": "proposed:card:multi-hit",
+                  "name": "Multiple Strikes",
+                  "namesProvisional": true,
+                  "entityKind": "combatCard",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:multi-hit"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Strike ? times for ?"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Multi-hit total versus per-hit damage, Ward break and Poise break are separate quantities; count, distribution and timing unresolved.",
+                    "parameters": null,
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:multi-hit"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ]
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "twinFang",
+                "faceLines": [
+                  "Strike 3 times for 4 damage. Deal 3 Ward and 3 Poise damage total."
+                ],
+                "sourceFaceLines": [
+                  "Strike ? times for ?"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": [
+                  "ward-channel"
+                ]
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 2,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Strike 3 times for 4 damage. Deal 3 Ward and 3 Poise damage total.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.paralysis-status-card",
+                "name": "Paralysis",
+                "class": "colorless",
+                "rarity": "special",
+                "cost": 0,
+                "costRule": "fixed",
+                "staminaCost": 0,
+                "manaCost": 0,
+                "type": "status",
+                "keywords": [
+                  "ethereal",
+                  "unplayable"
+                ],
+                "effects": [],
+                "textTemplate": "Skip your next action when drawn. Ethereal.",
+                "icon": "🛡",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "burden": {
+                  "skipActions": 1,
+                  "staminaTax": 0,
+                  "manaTax": 0
+                }
+              },
+              "tags": [
+                "classification.statusCard"
+              ],
+              "groups": [
+                "base.generated-burdens"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": [
+                  "statuses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "user-request-term"
+                  },
+                  "id": "proposed:card:paralysis-status-card",
+                  "name": "Paralysis",
+                  "namesProvisional": false,
+                  "entityKind": "statusCard",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:paralysis-status-card"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Paralysis: ?"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Generated Paralysis card goes into the opponent deck; effect, costs and lifecycle unresolved.",
+                    "parameters": {
+                      "recipient": "opponent",
+                      "destination": "deck",
+                      "resourceCost": null,
+                      "effect": null,
+                      "lifecycle": null
+                    },
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:paralysis-status-card"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "generatedByCandidateIds": [
+                    "proposed:card:status-card-paralyze"
+                  ]
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Skip your next action when drawn. Ethereal."
+                ],
+                "sourceFaceLines": [
+                  "Paralysis: ?"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 0,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Skip your next action when drawn. Ethereal.",
+                "rationale": "One drawn burden skips one action and then exhausts. Recycling a skip burden through the enemy overlay would deny every future action; finite exhaustion is the authored lifecycle default.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.restrained-status-card",
+                "name": "Restrained",
+                "class": "colorless",
+                "rarity": "special",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 0,
+                "type": "status",
+                "keywords": [
+                  "ethereal",
+                  "unplayable"
+                ],
+                "effects": [],
+                "textTemplate": "Your actions cost +1 SP while this burden is held. Ethereal.",
+                "icon": "🛡",
+                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "burden": {
+                  "skipActions": 0,
+                  "staminaTax": 1,
+                  "manaTax": 0,
+                  "ranges": [
+                    "melee",
+                    "reach"
+                  ],
+                  "cardTypes": [
+                    "attack"
+                  ]
+                }
+              },
+              "tags": [
+                "classification.statusCard"
+              ],
+              "groups": [
+                "base.generated-burdens"
+              ],
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": [
+                  "statuses"
+                ]
+              },
+              "provenance": {
+                "sourceBranch": "Feature/updateCharacterCreation",
+                "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+                "sourceProposal": {
+                  "state": "proposed",
+                  "balanceUndecided": true,
+                  "provenance": {
+                    "source": "user-request",
+                    "nameSource": "user-request-term"
+                  },
+                  "id": "proposed:card:restrained-status-card",
+                  "name": "Restrained",
+                  "namesProvisional": false,
+                  "entityKind": "statusCard",
+                  "school": null,
+                  "schoolGrouping": "unspecified",
+                  "stance": null,
+                  "cost": {
+                    "sp": null,
+                    "mp": null
+                  },
+                  "tagIds": [
+                    "proposed:effect:restrained-status-card"
+                  ],
+                  "face": {
+                    "lines": [
+                      "Restrained: ?"
+                    ],
+                    "iconTags": [],
+                    "maxClauses": 2,
+                    "maxPhysicalLines": 3
+                  },
+                  "inspection": {
+                    "fullRules": "Generated Restrained resource-cost card goes into the opponent hand. Pay resource to use reach/melee actions; resource, cost, eligible actions and lifecycle unresolved.",
+                    "parameters": {
+                      "recipient": "opponent",
+                      "destination": "hand",
+                      "resourceCost": null,
+                      "effect": null,
+                      "lifecycle": null
+                    },
+                    "canonicalSpellId": null,
+                    "activeVariant": null,
+                    "variants": [],
+                    "openQuestionIds": [
+                      "question:restrained-status-card"
+                    ]
+                  },
+                  "wireframeIds": [
+                    "proposed:wireframe:compact",
+                    "proposed:wireframe:expanded-inspection"
+                  ],
+                  "generatedByCandidateIds": [
+                    "proposed:card:restrained"
+                  ]
+                }
+              },
+              "presentation": {
+                "canonicalCardRef": "ironSkin",
+                "faceLines": [
+                  "Your actions cost +1 SP while this burden is held. Ethereal."
+                ],
+                "sourceFaceLines": [
+                  "Restrained: ?"
+                ]
+              },
+              "authoring": {
+                "statusDefaults": "Status timing, magnitude, triggers and removal are authored in statuses.json; original unresolved wording remains in provenance.",
+                "balance": "SP/MP are selected author defaults. Every mana-priced spell/art has at least 1 base MP.",
+                "coreExclusionReasons": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Your actions cost +1 SP while this burden is held. Ethereal.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            }
+          ],
+          "helpers": [
+            {
+              "definition": {
+                "id": "base.strike",
+                "name": "Strike",
+                "class": "colorless",
+                "rarity": "special",
+                "cost": 1,
+                "costRule": "fixed",
+                "staminaCost": 1,
+                "manaCost": 0,
+                "type": "attack",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "damage",
+                    "target": "enemy",
+                    "amount": 6
+                  }
+                ],
+                "textTemplate": "Deal {damage} damage.",
+                "icon": "⚔",
+                "damageSchool": "physical",
+                "exposureBuildupPerHit": 0
+              },
+              "tags": [
+                "camp:physical",
+                "classification.attack",
+                "maneuver:attack"
+              ],
+              "groups": [
+                "base.generated-helpers"
+              ],
+              "presentation": {
+                "canonicalCardRef": "strike",
+                "faceLines": [
+                  "Deal 6 damage."
+                ]
+              },
+              "provenance": {
+                "source": "authored-helper",
+                "reason": "Stable generated identity; Smash is 2× Strike for +1 SP."
+              },
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 1,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Deal 6 damage.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            },
+            {
+              "definition": {
+                "id": "base.smash",
+                "name": "Smash",
+                "class": "colorless",
+                "rarity": "special",
+                "cost": 2,
+                "costRule": "fixed",
+                "staminaCost": 2,
+                "manaCost": 0,
+                "type": "attack",
+                "keywords": [],
+                "effects": [
+                  {
+                    "op": "damage",
+                    "target": "enemy",
+                    "amount": 12
+                  }
+                ],
+                "textTemplate": "Deal {damage} damage.",
+                "icon": "⚔",
+                "damageSchool": "physical",
+                "exposureBuildupPerHit": 0
+              },
+              "tags": [
+                "camp:physical",
+                "classification.attack",
+                "maneuver:smash"
+              ],
+              "groups": [
+                "base.generated-helpers"
+              ],
+              "presentation": {
+                "canonicalCardRef": "strike",
+                "faceLines": [
+                  "Deal 12 damage."
+                ]
+              },
+              "provenance": {
+                "source": "authored-helper",
+                "reason": "Stable generated identity; Smash is 2× Strike for +1 SP."
+              },
+              "requirements": {
+                "elements": [],
+                "features": [],
+                "modules": []
+              },
+              "authorDefaults": {
+                "state": "editable-author-defaults",
+                "costs": {
+                  "stamina": 2,
+                  "mana": 0,
+                  "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
+                },
+                "chosenRules": "Deal 12 damage.",
+                "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
+                "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
+              }
+            }
+          ]
+        },
+        "baseCardGroups": {
+          "base.current-rewards": {
+            "members": [
+              "base.persistent-protection",
+              "base.greased",
+              "base.divine-strike",
+              "base.poison",
+              "base.blight",
+              "base.weak",
+              "base.charm",
+              "base.bind",
+              "base.restrained",
+              "base.foresight",
+              "base.evade",
+              "base.intangible",
+              "base.mirrors",
+              "base.elemental-weapon",
+              "base.fire-cleanse",
+              "base.divine-cleanse",
+              "base.necrotic-heal",
+              "base.divine-harm",
+              "base.shuffle-hand",
+              "base.shuffle-deck",
+              "base.draw",
+              "base.retain",
+              "base.scout",
+              "base.reveal-opponent-hand",
+              "base.recall-choose",
+              "base.recover-exile",
+              "base.exhaust-choose",
+              "base.transform",
+              "base.status-card-stagger",
+              "base.status-card-paralyze",
+              "base.exhaust",
+              "base.ethereal",
+              "base.stat-buff",
+              "base.drain-allies",
+              "base.scale-negative-status",
+              "base.scale-damage-taken",
+              "base.growth-per-type",
+              "base.cost-per-use",
+              "base.damage-per-use",
+              "base.pay-x-effect",
+              "base.pay-x-targets",
+              "base.hide-cards",
+              "base.force-stance",
+              "base.multi-stance",
+              "base.current-stance-variant",
+              "base.paid-resource-variant",
+              "base.attack-then-defend",
+              "base.modify-card-stance",
+              "base.modify-card-range",
+              "base.extra-weapon",
+              "base.extra-shield",
+              "base.auto-counter",
+              "base.auto-sweep",
+              "base.reflect",
+              "base.guard-allies",
+              "base.transmute",
+              "base.one-use-scroll",
+              "base.gain-resource",
+              "base.buff-ally",
+              "base.break-ward",
+              "base.break-poise",
+              "base.generate-smash",
+              "base.conditional-damage-bonus",
+              "base.perception-untargetable",
+              "base.retain-block",
+              "base.immediate-stance-transition",
+              "base.multi-hit"
+            ]
+          },
+          "base.core-rewards": {
+            "members": [
+              "base.blight",
+              "base.weak",
+              "base.charm",
+              "base.bind",
+              "base.restrained",
+              "base.foresight",
+              "base.evade",
+              "base.intangible",
+              "base.mirrors",
+              "base.shuffle-hand",
+              "base.shuffle-deck",
+              "base.draw",
+              "base.scout",
+              "base.reveal-opponent-hand",
+              "base.recall-choose",
+              "base.recover-exile",
+              "base.exhaust-choose",
+              "base.transform",
+              "base.status-card-stagger",
+              "base.status-card-paralyze",
+              "base.exhaust",
+              "base.ethereal",
+              "base.stat-buff",
+              "base.drain-allies",
+              "base.scale-negative-status",
+              "base.scale-damage-taken",
+              "base.growth-per-type",
+              "base.cost-per-use",
+              "base.damage-per-use",
+              "base.pay-x-effect",
+              "base.pay-x-targets",
+              "base.hide-cards",
+              "base.force-stance",
+              "base.multi-stance",
+              "base.current-stance-variant",
+              "base.paid-resource-variant",
+              "base.attack-then-defend",
+              "base.modify-card-stance",
+              "base.modify-card-range",
+              "base.extra-weapon",
+              "base.extra-shield",
+              "base.auto-counter",
+              "base.auto-sweep",
+              "base.reflect",
+              "base.guard-allies",
+              "base.transmute",
+              "base.one-use-scroll",
+              "base.gain-resource",
+              "base.buff-ally",
+              "base.break-poise",
+              "base.generate-smash",
+              "base.conditional-damage-bonus",
+              "base.perception-untargetable",
+              "base.retain-block",
+              "base.immediate-stance-transition"
+            ]
+          },
+          "base.generated-burdens": {
+            "members": [
+              "base.stagger-status-card",
+              "base.paralysis-status-card",
+              "base.restrained-status-card"
+            ]
+          },
+          "base.generated-helpers": {
+            "members": [
+              "base.strike",
+              "base.smash"
+            ]
+          }
+        },
+        "baseCardVariants": {
+          "base.persistent-protection": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 2
+            },
+            "sp": {
+              "cost": 3,
+              "staminaCost": 3,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 3
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.greased": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 1
+            },
+            "sp": {
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 2
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.divine-strike": {
+            "sp,mp": {
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 1
+            },
+            "sp": {
+              "cost": 3,
+              "staminaCost": 3,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 3
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.poison": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 1
+            },
+            "sp": {
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 2
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.blight": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 1
+            },
+            "sp": {
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 2
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.weak": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 1
+            },
+            "sp": {
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 2
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.charm": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 1
+            },
+            "sp": {
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 2
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.bind": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 1
+            },
+            "sp": {
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 2
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.restrained": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 1
+            },
+            "sp": {
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 2
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.foresight": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 1
+            },
+            "sp": {
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 2
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.evade": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 1
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.intangible": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 2
+            },
+            "sp": {
+              "cost": 3,
+              "staminaCost": 3,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 3
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.mirrors": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 2
+            },
+            "sp": {
+              "cost": 3,
+              "staminaCost": 3,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 3
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.elemental-weapon": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 1
+            },
+            "sp": {
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 2
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.fire-cleanse": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 1
+            },
+            "sp": {
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 2
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.divine-cleanse": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 1
+            },
+            "sp": {
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 2
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.necrotic-heal": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 1
+            },
+            "sp": {
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 2
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.divine-harm": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 1
+            },
+            "sp": {
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 2
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.shuffle-hand": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 1
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.shuffle-deck": {
+            "sp,mp": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.draw": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 1
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.retain": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 1
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.scout": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 1
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.reveal-opponent-hand": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 1
+            },
+            "sp": {
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 2
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.recall-choose": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 1
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.recover-exile": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 1
+            },
+            "sp": {
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 2
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.exhaust-choose": {
+            "sp,mp": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.transform": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 1
+            },
+            "sp": {
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 2
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.status-card-stagger": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 1
+            },
+            "sp": {
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 2
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.status-card-paralyze": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 1
+            },
+            "sp": {
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 2
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.exhaust": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 1
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.ethereal": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 1
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.stat-buff": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 1
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.drain-allies": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 1
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.scale-negative-status": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 1
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.scale-damage-taken": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 1
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.growth-per-type": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 1
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.cost-per-use": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 1,
+              "costGrowth": {
+                "stamina": 0,
+                "mana": 1,
+                "perUse": 1,
+                "max": 3
+              }
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0,
+              "costGrowth": {
+                "stamina": 0,
+                "mana": 0,
+                "perUse": 1,
+                "max": 3
+              }
+            }
+          },
+          "base.damage-per-use": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 1
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.pay-x-effect": {
+            "sp,mp": {
+              "cost": "X",
+              "staminaCost": 0,
+              "manaCost": 1
+            },
+            "sp": {
+              "cost": "X",
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 1,
+              "effects": [
+                {
+                  "op": "damage",
+                  "target": "enemy",
+                  "amount": 6
+                }
+              ],
+              "textTemplate": "Deal {damage} damage to one enemy."
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0,
+              "effects": [
+                {
+                  "op": "damage",
+                  "target": "enemy",
+                  "amount": 6
+                }
+              ],
+              "textTemplate": "Deal {damage} damage to one enemy."
+            }
+          },
+          "base.pay-x-targets": {
+            "sp,mp": {
+              "cost": "X",
+              "staminaCost": 0,
+              "manaCost": 1
+            },
+            "sp": {
+              "cost": "X",
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 1,
+              "effects": [
+                {
+                  "op": "damage",
+                  "target": "enemy",
+                  "amount": 8
+                }
+              ],
+              "targetLimit": 1,
+              "textTemplate": "Deal {damage} damage to one enemy."
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0,
+              "effects": [
+                {
+                  "op": "damage",
+                  "target": "enemy",
+                  "amount": 8
+                }
+              ],
+              "targetLimit": 1,
+              "textTemplate": "Deal {damage} damage to one enemy."
+            }
+          },
+          "base.hide-cards": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 1
+            },
+            "sp": {
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 2
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.force-stance": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 1
+            },
+            "sp": {
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 2
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.multi-stance": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 1
+            },
+            "sp": {
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 2
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.current-stance-variant": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 1
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.paid-resource-variant": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 1
+            },
+            "sp": {
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 2
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.attack-then-defend": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 1
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.modify-card-stance": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 1
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.modify-card-range": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 1
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.extra-weapon": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 1
+            },
+            "sp": {
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 2
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.extra-shield": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 1
+            },
+            "sp": {
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 2
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.auto-counter": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 1
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.auto-sweep": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 1
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.reflect": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 1
+            },
+            "sp": {
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 2
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.guard-allies": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 1
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.transmute": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 1
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.one-use-scroll": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 1
+            },
+            "sp": {
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 2
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.gain-resource": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 1
+            },
+            "sp": {
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 2,
+              "effects": [
+                {
+                  "op": "restoreMana",
+                  "target": "self",
+                  "amount": 3
+                }
+              ],
+              "textTemplate": "Restore {restoreMana} MP."
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0,
+              "effects": [
+                {
+                  "op": "draw",
+                  "amount": 1
+                }
+              ],
+              "textTemplate": "Draw {draw} card."
+            }
+          },
+          "base.buff-ally": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 1
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.break-ward": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 1
+            },
+            "sp": {
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 2
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.break-poise": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 1
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.generate-smash": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 1
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.conditional-damage-bonus": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 1
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.perception-untargetable": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 1
+            },
+            "sp": {
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 2
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.retain-block": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 1
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.immediate-stance-transition": {
+            "sp,mp": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.stagger-status-card": {
+            "sp,mp": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.multi-hit": {
+            "sp,mp": {
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 2
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.paralysis-status-card": {
+            "sp,mp": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.restrained-status-card": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 1
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.strike": {
+            "sp,mp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 1,
+              "staminaCost": 1,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 1
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          },
+          "base.smash": {
+            "sp,mp": {
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 0
+            },
+            "sp": {
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 0
+            },
+            "mp": {
+              "cost": 1,
+              "staminaCost": 0,
+              "manaCost": 2
+            },
+            "none": {
+              "cost": 0,
+              "staminaCost": 0,
+              "manaCost": 0
+            }
+          }
+        },
+        "baseCardSourceManifest": {
+          "sourceBranch": "Feature/updateCharacterCreation",
+          "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+          "sourceFilename": "docs/design/card-tag-design/proposed-design.json",
+          "normalization": {
+            "combatCards": 67,
+            "statusCards": 3,
+            "excludedEntityKinds": [
+              "service",
+              "ruleTemplate"
+            ]
+          },
+          "sourceEntries": [
+            {
+              "id": "proposed:card:persistent-protection",
+              "sha256": "1e35d65d3962adaeb43e57757e8ca9965c7c69aa053a99ea74eb63627b7ce15c"
+            },
+            {
+              "id": "proposed:card:greased",
+              "sha256": "5cee695572b3cb545e3990cc81e40d299477441327861f5f0ec3b494f66f1732"
+            },
+            {
+              "id": "proposed:card:divine-strike",
+              "sha256": "691663ebfd98834d7def1d87f3958a447e00f0e44e37dbf6fa8c3dfed6c65a8f"
+            },
+            {
+              "id": "proposed:card:poison",
+              "sha256": "1bce1628803f8c804bac99d07ebebefef8093ec1e779b84c506d17b5a49d8959"
+            },
+            {
+              "id": "proposed:card:blight",
+              "sha256": "f23b56155a2c0a89d2fe2cb08f620f801e77307ffaebb54057f349562ac6f791"
+            },
+            {
+              "id": "proposed:card:weak",
+              "sha256": "5bb7c907458e87f15365f8c0b47948e6112724bfae56bd3b72f4e3a505c69719"
+            },
+            {
+              "id": "proposed:card:charm",
+              "sha256": "48adfd1d510efd85a9950d56c0c372f9048467db4391de3ff1683244bd8bf299"
+            },
+            {
+              "id": "proposed:card:bind",
+              "sha256": "e8a121f423883818e8ade8c4c5ec0a4096e753c4161df16234768a2199b74a2b"
+            },
+            {
+              "id": "proposed:card:restrained",
+              "sha256": "9b06c725b9a183898d4a73b6aa90ac6b01fc1b48bba6239f80beecc5ef5b9257"
+            },
+            {
+              "id": "proposed:card:foresight",
+              "sha256": "965873f481538b0a2af6c3d00e671ff425a4817c7348232d811b82607f392a3e"
+            },
+            {
+              "id": "proposed:card:evade",
+              "sha256": "ffc82dd0520b4ed102f433d31d6eed83ed50f11160a72219107c8297754922cb"
+            },
+            {
+              "id": "proposed:card:intangible",
+              "sha256": "f25cc43731be584f2a8a06647dd33a0804631d5f58e7342c1da497e9092b2957"
+            },
+            {
+              "id": "proposed:card:mirrors",
+              "sha256": "426f2770f3a614a2d34591ffde791a1fcc462b963f20693fda48934334a87899"
+            },
+            {
+              "id": "proposed:card:elemental-weapon",
+              "sha256": "86dc01d158bbe8bd6a7c464a9ccf7d23f58ae8e87299ec1515afa8873c4f0c9e"
+            },
+            {
+              "id": "proposed:card:fire-cleanse",
+              "sha256": "fc0294f944fc8d331c448c2f404ecb25dabf66c1c95d30feee081c4dd28cbe11"
+            },
+            {
+              "id": "proposed:card:divine-cleanse",
+              "sha256": "e0490322563d1c164a61727f46b38519f26f135e7ebcbedb9ec55013d4b50de1"
+            },
+            {
+              "id": "proposed:card:necrotic-heal",
+              "sha256": "bd432d1848451b2cbdffac82d64782f8c446e4247589a56e6364a1b37e658e55"
+            },
+            {
+              "id": "proposed:card:divine-harm",
+              "sha256": "0f3f5cab02e2e018c9ec4e49741fe0247606ac406bc18a8be0ee41764edd7f22"
+            },
+            {
+              "id": "proposed:card:shuffle-hand",
+              "sha256": "3460a1d10d1385ef37284fe2cb387576d25deac85aa473903434258381eeaa4d"
+            },
+            {
+              "id": "proposed:card:shuffle-deck",
+              "sha256": "ef118dda9bc0c06005a7a52b43d48f58d159334e2c072e836da100584a5b78ca"
+            },
+            {
+              "id": "proposed:card:draw",
+              "sha256": "61b6694107227948855ba70daafadddcee8a361f33dac8ca49fb7388a7878d98"
+            },
+            {
+              "id": "proposed:card:retain",
+              "sha256": "03ee33fdd3ac8ce25c0252eec656ac68fe60c5f568f9b780e6fdedf5d8b124ec"
+            },
+            {
+              "id": "proposed:card:scout",
+              "sha256": "6e0d34740fa4c9ce233c9fed0e54bd9ead728cc50e09243f60120a825edd2c7c"
+            },
+            {
+              "id": "proposed:card:reveal-opponent-hand",
+              "sha256": "887591a3dcaa8a9ea6056693783f66806641be64df0a551cbb2eef3d9b4ef19d"
+            },
+            {
+              "id": "proposed:card:recall-choose",
+              "sha256": "a64082004adbea4d01c64baf137d012d7a60295399025e0aaa8ee5d3e6e9a6d8"
+            },
+            {
+              "id": "proposed:card:recover-exile",
+              "sha256": "562d708aa0951b3dee267c0e8679f489988e184729643e0ffeb0f0cf17e6f2ac"
+            },
+            {
+              "id": "proposed:card:exhaust-choose",
+              "sha256": "6f6d8c4648e105f35559b69c55325c1a47ca4e166d8df411a57548297b6ea313"
+            },
+            {
+              "id": "proposed:card:transform",
+              "sha256": "55ff5b21b80ae3e5088ea5ee6d8773759cb41bbc95454c35742d41874b8f9bed"
+            },
+            {
+              "id": "proposed:card:status-card-stagger",
+              "sha256": "1511bae7d6ed887e5ecb909378d05432de9c2ed0d3cc86eead576b5bf3d8acbe"
+            },
+            {
+              "id": "proposed:card:status-card-paralyze",
+              "sha256": "d6c18643f7becb7d652151a758b59c464e5ba0116098520f124e80a7ca6bdde3"
+            },
+            {
+              "id": "proposed:card:exhaust",
+              "sha256": "656afbcd0fafbf22559e7def6e3d3cc3083bac3c543deeaaddb02481182d04b9"
+            },
+            {
+              "id": "proposed:card:ethereal",
+              "sha256": "e2e91040f3069260c8318aab22ac4fb422de828e97bd40665abe5856a9c2b2d1"
+            },
+            {
+              "id": "proposed:card:stat-buff",
+              "sha256": "9051ac5939a72ba379ab0e10cbd4d3a4ca1b8def896938d1db506862a32cd5d1"
+            },
+            {
+              "id": "proposed:card:drain-allies",
+              "sha256": "5fc6c3b6dbb417c44c279fcad9782b60ecb33d4671050962a06bf4cd24b20c8e"
+            },
+            {
+              "id": "proposed:card:scale-negative-status",
+              "sha256": "aa708b921ac3582069ed7fbd3401861a7b63c4af7a6e850407d98049a696a6e1"
+            },
+            {
+              "id": "proposed:card:scale-damage-taken",
+              "sha256": "20bcd4743e403e3ec275fa634c7a33ce2c1861e809a763694d3731bf979b01db"
+            },
+            {
+              "id": "proposed:card:growth-per-type",
+              "sha256": "6a2990adf86d34ca5a3f28854669d5d38b38f473dd8d0a176a0b5664968007ce"
+            },
+            {
+              "id": "proposed:card:cost-per-use",
+              "sha256": "083c5eafaa31bf2abeac1c4ee0c18c5c5de2dfbefa48d4ab227d84c319a798b7"
+            },
+            {
+              "id": "proposed:card:damage-per-use",
+              "sha256": "b5d555f69856133795ed488c6acccf34f12c4e341d986a6de6e59133752ccd91"
+            },
+            {
+              "id": "proposed:card:pay-x-effect",
+              "sha256": "41113af8112459bd2dcd2f9d1fd798c9c077d86e1c122e60ec852279fafb2306"
+            },
+            {
+              "id": "proposed:card:pay-x-targets",
+              "sha256": "c7734b2a6aa2aa8787b2fdeb8817311d9e85d7c4db45006d4489288be57d5157"
+            },
+            {
+              "id": "proposed:card:hide-cards",
+              "sha256": "365a19eb68a6cd3e661f16b6f6e127f48a3dae33e193e2a78736c9cfa55ba6a4"
+            },
+            {
+              "id": "proposed:card:force-stance",
+              "sha256": "f9eacdac450aae5148c6df6b63f42d55a63ae41a71970e1cdb9bc8cdbb7a6895"
+            },
+            {
+              "id": "proposed:card:multi-stance",
+              "sha256": "f6d37e79ec1f703d4f0e19451d3b922e0c1dec431b2e8108605e4fbf196ddcb3"
+            },
+            {
+              "id": "proposed:card:current-stance-variant",
+              "sha256": "892c030b9cd38ffa8ba8d3cabdaa03a3f946e7e6c09c641357f74839a190eec9"
+            },
+            {
+              "id": "proposed:card:paid-resource-variant",
+              "sha256": "cbe4a095c40b152cf0196547348c1eb5a00b61f738b4149c2190558b3e5bd124"
+            },
+            {
+              "id": "proposed:card:attack-then-defend",
+              "sha256": "2437a08d5faab3d2c6482c84c3f803d42569a9a7ca19b5341e76b1cf1bb4168d"
+            },
+            {
+              "id": "proposed:card:modify-card-stance",
+              "sha256": "b0d3dbd107969b2846ba75ceea8c043cacdb66f861e91fc2a6aefa0bbd6f89d3"
+            },
+            {
+              "id": "proposed:card:modify-card-range",
+              "sha256": "d14b5c25ddd511fcb5229b0012db9ec5a037f0d15d1df35e432c19a7b015852d"
+            },
+            {
+              "id": "proposed:card:extra-weapon",
+              "sha256": "faabf32a4e567596fc833836b63cdce9d8ee10855bf1f9612dfd126b515f5475"
+            },
+            {
+              "id": "proposed:card:extra-shield",
+              "sha256": "6ad1b12cf9ae67eaa82637c42992dbd7b45c745cb4ddb4b6bedebeb22d8d9a90"
+            },
+            {
+              "id": "proposed:card:auto-counter",
+              "sha256": "ec8695c31f39a2590ab8bed59153cb7bfd17a63482a8d04f704189e01cc4c694"
+            },
+            {
+              "id": "proposed:card:auto-sweep",
+              "sha256": "c8813f4f7cbccebc53449c4af6f3430680c02d136cb752707f696af422dbf14b"
+            },
+            {
+              "id": "proposed:card:reflect",
+              "sha256": "103c625a8d907bc45f4c4098f021f51e659f26d760e5b7e4cde3f15aafd18ca4"
+            },
+            {
+              "id": "proposed:card:guard-allies",
+              "sha256": "5aee8d23a719b65b1dc90320ed99924068d39d542ba14942d7ac80568353aacd"
+            },
+            {
+              "id": "proposed:card:transmute",
+              "sha256": "4fd148cc1a7b31e4039b74e376c4562dfc354c7ab4a2c9455462e50f5562a6ca"
+            },
+            {
+              "id": "proposed:card:one-use-scroll",
+              "sha256": "499615f9c098802a4ed4465e577ce1c8e7119d103627e782f3398b331e4eac91"
+            },
+            {
+              "id": "proposed:card:gain-resource",
+              "sha256": "165f0bfe3e80740b5a8536ca90e5b5f6447dcf854b37e4f67d8185e175a5ebe3"
+            },
+            {
+              "id": "proposed:card:buff-ally",
+              "sha256": "0c64a4a7705784c6ae4298974f800c87d6f81847a469bb7429b94a512d64cdfb"
+            },
+            {
+              "id": "proposed:card:break-ward",
+              "sha256": "d2875140dceb6322bc6a218e3f8ec46b02b9b49d2f013cb34ba1d2f60187e971"
+            },
+            {
+              "id": "proposed:card:break-poise",
+              "sha256": "ef6ec99379514c5d25c401486d5363a2577f846eed0fafbadef1e77f5a62599e"
+            },
+            {
+              "id": "proposed:card:generate-smash",
+              "sha256": "7f91400e9faef5312cf46ff3b6895462ec453ef74253927830b7358d548f1a65"
+            },
+            {
+              "id": "proposed:card:conditional-damage-bonus",
+              "sha256": "aa5b887a2c0a14d87c5927beb6a18b61471c594752464e7ef29c79dee43026c9"
+            },
+            {
+              "id": "proposed:card:perception-untargetable",
+              "sha256": "02bac4b937049ef6057901e5ef5a34585c52e45423e50f83785e0bbee273a0d8"
+            },
+            {
+              "id": "proposed:card:retain-block",
+              "sha256": "e9cf7a1c30cc6b850ba200197dcb6dd1fd239781d6e0783183d077662e33b17a"
+            },
+            {
+              "id": "proposed:card:immediate-stance-transition",
+              "sha256": "9ac556aa6193cab43adaa64521d8fee5e2b11f5e9cb7145c549af963367ee972"
+            },
+            {
+              "id": "proposed:card:stagger-status-card",
+              "sha256": "11a3989884fbf33e0413042d011a6c844c02a0060705503c152ff8a6deb2a0d0"
+            },
+            {
+              "id": "proposed:card:multi-hit",
+              "sha256": "eedda14122b1530bf4a614ca25d2f8498b1e93d8dcb2bc6b6777ad740d13e0e8"
+            },
+            {
+              "id": "proposed:card:paralysis-status-card",
+              "sha256": "6f93a3a513baf1882e103a7e8c37440568631a04e2b5f969338a5c12a4a729d8"
+            },
+            {
+              "id": "proposed:card:restrained-status-card",
+              "sha256": "1f2e48b618f8e98baffa19c6a4364b0e9016b250d7e9f5a8df4d3a97225ae289"
+            }
+          ],
+          "excludedEntries": [
+            {
+              "id": "proposed:card:creature-vulnerability",
+              "entityKind": "ruleTemplate",
+              "reason": "Non-combat service or rule template; retained as design context, not a playable card."
+            },
+            {
+              "id": "proposed:card:armor-resistance",
+              "entityKind": "ruleTemplate",
+              "reason": "Non-combat service or rule template; retained as design context, not a playable card."
+            },
+            {
+              "id": "proposed:card:learn-spell",
+              "entityKind": "service",
+              "reason": "Non-combat service or rule template; retained as design context, not a playable card."
+            },
+            {
+              "id": "proposed:card:extract-ranked-copy",
+              "entityKind": "service",
+              "reason": "Non-combat service or rule template; retained as design context, not a playable card."
+            }
+          ]
+        },
+        "baseCardStatusSource": {
+          "schemaVersion": 1,
+          "defaults": {
+            "appliedStacks": 1,
+            "beneficialDecayPhase": "start",
+            "harmfulDecayPhase": "end",
+            "decayStacks": 1,
+            "coreElements": [],
+            "randomRollDomain": "integer 0..99; success when roll < chance",
+            "proneStatus": "prone",
+            "reactiveDamageNeverRecurses": true
+          },
+          "statuses": [
+            {
+              "id": "base.persistent-block",
+              "name": "Persistent Block",
+              "icon": "▰",
+              "stackMode": "add",
+              "decay": "none",
+              "tooltip": "Replenish Block up to remaining stacks at turn start. A connected physical hit consumes one stack, including fully blocked hits."
+            },
+            {
+              "id": "base.persistent-barrier",
+              "name": "Persistent Barrier",
+              "icon": "◇",
+              "stackMode": "add",
+              "decay": "none",
+              "tooltip": "Replenish Barrier up to remaining stacks at turn start. A connected magical hit consumes one stack, including fully protected hits."
+            },
+            {
+              "id": "base.greased",
+              "name": "Greased",
+              "icon": "◒",
+              "stackMode": "add",
+              "decay": "none",
+              "tooltip": "Melee/Reach accuracy -20. At turn start 25% chance to become Prone. Fire cannot miss: triple damage, Burn 3, and splash 1.5 times the original incoming fire damage to other same-side actors."
+            },
+            {
+              "id": "base.poison",
+              "name": "Poison",
+              "icon": "☠",
+              "stackMode": "add",
+              "decay": "none",
+              "tooltip": "At turn start take 1 necrotic damage per stack. Unlike Venom, this is direct ongoing damage, without a buildup threshold. Lose one stack at turn end."
+            },
+            {
+              "id": "base.blight",
+              "name": "Blight",
+              "icon": "◈",
+              "stackMode": "add",
+              "decay": "none",
+              "tooltip": "If Blight stacks reach current HP, die immediately. Lose one stack at turn end."
+            },
+            {
+              "id": "base.weak",
+              "name": "Weak",
+              "icon": "↓",
+              "stackMode": "add",
+              "decay": "none",
+              "tooltip": "Deal 25% less direct damage while active. Additional stacks extend duration; they do not multiply the penalty."
+            },
+            {
+              "id": "base.charm",
+              "name": "Charm",
+              "icon": "♡",
+              "stackMode": "add",
+              "decay": "none",
+              "tooltip": "Direct attack accuracy -25 while active. Lose one stack at turn end."
+            },
+            {
+              "id": "base.bind",
+              "name": "Bind",
+              "icon": "⌁",
+              "stackMode": "add",
+              "decay": "none",
+              "tooltip": "Cannot play Attack cards. Skill, Power and recovery cards remain available. Lose one stack at turn end."
+            },
+            {
+              "id": "base.restrained",
+              "name": "Restrained",
+              "icon": "⊗",
+              "stackMode": "add",
+              "decay": "none",
+              "tooltip": "Melee and Reach cards cost 1 extra Stamina while active. This is separate from a generated Restrained burden card."
+            },
+            {
+              "id": "base.foresight",
+              "name": "Foresight",
+              "icon": "◎",
+              "stackMode": "add",
+              "decay": "none",
+              "tooltip": "Each stack grants +2 Perception for detecting Veil. Lose one stack at the next turn start."
+            },
+            {
+              "id": "base.evade",
+              "name": "Evade",
+              "icon": "↝",
+              "stackMode": "add",
+              "decay": "none",
+              "tooltip": "Consume one stack when a direct physical hit is attempted: 25% chance to avoid the entire action. Failed attempts also consume the stack."
+            },
+            {
+              "id": "base.intangible",
+              "name": "Intangible",
+              "icon": "◌",
+              "stackMode": "add",
+              "decay": "none",
+              "tooltip": "Direct hit damage is capped at 1; ongoing damage is unaffected. Lose one stack at the next turn start."
+            },
+            {
+              "id": "base.mirrors",
+              "name": "Mirrors",
+              "icon": "◇",
+              "stackMode": "add",
+              "decay": "none",
+              "tooltip": "Double direct outgoing damage. Additional stacks extend duration, without exponential multiplication. Lose one stack at the next turn start."
+            },
+            {
+              "id": "base.elemental-weapon",
+              "name": "Elemental Weapon",
+              "icon": "✦",
+              "stackMode": "add",
+              "decay": "none",
+              "tooltip": "Weapon attacks add a separate 3 Fire damage packet. The packet does not recursively trigger enchantments or reactions."
+            },
+            {
+              "id": "base.necrotic-healing",
+              "name": "Necrotic Renewal",
+              "icon": "✚",
+              "stackMode": "add",
+              "decay": "none",
+              "tooltip": "Incoming necrotic damage becomes equal healing, before protection. Lose one stack at the next turn start."
+            },
+            {
+              "id": "base.divine-harm",
+              "name": "Profane Inversion",
+              "icon": "†",
+              "stackMode": "add",
+              "decay": "none",
+              "tooltip": "Incoming Divine healing becomes equal Sacred damage. Ordinary healing is unchanged. Lose one stack at turn end."
+            },
+            {
+              "id": "base.extra-weapon",
+              "name": "Extra Weapon",
+              "icon": "⚔",
+              "stackMode": "add",
+              "decay": "none",
+              "tooltip": "The next weapon Attack repeats its primary damage once, without repeating card payment or recursively creating another action."
+            },
+            {
+              "id": "base.extra-shield",
+              "name": "Extra Shield",
+              "icon": "▰",
+              "stackMode": "add",
+              "decay": "none",
+              "tooltip": "The next shield/guard card repeats its protection once, without repeating payment or reactions."
+            },
+            {
+              "id": "base.auto-counter",
+              "name": "Automatic Counter",
+              "icon": "↶",
+              "stackMode": "add",
+              "decay": "none",
+              "tooltip": "After a hostile direct Melee/Reach hit connects, consume a stack and return 6 physical damage. Reaction damage cannot trigger another automatic reaction."
+            },
+            {
+              "id": "base.auto-sweep",
+              "name": "Automatic Sweep",
+              "icon": "↔",
+              "stackMode": "add",
+              "decay": "none",
+              "tooltip": "After a hostile direct hit connects, consume a stack and deal 4 physical damage to each opposing actor. Reaction damage cannot recurse."
+            },
+            {
+              "id": "base.reflect",
+              "name": "Reflect",
+              "icon": "↩",
+              "stackMode": "add",
+              "decay": "none",
+              "tooltip": "Reflect half actual HP damage from hostile direct hits, rounded down. Reflected damage never reflects again."
+            },
+            {
+              "id": "base.guard-allies",
+              "name": "Interpose",
+              "icon": "▣",
+              "stackMode": "add",
+              "decay": "none",
+              "tooltip": "Intercept up to 4 direct damage per stack for another ally, consuming one stack per interception. The lowest actor ID wins competing guards."
+            },
+            {
+              "id": "base.veil",
+              "name": "Veil",
+              "icon": "◍",
+              "stackMode": "add",
+              "decay": "none",
+              "tooltip": "Single-target actions must detect the bearer. Chance is 50% plus 5% per Perception advantage, minus 10% per Veil stack, clamped to 5–95%. Area actions bypass Veil."
+            },
+            {
+              "id": "base.retain-block",
+              "name": "Hold Block",
+              "icon": "▰",
+              "stackMode": "add",
+              "decay": "none",
+              "tooltip": "Retain up to 4 existing Block per stack when Block would expire. This does not create protection or duplicate Persistent Block."
+            },
+            {
+              "id": "base.read-intent",
+              "name": "Read Intent",
+              "icon": "◉",
+              "stackMode": "add",
+              "decay": "none",
+              "tooltip": "Reveal opposing burden hand card identities and counts while active. Lose one stack at the next turn start."
+            },
+            {
+              "id": "base.stagger",
+              "name": "Stagger",
+              "icon": "✦",
+              "stackMode": "add",
+              "decay": "none",
+              "tooltip": "Visible burden tracking only. The generated card owns its action loss or resource tax, so this marker never applies it twice."
+            },
+            {
+              "id": "base.paralysis",
+              "name": "Paralysis",
+              "icon": "ϟ",
+              "stackMode": "add",
+              "decay": "none",
+              "tooltip": "Visible burden tracking only. The generated card owns its action loss or resource tax, so this marker never applies it twice."
+            },
+            {
+              "id": "base.restrained-burden",
+              "name": "Restrained Burden",
+              "icon": "⊗",
+              "stackMode": "add",
+              "decay": "none",
+              "tooltip": "Visible burden tracking only. The generated card owns its action loss or resource tax, so this marker never applies it twice."
+            },
+            {
+              "id": "base.many-forms",
+              "name": "Many Forms",
+              "icon": "✧",
+              "stackMode": "add",
+              "decay": "none",
+              "tooltip": "Each stack permits one additional concurrent stance. One stack allows two total stances. Lose one stack at the next turn start."
+            },
+            {
+              "id": "base.conceal",
+              "name": "Conceal",
+              "icon": "◒",
+              "stackMode": "add",
+              "decay": "none",
+              "tooltip": "Each stack increases cards hidden and their hidden duration by one. Lose one stack at owner turn start."
+            }
+          ],
+          "rules": {
+            "base.persistent-block": {
+              "requires": {
+                "modules": [
+                  "statuses",
+                  "defenses"
+                ],
+                "elements": [],
+                "protections": [
+                  "block"
+                ]
+              },
+              "decay": null,
+              "behaviors": [
+                {
+                  "kind": "persistentProtection",
+                  "pool": "block",
+                  "camp": "physical",
+                  "minimumIncomingDamage": 1
+                }
+              ]
+            },
+            "base.persistent-barrier": {
+              "requires": {
+                "modules": [
+                  "statuses",
+                  "defenses"
+                ],
+                "elements": [],
+                "protections": [
+                  "barrier"
+                ]
+              },
+              "decay": null,
+              "behaviors": [
+                {
+                  "kind": "persistentProtection",
+                  "pool": "barrier",
+                  "camp": "spell",
+                  "minimumIncomingDamage": 1
+                }
+              ]
+            },
+            "base.greased": {
+              "requires": {
+                "modules": [
+                  "statuses"
+                ],
+                "elements": [
+                  "fire"
+                ]
+              },
+              "decay": {
+                "phase": "end",
+                "stacks": 1
+              },
+              "behaviors": [
+                {
+                  "kind": "accuracy",
+                  "delta": -20,
+                  "ranges": [
+                    "melee",
+                    "reach"
+                  ]
+                },
+                {
+                  "kind": "turnChance",
+                  "phase": "start",
+                  "chance": 25,
+                  "status": "prone",
+                  "stacks": 1
+                },
+                {
+                  "kind": "greaseFire",
+                  "damageTypes": [
+                    "fire"
+                  ],
+                  "multiplier": 3,
+                  "burnStatus": "burn",
+                  "burnStacks": 3,
+                  "splashMultiplier": 1.5,
+                  "splashBasis": "originalIncoming",
+                  "consumeStacks": 1
+                }
+              ]
+            },
+            "base.poison": {
+              "requires": {
+                "modules": [
+                  "statuses"
+                ],
+                "elements": [
+                  "decay"
+                ]
+              },
+              "decay": {
+                "phase": "end",
+                "stacks": 1
+              },
+              "behaviors": [
+                {
+                  "kind": "turnDamage",
+                  "phase": "start",
+                  "amountPerStack": 1,
+                  "damageType": "decay",
+                  "camp": "spell"
+                }
+              ]
+            },
+            "base.blight": {
+              "requires": {
+                "modules": [
+                  "statuses"
+                ],
+                "elements": [
+                  "decay"
+                ]
+              },
+              "decay": {
+                "phase": "end",
+                "stacks": 1
+              },
+              "behaviors": [
+                {
+                  "kind": "lethalThreshold",
+                  "basis": "currentHp",
+                  "comparison": "atLeast",
+                  "damageType": "decay"
+                }
+              ]
+            },
+            "base.weak": {
+              "requires": {
+                "modules": [
+                  "statuses"
+                ],
+                "elements": []
+              },
+              "decay": {
+                "phase": "end",
+                "stacks": 1
+              },
+              "behaviors": [
+                {
+                  "kind": "outgoingMultiplier",
+                  "multiplier": 0.75,
+                  "directOnly": true
+                }
+              ]
+            },
+            "base.charm": {
+              "requires": {
+                "modules": [
+                  "statuses"
+                ],
+                "elements": []
+              },
+              "decay": {
+                "phase": "end",
+                "stacks": 1
+              },
+              "behaviors": [
+                {
+                  "kind": "accuracy",
+                  "delta": -25
+                }
+              ]
+            },
+            "base.bind": {
+              "requires": {
+                "modules": [
+                  "statuses"
+                ],
+                "elements": []
+              },
+              "decay": {
+                "phase": "end",
+                "stacks": 1
+              },
+              "behaviors": [
+                {
+                  "kind": "restriction",
+                  "cardTypes": [
+                    "attack"
+                  ]
+                }
+              ]
+            },
+            "base.restrained": {
+              "requires": {
+                "modules": [
+                  "statuses"
+                ],
+                "elements": []
+              },
+              "decay": {
+                "phase": "end",
+                "stacks": 1
+              },
+              "behaviors": [
+                {
+                  "kind": "cardTax",
+                  "ranges": [
+                    "melee",
+                    "reach"
+                  ],
+                  "stamina": 1,
+                  "mana": 0
+                }
+              ]
+            },
+            "base.foresight": {
+              "requires": {
+                "modules": [
+                  "statuses",
+                  "stats"
+                ],
+                "elements": []
+              },
+              "decay": {
+                "phase": "start",
+                "stacks": 1
+              },
+              "behaviors": [
+                {
+                  "kind": "perception",
+                  "amountPerStack": 2
+                }
+              ]
+            },
+            "base.evade": {
+              "requires": {
+                "modules": [
+                  "statuses"
+                ],
+                "elements": []
+              },
+              "decay": {
+                "phase": "start",
+                "stacks": 1
+              },
+              "behaviors": [
+                {
+                  "kind": "evade",
+                  "chance": 25,
+                  "camps": [
+                    "physical"
+                  ],
+                  "consumeStacks": 1
+                }
+              ]
+            },
+            "base.intangible": {
+              "requires": {
+                "modules": [
+                  "statuses"
+                ],
+                "elements": []
+              },
+              "decay": {
+                "phase": "start",
+                "stacks": 1
+              },
+              "behaviors": [
+                {
+                  "kind": "incomingCap",
+                  "maximum": 1,
+                  "directOnly": true
+                }
+              ]
+            },
+            "base.mirrors": {
+              "requires": {
+                "modules": [
+                  "statuses"
+                ],
+                "elements": []
+              },
+              "decay": {
+                "phase": "start",
+                "stacks": 1
+              },
+              "behaviors": [
+                {
+                  "kind": "outgoingMultiplier",
+                  "multiplier": 2,
+                  "directOnly": true
+                }
+              ]
+            },
+            "base.elemental-weapon": {
+              "requires": {
+                "modules": [
+                  "statuses",
+                  "equipment"
+                ],
+                "elements": [
+                  "fire"
+                ]
+              },
+              "decay": {
+                "phase": "start",
+                "stacks": 1
+              },
+              "behaviors": [
+                {
+                  "kind": "weaponBonus",
+                  "amount": 3,
+                  "damageType": "fire",
+                  "camp": "spell",
+                  "requiredTags": [
+                    "source:weapon"
+                  ]
+                }
+              ]
+            },
+            "base.necrotic-healing": {
+              "requires": {
+                "modules": [
+                  "statuses"
+                ],
+                "elements": [
+                  "decay"
+                ]
+              },
+              "decay": {
+                "phase": "start",
+                "stacks": 1
+              },
+              "behaviors": [
+                {
+                  "kind": "damageToHealing",
+                  "damageTypes": [
+                    "decay",
+                    "necrotic"
+                  ],
+                  "multiplier": 1
+                }
+              ]
+            },
+            "base.divine-harm": {
+              "requires": {
+                "modules": [
+                  "statuses"
+                ],
+                "elements": [
+                  "sacred"
+                ]
+              },
+              "decay": {
+                "phase": "end",
+                "stacks": 1
+              },
+              "behaviors": [
+                {
+                  "kind": "healingToDamage",
+                  "damageTypes": [
+                    "sacred",
+                    "divine",
+                    "holy"
+                  ],
+                  "multiplier": 1,
+                  "damageType": "sacred"
+                }
+              ]
+            },
+            "base.extra-weapon": {
+              "requires": {
+                "modules": [
+                  "statuses",
+                  "equipment"
+                ],
+                "elements": []
+              },
+              "decay": {
+                "phase": "start",
+                "stacks": 1
+              },
+              "behaviors": [
+                {
+                  "kind": "extraWeapon",
+                  "requiredTags": [
+                    "source:weapon"
+                  ],
+                  "fallbackDamage": 6,
+                  "consumeStacks": 1
+                }
+              ]
+            },
+            "base.extra-shield": {
+              "requires": {
+                "modules": [
+                  "statuses",
+                  "equipment",
+                  "defenses"
+                ],
+                "elements": []
+              },
+              "decay": {
+                "phase": "start",
+                "stacks": 1
+              },
+              "behaviors": [
+                {
+                  "kind": "extraShield",
+                  "requiredTags": [
+                    "item:shield",
+                    "shield",
+                    "maneuver:defend"
+                  ],
+                  "fallbackBlock": 4,
+                  "consumeStacks": 1
+                }
+              ]
+            },
+            "base.auto-counter": {
+              "requires": {
+                "modules": [
+                  "statuses",
+                  "reactions"
+                ],
+                "elements": []
+              },
+              "decay": {
+                "phase": "start",
+                "stacks": 1
+              },
+              "behaviors": [
+                {
+                  "kind": "autoReaction",
+                  "mode": "counter",
+                  "amount": 6,
+                  "damageType": "blunt",
+                  "camp": "physical",
+                  "ranges": [
+                    "melee",
+                    "reach"
+                  ],
+                  "consumeStacks": 1
+                }
+              ]
+            },
+            "base.auto-sweep": {
+              "requires": {
+                "modules": [
+                  "statuses",
+                  "reactions"
+                ],
+                "elements": []
+              },
+              "decay": {
+                "phase": "start",
+                "stacks": 1
+              },
+              "behaviors": [
+                {
+                  "kind": "autoReaction",
+                  "mode": "sweep",
+                  "amount": 4,
+                  "damageType": "slashing",
+                  "camp": "physical",
+                  "consumeStacks": 1
+                }
+              ]
+            },
+            "base.reflect": {
+              "requires": {
+                "modules": [
+                  "statuses",
+                  "reactions"
+                ],
+                "elements": []
+              },
+              "decay": {
+                "phase": "start",
+                "stacks": 1
+              },
+              "behaviors": [
+                {
+                  "kind": "reflect",
+                  "multiplier": 0.5,
+                  "damageType": "same"
+                }
+              ]
+            },
+            "base.guard-allies": {
+              "requires": {
+                "modules": [
+                  "statuses",
+                  "multiplayer"
+                ],
+                "elements": []
+              },
+              "decay": {
+                "phase": "start",
+                "stacks": 1
+              },
+              "behaviors": [
+                {
+                  "kind": "guard",
+                  "amountPerStack": 4,
+                  "consumeStacks": 1
+                }
+              ]
+            },
+            "base.veil": {
+              "requires": {
+                "modules": [
+                  "statuses",
+                  "stats"
+                ],
+                "elements": []
+              },
+              "decay": {
+                "phase": "start",
+                "stacks": 1
+              },
+              "behaviors": [
+                {
+                  "kind": "veil",
+                  "baseChance": 50,
+                  "perceptionScale": 5,
+                  "penaltyPerStack": 10,
+                  "minimum": 5,
+                  "maximum": 95,
+                  "areaBypass": true
+                }
+              ]
+            },
+            "base.retain-block": {
+              "requires": {
+                "modules": [
+                  "statuses",
+                  "defenses"
+                ],
+                "elements": [],
+                "protections": [
+                  "block"
+                ]
+              },
+              "decay": {
+                "phase": "start",
+                "stacks": 1
+              },
+              "behaviors": [
+                {
+                  "kind": "retainProtection",
+                  "pool": "block",
+                  "amountPerStack": 4
+                }
+              ]
+            },
+            "base.read-intent": {
+              "requires": {
+                "modules": [
+                  "statuses",
+                  "intent"
+                ],
+                "elements": []
+              },
+              "decay": {
+                "phase": "start",
+                "stacks": 1
+              },
+              "behaviors": [
+                {
+                  "kind": "revealIntent"
+                }
+              ]
+            },
+            "base.stagger": {
+              "requires": {
+                "modules": [
+                  "statuses"
+                ],
+                "elements": []
+              },
+              "decay": null,
+              "behaviors": []
+            },
+            "base.paralysis": {
+              "requires": {
+                "modules": [
+                  "statuses"
+                ],
+                "elements": []
+              },
+              "decay": null,
+              "behaviors": []
+            },
+            "base.restrained-burden": {
+              "requires": {
+                "modules": [
+                  "statuses"
+                ],
+                "elements": []
+              },
+              "decay": null,
+              "behaviors": []
+            },
+            "base.many-forms": {
+              "requires": {
+                "modules": [
+                  "statuses",
+                  "stances"
+                ],
+                "elements": []
+              },
+              "decay": {
+                "phase": "start",
+                "stacks": 1
+              },
+              "behaviors": [
+                {
+                  "kind": "stanceCapacity",
+                  "additionalPerStack": 1,
+                  "maxStances": 2,
+                  "defensePriority": [
+                    "counter",
+                    "defend",
+                    "evade",
+                    "casting",
+                    "attack",
+                    "smash",
+                    "sweep"
+                  ]
+                }
+              ]
+            },
+            "base.conceal": {
+              "requires": {
+                "modules": [
+                  "statuses"
+                ],
+                "elements": []
+              },
+              "decay": {
+                "phase": "start",
+                "stacks": 1
+              },
+              "behaviors": []
+            }
+          }
+        }
+      },
+      "artifacts": [
+        {
+          "path": "games/ashenspire/packs/base-cards/pack.json",
+          "id": "ashen.base-cards",
+          "version": "1.0.0",
+          "hash": "sha256:5b617c04bc9d4d1c823a3ecac96e437187bb1949aa5064a07ef3b2a4e11effc1"
+        },
+        {
+          "path": "games/ashenspire/packs/base-cards/cards.json",
+          "id": "ashen.base-cards",
+          "version": "1.0.0",
+          "hash": "sha256:fe6767b8f05aed42e1600d8bbfc59d8550317d366bd062fdf71f8098db651c57"
+        },
+        {
+          "path": "games/ashenspire/packs/base-cards/groups.json",
+          "id": "ashen.base-cards",
+          "version": "1.0.0",
+          "hash": "sha256:30624b09eacc0745d8ed062aede61187ac85b4c092e5810aec32b338b78a0015"
+        },
+        {
+          "path": "games/ashenspire/packs/base-cards/resourceVariants.json",
+          "id": "ashen.base-cards",
+          "version": "1.0.0",
+          "hash": "sha256:38e1bb638c066917feb70934d18018c728abbf0e6327afb7a0c4257634a43aad"
+        },
+        {
+          "path": "games/ashenspire/packs/base-cards/sourceManifest.json",
+          "id": "ashen.base-cards",
+          "version": "1.0.0",
+          "hash": "sha256:9bdcc7435d6f2f09b261f48a268b6edefa24599a38265e5f66881b4e40208512"
+        },
+        {
+          "path": "games/ashenspire/packs/base-cards/statuses.json",
+          "id": "ashen.base-cards",
+          "version": "1.0.0",
+          "hash": "sha256:ca89a2d501b990d08b6c6a737cccc620849cf62034c4b46399af06bb3838f2e1"
+        }
+      ]
     }
   },
   "runtimeArtifacts": [
@@ -3600,7 +15248,7 @@ export const gameProfileCatalog = {
       "path": "engine/kernel/gameConfig.js",
       "id": "ashen.runtime",
       "version": "1.0.0",
-      "hash": "sha256:1567809b69ed40bf7ae9b2fe2e710fac67a4a081b69aeb451a2fb06cd25bad7b"
+      "hash": "sha256:9095c9c9ea75ac88963dc53b9367728031c5711aeb4a98d17623644533efa4ea"
     },
     {
       "path": "engine/contracts/game-profile.json",
@@ -3618,7 +15266,7 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "path": "src/** (excluding generated gameProfiles/changelog)",
-      "hash": "sha256:79040a1caf1d7c7cb8d5501fbf1f03563ac3234779ccbf8c614723d738696393"
+      "hash": "sha256:3b3f41247b66312734e183355d56e7212c96a95896fe394627ddfce63df4f56a"
     }
   ],
   "runtimeSources": [
@@ -3716,13 +15364,13 @@ export const gameProfileCatalog = {
       "path": "src/content/card-layout.json",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:acd8c4f83b10b9daa397afa144772662706f196a9f4363211093a32bd56c03aa"
+      "hash": "sha256:654ef97606777138051ac8a18e64907390adabcc2f21abf5751afb7278490566"
     },
     {
       "path": "src/content/cardComponents.generated.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:7bba2d5822477d9a19bdd3799924decef51eababe0ad89a56e7fc5bb42fef35a"
+      "hash": "sha256:17ae8e4e8e67303f2c76d9b5f44af4bb3ad59423e67a3569bd2e04dc31af8952"
     },
     {
       "path": "src/content/cards/armaments.js",
@@ -4073,6 +15721,12 @@ export const gameProfileCatalog = {
       "hash": "sha256:9dea59a52a4bc5d6394b8f432a928ed0be2b86b95ad167db35774a899d48cdfc"
     },
     {
+      "path": "src/content/generated/baseCards.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:07749162341e3f2577f1189ebfed5ccd370e18dd3d2579fd26b94ba9349d272d"
+    },
+    {
       "path": "src/content/generated/basicCardProfiles.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
@@ -4184,7 +15838,7 @@ export const gameProfileCatalog = {
       "path": "src/content/generated/nodeTerms.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:113cb18af516b29c3e0213f5d7f740f382ce99646e600afa6cb9628c14445931"
+      "hash": "sha256:9fd2d4823deb8cb03a315e0d254fed8b10cbe817438269c5446e1245efefa9f8"
     },
     {
       "path": "src/content/generated/nodeVariables.js",
@@ -4196,7 +15850,7 @@ export const gameProfileCatalog = {
       "path": "src/content/generated/nodes.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:9acc1621d24e8c196aafc5582bc8f85a54aee9518e55dc12ede70606287eb3f8"
+      "hash": "sha256:9c4063cba4019394ccd405cc77619e5bad96d657dfab7d48fb9b1d029e2adef5"
     },
     {
       "path": "src/content/generated/outfits.js",
@@ -4256,13 +15910,13 @@ export const gameProfileCatalog = {
       "path": "src/content/generated/tags.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:b1ae58c3daa140cf24f4ee52fb3d27425f74392e4ce3ec4eb86602b24f1dee36"
+      "hash": "sha256:140bd315a0755a5e1cd3c40dd93fc29ca139ad2ea35ab1da2fc3948a0296076d"
     },
     {
       "path": "src/content/generated/uiStrings.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:b81aca2f7dfc0a447df754f0d12765de7b828d033b9bba371576601ca0f836d8"
+      "hash": "sha256:17e68230e0985a5a3898db84392e2ccbe7d5d4e9ecbeedb1135ec3912a13c81f"
     },
     {
       "path": "src/content/generated/unlocks.js",
@@ -4310,7 +15964,7 @@ export const gameProfileCatalog = {
       "path": "src/content/index.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:190bbf8377671c9efed1b4936343639d804d11361d1f87996c6fc3e8f40d7b28"
+      "hash": "sha256:333fe7e10d2a3ee53939144a67980edc8216135d6624b8dabb142745db4f7d78"
     },
     {
       "path": "src/content/keepsakeArt.js",
@@ -4652,13 +16306,13 @@ export const gameProfileCatalog = {
       "path": "src/engine/abilityRiders.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:285ee241ccfad660135ae100c49695e41a17c0cd8177b4dcd1171fb1d12592dd"
+      "hash": "sha256:1954d683ea2873f0e7fb84281fd2097afb4a686315c9897ce3543d995821458c"
     },
     {
       "path": "src/engine/actions.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:2abf41c88d8011d35c960cfc52eb4681ea082456e757b3e25fb1438612e1046e"
+      "hash": "sha256:4de6983d1e0b6d8517f983744075a83cb1d9cc863bace139d098977476e5b4ca"
     },
     {
       "path": "src/engine/actmap.js",
@@ -4679,10 +16333,22 @@ export const gameProfileCatalog = {
       "hash": "sha256:15372ce722d6cdc2e01ac4bf9e4ccc38f891b3ad6e9fe0982b3da066d1ec4611"
     },
     {
+      "path": "src/engine/cardBehavior.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:c82a6a6e25b251ef16d2ca224e82c1753acdac48c4904ec4dc68d0722b6d5004"
+    },
+    {
+      "path": "src/engine/cardZones.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:bc908d1eada4d28e4d4f49d31a04131c642520046b3f6c217ebb5ddf05212e8a"
+    },
+    {
       "path": "src/engine/combat.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:3b7830dc270108597177e6efc01473f0ec84c3d940c21d150bce9a1cfb61751f"
+      "hash": "sha256:d7bff9df79a92f86459b15f415e7873819d9675adc42a84827ca0040cdb9629d"
     },
     {
       "path": "src/engine/combatAvoidance.js",
@@ -4694,7 +16360,7 @@ export const gameProfileCatalog = {
       "path": "src/engine/combatCardTactics.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:2df3c9b7685a1263cf12cba824666b4197dbb922dacec0e5877546c7d4e3bd0e"
+      "hash": "sha256:7024dea27554e545283c5e7b7a7112a15b3f730a008955490e8da3386bd7a6ef"
     },
     {
       "path": "src/engine/combatCardTraitMath.js",
@@ -4712,7 +16378,7 @@ export const gameProfileCatalog = {
       "path": "src/engine/combatExpansion.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:6d057d2ceedc382c62e5536f671100b38d81ccb788f37271995ccb8c9bc266d3"
+      "hash": "sha256:f888d7eec6d09f4dd76c3325ef52b2d29eff3529ac36f1995ccb7469b0ff54e1"
     },
     {
       "path": "src/engine/combatExpansionActions.js",
@@ -4748,7 +16414,7 @@ export const gameProfileCatalog = {
       "path": "src/engine/combatMatchups.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:f303c406e0839c9d54e0d18361c714ded390291164d4bf8a9dc5caa17558f86d"
+      "hash": "sha256:8ccc8c92cc8d6ae0e3a2c9296e00225bf12c6f140f5aa461df1ac2b07ba29d09"
     },
     {
       "path": "src/engine/combatPools.js",
@@ -4772,7 +16438,7 @@ export const gameProfileCatalog = {
       "path": "src/engine/combatReactions.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:b2b2d0c0542330c6fe1e8b0adac8f2ab7a338218092756573ed95487388b5b41"
+      "hash": "sha256:817c0d451c7e1d0765aa1ed88bd8f250472063d1aaa5982234057d976eec01e6"
     },
     {
       "path": "src/engine/combatRounds/resolver.js",
@@ -4808,13 +16474,13 @@ export const gameProfileCatalog = {
       "path": "src/engine/combatRules.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:e2c44f13b13025c126308f43b1332aa46688c51bf09a3537d09efbc2f72fe911"
+      "hash": "sha256:190e09d1e2e235bd42e06fdf6afc24c1c0e79455cbe3d632a5f59e898072dbce"
     },
     {
       "path": "src/engine/combatSnapshot.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:75d3f6505c19cc8ef88210a7faee29dca724445d57b45371ed46995c8bed1445"
+      "hash": "sha256:b3dbb0e8be9cbac0998bbcc2035f3a94b3666d32767762691236093181f05c49"
     },
     {
       "path": "src/engine/combatStatusControl.js",
@@ -4823,16 +16489,22 @@ export const gameProfileCatalog = {
       "hash": "sha256:9d76be0da14c92c16af6b311881da0a6f43401e2624943a3cb9c8eed1647040b"
     },
     {
+      "path": "src/engine/concurrentStances.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:0f052471383b0ac6e4d4d975ee1b25ed3cf18ab85fe9ed7642a495b65a2d28f5"
+    },
+    {
       "path": "src/engine/coopCombat.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:b19d30f16fc075de4742424e0a13a49b8df4175802c58dd895a510b5ee0551f9"
+      "hash": "sha256:8ea3bc472dcd09d79d2c2a40563904ba8c8d44aab53a077b3797be4f3a7927ce"
     },
     {
       "path": "src/engine/coopCombatSnapshot.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:f05608d6a8c0e8892c76b7c3c90023e74d1d16031638d00f90510ab8df01c609"
+      "hash": "sha256:bac3175038f69b22e9ea878aeff77e934e34c0a89c1cad30fd4325a94963d28a"
     },
     {
       "path": "src/engine/counterReturn.js",
@@ -4845,6 +16517,12 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "hash": "sha256:963c02e91f7392b861d0f4787b1c9f81b2a91b98b8780b124b6cc98a927e7bca"
+    },
+    {
+      "path": "src/engine/enemyBurdens.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:d5a31d97d0977ff3fc472a824348f3333f668cc1bb976b08a43effca046b5634"
     },
     {
       "path": "src/engine/enemyKnowledge.js",
@@ -4868,13 +16546,13 @@ export const gameProfileCatalog = {
       "path": "src/engine/gameProfileCombat.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:f44ba0df9d8fe354e26b92fddcd18c87b95ff5aca138662efb7817c2280e1575"
+      "hash": "sha256:e66e18009ed4ac368d4b9dcb74529611c3db08479726b377f3fa56af2587ec98"
     },
     {
       "path": "src/engine/handRules.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:b719cd85e5b9f7c8f508a8dbb1f53e02370c5dc724f0da787f15dfd1263114d2"
+      "hash": "sha256:9438b12491a6dbd648acddde1893413783d3557d75d5f0895306aa4e9c6825fb"
     },
     {
       "path": "src/engine/locations.js",
@@ -4907,6 +16585,12 @@ export const gameProfileCatalog = {
       "hash": "sha256:1186ad917abe307b00110ca3376b466c3108e0d11026162ed7005fe8ede22b17"
     },
     {
+      "path": "src/engine/proposalStatusRuntime.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:38e71cc912c35f1d153c5bf83bd6e36d944acb79127304b6e94853b80ae5534d"
+    },
+    {
       "path": "src/engine/quests.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
@@ -4916,7 +16600,7 @@ export const gameProfileCatalog = {
       "path": "src/engine/reactionState.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:7032439c65bdb584ddad6a0c070cec96702b9499f49e727f61279ced289d3386"
+      "hash": "sha256:2adf1ca671a56ebab57aced397e4dad40c05868d2b2f7d2ca1505466f26846fb"
     },
     {
       "path": "src/engine/rng.js",
@@ -4928,7 +16612,7 @@ export const gameProfileCatalog = {
       "path": "src/engine/runCombat.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:2738e8d854cc71a19b7b75edf767426fbd51961d2f581e96d4518facddd0a309"
+      "hash": "sha256:b73b38b44ab1bb7f1b1078323d5652bfc659098b8d7ac320d1464f0939bf0d3d"
     },
     {
       "path": "src/engine/save.js",
@@ -4964,7 +16648,7 @@ export const gameProfileCatalog = {
       "path": "src/engine/stanceHit.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:d24c2779c693053a3db5a89f23c4dfb3ede06f9636a27035865024aeaf7c7928"
+      "hash": "sha256:75d4e8678ef7c832377c27083cafe8fb3a42a144dcb96577ea878960e6f8383c"
     },
     {
       "path": "src/engine/statuses.js",
@@ -4976,7 +16660,7 @@ export const gameProfileCatalog = {
       "path": "src/engine/triggers.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:28f584893ad1cefc05ae548105d2008ac84762006b7acdb9512cb7a85120182f"
+      "hash": "sha256:fd7c969fa5f9d64005b22180368d53c42aa337f846a1b4705da3bae62d137f71"
     },
     {
       "path": "src/framework/bridge.js",
@@ -4988,7 +16672,7 @@ export const gameProfileCatalog = {
       "path": "src/framework/candidate.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:7607baba7f6cabf74b7d8f070d1be3f9d640e56a7ff871280745ea5f00262ea0"
+      "hash": "sha256:0174acf92b301becf4aa3b0f4e6a3a05a95dbcfc5ae462ed2108ba86dcbc2070"
     },
     {
       "path": "src/framework/compiler.js",
@@ -5036,7 +16720,7 @@ export const gameProfileCatalog = {
       "path": "src/framework/data/properties.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:ae1ea389dbe3a02d27ff3dc7d12302e565c2c8ed845c7024b03f95946964dc1f"
+      "hash": "sha256:3aee3ff28a034dcad5cb101001ca218adcb83e77ee002ca630698e56aee7c22c"
     },
     {
       "path": "src/framework/data/relations.js",
@@ -5048,7 +16732,7 @@ export const gameProfileCatalog = {
       "path": "src/framework/data/terms.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:a959763511b2ccd1ea1df112e496eaf95fdbc15b9851f080c87aecd89d2c0e49"
+      "hash": "sha256:b89426edb94fbdbd955dc00a12591bd94a694670dbe033840501234e3c50f561"
     },
     {
       "path": "src/framework/data/theme.js",
@@ -5072,7 +16756,7 @@ export const gameProfileCatalog = {
       "path": "src/framework/importer.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:65d9f529b0ce4e6cee49119fc7500b947cce972a92c3bda27884d866888afc6d"
+      "hash": "sha256:005bf4891ad78de0dece56906a34b130e14dd3825a1a319299c449713e2d5b8a"
     },
     {
       "path": "src/framework/index.js",
@@ -5150,7 +16834,7 @@ export const gameProfileCatalog = {
       "path": "src/framework/termOverlay.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:972196f411eafe4184ed43c507e68dbe547c6a88ab695fe40cb09bca4c4c9d1f"
+      "hash": "sha256:4a2937328a1a0d218b1c824288a1d511845d77ad232420d582e935419fdaaf55"
     },
     {
       "path": "src/framework/validate.js",
@@ -5312,7 +16996,7 @@ export const gameProfileCatalog = {
       "path": "src/model/cardChoices.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:8ffce56dd4b9eb2d58ce45b8dac25a5359fc6f2ecff76af6590e7ac63d5989a4"
+      "hash": "sha256:dbab3e81a7ac7d8c09789b9b066f824b4a992f0f3d7e52b4667e869ecfe688a2"
     },
     {
       "path": "src/model/cardClassification.js",
@@ -5564,7 +17248,7 @@ export const gameProfileCatalog = {
       "path": "src/model/combatReactionState.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:44d1bd15b0d35b764bcfe591b961331d7fef30bd8ca18d6b9104d071bb7416e0"
+      "hash": "sha256:985c978109278a3f7224e12e798d56dcc7152574193275663c9f1ea4454c61d9"
     },
     {
       "path": "src/model/combatRounds.js",
@@ -5582,7 +17266,7 @@ export const gameProfileCatalog = {
       "path": "src/model/combatSnapshot.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:83e4e54c1394b96150fa8382a617cc9408536054496718a2341211c796b9bda6"
+      "hash": "sha256:735ca8b477f988163d4e6a7689f3cb321933b18f3007f0e63225426c38a018a9"
     },
     {
       "path": "src/model/combatStatusState.js",
@@ -5834,7 +17518,7 @@ export const gameProfileCatalog = {
       "path": "src/model/formulas.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:51fbbb6ffcad8042dad38080950ab434381710d84629607a9e1e25bb1495df32"
+      "hash": "sha256:692dd782293687bacf250ea0de37852d77b144c28ae898a2c0a56277a01e0cc7"
     },
     {
       "path": "src/model/friendlyTargets.js",
@@ -5858,7 +17542,7 @@ export const gameProfileCatalog = {
       "path": "src/model/gameProfileRewards.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:c83fc23809cc1a7df01aa0371bf92d3a19003517dc6dda5139ed58cc43a13d24"
+      "hash": "sha256:85fc18caea2f0e344f49af1c13a0a14e51f1d9427351c936724cf6429a1794ad"
     },
     {
       "path": "src/model/gameProfileRun.js",
@@ -6053,6 +17737,12 @@ export const gameProfileCatalog = {
       "hash": "sha256:086e22884ada9b1933fb011a67b3e213ca38c10bc0828082519b4daf04d9d699"
     },
     {
+      "path": "src/model/proposalStatusRules.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:26c4b19a8f5106b59c9e5cdd1ea8403442d4bf4016595efa524890953c49f5c5"
+    },
+    {
       "path": "src/model/quests.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
@@ -6074,7 +17764,7 @@ export const gameProfileCatalog = {
       "path": "src/model/registries.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:2adf49ec5e3b3a4bb50efb7be250f0d6b72709ae3832d60187becd370c5eaf10"
+      "hash": "sha256:be375a4a6e35bc88803e89483ee7b1aaedba0d1424b0402fb355a505e9cb0c12"
     },
     {
       "path": "src/model/relicArt.js",
@@ -6146,7 +17836,7 @@ export const gameProfileCatalog = {
       "path": "src/model/schemas.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:445234034c7bd1b855ff9508ea3e96582934955634fa60ced64bc7983c302266"
+      "hash": "sha256:701ff536a80a7c08d5acd611002aec09615eca69236777298785ff1542de37ed"
     },
     {
       "path": "src/model/seats.js",
@@ -6242,7 +17932,7 @@ export const gameProfileCatalog = {
       "path": "src/model/stanceRules.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:fd2048ce9165a6e9e3414342fba269614146b3f65848cd95744b4cbbfdf1555e"
+      "hash": "sha256:fc518075c74767fba705d08b26593af58c0525a659fbe46ccac672574af4f8eb"
     },
     {
       "path": "src/model/startingAbilities.js",
@@ -6302,7 +17992,7 @@ export const gameProfileCatalog = {
       "path": "src/model/tokens.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:3bbce91825701b00d1af0641a14d544b693e28ea40e043e5d91c69b030908943"
+      "hash": "sha256:abf0ddf6a79aef4dcaa600e070dc195986ef754a99332201351366119a1e0d92"
     },
     {
       "path": "src/model/tooltipSettings.js",
@@ -6338,7 +18028,7 @@ export const gameProfileCatalog = {
       "path": "src/model/validate.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:67fd52c10570a01baa83a89e28899ad157a35aca0cc9965df6c69841ef08942c"
+      "hash": "sha256:3d5a5f0c09ab6a7b83d613a181a148e63714fcfcb42cd517fa80c84bc2800a0f"
     },
     {
       "path": "src/model/victoryXpPresentation.js",
@@ -6614,7 +18304,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/components/card.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:c1ad30d1be9f64d4bca24f463418040fe89c13b73cd3a483990f64a49928633a"
+      "hash": "sha256:71a94f6a6e129c31214a4622cc9cf9ca226f20caae343f597b4e721b60c6aede"
     },
     {
       "path": "src/ui/components/cardAppearance.js",
@@ -6746,7 +18436,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/components/combatantInspector.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:838b11cb31be63adf51597239ab649505d10a9db763b71569d3dc4607fce4656"
+      "hash": "sha256:101331e63123124fdb8b66fb6ccfe8d3ad83c4f0058042d261f72d3d94c17f94"
     },
     {
       "path": "src/ui/components/combatantOverhead.js",
@@ -6824,7 +18514,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/components/deckCardAnimationPreview.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:29cc0125acf51c09b864c4021c0ee4ad51e14c2e33dae4dcfc1b398866dbee12"
+      "hash": "sha256:51ea72d61a7f972bd69d0bd1bcd1819923cd2bf959e9aa142d82ea55ef790543"
     },
     {
       "path": "src/ui/components/dialogueStage.js",
@@ -6836,7 +18526,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/components/discardChoiceModal.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:4ae5563749e8ba25811d56681655dd21e8ec20ed21b6cc39a478acd2f55b10a2"
+      "hash": "sha256:fc3e6cdb839e0e68e94d60ab61073e906f658717114ee687e0f121423046288c"
     },
     {
       "path": "src/ui/components/disclosure.js",
@@ -7040,13 +18730,13 @@ export const gameProfileCatalog = {
       "path": "src/ui/components/illustratedCard.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:5669bd0c1814a7bae6058abc9e0ea8168f3ef0444c48da892bd7646109645d8f"
+      "hash": "sha256:d539fa8775cd00d384f37d34885fc50f3628470c7bdd7f22c67b83f12ee71994"
     },
     {
       "path": "src/ui/components/illustratedCardFitter.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:851d4d4ec49f34623963772addc42fdf64a4d79a1b3f4c510847b9ae0509072a"
+      "hash": "sha256:9a108e4443e33887de9fc270ec4f1897fbb31146f7f4c025c0b8cfa31d89f339"
     },
     {
       "path": "src/ui/components/intentIcon.js",
@@ -7706,7 +19396,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/models/CoopIntentModel.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:ae41e5e77d6405dd7de478edf1fb680b012970ed95c5e5ac48e29e81b73d934f"
+      "hash": "sha256:a2567dee373d3503c3242a4b7f187639edd1b6bad64647fa2970054748ca0abc"
     },
     {
       "path": "src/ui/models/CreationFeatBrowserModel.js",
@@ -7731,6 +19421,12 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "hash": "sha256:50781b0824970f2a65077bc1008da4c58c2481b45568c3a726847a3b1afac54b"
+    },
+    {
+      "path": "src/ui/models/EnemyBurdenModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:783f952969bac986387ed2727b26ad4319f80f202aa321e3ebd795ad9d900060"
     },
     {
       "path": "src/ui/models/EnemyTargetGridModel.js",
@@ -8234,7 +19930,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/screens/combat.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:e2f2e48b3453c3fa3de1f69811f904ce862210771200c34ee4c66c4d475e84de"
+      "hash": "sha256:10f9d55e95441eb4941616bd8e282686f56f18ce9b164234ab0be44e6399f0fb"
     },
     {
       "path": "src/ui/screens/combatTest.js",
@@ -8258,7 +19954,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/screens/coop.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:f0d35fd8520975193d49348329d9d3c812ecd5599b893d0b5d3814642d10cba3"
+      "hash": "sha256:1ae9cabb0b2b47898c5ff727d1f33792b765be73123e8d315520f95c82b993c1"
     },
     {
       "path": "src/ui/screens/customRun.js",
@@ -8276,7 +19972,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/screens/deckEditor.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:74a50f85b9d95bef49700e3f44fc7cb80cb69f4980fedd7110c7b80f3470e74a"
+      "hash": "sha256:46d249dfe682eabe7831664456bc98872dc7b11825d640d2ed2fa0c00f72f1ae"
     },
     {
       "path": "src/ui/screens/dialogue.js",
@@ -8489,7 +20185,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:23af16d4e9c9f6d88fe655d32ecf1a688b47df39f9e3a1d6d193ce63923593ab"
     }
   ],
-  "runtimeHash": "sha256:c539954600c56ed5a12220b5d427ad210db33c30378aac91eab5fafd8146faf3"
+  "runtimeHash": "sha256:e630b7185f5e0b7bf8d937c9b6b0a0dfecd4ca4d61355fb068630bef4c6c1cc5"
 };
 export const gameProfileAuthors = {
   "default": {

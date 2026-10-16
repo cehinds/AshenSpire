@@ -477,47 +477,88 @@ body.reduced-motion .shop-workspace .shop-pane { animation:none; }
   background-image: linear-gradient(#201b15b8, #100d09c9), url('../assets/player-polish/materials/soot-leather-material.webp');
   background-size: cover;
 }
-:root .rest-screen.choice-screen { justify-content:flex-end; padding:12rem 3rem 2rem; }
-:root .rest-screen.choice-screen .rest-door { flex:0 1 48%; max-height:48%; background-color:#17130fd4; background-image:none; }
-:root .rest-screen.choice-screen .rest-door > :is(.modal-head,.modal-foot) { min-height:4.5rem; }
+:root[data-layout] .rest-screen.choice-screen { justify-content:flex-end; padding:12rem 3rem 2rem; }
+:root[data-layout] .rest-screen.choice-screen .rest-door { flex:0 1 48%; max-height:48%; background-color:#17130fd4; background-image:none; }
+:root[data-layout] .rest-screen.choice-screen .rest-door > :is(.modal-head,.modal-foot) { min-height:4.5rem; }
 :root[data-layout='narrow'] .rest-screen.choice-screen { padding:12rem 1rem 1rem; }
 :root[data-layout='narrow'] .rest-screen.choice-screen .rest-door { flex-basis:60%; max-height:60%; }
 :root[data-composition='short-wide'] .rest-screen.choice-screen { padding:2rem 1rem 1rem; }
 :root[data-composition='short-wide'] .rest-screen.choice-screen .rest-door { flex-basis:88%; max-height:88%; }
 
-/* The chapel's foreground and recovery ledger share the live rest plan.
-   The backdrop and traveler sit on a square stage in the backdrop's own
-   coordinates (emulating object-fit:cover), so the foreground stays on the
-   painted floor at every viewport aspect. */
-.rest-screen .polish-scene-painting { container-type:size; --rest-focus-x:.5; --rest-focus-y:1; --rest-floor-y:70%; }
-.rest-screen .rest-scene-stage { position:absolute; aspect-ratio:1 / 1;
- width:max(100cqw, 100cqh); height:max(100cqw, 100cqh);
- left:calc((100cqw - max(100cqw, 100cqh)) * var(--rest-focus-x)); top:calc((100cqh - max(100cqw, 100cqh)) * var(--rest-focus-y)); }
-.rest-screen .rest-scene-stage > img:first-child { position:absolute; inset:0; width:100%; height:100%; object-fit:fill; }
+/* Rest keeps the room as scenery and the visit in a compact reading rail.
+   The square painting and traveler share source coordinates; no image is
+   stretched, and the scene scales from the available scenery rather than the
+   full viewport width. */
+:root[data-layout] .rest-screen.choice-screen {
+ --rest-rail:calc(464px / var(--ui-zoom, 1));
+ --rest-gap:calc(24px / var(--ui-zoom, 1));
+ justify-content:center; align-items:flex-end;
+ padding:calc(100px / var(--ui-zoom, 1)) var(--rest-gap) var(--rest-gap);
+ background-image:none;
+}
+:root[data-layout] .rest-screen.choice-screen .rest-door {
+ flex:0 1 auto; width:var(--rest-rail); max-width:100%;
+ height:100%; max-height:100%; min-height:0;
+ background:#17130fec; background-image:none;
+ --rest-inset:calc(20px / var(--ui-zoom, 1));
+ --choice-inset-x:var(--rest-inset);
+ font-size:calc(16px / var(--ui-zoom, 1));
+}
+:root .rest-screen .rest-door > :is(.modal-head,.modal-foot) {
+ min-height:0; padding:var(--rest-inset); flex-shrink:0;
+}
+:root .rest-screen .rest-door .modal-head { gap:calc(10px / var(--ui-zoom, 1)); }
+:root .rest-screen .rest-door .modal-head-id h2 { font-size:calc(24px / var(--ui-zoom, 1)); }
+:root .rest-screen .rest-door .modal-head-status { font-size:calc(13px / var(--ui-zoom, 1)); }
+:root .rest-screen .rest-door > .modal-body { padding:var(--rest-inset); }
+:root .rest-screen .choice-body-columns { grid-template-columns:minmax(0,1fr); gap:calc(16px / var(--ui-zoom, 1)); }
+.rest-screen .rest-consequences { order:-1; gap:calc(10px / var(--ui-zoom, 1)); }
+:root .rest-screen .rest-door .as-flavor { font-size:calc(14px / var(--ui-zoom, 1)); line-height:1.45; margin:0; }
+:root .rest-screen .rest-door .as-eyebrow { font-size:calc(11px / var(--ui-zoom, 1)); margin-bottom:calc(6px / var(--ui-zoom, 1)); }
+.rest-screen .rest-recovery { margin:0; }
+.rest-recovery-row { display:grid; grid-template-columns:20px 1fr auto 2.4em; align-items:center; gap:.7rem; padding:.7rem 0; border-bottom:1px solid var(--line-soft); }
+.rest-screen .rest-recovery-row { grid-template-columns:calc(20px / var(--ui-zoom, 1)) 1fr auto 2.4em; gap:.5em; padding:.45em 0; }
+.rest-screen .rest-recovery-row .engraved-icon { width:calc(20px / var(--ui-zoom, 1)); height:calc(20px / var(--ui-zoom, 1)); }
+.rest-recovery-gain { color:var(--control-positive-border); text-align:right; }
+/* The service cards already explain availability; their duplicated ledger
+   remains available to assistive technology without repeating three rows. */
+.rest-screen .choice-status-list { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+:root .rest-screen .shrine-option-list { display:flex; flex-direction:column; gap:calc(10px / var(--ui-zoom, 1)); }
+:root .rest-screen .class-pick {
+ display:grid; height:auto; width:100%; min-height:var(--tap-floor); padding:calc(14px / var(--ui-zoom, 1));
+ grid-template-columns:calc(28px / var(--ui-zoom, 1)) minmax(0,1fr);
+ gap:calc(12px / var(--ui-zoom, 1));
+}
+:root .rest-screen .class-pick .cp-body h3 { font-size:calc(18px / var(--ui-zoom, 1)); margin:0 0 .25em; }
+:root .rest-screen .class-pick .cp-body p { font-size:calc(14px / var(--ui-zoom, 1)); line-height:1.4; margin:0; }
+:root .rest-screen .class-pick > .glyph { width:calc(28px / var(--ui-zoom, 1)); }
+:root .rest-screen .class-pick > .glyph .engraved-icon { width:100%; height:calc(28px / var(--ui-zoom, 1)); color:var(--gold); }
+:root .rest-screen #shrine-leave { font-size:calc(16px / var(--ui-zoom, 1)); min-height:var(--tap-floor); }
+.rest-screen .polish-scene-painting { container-type:size; background:#17130f; }
+:root .rest-screen .rest-scene-stage {
+ position:absolute; aspect-ratio:1;
+ --rest-scene-size:max(100cqh, calc(100cqw - var(--rest-rail) - 2 * var(--rest-gap)));
+ width:var(--rest-scene-size); height:var(--rest-scene-size);
+ left:0; top:calc((100cqh - var(--rest-scene-size)) * .5);
+}
+.rest-screen .rest-scene-stage > img:first-child { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
 .rest-screen .rest-scene-stage > .rest-traveler-foreground {
- position:absolute; left:15%; width:44%; height:auto; aspect-ratio:720 / 480; object-fit:contain;
- bottom:calc(100% - var(--rest-floor-y) - 44% * 31 / 720 * 1);
+ position:absolute; left:26%; width:32%; height:auto; aspect-ratio:720 / 480; object-fit:contain;
+ bottom:calc(30% - 32% * 31 / 720);
  animation:playerSceneReveal 700ms ease-out; filter:drop-shadow(0 7px 12px #100a08a0); pointer-events:none;
 }
-.rest-recovery { margin-bottom:1.2rem; }
-.rest-recovery-row { display:grid; grid-template-columns:24px 1fr auto 3rem; align-items:center; gap:.7rem; padding:.7rem 0; border-bottom:1px solid var(--line-soft); }
-.rest-recovery-gain { color:var(--control-positive-border); text-align:right; }
-.rest-screen .rest-consequences { order:-1; }
-.rest-screen .choice-body-columns { grid-template-columns:minmax(0,1fr) minmax(0,1.6fr); }
 .rest-availability summary { cursor:pointer; padding:.5rem 0; color:var(--ink-dim); }
-.rest-screen .class-pick > .glyph .engraved-icon { width:30px; height:30px; color:var(--gold); }
-/* Narrow: the floor (--rest-floor-y, 70% of the stage) must land just above the
-   rest door (its top is near 47% of the frame), so the stage is sized from the
-   floor line. The 0.70 below is --rest-floor-y as a fraction; keep it in sync. */
-:root[data-layout='narrow'] .rest-screen .polish-scene-painting { --rest-focus-x:.42; --rest-floor-screen:.46; background:#17130f; }
-:root[data-layout='narrow'] .rest-screen .rest-scene-stage {
- --rest-stage-size:max(100cqw, 100cqh * var(--rest-floor-screen) / .70);
- width:var(--rest-stage-size); height:var(--rest-stage-size);
- left:calc((100cqw - var(--rest-stage-size)) * var(--rest-focus-x));
- top:calc(100cqh * var(--rest-floor-screen) - .70 * var(--rest-stage-size));
+/* On phones the room gets its own quiet upper aperture. The rail stays in
+   normal screen flow and only its body scrolls, with Continue always visible. */
+@media (max-width:700px) {
+ :root[data-layout] .rest-screen.choice-screen { padding:calc(100px / var(--ui-zoom, 1)) calc(12px / var(--ui-zoom, 1)) calc(12px / var(--ui-zoom, 1)); justify-content:flex-end; }
+ :root[data-layout] .rest-screen.choice-screen .rest-door { flex:0 0 auto; width:100%; height:calc(72vh / var(--ui-zoom, 1)); max-height:calc(72vh / var(--ui-zoom, 1)); --rest-inset:calc(14px / var(--ui-zoom, 1)); }
+ :root .rest-screen .rest-scene-stage {
+  --rest-scene-size:max(100cqw, 100cqh * .56);
+  left:calc((100cqw - var(--rest-scene-size)) * .5);
+  top:calc(100cqh * .24 - var(--rest-scene-size) * .70);
+ }
 }
-:root[data-layout='narrow'] .rest-screen .choice-body-columns { grid-template-columns:minmax(0,1fr); }
-:root[data-layout='narrow'] .rest-recovery { margin-bottom:0; }
 body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 @media (prefers-reduced-motion:reduce) { .rest-screen .rest-traveler-foreground { animation:none; } }
 /* The outer fan cards dip below their anchors; leave that arc above the

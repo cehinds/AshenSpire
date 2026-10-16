@@ -1,3 +1,5 @@
+import { enemyBurdenProblems } from '../engine/enemyBurdens.js';
+import { validateZoneEffect } from '../engine/cardZones.js';
 import { validateGameProfileSnapshot, projectGameCard } from './gameProfile.js';
 import { combatExpansionRulesProblems } from './combatExpansionRules.js';
 import { retiredAttackSlots } from './cardRemoval.js';
@@ -56,9 +58,11 @@ function entityProblems(entity, path, { player = false } = {}) {
     else {
       for (const key of ['cardsPlayed', 'manaSpent', 'discarded', 'hpLostSinceTurnStart', 'hpLostThisRound', 'offeringsPaid', 'previousSpell', 'attacksPlayed', 'cardPlaysCombat']) if (state[key] !== undefined && (!Number.isSafeInteger(state[key]) || state[key] < 0)) problems.push(`${path}.abilityRiders.${key} must be a non-negative whole number`);
       if (state.turnStartHpPct !== undefined && (!finite(state.turnStartHpPct) || state.turnStartHpPct < 0 || state.turnStartHpPct > 100)) problems.push(`${path}.abilityRiders.turnStartHpPct must be a percentage`);
-      for (const key of ['charges', 'once', 'tagPlays', 'sameCardPlays', 'distinctTagPlays']) if (state[key] !== undefined && !record(state[key])) problems.push(`${path}.abilityRiders.${key} must be an object`);
+      for (const key of ['charges', 'once', 'tagPlays', 'sameCardPlays', 'cardUsesCombat','instanceUsesCombat','typePlays','distinctTagPlays']) if (state[key] !== undefined && !record(state[key])) problems.push(`${path}.abilityRiders.${key} must be an object`);
     }
   }
+  for(const key of ['cardUsesCombat','instanceUsesCombat','typePlays']) if(record(entity.abilityRiders?.[key]) && Object.values(entity.abilityRiders[key]).some(v=>!Number.isSafeInteger(v) || v<0)) problems.push(`${path}.abilityRiders.${key} must contain nonnegative counts`);
+  if(entity.concurrentStances!==undefined && (!Array.isArray(entity.concurrentStances) || entity.concurrentStances.length>7 || entity.concurrentStances.some(row=>!record(row) || !['attack','smash','defend','sweep','counter','casting','prepared','evade','neutral'].includes(row.maneuver) || !['physical','spell'].includes(row.camp)))) problems.push(`${path}.concurrentStances invalid`);
   if (!nonEmptyString(entity.id)) problems.push(`${path}.id must be a non-empty string`);
   if (entity.kind !== (player ? 'player' : 'enemy')) problems.push(`${path}.kind must be '${player ? 'player' : 'enemy'}'`);
   const defKey = player ? 'classId' : 'enemyId';
@@ -75,6 +79,7 @@ function entityProblems(entity, path, { player = false } = {}) {
   if (finite(entity.hp) && finite(entity.maxHp) && (entity.hp < 0 || entity.hp > entity.maxHp)) {
     problems.push(`${path}.hp must be between 0 and maxHp`);
   }
+  problems.push(...enemyBurdenProblems(entity));
   if (!record(entity.statuses)) problems.push(`${path}.statuses must be an object`);
   if (entity.ratings !== undefined && (!record(entity.ratings) || ['ar', 'dr', 'pr', 'poise', 'ward'].some(id => !Number.isFinite(entity.ratings[id]) || entity.ratings[id] < 0))) problems.push(`${path}.ratings must contain finite non-negative ratings`);
   if (entity.wardMeter !== undefined && (!record(entity.wardMeter) || !Number.isInteger(entity.wardMeter.max) || entity.wardMeter.max <= 0 || !Number.isFinite(entity.wardMeter.value) || entity.wardMeter.value < 0 || entity.wardMeter.value >= entity.wardMeter.max)) problems.push(`${path}.wardMeter is invalid`);
@@ -182,10 +187,17 @@ export function combatSnapshotProblems(snapshot) {
     catch (error) { problems.push(`derivedStatRuleSnapshot: ${error.message}`); }
   }
   if (snapshot.ratingAttributeScale !== undefined && (!Number.isFinite(snapshot.ratingAttributeScale) || snapshot.ratingAttributeScale <= 0)) problems.push('ratingAttributeScale must be positive');
+  if(snapshot.proposalRewards!==undefined && (!record(snapshot.proposalRewards) || !Number.isSafeInteger(snapshot.proposalRewards.cinders) || snapshot.proposalRewards.cinders<0 || snapshot.proposalRewards.cinders>1e9 || snapshot.proposalRewards.settled!==undefined && typeof snapshot.proposalRewards.settled!=='boolean')) problems.push('proposalRewards invalid');
   if (snapshot.pendingDiscardDraw !== undefined && (!Number.isInteger(snapshot.pendingDiscardDraw) || snapshot.pendingDiscardDraw < 0 || snapshot.pendingDiscardDraw > 99)) problems.push('pendingDiscardDraw must be an integer from 0 to 99');
-  if (snapshot.pendingAbilityDiscard !== undefined) {
-    const pending = snapshot.pendingAbilityDiscard;
-    if (!record(pending) || !Number.isInteger(pending.count) || pending.count < 1 || pending.count > (snapshot.piles?.hand?.length || 0)) problems.push('pendingAbilityDiscard requires a valid hand count');
+  if (snapshot.pendingAbilityDiscard !== undefined || snapshot.pendingCardChoice !== undefined) {
+    const pending = snapshot.pendingAbilityDiscard || snapshot.pendingCardChoice;
+    if (!record(pending) || !Number.isInteger(pending.count) || pending.count < 1 || pending.count > (snapshot.pendingCardChoice ? (snapshot.piles?.[pending.effect?.from]?.length || 0) : (snapshot.piles?.hand?.length || 0))) problems.push('pendingAbilityDiscard requires a valid hand count');
+    if (snapshot.pendingCardChoice) {
+      try { validateZoneEffect(pending.effect); } catch(error) {problems.push(`pendingCardChoice: ${error.message}`);}
+      const candidates=(snapshot.piles?.[pending.effect?.from] || []).slice(0,pending.effect?.look ?? 100000).map(c=>c.instanceId);
+      if (!['moveCards','modifyCards'].includes(pending.effect?.op) || pending.kind!=='moveCards' || pending.count>100 || (typeof pending.effect?.amount==='number' && pending.count>pending.effect.amount) || pending.candidateIds?.some(id=>!candidates.includes(id))) problems.push('pendingCardChoice has invalid selection bounds');
+    }
+    if (snapshot.pendingCardChoice && (!Array.isArray(pending.candidateIds) || pending.candidateIds.length < pending.count || new Set(pending.candidateIds).size !== pending.candidateIds.length || pending.candidateIds.some(id => !(snapshot.piles?.[pending.effect?.from] || []).some(c => c.instanceId === id)))) problems.push('pendingCardChoice requires eligible unique cards');
     if (!record(snapshot.pendingAbilityPlay)) problems.push('pendingAbilityDiscard requires its paid card');
     else problems.push(...cardProblems(snapshot.pendingAbilityPlay.instance, 'pendingAbilityPlay.instance'));
     if (!Array.isArray(snapshot.abilityQueue) || snapshot.abilityQueue.some(action => !record(action) || !record(action.effect) || !nonEmptyString(action.effect.op))) problems.push('abilityQueue must contain queued effects');
@@ -284,6 +296,12 @@ export function combatSnapshotProblems(snapshot) {
   if (!record(snapshot.piles)) problems.push('piles must be an object');
   else {
     const seen = new Set();
+    for (const row of snapshot.hiddenCards || []) {
+      if (!record(row) || !Number.isSafeInteger(row.returnTurn) || row.returnTurn < snapshot.turn || row.returnTurn > snapshot.turn+10) problems.push('hiddenCards requires bounded return turn');
+      problems.push(...cardProblems(row?.card,'hiddenCards.card'));
+      if (seen.has(row?.card?.instanceId)) problems.push('duplicate hidden card');
+      seen.add(row?.card?.instanceId);
+    }
     for (const pile of SNAPSHOT_PILES) {
       const cards = snapshot.piles[pile];
       if (!Array.isArray(cards)) {
@@ -333,6 +351,8 @@ export function combatSnapshotReferenceProblems(snapshot, registries) {
     if (!known) problems.push(`itemUpgradeLevels.${itemRef} is unknown`);
     else if (level > (itemUpgradeTiers(registries, itemRef).at(-1) || 0)) problems.push(`itemUpgradeLevels.${itemRef} exceeds its highest authored tier`);
   }
+  if (snapshot.pendingCardChoice?.effect?.transformTo) has(registries.cards,snapshot.pendingCardChoice.effect.transformTo,'pendingCardChoice.transformTo');
+  for (const row of snapshot.hiddenCards || []) has(registries.cards,row.card?.cardId,'hiddenCards.cardId');
   has(registries.classes, snapshot.player?.classId, 'player.classId');
   for (const id of snapshot.player?.relicIds || []) has(registries.relics, id, 'player.relicIds');
   // SPEC §15.4 (rarity at every door): an attuned id is a known LEGENDARY.
@@ -346,6 +366,7 @@ export function combatSnapshotReferenceProblems(snapshot, registries) {
   for (const id of Object.keys(snapshot.player?.statuses || {})) has(registries.statuses, id, 'player.statuses');
   for (let index = 0; index < (snapshot.enemies || []).length; index++) {
     const enemy = snapshot.enemies[index];
+    problems.push(...enemyBurdenProblems(enemy,registries));
     has(registries.enemies, enemy?.enemyId, `enemies[${index}].enemyId`);
     for (const id of Object.keys(enemy?.statuses || {})) has(registries.statuses, id, `enemies[${index}].statuses`);
   }

@@ -38,7 +38,7 @@ export function stanceOf(carrier, entity = null) {
 }
 export function sameStance(entity, carrier) {
   const active = stanceOf(entity?.combatStance), next = stanceOf(carrier, entity);
-  return !!active && !!next && active.maneuver === next.maneuver && active.camp === next.camp;
+  return !!next && [...(entity?.concurrentStances || []),active].some(row=>row && row.maneuver===next.maneuver && row.camp===next.camp);
 }
 export function stanceStaminaCost(base, entity, carrier, ctx = null) {
   if (ctx?.combatExpansionVersion !== 2 || !sameStance(entity, carrier)) return base;

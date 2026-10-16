@@ -1,3 +1,5 @@
+import { enemyBurdenProblems } from './enemyBurdens.js';
+import { hasCardChoice } from './cardZones.js';
 import { validateGameProfileSnapshot } from '../model/gameProfile.js';
 import { freezeProfile, configuredCombat } from './gameProfileCombat.js';
 // src/engine/combatSnapshot.js — CombatSnapshotService.
@@ -45,7 +47,7 @@ function carryRelicGateKeys(entries) {
 /** Return the JSON-safe state of one fully committed combat turn. */
 export function serializeCombatSnapshot(combat) {
   if (!combat || typeof combat !== 'object') throw new Error('Cannot save a missing combat');
-  if (combat._buffer !== null || (combat.queue && combat.queue.length && !combat.pendingAbilityDiscard && !combat.pendingReaction)) {
+  if (combat._buffer !== null || (combat.queue && combat.queue.length && !hasCardChoice(combat) && !combat.pendingReaction)) {
     throw new Error('Combat is still resolving; wait for the action to finish before saving');
   }
   const snapshot = structuredClone({
@@ -107,9 +109,11 @@ export function serializeCombatSnapshot(combat) {
     derivedStatRuleSnapshot: combat.derivedStatRuleSnapshot || null,
     swapCostRule: combat.swapCostRule,
     swapsLeft: combat.swapsLeft,
+    ...(combat.proposalRewards ? {proposalRewards:combat.proposalRewards} : {}),
     piles: combat.piles,
-    ...(combat.pendingAbilityDiscard || combat.pendingReaction ? {
-      ...(combat.pendingAbilityDiscard ? { pendingAbilityDiscard: combat.pendingAbilityDiscard, pendingAbilityPlay: combat.pendingAbilityPlay } : {}),
+    ...(combat.hiddenCards ? {hiddenCards:combat.hiddenCards} : {}),
+    ...(hasCardChoice(combat) || combat.pendingReaction ? {
+      ...(hasCardChoice(combat) ? { ...(combat.pendingAbilityDiscard ? {pendingAbilityDiscard:combat.pendingAbilityDiscard} : {pendingCardChoice:combat.pendingCardChoice}), pendingAbilityPlay: combat.pendingAbilityPlay } : {}),
       abilityQueue: combat.queue.map(({ source, owner, target, ...action }) => ({ ...action, sourceId: source?.id, ownerId: owner?.id, targetId: target?.id })),
     } : {}),
     eventLog: combat.eventLog,
@@ -165,6 +169,8 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   assertCombatSnapshot(saved);
   if (saved.gameProfile) validateGameProfileSnapshot(saved.gameProfile);
   if (expectedGameProfile && saved.gameProfile?.hash !== expectedGameProfile.hash) throw new Error('Combat game profile does not match the run configuration');
+  if (saved.pendingCardChoice?.effect?.transformTo) registries.cards.get(saved.pendingCardChoice.effect.transformTo);
+  for(const enemy of saved.enemies) {const errors=enemyBurdenProblems(enemy,registries);if(errors.length)throw new Error(`Malformed enemy burden: ${errors.join('; ')}`);}
   if (saved.foundation) validateFoundationSnapshot(saved.foundation);
   const combat = {
     ...(saved.gameProfile ? { gameProfile: freezeProfile(saved.gameProfile), gameProfileCommands: saved.gameProfileCommands || 0, gameProfileInterrupts: saved.gameProfileInterrupts || {} } : {}),
@@ -230,9 +236,11 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     derivedStatRuleSnapshot: saved.derivedStatRuleSnapshot || fallbackDerivedStatRuleSnapshot || null,
     swapCostRule: saved.swapCostRule,
     swapsLeft: saved.swapsLeft,
+    ...(saved.proposalRewards ? {proposalRewards:saved.proposalRewards} : {}),
     piles: saved.piles,
+    ...(saved.hiddenCards ? {hiddenCards:saved.hiddenCards} : {}),
     queue: [],
-    ...(saved.pendingAbilityDiscard ? { pendingAbilityDiscard: saved.pendingAbilityDiscard, pendingAbilityPlay: saved.pendingAbilityPlay } : {}),
+    ...((saved.pendingAbilityDiscard || saved.pendingCardChoice) ? { ...(saved.pendingAbilityDiscard ? {pendingAbilityDiscard:saved.pendingAbilityDiscard} : {pendingCardChoice:saved.pendingCardChoice}), pendingAbilityPlay:saved.pendingAbilityPlay } : {}),
     eventLog: saved.eventLog,
     _buffer: null,
     triggerState: new Map(carryRelicGateKeys(saved.triggerState)),

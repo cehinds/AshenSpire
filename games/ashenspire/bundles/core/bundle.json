@@ -82,6 +82,11 @@
       "id": "ashen.core-content",
       "version": "1.0.0",
       "path": "../../packs/core/pack.json"
+    },
+    {
+      "id": "ashen.base-cards",
+      "version": "1.0.0",
+      "path": "../../packs/base-cards/pack.json"
     }
   ],
   "policyBindings": [

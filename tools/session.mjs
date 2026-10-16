@@ -1,3 +1,4 @@
+import { projectEnemyBurdenHand } from '../src/ui/models/EnemyBurdenModel.js';
 import {rollPendingAbilityOffers} from '../src/model/abilityOffers.js';
 import { enemyStanceCategory } from '../src/model/enemyStancePose.js';
 import {abilityDraftChoice} from '../src/model/abilityDraftReceipts.js';
@@ -837,6 +838,7 @@ export function createSession({ registries, seedString, endless = false, restore
       result: c.result,
       headcount: connectedMembers().length,
       enemies: c.enemies.map((e) => ({
+        burdenRead: projectEnemyBurdenHand(e, { turn: c.turn, registries: c.registries }),
         presentationStance: enemyStanceCategory(e.intent),
         combatExpansionVersion: e.combatExpansionVersion || 1, combatStance: e.combatStance,
         persistentWard: e.persistentWard, barrier: e.barrier, statusControl: e.statusControl,
@@ -869,7 +871,8 @@ export function createSession({ registries, seedString, endless = false, restore
         ashenBlight: P.entity.ashenBlight ? structuredClone(P.entity.ashenBlight) : undefined,
         combatStance: P.entity.combatStance, persistentWard: P.entity.persistentWard, barrier: P.entity.barrier,
         statusControl: P.entity.statusControl, recoveryControls: recoveryControls({ ...c, combatExpansionVersion: P.entity.combatExpansionVersion || 1 }, P.entity),
-        pendingAbilityDiscard: c.pendingAbilityDiscard || null,
+        pendingAbilityDiscard: c.pendingAbilityDiscard?.playerId===P.id ? c.pendingAbilityDiscard : null,
+        pendingCardChoice:c.pendingCardChoice?.playerId===P.id ? structuredClone(c.pendingCardChoice) : null,
         pendingReaction: c.pendingReaction?.ownerId === P.id ? structuredClone(c.pendingReaction) : null,
         ...(c.reactionRulesVersion >= 1 ? { reactionsEnabled: P.entity.reactionsEnabled !== false } : {}),
         abilityRiders: P.entity.abilityRiders,

@@ -1,3 +1,7 @@
+import { proposalCardPlan, applyProposalPlan, proposalTurn, proposalRetained } from './proposalStatusRuntime.js';
+import { beginEnemyBurdens, endEnemyBurdens, allowBurdenMove } from './enemyBurdens.js';
+import { selectCardVariant } from './cardBehavior.js';
+import { chooseZoneCards, hasCardChoice, returnHiddenCards } from './cardZones.js';
 import { configuredCombat, configuredModule, setProfileStance, profileCardCosts, profileHandSize, profileFallbackDamage, freezeProfile } from './gameProfileCombat.js';
 import { decayStanceRoundStart } from './combatMatchups.js';
 import { previewCardAttackHit } from './stanceHit.js';
@@ -502,7 +506,7 @@ function drainQueue(combat) {
         else delete combat.roundPoiseMultiplier;
       }
     }
-    if (combat.pendingAbilityDiscard) return;
+    if (hasCardChoice(combat)) return;
     endCheck(combat);
     if (combat.result) {
       combat.queue.length = 0;
@@ -538,6 +542,7 @@ function finishCombat(combat, result) {
 
 function startPlayerTurn(combat) {
   combat.turn += 1;
+  returnHiddenCards(combat);
   decayStanceRoundStart(combat);
   clearEnemyReactionRolls(combat);
   combat.phase = 'player';
@@ -554,7 +559,7 @@ function startPlayerTurn(combat) {
   // (2) Lose all block — unless modified (generic 'retainBlock' modifier;
   // a 'blockCap' modifier clamps what is kept).
   if (!S.getFlag(combat, p, 'retainBlock')) {
-    p.block = Math.min(p.block, passiveMax(combat.registries, p.relicIds, 'retainBlockUpTo', propertyMountsOf(combat, p)));
+    p.block = Math.min(p.block, Math.max(proposalRetained(combat,p),passiveMax(combat.registries, p.relicIds, 'retainBlockUpTo', propertyMountsOf(combat, p))));
   } else {
     const cap = S.getCap(combat, p, 'blockCap');
     if (cap != null) p.block = Math.min(p.block, cap);
@@ -590,6 +595,7 @@ function startPlayerTurn(combat) {
 
   // playerTurnStart triggers + owner-relative status/stance hooks.
   combat.emit('playerTurnStart', { turn: combat.turn });
+  proposalTurn(combat,p,'start');
   fireOwnerHooks(combat, p, 'ownerTurnStart');
   drainQueue(combat);
   if (combat.combatExpansionVersion === 2 && !combat.result) {
@@ -605,6 +611,7 @@ function endPlayerTurn(combat, discardIds = []) {
 
   // (4) playerTurnEnd triggers first…
   combat.emit('playerTurnEnd', { turn: combat.turn });
+  proposalTurn(combat,p,'end');
   fireOwnerHooks(combat, p, 'ownerTurnEnd');
   drainQueue(combat);
   if (combat.result) return;
@@ -694,7 +701,9 @@ function enemyTurnStart(combat) {
 // One enemy's own turn start: its owner-relative hooks (DoT ticks etc.) and, expanded, its status
 // recovery. Leaves the enemy dead when a tick killed it.
 function enemyOwnerTurnStart(combat, enemy) {
+  beginEnemyBurdens(combat,enemy,Rounds.enemyPool(combat.registries.enemies.get(enemy.enemyId)));
   Reactions.revealActor(combat, enemy);
+  proposalTurn(combat,enemy,'start');
   fireOwnerHooks(combat, enemy, 'ownerTurnStart');
   drainQueue(combat);
   if (combat.result || !enemy.alive) return;
@@ -800,6 +809,8 @@ function enemyPhase(combat) {
     // Owner-relative turn-end hooks, then decay (perTurnEnd statuses the
     // player applied to an enemy tick down at the ENEMY's turn end).
     if (enemy.alive) {
+      endEnemyBurdens(combat,enemy);
+      proposalTurn(combat,enemy,'end');
       fireOwnerHooks(combat, enemy, 'ownerTurnEnd');
       drainQueue(combat);
       if (combat.result) return;
@@ -850,6 +861,7 @@ function startDelayedMove(combat, enemy, move, moveId) {
 // `roundEntry`: the move resolves a Combat Rounds timeline entry, whose reaction point was the round prompt (SPEC
 // §4.11), so its group is marked roundSettled and the live reaction window does not open for it again.
 function executeMovePayload(combat, enemy, move, moveId, { roundEntry = false, roundPoiseMultiplier = combat.roundPoiseMultiplier } = {}) {
+  if (!allowBurdenMove(combat,enemy,Rounds.enemyMoveSp(move,{enemy,moveId,combat}),move)) return;
   move = expandedEnemyMove(enemy, move, moveId, combat);
   // movesHistory records ROLLS (maxConsecutive reads it); a roll a stagger
   // cancels never happens. This is what did — the inspector's history.
@@ -1039,12 +1051,12 @@ function buildIntent(move, moveId, enemy = null, combat = null) {
 export function dispatch(combat, intent) {
   if (combat.gameProfile) freezeProfile(combat.gameProfile);
   if (configuredCombat(combat)) combat.emit = (type, payload) => combat._emitEvent(combat, type, payload);
-  if (!combat._foundationTransaction && (configuredCombat(combat) || combat.combatExpansionVersion === 2 || combat.foundation || ['playCard', 'unqueueCard', 'chooseDiscard'].includes(intent.type))) return F.foundationTransaction(combat, (candidate) => dispatch(candidate, intent), { advanceAction: intent.type === 'chooseDiscard' ? !combat.reactionResume : !['predictIntent', 'chooseReaction', 'setReactions'].includes(intent.type) });
+  if (!combat._foundationTransaction && (configuredCombat(combat) || combat.combatExpansionVersion === 2 || combat.foundation || ['playCard', 'unqueueCard', 'chooseDiscard', 'chooseCards'].includes(intent.type))) return F.foundationTransaction(combat, (candidate) => dispatch(candidate, intent), { advanceAction: ['chooseDiscard','chooseCards'].includes(intent.type) ? !combat.reactionResume : !['predictIntent', 'chooseReaction', 'setReactions'].includes(intent.type) });
   if (combat.result) throw new Error('Combat is over');
   combat._buffer = [];
   try {
     if (combat.pendingReaction && intent.type !== 'chooseReaction') throw new Error('Answer the pending reaction first');
-    if (intent.type !== 'chooseDiscard') R.assertNoAbilityChoice(combat);
+    if (!['chooseDiscard','chooseCards'].includes(intent.type)) R.assertNoAbilityChoice(combat);
     switch (intent.type) {
       case 'setReactions':
         Reactions.setReactionsEnabled(combat, combat.player, intent.enabled);
@@ -1074,6 +1086,12 @@ export function dispatch(combat, intent) {
         refreshCombatRatings(combat);
         break;
       }
+      case 'chooseCards':
+        chooseZoneCards(combat, intent.cardInstanceIds);
+        drainQueue(combat);
+        finishAbilityPlay(combat);
+        if (Reactions.restoreReactionQueue(combat) || combat.reactionCursor) resumeEnemyTurn(combat);
+        break;
       case 'chooseDiscard':
         R.chooseAbilityDiscard(combat, intent.cardInstanceIds);
         drainQueue(combat);
@@ -1427,7 +1445,15 @@ export function resolvedCardPlayCosts(combat, def, claimed = null) {
 
 // Restore cards show their full discounted price, although their own restore
 // funds part of the payment. Keep both amounts before payment clamps to zero.
-function resolvedCardPriceReceipt(combat, def, claimed = null) {
+function resolvedCardPriceReceipt(combat,def,claimed=null) {
+ const result=baseCardPriceReceipt(combat,def,claimed),status=proposalCardPlan(combat,combat.player,def);
+ if(status.staminaTax || status.manaTax) {
+  result.paid={...result.paid,energy:result.paid.energy+status.staminaTax,stamina:result.paid.stamina+status.staminaTax,mana:result.paid.mana+status.manaTax};
+  result.display={...result.display,action:result.display.action+status.staminaTax,stamina:result.display.stamina+status.staminaTax,mana:result.display.mana+status.manaTax};
+ }
+ return result;
+}
+function baseCardPriceReceipt(combat, def, claimed = null) {
   if (configuredCombat(combat)) {
     const paid = profileCardCosts(combat, def);
     return { paid, display: { action: paid.energy, stamina: paid.stamina, mana: paid.mana }, selfFunded: false };
@@ -1474,7 +1500,7 @@ function preparedPlayCosts(combat, inst, def, claimed, targetId, { afterQueued =
   if (!combat.result && combat.player?.alive && combat.player.hp > 0
     && combat.enemies?.some(enemy => enemy.alive && enemy.hp > 0)
     && combat._emitEvent === emitEvent && Array.isArray(combat.queue) && combat.queue.length === 0
-    && !combat.pendingAbilityDiscard && !combat._abilityAction && !combat._emitDepth
+    && !hasCardChoice(combat) && !combat._abilityAction && !combat._emitDepth
     && !combat._foundationTransaction && !combat._foundationAncestry?.length
     && !hasEventTriggers(combat, 'cardPreparing', { cardTags: def.cardTags || def.tags || [] })) return playCosts(projectedQueuePricing(combat, inst, afterQueued), def, claimed);
   return playCosts(preparingPreview(combat, inst, def, targetId, { afterQueued }), def, claimed);
@@ -1562,7 +1588,7 @@ export function cardNeedsEnemyTargetNow(combat, cardInstanceId) {
   if (!combat.result && combat.player?.alive && combat.player.hp > 0
     && combat.enemies?.some(enemy => enemy.alive && enemy.hp > 0)
     && combat._emitEvent === emitEvent && Array.isArray(combat.queue) && combat.queue.length === 0
-    && !combat.pendingAbilityDiscard && !combat._abilityAction && !combat._emitDepth
+    && !hasCardChoice(combat) && !combat._abilityAction && !combat._emitDepth
     && !combat._foundationAncestry?.length && !hasEventTriggers(combat, 'cardPreparing', { cardTags: def.cardTags || def.tags || [] })) {
     const enemyAvailable = combat.enemies.some(enemy => enemy.alive);
     const charges = R.matchingAbilityCharges(combat.player, {
@@ -1580,7 +1606,7 @@ export function cardNeedsEnemyTargetNow(combat, cardInstanceId) {
 // Charges the player already holds are not spent here: the queue's claims already share those out.
 function preparingPreview(combat, inst, def, targetId, { afterQueued = false } = {}) {
   const clone = F.candidateState(combat, { detached: true });
-  if (clone.pendingAbilityDiscard) { clone.queue = []; return clone; }
+  if (hasCardChoice(clone)) { clone.queue = []; return clone; }
   // A reaction choice waiting on the live fight (a round reaction is priced while its offer is open) would hold the
   // preview's trigger effects back (beforeReactionAction); the detached preview prices the card as it will play.
   delete clone.pendingReaction;
@@ -1630,8 +1656,10 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
   const idx = combat.piles.hand.findIndex((c) => c.instanceId === cardInstanceId);
   if (idx < 0) throw new Error(`Card '${cardInstanceId}' is not in hand`);
   const inst = combat.piles.hand[idx];
-  const def = resolveCombatCard(combat, inst, { upcastTier, upcastRanks });
+  let def = resolveCombatCard(combat, inst, { upcastTier, upcastRanks });
   const kws = def.keywords || [];
+  const statusPlan=proposalCardPlan(combat,p,def);
+  if(!statusPlan.allowed) throw F.playRefusal(statusPlan.refusal,'controlled');
   if (!Control.controlGate(combat, p, def).allowed) throw F.playRefusal('Recover from the active control statuses before playing cards', 'controlled');
   if (p.ashenBlight?.milestones?.some(row => row.path === null)) throw new Error('Choose the pending Ashen Blight feat first');
   const chosen = assertCardChoice(cardChoice(combat.registries, def, p.classId), choice);
@@ -1641,6 +1669,7 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
 
   const isX = def.cost === 'X';
   let { energy: cost, mana: manaCost, stamina: staminaCost } = prepaid ?? playCosts(combat, def);
+  def=selectCardVariant(combat,def,{energy:cost,mana:manaCost,stamina:staminaCost},targetId ? findEntity(combat,targetId) : null);
 
   const players = [{ id: p.id, alive: p.alive, connected: true }];
   const targetPlan = cardTargetPlan(def, p.id, combat.enemies, players, { solo: true });
@@ -1746,7 +1775,7 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
   p.counters.cardsPlayedThisTurn += 1;
   p.counters.cardsPlayedThisCombat += 1;
   const meta = {
-    ...before,
+    ...before,proposalTargetDecisions:{},
     energySpent: cost,
     manaSpent: manaCost,
     staminaSpent: staminaCost,
@@ -1780,6 +1809,7 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
     expandedActions.push(action);
   }
   enqueueExpandedAction(combat, expandedActions, { source: p, target, carrier: cardRef });
+  applyProposalPlan(combat,statusPlan,p,target,cardRef);
   if (!configuredCombat(combat)) enqueueCounterWard(combat, p, cardRef, meta);
   combat.emit('cardPlayed', {
     ...before, abilityKind: cardRef.abilityKind, printedManaCost: def.manaCost || 0, sourceId: p.id,
@@ -2264,7 +2294,7 @@ function completeEndTurn(combat, discardIds) {
 }
 
 function resumeEnemyTurn(combat) {
-  if (combat.pendingAbilityDiscard || combat.reactionResume) return;
+  if (hasCardChoice(combat) || combat.reactionResume) return;
   if (!combat.reactionCursor) { drainQueue(combat); finishAbilityPlay(combat); return; }
   enemyPhase(combat);
   if (combat.result || Reactions.reactionPaused(combat)) return;
@@ -2349,7 +2379,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
     combat.piles.discard.find((c) => c.instanceId === cardInstanceId) ||
     combat.piles.exhaust.find((c) => c.instanceId === cardInstanceId);
   if (!inst) throw new Error(`Unknown card instance '${cardInstanceId}'`);
-  const def = resolveCombatCard(combat, inst, { upcastRanks });
+  let def = resolveCombatCard(combat, inst, { upcastRanks });
   if (!combat._abilityPreparingPreview) {
     const clone = preparingPreview(combat, inst, def, targetId);
     clone._abilityPreparingPreview = true;
@@ -2359,6 +2389,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
   const isX = def.cost === 'X';
   const priceReceipt = resolvedCardPriceReceipt(combat, def);
   const paidCosts = priceReceipt.paid;
+  def=selectCardVariant(combat,def,paidCosts,targetId ? findEntity(combat,targetId) : null);
   // A queued card owns its discount charges. A restore's full display price
   // cannot borrow them, even when its net payment would still be zero.
   const displayClaims = priceReceipt.selfFunded ? claimedCharges(combat, inst.instanceId) : null;
@@ -2366,7 +2397,8 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
     ? resolvedCardPriceReceipt(combat, def, displayClaims).display : priceReceipt.display;
   const shownCost = configuredCombat(combat) || combat.combatExpansionVersion === 2 ? paidCosts.energy : isX ? p.energy : effectiveCost(combat, def);
   const target = targetId != null ? findEntity(combat, targetId) : null;
-  const living = combat.enemies.filter((e) => e.alive);
+  const allLiving = combat.enemies.filter((e) => e.alive);
+  const living = def.targetLimit===undefined ? allLiving : allLiving.slice(0,Math.max(0,evaluate(def.targetLimit,{energySpent:paidCosts.stamina,entities:{self:p,owner:p,player:p,target,enemy:target,allEnemies:allLiving}})));
 
   // Same action shape execution uses, so formulas resolve identically.
   const action = {
@@ -2392,7 +2424,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
       exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
       ...(def.cardRatingValues ? { cardRatingValues: def.cardRatingValues } : {}),
     },
-    meta: { energySpent: isX ? p.energy : typeof shownCost === 'number' ? shownCost : 0 },
+    meta: { energySpent:paidCosts.stamina,manaSpent:paidCosts.mana,staminaSpent:paidCosts.stamina },
   };
 
   Object.assign(action.card, tacticalCarrier(def, action.card, combat, p));
@@ -2470,7 +2502,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
     const entry = { op: eff.op, target: eff.target || null };
     const primary = firstResolvedTarget(combat, action, eff);
     action.effect = eff;
-    action.meta = { energySpent: shownCost };
+    action.meta = { energySpent:paidCosts.stamina,manaSpent:paidCosts.mana,staminaSpent:paidCosts.stamina };
     R.attachAbilityCharges(action, charges, applied, combat);
     switch (eff.op) {
       case 'damage': {
@@ -2673,8 +2705,9 @@ export function previewIntent(combat, enemyInstanceId) {
   const intent = enemy.intent || { kind: 'unknown', moveId: null };
   const profile = intent.combatProfile || {};
   const knowledge = knowledgeIntentProjection(combat, enemy);
-  if (knowledge && !knowledge.exact) return knowledge.intent;
-  const revealed = enemy.actorIntentRevealed || (enemy.intentReads ? enemy.intentReads[combat.playerKey] === true : enemy.intentRevealed !== false);
+  const proposalRead=(enemy.proposalIntentRevealedUntil || 0)>combat.turn;
+  if (!proposalRead && knowledge && !knowledge.exact) return knowledge.intent;
+  const revealed = proposalRead || enemy.actorIntentRevealed || (enemy.intentReads ? enemy.intentReads[combat.playerKey] === true : enemy.intentRevealed !== false);
   if (!knowledge && !revealed && profile.camp && intent.kind !== 'staggered') return concealIntent(intent, profile);
   const out = { ...intent, profile, stance: combatIntentStance(intent, profile), revealed: true, hidden: false };
   // The armed payload is public only after this observer's read gate. This is
