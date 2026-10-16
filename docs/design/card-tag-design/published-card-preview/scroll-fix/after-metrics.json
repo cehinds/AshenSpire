@@ -1,0 +1,382 @@
+[
+  {
+    "name": "mobile",
+    "width": 390,
+    "height": 844,
+    "initial": {
+      "root": {
+        "height": "3221.23px",
+        "overflowY": "auto",
+        "scrollHeight": 3221,
+        "clientHeight": 791
+      },
+      "body": {
+        "height": "3221.23px",
+        "overflowY": "visible",
+        "scrollHeight": 3221,
+        "clientHeight": 3221
+      },
+      "top": 0,
+      "max": 2430,
+      "horizontal": false,
+      "origin": "null"
+    },
+    "expanded": {
+      "root": {
+        "height": "36161px",
+        "overflowY": "auto",
+        "scrollHeight": 36161,
+        "clientHeight": 791
+      },
+      "body": {
+        "height": "36161px",
+        "overflowY": "visible",
+        "scrollHeight": 36161,
+        "clientHeight": 36161
+      },
+      "top": 0,
+      "max": 35370,
+      "horizontal": false,
+      "origin": "null"
+    },
+    "wheel": {
+      "root": {
+        "height": "36161px",
+        "overflowY": "auto",
+        "scrollHeight": 36161,
+        "clientHeight": 791
+      },
+      "body": {
+        "height": "36161px",
+        "overflowY": "visible",
+        "scrollHeight": 36161,
+        "clientHeight": 36161
+      },
+      "top": 35370,
+      "max": 35370,
+      "horizontal": false,
+      "origin": "null"
+    },
+    "end": {
+      "root": {
+        "height": "36161px",
+        "overflowY": "auto",
+        "scrollHeight": 36161,
+        "clientHeight": 791
+      },
+      "body": {
+        "height": "36161px",
+        "overflowY": "visible",
+        "scrollHeight": 36161,
+        "clientHeight": 36161
+      },
+      "top": 35370,
+      "max": 35370,
+      "horizontal": false,
+      "origin": "null"
+    },
+    "lastBeforeEnd": {
+      "x": 47.5,
+      "y": 381.40625,
+      "width": 280,
+      "height": 420
+    },
+    "lastBox": {
+      "x": 47.5,
+      "y": 381.40625,
+      "width": 280,
+      "height": 420
+    },
+    "wheelReachedLast": true,
+    "inspection": true,
+    "restored": true,
+    "reexpanded": true,
+    "touchMoved": false,
+    "errors": []
+  },
+  {
+    "name": "tablet",
+    "width": 1024,
+    "height": 768,
+    "initial": {
+      "root": {
+        "height": "1296.88px",
+        "overflowY": "auto",
+        "scrollHeight": 1297,
+        "clientHeight": 734
+      },
+      "body": {
+        "height": "1296.88px",
+        "overflowY": "visible",
+        "scrollHeight": 1297,
+        "clientHeight": 1297
+      },
+      "top": 0,
+      "max": 563,
+      "horizontal": false,
+      "origin": "null"
+    },
+    "expanded": {
+      "root": {
+        "height": "12580px",
+        "overflowY": "auto",
+        "scrollHeight": 12580,
+        "clientHeight": 734
+      },
+      "body": {
+        "height": "12580px",
+        "overflowY": "visible",
+        "scrollHeight": 12580,
+        "clientHeight": 12580
+      },
+      "top": 0,
+      "max": 11846,
+      "horizontal": false,
+      "origin": "null"
+    },
+    "wheel": {
+      "root": {
+        "height": "12580px",
+        "overflowY": "auto",
+        "scrollHeight": 12580,
+        "clientHeight": 734
+      },
+      "body": {
+        "height": "12580px",
+        "overflowY": "visible",
+        "scrollHeight": 12580,
+        "clientHeight": 12580
+      },
+      "top": 11846,
+      "max": 11846,
+      "horizontal": false,
+      "origin": "null"
+    },
+    "end": {
+      "root": {
+        "height": "12580px",
+        "overflowY": "auto",
+        "scrollHeight": 12580,
+        "clientHeight": 734
+      },
+      "body": {
+        "height": "12580px",
+        "overflowY": "visible",
+        "scrollHeight": 12580,
+        "clientHeight": 12580
+      },
+      "top": 11846,
+      "max": 11846,
+      "horizontal": false,
+      "origin": "null"
+    },
+    "lastBeforeEnd": {
+      "x": 56.5,
+      "y": 276.796875,
+      "width": 280,
+      "height": 420
+    },
+    "lastBox": {
+      "x": 56.5,
+      "y": 276.796875,
+      "width": 280,
+      "height": 420
+    },
+    "wheelReachedLast": true,
+    "inspection": true,
+    "restored": true,
+    "reexpanded": true,
+    "touchMoved": null,
+    "errors": []
+  },
+  {
+    "name": "desktop",
+    "width": 1440,
+    "height": 900,
+    "initial": {
+      "root": {
+        "height": "1296.88px",
+        "overflowY": "auto",
+        "scrollHeight": 1297,
+        "clientHeight": 866
+      },
+      "body": {
+        "height": "1296.88px",
+        "overflowY": "visible",
+        "scrollHeight": 1297,
+        "clientHeight": 1297
+      },
+      "top": 0,
+      "max": 431,
+      "horizontal": false,
+      "origin": "null"
+    },
+    "expanded": {
+      "root": {
+        "height": "12580px",
+        "overflowY": "auto",
+        "scrollHeight": 12580,
+        "clientHeight": 866
+      },
+      "body": {
+        "height": "12580px",
+        "overflowY": "visible",
+        "scrollHeight": 12580,
+        "clientHeight": 12580
+      },
+      "top": 0,
+      "max": 11714,
+      "horizontal": false,
+      "origin": "null"
+    },
+    "wheel": {
+      "root": {
+        "height": "12580px",
+        "overflowY": "auto",
+        "scrollHeight": 12580,
+        "clientHeight": 866
+      },
+      "body": {
+        "height": "12580px",
+        "overflowY": "visible",
+        "scrollHeight": 12580,
+        "clientHeight": 12580
+      },
+      "top": 11714,
+      "max": 11714,
+      "horizontal": false,
+      "origin": "null"
+    },
+    "end": {
+      "root": {
+        "height": "12580px",
+        "overflowY": "auto",
+        "scrollHeight": 12580,
+        "clientHeight": 866
+      },
+      "body": {
+        "height": "12580px",
+        "overflowY": "visible",
+        "scrollHeight": 12580,
+        "clientHeight": 12580
+      },
+      "top": 11714,
+      "max": 11714,
+      "horizontal": false,
+      "origin": "null"
+    },
+    "lastBeforeEnd": {
+      "x": 264.5,
+      "y": 408.796875,
+      "width": 280,
+      "height": 420
+    },
+    "lastBox": {
+      "x": 264.5,
+      "y": 408.796875,
+      "width": 280,
+      "height": 420
+    },
+    "wheelReachedLast": true,
+    "inspection": true,
+    "restored": true,
+    "reexpanded": true,
+    "touchMoved": null,
+    "errors": []
+  },
+  {
+    "name": "wide",
+    "width": 2560,
+    "height": 1440,
+    "initial": {
+      "root": {
+        "height": "1406px",
+        "overflowY": "auto",
+        "scrollHeight": 1406,
+        "clientHeight": 1406
+      },
+      "body": {
+        "height": "1406px",
+        "overflowY": "visible",
+        "scrollHeight": 1406,
+        "clientHeight": 1406
+      },
+      "top": 0,
+      "max": 0,
+      "horizontal": false,
+      "origin": "null"
+    },
+    "expanded": {
+      "root": {
+        "height": "12580px",
+        "overflowY": "auto",
+        "scrollHeight": 12580,
+        "clientHeight": 1406
+      },
+      "body": {
+        "height": "12580px",
+        "overflowY": "visible",
+        "scrollHeight": 12580,
+        "clientHeight": 12580
+      },
+      "top": 0,
+      "max": 11174,
+      "horizontal": false,
+      "origin": "null"
+    },
+    "wheel": {
+      "root": {
+        "height": "12580px",
+        "overflowY": "auto",
+        "scrollHeight": 12580,
+        "clientHeight": 1406
+      },
+      "body": {
+        "height": "12580px",
+        "overflowY": "visible",
+        "scrollHeight": 12580,
+        "clientHeight": 12580
+      },
+      "top": 11174,
+      "max": 11174,
+      "horizontal": false,
+      "origin": "null"
+    },
+    "end": {
+      "root": {
+        "height": "12580px",
+        "overflowY": "auto",
+        "scrollHeight": 12580,
+        "clientHeight": 1406
+      },
+      "body": {
+        "height": "12580px",
+        "overflowY": "visible",
+        "scrollHeight": 12580,
+        "clientHeight": 12580
+      },
+      "top": 11174,
+      "max": 11174,
+      "horizontal": false,
+      "origin": "null"
+    },
+    "lastBeforeEnd": {
+      "x": 824.5,
+      "y": 948.796875,
+      "width": 280,
+      "height": 420
+    },
+    "lastBox": {
+      "x": 824.5,
+      "y": 948.796875,
+      "width": 280,
+      "height": 420
+    },
+    "wheelReachedLast": true,
+    "inspection": true,
+    "restored": true,
+    "reexpanded": true,
+    "touchMoved": null,
+    "errors": []
+  }
+]

@@ -1,0 +1,17 @@
+{
+  "wrapper": "Exact previewWrapperHtml and PREVIEW_SCRIPT from origin/dev:tools/pages-site.mjs",
+  "beforeEnd": 900,
+  "afterEnd": 35370,
+  "afterTouch": 34670,
+  "endMoves": true,
+  "touchMovesUp": true,
+  "inspected": "Restrained",
+  "escaped": true,
+  "origin": "null",
+  "touchAction": "auto",
+  "cards": 70,
+  "overflowY": "auto",
+  "horizontal": false,
+  "fadeCount": true,
+  "allImages": true
+}

@@ -3,8 +3,8 @@
   "gameSource": "f7a24e0e39dd7823c15f89afd6023782526655d0",
   "generator": "ingame-card-preview/export-standalone.mjs",
   "renderedFrom": "http://127.0.0.1:8767/",
-  "standaloneSha256": "f402742bbdf84ba368020a0992ee063546c57881f48a6e3f91c791eb60250291",
-  "bytes": 11139723,
+  "standaloneSha256": "04e17eaf2cf1ebb3d393d2aa0e26a62f3fe0873f0a3f0e8e3df862debfb28d5a",
+  "bytes": 11139814,
   "featured": 6,
   "expanded": 70,
   "uniqueImages": 11,
@@ -114,5 +114,12 @@
       "sha256": "7ea9d2f1274cebee837f0c6eebb426c18fbb2333a6b6da4d02ec5cf47db7fb8e"
     }
   },
-  "notes": "Production DOM/styles/Simple artwork; visual proposals only. No runtime source imports, fetches, external styles or external assets."
+  "notes": "Production DOM/styles/Simple artwork; visual proposals only. No runtime source imports, fetches, external styles or external assets.",
+  "previousStandaloneSha256": "f402742bbdf84ba368020a0992ee063546c57881f48a6e3f91c791eb60250291",
+  "updatedAt": "2026-10-16T05:32:26.207Z",
+  "previewFlowCorrection": {
+    "method": "Single exact gallery-style replacement, equivalent to regenerating from corrected canonical gallery source; all production CSS, card DOM, assets, runtime and rule text unchanged.",
+    "from": "html{background:#090b0c}body{margin:0",
+    "to": "html{background:#090b0c;height:auto;min-height:100%;overflow-x:hidden;overflow-y:auto}body{height:auto;overflow:visible;margin:0"
+  }
 }

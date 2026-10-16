@@ -1,0 +1,382 @@
+[
+  {
+    "name": "mobile",
+    "width": 390,
+    "height": 844,
+    "initial": {
+      "root": {
+        "height": "791px",
+        "overflowY": "hidden",
+        "scrollHeight": 791,
+        "clientHeight": 791
+      },
+      "body": {
+        "height": "791px",
+        "overflowY": "hidden",
+        "scrollHeight": 3193,
+        "clientHeight": 791
+      },
+      "top": 0,
+      "max": 0,
+      "horizontal": false,
+      "origin": "null"
+    },
+    "expanded": {
+      "root": {
+        "height": "791px",
+        "overflowY": "hidden",
+        "scrollHeight": 791,
+        "clientHeight": 791
+      },
+      "body": {
+        "height": "791px",
+        "overflowY": "hidden",
+        "scrollHeight": 36133,
+        "clientHeight": 791
+      },
+      "top": 0,
+      "max": 0,
+      "horizontal": false,
+      "origin": "null"
+    },
+    "wheel": {
+      "root": {
+        "height": "791px",
+        "overflowY": "hidden",
+        "scrollHeight": 791,
+        "clientHeight": 791
+      },
+      "body": {
+        "height": "791px",
+        "overflowY": "hidden",
+        "scrollHeight": 36133,
+        "clientHeight": 791
+      },
+      "top": 0,
+      "max": 0,
+      "horizontal": false,
+      "origin": "null"
+    },
+    "end": {
+      "root": {
+        "height": "791px",
+        "overflowY": "hidden",
+        "scrollHeight": 791,
+        "clientHeight": 791
+      },
+      "body": {
+        "height": "791px",
+        "overflowY": "hidden",
+        "scrollHeight": 36133,
+        "clientHeight": 791
+      },
+      "top": 0,
+      "max": 0,
+      "horizontal": false,
+      "origin": "null"
+    },
+    "lastBeforeEnd": {
+      "x": 55,
+      "y": 35723.40625,
+      "width": 280,
+      "height": 420
+    },
+    "lastBox": {
+      "x": 55,
+      "y": 35723.40625,
+      "width": 280,
+      "height": 420
+    },
+    "wheelReachedLast": false,
+    "inspection": false,
+    "restored": false,
+    "reexpanded": false,
+    "touchMoved": null,
+    "errors": []
+  },
+  {
+    "name": "tablet",
+    "width": 1024,
+    "height": 768,
+    "initial": {
+      "root": {
+        "height": "734px",
+        "overflowY": "hidden",
+        "scrollHeight": 734,
+        "clientHeight": 734
+      },
+      "body": {
+        "height": "734px",
+        "overflowY": "hidden",
+        "scrollHeight": 1297,
+        "clientHeight": 734
+      },
+      "top": 0,
+      "max": 0,
+      "horizontal": false,
+      "origin": "null"
+    },
+    "expanded": {
+      "root": {
+        "height": "734px",
+        "overflowY": "hidden",
+        "scrollHeight": 734,
+        "clientHeight": 734
+      },
+      "body": {
+        "height": "734px",
+        "overflowY": "hidden",
+        "scrollHeight": 12580,
+        "clientHeight": 734
+      },
+      "top": 0,
+      "max": 0,
+      "horizontal": false,
+      "origin": "null"
+    },
+    "wheel": {
+      "root": {
+        "height": "734px",
+        "overflowY": "hidden",
+        "scrollHeight": 734,
+        "clientHeight": 734
+      },
+      "body": {
+        "height": "734px",
+        "overflowY": "hidden",
+        "scrollHeight": 12580,
+        "clientHeight": 734
+      },
+      "top": 0,
+      "max": 0,
+      "horizontal": false,
+      "origin": "null"
+    },
+    "end": {
+      "root": {
+        "height": "734px",
+        "overflowY": "hidden",
+        "scrollHeight": 734,
+        "clientHeight": 734
+      },
+      "body": {
+        "height": "734px",
+        "overflowY": "hidden",
+        "scrollHeight": 12580,
+        "clientHeight": 734
+      },
+      "top": 0,
+      "max": 0,
+      "horizontal": false,
+      "origin": "null"
+    },
+    "lastBeforeEnd": {
+      "x": 64,
+      "y": 12122.796875,
+      "width": 280,
+      "height": 420
+    },
+    "lastBox": {
+      "x": 64,
+      "y": 12122.796875,
+      "width": 280,
+      "height": 420
+    },
+    "wheelReachedLast": false,
+    "inspection": false,
+    "restored": false,
+    "reexpanded": false,
+    "touchMoved": null,
+    "errors": []
+  },
+  {
+    "name": "desktop",
+    "width": 1440,
+    "height": 900,
+    "initial": {
+      "root": {
+        "height": "866px",
+        "overflowY": "hidden",
+        "scrollHeight": 866,
+        "clientHeight": 866
+      },
+      "body": {
+        "height": "866px",
+        "overflowY": "hidden",
+        "scrollHeight": 1297,
+        "clientHeight": 866
+      },
+      "top": 0,
+      "max": 0,
+      "horizontal": false,
+      "origin": "null"
+    },
+    "expanded": {
+      "root": {
+        "height": "866px",
+        "overflowY": "hidden",
+        "scrollHeight": 866,
+        "clientHeight": 866
+      },
+      "body": {
+        "height": "866px",
+        "overflowY": "hidden",
+        "scrollHeight": 12580,
+        "clientHeight": 866
+      },
+      "top": 0,
+      "max": 0,
+      "horizontal": false,
+      "origin": "null"
+    },
+    "wheel": {
+      "root": {
+        "height": "866px",
+        "overflowY": "hidden",
+        "scrollHeight": 866,
+        "clientHeight": 866
+      },
+      "body": {
+        "height": "866px",
+        "overflowY": "hidden",
+        "scrollHeight": 12580,
+        "clientHeight": 866
+      },
+      "top": 0,
+      "max": 0,
+      "horizontal": false,
+      "origin": "null"
+    },
+    "end": {
+      "root": {
+        "height": "866px",
+        "overflowY": "hidden",
+        "scrollHeight": 866,
+        "clientHeight": 866
+      },
+      "body": {
+        "height": "866px",
+        "overflowY": "hidden",
+        "scrollHeight": 12580,
+        "clientHeight": 866
+      },
+      "top": 0,
+      "max": 0,
+      "horizontal": false,
+      "origin": "null"
+    },
+    "lastBeforeEnd": {
+      "x": 272,
+      "y": 12122.796875,
+      "width": 280,
+      "height": 420
+    },
+    "lastBox": {
+      "x": 272,
+      "y": 12122.796875,
+      "width": 280,
+      "height": 420
+    },
+    "wheelReachedLast": false,
+    "inspection": false,
+    "restored": false,
+    "reexpanded": false,
+    "touchMoved": null,
+    "errors": []
+  },
+  {
+    "name": "wide",
+    "width": 2560,
+    "height": 1440,
+    "initial": {
+      "root": {
+        "height": "1406px",
+        "overflowY": "hidden",
+        "scrollHeight": 1406,
+        "clientHeight": 1406
+      },
+      "body": {
+        "height": "1406px",
+        "overflowY": "hidden",
+        "scrollHeight": 1406,
+        "clientHeight": 1406
+      },
+      "top": 0,
+      "max": 0,
+      "horizontal": false,
+      "origin": "null"
+    },
+    "expanded": {
+      "root": {
+        "height": "1406px",
+        "overflowY": "hidden",
+        "scrollHeight": 1406,
+        "clientHeight": 1406
+      },
+      "body": {
+        "height": "1406px",
+        "overflowY": "hidden",
+        "scrollHeight": 12580,
+        "clientHeight": 1406
+      },
+      "top": 0,
+      "max": 0,
+      "horizontal": false,
+      "origin": "null"
+    },
+    "wheel": {
+      "root": {
+        "height": "1406px",
+        "overflowY": "hidden",
+        "scrollHeight": 1406,
+        "clientHeight": 1406
+      },
+      "body": {
+        "height": "1406px",
+        "overflowY": "hidden",
+        "scrollHeight": 12580,
+        "clientHeight": 1406
+      },
+      "top": 0,
+      "max": 0,
+      "horizontal": false,
+      "origin": "null"
+    },
+    "end": {
+      "root": {
+        "height": "1406px",
+        "overflowY": "hidden",
+        "scrollHeight": 1406,
+        "clientHeight": 1406
+      },
+      "body": {
+        "height": "1406px",
+        "overflowY": "hidden",
+        "scrollHeight": 12580,
+        "clientHeight": 1406
+      },
+      "top": 0,
+      "max": 0,
+      "horizontal": false,
+      "origin": "null"
+    },
+    "lastBeforeEnd": {
+      "x": 832,
+      "y": 12122.796875,
+      "width": 280,
+      "height": 420
+    },
+    "lastBox": {
+      "x": 832,
+      "y": 12122.796875,
+      "width": 280,
+      "height": 420
+    },
+    "wheelReachedLast": false,
+    "inspection": false,
+    "restored": false,
+    "reexpanded": false,
+    "touchMoved": null,
+    "errors": []
+  }
+]
