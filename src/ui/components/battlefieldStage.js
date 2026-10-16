@@ -588,7 +588,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         art,
         // The overhead stack's own height (Inspect, when shown, over the
         // intent), in local px, for the headroom clamp below.
-        leadingHeight, leadingWidth,
+        leadingHeight, leadingWidth, artLeading: ceiling * zoom,
         // Reading controls do not change the unselected fitting envelope.
         leading: Math.max(Math.min(66, fieldRect.height * .25), leadingHeight * zoom + ceiling * zoom + overheadGap) };
     });

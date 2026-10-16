@@ -134,7 +134,8 @@
         "widthScale": 1,
         "heightPerWidth": 0.6666666666666666
       },
-      "enemyMiniHudScale": 1.5
+      "enemyMiniHudScale": 1.5,
+      "spaciousEnemyClassHeightFraction": 0.717
     }
   }
 }

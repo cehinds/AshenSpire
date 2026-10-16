@@ -123,7 +123,13 @@ export function fitAlternativeSprites({ width, height, actors, narrow }) {
     // that impossible case; the controls are packed independently, so they
     // must not collapse the body and make composition move its foot anchor.
     const shortFloor = height < GRID.shortBelowPx ? Math.min(a.slot.box?.height ?? 1, requested) : 1;
-    const visibleHeight = Math.max(shortFloor, Math.min(requested * Math.min(1.25, a.multiplier || 1),
+    // A spacious rank retains its approved body size when the readable HUD grows.
+    // Its HUD is packed separately; viewport, cell width and edge bounds remain hard.
+    const spaciousFloor = enemy && !narrow && height >= GRID.shortBelowPx && sideCount <= 3
+      ? Math.min(height * GRID.spaciousEnemyClassHeightFraction * ratio * Math.min(1, a.multiplier || 1),
+        a.slot.ground - (a.artLeading ?? a.leading) - 6, widthLimit * a.visibleHeight / a.visibleWidth,
+        2 * Math.min(a.slot.x - 5, width - a.slot.x - 5) * a.visibleHeight / a.visibleWidth) : 1;
+    const visibleHeight = Math.max(shortFloor, spaciousFloor, Math.min(requested * Math.min(1.25, a.multiplier || 1),
       a.slot.ground - a.leading - 6, widthLimit * a.visibleHeight / a.visibleWidth,
       2 * Math.min(a.slot.x - 5, width - a.slot.x - 5) * a.visibleHeight / a.visibleWidth));
     return { a, enemy, low, visibleHeight };
