@@ -1,7 +1,8 @@
+import { proposalCardPlan, applyProposalPlan, proposalTurn, proposalRetained } from './proposalStatusRuntime.js';
 import * as Rounds from './combatRoundsAdapter.js';
 import { beginEnemyBurdens, endEnemyBurdens, allowBurdenMove } from './enemyBurdens.js';
 import { selectCardVariant } from './cardBehavior.js';
-import { hasCardChoice, chooseZoneCards } from './cardZones.js';
+import { hasCardChoice, chooseZoneCards, returnHiddenCards } from './cardZones.js';
 import { decayStanceRoundStart } from './combatMatchups.js';
 import { combatMatchups, combatIntent, combatExpansionMatchups } from '../content/combatMatchups.js';
 import { ownRestoreFunds } from '../model/actionCosts.js';
@@ -582,6 +583,7 @@ function startPlayerPhase(C) {
   for (const P of livingPlayers(C)) {
     setActive(C, P);
     const e = P.entity;
+    returnHiddenCards(C);
     delete e.combatRetainedCards;
     // Barrier lasts until its owner's next turn starts (solo clears it at the same point).
     if (C.combatExpansionVersion === 2) e.barrier = 0;
@@ -596,7 +598,7 @@ function startPlayerPhase(C) {
     // endOnePlayerTurn, so the counter is zeroed here, at every seat's turn
     // start, and never survives into a later turn to suppress its recovery.
     e.counters.staminaSpentThisTurn = 0;
-    if (!S.getFlag(C, e, 'retainBlock')) e.block = Math.min(e.block, passiveMax(C.registries, e.relicIds, 'retainBlockUpTo', propertyMountsOf(C, e)));
+    if (!S.getFlag(C, e, 'retainBlock')) e.block = Math.min(e.block,Math.max(proposalRetained(C,e), passiveMax(C.registries, e.relicIds, 'retainBlockUpTo', propertyMountsOf(C, e))));
     else { const cap = S.getCap(C, e, 'blockCap'); if (cap != null) e.block = Math.min(e.block, cap); }
     reconcileWardBlock(e);
     clearMeterGuards(e);
@@ -621,6 +623,7 @@ function startPlayerPhase(C) {
       A.drawCards(C, !P.opened ? Math.max(1, count - (C.combatExpansionVersion === 2 ? ashenBlightBonuses(e).openingHandPenalty : 0)) : count);
     }
     P.opened = true;
+    proposalTurn(C,e,'start');
     C.emit('playerTurnStart', { turn: C.turn, playerId: P.id });
     if (C.combatExpansionVersion !== 2) fireOwnerHooks(C, e, 'ownerTurnStart');
     drainQueue(C);
@@ -731,6 +734,7 @@ function doPlayCard(C, { cardInstanceId, targetId, choice, upcastTier, selectedB
   let def = resolveCombatCard(C, inst, { upcastTier });
   if (!controlGate(C, p, def).allowed) throw F.playRefusal('Recover from active control before playing this card', 'controlled');
   if (!preflightOnly && C.combatExpansionVersion === 2 && p.ashenBlight?.milestones.some(row => row.path === null)) throw new Error('Choose the pending Ashen Blight feat first');
+  const statusPlan=proposalCardPlan(C,p,def);if(!statusPlan.allowed)throw F.playRefusal(statusPlan.refusal,'controlled');
   const kws = def.keywords || [];
   const chosen = assertCardChoice(cardChoice(C.registries, def, p.classId), choice);
   F.assertFoundationPlayable(C, def, chosen);
@@ -878,6 +882,7 @@ function doPlayCard(C, { cardInstanceId, targetId, choice, upcastTier, selectedB
     R.attachAbilityCharges(action, charges, charged);
   }
   enqueueExpandedAction(C, actions, { source: p, target, carrier: cardRef });
+  applyProposalPlan(C,statusPlan,p,target,cardRef);
   enqueueCounterWard(C, p, cardRef, meta);
   C.emit('cardPlayed', {
     ...before, abilityKind: cardRef.abilityKind, printedManaCost: def.manaCost || 0, sourceId: p.id, sourcePlayerId: C.playerKey,
@@ -1061,6 +1066,7 @@ export function chooseDiscard(C, playerId, cardInstanceIds) {
 function endOnePlayerTurn(C, P) {
   const p = P.entity;
   C.emit('playerTurnEnd', { turn: C.turn, playerId: P.id });
+  proposalTurn(C,p,'end');
   fireOwnerHooks(C, p, 'ownerTurnEnd');
   drainQueue(C);
   if (C.result) return;
@@ -1158,6 +1164,7 @@ function enemyPhase(C) {
     setActive(C, firstLiving(C));
     let tacticalProtection = { block: 0, barrier: 0 };
     if (C.sharedExpansionVersion === 2) { C.combatExpansionVersion = 2; enemy.barrier = 0; tacticalProtection = startTacticalTurn(C, enemy); }
+    proposalTurn(C,enemy,'start');
     fireOwnerHooks(C, enemy, 'ownerTurnStart');
     drainQueue(C);
     if (C.result || !enemy.alive) continue;
@@ -1208,7 +1215,7 @@ function enemyPhase(C) {
     drainQueue(C);
     if (Reactions.reactionPaused(C)) return;
     if (C.result) return;
-    if (enemy.alive) { endEnemyBurdens(C,enemy); setActive(C, firstLiving(C)); fireOwnerHooks(C, enemy, 'ownerTurnEnd'); drainQueue(C); if (C.result) return; if (enemy.alive) S.decayAtTurnEnd(C, enemy); }
+    if (enemy.alive) { endEnemyBurdens(C,enemy); proposalTurn(C,enemy,'end'); setActive(C, firstLiving(C)); fireOwnerHooks(C, enemy, 'ownerTurnEnd'); drainQueue(C); if (C.result) return; if (enemy.alive) S.decayAtTurnEnd(C, enemy); }
   }
   C.emit('enemyTurnEnd', { turn: C.turn });
   setActive(C, firstLiving(C));
@@ -1260,7 +1267,7 @@ function executeMove(C, enemy, move, moveId) {
 const SEAT_PILE_OPS = new Set(['addCard', 'draw', 'discard', 'exhaust', 'shuffleDiscardIntoDraw']);
 
 function executeExpandedEnemyPayload(C, enemy, move, moveId, carrier, start = null, extraMeta = null) {
-  if(!allowBurdenMove(C,enemy,Rounds.enemyMoveSp(move,{enemy,moveId,combat:C}))) return;
+  if(!allowBurdenMove(C,enemy,Rounds.enemyMoveSp(move,{enemy,moveId,combat:C}),move)) return;
   if (Reactions.usesReactions(C)) {
     const actions = [];
     for (const P of livingPlayers(C)) {
