@@ -4,11 +4,7 @@ name: feature preview
 # The trusted dev Pages collector handles deployment through its sandbox wrapper.
 on:
   push:
-    branches: ['[Ff][Ee][Aa][Tt][Uu][Rr][Ee]/**', '[Ff][Ii][Xx]/**', '[Cc][Hh][Oo][Rr][Ee]/**']
-    paths:
-      - '.github/workflows/feature-preview.yml'
-      - 'docs/design/card-tag-design/published-card-preview/**'
-      - README.md
+    branches: ['Feature/CardPreview']
   workflow_dispatch:
 
 permissions:
