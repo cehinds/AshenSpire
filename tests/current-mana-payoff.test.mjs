@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
+import { validateContent } from '../src/model/validate.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
@@ -129,4 +130,25 @@ test('Sundering Hew buys a large payoff over the starting greatsword Smash', () 
  assert.equal(upgraded.effects.find(e=>e.op==='poiseDamage').amount,7);
  assert.equal(base.effects.find(e=>e.status==='vulnerable').stacks,1);
  assert.equal(applyCombatExpansionCard(base).effects.find(e=>e.status==='vulnerable').amount,4,'combat v2 keeps four Vulnerable buildup');
+});
+
+
+test('fixed grade prices validate without accepting fractional or out-of-range costs', () => {
+ assert.deepEqual(validateContent(contentBundle).errors,[]);
+ for (const [actionCost,manaCost] of [[0,1],[-1,1],[1.5,1],[6,1],[1,-1],[1,1.5],[1,6]]) {
+  const bundle={...contentBundle,cards:structuredClone(contentBundle.cards),equipment:{...contentBundle.equipment,armaments:contentBundle.equipment.armaments.map(piece=>({...piece}))}};
+  const grade=bundle.cards.find(card=>card.id==='cometFragment').gradeProfiles[2];
+  grade.actionCost=actionCost; grade.manaCost=manaCost;
+  assert.ok(validateContent(bundle).errors.some(error=>error.path==='cards.cometFragment.gradeProfiles.2'),`${actionCost} SP / ${manaCost} MP must be rejected`);
+ }
+ const formula={...contentBundle,cards:structuredClone(contentBundle.cards)};
+ delete formula.cards.find(card=>card.id==='cometFragment').gradeProfiles[2].traits.costRule;
+ assert.ok(validateContent(formula).errors.some(error=>error.path==='cards.cometFragment.gradeProfiles.2'),'formula grades still require rank-based authored Mana');
+});
+
+
+test('boot validation agrees with the authored weapon-art Mana minimum', () => {
+ const bundle={...contentBundle,cards:structuredClone(contentBundle.cards),equipment:{...contentBundle.equipment,armaments:contentBundle.equipment.armaments.map(piece=>({...piece}))}};
+ bundle.equipment.armaments.find(piece=>piece.id==='greatsword').weaponArtManaCost=0;
+ assert.ok(validateContent(bundle).errors.some(error=>error.path==='equipment.armaments.greatsword.weaponArtManaCost'));
 });
