@@ -25,6 +25,15 @@ import { hudGeometry, offsetPlacement, offsetTargetPlate, targetPlateBox } from 
 import { restingHandEnvelope, handGeometryKey } from '../models/HandLayout.js';
 import { reducedMotionRequested } from '../motion.js';
 
+// Presentation-only adjustment: header clearance moves the compact readout,
+// never the sprite's fitted position, foot anchor, or scale.
+export function targetOverheadPlacement({ art, box, headerBottom, gap = 14, zoom = 1 }) {
+  const preferredTop = art.top - gap - box.height;
+  const top = Math.max(preferredTop, Number.isFinite(headerBottom) ? headerBottom + 4 : -Infinity);
+  return { dx: ((art.left + art.right - box.left - box.right) / 2) / zoom,
+    dy: (top - box.top) / zoom };
+}
+
 // Hidden panels can retain layout rectangles. Reserve controls that will paint
 // together at the layout boundary, including during its common screen fade.
 // Individually hidden children and intermediate ancestors remain excluded.
@@ -211,11 +220,11 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       delete frame.dataset.overheadObstructed;
       return [{ frame, sprite, leading }];
     });
+    const headerBottom = field.closest('.combat')?.querySelector(':scope > .topbar')?.getBoundingClientRect().bottom;
     const placements = rows.map(({ frame, sprite, leading }) => {
       const art = currentSpriteArtBounds(sprite, schedule), box = leading.getBoundingClientRect();
       const gap = field.closest('.combat')?.dataset.compactCombat === 'true' ? 4 : 14;
-      return { frame, leading, dx: ((art.left + art.right - box.left - box.right) / 2) / zoom,
-        dy: (art.top - gap - box.bottom) / zoom };
+      return { frame, leading, ...targetOverheadPlacement({ art, box, headerBottom, gap, zoom }) };
     });
     for (const { leading, dx, dy } of placements) leading.style.translate = `${dx}px ${dy}px`;
   }
@@ -1318,7 +1327,7 @@ function enemyFrameAtCell(field, x, y) {
 function wireGridTargeting(field) {
   if (gridTargetingFields.has(field)) return;
   gridTargetingFields.add(field);
-  const passive = target => target.closest('.combatant, button:not(.formation-grid-cell), .hand, .card, .modal, input, a, [role="button"]');
+  const passive = target => target.closest('.combatant, .target-hud-layer, button:not(.formation-grid-cell), .hand, .card, .modal, input, a, [role="button"]');
   field.addEventListener('click', event => {
     if (passive(event.target)) return;
     const frame = enemyFrameAtCell(field, event.clientX, event.clientY);

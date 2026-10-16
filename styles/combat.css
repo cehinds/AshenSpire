@@ -1982,3 +1982,9 @@ body.reduce-motion .target-hud-detail { transition: none; }
 :root .combat[data-target-hud='true'] .combatant.enemy:is(.targetable, .target-hud-candidate) .sprite { outline: none; filter: drop-shadow(1px 0 0 #de6c5b99) drop-shadow(-1px 0 0 #de6c5b99); }
 :root .combat[data-target-hud='true'] .combatant.enemy:is(.target-hud-selected, .target-hud-focused) .sprite { outline: none; filter: drop-shadow(1px 0 0 #ef756bcc) drop-shadow(-1px 0 0 #ef756bcc) drop-shadow(0 1px 0 #ef756bcc); }
 :root .combat[data-target-hud='true'] .combatant.enemy::after { background: none !important; border: 0 !important; box-shadow: none !important; }
+/* Tactical preview previously painted four cumulative bright edges directly
+   on the artwork. The target HUD owns its subtle host outline instead. */
+:root .combat[data-target-hud='true'] .combatant .sprite [data-target-outline] { filter: none !important; }
+/* A host outline must follow opaque art, not the broad readability shadow
+   already painted on each frame; otherwise that shadow becomes a red halo. */
+:root .combat[data-target-hud='true'] .combatant:is(.target-hud-candidate, .target-hud-selected, .target-hud-focused) .sprite { --combatant-edge: none; }

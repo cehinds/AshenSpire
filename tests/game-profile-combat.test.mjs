@@ -151,7 +151,7 @@ test('actual core run hands the same pin and derived AR/DR to the live combat fa
   assert.deepEqual(combat.skillXp, {}, 'configured core does not gain legacy skill XP');
 });
 
-test('current profile adds only formation metadata while preserving absent-profile combat traces and state', async () => {
+test('current profile uses right-first placement while legacy combat keeps absent occupancy and identical combat traces', async () => {
   const { createRunState } = await import('../src/model/state.js');
   const { createRunCombat } = await import('../src/engine/runCombat.js');
   const current = resolveGameProfile('current');
@@ -165,7 +165,8 @@ test('current profile adds only formation metadata while preserving absent-profi
     const selectedSnapshot = serializeCombatSnapshot(selected), absentSnapshot = serializeCombatSnapshot(absent);
     assert.deepEqual(selectedSnapshot.formationPolicy, current.modules.formation);
     assert.equal(selectedSnapshot.player.formationCell, 'C1');
-    assert.deepEqual(selectedSnapshot.enemies.map(enemy => enemy.formationCell), ['A4']);
+    assert.deepEqual(selectedSnapshot.enemies.map(enemy => enemy.formationCell), ['C4'], 'profile-backed fresh enemies start at back right');
+    // Legacy fights have no authoritative occupancy; they do not acquire the new default order.
     assert.equal(absentSnapshot.formationPolicy, undefined);
     assert.equal(absentSnapshot.player.formationCell, undefined);
     assert(absentSnapshot.enemies.every(enemy => enemy.formationCell === undefined));
@@ -306,6 +307,19 @@ test('core Counter arms on play, then returns once after a fully blocked attack'
   assert.equal(ended.events.filter(event => event.type === 'combatCounterTriggered').length, 1);
   assert.equal(ended.events.filter(event => event.type === 'damageDealt' && event.sourceId === enemy.id).length, 2);
   assert.ok(enemy.hp < hp);
+  const incoming = ended.events.filter(event => event.type === 'damageDealt' && event.sourceId === enemy.id);
+  assert.ok(incoming.every(event => event.amount === 0 && event.blocked === 0),
+    'the positive one-point contacts mitigate to zero but still trigger the prepared Counter');
+});
+
+test('an authored zero-damage contact cannot fabricate a Counter trigger', () => {
+  const zeroMoves = { slash: { ...counterMoves.slash, damage: 0 } };
+  const { combat } = live({ reactions: false }, null, zeroMoves);
+  addCounter(combat);
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'deferred-counter' });
+  const ended = dispatch(combat, { type: 'endTurn' });
+  assert.equal(ended.events.filter(event => event.type === 'combatCounterTriggered').length, 0);
+  assert.equal(ended.events.filter(event => event.type === 'damageDealt' && event.sourceId === 'player').length, 0);
 });
 
 test('core incoming attacks offer paid Counter reactions and save/resume the same contact plan', () => {

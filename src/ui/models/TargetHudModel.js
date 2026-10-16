@@ -38,7 +38,7 @@ export function placeTargetHudPanels({ bounds, panels, obstacles = [], config = 
     }
     for (let top = area.top; top <= area.top + area.height - height; top += step)
       for (let left = area.left; left <= area.left + area.width - width; left += width + gap) add(left, top, 1800 + Math.abs(left - a.left) + Math.abs(top - a.top));
-    const obstacleCount = rect => obstacles.filter(other => targetHudOverlaps(rect, other, gap / 2)).length;
+    const obstacleCount = rect => obstacles.filter(other => targetHudOverlaps(rect, other)).length;
     choices.sort((a, b) => obstacleCount(a) - obstacleCount(b) || a.penalty - b.penalty);
     const clear = choices.filter(choice => obstacleCount(choice) === 0);
     requests.push({ id: panel.id, side, choices, clear });
@@ -63,7 +63,7 @@ export function placeTargetHudPanels({ bounds, panels, obstacles = [], config = 
   const placed = [];
   for (const request of requests) {
     const score = rect => rect.penalty + placed.filter(other => targetHudOverlaps(rect, other, gap)).length * 1e7
-      + obstacles.filter(other => targetHudOverlaps(rect, other, gap / 2)).length * 1e5;
+      + obstacles.filter(other => targetHudOverlaps(rect, other)).length * 1e5;
     const choices = [...request.choices].sort((a, b) => score(a) - score(b));
     placed.push({ id: request.id, side: request.side, ...choices[0] });
   }

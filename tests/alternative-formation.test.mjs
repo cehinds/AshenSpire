@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { alternativeFormation, fitAlternativeSprites, perspectiveCellContains, perspectiveLanePattern } from '../src/ui/models/AlternativeFormationModel.js';
+import { alternativeCombatComposition } from '../src/ui/models/CombatCompositionModel.js';
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
 
 const plan = (count, players = 1) => combatFormation({ width: 1000, height: 500,
@@ -77,7 +78,8 @@ test('fitted sprites stay inside their lane and above their foot anchor', () => 
       for (const [visibleWidth, visibleHeight] of [[240, 700], [700, 320]]) {
         const actors = formation.slots.map(slot => ({ slot, side: slot.side, visibleWidth, visibleHeight,
           leading: 30, ratio: 1.1, multiplier: 1.25 }));
-        const sizes = fitAlternativeSprites({ width, height, actors, narrow });
+        const sizes = alternativeCombatComposition({width,height,actors,perspectiveGrid:true,
+        sizes:fitAlternativeSprites({ width, height, actors, narrow })});
         assert.equal(sizes.length, actors.length);
         sizes.forEach((size, i) => {
           const actor = actors[i], halfWidth = visibleWidth * size.scale / 2;
@@ -118,7 +120,8 @@ test('enemies of one class stand one height in every rank; low creatures stay at
     const formation = alternativeFormation(plan(5), width, height, narrow);
     const actors = formation.slots.map((slot, i) => ({ slot, side: slot.side, visibleWidth: 120 + i * 30, visibleHeight: 300,
       leading: 40, ratio: 1, multiplier: 1, enemyId: slot.side === 'enemy' && i === 2 ? 'blightHound' : `foe${i}` }));
-    const sizes = fitAlternativeSprites({ width, height, actors, narrow });
+    const sizes = alternativeCombatComposition({width,height,actors,perspectiveGrid:true,
+        sizes:fitAlternativeSprites({ width, height, actors, narrow })});
     const enemy = sizes.filter(size => formation.slots.find(s => s.id === size.id).side === 'enemy');
     const hound = enemy.find(size => actors.find(a => a.slot.id === size.id).enemyId === 'blightHound');
     const others = enemy.filter(size => size !== hound);
@@ -170,4 +173,14 @@ test('a spacious enemy rank keeps its approved body size as independent HUDs gro
   const actors=formation.slots.filter(s=>s.side==='enemy').map(slot=>({slot,side:'enemy',enemyId:'stitchedHound',ratio:1,multiplier:1.5,visibleWidth:179,visibleHeight:190,artLeading:0,leading:180}));
   const sizes=fitAlternativeSprites({width:1440,height:441,actors,narrow:false});
   for(const fit of sizes){assert(Math.abs(fit.visibleHeight-158.0985)<.01);assert(fit.visibleHeight<actors[0].slot.ground-6);}
+});
+
+test('right-first phone allocation uses inward cell room before shrinking a whole enemy class', () => {
+  const formation=alternativeFormation(plan(2),390,426,true);
+  const actors=formation.slots.filter(slot=>slot.side==='enemy').map(slot=>({slot,side:'enemy',enemyId:'stitchedHound',ratio:1,multiplier:1,visibleWidth:179,visibleHeight:217.4,leading:66}));
+  assert.deepEqual(actors.map(actor=>actor.slot.cell),['C4','A4']);
+  const fits=fitAlternativeSprites({width:390,height:426,actors,narrow:true});
+  const leftOnly=fitAlternativeSprites({width:390,height:426,actors:[actors[1]],narrow:true})[0];
+  for(const fit of fits) assert.equal(fit.visibleHeight,leftOnly.visibleHeight,'outer right lane retains the same readable class height as the left lane');
+  assert(fits[0].visibleHeight>70,'normal phone enemies do not collapse to the old far-right edge reserve');
 });
