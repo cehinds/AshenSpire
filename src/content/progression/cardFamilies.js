@@ -88,21 +88,120 @@ export const cardFamilies = [
     "primary": "damage",
     "hits": 1,
     "abilityRank": 1,
-    "primaryValues": [
-      6,
-      9,
-      12,
-      15,
-      18,
-      22
-    ],
-    "actionCosts": [
-      2,
-      1,
-      2,
-      2,
-      3,
-      3
+    "grades": [
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 11
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 2,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 11
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 3,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 22
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 7
+          }
+        ]
+      },
+      {
+        "actionCost": 3,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 27
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 7
+          }
+        ]
+      },
+      {
+        "actionCost": 4,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 35
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 7
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 4,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 4,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 47
+          },
+          {
+            "op": "poiseDamage",
+            "target": "enemy",
+            "amount": 7
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 4,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
     ]
   },
   {

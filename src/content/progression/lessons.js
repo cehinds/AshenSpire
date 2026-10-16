@@ -123,7 +123,14 @@ const recipes = [
   ['lastMercy', 'spell', 2, 1, 0, [2, 3, 5, 6, 7, 8]],
   ['bracingStance', 'maneuver', 1, 1, 0, [4, 5, 6, 9, 12, 16]],
   ['stomp', 'maneuver', 1, 1, 0, [6, 9, 12, 15, 18, 22]],
-  ['kickOff', 'maneuver', 1, 1, 0, [2, 3, 4, 7, 10, 14]],
+  ['kickOff', 'maneuver', 1, 1, 0, null, { grades: [
+      {"actionCost":2,"manaCost":0,"effects":[{"op":"damage","target":"enemy","amount":6},{"op":"poiseDamage","target":"enemy","amount":3}]},
+      {"actionCost":2,"manaCost":0,"effects":[{"op":"damage","target":"enemy","amount":9},{"op":"poiseDamage","target":"enemy","amount":3}]},
+      {"actionCost":3,"manaCost":0,"effects":[{"op":"damage","target":"enemy","amount":20},{"op":"poiseDamage","target":"enemy","amount":3}]},
+      {"actionCost":3,"manaCost":0,"effects":[{"op":"damage","target":"enemy","amount":27},{"op":"poiseDamage","target":"enemy","amount":3}]},
+      {"actionCost":4,"manaCost":0,"effects":[{"op":"damage","target":"enemy","amount":35},{"op":"poiseDamage","target":"enemy","amount":5},{"op":"block","target":"self","amount":4,"oncePerTurn":"grade-block"}]},
+      {"actionCost":4,"manaCost":0,"effects":[{"op":"damage","target":"enemy","amount":47},{"op":"poiseDamage","target":"enemy","amount":5},{"op":"block","target":"self","amount":4,"oncePerTurn":"grade-block"},{"op":"draw","amount":1,"oncePerTurn":"grade-draw"}]}
+    ] }],
   ['warcry', 'maneuver', 2, 1, 0, [1, 1, 1, 2, 2, 3]],
   ['sunderplate', 'maneuver', 2, 2, 0, [5, 7, 9, 12, 15, 19]],
   ['poiseBreaker', 'maneuver', 3, 2, 0, [6, 8, 11, 14, 17, 21]],
