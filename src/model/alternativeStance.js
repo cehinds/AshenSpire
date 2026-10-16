@@ -1,3 +1,4 @@
+import { cardPreparationCategory } from './cardClassification.js';
 import { combatProfileFor } from './combatCardProfile.js';
 
 export const STANCE_FAMILIES = Object.freeze(['offensive', 'defensive', 'casting']);
@@ -30,6 +31,7 @@ export function kindForCard(card = {}) {
 export function stanceForCard(card = {}) {
   card = withTagIds(card);
   const profile = combatProfileFor(card);
+  if (cardPreparationCategory(card)) return 'casting';
   // Player-only reviewed counter/sweep families; public enemy intent stays broad.
   if (profile.maneuver === 'counter') return 'counter';
   if (defensive.has(profile.maneuver)) return 'defensive';

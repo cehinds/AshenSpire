@@ -83,7 +83,7 @@ test('all three burden cards are real unplayable definitions and never normal re
 test('core keeps its ten-card starter and only admits compatible rewards with active dependencies',()=>{
   const p=profile(),reg=registries(p),run=createRunState({seed:73,classId:'reaver',registries:reg});
   assert.equal(run.deck.length,10);assert.equal(run.deck.filter(card=>card.cardId==='core.reaverSpecial').length,1);
-  assert.equal(run.deck.some(card=>card.cardId.startsWith('base.')),false);
+  assert.deepEqual(run.deck.filter(card=>card.cardId.startsWith('base.')).map(card=>card.cardId),['base.draw']);
   const admitted=new Set(p.content.cards.map(card=>card.id));
   assert.ok(admitted.has('base.draw'));assert.ok(admitted.has('base.foresight'));
   for(const id of ['base.greased','base.poison','base.blight','base.divine-strike','base.persistent-protection','base.retain','base.break-ward']) assert.equal(admitted.has(id),false,id);

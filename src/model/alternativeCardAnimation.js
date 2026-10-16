@@ -1,3 +1,4 @@
+import { cardPreparationCategory } from './cardClassification.js';
 import { combatProfileFor } from './combatCardProfile.js';
 import { isPureDodge } from '../framework/importer.js';
 import { cardKind } from './tree.js';
@@ -12,6 +13,7 @@ export function cardActionFor(card = {}, classId) {
   const ids = resolved?.map(t => typeof t === 'string' ? t : t.id);
   const profile = combatProfileFor(ids ? { ...card, cardTags: ids } : card);
   const tags = new Set(ids || []);
+  if (cardPreparationCategory(card)) return 'spell';
   if (profile.camp === 'physical' && isPureDodge(card)) return 'evade';
   if (profile.maneuver === 'ranged') return profile.camp === 'spell' || tags.has('source:spell') ? 'rangedMagic' : 'ranged';
   if (profile.maneuver === 'counter' || profile.maneuver === 'defend') return profile.maneuver;
