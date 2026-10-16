@@ -1985,3 +1985,6 @@ body.reduce-motion .target-hud-detail { transition: none; }
 /* Tactical preview previously painted four cumulative bright edges directly
    on the artwork. The target HUD owns its subtle host outline instead. */
 :root .combat[data-target-hud='true'] .combatant .sprite [data-target-outline] { filter: none !important; }
+/* A host outline must follow opaque art, not the broad readability shadow
+   already painted on each frame; otherwise that shadow becomes a red halo. */
+:root .combat[data-target-hud='true'] .combatant:is(.target-hud-candidate, .target-hud-selected, .target-hud-focused) .sprite { --combatant-edge: none; }
