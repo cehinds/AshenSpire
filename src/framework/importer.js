@@ -47,9 +47,8 @@ const DAMAGE_SCHOOL_PROPERTY = Object.freeze({
   physical: 'damage.physical',
   magic: 'damage.magic',
   arcane: 'damage.arcane',
-  // Coarse magical carriers keep their specific type in the raw attack data.
-  holy: 'damage.magic',
-  fire: 'damage.magic',
+  holy: 'damage.holy',
+  fire: 'damage.fire',
 });
 
 const TARGET_PROPERTY = Object.freeze({
@@ -58,7 +57,7 @@ const TARGET_PROPERTY = Object.freeze({
   allEnemies: 'targeting.allEnemies',
   randomEnemy: 'targeting.randomEnemy',
   ally: 'targeting.ally',
-  allAllies: 'targeting.ally',
+  allAllies: 'targeting.allAllies',
 });
 
 const PROFILE_ROLE_PROPERTY = Object.freeze({

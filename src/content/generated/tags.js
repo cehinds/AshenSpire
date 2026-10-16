@@ -2010,6 +2010,24 @@ export const tags = [
     "blurb": ""
   },
   {
+    "id": "damage.fire",
+    "domain": "damage",
+    "label": "fire",
+    "color": "",
+    "glyph": "",
+    "visibility": "SECONDARY",
+    "blurb": ""
+  },
+  {
+    "id": "damage.holy",
+    "domain": "damage",
+    "label": "holy",
+    "color": "",
+    "glyph": "",
+    "visibility": "SECONDARY",
+    "blurb": ""
+  },
+  {
     "id": "damage.blade",
     "domain": "damage",
     "label": "blade",
@@ -2328,6 +2346,15 @@ export const tags = [
     "id": "targeting.ally",
     "domain": "targeting",
     "label": "ally",
+    "color": "",
+    "glyph": "",
+    "visibility": "CONTEXTUAL",
+    "blurb": ""
+  },
+  {
+    "id": "targeting.allAllies",
+    "domain": "targeting",
+    "label": "allAllies",
     "color": "",
     "glyph": "",
     "visibility": "CONTEXTUAL",

@@ -58,6 +58,30 @@ export const terms = {
       "canonicalText": "Magic"
     },
     {
+      "id": "term.fire",
+      "canonicalText": "Fire"
+    },
+    {
+      "id": "term.sacred",
+      "canonicalText": "Sacred"
+    },
+    {
+      "id": "term.targetAllAllies",
+      "canonicalText": "All allies"
+    },
+    {
+      "id": "term.tooltip.fire",
+      "canonicalText": "Fire damage. Its magical protection and typed resistance remain separate from resource costs."
+    },
+    {
+      "id": "term.tooltip.sacred",
+      "canonicalText": "Sacred damage. Its magical protection and typed resistance remain separate from resource costs."
+    },
+    {
+      "id": "term.tooltip.targetAllAllies",
+      "canonicalText": "Affects every living ally, including the acting character."
+    },
+    {
       "id": "term.arcane",
       "canonicalText": "Arcane"
     },
