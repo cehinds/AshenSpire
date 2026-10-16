@@ -12,7 +12,9 @@ These cards remain visual proposals with unknown costs, rank, school and stance;
 
 ## Publishing and capture record
 
-Expected public route: https://cehinds.github.io/AshenSpire/branches/Feature/CardPreview/latest/ (publication is pending verification).
+Verified public route: https://cehinds.github.io/AshenSpire/branches/Feature/CardPreview/latest/.
+
+Trusted runner [38855179710, job 116824927874](https://github.com/cehinds/AshenSpire/actions/runs/38855179710) passed on 2026-10-16 at 05:19:39 UTC. The public index identified artifact source `3094c9203fa8d07ba2fdda5c05d77162efbf83d8`. Wrapper, loader and plaintext payload returned HTTP 200; the downloaded 11,139,723 bytes matched SHA-256 `f402742bbdf84ba368020a0992ee063546c57881f48a6e3f91c791eb60250291`. This pins the approved visual payload, not the latest source HEAD. Compressed HEAD length was 7,529,673 bytes with gzip; the strict length and hash apply to the decompressed GET body. See public-verification-receipt.json.
 
 The dedicated feature-preview workflow validates the committed plaintext build.txt and packages it as the artifact’s only HTML file. The trusted dev Pages publisher serves the payload as build.txt inside its existing opaque-origin sandbox wrapper. This branch does not deploy directly, change Pages settings, or merge game changes.
 

@@ -1,0 +1,22 @@
+{
+  "verifiedAt": "2026-10-16T05:19:39Z",
+  "url": "https://cehinds.github.io/AshenSpire/branches/Feature/CardPreview/latest/",
+  "runUrl": "https://github.com/cehinds/AshenSpire/actions/runs/38855179710",
+  "runId": 38855179710,
+  "jobId": 116824927874,
+  "runSourceSha": "43f764ce4fd3c5000b5b9717de4ccd20ceb994b9",
+  "actualPublicArtifactSourceSha": "3094c9203fa8d07ba2fdda5c05d77162efbf83d8",
+  "rootIndexHttpStatus": 200,
+  "wrapperHttpStatus": 200,
+  "loaderHttpStatus": 200,
+  "payloadHeadHttpStatus": 200,
+  "payloadHeadContentType": "text/plain; charset=utf-8",
+  "payloadHeadContentEncoding": "gzip",
+  "payloadHeadContentLength": 7529673,
+  "payloadGetHttpStatus": 200,
+  "payloadDecodedBytes": 11139723,
+  "payloadSha256": "f402742bbdf84ba368020a0992ee063546c57881f48a6e3f91c791eb60250291",
+  "trustedSandboxValidated": true,
+  "result": "PASS",
+  "scope": "Exact approved visual payload and public delivery; not a claim that public source equals latest documentation/workflow HEAD."
+}

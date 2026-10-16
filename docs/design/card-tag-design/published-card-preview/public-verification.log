@@ -1,0 +1,9 @@
+2026-10-16T05:19:38.6482625Z 2026-10-16T05:19:38.647Z GET https://cehinds.github.io/AshenSpire/ HTTP 200
+2026-10-16T05:19:38.6569139Z Actual public card preview source SHA: 3094c9203fa8d07ba2fdda5c05d77162efbf83d8
+2026-10-16T05:19:38.7158334Z 2026-10-16T05:19:38.715Z GET https://cehinds.github.io/AshenSpire/branches/Feature/CardPreview/latest/ HTTP 200
+2026-10-16T05:19:38.7757424Z 2026-10-16T05:19:38.775Z GET https://cehinds.github.io/AshenSpire/branches/Feature/CardPreview/latest/preview.js HTTP 200
+2026-10-16T05:19:39.2761141Z 2026-10-16T05:19:39.275Z HEAD https://cehinds.github.io/AshenSpire/branches/Feature/CardPreview/latest/build.txt HTTP 200
+2026-10-16T05:19:39.2762304Z Public payload HEAD: bytes=7529673, content-type=text/plain; charset=utf-8, content-encoding=gzip
+2026-10-16T05:19:39.3646321Z 2026-10-16T05:19:39.364Z GET https://cehinds.github.io/AshenSpire/branches/Feature/CardPreview/latest/build.txt HTTP 200
+2026-10-16T05:19:39.6098064Z Public payload GET: bytes=11139723, SHA-256=f402742bbdf84ba368020a0992ee063546c57881f48a6e3f91c791eb60250291
+2026-10-16T05:19:39.6099703Z PASS: direct public card preview HTTP/sandbox/loader/plaintext/GET length/SHA-256 verified; root index source SHA=3094c9203fa8d07ba2fdda5c05d77162efbf83d8

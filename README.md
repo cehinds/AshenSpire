@@ -5,7 +5,7 @@
 
 [Open the card preview](https://cehinds.github.io/AshenSpire/branches/Feature/CardPreview/latest/) · [Source and capture record](docs/design/card-tag-design/published-card-preview/README.md)
 
-**Publication pending verification.** This standalone visual demonstration uses the current game renderer, title fade and Simple artwork. It shows six featured cards and all 70 combat proposals; these are proposed effects, not playable game additions. Unknown cost, rank, school and stance stay unassigned. Tap a card for its full rules; Escape closes inspection.
+**Public preview verified.** [HTTP and exact-payload verification](https://github.com/cehinds/AshenSpire/actions/runs/38855179710) passed at 2026-10-16 05:19:39 UTC for published artifact source `3094c9203fa8d07ba2fdda5c05d77162efbf83d8`. The approved visual payload is pinned by SHA-256 `f402742bbdf84ba368020a0992ee063546c57881f48a6e3f91c791eb60250291`; this receipt identifies the served visual bytes, not the latest documentation or workflow HEAD. This standalone visual demonstration uses the current game renderer, title fade and Simple artwork. It shows six featured cards and all 70 combat proposals; these are proposed effects, not playable game additions. Unknown cost, rank, school and stance stay unassigned. Tap a card for its full rules; Escape closes inspection.
 
 | Mobile · 390 × 844 | Tablet · 1024 × 768 |
 | --- | --- |
