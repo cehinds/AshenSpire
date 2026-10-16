@@ -81,8 +81,12 @@ export function buildMetadataTrailHtml(model) {
   ]));
 }
 
-// The floating header contains only HP and the relic rail.
-export function runHeaderStripHtml() { return ''; }
+// The existing Cinders model carries the active player's live purse. Keep
+// class/position on their dedicated surfaces while exposing this enabled layer.
+export function runHeaderStripHtml(model) {
+  return part(model, UI.cindersCounter, (counter) =>
+    `<div class="hud-info-row hud-cinders-strip as-band-row">${cindersCounterHtml(counter)}</div>`);
+}
 
 export function vitalsPanelHtml(model) {
   const meter = childModel(model, UI.resourceMeter);

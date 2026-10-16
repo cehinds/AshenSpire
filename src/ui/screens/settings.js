@@ -1,3 +1,4 @@
+import { settingsRowAvailable, activeSettingsProfile } from '../models/SettingsCapabilitiesModel.js';
 import { mountGameProfileSettings } from '../components/gameProfileSelector.js';
 import { previewPrologue } from './prologue.js';
 import { openPrologueSceneEditor } from './prologueSceneEditor.js';
@@ -973,8 +974,9 @@ export function developerSwitchHtml(state = debugSwitch()) {
 }
 
 /** visibleAdvancedGroups(debug) → the Advanced sections this build shows. */
-export function visibleAdvancedGroups(debug = pageDebug()) {
-  return debug ? ADVANCED_GROUPS : ADVANCED_GROUPS.filter((group) => RELEASE_ADVANCED_GROUP_IDS.includes(group.id));
+export function visibleAdvancedGroups(debug = pageDebug(), profile = null) {
+  const groups = debug ? ADVANCED_GROUPS : ADVANCED_GROUPS.filter((group) => RELEASE_ADVANCED_GROUP_IDS.includes(group.id));
+  return profile ? groups.filter(group => MOUNTED_ADVANCED_GROUPS[group.id] || cachedSubgroups(ROWS, group.id, profile).length) : groups;
 }
 
 /** The key the chosen category rides in. `meta.settings` is a free bag. */
@@ -1016,11 +1018,11 @@ const MOVED_ADVANCED_TOPICS = Object.freeze({
   Rules: ['Poise', 'Stagger', 'Mana'],
 });
 
-export function activeAdvancedGroup(settings) {
+export function activeAdvancedGroup(settings, profile = null) {
   const raw = settings?.[ADVANCED_CAT_KEY];
   const moved = MOVED_ADVANCED_TOPICS[raw]?.includes(settings?.[`settingsAdvancedSubgroup.${raw}`]);
   const stored = moved ? 'Stats' : MERGED_ADVANCED_GROUPS[raw] || raw;
-  const shown = visibleAdvancedGroups();
+  const shown = visibleAdvancedGroups(pageDebug(), profile);
   return shown.some((group) => group.id === stored) ? stored : shown[0].id;
 }
 
@@ -2432,10 +2434,10 @@ function shownCategories(saves) {
  * report that created it ("no good section to customize combat, combat
  * animation") is a claim about which NAME holds which ROW, and that claim is
  * only worth anything if something reads it back. */
-export function generalGroups(category) {
+export function generalGroups(category, profile = null) {
   if (Object.hasOwn(CUSTOM_GENERAL_GROUPS, category)) return new Map([[categoryLabel(category), CUSTOM_GENERAL_GROUPS[category].map(key => ({ key }))]]);
   const groups = new Map();
-  for (const row of categoryHandler(category).rows) {
+  for (const row of categoryHandler(category).rows.filter(row => settingsRowAvailable(row, profile))) {
     const key = row.key;
     const label = category === 'Display' ? /^hud/.test(key) ? 'HUD' : /map|shrine/.test(key) ? 'Map'
       // "Effects & pacing" USED TO CATCH THE COMBAT ROWS TOO, and that is the
@@ -2577,9 +2579,10 @@ function visibleAdvancedSubgroups(rows, groupId) {
 // nothing else; a section draws only the topic that is open.
 const SEARCH_LIMIT = 120;
 const subgroupCache = new Map();
-function cachedSubgroups(rows, groupId) {
-  if (!subgroupCache.has(groupId)) subgroupCache.set(groupId, visibleAdvancedSubgroups(rows, groupId));
-  return subgroupCache.get(groupId);
+function cachedSubgroups(rows, groupId, profile = null) {
+  const key = `${groupId}:${profile?.hash || ''}`;
+  if (!subgroupCache.has(key)) subgroupCache.set(key, visibleAdvancedSubgroups(rows.filter(row => row.cat === 'Advanced' && settingsRowAvailable(row, profile)), groupId));
+  return subgroupCache.get(key);
 }
 
 /**
@@ -2588,7 +2591,7 @@ function cachedSubgroups(rows, groupId) {
  * fixed-draw rows while drawing to a hand size) is not a hit: it would be
  * counted, and reset, without being on screen.
  */
-export function settingsSearchHits(query, debug = pageDebug(), settings = null, { changedOnly = false } = {}) {
+export function settingsSearchHits(query, debug = pageDebug(), settings = null, { changedOnly = false, profile = null } = {}) {
   const q = String(query || '').trim().toLocaleLowerCase();
   if (!q && !changedOnly) return [];
   const words = q ? q.split(/\s+/) : [];
@@ -2597,7 +2600,7 @@ export function settingsSearchHits(query, debug = pageDebug(), settings = null, 
     for (const row of [...handRulesRows(), ...FIXED_DRAW_ROWS]) if (row.fixedOnly) hiddenByRules.add(row.key);
   }
   const hit = (row) => {
-    if (hiddenByRules.has(row.key)) return false;
+    if (hiddenByRules.has(row.key) || !settingsRowAvailable(row, profile)) return false;
     if (changedOnly && !rowModified(settings, row)) return false;
     const hay = `${row.label || ''} ${typeof row.note === 'string' ? row.note : ''} ${row.key || ''}`.toLocaleLowerCase();
     return words.every((word) => hay.includes(word));
@@ -2608,17 +2611,17 @@ export function settingsSearchHits(query, debug = pageDebug(), settings = null, 
     if (hit(row)) hits.push({ row, where: row.cat === 'Accessibility' ? 'Accessibility' : `General › ${row.cat}` });
   }
   const advanced = categoryHandler('Advanced')?.rows || [];
-  for (const group of visibleAdvancedGroups(debug)) {
+  for (const group of visibleAdvancedGroups(debug, profile)) {
     if (MOUNTED_ADVANCED_GROUPS[group.id]) continue;
-    for (const sub of cachedSubgroups(advanced, group.id)) {
+    for (const sub of cachedSubgroups(advanced, group.id, profile)) {
       for (const row of sub.rows) if (hit(row)) hits.push({ row, where: `${group.label} › ${sub.label}` });
     }
   }
   return hits;
 }
 
-function searchResultsHtml(settings, query, changedOnly = false) {
-  const hits = settingsSearchHits(query, pageDebug(), settings, { changedOnly });
+function searchResultsHtml(settings, query, changedOnly = false, profile = null) {
+  const hits = settingsSearchHits(query, pageDebug(), settings, { changedOnly, profile });
   if (!hits.length) {
     return `<p class="set-note set-search-empty" data-search-results="0">${changedOnly
       ? (query ? `No changed setting matches “${esc(query)}”.` : 'Nothing is changed: every setting is at its default.')
@@ -2639,12 +2642,12 @@ function searchResultsHtml(settings, query, changedOnly = false) {
 }
 
 /** categoryHtml(cat, settings, …) → one pane's markup (exported for tests). */
-export function categoryHtml(cat, settings, saves, previewAttributes = null, previewLevel = null, previewClassId = null, query = '', changedOnly = false) {
-  if (query || changedOnly) return searchResultsHtml(settings, query, changedOnly);
+export function categoryHtml(cat, settings, saves, previewAttributes = null, previewLevel = null, previewClassId = null, query = '', changedOnly = false, profile = null) {
+  if (query || changedOnly) return searchResultsHtml(settings, query, changedOnly, profile);
   if (cat === 'General' || cat === 'Accessibility') {
     const groups = cat === 'Accessibility' ? ['Accessibility'] : GENERAL_GROUPS;
     const selected = groups.includes(settings.settingsGeneralCategory) ? settings.settingsGeneralCategory : groups[0];
-    const topics = generalGroups(selected);
+    const topics = generalGroups(selected, profile);
     const storedTopic = settings[`settingsGeneralTopic.${selected}`];
     const topic = topics.has(storedTopic) ? storedTopic : topics.keys().next().value;
     const rows = topics.get(topic);
@@ -2676,8 +2679,8 @@ export function categoryHtml(cat, settings, saves, previewAttributes = null, pre
   // The selected tab is the pane's identity: the panel is labelled by it
   // (aria-labelledby), and the tip is still the tab's tooltip.
   if (cat === 'Advanced') {
-    const shownGroups = visibleAdvancedGroups();
-    const active = activeAdvancedGroup(settings);
+    const shownGroups = visibleAdvancedGroups(pageDebug(), profile);
+    const active = activeAdvancedGroup(settings, profile);
     const tabs = shownGroups.map((group) => `<button class="set-subtab${group.id === active ? ' on' : ''}"`
       + ` type="button" role="tab" aria-selected="${group.id === active}" aria-pressed="${group.id === active}"`
       + ` data-advanced-group="${esc(group.id)}">${esc(group.label)}</button>`).join('');
@@ -2691,7 +2694,7 @@ export function categoryHtml(cat, settings, saves, previewAttributes = null, pre
         return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"`
           + `><div class="${MOUNTED_ADVANCED_GROUPS[group.id]}"></div></section>`;
       }
-      const subgroups = cachedSubgroups(h.rows, group.id);
+      const subgroups = cachedSubgroups(h.rows, group.id, profile);
       const selected = storedAdvancedTopic(settings, group.id);
       const activeSub = subgroups.find(sub => sub.id === selected) || subgroups[0];
       const subTabs = subgroups.length > 1 ? `<div class="set-topic-tabs" role="tablist" aria-label="${esc(group.label)} groups">`
@@ -2721,7 +2724,7 @@ export function categoryHtml(cat, settings, saves, previewAttributes = null, pre
       + groups;
   }
   if (h.mount) return `<div class="${h.mount}"></div>`;
-  return `<div class="set-card-list">${h.rows.map((r) => settingsRowHtml(settings, r)).join('')}</div>`;
+  return `<div class="set-card-list">${h.rows.filter(row => settingsRowAvailable(row, profile)).map((r) => settingsRowHtml(settings, r)).join('')}</div>`;
 }
 
 // ---- keeping the player's place across a rebuild --------------------------
@@ -2814,6 +2817,7 @@ export function restoreView(root, view) {
  */
 const MARKS_MODIFIED = Symbol('marks modified rows');
 export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onOffline = null, headerTools = null, previewAttributes = null, previewLevel = null, previewClassId = null, gameProfile = null }) {
+  const activeProfile = () => activeSettingsProfile(gameProfile);
   panelSettings = settings;
   if (!onChange[MARKS_MODIFIED]) {
     const report = onChange;
@@ -2879,10 +2883,10 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         + `<div class="as-rail set-tabs" id="set-tabs" role="tablist" aria-label="${esc(t('settings.nav.sections'))}"`
         + ` aria-orientation="vertical" data-surface="settingsCategory">${tabs}</div>`
         + `<div class="as-pane set-panel" id="set-panel" role="tabpanel"`
-        + ` aria-labelledby="set-tab-${esc(current)}">${categoryHtml(current, settings, saves, previewAttributes, previewLevel, previewClassId, searchQuery(), changedOnly())}</div></div>`;
+        + ` aria-labelledby="set-tab-${esc(current)}">${categoryHtml(current, settings, saves, previewAttributes, previewLevel, previewClassId, searchQuery(), changedOnly(), activeProfile())}</div></div>`;
     }
   } else {
-    html = ROWS.filter((r) => !r.retired).map((r) => settingsRowHtml(settings, r)).join('');
+    html = ROWS.filter((r) => !r.retired && settingsRowAvailable(r, activeProfile())).map((r) => settingsRowHtml(settings, r)).join('');
   }
   const view = captureView(container);
   container.innerHTML = html;
@@ -2956,7 +2960,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     // carries the scroll offsets over; focus is kept either way.
     const view = captureView(container, { scroll: keepScroll });
     container.querySelector('.set-tabs > .set-advanced-head')?.remove();
-    panel.innerHTML = categoryHtml(current, settings, saves, previewAttributes, previewLevel, previewClassId, searchQuery(), changedOnly());
+    panel.innerHTML = categoryHtml(current, settings, saves, previewAttributes, previewLevel, previewClassId, searchQuery(), changedOnly(), activeProfile());
     panel.setAttribute('aria-labelledby', `set-tab-${current}`);
     panel.dataset.searching = String(filtering());
     const groupReset = headerTools.querySelector('[data-reset-config="group"]');
@@ -3029,7 +3033,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     if (toggle) {
       // The rows Changed can show: on a release build, hidden tuning is
       // counted by Clear hidden tuning instead.
-      const count = settingsSearchHits('', pageDebug(), settings, { changedOnly: true }).length;
+      const count = settingsSearchHits('', pageDebug(), settings, { changedOnly: true, profile: activeProfile() }).length;
       toggle.textContent = count ? `Changed · ${count}` : 'Changed';
       toggle.setAttribute('aria-pressed', String(changedOnly()));
       toggle.classList.toggle('on', changedOnly());
@@ -3301,8 +3305,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
 
   headerTools.querySelectorAll('[data-reset-config]').forEach((button) => {
     button.onclick = () => {
-      const currentGroup = activeAdvancedGroup(settings);
-      const groups = visibleAdvancedSubgroups(ROWS, currentGroup);
+      const currentGroup = activeAdvancedGroup(settings, activeProfile());
+      const groups = cachedSubgroups(ROWS, currentGroup, activeProfile());
       const selected = storedAdvancedTopic(settings, currentGroup);
       // Reset all also clears inert retired keys: they are off the screen, so
       // this is the only door that can take a stale one out of a profile.
@@ -3311,10 +3315,10 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       // and never the section that was open behind the search.
       const query = searchQuery();
       const rows = button.dataset.resetConfig === 'all' ? [...ROWS, ...INERT_CONFIG_ROWS]
-        : filtering() ? settingsSearchHits(query, pageDebug(), settings, { changedOnly: changedOnly() }).map((hit) => hit.row)
+        : filtering() ? settingsSearchHits(query, pageDebug(), settings, { changedOnly: changedOnly(), profile: activeProfile() }).map((hit) => hit.row)
         : current === 'General' || current === 'Accessibility' ? (() => {
           const section = current === 'Accessibility' ? 'Accessibility' : generalGroup(settings);
-          const topics = generalGroups(section);
+          const topics = generalGroups(section, activeProfile());
           return topics.get(settings[`settingsGeneralTopic.${section}`]) || topics.values().next().value;
         })()
         : (groups.find(group => group.id === selected) || groups[0])?.rows || [];

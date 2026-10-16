@@ -1222,7 +1222,7 @@ export function mountRewards(app, {
     const isRelic = isRelicChoice(row);
     const ids = isMilestone ? row.choiceIds || row.options : isRelic ? row.relicIds : isNodeRow ? row.nodeIds : isLevelChoice ? row.options.map((o) => `${o.kind}:${o.id}`) : isRankUp ? rankUpCards.map((inst) => inst.instanceId) : row.choiceIds || row.cardIds;
     const pickField = isRelic ? 'chosenRelicId' : isMilestone || isLevelChoice || row.choiceIds ? 'choiceId' : isNodeRow ? 'nodeId' : isRankUp ? 'instanceId' : 'cardId';
-    const backButton = button({ label: t('reward.chooser.back'), id: 'reward-back', className: 'subtle', attrs: { 'data-back': '' } });
+    const backButton = button({ label: t('common.skip'), id: 'reward-back', className: 'danger', attrs: { 'data-back': '' } });
     const confirmButton = button({
       label: t('reward.confirm'), weight: 'primary', id: 'reward-card-confirm', className: 'reward-confirm', disabled: true,
     });
@@ -1451,32 +1451,52 @@ export function mountRewards(app, {
     }
     confirmButton.disabled = !selectedCardId;
     confirmReason();
-    confirmButton.addEventListener('click', () => {
+    // Confirm stages a review only. Continue is the sole persistence door;
+    // Back can change the selection without undoing inventory or class grants.
+    let reviewing = false;
+    const commitSelection = () => {
       if (!selectedCardId || confirming || taken()) return;
       confirming = true;
       confirmButton.disabled = true;
       try {
-        // A take that lands returns true and re-renders the menu; one the
-        // door refuses (a draft the ledger has no draft queued for — an
-        // offer older than its ledger) returns false and must not leave the
-        // chooser armed but dead: say so and hand the button back.
         const cardSelection = row.kind === 'skillDraft' && row.choiceIds ? { cardId: row.cardIds[row.choiceIds.indexOf(selectedCardId)] } : {};
-        if (!take({ ...row, ...cardSelection, [pickField]: selectedCardId }, row.key)) {
-          message.textContent = t(row.kind === 'skillDraft' ? 'reward.skillDraft.spent' : row.kind === 'classDraft' ? 'reward.classDraft.spent' : isRankUp ? 'reward.skillRankUp.spent' : row.kind === 'skillAttribute' ? 'reward.skillAttribute.spent' : row.kind === 'skillFeat' ? 'reward.skillFeat.spent' : 'reward.card.alreadyTaken');
-          message.hidden = false;
-          confirming = false;
-          confirmButton.disabled = false;
-        }
+        if (take({ ...row, ...cardSelection, [pickField]: selectedCardId }, row.key)) return;
+        message.textContent = t(row.kind === 'skillDraft' ? 'reward.skillDraft.spent' : row.kind === 'classDraft' ? 'reward.classDraft.spent' : isRankUp ? 'reward.skillRankUp.spent' : row.kind === 'skillAttribute' ? 'reward.skillAttribute.spent' : row.kind === 'skillFeat' ? 'reward.skillFeat.spent' : 'reward.card.alreadyTaken');
       } catch {
         message.textContent = t('reward.card.saveFailed');
-        message.hidden = false;
-        confirming = false;
-        confirmButton.disabled = false;
       }
+      message.hidden = false;
+      confirming = false;
+      confirmButton.disabled = false;
+    };
+    confirmButton.addEventListener('click', () => {
+      if (!selectedCardId || confirming || taken()) return;
+      if (reviewing) return commitSelection();
+      reviewing = true;
+      confirmButton.textContent = t('common.continue');
+      backButton.textContent = t('common.back');
+      strip.setAttribute('aria-label', t('reward.confirm'));
+      // Preserve the real selected face and its authored details for review.
+      for (const option of strip.children) {
+        option.hidden = !option.matches('.reward-selected') && !option.querySelector('.reward-selected')
+          && option.dataset.pickId !== selectedCardId;
+      }
+      strip.inert = true;
     });
-    const back = app.querySelector('#reward-back');
-    attachTooltip(back, () => `<div class="tt-title">${esc(tTip('reward.chooser.back'))}</div>${esc(tFull('reward.chooser.back'))}`);
-    back.addEventListener('click', () => backTo(row.key));
+    backButton.addEventListener('click', () => {
+      if (confirming || taken()) return;
+      if (reviewing) return renderChooser(row);
+      states[row.key] = 'skipped';
+      try { persistProgress(); }
+      catch {
+        delete states[row.key];
+        if (checkpoint) checkpoint.states = { ...states };
+        message.textContent = t('reward.card.saveFailed');
+        message.hidden = false;
+        return;
+      }
+      backTo(row.key);
+    });
     if (isEngaged()) setTimeout(() => focusFirst('.reward-row .reward-pick') || focusFirst('#reward-back'), 0);
   }
 
