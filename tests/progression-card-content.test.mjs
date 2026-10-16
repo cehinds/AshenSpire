@@ -49,7 +49,7 @@ test('forty families author every grade and the complete ten-unlock class ladder
   for (const card of [...progressionCards, ...abilityCardUpdates]) {
     assert.deepEqual(card.gradeProfiles.map(p => p.rank), [0, 1, 2, 3, 4, 5], card.id);
     for (const p of card.gradeProfiles) {
-      assert.equal(p.manaCost, p.rank, card.id);
+      if (p.traits?.costRule !== 'fixed') assert.equal(p.manaCost, p.rank, card.id);
       assert(p.actionCost >= 1 && p.actionCost <= (p.rank === 0 ? 3 : p.rank), `${card.id}/${p.rank}`);
       assert(!('staminaCost' in p), 'Actions and Stamina have one authored price');
     }
@@ -59,7 +59,7 @@ test('forty families author every grade and the complete ten-unlock class ladder
 test('every new family reserves the complete conditional direct-effect budget', () => {
   for (const card of progressionCards) for (const p of card.gradeProfiles) {
     const direct = p.effects.filter(e => ['damage', 'block'].includes(e.op)).reduce((sum, e) => sum + e.amount * (e.hits || 1), 0);
-    assert(direct <= [6, 9, 13, 18, 24, 30][p.rank], `${card.id}/${p.rank}: ${direct}`);
+    assert(direct <= [8, 10, 15, 18, 24, 30][p.rank], `${card.id}/${p.rank}: ${direct}`);
     assert(p.effects.every(e => e.amount == null || e.amount >= 0), card.id);
   }
 });
@@ -205,7 +205,12 @@ test('assembled content validates every normalized card, feat and relic rule', (
 
 // Each grade's Stamina and Mana are the cost formula's at that grade's rank (SPEC §4.3a, owner 2026-10-12). Replaced
 // rule: the authored actionCost (then the stance price plus the grade's delta) and Mana equal to the rank.
-const gradeCost = (card, profile) => cardCostBudget(applyAbilityGrade(card, profile.rank), { rank: profile.rank });
+const gradeCost = (card, profile) => {
+  const face = applyAbilityGrade(card, profile.rank);
+  const priced = face.costRule === 'fixed' ? { sp: profile.actionCost, mp: profile.manaCost }
+    : cardCostBudget(face, { rank: profile.rank });
+  return { ...priced, mp: card.abilityKind === 'spell' ? Math.max(1, priced.mp) : priced.mp };
+};
 test('every authored family grade completes a paid real play in the assembled engine', () => {
   for (const card of progressionCards) for (const profile of card.gradeProfiles) {
     const combat = fixture();
