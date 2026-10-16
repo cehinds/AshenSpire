@@ -1,3 +1,4 @@
+import { uiConfig } from '../config/generated/ui.js';
 import { alternativeArtCatalog } from './alternativeArtCatalog.js';
 import { assetUrl } from './assetmap.js';
 import { markArtPlaceholder } from './artFallback.js';
@@ -116,7 +117,9 @@ export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground
   const key = narrow ? 'phone' : 'desktop';
   const device = scene.devices[key];
   const svg = backdrop.querySelector('svg');
-  const scale = Math.max(width / device.width, height / device.height);
+  const framing = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.scene;
+  const previewTop = narrow ? fieldTop * .5 : combat.clientHeight * framing.topHeightFraction;
+  const scale = Math.max(width / device.width, (coverFloor ? fieldTop + height - previewTop : height) / device.height);
   // Combat follows the fitted enemies while keeping the floor canvas beneath
   // the entire battlefield; moving it farther up exposes its lower edge.
   // Other callers (dialogue) keep their own floor line.
@@ -129,7 +132,7 @@ export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground
     ? Math.max(framed, height - (1 - device.groundAnchor) * device.height * scale) : framed;
   const top = document.documentElement.dataset.wireframeSceneFloor === 'off'
     ? fieldTop + (height - device.height * scale) / 2
-    : fieldTop + cameraGround - device.groundAnchor * device.height * scale;
+    : coverFloor ? previewTop : fieldTop + cameraGround - device.groundAnchor * device.height * scale;
   svg.setAttribute('viewBox', `0 0 ${device.width} ${device.height}`);
   svg.style.cssText = `width:${device.width * scale}px;height:${device.height * scale}px;left:${(width - device.width * scale) / 2}px;top:${top}px`;
   backdrop.dataset.device = key;

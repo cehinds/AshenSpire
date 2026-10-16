@@ -1,6 +1,25 @@
+import { playerFormationCell } from '../../model/formationLayout.js';
 import { uiConfig } from '../../config/generated/ui.js';
 
 const GRID = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
+
+export function validatePerspectiveGrid(grid) {
+  const ids = ['enemy-back','enemy-front','extra-combatants','player'];
+  if (!Array.isArray(grid.bands) || grid.bands.length !== ids.length
+    || grid.bands.some((band, i) => band.id !== ids[i] || band.index !== i
+      || ![band.anchor?.x, band.anchor?.y].every(n => Number.isFinite(n) && n > 0 && n < 1)
+      || !(band.depth > 0) || !Number.isFinite(band.layer))) throw new Error('Invalid perspective visual bands');
+  for (const key of ['wide','narrow','short']) {
+    const p = grid[key];
+    if (![p?.left,p?.right,p?.top,p?.rowHeight,p?.skew].every(Number.isFinite)
+      || p.left < 0 || p.right > 1 || p.left >= p.right || p.top < 0 || p.rowHeight <= 0
+      || p.top + p.rowHeight * ids.length > 1 || p.skew < 0) throw new Error(`Invalid perspective ${key} profile`);
+  }
+  if (!(grid.playerArtworkScale > 0) || !(grid.miniHudScale > 0)) throw new Error('Invalid perspective figure/HUD scale');
+  return grid;
+}
+validatePerspectiveGrid(GRID);
+
 
 // Spread k actors evenly over a rank of `lanes`: one stands in the middle
 // lane, two take the outer lanes, three fill the rank.
@@ -16,7 +35,7 @@ export function perspectiveLanePattern(count, lanes) {
 // foot anchor (its shadow) is where the sprite's feet stand. Enemies fill the
 // back rank first, then the front rank; the player's party shares one rank.
 // Cell IDs stay gameplay addresses: column = depth (outer = back), row = lane.
-export function alternativeFormation(plan, width, height, narrow) {
+export function alternativeFormation(plan, width, height, narrow, presentation = {}) {
   // A short strip (landscape phone) has no room for depth above the bodies'
   // overhead controls; its ranks sit low and close together.
   const profile = height < GRID.shortBelowPx ? GRID.short : narrow ? GRID.narrow : GRID.wide;
@@ -27,36 +46,28 @@ export function alternativeFormation(plan, width, height, narrow) {
   // The party's name and meters sit below its feet; on a short field the
   // whole grid rises together so they stay inside the field and no rank
   // overlaps another.
-  const playerFoot = height * profile.playerRowHeight * GRID.footFraction.player;
-  const lift = Math.max(0, height * profile.playerTop + playerFoot - (height - GRID.playerBelowFootPx));
-  const baseline = height * (profile.playerTop + profile.playerRowHeight) - lift;
+  const rowHeight = height * profile.rowHeight;
+  const baseline = height * (profile.top + 4 * profile.rowHeight);
   const shear = y => profile.skew * (baseline - y);
-  // The enemy back rank also steps right by a fraction of a lane, so its
-  // figures stand clear of the front rank's; the lanes narrow to keep it in.
-  const backShift = GRID.backRankShift || 0;
-  const laneWidth = (width * (profile.right - profile.left) - shear(height * profile.enemyTop - lift)) / (lanes + backShift);
+  const laneWidth = Math.max(1, (width * (profile.right - profile.left)
+    - shear(height * profile.top)) / lanes);
   const place = cell => {
     const enemy = cell.side ? cell.side === 'enemy' : Number(cell.cell.slice(1)) > plan.columns;
-    // Enemy column 0 is the outermost (back) column; the player's front
-    // column has no perspective rank.
     if (!enemy && cell.column > 0) return null;
-    const rank = enemy ? (cell.column === 0 ? 0 : 1) : 0;
+    const rank = enemy ? Math.min(2, cell.column) : 0;
+    const role = enemy ? ['enemy-back','enemy-front','extra'][rank] : 'player';
+    const band = GRID.bands.find(b => b.id === (role === 'extra' ? 'extra-combatants' : role));
     const lane = enemy ? cell.row : lanes - 1 - cell.row;
-    const rowHeight = height * (enemy ? profile.enemyRowHeight : profile.playerRowHeight);
-    const foot = rowHeight * (enemy ? GRID.footFraction.enemy : GRID.footFraction.player);
-    const top = height * (enemy ? profile.enemyTop : profile.playerTop) + rank * rowHeight - lift;
-    const ground = top + foot;
-    const laneLeft = width * profile.left + (lane + (enemy && rank === 0 ? backShift : 0)) * laneWidth;
-    // `box` is the cell's unsheared rectangle at its mid-height; `skew` shears
-    // it about that centre line into the drawn parallelogram.
+    const top = height * profile.top + band.index * rowHeight;
+    const ground = top + band.anchor.y * rowHeight;
+    const laneLeft = width * profile.left + lane * laneWidth;
     const left = laneLeft + shear(top + rowHeight / 2);
-    return { ...cell, side: enemy ? 'enemy' : 'player', lane, rank,
+    return { ...cell, side: enemy ? 'enemy' : 'player', lane, rank, visualBand: 'ABCD'[band.index], formationRole: role,
       formationRow: enemy && rank === 0 ? 'back-row' : 'front-row',
-      x: laneLeft + laneWidth / 2 + shear(ground), ground, fitGround: ground,
+      x: laneLeft + band.anchor.x * laneWidth + shear(ground), ground, fitGround: ground,
       box: { left, top, width: laneWidth, height: rowHeight, skew: profile.skew },
       width: Math.min(laneWidth * GRID.bodyWidthFraction, GRID.bodyWidthMaxPx),
-      artWidth: laneWidth, depth: enemy ? (rank === 0 ? GRID.depth.back : GRID.depth.front) : GRID.depth.player,
-      layer: enemy ? rank : 2 };
+      artWidth: laneWidth, depth: band.depth, layer: band.layer };
   };
   plan.cells = plan.cells.map(place).filter(Boolean);
   const cellAt = (side, rank, lane) => plan.cells.find(c => c.side === side && c.rank === rank && c.lane === lane);
@@ -75,6 +86,17 @@ export function alternativeFormation(plan, width, height, narrow) {
     // occupied cell rather than losing its geometry.
     ...enemies.map((slot, i) => ({ ...(enemyCells[i] ?? enemyCells[i % enemyCells.length]), id: slot.id })),
   ];
+  if (presentation.formationOccupancy?.length) {
+    const dimensions = { columns: plan.columns, rows: plan.rows, perspective: true };
+    const occupied = new Map(presentation.formationOccupancy.map(actor => [actor.id,
+      actor.side === 'player' ? playerFormationCell(actor.cell, dimensions) : actor.cell]));
+    plan.slots = plan.slots.map(slot => {
+      const cell = plan.cells.find(cell => cell.cell === occupied.get(slot.id) && cell.side === slot.side);
+      return cell ? { ...cell, id: slot.id } : slot;
+    });
+  }
+  // All four bands occupy the same space whether extra occupancy is enabled or not.
+  plan.visualBands = GRID.bands.map(band => ({ ...band, top: height * profile.top + band.index * rowHeight, height: rowHeight }));
   plan.ground = Math.max(...plan.cells.map(c => c.ground));
   return plan;
 }
@@ -93,9 +115,9 @@ export function fitAlternativeSprites({ width, height, actors, narrow }) {
     const ratio = !enemy ? 1 : low ? .50 : Math.min(1.3, a.ratio);
     // Owner (2026-10-12): an enemy class stands one height in every rank, so
     // the rank depth shrink applies to the party only.
-    const requested = height * (narrow ? .46 : .73) * ratio * (enemy ? 1 : a.slot.depth);
+    const requested = height * (enemy ? (narrow ? .46 : .73) : (narrow ? .46 : .31)) * ratio * (enemy ? 1 : a.slot.depth * GRID.playerArtworkScale);
     const widthLimit = Math.min(width * (narrow ? (sideCount > 2 ? .24 : .34) : (sideCount > 2 ? .20 : .31)),
-      a.slot.artWidth ? a.slot.artWidth * .96 : Infinity);
+      a.slot.artWidth ? a.slot.artWidth * (enemy ? .96 : GRID.playerArtworkScale) : Infinity);
     // A 130px landscape field can leave less headroom than the measured
     // Inspect/intent union. Keep one cell-height of readable silhouette in
     // that impossible case; the controls are packed independently, so they

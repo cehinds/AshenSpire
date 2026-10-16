@@ -18,18 +18,13 @@ test('the perspective grid is one sheared grid: equal parallelograms on diagonal
     assert.equal(new Set(formation.cells.map(c => Math.round(c.box.width * 1e6))).size, 1, 'every cell has one width');
     const skew = formation.cells[0].box.skew;
     assert(skew > 0, 'the grid leans');
-    const backSteps = [];
-    for (const lane of [0, 1, 2]) {
-      // Every anchor of a lane lies on one diagonal line of slope -skew; the
-      // enemy back rank steps right of that line by one shared amount.
-      const column = formation.cells.filter(c => c.lane === lane);
-      const intercepts = column.filter(c => !(c.side === 'enemy' && c.rank === 0)).map(c => c.x + skew * c.ground);
-      assert(Math.max(...intercepts) - Math.min(...intercepts) < 1e-6, 'a lane is one straight diagonal');
-      const back = column.find(c => c.side === 'enemy' && c.rank === 0);
-      backSteps.push(back.x + skew * back.ground - intercepts[0]);
+    for (const cell of formation.cells) {
+      const anchor = cell.formationRole === 'enemy-back' ? {x:.83,y:.2}
+        : cell.formationRole === 'enemy-front' ? {x:.18,y:.82} : {x:.5,y:.83};
+      assert(Math.abs(cell.ground - cell.box.top - anchor.y * cell.box.height) < 1e-6);
+      const centre = cell.box.left + cell.box.width / 2 + skew * (cell.box.top + cell.box.height / 2 - cell.ground);
+      assert(Math.abs(cell.x - centre - (anchor.x - .5) * cell.box.width) < 1e-6);
     }
-    assert(backSteps[0] > 0, 'the back rank steps right of its lane line');
-    assert(Math.max(...backSteps) - Math.min(...backSteps) < 1e-6, 'every back-rank cell steps right by the same amount');
     const back = enemies.filter(c => c.rank === 0), front = enemies.filter(c => c.rank === 1);
     assert(Math.max(...back.map(c => c.ground)) < Math.min(...front.map(c => c.ground)), 'back rank sits behind the front');
     assert(Math.max(...front.map(c => c.box.top + c.box.height)) <= Math.min(...players.map(c => c.box.top)) + 1e-6,
@@ -88,7 +83,7 @@ test('fitted sprites stay inside their lane and above their foot anchor', () => 
           const actor = actors[i], halfWidth = visibleWidth * size.scale / 2;
           assert(size.scale > 0 && Number.isFinite(size.scale));
           assert(size.x - halfWidth >= 5 - 1e-6 && size.x + halfWidth <= width - 5 + 1e-6);
-          assert(halfWidth * 2 <= actor.slot.box.width + 1e-6, 'a body fits its lane');
+          assert(halfWidth * 2 <= actor.slot.box.width * (actor.side === 'player' ? 1.5 : 1) + 1e-6, 'player growth has its explicit width allowance');
           assert(actor.slot.ground - size.visibleHeight >= actor.leading + 6 - 1e-6);
         });
       }
@@ -96,10 +91,10 @@ test('fitted sprites stay inside their lane and above their foot anchor', () => 
   }
 });
 
-test('the party keeps room for its name and meters below the feet on short fields', () => {
+test('the player stands inside the final band with HUD room above rather than below', () => {
   for (const height of [130, 160, 183, 420]) {
     const formation = alternativeFormation(plan(3), 844, height, false);
-    for (const cell of formation.cells.filter(c => c.side === 'player')) assert(cell.ground <= height - 32 + 1e-9);
+    for (const cell of formation.cells.filter(c => c.side === 'player')) assert(cell.ground < height && cell.visualBand === 'D');
   }
 });
 
@@ -130,4 +125,36 @@ test('enemies of one class stand one height in every rank; low creatures stay at
     assert.equal(new Set(others.map(size => Math.round(size.visibleHeight * 1e6))).size, 1, 'one minion height across both ranks');
     assert(Math.abs(hound.visibleHeight - others[0].visibleHeight * .5) < 1e-6, 'a low creature is half its class height');
   }
+});
+
+test('the extra band keeps identical geometry when core occupancy is disabled', () => {
+  const plans = [false,true].map(enabled => {
+    const presentation = {perspectiveGrid:true,formationPreset:'straight',formationPolicy:{extraRow:{enabled,sides:['enemy'],capacityPerLane:1}}};
+    return alternativeFormation(combatFormation({width:1440,height:441,presentation,friends:['p'],enemies:['e']}),1440,441,false,presentation);
+  });
+  assert.deepEqual(plans[0].visualBands,plans[1].visualBands);
+  assert.equal(plans[0].visualBands.length,4);
+  assert.equal(plans[0].cells.some(c=>c.visualBand==='C'),false);
+  assert.equal(plans[1].cells.filter(c=>c.visualBand==='C').length,3);
+});
+
+test('engine occupancy is authoritative for extra combatants and saved player lanes', () => {
+  const presentation = {perspectiveGrid:true,formationPreset:'straight',formationPolicy:{extraRow:{enabled:true,sides:['enemy'],capacityPerLane:1}},
+    formationOccupancy:[{id:'p',side:'player',cell:'B2'},{id:'e',side:'enemy',cell:'A5'}]};
+  const result=alternativeFormation(combatFormation({width:1440,height:441,presentation,friends:['p'],enemies:['e']}),1440,441,false,presentation);
+  assert.equal(result.slots.find(s=>s.id==='e').visualBand,'C');
+  assert.equal(result.slots.find(s=>s.id==='e').cell,'A5');
+  assert.equal(result.slots.find(s=>s.id==='p').cell,'B1');
+  assert.equal(result.slots.find(s=>s.id==='p').lane,1);
+  const old=plan(2);old.slots.find(s=>s.side==='player').row=0;
+  assert.equal(alternativeFormation(old,1440,441,false).slots.find(s=>s.side==='player').lane,2);
+});
+
+test('malformed visual band configuration fails before producing NaN geometry', async () => {
+  const {validatePerspectiveGrid}=await import('../src/ui/models/AlternativeFormationModel.js');
+  const {uiConfig}=await import('../src/config/generated/ui.js');
+  const grid=structuredClone(uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid);
+  grid.bands[2].id='enemy-front';assert.throws(()=>validatePerspectiveGrid(grid),/visual bands/);
+  const invalid=structuredClone(uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid);
+  invalid.wide.rowHeight=NaN;assert.throws(()=>validatePerspectiveGrid(invalid),/wide profile/);
 });

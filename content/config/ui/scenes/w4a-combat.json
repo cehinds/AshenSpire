@@ -3,7 +3,7 @@
     "meterRowRem": 0.85
   },
   "sizing": {
-    "bands": { "hud": 10, "scene": 55, "context": 30, "footer": 5 },
+    "bands": { "hud": 10, "scene": 49, "context": 27, "footer": 14 },
     "floorPercent": 80,
     "compactCombat": {
       "maxWidthPx": 600,
