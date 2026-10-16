@@ -1,19 +1,19 @@
 # AshenSpire
 
 <!-- feature-preview:start -->
-## Feature preview — Card proposals in the current game look
+## Feature preview — Scroll through all 70 card proposals
 
 [Open the card preview](https://cehinds.github.io/AshenSpire/branches/Feature/CardPreview/latest/) · [Source and capture record](docs/design/card-tag-design/published-card-preview/README.md)
 
-**Public preview verified.** [HTTP and exact-payload verification](https://github.com/cehinds/AshenSpire/actions/runs/38855179710) passed at 2026-10-16 05:19:39 UTC for published artifact source `3094c9203fa8d07ba2fdda5c05d77162efbf83d8`. The approved visual payload is pinned by SHA-256 `f402742bbdf84ba368020a0992ee063546c57881f48a6e3f91c791eb60250291`; this receipt identifies the served visual bytes, not the latest documentation or workflow HEAD. This standalone visual demonstration uses the current game renderer, title fade and Simple artwork. It shows six featured cards and all 70 combat proposals; these are proposed effects, not playable game additions. Unknown cost, rank, school and stance stay unassigned. Tap a card for its full rules; Escape closes inspection.
+**Scroll-fix publication pending.** The prior visual payload was verified at 2026-10-16 05:19:39 UTC ([historical receipt](docs/design/card-tag-design/published-card-preview/public-verification-receipt.json)); that receipt does not verify this scroll correction. A new public check will require this revision's index SHA and exact new payload bytes before the correction is called live. This standalone visual demonstration uses the current game renderer, title fade and Simple artwork. The gallery correction removes the inherited fixed-height/hidden-overflow behavior so all 70 expanded cards can be reached by scrolling. It shows six featured cards and all 70 combat proposals; these are proposed effects, not playable game additions. Unknown cost, rank, school and stance stay unassigned. Tap a card for its full rules; Escape closes inspection.
 
 | Mobile · 390 × 844 | Tablet · 1024 × 768 |
 | --- | --- |
-| ![Mobile proposed card gallery](docs/design/card-tag-design/ingame-look-preview/mobile.png) | ![Tablet proposed card gallery](docs/design/card-tag-design/ingame-look-preview/tablet.png) |
+| ![Mobile scrolling reaches the last proposed card](docs/design/card-tag-design/published-card-preview/scroll-fix/after-mobile-last-card.png) | ![Tablet scrolling reaches the last proposed card](docs/design/card-tag-design/published-card-preview/scroll-fix/after-tablet-last-card.png) |
 | Desktop · 1440 × 900 | Wide · 2560 × 1440 |
-| ![Desktop proposed card gallery](docs/design/card-tag-design/ingame-look-preview/desktop.png) | ![Wide proposed card gallery](docs/design/card-tag-design/ingame-look-preview/wide.png) |
+| ![Desktop scrolling reaches the last proposed card](docs/design/card-tag-design/published-card-preview/scroll-fix/after-desktop-last-card.png) | ![Wide scrolling reaches the last proposed card](docs/design/card-tag-design/published-card-preview/scroll-fix/after-wide-last-card.png) |
 
-Source renderer: `f7a24e0e39dd7823c15f89afd6023782526655d0`. Reviewed preview source: `fbee6162589ec2374664c19c4c78ee2795691d7e`. Captures: 2026-10-16 UTC (2026-10-15 Anchorage). This dedicated branch packages only the approved visual artifact; no game integration or promotion is included.
+Source renderer: `f7a24e0e39dd7823c15f89afd6023782526655d0`. Scroll-fix candidate payload: SHA-256 `04e17eaf2cf1ebb3d393d2aa0e26a62f3fe0873f0a3f0e8e3df862debfb28d5a`, 11,139,814 bytes. Local captures show actual input reaching the last card in the opaque Pages wrapper; public delivery remains pending. [Historical artwork and six-card gallery](docs/design/card-tag-design/ingame-look-preview/README.md). Captures: 2026-10-16 UTC (2026-10-15 Anchorage). This dedicated branch packages only the approved visual artifact; no game integration or promotion is included.
 <!-- feature-preview:end -->
 
 A browser roguelike: build a character, explore a seeded world, and fight with cards.

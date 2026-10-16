@@ -1,9 +1,13 @@
 name: card preview public check
 
-# Independent of packaging and Pages completion; checks only the approved card route.
+# Allow the normal trusted Pages pipeline to finish, then prove this exact revision.
 on:
   push:
     branches: ['Feature/CardPreview']
+    paths:
+      - 'docs/design/card-tag-design/published-card-preview/build.txt'
+      - 'docs/design/card-tag-design/published-card-preview/check-public-page.mjs'
+      - '.github/workflows/card-preview-public-check.yml'
   workflow_dispatch:
 
 permissions:
@@ -12,7 +16,7 @@ permissions:
 jobs:
   public-check:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
@@ -23,5 +27,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Verify this card preview's public HTTP delivery and exact approved bytes
+      - name: Verify this revision and approved payload after trusted Pages publication
         run: node docs/design/card-tag-design/published-card-preview/check-public-page.mjs
