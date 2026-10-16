@@ -133,7 +133,23 @@
       "scene": {
         "topHeightFraction": -0.1556,
         "widthScale": 1,
-        "heightPerWidth": 0.6666666666666666
+        "heightPerWidth": 0.6666666666666666,
+        "mobileFloor": {
+          "shadowClearancePx": 10,
+          "paintAlphaThreshold": 128,
+          "paintStarts": {
+            "ashen-crown-ground": 0.49122807017543857,
+            "BS-ground": 0.5146198830409356,
+            "cinder-reach-ground": 0.5146198830409356,
+            "drowned-coast-ground": 0.5029239766081871,
+            "FC-ground": 0.49122807017543857,
+            "glass-lake-ground": 0.4619883040935672,
+            "grave-ships-ground": 0.4678362573099415,
+            "HM-ground": 0.49122807017543857,
+            "pale-marches-ground": 0.49122807017543857,
+            "hollow-weald-ground": 0.5694444444444444
+          }
+        }
       },
       "enemyMiniHudScale": 1.5,
       "spaciousEnemyClassHeightFraction": 0.717

@@ -1,3 +1,4 @@
+import { mobileFloorShadowTop } from '../models/MobileFloorModel.js';
 import { uiConfig } from '../../config/generated/ui.js';
 import { logicalViewport } from '../viewViewport.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
@@ -1208,10 +1209,18 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // Continue real ground past the lowered footer fade, including on phones
     // where the hand consumes much of the viewport. Keep the same horizon.
     const sceneHeight = fieldTop + fieldRect.height / zoom;
+    const floorShadowTop = document.documentElement.dataset.formFactor === 'mobile' ? mobileFloorShadowTop(placed.filter(({frame}) => frame.classList.contains('enemy') && !frame.classList.contains('dead')).map(({frame,sprite}) => {
+      const box = sprite.getBoundingClientRect(), style = getComputedStyle(sprite), shadow = getComputedStyle(sprite, '::before');
+      const spriteZoom = box.height / (parseFloat(style.height) || sprite.offsetHeight || 1);
+      const translatedY = new DOMMatrix(shadow.transform === 'none' ? undefined : shadow.transform).m42;
+      return { band: frame.dataset.visualBand,
+        top: box.bottom - (parseFloat(shadow.bottom) + parseFloat(shadow.height) - translatedY) * spriteZoom };
+    })) : undefined;
+
     if (!classicAppearance()) fitAlternativeBackdrop(combat, { width: rect.width / zoom, height: fieldRect.height / zoom,
       fieldTop, ground: combatSceneryGround(sizes, actors, plan.ground) / zoom,
       standGround: combatStandingGround(sizes, actors, plan.ground) / zoom, narrow,
-      coverFloor: true });
+      coverFloor: true, zoom, floorShadowTop: Number.isFinite(floorShadowTop) ? (floorShadowTop - rect.top) / zoom : undefined });
     if (backdrop) fitSceneBackdrop(backdrop, {
       width: backdropWidth, height: rect.height / zoom, zoom,
       windowTop: 0, windowHeight: sceneHeight,
