@@ -41,7 +41,7 @@ export function wireCombatLayout(combatEl) {
     if (split && row && handArea) {
       const plan = desktopFooterLayout({ width: combatEl.clientWidth, height: combatEl.clientHeight, zoom });
       const areaTop = (handArea.getBoundingClientRect().top - combatEl.getBoundingClientRect().top) / zoom;
-      for (const [name, value] of Object.entries({ 'area-top': areaTop, 'hand-top': plan.handTop - areaTop, 'hand-height': plan.handHeight, 'background-top': plan.backgroundTop - areaTop, 'tools-top': plan.toolsTop, 'corner-inset': plan.corner, 'end-art-width': plan.endArtWidth, 'end-art-height': plan.endArtHeight })) combatEl.style.setProperty('--desktop-' + name, value + 'px');
+      for (const [name, value] of Object.entries({ 'area-top': areaTop, 'hand-top': plan.handTop - areaTop, 'hand-height': plan.handHeight, 'background-top': plan.backgroundTop - areaTop, 'background-fade-height': plan.backgroundFadeHeight, 'tools-top': plan.toolsTop, 'corner-inset': plan.corner, 'end-art-width': plan.endArtWidth, 'end-art-height': plan.endArtHeight })) combatEl.style.setProperty('--desktop-' + name, value + 'px');
       const selectors = { sp: '.energy-orb', draw: '.draw', end: '.end-turn', discard: '.spent', potions: '.combat-potions' };
       for (const [role, box] of Object.entries(plan.controls)) {
         const control = row.querySelector(selectors[role]);
