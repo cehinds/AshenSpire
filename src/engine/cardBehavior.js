@@ -11,7 +11,8 @@ export function projectCardBehavior(ctx, instance, def) {
   if (def.costGrowth) {
     const growth=def.costGrowth, plays=ctx.player.abilityRiders?.cardUsesCombat?.[instance.cardId] || 0;
     const steps=Math.min(growth.max ?? 3,Math.floor(plays/(growth.perUse || 1)));
-    const stamina=typeof result.cost==='number' ? Math.max(0,result.cost+steps*(growth.stamina || 0)) : result.cost;
+    const baseStamina=result.resourceCosts?.sp ?? result.staminaCost ?? result.cost;
+    const stamina=typeof baseStamina==='number' ? Math.max(0,baseStamina+steps*(growth.stamina || 0)) : baseStamina;
     const mana=Math.max(0,(result.manaCost || 0)+steps*(growth.mana || 0));
     result={...result,cost:stamina,staminaCost:stamina,manaCost:mana,...(result.resourceCosts ? {resourceCosts:{...result.resourceCosts,sp:stamina,mp:mana}} : {})};
   }

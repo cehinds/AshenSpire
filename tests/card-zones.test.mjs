@@ -1,3 +1,4 @@
+import { executeAction } from '../src/engine/actions.js';
 import { resolveGameProfile } from '../src/model/gameProfile.js';
 import { setProfileStance,profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
 import { trimCombatStances } from '../src/engine/concurrentStances.js';
@@ -6,7 +7,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { createCombat, dispatch, previewCard, cardPlayCosts } from '../src/engine/combat.js';
+import { createCombat, dispatch, previewCard, cardPlayCosts, previewIntent } from '../src/engine/combat.js';
 import { createCoopCombat, playCard, chooseDiscard, endTurn, previewCoopCard } from '../src/engine/coopCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
@@ -157,4 +158,32 @@ test('stance variant validation accepts combat maneuvers while refusing invented
  const errors=[],ctx={err:(p,m)=>errors.push(m),ids:{stances:new Set(['brace'])}};
  for(const stance of ['smash','defend','casting','prepared','brace'])validatePredicate({p:'inStance',stance},'variant',ctx);
  assert.deepEqual(errors,[]);validatePredicate({p:'inStance',stance:'invented'},'variant',ctx);assert.equal(errors.length,1);
+});
+
+test('Read Intent overrides observer concealment only for its authored duration',()=>{
+ const combat=fixture([{op:'revealIntent',target:'enemy',amount:1}]);const enemy=combat.enemies[0];enemy.intentReads={player:false};enemy.intentRevealed=false;
+ play(combat);assert.equal(previewIntent(combat,enemy.id).revealed,true);
+ combat.turn=enemy.proposalIntentRevealedUntil;assert.equal(previewIntent(combat,enemy.id).hidden,true);
+});
+test('one Veil perception decision gates every hit of the same hostile action',()=>{
+ const combat=fixture([{op:'block',amount:1,target:'self'}]);combat.registries={...combat.registries,proposalStatusRules:{weak:{behaviors:[{kind:'veil',minimum:50,maximum:50,baseChance:50,perceptionScale:0,penaltyPerStack:0}]}}};
+ const target=combat.enemies[0];target.statuses.weak={stacks:1};let rolls=0;const original=combat.rng.float;combat.rng.float=stream=>stream==='misc' ? (++rolls===1 ? .9 : 0) : original(stream);
+ executeAction(combat,{effect:{op:'damage',amount:8,hits:2,target:'enemy'},source:combat.player,owner:combat.player,target,card:{combatProfile:{maneuver:'attack',camp:'physical',range:'melee'}}});
+ assert.equal(rolls,1);assert.equal(target.hp,1000);
+});
+
+test('one-use scroll limits apply to each physical instance and survive reload/recovery independently',()=>{
+ const combat=fixture([{op:'castLinkedSpell',card:'strike',target:'enemy'}],{definition:{playLimit:1,keywords:['exhaust']}});
+ const ids=combat.piles.hand.map(c=>c.instanceId);for(const id of ids)dispatch(combat,{type:'playCard',cardInstanceId:id,targetId:combat.enemies[0].id});
+ assert.equal(combat.piles.exhaust.length,2);
+ const restored=restoreCombatSnapshot({registries:combat.registries,rng:createRng(9),snapshot:serializeCombatSnapshot(combat)});
+ const index=restored.piles.exhaust.findIndex(c=>c.instanceId===ids[0]);restored.piles.hand.push(restored.piles.exhaust.splice(index,1)[0]);
+ assert.throws(()=>dispatch(restored,{type:'playCard',cardInstanceId:ids[0],targetId:restored.enemies[0].id}),/unplayable/);
+});
+
+test('MP-only configured growth does not reintroduce disabled Stamina through action aliases',()=>{
+ const combat=fixture([{op:'block',target:'self',amount:2}],{cost:1,manaCost:1,definition:{resourceCosts:{sp:0,mp:1},staminaCost:0,costGrowth:{stamina:0,mana:1,max:3}}});
+ combat.gameProfile=resolveGameProfile({formatVersion:1,core:'ashen.core@1.0.0',modules:{resources:{include:['hp','mp']}}});
+ const id=combat.piles.hand[0].instanceId;assert.equal(cardPlayCosts(combat,id).stamina,0);play(combat);
+ const next=combat.piles.hand[0].instanceId;assert.equal(cardPlayCosts(combat,next).stamina,0);assert.equal(cardPlayCosts(combat,next).mana,2);
 });

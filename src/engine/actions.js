@@ -1739,7 +1739,7 @@ function runOpcode(ctx, action, eff) {
         const percentage = ctx.combatExpansionVersion === 2 && nominal > 0
           ? (ctx.restorationModifierPercent?.(t, 'hp') || 0) + (eff.ashenBlightBonusPct || 0) : 0;
         const amount = Math.max(0, Math.floor(nominal * mult * (1 + percentage / 100)));
-        const healing=proposalHealingPlan(ctx,t,amount + Ratings.cardRatingBonus(ctx, action.source, action.card, 'heal', amount) + (action.meta?.abilityChargeHeal || 0),eff.damageType || action.card?.damageSchool);
+        const healing=proposalHealingPlan(ctx,t,amount + Ratings.cardRatingBonus(ctx, action.source, action.card, 'heal', amount) + (action.meta?.abilityChargeHeal || 0),eff.damageType || action.card || {});
         if(healing.damage) applyLoseHp(ctx,t,healing.damage,'healingInversion');
         applyHeal(ctx, t, healing.healing);
       }
