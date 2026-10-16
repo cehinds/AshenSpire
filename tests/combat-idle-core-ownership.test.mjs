@@ -47,7 +47,7 @@ const stageEnd=stageSource.indexOf('    const rect = combat.getBoundingClientRec
 // The adapter asks for idle enemies and for context-selected ones; answer each.
 const actor=(id,art,x,y,idle)=>{
   const properties={};
-  return {frame:{dataset:{eid:id},matches:selector=>selector.includes('.context-selected:') ? !idle : idle,
+  return {frame:{dataset:{eid:id},classList:{contains:name=>name==='enemy'},matches:selector=>selector.includes('.context-selected:') ? !idle : idle,
     getBoundingClientRect:()=>({left:0,top:0}),
     style:{removeProperty:key=>delete properties[key],setProperty:(key,value)=>{properties[key]=value;}},properties,x,y},
     sprite:{art,getBoundingClientRect:()=>({...art,width:art.right-art.left,height:art.bottom-art.top})}};
@@ -98,4 +98,38 @@ test('the player\'s self-cast square is a fixed obstacle for idle-core packing',
   const selectors = fixed[1].split(',').map(part => part.trim());
   assert.ok(selectors.includes('.player:not(.dead)'), 'the living player square is never covered by a packed enemy core');
   assert.ok(selectors.includes('.enemy.context-selected:not(.dead)'));
+});
+
+
+test('aiming selected-enemy core cannot cover another actor body', () => {
+  // Phone C-band art can shrink during the aim refit. The default e1 aim
+  // selection used to retain a fixed 44px square over this real e7 body.
+  const placed=[actor('e1',{left:280,right:320,top:60,bottom:100},124,150,false),
+    actor('e7',{left:108,right:140,top:133,bottom:166},124,172,true)];
+  const original=placed.map(value=>structuredClone(value.sprite.art));
+  runStage(placed);
+  assert.equal(placed[0].frame.dataset.coreObstructed,'true',
+    'selected auxiliary square yields to another actor actual art');
+  assert.deepEqual(placed.map(value=>value.sprite.art),original,
+    'input ownership correction preserves both actors geometry');
+});
+
+test('selected visible footer packing reserves foreign fighter artwork', () => {
+  const placed=[actor('e1',{left:280,right:320,top:60,bottom:100},124,150,false),
+    actor('e7',{left:108,right:140,top:133,bottom:166},124,172,true)];
+  placed[0].frame.classList.contains=name=>['enemy','context-selected'].includes(name);
+  const boxes=placed.map(()=>({frameRect:{},controls:[]}));
+  const start=stageSource.indexOf('    const packTargets = () =>');
+  const end=stageSource.indexOf('    // A fallen frame',start);
+  const targets=runInNewContext(stageSource.slice(start,end)+'\npackTargets();',{
+    placed,boxes,refresh:()=>{},footerSize:44,
+    fieldRect:{left:0,top:0,width:390,height:190},
+    combat:{dataset:{},getBoundingClientRect:()=>({bottom:190})},
+    readFooterObstacles:()=>[],currentSpriteArtBounds:sprite=>sprite.art,
+    combatFrameTarget:({id})=>({id,x:124,y:150,width:104}),combatTargetAnchors,
+  });
+  const selected=targets[0];
+  assert.equal(selected.obstructed,false);
+  assert.equal(overlaps(selected,placed[1].sprite.art),false,
+    'the selected e1 HP/name footer must leave the e7 body clickable');
 });
