@@ -13,7 +13,7 @@ export function applyProposalPlan(ctx,plan,source=null,target=null,card=null) {
  }
  for(const job of plan.effects || []) {
   const {sourceId,targetId,proposalReactive,damageType,camp,direct,...effect}=job,actor=find(sourceId) || source,recipient=find(targetId) || target;
-  ctx.enqueue({effect,source:actor,owner:actor,target:recipient,card:{...card,proposalReactive:!!proposalReactive,damageType,damageSchool:damageType || card?.damageSchool,combatProfile:{...card?.combatProfile,camp:camp || card?.combatProfile?.camp || 'physical'},skipRatingBonus:!!proposalReactive},meta:{proposalReactive:!!proposalReactive,direct:direct!==false}});
+  ctx.enqueue({effect,source:actor,owner:actor,target:recipient,card:{...card,proposalReactive:!!proposalReactive,damageType,damageSchool:damageType || card?.damageSchool,combatProfile:{...card?.combatProfile,camp:camp || card?.combatProfile?.camp || 'physical'},skipRatingBonus:!!proposalReactive || !!card?.skipRatingBonus},meta:{proposalReactive:!!proposalReactive,direct:direct!==false}});
  }
 }
 export function proposalCardPlan(ctx,actor,card) {return Plans.proposalCardRules({actor,card,...proposalContext(ctx)});}
@@ -25,7 +25,7 @@ export function proposalTargetPlan(ctx,actor,target,card,{resolve=false}={}) {
 }
 export function proposalHitPlan(ctx,source,target,amount,card={}) {return Plans.proposalHitRules({actor:source,target,card,amount,damageType:card?.attack?.damageType || card?.damageType || card?.magicDamageType || card?.physicalDamageType || card?.damageSchool,camp:card?.combatProfile?.camp || 'physical',range:card?.range || card?.combatProfile?.range,direct:!card.proposalReactive,reactive:!!card.proposalReactive,allies:proposalAllies(ctx,target),...proposalContext(ctx)});}
 export function proposalAfterHit(ctx,source,target,amount,hpDamage,card={}) {applyProposalPlan(ctx,Plans.proposalAfterHitRules({actor:source,target,incomingDamage:amount,hpDamage,damageType:card?.attack?.damageType || card?.damageType || card?.magicDamageType || card?.physicalDamageType || card?.damageSchool,camp:card?.combatProfile?.camp || 'physical',range:card?.range || card?.combatProfile?.range,direct:!card.proposalReactive,reactive:!!card.proposalReactive,opponents:proposalAllies(ctx,source),...proposalContext(ctx)}),source,target,card);}
-export function proposalTurn(ctx,actor,phase) {applyProposalPlan(ctx,Plans.proposalTurnRules({actor,phase,...proposalContext(ctx),roll:()=>Math.floor(ctx.rng.float('misc')*100)}),actor,actor);}
+export function proposalTurn(ctx,actor,phase) {applyProposalPlan(ctx,Plans.proposalTurnRules({actor,phase,...proposalContext(ctx),roll:()=>Math.floor(ctx.rng.float('misc')*100)}),actor,actor,{skipRatingBonus:true,proposalProtectionFloor:true});}
 export function proposalThreshold(ctx,actor) {applyProposalPlan(ctx,Plans.proposalThresholdRules({actor,...proposalContext(ctx)}),actor,actor);}
 export function proposalRetained(ctx,actor,pool='block') {return Plans.proposalRetainProtection({actor,pool,...proposalContext(ctx)});}
 export function proposalHealingPlan(ctx,target,amount,damageType) {return Plans.proposalHealingRules({target,amount,damageType,...proposalContext(ctx)});}

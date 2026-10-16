@@ -58,10 +58,10 @@ function entityProblems(entity, path, { player = false } = {}) {
     else {
       for (const key of ['cardsPlayed', 'manaSpent', 'discarded', 'hpLostSinceTurnStart', 'hpLostThisRound', 'offeringsPaid', 'previousSpell', 'attacksPlayed', 'cardPlaysCombat']) if (state[key] !== undefined && (!Number.isSafeInteger(state[key]) || state[key] < 0)) problems.push(`${path}.abilityRiders.${key} must be a non-negative whole number`);
       if (state.turnStartHpPct !== undefined && (!finite(state.turnStartHpPct) || state.turnStartHpPct < 0 || state.turnStartHpPct > 100)) problems.push(`${path}.abilityRiders.turnStartHpPct must be a percentage`);
-      for (const key of ['charges', 'once', 'tagPlays', 'sameCardPlays', 'cardUsesCombat','typePlays','distinctTagPlays']) if (state[key] !== undefined && !record(state[key])) problems.push(`${path}.abilityRiders.${key} must be an object`);
+      for (const key of ['charges', 'once', 'tagPlays', 'sameCardPlays', 'cardUsesCombat','instanceUsesCombat','typePlays','distinctTagPlays']) if (state[key] !== undefined && !record(state[key])) problems.push(`${path}.abilityRiders.${key} must be an object`);
     }
   }
-  for(const key of ['cardUsesCombat','typePlays']) if(record(entity.abilityRiders?.[key]) && Object.values(entity.abilityRiders[key]).some(v=>!Number.isSafeInteger(v) || v<0)) problems.push(`${path}.abilityRiders.${key} must contain nonnegative counts`);
+  for(const key of ['cardUsesCombat','instanceUsesCombat','typePlays']) if(record(entity.abilityRiders?.[key]) && Object.values(entity.abilityRiders[key]).some(v=>!Number.isSafeInteger(v) || v<0)) problems.push(`${path}.abilityRiders.${key} must contain nonnegative counts`);
   if(entity.concurrentStances!==undefined && (!Array.isArray(entity.concurrentStances) || entity.concurrentStances.length>7 || entity.concurrentStances.some(row=>!record(row) || !['attack','smash','defend','sweep','counter','casting','prepared','evade','neutral'].includes(row.maneuver) || !['physical','spell'].includes(row.camp)))) problems.push(`${path}.concurrentStances invalid`);
   if (!nonEmptyString(entity.id)) problems.push(`${path}.id must be a non-empty string`);
   if (entity.kind !== (player ? 'player' : 'enemy')) problems.push(`${path}.kind must be '${player ? 'player' : 'enemy'}'`);
