@@ -1,0 +1,118 @@
+{
+  "createdAt": "2026-10-16T04:41:01.305Z",
+  "gameSource": "f7a24e0e39dd7823c15f89afd6023782526655d0",
+  "generator": "ingame-card-preview/export-standalone.mjs",
+  "renderedFrom": "http://127.0.0.1:8767/",
+  "standaloneSha256": "f402742bbdf84ba368020a0992ee063546c57881f48a6e3f91c791eb60250291",
+  "bytes": 11139723,
+  "featured": 6,
+  "expanded": 70,
+  "uniqueImages": 11,
+  "assets": {
+    "http://127.0.0.1:8767/assets/cards/library/magical-defend-05-1024.webp": {
+      "bytes": 149296,
+      "sha256": "9a6ae5eede5916a45fb7bae5a923ca6d4f0d8ddb04bbc95448b33ded641bb068"
+    },
+    "http://127.0.0.1:8767/assets/cards/library/magical-attack-03-1024.webp": {
+      "bytes": 92898,
+      "sha256": "34775a4a1b0e4461b1c38629cd2a4c34f33385a05ffaa41ea9f5d6b7e10c129d"
+    },
+    "http://127.0.0.1:8767/assets/cards/library/magical-attack-05-1024.webp": {
+      "bytes": 78612,
+      "sha256": "0ec58e837231638671b3fc2ff60b2cb186be7b3f23939868b06615719e20f77e"
+    },
+    "http://127.0.0.1:8767/assets/cards/library/physical-attack-02-1024.webp": {
+      "bytes": 76598,
+      "sha256": "3a4d3d2ab4e4a600600251e36775162948aeff977c23213a6895097299fe63ee"
+    },
+    "http://127.0.0.1:8767/assets/cards/library/magical-defend-04-1024.webp": {
+      "bytes": 150186,
+      "sha256": "ea54c4a728af2f973703c27fa5385ada0da861f3f5515af49a009c7f1309f2fc"
+    },
+    "http://127.0.0.1:8767/assets/cards/library/magical-attack-04-1024.webp": {
+      "bytes": 82774,
+      "sha256": "ec1da6f5bb1587b2866f5bf2297362524a9cd45ee8ccf7b66c49701d5d7337e3"
+    },
+    "http://127.0.0.1:8767/assets/card-components/36cda4cba048ed38b0c9.webp": {
+      "bytes": 567466,
+      "sha256": "b387531a254dc1c23298789f47420dcff640261ea6da4bfff3715cb5eef60af3"
+    },
+    "http://127.0.0.1:8767/assets/card-components/0949257201425783d7c8.webp": {
+      "bytes": 1128752,
+      "sha256": "aa39ccff684701177b1bf90fef520eecdc3ff0da158c4d90c79b09b801976e99"
+    },
+    "http://127.0.0.1:8767/assets/card-components/f31ac0a1985194c9aa76.webp": {
+      "bytes": 1222162,
+      "sha256": "6abe2d461710fb35a19676408c27b9e38a1f38c589f3bf23ec73e70648ff06de"
+    },
+    "http://127.0.0.1:8767/assets/card-components/1fe4ba7f330c67fca0a6.webp": {
+      "bytes": 1970898,
+      "sha256": "53952607084d07847d1492abcd71215ee946ee31393ba312f10b7716170cf673"
+    },
+    "http://127.0.0.1:8767/assets/card-components/95887e9c269a4996cf95.webp": {
+      "bytes": 1372012,
+      "sha256": "a60070e1cfbedf623ddbc53ac0bf18299d2d3af5207554ce1062d72d287e589b"
+    },
+    "http://127.0.0.1:8767/assets/fonts/im-fell-english-400-normal.woff2": {
+      "bytes": 59880,
+      "sha256": "248300df1647bec49155a5cada1d65f719ae633ef48564d1f19b135a8a5b7f5f"
+    },
+    "http://127.0.0.1:8767/assets/fonts/im-fell-english-400-italic.woff2": {
+      "bytes": 57808,
+      "sha256": "8fc678575e83868f82ce5aa6e023f056ea68d480e16dd108b3e14bc375c8fdea"
+    },
+    "http://127.0.0.1:8767/assets/fonts/eb-garamond-400-normal.woff2": {
+      "bytes": 23820,
+      "sha256": "912929dba0faab5e151849ea5e988adba3080ad6d2bcc4dbff27aa427896498d"
+    },
+    "http://127.0.0.1:8767/assets/fonts/eb-garamond-400-italic.woff2": {
+      "bytes": 25388,
+      "sha256": "fc5851c4466e73bec048bb62d65f8abadf70d602816687e6d364214e35fa8abb"
+    },
+    "http://127.0.0.1:8767/assets/fonts/cormorant-garamond-500-normal.woff2": {
+      "bytes": 23312,
+      "sha256": "8197bf53615ddc8c423f444c7f0eec63b7fa0ba093fcfbec60dfdd28429b0fc8"
+    },
+    "http://127.0.0.1:8767/assets/fonts/cormorant-garamond-500-italic.woff2": {
+      "bytes": 23924,
+      "sha256": "4fb55a7a6d564d428061fe12c82c896264bcc8b7f0b52840bf88e0db5b91256f"
+    },
+    "http://127.0.0.1:8767/assets/fonts/crimson-pro-400-normal.woff2": {
+      "bytes": 18336,
+      "sha256": "d2a3a146387d91b8d476d508849dd1d93a3cbde85d1e0d303e3d5c970726a703"
+    },
+    "http://127.0.0.1:8767/assets/fonts/crimson-pro-400-italic.woff2": {
+      "bytes": 19104,
+      "sha256": "1fac78d865686e4e1236e5e599f02c8afe05dd59d04344553cc45a160d53ac63"
+    },
+    "http://127.0.0.1:8767/assets/fonts/spectral-400-normal.woff2": {
+      "bytes": 21696,
+      "sha256": "cf8daee3b83c1e662196c6e34e444bc41344d54bfeb4fb5351e197de6ce94539"
+    },
+    "http://127.0.0.1:8767/assets/fonts/spectral-400-italic.woff2": {
+      "bytes": 22712,
+      "sha256": "db397149a9f73fd6a41dd2fdf3314cf8a9daf0485134465cc268cac578766b71"
+    },
+    "http://127.0.0.1:8767/assets/fonts/libre-baskerville-400-normal.woff2": {
+      "bytes": 20108,
+      "sha256": "3eb80fbca70498126925ce16ff5c20b2fa35e67ae7123ddb46302d2778dfbf0e"
+    },
+    "http://127.0.0.1:8767/assets/fonts/libre-baskerville-400-italic.woff2": {
+      "bytes": 21564,
+      "sha256": "efb7e5f4376a557314f5bb9f5197ef837d86c0ab38e1a50a0ff5c60c3400c629"
+    },
+    "http://127.0.0.1:8767/assets/fonts/cinzel-400-normal.woff2": {
+      "bytes": 14128,
+      "sha256": "b873cdd90d6bd9ca4793c805b4175abfae00b3611ee8afccf63067133dcf1217"
+    },
+    "http://127.0.0.1:8767/assets/fonts/inter-400-normal.woff2": {
+      "bytes": 23664,
+      "sha256": "8909904ab6c872eb994093482a88a28eca2cd95912d7b6fecd72103b0dc07edc"
+    },
+    "http://127.0.0.1:8767/assets/fonts/inter-400-italic.woff2": {
+      "bytes": 25040,
+      "sha256": "7ea9d2f1274cebee837f0c6eebb426c18fbb2333a6b6da4d02ec5cf47db7fb8e"
+    }
+  },
+  "notes": "Production DOM/styles/Simple artwork; visual proposals only. No runtime source imports, fetches, external styles or external assets."
+}

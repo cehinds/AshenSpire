@@ -1,0 +1,17 @@
+{
+  "requests": [],
+  "errors": [],
+  "offline": {
+    "count": 70,
+    "images": true,
+    "fades": true,
+    "overflow": 0
+  },
+  "inspectionRulesPresent": true,
+  "escapeCloses": true,
+  "sandbox": {
+    "origin": "null",
+    "featured": 6,
+    "decoded": true
+  }
+}

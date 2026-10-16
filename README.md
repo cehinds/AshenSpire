@@ -1,25 +1,19 @@
 # AshenSpire
 
 <!-- feature-preview:start -->
-## Feature preview — Review character stats
+## Feature preview — Card proposals in the current game look
 
-[Feature Play route](https://cehinds.github.io/AshenSpire/branches/Feature/updateCharacterCreation/latest/) · [Current build run](https://github.com/cehinds/AshenSpire/actions/runs/38754284560) · [Download backup](https://github.com/cehinds/AshenSpire/actions/runs/38754284560/artifacts/11982198573) · [Four Review screenshots and wireframes](docs/preview/features/update-character-creation/review-character-card/README.md)
+[Open the card preview](https://cehinds.github.io/AshenSpire/branches/Feature/CardPreview/latest/) · [Source and capture record](docs/design/card-tag-design/published-card-preview/README.md)
 
-**Current revision publication is pending.** The prior `a12edfdd78` revision passed public delivery checks; the Play route is not yet verified for this new stats revision. Feature previews are sandboxed; progress is not saved. Press **Enter** on the startup screen.
-
-The opened Review character stat card now shows all 16 glance stats instead of hiding five behind an ellipsis. Its 2:3 dimensions still match the equipment cards. Captured **0.7.1.1520 / `ee6988101d`**, source `c749675356`, 2026-10-15 (America/Anchorage), with Starseer / Battle Mage and the Review loadout open.
-
-![Character stat card with all 16 glance stats visible](docs/preview/features/update-character-creation/review-character-card/character-card-desktop-1440x900.png)
+**Publication pending verification.** This standalone visual demonstration uses the current game renderer, title fade and Simple artwork. It shows six featured cards and all 70 combat proposals; these are proposed effects, not playable game additions. Unknown cost, rank, school and stance stay unassigned. Tap a card for its full rules; Escape closes inspection.
 
 | Mobile · 390 × 844 | Tablet · 1024 × 768 |
 | --- | --- |
-| ![Mobile opened Review character stat and equipment cards](docs/preview/features/update-character-creation/review-character-card/review-mobile-390x844.png) | ![Tablet opened Review character stat and equipment cards](docs/preview/features/update-character-creation/review-character-card/review-tablet-1024x768.png) |
-| Desktop · 1440 × 900 | Widescreen · 1920 × 1080 |
-| ![Desktop opened Review character stat and equipment cards](docs/preview/features/update-character-creation/review-character-card/review-desktop-1440x900.png) | ![Widescreen opened Review character stat and equipment cards](docs/preview/features/update-character-creation/review-character-card/review-wide-1920x1080.png) |
+| ![Mobile proposed card gallery](docs/design/card-tag-design/ingame-look-preview/mobile.png) | ![Tablet proposed card gallery](docs/design/card-tag-design/ingame-look-preview/tablet.png) |
+| Desktop · 1440 × 900 | Wide · 2560 × 1440 |
+| ![Desktop proposed card gallery](docs/design/card-tag-design/ingame-look-preview/desktop.png) | ![Wide proposed card gallery](docs/design/card-tag-design/ingame-look-preview/wide.png) |
 
-[Prior compact-layout matrix: 36 screenshots and wireframes](docs/preview/features/update-character-creation/README.md) remains evidence for **`652574f013`**, source `f6801043c9`; it is not recaptured or relabeled as the current revision.
-
-**Feature branch only:** remove this section and its feature gallery before merging to `dev`. See [the delivery protocol](CONTRIBUTING.md#feature-branch-previews).
+Source renderer: `f7a24e0e39dd7823c15f89afd6023782526655d0`. Reviewed preview source: `fbee6162589ec2374664c19c4c78ee2795691d7e`. Captures: 2026-10-16 UTC (2026-10-15 Anchorage). This dedicated branch packages only the approved visual artifact; no game integration or promotion is included.
 <!-- feature-preview:end -->
 
 A browser roguelike: build a character, explore a seeded world, and fight with cards.
