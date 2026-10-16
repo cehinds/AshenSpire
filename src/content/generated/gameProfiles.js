@@ -15391,7 +15391,7 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "path": "src/** (excluding generated gameProfiles/changelog)",
-      "hash": "sha256:90142afcbe3dee50e1571e95b15f9b129d829e8d01194d1dfb6b5e9ae54ca995"
+      "hash": "sha256:6a10e1fd6d12756e1d864cc39d9e9d024c1257b9a32db0fa1b9a3a76bd22b467"
     }
   ],
   "runtimeSources": [
@@ -15411,7 +15411,7 @@ export const gameProfileCatalog = {
       "path": "src/config/generated/ui.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:ebdf18d41442be6616d7fce23f51477489548e1aed6c012f2e08d88c72910be2"
+      "hash": "sha256:1bf2f6db935ce999d1007cb0169dfeb9471144cfcec3bb4a5f2135dffad2a2e2"
     },
     {
       "path": "src/content/actionAnimations.js",
@@ -19329,7 +19329,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/models/AlternativeFormationModel.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:0e69e9107f6fc59b9ca10795909fab3c4173a4f2c685de7c9108362c9ecac253"
+      "hash": "sha256:1d111624c994dd807f0e21ba0b3a59dcc7cbd91c5983de9f6230d3cb79f3a0c9"
     },
     {
       "path": "src/ui/models/ArmouryModels.js",
@@ -19419,7 +19419,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/models/CombatCompositionModel.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:50da08b5276930c11798d0e23a93c002e0610426b7d5d8b1989542e53da641c3"
+      "hash": "sha256:a9c61644da10967277da5adba530aea686c4916232db37323f29fca770a52251"
     },
     {
       "path": "src/ui/models/CombatFormationModel.js",
@@ -20358,7 +20358,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:23af16d4e9c9f6d88fe655d32ecf1a688b47df39f9e3a1d6d193ce63923593ab"
     }
   ],
-  "runtimeHash": "sha256:fa65774f9d8ff7611a4420f0ea6a4d90a145c40bfd6b8ce5c4e3ffa9f194516b"
+  "runtimeHash": "sha256:12148bbcc8a78fa6ea4a06c6fdaf38b9d41469637ce210cb696f3101d3856444"
 };
 export const gameProfileAuthors = {
   "default": {
