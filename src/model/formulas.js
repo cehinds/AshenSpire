@@ -25,6 +25,7 @@ export const FORMULA_OPS = Object.freeze([
   'blockOf',
   'hpOf',
   'cardsPlayedThisTurn',
+  'metric',
   'traitBonus',
 ]);
 
@@ -179,6 +180,13 @@ function evalNode(node, ctx) {
       for (const ent of ents) total += stacksOf(ent, node.status);
       v = node.per != null ? Math.floor(total / node.per) : total;
       break;
+    }
+    case 'metric': {
+      const ent = resolveOne(ctx, node.of || 'self', node.f), state=(node.of===undefined || node.of==='self' || node.of==='owner') && ctx.metricsBefore ? ctx.metricsBefore : ent.abilityRiders || {};
+      const active=Object.entries(ent.statuses || {}).filter(([id,row])=>(row.stacks || row.meter?.value || 0)>0 && (node.statuses || []).includes(id)).map(([,row])=>row);
+      const values={negativeStatusTypes:active.length,negativeStatusStacks:active.reduce((n,row)=>n+(row.stacks || row.meter?.value || 0),0),damageTakenThisTurn:state.hpLostSinceTurnStart || 0,sameCardPlays:state.sameCardPlays?.[ctx.cardId] || 0,cardsPlayed:state.cardsPlayed || 0,distinctTypes:Object.keys(state.typePlays || {}).length,manaSpent:ctx.manaSpent || 0,staminaSpent:ctx.staminaSpent || 0};
+      if (!(node.metric in values)) throw new Error('Unknown combat metric');
+      v=values[node.metric]*(node.per ?? 1);break;
     }
     case 'energySpent': {
       const spent = ctx.energySpent != null ? ctx.energySpent : 0;

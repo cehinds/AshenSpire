@@ -1,3 +1,4 @@
+import { selectCardVariant } from './cardBehavior.js';
 import { hasCardChoice, chooseZoneCards } from './cardZones.js';
 import { decayStanceRoundStart } from './combatMatchups.js';
 import { combatMatchups, combatIntent, combatExpansionMatchups } from '../content/combatMatchups.js';
@@ -725,7 +726,7 @@ function doPlayCard(C, { cardInstanceId, targetId, choice, upcastTier, selectedB
   const idx = C.piles.hand.findIndex((c) => c.instanceId === cardInstanceId);
   if (idx < 0) throw new Error(`Card '${cardInstanceId}' is not in hand`);
   const inst = C.piles.hand[idx];
-  const def = resolveCombatCard(C, inst, { upcastTier });
+  let def = resolveCombatCard(C, inst, { upcastTier });
   if (!controlGate(C, p, def).allowed) throw F.playRefusal('Recover from active control before playing this card', 'controlled');
   if (!preflightOnly && C.combatExpansionVersion === 2 && p.ashenBlight?.milestones.some(row => row.path === null)) throw new Error('Choose the pending Ashen Blight feat first');
   const kws = def.keywords || [];
@@ -739,6 +740,7 @@ function doPlayCard(C, { cardInstanceId, targetId, choice, upcastTier, selectedB
   const pools = F.foundationCosts(C, def, playerWeightClass(C).weightClass, C.registries.framework.costProfile(def, { weightClass: playerWeightClass(C).weightClass }));
   let manaCost = Math.max(0, pools.mana - R.matchingAbilityCharges(p, { ...def, type: cardKind(def), authoredTags: def.cardTags || def.tags }).manaDiscount) + (def.upcastSurcharge || 0);
   let staminaCost = expandedCosts?.stamina ?? cost;
+  def=selectCardVariant(C,def,{energy:cost,mana:manaCost,stamina:staminaCost},C.enemies.find(e=>e.id===targetId) || null);
 
   const friendlyPlan = friendlyTargetPlan(def, C.playerKey, [...C.players.values()].map((entry) => ({
     id: entry.id,

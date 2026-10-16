@@ -1169,7 +1169,8 @@ export function resolveTargets(ctx, action, targetSpec) {
   const refs = group?.begun && generic ? action.meta?.expansionTargets?.[action.meta?.expansionExecutionRepeat || 0] : null;
   const targets = refs ? refs.map(ref => Expanded.expansionEntity(ctx, ref)).filter(entity => Expanded.expansionTargetPresent(ctx, entity))
     : resolveRawTargets(ctx, action, targetSpec);
-  return targets.filter(entity => !group?.targets?.[ctx.playerIdForEntity?.(entity) || entity.id]?.receipt?.avoided);
+  const eligible=targets.filter(entity => !group?.targets?.[ctx.playerIdForEntity?.(entity) || entity.id]?.receipt?.avoided);
+  return targetSpec==='allEnemies' && action.card?.targetLimit !== undefined ? eligible.slice(0,Math.max(0,evalNum(ctx,action,action.card.targetLimit,eligible.length))) : eligible;
 }
 
 function resolveRawTargets(ctx, action, targetSpec) {
@@ -1201,6 +1202,8 @@ function resolveRawTargets(ctx, action, targetSpec) {
       const living = livingEnemies(ctx);
       return living.length ? [ctx.rng.pick('misc', living)] : [];
     }
+    case 'allAllies':
+      return ctx.players ? [...ctx.players.values()].filter(p=>p.connected && p.entity.alive).map(p=>p.entity) : [ctx.player].filter(p=>p?.alive);
     case 'ally': {
       // Co-op: the explicitly aimed living teammate. Solo — or no pick — falls
       // back to the source, so every ally card stays fully solo-valid.
@@ -1225,6 +1228,7 @@ export function formulaCtxFor(ctx, action, primaryTarget) {
       player: ctx.player || null,
       allEnemies: livingEnemies(ctx),
     },
+    cardId: action.card?.cardId, metricsBefore:meta.abilityBefore, manaSpent:meta.manaSpent || 0, staminaSpent:meta.staminaSpent || 0,
     energySpent: meta.energySpent != null ? meta.energySpent : 0,
     cardsPlayedThisTurn: ctx.player ? ctx.player.counters.cardsPlayedThisTurn : 0,
   };
@@ -1588,6 +1592,7 @@ function runOpcode(ctx, action, eff) {
       }
       break;
     }
+    case 'modifyCards':
     case 'moveCards': {
       moveCards(ctx, action, evalNum(ctx, action, eff.amount, 1));
       break;

@@ -403,8 +403,10 @@ export function evalPredicate(ctx, pred, pctx = {}) {
       const def = id && ctx.registries.cards.get(id);
       return !!def?.effects?.some(effect => effect.op === 'damage' && effect.target === 'allEnemies');
     }
+    case 'resourcePaid':
+      return (pctx.meta?.[pred.resource === 'mana' ? 'manaSpent' : 'staminaSpent'] || 0) >= (pred.amount ?? 1);
     case 'inStance':
-      return ctx.player.stanceId === pred.stance;
+      return ctx.player.stanceId === pred.stance || ctx.player.combatStance?.maneuver === pred.stance;
     case 'hasStatus': {
       if (pred.of === 'allEnemies') return ctx.enemies.map(entity => pred.snapshot ? priorAbilityEntity(ctx, entity, pctx.meta || pctx.event) : entity).some(entity => entity.alive && StatusHelpers.getStacks(entity, pred.status) >= (pred.atLeast ?? 1));
       const current = resolveOf(ctx, pctx, pred.of);

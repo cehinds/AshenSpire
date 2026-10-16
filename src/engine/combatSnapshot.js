@@ -109,6 +109,7 @@ export function serializeCombatSnapshot(combat) {
     swapCostRule: combat.swapCostRule,
     swapsLeft: combat.swapsLeft,
     piles: combat.piles,
+    ...(combat.hiddenCards ? {hiddenCards:combat.hiddenCards} : {}),
     ...(hasCardChoice(combat) || combat.pendingReaction ? {
       ...(hasCardChoice(combat) ? { ...(combat.pendingAbilityDiscard ? {pendingAbilityDiscard:combat.pendingAbilityDiscard} : {pendingCardChoice:combat.pendingCardChoice}), pendingAbilityPlay: combat.pendingAbilityPlay } : {}),
       abilityQueue: combat.queue.map(({ source, owner, target, ...action }) => ({ ...action, sourceId: source?.id, ownerId: owner?.id, targetId: target?.id })),
@@ -166,6 +167,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   assertCombatSnapshot(saved);
   if (saved.gameProfile) validateGameProfileSnapshot(saved.gameProfile);
   if (expectedGameProfile && saved.gameProfile?.hash !== expectedGameProfile.hash) throw new Error('Combat game profile does not match the run configuration');
+  if (saved.pendingCardChoice?.effect?.transformTo) registries.cards.get(saved.pendingCardChoice.effect.transformTo);
   if (saved.foundation) validateFoundationSnapshot(saved.foundation);
   const combat = {
     ...(saved.gameProfile ? { gameProfile: freezeProfile(saved.gameProfile), gameProfileCommands: saved.gameProfileCommands || 0, gameProfileInterrupts: saved.gameProfileInterrupts || {} } : {}),
@@ -232,6 +234,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     swapCostRule: saved.swapCostRule,
     swapsLeft: saved.swapsLeft,
     piles: saved.piles,
+    ...(saved.hiddenCards ? {hiddenCards:saved.hiddenCards} : {}),
     queue: [],
     ...((saved.pendingAbilityDiscard || saved.pendingCardChoice) ? { ...(saved.pendingAbilityDiscard ? {pendingAbilityDiscard:saved.pendingAbilityDiscard} : {pendingCardChoice:saved.pendingCardChoice}), pendingAbilityPlay:saved.pendingAbilityPlay } : {}),
     eventLog: saved.eventLog,
