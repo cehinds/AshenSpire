@@ -1,8 +1,20 @@
+# Revised original battlefield layout — approval pending
+
+The owner rejected all A–G proposals because the footer was redesigned. Those files are archived proposals, not active candidates.
+
+**Current proposal:** [revised-original.html](revised-original.html), [PNG](revised-original.png), [SVG](revised-original.svg). The original header and footer control arrangement are retained. Existing Combat log and Reaction controls retain their recognizable button/toggle presentation and sides, with fixed screen-relative positions independent of the hand.
+
+The footer keeps its existing stone HUD group, enlarged in place, ordered resource orb, draw pile, End Turn, discard pile, potions. The hand remains centered directly above it, with unused hand-space removed. All lower HUD background uses the same color. Turn banner remains at the upper center of the field; health remains top left, shield/menu top right.
+
+Scene changes remain reduced zoom/lower ground to expose sky, requested 3×3 row anchors and character-width shadows. The shared anchors inset still applies. Card and control sizes are schematic; this is a faithful composition review before the visual preview, then implementation.
+
+## Rejected archive: A–G
+
 # Battlefield approval wireframes — 2026-10-16
 
 Docs-only layout proposals. No battlefield implementation is authorized until the owner chooses an option, then reviews its visual preview.
 
-Open `index.html` for the interactive comparison. `overview.png` contains A–G and the common anchor inset. Individual PNG/SVG files are 1440×900. Shapes are schematic, not final artwork; the same required scene, formation anchors and shadow rules apply to every option.
+The archived `index.html` contains the rejected interactive comparison. `overview.png` contains A–G and the common anchor inset. Individual PNG/SVG files are 1440×900. Shapes are schematic, not final artwork; the same required scene, formation anchors and shadow rules apply to every option.
 
 - **A — Balanced desktop · recommended:** Side utilities; five larger cards; compact, readable footer.
 - **B — Wide utility rails:** Tall side rails keep logs and reactions beside the stage.
