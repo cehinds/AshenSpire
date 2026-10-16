@@ -24,7 +24,7 @@ export function validateZoneEffect(effect) {
     for (const key of Object.keys(effect.changes)) if (!['retain','retainTurns','hideTurns','maneuver','range'].includes(key)) throw new Error('Unknown card change');
     if (effect.changes.retain !== undefined && typeof effect.changes.retain !== 'boolean') throw new Error('Retain must be boolean');
     if (effect.changes.retainTurns!==undefined && (!Number.isSafeInteger(effect.changes.retainTurns) || effect.changes.retainTurns<1 || effect.changes.retainTurns>10)) throw new Error('Retain duration must be 1–10 turns');
-    if (effect.changes.hideTurns !== undefined && (!Number.isSafeInteger(effect.changes.hideTurns) || effect.changes.hideTurns < 1 || effect.changes.hideTurns > 10)) throw new Error('Hide duration must be 1–10 turns');
+    if (effect.changes.hideTurns !== undefined && !(effect.changes.hideTurns && typeof effect.changes.hideTurns==='object' && typeof effect.changes.hideTurns.f==='string') && (!Number.isSafeInteger(effect.changes.hideTurns) || effect.changes.hideTurns < 1 || effect.changes.hideTurns > 10)) throw new Error('Hide duration must be 1–10 turns');
     if (effect.changes.maneuver && !['attack','smash','defend','sweep','counter','casting','evade'].includes(effect.changes.maneuver)) throw new Error('Unknown card maneuver');
     if (effect.changes.range && !['melee','reach','ranged'].includes(effect.changes.range)) throw new Error('Unknown card range');
   }
