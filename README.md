@@ -10,6 +10,8 @@ The same runtime supports two authored configurations. **Product core** includes
 
 Desktop and widescreen now use the approved **B footer fade**, exposing the battlefield behind the cards while preserving the existing header fade and all control positions. [Fresh screenshots and verification](docs/preview/features/json-game-modules/footer-fade/README.md) · [Original wireframes A–G](docs/preview/features/json-game-modules/footer-fade-proposals/README.md).
 
+[Review targeting HUD wireframes](docs/preview/features/json-game-modules/target-hud-proposals/README.md) — proposed enemy lane order, overhead intent, selected target panels, and card-target previews. These diagrams await approval; they do not change gameplay.
+
 The deck editor’s animation sprite now sits lower so the head clears the preview border, while retaining its size and the description layout. [Fresh headroom screenshots](docs/preview/features/json-game-modules/deck-headroom/README.md).
 
 The battlefield grid now uses thin, translucent lines and a saved **Grid** checkbox directly above Combat Log. Core’s unused middle row stays visible without enabling placement. [Grid screenshots and verification](docs/preview/features/json-game-modules/grid/README.md).
