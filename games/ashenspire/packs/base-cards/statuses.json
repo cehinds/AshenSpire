@@ -1,0 +1,857 @@
+{
+  "schemaVersion": 1,
+  "defaults": {
+    "appliedStacks": 1,
+    "beneficialDecayPhase": "start",
+    "harmfulDecayPhase": "end",
+    "decayStacks": 1,
+    "coreElements": [],
+    "randomRollDomain": "integer 0..99; success when roll < chance",
+    "proneStatus": "prone",
+    "reactiveDamageNeverRecurses": true
+  },
+  "statuses": [
+    {
+      "id": "base.persistent-block",
+      "name": "Persistent Block",
+      "icon": "▰",
+      "stackMode": "add",
+      "decay": "none",
+      "tooltip": "Replenish Block up to remaining stacks at turn start. A connected physical hit consumes one stack, including fully blocked hits."
+    },
+    {
+      "id": "base.persistent-barrier",
+      "name": "Persistent Barrier",
+      "icon": "◇",
+      "stackMode": "add",
+      "decay": "none",
+      "tooltip": "Replenish Barrier up to remaining stacks at turn start. A connected magical hit consumes one stack, including fully protected hits."
+    },
+    {
+      "id": "base.greased",
+      "name": "Greased",
+      "icon": "◒",
+      "stackMode": "add",
+      "decay": "none",
+      "tooltip": "Melee/Reach accuracy -20. At turn start 25% chance to become Prone. Fire cannot miss: triple damage, Burn 3, and splash 1.5 times the original incoming fire damage to other same-side actors."
+    },
+    {
+      "id": "base.poison",
+      "name": "Poison",
+      "icon": "☠",
+      "stackMode": "add",
+      "decay": "none",
+      "tooltip": "At turn start take 1 necrotic damage per stack. Unlike Venom, this is direct ongoing damage, without a buildup threshold. Lose one stack at turn end."
+    },
+    {
+      "id": "base.blight",
+      "name": "Blight",
+      "icon": "◈",
+      "stackMode": "add",
+      "decay": "none",
+      "tooltip": "If Blight stacks reach current HP, die immediately. Lose one stack at turn end."
+    },
+    {
+      "id": "base.weak",
+      "name": "Weak",
+      "icon": "↓",
+      "stackMode": "add",
+      "decay": "none",
+      "tooltip": "Deal 25% less direct damage while active. Additional stacks extend duration; they do not multiply the penalty."
+    },
+    {
+      "id": "base.charm",
+      "name": "Charm",
+      "icon": "♡",
+      "stackMode": "add",
+      "decay": "none",
+      "tooltip": "Direct attack accuracy -25 while active. Lose one stack at turn end."
+    },
+    {
+      "id": "base.bind",
+      "name": "Bind",
+      "icon": "⌁",
+      "stackMode": "add",
+      "decay": "none",
+      "tooltip": "Cannot play Attack cards. Skill, Power and recovery cards remain available. Lose one stack at turn end."
+    },
+    {
+      "id": "base.restrained",
+      "name": "Restrained",
+      "icon": "⊗",
+      "stackMode": "add",
+      "decay": "none",
+      "tooltip": "Melee and Reach cards cost 1 extra Stamina while active. This is separate from a generated Restrained burden card."
+    },
+    {
+      "id": "base.foresight",
+      "name": "Foresight",
+      "icon": "◎",
+      "stackMode": "add",
+      "decay": "none",
+      "tooltip": "Each stack grants +2 Perception for detecting Veil. Lose one stack at the next turn start."
+    },
+    {
+      "id": "base.evade",
+      "name": "Evade",
+      "icon": "↝",
+      "stackMode": "add",
+      "decay": "none",
+      "tooltip": "Consume one stack when a direct physical hit is attempted: 25% chance to avoid the entire action. Failed attempts also consume the stack."
+    },
+    {
+      "id": "base.intangible",
+      "name": "Intangible",
+      "icon": "◌",
+      "stackMode": "add",
+      "decay": "none",
+      "tooltip": "Direct hit damage is capped at 1; ongoing damage is unaffected. Lose one stack at the next turn start."
+    },
+    {
+      "id": "base.mirrors",
+      "name": "Mirrors",
+      "icon": "◇",
+      "stackMode": "add",
+      "decay": "none",
+      "tooltip": "Double direct outgoing damage. Additional stacks extend duration, without exponential multiplication. Lose one stack at the next turn start."
+    },
+    {
+      "id": "base.elemental-weapon",
+      "name": "Elemental Weapon",
+      "icon": "✦",
+      "stackMode": "add",
+      "decay": "none",
+      "tooltip": "Weapon attacks add a separate 3 Fire damage packet. The packet does not recursively trigger enchantments or reactions."
+    },
+    {
+      "id": "base.necrotic-healing",
+      "name": "Necrotic Renewal",
+      "icon": "✚",
+      "stackMode": "add",
+      "decay": "none",
+      "tooltip": "Incoming necrotic damage becomes equal healing, before protection. Lose one stack at the next turn start."
+    },
+    {
+      "id": "base.divine-harm",
+      "name": "Profane Inversion",
+      "icon": "†",
+      "stackMode": "add",
+      "decay": "none",
+      "tooltip": "Incoming Divine healing becomes equal Sacred damage. Ordinary healing is unchanged. Lose one stack at turn end."
+    },
+    {
+      "id": "base.extra-weapon",
+      "name": "Extra Weapon",
+      "icon": "⚔",
+      "stackMode": "add",
+      "decay": "none",
+      "tooltip": "The next weapon Attack repeats its primary damage once, without repeating card payment or recursively creating another action."
+    },
+    {
+      "id": "base.extra-shield",
+      "name": "Extra Shield",
+      "icon": "▰",
+      "stackMode": "add",
+      "decay": "none",
+      "tooltip": "The next shield/guard card repeats its protection once, without repeating payment or reactions."
+    },
+    {
+      "id": "base.auto-counter",
+      "name": "Automatic Counter",
+      "icon": "↶",
+      "stackMode": "add",
+      "decay": "none",
+      "tooltip": "After a hostile direct Melee/Reach hit connects, consume a stack and return 6 physical damage. Reaction damage cannot trigger another automatic reaction."
+    },
+    {
+      "id": "base.auto-sweep",
+      "name": "Automatic Sweep",
+      "icon": "↔",
+      "stackMode": "add",
+      "decay": "none",
+      "tooltip": "After a hostile direct hit connects, consume a stack and deal 4 physical damage to each opposing actor. Reaction damage cannot recurse."
+    },
+    {
+      "id": "base.reflect",
+      "name": "Reflect",
+      "icon": "↩",
+      "stackMode": "add",
+      "decay": "none",
+      "tooltip": "Reflect half actual HP damage from hostile direct hits, rounded down. Reflected damage never reflects again."
+    },
+    {
+      "id": "base.guard-allies",
+      "name": "Interpose",
+      "icon": "▣",
+      "stackMode": "add",
+      "decay": "none",
+      "tooltip": "Intercept up to 4 direct damage per stack for another ally, consuming one stack per interception. The lowest actor ID wins competing guards."
+    },
+    {
+      "id": "base.veil",
+      "name": "Veil",
+      "icon": "◍",
+      "stackMode": "add",
+      "decay": "none",
+      "tooltip": "Single-target actions must detect the bearer. Chance is 50% plus 5% per Perception advantage, minus 10% per Veil stack, clamped to 5–95%. Area actions bypass Veil."
+    },
+    {
+      "id": "base.retain-block",
+      "name": "Hold Block",
+      "icon": "▰",
+      "stackMode": "add",
+      "decay": "none",
+      "tooltip": "Retain up to 4 existing Block per stack when Block would expire. This does not create protection or duplicate Persistent Block."
+    },
+    {
+      "id": "base.read-intent",
+      "name": "Read Intent",
+      "icon": "◉",
+      "stackMode": "add",
+      "decay": "none",
+      "tooltip": "Reveal opposing burden hand card identities and counts while active. Lose one stack at the next turn start."
+    },
+    {
+      "id": "base.stagger",
+      "name": "Stagger",
+      "icon": "✦",
+      "stackMode": "add",
+      "decay": "none",
+      "tooltip": "Visible burden tracking only. The generated card owns its action loss or resource tax, so this marker never applies it twice."
+    },
+    {
+      "id": "base.paralysis",
+      "name": "Paralysis",
+      "icon": "ϟ",
+      "stackMode": "add",
+      "decay": "none",
+      "tooltip": "Visible burden tracking only. The generated card owns its action loss or resource tax, so this marker never applies it twice."
+    },
+    {
+      "id": "base.restrained-burden",
+      "name": "Restrained Burden",
+      "icon": "⊗",
+      "stackMode": "add",
+      "decay": "none",
+      "tooltip": "Visible burden tracking only. The generated card owns its action loss or resource tax, so this marker never applies it twice."
+    },
+    {
+      "id": "base.many-forms",
+      "name": "Many Forms",
+      "icon": "✧",
+      "stackMode": "add",
+      "decay": "none",
+      "tooltip": "Each stack permits one additional concurrent stance. Two stacks allow three total stances. Lose one stack at the next turn start."
+    }
+  ],
+  "rules": {
+    "base.persistent-block": {
+      "requires": {
+        "modules": [
+          "statuses",
+          "defenses"
+        ],
+        "elements": []
+      },
+      "decay": null,
+      "behaviors": [
+        {
+          "kind": "persistentProtection",
+          "pool": "block",
+          "camp": "physical",
+          "minimumIncomingDamage": 1
+        }
+      ]
+    },
+    "base.persistent-barrier": {
+      "requires": {
+        "modules": [
+          "statuses",
+          "defenses"
+        ],
+        "elements": []
+      },
+      "decay": null,
+      "behaviors": [
+        {
+          "kind": "persistentProtection",
+          "pool": "barrier",
+          "camp": "spell",
+          "minimumIncomingDamage": 1
+        }
+      ]
+    },
+    "base.greased": {
+      "requires": {
+        "modules": [
+          "statuses"
+        ],
+        "elements": [
+          "fire"
+        ]
+      },
+      "decay": {
+        "phase": "end",
+        "stacks": 1
+      },
+      "behaviors": [
+        {
+          "kind": "accuracy",
+          "delta": -20,
+          "ranges": [
+            "melee",
+            "reach"
+          ]
+        },
+        {
+          "kind": "turnChance",
+          "phase": "start",
+          "chance": 25,
+          "status": "prone",
+          "stacks": 1
+        },
+        {
+          "kind": "greaseFire",
+          "damageTypes": [
+            "fire"
+          ],
+          "multiplier": 3,
+          "burnStatus": "burn",
+          "burnStacks": 3,
+          "splashMultiplier": 1.5,
+          "splashBasis": "originalIncoming",
+          "consumeStacks": 1
+        }
+      ]
+    },
+    "base.poison": {
+      "requires": {
+        "modules": [
+          "statuses"
+        ],
+        "elements": [
+          "decay"
+        ]
+      },
+      "decay": {
+        "phase": "end",
+        "stacks": 1
+      },
+      "behaviors": [
+        {
+          "kind": "turnDamage",
+          "phase": "start",
+          "amountPerStack": 1,
+          "damageType": "decay",
+          "camp": "spell"
+        }
+      ]
+    },
+    "base.blight": {
+      "requires": {
+        "modules": [
+          "statuses"
+        ],
+        "elements": [
+          "decay"
+        ]
+      },
+      "decay": {
+        "phase": "end",
+        "stacks": 1
+      },
+      "behaviors": [
+        {
+          "kind": "lethalThreshold",
+          "basis": "currentHp",
+          "comparison": "atLeast",
+          "damageType": "decay"
+        }
+      ]
+    },
+    "base.weak": {
+      "requires": {
+        "modules": [
+          "statuses"
+        ],
+        "elements": []
+      },
+      "decay": {
+        "phase": "end",
+        "stacks": 1
+      },
+      "behaviors": [
+        {
+          "kind": "outgoingMultiplier",
+          "multiplier": 0.75
+        }
+      ]
+    },
+    "base.charm": {
+      "requires": {
+        "modules": [
+          "statuses"
+        ],
+        "elements": []
+      },
+      "decay": {
+        "phase": "end",
+        "stacks": 1
+      },
+      "behaviors": [
+        {
+          "kind": "accuracy",
+          "delta": -25
+        }
+      ]
+    },
+    "base.bind": {
+      "requires": {
+        "modules": [
+          "statuses"
+        ],
+        "elements": []
+      },
+      "decay": {
+        "phase": "end",
+        "stacks": 1
+      },
+      "behaviors": [
+        {
+          "kind": "restriction",
+          "cardTypes": [
+            "attack"
+          ]
+        }
+      ]
+    },
+    "base.restrained": {
+      "requires": {
+        "modules": [
+          "statuses"
+        ],
+        "elements": []
+      },
+      "decay": {
+        "phase": "end",
+        "stacks": 1
+      },
+      "behaviors": [
+        {
+          "kind": "cardTax",
+          "ranges": [
+            "melee",
+            "reach"
+          ],
+          "stamina": 1,
+          "mana": 0
+        }
+      ]
+    },
+    "base.foresight": {
+      "requires": {
+        "modules": [
+          "statuses",
+          "stats"
+        ],
+        "elements": []
+      },
+      "decay": {
+        "phase": "start",
+        "stacks": 1
+      },
+      "behaviors": [
+        {
+          "kind": "perception",
+          "amountPerStack": 2
+        }
+      ]
+    },
+    "base.evade": {
+      "requires": {
+        "modules": [
+          "statuses"
+        ],
+        "elements": []
+      },
+      "decay": {
+        "phase": "start",
+        "stacks": 1
+      },
+      "behaviors": [
+        {
+          "kind": "evade",
+          "chance": 25,
+          "camps": [
+            "physical"
+          ],
+          "consumeStacks": 1
+        }
+      ]
+    },
+    "base.intangible": {
+      "requires": {
+        "modules": [
+          "statuses"
+        ],
+        "elements": []
+      },
+      "decay": {
+        "phase": "start",
+        "stacks": 1
+      },
+      "behaviors": [
+        {
+          "kind": "incomingCap",
+          "maximum": 1,
+          "directOnly": true
+        }
+      ]
+    },
+    "base.mirrors": {
+      "requires": {
+        "modules": [
+          "statuses"
+        ],
+        "elements": []
+      },
+      "decay": {
+        "phase": "start",
+        "stacks": 1
+      },
+      "behaviors": [
+        {
+          "kind": "outgoingMultiplier",
+          "multiplier": 2,
+          "directOnly": true
+        }
+      ]
+    },
+    "base.elemental-weapon": {
+      "requires": {
+        "modules": [
+          "statuses",
+          "equipment"
+        ],
+        "elements": [
+          "fire"
+        ]
+      },
+      "decay": {
+        "phase": "start",
+        "stacks": 1
+      },
+      "behaviors": [
+        {
+          "kind": "weaponBonus",
+          "amount": 3,
+          "damageType": "fire",
+          "camp": "spell",
+          "requiredTags": [
+            "source:weapon"
+          ]
+        }
+      ]
+    },
+    "base.necrotic-healing": {
+      "requires": {
+        "modules": [
+          "statuses"
+        ],
+        "elements": [
+          "decay"
+        ]
+      },
+      "decay": {
+        "phase": "start",
+        "stacks": 1
+      },
+      "behaviors": [
+        {
+          "kind": "damageToHealing",
+          "damageTypes": [
+            "decay",
+            "necrotic"
+          ],
+          "multiplier": 1
+        }
+      ]
+    },
+    "base.divine-harm": {
+      "requires": {
+        "modules": [
+          "statuses"
+        ],
+        "elements": [
+          "sacred"
+        ]
+      },
+      "decay": {
+        "phase": "end",
+        "stacks": 1
+      },
+      "behaviors": [
+        {
+          "kind": "healingToDamage",
+          "damageTypes": [
+            "sacred",
+            "divine",
+            "holy"
+          ],
+          "multiplier": 1,
+          "damageType": "sacred"
+        }
+      ]
+    },
+    "base.extra-weapon": {
+      "requires": {
+        "modules": [
+          "statuses",
+          "equipment"
+        ],
+        "elements": []
+      },
+      "decay": {
+        "phase": "start",
+        "stacks": 1
+      },
+      "behaviors": [
+        {
+          "kind": "extraWeapon",
+          "requiredTags": [
+            "source:weapon"
+          ],
+          "fallbackDamage": 6,
+          "consumeStacks": 1
+        }
+      ]
+    },
+    "base.extra-shield": {
+      "requires": {
+        "modules": [
+          "statuses",
+          "equipment",
+          "defenses"
+        ],
+        "elements": []
+      },
+      "decay": {
+        "phase": "start",
+        "stacks": 1
+      },
+      "behaviors": [
+        {
+          "kind": "extraShield",
+          "requiredTags": [
+            "item:shield",
+            "shield",
+            "maneuver:defend"
+          ],
+          "fallbackBlock": 4,
+          "consumeStacks": 1
+        }
+      ]
+    },
+    "base.auto-counter": {
+      "requires": {
+        "modules": [
+          "statuses",
+          "reactions"
+        ],
+        "elements": []
+      },
+      "decay": {
+        "phase": "start",
+        "stacks": 1
+      },
+      "behaviors": [
+        {
+          "kind": "autoReaction",
+          "mode": "counter",
+          "amount": 6,
+          "damageType": "blunt",
+          "camp": "physical",
+          "ranges": [
+            "melee",
+            "reach"
+          ],
+          "consumeStacks": 1
+        }
+      ]
+    },
+    "base.auto-sweep": {
+      "requires": {
+        "modules": [
+          "statuses",
+          "reactions"
+        ],
+        "elements": []
+      },
+      "decay": {
+        "phase": "start",
+        "stacks": 1
+      },
+      "behaviors": [
+        {
+          "kind": "autoReaction",
+          "mode": "sweep",
+          "amount": 4,
+          "damageType": "slashing",
+          "camp": "physical",
+          "consumeStacks": 1
+        }
+      ]
+    },
+    "base.reflect": {
+      "requires": {
+        "modules": [
+          "statuses",
+          "reactions"
+        ],
+        "elements": []
+      },
+      "decay": {
+        "phase": "start",
+        "stacks": 1
+      },
+      "behaviors": [
+        {
+          "kind": "reflect",
+          "multiplier": 0.5,
+          "damageType": "same"
+        }
+      ]
+    },
+    "base.guard-allies": {
+      "requires": {
+        "modules": [
+          "statuses",
+          "multiplayer"
+        ],
+        "elements": []
+      },
+      "decay": {
+        "phase": "start",
+        "stacks": 1
+      },
+      "behaviors": [
+        {
+          "kind": "guard",
+          "amountPerStack": 4,
+          "consumeStacks": 1
+        }
+      ]
+    },
+    "base.veil": {
+      "requires": {
+        "modules": [
+          "statuses",
+          "stats"
+        ],
+        "elements": []
+      },
+      "decay": {
+        "phase": "start",
+        "stacks": 1
+      },
+      "behaviors": [
+        {
+          "kind": "veil",
+          "baseChance": 50,
+          "perceptionScale": 5,
+          "penaltyPerStack": 10,
+          "minimum": 5,
+          "maximum": 95,
+          "areaBypass": true
+        }
+      ]
+    },
+    "base.retain-block": {
+      "requires": {
+        "modules": [
+          "statuses",
+          "defenses"
+        ],
+        "elements": []
+      },
+      "decay": {
+        "phase": "start",
+        "stacks": 1
+      },
+      "behaviors": [
+        {
+          "kind": "retainProtection",
+          "pool": "block",
+          "amountPerStack": 4
+        }
+      ]
+    },
+    "base.read-intent": {
+      "requires": {
+        "modules": [
+          "statuses",
+          "intent"
+        ],
+        "elements": []
+      },
+      "decay": {
+        "phase": "start",
+        "stacks": 1
+      },
+      "behaviors": [
+        {
+          "kind": "revealIntent"
+        }
+      ]
+    },
+    "base.stagger": {
+      "requires": {
+        "modules": [
+          "statuses"
+        ],
+        "elements": []
+      },
+      "decay": null,
+      "behaviors": []
+    },
+    "base.paralysis": {
+      "requires": {
+        "modules": [
+          "statuses"
+        ],
+        "elements": []
+      },
+      "decay": null,
+      "behaviors": []
+    },
+    "base.restrained-burden": {
+      "requires": {
+        "modules": [
+          "statuses"
+        ],
+        "elements": []
+      },
+      "decay": null,
+      "behaviors": []
+    },
+    "base.many-forms": {
+      "requires": {
+        "modules": [
+          "statuses",
+          "stances"
+        ],
+        "elements": []
+      },
+      "decay": {
+        "phase": "start",
+        "stacks": 1
+      },
+      "behaviors": [
+        {
+          "kind": "stanceCapacity",
+          "additionalPerStack": 1
+        }
+      ]
+    }
+  }
+}
