@@ -92,7 +92,7 @@ test('wireCombatLayout watches data-form-factor on the root and mirrors it on mo
   const formObserver = mutationObservers.find(mo => mo.options?.attributeFilter?.includes('data-form-factor'));
   assert.ok(formObserver, 'a form-factor MutationObserver is attached');
   assert.equal(formObserver.target, documentElement);
-  assert.deepEqual(formObserver.options, { attributes: true, attributeFilter: ['data-form-factor'] });
+  assert.deepEqual(formObserver.options, { attributes: true, attributeFilter: ['data-form-factor', 'data-display-appearance'] });
   assert.equal(combatEl.dataset.formFactor, 'tablet');
   layout.release();
 }));

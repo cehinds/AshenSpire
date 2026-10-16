@@ -1,3 +1,4 @@
+import { desktopHandLayout } from '../models/DesktopCombatFooter.js';
 import { COMBAT_TOOLS_HEIGHT_PX, COMBAT_TOOLS_DESKTOP_HEIGHT_PX, handLayout, handGeometryKey, reconcileHandOrder, moveHandInstance } from '../models/HandLayout.js';
 import { mountHandInspectionOverlay } from './handInspectionOverlay.js';
 // src/ui/components/hand.js — THE hand strip. One renderer, two surfaces.
@@ -159,7 +160,8 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       });
       // On a phone the selected card's lift rises over the tool row (it paints
       // above the row), so no empty lift band separates the row from the fan.
-      const plan = handLayout({ width: handEl.clientWidth, height: handEl.clientHeight - toolsHeight,
+      const layoutHand = handEl.closest('.combat')?.dataset.desktopFooter === 'true' ? desktopHandLayout : handLayout;
+      const plan = layoutHand({ width: handEl.clientWidth, height: handEl.clientHeight - toolsHeight,
         count: cards.length, rem, zoom, compact, controlsHeight, controlled, headroom: compact ? toolsHeight : 0 });
       handEl.dataset.wireframeHand = 'true';
       handEl.style.setProperty('--hand-card-zoom', '1');
