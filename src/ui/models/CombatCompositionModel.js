@@ -1,3 +1,5 @@
+import { uiConfig } from '../../config/generated/ui.js';
+
 // Presentation transforms after the shared fit. The foreground player and
 // distant enemy group do not change gameplay formation addresses or stature.
 export function stableHandAnchor(previous, layoutKey, { left, top } = {}) {
@@ -106,8 +108,10 @@ function perspectiveGridComposition({ sizes, actors, width }) {
 // Constrain the shadow's complete bounding envelope inside its skewed cell.
 // The active kit draws an 8%-high ellipse centred on the sprite's foot.
 // Its full bounding envelope, rather than only its centre, owns this cell.
+// Configured clearance is in physical field pixels, independent of CSS zoom.
 // Moving the anchor never refits artwork.
-export function insetPerspectiveFootprint(slot, { width, height = 12, inset = 1 }) {
+export function insetPerspectiveFootprint(slot, { width, height = 12,
+  inset = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.footprintInsetPx }) {
   const box = slot.box;
   if (!box) return { x: slot.x, ground: slot.ground };
   const above = height / 2, below = height / 2;
@@ -120,7 +124,8 @@ export function insetPerspectiveFootprint(slot, { width, height = 12, inset = 1 
   const high = Math.min(centreAt(ground - above), centreAt(ground + below)) + box.width / 2 - half;
   // Extremely wide custom art may exceed a cell. Preserve its authored size
   // and centre it rather than silently shrinking it to satisfy presentation.
-  return { x: low <= high ? Math.max(low, Math.min(high, slot.x)) : (low + high) / 2, ground };
+  return { x: low <= high ? Math.max(low, Math.min(high, slot.x)) : (low + high) / 2, ground,
+    footprintFits: low <= high && box.height >= above + below + 2 * inset };
 }
 
 // The pre-grid composition: a spacious field (above 300 px) spreads its back

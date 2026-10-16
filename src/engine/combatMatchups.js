@@ -1,3 +1,4 @@
+import { stanceMitigation } from './stanceMitigation.js';
 import { rememberCombatStance, defensiveCombatStance, activeCombatStances, stanceCapacity } from './concurrentStances.js';
 import { configuredCombat, configuredModule, setProfileStance } from './gameProfileCombat.js';
 import { removeStatus } from './statuses.js';
@@ -450,10 +451,10 @@ function stanceMultiplier(ctx, target, profile, hit) {
   const incoming = profile.maneuver === 'counter' ? { maneuver: 'counter' } : stanceOf({ combatProfile: profile });
   if (!incoming) return 1;
   const cfg = stanceRulesFor(ctx);
-  if (incoming.maneuver === 'smash' && (['defend', 'casting'].includes(stance?.maneuver) || hit?.evadeAttempted)) return cfg.smashMultiplier;
-  if (incoming.maneuver === 'counter' && (['attack', 'smash'].includes(stance?.maneuver) || hit?.evadeAttempted)) return cfg.counterMultiplier;
-  if (incoming.maneuver === 'sweep' && stance?.maneuver === 'counter') return cfg.sweepCounterMultiplier;
-  return 1;
+  const offense = incoming.maneuver === 'smash' && (['defend', 'casting'].includes(stance?.maneuver) || hit?.evadeAttempted) ? cfg.smashMultiplier
+    : incoming.maneuver === 'counter' && (['attack', 'smash'].includes(stance?.maneuver) || hit?.evadeAttempted) ? cfg.counterMultiplier
+      : incoming.maneuver === 'sweep' && stance?.maneuver === 'counter' ? cfg.sweepCounterMultiplier : 1;
+  return offense * stanceMitigation(ctx, incoming.maneuver, stance?.maneuver).multiplier;
 }
 
 /** Largest-remainder distribution conserves the once-rounded action budget. */
@@ -663,7 +664,12 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   const stillPrepared = counter && target?.combatCounter?.serial === counter.serial;
   const blocked = restrictions(ctx, target, options).counterDisabled || receipt.counterDisabledAtStart;
   const unreflectable = receipt.profiles.some(p => hasTrait(p, 'unreflectable'));
-  const resistedPayload = receipt.amount > 0 ? receipt.blocked + receipt.wardResisted >= receipt.amount : receipt.statusResisted > 0;
+  // Mitigation may round a positive incoming contact down to zero. Coverage
+  // records that original positive damage before defense; it remains a landed,
+  // fully resisted attack, unlike a zero-damage author row or an avoided hit.
+  const mitigatedContact = receipt.connected && receipt.covered.some((covered, index) => covered && !receipt.profiles[index]?.effect);
+  const resistedPayload = receipt.amount > 0 ? receipt.blocked + receipt.wardResisted >= receipt.amount
+    : receipt.statusResisted > 0 || mitigatedContact;
   if (!stillPrepared || blocked || receipt.avoided || receipt.counterBroken || unreflectable
     || !target?.alive || !source?.alive || receipt.hpLoss > 0 || receipt.statusAccepted > 0 || !resistedPayload
     || target.combatCounterReturnedCycle === (target.combatOwnerCycle || 0)) return queue;

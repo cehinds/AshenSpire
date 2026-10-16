@@ -15,6 +15,7 @@ export function validatePerspectiveGrid(grid) {
       || p.left < 0 || p.right > 1 || p.left >= p.right || p.top < 0 || p.rowHeight <= 0
       || p.top + p.rowHeight * ids.length > 1 || p.skew < 0) throw new Error(`Invalid perspective ${key} profile`);
   }
+  if (!Number.isFinite(grid.footprintInsetPx) || grid.footprintInsetPx < 0) throw new Error('Invalid perspective footprint clearance');
   if (!(grid.playerArtworkScale > 0) || !(grid.miniHudScale > 0) || !(grid.enemyMiniHudScale > 0)) throw new Error('Invalid perspective figure/HUD scale');
   return grid;
 }
@@ -122,6 +123,14 @@ export function fitAlternativeSprites({ width, height, actors, narrow }) {
     const requested = height * (enemy ? (narrow ? .46 : .73) : (narrow ? .46 : .31)) * ratio * (enemy ? 1 : a.slot.depth * GRID.playerArtworkScale);
     const widthLimit = Math.min(width * (narrow ? (sideCount > 2 ? .24 : .34) : (sideCount > 2 ? .20 : .31)),
       a.slot.artWidth ? a.slot.artWidth * (enemy ? .96 : GRID.playerArtworkScale) : Infinity);
+    // Enemy foot anchors can move inward inside their own cell after fitting.
+    // Reserve screen edges at that available centre as well as the preferred
+    // side-biased anchor, so a newly occupied right lane cannot shrink the
+    // entire enemy class before its footprint receives the inset.
+    const box = enemy ? a.slot.box : null;
+    const cellCentre = box ? box.left + box.width / 2 + (box.skew || 0) * (box.top + box.height / 2 - a.slot.ground) : a.slot.x;
+    const edgeRoom = Math.max(Math.min(a.slot.x - 5, width - a.slot.x - 5),
+      Math.min(cellCentre - 5, width - cellCentre - 5));
     // A 130px landscape field can leave less headroom than the measured
     // Inspect/intent union. Keep one cell-height of readable silhouette in
     // that impossible case; the controls are packed independently, so they
@@ -132,10 +141,10 @@ export function fitAlternativeSprites({ width, height, actors, narrow }) {
     const spaciousFloor = enemy && !narrow && height >= GRID.shortBelowPx && sideCount <= 3
       ? Math.min(height * GRID.spaciousEnemyClassHeightFraction * ratio * Math.min(1, a.multiplier || 1),
         a.slot.ground - (a.artLeading ?? a.leading) - 6, widthLimit * a.visibleHeight / a.visibleWidth,
-        2 * Math.min(a.slot.x - 5, width - a.slot.x - 5) * a.visibleHeight / a.visibleWidth) : 1;
+        2 * edgeRoom * a.visibleHeight / a.visibleWidth) : 1;
     const visibleHeight = Math.max(shortFloor, spaciousFloor, Math.min(requested * Math.min(1.25, a.multiplier || 1),
       a.slot.ground - a.leading - 6, widthLimit * a.visibleHeight / a.visibleWidth,
-      2 * Math.min(a.slot.x - 5, width - a.slot.x - 5) * a.visibleHeight / a.visibleWidth));
+      2 * edgeRoom * a.visibleHeight / a.visibleWidth));
     return { a, enemy, low, visibleHeight };
   });
   // Every enemy of one class takes the class's smallest fitted height, so no
