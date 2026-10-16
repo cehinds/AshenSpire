@@ -1991,37 +1991,35 @@ body.reduce-motion .target-hud-detail { transition: none; }
 :root .combat[data-target-hud='true'] .combatant.enemy.target-hud-candidate:not(.target-hud-focused) .sprite { filter: drop-shadow(1px 0 0 #de6c5b99) drop-shadow(-1px 0 0 #de6c5b99); }
 
 /* Mobile player mini HUD: the existing HP meter spans the complete inner
-   width, with the existing defense badges and HP fraction beneath it. Undo
-   the player's mini-HUD zoom for enemy-matched physical thickness and type. */
-@container game-viewport (max-width: 600px) or ((max-height: 480px) and (max-width: 1100px)) {
-  :root[data-display-appearance='alternative'] .combat[data-layout='formation'] .player .combatant-mini-hud .combat-health-row {
-    --health-row-h: calc(7px * var(--combat-enemy-hud-scale, 1) / var(--combat-mini-hud-scale, 1.8) / var(--ui-zoom, 1));
-    --combatant-hp-h: var(--health-row-h);
-    --combatant-value-text: calc(10px * var(--combat-enemy-hud-scale, 1) / var(--combat-mini-hud-scale, 1.8) / var(--ui-zoom, 1));
-    --mini-health-badge: calc(16px * var(--combat-enemy-hud-scale, 1) / var(--combat-mini-hud-scale, 1.8) / var(--ui-zoom, 1));
-    --mini-health-gap: calc(3px / var(--combat-mini-hud-scale, 1.8) / var(--ui-zoom, 1));
-    display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start;
-    width: 100% !important; min-width: 0; height: auto !important;
-    min-height: calc(var(--health-row-h) + var(--mini-health-gap) + var(--mini-health-badge)) !important;
-    gap: var(--mini-health-gap); padding: 0 !important;
-  }
-  :root[data-display-appearance='alternative'] .combat[data-layout='formation'] .player .combatant-mini-hud .combat-health-meter {
-    order: -1; flex: 0 0 100%; width: 100% !important; height: var(--health-row-h);
-    margin: 0; min-height: 0;
-  }
-  :root[data-display-appearance='alternative'] .combat[data-layout='formation'] .player .combatant-mini-hud .combat-health-meter .m-track {
-    width: 100% !important; height: var(--health-row-h); min-height: 0;
-  }
-  :root[data-display-appearance='alternative'] .combat[data-layout='formation'] .player .combatant-mini-hud .combat-health-meter > .m-plate {
-    inset: auto 0 auto auto; top: calc(100% + var(--mini-health-gap));
-    width: auto; min-height: var(--mini-health-badge); justify-content: flex-end; align-items: center;
-  }
-  :root[data-display-appearance='alternative'] .combat[data-layout='formation'] .player .combatant-mini-hud .combat-health-meter .m-value {
-    font-size: var(--combatant-value-text) !important; line-height: 1; padding: 0;
-  }
-  :root[data-display-appearance='alternative'] .combat[data-layout='formation'] .player .combatant-mini-hud .combat-health-meter .m-value::after { content: none; }
-  :root[data-display-appearance='alternative'] .combat[data-layout='formation'] .player .combatant-mini-hud .combat-health-badge {
-    flex: 0 0 var(--mini-health-badge); width: var(--mini-health-badge); height: var(--mini-health-badge);
-    min-width: 0; aspect-ratio: auto; font-size: var(--combatant-value-text); line-height: 1;
-  }
+ width, with the existing defense badges and HP fraction beneath it. Undo
+ the player's mini-HUD zoom for enemy-matched physical thickness and type. */
+:root[data-display-appearance='alternative'][data-form-factor='mobile'] .combat[data-layout='formation'] .player .combatant-mini-hud .combat-health-row {
+  --health-row-h: calc(7px * var(--combat-enemy-hud-scale, 1) / var(--combat-mini-hud-scale, 1.8) / var(--ui-zoom, 1));
+  --combatant-hp-h: var(--health-row-h);
+  --combatant-value-text: calc(10px * var(--combat-enemy-hud-scale, 1) / var(--combat-mini-hud-scale, 1.8) / var(--ui-zoom, 1));
+  --mini-health-badge: calc(16px * var(--combat-enemy-hud-scale, 1) / var(--combat-mini-hud-scale, 1.8) / var(--ui-zoom, 1));
+  --mini-health-gap: calc(3px / var(--combat-mini-hud-scale, 1.8) / var(--ui-zoom, 1));
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start;
+  width: 100% !important; min-width: 0; height: auto !important;
+  min-height: calc(var(--health-row-h) + var(--mini-health-gap) + var(--mini-health-badge)) !important;
+  gap: var(--mini-health-gap); padding: 0 !important;
+}
+:root[data-display-appearance='alternative'][data-form-factor='mobile'] .combat[data-layout='formation'] .player .combatant-mini-hud .combat-health-meter {
+  order: -1; flex: 0 0 100%; width: 100% !important; height: var(--health-row-h);
+  margin: 0; min-height: 0;
+}
+:root[data-display-appearance='alternative'][data-form-factor='mobile'] .combat[data-layout='formation'] .player .combatant-mini-hud .combat-health-meter .m-track {
+  width: 100% !important; height: var(--health-row-h); min-height: 0;
+}
+:root[data-display-appearance='alternative'][data-form-factor='mobile'] .combat[data-layout='formation'] .player .combatant-mini-hud .combat-health-meter > .m-plate {
+  inset: auto 0 auto auto; top: calc(100% + var(--mini-health-gap));
+  width: auto; min-height: var(--mini-health-badge); justify-content: flex-end; align-items: center;
+}
+:root[data-display-appearance='alternative'][data-form-factor='mobile'] .combat[data-layout='formation'] .player .combatant-mini-hud .combat-health-meter .m-value {
+  font-size: var(--combatant-value-text) !important; line-height: 1; padding: 0;
+}
+:root[data-display-appearance='alternative'][data-form-factor='mobile'] .combat[data-layout='formation'] .player .combatant-mini-hud .combat-health-meter .m-value::after { content: none; }
+:root[data-display-appearance='alternative'][data-form-factor='mobile'] .combat[data-layout='formation'] .player .combatant-mini-hud .combat-health-badge {
+  flex: 0 0 var(--mini-health-badge); width: var(--mini-health-badge); height: var(--mini-health-badge);
+  min-width: 0; aspect-ratio: auto; font-size: var(--combatant-value-text); line-height: 1;
 }
