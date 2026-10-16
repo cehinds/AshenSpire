@@ -2287,7 +2287,7 @@ export const baseCardTagging = [
   {
     "family": "card",
     "objectId": "base.shuffle-hand",
-    "tagId": "maneuver:defend"
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -2302,7 +2302,7 @@ export const baseCardTagging = [
   {
     "family": "card",
     "objectId": "base.shuffle-deck",
-    "tagId": "maneuver:defend"
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -2317,7 +2317,7 @@ export const baseCardTagging = [
   {
     "family": "card",
     "objectId": "base.draw",
-    "tagId": "maneuver:defend"
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -2332,7 +2332,7 @@ export const baseCardTagging = [
   {
     "family": "card",
     "objectId": "base.retain",
-    "tagId": "maneuver:defend"
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -2347,7 +2347,7 @@ export const baseCardTagging = [
   {
     "family": "card",
     "objectId": "base.scout",
-    "tagId": "maneuver:defend"
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -2377,7 +2377,7 @@ export const baseCardTagging = [
   {
     "family": "card",
     "objectId": "base.recall-choose",
-    "tagId": "maneuver:defend"
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -2392,7 +2392,7 @@ export const baseCardTagging = [
   {
     "family": "card",
     "objectId": "base.recover-exile",
-    "tagId": "maneuver:defend"
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -2407,7 +2407,7 @@ export const baseCardTagging = [
   {
     "family": "card",
     "objectId": "base.exhaust-choose",
-    "tagId": "maneuver:defend"
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -2467,7 +2467,7 @@ export const baseCardTagging = [
   {
     "family": "card",
     "objectId": "base.exhaust",
-    "tagId": "maneuver:defend"
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -2482,7 +2482,7 @@ export const baseCardTagging = [
   {
     "family": "card",
     "objectId": "base.ethereal",
-    "tagId": "maneuver:defend"
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -2497,7 +2497,7 @@ export const baseCardTagging = [
   {
     "family": "card",
     "objectId": "base.stat-buff",
-    "tagId": "maneuver:defend"
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -2512,7 +2512,7 @@ export const baseCardTagging = [
   {
     "family": "card",
     "objectId": "base.drain-allies",
-    "tagId": "maneuver:defend"
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -2557,7 +2557,7 @@ export const baseCardTagging = [
   {
     "family": "card",
     "objectId": "base.growth-per-type",
-    "tagId": "maneuver:defend"
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -2662,7 +2662,7 @@ export const baseCardTagging = [
   {
     "family": "card",
     "objectId": "base.multi-stance",
-    "tagId": "maneuver:defend"
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -2722,7 +2722,7 @@ export const baseCardTagging = [
   {
     "family": "card",
     "objectId": "base.modify-card-stance",
-    "tagId": "maneuver:defend"
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -2737,7 +2737,7 @@ export const baseCardTagging = [
   {
     "family": "card",
     "objectId": "base.modify-card-range",
-    "tagId": "maneuver:defend"
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -2752,7 +2752,7 @@ export const baseCardTagging = [
   {
     "family": "card",
     "objectId": "base.extra-weapon",
-    "tagId": "maneuver:defend"
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -2767,7 +2767,7 @@ export const baseCardTagging = [
   {
     "family": "card",
     "objectId": "base.extra-shield",
-    "tagId": "maneuver:defend"
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -2782,7 +2782,7 @@ export const baseCardTagging = [
   {
     "family": "card",
     "objectId": "base.auto-counter",
-    "tagId": "maneuver:defend"
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -2797,7 +2797,7 @@ export const baseCardTagging = [
   {
     "family": "card",
     "objectId": "base.auto-sweep",
-    "tagId": "maneuver:defend"
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -2827,7 +2827,7 @@ export const baseCardTagging = [
   {
     "family": "card",
     "objectId": "base.guard-allies",
-    "tagId": "maneuver:defend"
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -2842,7 +2842,7 @@ export const baseCardTagging = [
   {
     "family": "card",
     "objectId": "base.transmute",
-    "tagId": "maneuver:defend"
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -2887,7 +2887,7 @@ export const baseCardTagging = [
   {
     "family": "card",
     "objectId": "base.buff-ally",
-    "tagId": "maneuver:defend"
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -2917,7 +2917,7 @@ export const baseCardTagging = [
   {
     "family": "card",
     "objectId": "base.break-poise",
-    "tagId": "maneuver:defend"
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -2932,7 +2932,7 @@ export const baseCardTagging = [
   {
     "family": "card",
     "objectId": "base.generate-smash",
-    "tagId": "maneuver:defend"
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -2977,7 +2977,7 @@ export const baseCardTagging = [
   {
     "family": "card",
     "objectId": "base.retain-block",
-    "tagId": "maneuver:defend"
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -2992,7 +2992,7 @@ export const baseCardTagging = [
   {
     "family": "card",
     "objectId": "base.immediate-stance-transition",
-    "tagId": "maneuver:defend"
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",

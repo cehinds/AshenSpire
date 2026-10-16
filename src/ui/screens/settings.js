@@ -1860,7 +1860,7 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
   const on = r.type === 'action' ? isFullscreen(doc) : controlOn(settings, r);
   return `${rowOpen()}
       ${stack()}
-      <span class="r-trail"><button type="button" class="as-toggle toggle ${on ? 'on' : ''}" data-key="${r.key}"${r.type === 'action' ? ` data-action="1" aria-label="${esc(r.label)}" aria-describedby="set-${r.key}-status"` : ''} role="switch" aria-checked="${on}"><span class="knob"></span></button></span>
+      <span class="r-trail"><button type="button" class="as-toggle toggle ${on ? 'on' : ''}" data-key="${r.key}" aria-label="${esc(r.label)}"${r.type === 'action' ? ` data-action="1" aria-describedby="set-${r.key}-status"` : ''} role="switch" aria-checked="${on}"><span class="knob"></span></button></span>
     </div>`;
 }
 

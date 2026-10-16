@@ -1,0 +1,363 @@
+{
+  "status": "passed",
+  "results": [
+    {
+      "profile": "core",
+      "combat": {
+        "initial": {
+          "display": "grid",
+          "opacity": 1,
+          "pointerEvents": "none",
+          "rect": {
+            "x": 0,
+            "y": 90,
+            "width": 1440,
+            "height": 441,
+            "top": 90,
+            "right": 1440,
+            "bottom": 531,
+            "left": 0
+          },
+          "markup": "<div class=\"formation-grid\" aria-hidden=\"true\" data-shape=\"wide-rhombus\" data-perspective=\"true\" style=\"z-index: calc(var(--combat-layer-shadows) - 1); --player-grid-color: #0000ff; --enemy-grid-color: #ff0000;\"><button type=\"button\" disabled=\"\" tabindex=\"-1\" aria-label=\"Position A1. Hold to move; release to review.\" class=\"formation-grid-cell beat-hold\" data-cell=\"A1\" data-side=\"player\" data-occupied=\"false\" data-visual-band=\"D\" data-visual-only=\"false\" data-anchor-x=\"826.2193649999999\" data-anchor-y=\"415.11330000000004\" style=\"--foot-y: 83.00000000000003%; transform: skewX(-0.759763rad); --cell-unskew: 0.7597627548757708rad; left: 591.792px; top: 312.375px; width: 218.795px; height: 40.425px; --tile-transform: none; --hold: 0;\" data-hold=\"idle\" data-hold-ms=\"600\" aria-pressed=\"false\"><svg class=\"formation-grid-outline\" viewBox=\"0 0 100 100\" preserveAspectRatio=\"none\" aria-hidden=\"true\"><polygon points=\"50,0 100,50 50,100 0,50\" vector-effect=\"non-scaling-stroke\"></polygon><rect width=",
+          "outline": {
+            "stroke": "rgba(238, 232, 220, 0.32)",
+            "strokeWidth": 0.833333,
+            "fill": "none"
+          },
+          "visualOnlyC": 3
+        },
+        "hidden": {
+          "display": "none",
+          "opacity": 1,
+          "pointerEvents": "none",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0,
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
+          },
+          "markup": "<div class=\"formation-grid\" aria-hidden=\"true\" data-shape=\"wide-rhombus\" data-perspective=\"true\" style=\"z-index: calc(var(--combat-layer-shadows) - 1); --player-grid-color: #0000ff; --enemy-grid-color: #ff0000;\"><button type=\"button\" disabled=\"\" tabindex=\"-1\" aria-label=\"Position A1. Hold to move; release to review.\" class=\"formation-grid-cell beat-hold\" data-cell=\"A1\" data-side=\"player\" data-occupied=\"false\" data-visual-band=\"D\" data-visual-only=\"false\" data-anchor-x=\"826.2193649999999\" data-anchor-y=\"415.11330000000004\" style=\"--foot-y: 83.00000000000003%; transform: skewX(-0.759763rad); --cell-unskew: 0.7597627548757708rad; left: 591.792px; top: 312.375px; width: 218.795px; height: 40.425px; --tile-transform: none; --hold: 0;\" data-hold=\"idle\" data-hold-ms=\"600\" aria-pressed=\"false\"><svg class=\"formation-grid-outline\" viewBox=\"0 0 100 100\" preserveAspectRatio=\"none\" aria-hidden=\"true\"><polygon points=\"50,0 100,50 50,100 0,50\" vector-effect=\"non-scaling-stroke\"></polygon><rect width=",
+          "outline": {
+            "stroke": "rgba(238, 232, 220, 0.32)",
+            "strokeWidth": 0.833333,
+            "fill": "none"
+          },
+          "visualOnlyC": 3
+        },
+        "shown": {
+          "display": "grid",
+          "opacity": 1,
+          "pointerEvents": "none",
+          "rect": {
+            "x": 0,
+            "y": 90,
+            "width": 1440,
+            "height": 441,
+            "top": 90,
+            "right": 1440,
+            "bottom": 531,
+            "left": 0
+          },
+          "markup": "<div class=\"formation-grid\" aria-hidden=\"true\" data-shape=\"wide-rhombus\" data-perspective=\"true\" style=\"z-index: calc(var(--combat-layer-shadows) - 1); --player-grid-color: #0000ff; --enemy-grid-color: #ff0000;\"><button type=\"button\" disabled=\"\" tabindex=\"-1\" aria-label=\"Position A1. Hold to move; release to review.\" class=\"formation-grid-cell beat-hold\" data-cell=\"A1\" data-side=\"player\" data-occupied=\"false\" data-visual-band=\"D\" data-visual-only=\"false\" data-anchor-x=\"826.2193649999999\" data-anchor-y=\"415.11330000000004\" style=\"--foot-y: 83.00000000000003%; transform: skewX(-0.759763rad); --cell-unskew: 0.7597627548757708rad; left: 591.792px; top: 312.375px; width: 218.795px; height: 40.425px; --tile-transform: none; --hold: 0;\" data-hold=\"idle\" data-hold-ms=\"600\" aria-pressed=\"false\"><svg class=\"formation-grid-outline\" viewBox=\"0 0 100 100\" preserveAspectRatio=\"none\" aria-hidden=\"true\"><polygon points=\"50,0 100,50 50,100 0,50\" vector-effect=\"non-scaling-stroke\"></polygon><rect width=",
+          "outline": {
+            "stroke": "rgba(238, 232, 220, 0.32)",
+            "strokeWidth": 0.833333,
+            "fill": "none"
+          },
+          "visualOnlyC": 3
+        },
+        "actorsBefore": [
+          {
+            "id": "player",
+            "x": 194.8125,
+            "y": 279.53125,
+            "width": 212.59375,
+            "height": 225.5625
+          },
+          {
+            "id": "e1",
+            "x": 479.203125,
+            "y": 170.921875,
+            "width": 151.640625,
+            "height": 158.09375
+          },
+          {
+            "id": "e2",
+            "x": 741.765625,
+            "y": 170.921875,
+            "width": 151.640625,
+            "height": 158.09375
+          }
+        ],
+        "toolBounds": [
+          {
+            "id": "log",
+            "x": 20,
+            "y": 750,
+            "width": 76.265625,
+            "height": 36
+          },
+          {
+            "id": "reaction",
+            "x": 1274.234375,
+            "y": 750,
+            "width": 145.765625,
+            "height": 36
+          }
+        ]
+      }
+    },
+    {
+      "profile": "core",
+      "persistence": "off and on survive normal reload"
+    },
+    {
+      "profile": "current",
+      "combat": {
+        "initial": {
+          "display": "grid",
+          "opacity": 1,
+          "pointerEvents": "none",
+          "rect": {
+            "x": 0,
+            "y": 90,
+            "width": 1440,
+            "height": 441,
+            "top": 90,
+            "right": 1440,
+            "bottom": 531,
+            "left": 0
+          },
+          "markup": "<div class=\"formation-grid\" aria-hidden=\"true\" data-shape=\"wide-rhombus\" data-perspective=\"true\" style=\"z-index: calc(var(--combat-layer-shadows) - 1); --player-grid-color: #0000ff; --enemy-grid-color: #ff0000;\"><button type=\"button\" disabled=\"\" tabindex=\"-1\" aria-label=\"Position A1. Hold to move; release to review.\" class=\"formation-grid-cell beat-hold\" data-cell=\"A1\" data-side=\"player\" data-occupied=\"false\" data-visual-band=\"D\" data-visual-only=\"false\" data-anchor-x=\"826.2193649999999\" data-anchor-y=\"415.11330000000004\" style=\"--foot-y: 83.00000000000003%; transform: skewX(-0.759763rad); --cell-unskew: 0.7597627548757708rad; left: 591.792px; top: 312.375px; width: 218.795px; height: 40.425px; --tile-transform: none; --hold: 0;\" data-hold=\"idle\" data-hold-ms=\"600\" aria-pressed=\"false\"><svg class=\"formation-grid-outline\" viewBox=\"0 0 100 100\" preserveAspectRatio=\"none\" aria-hidden=\"true\"><polygon points=\"50,0 100,50 50,100 0,50\" vector-effect=\"non-scaling-stroke\"></polygon><rect width=",
+          "outline": {
+            "stroke": "rgba(238, 232, 220, 0.32)",
+            "strokeWidth": 0.833333,
+            "fill": "none"
+          },
+          "visualOnlyC": 0
+        },
+        "hidden": {
+          "display": "none",
+          "opacity": 1,
+          "pointerEvents": "none",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0,
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
+          },
+          "markup": "<div class=\"formation-grid\" aria-hidden=\"true\" data-shape=\"wide-rhombus\" data-perspective=\"true\" style=\"z-index: calc(var(--combat-layer-shadows) - 1); --player-grid-color: #0000ff; --enemy-grid-color: #ff0000;\"><button type=\"button\" disabled=\"\" tabindex=\"-1\" aria-label=\"Position A1. Hold to move; release to review.\" class=\"formation-grid-cell beat-hold\" data-cell=\"A1\" data-side=\"player\" data-occupied=\"false\" data-visual-band=\"D\" data-visual-only=\"false\" data-anchor-x=\"826.2193649999999\" data-anchor-y=\"415.11330000000004\" style=\"--foot-y: 83.00000000000003%; transform: skewX(-0.759763rad); --cell-unskew: 0.7597627548757708rad; left: 591.792px; top: 312.375px; width: 218.795px; height: 40.425px; --tile-transform: none; --hold: 0;\" data-hold=\"idle\" data-hold-ms=\"600\" aria-pressed=\"false\"><svg class=\"formation-grid-outline\" viewBox=\"0 0 100 100\" preserveAspectRatio=\"none\" aria-hidden=\"true\"><polygon points=\"50,0 100,50 50,100 0,50\" vector-effect=\"non-scaling-stroke\"></polygon><rect width=",
+          "outline": {
+            "stroke": "rgba(238, 232, 220, 0.32)",
+            "strokeWidth": 0.833333,
+            "fill": "none"
+          },
+          "visualOnlyC": 0
+        },
+        "shown": {
+          "display": "grid",
+          "opacity": 1,
+          "pointerEvents": "none",
+          "rect": {
+            "x": 0,
+            "y": 90,
+            "width": 1440,
+            "height": 441,
+            "top": 90,
+            "right": 1440,
+            "bottom": 531,
+            "left": 0
+          },
+          "markup": "<div class=\"formation-grid\" aria-hidden=\"true\" data-shape=\"wide-rhombus\" data-perspective=\"true\" style=\"z-index: calc(var(--combat-layer-shadows) - 1); --player-grid-color: #0000ff; --enemy-grid-color: #ff0000;\"><button type=\"button\" disabled=\"\" tabindex=\"-1\" aria-label=\"Position A1. Hold to move; release to review.\" class=\"formation-grid-cell beat-hold\" data-cell=\"A1\" data-side=\"player\" data-occupied=\"false\" data-visual-band=\"D\" data-visual-only=\"false\" data-anchor-x=\"826.2193649999999\" data-anchor-y=\"415.11330000000004\" style=\"--foot-y: 83.00000000000003%; transform: skewX(-0.759763rad); --cell-unskew: 0.7597627548757708rad; left: 591.792px; top: 312.375px; width: 218.795px; height: 40.425px; --tile-transform: none; --hold: 0;\" data-hold=\"idle\" data-hold-ms=\"600\" aria-pressed=\"false\"><svg class=\"formation-grid-outline\" viewBox=\"0 0 100 100\" preserveAspectRatio=\"none\" aria-hidden=\"true\"><polygon points=\"50,0 100,50 50,100 0,50\" vector-effect=\"non-scaling-stroke\"></polygon><rect width=",
+          "outline": {
+            "stroke": "rgba(238, 232, 220, 0.32)",
+            "strokeWidth": 0.833333,
+            "fill": "none"
+          },
+          "visualOnlyC": 0
+        },
+        "actorsBefore": [
+          {
+            "id": "player",
+            "x": 194.8125,
+            "y": 279.53125,
+            "width": 212.59375,
+            "height": 225.5625
+          },
+          {
+            "id": "e1",
+            "x": 479.203125,
+            "y": 170.921875,
+            "width": 151.640625,
+            "height": 158.09375
+          },
+          {
+            "id": "e2",
+            "x": 741.765625,
+            "y": 170.921875,
+            "width": 151.640625,
+            "height": 158.09375
+          }
+        ],
+        "toolBounds": [
+          {
+            "id": "log",
+            "x": 20,
+            "y": 750,
+            "width": 76.265625,
+            "height": 36
+          },
+          {
+            "id": "reaction",
+            "x": 1274.234375,
+            "y": 750,
+            "width": 145.765625,
+            "height": 36
+          }
+        ]
+      }
+    },
+    {
+      "profile": "current",
+      "persistence": "off and on survive normal reload"
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "grid": {
+        "display": "grid",
+        "opacity": 1,
+        "pointerEvents": "none",
+        "rect": {
+          "x": 0,
+          "y": 108.03125,
+          "width": 1920,
+          "height": 529.015625,
+          "top": 108.03125,
+          "right": 1920,
+          "bottom": 637.046875,
+          "left": 0
+        },
+        "markup": "<div class=\"formation-grid\" aria-hidden=\"true\" data-shape=\"wide-rhombus\" data-perspective=\"true\" style=\"z-index: calc(var(--combat-layer-shadows) - 1); --player-grid-color: #0000ff; --enemy-grid-color: #ff0000;\"><button type=\"button\" disabled=\"\" tabindex=\"-1\" aria-label=\"Position A1. Hold to move; release to review.\" class=\"formation-grid-cell beat-hold\" data-cell=\"A1\" data-side=\"player\" data-occupied=\"false\" data-visual-band=\"D\" data-visual-only=\"false\" data-anchor-x=\"1121.1241865364584\" data-anchor-y=\"497.9624078125\" style=\"--foot-y: 83.00000000000004%; transform: skewX(-0.759763rad); --cell-unskew: 0.7597627548757708rad; left: 648.799px; top: 303.827px; width: 242.088px; height: 39.3187px; --tile-transform: none; --hold: 0;\" data-hold=\"idle\" data-hold-ms=\"600\" aria-pressed=\"false\"><svg class=\"formation-grid-outline\" viewBox=\"0 0 100 100\" preserveAspectRatio=\"none\" aria-hidden=\"true\"><polygon points=\"50,0 100,50 50,100 0,50\" vector-effect=\"non-scaling-stroke\"></polygon><rect width=\"1",
+        "outline": {
+          "stroke": "rgba(238, 232, 220, 0.32)",
+          "strokeWidth": 0.675676,
+          "fill": "none"
+        },
+        "visualOnlyC": 3
+      }
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "grid": {
+        "display": "grid",
+        "opacity": 1,
+        "pointerEvents": "none",
+        "rect": {
+          "x": 0,
+          "y": 76.828125,
+          "width": 1024,
+          "height": 335.8125,
+          "top": 76.828125,
+          "right": 1024,
+          "bottom": 412.640625,
+          "left": 0
+        },
+        "markup": "<div class=\"formation-grid\" aria-hidden=\"true\" data-shape=\"wide-rhombus\" data-perspective=\"true\" style=\"z-index: calc(var(--combat-layer-shadows) - 1); --player-grid-color: #0000ff; --enemy-grid-color: #ff0000;\"><button type=\"button\" disabled=\"\" tabindex=\"-1\" aria-label=\"Position A1. Hold to move; release to review.\" class=\"formation-grid-cell beat-hold\" data-cell=\"A1\" data-side=\"player\" data-occupied=\"false\" data-visual-band=\"D\" data-visual-only=\"false\" data-anchor-x=\"580.1910215624999\" data-anchor-y=\"316.10030625\" style=\"--foot-y: 83.00000000000001%; transform: skewX(-0.759763rad); --cell-unskew: 0.7597627548757708rad; left: 588.196px; top: 335.812px; width: 216.012px; height: 43.4581px; --tile-transform: none; --hold: 0;\" data-hold=\"idle\" data-hold-ms=\"600\" aria-pressed=\"false\"><svg class=\"formation-grid-outline\" viewBox=\"0 0 100 100\" preserveAspectRatio=\"none\" aria-hidden=\"true\"><polygon points=\"50,0 100,50 50,100 0,50\" vector-effect=\"non-scaling-stroke\"></polygon><rect width=\"100\"",
+        "outline": {
+          "stroke": "rgba(238, 232, 220, 0.32)",
+          "strokeWidth": 1.17647,
+          "fill": "none"
+        },
+        "visualOnlyC": 3
+      }
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "grid": {
+        "display": "grid",
+        "opacity": 1,
+        "pointerEvents": "none",
+        "rect": {
+          "x": 0,
+          "y": 75.96875,
+          "width": 390,
+          "height": 426.296875,
+          "top": 75.96875,
+          "right": 390,
+          "bottom": 502.265625,
+          "left": 0
+        },
+        "markup": "<div class=\"formation-grid\" aria-hidden=\"true\" data-shape=\"wide-rhombus\" data-perspective=\"true\" style=\"z-index: calc(var(--combat-layer-shadows) - 1); --player-grid-color: #0000ff; --enemy-grid-color: #ff0000;\"><button type=\"button\" disabled=\"\" tabindex=\"-1\" aria-label=\"Position A1. Hold to move; release to review.\" class=\"formation-grid-cell beat-hold\" data-cell=\"A1\" data-side=\"player\" data-occupied=\"false\" data-visual-band=\"D\" data-visual-only=\"false\" data-anchor-x=\"290.03554125\" data-anchor-y=\"397.649725\" style=\"--foot-y: 82.99999999999996%; transform: skewX(-0.14889rad); --cell-unskew: 0.14888994760949725rad; left: 262.814px; top: 378.931px; width: 126.398px; height: 75.7861px; --tile-transform: none; --hold: 0;\" data-hold=\"idle\" data-hold-ms=\"600\" aria-pressed=\"false\"><svg class=\"formation-grid-outline\" viewBox=\"0 0 100 100\" preserveAspectRatio=\"none\" aria-hidden=\"true\"><polygon points=\"50,0 100,50 50,100 0,50\" vector-effect=\"non-scaling-stroke\"></polygon><rect width=\"100\" height",
+        "outline": {
+          "stroke": "rgba(238, 232, 220, 0.32)",
+          "strokeWidth": 1.11111,
+          "fill": "none"
+        },
+        "visualOnlyC": 3
+      }
+    }
+  ],
+  "captures": [
+    {
+      "file": "core-1440.png",
+      "sourceDigest": "a02392f1d9"
+    },
+    {
+      "file": "core-1440-off.png",
+      "sourceDigest": "a02392f1d9"
+    },
+    {
+      "file": "core-1440-settings.png",
+      "sourceDigest": "a02392f1d9"
+    },
+    {
+      "file": "current-1440.png",
+      "sourceDigest": "a02392f1d9"
+    },
+    {
+      "file": "current-1440-off.png",
+      "sourceDigest": "a02392f1d9"
+    },
+    {
+      "file": "current-1440-settings.png",
+      "sourceDigest": "a02392f1d9"
+    },
+    {
+      "file": "core-1920.png",
+      "sourceDigest": "a02392f1d9"
+    },
+    {
+      "file": "core-1024.png",
+      "sourceDigest": "a02392f1d9"
+    },
+    {
+      "file": "core-390.png",
+      "sourceDigest": "a02392f1d9"
+    }
+  ],
+  "artifact": {
+    "sourceCommit": "14d121b48",
+    "embeddedSource": "a02392f1d9",
+    "version": "0.7.1.1534",
+    "sha256": "39e5ab39830f831eeee1e129d9f1c61761c003f2ce75ad3a6cbfc363c6cad55a"
+  },
+  "coverage": [
+    "Core and Current desktop native Grid checkbox synchronizes Settings switch; reopen retains state",
+    "Normal durable title sessions preserve explicit off and on across reload (shots intentionally memory-only)",
+    "Actor and Combat Log/Reaction bounds change at most1px; checkbox remains above Log",
+    "Thin translucent unfilled lines are pointer-inert; real actor artwork still selects",
+    "Core visual-only C geometry exists without enabling extra-row policy or actors",
+    "Core1440x900,1920x1080,1024x768,390x844 captures; desktopon/off/Settings captures forbothprofiles"
+  ]
+}

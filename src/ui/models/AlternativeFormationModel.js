@@ -1,4 +1,4 @@
-import { playerFormationCell } from '../../model/formationLayout.js';
+import { FORMATION_ROWS, playerFormationCell } from '../../model/formationLayout.js';
 import { uiConfig } from '../../config/generated/ui.js';
 
 const GRID = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
@@ -70,6 +70,11 @@ export function alternativeFormation(plan, width, height, narrow, presentation =
       artWidth: laneWidth, depth: band.depth, layer: band.layer };
   };
   plan.cells = plan.cells.map(place).filter(Boolean);
+  // Display the full four-band lattice even when Core forbids extra-row
+  // occupancy. Visual-only cells never enter the gameplay/targeting cell map.
+  const extraVisualCells = Array.from({ length: lanes }, (_, row) => ({ cell: `${FORMATION_ROWS[row]}5`, row, column: 2, side: 'enemy', visualOnly: true }))
+    .filter(cell => !plan.cells.some(existing => existing.cell === cell.cell)).map(place);
+  plan.visualCells = [...plan.cells, ...extraVisualCells];
   const cellAt = (side, rank, lane) => plan.cells.find(c => c.side === side && c.rank === rank && c.lane === lane);
   const enemies = plan.slots.filter(slot => slot.side === 'enemy');
   const friends = plan.slots.filter(slot => slot.side !== 'enemy');

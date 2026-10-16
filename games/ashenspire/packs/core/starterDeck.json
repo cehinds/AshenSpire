@@ -6,7 +6,7 @@
     },
     {
       "card": "core.defend",
-      "copies": 3
+      "copies": 2
     },
     {
       "card": "core.counter",
@@ -18,6 +18,10 @@
     },
     {
       "card": "core.sweep",
+      "copies": 1
+    },
+    {
+      "card": "base.draw",
       "copies": 1
     }
   ],

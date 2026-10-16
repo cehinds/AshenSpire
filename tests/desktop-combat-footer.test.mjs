@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { uiConfig } from '../src/config/generated/ui.js';
 import { desktopFooterEnabled, desktopFooterLayout, desktopHandLayout } from '../src/ui/models/DesktopCombatFooter.js';
 
 test('approved footer follows the chosen wide preset and alternative appearance only', () => {
@@ -24,5 +25,24 @@ for (const [width,height,zoom] of [[1440,900,1.2],[1920,1080,1.48]]) test(`deskt
     const centerBottom=(footer.handTop+hand.top+hand.cardHeight)*zoom;
     assert.ok(centerBottom<(end.y+end.h-footer.endArtHeight)*zoom, 'center cards leave room for the lower End Turn plate');
   }
-  assert.ok(Math.abs(footer.backgroundTop*zoom-(height-(900-600)*footer.unit*zoom))<1e-8);
+  assert.ok(Math.abs(footer.backgroundTop*zoom-(height-(900-700)*footer.unit*zoom))<1e-8);
+});
+
+
+test('approved B fade changes only the desktop backing, preserving all layout geometry', () => {
+  const config=uiConfig.scenes.w4a.sizing.desktopFooter;
+  for(const [width,height,zoom] of [[1440,900,1.2],[1920,1080,1.48]]) {
+    const input={width:width/zoom,height:height/zoom,zoom};
+    const before=desktopFooterLayout(input,{...config,backgroundTopPx:600});
+    const after=desktopFooterLayout(input);
+    const {backgroundTop:oldTop,...oldGeometry}=before;
+    const {backgroundTop:newTop,...newGeometry}=after;
+    assert.deepEqual(newGeometry,oldGeometry,'only the backing position changes');
+    assert.equal(after.backgroundFadeHeight*zoom,90*after.unit*zoom);
+    assert.ok(newTop>oldTop);
+    if(width===1440) {
+      assert.ok(Math.abs(newTop*zoom-700)<.001);
+      assert.ok(Math.abs((newTop+after.backgroundFadeHeight)*zoom-790)<.001);
+    }
+  }
 });
