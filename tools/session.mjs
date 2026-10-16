@@ -1,3 +1,4 @@
+import { projectEnemyBurdenHand } from '../src/ui/models/EnemyBurdenModel.js';
 import {rollPendingAbilityOffers} from '../src/model/abilityOffers.js';
 import { enemyStanceCategory } from '../src/model/enemyStancePose.js';
 import {abilityDraftChoice} from '../src/model/abilityDraftReceipts.js';
@@ -837,6 +838,7 @@ export function createSession({ registries, seedString, endless = false, restore
       result: c.result,
       headcount: connectedMembers().length,
       enemies: c.enemies.map((e) => ({
+        burdenRead: projectEnemyBurdenHand(e, { turn: c.turn, registries: c.registries }),
         presentationStance: enemyStanceCategory(e.intent),
         combatExpansionVersion: e.combatExpansionVersion || 1, combatStance: e.combatStance,
         persistentWard: e.persistentWard, barrier: e.barrier, statusControl: e.statusControl,

@@ -55,6 +55,16 @@ function section(title, rows, empty) {
   ]);
 }
 
+function revealedHandSection(read) {
+  if (read?.visible !== true) return null;
+  const rows = read.cards.map(card => ({ name: `${card.name} ×${card.count}`, detail: card.type }));
+  const node = section('Revealed enemy hand', rows, 'Hand is empty.');
+  node.dataset.section = 'revealed-hand';
+  node.append(statusText(['draw', 'hand', 'discard', 'exhaust']
+    .map(zone => `${zone}: ${read.counts[zone]}`).join(' · ')));
+  return node;
+}
+
 function abilitySection(abilities) {
   const list = el('details', { class: 'combatant-inspector-section combatant-abilities', open: true }, [
     el('summary', { class: 'as-eyebrow', text: `${helpText('activeListTitle')} (${abilities.length})` }), hairline(),
@@ -113,6 +123,7 @@ export function combatantDetailBody(subject, { heading = true } = {}) {
     heading ? labelStack({ label: subject.name, hint: subject.subtitle || '' }) : null,
     projectedSection(byId.summary),
     projectedSection(byId.state),
+    revealedHandSection(subject.burdenRead || subject.intent?.burdenRead),
     subject.learning ? renderEnemyKnowledge(subject.learning, { perception: subject.perception }) : null,
     subject.prediction ? renderIntentPrediction(subject.prediction, subject.onPredict) : null,
     projectedSection(byId.history),
