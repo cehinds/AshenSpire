@@ -1,3 +1,4 @@
+import { stanceMitigation } from './stanceMitigation.js';
 import { cardPreparationCategory } from '../model/cardClassification.js';
 import { rememberCombatStance, defensiveCombatStance } from './concurrentStances.js';
 import { proposalHitPlan, proposalTargetPlan } from './proposalStatusRuntime.js';
@@ -54,7 +55,8 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
     && !!stances?.matchups?.[attacking]?.includes(defending);
   let raw = Math.max(0, Math.floor(base + rating(source, 'ar') * (effects?.attackRatingWeight || 0)));
   if(proposal && target) raw=proposalHitPlan(ctx,source,target,raw,carrier).amount;
-  let amount = Math.max(0, Math.floor(raw * (advantage ? stances.advantageMultiplier ?? 1 : 1)));
+  const defense = stanceMitigation(ctx, attacking, defending);
+  let amount = Math.max(0, Math.floor(raw * (advantage ? stances.advantageMultiplier ?? 1 : 1) * defense.multiplier));
   const evade = stances?.include?.includes('evade') && defending === 'evade';
   const targeting=proposalTargetPlan(ctx,source,target,carrier);
   let hitChance = evade ? Math.max(stances.minimumHitChance ?? 0.05,
@@ -81,6 +83,7 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   return { raw, hitChance, uncertain: evade && roll === null,
     hpLossBounds: evade ? [0, amount] : [amount, amount], amount: amount + blocked, hpLoss: amount, blocked, poiseMitigated,
     blockRemaining: Math.max(0, (target?.block || 0) - blocked), evaded, advantage,
+    defenseAdvantage: defense.defenseAdvantage, stanceMitigation: defense.mitigation,
     attackStance: attacking, defenseStance: defending,
     interrupted: advantage && stances?.staggerOnAdvantage === true
       && (stances.staggerManeuvers || ['smash']).includes(attacking) };

@@ -45,5 +45,6 @@
   "staggerManeuvers": [
     "smash"
   ],
-  "staggerLimitPerTargetPerRound": 1
+  "staggerLimitPerTargetPerRound": 1,
+  "defenseMitigation": 0.25
 }
