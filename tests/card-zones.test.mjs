@@ -171,3 +171,12 @@ test('one Veil perception decision gates every hit of the same hostile action',(
  executeAction(combat,{effect:{op:'damage',amount:8,hits:2,target:'enemy'},source:combat.player,owner:combat.player,target,card:{combatProfile:{maneuver:'attack',camp:'physical',range:'melee'}}});
  assert.equal(rolls,1);assert.equal(target.hp,1000);
 });
+
+test('one-use scroll limits apply to each physical instance and survive reload/recovery independently',()=>{
+ const combat=fixture([{op:'castLinkedSpell',card:'strike',target:'enemy'}],{definition:{playLimit:1,keywords:['exhaust']}});
+ const ids=combat.piles.hand.map(c=>c.instanceId);for(const id of ids)dispatch(combat,{type:'playCard',cardInstanceId:id,targetId:combat.enemies[0].id});
+ assert.equal(combat.piles.exhaust.length,2);
+ const restored=restoreCombatSnapshot({registries:combat.registries,rng:createRng(9),snapshot:serializeCombatSnapshot(combat)});
+ const index=restored.piles.exhaust.findIndex(c=>c.instanceId===ids[0]);restored.piles.hand.push(restored.piles.exhaust.splice(index,1)[0]);
+ assert.throws(()=>dispatch(restored,{type:'playCard',cardInstanceId:ids[0],targetId:restored.enemies[0].id}),/unplayable/);
+});

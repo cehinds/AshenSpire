@@ -236,10 +236,10 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
   if(!targetPlan.allowed || targetPlan.avoided) {ctx.emit('proposalHitAvoided',{sourceId:source?.id,targetId:target.id,perception:!targetPlan.allowed});return 0;}
   const raw=configuredCombat(ctx) ? profileDamageReceipt(ctx,source,target,base,resolved,{proposal:false}).raw : computeAttackDamage(ctx,source,target,base,attackTags,resolved,{matchups:false,beforeDefense:true,proposal:false});
   const plan=proposalHitPlan(ctx,source,target,raw,resolved);
-  const hp=target.hp,eventStart=ctx.eventLog.length;
+  const hp=target.hp,eventStart=ctx.eventLog?.length || 0;
   const amount=plan.healing>0 ? 0 : applyBaseAttackDamage(ctx,source,target,base,attackTags,resolved);
   if(plan.healing>0) applyHeal(ctx,target,plan.healing);
-  const contact=ctx.eventLog.slice(eventStart).find(event=>event.type==='damageDealt' && event.targetId===target.id);
+  const contact=(ctx.eventLog || []).slice(eventStart).find(event=>event.type==='damageDealt' && event.targetId===target.id);
   if(plan.healing>0 || raw>0 && contact && !contact.evaded && !contact.immune){applyProposalPlan(ctx,plan,source,target,resolved);proposalAfterHit(ctx,source,target,raw,Math.max(0,hp-target.hp),resolved);}
   return amount;
 }
@@ -1490,7 +1490,7 @@ function runOpcode(ctx, action, eff) {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         const base = evalNum(ctx, action, eff.amount, 0, t);
         // Stance entry and restoration already own their lane and exact budget.
-        if (ctx.combatExpansionVersion === 2 && (action.meta?.stanceEntry || action.meta?.stanceRestore)) {
+        if (action.card?.proposalProtectionFloor || ctx.combatExpansionVersion === 2 && (action.meta?.stanceEntry || action.meta?.stanceRestore)) {
           gainBlockAmount(ctx, t, Math.max(0, Math.floor(base)), action.card, false);
         } else gainBlock(ctx, t, base + (action.meta?.abilityChargeBlock || 0), action.card);
       }
@@ -1499,7 +1499,7 @@ function runOpcode(ctx, action, eff) {
     case 'gainBarrier': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         const base = evalNum(ctx, action, eff.amount, 0, t);
-        if (ctx.combatExpansionVersion === 2 && (action.meta?.stanceEntry || action.meta?.stanceRestore)) {
+        if (action.card?.proposalProtectionFloor || ctx.combatExpansionVersion === 2 && (action.meta?.stanceEntry || action.meta?.stanceRestore)) {
           gainBarrierAmount(ctx, t, Math.max(0, Math.floor(base)), action.card, false);
         } else gainBarrier(ctx, t, base + (action.meta?.abilityChargeBlock || 0), action.card);
       }
