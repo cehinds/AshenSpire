@@ -1,12 +1,5 @@
-import { DEFAULT_COMBAT_WEAPONS } from '../model/combatWeaponPresentation.js';
-import { classSmashSequence } from '../model/classSmashAnimations.js';
-import { classSmashAnimations } from '../content/classSmashAnimations.js';
 import { selectedWeaponSequence, selectedWeaponSequenceTiming } from '../model/selectedWeaponSequences.js';
-import { alternativeCardAnimations } from '../content/alternativeCardAnimations.js';
-import { playerCounterSweepSprites } from '../content/playerCounterSweepSprites.js';
-import { playerAttackSprites } from '../content/playerAttackSprites.js';
-import { alternativeSelectedStances } from '../content/alternativeSelectedStances.js';
-import { durationFor, sampleSequence, hitFlashOpacity, hitRecoilX, HURT_CLIP_MIN_MS } from '../model/alternativeCardAnimation.js';
+import { sampleSequence, hitFlashOpacity, hitRecoilX, HURT_CLIP_MIN_MS } from '../model/alternativeCardAnimation.js';
 import { alternativeArtUrl } from './alternativeArt.js';
 import { auraFilter } from './combatAura.js';
 import { createAlternativeAuraRenderer } from './alternativeAuraRenderer.js';
@@ -19,7 +12,7 @@ import { builtInFor } from './highResArt.js';
 import { classicAppearance } from './displayAppearance.js';
 import { markArtPlaceholder, ART_PLACEHOLDER_ATTR } from './artFallback.js';
 
-const aliases = { idle: 'ready', guard: 'defend', guardHit: 'defend', cast: 'spell', power: 'spell', buff: 'spell' };
+import { alternativeCardAnimationFamily, cardSequenceTiming, CARD_ANIMATION_ALIASES as aliases } from '../model/cardAnimationFamily.js';
 const cached = new Map();
 function load(url) {
   if (!cached.has(url)) {
@@ -37,47 +30,9 @@ function load(url) {
 /** Base armour actions with explicitly selected reviewed weapon attacks. */
 export function createAlternativeCardStage(classId, { still = false, weaponProfile = null, smashProfile = null } = {}) {
   if (classicAppearance()) return null;
-  const base = alternativeCardAnimations.classes[classId];
-  if (!base) return null;
-  const selected = playerCounterSweepSprites[classId];
-  const pilot = alternativeSelectedStances.weaponProfiles?.[weaponProfile];
-  const pilotFrames = pilot?.classId === classId ? pilot.frames : null;
-  const classSmash = smashProfile === classId ? classSmashAnimations.classes[classId] : null;
-  const attacks = DEFAULT_COMBAT_WEAPONS ? [] : Object.entries(playerAttackSprites[classId] || {});
-  const family = { ...base,
-    frames: { ...base.frames, ...selected.frames, ...Object.assign({}, ...attacks.map(([, entry]) => entry.frames)) },
-    sequences: { ...base.sequences, ...selected.sequences,
-      // Preserve the original forward sweep while fitting its four painted phases.
-      sweep: { ...selected.sequences.sweep, travel: [0,
-        base.sequences.sweep.travel[base.sequences.sweep.impact],
-        base.sequences.sweep.travel[base.sequences.sweep.impact + 1], 0] },
-      counterPrepare: { poses: [selected.stances.counter], durations: [260], impact: 0, travel: [0], hold: true },
-      ...Object.fromEntries(attacks.flatMap(([name, entry]) =>
-      ['attack', 'spell', 'ranged', 'rangedMagic'].map(action => [`weapon:${action}:${name}`, { ...entry.sequence, action }]))) },
-  };
-  if (pilotFrames) {
-    for (const [action, frame] of Object.entries(pilotFrames)) family.frames['pilot-'+action] = frame;
-    family.frames['smash-load'] = pilotFrames.smash;
-    family.sequences.sweep = { ...family.sequences.sweep, poses: ['pilot-sweep', ...family.sequences.sweep.poses.slice(1)] };
-    family.sequences.counterPrepare = { ...family.sequences.counterPrepare, poses: ['pilot-counter'] };
-    for (const kind of ['attack','smash','sweep','counter-guard','counter-evade']) {
-      const clip=selectedWeaponSequence(kind);
-      if(clip.poses.every(pose=>pose==='origin'||family.frames[pose])) family.sequences[kind]=clip;
-    }
-    for(const key of Object.keys(family.sequences)) if(key==='weapon:attack:greatsword'&&family.sequences.attack?.pilot)family.sequences[key]=family.sequences.attack;
-  }
-  if (classSmash) {
-    for (const [key, frame] of Object.entries(classSmash.frames)) family.frames['class-smash-'+key] = frame;
-    family.sequences.smash = classSmashSequence();
-  }
-  // Smash holds the first painted frame of its own swing (owner, 2026-10-12),
-  // the way counter and sweep hold theirs.
-  const heldFrames = { ...alternativeSelectedStances.classes[classId]?.frames,
-    ...Object.fromEntries(Object.entries(selected.stances).map(([action, pose]) => [action, selected.frames[pose]])),
-    ...(family.frames['smash-load'] ? { smash: family.frames['smash-load'] } : {}),
-    ...(classSmash ? {smash:classSmash.frames.held} : {}),
-    ...(pilotFrames ? { sweep: pilotFrames.sweep, counter: pilotFrames.counter, smash: pilotFrames.smash, evade: pilotFrames.evade, ...(pilotFrames.defend?{defend:pilotFrames.defend,defensive:pilotFrames.defend}:{}) } : {}) };
-  const frames = { ...family.frames, ...Object.fromEntries(Object.entries(heldFrames).map(([stance, frame]) => ['stance-'+stance, frame])) };
+  const assembled = alternativeCardAnimationFamily(classId, { weaponProfile, smashProfile });
+  if (!assembled) return null;
+  const { family, selected, pilotFrames, classSmash, heldFrames, frames } = assembled;
   const el = document.createElement('div');
   el.className = 'pose-stage painted-stage alternative-card-stage';
   // A still (Rendered-style) stage paints no canvas reaction; CSS tints it instead.
@@ -142,7 +97,7 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
   // A selected target reaction shares the RAF, but starts its own finite clock.
   // It overlays the body without replacing the action or last confirmed stance.
   let resources=[], reactionTimer=null, currentArt=null, bodyReaction=null;
-  const restPose = () => rest === 'defeated' ? 'defeated' : stance ? 'stance-'+stance : rest === 'counter' ? (pilotFrames ? 'pilot-counter' : selected.stances.counter) : ['defend','guard'].includes(rest) ? 'guard-brace' : 'ready';
+  const restPose = () => rest === 'defeated' ? 'defeated' : stance ? 'stance-'+stance : rest === 'counter' ? (pilotFrames ? 'pilot-counter' : selected.stances.counter) : ['defend','guard','evade'].includes(rest) ? 'guard-brace' : 'ready';
   const filterFor = (frame, action, paid = resources, active = !!action) =>
     auraFilter(action === 'spell' ? 'power2' : frame, ['defend','counter'].includes(rest) ? 'guard' : rest, paid, active);
   function paint(now=performance.now(), materialize=false) {
@@ -280,9 +235,7 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
     },
     actionTiming(action,speed=ANIM_SPEEDS.normal){
       const sequence=family.sequences[aliases[action]||action];if(!sequence)return null;
-      if(sequence.pilot || sequence.timingUnits)return selectedWeaponSequenceTiming(sequence,speed);
-      const totalMs=durationFor(sequence,speed);
-      return {totalMs,impactMs:sequence.durations.slice(0,sequence.impact).reduce((a,b)=>a+b,0)/sequence.durations.reduce((a,b)=>a+b,0)*totalMs};
+      return cardSequenceTiming(sequence, speed);
     },
     play(action,ms,aura=[]){
       if(disposed || (rest==='defeated'&&action!=='defeated'))return false;
