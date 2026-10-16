@@ -173,7 +173,8 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
     // ignored). Its height is read only for a raise: at 0 no layout is forced.
     const corners = true;
     const dockTop = combatEl.querySelector('.hand-area')?.getBoundingClientRect().top ?? handBox?.top ?? combatBox.bottom;
-    const top = dockTop - (combatEl.dataset.compactCombat === 'true' ? 0 : root.getBoundingClientRect().height / 2);
+    const split = combatEl.dataset.desktopFooter === 'true';
+    const top = split ? combatBox.top + parseFloat(getComputedStyle(combatEl).getPropertyValue('--desktop-tools-top')) * zoom : dockTop - (combatEl.dataset.compactCombat === 'true' ? 0 : root.getBoundingClientRect().height / 2);
     root.dataset.toolsPlacement = 'corners';
     const localDock = anchorLocalBox(combatEl, { left,
       top, width: 0, height: 0 }, { zoom });
@@ -182,8 +183,8 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
     root.style.right = 'auto';
     if (corners) {
       // The corners hug the combat screen's own edges, in its local px.
-      root.style.left = `${CORNER_INSET}px`;
-      root.style.right = `${CORNER_INSET}px`;
+      root.style.left = `${split ? parseFloat(getComputedStyle(combatEl).getPropertyValue('--desktop-corner-inset')) : CORNER_INSET}px`;
+      root.style.right = `${split ? parseFloat(getComputedStyle(combatEl).getPropertyValue('--desktop-corner-inset')) : CORNER_INSET}px`;
       root.style.width = 'auto';
     }
     const height = drag?.active ? drag.height : snapHeights()[state.size];

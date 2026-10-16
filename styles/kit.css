@@ -6485,3 +6485,29 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 .combat .hand .card .card-hit-chances { top: 16%; bottom: auto; inset-inline: 6%; max-width: 88%; box-sizing: border-box; font-size: max(10px, 1.05rem); }
 .combat .card-hit-chance { max-width: 100%; white-space: normal; overflow-wrap: anywhere; text-align: center; }
 .expanded-combat-card .ic-text[data-card-binding="rules"] .face-line { display: block; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+
+/* The enabled purse layer is part of the shared HUD, in normal flow. */
+.shared-hud .hud-cinders-strip { display:flex; flex:0 0 auto; justify-content:flex-start; }
+.shared-hud .hud-cinders-strip .hud-center { display:flex; min-width:0; }
+.shared-hud .hud-cinders-strip .hud-cinders { white-space:nowrap; }
+
+/* Reward review has an explicit red return/skip action, independent of the
+   theme's orange danger tint. Only the chooser footer uses this treatment. */
+.reward-door .reward-chooser-foot .danger {
+  background: #a51f2b;
+  border-color: #e65b66;
+  color: #fff7f3;
+}
+.reward-door .reward-chooser-foot .danger:hover,
+.reward-door .reward-chooser-foot .danger:focus-visible {
+  background: #c02634;
+  border-color: #ff8b94;
+  color: #fff7f3;
+}
+/* Author display:flex otherwise overrides the browser's hidden attribute. */
+.reward-door .reward-choice-option[hidden] { display: none; }
+.reward-door .reward-choice-grid[inert] {
+  --choice-count: 1;
+  grid-template-columns: minmax(0, 16rem);
+  justify-content: center;
+}
