@@ -1592,11 +1592,18 @@
   border-radius: .2rem;
 }
 /* Perspective grid: uniform cells; the shadow is each body's foot anchor. */
-:root:not([data-display-appearance='classic']) .formation-grid[data-perspective='true'] { display: grid; }
+:root:not([data-display-appearance='classic'])[data-formation-grid='true'] .formation-grid[data-perspective='true'] { display: grid; }
 .formation-grid[data-perspective='true'] .formation-grid-cell { transform: none; }
 .formation-grid[data-perspective='true'] .formation-grid-outline { display: none; }
+:root[data-formation-grid='true'] .formation-grid[data-perspective='true'] .formation-grid-outline { display: block; }
+/* One uniform, unfilled outline follows each actual skewed cell box. */
+.formation-grid[data-perspective='true'] .formation-grid-outline > * {
+  display: none; fill: none; stroke: rgb(238 232 220 / 32%);
+  stroke-width: calc(1px / var(--ui-zoom, 1));
+}
+.formation-grid[data-perspective='true'] .formation-grid-outline > [data-perspective-outline] { display: block; }
 .formation-grid[data-perspective='true'] .formation-grid-cell span { display: none; }
-/* Owner (2026-10-12): no grid lines; only the foot shadows mark the cells. */
+/* Grid visibility is independent from movement and the foot-anchor marks. */
 .formation-grid[data-perspective='true'] .formation-grid-cell { border: 0; }
 .formation-grid[data-perspective='true'] .formation-grid-cell::before {
   content: ''; position: absolute; left: 50%; top: var(--foot-y, 70%);
@@ -1881,4 +1888,19 @@
   position:absolute; grid-area:auto; display:flex; top:calc(38px / var(--ui-zoom,1));
   left:50%; transform:translateX(-50%); width:max-content; max-width:45%; margin:0;
   justify-content:center; pointer-events:auto;
+}
+
+/* Live display preference above the fixed Log corner, outside row sizing. */
+:root .combat[data-layout='formation'] .combat-tools > .combat-grid-toggle {
+  position:absolute; left:0; bottom:calc(100% + 4px / var(--ui-zoom,1));
+  display:flex; align-items:center; gap:calc(6px / var(--ui-zoom,1));
+  height:calc(28px / var(--ui-zoom,1)); min-height:0; margin:0; padding:0 calc(2px / var(--ui-zoom,1));
+  width:max-content; min-width:calc(58px / var(--ui-zoom,1));
+  color:#eee8dc; font:calc(12px / var(--ui-zoom,1))/1 var(--font-ui,sans-serif);
+  text-shadow:0 1px 3px #000,0 0 4px #000; pointer-events:auto; cursor:pointer;
+}
+:root .combat[data-layout='formation'] .combat-tools > .combat-grid-toggle > input {
+  appearance:auto; width:calc(18px / var(--ui-zoom,1)); height:calc(18px / var(--ui-zoom,1));
+  min-width:0; min-height:0; max-width:none; max-height:none; margin:0; padding:0;
+  accent-color:#d4bd82; cursor:pointer; flex:none;
 }
