@@ -95,7 +95,7 @@ function perspectiveGridComposition({ sizes, actors, width }) {
     const actor = actors.find(actor => actor.slot.id === size.id);
     // The selected pilot's wide blade/cape uses the existing screen-edge clamp.
     // Keep idle fitting, uniform pose scale, and domain cell addresses intact.
-    const halfWidth = Math.max(actor.visibleWidth, actor.edgeWidth || 0) * size.scale / 2;
+    const halfWidth = actor.visibleWidth * size.scale / 2;
     const x = Math.max(halfWidth + 6, Math.min(width - halfWidth - 6, actor.slot.x));
     return { ...size, x, ground: actor.slot.ground };
   });

@@ -159,18 +159,9 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
     const handBox = hand?.getBoundingClientRect();
     // HUD layout tokens (docs/hud-layout-tokens.md), read once per pass.
     const { span, dy } = combatToolsTokens(combatEl);
-    // 'field' (the default) spans the hand's full row, as it always has.
-    // 'hand' spans only the card band: the first card's left edge to the last
-    // card's right edge, never narrower than the two tools need.
-    let width = Math.max(0, (handBox?.width || viewViewportBox().width) - 12);
-    let left = (handBox?.right || viewViewportBox().right) - width - 6;
-    const band = span === 'hand' ? cardBand(hand) : null;
-    if (band && handBox) {
-      const minWidth = Math.min(handBox.width - 12, TOOLS_MIN_WIDTH * zoom);
-      width = Math.max(band.right - band.left, minWidth);
-      const center = (band.left + band.right) / 2;
-      left = Math.max(handBox.left + 6, Math.min(center - width / 2, handBox.right - 6 - width));
-    }
+    // Tools belong to the screen edges, never the current fan or hand width.
+    const width = Math.max(0, combatBox.width - 2 * CORNER_INSET * zoom);
+    const left = combatBox.left + CORNER_INSET * zoom;
     const localWidth = anchorLocalBox(VIEWPORT_ORIGIN, { left: 0, top: 0, width, height: 0 }, { zoom });
     root.style.width = `${localWidth.width}px`;
     // A compact toolbar occupies the top of the card band. It never consumes
@@ -180,15 +171,10 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
     // the field but never leaves the combat screen, never covers a control
     // above it, and never drops over the cards below its dock (dy > 0 is
     // ignored). Its height is read only for a raise: at 0 no layout is forced.
-    // Owner (2026-10-12), desktop only: the log sits in the screen's left
-    // corner and the reaction switch in its right, level with the card
-    // bottoms, so the strip above the cards stays free.
-    const corners = globalThis.document?.documentElement?.dataset.formFactor === 'desktop' && handBox;
-    const dockTop = handBox?.top || 0;
-    const top = corners ? handBox.bottom - root.getBoundingClientRect().height - CORNER_INSET * zoom
-      : dy < 0 ? toolsRowTop({ dockTop, dy: dy * zoom, screenTop: combatBox.top,
-        row: { left, width, height: root.getBoundingClientRect().height }, obstacles: toolsObstacles(combatEl, zoom) }) : dockTop;
-    root.dataset.toolsPlacement = corners ? 'corners' : 'row';
+    const corners = true;
+    const dockTop = combatEl.querySelector('.hand-area')?.getBoundingClientRect().top ?? handBox?.top ?? combatBox.bottom;
+    const top = dockTop - (combatEl.dataset.compactCombat === 'true' ? 0 : root.getBoundingClientRect().height / 2);
+    root.dataset.toolsPlacement = 'corners';
     const localDock = anchorLocalBox(combatEl, { left,
       top, width: 0, height: 0 }, { zoom });
     root.style.top = `${localDock.top}px`;

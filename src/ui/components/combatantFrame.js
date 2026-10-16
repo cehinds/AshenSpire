@@ -2,6 +2,7 @@
 // slots and interaction callbacks; this component owns only stable structure,
 // role semantics, and component identity.
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
+import { classicAppearance } from '../displayAppearance.js';
 import { artworkAnchor } from '../models/IdentityModel.js';
 
 const ownedClasses = new WeakMap();
@@ -32,7 +33,8 @@ export function updateCombatantFrame(frame, { classNames = [], leading = [], blo
     widget.appendChild(name);
   }
   if (meters) widget.appendChild(meters);
-  appendAll(widget, trailing.filter(n => n?.classList.contains('statuses')));
+  appendAll(frame.classList.contains('enemy') && !classicAppearance() ? leadingHost : widget,
+    trailing.filter(n => n?.classList.contains('statuses')));
   appendAll(widget, trailing.filter(n => !n?.classList.contains('statuses')));
   return frame;
 }
@@ -61,6 +63,9 @@ export function adoptCombatantFrame(frame) {
   if (name) markName(name, role);
   const sprite = card.querySelector(':scope > .sprite');
   if (sprite) markArtwork(sprite);
+  if (role === 'enemy' && !classicAppearance()) {
+    for (const status of card.querySelectorAll(':scope > .statuses')) leading.append(status);
+  }
   if (role === 'player') {
     const widget = playerWidget(leading);
     for (const child of [...card.children]) if (child !== sprite) widget.append(child);
@@ -120,7 +125,8 @@ export function combatantFrame({
     widget.appendChild(name);
   }
   if (meters) widget.appendChild(meters);
-  appendAll(widget, trailing.filter(n => n?.classList.contains('statuses')));
+  appendAll(role === 'enemy' && !classicAppearance() ? leadingHost : widget,
+    trailing.filter(n => n?.classList.contains('statuses')));
   appendAll(widget, trailing.filter(n => !n?.classList.contains('statuses')));
   stack.appendChild(card);
   frame.appendChild(stack);

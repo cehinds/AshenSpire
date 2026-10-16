@@ -141,9 +141,8 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // fan reserves no tool row above the cards there. Read from the form
       // factor, not the row's placement mark: a freshly rebuilt row has no
       // mark until its queued measure runs, after this layout.
-      const cornerTools = desktop;
-      const toolsPhysical = !desktop ? COMBAT_TOOLS_HEIGHT_PX
-        : cornerTools ? 0 : measuredRow > 0 ? measuredRow + 4 : COMBAT_TOOLS_DESKTOP_HEIGHT_PX;
+      const cornerTools = !compact;
+      const toolsPhysical = cornerTools ? 0 : COMBAT_TOOLS_HEIGHT_PX;
       const toolsHeight = toolsPhysical / zoom;
       handEl.style.setProperty('--hand-controls-max-width', `${Math.max(0, handEl.clientWidth - 2 / zoom)}px`);
       // Measure the complete row, including the normally hidden native picker.
