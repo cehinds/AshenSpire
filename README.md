@@ -1,5 +1,9 @@
 # AshenSpire
 
+> **Shrine rest layout — source preview, not published.** [Open local preview](http://127.0.0.1:8795/index.html?shot=rest&shotRestState=wounded) · [Screenshots, wireframe, QA, and reproduction](docs/feature-evidence/rest-screen-layout/README.md). Desktop/widescreen keep a compact right-side service panel and proportionate traveler, with more chapel scenery visible. Mobile/tablet retain a lower tray. **Hosted artifact publication is blocked on the canonical art release and game pin update**; the local URL requires the running workspace preview server.
+
+![Shrine rest desktop source preview](docs/feature-evidence/rest-screen-layout/after-desktop.webp)
+
 
 
 A browser roguelike: build a character, explore a seeded world, and fight with cards.

@@ -674,7 +674,7 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
  .rest-screen .rest-recovery-row { padding:.35rem 0; }
  .rest-screen .rest-recovery { margin-bottom:.5rem; }
  .rest-screen .rest-wide-backdrop { display:block; position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:40% center; }
- .rest-screen .rest-scene-stage { width:min(100cqh, calc(1050px / var(--ui-zoom, 1))); height:min(100cqh, calc(1050px / var(--ui-zoom, 1))); left:calc(36cqw - min(100cqh, calc(1050px / var(--ui-zoom, 1))) * .50); top:calc(62cqh - min(100cqh, calc(1050px / var(--ui-zoom, 1))) * .70); }
+ .rest-screen .rest-scene-stage { width:min(100cqh, calc(1050px / var(--ui-zoom, 1))); height:min(100cqh, calc(1050px / var(--ui-zoom, 1))); left:calc(36cqw - min(100cqh, calc(1050px / var(--ui-zoom, 1))) * .50); top:calc(50cqh + max(100cqh, 100cqw * 941 / 1672) * .135 - min(100cqh, calc(1050px / var(--ui-zoom, 1))) * .70); }
  .rest-screen .rest-scene-stage > img:first-child { visibility:hidden; }
  .rest-screen .rest-scene-stage > .rest-traveler-foreground { left:15%; width:44%; }
  .rest-screen .class-pick :is(h3,p,.on,.om) { white-space:normal; overflow:visible; text-overflow:clip; -webkit-line-clamp:unset; }
