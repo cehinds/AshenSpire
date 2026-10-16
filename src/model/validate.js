@@ -2720,7 +2720,7 @@ export function validatePredicate(pred, path, vctx) {
       if (pred.atLeast !== undefined && pred.atMost !== undefined && pred.atLeast > pred.atMost) err(path, 'turn metric bounds are reversed');
       break;
     case 'inStance':
-      if (typeof pred.stance !== 'string' || !vctx.ids.stances.has(pred.stance)) {
+      if (typeof pred.stance !== 'string' || !vctx.ids.stances.has(pred.stance) && !['attack','smash','defend','counter','sweep','casting','prepared','evade'].includes(pred.stance)) {
         err(`${path}.stance`, `Dangling reference: unknown stance id '${pred.stance}'`);
       }
       break;
