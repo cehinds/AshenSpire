@@ -13,7 +13,7 @@ import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/co
 import { applyStatus, removeStatus, advanceStatusClock, getStacks } from '../src/engine/statuses.js';
 import { evalPredicate, triggerOwnerKey } from '../src/engine/triggers.js';
 import { grantAbilityCharge, beginAbilityTurn, matchingAbilityCharges } from '../src/engine/abilityRiders.js';
-import { computeTokenBindings, validateEffects } from '../src/model/validate.js';
+import { computeTokenBindings, validateEffects, validatePredicate } from '../src/model/validate.js';
 import { skillXpReceipt } from '../src/engine/skillXp.js';
 
 // The fixture pins its own Stamina and Mana: costRule 'fixed' opts it out of the cost formula (SPEC §4.3a).
@@ -151,4 +151,10 @@ test('Conceal snapshots both selected count and hidden duration from its authore
  combat.player.statuses.weak={stacks:2};combat.piles.hand.push({instanceId:'extra-conceal',cardId:'defend',upgraded:false});
  play(combat);assert.equal(combat.pendingCardChoice.count,2);assert.equal(combat.pendingCardChoice.effect.changes.hideTurns,2);
  dispatch(combat,{type:'chooseCards',cardInstanceIds:combat.pendingCardChoice.candidateIds.slice(0,2)});assert.ok(combat.hiddenCards.every(row=>row.returnTurn===combat.turn+2));
+});
+
+test('stance variant validation accepts combat maneuvers while refusing invented identities',()=>{
+ const errors=[],ctx={err:(p,m)=>errors.push(m),ids:{stances:new Set(['brace'])}};
+ for(const stance of ['smash','defend','casting','prepared','brace'])validatePredicate({p:'inStance',stance},'variant',ctx);
+ assert.deepEqual(errors,[]);validatePredicate({p:'inStance',stance:'invented'},'variant',ctx);assert.equal(errors.length,1);
 });
