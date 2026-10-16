@@ -136,3 +136,19 @@ test('Many Forms uses one best defensive receipt for each attack and expires bac
  restored.player.statuses['weak'].stacks=0;trimCombatStances(restored,restored.player);
  assert.equal(restored.player.concurrentStances,undefined);assert.equal(restored.player.combatStance.maneuver,'defend');assert.equal(profileDamageReceipt(restored,restored.enemies[0],restored.player,10,carrier('smash')).advantage,true);
 });
+
+test('combat growth survives a turn and reload while one-use linked scrolls stay spent after recovery',()=>{
+ const growth=fixture([{op:'block',target:'self',amount:2}],{definition:{costGrowth:{stamina:1,perUse:1,max:3}}});play(growth);dispatch(growth,{type:'endTurn'});
+ const restored=restoreCombatSnapshot({registries:growth.registries,rng:createRng(9),snapshot:serializeCombatSnapshot(growth)});
+ assert.equal(cardPlayCosts(restored,restored.piles.hand[0].instanceId).stamina,2);
+ const scroll=fixture([{op:'castLinkedSpell',card:'strike',target:'enemy'}],{definition:{playLimit:1,keywords:['exhaust']}});
+ const id=scroll.piles.hand[0].instanceId;play(scroll);assert.ok(scroll.enemies[0].hp<1000);
+ const index=scroll.piles.exhaust.findIndex(card=>card.instanceId===id);scroll.piles.hand.push(scroll.piles.exhaust.splice(index,1)[0]);
+ const state=JSON.stringify(serializeCombatSnapshot(scroll));assert.throws(()=>dispatch(scroll,{type:'playCard',cardInstanceId:id,targetId:scroll.enemies[0].id}),/unplayable/);assert.equal(JSON.stringify(serializeCombatSnapshot(scroll)),state);
+});
+test('Conceal snapshots both selected count and hidden duration from its authored stack formula',()=>{
+ const combat=fixture([{op:'modifyCards',from:'hand',amount:{f:'stacks',status:'weak',of:'self'},selection:'choose',changes:{hideTurns:{f:'stacks',status:'weak',of:'self'}}}]);
+ combat.player.statuses.weak={stacks:2};combat.piles.hand.push({instanceId:'extra-conceal',cardId:'defend',upgraded:false});
+ play(combat);assert.equal(combat.pendingCardChoice.count,2);assert.equal(combat.pendingCardChoice.effect.changes.hideTurns,2);
+ dispatch(combat,{type:'chooseCards',cardInstanceIds:combat.pendingCardChoice.candidateIds.slice(0,2)});assert.ok(combat.hiddenCards.every(row=>row.returnTurn===combat.turn+2));
+});

@@ -58,9 +58,11 @@ function entityProblems(entity, path, { player = false } = {}) {
     else {
       for (const key of ['cardsPlayed', 'manaSpent', 'discarded', 'hpLostSinceTurnStart', 'hpLostThisRound', 'offeringsPaid', 'previousSpell', 'attacksPlayed', 'cardPlaysCombat']) if (state[key] !== undefined && (!Number.isSafeInteger(state[key]) || state[key] < 0)) problems.push(`${path}.abilityRiders.${key} must be a non-negative whole number`);
       if (state.turnStartHpPct !== undefined && (!finite(state.turnStartHpPct) || state.turnStartHpPct < 0 || state.turnStartHpPct > 100)) problems.push(`${path}.abilityRiders.turnStartHpPct must be a percentage`);
-      for (const key of ['charges', 'once', 'tagPlays', 'sameCardPlays', 'distinctTagPlays']) if (state[key] !== undefined && !record(state[key])) problems.push(`${path}.abilityRiders.${key} must be an object`);
+      for (const key of ['charges', 'once', 'tagPlays', 'sameCardPlays', 'cardUsesCombat','typePlays','distinctTagPlays']) if (state[key] !== undefined && !record(state[key])) problems.push(`${path}.abilityRiders.${key} must be an object`);
     }
   }
+  for(const key of ['cardUsesCombat','typePlays']) if(record(entity.abilityRiders?.[key]) && Object.values(entity.abilityRiders[key]).some(v=>!Number.isSafeInteger(v) || v<0)) problems.push(`${path}.abilityRiders.${key} must contain nonnegative counts`);
+  if(entity.concurrentStances!==undefined && (!Array.isArray(entity.concurrentStances) || entity.concurrentStances.length>7 || entity.concurrentStances.some(row=>!record(row) || !['attack','smash','defend','sweep','counter','casting','prepared','evade','neutral'].includes(row.maneuver) || !['physical','spell'].includes(row.camp)))) problems.push(`${path}.concurrentStances invalid`);
   if (!nonEmptyString(entity.id)) problems.push(`${path}.id must be a non-empty string`);
   if (entity.kind !== (player ? 'player' : 'enemy')) problems.push(`${path}.kind must be '${player ? 'player' : 'enemy'}'`);
   const defKey = player ? 'classId' : 'enemyId';
@@ -185,6 +187,7 @@ export function combatSnapshotProblems(snapshot) {
     catch (error) { problems.push(`derivedStatRuleSnapshot: ${error.message}`); }
   }
   if (snapshot.ratingAttributeScale !== undefined && (!Number.isFinite(snapshot.ratingAttributeScale) || snapshot.ratingAttributeScale <= 0)) problems.push('ratingAttributeScale must be positive');
+  if(snapshot.proposalRewards!==undefined && (!record(snapshot.proposalRewards) || !Number.isSafeInteger(snapshot.proposalRewards.cinders) || snapshot.proposalRewards.cinders<0 || snapshot.proposalRewards.cinders>1e9 || snapshot.proposalRewards.settled!==undefined && typeof snapshot.proposalRewards.settled!=='boolean')) problems.push('proposalRewards invalid');
   if (snapshot.pendingDiscardDraw !== undefined && (!Number.isInteger(snapshot.pendingDiscardDraw) || snapshot.pendingDiscardDraw < 0 || snapshot.pendingDiscardDraw > 99)) problems.push('pendingDiscardDraw must be an integer from 0 to 99');
   if (snapshot.pendingAbilityDiscard !== undefined || snapshot.pendingCardChoice !== undefined) {
     const pending = snapshot.pendingAbilityDiscard || snapshot.pendingCardChoice;
