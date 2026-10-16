@@ -2,7 +2,7 @@
 
 **Current review:** [visual-review.html](visual-review.html), [1440×900 image](visual-preview-1440.png), [1920×1080 image](visual-preview-1920.png). The openable [visual-preview.html](visual-preview.html) is a frozen browser DOM snapshot with existing embedded game artwork, repositioned by docs-only `visual-preview.js`. It has no game engine, interaction or persistence. No production source is changed.
 
-The updated wireframe has four visual depth bands across three columns. A: enemy back / top-right cell anchor. B: enemy front / bottom-left anchor. C: extra combatant row, configurable and occupiable but disabled in core (current module enabled). D: player / bottom-center anchor, leftmost cell by default. The core visual preview leaves C empty. These visual depth-band names are not changes to the existing saved formation cell/lane addresses. Exact module schema and allocation belong to implementation after visual approval.
+The updated wireframe has four visual depth bands across three columns. A: enemy back / top-right cell anchor. B: enemy front / bottom-left anchor. C: extra combatant row, configurable and occupiable but planned disabled in core and enabled in the current module. D: player / bottom-center anchor, leftmost cell by default. The core visual preview leaves C empty. These visual depth-band names are not changes to the existing saved formation cell/lane addresses. Exact module schema and allocation belong to implementation after visual approval.
 
 The prototype uses the normal two-enemy screenshot fixture: one back and one front, with the player in leftmost D. Ground scene art retains its proportions, shows more sky, and sits lower. Shadows follow figure widths. Original header, centered hand, utility button/toggle and stone footer arrangement are preserved. Footer and card artwork scale uniformly. Combat log/Reactions use fixed screen edges above the hand. The lower HUD background is continuous. The previous A–G layouts are rejected archive material.
 
@@ -18,7 +18,7 @@ The owner rejected all A–G proposals because the footer was redesigned. Those 
 
 The footer keeps its existing stone HUD group, enlarged in place, ordered resource orb, draw pile, End Turn, discard pile, potions. The hand remains centered directly above it, with unused hand-space removed. Card frames retain the original 2:3 width-to-height proportion (147×220.5). All lower HUD background uses the same color. Turn banner remains at the upper center of the field; health remains top left, shield/menu top right.
 
-Scene changes remain reduced zoom/lower ground to expose sky, requested 3×3 row anchors and character-width shadows. The shared anchors inset still applies. Card and control sizes are schematic; this is a faithful composition review before the visual preview, then implementation.
+Scene changes remain reduced zoom/lower ground to expose sky, requested 4×3 visual-band anchors and character-width shadows. The updated shared inset shows A/B foot rules and player D; C is the extra configurable combatant band. Card and control sizes are schematic; this is a faithful composition review before the visual preview, then implementation.
 
 ## Rejected archive: A–G
 
