@@ -5,8 +5,10 @@
 
 The same runtime supports two authored configurations. **Product core** includes its required bundled modules and keeps optional gameplay packages off where the core has a fallback. **Current game** preserves the full legacy configuration.
 
-- **Product core:** [Play on Pages (latest publication unverified)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-modules/latest/) · [standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38966511950/artifacts/12075780219) · [build run](https://github.com/cehinds/AshenSpire/actions/runs/38966511950)
-- **Current game:** [Play on Pages (latest publication unverified)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-current-preview/latest/) · [standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38966666448/artifacts/12075830423) · [build run](https://github.com/cehinds/AshenSpire/actions/runs/38966666448)
+- **Product core:** [Play on Pages (latest publication unverified)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-modules/latest/) · [standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38976523633/artifacts/12079182071) · [build run](https://github.com/cehinds/AshenSpire/actions/runs/38976523633)
+- **Current game:** [Play on Pages (latest publication unverified)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-current-preview/latest/) · [standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38976558207/artifacts/12079610146) · [build run](https://github.com/cehinds/AshenSpire/actions/runs/38976558207)
+
+Mobile now raises visible floor art to clear back-row shadows by 10px and gives the player a full-width mini HP bar, with defenses below-left and HP below-right. Resizing preserves clearance; centered Mobile presets keep combatants in their game area. [Reviewed mobile screenshots and builds](docs/preview/features/json-game-modules/mobile-grounding/README.md).
 
 Desktop and widescreen now use the approved **B footer fade**, exposing the battlefield behind the cards while preserving the existing header fade and all control positions. [Fresh screenshots and verification](docs/preview/features/json-game-modules/footer-fade/README.md) · [Original wireframes A–G](docs/preview/features/json-game-modules/footer-fade-proposals/README.md).
 
