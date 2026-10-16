@@ -93,7 +93,12 @@ export function spellDamageDealtMultiplier(ctx, source, carrier) {
  * Pure (no mutation). Pass target = null to preview without defender mods.
  */
 export function computeAttackDamage(ctx, source, target, base, attackTags, carrier = null, { matchups = true, beforeDefense = false, proposal = true } = {}) {
-  if (configuredCombat(ctx)) return profileDamageReceipt(ctx, source, target, base, carrier,{proposal}).amount;
+  if (configuredCombat(ctx)) {
+    const receipt = profileDamageReceipt(ctx, source, target, base, carrier, { proposal });
+    // Group preparation needs the positive incoming contact before stance and
+    // protection math. Live application supplies that defense receipt once.
+    return beforeDefense ? receipt.raw : receipt.amount;
+  }
   const ratedBase = base + (carrier?.skipRatingBonus ? 0 : Ratings.cardRatingBonus(ctx, source, carrier, 'damage', base));
   if (ctx.foundation) {
     let amount = F.foundationDamage(ctx, source, target, ratedBase, carrier, attackTags || [], { beforeDefense }).amount;
