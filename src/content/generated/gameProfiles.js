@@ -2766,8 +2766,8 @@ export const gameProfileCatalog = {
             "name": "Smash",
             "class": "colorless",
             "rarity": "starter",
-            "cost": 1,
-            "staminaCost": 1,
+            "cost": 2,
+            "staminaCost": 2,
             "manaCost": 0,
             "costRule": "fixed",
             "type": "attack",
@@ -2777,7 +2777,7 @@ export const gameProfileCatalog = {
               {
                 "op": "damage",
                 "target": "enemy",
-                "amount": 8
+                "amount": 12
               }
             ],
             "tags": [
@@ -2824,9 +2824,9 @@ export const gameProfileCatalog = {
             "name": "Sundering Art",
             "class": "reaver",
             "rarity": "starter",
-            "cost": 1,
-            "staminaCost": 1,
-            "manaCost": 0,
+            "cost": 2,
+            "staminaCost": 2,
+            "manaCost": 1,
             "costRule": "fixed",
             "type": "attack",
             "icon": "⚔",
@@ -2835,13 +2835,14 @@ export const gameProfileCatalog = {
               {
                 "op": "damage",
                 "target": "enemy",
-                "amount": 10
+                "amount": 36
               }
             ],
             "tags": [
               "camp:physical",
               "maneuver:smash",
-              "classification.attack"
+              "classification.attack",
+              "extractable"
             ],
             "textTemplate": "Deal {damage} damage.",
             "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
@@ -2865,6 +2866,12 @@ export const gameProfileCatalog = {
                 "op": "damage",
                 "target": "enemy",
                 "amount": 9
+              },
+              {
+                "op": "applyStatus",
+                "target": "enemy",
+                "status": "vulnerable",
+                "stacks": 2
               }
             ],
             "tags": [
@@ -2872,7 +2879,7 @@ export const gameProfileCatalog = {
               "maneuver:casting",
               "classification.attack"
             ],
-            "textTemplate": "Deal {damage} damage.",
+            "textTemplate": "Deal {damage} damage. Apply {vulnerable} Vulnerable.",
             "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
             "damageSchool": "physical",
             "exposureBuildupPerHit": 0
@@ -3009,7 +3016,12 @@ export const gameProfileCatalog = {
               "draw": 1
             }
           },
-          "secondaryPolicy": "legacyAdapter"
+          "secondaryPolicy": "legacyAdapter",
+          "poolBasesByClass": {
+            "reaver": {
+              "mana": 0
+            }
+          }
         },
         "classUnlocks": {
           "initial": [
@@ -3327,8 +3339,8 @@ export const gameProfileCatalog = {
               "manaCost": 0
             },
             "sp": {
-              "cost": 1,
-              "staminaCost": 1,
+              "cost": 2,
+              "staminaCost": 2,
               "manaCost": 0
             },
             "mp": {
@@ -3337,8 +3349,8 @@ export const gameProfileCatalog = {
               "manaCost": 0
             },
             "sp,mp": {
-              "cost": 1,
-              "staminaCost": 1,
+              "cost": 2,
+              "staminaCost": 2,
               "manaCost": 0
             }
           },
@@ -3371,19 +3383,19 @@ export const gameProfileCatalog = {
               "manaCost": 0
             },
             "sp": {
-              "cost": 1,
-              "staminaCost": 1,
+              "cost": 2,
+              "staminaCost": 2,
               "manaCost": 0
             },
             "mp": {
               "cost": 0,
               "staminaCost": 0,
-              "manaCost": 0
+              "manaCost": 1
             },
             "sp,mp": {
-              "cost": 1,
-              "staminaCost": 1,
-              "manaCost": 0
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 1
             }
           },
           "core.starseerSpecial": {
@@ -3497,7 +3509,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/cards.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:2953709cc79ceb7521b9b832e1e7f3c78a25209d5fc6ba51aa8054bf9f868c1d"
+          "hash": "sha256:cf7bd77a1542dc33d4c0b2d859e350cd5a7e3b9c749af57cae840c0a3f82d6c6"
         },
         {
           "path": "games/ashenspire/packs/core/starterDeck.json",
@@ -3509,7 +3521,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/stats.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:a6ceca9f64665580255004bdfaeb606c87024eb4b1cd78e1e75ed30374d4adc7"
+          "hash": "sha256:6dde8f5ffa59b53c231493abd272e4f18ea7a2577316dcb5cf9981e3f41a8ddc"
         },
         {
           "path": "games/ashenspire/packs/core/classUnlocks.json",
@@ -3545,7 +3557,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/resourceVariants.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:613b821d19f103febfde23db9edcd0496c14520c727e6e00e798e4aeb85375b0"
+          "hash": "sha256:e3954567f8289171bb24f003abc7a777deca613c1d3330ed70e8e9fbaf4d9e0c"
         },
         {
           "path": "games/ashenspire/packs/core/shops.json",
@@ -3567,7 +3579,7 @@ export const gameProfileCatalog = {
       "path": "engine/kernel/gameConfig.js",
       "id": "ashen.runtime",
       "version": "1.0.0",
-      "hash": "sha256:4aa35e0dc6040426330a8b872f7c1da47e0b8bdf76e2ae34eeab3dbbe984573d"
+      "hash": "sha256:27bff20abaecb87e42b0b45fb35a150e914c1e472b2fc16614b70ca360d8260d"
     },
     {
       "path": "engine/contracts/game-profile.json",
@@ -3585,7 +3597,7 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "path": "src/** (excluding generated gameProfiles/changelog)",
-      "hash": "sha256:77218de49d11301e372db3f87848546a35491e135072f4f922465b4a84f246c5"
+      "hash": "sha256:50deb904812961d9e3438ed39f3dc42c4be1c40ab6285429ad5377cad5fa5736"
     }
   ],
   "runtimeSources": [
@@ -4058,6 +4070,12 @@ export const gameProfileCatalog = {
       "hash": "sha256:c5c843b7abd0aabb2d61e47d64b8b3f14c7bca2963f0dc11d8f19b24a0f9fa10"
     },
     {
+      "path": "src/content/generated/cardManaPolicy.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f48d115a19c346ed0ca645c350fe90294e5d5b91aa73dabf797dbc54e9b13c08"
+    },
+    {
       "path": "src/content/generated/characterCreation.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
@@ -4247,7 +4265,7 @@ export const gameProfileCatalog = {
       "path": "src/content/generated/weapons.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:229381ed59929e84514d0c035ace8aec01dc20c3df37486735ff3e4e12903499"
+      "hash": "sha256:fd111b38d59db9f0e555e7d2a94903cea867b1883302de9fe707dfbb815cf21b"
     },
     {
       "path": "src/content/generated/worldAtlas.js",
@@ -5312,6 +5330,12 @@ export const gameProfileCatalog = {
       "hash": "sha256:040e0c302df916d790e7ad0328efbb98469e11546b3f8c8e6c9530a762cc98af"
     },
     {
+      "path": "src/model/cardManaPolicy.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:223fe777c0b37d980b5df8d7742aee04ad0f021ff66be6641caeb9df29b35558"
+    },
+    {
       "path": "src/model/cardMounts.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
@@ -5819,7 +5843,7 @@ export const gameProfileCatalog = {
       "path": "src/model/gameProfileRun.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:c9178f8c7bddd5fcb2fcb2642c03ac52356e590272a2df92603bf5de9849b0c9"
+      "hash": "sha256:7cc91e328c2f96c3ae61762a5534a0467d6da7aa281353034dc09db95ec78339"
     },
     {
       "path": "src/model/gracerefill.js",
@@ -5885,7 +5909,7 @@ export const gameProfileCatalog = {
       "path": "src/model/loadout.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:7485965b56e956b531ad8eca5ccd619d164bfd0b4bd98b0ecf548ae39312ba1f"
+      "hash": "sha256:8dba1a50376c3be4ced67ff1088f7e54207e25f73fc2e88e4ba1adba3bebe0da"
     },
     {
       "path": "src/model/locationPresentation.js",
@@ -6029,7 +6053,7 @@ export const gameProfileCatalog = {
       "path": "src/model/registries.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:e70aa8dbfb4ebf45762fad02ecb16a9f09eb92430ace9210e79e330fa23b1847"
+      "hash": "sha256:2adf49ec5e3b3a4bb50efb7be250f0d6b72709ae3832d60187becd370c5eaf10"
     },
     {
       "path": "src/model/relicArt.js",
@@ -8444,7 +8468,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:23af16d4e9c9f6d88fe655d32ecf1a688b47df39f9e3a1d6d193ce63923593ab"
     }
   ],
-  "runtimeHash": "sha256:64b58de1c83b67664302e36495d590bc38eab22dd48c3af13cfcfcaa77772d3e"
+  "runtimeHash": "sha256:f5997f46695c042ea545ecc485bef2c83983b63b2769ae13400c3baf7c05e8d6"
 };
 export const gameProfileAuthors = {
   "default": {
