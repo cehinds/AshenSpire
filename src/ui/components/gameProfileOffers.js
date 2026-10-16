@@ -86,7 +86,10 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
     }
     pending = true; confirm.disabled = true; next.disabled = true;
     try {
-      if (!offer.taken.includes(selected)) await onTake(selected);
+      if (!offer.taken.includes(selected)) {
+        const updated = await onTake(selected);
+        if (updated?.id === offer.id) offer = updated;
+      }
       if (offer.claimed !== null || offer.taken.length >= Math.min(offer.takeCount, offer.options.length)) {
         onContinue();
         completed = true;
