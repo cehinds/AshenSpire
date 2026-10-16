@@ -998,6 +998,7 @@ export function createSession({ registries, seedString, endless = false, restore
       if (c.enemyKnowledge?.owners[m.id]) reconcileCombatKnowledge(m.run, c, m.id);
       const s = outcome.survivors[m.id];
       if (!s) continue;
+      m.run.cinders=(m.run.cinders || 0)+(outcome.earnedCinders?.[m.id] || 0);
       m.run.hp = s.downed ? 0 : Math.max(0, s.hp);
       if (s.ashenBlight) m.run.ashenBlight = structuredClone(s.ashenBlight);
       if (s.blightTerminal) { m.alive = false; m.catchup.length = 0; }
