@@ -859,7 +859,7 @@ function doPlayCard(C, { cardInstanceId, targetId, choice, upcastTier, selectedB
   p.counters.cardsPlayedThisTurn += 1;
   p.counters.cardsPlayedThisCombat += 1;
   const meta = {
-    ...before,
+    ...before,proposalTargetDecisions:{},
     energySpent: cost,
     manaSpent: manaCost,
     staminaSpent: staminaCost,
