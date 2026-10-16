@@ -15398,7 +15398,7 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "path": "src/** (excluding generated gameProfiles/changelog)",
-      "hash": "sha256:730bdba8b3ce08e4c43accf39a1531095780f65a86e6aac00f4c8713074e7540"
+      "hash": "sha256:c0ba1ae2ad2c460e287b9bb331c621c8de0bd5abe25700f3dbfdd65effb50e97"
     }
   ],
   "runtimeSources": [
@@ -15418,7 +15418,7 @@ export const gameProfileCatalog = {
       "path": "src/config/generated/ui.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:c6c76767b416c976d056928e7401d96b1a2fb6ee194d6fbbc0050a64bf58a60d"
+      "hash": "sha256:e7fd15da434d96634a37e9aebbcc676767dfc46be2c05466dd3e99f6ebb575f9"
     },
     {
       "path": "src/content/actionAnimations.js",
@@ -18232,7 +18232,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/alternativeArt.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:e01fa7364ed21fe1458b996eafd85a5c60a2afb3a783986a9fb07a19e537d54e"
+      "hash": "sha256:b2b689edf7abb816f30c2cb815f60f134fa37912e17b9415acd1cb6a7815dba4"
     },
     {
       "path": "src/ui/alternativeArtCatalog.js",
@@ -18430,7 +18430,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/components/battlefieldStage.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:77ba4c82a35eb8aec9b851ac5c9ff60e91a18d68fda2d2e4d78814c051b445b1"
+      "hash": "sha256:c009cc2cb954575618a706fee4e4ee23192f17049a9c64497c9bff7e8ca96792"
     },
     {
       "path": "src/ui/components/bookArt.js",
@@ -19741,6 +19741,12 @@ export const gameProfileCatalog = {
       "hash": "sha256:4c1cd9c812934bc2cc2f6fd3369761758c21c3e7597c36bc9e3d1b2e7ab1c5ec"
     },
     {
+      "path": "src/ui/models/MobileFloorModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:ba8f1d377622437d72ebc6068576e6a2a8b0bb99b6e109a41100b6da74fc4eb3"
+    },
+    {
       "path": "src/ui/models/MountServiceModel.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
@@ -20377,7 +20383,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:23af16d4e9c9f6d88fe655d32ecf1a688b47df39f9e3a1d6d193ce63923593ab"
     }
   ],
-  "runtimeHash": "sha256:e3da7479f9e080def861c7d2e8a0c0ae923087ba5f7258ee38ee7809a3ce7a62"
+  "runtimeHash": "sha256:40c72af9e9f9a3bcfc3e1bc254b788659305dcc9439361e16142822af116fcf5"
 };
 export const gameProfileAuthors = {
   "default": {
