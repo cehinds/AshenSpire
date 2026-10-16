@@ -983,7 +983,6 @@ function presentIntent(combat, enemy, def, moveId) {
     delete enemy.intentRevealed;
   } else if (enemy.intent.combatProfile.camp) enemy.intentRevealed = combat.rng.float('enemyIntentVisibility') >= hiddenIntentChance(combat.attributes || {}, combat.combatIntentRules || {});
   else delete enemy.intentRevealed;
-  if ((enemy.proposalIntentRevealedUntil || 0)>combat.turn) enemy.intentRevealed=true;
   primeEnemyCounter(combat, enemy, def.moves[moveId], moveId);
 }
 
@@ -1776,7 +1775,7 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
   p.counters.cardsPlayedThisTurn += 1;
   p.counters.cardsPlayedThisCombat += 1;
   const meta = {
-    ...before,
+    ...before,proposalTargetDecisions:{},
     energySpent: cost,
     manaSpent: manaCost,
     staminaSpent: staminaCost,
@@ -2706,8 +2705,9 @@ export function previewIntent(combat, enemyInstanceId) {
   const intent = enemy.intent || { kind: 'unknown', moveId: null };
   const profile = intent.combatProfile || {};
   const knowledge = knowledgeIntentProjection(combat, enemy);
-  if (knowledge && !knowledge.exact) return knowledge.intent;
-  const revealed = enemy.actorIntentRevealed || (enemy.intentReads ? enemy.intentReads[combat.playerKey] === true : enemy.intentRevealed !== false);
+  const proposalRead=(enemy.proposalIntentRevealedUntil || 0)>combat.turn;
+  if (!proposalRead && knowledge && !knowledge.exact) return knowledge.intent;
+  const revealed = proposalRead || enemy.actorIntentRevealed || (enemy.intentReads ? enemy.intentReads[combat.playerKey] === true : enemy.intentRevealed !== false);
   if (!knowledge && !revealed && profile.camp && intent.kind !== 'staggered') return concealIntent(intent, profile);
   const out = { ...intent, profile, stance: combatIntentStance(intent, profile), revealed: true, hidden: false };
   // The armed payload is public only after this observer's read gate. This is

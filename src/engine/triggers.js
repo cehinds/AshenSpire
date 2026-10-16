@@ -1,3 +1,4 @@
+import { activeCombatStances } from './concurrentStances.js';
 // src/engine/triggers.js — event bus + declarative trigger wiring + predicates
 // (SPEC §3.6, §3.9, §3.10)
 //
@@ -406,7 +407,7 @@ export function evalPredicate(ctx, pred, pctx = {}) {
     case 'resourcePaid':
       return (pctx.meta?.[pred.resource === 'mana' ? 'manaSpent' : 'staminaSpent'] || 0) >= (pred.amount ?? 1);
     case 'inStance':
-      return ctx.player.stanceId === pred.stance || ctx.player.combatStance?.maneuver === pred.stance;
+      return ctx.player.stanceId === pred.stance || activeCombatStances(ctx,ctx.player).some(row=>row.maneuver===pred.stance || row.maneuver==='prepared' && pred.stance==='casting');
     case 'hasStatus': {
       if (pred.of === 'allEnemies') return ctx.enemies.map(entity => pred.snapshot ? priorAbilityEntity(ctx, entity, pctx.meta || pctx.event) : entity).some(entity => entity.alive && StatusHelpers.getStacks(entity, pred.status) >= (pred.atLeast ?? 1));
       const current = resolveOf(ctx, pctx, pred.of);
