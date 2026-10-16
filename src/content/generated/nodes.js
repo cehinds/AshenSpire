@@ -2859,6 +2859,30 @@ export const nodes = [
     "blurb": ""
   },
   {
+    "id": "damage.fire",
+    "parentId": "damage",
+    "label": "fire",
+    "color": "",
+    "glyph": "",
+    "visibility": "SECONDARY",
+    "priority": 16,
+    "domain": "",
+    "aside": "",
+    "blurb": ""
+  },
+  {
+    "id": "damage.holy",
+    "parentId": "damage",
+    "label": "holy",
+    "color": "",
+    "glyph": "",
+    "visibility": "SECONDARY",
+    "priority": 17,
+    "domain": "",
+    "aside": "",
+    "blurb": ""
+  },
+  {
     "id": "damage.blade",
     "parentId": "damage",
     "label": "blade",
@@ -3358,6 +3382,18 @@ export const nodes = [
     "glyph": "",
     "visibility": "CONTEXTUAL",
     "priority": 14,
+    "domain": "",
+    "aside": "",
+    "blurb": ""
+  },
+  {
+    "id": "targeting.allAllies",
+    "parentId": "targeting",
+    "label": "allAllies",
+    "color": "",
+    "glyph": "",
+    "visibility": "CONTEXTUAL",
+    "priority": 15,
     "domain": "",
     "aside": "",
     "blurb": ""
