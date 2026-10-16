@@ -5,8 +5,10 @@
 
 The same runtime supports two authored configurations. **Product core** includes its required bundled modules and keeps optional gameplay packages off where the core has a fallback. **Current game** preserves the full legacy configuration.
 
-- **Product core:** [Play on Pages (latest publication unverified)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-modules/latest/) · [standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38952859060/artifacts/12070010032) · [successful build run](https://github.com/cehinds/AshenSpire/actions/runs/38952859060)
-- **Current game:** [Play on Pages (latest publication unverified)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-current-preview/latest/) · [standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38952896396/artifacts/12068894262) · [successful build run](https://github.com/cehinds/AshenSpire/actions/runs/38952896396)
+- **Product core:** [Play on Pages (latest publication unverified)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-modules/latest/) · [standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38953953766/artifacts/12070470683) · [successful build run](https://github.com/cehinds/AshenSpire/actions/runs/38953953766)
+- **Current game:** [Play on Pages (latest publication unverified)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-current-preview/latest/) · [standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38953971025/artifacts/12069821640) · [successful build run](https://github.com/cehinds/AshenSpire/actions/runs/38953971025)
+
+The deck editor’s animation sprite now sits lower so the head clears the preview border, while retaining its size and the description layout. [Fresh headroom screenshots](docs/preview/features/json-game-modules/deck-headroom/README.md).
 
 The battlefield grid now uses thin, translucent lines and a saved **Grid** checkbox directly above Combat Log. Core’s unused middle row stays visible without enabling placement. [Grid screenshots and verification](docs/preview/features/json-game-modules/grid/README.md).
 
