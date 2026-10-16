@@ -713,3 +713,17 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
  .rest-screen .shrine-fold > summary { height:auto; min-height:calc(64px / var(--ui-zoom, 1)); }
  .rest-screen .shrine-option-list { gap:calc(8px / var(--ui-zoom, 1)); }
 }
+
+/* The approved expanded chapel has its own painted fire/floor coordinates.
+   Derive anchors from its actual 1938 × 812 cover geometry, without growing
+   the traveler or control rail on ultrawide screens. */
+@media (min-width:2000px) and (min-aspect-ratio:2/1) and (min-height:650px) {
+ :root .rest-screen.choice-screen .rest-door { width:calc(400px / var(--ui-zoom, 1)); max-width:400px; }
+ .rest-screen .rest-wide-backdrop { object-position:center; }
+ .rest-screen .rest-scene-stage {
+  --rest-ultrawide-cover-width:max(100cqw, 100cqh * 1938 / 812);
+  --rest-ultrawide-cover-height:max(100cqh, 100cqw * 812 / 1938);
+  left:calc(50cqw - var(--rest-ultrawide-cover-width) * .0924 - min(100cqh, calc(1050px / var(--ui-zoom, 1))) * .492);
+  top:calc(50cqh + var(--rest-ultrawide-cover-height) * .16 - min(100cqh, calc(1050px / var(--ui-zoom, 1))) * .70);
+ }
+}

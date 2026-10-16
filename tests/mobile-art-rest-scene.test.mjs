@@ -17,3 +17,11 @@ test('other scenery keeps the existing 256px ceiling', () => {
     assert.equal(rule.maxHeight, 256);
   }
 });
+
+test('ultrawide chapel preserves its expanded aspect at the 720p ceiling', () => {
+  const rule = policyFor('player-polish/scenes/chapel-rest-ultrawide.webp');
+  assert.deepEqual(twinDimensions({ width: 1938, height: 812 }, rule), { width: 1718, height: 720 });
+  assert.deepEqual(twinDimensions({ width: 600, height: 251 }, rule), { width: 600, height: 251 });
+  assert.equal(rule.quality, 78);
+  assert.equal(rule.alphaQuality, 80);
+});

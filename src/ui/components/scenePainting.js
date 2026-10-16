@@ -36,7 +36,12 @@ export function scenePainting(id) {
     wideArt.src = assetUrl('assets/player-polish/scenes/chapel-rest-desktop.webp');
     wideArt.alt = '';
     wideArt.decoding = 'async';
-    frame.appendChild(wideArt);
+    const wideScene = document.createElement('picture');
+    const ultrawideSource = document.createElement('source');
+    ultrawideSource.media = '(min-width:2000px) and (min-aspect-ratio:2/1)';
+    ultrawideSource.srcset = assetUrl('assets/player-polish/scenes/chapel-rest-ultrawide.webp');
+    wideScene.append(ultrawideSource, wideArt);
+    frame.appendChild(wideScene);
     stage.appendChild(art);
     stage.appendChild(foreground);
     frame.appendChild(stage);
