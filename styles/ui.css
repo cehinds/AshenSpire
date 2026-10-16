@@ -1941,6 +1941,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   width: min(120rem, calc(100vw - 3.2rem));
   max-width: 120rem;
   margin-inline: auto;
+  background: #211a12;
 }
 .deck-editor-reading-desk > .deck-editor-panes {
   grid-template-columns: minmax(28rem, .85fr) minmax(0, 1.4fr);
@@ -1954,10 +1955,10 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor-reading-desk .deck-editor-panes[data-active="collection"] > [data-pane="deck"],
 .deck-editor-reading-desk .deck-editor-panes[data-active="deck"] > [data-pane="collection"] { display: none; }
 .deck-editor-reading-desk .deck-editor-reading { padding: .5rem; overflow-x: hidden; }
-.deck-editor-reading-desk .deck-editor-preview { display: flex; flex-direction: column; align-items: center; gap: .6rem; margin-bottom: 1rem; }
+.deck-editor-reading-desk .deck-editor-preview { display: flex; flex-direction: column; align-items: center; gap: .4rem; margin-bottom: .6rem; }
 .deck-editor.deck-editor-reading-desk .deck-editor-reading > .deck-editor-preview > .card {
-  width: min(14rem, 100%, max(10rem, calc((100dvh - 56rem) * var(--card-ratio, .67)))) !important;
-  max-width: 14rem; height: auto; aspect-ratio: var(--card-ratio); margin: 0 auto;
+  width: min(var(--deck-preview-width, 14rem), 100%) !important;
+  max-width: 18rem; height: auto; aspect-ratio: var(--card-ratio); margin: 0 auto;
   flex: none; pointer-events: none;
 }
 .deck-editor-reading-desk .deck-editor-preview-toggle { min-height: var(--deck-editor-target); font-size: max(1.2rem, var(--deck-min-text)); }
@@ -1982,7 +1983,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   .deck-editor-reading-desk > .deck-editor-panes { display: block; }
   .deck-editor-reading-desk .deck-editor-inspector { padding: 0; border: 0; }
   .deck-editor-reading-desk .deck-editor-preview-toggle { display: none; }
-  .deck-editor.deck-editor-reading-desk .deck-editor-reading > .deck-editor-preview > .card { width: 15rem !important; }
+  .deck-editor.deck-editor-reading-desk .deck-editor-reading > .deck-editor-preview > .card { width: 12rem !important; }
 }
 @container game-viewport (max-width: 1000px) {
   .deck-editor.deck-editor-reading-desk { width: calc(100cqw - 1.6rem); }
@@ -1990,3 +1991,8 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   .deck-editor-reading-desk .deck-editor-inspector { padding: 0; border: 0; }
   .deck-editor-reading-desk .deck-editor-preview-toggle { display: none; }
 }
+
+/* The optional animation switch sits beside the small face, leaving the
+   vertical reading space to the card's effect and combat rules. */
+.deck-editor-reading-desk .deck-editor-preview:not(.animation-mode) { flex-direction: row; justify-content: center; align-items: flex-end; gap: 1rem; }
+.deck-editor.deck-editor-reading-desk .deck-editor-reading > .deck-editor-preview > .card { margin: 0; }
