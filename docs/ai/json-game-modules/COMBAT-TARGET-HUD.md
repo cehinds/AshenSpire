@@ -10,4 +10,8 @@ A single dwell applies on entry, exit and stable switches. The actor, connecting
 
 Status icons reuse the existing shared tray/tooltip components and remain readable while a card is armed. Detail intent receipts describe direct HP at current defenses and committed stance, excluding delayed effects and retaliation. Hidden intent stays hidden in both surfaces.
 
+Winning defending stances now reduce incoming damage by 25% in newly resolved Core and Current profiles. Author `modules.stances.defenseMitigation` in the game JSON (fraction `0..1`; `0` disables it). The engine and intent preview use the same rule, before defense pools. Existing saved resolved profiles without this setting keep their previous rules. Green means the displayed damage range is strictly reduced against a neutral-stance baseline; an Evade range with a higher possible maximum remains red.
+
+Fresh profile-backed enemy occupancy is back-right, back-left, back-middle, front-right, front-middle, front-left. Existing saved/moved positions are preserved. Sprite feet and shadows are inset into their cells without reducing desktop sprite size. The header owns the live turn indicator and Cinders, and compact overheads stay below it. The approved footer and header fades are retained.
+
 Checks: `node --test tests/target-hud-model.test.mjs`, projected intent tests, and actual browser checks for desktop/widescreen crowded targets, card/self eligibility, keyboard focus, tooltip corridor, reduced motion and mobile/Classic fallback.
