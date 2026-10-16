@@ -75,3 +75,38 @@ test('existing HUD purse follows current value and layer visibility', () => {
     assert.equal(runHeaderStripHtml(runHeaderModel({}, { cinders: false })), '');
   });
 });
+
+test('configured save transaction restores claim and pending state, and returns fresh offer after cloned claim', async () => {
+  const { persistRewardChange } = await import('../src/model/rewardTransaction.js');
+  const offer = { id: 'a', taken: [], claimed: null };
+  const run = { cinders: 10, sideboard: [], gameProfilePendingReward: { offerId: 'a' }, gameProfileRewardOffers: { a: offer } };
+  const before = structuredClone(run);
+  const change = () => {
+    const draft = structuredClone(run);
+    draft.sideboard.push({ cardId: 'core.strike' }); draft.gameProfileRewardOffers.a.taken.push(0); draft.gameProfileRewardOffers.a.claimed = 0;
+    Object.assign(run, draft);
+  };
+  assert.throws(() => persistRewardChange(run, 'a', change, () => { throw new Error('save failed'); }), /save failed/);
+  assert.deepEqual(run, before); assert.equal(run.gameProfileRewardOffers.a, offer);
+  const updated = persistRewardChange(run, 'a', change, () => {});
+  assert.notEqual(updated, offer); assert.equal(updated.claimed, 0);
+  const claimed = structuredClone(run);
+  assert.throws(() => persistRewardChange(run, 'a', () => { delete run.gameProfilePendingReward; }, () => { throw new Error('save failed'); }), /save failed/);
+  assert.deepEqual(run, claimed);
+});
+
+test('cloned configured offers support partial and final claims without replaying an old offer', async () => {
+  const dom = rewardDom(); const before = Object.fromEntries(Object.keys(dom).map(key => [key, globalThis[key]])); Object.assign(globalThis, dom);
+  try {
+    const app = document.createElement('main'); document.body.append(app);
+    let offer = { id: 'two', options: [{ kind: 'combatCards', id: 'frostNova' }, { kind: 'combatCards', id: 'scholarsInsight' }], taken: [], claimed: null, takeCount: 2 };
+    let grants = 0, exits = 0;
+    mountGameProfileOffers(app, { registries: registriesFor('frostNova'), run: { class: 'reaver' }, offer, title: 'Reward', onTake(index) {
+      offer = structuredClone(offer); offer.taken.push(index); if (offer.taken.length === 2) offer.claimed = index; grants++; return offer;
+    }, onContinue() { exits++; } });
+    app.querySelectorAll('.reward-pick')[0].click(); app.querySelector('#reward-card-confirm').click(); app.querySelector('#reward-card-confirm').click(); await Promise.resolve();
+    assert.equal(grants, 1); assert.equal(exits, 0); assert.ok(app.querySelectorAll('.reward-pick')[0].disabled);
+    app.querySelectorAll('.reward-pick')[1].click(); app.querySelector('#reward-card-confirm').click(); app.querySelector('#reward-card-confirm').click(); await Promise.resolve();
+    assert.equal(grants, 2); assert.equal(exits, 1);
+  } finally { for (const [key,value] of Object.entries(before)) { if (value === undefined) delete globalThis[key]; else globalThis[key] = value; } }
+});

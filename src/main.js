@@ -1,3 +1,4 @@
+import { persistRewardChange as transactReward } from './model/rewardTransaction.js';
 import { applyViewViewport, resolveViewViewport } from './ui/viewViewport.js';
 import { screenshotRoutePath } from './ui/models/ScreenshotFixtureModel.js';
 import { t } from './ui/strings.js';
@@ -3803,21 +3804,7 @@ function beginGameProfileReward({ source = 'combat', after = 'map', levelOffers 
 function showGameProfileReward() {
   const pending = run.gameProfilePendingReward;
   const offer = run.gameProfileRewardOffers[pending.offerId];
-  // Reward mutations and their save form one transaction. Preserve the
-  // current offer object too: the mounted chooser holds that same reference.
-  const persistRewardChange = (change) => {
-    const before = structuredClone(run);
-    const offerBefore = structuredClone(offer);
-    try { change(); persist(); }
-    catch (error) {
-      for (const key of Object.keys(run)) delete run[key];
-      Object.assign(run, before);
-      for (const key of Object.keys(offer)) delete offer[key];
-      Object.assign(offer, offerBefore);
-      run.gameProfileRewardOffers[pending.offerId] = offer;
-      throw error;
-    }
-  };
+  const persistRewardChange = change => transactReward(run, pending.offerId, change, persist);
   mountGameProfileOffers(app, { registries, run, offer, title: pending.source === 'level' ? 'Level reward' : 'Victory rewards',
     onTake: index => persistRewardChange(() => claimGameProfileReward(registries, run, pending.offerId, index)),
     onContinue: () => {
@@ -4230,6 +4217,16 @@ if (shotState) {
   // NOT a player-facing surface: what a PLAYER should be told when their save
   // was repaired is wording, and wording is not this seat's to write.
   window.__runstatus = () => saves.runStatus();
+  window.__rewardStateForShot = () => {
+    const snapshot = row => row ? structuredClone({
+      deckIDs: (row.deck || []).map(card => card.cardId),
+      sideboardIDs: (row.sideboard || []).map(card => card.cardId),
+      cinders: row.cinders,
+      pendingReward: row.gameProfilePendingReward || row.pendingReward || null,
+      offers: row.gameProfileRewardOffers || null,
+    }) : null;
+    return { live: snapshot(run), saved: snapshot(saves.loadRun(registries, activeSlot)) };
+  };
   // Rest QA reads the live transaction and its actual persisted slot. No
   // mutable references escape, and this handle exists only in shot boots.
   if (shotState === 'rest' || shotState === 'smith') window.__restStateForShot = () => {
