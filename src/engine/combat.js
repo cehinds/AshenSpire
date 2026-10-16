@@ -1,3 +1,4 @@
+import { initializeFormationOccupancy } from '../model/formationOccupancy.js';
 import { proposalCardPlan, applyProposalPlan, proposalTurn, proposalRetained } from './proposalStatusRuntime.js';
 import { beginEnemyBurdens, endEnemyBurdens, allowBurdenMove } from './enemyBurdens.js';
 import { selectCardVariant } from './cardBehavior.js';
@@ -375,6 +376,7 @@ export function createCombat({
     combat.emit('enemySpawned', { targetId: `e${i + 1}`, enemyId });
   });
 
+  initializeFormationOccupancy(combat);
   if (knowledge) initializeCombatKnowledge(combat, knowledge);
   if (combat.ratingsRules) {
     refreshCombatRatings(combat);
