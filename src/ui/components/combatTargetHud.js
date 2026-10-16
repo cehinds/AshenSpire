@@ -193,7 +193,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       if (a && (contains(a, event.clientX, event.clientY, 5) || contains(b, event.clientX, event.clientY, 5)
         || corridor(a, b, event.clientX, event.clientY, config.positioning.gapPx * 1.5))) return;
     }
-    if (hover != null) { hover = null; refreshDesired(); }
+    if (hover != null) { hover = null; refreshDesired(); paint(); }
   }
   function focus(event) {
     const frame = event.target.closest?.('.combatant, .target-hud-detail');

@@ -1988,3 +1988,4 @@ body.reduce-motion .target-hud-detail { transition: none; }
 /* A host outline must follow opaque art, not the broad readability shadow
    already painted on each frame; otherwise that shadow becomes a red halo. */
 :root .combat[data-target-hud='true'] .combatant:is(.target-hud-candidate, .target-hud-selected, .target-hud-focused) .sprite { --combatant-edge: none; }
+:root .combat[data-target-hud='true'] .combatant.enemy.target-hud-candidate:not(.target-hud-focused) .sprite { filter: drop-shadow(1px 0 0 #de6c5b99) drop-shadow(-1px 0 0 #de6c5b99); }
