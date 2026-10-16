@@ -1575,6 +1575,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       if (!preservedTarget || !focusElement(preservedTarget)) focusFirst('.coop-seat[data-friendly-target]');
     }
     // Fit only after the replacement hand/footer establish the final field size.
+    app.querySelector('.field').dataset.formationPolicy = JSON.stringify(sc.formationPolicy || null);
+    app.querySelector('.field').dataset.formationOccupancy = JSON.stringify(sc.formationOccupancy || []);
     wireBattlefieldStage(app.querySelector('.field'), battlefieldStageModel(registries.balance.ui.combatantStage), combatLayoutState);
     for (const [ownerId, plan] of pendingAnimations) playSeatPlan(ownerId, plan);
     lastSoundSeq = coopReceiptSounds(sc, lastSoundSeq, seats);

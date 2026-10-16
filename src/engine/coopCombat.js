@@ -1,3 +1,4 @@
+import { initializeFormationOccupancy, formationOccupancyProblems } from '../model/formationOccupancy.js';
 import { proposalCardPlan, applyProposalPlan, proposalTurn, proposalRetained } from './proposalStatusRuntime.js';
 import * as Rounds from './combatRoundsAdapter.js';
 import { beginEnemyBurdens, endEnemyBurdens, allowBurdenMove } from './enemyBurdens.js';
@@ -177,6 +178,8 @@ export function createCoopCombat({ registries, rng, players, enemyIds, enemyLeve
     }
     for (const enemy of saved.enemies) if (!registries.enemies.has(enemy.enemyId)) throw new Error('Saved co-op enemy is unavailable');
     Object.assign(C, saved);
+    const formationErrors = formationOccupancyProblems(C);
+    if (formationErrors.length) throw new Error(formationErrors.join('; '));
     for (const P of C.players.values()) {
       bindTurnStamina(P.entity);
       // Older expanded seats omitted this equipment context. The member's
@@ -224,6 +227,7 @@ export function createCoopCombat({ registries, rng, players, enemyIds, enemyLeve
 
   // Players — each an entity + own shuffled piles (Innate on top).
   for (const p of players) addPlayerState(C, p, { initial: true });
+  initializeFormationOccupancy(C);
   if (knowledge) initializeCombatKnowledge(C, knowledge);
   if (C.sharedExpansionVersion === 2 && !livingPlayers(C).length) { finish(C, 'defeat'); return C; }
 
@@ -480,6 +484,7 @@ export function joinCombat(C, player) {
     return existing;
   }
   const seat = addPlayerState(C, player);
+  initializeFormationOccupancy(C);
   if (C.enemyKnowledge && seat.entity.alive && !C.result) addKnowledgeObserver(C, player.id, player.enemyKnowledgeProfile);
   return seat;
 }

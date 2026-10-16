@@ -1,3 +1,4 @@
+import { formationOccupancyProblems } from '../model/formationOccupancy.js';
 import { enemyBurdenProblems } from './enemyBurdens.js';
 import { hasCardChoice } from './cardZones.js';
 import { validateGameProfileSnapshot } from '../model/gameProfile.js';
@@ -50,8 +51,11 @@ export function serializeCombatSnapshot(combat) {
   if (combat._buffer !== null || (combat.queue && combat.queue.length && !hasCardChoice(combat) && !combat.pendingReaction)) {
     throw new Error('Combat is still resolving; wait for the action to finish before saving');
   }
+  const formationErrors = formationOccupancyProblems(combat);
+  if (formationErrors.length) throw new Error(formationErrors.join('; '));
   const snapshot = structuredClone({
     version: COMBAT_SNAPSHOT_VERSION,
+    ...(combat.formationPolicy ? { formationPolicy: combat.formationPolicy } : {}),
     ...(combat.gameProfile ? { gameProfile: combat.gameProfile, gameProfileCommands: combat.gameProfileCommands || 0, gameProfileInterrupts: combat.gameProfileInterrupts || {} } : {}),
     ...(combat.combatExpansionVersion === 2 ? { combatExpansionVersion: 2, combatExpansionRules: combat.combatExpansionRules, combatKey: combat.combatKey,
       expansionActionSerial: combat.expansionActionSerial || 0, pendingExpansionActions: combat.pendingExpansionActions || 0, allocatedAttributes: combat.allocatedAttributes } : {}),
@@ -176,6 +180,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     ...(saved.gameProfile ? { gameProfile: freezeProfile(saved.gameProfile), gameProfileCommands: saved.gameProfileCommands || 0, gameProfileInterrupts: saved.gameProfileInterrupts || {} } : {}),
     registries,
     rng,
+    ...(saved.formationPolicy ? { formationPolicy: saved.formationPolicy } : {}),
     ...(saved.combatExpansionVersion === 2 ? { combatExpansionVersion: 2, combatExpansionRules: saved.combatExpansionRules, combatKey: saved.combatKey,
       expansionActionSerial: saved.expansionActionSerial || 0, pendingExpansionActions: saved.pendingExpansionActions || 0, allocatedAttributes: saved.allocatedAttributes } : {}),
     ...(saved.combatMatchupRules ? { combatMatchupRules: saved.combatMatchupRules } : {}),
@@ -312,6 +317,8 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   }
   // An older expanded save has Ward and no Poise: every combatant restores with a full Poise pool.
   for (const entity of [combat.player, ...(combat.enemies || [])]) backfillPersistentPoise(combat, entity);
+  const formationErrors = formationOccupancyProblems(combat);
+  if (formationErrors.length) throw new Error(formationErrors.join('; '));
   return combat;
 }
 
