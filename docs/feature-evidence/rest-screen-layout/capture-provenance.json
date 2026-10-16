@@ -1,9 +1,9 @@
 {
-  "rendererSourceCommit": "b923f9bc5c34af0c8fa8a0ea76182047cb35ba61",
-  "note": "Captures were made from the local source worktree before committing this renderer state. Viewport-specific selectors unaffected by later changes retain the same rendered source behavior. This is source-preview evidence, not a published build.",
+  "rendererSourceCommit": "f3e60453ad8d9a954363870747472c066a6c1568",
+  "note": "Accepted LOCAL source preview; canonical art release and game pin remain unavailable. Captures precede the corresponding source commit or validate unchanged viewport selectors. Expanded ultrawide art reinterprets central content; exact original pixels are not claimed.",
   "rendererSha256": {
-    "styles/player-polish.css": "043e7ab5d809acb81fcf6d1aeed13140e167676fc1b45f6eb5b552ee5c465e49",
-    "src/ui/components/scenePainting.js": "8c45a80512a599214aa015485259a5a71beded322323de3bf25fc5df5bb1e4dd"
+    "styles/player-polish.css": "b59b782a4b0147f0315333f1c493da8c289dde107422b7477a993893e4a6d9d5",
+    "src/ui/components/scenePainting.js": "f5709c9ceece8273bc6b1323a359bb1e1a8b8a9d13a65995dd62a729d6f217c7"
   },
   "captures": [
     {
@@ -12,9 +12,9 @@
         "width": 390,
         "height": 844
       },
-      "capturedAtUtc": "2026-10-16T04:59:42.872430+00:00",
+      "capturedAtUtc": "2026-10-16T05:12:05.108144+00:00",
       "originalPngSha256": "d416a65fbcb57ec387713f508a3213f63bb5a06fb717b694528b3a3bcbb2b16f",
-      "originalFile": "after-mobile.png"
+      "originalFile": "containment-mobile.png"
     },
     {
       "profile": "tablet",
@@ -42,9 +42,9 @@
         "width": 1440,
         "height": 900
       },
-      "capturedAtUtc": "2026-10-16T05:05:01.502576+00:00",
+      "capturedAtUtc": "2026-10-16T05:12:22.491384+00:00",
       "originalPngSha256": "012318b30ace76b30f6e6d63a98081a6ede606a41a42920bb4ec9d0f67c5dda9",
-      "originalFile": "after-desktop.png"
+      "originalFile": "containment-desktop.png"
     },
     {
       "profile": "widescreen",
@@ -52,9 +52,9 @@
         "width": 2560,
         "height": 1440
       },
-      "capturedAtUtc": "2026-10-16T05:05:10.994163+00:00",
+      "capturedAtUtc": "2026-10-16T05:12:41.014574+00:00",
       "originalPngSha256": "0e068158948c6fa28172f647eb68d52e4688d4b8ac51d30b7368222af8cd86c6",
-      "originalFile": "after-widescreen.png"
+      "originalFile": "containment-widescreen.png"
     },
     {
       "profile": "ultrawide",
@@ -62,9 +62,25 @@
         "width": 3440,
         "height": 1440
       },
-      "capturedAtUtc": "2026-10-16T05:04:17.876475+00:00",
-      "originalPngSha256": "e7ad3790c78b0ce70cb9c40122558e7d289bcfd030ca3fed66b88d6bf9033c43",
+      "capturedAtUtc": "2026-10-16T05:11:40.881201+00:00",
+      "originalPngSha256": "5dbd8b792f4ab5b2457dd6a895adce951909d04822344abc8e9dd56bd9ab4513",
       "originalFile": "ultrawide-ultrawide.png"
     }
-  ]
+  ],
+  "lightUltrawideCheck": {
+    "viewport": {
+      "width": 3440,
+      "height": 1440
+    },
+    "capturedAtUtc": "2026-10-16T05:14:56.984600+00:00",
+    "originalFile": "light-ultrawide.png",
+    "originalPngSha256": "7f66ab8f304f11841b2d2ebd582a2fe76e4607b434e3018208bcacb515a34ba9",
+    "canonicalLightDimensions": {
+      "width": 1718,
+      "height": 720
+    },
+    "requestOrigins": [
+      "http://127.0.0.1:8793"
+    ]
+  }
 }

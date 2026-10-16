@@ -184,55 +184,6 @@
     "errors": [],
     "results": [
       {
-        "name": "mobile",
-        "width": 390,
-        "height": 844,
-        "title": "Ashen Spire",
-        "door": {
-          "x": 9,
-          "y": 398.8125,
-          "width": 372,
-          "height": 436.1875
-        },
-        "stage": {
-          "x": -69.140625,
-          "y": 0,
-          "width": 554.609375,
-          "height": 554.609375
-        },
-        "foreground": {
-          "x": 14.046875,
-          "y": 236.0625,
-          "width": 244.015625,
-          "height": 162.671875
-        },
-        "overflow": false,
-        "text": "REST\nShrine of Ember\n4 of 6 available\nRest\n\nHeal 22 HP (37 \u2192 59/63) and restore Mana (0 \u2192 1).\n\nHOLD\n\u2726\nLevel up\n\n5 points to assign \u00b7 Level 1\n\nUpgrade an Item\n\n0 Smithing Stones \u00b7 choose one owned armament.\n\n\u2697\nReallocate Flask Charges\n3/3 assigned\n\u25b8\n\u2699\nExtract a Card\n\nNothing you carry lends a card a smith can lift out.\n\n\u2692\nSeat a Card\n\nNo item has an open mount, or no deck card would fit one.\n\nRECOVERY PREVIEW\nHP\n37 \u2192 59\n+22\nMana\n0 \u2192 1\n+1\nAvailability\nContinue",
-        "images": [
-          {
-            "src": "http://127.0.0.1:8793/assets/player-polish/scenes/chapel-rest-desktop.webp",
-            "loaded": true
-          },
-          {
-            "src": "http://127.0.0.1:8793/assets/player-polish/scenes/chapel-rest-master.webp",
-            "loaded": true
-          },
-          {
-            "src": "http://127.0.0.1:8793/assets/player-polish/illustrations/rest-traveler-fire.webp",
-            "loaded": true
-          },
-          {
-            "src": "http://127.0.0.1:8793/assets/ui/flasks/flask-crimson.webp",
-            "loaded": true
-          },
-          {
-            "src": "http://127.0.0.1:8793/assets/ui/flasks/flask-azure.webp",
-            "loaded": true
-          }
-        ],
-        "levelModal": true
-      },
-      {
         "name": "tablet",
         "width": 834,
         "height": 1194,
@@ -331,6 +282,54 @@
         "levelModal": true
       },
       {
+        "name": "mobile",
+        "width": 390,
+        "height": 844,
+        "title": "Ashen Spire",
+        "door": {
+          "x": 9,
+          "y": 398.8125,
+          "width": 372,
+          "height": 436.1875
+        },
+        "stage": {
+          "x": -69.140625,
+          "y": 0,
+          "width": 554.609375,
+          "height": 554.609375
+        },
+        "foreground": {
+          "x": 14.046875,
+          "y": 236.0625,
+          "width": 244.015625,
+          "height": 162.671875
+        },
+        "overflow": false,
+        "text": "REST\nShrine of Ember\n4 of 6 available\nRest\n\nHeal 22 HP (37 \u2192 59/63) and restore Mana (0 \u2192 1).\n\nHOLD\n\u2726\nLevel up\n\n5 points to assign \u00b7 Level 1\n\nUpgrade an Item\n\n0 Smithing Stones \u00b7 choose one owned armament.\n\n\u2697\nReallocate Flask Charges\n3/3 assigned\n\u25b8\n\u2699\nExtract a Card\n\nNothing you carry lends a card a smith can lift out.\n\n\u2692\nSeat a Card\n\nNo item has an open mount, or no deck card would fit one.\n\nRECOVERY PREVIEW\nHP\n37 \u2192 59\n+22\nMana\n0 \u2192 1\n+1\nAvailability\nContinue",
+        "images": [
+          {
+            "src": "http://127.0.0.1:8796/assets/player-polish/scenes/chapel-rest-desktop.webp",
+            "loaded": true
+          },
+          {
+            "src": "http://127.0.0.1:8796/assets/player-polish/scenes/chapel-rest-master.webp",
+            "loaded": true
+          },
+          {
+            "src": "http://127.0.0.1:8796/assets/player-polish/illustrations/rest-traveler-fire.webp",
+            "loaded": true
+          },
+          {
+            "src": "http://127.0.0.1:8796/assets/ui/flasks/flask-crimson.webp",
+            "loaded": true
+          },
+          {
+            "src": "http://127.0.0.1:8796/assets/ui/flasks/flask-azure.webp",
+            "loaded": true
+          }
+        ]
+      },
+      {
         "name": "desktop",
         "width": 1440,
         "height": 900,
@@ -357,27 +356,26 @@
         "text": "REST\nShrine of Ember\n4 of 6 available\nRest\n\nHeal 22 HP (37 \u2192 59/63) and restore Mana (0 \u2192 1).\n\nHOLD\n\u2726\nLevel up\n\n5 points to assign \u00b7 Level 1\n\nUpgrade an Item\n\n0 Smithing Stones \u00b7 choose one owned armament.\n\n\u2697\nReallocate Flask Charges\n3/3 assigned\n\u25b8\n\u2699\nExtract a Card\n\nNothing you carry lends a card a smith can lift out.\n\n\u2692\nSeat a Card\n\nNo item has an open mount, or no deck card would fit one.\n\nRECOVERY PREVIEW\nHP\n37 \u2192 59\n+22\nMana\n0 \u2192 1\n+1\nAvailability\nContinue",
         "images": [
           {
-            "src": "http://127.0.0.1:8793/assets/player-polish/scenes/chapel-rest-desktop.webp",
+            "src": "http://127.0.0.1:8796/assets/player-polish/scenes/chapel-rest-desktop.webp",
             "loaded": true
           },
           {
-            "src": "http://127.0.0.1:8793/assets/player-polish/scenes/chapel-rest-master.webp",
+            "src": "http://127.0.0.1:8796/assets/player-polish/scenes/chapel-rest-master.webp",
             "loaded": true
           },
           {
-            "src": "http://127.0.0.1:8793/assets/player-polish/illustrations/rest-traveler-fire.webp",
+            "src": "http://127.0.0.1:8796/assets/player-polish/illustrations/rest-traveler-fire.webp",
             "loaded": true
           },
           {
-            "src": "http://127.0.0.1:8793/assets/ui/flasks/flask-crimson.webp",
+            "src": "http://127.0.0.1:8796/assets/ui/flasks/flask-crimson.webp",
             "loaded": true
           },
           {
-            "src": "http://127.0.0.1:8793/assets/ui/flasks/flask-azure.webp",
+            "src": "http://127.0.0.1:8796/assets/ui/flasks/flask-azure.webp",
             "loaded": true
           }
-        ],
-        "levelModal": true
+        ]
       },
       {
         "name": "widescreen",
@@ -406,27 +404,26 @@
         "text": "REST\nShrine of Ember\n4 of 6 available\nRest\n\nHeal 22 HP (37 \u2192 59/63) and restore Mana (0 \u2192 1).\n\nHOLD\n\u2726\nLevel up\n\n5 points to assign \u00b7 Level 1\n\nUpgrade an Item\n\n0 Smithing Stones \u00b7 choose one owned armament.\n\n\u2697\nReallocate Flask Charges\n3/3 assigned\n\u25b8\n\u2699\nExtract a Card\n\nNothing you carry lends a card a smith can lift out.\n\n\u2692\nSeat a Card\n\nNo item has an open mount, or no deck card would fit one.\n\nRECOVERY PREVIEW\nHP\n37 \u2192 59\n+22\nMana\n0 \u2192 1\n+1\nAvailability\nContinue",
         "images": [
           {
-            "src": "http://127.0.0.1:8793/assets/player-polish/scenes/chapel-rest-desktop.webp",
+            "src": "http://127.0.0.1:8796/assets/player-polish/scenes/chapel-rest-desktop.webp",
             "loaded": true
           },
           {
-            "src": "http://127.0.0.1:8793/assets/player-polish/scenes/chapel-rest-master.webp",
+            "src": "http://127.0.0.1:8796/assets/player-polish/scenes/chapel-rest-master.webp",
             "loaded": true
           },
           {
-            "src": "http://127.0.0.1:8793/assets/player-polish/illustrations/rest-traveler-fire.webp",
+            "src": "http://127.0.0.1:8796/assets/player-polish/illustrations/rest-traveler-fire.webp",
             "loaded": true
           },
           {
-            "src": "http://127.0.0.1:8793/assets/ui/flasks/flask-crimson.webp",
+            "src": "http://127.0.0.1:8796/assets/ui/flasks/flask-crimson.webp",
             "loaded": true
           },
           {
-            "src": "http://127.0.0.1:8793/assets/ui/flasks/flask-azure.webp",
+            "src": "http://127.0.0.1:8796/assets/ui/flasks/flask-azure.webp",
             "loaded": true
           }
-        ],
-        "levelModal": true
+        ]
       }
     ]
   },
@@ -445,14 +442,14 @@
           "height": 1020.6875
         },
         "stage": {
-          "x": 713.390625,
-          "y": 246.34375,
+          "x": 885.53125,
+          "y": 215.59375,
           "width": 1050,
           "height": 1050
         },
         "foreground": {
-          "x": 870.890625,
-          "y": 693.25,
+          "x": 1043.03125,
+          "y": 662.5,
           "width": 462,
           "height": 308
         },
@@ -460,7 +457,7 @@
         "text": "REST\nShrine of Ember\n4 of 6 available\nRest\n\nHeal 22 HP (37 \u2192 59/63) and restore Mana (0 \u2192 1).\n\nHOLD\n\u2726\nLevel up\n\n5 points to assign \u00b7 Level 1\n\nUpgrade an Item\n\n0 Smithing Stones \u00b7 choose one owned armament.\n\n\u2697\nReallocate Flask Charges\n3/3 assigned\n\u25b8\n\u2699\nExtract a Card\n\nNothing you carry lends a card a smith can lift out.\n\n\u2692\nSeat a Card\n\nNo item has an open mount, or no deck card would fit one.\n\nRECOVERY PREVIEW\nHP\n37 \u2192 59\n+22\nMana\n0 \u2192 1\n+1\nAvailability\nContinue",
         "images": [
           {
-            "src": "http://127.0.0.1:8793/assets/player-polish/scenes/chapel-rest-desktop.webp",
+            "src": "http://127.0.0.1:8793/assets/player-polish/scenes/chapel-rest-ultrawide.webp",
             "loaded": true
           },
           {
