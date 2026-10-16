@@ -109,6 +109,7 @@ export function serializeCombatSnapshot(combat) {
     derivedStatRuleSnapshot: combat.derivedStatRuleSnapshot || null,
     swapCostRule: combat.swapCostRule,
     swapsLeft: combat.swapsLeft,
+    ...(combat.proposalRewards ? {proposalRewards:combat.proposalRewards} : {}),
     piles: combat.piles,
     ...(combat.hiddenCards ? {hiddenCards:combat.hiddenCards} : {}),
     ...(hasCardChoice(combat) || combat.pendingReaction ? {
@@ -235,6 +236,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     derivedStatRuleSnapshot: saved.derivedStatRuleSnapshot || fallbackDerivedStatRuleSnapshot || null,
     swapCostRule: saved.swapCostRule,
     swapsLeft: saved.swapsLeft,
+    ...(saved.proposalRewards ? {proposalRewards:saved.proposalRewards} : {}),
     piles: saved.piles,
     ...(saved.hiddenCards ? {hiddenCards:saved.hiddenCards} : {}),
     queue: [],
