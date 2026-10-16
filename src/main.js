@@ -3803,16 +3803,33 @@ function beginGameProfileReward({ source = 'combat', after = 'map', levelOffers 
 function showGameProfileReward() {
   const pending = run.gameProfilePendingReward;
   const offer = run.gameProfileRewardOffers[pending.offerId];
+  // Reward mutations and their save form one transaction. Preserve the
+  // current offer object too: the mounted chooser holds that same reference.
+  const persistRewardChange = (change) => {
+    const before = structuredClone(run);
+    const offerBefore = structuredClone(offer);
+    try { change(); persist(); }
+    catch (error) {
+      for (const key of Object.keys(run)) delete run[key];
+      Object.assign(run, before);
+      for (const key of Object.keys(offer)) delete offer[key];
+      Object.assign(offer, offerBefore);
+      run.gameProfileRewardOffers[pending.offerId] = offer;
+      throw error;
+    }
+  };
   mountGameProfileOffers(app, { registries, run, offer, title: pending.source === 'level' ? 'Level reward' : 'Victory rewards',
-    onTake: index => { claimGameProfileReward(registries, run, pending.offerId, index); persist(); showGameProfileReward(); },
+    onTake: index => persistRewardChange(() => claimGameProfileReward(registries, run, pending.offerId, index)),
     onContinue: () => {
-      delete run.gameProfilePendingReward; persist();
-      if (pending.levelOffers > 0) {
-        const offerId = `${pending.offerId}:level:${pending.levelOffers}`;
-        gameProfileRewardOffers(registries, run, rng, { offerId, source: 'level' });
-        run.gameProfilePendingReward = { ...pending, offerId, source: 'level', levelOffers: pending.levelOffers - 1 };
-        persist(); return showGameProfileReward();
-      }
+      persistRewardChange(() => {
+        delete run.gameProfilePendingReward;
+        if (pending.levelOffers > 0) {
+          const offerId = `${pending.offerId}:level:${pending.levelOffers}`;
+          gameProfileRewardOffers(registries, run, rng, { offerId, source: 'level' });
+          run.gameProfilePendingReward = { ...pending, offerId, source: 'level', levelOffers: pending.levelOffers - 1 };
+        }
+      });
+      if (pending.levelOffers > 0) return showGameProfileReward();
       if (pending.after === 'advanceAct') return advanceAct();
       showMap();
     } });
