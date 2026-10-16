@@ -46,7 +46,7 @@ test('a body at the field edge stays on stage', () => {
   assert.equal(fit.x, 56);
 });
 
-test('selected pose reach clamps mobile artwork without refitting its body or domain cell', () => {
+test('selected pose reach preserves the idle silhouette cell anchor without refitting its body', () => {
   const stage = { dataset: { idleHeightRatio: '1', idleWidthRatio: String(246/261), maximumWidthRatio: String(456/261) },
     matches: selector => selector === '.painted-stage', querySelector: () => null };
   // The live alternative card stage is the sprite's first child itself,
@@ -64,9 +64,9 @@ test('selected pose reach clamps mobile artwork without refitting its body or do
   const size = { id: 'player', scale: .6080383240223463, visibleHeight: 186.34860359596735, multiplier: 1 };
   const before = structuredClone(actor);
   const [fitted] = alternativeCombatComposition({ actors: [actor], sizes: [size], width: 390, perspectiveGrid: true });
-  assert.ok(fitted.x > actor.slot.x, 'the screen edge requires a presentation shift');
-  assert.ok(fitted.x - geometry.edgeWidth*fitted.scale/2 >= 6-1e-9);
-  assert.ok(fitted.x + geometry.edgeWidth*fitted.scale/2 <= 384+1e-9);
+  assert.equal(fitted.x, actor.slot.x, 'a wider action envelope must not move the idle foot anchor');
+  assert.ok(fitted.x - geometry.visibleWidth*fitted.scale/2 >= 6-1e-9);
+  assert.ok(fitted.x + geometry.visibleWidth*fitted.scale/2 <= 384+1e-9);
   assert.equal(fitted.scale, size.scale);
   assert.equal(fitted.visibleHeight, size.visibleHeight);
   assert.equal(fitted.ground, actor.slot.ground);

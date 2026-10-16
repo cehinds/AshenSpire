@@ -64,7 +64,8 @@ export function combatFormation(input) {
   }
   const { width, height, friends = [], enemies = [], footerClearance = 0, preview = false } = input;
   const config = formationLayoutConfig(input.presentation);
-  const dimensions = formationDimensions(config, Math.max(friends.length, enemies.length), friends.length);
+  const savedLanes = Math.max(0, ...(input.presentation?.formationOccupancy || []).map(actor => FORMATION_ROWS.indexOf(actor.cell?.[0]) + 1));
+  const dimensions = formationDimensions({ ...config, formationPolicy: input.presentation?.formationPolicy }, Math.max(friends.length, enemies.length), Math.max(friends.length, savedLanes));
   const { columns, rows } = dimensions;
   const footprint = width * config.formationWidth / 100;
   const gap = footprint * config.formationGap / 100;
@@ -113,5 +114,5 @@ export function combatFormation(input) {
     });
   };
   return { columns, rows, ground: lastFoot, rowSpacing, friendlyWidth: span, enemyWidth: span,
-    cells, slots: [...group(friends, 'player'), ...group(enemies, 'enemy')] };
+    cells: [...cells, ...(dimensions.extraCells || [])], slots: [...group(friends, 'player'), ...group(enemies, 'enemy')] };
 }
