@@ -87,6 +87,16 @@ function verifyContent(content) {
     for (const key of ['cost','staminaCost','manaCost']) if (!Number.isSafeInteger(row[key]) || row[key] < 0) fail(`$/content/cards/${row.id}/${key}`, 'expected nonnegative integer price');
     for (const [i,effect] of (row.effects || []).entries()) if ((effect.amount !== undefined || ['damage','block'].includes(effect.op)) && (typeof effect.amount !== 'number' || !Number.isFinite(effect.amount) || effect.amount < 0)) fail(`$/content/cards/${row.id}/effects/${i}/amount`, 'expected nonnegative finite adapter amount');
   }
+  if (content.stats.poolBasesByClass !== undefined) {
+    if (!record(content.stats.poolBasesByClass)) fail('$/content/stats/poolBasesByClass', 'expected class pool-base map');
+    for (const [classId, pools] of Object.entries(content.stats.poolBasesByClass)) {
+      if (!classIDs.has(classId)) fail(`$/content/stats/poolBasesByClass/${classId}`, 'unknown class');
+      if (!record(pools)) fail(`$/content/stats/poolBasesByClass/${classId}`, 'expected pool-base map');
+      for (const [pool, base] of Object.entries(pools)) {
+        if (!['hp', 'mana', 'stamina'].includes(pool) || !Number.isFinite(base) || base < 0) fail(`$/content/stats/poolBasesByClass/${classId}/${pool}`, 'expected known pool and nonnegative finite base');
+      }
+    }
+  }
   const cards = new Set(content.cards.map(card => card.id));
   if (cards.size !== content.cards.length) fail('$/content/cards', 'duplicate card ID');
   for (const row of content.classes) if (!cards.has(row.specialCardId)) fail(`$/content/classes/${row.id}/specialCardId`, 'unresolved card reference');

@@ -9,7 +9,7 @@
     "manaCost": 0,
     "costRule": "fixed",
     "type": "attack",
-    "icon": "⚔",
+    "icon": "\u2694",
     "keywords": [],
     "effects": [
       {
@@ -38,7 +38,7 @@
     "manaCost": 0,
     "costRule": "fixed",
     "type": "skill",
-    "icon": "🛡",
+    "icon": "\ud83d\udee1",
     "keywords": [],
     "effects": [
       {
@@ -66,7 +66,7 @@
     "manaCost": 0,
     "costRule": "fixed",
     "type": "attack",
-    "icon": "⚔",
+    "icon": "\u2694",
     "keywords": [],
     "effects": [
       {
@@ -96,18 +96,18 @@
     "name": "Smash",
     "class": "colorless",
     "rarity": "starter",
-    "cost": 1,
-    "staminaCost": 1,
+    "cost": 2,
+    "staminaCost": 2,
     "manaCost": 0,
     "costRule": "fixed",
     "type": "attack",
-    "icon": "⚔",
+    "icon": "\u2694",
     "keywords": [],
     "effects": [
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 8
+        "amount": 12
       }
     ],
     "tags": [
@@ -130,7 +130,7 @@
     "manaCost": 0,
     "costRule": "fixed",
     "type": "attack",
-    "icon": "⚔",
+    "icon": "\u2694",
     "keywords": [],
     "effects": [
       {
@@ -154,24 +154,25 @@
     "name": "Sundering Art",
     "class": "reaver",
     "rarity": "starter",
-    "cost": 1,
-    "staminaCost": 1,
-    "manaCost": 0,
+    "cost": 2,
+    "staminaCost": 2,
+    "manaCost": 1,
     "costRule": "fixed",
     "type": "attack",
-    "icon": "⚔",
+    "icon": "\u2694",
     "keywords": [],
     "effects": [
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 10
+        "amount": 36
       }
     ],
     "tags": [
       "camp:physical",
       "maneuver:smash",
-      "classification.attack"
+      "classification.attack",
+      "extractable"
     ],
     "textTemplate": "Deal {damage} damage.",
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
@@ -188,13 +189,19 @@
     "manaCost": 1,
     "costRule": "fixed",
     "type": "attack",
-    "icon": "✦",
+    "icon": "\u2726",
     "keywords": [],
     "effects": [
       {
         "op": "damage",
         "target": "enemy",
         "amount": 9
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "vulnerable",
+        "stacks": 2
       }
     ],
     "tags": [
@@ -202,7 +209,7 @@
       "maneuver:casting",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage.",
+    "textTemplate": "Deal {damage} damage. Apply {vulnerable} Vulnerable.",
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
@@ -217,7 +224,7 @@
     "manaCost": 0,
     "costRule": "fixed",
     "type": "skill",
-    "icon": "🛡",
+    "icon": "\ud83d\udee1",
     "keywords": [],
     "effects": [
       {
@@ -244,7 +251,7 @@
     "manaCost": 0,
     "costRule": "fixed",
     "type": "power",
-    "icon": "🛡",
+    "icon": "\ud83d\udee1",
     "keywords": [],
     "effects": [
       {
@@ -271,7 +278,7 @@
     "manaCost": 0,
     "costRule": "fixed",
     "type": "skill",
-    "icon": "↝",
+    "icon": "\u219d",
     "keywords": [],
     "effects": [],
     "tags": [

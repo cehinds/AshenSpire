@@ -50,6 +50,13 @@ export function gameProfileStatOptions(subject, options = {}) {
       ...(rows[aliases[name] || name] || {}), [attribute]: amount,
     };
   }
+  // Optional authored per-class pool bases use the ordinary stat-row shape;
+  // attribute weights/growth remain the same and are snapshotted with the run.
+  for (const [classId, pools] of Object.entries(stats.poolBasesByClass || {})) {
+    for (const [id, base] of Object.entries(pools)) rows[id] = {
+      ...(rows[id] || {}), byClass: { ...(rows[id]?.byClass || {}), [classId]: { base } },
+    };
+  }
   for (const id of ['openingHand', 'draw']) rows[id] = {
     ...(rows[id] || {}), base: stats.handBase, intelligence: 1, attributeBaseline: 0,
     byClass: {},
