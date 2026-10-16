@@ -1,3 +1,4 @@
+import { stanceMitigation } from './stanceMitigation.js';
 import { rememberCombatStance, defensiveCombatStance, activeCombatStances, stanceCapacity } from './concurrentStances.js';
 import { configuredCombat, configuredModule, setProfileStance } from './gameProfileCombat.js';
 import { removeStatus } from './statuses.js';
@@ -450,10 +451,10 @@ function stanceMultiplier(ctx, target, profile, hit) {
   const incoming = profile.maneuver === 'counter' ? { maneuver: 'counter' } : stanceOf({ combatProfile: profile });
   if (!incoming) return 1;
   const cfg = stanceRulesFor(ctx);
-  if (incoming.maneuver === 'smash' && (['defend', 'casting'].includes(stance?.maneuver) || hit?.evadeAttempted)) return cfg.smashMultiplier;
-  if (incoming.maneuver === 'counter' && (['attack', 'smash'].includes(stance?.maneuver) || hit?.evadeAttempted)) return cfg.counterMultiplier;
-  if (incoming.maneuver === 'sweep' && stance?.maneuver === 'counter') return cfg.sweepCounterMultiplier;
-  return 1;
+  const offense = incoming.maneuver === 'smash' && (['defend', 'casting'].includes(stance?.maneuver) || hit?.evadeAttempted) ? cfg.smashMultiplier
+    : incoming.maneuver === 'counter' && (['attack', 'smash'].includes(stance?.maneuver) || hit?.evadeAttempted) ? cfg.counterMultiplier
+      : incoming.maneuver === 'sweep' && stance?.maneuver === 'counter' ? cfg.sweepCounterMultiplier : 1;
+  return offense * stanceMitigation(ctx, incoming.maneuver, stance?.maneuver).multiplier;
 }
 
 /** Largest-remainder distribution conserves the once-rounded action budget. */

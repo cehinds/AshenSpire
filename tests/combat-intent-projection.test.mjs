@@ -91,6 +91,8 @@ test('known HP presentation and public Dodge charge count remain separate from h
 test('Core Counter has no fabricated mitigation and a wider Evade range stays red despite lower expected HP', () => {
   const { combat, enemy } = fixture(true);
   combat.player.gameProfilePoise = 1;
+  combat.gameProfile = structuredClone(combat.gameProfile);
+  delete combat.gameProfile.modules.stances.defenseMitigation;
   const baseline = projectCombatIntent(combat, enemy.id).projectedDamage;
   combat.player.combatStance = { camp: 'physical', maneuver: 'counter' };
   const counter = projectCombatIntent(combat, enemy.id).projectedDamage;
