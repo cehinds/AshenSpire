@@ -251,7 +251,10 @@
           "statuses",
           "defenses"
         ],
-        "elements": []
+        "elements": [],
+        "protections": [
+          "block"
+        ]
       },
       "decay": null,
       "behaviors": [
@@ -269,7 +272,10 @@
           "statuses",
           "defenses"
         ],
-        "elements": []
+        "elements": [],
+        "protections": [
+          "barrier"
+        ]
       },
       "decay": null,
       "behaviors": [
@@ -773,7 +779,10 @@
           "statuses",
           "defenses"
         ],
-        "elements": []
+        "elements": [],
+        "protections": [
+          "block"
+        ]
       },
       "decay": {
         "phase": "start",

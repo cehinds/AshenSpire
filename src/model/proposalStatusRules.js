@@ -13,8 +13,8 @@ const hasAnyTag = (card, tags) => !tags?.length || tags.some(tag => tagsOf(card)
 
 export function proposalRuleEnabled(rule, capabilities = {}) {
   if (!rule) return false;
-  return ['modules', 'elements'].every(key => capabilities[key] == null
-    || (rule.requires?.[key] || []).every(value => capabilities[key].includes(value)));
+  return Object.entries(rule.requires || {}).every(([key, values]) => capabilities[key] == null
+    || values.every(value => capabilities[key].includes(value)));
 }
 
 function* active(actor, rules = {}, capabilities) {
@@ -61,7 +61,7 @@ export function proposalThresholdRules({ actor, rules = {}, capabilities } = {})
 /** Taxes are flat while active; stacks extend their duration, not their magnitude. */
 export function proposalCardRules({ actor, card, rules = {}, capabilities, reactive = false } = {}) {
   const out = { allowed: true, refusal: null, staminaTax: 0, manaTax: 0, additionalStanceCapacity: 0,
-    effects: [], statusChanges: [] };
+    effects: [], statusChanges: [], revealIntent: false };
   for (const { status, stacks, behavior: b } of active(actor, rules, capabilities)) {
     if (b.kind === 'restriction' && matches(b.cardTypes, card?.type)) {
       out.allowed = false; out.refusal = `Restricted by ${status}`;
@@ -69,6 +69,7 @@ export function proposalCardRules({ actor, card, rules = {}, capabilities, react
     if (b.kind === 'cardTax' && matches(b.ranges, rangeOf(card))) {
       out.staminaTax += b.stamina || 0; out.manaTax += b.mana || 0;
     }
+    if (b.kind === 'revealIntent') out.revealIntent = true;
     if (b.kind === 'stanceCapacity') out.additionalStanceCapacity += stacks * b.additionalPerStack;
     if (reactive || !hasAnyTag(card, b.requiredTags)) continue;
     if (b.kind === 'extraWeapon' && card?.type === 'attack') {
@@ -98,7 +99,9 @@ export function proposalTargetRules({ actor, target, card, rules = {}, capabilit
   const out = { allowed: true, avoided: false, accuracyDelta: 0, unavoidable: false,
     perceptionChance: null, evadeChance: 0, checks: [], statusChanges: [] };
   const range = rangeOf(card), camp = card?.camp ?? (tagsOf(card).includes('camp:spell') ? 'spell' : 'physical');
-  const damageType = card?.damageType ?? card?.attack?.damageType;
+  const damageType = card?.damageType ?? card?.attack?.damageType
+    ?? card?.effects?.find(row => row.op === 'damage' && row.damageType)?.damageType
+    ?? tagsOf(card).find(tag => tag.startsWith('damage:'))?.slice(7);
   for (const { behavior: b } of active(actor, rules, capabilities))
     if (b.kind === 'accuracy' && matches(b.ranges, range)) out.accuracyDelta += b.delta;
   for (const { status, stacks, behavior: b } of active(target, rules, capabilities)) {
@@ -149,8 +152,8 @@ export function proposalHitRules({ actor, target, card, amount, damageType, camp
     if (b.kind === 'incomingCap' && (!b.directOnly || direct)) incomingCap = Math.min(incomingCap, b.maximum);
     if (b.kind === 'damageToHealing' && matches(b.damageTypes, damageType)) healingMultiplier = b.multiplier;
   }
-  out.amount = Math.min(out.amount, incomingCap);
   if (healingMultiplier != null) { out.healing = rounded(out.amount * healingMultiplier); out.amount = 0; }
+  else out.amount = Math.min(out.amount, incomingCap);
   if (direct && !reactive && out.amount > 0) {
     const guards = allies.filter(row => idOf(row) !== idOf(target) && row.hp > 0).sort((a, b) => String(idOf(a)) < String(idOf(b)) ? -1 : String(idOf(a)) > String(idOf(b)) ? 1 : 0);
     outer: for (const guard of guards) for (const { status, stacks, behavior: b } of active(guard, rules, capabilities)) {
