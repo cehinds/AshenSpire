@@ -122,6 +122,7 @@ export const REQUIRED_TOKEN_OPS = Object.freeze([
 ]);
 
 const KNOWN_BUNDLE_KEYS = new Set([
+  'proposalStatusRules',
   ...REGISTRY_TYPES,
   'version',
   'contentVersion',
@@ -2454,6 +2455,7 @@ export function validateEffects(effects, path, vctx) {
     if (['moveCards','modifyCards'].includes(eff.op)) { try { validateZoneEffect(eff); } catch (error) { err(p, error.message); } }
     if (eff.oncePerTurn !== undefined && (typeof eff.oncePerTurn !== 'string' || !eff.oncePerTurn.trim())) err(`${p}.oncePerTurn`, 'must be a non-empty family marker');
     for (const flag of ['nonlethal', 'offering', ...(eff.op === 'discard' ? ['choose'] : [])]) if (eff[flag] !== undefined && typeof eff[flag] !== 'boolean') err(`${p}.${flag}`, 'must be a boolean');
+    if(eff.op==='addBurden' && eff.pile!==undefined && !['draw','hand'].includes(eff.pile)) err(`${p}.pile`,'Enemy burden pile must be draw or hand');
     if (eff.op === 'discard' && eff.choose && eff.random) err(p, 'chosen discard cannot also be random');
     if (eff.op === 'grantCardCharge') {
       if (typeof eff.key !== 'string' || !eff.key.trim()) err(`${p}.key`, 'must be a non-empty charge key');

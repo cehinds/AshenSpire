@@ -532,7 +532,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   const send = (obj,{progressionPopup=false}={}) => {
     if (latestWireSnap?.scene?.reactionWaiting && ['playCard', 'endTurn', 'flaskIntent', 'recoverControl', 'chooseBlightFeat', 'predictIntent'].includes(obj.t)) { showPendingReaction(); return; }
     if (obj.t === 'playCard' && obj.upcastTier == null && upcastTiersByCard.has(upcastKey(obj.cardInstanceId))) obj = { ...obj, upcastTier: upcastTiersByCard.get(upcastKey(obj.cardInstanceId)) };
-    if (obj.t !== 'chooseDiscard' && ['playCard', 'endTurn', 'flaskIntent'].includes(obj.t) && latestWireSnap?.scene?.players?.some(p => p.pendingAbilityDiscard)) { showPendingDiscard(); return; }
+    if (obj.t !== 'chooseDiscard' && ['playCard', 'endTurn', 'flaskIntent'].includes(obj.t) && latestWireSnap?.scene?.players?.some(p => p.pendingAbilityDiscard || p.pendingCardChoice)) { showPendingDiscard(); return; }
     if(progressionDoor&&!progressionDoor.ready&&!progressionPopup&&['chooseReward','catchupChoice','chooseClassMilestone','chooseLevelCard','chooseAbilityDraft'].includes(obj.t))return false;
     if (busy() && ['playCard', 'endTurn', 'flaskIntent'].includes(obj.t)) return;
     if (obj.t === 'playCard' && obj.upcastTier == null && meta.settings?.askToUpcastAfterTarget) {
@@ -699,7 +699,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     return combatSnapshotCardCosts(memberRegistries(), def, player);
   }
   function cardAffordableFromSnapshot(def, player) {
-    if (!def || !player || player.pendingAbilityDiscard || player.ended || !player.alive || !player.connected) return false;
+    if (!def || !player || (player.pendingAbilityDiscard || player.pendingCardChoice) || player.ended || !player.alive || !player.connected) return false;
     if (player.ashenBlight?.milestones.some(row => row.path === null) || !controlGate({ combatExpansionVersion: player.combatExpansionVersion || 1, combatStatusRules: snap?.scene?.combatStatusRules }, player, def).allowed) return false;
     const costs = snapshotCosts(def, player);
     return player.energy >= costs.energy && player.mana >= costs.mana && (player.stamina || 0) >= costs.stamina;
@@ -1183,14 +1183,15 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     showPendingReaction();
     const sc = latestWireSnap?.scene;
     const player = sc?.players?.find(p => p.id === me);
-    const pending = player?.pendingAbilityDiscard;
+    const pending = player?.pendingAbilityDiscard || player?.pendingCardChoice;
     if (!pending || pending.playerId !== me || discardShell || busy()) return;
     const owner = me;
     // This viewer's stacked cards wait to resolve: they are not discard fodder (the engine refuses them).
     const stackedIds = new Set((sc.reactionStack?.entries || []).filter((entry) => entry.ownerId === me).map((entry) => entry.cardInstanceId));
     discardShell = openDiscardChoiceModal({
+      ...(player.pendingCardChoice ? {title:t('combat.cards.choose.title',{count:pending.count}),prompt:t('combat.cards.choose.prompt',{from:pending.effect.from,to:pending.effect.to || pending.effect.from}),confirmLabel:t('combat.cards.choose.confirm'),ordered:pending.effect.from===pending.effect.to} : {}),
       count: pending.count, cardName: registries.cards.get(pending.cardId).name,
-      cards: player.hand.filter((card) => !stackedIds.has(card.instanceId)).map(card => ({ instanceId: card.instanceId, name: resolveCard(registries, card).name })),
+      cards: (player.pendingCardChoice ? pending.candidates : player.hand.filter((card) => !stackedIds.has(card.instanceId))).map(card => ({ instanceId: card.instanceId, name: resolveCard(registries, card).name })),
       onClosed: () => { discardShell = null; },
       onChoose: cardInstanceIds => { if (me === owner) send({ t: 'chooseDiscard', cardInstanceIds }); },
     });
@@ -1201,7 +1202,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   function showPendingReaction() {
     const sc = latestWireSnap?.scene;
     const owner = sc?.players?.find(player => seats.includes(player.id) && player.pendingReaction?.ownerId === player.id);
-    if (!owner || reactionShell || busy() || sc.players.some(player => player.pendingAbilityDiscard)) return;
+    if (!owner || reactionShell || busy() || sc.players.some(player => player.pendingAbilityDiscard || player.pendingCardChoice)) return;
     const ownerId = owner.id;
     reactionOfferId = owner.pendingReaction.id;
     if (me !== ownerId) { seatIdx = seats.indexOf(ownerId); me = ownerId; }
@@ -1431,7 +1432,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     combatTools?.release();
     const updateTools = () => combatTools.update(combatToolsModel({ supported: sc.reactionRulesVersion >= 1,
       enabled: meP?.reactionsEnabled !== false, disabled: busy() || sc.phase !== 'player' || !!sc.reactionWaiting
-        || !meP?.connected || !meP?.alive || !!meP?.pendingAbilityDiscard,
+        || !meP?.connected || !meP?.alive || !!(meP?.pendingAbilityDiscard || meP?.pendingCardChoice),
       ...combatToolsState, entries: sc.combatLog || [] }));
     combatTools = mountCombatTools(app.querySelector('.combat'), { state: combatToolsState,
       onViewChange: updateTools, onToggle: enabled => send({ t: 'setReactions', enabled }) });

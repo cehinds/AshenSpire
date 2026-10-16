@@ -576,7 +576,7 @@ function restoreRootPlay(ctx) {
 }
 
 export function restoreReactionQueue(ctx) {
-  if (!ctx.reactionResume || ctx.pendingAbilityDiscard || ctx.pendingAbilityPlay) return;
+  if (!ctx.reactionResume || (ctx.pendingAbilityDiscard || ctx.pendingCardChoice) || ctx.pendingAbilityPlay) return;
   const saved = ctx.reactionResume;
   ctx.queue.push(...saved.queue);
   if (ctx.foundation && saved.foundation) Object.assign(ctx.foundation, saved.foundation);

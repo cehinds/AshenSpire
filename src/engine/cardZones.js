@@ -21,8 +21,9 @@ export function validateZoneEffect(effect) {
   if (!['first', 'random', 'choose'].includes(effect.selection || 'first')) throw new Error('Unknown card selection');
   if (effect.op === 'modifyCards') {
     if (!effect.changes || typeof effect.changes !== 'object' || Array.isArray(effect.changes)) throw new Error('Card changes must be an object');
-    for (const key of Object.keys(effect.changes)) if (!['retain','hideTurns','maneuver','range'].includes(key)) throw new Error('Unknown card change');
+    for (const key of Object.keys(effect.changes)) if (!['retain','retainTurns','hideTurns','maneuver','range'].includes(key)) throw new Error('Unknown card change');
     if (effect.changes.retain !== undefined && typeof effect.changes.retain !== 'boolean') throw new Error('Retain must be boolean');
+    if (effect.changes.retainTurns!==undefined && (!Number.isSafeInteger(effect.changes.retainTurns) || effect.changes.retainTurns<1 || effect.changes.retainTurns>10)) throw new Error('Retain duration must be 1–10 turns');
     if (effect.changes.hideTurns !== undefined && (!Number.isSafeInteger(effect.changes.hideTurns) || effect.changes.hideTurns < 1 || effect.changes.hideTurns > 10)) throw new Error('Hide duration must be 1–10 turns');
     if (effect.changes.maneuver && !['attack','smash','defend','sweep','counter','casting','evade'].includes(effect.changes.maneuver)) throw new Error('Unknown card maneuver');
     if (effect.changes.range && !['melee','reach','ranged'].includes(effect.changes.range)) throw new Error('Unknown card range');
@@ -35,9 +36,9 @@ function applyMove(ctx, effect, ids) {
     for (const id of ids) {
       const card = ctx.piles[effect.from].find(c => c.instanceId === id);
       card.proposalChanges = {...card.proposalChanges,...effect.changes};
-      if (effect.changes.retain) {ctx.player.combatRetainedCards ||= []; if (!ctx.player.combatRetainedCards.includes(id)) ctx.player.combatRetainedCards.push(id);}
+      if (effect.changes.retain) card.proposalChanges.retainUntilTurn=ctx.turn+(effect.changes.retainTurns || 1)-1;
       if (effect.changes.hideTurns) {
-        ctx.hiddenCards ||= []; ctx.hiddenCards.push({card,returnTurn:ctx.turn+effect.changes.hideTurns});
+        ctx.hiddenCards ||= []; ctx.hiddenCards.push({card,playerId:ctx.playerKey || null,returnTurn:ctx.turn+effect.changes.hideTurns});
         ctx.piles[effect.from].splice(ctx.piles[effect.from].indexOf(card),1);
       }
       ctx.emit('cardModified',{cardInstanceId:id,cardId:card.cardId,changes:effect.changes});
@@ -75,7 +76,7 @@ export function moveCards(ctx, action, amount) {
   if (!count) return;
   if (effect.selection === 'choose') {
     if (!ctx.pendingAbilityPlay) throw new Error('Card selection requires a resolving card');
-    ctx.pendingCardChoice = { kind: 'moveCards', count, effect: {...structuredClone(effect),amount:count}, candidateIds: candidates.map(c => c.instanceId), playerId: ctx.playerKey || null, cardId: ctx.pendingAbilityPlay.instance.cardId };
+    ctx.pendingCardChoice = { kind: 'moveCards', count, effect: {...structuredClone(effect),amount:count}, candidateIds: candidates.map(c => c.instanceId), candidates:candidates.map(c=>({instanceId:c.instanceId,cardId:c.cardId})), playerId: ctx.playerKey || null, cardId: ctx.pendingAbilityPlay.instance.cardId };
     return;
   }
   const ordered = effect.selection === 'random' ? ctx.rng.shuffle('shuffle', candidates) : candidates;
@@ -92,9 +93,14 @@ export function chooseZoneCards(ctx, ids) {
 
 export function returnHiddenCards(ctx) {
   const remaining=[];
-  for (const row of ctx.hiddenCards || []) if (row.returnTurn <= ctx.turn) {
+  for (const row of ctx.hiddenCards || []) if (row.returnTurn <= ctx.turn && (row.playerId || null)===(ctx.playerKey || null)) {
     (ctx.piles.hand.length < ctx.handMax ? ctx.piles.hand : ctx.piles.discard).push(row.card);
     ctx.emit('cardMoved',{cardInstanceId:row.card.instanceId,cardId:row.card.cardId,from:'hidden',to:'hand',reason:'returned'});
   } else remaining.push(row);
   if (ctx.hiddenCards) ctx.hiddenCards=remaining;
+}
+
+export function cardChoiceForSeat(ctx,playerId) {
+ const pending=ctx.pendingCardChoice;
+ return pending && pending.playerId===playerId ? structuredClone(pending) : null;
 }
