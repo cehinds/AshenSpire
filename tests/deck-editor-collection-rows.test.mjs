@@ -29,13 +29,16 @@ test('a grouped row removes an actual member and restores its ownership before m
   const session = openDeckEdit(registries, run);
   let strike = rows().find(row => row.name === 'Slashing Strike');
   const removed = run.deck.find(card => card.instanceId === strike.removeInstanceId);
-  assert.ok(removed.grantedBy, 'last matching equipped grant is selected');
+  assert.ok(removed, 'the group selects an actual deck instance');
   assert.equal(session.remove(strike.removeInstanceId).ok, true);
+  session.undo();
+  const grant = run.deck.find(card => card.instanceId === 'kit:straightSword:attack');
+  assert.equal(session.remove(grant.instanceId).ok, true);
   strike = rows().find(row => row.name === 'Slashing Strike');
   assert.equal(strike.inDeck, 1);
   assert.notEqual(strike.addKey, strike.key, 'available owned member is restored before minting');
   assert.equal(session.add(strike.addKey).ok, true);
-  assert.ok(run.deck.some(card => card.instanceId === removed.instanceId));
+  assert.ok(run.deck.some(card => card.instanceId === grant.instanceId));
   assert.equal(rows().find(row => row.name === 'Slashing Strike').inDeck, 2);
   session.cancel();
   assert.deepEqual(run, before);

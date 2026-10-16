@@ -5815,7 +5815,7 @@ export const uiStrings = [
   {
     "id": "deckEditor.keys",
     "extends": "",
-    "short": "Select to inspect · ＋ or － moves a card · {panes} switch panes · {filter} cycles filters · {move} picks up a row · {done} Done · {cancel} Cancel",
+    "short": "Select to inspect · ＋ or － moves a card · {panes} switch panes · {filter} cycles filters · {move} picks up a row · {done} Accept · {cancel} Cancel",
     "full": "",
     "tip": ""
   },
@@ -5830,7 +5830,7 @@ export const uiStrings = [
     "id": "deckEditor.cancel",
     "extends": "",
     "short": "Cancel",
-    "full": "Put the deck back exactly as it was when the editor opened.",
+    "full": "Discard deck changes after confirmation.",
     "tip": "Cancel"
   },
   {
@@ -10732,5 +10732,40 @@ export const uiStrings = [
     "short": "Rules and keywords",
     "full": "Rules and keywords",
     "tip": "Rules and keywords"
+  },
+  {
+    "id": "deckEditor.accept",
+    "extends": "",
+    "short": "Accept",
+    "full": "Save this deck.",
+    "tip": "Accept"
+  },
+  {
+    "id": "deckEditor.closeUnsaved.title",
+    "extends": "",
+    "short": "Discard deck changes?",
+    "full": "Discard deck changes?",
+    "tip": "Discard deck changes?"
+  },
+  {
+    "id": "deckEditor.closeUnsaved.message",
+    "extends": "",
+    "short": "Close without saving your deck edits?",
+    "full": "Close without saving your deck edits?",
+    "tip": "Close without saving your deck edits?"
+  },
+  {
+    "id": "deckEditor.closeUnsaved.discard",
+    "extends": "",
+    "short": "Discard changes",
+    "full": "Discard changes",
+    "tip": "Discard changes"
+  },
+  {
+    "id": "deckEditor.closeUnsaved.keepEditing",
+    "extends": "",
+    "short": "Keep editing",
+    "full": "Keep editing",
+    "tip": "Keep editing"
   }
 ];

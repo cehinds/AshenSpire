@@ -897,9 +897,9 @@ deckEditor.refuse.copyLimit,,{name} is limited to {limit} in the deck.,,
 deckEditor.refuse.allInDeck,,Every {name} you own is already in the deck.,,
 deckEditor.empty.deck,,No card in the deck matches these filters.,,
 deckEditor.empty.collection,,No card you own matches these filters.,,
-deckEditor.keys,,"Select to inspect · ＋ or － moves a card · {panes} switch panes · {filter} cycles filters · {move} picks up a row · {done} Done · {cancel} Cancel",,
+deckEditor.keys,,"Select to inspect · ＋ or － moves a card · {panes} switch panes · {filter} cycles filters · {move} picks up a row · {done} Accept · {cancel} Cancel",,
 deckEditor.done,,Done,Keep this deck.,Done
-deckEditor.cancel,,Cancel,Put the deck back exactly as it was when the editor opened.,Cancel
+deckEditor.cancel,,Cancel,Discard deck changes after confirmation.,Cancel
 # ---- why a forward control is off (docs/FINISH.md §6) ------------------------
 # The visible line under a disabled Next / Continue / Confirm (refusal.js
 # reasonNote). Short and plain: what the player does to turn it on.
@@ -1619,3 +1619,8 @@ deckEditor.preview.card,,Show card,Show card,Show card
 deckEditor.preview.animation,,Show animation,Show animation,Show animation
 deckEditor.keywordExplanations,,Keyword explanations,Keyword explanations,Keyword explanations
 deckEditor.rulesAndKeywords,,Rules and keywords,Rules and keywords,Rules and keywords
+deckEditor.accept,,Accept,Save this deck.,Accept
+deckEditor.closeUnsaved.title,,Discard deck changes?,Discard deck changes?,Discard deck changes?
+deckEditor.closeUnsaved.message,,Close without saving your deck edits?,Close without saving your deck edits?,Close without saving your deck edits?
+deckEditor.closeUnsaved.discard,,Discard changes,Discard changes,Discard changes
+deckEditor.closeUnsaved.keepEditing,,Keep editing,Keep editing,Keep editing
