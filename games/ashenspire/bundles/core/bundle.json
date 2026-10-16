@@ -75,6 +75,19 @@
     "reactions": {
       "version": "1.0.0",
       "settings": {}
+    },
+    "formation": {
+      "version": "1.0.0",
+      "settings": {
+        "mode": "configured",
+        "extraRow": {
+          "enabled": false,
+          "sides": [
+            "enemy"
+          ],
+          "capacityPerLane": 1
+        }
+      }
     }
   },
   "packs": [
