@@ -487,7 +487,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // Three or more lanes on a phone cap HUD width while retaining physical type/tap floors.
     combat.style.setProperty('--combat-enemy-hud-scale', String(Math.min(
       uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.enemyMiniHudScale,
-      Math.max(1, (fieldRect.width - 24) / (plan.rows * 104)))));
+      Math.max(1, Math.min((fieldRect.width - 24) / plan.rows,
+        ...plan.cells.map(cell => (cell.box?.width ?? Infinity) - 12)) / 104))));
     const grid = field.querySelector('.formation-grid');
     if (grid) {
       grid.dataset.shape = presentation.gridShape;
@@ -558,14 +559,17 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       const enemyId = sprite.firstElementChild.dataset.enemyId;
       const ratio = combatSpriteRatio(frame.dataset.stature, enemyId);
       const leadingHost = frame.querySelector('.combatant-leading');
-      const leadingHeight = !frame.classList.contains('player') ? (visibleCombatPanelRect(leadingHost, field)?.height || 0) / zoom : 0;
+      let leadingHeight = !frame.classList.contains('player') ? (visibleCombatPanelRect(leadingHost, field)?.height || 0) / zoom : 0;
       // Inspect and intent stack vertically except on short landscape screens,
       // where their complete side-by-side union must stay inside the field.
       // Decorative shortcut keys do not enlarge the actionable control box.
       // An enemy's Inspect sits above its intent outside the fitted envelope
       // (placeEnemyInspect), so it never widens or heightens the stack.
-      const leadingRects = leadingHost ? [...leadingHost.querySelectorAll(':scope > .overhead-control:not(.combatant-info), :scope > .combatant-mini-hud')]
+      const leadingRects = leadingHost ? [...leadingHost.querySelectorAll(':scope > .overhead-control:not(.combatant-info), :scope > .combatant-mini-hud, :scope > .statuses')]
         .map(control => visibleCombatPanelRect(control, field)).filter(Boolean) : [];
+      // Status rows belong to this HUD; transient hit-chance receipts do not resize art.
+      if (!frame.classList.contains('player') && leadingRects.length) leadingHeight =
+        (Math.max(...leadingRects.map(r => r.bottom)) - Math.min(...leadingRects.map(r => r.top))) / zoom;
       const leadingWidth = leadingRects.length && !frame.classList.contains('player') ? (Math.max(...leadingRects.map(rect => rect.right))
         - Math.min(...leadingRects.map(rect => rect.left))) / zoom : 0;
       const multiplier = (presentation[`row${FORMATION_ROWS[slot.row]}Scale`] ?? 1) * (frame.classList.contains('player') ? presentation.playerSpriteScale : presentation.enemySpriteScale)
@@ -1018,9 +1022,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         const artTop = anchorLocalBox(frame, { left: 0, top: currentSpriteArtBounds(sprite, refresh).top, width: 0, height: 0 }).top;
         bottomLimit = artTop - INTENT_ART_GAP;
       } else {
+        const statusHeight = (leadingHost.querySelector(':scope > .statuses')?.getBoundingClientRect().height || 0) / zoom;
         const topOfRow = Math.min(anchorLocalBox(frame, row).top, ...[...row.querySelectorAll('.combat-health-badge')]
           .map(badge => anchorLocalBox(frame, badge).top));
-        bottomLimit = topOfRow - INTENT_BAR_GAP;
+        bottomLimit = topOfRow - INTENT_BAR_GAP - statusHeight;
       }
       const dx = (trackBox.left + trackBox.width / 2) - (intentBox.left + intentBox.width / 2);
       let dy = bottomLimit - (intentBox.top + intentBox.height);
