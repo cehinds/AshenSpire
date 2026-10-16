@@ -52,6 +52,6 @@ for (const { width, height, zoom } of WINDOWS) {
 // of the observer when it releases.
 test('the combat layout re-plans when data-form-factor changes', () => {
   assert.match(combatLayoutSource, /formFactorObserver = new MutationObserver\(schedule\);/);
-  assert.match(combatLayoutSource, /formFactorObserver\.observe\(document\.documentElement, \{ attributes: true, attributeFilter: \['data-form-factor'\] \}\);/);
+  assert.match(combatLayoutSource, /formFactorObserver\.observe\(document\.documentElement, \{ attributes: true, attributeFilter: \['data-form-factor', 'data-display-appearance'\] \}\);/);
   assert.match(combatLayoutSource, /function release\(\) \{[\s\S]*?formFactorObserver\?\.disconnect\(\);/);
 });

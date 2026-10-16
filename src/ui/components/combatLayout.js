@@ -1,3 +1,4 @@
+import { desktopFooterEnabled, desktopFooterLayout } from '../models/DesktopCombatFooter.js';
 import { allocateCombatBands, packCombatFooter } from '../models/CombatLayout.js';
 import { footerArtHeight, footerArtWidth } from '../models/FooterLayoutModel.js';
 import { footerSizing } from '../../content/footerLayout.js';
@@ -35,6 +36,18 @@ export function wireCombatLayout(combatEl) {
     // | desktop). The plan reads it; it is mirrored on the combat root for CSS.
     const formFactor = document.documentElement.dataset.formFactor || null;
     combatEl.dataset.formFactor = formFactor || '';
+    const split = desktopFooterEnabled({ formFactor, appearance: document.documentElement.dataset.displayAppearance, layout: combatEl.dataset.layout });
+    combatEl.dataset.desktopFooter = String(split);
+    if (split && row && handArea) {
+      const plan = desktopFooterLayout({ width: combatEl.clientWidth, height: combatEl.clientHeight, zoom });
+      const areaTop = (handArea.getBoundingClientRect().top - combatEl.getBoundingClientRect().top) / zoom;
+      for (const [name, value] of Object.entries({ 'area-top': areaTop, 'hand-top': plan.handTop - areaTop, 'hand-height': plan.handHeight, 'background-top': plan.backgroundTop - areaTop, 'tools-top': plan.toolsTop, 'corner-inset': plan.corner, 'end-art-width': plan.endArtWidth, 'end-art-height': plan.endArtHeight })) combatEl.style.setProperty('--desktop-' + name, value + 'px');
+      const selectors = { sp: '.energy-orb', draw: '.draw', end: '.end-turn', discard: '.spent', potions: '.combat-potions' };
+      for (const [role, box] of Object.entries(plan.controls)) {
+        const control = row.querySelector(selectors[role]);
+        if (control) for (const [key, value] of Object.entries(box)) control.style.setProperty('--desktop-' + key, value + 'px');
+      }
+    }
     const compact = width * zoom <= uiConfig.scenes.w4a.sizing.compactCombat.maxWidthPx;
     combatEl.dataset.compactCombat = String(compact);
     const bands = allocateCombatBands({ width, height: combatEl.clientHeight, zoom, rem, compact, footerArtPx: footerArtHeight(width, zoom, formFactor) * zoom });
@@ -107,7 +120,7 @@ export function wireCombatLayout(combatEl) {
   // form factor. Re-plan when the attribute changes.
   if (typeof MutationObserver !== 'undefined') {
     formFactorObserver = new MutationObserver(schedule);
-    formFactorObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-form-factor'] });
+    formFactorObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-form-factor', 'data-display-appearance'] });
   }
   apply();
   return { apply, release };

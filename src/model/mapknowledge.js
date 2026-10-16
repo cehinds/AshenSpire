@@ -91,7 +91,7 @@ export const MAP_MODE_DEFAULT = 'fog';
 
 /**
  * resolveMapMode(meta, run?) → 'path' | 'fog'.
- * Configured routes pin their authored visibility policy; legacy runs use the viewer setting.
+ * Configured routes pin their authored visibility policy; legacy runs use an explicit viewer setting, then the authored profile default.
  *
  * Unset, or a value this build cannot read, is the SHIPPING DEFAULT — the same
  * rule `savedZoom` and `resolveTapSize` use one screen away, and for the same
@@ -103,7 +103,7 @@ export function resolveMapMode(meta, run) {
   const routes = gameModule(run, 'routes');
   if (routes?.mode === 'configured') return MAP_MODES.includes(routes.mapMode) ? routes.mapMode : MAP_MODE_DEFAULT;
   const m = ((meta && meta.settings) || {}).mapMode;
-  return MAP_MODES.includes(m) ? m : MAP_MODE_DEFAULT;
+  return MAP_MODES.includes(m) ? m : MAP_MODES.includes(routes?.mapMode) ? routes.mapMode : MAP_MODE_DEFAULT;
 }
 
 /**
