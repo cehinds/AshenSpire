@@ -151,7 +151,7 @@ test('actual core run hands the same pin and derived AR/DR to the live combat fa
   assert.deepEqual(combat.skillXp, {}, 'configured core does not gain legacy skill XP');
 });
 
-test('current profile adds only formation metadata while preserving absent-profile combat traces and state', async () => {
+test('current profile uses right-first placement while legacy combat keeps absent occupancy and identical combat traces', async () => {
   const { createRunState } = await import('../src/model/state.js');
   const { createRunCombat } = await import('../src/engine/runCombat.js');
   const current = resolveGameProfile('current');
@@ -165,7 +165,8 @@ test('current profile adds only formation metadata while preserving absent-profi
     const selectedSnapshot = serializeCombatSnapshot(selected), absentSnapshot = serializeCombatSnapshot(absent);
     assert.deepEqual(selectedSnapshot.formationPolicy, current.modules.formation);
     assert.equal(selectedSnapshot.player.formationCell, 'C1');
-    assert.deepEqual(selectedSnapshot.enemies.map(enemy => enemy.formationCell), ['A4']);
+    assert.deepEqual(selectedSnapshot.enemies.map(enemy => enemy.formationCell), ['C4'], 'profile-backed fresh enemies start at back right');
+    // Legacy fights have no authoritative occupancy; they do not acquire the new default order.
     assert.equal(absentSnapshot.formationPolicy, undefined);
     assert.equal(absentSnapshot.player.formationCell, undefined);
     assert(absentSnapshot.enemies.every(enemy => enemy.formationCell === undefined));
