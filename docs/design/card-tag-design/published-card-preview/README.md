@@ -12,9 +12,11 @@ These cards remain visual proposals with unknown costs, rank, school and stance;
 
 ## Publishing and capture record
 
-Public route (scroll-fix revision pending verification): https://cehinds.github.io/AshenSpire/branches/Feature/CardPreview/latest/.
+Verified public route: https://cehinds.github.io/AshenSpire/branches/Feature/CardPreview/latest/.
 
-**Historical verification of the prior payload; not evidence for the scroll correction.** Trusted runner [38855179710, job 116824927874](https://github.com/cehinds/AshenSpire/actions/runs/38855179710) passed on 2026-10-16 at 05:19:39 UTC. The public index identified artifact source `3094c9203fa8d07ba2fdda5c05d77162efbf83d8`. Wrapper, loader and plaintext payload returned HTTP 200; the downloaded 11,139,723 bytes matched SHA-256 `f402742bbdf84ba368020a0992ee063546c57881f48a6e3f91c791eb60250291`. This pins the approved visual payload, not the latest source HEAD. Compressed HEAD length was 7,529,673 bytes with gzip; the strict length and hash apply to the decompressed GET body. See public-verification-receipt.json.
+**Scroll correction verified live.** Trusted runner [38857128568, job 116831016106](https://github.com/cehinds/AshenSpire/actions/runs/38857128568) passed on 2026-10-16 at 06:20:25 UTC. The public index identified the exact expected source `44829bbee22fa1f18d4367ecc6dc8d929328780c`. Wrapper, loader and plaintext payload returned HTTP 200; the decoded GET body was exactly 11,139,814 bytes with SHA-256 `04e17eaf2cf1ebb3d393d2aa0e26a62f3fe0873f0a3f0e8e3df862debfb28d5a`. This pins the tested scroll-fixed payload, not a later documentation HEAD. The compressed HEAD length was 7,529,696 bytes with gzip. See public-verification-receipt.json and public-verification.log.
+
+The previous payload f402742b… was verified at 05:19:39 UTC by run 38855179710. That prior receipt is historical and does not establish the scrolling correction; the current receipt above does.
 
 The dedicated feature-preview workflow validates the committed plaintext build.txt and packages it as the artifact’s only HTML file. The trusted dev Pages publisher serves the payload as build.txt inside its existing opaque-origin sandbox wrapper. This branch does not deploy directly, change Pages settings, or merge game changes.
 
@@ -24,13 +26,13 @@ Captures are existing reviewed files in ../ingame-look-preview/: mobile.png (390
 
 Run `node validate-bundle.mjs` for static delivery checks. To regenerate, run the sibling ingame-look-preview server with ASHENSPIRE_REPO set, then use export-standalone.mjs with CARD_PREVIEW_URL, CARD_PREVIEW_OUTPUT and optionally CARD_PREVIEW_PROPOSALS. The copied exporter defaults to the sibling preview’s proposals.json when needed. Exporting requires the same browser/Playwright tools as the reviewed preview; CI only validates and packages the already reviewed bytes.
 
-The scrolling correction is awaiting publication and exact-byte public verification. The previous f402742b… receipt remains historical. The current checker waits for GITHUB_SHA in the public index, then the new approved payload hash; stale CDN bodies are retried at most once per minute for up to 44 minutes.
+The scrolling correction passed exact-byte public verification at 06:20:25 UTC. The previous f402742b… receipt remains historical. The current checker waits for GITHUB_SHA in the public index, then the new approved payload hash; stale CDN bodies are retried at most once per minute for up to 44 minutes.
 
 ## Scroll correction capture record
 
 The inherited game page styles fixed the document height and hid overflow. The gallery-specific override gives html and body automatic height and restores vertical document scrolling; the card renderer and artwork are unchanged.
 
-Reviewed candidate: SHA-256 `04e17eaf2cf1ebb3d393d2aa0e26a62f3fe0873f0a3f0e8e3df862debfb28d5a`, 11,139,814 bytes. These are local captures of the exact opaque-origin Pages wrapper, made 2026-10-16 UTC (2026-10-15 Anchorage), not evidence that the public correction has deployed.
+Reviewed candidate: SHA-256 `04e17eaf2cf1ebb3d393d2aa0e26a62f3fe0873f0a3f0e8e3df862debfb28d5a`, 11,139,814 bytes. These are local captures of the exact opaque-origin Pages wrapper, made 2026-10-16 UTC (2026-10-15 Anchorage). The separate strict public receipt verifies that the same approved payload is live.
 
 | Mobile · 390×844 | Tablet · 1024×768 |
 | --- | --- |
