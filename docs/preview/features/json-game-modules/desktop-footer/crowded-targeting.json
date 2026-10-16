@@ -1,0 +1,110 @@
+{
+  "status": "passed",
+  "metrics": [
+    {
+      "profile": "core",
+      "width": 1440,
+      "seven": {
+        "count": 7,
+        "bands": [
+          "A",
+          "A",
+          "A",
+          "A",
+          "B",
+          "B",
+          "B"
+        ],
+        "cells": [
+          "A4",
+          "B4",
+          "C4",
+          "D4",
+          "A3",
+          "B3",
+          "C3"
+        ],
+        "policy": {
+          "mode": "configured",
+          "extraRow": {
+            "enabled": false,
+            "sides": [
+              "enemy"
+            ],
+            "capacityPerLane": 1
+          }
+        }
+      }
+    },
+    {
+      "profile": "current",
+      "width": 1440,
+      "seven": {
+        "count": 7,
+        "bands": [
+          "A",
+          "A",
+          "A",
+          "B",
+          "B",
+          "B",
+          "C"
+        ],
+        "cells": [
+          "A4",
+          "B4",
+          "C4",
+          "A3",
+          "B3",
+          "C3",
+          "A5"
+        ],
+        "policy": {
+          "mode": "legacy",
+          "extraRow": {
+            "enabled": true,
+            "sides": [
+              "enemy"
+            ],
+            "capacityPerLane": 1
+          }
+        }
+      }
+    },
+    {
+      "profile": "current",
+      "width": 390,
+      "seven": {
+        "count": 7,
+        "bands": [
+          "A",
+          "A",
+          "A",
+          "B",
+          "B",
+          "B",
+          "C"
+        ],
+        "cells": [
+          "A4",
+          "B4",
+          "C4",
+          "A3",
+          "B3",
+          "C3",
+          "A5"
+        ],
+        "policy": {
+          "mode": "legacy",
+          "extraRow": {
+            "enabled": true,
+            "sides": [
+              "enemy"
+            ],
+            "capacityPerLane": 1
+          }
+        }
+      }
+    }
+  ]
+}
