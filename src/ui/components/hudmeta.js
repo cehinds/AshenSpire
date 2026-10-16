@@ -85,7 +85,7 @@ export function buildMetadataTrailHtml(model) {
 // class/position on their dedicated surfaces while exposing this enabled layer.
 export function runHeaderStripHtml(model) {
   return part(model, UI.cindersCounter, (counter) =>
-    `<div class="hud-cinders-strip as-band-row">${cindersCounterHtml(counter)}</div>`);
+    `<div class="hud-info-row hud-cinders-strip as-band-row">${cindersCounterHtml(counter)}</div>`);
 }
 
 export function vitalsPanelHtml(model) {
