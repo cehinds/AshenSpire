@@ -1,4 +1,4 @@
-import { FORMATION_ROWS, playerFormationCell } from '../../model/formationLayout.js';
+import { FORMATION_ROWS, playerFormationCell, perspectiveEnemyCellOrder } from '../../model/formationLayout.js';
 import { uiConfig } from '../../config/generated/ui.js';
 
 const GRID = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
@@ -78,10 +78,9 @@ export function alternativeFormation(plan, width, height, narrow, presentation =
   const cellAt = (side, rank, lane) => plan.cells.find(c => c.side === side && c.rank === rank && c.lane === lane);
   const enemies = plan.slots.filter(slot => slot.side === 'enemy');
   const friends = plan.slots.filter(slot => slot.side !== 'enemy');
-  // Back rank first, spread across the lanes; the remainder fills the front.
-  const back = Math.min(enemies.length, lanes);
-  const enemyCells = [...perspectiveLanePattern(back, lanes).map(lane => cellAt('enemy', 0, lane)),
-    ...perspectiveLanePattern(enemies.length - back, lanes).map(lane => cellAt('enemy', 1, lane))];
+  // Renderer fallback and the engine use the same default address order.
+  const enemyCells = perspectiveEnemyCellOrder({ rows: lanes, extraCells: plan.cells.filter(c => c.formationRole === 'extra') })
+    .map(address => plan.cells.find(cell => cell.side === 'enemy' && cell.cell === address)).filter(Boolean);
   // The lead player keeps the lane of their gameplay cell; others fill the rest.
   const lead = friends.length ? lanes - 1 - friends[0].row : 0;
   const friendLanes = [lead, ...Array.from({ length: lanes }, (_, i) => i).filter(i => i !== lead)];
