@@ -2,9 +2,9 @@
 
 The owner rejected all A–G proposals because the footer was redesigned. Those files are archived proposals, not active candidates.
 
-**Current proposal:** [revised-original.html](revised-original.html), [PNG](revised-original.png), [SVG](revised-original.svg). The original header and footer control arrangement are retained. Existing Combat log and Reaction controls retain their recognizable button/toggle presentation and sides, with fixed screen-relative positions independent of the hand.
+**Current proposal:** [revised-original.html](revised-original.html), [PNG](revised-original.png), [SVG](revised-original.svg). The original header and footer control arrangement are retained. Existing Combat log and Reaction controls retain their recognizable button/toggle presentation and sides, with fixed screen-relative positions on a slim line above the hand, independent of the hand width.
 
-The footer keeps its existing stone HUD group, enlarged in place, ordered resource orb, draw pile, End Turn, discard pile, potions. The hand remains centered directly above it, with unused hand-space removed. All lower HUD background uses the same color. Turn banner remains at the upper center of the field; health remains top left, shield/menu top right.
+The footer keeps its existing stone HUD group, enlarged in place, ordered resource orb, draw pile, End Turn, discard pile, potions. The hand remains centered directly above it, with unused hand-space removed. Card frames retain the original 2:3 width-to-height proportion (147×220.5). All lower HUD background uses the same color. Turn banner remains at the upper center of the field; health remains top left, shield/menu top right.
 
 Scene changes remain reduced zoom/lower ground to expose sky, requested 3×3 row anchors and character-width shadows. The shared anchors inset still applies. Card and control sizes are schematic; this is a faithful composition review before the visual preview, then implementation.
 
