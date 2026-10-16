@@ -1604,3 +1604,24 @@ test('public deck group headings use canonical categories while raw filter kinds
     editor.close();
   });
 });
+
+
+test('Reading Desk: selecting or focusing a new row immediately replaces a previously opened inspection', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  withDom(() => {
+    const run = freshRun(), before = editState(run);
+    const editor = mountDeckEditor(document.body, { registries: REG, run });
+    const counter = editor.root.querySelector('.deck-editor-row[data-instance-id="' + run.deck.find(card => card.cardId === 'guardCounter').instanceId + '"]');
+    counter.querySelector('.deck-editor-main').click();
+    counter.querySelector('.deck-editor-inline-inspect').click();
+    assert.equal(editor.root.querySelector('.deck-editor-reading .card').dataset.cardId, 'guardCounter');
+    const defend = editor.root.querySelector('.deck-editor-tile[data-key="basic:guard"] .deck-editor-main');
+    defend.focus();
+    assert.equal(editor.root.querySelector('.deck-editor-reading .card').dataset.cardId, 'defend', 'focus updates the face without another inspection action');
+    editor.root.querySelector('.deck-editor-tile[data-key="basic:attack"] .deck-editor-main').click();
+    assert.equal(editor.root.querySelector('.deck-editor-reading .card').dataset.cardId, 'strike', 'click updates an inspection that was already open');
+    assert.equal(editor.root.querySelector('.deck-editor-animation'), null);
+    assert.deepEqual(editState(run), before);
+    editor.close();
+  });
+});
