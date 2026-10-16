@@ -229,8 +229,10 @@ export function rollCrit(ctx, source, tags) {
 export function applyAttackDamage(ctx, source, target, base, attackTags, carrier = null) {
   if(!target?.alive)return 0;
   const resolved=carrier || {};
-  const targetPlan=proposalTargetPlan(ctx,source,target,resolved,{resolve:true});
-  applyProposalPlan(ctx,{statusChanges:targetPlan.statusChanges},source,target,resolved);
+  if(resolved.expansionContact?.receipt?.avoided)return 0;
+  const decisionKey=ctx.playerIdForEntity?.(target) || target.id,decisions=resolved.proposalTargetDecisions;
+  const cached=decisions?.[decisionKey],targetPlan=cached || proposalTargetPlan(ctx,source,target,resolved,{resolve:true});
+  if(!cached) {if(decisions)decisions[decisionKey]=targetPlan;applyProposalPlan(ctx,{statusChanges:targetPlan.statusChanges},source,target,resolved);}
   if(!targetPlan.allowed || targetPlan.avoided) {ctx.emit('proposalHitAvoided',{sourceId:source?.id,targetId:target.id,perception:!targetPlan.allowed});return 0;}
   const raw=configuredCombat(ctx) ? profileDamageReceipt(ctx,source,target,base,resolved,{proposal:false}).raw : computeAttackDamage(ctx,source,target,base,attackTags,resolved,{matchups:false,beforeDefense:true,proposal:false});
   const plan=proposalHitPlan(ctx,source,target,raw,resolved);
@@ -1408,6 +1410,7 @@ function runOpcode(ctx, action, eff) {
       break;
     }
     case 'damage': {
+      action.meta ||= {};
       // hits may legitimately evaluate to 0 (X-cost at 0 energy whiffs, StS-style).
       const hits = Math.max(0, evalNum(ctx, action, eff.hits, 1));
       const attackTags = attackTagsFor(action, eff, ctx.registries);
@@ -1431,7 +1434,7 @@ function runOpcode(ctx, action, eff) {
             damageSchool: eff.damageSchool || action.card?.damageSchool,
             tags: action.card?.tags || attackTags,
             combatProfile: Expanded.effectCarrier(action.card, eff).combatProfile,
-            combatRiderTargets,
+            combatRiderTargets,proposalTargetDecisions:action.meta ? (action.meta.proposalTargetDecisions ||= {}) : {},
             energySpent: action.meta?.energySpent || 0 };
           if (plannedContacts) {
             const contact = plannedContacts.find(row => Expanded.expansionEntity(ctx, row) === t);
@@ -1629,7 +1632,7 @@ function runOpcode(ctx, action, eff) {
     case 'addBurden':
       for(const enemy of resolveTargets(ctx,action,eff.target)) {if(enemy.kind!=='enemy') throw new Error('Burden targets enemies only');addEnemyBurden(ctx,enemy,eff.card,evalNum(ctx,action,eff.count,1),eff.pile || 'draw');}break;
     case 'revealIntent':
-      for(const enemy of resolveTargets(ctx,action,eff.target)) {if(enemy.kind!=='enemy') continue;enemy.proposalIntentRevealedUntil=ctx.turn+Math.max(1,Math.min(10,evalNum(ctx,action,eff.amount,1)));enemy.intentRevealed=true;ctx.emit('intentRevealed',{targetId:enemy.id,until:enemy.proposalIntentRevealedUntil,burdenCards:(enemy.burdenPiles?.hand || []).map(c=>c.cardId),burdenCounts:Object.fromEntries(Object.entries(enemy.burdenPiles || {}).map(([k,v])=>[k,v.length]))});}break;
+      for(const enemy of resolveTargets(ctx,action,eff.target)) {if(enemy.kind!=='enemy') continue;enemy.proposalIntentRevealedUntil=ctx.turn+Math.max(1,Math.min(10,evalNum(ctx,action,eff.amount,1)));ctx.emit('intentRevealed',{targetId:enemy.id,until:enemy.proposalIntentRevealedUntil,burdenCards:(enemy.burdenPiles?.hand || []).map(c=>c.cardId),burdenCounts:Object.fromEntries(Object.entries(enemy.burdenPiles || {}).map(([k,v])=>[k,v.length]))});}break;
     case 'modifyCards':
     case 'moveCards': {
       const resolved=eff.changes?.hideTurns && typeof eff.changes.hideTurns==='object' ? {...action,effect:{...eff,changes:{...eff.changes,hideTurns:Math.min(10,Math.max(1,evalNum(ctx,action,eff.changes.hideTurns,1)))}}} : action;
