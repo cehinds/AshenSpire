@@ -132,3 +132,24 @@ export function combatantFrame({
   frame.appendChild(stack);
   return frame;
 }
+
+// The contextual desktop HUD keeps only HP beside the overhead intent. Move
+// the shared live meter nodes, including their tooltips, instead of cloning a
+// second health display or changing the sprite's frame geometry.
+export function setCombatantTargetHud(frame, enabled) {
+  const leading = frame.querySelector('.combatant-leading');
+  const rack = leading?.querySelector(':scope > .target-hud-overhead-meters');
+  if (!leading) return;
+  if (enabled) {
+    if (rack) return;
+    const meters = frame.querySelector('.combatant-card .meters, .combatant-mini-hud .meters');
+    if (!meters) return;
+    for (const slot of [meters, ...frame.querySelectorAll('.nm')]) { slot.style.removeProperty('transform'); slot.style.removeProperty('translate'); slot.style.removeProperty('position'); slot.style.removeProperty('left'); slot.style.removeProperty('top'); }
+    const host = document.createElement('div'); host.className = 'target-hud-overhead-meters';
+    host.append(meters); leading.append(host);
+  } else if (rack) {
+    const parent = frame.classList.contains('player') ? leading.querySelector('.combatant-mini-hud') : frame.querySelector('.combatant-card');
+    if (parent) parent.append(...rack.childNodes);
+    rack.remove();
+  }
+}

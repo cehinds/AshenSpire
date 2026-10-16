@@ -6,7 +6,8 @@ export function targetHudEnabled({ formFactor, classic, layout = 'formation' }, 
 }
 export function targetHudSide(role, lane, config = targetHudConfig()) {
   const sides = role === 'player' ? config.positioning.playerLaneSides : config.positioning.enemyLaneSides;
-  return sides[Math.min(2, Math.max(0, Number(lane) || 0))];
+  const index = typeof lane === 'string' && ['left', 'middle', 'right'].includes(lane) ? ['left', 'middle', 'right'].indexOf(lane) : Number(lane) || 0;
+  return sides[Math.min(2, Math.max(0, index))];
 }
 const clamp = (value, low, high) => Math.min(Math.max(low, high), Math.max(low, value));
 export const targetHudOverlaps = (a, b, gap = 0) => a.left < b.left + b.width + gap && a.left + a.width + gap > b.left
@@ -19,7 +20,7 @@ export function placeTargetHudPanels({ bounds, panels, obstacles = [], config = 
   const gap = config.positioning.gapPx, step = config.positioning.staggerStepPx, inset = config.positioning.edgeInsetPx;
   const area = { left: bounds.left + inset, top: bounds.top + inset,
     width: bounds.width - inset * 2, height: bounds.height - inset * 2 };
-  const placed = [];
+  const requests = [];
   for (const panel of [...panels].sort((a, b) => (a.role === 'player') - (b.role === 'player') || a.anchor.top - b.anchor.top || a.anchor.left - b.anchor.left)) {
     const width = Math.min(panel.width, area.width), height = Math.min(panel.height, area.height), a = panel.anchor;
     const side = targetHudSide(panel.role, panel.lane, config);
@@ -37,10 +38,34 @@ export function placeTargetHudPanels({ bounds, panels, obstacles = [], config = 
     }
     for (let top = area.top; top <= area.top + area.height - height; top += step)
       for (let left = area.left; left <= area.left + area.width - width; left += width + gap) add(left, top, 1800 + Math.abs(left - a.left) + Math.abs(top - a.top));
+    const obstacleCount = rect => obstacles.filter(other => targetHudOverlaps(rect, other)).length;
+    choices.sort((a, b) => obstacleCount(a) - obstacleCount(b) || a.penalty - b.penalty);
+    const clear = choices.filter(choice => obstacleCount(choice) === 0);
+    requests.push({ id: panel.id, side, choices, clear });
+  }
+  // Backtracking with the most constrained remaining target first avoids an
+  // early preferred panel consuming the only free space for a front-row pair.
+  let attempts = 0;
+  function solve(remaining, assigned) {
+    if (!remaining.length) return assigned;
+    if (++attempts > 5000) return null;
+    const options = remaining.map(request => ({ request, choices: request.clear.filter(rect => !assigned.some(other => targetHudOverlaps(rect, other, gap))) }))
+      .sort((a, b) => a.choices.length - b.choices.length);
+    const next = options[0];
+    for (const rect of next.choices) {
+      const result = solve(remaining.filter(request => request !== next.request), [...assigned, { id: next.request.id, side: next.request.side, ...rect }]);
+      if (result) return result;
+    }
+    return null;
+  }
+  const solved = solve(requests, []);
+  if (solved) return solved;
+  const placed = [];
+  for (const request of requests) {
     const score = rect => rect.penalty + placed.filter(other => targetHudOverlaps(rect, other, gap)).length * 1e7
-      + obstacles.filter(other => targetHudOverlaps(rect, other, gap / 2)).length * 1e5;
-    choices.sort((a, b) => score(a) - score(b));
-    placed.push({ id: panel.id, side, ...choices[0] });
+      + obstacles.filter(other => targetHudOverlaps(rect, other)).length * 1e5;
+    const choices = [...request.choices].sort((a, b) => score(a) - score(b));
+    placed.push({ id: request.id, side: request.side, ...choices[0] });
   }
   return placed;
 }

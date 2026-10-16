@@ -6,18 +6,36 @@
     "panelHeightPx": 108,
     "statusHeightPx": 34,
     "fontPx": 13,
-    "statusIconPx": 29
+    "statusIconPx": 29,
+    "crowdedFrom": 4,
+    "crowdedPanelWidthPx": 180,
+    "crowdedPaddingBlockEm": 0.3,
+    "crowdedPaddingInlineEm": 0.6
   },
   "positioning": {
     "gapPx": 12,
     "edgeInsetPx": 12,
     "staggerStepPx": 36,
-    "enemyLaneSides": ["left", "below", "right"],
-    "playerLaneSides": ["right", "left", "left"]
+    "enemyLaneSides": [
+      "left",
+      "below",
+      "right"
+    ],
+    "playerLaneSides": [
+      "right",
+      "left",
+      "left"
+    ]
   },
-  "motion": { "dwellMs": 500, "fadeMs": 150 },
+  "motion": {
+    "dwellMs": 500,
+    "fadeMs": 150
+  },
   "behavior": {
-    "formFactors": ["desktop", "widescreen"],
+    "formFactors": [
+      "desktop",
+      "widescreen"
+    ],
     "enemyTint": "#bf3535",
     "playerTint": "#3e9be8",
     "candidateTintOpacity": 0.14,

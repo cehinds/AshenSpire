@@ -10767,5 +10767,54 @@ export const uiStrings = [
     "short": "Keep editing",
     "full": "Keep editing",
     "tip": "Keep editing"
+  },
+  {
+    "id": "combat.targetHud.details",
+    "extends": "",
+    "short": "Combatant details",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.targetHud.namedDetails",
+    "extends": "",
+    "short": "{name} details",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.targetHud.unknown",
+    "extends": "",
+    "short": "Exact move, damage, and effects unread.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.targetHud.damageScope",
+    "extends": "",
+    "short": "Direct HP damage at current defenses and committed stance. Excludes delayed effects and retaliation.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.targetHud.ready",
+    "extends": "",
+    "short": "Ready",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.targetHud.prepare",
+    "extends": "",
+    "short": "Prepare",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.targetHud.defend",
+    "extends": "",
+    "short": "Defend",
+    "full": "",
+    "tip": ""
   }
 ];
