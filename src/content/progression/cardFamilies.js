@@ -270,21 +270,130 @@ export const cardFamilies = [
     "primary": "damage",
     "hits": 1,
     "abilityRank": 0,
-    "primaryValues": [
-      4,
-      6,
-      7,
-      10,
-      13,
-      17
-    ],
-    "actionCosts": [
-      1,
-      1,
-      1,
-      1,
-      2,
-      2
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 8
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 10
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 12
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3,
+            "if": {
+              "p": "turnMetric",
+              "metric": "previousSpell",
+              "atLeast": 1
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 14
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3,
+            "if": {
+              "p": "turnMetric",
+              "metric": "previousSpell",
+              "atLeast": 1
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 16
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3,
+            "if": {
+              "p": "turnMetric",
+              "metric": "previousSpell",
+              "atLeast": 1
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 18
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3,
+            "if": {
+              "p": "turnMetric",
+              "metric": "previousSpell",
+              "atLeast": 1
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
     ]
   },
   {
@@ -296,21 +405,130 @@ export const cardFamilies = [
     "primary": "block",
     "hits": 1,
     "abilityRank": 0,
-    "primaryValues": [
-      5,
-      7,
-      8,
-      11,
-      14,
-      18
-    ],
-    "actionCosts": [
-      1,
-      1,
-      1,
-      1,
-      2,
-      2
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 8
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 10
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 12
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 3,
+            "if": {
+              "p": "turnMetric",
+              "metric": "manaSpent",
+              "atLeast": 2
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 14
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 3,
+            "if": {
+              "p": "turnMetric",
+              "metric": "manaSpent",
+              "atLeast": 2
+            }
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 16
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 3,
+            "if": {
+              "p": "turnMetric",
+              "metric": "manaSpent",
+              "atLeast": 2
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 18
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 3,
+            "if": {
+              "p": "turnMetric",
+              "metric": "manaSpent",
+              "atLeast": 2
+            }
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
     ]
   },
   {
@@ -790,21 +1008,110 @@ export const cardFamilies = [
     "primary": "block",
     "hits": 1,
     "abilityRank": 0,
-    "primaryValues": [
-      4,
-      6,
-      7,
-      10,
-      13,
-      17
-    ],
-    "actionCosts": [
-      1,
-      1,
-      1,
-      1,
-      2,
-      2
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 8
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 10
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 12
+          },
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 14
+          },
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 16
+          },
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 2
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 18
+          },
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 2
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
     ]
   },
   {
@@ -816,21 +1123,138 @@ export const cardFamilies = [
     "primary": "damage",
     "hits": 1,
     "abilityRank": 0,
-    "primaryValues": [
-      5,
-      7,
-      8,
-      11,
-      14,
-      18
-    ],
-    "actionCosts": [
-      1,
-      1,
-      1,
-      1,
-      2,
-      2
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 0,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 8
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 10
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "loseHp",
+            "target": "self",
+            "amount": 2,
+            "nonlethal": true,
+            "offering": true
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 12
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 2,
+        "effects": [
+          {
+            "op": "loseHp",
+            "target": "self",
+            "amount": 2,
+            "nonlethal": true,
+            "offering": true
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 14
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "loseHp",
+            "target": "self",
+            "amount": 2,
+            "nonlethal": true,
+            "offering": true
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 16
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 3
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 3,
+        "effects": [
+          {
+            "op": "loseHp",
+            "target": "self",
+            "amount": 2,
+            "nonlethal": true,
+            "offering": true
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 18
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 3
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
     ]
   },
   {
