@@ -167,7 +167,13 @@
       }
     }
   },
-  "packs": [],
+  "packs": [
+    {
+      "id": "ashen.base-cards",
+      "version": "1.0.0",
+      "path": "../../packs/base-cards/pack.json"
+    }
+  ],
   "legacySources": [
     "src/content/index.js",
     "content/source",
