@@ -67,7 +67,8 @@
     "routes": {
       "version": "1.0.0",
       "settings": {
-        "mode": "legacy"
+        "mode": "legacy",
+        "mapMode": "fog"
       }
     },
     "rest": {
