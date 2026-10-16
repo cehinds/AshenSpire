@@ -1327,7 +1327,7 @@ function enemyFrameAtCell(field, x, y) {
 function wireGridTargeting(field) {
   if (gridTargetingFields.has(field)) return;
   gridTargetingFields.add(field);
-  const passive = target => target.closest('.combatant, button:not(.formation-grid-cell), .hand, .card, .modal, input, a, [role="button"]');
+  const passive = target => target.closest('.combatant, .target-hud-layer, button:not(.formation-grid-cell), .hand, .card, .modal, input, a, [role="button"]');
   field.addEventListener('click', event => {
     if (passive(event.target)) return;
     const frame = enemyFrameAtCell(field, event.clientX, event.clientY);
