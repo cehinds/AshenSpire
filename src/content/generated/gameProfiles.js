@@ -15266,7 +15266,7 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "path": "src/** (excluding generated gameProfiles/changelog)",
-      "hash": "sha256:17d8081140036aa4af74714134496b8aa63079b87c7ccc2e97e4616c78fbc592"
+      "hash": "sha256:5b85845867e525a5edae9781230853795ddf84e246bcc93cda19e7ed14bbf76c"
     }
   ],
   "runtimeSources": [
@@ -15916,7 +15916,7 @@ export const gameProfileCatalog = {
       "path": "src/content/generated/uiStrings.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:17e68230e0985a5a3898db84392e2ccbe7d5d4e9ecbeedb1135ec3912a13c81f"
+      "hash": "sha256:7fd381740ae6236d3bba2f130c2e75792437eefebb64a108960e0c6157e7cfb4"
     },
     {
       "path": "src/content/generated/unlocks.js",
@@ -19801,6 +19801,12 @@ export const gameProfileCatalog = {
       "hash": "sha256:093d29b3d7ed2beb082c99a69cb9e2c476ea502b30c8aa4f285b906a0d4ffe25"
     },
     {
+      "path": "src/ui/models/deckEditorCollectionRows.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:ee5d3d4d8ce19b517630032c99124873651d7f309c7112980f1fc884e8ebfe2c"
+    },
+    {
       "path": "src/ui/models/deckEditorCosts.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
@@ -19972,7 +19978,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/screens/deckEditor.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:46d249dfe682eabe7831664456bc98872dc7b11825d640d2ed2fa0c00f72f1ae"
+      "hash": "sha256:3bc5cddd3efc3fb2681f72528142faa8a6e4fd29d3a322a69392b2c7983af53e"
     },
     {
       "path": "src/ui/screens/dialogue.js",
@@ -20185,7 +20191,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:23af16d4e9c9f6d88fe655d32ecf1a688b47df39f9e3a1d6d193ce63923593ab"
     }
   ],
-  "runtimeHash": "sha256:b3db6a06ce4b09c7a8f14eea833b49044660028f301ff766e20d04de176ded95"
+  "runtimeHash": "sha256:7825812b84a70215d56dc4106bea0c8e2ecf1c18a1a444b5025b6ae1a439ef53"
 };
 export const gameProfileAuthors = {
   "default": {
