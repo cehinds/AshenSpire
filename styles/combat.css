@@ -1846,3 +1846,31 @@
 :root[data-display-appearance='alternative'] .combat[data-layout='formation'] .enemy .combatant-leading > .statuses:empty {
   display: none;
 }
+
+/* Approved desktop D: the upper hand is transparent; fixed original footer
+   controls share the combat root ruler rather than the current card count. */
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'][data-desktop-footer='true'] > .hand-area {
+  position:relative; background:transparent; overflow:visible; pointer-events:none;
+}
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'][data-desktop-footer='true'] > .hand-area::before {
+  content:''; position:absolute; inset:var(--desktop-background-top) 0 0; background:#211d16; pointer-events:none;
+}
+:root .combat[data-layout='formation'][data-desktop-footer='true']:is(.coop,:not(.coop)) .hand-overlay {
+  position:absolute; inset:var(--desktop-hand-top) 0 auto; height:var(--desktop-hand-height); width:100%; overflow:visible;
+}
+:root .combat[data-layout='formation'][data-desktop-footer='true']:is(.coop,:not(.coop)) .hand[data-wireframe-hand='true'] {
+  width:100%; height:100%; background:transparent; pointer-events:none;
+}
+:root .combat[data-layout='formation'][data-desktop-footer='true'] .hand .card { pointer-events:auto; }
+:root .combat[data-layout='formation'][data-desktop-footer='true']:is(.coop,:not(.coop)) > .hand-area > .combat-action-row[data-footer-art] {
+  grid-area:auto !important; position:absolute !important; inset:0 !important; width:100% !important; height:100% !important; max-width:none !important; margin:0 !important; padding:0; pointer-events:none;
+}
+:root .combat[data-layout='formation'][data-desktop-footer='true']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art] > :is(.energy-orb,.pile,.end-turn,.combat-potions) {
+  left:var(--desktop-x) !important; top:calc(var(--desktop-y) - var(--desktop-area-top, 0px)) !important;
+  width:var(--desktop-w) !important; height:var(--desktop-h) !important; min-width:0 !important; min-height:0 !important; max-width:none; max-height:none; pointer-events:auto;
+}
+:root .combat[data-layout='formation'][data-desktop-footer='true'] .footer-art-rails { display:none; }
+:root .combat[data-layout='formation'][data-desktop-footer='true'] .end-turn > .footer-art-face {
+  position:absolute; width:var(--desktop-end-art-width); height:var(--desktop-end-art-height); left:50%; top:auto; bottom:0; transform:translateX(-50%);
+}
+:root .combat[data-layout='formation'][data-desktop-footer='true'] .end-turn > .hold-hint { position:absolute; bottom:0; left:0; right:0; }
