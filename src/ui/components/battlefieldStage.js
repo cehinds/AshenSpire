@@ -5,7 +5,7 @@ import { anchorLocalBox, uiZoom, VIEWPORT_ORIGIN } from '../fx.js';
 import { combatFormation } from '../models/CombatFormationModel.js';
 import { isWideFormFactor } from '../models/FormFactorModel.js';
 import { COMBAT_TARGET_HIT_PX, combatOverheadAnchors, combatOverheadRibbonShift, combatTargetAnchors, combatTargetPackSize } from '../models/CombatOverheadModel.js';
-import { formationTileGeometry } from '../models/FormationGridModel.js';
+import { formationTileGeometry, perspectiveCellOutlinePath } from '../models/FormationGridModel.js';
 import { FORMATION_ROWS, formationDimensions, playerFormationCell } from '../../model/formationLayout.js';
 import { fitIconTray } from './iconTray.js';
 import { combatSpriteRatio, fitCombatSprites, NARROW_MIN_HEIGHT_FRACTION } from '../models/CombatSpriteScaleModel.js';
@@ -500,9 +500,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       grid.style.setProperty('--enemy-grid-color', presentation.enemyGridColor);
       const occupied = new Set(plan.slots.map(slot => slot.cell));
       // Offsets and edge clamping must not resize the reference tiles.
-      const activeCells = new Set(plan.cells.map(cell => cell.cell));
+      const gridCells = plan.visualCells || plan.cells;
+      const activeCells = new Set(gridCells.map(cell => cell.cell));
       for (const tile of grid.querySelectorAll('[data-cell]')) tile.hidden = !activeCells.has(tile.dataset.cell);
-      for (const cell of plan.cells) {
+      for (const cell of gridCells) {
         const tile = grid.querySelector(`[data-cell="${cell.cell}"]`);
         if (!tile) continue;
         // A perspective cell is drawn whole, its shadow at the foot anchor.
@@ -531,6 +532,11 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         tile.style.setProperty('--tile-transform', geometry.transform);
         tile.dataset.side = cell.side || (Number(cell.cell[1]) <= plan.columns ? 'player' : 'enemy');
         tile.dataset.occupied = String(occupied.has(cell.cell));
+        tile.dataset.visualBand = cell.visualBand || '';
+        tile.dataset.visualOnly = String(!!cell.visualOnly);
+        // Each shared edge is painted once, so translucent seams stay thin.
+        tile.querySelector('[data-perspective-outline]')?.setAttribute('d',
+          perspectiveCellOutlinePath(cell, plan.rows));
         tile.dataset.anchorX = String(cell.x);
         tile.dataset.anchorY = String(cell.ground);
       }
@@ -881,7 +887,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       // and its visible footer may then shift by at most one physical target.
       lockX: true, size: footerSize, maxShiftX: 44,
       obstacles: [...readFooterObstacles(),
-        ...boxes.flatMap((box, index) => placed[index].frame.classList.contains('player') ? [] : box.controls)].map(rect => ({
+        ...boxes.flatMap((box, index) => placed[index].frame.classList.contains('player') ? [] : box.controls),
+        ...placed.map(({ frame, sprite }) => ({ ...currentSpriteArtBounds(sprite, refresh), ownerId: frame.dataset.eid }))].map(rect => ({
+        ownerId: rect.ownerId,
         left: rect.left - fieldRect.left, right: rect.right - fieldRect.left,
         top: rect.top - fieldRect.top, bottom: rect.bottom - fieldRect.top,
       })),
@@ -1108,8 +1116,14 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         if (style.display === 'none' || style.pointerEvents === 'none') return null;
         const x = box.left + parseFloat(style.left) * zoom - fieldRect.left;
         const y = box.top + parseFloat(style.top) * zoom - fieldRect.top;
-        return Number.isFinite(x) && Number.isFinite(y)
-          ? { ownerId:frame.dataset.eid, x, y, left:x-22, right:x+22, top:y-22, bottom:y+22 } : null;
+        if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+        // Aiming can promote an enemy to context-selected after its idle core
+        // was packed. Its auxiliary square still cannot cover another actor.
+        if (frame.classList.contains('enemy') && stealsArtwork({ id: frame.dataset.eid, x, y })) {
+          frame.dataset.coreObstructed = 'true';
+          return null;
+        }
+        return { ownerId:frame.dataset.eid, x, y, left:x-22, right:x+22, top:y-22, bottom:y+22 };
       }).filter(Boolean);
     const near = (a, b) => Math.abs(a.x-b.x) < 44 && Math.abs(a.y-b.y) < 44;
     if (idleCores.some((core, i) => core.y > core.art.bottom - fieldRect.top || stealsArtwork(core) || fixedCores.some(fixed => near(core, fixed))

@@ -1926,7 +1926,9 @@ async function persistSettingsChange(changed) {
   if (Object.keys(changed || {}).some((key) => STAT_ROWS_CHANGED_MEANING.test(key))) activeSettings[STAT_ROWS_MARKER] = STAT_ROWS_VERSION;
   if (seed) activeSettings[SEED_KEY] = seed;
   activeMeta.settings = activeSettings;
-  const res = await saves.saveMeta(activeMeta);
+  let res;
+  try { res = await saves.saveMeta(activeMeta); }
+  catch (error) { res = { ok: false, error: String(error?.message || error) }; }
   if (res?.ok === false) {
     activeSettings = settingsBefore;
     activeMeta.settings = settingsBefore;
