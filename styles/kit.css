@@ -1150,35 +1150,35 @@ input[type="range"] { min-height: var(--tap-floor); }
 .class-pick.locked:hover { border-color: var(--line); }
 /* The configured next class stays readable and focusable behind a dark veil.
    Only its decorative lock and unlock instruction rise above the dimmed face. */
-.class-pick.configured-class-lock {
+.class-pick.configured-class-lock.locked[data-class] {
   display:grid; grid-template-columns:minmax(0,1fr) 56px minmax(0,1fr);
   gap:16px; min-height:80px; opacity:1;
 }
-.class-pick.configured-class-lock > .og { position:absolute; left:15px; }
-.class-pick.configured-class-lock > .ob { grid-column:1; padding-left:40px; }
-.class-pick.configured-class-lock .on { white-space:normal; }
-.class-pick.configured-class-lock > .class-unlock-hint {
+.class-pick.configured-class-lock.locked[data-class] > .og { position:absolute; left:15px; }
+.class-pick.configured-class-lock.locked[data-class] > .ob { grid-column:1; padding-left:40px; }
+.class-pick.configured-class-lock.locked[data-class] .on { white-space:normal; }
+.class-pick.configured-class-lock.locked[data-class] > .class-unlock-hint {
   grid-column:3; position:relative; z-index:3; justify-self:end;
   max-width:100%; white-space:normal; color:var(--parchment);
 }
-.class-pick.configured-class-lock > .class-lock-veil {
+.class-pick.configured-class-lock.locked[data-class] > .class-lock-veil {
   position:absolute; inset:0; z-index:2; display:grid; place-items:center;
   border-radius:inherit; background:rgba(8,9,10,.48); pointer-events:none;
   color:#b89a54;
 }
 .class-lock-veil > svg { display:block; width:56px; height:56px; }
 /* Compact tiles reserve a band above and below the centered silhouette. */
-.cc-choice-collection[data-view="grid"] .class-pick.configured-class-lock { min-height:180px; grid-template-columns:minmax(0,1fr); grid-template-rows:1fr 56px 1fr; }
+.cc-choice-collection[data-view="grid"] .class-pick.configured-class-lock.locked[data-class] { min-height:180px; grid-template-columns:minmax(0,1fr); grid-template-rows:1fr 56px 1fr; }
 .cc-choice-collection[data-view="grid"] .configured-class-lock > .og { display:none; }
 .cc-choice-collection[data-view="grid"] .configured-class-lock > .ob { grid-column:1; grid-row:1; padding-left:0; align-self:start; }
 .cc-choice-collection[data-view="grid"] .configured-class-lock .od { display:none; }
 .cc-choice-collection[data-view="grid"] .configured-class-lock > .class-unlock-hint { grid-column:1; grid-row:3; justify-self:center; align-self:end; }
 @container game-viewport (max-width:600px) {
-  .class-pick.configured-class-lock { min-height:180px; grid-template-columns:minmax(0,1fr); grid-template-rows:1fr 56px 1fr; }
-  .class-pick.configured-class-lock > .og { display:none; }
-  .class-pick.configured-class-lock > .ob { grid-column:1; grid-row:1; padding-left:0; align-self:start; }
-  .class-pick.configured-class-lock .od { display:none; }
-  .class-pick.configured-class-lock > .class-unlock-hint { grid-column:1; grid-row:3; justify-self:center; align-self:end; }
+  .class-pick.configured-class-lock.locked[data-class] { min-height:180px; grid-template-columns:minmax(0,1fr); grid-template-rows:1fr 56px 1fr; }
+  .class-pick.configured-class-lock.locked[data-class] > .og { display:none; }
+  .class-pick.configured-class-lock.locked[data-class] > .ob { grid-column:1; grid-row:1; padding-left:0; align-self:start; }
+  .class-pick.configured-class-lock.locked[data-class] .od { display:none; }
+  .class-pick.configured-class-lock.locked[data-class] > .class-unlock-hint { grid-column:1; grid-row:3; justify-self:center; align-self:end; }
 }
 
 .class-pick > .glyph { flex: 0 0 3rem; font-size: 2.25rem; line-height: 1; color: var(--gold); text-align: center; }
