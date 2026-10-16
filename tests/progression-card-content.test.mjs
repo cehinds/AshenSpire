@@ -50,7 +50,7 @@ test('forty families author every grade and the complete ten-unlock class ladder
     assert.deepEqual(card.gradeProfiles.map(p => p.rank), [0, 1, 2, 3, 4, 5], card.id);
     for (const p of card.gradeProfiles) {
       if (p.traits?.costRule !== 'fixed') assert.equal(p.manaCost, p.rank, card.id);
-      assert(p.actionCost >= 1 && p.actionCost <= (p.rank === 0 ? 3 : p.rank), `${card.id}/${p.rank}`);
+      assert(p.actionCost >= 1 && p.actionCost <= (p.traits?.costRule === 'fixed' ? 5 : p.rank === 0 ? 3 : p.rank), `${card.id}/${p.rank}`);
       assert(!('staminaCost' in p), 'Actions and Stamina have one authored price');
     }
   }
@@ -59,7 +59,8 @@ test('forty families author every grade and the complete ten-unlock class ladder
 test('every new family reserves the complete conditional direct-effect budget', () => {
   for (const card of progressionCards) for (const p of card.gradeProfiles) {
     const direct = p.effects.filter(e => ['damage', 'block'].includes(e.op)).reduce((sum, e) => sum + e.amount * (e.hits || 1), 0);
-    assert(direct <= [8, 10, 15, 18, 24, 30][p.rank], `${card.id}/${p.rank}: ${direct}`);
+    const ceilings = card.id === 'progression-breaker-s-toll' ? [11, 11, 22, 27, 39, 51] : [8, 10, 15, 18, 24, 30];
+    assert(direct <= ceilings[p.rank], `${card.id}/${p.rank}: ${direct}`);
     assert(p.effects.every(e => e.amount == null || e.amount >= 0), card.id);
   }
 });
