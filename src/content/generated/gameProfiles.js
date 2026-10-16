@@ -15391,7 +15391,7 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "path": "src/** (excluding generated gameProfiles/changelog)",
-      "hash": "sha256:3df21ab08f6b61968b06ca5abf7b5318e8375f19048ce0f494798943bda1d3cd"
+      "hash": "sha256:9aa50f6d9f9ba68bd4925bc8855f8dfd07de6bfae1be88ec127de40748373ef5"
     }
   ],
   "runtimeSources": [
@@ -15411,7 +15411,7 @@ export const gameProfileCatalog = {
       "path": "src/config/generated/ui.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:45a44ad399ae4aac2c162e09b5bc00bb7f7cc115d8e0d8abdc54b3791fb9b3b3"
+      "hash": "sha256:0c9e16632fc18191f6b97394e10e1cc0c7a4b384e3d96efca32b7e78f1706752"
     },
     {
       "path": "src/content/actionAnimations.js",
@@ -18537,7 +18537,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/components/combatLayout.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:053e1b41240ce12fa8eb9fee95b1a67098d8842a78e65011580874ebcebe73fe"
+      "hash": "sha256:e935c9ece0bd8a15a06a89da91affb771f95238c6327ca3c8ad99b2f3cec4d03"
     },
     {
       "path": "src/ui/components/combatLogModal.js",
@@ -19563,7 +19563,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/models/DesktopCombatFooter.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:5e5691dad5f8b5ac69127a0c7380445519521d85d3694c5074951dbebe6d2ef9"
+      "hash": "sha256:24609682a8d03357b1111c34217c6d76f78a9f4c50a4c714eb2dfee8ad0323b4"
     },
     {
       "path": "src/ui/models/DialogueModel.js",
@@ -20346,7 +20346,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:23af16d4e9c9f6d88fe655d32ecf1a688b47df39f9e3a1d6d193ce63923593ab"
     }
   ],
-  "runtimeHash": "sha256:0978df8f79a25318856a5d2035ee3285f1e90822ae286abddc9dc89258d72edc"
+  "runtimeHash": "sha256:01dd216fcd925d0b296745b387b4f0b127953dd5922f39a63593e341aac1fdc1"
 };
 export const gameProfileAuthors = {
   "default": {

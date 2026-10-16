@@ -1860,7 +1860,8 @@
   position:relative; background:transparent; overflow:visible; pointer-events:none;
 }
 :root[data-display-appearance='alternative'] .combat[data-layout='formation'][data-desktop-footer='true'] > .hand-area::before {
-  content:''; position:absolute; inset:var(--desktop-background-top) 0 0; background:#211d16; pointer-events:none;
+  content:''; position:absolute; inset:var(--desktop-background-top) 0 0; pointer-events:none;
+  background:linear-gradient(to bottom, rgb(33 29 22 / 0), #211d16 var(--desktop-background-fade-height));
 }
 :root .combat[data-layout='formation'][data-desktop-footer='true']:is(.coop,:not(.coop)) .hand-overlay {
   position:absolute; inset:var(--desktop-hand-top) 0 auto; height:var(--desktop-hand-height); width:100%; overflow:visible;

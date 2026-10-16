@@ -19,6 +19,7 @@ export function desktopFooterLayout({ width, height, zoom = 1 }, config = uiConf
   };
   return { unit, controls, handTop: height - (config.handBottomPx + config.handHeightPx) * unit,
     handHeight: config.handHeightPx * unit, backgroundTop: height - (config.referenceHeightPx - config.backgroundTopPx) * unit,
+    backgroundFadeHeight: config.backgroundFadeHeightPx * unit,
     toolsTop: bottom - config.toolsBottomPx * unit, corner, endArtWidth: config.endArtWidthPx * unit,
     endArtHeight: config.endArtHeightPx * unit };
 }
