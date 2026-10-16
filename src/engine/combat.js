@@ -1,3 +1,4 @@
+import { beginEnemyBurdens, endEnemyBurdens, allowBurdenMove } from './enemyBurdens.js';
 import { selectCardVariant } from './cardBehavior.js';
 import { chooseZoneCards, hasCardChoice, returnHiddenCards } from './cardZones.js';
 import { configuredCombat, configuredModule, setProfileStance, profileCardCosts, profileHandSize, profileFallbackDamage, freezeProfile } from './gameProfileCombat.js';
@@ -697,6 +698,7 @@ function enemyTurnStart(combat) {
 // One enemy's own turn start: its owner-relative hooks (DoT ticks etc.) and, expanded, its status
 // recovery. Leaves the enemy dead when a tick killed it.
 function enemyOwnerTurnStart(combat, enemy) {
+  beginEnemyBurdens(combat,enemy,Rounds.enemyPool(combat.registries.enemies.get(enemy.enemyId)));
   Reactions.revealActor(combat, enemy);
   fireOwnerHooks(combat, enemy, 'ownerTurnStart');
   drainQueue(combat);
@@ -803,6 +805,7 @@ function enemyPhase(combat) {
     // Owner-relative turn-end hooks, then decay (perTurnEnd statuses the
     // player applied to an enemy tick down at the ENEMY's turn end).
     if (enemy.alive) {
+      endEnemyBurdens(combat,enemy);
       fireOwnerHooks(combat, enemy, 'ownerTurnEnd');
       drainQueue(combat);
       if (combat.result) return;
@@ -853,6 +856,7 @@ function startDelayedMove(combat, enemy, move, moveId) {
 // `roundEntry`: the move resolves a Combat Rounds timeline entry, whose reaction point was the round prompt (SPEC
 // §4.11), so its group is marked roundSettled and the live reaction window does not open for it again.
 function executeMovePayload(combat, enemy, move, moveId, { roundEntry = false, roundPoiseMultiplier = combat.roundPoiseMultiplier } = {}) {
+  if (!allowBurdenMove(combat,enemy,Rounds.enemyMoveSp(move,{enemy,moveId,combat}))) return;
   move = expandedEnemyMove(enemy, move, moveId, combat);
   // movesHistory records ROLLS (maxConsecutive reads it); a roll a stagger
   // cancels never happens. This is what did — the inspector's history.
@@ -974,6 +978,7 @@ function presentIntent(combat, enemy, def, moveId) {
     delete enemy.intentRevealed;
   } else if (enemy.intent.combatProfile.camp) enemy.intentRevealed = combat.rng.float('enemyIntentVisibility') >= hiddenIntentChance(combat.attributes || {}, combat.combatIntentRules || {});
   else delete enemy.intentRevealed;
+  if ((enemy.proposalIntentRevealedUntil || 0)>combat.turn) enemy.intentRevealed=true;
   primeEnemyCounter(combat, enemy, def.moves[moveId], moveId);
 }
 

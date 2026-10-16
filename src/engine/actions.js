@@ -1,3 +1,4 @@
+import { addEnemyBurden } from './enemyBurdens.js';
 import { moveCards, hasCardChoice } from './cardZones.js';
 import { configuredCombat, configuredModule, profileDamageReceipt } from './gameProfileCombat.js';
 // src/engine/actions.js — effect-DSL opcode implementations (SPEC §3.4)
@@ -1592,6 +1593,10 @@ function runOpcode(ctx, action, eff) {
       }
       break;
     }
+    case 'addBurden':
+      for(const enemy of resolveTargets(ctx,action,eff.target)) {if(enemy.kind!=='enemy') throw new Error('Burden targets enemies only');addEnemyBurden(ctx,enemy,eff.card,evalNum(ctx,action,eff.count,1));}break;
+    case 'revealIntent':
+      for(const enemy of resolveTargets(ctx,action,eff.target)) {if(enemy.kind!=='enemy') continue;enemy.proposalIntentRevealedUntil=ctx.turn+Math.max(1,Math.min(10,evalNum(ctx,action,eff.amount,1)));enemy.intentRevealed=true;ctx.emit('intentRevealed',{targetId:enemy.id,until:enemy.proposalIntentRevealedUntil,burdenCards:(enemy.burdenPiles?.hand || []).map(c=>c.cardId),burdenCounts:Object.fromEntries(Object.entries(enemy.burdenPiles || {}).map(([k,v])=>[k,v.length]))});}break;
     case 'modifyCards':
     case 'moveCards': {
       moveCards(ctx, action, evalNum(ctx, action, eff.amount, 1));

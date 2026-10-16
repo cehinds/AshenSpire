@@ -1,3 +1,4 @@
+import { enemyBurdenProblems } from './enemyBurdens.js';
 import { hasCardChoice } from './cardZones.js';
 import { validateGameProfileSnapshot } from '../model/gameProfile.js';
 import { freezeProfile, configuredCombat } from './gameProfileCombat.js';
@@ -168,6 +169,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   if (saved.gameProfile) validateGameProfileSnapshot(saved.gameProfile);
   if (expectedGameProfile && saved.gameProfile?.hash !== expectedGameProfile.hash) throw new Error('Combat game profile does not match the run configuration');
   if (saved.pendingCardChoice?.effect?.transformTo) registries.cards.get(saved.pendingCardChoice.effect.transformTo);
+  for(const enemy of saved.enemies) {const errors=enemyBurdenProblems(enemy,registries);if(errors.length)throw new Error(`Malformed enemy burden: ${errors.join('; ')}`);}
   if (saved.foundation) validateFoundationSnapshot(saved.foundation);
   const combat = {
     ...(saved.gameProfile ? { gameProfile: freezeProfile(saved.gameProfile), gameProfileCommands: saved.gameProfileCommands || 0, gameProfileInterrupts: saved.gameProfileInterrupts || {} } : {}),
