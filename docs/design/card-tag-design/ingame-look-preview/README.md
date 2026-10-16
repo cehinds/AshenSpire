@@ -30,4 +30,8 @@ Captures: `hero.png` (three-column, two-row card contact sheet); `overview.png`;
 
 `audit.json` records decoded image references, actual text-node rule line counts and layer counts. `all-proposals-audit.json` compares normalized full source face text against visible rendered text across all70 combat/status proposals, detects horizontal/vertical overflow and records centering and font size. Verification: all70 complete, no overflow or non-Simple artwork, fonts17.55–24.06px at280px card width, maximum vertical center deviation under0.008px. All54 featured image instances decode successfully; zero page errors. Screenshots are fresh renders, not edited composites.
 
+The initial preview accidentally omitted the current game's dark title fade: `illustratedCardHtml` emits that visual layer only when the model has sigils, while these proposals deliberately leave stance/school unassigned. `configurePreviewPresentation` now restores the exact existing `.card-title-fade` node (layer3) once per card using the unchanged `styles/illustrated-cards.css` gradient. It does not assign fake sigils or shift the panel, artwork, rank or effect box. `before-title-fade-smite.png` preserves the preceding preview for comparison. No game renderer or engine files changed.
+
 For this preserved docs/design location, launch with `ASHENSPIRE_REPO=/absolute/path/to/AshenSpire node server.mjs`. The default repository path targets the original output workspace.
+
+Latest title-fade captures: 2026-10-16 UTC (2026-10-15 Anchorage). Initial capture date above is preserved.

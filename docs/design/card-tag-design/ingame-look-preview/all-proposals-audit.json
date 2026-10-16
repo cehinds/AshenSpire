@@ -13,7 +13,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Grease",
@@ -29,7 +34,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": -0.0078125,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Smite",
@@ -45,7 +55,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Poison",
@@ -61,7 +76,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": -0.0078125,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Blight",
@@ -77,7 +97,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": -0.0078125,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Weaken",
@@ -93,7 +118,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": -0.0078125,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Charm",
@@ -109,7 +139,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": -0.0078125,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Bind",
@@ -125,7 +160,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": -0.0078125,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Restrain",
@@ -141,7 +181,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": -0.0078125,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Foresight",
@@ -157,7 +202,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": -0.0078125,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Evade",
@@ -173,7 +223,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": -0.0078125,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Intangible",
@@ -189,7 +244,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": -0.0078125,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Mirrors",
@@ -205,7 +265,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": -0.0078125,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Elemental Weapon",
@@ -221,7 +286,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Purifying Flame",
@@ -237,7 +307,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Divine Cleanse",
@@ -253,7 +328,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Necrotic Renewal",
@@ -269,7 +349,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Profane Inversion",
@@ -285,7 +370,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Hand Shuffle",
@@ -301,7 +391,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Deck Shuffle",
@@ -317,7 +412,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": -0.0078125,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Draw",
@@ -333,7 +433,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": -0.0078125,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Retain",
@@ -349,7 +454,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": -0.0078125,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Scout",
@@ -365,7 +475,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Read Intent",
@@ -381,7 +496,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Recall",
@@ -397,7 +517,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Exile Recovery",
@@ -413,7 +538,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Chosen Exhaust",
@@ -429,7 +559,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Transform",
@@ -445,7 +580,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Staggering Burden",
@@ -461,7 +601,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Paralyzing Burden",
@@ -477,7 +622,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Exhaust",
@@ -493,7 +643,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Ethereal",
@@ -509,7 +664,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Empower",
@@ -525,7 +685,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Shared Sacrifice",
@@ -541,7 +706,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Affliction Scaling",
@@ -557,7 +727,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Reprisal Growth",
@@ -573,7 +748,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Discipline Growth",
@@ -589,7 +769,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Shifting Cost",
@@ -605,7 +790,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Rising Damage",
@@ -621,7 +811,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Channel X",
@@ -637,7 +832,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Spread X",
@@ -653,7 +853,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Conceal",
@@ -669,7 +874,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Force Stance",
@@ -685,7 +895,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": -0.0078125,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Many Forms",
@@ -701,7 +916,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Stance Echo",
@@ -717,7 +937,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Resource Echo",
@@ -733,7 +958,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Strike and Settle",
@@ -749,7 +979,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Reframe",
@@ -765,7 +1000,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Extend",
@@ -781,7 +1021,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Extra Weapon",
@@ -797,7 +1042,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Extra Shield",
@@ -813,7 +1063,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Automatic Counter",
@@ -829,7 +1084,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Automatic Sweep",
@@ -845,7 +1105,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Reflect",
@@ -861,7 +1126,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Interpose",
@@ -877,7 +1147,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Transmute",
@@ -893,7 +1168,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Spell Scroll",
@@ -909,7 +1189,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Resource Gain",
@@ -925,7 +1210,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": -0.0078125,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Ally Empowerment",
@@ -941,7 +1231,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": -0.0078125,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Ward Break",
@@ -957,7 +1252,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": -0.0078125,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Poise Break",
@@ -973,7 +1273,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": -0.0078125,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Smash Creation",
@@ -989,7 +1294,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Conditional Strike",
@@ -1005,7 +1315,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": -0.0078125,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Veil",
@@ -1021,7 +1336,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Hold Block",
@@ -1037,7 +1357,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": -0.0078125,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Flowing Transition",
@@ -1053,7 +1378,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": 0,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Stagger",
@@ -1069,7 +1399,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": -0.0078125,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Multiple Strikes",
@@ -1085,7 +1420,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": -0.0078125,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Paralysis",
@@ -1101,7 +1441,12 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": -0.0078125,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   },
   {
     "name": "Inspect Restrained",
@@ -1117,6 +1462,11 @@
     "overflow": false,
     "centerDeltaX": 0,
     "centerDeltaY": -0.0078125,
-    "art": "simple"
+    "art": "simple",
+    "fadeCount": 1,
+    "fadeLayer": "3",
+    "fadeBackground": "linear-gradient(rgba(21, 17, 15, 0.96) 0%, rgba(21, 17, 15, 0.96) 48%, rgba(21, 17, 15, 0.7) 66%, rgba(21, 17, 15, 0) 100%)",
+    "fadeZ": "3",
+    "titleZ": "8"
   }
 ]
