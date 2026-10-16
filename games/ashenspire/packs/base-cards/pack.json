@@ -1,0 +1,11 @@
+{
+  "id": "ashen.base-cards",
+  "version": "1.0.0",
+  "content": {
+    "baseCards": "cards.json",
+    "baseCardGroups": "groups.json",
+    "baseCardVariants": "resourceVariants.json",
+    "baseCardSourceManifest": "sourceManifest.json",
+    "baseCardStatusSource": "statuses.json"
+  }
+}
