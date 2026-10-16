@@ -484,6 +484,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       enemies: frames.filter(f => f.classList.contains('enemy')).map(f => f.dataset.eid) });
     if (!classicAppearance()) alternativeFormation(plan, fieldRect.width, fieldRect.height, document.documentElement.dataset.layout === 'narrow', presentation);
     const nameWidth = Math.min(...plan.slots.map(slot => slot.width));
+    // Three or more lanes on a phone cap HUD width while retaining physical type/tap floors.
+    combat.style.setProperty('--combat-enemy-hud-scale', String(Math.min(
+      uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.enemyMiniHudScale,
+      Math.max(1, (fieldRect.width - 24) / (plan.rows * 104)))));
     const grid = field.querySelector('.formation-grid');
     if (grid) {
       grid.dataset.shape = presentation.gridShape;

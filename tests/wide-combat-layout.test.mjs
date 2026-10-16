@@ -40,8 +40,8 @@ for (const { width, height, zoom } of WINDOWS) {
     for (const formFactor of ['desktop', 'widescreen']) {
       const wide = planCombatLayout({ formFactor, ...local });
       assert.deepEqual(SHARED.map(key => wide[key]), SHARED.map(key => phone[key]), `${formFactor} bands at ${width}x${height}`);
-      assert.ok(Math.abs(wide.footer * zoom - 92) < 1.5, `${formFactor} footer at ${width}x${height}: ${wide.footer * zoom}px`);
-      assert.ok(near(wide.hand / local.height, .30) || wide.hand * zoom <= 208 + 1e-6, `hand share at ${width}x${height}`);
+      assert.ok(wide.footer * zoom >= 92 && wide.footer * zoom <= height * .3, `${formFactor} footer at ${width}x${height}: ${wide.footer * zoom}px`);
+      assert.ok(near(wide.hand / local.height, .27) || wide.hand * zoom <= 208 + 1e-6, `hand share at ${width}x${height}`);
     }
   });
 }

@@ -63,7 +63,7 @@ test('the W4 parent and combat scene carry the contract values', () => {
     sizing: { minimums: { footerPx: 56, targetPx: 44 }, compactBelowPx: 768 },
     layering: { plate: { bleedFraction: 0.02 } },
   });
-  assert.deepEqual(w4a.sizing.bands, { hud: 10, scene: 55, context: 30, footer: 5 });
+  assert.deepEqual(w4a.sizing.bands, { hud: 10, scene: 49, context: 27, footer: 14 });
   assert.equal(w4a.sizing.floorPercent, 80);
   assert.deepEqual(w4a.layering.layers.map((l) => [l.id, l.z, l.enabled]), [
     ['skyline', 1, true], ['floor', 2, true], ['actors', 3, true], ['targets', 4, true],
@@ -293,7 +293,7 @@ test('a content/config JSON is stray, by name, unless the generated module was c
 
 // ---- the compatibility shim -------------------------------------------------
 
-test('wireframeUi still equals the pre-migration snapshot, key order included', () => {
+test('wireframeUi equals the approved composition snapshot, key order included', () => {
   const snapshot = readFileSync(new URL('./fixtures/wireframe-ui-snapshot.json', import.meta.url), 'utf8');
   assert.deepStrictEqual(JSON.parse(JSON.stringify(wireframeUi)), JSON.parse(snapshot));
   assert.equal(`${JSON.stringify(wireframeUi, null, 2)}\n`, lf(snapshot), 'same keys in the same order with the same numbers');
