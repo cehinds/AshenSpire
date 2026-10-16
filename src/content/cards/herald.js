@@ -15,22 +15,22 @@ const one = { f: 'add', args: [1] };
 export const heraldCards = [
   // ---- Starter ---------------------------------------------------------------
   {
-    id: 'urgentHeal', name: 'Urgent Heal', class: 'herald', rarity: 'starter', cost: 1, manaCost: 1, type: 'skill',
+    id: 'urgentHeal', name: 'Urgent Heal', class: 'herald', rarity: 'starter', cost: 1, manaCost: 1, costRule: 'fixed', type: 'skill',
     flavor: "Rite of the Furnace Chapel, for wounds taken in its service.\n\nPerformed swiftly, its prayer cut to the first line. The rubric bids the wound be bound beneath the brand, never over it, that the mark be left clear.\n\nWe bind the wound beneath the unspent brand.",
     keywords: ['retain'], icon: '✚',
-    effects: [{ op: 'heal', target: 'self', amount: 4 }],
+    effects: [{ op: 'heal', target: 'self', amount: 8 }],
     textTemplate: 'Heal {heal} HP.',
-    upgrade: { effects: [{ op: 'heal', target: 'self', amount: 6 }] },
+    upgrade: { effects: [{ op: 'heal', target: 'self', amount: 10 }] },
   },
 
   // ---- Commons ----------------------------------------------------------------
   {
-    id: 'emberCommunion', name: 'Ember Communion', class: 'herald', rarity: 'common', cost: 1, type: 'skill',
+    id: 'emberCommunion', name: 'Ember Communion', class: 'herald', rarity: 'common', cost: 1, manaCost: 1, costRule: 'fixed', type: 'skill',
     flavor: "The Chapel's last cup.\n\nWhen the censer cooled, the celebrant passed its remaining warmth among the wounded. The rubric called the sharing a waste. Those who received it called it enough.\n\nNo name was entered in the Chapel's ledger that night.",
     keywords: ['exhaust'], icon: '✚',
     effects: [
-      { op: 'restoreMana', target: 'self', amount: 1 },
-      { op: 'heal', target: 'self', amount: 2 },
+      { op: 'restoreMana', target: 'self', amount: 2 },
+      { op: 'heal', target: 'self', amount: 5 },
     ],
     textTemplate: 'Restore {restoreMana} Mana. Heal {heal} HP. Exhaust.',
     upgrade: { keywords: [], textTemplate: 'Restore {restoreMana} Mana. Heal {heal} HP.' },
@@ -190,12 +190,12 @@ export const heraldCards = [
     },
   },
   {
-    id: 'transfusion', name: 'Transfusion', class: 'herald', rarity: 'common', cost: 1, type: 'skill',
+    id: 'transfusion', name: 'Transfusion', class: 'herald', rarity: 'common', cost: 1, manaCost: 1, costRule: 'fixed', type: 'skill',
     flavor: "Communion of blood, between Saint and dying.\n\nBlood poured from cup to cup, for the dying of good family. The rubric speaks of the Saint giving, never receiving. Novice Wen wrote that the flow ran both ways.\n\nThe Saints rose from the rite looking younger.",
     keywords: ['retain'], icon: '➕',
-    effects: [{ op: 'heal', target: 'self', amount: 6 }],
+    effects: [{ op: 'heal', target: 'self', amount: 8 }],
     textTemplate: 'Heal {heal} HP.',
-    upgrade: { effects: [{ op: 'heal', target: 'self', amount: 9 }] },
+    upgrade: { effects: [{ op: 'heal', target: 'self', amount: 10 }] },
   },
   {
     id: 'blightward', name: 'Blightward', class: 'herald', rarity: 'common', cost: 1, type: 'skill',
@@ -605,13 +605,13 @@ export const heraldCards = [
   // Litany: the Herald's loop is overheal turned to offence; one card that
   // heals and braces in the same breath.
   {
-    id: 'warmLitany', name: 'Warm Litany', class: 'herald', rarity: 'starter', cost: 1, type: 'skill',
+    id: 'warmLitany', name: 'Warm Litany', class: 'herald', rarity: 'starter', cost: 1, manaCost: 1, costRule: 'fixed', type: 'skill',
     flavor: "First prayer of the Furnace Chapel's novices.\n\nSaid over a small hurt, to keep it warm. The novices were taught its words were older than the Chapel, found by the first Saint cut into the caldera wall.\n\nWe give the name. We keep the warmth.",
     keywords: ['retain'], icon: '📿',
-    effects: [{ op: 'heal', target: 'self', amount: 3 }, { op: 'block', target: 'self', amount: 3 }],
+    effects: [{ op: 'heal', target: 'self', amount: 5 }, { op: 'block', target: 'self', amount: 5 }],
     textTemplate: 'Heal {heal}. Gain {block} Block.',
     upgrade: {
-      effects: [{ op: 'heal', target: 'self', amount: 5 }, { op: 'block', target: 'self', amount: 5 }],
+      effects: [{ op: 'heal', target: 'self', amount: 7 }, { op: 'block', target: 'self', amount: 7 }],
     },
   },
 ];
