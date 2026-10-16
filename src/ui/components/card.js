@@ -324,6 +324,8 @@ export function renderCard(registries, ref, opts = {}) {
       artworkKind:artwork?.kind,
       artworkPosition:artwork?.position,
       artworkComposition:artwork,
+      completeRules: at === 'inspect',
+      rulesOverflow: at !== 'inspect' && Boolean(allFaceLines?.length > (faceLines?.length ?? 0)),
       glyph:engravedIconHtml(engravedGlyphId(model.icon))||esc(model.icon),
     });
     applyCardAppearance(el.querySelector('.illustrated-card-face'));

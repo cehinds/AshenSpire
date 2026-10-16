@@ -8,6 +8,13 @@
 :root .illustrated-card-face img { position:absolute; max-width:none; object-fit:fill; padding:0; margin:0; border:0; }
 :root .illustrated-card-face .ic-text { flex-shrink:0; width:100%; height:auto; white-space:pre-wrap; overflow-wrap:anywhere; line-height:1.25; overflow:hidden; }
 :root .illustrated-card-face .ic-text .val,:root .illustrated-card-face .ic-text .kw { font:inherit; color:inherit; }
+:root .illustrated-card-face:not([data-full-rules='true']) [data-face-overflow='true'] { display:none !important; }
+:root .illustrated-card-face .card-rules-inspect-cue {
+  display:none;position:absolute;top:100%;left:0;width:100%;padding-top:.4cqw;
+  color:#654923;font:600 clamp(8px,4.3cqw,12px)/1.1 Georgia,serif;text-align:center;
+  letter-spacing:.02em;text-shadow:0 1px #f0dfba;pointer-events:none;
+}
+:root .illustrated-card-face[data-rules-overflow='true'] .card-rules-inspect-cue { display:block; }
 :root .illustrated-card-face .card-title-fade {
   position:absolute;z-index:3;left:6%;right:6%;top:3.5%;height:22%;pointer-events:none;
   border-radius:3cqw 3cqw 0 0;
