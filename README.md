@@ -5,8 +5,19 @@
 
 The same runtime supports two authored configurations. **Product core** includes its required bundled modules and keeps optional gameplay packages off where the core has a fallback. **Current game** preserves the full legacy configuration.
 
-- **Product core:** [Play on Pages (publication pending)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-modules/latest/) · [standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38824467486/artifacts/12014905501) · [successful build run](https://github.com/cehinds/AshenSpire/actions/runs/38824467486)
-- **Current game:** [Play on Pages (publication pending)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-current-preview/latest/) · [standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38824501533/artifacts/12014322113) · [successful build run](https://github.com/cehinds/AshenSpire/actions/runs/38824501533)
+- **Product core:** [Play on Pages (publication pending)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-modules/latest/) · [previous standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38824467486/artifacts/12014905501) · [previous successful build run](https://github.com/cehinds/AshenSpire/actions/runs/38824467486)
+- **Current game:** [Play on Pages (publication pending)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-current-preview/latest/) · [previous standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38824501533/artifacts/12014322113) · [previous successful build run](https://github.com/cehinds/AshenSpire/actions/runs/38824501533)
+
+The next locked class now wears the **Dark veil** treatment: a translucent charcoal veil and a large centered gold padlock, with its unlock note kept visible. Unlocked classes keep their existing presentation. Weapon arts and spells have a base cost of at least 1 MP; the Reaver starts with 1 MP, and Sundering Art displays 36 damage for 2 SP and 1 MP.
+
+| Desktop · 1440×900 | Wide · 1920×1080 | Tablet · 1024×768 | Mobile · 390×844 |
+| --- | --- | --- | --- |
+| ![Dark veil on desktop](docs/preview/features/json-game-modules/dark-veil/desktop.png) | ![Dark veil wide](docs/preview/features/json-game-modules/dark-veil/wide.png) | ![Dark veil on tablet](docs/preview/features/json-game-modules/dark-veil/tablet.png) | ![Dark veil on mobile](docs/preview/features/json-game-modules/dark-veil/mobile.png) |
+
+Fresh local captures use source `dad857421`, build `0.7.1.1534`, runtime `554f3a5be2`. [Dark veil capture provenance and cosmetic checks](docs/preview/features/json-game-modules/dark-veil/README.md) · [Sundering Art inspection](docs/preview/features/json-game-modules/dark-veil/desktop-sundering-art.png) · [Map after the initial Rest](docs/preview/features/json-game-modules/dark-veil/desktop-map.png).
+
+<details>
+<summary>Earlier Rest restoration and progressive class captures</summary>
 
 Core Rest now uses the original full game's painted Shrine, run HUD, recovery preview, and service cards. Strategize, Smith, and Level Up open their existing review surfaces; cancelling keeps the visit untouched, and one confirmed service refills HP, MP, SP, and both flask pools. Class selection shows unlocked classes and the next class to earn; a fresh run shows Reaver and locked Starseer.
 
@@ -19,6 +30,8 @@ Core source `056668011` and current-profile source `f90fea869` have successful C
 | Progressive class selection | Reaver review |
 | --- | --- |
 | ![Reaver and next locked Starseer](docs/preview/features/json-game-modules/rest-ui/desktop-class.png) | ![Reaver starter deck review](docs/preview/features/json-game-modules/rest-ui/desktop-review.png) |
+
+</details>
 
 <details>
 <summary>Earlier Settings update and capture provenance</summary>
