@@ -59,6 +59,7 @@ export const COMBAT_OPCODES = Object.freeze([
   'applyStatus',
   'removeStatus',
   'grantCardCharge',
+  'modifyCards',
   'moveCards',
   'draw',
   'discard',
@@ -107,6 +108,7 @@ export const TARGETS = Object.freeze([
   'randomEnemy',
   'player',
   'owner',
+  'allAllies',
   'ally', // co-op: a chosen living teammate; resolves to self in solo play
   // Every living enemy EXCEPT the one the firing event names (and the action's
   // own target): a break's ripple reaches the others, never the broken one.
@@ -132,6 +134,7 @@ export const EVENTS = Object.freeze([
   'enemyActorTurnStarted', 'combatReactionOffered', 'combatReactionChosen',
   // SPEC §4.10: why no reaction was offered; a Smash broke physical Guard.
   'combatReactionUnavailable', 'combatGuardBroken',
+  'cardModified',
   'cardMoved',
   'cardDrawn',
   'cardPlayed',
@@ -222,6 +225,7 @@ export const PREDICATES = Object.freeze([
   'enemyNegativeStatusNew',
   'cardAbilityKindIs',
   'cardTargetsAllEnemies',
+  'resourcePaid',
   'inStance',
   'hasStatus',
   'hasBlock',
@@ -544,6 +548,7 @@ export const EFFECT_SPECS = Object.freeze({
   applyStatus: { allowed: ['status', 'stacks'], required: ['status'], refs: { status: 'statuses' } },
   removeStatus: { allowed: ['status', 'amount'], required: ['status'], refs: { status: 'statuses' } },
   grantCardCharge: { allowed: ['key', 'cardType', 'cardTag', 'abilityKind', 'damage', 'damageScope', 'manaDiscount', 'block', 'heal', 'break', 'buildup', 'buildupStatus'], required: ['key'], refs: { buildupStatus: 'statuses' } },
+  modifyCards: { allowed: ['from','selection','look','changes'], required: ['from','amount','changes'], refs: {} },
   moveCards: { allowed: ['from','to','selection','position','look','transformTo'], required: ['from','to','amount'], refs: { transformTo: 'cards' } },
   draw: { allowed: [], required: ['amount'], refs: {} },
   discard: { allowed: ['random', 'choose'], required: [], refs: {} },
@@ -835,6 +840,9 @@ export const SCHEMAS = Object.freeze({
     legacyGradeMap: opt(mapOf(int)),
     legacyFace: opt(any),
     requirements: opt(any),
+    costGrowth: opt(obj({stamina:opt(num),mana:opt(num),perUse:opt(num),max:opt(num)})),
+    effectVariants: opt(arr(obj({if:{k:'predicate'},effects,textTemplate:opt(str)}))),
+    targetLimit: opt({k:'formulaOrNum'}),
     gradeProfiles: opt(arr(obj({ rank: int, actionCost: int, manaCost: int, effects, textTemplate: opt(str), traits: opt(any) }))),
     weightClassPriced: opt(bool),
     type: en(...CARD_TYPES),

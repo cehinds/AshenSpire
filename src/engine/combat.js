@@ -1,4 +1,5 @@
-import { chooseZoneCards, hasCardChoice } from './cardZones.js';
+import { selectCardVariant } from './cardBehavior.js';
+import { chooseZoneCards, hasCardChoice, returnHiddenCards } from './cardZones.js';
 import { configuredCombat, configuredModule, setProfileStance, profileCardCosts, profileHandSize, profileFallbackDamage, freezeProfile } from './gameProfileCombat.js';
 import { decayStanceRoundStart } from './combatMatchups.js';
 import { previewCardAttackHit } from './stanceHit.js';
@@ -539,6 +540,7 @@ function finishCombat(combat, result) {
 
 function startPlayerTurn(combat) {
   combat.turn += 1;
+  returnHiddenCards(combat);
   decayStanceRoundStart(combat);
   clearEnemyReactionRolls(combat);
   combat.phase = 'player';
@@ -1637,7 +1639,7 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
   const idx = combat.piles.hand.findIndex((c) => c.instanceId === cardInstanceId);
   if (idx < 0) throw new Error(`Card '${cardInstanceId}' is not in hand`);
   const inst = combat.piles.hand[idx];
-  const def = resolveCombatCard(combat, inst, { upcastTier, upcastRanks });
+  let def = resolveCombatCard(combat, inst, { upcastTier, upcastRanks });
   const kws = def.keywords || [];
   if (!Control.controlGate(combat, p, def).allowed) throw F.playRefusal('Recover from the active control statuses before playing cards', 'controlled');
   if (p.ashenBlight?.milestones?.some(row => row.path === null)) throw new Error('Choose the pending Ashen Blight feat first');
@@ -1648,6 +1650,7 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
 
   const isX = def.cost === 'X';
   let { energy: cost, mana: manaCost, stamina: staminaCost } = prepaid ?? playCosts(combat, def);
+  def=selectCardVariant(combat,def,{energy:cost,mana:manaCost,stamina:staminaCost},targetId ? findEntity(combat,targetId) : null);
 
   const players = [{ id: p.id, alive: p.alive, connected: true }];
   const targetPlan = cardTargetPlan(def, p.id, combat.enemies, players, { solo: true });
@@ -2356,7 +2359,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
     combat.piles.discard.find((c) => c.instanceId === cardInstanceId) ||
     combat.piles.exhaust.find((c) => c.instanceId === cardInstanceId);
   if (!inst) throw new Error(`Unknown card instance '${cardInstanceId}'`);
-  const def = resolveCombatCard(combat, inst, { upcastRanks });
+  let def = resolveCombatCard(combat, inst, { upcastRanks });
   if (!combat._abilityPreparingPreview) {
     const clone = preparingPreview(combat, inst, def, targetId);
     clone._abilityPreparingPreview = true;
@@ -2366,6 +2369,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
   const isX = def.cost === 'X';
   const priceReceipt = resolvedCardPriceReceipt(combat, def);
   const paidCosts = priceReceipt.paid;
+  def=selectCardVariant(combat,def,paidCosts,targetId ? findEntity(combat,targetId) : null);
   // A queued card owns its discount charges. A restore's full display price
   // cannot borrow them, even when its net payment would still be zero.
   const displayClaims = priceReceipt.selfFunded ? claimedCharges(combat, inst.instanceId) : null;
@@ -2373,7 +2377,8 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
     ? resolvedCardPriceReceipt(combat, def, displayClaims).display : priceReceipt.display;
   const shownCost = configuredCombat(combat) || combat.combatExpansionVersion === 2 ? paidCosts.energy : isX ? p.energy : effectiveCost(combat, def);
   const target = targetId != null ? findEntity(combat, targetId) : null;
-  const living = combat.enemies.filter((e) => e.alive);
+  const allLiving = combat.enemies.filter((e) => e.alive);
+  const living = def.targetLimit===undefined ? allLiving : allLiving.slice(0,Math.max(0,evaluate(def.targetLimit,{energySpent:paidCosts.stamina,entities:{self:p,owner:p,player:p,target,enemy:target,allEnemies:allLiving}})));
 
   // Same action shape execution uses, so formulas resolve identically.
   const action = {
@@ -2399,7 +2404,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
       exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
       ...(def.cardRatingValues ? { cardRatingValues: def.cardRatingValues } : {}),
     },
-    meta: { energySpent: isX ? p.energy : typeof shownCost === 'number' ? shownCost : 0 },
+    meta: { energySpent:paidCosts.stamina,manaSpent:paidCosts.mana,staminaSpent:paidCosts.stamina },
   };
 
   Object.assign(action.card, tacticalCarrier(def, action.card, combat, p));
@@ -2477,7 +2482,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
     const entry = { op: eff.op, target: eff.target || null };
     const primary = firstResolvedTarget(combat, action, eff);
     action.effect = eff;
-    action.meta = { energySpent: shownCost };
+    action.meta = { energySpent:paidCosts.stamina,manaSpent:paidCosts.mana,staminaSpent:paidCosts.stamina };
     R.attachAbilityCharges(action, charges, applied, combat);
     switch (eff.op) {
       case 'damage': {
