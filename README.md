@@ -5,8 +5,22 @@
 
 The same runtime supports two authored configurations. **Product core** includes its required bundled modules and keeps optional gameplay packages off where the core has a fallback. **Current game** preserves the full legacy configuration.
 
-- **Product core:** [Play on Pages (publication pending)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-modules/latest/) · [previous standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38824467486/artifacts/12014905501) · [previous successful build run](https://github.com/cehinds/AshenSpire/actions/runs/38824467486)
-- **Current game:** [Play on Pages (publication pending)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-current-preview/latest/) · [previous standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38824501533/artifacts/12014322113) · [previous successful build run](https://github.com/cehinds/AshenSpire/actions/runs/38824501533)
+- **Product core:** [Play on Pages (latest publication unverified)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-modules/latest/) · [standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38857847633/artifacts/12028060905) · [successful build run](https://github.com/cehinds/AshenSpire/actions/runs/38857847633)
+- **Current game:** [Play on Pages (latest publication unverified)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-current-preview/latest/) · [standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38857898292/artifacts/12027628689) · [successful build run](https://github.com/cehinds/AshenSpire/actions/runs/38857898292)
+
+Desktop Strategize now uses a two-column **Reading Desk**: choosing a card updates a large inspection immediately, with the complete main description below its substantial face, visible without scrolling on desktop. Show animation is an optional checkbox; playback runs at half speed and can be paused. Equivalent owned and unlimited library entries share one count. Cancel and Escape review unsaved changes; Accept saves a valid deck, while a red count explains an invalid size. 
+
+The runtime includes the 70-card base catalog and automatic area Sweeps. Rest uses a compact right sidebar on wide screens and keeps its painted scene in proportion; mobile retains scrolling services and a reachable Continue footer.
+
+| | Desktop · 1440×900 | Wide · 1920×1080 | Tablet · 1024×768 | Mobile · 390×844 |
+| --- | --- | --- | --- | --- |
+| Strategize | ![Reading Desk desktop](docs/preview/features/json-game-modules/latest-ui/desktop-desk.png) | ![Reading Desk wide](docs/preview/features/json-game-modules/latest-ui/wide-desk.png) | ![Reading Desk tablet](docs/preview/features/json-game-modules/latest-ui/tablet-desk.png) | ![Reading Desk mobile inspection](docs/preview/features/json-game-modules/latest-ui/mobile-inspection.png) |
+| Rest | ![Rest desktop sidebar](docs/preview/features/json-game-modules/latest-ui/desktop-rest.png) | ![Rest wide sidebar](docs/preview/features/json-game-modules/latest-ui/wide-rest.png) | ![Rest tablet](docs/preview/features/json-game-modules/latest-ui/tablet-rest.png) | ![Rest mobile](docs/preview/features/json-game-modules/latest-ui/mobile-rest.png) |
+
+Adaptive-fit core source `367654085` and current source `8e548d580` both have successful CI builds. The affected Desk captures now use adaptive-fit source `367654085`, runtime `03196f4b63`; remaining captures use source `3abd51267`, runtime `b284ae955d`, all build `0.7.1.1534`. All six core descriptions passed at zero scroll at 1440×900 and 1366×768. Latest Pages publication remains unverified. [Combined standalone capture provenance and checks](docs/preview/features/json-game-modules/latest-ui/README.md) · [Paused animation preview](docs/preview/features/json-game-modules/latest-ui/desktop-animation-paused.png).
+
+<details>
+<summary>Earlier Dark veil, Mana, and Rest-start map evidence</summary>
 
 The next locked class now wears the **Dark veil** treatment: a translucent charcoal veil and a large centered gold padlock, with its unlock note kept visible. Unlocked classes keep their existing presentation. Weapon arts and spells have a base cost of at least 1 MP; the Reaver starts with 1 MP, and Sundering Art displays 36 damage for 2 SP and 1 MP.
 
@@ -15,6 +29,8 @@ The next locked class now wears the **Dark veil** treatment: a translucent charc
 | ![Dark veil on desktop](docs/preview/features/json-game-modules/dark-veil/desktop.png) | ![Dark veil wide](docs/preview/features/json-game-modules/dark-veil/wide.png) | ![Dark veil on tablet](docs/preview/features/json-game-modules/dark-veil/tablet.png) | ![Dark veil on mobile](docs/preview/features/json-game-modules/dark-veil/mobile.png) |
 
 Fresh local captures use source `dad857421`, build `0.7.1.1534`, runtime `554f3a5be2`. [Dark veil capture provenance and cosmetic checks](docs/preview/features/json-game-modules/dark-veil/README.md) · [Sundering Art inspection](docs/preview/features/json-game-modules/dark-veil/desktop-sundering-art.png) · [Map after the initial Rest](docs/preview/features/json-game-modules/dark-veil/desktop-map.png).
+
+</details>
 
 <details>
 <summary>Earlier Rest restoration and progressive class captures</summary>

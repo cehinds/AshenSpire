@@ -2032,3 +2032,32 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   .deck-editor-reading-desk .deck-editor-preview-toggle { display: none; }
   .deck-editor-reading-desk .deck-editor-main > .deck-editor-row-rules { -webkit-line-clamp: 2; line-clamp: 2; max-height: 2.7em; }
 }
+.deck-editor-reading-desk .deck-editor-selected-buttons > .deck-editor-secondary { color: #ffd8d2; background: #792f2b; border-color: #b95e53; }
+.deck-editor-reading-desk .deck-editor-selected-buttons > .deck-editor-primary:not(:disabled) { color: #edffe9; background: #326b3b; border-color: #70a675; }
+.deck-editor-reading-desk .deck-editor-done:not(:disabled) { color: #edffe9; background: #326b3b; border-color: #70a675; }
+.deck-editor-reading-desk .deck-editor-done:disabled { color: #aaa69e; background: #3a3834; border-color: #5d5952; opacity: 1; }
+.deck-editor-reading-desk .deck-editor-counter[data-state="out"],
+.deck-editor-reading-desk .deck-editor-refusal { color: #ff9488; }
+.deck-editor-reading-desk .deck-editor-counter[data-state="out"] { font-weight: 700; }
+.deck-editor-reading-desk .deck-editor-refusal:not([hidden])::before { content: '* '; }
+
+.deck-editor.deck-editor-reading-desk .deck-editor-foot > .modal-btnrow { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
+/* Keep the name and cost on one reading line beneath the large preview. */
+.deck-editor-reading-desk .deck-editor-rules { display: flex; flex-wrap: wrap; align-items: baseline; gap: .4rem .8rem; }
+.deck-editor-reading-desk .deck-editor-rules > :is(.tt-title, .ti-meta) { margin: 0; }
+.deck-editor-reading-desk .deck-editor-rules > .ctext { flex: 1 0 100%; margin: .5rem 0; }
+.deck-editor.deck-editor-reading-desk .deck-editor-selected-buttons > button.deck-editor-primary:not(:disabled):not([aria-disabled="true"]) { color: #edffe9; background-color: #326b3b; border-color: #70a675; }
+.deck-editor-reading-desk #deck-editor-done:not(:disabled) { color: #edffe9; background-color: #326b3b; border-color: #70a675; }
+.deck-editor-reading-desk #deck-editor-done:disabled { color: #aaa69e; background-color: #3a3834; border-color: #5d5952; opacity: 1; }
+/* The live game UI zoom changes the available reading height. Preserve the
+   main effect below the preview before spending remaining space on the face. */
+.deck-editor-reading-desk .deck-editor-selected-reason { display: none; }
+.deck-editor.deck-editor-reading-desk .deck-editor-reading > .deck-editor-preview > .card {
+  width: min(var(--deck-preview-fitted-width, 30rem), 100%) !important;
+}
+@media (max-width: 1000px) {
+  .deck-editor.deck-editor-reading-desk .deck-editor-reading > .deck-editor-preview > .card { width: min(24rem, 100%) !important; }
+}
+@container game-viewport (max-width: 1000px) {
+  .deck-editor.deck-editor-reading-desk .deck-editor-reading > .deck-editor-preview > .card { width: min(24rem, 100%) !important; }
+}

@@ -28,6 +28,7 @@ import { progressionTip } from '../components/progressionCards.js';
 
 import { el, button } from '../kit/index.js';
 import { bindModalDismiss, modalFooter, modalHead } from '../components/modalShell.js';
+import { openConfirmationModal, closeConfirmationModal } from '../components/confirmationModal.js';
 import { markUiComponent, UI_COMPONENTS as UI } from '../components/uiComponents.js';
 import { actionLabel, focusElement, matchAction, setInputGate, setTabRing } from '../input.js';
 import { DECK_PANES, deckEditorModel, deckEditorView, deckVariantKey, nextFilterPreset, openDeckEdit } from '../models/DeckEditorModel.js';
@@ -43,7 +44,7 @@ import { cardArtLayersHtml } from '../cardArtLayers.js';
 import { registerCardArtRefresh } from '../cardArtStyle.js';
 import { assetUrl } from '../assetmap.js';
 import { markArtPlaceholder } from '../artFallback.js';
-import { cardShapeCssProperties, cardLevelWidthCss } from '../models/CardSizeModel.js';
+import { cardShape, cardShapeCssProperties, cardLevelWidthCss } from '../models/CardSizeModel.js';
 import { keywordExplanations } from '../components/tooltipGlossary.js';
 import { deckCardAnimationPreview } from '../components/deckCardAnimationPreview.js';
 import { deckEditorCollectionRows } from '../models/deckEditorCollectionRows.js';
@@ -98,6 +99,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   let animationPreview = null;
   let animationPaused = false;
   let animationVisible = false;
+  let closeConfirmationOpen = false;
+  let previewFitObserver = null;
 
 
   const root = el('div', { class: 'modal-veil deck-editor-veil' });
@@ -129,7 +132,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
 
   function header() {
     const counter = el('p', {
-      class: 'deck-editor-counter', role: 'status', 'aria-live': 'polite',
+      class: 'deck-editor-counter', role: 'status', 'aria-live': 'polite', 'aria-invalid': model.counter.outOfBounds ? 'true' : 'false',
       dataset: { state: model.counter.outOfBounds ? 'out' : 'ok' }, title: tFull('deckEditor.counter', null),
       text: model.counter.text,
     });
@@ -247,6 +250,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   }
 
   function inspectPane() {
+    previewFitObserver?.disconnect();
+    previewFitObserver = null;
     animationPreview?.dispose();
     animationPreview = null;
     const section = el('section', { class: 'deck-editor-inspector', 'aria-label': t('deckEditor.inspect') });
@@ -343,9 +348,26 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       ]),
       el('div', { class: 'deck-editor-selected-actions' }, [
         el('p', { id: 'deck-editor-selected-reason', class: 'deck-editor-selected-reason', text: reasonText }),
-        el('div', { class: 'deck-editor-selected-buttons' }, [addNode, removeNode]),
+        el('div', { class: 'deck-editor-selected-buttons' }, [...(removeOn ? [removeNode] : []), addNode]),
       ]),
     );
+    // Fit the preview against the live reading box, including UI zoom. The
+    // main effect text and collapsed reference heading own their height first.
+    if (!showAnimation && typeof ResizeObserver === 'function') {
+      const reading = section.querySelector('.deck-editor-reading');
+      const fitPreview = () => {
+        if (!section.isConnected || matchViewMedia('(max-width: 1000px)').matches) return;
+        const rootFont = parseFloat(getComputedStyle(document.documentElement).fontSize) || 10;
+        const referenceHeight = glossary?.querySelector('summary')?.offsetHeight || 0;
+        const available = reading.clientHeight - details.offsetHeight - previewControl.offsetHeight - referenceHeight - 3.5 * rootFont;
+        const width = Math.floor(Math.min(30 * rootFont, Math.max(22 * rootFont, available * cardShape().ratio)));
+        face.style.setProperty('--deck-preview-fitted-width', `${width}px`);
+      };
+      previewFitObserver = new ResizeObserver(fitPreview);
+      previewFitObserver.observe(reading);
+      previewFitObserver.observe(details);
+      previewFitObserver.observe(previewControl);
+    }
     return section;
   }
 
@@ -769,15 +791,13 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   }, true);
 
   function footer() {
-    const undo = focusable(button({ label: t('deckEditor.undo'), disabled: !session.canUndo, className: 'deck-editor-undo' }), 'undo');
-    undo.addEventListener('click', () => { drop(); session.undo(); success = ''; notice = ''; draw(); });
     const cancel = button({ label: t('deckEditor.cancel'), id: 'deck-editor-cancel', className: 'deck-editor-cancel', attrs: { title: tFull('deckEditor.cancel') } });
     const done = button({
-      label: t('deckEditor.done'), weight: 'primary', id: 'deck-editor-done', className: 'deck-editor-done',
-      disabled: model.done.disabled, attrs: { title: tFull('deckEditor.done'), 'aria-describedby': 'deck-editor-refusal' },
+      label: t('deckEditor.accept'), weight: 'primary', id: 'deck-editor-done', className: 'deck-editor-done',
+      disabled: model.done.disabled, attrs: { title: tFull('deckEditor.accept'), 'aria-describedby': 'deck-editor-refusal' },
     });
     done.setAttribute('aria-disabled', model.done.disabled ? 'true' : 'false');
-    cancel.addEventListener('click', doCancel);
+    cancel.addEventListener('click', requestClose);
     done.addEventListener('click', doDone);
     focusable(cancel, 'cancel');
     focusable(done, 'done');
@@ -794,7 +814,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
           panes: '[ ]', filter: actionLabel('deck'), move: actionLabel('endTurn'), done: actionLabel('menu'), cancel: actionLabel('cancel'),
         }),
     });
-    const foot = modalFooter({ secondary: [undo, cancel], primary: done, className: 'deck-editor-foot', size: 'medium' });
+    const foot = modalFooter({ secondary: [cancel], primary: done, className: 'deck-editor-foot', size: 'medium' });
     return el('div', { class: 'deck-editor-footer' }, [refusal,
       el('div', { class: 'deck-editor-feedback', hidden: !success, role: 'status', 'aria-live': 'polite', text: success }), keys, foot]);
   }
@@ -823,7 +843,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     if (onNavigate) {
       const head = modalHead({ tabs: [
         { id: 'character', label: t('progression.tab.character') }, { id: 'armory', label: t('armoury.hub.armory') }, { id: 'deck', label: t('armoury.hub.deck'), selected: true },
-      ], showMenuButton: false, onClose: doCancel, onTab: id => {
+      ], showMenuButton: false, onClose: requestClose, onTab: id => {
         if (id === 'deck') return;
         const result = session.confirm();
         if (!result.ok) { notice = result.refusal || model.done.refusal; draw(); return; }
@@ -925,7 +945,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
 
   /** The held row's inputs. True when consumed (input.js stops there). */
   function heldInput(input) {
-    if (!held) return false;
+    if (!held || closeConfirmationOpen) return false;
     const keyboard = input.family === 'keyboard';
     const up = keyboard ? input.key === 'ArrowUp' : input.button === PAD.up;
     const down = keyboard ? input.key === 'ArrowDown' : input.button === PAD.down;
@@ -936,7 +956,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     }
     // Cancel is Cancel even mid-move: Esc and B restore the whole edit (the
     // hold included). Only Enter, A and X (the End Turn key) drop the row.
-    if (keyboard ? input.key === 'Escape' : input.button === PAD.b) { doCancel(); return true; }
+    if (keyboard ? input.key === 'Escape' : input.button === PAD.b) { requestClose(); return true; }
     const dropNow = keyboard
       ? (input.key === 'Enter' || matchAction({ key: input.key }, 'endTurn'))
       : [PAD.a, PAD.x].includes(input.button);
@@ -982,6 +1002,18 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     return result;
   }
 
+  function requestClose() {
+    if (closeConfirmationOpen) return;
+    if (!session.canUndo) { doCancel(); return; }
+    closeConfirmationOpen = true;
+    openConfirmationModal({ title: t('deckEditor.closeUnsaved.title'),
+      message: t('deckEditor.closeUnsaved.message'),
+      confirmLabel: t('deckEditor.closeUnsaved.discard'), cancelLabel: t('deckEditor.closeUnsaved.keepEditing'),
+      tone: 'danger', onConfirm: () => { closeConfirmationOpen = false; doCancel(); },
+      onCancel: () => { closeConfirmationOpen = false; },
+    });
+  }
+
   function doCancel() {
     if (session.closed) return;
     session.cancel();
@@ -995,12 +1027,12 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
    * test all come through here.
    */
   function dispatch(input) {
-    if (session.closed) return false;
+    if (session.closed || closeConfirmationOpen) return false;
     if (held && heldInput(input)) return true;
     if (input.family === 'controller') {
       switch (input.button) {
         case PAD.a: activateFocused(); return true;
-        case PAD.b: doCancel(); return true;
+        case PAD.b: requestClose(); return true;
         case PAD.x: { const row = focusedRow(); if (row && model.ordered) togglePick(row); return !!row; }
         case PAD.y: cycleFilters(); return true;
         case PAD.lb: return switchPane(-1);
@@ -1011,7 +1043,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     }
     const key = input.key || '';
     const probe = { key };
-    if (key === 'Escape') { doCancel(); return true; }
+    if (key === 'Escape') { requestClose(); return true; }
     if (focused()?.tagName === 'INPUT') return false;
     // `[` / `]` are the tab ring's (input.js), which switches the pane once;
     // answering them here too switched it twice, i.e. not at all.
@@ -1073,10 +1105,13 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     sibling.setAttribute('inert', '');
     madeInert.push(sibling);
   }
-  const releaseDismiss = bindModalDismiss({ veil: root, panel, close: () => doCancel() });
+  const releaseDismiss = bindModalDismiss({ veil: root, panel, close: requestClose });
 
   function close() {
+    if (closeConfirmationOpen) { closeConfirmationModal({ restoreFocus: false }); closeConfirmationOpen = false; }
     inspectObserver?.disconnect();
+    previewFitObserver?.disconnect();
+    previewFitObserver = null;
     animationPreview?.dispose();
     animationPreview = null;
     drop();
