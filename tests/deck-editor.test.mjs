@@ -19,8 +19,22 @@ import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { locationServices, locationTags } from '../src/model/locations.js';
 import { deckEditorModel, deckEditorDoors, deckVariantKey, openDeckEdit, nextFilterPreset, deckEditorView } from '../src/ui/models/DeckEditorModel.js';
+import { deckEditorCollectionRows } from '../src/ui/models/deckEditorCollectionRows.js';
 import { setKeyBindings } from '../src/ui/input.js';
-import { withModalDom as withDom } from './helpers/modal-dom.mjs';
+import { withModalDom as withBaseDom } from './helpers/modal-dom.mjs';
+
+// The shared discard confirmation owns a short input-shield timer. Keep it
+// inside this synchronous DOM fixture instead of leaking into the next test.
+const withDom = fn => withBaseDom((...args) => {
+  const nativeTimeout = globalThis.setTimeout;
+  const nativeElement = globalThis.HTMLElement;
+  globalThis.HTMLElement = args[0].document.body.constructor;
+  const timers = new Set();
+  globalThis.setTimeout = (...params) => { const id = nativeTimeout(...params); timers.add(id); return id; };
+  try { return fn(...args); }
+  finally { for (const id of timers) clearTimeout(id); globalThis.setTimeout = nativeTimeout;
+    if (nativeElement === undefined) delete globalThis.HTMLElement; else globalThis.HTMLElement = nativeElement; }
+});
 
 const REG = createRegistries(contentBundle);
 // Keep the historical equipment filler allocation used by these edit plants.
@@ -404,6 +418,7 @@ test('DOM: inspection is read-only; explicit actions, keyboard and pad edit; Don
 
     // B cancels: everything the session changed is back, and the veil is gone.
     editor.dispatch({ family: 'controller', button: 1 });
+    document.querySelector('.confirmation-confirm').click();
     assert.equal(cancelled, 1);
     assert.deepEqual(editState(run), before, 'Cancel restores both piles, the slots, the guards and the mint counter');
     assert.equal(root.isConnected, false);
@@ -431,6 +446,7 @@ test('DOM: Start confirms inside the bounds, and the Escape key cancels', async 
     const second = mountDeckEditor(document.body, { registries: REG, run: again, settings: {}, onCancel: () => { cancelled += 1; } });
     second.root.querySelector('.deck-editor-tile[data-key="basic:guard"] .deck-editor-step[data-action="add"]').click();
     win.dispatchEvent(new dom.Event('keydown', { key: 'Escape' }));
+    document.querySelector('.confirmation-confirm').click();
     assert.equal(cancelled, 1);
     assert.deepEqual(editState(again), before);
   });
@@ -444,7 +460,9 @@ test('Reading Desk: text search is off by default (owner, 2026-10-11)', async ()
     assert.equal(editor.root.querySelector('.deck-editor-search'), null, 'no collection search by default');
     assert.equal(editor.root.querySelector('[data-focus-key="deck-search"]'), null, 'no deck search by default');
     assert.equal(editor.root.querySelector('input[type="search"]'), null, 'no search input at all by default');
-    assert.ok(editor.root.querySelector('[data-focus-key="scope:all"]'), 'the All / In Deck chips stay');
+    assert.equal(editor.root.querySelector('[data-focus-key="scope:all"]'), null, 'redundant scope tabs are omitted');
+    assert.equal(editor.root.querySelector('[data-focus-key="scope:deck"]'), null);
+    assert.equal(editor.root.querySelector('[data-pane="collection"] .deck-editor-pane-title'), null, 'the header already reports the deck count');
     editor.close();
   });
 });
@@ -491,19 +509,18 @@ test('Reading Desk: inspector uses one native artwork image across card selectio
   });
 });
 
-test('Reading Desk: Undo reverses a row action and Cancel still restores the opening state', async () => {
+test('Reading Desk: footer omits Undo and Cancel restores the opening state after confirmation', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   withDom(() => {
     const run = freshRun(), before = editState(run);
     const editor = mountDeckEditor(document.body, { registries: REG, run });
     editor.root.querySelector('.deck-editor-tile .deck-editor-step[data-action="add"]').click();
     assert.equal(run.deck.length, before.deck.length + 1);
-    assert.equal(editor.root.querySelector('.deck-editor-undo').disabled, false);
-    editor.root.querySelector('.deck-editor-undo').click();
-    assert.deepEqual(editState(run), before);
-    assert.equal(editor.root.querySelector('.deck-editor-undo').disabled, true);
-    editor.root.querySelector('.deck-editor-tile .deck-editor-step[data-action="add"]').click();
+    assert.equal(editor.root.querySelector('.deck-editor-undo'), null);
+    assert.equal(editor.root.querySelector('#deck-editor-close'), null);
     editor.root.querySelector('#deck-editor-cancel').click();
+    document.querySelector('.confirmation-confirm')?.click();
+    document.querySelector('.confirmation-confirm')?.click();
     assert.deepEqual(editState(run), before);
   });
 });
@@ -555,16 +572,16 @@ test('Reading Desk: thumbnail art follows the live style preference and retains 
   });
 });
 
-test('Reading Desk: In Deck hides a removed reward and Undo restores it', async () => {
+test('Reading Desk: removed cards remain available and Undo restores their deck count', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   withDom(() => {
     const run = freshRun();
     const editor = mountDeckEditor(document.body, { registries: REG, run });
     const reward = deckEditorModel({ registries: REG, run }).deck.find(row => row.cardId === 'gorefireSlash');
     editor.root.querySelector(`[data-focus-key="row-remove:${reward.groupKey}"]`).click();
-    editor.root.querySelector('[data-focus-key="scope:deck"]').click();
-    assert.equal([...editor.root.querySelectorAll('.deck-editor-tile .deck-editor-name')].some(node => node.textContent === reward.name), false);
-    editor.root.querySelector('.deck-editor-undo').click();
+    const removed = editor.root.querySelector(`.deck-editor-tile[data-key="card:${deckVariantKey(reward.ref)}"]`);
+    assert.equal(removed.querySelector('.deck-editor-stepper-count').textContent, '0/1', 'owned cards remain available without another tab');
+    removed.querySelector('.deck-editor-step[data-action="add"]').click();
     assert.equal([...editor.root.querySelectorAll('.deck-editor-tile .deck-editor-name')].some(node => node.textContent === reward.name), true);
     editor.close();
   });
@@ -1131,7 +1148,7 @@ test('DOM: the inspector offers Add and Remove side by side, each enabled only w
     const model = () => deckEditorModel({ registries: REG, run, settings: {} });
     const add = () => editor.root.querySelector('.deck-editor-inspector [data-focus-key="selected-add"]');
     const remove = () => editor.root.querySelector('.deck-editor-inspector [data-focus-key="selected-remove"]');
-    const off = (node) => node.disabled === true || node.hasAttribute('disabled');
+    const off = (node) => !node || node.disabled === true || node.hasAttribute('disabled');
     const inspectDeckRow = (groupKey) => {
       editor.root.querySelector(`[data-focus-key="row:${groupKey}"]`).click();
       editor.root.querySelector(`[data-focus-key="inspect:deck:${groupKey}"]`).click();
@@ -1394,13 +1411,14 @@ test('DOM: the stepper reads in-deck / owned (∞ for a basic); its label is the
     const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
     const model = deckEditorModel({ registries: REG, run, settings: {} });
     const basic = editor.root.querySelector('.deck-editor-tile[data-key="basic:attack"] .deck-editor-stepper-count');
-    assert.equal(basic.textContent, `${model.collection.find(t => t.key === 'basic:attack').inDeck}/∞`);
+    const groupedBasic = deckEditorCollectionRows({ registries: REG, run, collection: model.collection }).find(t => t.key === 'basic:attack');
+    assert.equal(basic.textContent, `${groupedBasic.inDeck}/∞`);
     const limited = editor.root.querySelector(`.deck-editor-tile[data-key="card:${variant}"] .deck-editor-stepper-count`);
     assert.equal(limited.textContent, '1/2', 'one in the deck of two owned');
     const tile = model.collection.find(t => t.key === `card:${variant}`);
     assert.equal(limited.getAttribute('aria-label'), '1 in deck of 2 owned.', 'the label speaks the same numbers');
     assert.equal(limited.getAttribute('title'), '1 in deck of 2 owned.');
-    assert.equal(basic.getAttribute('aria-label'), `${model.collection.find(t => t.key === 'basic:attack').inDeck} in deck; unlimited copies.`);
+    assert.equal(basic.getAttribute('aria-label'), `${groupedBasic.inDeck} in deck; unlimited copies.`);
     editor.close();
   });
 });
@@ -1459,6 +1477,7 @@ test('DOM: with a row held, Escape and pad B cancel the whole edit; Enter, A and
       pickUp(editor, run);
       editor.dispatch({ family: 'controller', button: 13 }); // move it, so there is something to restore
       fire(editor);
+      document.querySelector('.confirmation-confirm').click();
       assert.equal(cancelled, 1, `${how} cancels the edit`);
       assert.equal(editor.root.isConnected, false, `${how} closes the editor`);
       assert.deepEqual(editState(run), before, `${how} restores the deck order`);
@@ -1623,5 +1642,34 @@ test('Reading Desk: selecting or focusing a new row immediately replaces a previ
     assert.equal(editor.root.querySelector('.deck-editor-animation'), null);
     assert.deepEqual(editState(run), before);
     editor.close();
+  });
+});
+
+
+test('Reading Desk: Cancel and Escape guard edits, Keep editing preserves them, Accept uses the actual minimum', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  withDom(() => {
+    const run = freshRun(), minimum = run.deck.length;
+    let saved = 0;
+    const editor = mountDeckEditor(document.body, { registries: REG, run, settings: { deckMinSize: minimum }, onDone: () => saved++ });
+    const main = editor.root.querySelector('.deck-editor-tile .deck-editor-main');
+    main.click();
+    const buttons = editor.root.querySelector('.deck-editor-selected-buttons');
+    assert.equal(buttons.children[0].dataset.focusKey, 'selected-remove');
+    assert.equal(buttons.children[1].dataset.focusKey, 'selected-add');
+    editor.root.querySelector('.deck-editor-tile .deck-editor-step[data-action="remove"]').click();
+    assert.equal(editor.root.querySelector('#deck-editor-done').disabled, true);
+    assert.equal(editor.root.querySelector('.deck-editor-counter').getAttribute('aria-invalid'), 'true');
+    editor.root.querySelector('#deck-editor-cancel').click();
+    assert.ok(document.querySelector('.confirmation-modal'));
+    assert.equal(run.deck.length, minimum - 1, 'opening the confirmation does not discard');
+    document.querySelector('.confirmation-cancel').click();
+    assert.equal(editor.root.isConnected, true);
+    assert.equal(run.deck.length, minimum - 1, 'Keep editing preserves edits');
+    editor.root.querySelector('.deck-editor-tile .deck-editor-step[data-action="add"]').click();
+    assert.equal(editor.root.querySelector('#deck-editor-done').disabled, false);
+    assert.equal(editor.root.querySelector('.deck-editor-counter').getAttribute('aria-invalid'), 'false');
+    editor.root.querySelector('#deck-editor-done').click();
+    assert.equal(saved, 1);
   });
 });

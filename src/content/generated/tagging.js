@@ -23479,5 +23479,41 @@ export const tagging = [
     "scope": "",
     "objectId": "hex",
     "tagId": "target"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crimsonCleave",
+    "tagId": "targeting:area"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "hewingArc",
+    "tagId": "targeting:area"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "whirlingGuard",
+    "tagId": "targeting:area"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cleavingBlow",
+    "tagId": "targeting:area"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sweepingBlow",
+    "tagId": "targeting:area"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ashen-cleaver",
+    "tagId": "targeting:area"
   }
 ];

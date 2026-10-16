@@ -1,0 +1,24 @@
+# Battlefield approval wireframes — 2026-10-16
+
+Docs-only layout proposals. No battlefield implementation is authorized until the owner chooses an option, then reviews its visual preview.
+
+Open `index.html` for the interactive comparison. `overview.png` contains A–G and the common anchor inset. Individual PNG/SVG files are 1440×900. Shapes are schematic, not final artwork; the same required scene, formation anchors and shadow rules apply to every option.
+
+- **A — Balanced desktop · recommended:** Side utilities; five larger cards; compact, readable footer.
+- **B — Wide utility rails:** Tall side rails keep logs and reactions beside the stage.
+- **C — Single action dock:** One continuous dock combines large cards and full-height controls.
+- **D — Left command column:** Resources and turn action on the left; cards center, log at right.
+- **E — Right command column:** Large command stack at right; centered hand and quiet left log.
+- **F — Raised utility shelf:** Log and reactions sit above a shallow hand dock; sky stays open.
+- **G — Split hand wings:** Cards split around a large central turn and resource hub.
+
+## Shared requirements
+
+- Reduce background zoom and move the ground down to expose an upper sky band.
+- Keep a perspective 3×3 grid: row A enemies anchor toward each cell’s top right; row B enemies toward bottom left; row C players toward bottom center. Dots show foot anchors; the grid is a review guide, not a requirement to display it during play.
+- Keep figures proportional; ground shadows follow the visual silhouette width.
+- Enlarge vitality, turn label, character mini HUD, cards and footer controls.
+- Combat log and Reactions have their own layout areas and never derive width from the hand.
+- Remove unused vertical space around the hand; the entire lower HUD has one continuous background color. Larger card/control content can fill that space.
+
+The representative four-character encounter demonstrates the shared anchor rules; unoccupied dots show all nine cell anchors. Options vary utility placement, command placement, card grouping and lower-panel height. Selection is a layout decision only; exact art, responsive behavior and final sizes belong to the next preview stage.

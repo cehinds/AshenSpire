@@ -28,6 +28,7 @@ import { progressionTip } from '../components/progressionCards.js';
 
 import { el, button } from '../kit/index.js';
 import { bindModalDismiss, modalFooter, modalHead } from '../components/modalShell.js';
+import { openConfirmationModal, closeConfirmationModal } from '../components/confirmationModal.js';
 import { markUiComponent, UI_COMPONENTS as UI } from '../components/uiComponents.js';
 import { actionLabel, focusElement, matchAction, setInputGate, setTabRing } from '../input.js';
 import { DECK_PANES, deckEditorModel, deckEditorView, deckVariantKey, nextFilterPreset, openDeckEdit } from '../models/DeckEditorModel.js';
@@ -43,9 +44,10 @@ import { cardArtLayersHtml } from '../cardArtLayers.js';
 import { registerCardArtRefresh } from '../cardArtStyle.js';
 import { assetUrl } from '../assetmap.js';
 import { markArtPlaceholder } from '../artFallback.js';
-import { cardShape, cardShapeCssProperties, cardLevelWidthCss } from '../models/CardSizeModel.js';
+import { cardShapeCssProperties, cardLevelWidthCss } from '../models/CardSizeModel.js';
 import { keywordExplanations } from '../components/tooltipGlossary.js';
 import { deckCardAnimationPreview } from '../components/deckCardAnimationPreview.js';
+import { deckEditorCollectionRows } from '../models/deckEditorCollectionRows.js';
 import { deckEditorCosts, deckEditorResourceGroups } from '../models/deckEditorCosts.js';
 
 // Standard-mapping pad buttons the editor reads directly while a row is held
@@ -90,7 +92,6 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   let mobileView = 'collection';
   let inspectOrigin = 'collection';
   let filtersOpen = false;
-  let libraryScope = 'all';
   let deckQuery = '';
   let deckDisplay = 'list';
   const foldedTypes = new Set();
@@ -98,7 +99,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   let animationPreview = null;
   let animationPaused = false;
   let animationVisible = false;
-  let previewFitObserver = null;
+  let closeConfirmationOpen = false;
 
 
   const root = el('div', { class: 'modal-veil deck-editor-veil' });
@@ -130,7 +131,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
 
   function header() {
     const counter = el('p', {
-      class: 'deck-editor-counter', role: 'status', 'aria-live': 'polite',
+      class: 'deck-editor-counter', role: 'status', 'aria-live': 'polite', 'aria-invalid': model.counter.outOfBounds ? 'true' : 'false',
       dataset: { state: model.counter.outOfBounds ? 'out' : 'ok' }, title: tFull('deckEditor.counter', null),
       text: model.counter.text,
     });
@@ -177,7 +178,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       draw();
     }, `sort:${s.id}`));
     const details = el('details', { class: 'deck-editor-tools', open: filtersOpen }, [
-      el('summary', { text: t('deckEditor.filterSort') }),
+      el('summary', { text: t('deckEditor.filters') }),
       el('div', { class: 'deck-editor-chips', role: 'group', 'aria-label': t('deckEditor.filters') }, [
         el('span', { class: 'deck-editor-chips-label', text: t('deckEditor.filters') }), ...filterChips,
       ]),
@@ -248,8 +249,6 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   }
 
   function inspectPane() {
-    previewFitObserver?.disconnect();
-    previewFitObserver = null;
     animationPreview?.dispose();
     animationPreview = null;
     const section = el('section', { class: 'deck-editor-inspector', 'aria-label': t('deckEditor.inspect') });
@@ -285,7 +284,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     // variant. Remove takes one copy: the tile's last deck copy, or this row.
     const deckCard = source === 'deck' ? run.deck.find(card => card.instanceId === row.instanceId) : null;
     const addTile = source === 'collection' ? row
-      : (deckCard ? model.collection.find(tile => tile.key === row.tileKey) : null) || null;
+      : (deckCard ? model.collection.find(tile => tile.key === row.tileKey || tile.memberKeys?.includes(row.tileKey)) : null) || null;
     const addOn = !!addTile?.addable;
     const removeOn = !!row.removable;
     const removeId = source === 'collection' ? row.removeInstanceId : row.instanceId;
@@ -308,13 +307,16 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     const showAnimation = animationVisible && (typeof matchMedia !== 'function' || matchViewMedia('(min-width: 1001px)').matches);
     if (showAnimation) animationPreview = deckCardAnimationPreview({ registries, run, ref: row.ref, paused: animationPaused,
       onPaused: paused => { animationPaused = paused; } });
-    const previewToggle = chip(t(animationVisible ? 'deckEditor.preview.card' : 'deckEditor.preview.animation'), animationVisible, () => {
-      animationVisible = !animationVisible;
+    const previewToggle = focusable(el('input', { type: 'checkbox', checked: animationVisible,
+      'aria-label': t('deckEditor.preview.animation') }), 'preview:animation');
+    previewToggle.addEventListener('change', () => {
+      animationVisible = previewToggle.checked;
       const current = panel.querySelector('.deck-editor-inspector');
       if (current) { current.parentNode.insertBefore(inspectPane(), current); current.remove(); }
       focusNode(panel.querySelector('[data-focus-key="preview:animation"]'));
-    }, 'preview:animation');
-    previewToggle.classList.add('deck-editor-preview-toggle');
+    });
+    const previewControl = el('label', { class: 'deck-editor-preview-toggle' }, [previewToggle,
+      el('span', { text: t('deckEditor.preview.animation') })]);
     const details = el('div', { class: 'deck-editor-rules' });
     details.innerHTML = cardDetailHtml(registries, row.ref, { rules: run, definition: combatDef(row) });
     // Keep the effect description before the longer combat explanations. Tags
@@ -324,9 +326,11 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     if (effectText && meta?.nextSibling) details.insertBefore(effectText, meta.nextSibling);
     const extraTags = details.querySelector('.inspection-tags');
     const sigilReference = details.querySelector('.inspection-sigils');
+    const combatReference = [...details.querySelectorAll('.combat-rule-hint')];
     const glossaryEntries = keywordExplanations(registries, rulesFor(row));
-    const glossary = extraTags || sigilReference || glossaryEntries.length ? el('details', { class: 'deck-editor-glossary' }, [
-      el('summary', { text: t('deckEditor.keywordExplanations') }),
+    const glossary = extraTags || sigilReference || combatReference.length || glossaryEntries.length ? el('details', { class: 'deck-editor-glossary' }, [
+      el('summary', { text: t('deckEditor.rulesAndKeywords') }),
+      ...combatReference,
       ...(sigilReference ? [sigilReference] : []),
       ...(extraTags ? [extraTags] : []),
       ...glossaryEntries.map(entry => el('div', { class: 'deck-editor-keyword' }, [
@@ -335,31 +339,15 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     ]) : null;
     section.append(
       el('div', { class: 'deck-editor-reading' }, [
-        el('div', { class: `deck-editor-preview${showAnimation ? ' animation-mode' : ''}` }, [showAnimation ? animationPreview.root : face, previewToggle]),
+        el('div', { class: `deck-editor-preview${showAnimation ? ' animation-mode' : ''}` }, [showAnimation ? animationPreview.root : face, previewControl]),
         details,
         ...(glossary ? [glossary] : []),
       ]),
       el('div', { class: 'deck-editor-selected-actions' }, [
         el('p', { id: 'deck-editor-selected-reason', class: 'deck-editor-selected-reason', text: reasonText }),
-        el('div', { class: 'deck-editor-selected-buttons' }, [addNode, removeNode]),
+        el('div', { class: 'deck-editor-selected-buttons' }, [...(removeOn ? [removeNode] : []), addNode]),
       ]),
     );
-    // Spend the remaining desktop height on the face only after the full
-    // effect and combat rules have their space. Long readings keep a small
-    // reference face; ordinary cards can use a more useful 180px preview.
-    if (!showAnimation && typeof ResizeObserver === 'function') {
-      const reading = section.querySelector('.deck-editor-reading');
-      const fitPreview = () => {
-        if (!section.isConnected || matchViewMedia('(max-width: 1000px)').matches) return;
-        const available = reading.clientHeight - details.offsetHeight - (glossary?.offsetHeight || 0) - 32;
-        const width = Math.floor(Math.max(90, Math.min(180, available * cardShape().ratio)));
-        face.style.setProperty('--deck-preview-width', `${width}px`);
-      };
-      previewFitObserver = new ResizeObserver(fitPreview);
-      previewFitObserver.observe(reading);
-      previewFitObserver.observe(details);
-      if (glossary) previewFitObserver.observe(glossary);
-    }
     return section;
   }
 
@@ -534,7 +522,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   function stepperCount(tile) {
     const kept = tile.key.startsWith('kept:');
     const inDeck = tile.inDeck;
-    const owned = kept ? tile.inDeck + tile.owned : tile.owned;
+    const owned = tile.totalOwned ?? (kept ? tile.inDeck + tile.owned : tile.owned);
     return { inDeck, owned, unlimited: !!tile.unlimited };
   }
   const stepperText = (count) => (count.unlimited ? t('deckEditor.stepperCount.unlimited', { inDeck: count.inDeck })
@@ -553,7 +541,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       try { next.setSelectionRange(caret, caret); } catch { /* search selection varies by browser */ }
     });
     const list = el('div', { class: 'deck-editor-list', role: 'list' });
-    const rows = model.collection.filter(row => (libraryScope === 'all' || row.inDeck > 0) && `${row.name} ${rulesFor(row)}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
+    const rows = model.collection.filter(row => `${row.name} ${rulesFor(row)}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
     for (const tile of rows) {
       const main = focusable(el('button', {
         type: 'button', class: 'deck-editor-main', disabled: tile.equipmentEligible === false, dataset: { action: 'add', key: tile.key, illustrated: 'true' },
@@ -590,9 +578,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       ])]));
     }
     if (!rows.length) list.appendChild(el('p', { class: 'deck-editor-empty', text: t('deckEditor.empty.collection') }));
-    return paneSection('collection', `${t('deckEditor.pane.deck')} · ${model.counter.count}`, list, [
-      chip(t('deckEditor.all'), libraryScope === 'all', () => { libraryScope = 'all'; draw(); }, 'scope:all'),
-      chip(t('deckEditor.inDeck'), libraryScope === 'deck', () => { libraryScope = 'deck'; draw(); }, 'scope:deck'),
+    return paneSection('collection', '', list, [
       tools(),
       search,
     ]);
@@ -680,8 +666,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // onto the bar's own line.
   function paneSection(id, title, list, controls = []) {
     const section = el('section', {
-      class: `deck-editor-pane${pane === id ? ' active' : ''}`, dataset: { pane: id }, 'aria-label': title,
-    }, [el('div', { class: 'deck-editor-pane-bar' }, [el('h3', { class: 'deck-editor-pane-title', text: title }), ...controls]), list]);
+      class: `deck-editor-pane${pane === id ? ' active' : ''}`, dataset: { pane: id }, 'aria-label': title || t('deckEditor.pane.deck'),
+    }, [el('div', { class: 'deck-editor-pane-bar' }, [...(title ? [el('h3', { class: 'deck-editor-pane-title', text: title })] : []), ...controls]), list]);
     return section;
   }
 
@@ -785,15 +771,13 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   }, true);
 
   function footer() {
-    const undo = focusable(button({ label: t('deckEditor.undo'), disabled: !session.canUndo, className: 'deck-editor-undo' }), 'undo');
-    undo.addEventListener('click', () => { drop(); session.undo(); success = ''; notice = ''; draw(); });
     const cancel = button({ label: t('deckEditor.cancel'), id: 'deck-editor-cancel', className: 'deck-editor-cancel', attrs: { title: tFull('deckEditor.cancel') } });
     const done = button({
-      label: t('deckEditor.done'), weight: 'primary', id: 'deck-editor-done', className: 'deck-editor-done',
-      disabled: model.done.disabled, attrs: { title: tFull('deckEditor.done'), 'aria-describedby': 'deck-editor-refusal' },
+      label: t('deckEditor.accept'), weight: 'primary', id: 'deck-editor-done', className: 'deck-editor-done',
+      disabled: model.done.disabled, attrs: { title: tFull('deckEditor.accept'), 'aria-describedby': 'deck-editor-refusal' },
     });
     done.setAttribute('aria-disabled', model.done.disabled ? 'true' : 'false');
-    cancel.addEventListener('click', doCancel);
+    cancel.addEventListener('click', requestClose);
     done.addEventListener('click', doDone);
     focusable(cancel, 'cancel');
     focusable(done, 'done');
@@ -810,14 +794,15 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
           panes: '[ ]', filter: actionLabel('deck'), move: actionLabel('endTurn'), done: actionLabel('menu'), cancel: actionLabel('cancel'),
         }),
     });
-    const foot = modalFooter({ secondary: [undo, cancel], primary: done, className: 'deck-editor-foot', size: 'medium' });
+    const foot = modalFooter({ secondary: [cancel], primary: done, className: 'deck-editor-foot', size: 'medium' });
     return el('div', { class: 'deck-editor-footer' }, [refusal,
       el('div', { class: 'deck-editor-feedback', hidden: !success, role: 'status', 'aria-live': 'polite', text: success }), keys, foot]);
   }
 
   function draw() {
     combatDefCache.clear();
-    model = deckEditorModel({ registries, run, settings, view });
+    const rawModel = deckEditorModel({ registries, run, settings, view });
+    model = { ...rawModel, collection: deckEditorCollectionRows({ registries, run, collection: rawModel.collection }) };
     if (!model.ordered && mobileView === 'deck') mobileView = 'collection';
     const rows = selected?.source === 'deck' ? model.deck : model.collection;
     const current = selected && rows.find(row => selectionKey(row, selected.source) === selected.key);
@@ -838,7 +823,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     if (onNavigate) {
       const head = modalHead({ tabs: [
         { id: 'character', label: t('progression.tab.character') }, { id: 'armory', label: t('armoury.hub.armory') }, { id: 'deck', label: t('armoury.hub.deck'), selected: true },
-      ], showMenuButton: false, onClose: doCancel, onTab: id => {
+      ], showMenuButton: false, onClose: requestClose, onTab: id => {
         if (id === 'deck') return;
         const result = session.confirm();
         if (!result.ok) { notice = result.refusal || model.done.refusal; draw(); return; }
@@ -898,7 +883,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // ---- actions --------------------------------------------------------------
   function add(key) {
     const name = model.collection.find(row => row.key === key)?.name || '';
-    const result = session.add(key);
+    const tile = model.collection.find(row => row.key === key || row.memberKeys?.includes(key));
+    const result = session.add(tile?.addKey || key);
     notice = result.ok ? '' : result.refusal;
     success = result.ok ? t('deckEditor.added', { name }) : '';
     draw();
@@ -939,7 +925,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
 
   /** The held row's inputs. True when consumed (input.js stops there). */
   function heldInput(input) {
-    if (!held) return false;
+    if (!held || closeConfirmationOpen) return false;
     const keyboard = input.family === 'keyboard';
     const up = keyboard ? input.key === 'ArrowUp' : input.button === PAD.up;
     const down = keyboard ? input.key === 'ArrowDown' : input.button === PAD.down;
@@ -950,7 +936,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     }
     // Cancel is Cancel even mid-move: Esc and B restore the whole edit (the
     // hold included). Only Enter, A and X (the End Turn key) drop the row.
-    if (keyboard ? input.key === 'Escape' : input.button === PAD.b) { doCancel(); return true; }
+    if (keyboard ? input.key === 'Escape' : input.button === PAD.b) { requestClose(); return true; }
     const dropNow = keyboard
       ? (input.key === 'Enter' || matchAction({ key: input.key }, 'endTurn'))
       : [PAD.a, PAD.x].includes(input.button);
@@ -996,6 +982,18 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     return result;
   }
 
+  function requestClose() {
+    if (closeConfirmationOpen) return;
+    if (!session.canUndo) { doCancel(); return; }
+    closeConfirmationOpen = true;
+    openConfirmationModal({ title: t('deckEditor.closeUnsaved.title'),
+      message: t('deckEditor.closeUnsaved.message'),
+      confirmLabel: t('deckEditor.closeUnsaved.discard'), cancelLabel: t('deckEditor.closeUnsaved.keepEditing'),
+      tone: 'danger', onConfirm: () => { closeConfirmationOpen = false; doCancel(); },
+      onCancel: () => { closeConfirmationOpen = false; },
+    });
+  }
+
   function doCancel() {
     if (session.closed) return;
     session.cancel();
@@ -1009,12 +1007,12 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
    * test all come through here.
    */
   function dispatch(input) {
-    if (session.closed) return false;
+    if (session.closed || closeConfirmationOpen) return false;
     if (held && heldInput(input)) return true;
     if (input.family === 'controller') {
       switch (input.button) {
         case PAD.a: activateFocused(); return true;
-        case PAD.b: doCancel(); return true;
+        case PAD.b: requestClose(); return true;
         case PAD.x: { const row = focusedRow(); if (row && model.ordered) togglePick(row); return !!row; }
         case PAD.y: cycleFilters(); return true;
         case PAD.lb: return switchPane(-1);
@@ -1025,7 +1023,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     }
     const key = input.key || '';
     const probe = { key };
-    if (key === 'Escape') { doCancel(); return true; }
+    if (key === 'Escape') { requestClose(); return true; }
     if (focused()?.tagName === 'INPUT') return false;
     // `[` / `]` are the tab ring's (input.js), which switches the pane once;
     // answering them here too switched it twice, i.e. not at all.
@@ -1087,12 +1085,11 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     sibling.setAttribute('inert', '');
     madeInert.push(sibling);
   }
-  const releaseDismiss = bindModalDismiss({ veil: root, panel, close: () => doCancel() });
+  const releaseDismiss = bindModalDismiss({ veil: root, panel, close: requestClose });
 
   function close() {
+    if (closeConfirmationOpen) { closeConfirmationModal({ restoreFocus: false }); closeConfirmationOpen = false; }
     inspectObserver?.disconnect();
-    previewFitObserver?.disconnect();
-    previewFitObserver = null;
     animationPreview?.dispose();
     animationPreview = null;
     drop();
