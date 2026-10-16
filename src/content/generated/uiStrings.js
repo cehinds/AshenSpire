@@ -10683,5 +10683,47 @@ export const uiStrings = [
     "short": "Play 1 game to unlock.",
     "full": "Play 1 game to unlock.",
     "tip": ""
+  },
+  {
+    "id": "combat.cards.choose.title",
+    "extends": "",
+    "short": "Choose {count} cards",
+    "full": "Choose {count} cards",
+    "tip": "Choose {count} cards"
+  },
+  {
+    "id": "combat.cards.choose.prompt",
+    "extends": "",
+    "short": "Choose cards from {from} for {to}. Selected order is used from top to bottom.",
+    "full": "Choose cards from {from} for {to}. Selected order is used from top to bottom.",
+    "tip": "Choose cards from {from} for {to}. Selected order is used from top to bottom."
+  },
+  {
+    "id": "combat.cards.choose.confirm",
+    "extends": "",
+    "short": "Confirm selection",
+    "full": "Confirm selection",
+    "tip": "Confirm selection"
+  },
+  {
+    "id": "deckEditor.preview.card",
+    "extends": "",
+    "short": "Show card",
+    "full": "Show card",
+    "tip": "Show card"
+  },
+  {
+    "id": "deckEditor.preview.animation",
+    "extends": "",
+    "short": "Show animation",
+    "full": "Show animation",
+    "tip": "Show animation"
+  },
+  {
+    "id": "deckEditor.keywordExplanations",
+    "extends": "",
+    "short": "Keyword explanations",
+    "full": "Keyword explanations",
+    "tip": "Keyword explanations"
   }
 ];

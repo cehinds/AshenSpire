@@ -1612,3 +1612,9 @@ gameProfile.rest.pool.sp,,SP,SP,
 gameProfile.rest.pool.healingFlask,,Healing flasks,Healing flasks,
 gameProfile.rest.pool.mpFlask,,MP flasks,MP flasks,
 creation.class.unlockNextRun,,Play 1 game to unlock.,Play 1 game to unlock.,
+combat.cards.choose.title,,Choose {count} cards,Choose {count} cards,Choose {count} cards
+combat.cards.choose.prompt,,Choose cards from {from} for {to}. Selected order is used from top to bottom.,Choose cards from {from} for {to}. Selected order is used from top to bottom.,Choose cards from {from} for {to}. Selected order is used from top to bottom.
+combat.cards.choose.confirm,,Confirm selection,Confirm selection,Confirm selection
+deckEditor.preview.card,,Show card,Show card,Show card
+deckEditor.preview.animation,,Show animation,Show animation,Show animation
+deckEditor.keywordExplanations,,Keyword explanations,Keyword explanations,Keyword explanations
