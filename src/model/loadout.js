@@ -1,3 +1,4 @@
+import { cardManaPolicy } from '../content/generated/cardManaPolicy.js';
 import { gameModule, gameContent } from './gameProfile.js';
 import { retiredAttackSlots, isPoolDeckRun } from './cardRemoval.js';
 import { tokenRe } from './tokens.js';
@@ -149,9 +150,10 @@ export function armamentIntrinsicStatProblems(piece) {
   }
   const isStaffTechnique = (piece?.itemTypeTags || []).includes('item:magic-focus')
     && piece?.techniqueProfile === 'staffTechnique';
-  const expectedManaCost = isStaffTechnique ? 1 : 0;
-  if (piece?.weaponArtManaCost !== expectedManaCost) {
-    problems.push(`${id}: weaponArtManaCost must be ${expectedManaCost} for its authored item type and technique profile`);
+  const hasWeaponArts = (piece?.weaponCardPackage?.weaponArtDefaults || []).length > 0;
+  const minimumManaCost = hasWeaponArts || isStaffTechnique ? cardManaPolicy.minimumMana : 0;
+  if (piece?.weaponArtManaCost < minimumManaCost) {
+    problems.push(`${id}: weaponArtManaCost must be at least ${minimumManaCost} for its authored weapon arts`);
   }
   if (piece?.uniqueSkillStaminaCost !== 0) {
     problems.push(`${id}: uniqueSkillStaminaCost must remain 0 until an explicit unique-skill consumer exists`);

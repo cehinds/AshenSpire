@@ -172,7 +172,7 @@ export function createRunState({
   const fixedAttributes = gameModule(profileSubject, 'class-selection')?.mode === 'configured' ? gameProfileAttributes(profileSubject, classId) : null;
   if (gameModule(profileSubject, 'class-selection')?.mode === 'configured' && !fixedAttributes) throw new Error(`Configured class '${classId}' has no attributes`);
   if (fixedAttributes && requestedAttributes && Object.entries(fixedAttributes).some(([key,value]) => requestedAttributes[key] !== value)) throw new Error('Configured creation uses fixed attributes');
-  derivedStatOptions = gameProfileStatOptions(profileSubject, derivedStatOptions);
+  derivedStatOptions = gameProfileStatOptions(profileSubject, derivedStatOptions, classId);
   const classDef = registries.classes.get(classId);
   const selectedAttributeMode = attributeMode === undefined
     ? defaultCreationModeId(registries)

@@ -67,6 +67,15 @@ const budget = [6, 9, 13, 18, 24, 30];
 const areaFamilies = new Set(['ashen-cleaver', 'falling-constellation']);
 
 export function familyGrade(family, rank) {
+  if (family.grades) {
+    const grade = structuredClone(family.grades[rank]);
+    const magical = ['starseer', 'herald'].includes(family.classId);
+    return { rank, ...grade, textTemplate: recipeText(grade.effects, combatProfileFor(family.id)),
+      traits: { costRule: 'fixed',
+        ...(family.primary === 'damage' ? { damageSchool: magical ? 'magic' : 'physical', exposureBuildupPerHit: magical ? (rank > 0 ? 5 : 1) : 0 } : {}),
+      },
+    };
+  }
   const key = family.id.replace(/^progression-/, '');
   const advanced = rank >= 2 ? riders[key](rank) : [];
   const riderBudget = advanced.filter(e => ['damage', 'block'].includes(e.op)).reduce((sum, e) => sum + e.amount * (e.hits || 1), 0);

@@ -1,3 +1,4 @@
+import { cardManaPolicy } from '../content/generated/cardManaPolicy.js';
 // src/model/validate.js — content validation (SPEC §3.14)
 //
 // Runs at boot in dev mode and from the test page. Checks, across ALL content:
@@ -555,7 +556,14 @@ function collectContentProblems(bundle, errors = []) {
       const ranks = card.gradeProfiles.map(row => row.rank).sort((a,b)=>a-b);
       if (JSON.stringify(ranks) !== '[0,1,2,3,4,5]') err(`cards.${card.id}.gradeProfiles`,'must author exactly the six ranks 0..5');
       for (const profile of card.gradeProfiles) {
-        if (profile.manaCost !== profile.rank || profile.actionCost < 1 || profile.actionCost > [3,1,2,3,4,5][profile.rank]) err(`cards.${card.id}.gradeProfiles.${profile.rank}`,'Actions/Mana costs are outside the ability grade contract');
+        const wholePrices = Number.isSafeInteger(profile.actionCost) && Number.isSafeInteger(profile.manaCost);
+        // Fixed grades author the previously resolved price, rather than the
+        // grade number used by formula-priced recipes. Keep the established
+        // six-grade maximum and reject fractional or resource-minting prices.
+        const validPrices = profile.traits?.costRule === 'fixed'
+          ? wholePrices && profile.actionCost >= 1 && profile.actionCost <= 5 && profile.manaCost >= 0 && profile.manaCost <= 5
+          : wholePrices && profile.manaCost === profile.rank && profile.actionCost >= 1 && profile.actionCost <= [3,1,2,3,4,5][profile.rank];
+        if (!validPrices) err(`cards.${card.id}.gradeProfiles.${profile.rank}`,'Actions/Mana costs are outside the ability grade contract');
       }
       if (!Number.isInteger(card.abilityRank) || card.abilityRank < 0 || card.abilityRank > 5) err(`cards.${card.id}.abilityRank`,'default grade must be 0..5');
     }
@@ -1085,9 +1093,10 @@ function collectContentProblems(bundle, errors = []) {
       // model/registries.js stamps `itemTypeTags` onto the piece.
       const isStaffTechnique = armamentTagIds(id).includes('item:magic-focus')
         && row?.techniqueProfile === 'staffTechnique';
-      const expectedManaCost = isStaffTechnique ? 1 : 0;
-      if (row?.weaponArtManaCost !== expectedManaCost) {
-        err(`equipment.armaments.${id}.weaponArtManaCost`, `must be ${expectedManaCost} for its authored item type and technique profile`);
+      const hasWeaponArts = (row?.weaponCardPackage?.weaponArtDefaults || []).length > 0;
+      const minimumManaCost = hasWeaponArts || isStaffTechnique ? cardManaPolicy.minimumMana : 0;
+      if (row?.weaponArtManaCost < minimumManaCost) {
+        err(`equipment.armaments.${id}.weaponArtManaCost`, `must be at least ${minimumManaCost} for its authored weapon arts`);
       }
       if (row?.uniqueSkillStaminaCost !== 0) {
         err(`equipment.armaments.${id}.uniqueSkillStaminaCost`, 'must remain 0 until an explicit unique-skill consumer exists');

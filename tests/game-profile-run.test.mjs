@@ -13,7 +13,7 @@ import { createSaveManager,createMemoryStorage,runKey } from '../src/engine/save
 const profile=resolveGameProfile('core');
 const reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);
 const fresh=()=>createRunState({seed:73,classId:'reaver',registries:reg,runId:'unique-run'});
-const visit=run=>{ run.mapGraph=buildActMap(reg,createRng(73),run.seatOrder[0],1);run.mapNodeId='n2_0'; return beginGameProfileRest(run,'1:n2_0'); };
+const visit=run=>{ run.mapGraph=buildActMap(reg,createRng(73),run.seatOrder[0],1);run.mapNodeId='n1_0'; return beginGameProfileRest(run,'1:n1_0'); };
 
 test('fixed classes, ten starters, persistent pin and restamping do not mint equipment grants',()=>{
  const run=fresh(); assert.equal(Object.values(run.attributes).reduce((a,b)=>a+b),6);
@@ -134,7 +134,7 @@ test('core Smith is a free single-tier service without stones, with paid overrid
  assert.throws(()=>commitGameProfileRest(reg,run,'smith',{itemRef:item.itemRef}),/spent/);
  const paid=resolveGameProfile({formatVersion:1,core:'ashen.core@1.0.0',modules:{rest:{smith:{free:false,tiersPerService:1}}}});
  const r=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,paid)),paid);
- const next=createRunState({seed:1,classId:'reaver',registries:r});next.mapGraph=buildActMap(r,createRng(1),next.seatOrder[0],1);next.mapNodeId='n2_0';beginGameProfileRest(next);
+ const next=createRunState({seed:1,classId:'reaver',registries:r});next.mapGraph=buildActMap(r,createRng(1),next.seatOrder[0],1);next.mapNodeId='n1_0';beginGameProfileRest(next);
  const before=JSON.stringify(next);assert.throws(()=>commitGameProfileRest(r,next,'smith',{itemRef:item.itemRef}),/Insufficient/);assert.equal(JSON.stringify(next),before);
 });
 
@@ -166,7 +166,8 @@ test('Smith tier bonuses share UI combat preview and real damage/block, survive 
  const {previewCard,dispatch}=await import('../src/engine/combat.js');
  const {smithingPlan}=await import('../src/model/smithing.js');
  const run=fresh();visit(run);
- const fight=()=>createRunCombat({registries:reg,run,rng:createRng(17),enemyIds:['wanderingSoldier']});
+ // Leave enough health to measure the full upgraded hit rather than overkill.
+ const fight=()=>{const combat=createRunCombat({registries:reg,run,rng:createRng(17),enemyIds:['wanderingSoldier']});combat.enemies[0].hp=combat.enemies[0].maxHp=1000;return combat;};
  const before=fight(),beforeRatings=ratingReceipt(reg,run,{}).totals;
  const beforeDefend=before.piles.hand.find(card=>card.cardId==='core.defend'),oldBlock=previewCard(before,beforeDefend.instanceId).values.find(e=>e.op==='block').value;
  const oldDamage=new Map(before.piles.hand.map(card=>[card.cardId,previewCard(before,card.instanceId,before.enemies[0].id).values.find(e=>e.op==='damage')?.value]));

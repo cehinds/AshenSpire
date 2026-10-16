@@ -1,3 +1,4 @@
+import { applyBaseManaPolicy } from './cardManaPolicy.js';
 import { applyAbilityGrade } from './abilityGrades.js';
 // src/model/registries.js — typed id → definition registries, deep-frozen (SPEC §3.3)
 //
@@ -614,7 +615,7 @@ function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = inst
   const rank = cardRank(instanceOrRef);
   const skillBonus = cardSkillBonus(instanceOrRef);
   const passiveBlock = cardPassiveBlock(instanceOrRef);
-  if (!instanceOrRef.upgraded && !(mods && mods.length) && !profileId && !hasCarrier && smithingLevel === 0 && rank === 1 && skillBonus === 0 && passiveBlock === 0) return derivedActionCost(base, definition, costRankOf(usesAbilityGrade, base, rank));
+  if (!instanceOrRef.upgraded && !(mods && mods.length) && !profileId && !hasCarrier && smithingLevel === 0 && rank === 1 && skillBonus === 0 && passiveBlock === 0) return applyBaseManaPolicy(registries, derivedActionCost(base, definition, costRankOf(usesAbilityGrade, base, rank)));
 
   let cache = resolveCache.get(registries);
   if (!cache) {
@@ -641,6 +642,7 @@ function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = inst
   if (instanceOrRef.upgraded && !usesAbilityGrade) result = mergeUpgrade(result);
   result = derivedActionCost(result, definition, costRankOf(usesAbilityGrade, base, rank));
   if (profileId) result = applyBasicCardProfile(result, profile);
+  result = applyBaseManaPolicy(registries, result);
   if (mods && mods.length) {
     const eq = registries.equipment || {};
     result = deepFreeze(

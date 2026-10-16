@@ -41,6 +41,19 @@
       "minimum": 2,
       "maximum": 5,
       "description": "Number of lanes at non-rest depths. Rest and boss nodes merge the lanes."
+    },
+    "minimumThreatFloor": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 101,
+      "description": "Earliest depth that may contain an elite or the final boss."
+    },
+    "mapMode": {
+      "enum": [
+        "fog",
+        "path"
+      ],
+      "description": "Map visibility policy for configured routes; fog reveals the trail and next choices."
     }
   },
   "required": [
@@ -50,7 +63,9 @@
     "restsPerAct",
     "hideUnknownNodes",
     "restFloors",
-    "branchColumns"
+    "branchColumns",
+    "minimumThreatFloor",
+    "mapMode"
   ],
   "additionalProperties": false
 }

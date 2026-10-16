@@ -1739,10 +1739,12 @@ export const gameProfileCatalog = {
         "restsPerAct": 2,
         "hideUnknownNodes": true,
         "restFloors": [
-          2,
+          1,
           6
         ],
-        "branchColumns": 3
+        "branchColumns": 3,
+        "minimumThreatFloor": 3,
+        "mapMode": "fog"
       },
       "schema": {
         "type": "object",
@@ -1787,6 +1789,19 @@ export const gameProfileCatalog = {
             "minimum": 2,
             "maximum": 5,
             "description": "Number of lanes at non-rest depths. Rest and boss nodes merge the lanes."
+          },
+          "minimumThreatFloor": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 101,
+            "description": "Earliest depth that may contain an elite or the final boss."
+          },
+          "mapMode": {
+            "enum": [
+              "fog",
+              "path"
+            ],
+            "description": "Map visibility policy for configured routes; fog reveals the trail and next choices."
           }
         },
         "required": [
@@ -1796,7 +1811,9 @@ export const gameProfileCatalog = {
           "restsPerAct",
           "hideUnknownNodes",
           "restFloors",
-          "branchColumns"
+          "branchColumns",
+          "minimumThreatFloor",
+          "mapMode"
         ],
         "additionalProperties": false
       },
@@ -1811,13 +1828,13 @@ export const gameProfileCatalog = {
           "path": "engine/modules/routes/defaults.json",
           "id": "routes",
           "version": "1.0.0",
-          "hash": "sha256:00dc1c47600a202b31d91956281bd6c884cbdba2fd18006e79553719d55534cd"
+          "hash": "sha256:552cfacf2746d6ccf46ac73b6abc01757b934a4c4eacc2537528b0f8a3d164c9"
         },
         {
           "path": "engine/modules/routes/settings.schema.json",
           "id": "routes",
           "version": "1.0.0",
-          "hash": "sha256:413eda6dbe4dd2c1d90b68ea21f93b57b7354b067d20dc03b9e23046e83f9242"
+          "hash": "sha256:6b1f0be86881608ea59fd0b4a74739bb8bcb14d154877c0363f5e05601832fbb"
         }
       ]
     },
@@ -2329,7 +2346,9 @@ export const gameProfileCatalog = {
               "prebossNodes": "prebossNodes",
               "restsPerAct": "restsPerAct",
               "restFloors": "restFloors",
-              "branchColumns": "branchColumns"
+              "branchColumns": "branchColumns",
+              "minimumThreatFloor": "minimumThreatFloor",
+              "mapMode": "mapMode"
             }
           },
           {
@@ -2382,7 +2401,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/bundles/core/bundle.json",
           "id": "ashen.core",
           "version": "1.0.0",
-          "hash": "sha256:e4ed69ba8e731b021324a9e3b49ca6f57503a71ab40149972fa875fd4af063b9"
+          "hash": "sha256:000cca6e7c06ebfd9059caa00c4b49a20ba42d19188b8d53ac4a3a35c430da76"
         }
       ]
     },
@@ -2766,8 +2785,8 @@ export const gameProfileCatalog = {
             "name": "Smash",
             "class": "colorless",
             "rarity": "starter",
-            "cost": 1,
-            "staminaCost": 1,
+            "cost": 2,
+            "staminaCost": 2,
             "manaCost": 0,
             "costRule": "fixed",
             "type": "attack",
@@ -2777,7 +2796,7 @@ export const gameProfileCatalog = {
               {
                 "op": "damage",
                 "target": "enemy",
-                "amount": 8
+                "amount": 12
               }
             ],
             "tags": [
@@ -2824,9 +2843,9 @@ export const gameProfileCatalog = {
             "name": "Sundering Art",
             "class": "reaver",
             "rarity": "starter",
-            "cost": 1,
-            "staminaCost": 1,
-            "manaCost": 0,
+            "cost": 2,
+            "staminaCost": 2,
+            "manaCost": 1,
             "costRule": "fixed",
             "type": "attack",
             "icon": "⚔",
@@ -2835,13 +2854,14 @@ export const gameProfileCatalog = {
               {
                 "op": "damage",
                 "target": "enemy",
-                "amount": 10
+                "amount": 36
               }
             ],
             "tags": [
               "camp:physical",
               "maneuver:smash",
-              "classification.attack"
+              "classification.attack",
+              "extractable"
             ],
             "textTemplate": "Deal {damage} damage.",
             "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
@@ -2865,6 +2885,12 @@ export const gameProfileCatalog = {
                 "op": "damage",
                 "target": "enemy",
                 "amount": 9
+              },
+              {
+                "op": "applyStatus",
+                "target": "enemy",
+                "status": "vulnerable",
+                "stacks": 2
               }
             ],
             "tags": [
@@ -2872,7 +2898,7 @@ export const gameProfileCatalog = {
               "maneuver:casting",
               "classification.attack"
             ],
-            "textTemplate": "Deal {damage} damage.",
+            "textTemplate": "Deal {damage} damage. Apply {vulnerable} Vulnerable.",
             "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
             "damageSchool": "physical",
             "exposureBuildupPerHit": 0
@@ -3009,7 +3035,12 @@ export const gameProfileCatalog = {
               "draw": 1
             }
           },
-          "secondaryPolicy": "legacyAdapter"
+          "secondaryPolicy": "legacyAdapter",
+          "poolBasesByClass": {
+            "reaver": {
+              "mana": 0
+            }
+          }
         },
         "classUnlocks": {
           "initial": [
@@ -3042,10 +3073,12 @@ export const gameProfileCatalog = {
             "boss"
           ],
           "restFloors": [
-            2,
+            1,
             6
           ],
-          "branchColumns": 3
+          "branchColumns": 3,
+          "minimumThreatFloor": 3,
+          "mapMode": "fog"
         },
         "rests": {
           "servicesPerVisit": 1,
@@ -3327,8 +3360,8 @@ export const gameProfileCatalog = {
               "manaCost": 0
             },
             "sp": {
-              "cost": 1,
-              "staminaCost": 1,
+              "cost": 2,
+              "staminaCost": 2,
               "manaCost": 0
             },
             "mp": {
@@ -3337,8 +3370,8 @@ export const gameProfileCatalog = {
               "manaCost": 0
             },
             "sp,mp": {
-              "cost": 1,
-              "staminaCost": 1,
+              "cost": 2,
+              "staminaCost": 2,
               "manaCost": 0
             }
           },
@@ -3371,19 +3404,19 @@ export const gameProfileCatalog = {
               "manaCost": 0
             },
             "sp": {
-              "cost": 1,
-              "staminaCost": 1,
+              "cost": 2,
+              "staminaCost": 2,
               "manaCost": 0
             },
             "mp": {
               "cost": 0,
               "staminaCost": 0,
-              "manaCost": 0
+              "manaCost": 1
             },
             "sp,mp": {
-              "cost": 1,
-              "staminaCost": 1,
-              "manaCost": 0
+              "cost": 2,
+              "staminaCost": 2,
+              "manaCost": 1
             }
           },
           "core.starseerSpecial": {
@@ -3497,7 +3530,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/cards.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:2953709cc79ceb7521b9b832e1e7f3c78a25209d5fc6ba51aa8054bf9f868c1d"
+          "hash": "sha256:cf7bd77a1542dc33d4c0b2d859e350cd5a7e3b9c749af57cae840c0a3f82d6c6"
         },
         {
           "path": "games/ashenspire/packs/core/starterDeck.json",
@@ -3509,7 +3542,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/stats.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:a6ceca9f64665580255004bdfaeb606c87024eb4b1cd78e1e75ed30374d4adc7"
+          "hash": "sha256:6dde8f5ffa59b53c231493abd272e4f18ea7a2577316dcb5cf9981e3f41a8ddc"
         },
         {
           "path": "games/ashenspire/packs/core/classUnlocks.json",
@@ -3521,7 +3554,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/routes.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:093f1956eb426d2a9e0a83edd9158ee9208e7245b37a3a600b6eeed3a54a4cdc"
+          "hash": "sha256:a09e35b86b52c0d72e6dc7aad1e8f2725290b8617c87c9b92e5b57c1c3505097"
         },
         {
           "path": "games/ashenspire/packs/core/rests.json",
@@ -3545,7 +3578,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/resourceVariants.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:613b821d19f103febfde23db9edcd0496c14520c727e6e00e798e4aeb85375b0"
+          "hash": "sha256:e3954567f8289171bb24f003abc7a777deca613c1d3330ed70e8e9fbaf4d9e0c"
         },
         {
           "path": "games/ashenspire/packs/core/shops.json",
@@ -3567,7 +3600,7 @@ export const gameProfileCatalog = {
       "path": "engine/kernel/gameConfig.js",
       "id": "ashen.runtime",
       "version": "1.0.0",
-      "hash": "sha256:4aa35e0dc6040426330a8b872f7c1da47e0b8bdf76e2ae34eeab3dbbe984573d"
+      "hash": "sha256:1567809b69ed40bf7ae9b2fe2e710fac67a4a081b69aeb451a2fb06cd25bad7b"
     },
     {
       "path": "engine/contracts/game-profile.json",
@@ -3585,7 +3618,7 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "path": "src/** (excluding generated gameProfiles/changelog)",
-      "hash": "sha256:77218de49d11301e372db3f87848546a35491e135072f4f922465b4a84f246c5"
+      "hash": "sha256:79040a1caf1d7c7cb8d5501fbf1f03563ac3234779ccbf8c614723d738696393"
     }
   ],
   "runtimeSources": [
@@ -3701,7 +3734,7 @@ export const gameProfileCatalog = {
       "path": "src/content/cards/colorless.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:0119c9ea71e83ed277294b39dafd056e65e0a83cf6df3bb9d52bbc6a05c09ee6"
+      "hash": "sha256:7a95f47686ed31d1200391a109e34d28d386c53b43a1fb9de0ec9cfaa227edda"
     },
     {
       "path": "src/content/cards/coop.js",
@@ -3719,7 +3752,7 @@ export const gameProfileCatalog = {
       "path": "src/content/cards/herald.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:3eabcf704192266c1b3e5906b39d4ecfd39280604d6294c8609749ae8ea4aa00"
+      "hash": "sha256:a5095108e50608f573356d757f3c1fed8ae31bb7ccebbc6d3b3d5088f09a35a8"
     },
     {
       "path": "src/content/cards/reaver.js",
@@ -3737,7 +3770,7 @@ export const gameProfileCatalog = {
       "path": "src/content/cards/starseer.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:57447de82f7fd1750cad636cc93b773a687a308dead336e13dde986001e688e8"
+      "hash": "sha256:985aee68d47c7021b3214d79cb4704c9da2afe62fbe9c44f7622a74dcf9e09ea"
     },
     {
       "path": "src/content/classArtAnchors.js",
@@ -3809,7 +3842,7 @@ export const gameProfileCatalog = {
       "path": "src/content/combatExpansionCards.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:79f731cb353c6c508f6c3b2a508c7479c9fb4caefa28b80f36165c3e93fb390b"
+      "hash": "sha256:9fd022c510952481ac86842e1910891e0cbf439a8b6b68796950264bdebd2f9e"
     },
     {
       "path": "src/content/combatExpansionCombos.js",
@@ -4058,6 +4091,12 @@ export const gameProfileCatalog = {
       "hash": "sha256:c5c843b7abd0aabb2d61e47d64b8b3f14c7bca2963f0dc11d8f19b24a0f9fa10"
     },
     {
+      "path": "src/content/generated/cardManaPolicy.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:f48d115a19c346ed0ca645c350fe90294e5d5b91aa73dabf797dbc54e9b13c08"
+    },
+    {
       "path": "src/content/generated/characterCreation.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
@@ -4247,7 +4286,7 @@ export const gameProfileCatalog = {
       "path": "src/content/generated/weapons.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:229381ed59929e84514d0c035ace8aec01dc20c3df37486735ff3e4e12903499"
+      "hash": "sha256:fd111b38d59db9f0e555e7d2a94903cea867b1883302de9fe707dfbb815cf21b"
     },
     {
       "path": "src/content/generated/worldAtlas.js",
@@ -4379,7 +4418,7 @@ export const gameProfileCatalog = {
       "path": "src/content/progression/cardFamilies.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:281fe75cad2b36499ee9e7a607973e7d71dbff88d51585e52fc96f0d69dcd843"
+      "hash": "sha256:44a5e633e09f97f166273157cd1709714177db455b403801b2d304064fb81835"
     },
     {
       "path": "src/content/progression/cardLore.js",
@@ -4397,7 +4436,7 @@ export const gameProfileCatalog = {
       "path": "src/content/progression/cards.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:1fb804a367bede722bc63829619281effbd3425bfed7b38df451298341972415"
+      "hash": "sha256:a8a7dbf4d8117393d18f9ea7b27fca5e048d0b40e35cdc2162d219eda9d0f2c4"
     },
     {
       "path": "src/content/progression/feats.js",
@@ -4415,7 +4454,7 @@ export const gameProfileCatalog = {
       "path": "src/content/progression/lessons.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:7352724529717c32d8bb7f312c955642eeccbbafa405e48b27e6982992b48e91"
+      "hash": "sha256:66182fabd973f46ca697d1bc685c29c7d562c7110e561d372077c5cb71793783"
     },
     {
       "path": "src/content/progression/relics.js",
@@ -4625,7 +4664,7 @@ export const gameProfileCatalog = {
       "path": "src/engine/actmap.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:cd0003e42f53f4fa78e4325fb33738ff6905cbb6ae51479f0246360b172cf0ef"
+      "hash": "sha256:6126eb5cd95b23d2d78fff94dbf999ba17da20522e5d771bc02edaef1c997f3a"
     },
     {
       "path": "src/engine/ashenBlight.js",
@@ -5312,6 +5351,12 @@ export const gameProfileCatalog = {
       "hash": "sha256:040e0c302df916d790e7ad0328efbb98469e11546b3f8c8e6c9530a762cc98af"
     },
     {
+      "path": "src/model/cardManaPolicy.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:223fe777c0b37d980b5df8d7742aee04ad0f021ff66be6641caeb9df29b35558"
+    },
+    {
       "path": "src/model/cardMounts.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
@@ -5819,7 +5864,7 @@ export const gameProfileCatalog = {
       "path": "src/model/gameProfileRun.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:c9178f8c7bddd5fcb2fcb2642c03ac52356e590272a2df92603bf5de9849b0c9"
+      "hash": "sha256:481de484fa93d54b889f0d68aef90c49b4c8c97e495f4e912c91ee79c98e8ad0"
     },
     {
       "path": "src/model/gracerefill.js",
@@ -5885,7 +5930,7 @@ export const gameProfileCatalog = {
       "path": "src/model/loadout.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:7485965b56e956b531ad8eca5ccd619d164bfd0b4bd98b0ecf548ae39312ba1f"
+      "hash": "sha256:8dba1a50376c3be4ced67ff1088f7e54207e25f73fc2e88e4ba1adba3bebe0da"
     },
     {
       "path": "src/model/locationPresentation.js",
@@ -5909,7 +5954,7 @@ export const gameProfileCatalog = {
       "path": "src/model/mapknowledge.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:4eec90a62a06220886cb1f028d98a56c9f0cc3569af8a10fe2938b48de9ccd7b"
+      "hash": "sha256:a69e2befdabea834597a03ebe31ad97d7c73255af300c4f83d08ab4a074682e3"
     },
     {
       "path": "src/model/mapview.js",
@@ -6029,7 +6074,7 @@ export const gameProfileCatalog = {
       "path": "src/model/registries.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:e70aa8dbfb4ebf45762fad02ecb16a9f09eb92430ace9210e79e330fa23b1847"
+      "hash": "sha256:2adf49ec5e3b3a4bb50efb7be250f0d6b72709ae3832d60187becd370c5eaf10"
     },
     {
       "path": "src/model/relicArt.js",
@@ -6239,7 +6284,7 @@ export const gameProfileCatalog = {
       "path": "src/model/state.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:9308613e0e51b55c2318c60d4d7c2ecb5e11361f257c7fd77456705b5e8d188c"
+      "hash": "sha256:aa5b563213ffcdefd5638bd00fb1c250e8b12d1d48cb117706e5692dc4cb3c0b"
     },
     {
       "path": "src/model/tagService.js",
@@ -6293,7 +6338,7 @@ export const gameProfileCatalog = {
       "path": "src/model/validate.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:b2b6d936eca8547688307e33cef2afc1fda2b19449fd4441d2c1ff2702712232"
+      "hash": "sha256:67fd52c10570a01baa83a89e28899ad157a35aca0cc9965df6c69841ef08942c"
     },
     {
       "path": "src/model/victoryXpPresentation.js",
@@ -8285,7 +8330,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/screens/map.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:967f437d467ccd5529239fbb93d74eda792f6e87d2e004049d3754420a7d424a"
+      "hash": "sha256:18a3961f929dfba992a4cbd035e48e014a3f583569ded1631a7b0eb3dba3485c"
     },
     {
       "path": "src/ui/screens/master.js",
@@ -8444,7 +8489,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:23af16d4e9c9f6d88fe655d32ecf1a688b47df39f9e3a1d6d193ce63923593ab"
     }
   ],
-  "runtimeHash": "sha256:64b58de1c83b67664302e36495d590bc38eab22dd48c3af13cfcfcaa77772d3e"
+  "runtimeHash": "sha256:c539954600c56ed5a12220b5d427ad210db33c30378aac91eab5fafd8146faf3"
 };
 export const gameProfileAuthors = {
   "default": {

@@ -3757,12 +3757,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(LEGACY_REG.equipment.armaments.every((piece) => piece.weight === piece.poiseThreshold),
       'presentation weight is the already-authored Poise threshold and adds no balance behavior');
     assert(LEGACY_REG.equipment.armaments.every((piece) => piece.weaponArtManaCost === (
-      piece.itemTypeTags.includes('item:magic-focus') && piece.techniqueProfile === 'staffTechnique' ? 1 : 0
-    )), 'only magic-focus staff-technique armaments author one Weapon Art Mana');
+      piece.weaponCardPackage.weaponArtDefaults.length || piece.itemTypeTags.includes('item:magic-focus') && piece.techniqueProfile === 'staffTechnique' ? 1 : 0
+    )), 'armaments with authored weapon arts expose at least one Weapon Art Mana');
     assert(LEGACY_REG.equipment.armaments.every((piece) => piece.uniqueSkillStaminaCost === 0),
       'Unique Skill Stamina remains explicit zero until a priority or unique-skill consumer exists');
     eq(JSON.stringify(armamentIntrinsicReceipt(LEGACY_REG.equipment.armaments.find((piece) => piece.id === 'greatsword'))),
-      JSON.stringify({ itemId: 'greatsword', attackRating: 4, defenseRating: 2, weight: 8, weaponArtManaCost: 0, uniqueSkillStaminaCost: 0 }),
+      JSON.stringify({ itemId: 'greatsword', attackRating: 4, defenseRating: 2, weight: 8, weaponArtManaCost: 1, uniqueSkillStaminaCost: 0 }),
       'the Greatsword receipt is intrinsic and does not include generated-card or Smithing deltas');
 
     const missingIntrinsicBundle = {
@@ -3780,7 +3780,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       equipment: {
         ...LEGACY_REG.equipment,
         armaments: LEGACY_REG.equipment.armaments.map((piece) => (
-          piece.id === 'straightSword' ? { ...piece, weaponArtManaCost: 1 } : piece
+          piece.id === 'straightSword' ? { ...piece, weaponArtManaCost: 0 } : piece
         )),
       },
     };
