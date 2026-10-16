@@ -1,3 +1,4 @@
+import { projectEnemyBurdenHand } from '../models/EnemyBurdenModel.js';
 import { hasCardChoice, zoneCandidates } from '../../engine/cardZones.js';
 import { foundationStandin } from '../components/foundationStandin.js';
 import { gameModule } from '../../model/gameProfile.js';
@@ -925,6 +926,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         hidden: intent.hidden, knowledgeRead: intent.knowledgeRead, stance: intent.stance, profile: intent.profile,
         active: true,
       },
+      burdenRead: projectEnemyBurdenHand(entity, { turn: combat.turn, registries }),
       skillLabel: 'Move set',
       moveCards: learning ? learning.moveCards : enemyMoveCards(def, { ...moveCardOptions, enemy: entity, preview: intent }),
       skills,
