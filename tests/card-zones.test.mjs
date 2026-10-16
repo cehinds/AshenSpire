@@ -93,3 +93,13 @@ test('dynamic same-card scaling matches preview before recording the current pla
  const combat=fixture([{op:'block',target:'self',amount:{f:'add',args:[2,{f:'metric',metric:'sameCardPlays',of:'self',per:3}]}}]);
  for(const expected of [2,5]){const id=combat.piles.hand[0].instanceId;assert.equal(previewCard(combat,id).values[0].value,expected);const old=combat.player.block;play(combat);assert.equal(combat.player.block-old,expected);}
 });
+
+test('enemy generated burden overlay skips once, exhausts, reveals and survives save without minting a player card',()=>{
+ const combat=fixture([{op:'addBurden',target:'enemy',card:'defend',count:1},{op:'revealIntent',target:'enemy',amount:2}],{definition:{burden:{skipActions:1},keywords:['ethereal']}});
+ play(combat);const enemy=combat.enemies[0];assert.equal(enemy.burdenPiles.draw.length,1);assert.equal(combat.piles.hand.filter(c=>c.cardId==='defend').length,1);
+ const restored=restoreCombatSnapshot({registries:combat.registries,rng:createRng(9,combat.rng.getCounters()),snapshot:serializeCombatSnapshot(combat)});
+ const hp=restored.player.hp;dispatch(restored,{type:'endTurn'});
+ assert.equal(restored.player.hp,hp);assert.equal(restored.enemies[0].burdenPiles.exhaust.length,1);assert.equal(restored.enemies[0].burdenPiles.hand.length,0);
+ assert.ok(restored.eventLog.some(e=>e.type==='intentRevealed'));assert.ok(restored.eventLog.some(e=>e.type==='enemyBurdenDrawn'));
+ dispatch(restored,{type:'endTurn'});assert.ok(restored.eventLog.some(e=>e.type==='enemyMoveStarted'),'normal authored move resumes after burden expires');
+});
