@@ -137,6 +137,8 @@ export function buildGameProfileActMap(registries, rng, seat, tier, { history = 
   const columns = rules.branchColumns;
   if (!Number.isInteger(count) || count < 1 || count < rules.restsPerAct) throw new Error('Invalid configured route length');
   if (!Number.isInteger(columns) || columns < 2 || columns > 5) throw new Error('Invalid configured branchColumns');
+  const minimumThreatFloor = rules.minimumThreatFloor;
+  if (!Number.isInteger(minimumThreatFloor) || minimumThreatFloor < 1 || count + 1 < minimumThreatFloor) throw new Error('Invalid configured minimumThreatFloor');
   const restFloors = rules.restFloors;
   if (!Array.isArray(restFloors)) throw new Error('Configured route requires authored restFloors');
   if (restFloors.length !== rules.restsPerAct || new Set(restFloors).size !== rules.restsPerAct || restFloors.some(n => !Number.isInteger(n) || n < 1 || n > count)) throw new Error('Invalid configured rest floors');
@@ -149,9 +151,11 @@ export function buildGameProfileActMap(registries, rng, seat, tier, { history = 
   for (let floor = 1; floor <= count; floor++) {
     const rest = restFloors.includes(floor);
     const layer = [];
+    const choices = alternatives.filter(type => type !== 'elite' || floor >= minimumThreatFloor);
+    if (!rest && !choices.length) throw new Error(`Configured route has no permitted node types at depth ${floor}`);
     for (let lane = 0; lane < (rest ? 1 : columns); lane++) {
       const id = `n${floor}_${lane}`;
-      const actual = rest ? 'rest' : rng.pick('map', alternatives);
+      const actual = rest ? 'rest' : rng.pick('map', choices);
       const type = hideUnknown && hidden.has(actual) ? 'event' : displayTypes[actual];
       const node = { id, floor, col: rest ? (columns - 1) / 2 : lane, type, actualType: actual, next: [] };
       if (type === 'event') {
