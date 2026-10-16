@@ -5,8 +5,10 @@
 
 The same runtime supports two authored configurations. **Product core** includes its required bundled modules and keeps optional gameplay packages off where the core has a fallback. **Current game** preserves the full legacy configuration.
 
-- **Product core:** [Play on Pages (latest publication unverified)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-modules/latest/) · [standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38917569924/artifacts/12052941982) · [successful build run](https://github.com/cehinds/AshenSpire/actions/runs/38917569924)
-- **Current game:** [Play on Pages (latest publication unverified)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-current-preview/latest/) · [standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38917656053/artifacts/12052679950) · [successful build run](https://github.com/cehinds/AshenSpire/actions/runs/38917656053)
+- **Product core:** [Play on Pages (latest publication unverified)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-modules/latest/) · [standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38952859060/artifacts/12070010032) · [successful build run](https://github.com/cehinds/AshenSpire/actions/runs/38952859060)
+- **Current game:** [Play on Pages (latest publication unverified)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-current-preview/latest/) · [standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38952896396/artifacts/12068894262) · [successful build run](https://github.com/cehinds/AshenSpire/actions/runs/38952896396)
+
+The battlefield grid now uses thin, translucent lines and a saved **Grid** checkbox directly above Combat Log. Core’s unused middle row stays visible without enabling placement. [Grid screenshots and verification](docs/preview/features/json-game-modules/grid/README.md).
 
 Desktop now uses the approved D layout with a wider fan, larger cards, a lower background, and three fixed footer groups. Cinders are visible, Core Settings follow enabled modules, rewards support reversible review, and Skills/Spells/Powers use Prepare. Core starters retain ten cards with two Defends, one Counter, and Draw. [Latest screenshots and verified builds](docs/preview/features/json-game-modules/desktop-footer/README.md).
 
