@@ -10,8 +10,6 @@ The large-preview revision is implemented by `fb6b4f943`, `2959a61fc` and `52265
 | --- | --- |
 | [Current desktop](after-desktop.png) | 1440 × 900; 11-card current starter; equivalent Slashing Strike copies combined as 2/∞ |
 | [Core desktop](after-core-desktop.png) | 1440 × 900; ten-card core starter in six distinct rows |
-| [Core short desktop](after-core-short-desktop.png) | 1366 × 768; 280px card; complete selected description and all six starter rows visible |
-| [Current short desktop](after-current-short-desktop.png) | 1366 × 768; 280px card; complete selected description visible; larger library scrolls |
 | [Current mobile list](after-mobile-list.png) | 390 × 844; all owned cards available without scope tabs |
 | [Current mobile inspection](after-mobile-inspection.png) | 390 × 844; selected card and main effect description |
 | [Optional animation](after-desktop-animation.png) | 1440 × 900; checked checkbox replaces the card face while retaining its description |
@@ -30,4 +28,4 @@ Long derived combat rules, tag explanations and keyword reference prose are avai
 ## Earlier comparisons
 
 - [Original three-column desktop](before-desktop.png): source `593d61962f81ff658ca55607dcb834db9e7d6feb`, 1440 × 900.
-- [Previous compact desktop](previous-compact-desktop.png): source `087880ede`, 1440 × 900. This 180px preview was superseded by the larger card above.
+- The previous compact desktop capture remains in git history at `7fcc003e6` (`after-desktop.png` in that revision), source `087880ede`, 1440 × 900. Its 180px preview was superseded by the larger card above.
