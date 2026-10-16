@@ -1,3 +1,4 @@
+import { mobileFloorLayer } from './models/MobileFloorModel.js';
 import { uiConfig } from '../config/generated/ui.js';
 import { alternativeArtCatalog } from './alternativeArtCatalog.js';
 import { assetUrl } from './assetmap.js';
@@ -110,8 +111,12 @@ export function alternativeCardFadeHtml() {
 // Fit the art canvas to the actual battlefield, keeping its measured ground
 // aligned with the current formation. HUD/cards/footer and actor slots stay owned
 // by their existing models. Never stretch a layer independently of its canvas.
-export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground, standGround, narrow, coverFloor = false }) {
+export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground, standGround, narrow, coverFloor = false, floorShadowTop, zoom = 1 }) {
   const backdrop = combat.querySelector('.alternative-backdrop');
+  if (backdrop) {
+    delete backdrop.dataset.mobileFloorPaintTop;
+    delete backdrop.dataset.mobileFloorShadowTop;
+  }
   const scene = alternativeArtCatalog.scenes[backdrop?.dataset.scene];
   if (!scene || width <= 0 || height <= 0) return;
   const key = narrow ? 'phone' : 'desktop';
@@ -137,7 +142,18 @@ export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground
   svg.style.cssText = `width:${device.width * scale}px;height:${device.height * scale}px;left:${(width - device.width * scale) / 2}px;top:${top}px`;
   backdrop.dataset.device = key;
   [...svg.querySelectorAll(':scope > .alternative-scene-layer')].forEach((group, index) => {
-    const layer = combatSceneLayers(device)[index];
+    let layer = combatSceneLayers(device)[index];
+    if (document.documentElement.dataset.formFactor === 'mobile' && coverFloor && Number.isFinite(floorShadowTop)) {
+      const floor = framing.mobileFloor;
+      const paintStart = floor.paintStarts[layer.id];
+      if (paintStart) {
+        group.style.transform = '';
+        const maximumPaintTop = (floorShadowTop - top - floor.shadowClearancePx / zoom) / scale;
+        layer = mobileFloorLayer(layer, { paintStart, maximumPaintTop });
+        backdrop.dataset.mobileFloorPaintTop = String((top + (layer.y + layer.height * paintStart) * scale) * zoom);
+        backdrop.dataset.mobileFloorShadowTop = String(floorShadowTop * zoom);
+      }
+    }
     const art = alternativeArtCatalog.sceneLayers[layer.id];
     const image = group.firstElementChild;
     group.dataset.depth = String(layer.depth);
@@ -162,7 +178,11 @@ export function wireAlternativeBackdrop(combat) {
     const x = off ? 0 : (event.clientX - bounds.left) / bounds.width * 2 - 1;
     const y = off ? 0 : (event.clientY - bounds.top) / bounds.height * 2 - 1;
     for (const layer of layers) {
-      const depth = Number(layer.dataset.depth);
+      const id = layer.firstElementChild?.dataset.layer;
+      const groundedMobile = document.documentElement.dataset.formFactor === 'mobile'
+        && combat.querySelector('.alternative-backdrop')?.dataset.mobileFloorPaintTop !== undefined
+        && alternativeArtCatalog.sceneLayers[id]?.kind === 'ground';
+      const depth = groundedMobile ? 0 : Number(layer.dataset.depth);
       layer.style.transform = `translate(${x * depth * 9}px,${y * depth * 3}px)`;
     }
   };
