@@ -40,7 +40,7 @@ export function gameProfileStarterDeck(subject, classId) {
 }
 
 // Replace primary weights, retaining secondary terms and authored bounds/bases.
-export function gameProfileStatOptions(subject, options = {}) {
+export function gameProfileStatOptions(subject, options = {}, classId = subject?.class) {
   if (gameModule(subject, 'stats')?.mode !== 'configured') return options;
   const stats = gameContent(subject, 'stats');
   const rows = {};
@@ -50,13 +50,11 @@ export function gameProfileStatOptions(subject, options = {}) {
       ...(rows[aliases[name] || name] || {}), [attribute]: amount,
     };
   }
-  // Optional authored per-class pool bases use the ordinary stat-row shape;
-  // attribute weights/growth remain the same and are snapshotted with the run.
-  for (const [classId, pools] of Object.entries(stats.poolBasesByClass || {})) {
-    for (const [id, base] of Object.entries(pools)) rows[id] = {
-      ...(rows[id] || {}), byClass: { ...(rows[id]?.byClass || {}), [classId]: { base } },
-    };
-  }
+  // Select only this run's authored class base. A base-only byClass row
+  // would replace (not merge) all attribute weights and erase WIS growth.
+  for (const [id, base] of Object.entries(stats.poolBasesByClass?.[classId] || {})) rows[id] = {
+    ...(rows[id] || {}), base,
+  };
   for (const id of ['openingHand', 'draw']) rows[id] = {
     ...(rows[id] || {}), base: stats.handBase, intelligence: 1, attributeBaseline: 0,
     byClass: {},
