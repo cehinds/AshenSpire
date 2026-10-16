@@ -165,6 +165,19 @@
       "settings": {
         "mode": "legacy"
       }
+    },
+    "formation": {
+      "version": "1.0.0",
+      "settings": {
+        "mode": "legacy",
+        "extraRow": {
+          "enabled": true,
+          "sides": [
+            "enemy"
+          ],
+          "capacityPerLane": 1
+        }
+      }
     }
   },
   "packs": [
