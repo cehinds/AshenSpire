@@ -41,3 +41,12 @@ test('host redacted explicit read is shared between seats, then normal private g
   assert.equal(expired.moveId, null);
   assert.equal(expired.burdenRead, undefined);
 });
+
+
+test('an active empty hand is explicit; unknown instances never disclose internal IDs', () => {
+  const empty = projectEnemyBurdenHand({ ...enemy, burdenPiles: {} }, { turn: 3, registries });
+  assert.deepEqual(empty.cards, []);
+  const unknown = projectEnemyBurdenHand({ ...enemy, burdenPiles: { hand: [{ cardId: 'secret.unregistered' }] } }, { turn: 3, registries });
+  assert.deepEqual(unknown.cards, [{ name: 'Unknown card', type: 'Unknown', count: 1 }]);
+  assert.doesNotMatch(JSON.stringify(unknown), /unregistered/);
+});
