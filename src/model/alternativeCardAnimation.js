@@ -1,4 +1,5 @@
 import { combatProfileFor } from './combatCardProfile.js';
+import { isPureDodge } from '../framework/importer.js';
 import { cardKind } from './tree.js';
 
 export const CARD_ACTION_CLASSES = Object.freeze(['reaver', 'rogue', 'starseer', 'herald']);
@@ -11,6 +12,7 @@ export function cardActionFor(card = {}, classId) {
   const ids = resolved?.map(t => typeof t === 'string' ? t : t.id);
   const profile = combatProfileFor(ids ? { ...card, cardTags: ids } : card);
   const tags = new Set(ids || []);
+  if (profile.camp === 'physical' && isPureDodge(card)) return 'evade';
   if (profile.maneuver === 'ranged') return profile.camp === 'spell' || tags.has('source:spell') ? 'rangedMagic' : 'ranged';
   if (profile.maneuver === 'counter' || profile.maneuver === 'defend') return profile.maneuver;
   if (profile.camp === 'spell' || tags.has('source:spell')) return 'spell';
@@ -25,7 +27,7 @@ export function cardActionPlan(card, classId) {
   const technique = cardActionFor(card, classId);
   if (!technique) return null;
   const ranged = technique.startsWith('ranged');
-  const guard = technique === 'defend' || technique === 'counter';
+  const guard = technique === 'defend' || technique === 'counter' || technique === 'evade';
   const cast = technique === 'spell';
   return { technique, group: guard ? 'defend' : cast ? 'cast' : 'attack',
     family: ranged ? 'projectile' : guard ? 'guard' : cast ? 'spell' : 'strike',
