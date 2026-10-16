@@ -144,7 +144,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   if (!mapAdapter && revisitId && map.nodes[revisitId]) reachable.add(revisitId);
   const configuredRoutes = gameModule(run, 'routes')?.mode === 'configured';
   const reveal = configuredRoutes ? false : passiveFlag(registries, run.relics, 'revealUnknown');
-  const mode = configuredRoutes ? 'path' : mapAdapter?.mode || resolveMapMode(meta);
+  const mode = configuredRoutes ? resolveMapMode(meta, run) : mapAdapter?.mode || resolveMapMode(meta);
   const fog = mode === 'fog';
 
   const atEntrance = !current;

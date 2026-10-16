@@ -93,7 +93,9 @@
         "prebossNodes": "prebossNodes",
         "restsPerAct": "restsPerAct",
         "restFloors": "restFloors",
-        "branchColumns": "branchColumns"
+        "branchColumns": "branchColumns",
+        "minimumThreatFloor": "minimumThreatFloor",
+        "mapMode": "mapMode"
       }
     },
     {

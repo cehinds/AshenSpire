@@ -5,8 +5,10 @@
   "restsPerAct": 2,
   "hideUnknownNodes": true,
   "restFloors": [
-    2,
+    1,
     6
   ],
-  "branchColumns": 3
+  "branchColumns": 3,
+  "minimumThreatFloor": 3,
+  "mapMode": "fog"
 }

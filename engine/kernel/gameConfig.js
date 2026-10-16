@@ -111,7 +111,8 @@ function verifySettings(modules, instances = {}) {
     if (settings.mode === 'configured' && settings.include?.some(key => registry.unsupported.includes(key))) fail(`$/modules/${id}/include`, 'unsupported configured instance; the legacy adapter is required');
   }
   if (modules.routes?.mode === 'configured') {
-    const {restFloors,restsPerAct,prebossNodes} = modules.routes;
+    const {restFloors,restsPerAct,prebossNodes,minimumThreatFloor} = modules.routes;
+    if (prebossNodes + 1 < minimumThreatFloor) fail('$/modules/routes/prebossNodes', 'boss depth must reach minimumThreatFloor');
     if (restFloors.length !== restsPerAct || restFloors.some(n=>n>prebossNodes)) fail('$/modules/routes/restFloors', 'must provide one valid preboss position per rest');
   }
   if (modules.rest?.mode === 'configured' && !modules.rest.services.includes('strategize')) fail('$/modules/rest/services', 'Strategize recovery fallback is required by this adapter');

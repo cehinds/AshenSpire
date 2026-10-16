@@ -8,6 +8,7 @@ import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { refreshBossDestinationLabels } from '../src/model/bossDestinationLabels.js';
 import { buildActMap, bossEncounterForNode } from '../src/engine/actmap.js';
 import { createRng } from '../src/engine/rng.js';
+import { mapKnowledge, resolveMapMode, HIDDEN, KNOWN } from '../src/model/mapknowledge.js';
 import { compileGameProfiles } from '../tools/game-config.mjs';
 import { resolveGameAuthor } from '../engine/kernel/gameConfig.js';
 
@@ -45,8 +46,13 @@ test('every seeded core branch visits eight levels and both rests across all thr
     for (let tier = 1; tier <= 3; tier++) {
       const seat = run.seatOrder[tier - 1];
       const map = buildActMap(reg, createRng(seed), seat, tier);
-      verifyPaths(map, [2, 6]);
+      verifyPaths(map, [1, 6]);
       assert.equal(map.floors, 8);
+      assert.deepEqual(map.startIds, ['n1_0']);
+      assert.equal(map.nodes.n1_0.type, 'shrine');
+      assert.equal(map.nodes.n1_0.next.length, 3);
+      assert.equal(Object.values(map.nodes).filter(node => node.floor === 1).length, 1);
+      for (const node of Object.values(map.nodes)) if (['elite', 'boss'].includes(node.actualType)) assert.ok(node.floor >= 3);
       assert.equal(Object.keys(map.nodes).length, 18);
       assert.ok(Object.values(map.nodes).some(node => node.next.length > 1));
       assert.equal(Object.values(map.nodes).filter(node => node.type === 'shrine').length, 2);
@@ -78,7 +84,7 @@ test('branch width, length, rest placement and exposed node types follow JSON se
 test('branched map choices survive a run round trip without regeneration', () => {
   const { reg, run } = setup();
   run.mapGraph = buildActMap(reg, createRng(9), run.seatOrder[0], 1);
-  run.mapNodeId = run.mapGraph.startIds[1];
+  run.mapNodeId = run.mapGraph.nodes.n1_0.next[1];
   const save = createSaveManager(createMemoryStorage());
   save.saveRun(run, null);
   const loaded = save.loadRun(reg);
@@ -96,4 +102,47 @@ test('route source defaults bind branch width and invalid dimensions fail before
   assert.equal(profile.content.routes.branchColumns, 5);
   for (const branchColumns of [0, 1, 6, 2.5]) assert.throws(() => setup({ branchColumns }), /branchColumns/);
   assert.throws(() => setup({ prebossNodes: 5, restFloors: [2, 6] }), /restFloors/);
+});
+
+test('core fog reveals only landmarks, then the split and next rest; the trail persists on load', () => {
+  const { reg, run } = setup();
+  run.mapGraph = buildActMap(reg, createRng(9), run.seatOrder[0], 1);
+  const mode = resolveMapMode({ settings: { mapMode: 'path' } }, run);
+  assert.equal(mode, 'fog', 'configured policy must not inherit a stale whole-map viewer setting');
+  const knowledge = (subject = run, reveal = false) => mapKnowledge({ graph: subject.mapGraph, run: subject, mode, reveal });
+  const birth = knowledge();
+  assert.deepEqual([...birth.drawn].sort(), ['boss', 'n1_0']);
+  assert.equal(birth.rung.get('n1_0'), KNOWN);
+  assert.equal(birth.rung.get('n6_0'), HIDDEN);
+  run.path = ['n1_0']; run.mapNodeId = 'n1_0';
+  const atRest = knowledge();
+  for (const id of run.mapGraph.nodes.n1_0.next) assert.ok(atRest.drawn.has(id));
+  assert.equal(atRest.rung.get('n6_0'), KNOWN, 'reaching Rest reveals the next Rest landmark');
+  for (const node of Object.values(run.mapGraph.nodes).filter(node => node.floor === 3)) {
+    assert.equal(atRest.rung.get(node.id), HIDDEN);
+    assert.equal(knowledge(run, true).rung.get(node.id), HIDDEN, 'type reveals do not bypass fog');
+  }
+  run.path.push('n2_0'); run.mapNodeId = 'n2_0';
+  const atSplit = knowledge();
+  for (const id of atRest.drawn) assert.ok(atSplit.drawn.has(id), 'previously revealed options stay lit');
+  for (const id of run.mapGraph.nodes.n2_0.next) assert.ok(atSplit.drawn.has(id));
+  assert.equal(atSplit.rung.get('n3_2'), HIDDEN, 'unconnected choices remain fogged');
+  const save = createSaveManager(createMemoryStorage()); save.saveRun(run, null);
+  const loaded = save.loadRun(reg); assert.ok(loaded, JSON.stringify(save.runStatus()));
+  assert.deepEqual(knowledge(loaded).drawn, atSplit.drawn);
+});
+test('authored threat threshold controls generation, validates boss depth, and current keeps its viewer mode', () => {
+  const { reg, run } = setup({ minimumThreatFloor: 5 });
+  let elites = 0;
+  for (let seed = 1; seed <= 20; seed++) {
+    const map = buildActMap(reg, createRng(seed), run.seatOrder[0], 1);
+    for (const node of Object.values(map.nodes)) if (node.actualType === 'elite') { assert.ok(node.floor >= 5); elites++; }
+  }
+  assert.ok(elites > 0, 'eligible later depths still offer elites');
+  assert.throws(() => setup({ minimumThreatFloor: 9 }), /prebossNodes.*minimumThreatFloor/);
+  assert.throws(() => setup({ prebossNodes: 1, restsPerAct: 1, restFloors: [1] }), /prebossNodes.*minimumThreatFloor/);
+  assert.equal(resolveMapMode({}, { gameProfile: resolveGameProfile('current') }), 'fog');
+  assert.equal(resolveMapMode({ settings: { mapMode: 'path' } }, { gameProfile: resolveGameProfile('current') }), 'path');
+  const authored = setup({ mapMode: 'path' });
+  assert.equal(resolveMapMode({}, authored.run), 'path');
 });
