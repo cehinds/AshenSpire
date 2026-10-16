@@ -4100,7 +4100,7 @@ export const baseCardStatuses = [
     "icon": "✧",
     "stackMode": "add",
     "decay": "none",
-    "tooltip": "Each stack permits one additional concurrent stance. Two stacks allow three total stances. Lose one stack at the next turn start."
+    "tooltip": "Each stack permits one additional concurrent stance. One stack allows two total stances. Lose one stack at the next turn start."
   },
   {
     "id": "base.conceal",
@@ -4256,7 +4256,8 @@ export const baseCardStatusRules = {
     "behaviors": [
       {
         "kind": "outgoingMultiplier",
-        "multiplier": 0.75
+        "multiplier": 0.75,
+        "directOnly": true
       }
     ]
   },
