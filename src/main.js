@@ -2941,6 +2941,15 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
   audio.music(enc.pool === 'boss' ? 'boss' : enc.pool === 'elite' ? 'elite' : 'combat');
   const cm = combatMods(enc.pool, enc);
   const entryRng = run.combatExpansionVersion === 2 && !savedSnapshot ? createRng(rng.seed, rng.getCounters()) : rng;
+  let enemyIds = shotState === 'combat' && shotParams.get('shotReaction') === 'counter' ? ['wanderingSoldier', 'wanderingSoldier'] : enc.enemies;
+  // Screenshot-only population fixture: initialize real enemies through the
+  // normal combat factory; never add actors to a running fight or its DOM.
+  const shotEnemyCount = shotState === 'combat' ? shotParams.get('shotEnemyCount') : null;
+  if (shotEnemyCount !== null) {
+    const count = Number(shotEnemyCount);
+    if (!Number.isInteger(count) || count < 1 || count > 12) throw new Error('?shotEnemyCount: expected a whole number from 1 to 12');
+    enemyIds = Array.from({ length: count }, (_, index) => enemyIds[index % enemyIds.length]);
+  }
   const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, expectedGameProfile: run.gameProfile, snapshot: savedSnapshot, fallbackAttackSlotCount: run.equipmentAttackSlotCount, fallbackRemovedAttackSlotIds: run.removedAttackSlotIds, fallbackDerivedStatRuleSnapshot: run.derivedStatRuleSnapshot, fallbackAttributeMode: run.attributeMode, fallbackPoolDeck: isPoolDeckMode(run) }) : createRunCombat({
     registries,
     rng: entryRng,
@@ -2950,7 +2959,7 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
     // The shot door's override, when parked (null otherwise — createCombat
     // then derives the threshold from the loadout receipt, the real path).
     player: shotPoiseMaxOverride != null ? { poiseMax: shotPoiseMaxOverride } : {},
-    enemyIds: shotState === 'combat' && shotParams.get('shotReaction') === 'counter' ? ['wanderingSoldier', 'wanderingSoldier'] : enc.enemies,
+    enemyIds,
     encounter: enc,
     hpMult: cm.hpMult,
     enemyDamageMult: cm.damageMult,
