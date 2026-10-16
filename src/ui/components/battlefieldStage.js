@@ -322,8 +322,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       if (!sprite) continue;
       const art = currentSpriteArtBounds(sprite, schedule);
       const spriteWidth = sprite.getBoundingClientRect().width;
-      if (!(art.width > 0 && spriteWidth > 0)) continue;
-      sprite.style.setProperty('--floor-shadow-width', `${(art.width / spriteWidth * 100).toFixed(2)}%`);
+      const artWidth = art.right - art.left;
+      if (!(artWidth > 0 && spriteWidth > 0)) continue;
+      sprite.style.setProperty('--floor-shadow-width', `${(artWidth / spriteWidth * 100).toFixed(2)}%`);
     }
   }
   // Every living enemy's Inspect hangs above its intent. The default spot is
