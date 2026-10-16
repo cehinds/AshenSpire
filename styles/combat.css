@@ -1843,3 +1843,6 @@
 :root[data-display-appearance='alternative'] .combat[data-layout='formation'] .combatant.enemy.enemy-target-hitbox::after {
   pointer-events: none;
 }
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] .enemy .combatant-leading > .statuses:empty {
+  display: none;
+}

@@ -158,3 +158,10 @@ test('malformed visual band configuration fails before producing NaN geometry', 
   const invalid=structuredClone(uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid);
   invalid.wide.rowHeight=NaN;assert.throws(()=>validatePerspectiveGrid(invalid),/wide profile/);
 });
+
+test('a spacious enemy rank keeps its approved body size as independent HUDs grow', () => {
+  const formation=alternativeFormation(plan(2),1440,441,false);
+  const actors=formation.slots.filter(s=>s.side==='enemy').map(slot=>({slot,side:'enemy',enemyId:'stitchedHound',ratio:1,multiplier:1.5,visibleWidth:179,visibleHeight:190,artLeading:0,leading:180}));
+  const sizes=fitAlternativeSprites({width:1440,height:441,actors,narrow:false});
+  for(const fit of sizes){assert(Math.abs(fit.visibleHeight-158.0985)<.01);assert(fit.visibleHeight<actors[0].slot.ground-6);}
+});
