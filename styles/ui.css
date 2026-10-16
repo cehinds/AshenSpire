@@ -1996,3 +1996,39 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
    vertical reading space to the card's effect and combat rules. */
 .deck-editor-reading-desk .deck-editor-preview:not(.animation-mode) { flex-direction: row; justify-content: center; align-items: flex-end; gap: 1rem; }
 .deck-editor.deck-editor-reading-desk .deck-editor-reading > .deck-editor-preview > .card { margin: 0; }
+
+/* Reading Desk review: retain a readable card face and use the space below
+   it for the full effect description. Reference rules expand on demand. */
+.deck-editor.deck-editor-reading-desk { --deck-row-height: 5.8rem; --deck-row-art: 4.8rem; }
+.deck-editor-reading-desk .deck-editor-list { gap: .35rem; }
+.deck-editor-reading-desk .deck-editor-item { margin-top: 0; }
+.deck-editor-reading-desk .deck-editor-main { grid-template-rows: 3rem minmax(0, 1fr); }
+.deck-editor-reading-desk .deck-editor-main > .deck-editor-row-rules { -webkit-line-clamp: 1; line-clamp: 1; max-height: 1.4em; }
+.deck-editor-reading-desk .deck-editor-preview:not(.animation-mode),
+.deck-editor-reading-desk .deck-editor-preview { flex-direction: column; align-items: center; gap: .4rem; margin-bottom: 1rem; }
+.deck-editor.deck-editor-reading-desk .deck-editor-reading > .deck-editor-preview > .card {
+  width: min(30rem, 100%) !important; max-width: 30rem; margin: 0 auto;
+}
+.deck-editor-reading-desk .deck-editor-preview-toggle {
+  display: inline-flex; align-items: center; justify-content: flex-end;
+  gap: .6rem; align-self: flex-end; min-height: 3rem; cursor: pointer;
+  font-size: max(1.2rem, var(--deck-min-text)); color: var(--parchment);
+}
+.deck-editor-reading-desk .deck-editor-preview-toggle input { width: 1.6rem; height: 1.6rem; accent-color: var(--gold); margin: 0; }
+.deck-editor-reading-desk .deck-editor-rules .ctext { margin-bottom: .5rem; }
+.deck-editor-reading-desk .deck-editor-selected-actions { margin-top: 0; }
+@media (min-width: 1001px) and (max-height: 820px) {
+  .deck-editor.deck-editor-reading-desk .deck-editor-reading > .deck-editor-preview > .card { width: min(28rem, 100%) !important; }
+}
+@media (max-width: 1000px) {
+  .deck-editor.deck-editor-reading-desk { --deck-row-height: 8.2rem; --deck-row-art: 4.4rem; }
+  .deck-editor.deck-editor-reading-desk .deck-editor-reading > .deck-editor-preview > .card { width: min(24rem, 100%) !important; }
+  .deck-editor-reading-desk .deck-editor-preview-toggle { display: none; }
+  .deck-editor-reading-desk .deck-editor-main > .deck-editor-row-rules { -webkit-line-clamp: 2; line-clamp: 2; max-height: 2.7em; }
+}
+@container game-viewport (max-width: 1000px) {
+  .deck-editor.deck-editor-reading-desk { --deck-row-height: 8.2rem; --deck-row-art: 4.4rem; }
+  .deck-editor.deck-editor-reading-desk .deck-editor-reading > .deck-editor-preview > .card { width: min(24rem, 100%) !important; }
+  .deck-editor-reading-desk .deck-editor-preview-toggle { display: none; }
+  .deck-editor-reading-desk .deck-editor-main > .deck-editor-row-rules { -webkit-line-clamp: 2; line-clamp: 2; max-height: 2.7em; }
+}

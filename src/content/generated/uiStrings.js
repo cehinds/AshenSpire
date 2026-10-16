@@ -10725,5 +10725,12 @@ export const uiStrings = [
     "short": "Keyword explanations",
     "full": "Keyword explanations",
     "tip": "Keyword explanations"
+  },
+  {
+    "id": "deckEditor.rulesAndKeywords",
+    "extends": "",
+    "short": "Rules and keywords",
+    "full": "Rules and keywords",
+    "tip": "Rules and keywords"
   }
 ];
