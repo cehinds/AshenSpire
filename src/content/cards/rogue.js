@@ -421,8 +421,8 @@ export const rogueCards = [
   {
     id: 'whirlingGuard', name: 'Whirling Guard', class: 'rogue', rarity: 'rare', cost: 1, type: 'attack', keywords: [], icon: '🌀',
     flavor: "A spin that is both parry and cut.\n\nDock dancers performed it for the Court at feast days, with painted wooden knives. After the Burning they were seen performing it on the quay, with other knives, and without the paint.\n\nNo feast has been held since.",
-    effects: [{ op: 'block', target: 'self', amount: 7 }, { op: 'damage', target: 'enemy', amount: 3, hits: 3 }],
-    textTemplate: 'Gain {block} Block. Deal {damage} damage {hits} times.',
-    upgrade: { effects: [{ op: 'block', target: 'self', amount: 10 }, { op: 'damage', target: 'enemy', amount: 4, hits: 3 }] },
+    effects: [{ op: 'block', target: 'self', amount: 7 }, { op: 'damage', target: 'allEnemies', amount: 3, hits: 3 }],
+    textTemplate: 'Gain {block} Block. Deal {damage} damage {hits} times to ALL enemies.',
+    upgrade: { effects: [{ op: 'block', target: 'self', amount: 10 }, { op: 'damage', target: 'allEnemies', amount: 4, hits: 3 }] },
   },
 ];

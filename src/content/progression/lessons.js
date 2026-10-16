@@ -80,7 +80,8 @@ const recipes = [
       {"actionCost":1,"manaCost":2,"effects":[{"op":"block","target":"self","amount":16},{"op":"heal","target":"self","amount":2},{"op":"block","target":"self","amount":2,"oncePerTurn":"grade-block"}]},
       {"actionCost":2,"manaCost":2,"effects":[{"op":"block","target":"self","amount":27},{"op":"heal","target":"self","amount":4},{"op":"block","target":"self","amount":4,"oncePerTurn":"grade-block"},{"op":"draw","amount":1,"oncePerTurn":"grade-draw"}]}
     ] }],
-  ['crimsonCleave', 'maneuver', 0, 2, 0, [5, 7, 8, 11, 14, 18]],
+  // Preserve the existing resolved grade-4 price after correcting Sweep area targeting.
+  ['crimsonCleave', 'maneuver', 0, 2, 0, [5, 7, 8, 11, 14, 18], { fixedGradeCosts: {4: {actionCost: 3, manaCost: 0}} }],
   ['shieldBash', 'maneuver', 0, 1, 0, null, { grades: [
       {"actionCost":2,"manaCost":0,"effects":[{"op":"damage","target":"enemy","amount":8},{"op":"poiseDamage","target":"enemy","amount":3}]},
       {"actionCost":1,"manaCost":0,"effects":[{"op":"damage","target":"enemy","amount":10},{"op":"poiseDamage","target":"enemy","amount":3}]},
@@ -171,8 +172,8 @@ function lessonGrade(recipe, rank) {
     delete primary.if;
     if (riderEffects[0]) riderEffects[0].amount = id === 'guardCounter' ? 6 : 7;
   }
-  // Area form begins at grade 3; the earlier recipe focuses a chosen enemy.
-  if (rank < 3) for (const effect of [primary, ...riderEffects]) if (effect.target === 'allEnemies') effect.target = 'enemy';
+  // Spell area forms begin at grade 3; a Sweep keeps its area at every grade.
+  if (rank < 3 && combatProfileFor(id).maneuver !== 'sweep') for (const effect of [primary, ...riderEffects]) if (effect.target === 'allEnemies') effect.target = 'enemy';
   if (['damage', 'block'].includes(primary.op)) {
     const extra = riderEffects.filter(e => ['damage', 'block'].includes(e.op) && typeof e.amount === 'number').reduce((sum, e) => sum + e.amount * (e.hits || 1), 0);
     primary.amount = Math.min(primary.amount, Math.max(1, Math.floor((budget[rank] - extra - (rank >= 4 ? 2 : 0)) / (primary.hits || 1))));
@@ -180,8 +181,9 @@ function lessonGrade(recipe, rank) {
   const effects = [primary, ...riderEffects];
   if (rank >= 4) effects.push({ op: 'block', target: 'self', amount: 2, oncePerTurn: 'grade-block' });
   if (rank >= 5) effects.push({ op: 'draw', amount: 1, oncePerTurn: 'grade-draw' });
-  return { rank, actionCost: rank === 0 ? Math.max(1, Math.min(actionCost, 3)) : rank === 1 ? 1 : Math.min(rank, actionCost + (rank >= 4 ? 1 : 0)), manaCost: rank, effects, textTemplate: recipeText(effects, combatProfileFor(id)),
-    ...(original.effects.some(e => e.op === 'damage') ? { traits: { damageSchool: abilityKind === 'spell' ? 'magic' : 'physical', exposureBuildupPerHit: abilityKind === 'spell' ? (rank > 0 ? 5 : 1) : 0 } } : {}),
+  const fixedCost=options.fixedGradeCosts?.[rank];
+  return { rank, actionCost: fixedCost?.actionCost ?? (rank === 0 ? Math.max(1, Math.min(actionCost, 3)) : rank === 1 ? 1 : Math.min(rank, actionCost + (rank >= 4 ? 1 : 0))), manaCost: fixedCost?.manaCost ?? rank, effects, textTemplate: recipeText(effects, combatProfileFor(id)),
+    ...(original.effects.some(e => e.op === 'damage') ? { traits: { ...(fixedCost ? {costRule:'fixed'} : {}),damageSchool: abilityKind === 'spell' ? 'magic' : 'physical', exposureBuildupPerHit: abilityKind === 'spell' ? (rank > 0 ? 5 : 1) : 0 } } : {}),
   };
 }
 
