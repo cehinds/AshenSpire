@@ -1977,7 +1977,9 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor-reading-desk .deck-editor-mobile-tabs { display: flex; }
 .deck-editor-reading-desk .deck-editor-animation { width: 100%; max-width: 32rem; margin: 0; }
 .deck-editor-reading-desk .deck-editor-animation-stage { height: 23rem; }
-.deck-editor-reading-desk .deck-editor-animation-stage .pose-stage { height: 22rem; }
+/* The renderer anchors its inline relative stage at the host's top. Reserve
+   headroom without changing sprite scale or the description's layout. */
+.deck-editor-reading-desk .deck-editor-animation-stage .pose-stage { height: 22rem; top: 1.5rem; bottom: auto; }
 @media (max-width: 1000px) {
   .deck-editor.deck-editor-reading-desk { width: calc(100vw - 1.6rem); }
   .deck-editor-reading-desk > .deck-editor-panes { display: block; }
