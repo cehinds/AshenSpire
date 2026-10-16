@@ -97,11 +97,12 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   let success = '';
   let animationPreview = null;
   let animationPaused = false;
+  let animationVisible = false;
 
 
   const root = el('div', { class: 'modal-veil deck-editor-veil' });
   const panel = el('section', {
-    class: 'deck-editor', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'deck-editor-title',
+    class: 'deck-editor deck-editor-reading-desk', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'deck-editor-title',
   });
   root.appendChild(panel);
   panel.style.setProperty('--deck-cost-count', String(deckEditorResourceGroups().length));
@@ -225,7 +226,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   function select(row, source, open = false) {
     if (source === 'collection' && row.equipmentEligible === false) return;
     selected = { key: selectionKey(row, source), source, row };
-    if (open) { inspected = selected; inspectOrigin = source; mobileView = 'inspect'; }
+    inspected = selected;
+    if (open) { inspectOrigin = source; mobileView = 'inspect'; }
     panel.dataset.mobileView = mobileView;
     for (const node of panel.querySelectorAll('.deck-editor-main')) {
       const on = node.dataset.selectionKey === selected.key && node.dataset.selectionSource === source;
@@ -235,7 +237,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     }
     trackInspect();
     const inspector = panel.querySelector('.deck-editor-inspector');
-    if (open && inspector) { inspector.parentNode.insertBefore(inspectPane(), inspector); inspector.remove(); }
+    if (inspector) { inspector.parentNode.insertBefore(inspectPane(), inspector); inspector.remove(); }
     syncPanes();
     syncInert();
     if (open && typeof matchMedia === 'function' && matchViewMedia('(max-width: 1000px)').matches) {
@@ -299,22 +301,26 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     // (where the oversized card face covered it). It follows a refusal too, so
     // the inspector always names the stance.
     const reasonText = [reasons.length ? reasons.join(' ') : base, stanceName(row)].filter(Boolean).join(' · ');
-    animationPreview = deckCardAnimationPreview({ registries, run, ref: row.ref, paused: animationPaused,
+    if (animationVisible) animationPreview = deckCardAnimationPreview({ registries, run, ref: row.ref, paused: animationPaused,
       onPaused: paused => { animationPaused = paused; } });
+    const previewToggle = chip(animationVisible ? 'Show card' : 'Show animation', animationVisible, () => {
+      animationVisible = !animationVisible;
+      const current = panel.querySelector('.deck-editor-inspector');
+      if (current) { current.parentNode.insertBefore(inspectPane(), current); current.remove(); }
+    }, 'preview:animation');
+    previewToggle.classList.add('deck-editor-preview-toggle');
     const details = el('div', { class: 'deck-editor-rules' });
     details.innerHTML = cardDetailHtml(registries, row.ref, { rules: run, definition: combatDef(row) });
     section.append(
-      el('div', { class: 'deck-editor-reading' }, [face,
-        el('label', { class: 'deck-editor-art-toggle' }, [
-          el('input', { type: 'checkbox', disabled: true, 'aria-label': t('deckEditor.art.alternative') }),
-          el('span', { text: t('deckEditor.art.alternative') }),
-          el('small', { text: t('deckEditor.art.basicOnly') }),
-        ]),
-        animationPreview.root,
+      el('div', { class: 'deck-editor-reading' }, [
+        el('div', { class: 'deck-editor-preview' }, [animationVisible ? animationPreview.root : face, previewToggle]),
         details,
-        ...keywordExplanations(registries, rulesFor(row)).map(entry => el('div', { class: 'deck-editor-keyword' }, [
-          el('strong', { text: entry.name }), el('p', { text: entry.explanation }),
-        ])),
+        ...(keywordExplanations(registries, rulesFor(row)).length ? [el('details', { class: 'deck-editor-glossary' }, [
+          el('summary', { text: 'Keyword explanations' }),
+          ...keywordExplanations(registries, rulesFor(row)).map(entry => el('div', { class: 'deck-editor-keyword' }, [
+            el('strong', { text: entry.name }), el('p', { text: entry.explanation }),
+          ])),
+        ])] : []),
       ]),
       el('div', { class: 'deck-editor-selected-actions' }, [
         el('p', { id: 'deck-editor-selected-reason', class: 'deck-editor-selected-reason', text: reasonText }),
@@ -346,7 +352,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // ordered deck can still be reworked on a phone.
   function navigation() {
     if (!model.ordered) return null;
-    const onDeck = mobileView === 'deck';
+    const onDeck = pane === 'deck';
     const node = chip(t('deckEditor.drawOrder'), onDeck, () => {
       mobileView = onDeck ? 'collection' : 'deck';
       pane = mobileView;
@@ -551,7 +557,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       ])]));
     }
     if (!rows.length) list.appendChild(el('p', { class: 'deck-editor-empty', text: t('deckEditor.empty.collection') }));
-    return paneSection('collection', t('deckEditor.pane.collection'), list, [
+    return paneSection('collection', `${t('deckEditor.pane.deck')} · ${model.counter.count}`, list, [
       chip(t('deckEditor.all'), libraryScope === 'all', () => { libraryScope = 'all'; draw(); }, 'scope:all'),
       chip(t('deckEditor.inDeck'), libraryScope === 'deck', () => { libraryScope = 'deck'; draw(); }, 'scope:deck'),
       tools(),
@@ -678,6 +684,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     if (!hit || !isInside(hit, panel)) return null;
     const row = hit.closest?.('.deck-editor-row');
     if (kind === 'row' && model.ordered && row) return { kind: 'row', node: row, instanceId: row.dataset.instanceId };
+    const inspector = hit.closest?.('.deck-editor-inspector');
+    if (inspector) return { kind: 'pane', node: inspector, pane: kind === 'tile' ? 'deck' : 'collection' };
     const paneNode = hit.closest?.('[data-pane]');
     if (!paneNode) return null;
     if (kind === 'tile' && paneNode.dataset.pane === 'deck') return { kind: 'pane', node: paneNode, pane: 'deck' };
@@ -810,7 +818,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     // The toolbar row holds only the phone's Draw order chip; it is left out
     // when there is nothing for it (the filters live on the collection's bar).
     const nav = navigation();
-    panel.append(header(), ...(nav ? [el('div', { class: 'deck-editor-toolbar' }, [nav])] : []), el('div', { class: 'deck-editor-panes', dataset: { active: pane } }, [collectionPane(), inspectPane(), deckPane()]), footer());
+    panel.append(header(), ...(nav ? [el('div', { class: 'deck-editor-toolbar' }, [nav])] : []), el('div', { class: 'deck-editor-panes', dataset: { active: pane } }, [inspectPane(), collectionPane(), deckPane()]), footer());
     syncInert();
     restoreFocus();
     trackInspect();
