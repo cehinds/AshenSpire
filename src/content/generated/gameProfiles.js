@@ -15398,7 +15398,7 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "path": "src/** (excluding generated gameProfiles/changelog)",
-      "hash": "sha256:7298e19357e7a490d78333c75e406357f2ff3b810fecf732c2a5856cfa0945b8"
+      "hash": "sha256:a6f091ea9bd6f6ad6204b16861d7ed940a96987f050b8dacd438f04719d97186"
     }
   ],
   "runtimeSources": [
@@ -18430,7 +18430,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/components/battlefieldStage.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:fcf43b6a6a9df8773e523d2032ebd60a6731b0a0ff25377472f7804ceac8eed6"
+      "hash": "sha256:4c198f121bc0f97ac6ef6ca402264722689579fa1e60ec94f75ef17037aeb1bc"
     },
     {
       "path": "src/ui/components/bookArt.js",
@@ -19348,7 +19348,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/models/AlternativeFormationModel.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:1d111624c994dd807f0e21ba0b3a59dcc7cbd91c5983de9f6230d3cb79f3a0c9"
+      "hash": "sha256:8bb7a7c26db0694d8913740cfaac8a8c2bbbe53c19852c47e7f1639083d94c91"
     },
     {
       "path": "src/ui/models/ArmouryModels.js",
@@ -20377,7 +20377,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:23af16d4e9c9f6d88fe655d32ecf1a688b47df39f9e3a1d6d193ce63923593ab"
     }
   ],
-  "runtimeHash": "sha256:b71ee757a3af09d02e37b1968112db8d74cd3f6261cacd806d65b16989338bab"
+  "runtimeHash": "sha256:d556ada9186a809fdcc021d702fd0ad4cf83b2cf25a2edbd34f5cb0b153ddecb"
 };
 export const gameProfileAuthors = {
   "default": {
