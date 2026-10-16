@@ -98,9 +98,12 @@ export function projectCombatIntent(combat, enemyInstanceId) {
   const baseline = damageBounds(combat, enemy, move, base, hits, true);
   if (!actual || !baseline) return { ...intent, projectedDamage: unknown('unsupportedDefenseMode') };
   const stanceReduced = actual.expected < baseline.expected - 1e-9;
+  // Green describes the displayed HP range, not an undisplayed average. A
+  // wider failed-dodge upper bound stays red even if its expectation improves.
+  const displayedReduction = stanceReduced && actual.min <= baseline.min && actual.max < baseline.max;
   return { ...intent, projectedDamage: { basis: 'hp', ...actual,
     label: actual.min === actual.max ? String(actual.max) : `${actual.min}–${actual.max}`,
-    tone: stanceReduced ? 'green' : 'red', stanceReduced, uncertain: actual.min !== actual.max,
+    tone: displayedReduction ? 'green' : 'red', stanceReduced, displayedReduction, uncertain: actual.min !== actual.max,
     baseline: { min: baseline.min, max: baseline.max, expected: baseline.expected },
     scope: 'directDamageAtCurrentDefenses' } };
 }
