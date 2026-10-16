@@ -49,7 +49,7 @@ test('actual range stance reduces Current projected HP; unchanged pools alone ne
   combat.player.combatStance = { camp: 'physical', maneuver: 'ranged', range: 'ranged' };
   const before = snapshot(combat);
   const reduced = projectCombatIntent(combat, enemy.id).projectedDamage;
-  assert.equal(reduced.max, 0); assert.equal(reduced.tone, 'green'); assert.equal(reduced.stanceReduced, true);
+  assert.equal(reduced.max, 0); assert.equal(reduced.tone, 'green'); assert.equal(reduced.stanceReduced, true); assert.equal(reduced.displayedReduction, true);
   assert.equal(reduced.baseline.max, neutral.max); assert.equal(snapshot(combat), before);
   delete combat.player.combatStance; combat.player.block = 30;
   const blocked = projectCombatIntent(combat, enemy.id).projectedDamage;
@@ -88,7 +88,7 @@ test('known HP presentation and public Dodge charge count remain separate from h
   assert.equal(hidden.parts[0].value, null); assert.equal(hidden.projectedDamage, undefined);
 });
 
-test('Core Counter has no fabricated mitigation, while genuine configured Evade probability may reduce expected HP', () => {
+test('Core Counter has no fabricated mitigation and a wider Evade range stays red despite lower expected HP', () => {
   const { combat, enemy } = fixture(true);
   combat.player.gameProfilePoise = 1;
   const baseline = projectCombatIntent(combat, enemy.id).projectedDamage;
@@ -96,10 +96,11 @@ test('Core Counter has no fabricated mitigation, while genuine configured Evade 
   const counter = projectCombatIntent(combat, enemy.id).projectedDamage;
   assert.equal(counter.max, baseline.max); assert.equal(counter.tone, 'red');
   // The authored accuracy formula can produce genuine low hit probability;
-  // green still keeps the doubled failed-dodge range visible.
+  // a wider failed-dodge range must stay red despite the lower expectation.
   combat.player.combatStance = { camp: 'physical', maneuver: 'evade' };
   combat.player.ratings = { ...combat.player.ratings, dr: 100 };
   const evade = projectCombatIntent(combat, enemy.id).projectedDamage;
-  assert.ok(evade.expected < evade.baseline.expected); assert.equal(evade.tone, 'green');
+  assert.ok(evade.expected < evade.baseline.expected); assert.equal(evade.stanceReduced, true);
+  assert.equal(evade.tone, 'red'); assert.equal(evade.displayedReduction, false);
   assert.equal(evade.min, 0); assert.ok(evade.max > evade.baseline.max);
 });
