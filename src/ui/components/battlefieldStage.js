@@ -1008,6 +1008,11 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const INTENT_RIBBON_GAP = 4 / uiZoom();
     const turnRibbonEl = field.querySelector(':scope > .turn-ribbon');
     const ribbonBox = turnRibbonEl ? anchorLocalBox(field, turnRibbonEl) : null;
+    const enemyCount = placed.filter(({frame}) => frame.classList.contains('enemy')).length;
+    const ribbonSeats = placed.flatMap(({frame}) => {
+      const intent = frame.querySelector('.intent');
+      return intent ? [{ id: frame.dataset.eid, ...anchorLocalBox(field, intent) }] : [];
+    });
     const intentMoves = placed.map(({ frame, sprite }) => {
       if (!frame.classList.contains('enemy') || frame.classList.contains('dead')) return null;
       const leadingHost = frame.querySelector('.combatant-leading');
@@ -1027,8 +1032,24 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
           .map(badge => anchorLocalBox(frame, badge).top));
         bottomLimit = topOfRow - INTENT_BAR_GAP - statusHeight;
       }
-      const dx = (trackBox.left + trackBox.width / 2) - (intentBox.left + intentBox.width / 2);
+      let dx = (trackBox.left + trackBox.width / 2) - (intentBox.left + intentBox.width / 2);
+      let footerShiftX = 0;
       let dy = bottomLimit - (intentBox.top + intentBox.height);
+      if (!classicAppearance() && !selected && enemyCount <= 3 && ribbonBox) {
+        const box = anchorLocalBox(field, intent);
+        const centre = box.left + dx + box.width / 2, half = box.width / 2, gap = 6 / zoom;
+        const top = box.top + dy, bottom = top + box.height;
+        if (top < ribbonBox.top + ribbonBox.height && bottom > ribbonBox.top
+          && centre - half < ribbonBox.left + ribbonBox.width && centre + half > ribbonBox.left) {
+          const walls = [{ left:ribbonBox.left, right:ribbonBox.left+ribbonBox.width },
+            ...ribbonSeats.filter(seat => seat.id !== frame.dataset.eid).map(seat => ({left:seat.left,right:seat.left+seat.width}))];
+          const candidates = walls.flatMap(wall => [wall.left-gap-half,wall.right+gap+half])
+            .filter(x => x-half >= gap && x+half <= field.clientWidth-gap
+              && walls.every(wall => x+half <= wall.left-gap || x-half >= wall.right+gap))
+            .sort((a,b) => Math.abs(a-centre)-Math.abs(b-centre));
+          if (candidates.length) { footerShiftX = candidates[0]-centre; dx += footerShiftX; }
+        }
+      }
       if (selected && ribbonBox && ribbonBox.width > 0 && ribbonBox.height > 0) {
         // Both boxes are in the field's local px, so the shift needs no zoom arithmetic.
         const intentFieldBox = anchorLocalBox(field, intent);
@@ -1038,11 +1059,15 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         const intentTop = intentFieldBox.top + dy;
         if (sharesColumns && intentTop < ribbonFloor) dy += ribbonFloor - intentTop;
       }
-      return { leadingHost, dx, dy };
+      return { leadingHost, dx, dy, footerShiftX, frame };
     });
     for (const move of intentMoves) {
       if (!move || (Math.abs(move.dx) < 0.01 && Math.abs(move.dy) < 0.01)) continue;
-      const { leadingHost, dx, dy } = move;
+      const { leadingHost, dx, dy, footerShiftX, frame } = move;
+      if (footerShiftX) for (const meter of frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')) {
+        const [x=0,y=0] = meter.style.translate.split(' ').map(v=>parseFloat(v)||0);
+        meter.style.translate = `${x+footerShiftX}px ${y}px`;
+      }
       // The host's current place in its own containing block, in layout px.
       const hostBox = anchorLocalBox(leadingHost.offsetParent || leadingHost.parentElement, leadingHost);
       const hostShiftY = parseFloat(leadingHost.style.translate.split(' ')[1]) || 0;
