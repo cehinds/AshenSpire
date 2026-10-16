@@ -2506,7 +2506,8 @@ export function validateEffects(effects, path, vctx) {
     // when it resolves (engine/actions.js enterStance;
     // tests/warriors-vow.test.mjs pins the throw).
     if (eff.op === 'enterStance') {
-      const named = eff.stance !== undefined;
+      const named = eff.stance !== undefined || eff.maneuver!==undefined;
+      if(eff.maneuver!==undefined && !['attack','smash','defend','sweep','counter','casting','evade'].includes(eff.maneuver))err(`${p}.maneuver`,'Unknown maneuver');
       const chosen = eff.choose !== undefined;
       if (named === chosen) err(p, `Opcode 'enterStance' takes exactly one of 'stance' or 'choose'`);
       else if (chosen && !STANCE_CHOICE_SELECTORS.includes(eff.choose)) err(`${p}.choose`, `Opcode 'enterStance' choose must be one of: ${STANCE_CHOICE_SELECTORS.join(', ')}`);
@@ -2825,7 +2826,7 @@ export function validateFormula(value, path, vctx) {
     else value.args.forEach((a, i) => validateFormula(a, `${path}.args[${i}]`, vctx));
   }
   if (value.f === 'metric' && value.statuses !== undefined && (!Array.isArray(value.statuses) || value.statuses.some(id=>!vctx.ids.statuses.has(id)))) err(`${path}.statuses`,'Unknown metric status reference');
-  if (value.f === 'metric' && !['negativeStatusTypes','negativeStatusStacks','damageTakenThisTurn','sameCardPlays','cardsPlayed','distinctTypes','manaSpent','staminaSpent'].includes(value.metric)) err(`${path}.metric`, 'Unknown combat metric');
+  if (value.f === 'metric' && !['weaponDamage','negativeStatusTypes','negativeStatusStacks','damageTakenThisTurn','sameCardPlays','cardsPlayed','distinctTypes','manaSpent','staminaSpent'].includes(value.metric)) err(`${path}.metric`, 'Unknown combat metric');
   if (value.f === 'stacks') {
     if (typeof value.status !== 'string' || !vctx.ids.statuses.has(value.status)) {
       err(`${path}.status`, `Dangling reference: unknown status id '${value.status}'`);

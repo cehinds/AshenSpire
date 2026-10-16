@@ -1,3 +1,6 @@
+import { resolveGameProfile } from '../src/model/gameProfile.js';
+import { setProfileStance,profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
+import { trimCombatStances } from '../src/engine/concurrentStances.js';
 import { botCardTargetId } from '../tools/simbot.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -102,4 +105,34 @@ test('enemy generated burden overlay skips once, exhausts, reveals and survives 
  assert.equal(restored.player.hp,hp);assert.equal(restored.enemies[0].burdenPiles.exhaust.length,1);assert.equal(restored.enemies[0].burdenPiles.hand.length,0);
  assert.ok(restored.eventLog.some(e=>e.type==='intentRevealed'));assert.ok(restored.eventLog.some(e=>e.type==='enemyBurdenDrawn'));
  dispatch(restored,{type:'endTurn'});assert.ok(restored.eventLog.some(e=>e.type==='enemyMoveStarted'),'normal authored move resumes after burden expires');
+});
+
+test('configured X spends remaining SP and scales actual damage and target count with the paid amount',()=>{
+ const combat=fixture([{op:'damage',target:'allEnemies',amount:{f:'energySpent',per:4}}],{cost:'X',manaCost:1,definition:{targetLimit:{f:'energySpent',per:1}}});
+ combat.gameProfile=resolveGameProfile('core');combat.player.stamina=2;
+ combat.enemies.push(...[1,2].map(i=>({...structuredClone(combat.enemies[0]),id:`extra-${i}`})));
+ const id=combat.piles.hand[0].instanceId;assert.equal(cardPlayCosts(combat,id).stamina,2);const preview=previewCard(combat,id);assert.equal(preview.values[0].value,6); // configured Poise mitigates the authored 8 by 25%
+
+ dispatch(combat,{type:'playCard',cardInstanceId:id});assert.equal(combat.player.stamina,0);
+ assert.deepEqual(combat.enemies.map(e=>1000-e.hp),[6,6,0]);
+});
+test('co-op choices and hidden cards belong to the acting seat and return only to that seat',()=>{
+ const combat=fixture([{op:'modifyCards',from:'hand',amount:1,selection:'choose',changes:{hideTurns:1,retain:true}}],{coop:true});
+ const a=combat.players.get('a'),b=combat.players.get('b');for(const P of [a,b])for(const pile of Object.values(P.piles))for(const card of pile)card.instanceId=`${P.id}-${card.instanceId}`;
+ playCard(combat,'a',a.piles.hand[0].instanceId);const chosen=combat.pendingCardChoice.candidateIds[0];
+ assert.throws(()=>chooseDiscard(combat,'b',[chosen]),/another player/);chooseDiscard(combat,'a',[chosen]);
+ assert.equal(combat.hiddenCards[0].playerId,'a');endTurn(combat,'a');endTurn(combat,'b');
+ assert.ok(a.piles.hand.some(c=>c.instanceId===chosen));assert.ok(!b.piles.hand.some(c=>c.instanceId===chosen));assert.equal(combat.hiddenCards.length,0);
+});
+test('Many Forms uses one best defensive receipt for each attack and expires back to the primary stance',()=>{
+ const combat=fixture([{op:'block',amount:1,target:'self'}]);combat.gameProfile=resolveGameProfile('core');
+ combat.registries={...combat.registries,proposalStatusRules:{'weak':{behaviors:[{kind:'stanceCapacity',additionalPerStack:1,maxStances:2,defensePriority:['counter','defend','evade','casting','attack','smash','sweep']}]}}};
+ combat.player.statuses['weak']={stacks:1};
+ const carrier=maneuver=>({combatProfile:{maneuver,camp:'physical',range:'melee'}});
+ setProfileStance(combat,combat.player,carrier('counter'));setProfileStance(combat,combat.player,carrier('defend'));
+ assert.equal(combat.player.concurrentStances.length,2);
+ for(const maneuver of ['smash','sweep'])assert.equal(profileDamageReceipt(combat,combat.enemies[0],combat.player,10,carrier(maneuver)).advantage,false);
+ const restored=restoreCombatSnapshot({registries:combat.registries,rng:createRng(9),snapshot:serializeCombatSnapshot(combat)});assert.equal(restored.player.concurrentStances.length,2);
+ restored.player.statuses['weak'].stacks=0;trimCombatStances(restored,restored.player);
+ assert.equal(restored.player.concurrentStances,undefined);assert.equal(restored.player.combatStance.maneuver,'defend');assert.equal(profileDamageReceipt(restored,restored.enemies[0],restored.player,10,carrier('smash')).advantage,true);
 });

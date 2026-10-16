@@ -574,7 +574,7 @@ export const EFFECT_SPECS = Object.freeze({
   shuffleDiscardIntoDraw: { allowed: [], required: [], refs: {} },
   // Exactly one of `stance` (a fixed stance) or `choose` (a pending choice the
   // play intent answers, model/cardChoices.js); validate.js refuses neither and both.
-  enterStance: { allowed: ['stance', 'choose'], required: [], refs: { stance: 'stances' } },
+  enterStance: { allowed: ['stance', 'choose','maneuver'], required: [], refs: { stance: 'stances' } },
   poiseDamage: { allowed: [], required: ['amount'], refs: {} },
   // Exactly one of `amount` (points) or `pct` (of the target's own threshold);
   // validate.js refuses neither or both. The school is the firing event's.
