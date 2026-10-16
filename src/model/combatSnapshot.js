@@ -187,6 +187,7 @@ export function combatSnapshotProblems(snapshot) {
     catch (error) { problems.push(`derivedStatRuleSnapshot: ${error.message}`); }
   }
   if (snapshot.ratingAttributeScale !== undefined && (!Number.isFinite(snapshot.ratingAttributeScale) || snapshot.ratingAttributeScale <= 0)) problems.push('ratingAttributeScale must be positive');
+  if(snapshot.proposalRewards?.byPlayer!==undefined && (!record(snapshot.proposalRewards.byPlayer) || Object.values(snapshot.proposalRewards.byPlayer).some(v=>!Number.isSafeInteger(v) || v<0 || v>1e9)))problems.push('proposalRewards.byPlayer invalid');
   if(snapshot.proposalRewards!==undefined && (!record(snapshot.proposalRewards) || !Number.isSafeInteger(snapshot.proposalRewards.cinders) || snapshot.proposalRewards.cinders<0 || snapshot.proposalRewards.cinders>1e9 || snapshot.proposalRewards.settled!==undefined && typeof snapshot.proposalRewards.settled!=='boolean')) problems.push('proposalRewards invalid');
   if (snapshot.pendingDiscardDraw !== undefined && (!Number.isInteger(snapshot.pendingDiscardDraw) || snapshot.pendingDiscardDraw < 0 || snapshot.pendingDiscardDraw > 99)) problems.push('pendingDiscardDraw must be an integer from 0 to 99');
   if (snapshot.pendingAbilityDiscard !== undefined || snapshot.pendingCardChoice !== undefined) {

@@ -1389,5 +1389,5 @@ export function coopOutcome(C) {
   const survivors = {};
   for (const P of C.players.values()) survivors[P.id] = { hp: Math.max(0, P.entity.hp), downed: !P.entity.alive,
     ...(P.entity.ashenBlight ? { ashenBlight: structuredClone(P.entity.ashenBlight) } : {}), blightTerminal: !!P.entity.blightTerminal };
-  return { survivors, result: C.result || (C.phase === 'suspended' ? 'suspended' : null) };
+  return { survivors,...(C.proposalRewards?.byPlayer ? {earnedCinders:{...C.proposalRewards.byPlayer}} : {}), result: C.result || (C.phase === 'suspended' ? 'suspended' : null) };
 }
