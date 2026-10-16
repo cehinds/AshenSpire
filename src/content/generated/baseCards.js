@@ -1872,10 +1872,11 @@ export const baseCardDefinitions = [
     "manaCost": 0,
     "type": "status",
     "keywords": [
+      "ethereal",
       "unplayable"
     ],
     "effects": [],
-    "textTemplate": "Skip your next action when drawn. Returns to the burden deck.",
+    "textTemplate": "Skip your next action when drawn. Ethereal.",
     "icon": "🛡",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
     "burden": {
@@ -3836,12 +3837,12 @@ export const baseCardPresentation = {
   "base.paralysis-status-card": {
     "canonicalCardRef": "ironSkin",
     "faceLines": [
-      "Skip your next action when drawn. Returns to the burden deck."
+      "Skip your next action when drawn. Ethereal."
     ],
     "sourceFaceLines": [
       "Paralysis: ?"
     ],
-    "textTemplate": "Skip your next action when drawn. Returns to the burden deck."
+    "textTemplate": "Skip your next action when drawn. Ethereal."
   },
   "base.restrained-status-card": {
     "canonicalCardRef": "ironSkin",
