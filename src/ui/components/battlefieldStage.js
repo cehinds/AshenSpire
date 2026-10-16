@@ -2,7 +2,7 @@ import { mobileFloorShadowTop } from '../models/MobileFloorModel.js';
 import { uiConfig } from '../../config/generated/ui.js';
 import { logicalViewport } from '../viewViewport.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
-import { anchorLocalBox, uiZoom, VIEWPORT_ORIGIN } from '../fx.js';
+import { anchorLocalBox, uiZoom } from '../fx.js';
 import { combatFormation } from '../models/CombatFormationModel.js';
 import { isWideFormFactor } from '../models/FormFactorModel.js';
 import { COMBAT_TARGET_HIT_PX, combatOverheadAnchors, combatOverheadRibbonShift, combatTargetAnchors, combatTargetPackSize } from '../models/CombatOverheadModel.js';
@@ -25,6 +25,10 @@ import { playerDetailsPlacement } from '../models/PlayerDetailsPlacementModel.js
 import { hudGeometry, offsetPlacement, offsetTargetPlate, targetPlateBox } from '../models/HudLayoutOffsetModel.js';
 import { restingHandEnvelope, handGeometryKey } from '../models/HandLayout.js';
 import { reducedMotionRequested } from '../motion.js';
+
+// Formation positions and adjustment deltas already use field-local physical
+// coordinates. A centred view preset must not subtract its viewport inset again.
+const FORMATION_LOCAL_ORIGIN = Object.freeze({ left: 0, top: 0 });
 
 // Presentation-only adjustment: header clearance moves the compact readout,
 // never the sprite's fitted position, foot anchor, or scale.
@@ -543,7 +547,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         // A perspective cell is drawn whole, its shadow at the foot anchor.
         const geometry = cell.box ? { width: cell.box.width, height: cell.box.height, transform: 'none' }
           : formationTileGeometry(cell, plan, presentation);
-        const localTile = anchorLocalBox(VIEWPORT_ORIGIN, cell.box ?? {
+        const localTile = anchorLocalBox(FORMATION_LOCAL_ORIGIN, cell.box ?? {
           left: cell.x - geometry.width / 2, top: cell.ground,
           width: geometry.width, height: geometry.height,
         }, { zoom: pageZoom });
@@ -742,7 +746,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         // centre on the body, but honour the packer's bounded displacement when
         // four or more perspective lanes make neighbouring readouts collide.
         const overheadX = anchor?.x ?? x;
-        const overheadLocal = anchorLocalBox(VIEWPORT_ORIGIN,
+        const overheadLocal = anchorLocalBox(FORMATION_LOCAL_ORIGIN,
           { left: overheadX - x, top: 0, width: 0, height: 0 }, { zoom });
         leadingHost.style.left = `${overheadLocal.left}px`;
         const above = ground - visibleHeight - overheadGap - actor.leadingHeight * zoom;
@@ -754,7 +758,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       }
       delete frame.dataset.hudBelow;
       const overheadX = anchor?.x ?? x;
-      const overheadLocal = anchorLocalBox(VIEWPORT_ORIGIN,
+      const overheadLocal = anchorLocalBox(FORMATION_LOCAL_ORIGIN,
         { left: overheadX - x, top: 0, width: 0, height: 0 }, { zoom });
       leadingHost.style.left = `${overheadLocal.left}px`;
       // Full-height artwork may reach its final ground before the fitter
@@ -791,7 +795,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       // Transparent canvas above the figure is not part of the card's layout.
       // Keep the image and its feet in place while the card starts at the ink.
       sprite.style.marginTop = `${(visibleHeight - paintedHeight) / scale}px`;
-      const local = anchorLocalBox(VIEWPORT_ORIGIN, { left: x - nameWidth / 2, top: ground - visibleHeight, width: nameWidth, height: visibleHeight }, { zoom: pageZoom });
+      const local = anchorLocalBox(FORMATION_LOCAL_ORIGIN, { left: x - nameWidth / 2, top: ground - visibleHeight, width: nameWidth, height: visibleHeight }, { zoom: pageZoom });
       frame.style.left = `${local.left}px`;
       frame.style.width = `${local.width}px`;
       // Keep depth on the artwork. A z-index on the whole frame traps its
@@ -1006,7 +1010,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         // settle. Round to a hundredth: a still footer then writes the same
         // value, and reduced motion sees no script-driven drift.
         const settledPx = value => Math.round(value * 100) / 100 || 0;
-        const offset = anchorLocalBox(VIEWPORT_ORIGIN, {
+        const offset = anchorLocalBox(FORMATION_LOCAL_ORIGIN, {
           left: fieldRect.left + target.x - (boxes[i].footerCenterX ?? hostRect.left + hostRect.width / 2),
           top: fieldRect.top + target.y - footerSize / 2 - (Number.isFinite(boxes[i].footerTop) ? boxes[i].footerTop : hostRect.bottom), width: 0, height: 0 }, { zoom });
         // Keep the visible name/health footer with its tap target. Packing
@@ -1024,7 +1028,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
           if (meter) {
             const rect = meter.getBoundingClientRect();
             const leading = frame.querySelector('.combatant-leading').getBoundingClientRect();
-            const idleOffset = anchorLocalBox(VIEWPORT_ORIGIN, {
+            const idleOffset = anchorLocalBox(FORMATION_LOCAL_ORIGIN, {
               left: leading.left + (leading.width - rect.width) / 2 - rect.left,
               top: leading.bottom - rect.height - rect.top, width: 0, height: 0,
             }, { zoom });
