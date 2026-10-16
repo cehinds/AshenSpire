@@ -99,7 +99,7 @@ export function combatCardDamageLabel(def, preview = null, registries = null, in
 
 export function combatCardType(def) {
   const classification = cardClassification(def);
-  const type = classification.stanceType || (classification.cardCategory === 'curse' ? 'status' : classification.cardCategory);
+  const type = (classification.stanceType !== 'prepare' && classification.stanceType) || (classification.cardCategory === 'curse' ? 'status' : classification.cardCategory);
   return type[0].toUpperCase() + type.slice(1);
 }
 

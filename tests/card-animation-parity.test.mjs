@@ -19,7 +19,7 @@ test('each character previews the exact live selected family and timing for ever
   for (const classId of classes) {
     const run = createRunState({ seed: 21, classId, registries });
     const before = structuredClone(run);
-    for (const cardId of ['strike', 'bashingBlow', 'crimsonCleave', 'guardCounter', 'defend', 'dodgeRoll', 'starstonePebble']) {
+    for (const cardId of ['strike', 'bashingBlow', 'crimsonCleave', 'guardCounter', 'defend', 'dodgeRoll', 'starstonePebble', 'ricochet']) {
       const preview = deckCardAnimationPlan(registries, run, { cardId });
       const live = alternativeCardAnimationFamily(classId, preview.presentation);
       assert.deepEqual(preview.sequence, live.family.sequences[preview.plan.technique], `${classId} ${cardId}`);
@@ -76,6 +76,22 @@ test('core and current keep class-default sprites when the mechanical loadout ch
       const changed = deckCardAnimationPlan(registries, run, ref);
       assert.deepEqual(changed.presentation, first.presentation);
       assert.deepEqual(changed.frames, first.frames);
+    }
+  }
+});
+
+
+test('every supported action, including cast and ranged magic, has a sequence for each owning character', () => {
+  for (const classId of classes) {
+    const family = alternativeCardAnimationFamily(classId).family;
+    for (const [maneuver, camp, expected] of [
+      ['attack', 'physical', 'attack'], ['smash', 'physical', 'smash'], ['sweep', 'physical', 'sweep'],
+      ['defend', 'physical', 'defend'], ['counter', 'physical', 'counterPrepare'],
+      ['attack', 'spell', 'spell'], ['ranged', 'physical', 'ranged'], ['ranged', 'spell', 'spell'],
+    ]) {
+      const plan = resolveCombatAnimation({ type: 'attack', cardTags: [`camp:${camp}`, `maneuver:${maneuver}`] }, [], { classId });
+      assert.equal(plan.technique, expected);
+      assert.ok(family.sequences[plan.technique]?.poses.length, `${classId}: ${expected} is playable`);
     }
   }
 });
