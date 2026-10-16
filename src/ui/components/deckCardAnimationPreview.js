@@ -50,8 +50,12 @@ export function deckCardAnimationPreview({ registries, run, ref, paused = false,
   let userPaused = paused || reducedMotionRequested();
   const stop = () => { if (tick !== null) cancelAnimationFrame(tick); tick = null; lastTime = null; };
   const paint = () => {
-    const time = playback.duration ? elapsed % playback.duration : 0;
-    const next = playback.sequence ? sampleSequence(playback.sequence,time,playback.duration).index : Math.floor(elapsed / playback.frameMs) % frames.length;
+    // Inspection runs at half combat speed and holds the final pose for a
+    // full second so the motion is easy to follow between repetitions.
+    const duration = playback.duration || playback.frameMs * frames.length;
+    const cycleTime = elapsed % (duration * 2 + 1000);
+    const time = Math.min(cycleTime / 2, Math.max(0, duration - 1));
+    const next = playback.sequence ? sampleSequence(playback.sequence,time,duration).index : Math.min(frames.length - 1, Math.floor(time / playback.frameMs));
     if (playback.sequence && stage.seek) { stage.seek(playback.plan.technique,time,playback.duration); index=next; return; }
     if (next !== index) { stage.setPose(frames[next]); index = next; }
   };

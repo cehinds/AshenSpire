@@ -700,7 +700,7 @@ test('Reading Desk: selection reveals inline Inspect without navigating or chang
     inspect.click();
     assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'inspect');
     assert.equal(editor.root.querySelector('.deck-editor-reading .card').dataset.cardId, 'defend');
-    assert.equal(editor.root.querySelector('.deck-editor-art-toggle input').hasAttribute('disabled'), true);
+    assert.equal(editor.root.querySelector('.deck-editor-animation'), null, 'animation is hidden until requested');
     assert.deepEqual(editState(run), before);
     editor.close();
   });

@@ -126,7 +126,7 @@ test('desktop preview loops authored frames and Pause/Play preserves the exact f
     const lengths=plan.sequence.durations.map(ms=>ms/total*plan.duration);
     const middle=lengths[0]+lengths[1]+lengths[2]/2;
     assert.equal(stage.painted.at(-1), plan.frames[0]);
-    step(1000); step(1000 + middle);
+    step(1000); step(1000 + middle * 2);
     assert.equal(stage.painted.at(-1), plan.frames[2]);
     const count = stage.painted.length;
     button.click();
@@ -135,10 +135,12 @@ test('desktop preview loops authored frames and Pause/Play preserves the exact f
     assert.equal(stage.painted.length, count);
     button.click(); step(30000);
     assert.equal(stage.painted.length, count, 'resume does not jump due to paused wall time');
-    step(30000 + lengths[2]/2 + lengths[3]/2);
+    step(30000 + lengths[2] + lengths[3]);
     assert.equal(stage.painted.at(-1), plan.frames[3]);
-    step(30000 + plan.duration-middle+lengths[0]+lengths[1]/2);
-    assert.equal(stage.painted.at(-1), plan.frames[1], 'sequence wraps without changing its order');
+    step(30000 + (plan.duration-middle) * 2 + 500);
+    assert.equal(stage.painted.at(-1), plan.frames.at(-1), 'final pose holds during the one-second loop pause');
+    step(30000 + (plan.duration-middle+lengths[0]+lengths[1]/2) * 2 + 1000);
+    assert.equal(stage.painted.at(-1), plan.frames[1], 'sequence wraps after the pause without changing its order');
     assert.deepEqual(pauses, [true, false]);
   });
 });
