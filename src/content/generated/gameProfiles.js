@@ -15267,7 +15267,7 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "path": "src/** (excluding generated gameProfiles/changelog)",
-      "hash": "sha256:ca98ffc87a7873033d78acff364180fe6115d5f19597d199ca8cb72e89935d3a"
+      "hash": "sha256:ff63fea79872fac58b6d1d56a04ead62c45c5a33d17893a5bfed407977fdddda"
     }
   ],
   "runtimeSources": [
@@ -19979,7 +19979,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/screens/deckEditor.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:3bc5cddd3efc3fb2681f72528142faa8a6e4fd29d3a322a69392b2c7983af53e"
+      "hash": "sha256:180358da1b750e0bc43e838ca2807d5f50396e3c84d24ea5e1d3a7907d037ed3"
     },
     {
       "path": "src/ui/screens/dialogue.js",
@@ -20192,7 +20192,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:23af16d4e9c9f6d88fe655d32ecf1a688b47df39f9e3a1d6d193ce63923593ab"
     }
   ],
-  "runtimeHash": "sha256:b92c809f73c41736579b2ec6d7bd56ea6c5b7787e26fa722b5cccdf9bd9b7e40"
+  "runtimeHash": "sha256:a2a3e963d88db707c9eb7cf5a65b0757b3881fb427571dec93cfc04e3f5fe317"
 };
 export const gameProfileAuthors = {
   "default": {
