@@ -109,7 +109,7 @@ test('Frost defense, capped healing, Break and two-hit recipes have separate out
   const heal = fixture(); heal.player.hp = 99; resolveRecipe(heal, byName('Ash Benediction'), 2);
   assert.equal(heal.player.hp, 100);
   const breaker = fixture(); resolveRecipe(breaker, byName('Breaker’s Toll'), 2);
-  assert.equal(breaker.enemies[0].poiseMeter.value, 4, 'Break buildup is separate from HP damage');
+  assert.equal(breaker.enemies[0].poiseMeter.value, 7, 'authored paid grade preserves its previously resolved Poise; buildup is separate from HP damage');
   assert.equal(breaker.enemies[0].hp, 1000 - byName('Breaker’s Toll').gradeProfiles[2].effects[0].amount);
   const twin = fixture(); resolveRecipe(twin, byName('Twinshade'), 2);
   assert.equal(twin.eventLog.filter(e => e.type === 'damageDealt').length, 2);
@@ -164,7 +164,7 @@ test('legacy existing faces keep their prior cost and effect recipes for explici
     assert.equal(typeof c.legacyFace.textTemplate, 'string');
   }
   assert.equal(abilityCardUpdates.find(c => c.id === 'kickOff').legacyFace.cost, 0);
-  assert.equal(abilityCardUpdates.find(c => c.id === 'kickOff').manaCost, 1);
+  assert.equal(abilityCardUpdates.find(c => c.id === 'kickOff').manaCost, 0, 'fixed Smash pays its premium in SP, without the unused raw grade Mana tax');
   assert.equal(abilityCardUpdates.find(c => c.id === 'starShower').legacyFace.manaCost, 0);
   assert.equal(abilityCardUpdates.find(c => c.id === 'starShower').manaCost, 2);
 });
