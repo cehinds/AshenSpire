@@ -1624,3 +1624,10 @@ deckEditor.closeUnsaved.title,,Discard deck changes?,Discard deck changes?,Disca
 deckEditor.closeUnsaved.message,,Close without saving your deck edits?,Close without saving your deck edits?,Close without saving your deck edits?
 deckEditor.closeUnsaved.discard,,Discard changes,Discard changes,Discard changes
 deckEditor.closeUnsaved.keepEditing,,Keep editing,Keep editing,Keep editing
+combat.targetHud.details,,Combatant details,,
+combat.targetHud.namedDetails,,{name} details,,
+combat.targetHud.unknown,,"Exact move, damage, and effects unread.",,
+combat.targetHud.damageScope,,Direct HP damage at current defenses and committed stance. Excludes delayed effects and retaliation.,,
+combat.targetHud.ready,,Ready,,
+combat.targetHud.prepare,,Prepare,,
+combat.targetHud.defend,,Defend,,

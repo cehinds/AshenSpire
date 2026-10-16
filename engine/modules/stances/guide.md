@@ -36,6 +36,7 @@ Settings live in `engine/modules/stances/settings.schema.json`; shipped defaults
 - `/include` (type array; default `["attack","smash","defend","counter","sweep","prepared","evade"]`): Unique supported maneuver IDs.
 - `/matchups` (type object; default `{"attack":["smash","prepared"],"counter":["smash","attack"],"smash":["defend","prepared"],"sweep":["counter","evade"],"prepared":["defend","counter"]}`): Directed edges: key is attacker, array lists the stances it beats.
 - `/advantageMultiplier` (type number; default `1.25`; range 0..100): Provisional advantage damage multiplier.
+- `/defenseMitigation` (type number; default `0.25`; range 0..1): Reduce incoming direct damage by this fraction when the defender's included stance beats the incoming maneuver in `matchups`. `0` disables mitigation. Applies once before Block/Poise in Core and the Current grouped defense adapter; existing offensive bonuses remain. Old saved resolved profiles missing this setting retain zero mitigation.
 - `/evadeFailureMultiplier` (type integer; default `2`; range 0..1000000): Damage multiplier when an evade fails.
 - `/accuracyPolicy` (type enum; default `"chance"`; allowed "chance"): Current host accuracy policy is chance.
 - `/staggerPolicy` (type string; default `"legacyAdapter"`; minLength 1): Host adapter stagger policy; treat as provisional.
@@ -71,3 +72,5 @@ node tools/game-config.mjs check
 ```
 
 For runtime changes, use the focused tests in `tests/game-profile-run.test.mjs` and the matching module tests. A passing resolver check proves schema/resolution only, not that every host behavior is covered by browser acceptance.
+
+Core order: base plus AR, outgoing/incoming status modifiers, attacker advantage and defender mitigation, floor, Evade outcome/failure multiplier, then configured defense pools. Current multiplies the existing offensive stance factor by `(1 - defenseMitigation)` before its existing once-per-action rounding and pool resolution. Neither the HUD nor previews apply an extra multiplier.

@@ -1,4 +1,4 @@
-import { FORMATION_ROWS, formationDimensions, isFormationCell } from './formationLayout.js';
+import { FORMATION_ROWS, formationDimensions, isFormationCell, perspectiveEnemyCellOrder } from './formationLayout.js';
 
 // Physical addresses are independent of the renderer's four visual bands.
 export function formationPolicyFor(subject) {
@@ -35,9 +35,8 @@ export function initializeFormationOccupancy(combat) {
   }
   for (const { entity, side } of actors) {
     if (entity.formationCell) continue;
-    const columns = side === 'enemy' ? [4, 3, ...(dimensions.extraCells?.length ? [5] : [])] : [1];
-    const lanes = Array.from({ length: dimensions.rows }, (_, i) => side === 'player' ? dimensions.rows - i - 1 : i);
-    const available = columns.flatMap(column => lanes.map(lane => `${FORMATION_ROWS[lane]}${column}`));
+    const available = side === 'enemy' ? perspectiveEnemyCellOrder(dimensions)
+      : Array.from({ length: dimensions.rows }, (_, i) => `${FORMATION_ROWS[dimensions.rows - i - 1]}1`);
     const cell = available.find(cell => !occupied.has(`${side}:${cell}`));
     if (!cell) throw new Error('Formation capacity exceeded');
     entity.formationCell = cell;
