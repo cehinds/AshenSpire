@@ -1,3 +1,4 @@
+import { validateZoneEffect } from '../engine/cardZones.js';
 import { cardManaPolicy } from '../content/generated/cardManaPolicy.js';
 // src/model/validate.js — content validation (SPEC §3.14)
 //
@@ -292,6 +293,7 @@ export function computeTokenBindings(effects) {
   (effects || []).forEach((eff, i) => {
     if (!eff || typeof eff !== 'object' || typeof eff.op !== 'string') return;
     if (!TOKENIZABLE_OPS.includes(eff.op)) return;
+    if (eff.op === 'moveCards') { try { validateZoneEffect(eff); } catch (error) { err(p, error.message); } }
     if (eff.op === 'grantCardCharge') {
       for (const field of ['damage', 'manaDiscount', 'block', 'heal', 'break', 'buildup']) if (eff[field] !== undefined) push(`charge${field[0].toUpperCase()}${field.slice(1)}`, i, field, eff.op, typeof eff[field] === 'number');
       return;

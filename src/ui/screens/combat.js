@@ -1,3 +1,4 @@
+import { hasCardChoice, zoneCandidates } from '../../engine/cardZones.js';
 import { foundationStandin } from '../components/foundationStandin.js';
 import { gameModule } from '../../model/gameProfile.js';
 import { combatWeaponProfilesFor } from '../../model/combatWeaponPresentation.js';
@@ -489,7 +490,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const lockReport = () => {
     const busyForMs = busy && busyStamp ? Math.round(performance.now() - busyStamp) : 0;
     return { busy, busyForMs, enemyPlayback, pendingReaction: combat.pendingReaction?.id || null, reactionModalOpen: !!reactionShell,
-      pendingDiscard: !!combat.pendingAbilityDiscard, phase: combat.phase, result: combat.result };
+      pendingDiscard: hasCardChoice(combat), phase: combat.phase, result: combat.result };
   };
   // One extra line once the lock has held for more than 3 s.
   const logIgnored = (what, why) => {
@@ -1304,7 +1305,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function renderCombatTools() {
     combatTools.update(combatToolsModel({ supported: combat.reactionRulesVersion >= 1,
       enabled: combat.player.reactionsEnabled !== false,
-      disabled: busy || combat.phase !== 'player' || !!combat.pendingAbilityDiscard || !!combat.pendingReaction,
+      disabled: busy || combat.phase !== 'player' || hasCardChoice(combat) || !!combat.pendingReaction,
       ...combatToolsState, entries: combatLogEntries(combat.eventLog.slice(0, disp?.logLength ?? combat.eventLog.length),
         { registries, players: [{ id: 'player', name: run.name || 'Forsaken' }], enemies: combat.enemies }) }));
     renderReactionNote();
@@ -2628,7 +2629,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function useFlask(slot, targetId, chargeKind = null) {
-    if (combat.pendingAbilityDiscard) { showPendingDiscard(); return; }
+    if (hasCardChoice(combat)) { showPendingDiscard(); return; }
     if (targetId && !getEntity(combat, targetId)?.alive) return;
     if (busy || combat.result) {
       logIgnored(`useFlask slot=${slot}`, lockReport());
@@ -2658,7 +2659,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   let reactionShell = null;
   function showPendingReaction() {
     const pending = combat.pendingReaction;
-    if (!pending || reactionShell || busy || combat.pendingAbilityDiscard) return;
+    if (!pending || reactionShell || busy || hasCardChoice(combat)) return;
     const stack = committedReactionStack(combat.reactionStack, pending.groupKey)
       .map(entry => ({ name: reactionStackEntryName(entry, registries), cardInstanceId: entry.cardInstanceId }));
     reactionShell = openReactionChoiceModal({ pending, stack,
@@ -2675,16 +2676,17 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     });
   }
   function showPendingDiscard() {
-    if (!combat.pendingAbilityDiscard) { showPendingReaction(); return; }
-    const pending = combat.pendingAbilityDiscard;
+    if (!hasCardChoice(combat)) { showPendingReaction(); return; }
+    const pending = combat.pendingAbilityDiscard || combat.pendingCardChoice;
     if (!pending || discardShell) return;
     discardShell = openDiscardChoiceModal({
+      ...(combat.pendingCardChoice ? {title: t('combat.cards.choose.title', {count:pending.count}), prompt:t('combat.cards.choose.prompt',{from:pending.effect.from,to:pending.effect.to}), confirmLabel:t('combat.cards.choose.confirm'), ordered:pending.effect.from===pending.effect.to} : {}),
       count: pending.count, cardName: registries.cards.get(pending.cardId).name,
-      cards: discardCandidates(combat).map(card => ({ instanceId: card.instanceId, name: resolveCard(registries, card).name })),
+      cards: (combat.pendingCardChoice ? zoneCandidates(combat,pending.effect) : discardCandidates(combat)).map(card => ({ instanceId: card.instanceId, name: resolveCard(registries, card).name })),
       onClosed: () => { discardShell = null; },
       onChoose: cardInstanceIds => {
         disp = takeSnapshot();
-        const out = dispatch(combat, { type: 'chooseDiscard', cardInstanceIds });
+        const out = dispatch(combat, { type: combat.pendingCardChoice ? 'chooseCards' : 'chooseDiscard', cardInstanceIds });
         busy = true; afterDispatch(out.events);
       },
     });
@@ -2908,7 +2910,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function playCard(instanceId, targetId, choice, chosenUpcastRanks = null) {
-    if (combat.pendingAbilityDiscard) { showPendingDiscard(); return; }
+    if (hasCardChoice(combat)) { showPendingDiscard(); return; }
     if (combat.combatRounds?.playerQueue?.some(record => record.instanceId === instanceId)) { unqueueCard(instanceId); return; }
     if (targetId && !getEntity(combat, targetId)?.alive) return;
     if (targetId && !cardTargets(instanceId).legalIds.includes(targetId)) return;
@@ -2988,7 +2990,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     question: 'End your turn and let the enemies act?',
     confirmLabel: 'END TURN',
     onConfirm: () => {
-    if (combat.pendingAbilityDiscard) { showPendingDiscard(); return; }
+    if (hasCardChoice(combat)) { showPendingDiscard(); return; }
     if (busy || combat.result || combat.phase !== 'player') {
       const why = lockReport();
       console.debug('[combat] endTurn ignored:', JSON.stringify(why));
