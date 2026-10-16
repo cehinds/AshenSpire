@@ -1,3 +1,4 @@
+import { cardPreparationCategory } from '../model/cardClassification.js';
 import { rememberCombatStance, defensiveCombatStance } from './concurrentStances.js';
 import { proposalHitPlan, proposalTargetPlan } from './proposalStatusRuntime.js';
 // Configured combat adapter. All rules are scoped to the saved resolved profile;
@@ -14,8 +15,9 @@ export function configuredModule(subject, id) {
   return rule?.mode === 'configured' ? rule : null;
 }
 export function configuredStance(carrier) {
+  if (cardPreparationCategory(carrier)) return 'prepared';
   const raw = carrier?.stanceTrigger?.stance || carrier?.combatProfile?.maneuver || carrier?.maneuver
-    || (carrier?.cardTags || carrier?.tags || []).find(tag => tag.startsWith('maneuver:'))?.slice(9);
+    || (carrier?.cardTags || carrier?.tags || []).map(tag => typeof tag === 'string' ? tag : tag.id).find(tag => tag.startsWith('maneuver:'))?.slice(9);
   return ({ casting: 'prepared', cast: 'prepared', spell: 'prepared', ranged: 'attack' })[raw] || raw || 'neutral';
 }
 export function setProfileStance(ctx, entity, carrier) {

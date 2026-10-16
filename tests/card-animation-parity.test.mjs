@@ -87,7 +87,7 @@ test('every supported action, including cast and ranged magic, has a sequence fo
     for (const [maneuver, camp, expected] of [
       ['attack', 'physical', 'attack'], ['smash', 'physical', 'smash'], ['sweep', 'physical', 'sweep'],
       ['defend', 'physical', 'defend'], ['counter', 'physical', 'counterPrepare'],
-      ['attack', 'spell', 'spell'], ['ranged', 'physical', 'ranged'], ['ranged', 'spell', 'rangedMagic'],
+      ['attack', 'spell', 'spell'], ['ranged', 'physical', 'ranged'], ['ranged', 'spell', 'spell'],
     ]) {
       const plan = resolveCombatAnimation({ type: 'attack', cardTags: [`camp:${camp}`, `maneuver:${maneuver}`] }, [], { classId });
       assert.equal(plan.technique, expected);

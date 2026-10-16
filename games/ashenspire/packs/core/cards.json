@@ -236,7 +236,7 @@
     ],
     "tags": [
       "camp:physical",
-      "maneuver:defend",
+      "maneuver:casting",
       "classification.skill"
     ],
     "textTemplate": " Gain {block} Block.",
@@ -263,7 +263,7 @@
     ],
     "tags": [
       "camp:physical",
-      "maneuver:defend",
+      "maneuver:casting",
       "classification.power"
     ],
     "textTemplate": " Gain {block} Block.",
