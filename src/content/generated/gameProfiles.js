@@ -2586,7 +2586,8 @@ export const gameProfileCatalog = {
           "routes": {
             "version": "1.0.0",
             "settings": {
-              "mode": "legacy"
+              "mode": "legacy",
+              "mapMode": "fog"
             }
           },
           "rest": {
@@ -2718,7 +2719,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/bundles/current/bundle.json",
           "id": "ashen.current",
           "version": "1.0.0",
-          "hash": "sha256:79fca14631a70c310adcc862fd2ab2ffb98777010dac7fcbf2e123041bc75815"
+          "hash": "sha256:1188f17631662bc46fbad4519d79184c31bb5c87f15110271a9c715cb4a73f9a"
         }
       ]
     }
@@ -3055,7 +3056,7 @@ export const gameProfileCatalog = {
             ],
             "tags": [
               "camp:physical",
-              "maneuver:defend",
+              "maneuver:casting",
               "classification.skill"
             ],
             "textTemplate": " Gain {block} Block.",
@@ -3082,7 +3083,7 @@ export const gameProfileCatalog = {
             ],
             "tags": [
               "camp:physical",
-              "maneuver:defend",
+              "maneuver:casting",
               "classification.power"
             ],
             "textTemplate": " Gain {block} Block.",
@@ -3121,7 +3122,7 @@ export const gameProfileCatalog = {
             },
             {
               "card": "core.defend",
-              "copies": 3
+              "copies": 2
             },
             {
               "card": "core.counter",
@@ -3133,6 +3134,10 @@ export const gameProfileCatalog = {
             },
             {
               "card": "core.sweep",
+              "copies": 1
+            },
+            {
+              "card": "base.draw",
               "copies": 1
             }
           ],
@@ -3661,13 +3666,13 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/cards.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:88c47e0eb85a6c0fe86ee70a154a5d2a01dd2738baddcbd05570eabac9412ac9"
+          "hash": "sha256:2b870d7131dba67acd6fa4e7d9a27ca841f0228aabc17ad1baff8e269eb605e8"
         },
         {
           "path": "games/ashenspire/packs/core/starterDeck.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:7e013299a9ca58f466f3f239401dc653d422169c310a9fab5d1579861a6db611"
+          "hash": "sha256:96259c469a1b7c391db46d502fd1018c21ea3ca8adcf3e1e34c99e99b9cdaf79"
         },
         {
           "path": "games/ashenspire/packs/core/stats.json",
@@ -5997,7 +6002,7 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:physical",
-                "maneuver:defend"
+                "maneuver:casting"
               ],
               "groups": [
                 "base.current-rewards",
@@ -6111,7 +6116,7 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:physical",
-                "maneuver:defend"
+                "maneuver:casting"
               ],
               "groups": [
                 "base.current-rewards",
@@ -6221,7 +6226,7 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:physical",
-                "maneuver:defend"
+                "maneuver:casting"
               ],
               "groups": [
                 "base.current-rewards",
@@ -6336,7 +6341,7 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:physical",
-                "maneuver:defend"
+                "maneuver:casting"
               ],
               "groups": [
                 "base.current-rewards"
@@ -6454,7 +6459,7 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:physical",
-                "maneuver:defend"
+                "maneuver:casting"
               ],
               "groups": [
                 "base.current-rewards",
@@ -6683,7 +6688,7 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:physical",
-                "maneuver:defend"
+                "maneuver:casting"
               ],
               "groups": [
                 "base.current-rewards",
@@ -6797,7 +6802,7 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:physical",
-                "maneuver:defend"
+                "maneuver:casting"
               ],
               "groups": [
                 "base.current-rewards",
@@ -6913,7 +6918,7 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:physical",
-                "maneuver:defend"
+                "maneuver:casting"
               ],
               "groups": [
                 "base.current-rewards",
@@ -7383,7 +7388,7 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:physical",
-                "maneuver:defend"
+                "maneuver:casting"
               ],
               "groups": [
                 "base.current-rewards",
@@ -7498,7 +7503,7 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:physical",
-                "maneuver:defend"
+                "maneuver:casting"
               ],
               "groups": [
                 "base.current-rewards",
@@ -7614,7 +7619,7 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:physical",
-                "maneuver:defend"
+                "maneuver:casting"
               ],
               "groups": [
                 "base.current-rewards",
@@ -7734,7 +7739,7 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:physical",
-                "maneuver:defend"
+                "maneuver:casting"
               ],
               "groups": [
                 "base.current-rewards",
@@ -8125,7 +8130,7 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:physical",
-                "maneuver:defend"
+                "maneuver:casting"
               ],
               "groups": [
                 "base.current-rewards",
@@ -8976,7 +8981,7 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:physical",
-                "maneuver:defend"
+                "maneuver:casting"
               ],
               "groups": [
                 "base.current-rewards",
@@ -9509,7 +9514,7 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:physical",
-                "maneuver:defend"
+                "maneuver:casting"
               ],
               "groups": [
                 "base.current-rewards",
@@ -9628,7 +9633,7 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:physical",
-                "maneuver:defend"
+                "maneuver:casting"
               ],
               "groups": [
                 "base.current-rewards",
@@ -9742,7 +9747,7 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:physical",
-                "maneuver:defend"
+                "maneuver:casting"
               ],
               "groups": [
                 "base.current-rewards",
@@ -9857,7 +9862,7 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:physical",
-                "maneuver:defend"
+                "maneuver:casting"
               ],
               "groups": [
                 "base.current-rewards",
@@ -9972,7 +9977,7 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:physical",
-                "maneuver:defend"
+                "maneuver:casting"
               ],
               "groups": [
                 "base.current-rewards",
@@ -10086,7 +10091,7 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:physical",
-                "maneuver:defend"
+                "maneuver:casting"
               ],
               "groups": [
                 "base.current-rewards",
@@ -10321,7 +10326,7 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:physical",
-                "maneuver:defend"
+                "maneuver:casting"
               ],
               "groups": [
                 "base.current-rewards",
@@ -10444,7 +10449,7 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:physical",
-                "maneuver:defend"
+                "maneuver:casting"
               ],
               "groups": [
                 "base.current-rewards",
@@ -10788,7 +10793,7 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:physical",
-                "maneuver:defend"
+                "maneuver:casting"
               ],
               "groups": [
                 "base.current-rewards",
@@ -11017,7 +11022,7 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:physical",
-                "maneuver:defend"
+                "maneuver:casting"
               ],
               "groups": [
                 "base.current-rewards",
@@ -11131,7 +11136,7 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:physical",
-                "maneuver:defend"
+                "maneuver:casting"
               ],
               "groups": [
                 "base.current-rewards",
@@ -11486,7 +11491,7 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:physical",
-                "maneuver:defend"
+                "maneuver:casting"
               ],
               "groups": [
                 "base.current-rewards",
@@ -11599,7 +11604,7 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:physical",
-                "maneuver:defend"
+                "maneuver:casting"
               ],
               "groups": [
                 "base.current-rewards",
@@ -15328,7 +15333,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/base-cards/cards.json",
           "id": "ashen.base-cards",
           "version": "1.0.0",
-          "hash": "sha256:fe6767b8f05aed42e1600d8bbfc59d8550317d366bd062fdf71f8098db651c57"
+          "hash": "sha256:16a7d21ed1872f4c53ca37b711787721e4486801882bcfa95a009ecc8a1e693d"
         },
         {
           "path": "games/ashenspire/packs/base-cards/groups.json",
@@ -15386,7 +15391,7 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "path": "src/** (excluding generated gameProfiles/changelog)",
-      "hash": "sha256:40d368d24a2880cf3937ba2ee384723811d2abebb35edb91321e3b35ebd9c9fc"
+      "hash": "sha256:9aa50f6d9f9ba68bd4925bc8855f8dfd07de6bfae1be88ec127de40748373ef5"
     }
   ],
   "runtimeSources": [
@@ -15406,7 +15411,7 @@ export const gameProfileCatalog = {
       "path": "src/config/generated/ui.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:5b9ee52fd5cabc19fafa24a53529c787f1939ff50552e1c35cdec393c2da8533"
+      "hash": "sha256:0c9e16632fc18191f6b97394e10e1cc0c7a4b384e3d96efca32b7e78f1706752"
     },
     {
       "path": "src/content/actionAnimations.js",
@@ -15844,7 +15849,7 @@ export const gameProfileCatalog = {
       "path": "src/content/generated/baseCards.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:07749162341e3f2577f1189ebfed5ccd370e18dd3d2579fd26b94ba9349d272d"
+      "hash": "sha256:5055b04cc47e99a192808002f5fda65b60df6cbd3674227d1e522b54af21e18f"
     },
     {
       "path": "src/content/generated/basicCardProfiles.js",
@@ -16312,7 +16317,7 @@ export const gameProfileCatalog = {
       "path": "src/content/settingsDefaults.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:b040fbf14f8f7587ea05ebf9932776e4e899039f029e1ac1cb8894aa4076eb6c"
+      "hash": "sha256:2ec39579661308904fca48a100fe959000d9d957b08e834433922c199c566c13"
     },
     {
       "path": "src/content/sfx.js",
@@ -16666,7 +16671,7 @@ export const gameProfileCatalog = {
       "path": "src/engine/gameProfileCombat.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:e66e18009ed4ac368d4b9dcb74529611c3db08479726b377f3fa56af2587ec98"
+      "hash": "sha256:165dcdebc1cd7084ba8e59787d5fdc8dae711026b38e940e3684fee270d61618"
     },
     {
       "path": "src/engine/handRules.js",
@@ -16972,7 +16977,7 @@ export const gameProfileCatalog = {
       "path": "src/main.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:f7758b3c7f5c689daa4c99386b722da26a30838a5130b859a2b9b871134e70b6"
+      "hash": "sha256:a42a87d7a86164623ce7a2afedf79ffe1ca1390c97183943fe59b36a50e21b9a"
     },
     {
       "path": "src/model/abilityDraftReceipts.js",
@@ -17014,19 +17019,19 @@ export const gameProfileCatalog = {
       "path": "src/model/advancedConfig.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:a28c6142d0d0268b7b3d2eadee30373e065de762760f571d1c440a0f9f533a88"
+      "hash": "sha256:e39bcfa21ecd293c072a58cc2ed9ab58af821158485891c3f087ecf2de3bdf90"
     },
     {
       "path": "src/model/alternativeCardAnimation.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:753aa282798e43061a5c5843f2a754b7b7a652a6a1cc10af5756bbfe46306ccb"
+      "hash": "sha256:55e9fedb5c48d319853c34f4011f2d7d142443bb5a4643621273323991d1ae74"
     },
     {
       "path": "src/model/alternativeStance.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:3a099b83ee302781d2bceb6f2abc5756c9e904054336f86a38039d239ef435e7"
+      "hash": "sha256:a79abd4f8878f667176c0b2f2885eee8eb391f3b3a6213b75828301c407050af"
     },
     {
       "path": "src/model/armamentTrading.js",
@@ -17107,6 +17112,12 @@ export const gameProfileCatalog = {
       "hash": "sha256:e74c594e85869b727a6fe561cfbbc32790a4da01bf1cf492587b00fda08f2e1f"
     },
     {
+      "path": "src/model/cardAnimationFamily.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:ad3e790f4a07c34c73d36ec99bbcbb7d01dc02509fa3f6d438fb93d0d9feeeb0"
+    },
+    {
       "path": "src/model/cardAppearance.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
@@ -17122,7 +17133,7 @@ export const gameProfileCatalog = {
       "path": "src/model/cardClassification.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:ac0a8e534b394ccff0e2a336ca731e0721e7d7e6b702d043858ccfdd239165fe"
+      "hash": "sha256:6b1d87b8e70c7f3facbe6327f6a0a671f929572b91e7d82334411fdc71d69cf0"
     },
     {
       "path": "src/model/cardExtraction.js",
@@ -17764,7 +17775,7 @@ export const gameProfileCatalog = {
       "path": "src/model/mapknowledge.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:a69e2befdabea834597a03ebe31ad97d7c73255af300c4f83d08ab4a074682e3"
+      "hash": "sha256:ce0fcb3fab7fe1ea80f7e59efb3f25dfe1fe5b20fa2058a36086493c492da191"
     },
     {
       "path": "src/model/mapview.js",
@@ -17818,7 +17829,7 @@ export const gameProfileCatalog = {
       "path": "src/model/playingCard.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:16261b76c375042534a6d60fa96e9ad282ea9a2c44c0896733e207388663cccb"
+      "hash": "sha256:e0ca8d0a44c2e0e0f9939ca8787463625020527f24c0d91fb24ffc32eaf0a307"
     },
     {
       "path": "src/model/presentationPoseCatalog.js",
@@ -17927,6 +17938,12 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "hash": "sha256:3e10a9164a1369242089b810e76d1ccbb8963124bdc935659f1c2849e1c18086"
+    },
+    {
+      "path": "src/model/rewardTransaction.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:c8570f0485ca89664509851145be6746bfa7c0e58c2b724f045e1f71fd7bd9f2"
     },
     {
       "path": "src/model/rewardXpPresentation.js",
@@ -18058,7 +18075,7 @@ export const gameProfileCatalog = {
       "path": "src/model/stanceRules.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:fc518075c74767fba705d08b26593af58c0525a659fbe46ccac672574af4f8eb"
+      "hash": "sha256:85010e06b6946f08993efab2d5dc1cc84320cfaef4f062af2b90eb4f832c51a3"
     },
     {
       "path": "src/model/startingAbilities.js",
@@ -18220,7 +18237,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/alternativeCardStage.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:55d4b08b82bdcdb30bca2a9d3a772f688ecd2fd5edf58680c0da9fa5c3a02ded"
+      "hash": "sha256:58a452d6c200b6c9edd33e2c3fc14e9f06cea785ca8c6c4cf574a8bad50fdad3"
     },
     {
       "path": "src/ui/alternativeStanceStage.js",
@@ -18400,7 +18417,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/components/battlefieldStage.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:39cdb7ebe3e453d0d66a13b2c8baa24dcdf42943703faa8432bc45391aaed859"
+      "hash": "sha256:72cff4425aaf85c5c35ea3b7d4bb99f46875f615a32796137a9e4a78abdd57f5"
     },
     {
       "path": "src/ui/components/bookArt.js",
@@ -18520,7 +18537,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/components/combatLayout.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:fd7ebfc4b0ad8d5f0fcd4f85bf0a52c4d91dd46a6893a287c5bbc9151bd30bed"
+      "hash": "sha256:e935c9ece0bd8a15a06a89da91affb771f95238c6327ca3c8ad99b2f3cec4d03"
     },
     {
       "path": "src/ui/components/combatLogModal.js",
@@ -18550,7 +18567,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/components/combatTools.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:a48ec3c2ba3a2edf0efb21f3ad4b81ddd2e584e314f7213af24bd244f6d1be7f"
+      "hash": "sha256:28689f86db60a627286b37f7ad06def2a05b8ebbca126450304c8abf4e491e9a"
     },
     {
       "path": "src/ui/components/combatantFrame.js",
@@ -18640,7 +18657,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/components/deckCardAnimationPreview.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:51ea72d61a7f972bd69d0bd1bcd1819923cd2bf959e9aa142d82ea55ef790543"
+      "hash": "sha256:ddc65816d36bb13a546150616289a02536d01cc7c06868a2872fd10df9b5bd6f"
     },
     {
       "path": "src/ui/components/dialogueStage.js",
@@ -18736,7 +18753,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/components/formationGrid.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:813127b9411879215696b9dcccd2a566968a8663c1def9f7b2d5e4948e03ad35"
+      "hash": "sha256:2ea12f9678828e7a23b8fcee1e938f71af521a9955aaeddc3c865b46d875e8ff"
     },
     {
       "path": "src/ui/components/formationMovement.js",
@@ -18754,7 +18771,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/components/formationSettings.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:3b4502c213b8f9bf7a0a6d881c491bd85418f68829860d00e89640268df246b4"
+      "hash": "sha256:b3663619192978e4dc00052a53ec8e106dc4a68c363af238fd98539412a1ea79"
     },
     {
       "path": "src/ui/components/foundationStandin.js",
@@ -18778,7 +18795,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/components/gameProfileOffers.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:db4c176dbf18fb41aad0d9dc57a6cb2f8659c59b64a6450ea0788f7773ad6cb3"
+      "hash": "sha256:817f42635aa3368d727ad343733aab1e28967f7550ed74c7d2b447d09f6be17e"
     },
     {
       "path": "src/ui/components/gameProfileRest.js",
@@ -18796,7 +18813,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/components/hand.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:fdeebdf5fff94e1dbaf10d03f7c503448059cca53bb98c50d8b5400934f23052"
+      "hash": "sha256:ddcb39a3d2c31108e5bd63c06288d958ca7ebc6b3fad15384a8084029d1fec5e"
     },
     {
       "path": "src/ui/components/handDiscard.js",
@@ -18838,7 +18855,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/components/hudmeta.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:ae63b98cfd7ba77528e7b682035d79d50c6a5007bb5b8e55e9c1d56691bef399"
+      "hash": "sha256:cb16b641ae19df4c2b2c03a2a42a011416b04e2d78a8811cdc8efac20147593b"
     },
     {
       "path": "src/ui/components/iconTray.js",
@@ -18958,7 +18975,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/components/overlay.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:eb396769eb3631527640a68d1628bee69d78e05e0b53ec961ae2b8bc0e29e904"
+      "hash": "sha256:7da16c2584b627bfbf4dd9351926f062421a1b3ceb7a57e11480299fa5ea0c04"
     },
     {
       "path": "src/ui/components/piles.js",
@@ -19312,7 +19329,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/models/AlternativeFormationModel.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:3ac358b44dbeec5eba7e22f340f45e6716405b8501f176fba04c87d8dfc5d665"
+      "hash": "sha256:f6ac1bcb7211bb445a92438000c4454180564daf7cdef70ab71dcc3fb16ffb9b"
     },
     {
       "path": "src/ui/models/ArmouryModels.js",
@@ -19543,6 +19560,12 @@ export const gameProfileCatalog = {
       "hash": "sha256:fe3cffdeb9af8ddf8677d0cd971245f9522a6449f41666abf1b0f36f1dcf0446"
     },
     {
+      "path": "src/ui/models/DesktopCombatFooter.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:24609682a8d03357b1111c34217c6d76f78a9f4c50a4c714eb2dfee8ad0323b4"
+    },
+    {
       "path": "src/ui/models/DialogueModel.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
@@ -19576,7 +19599,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/models/FormationGridModel.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:e3d5151b524750a4d57a51f6e24d9f54ef9e7207342246451f4ed2e0ee2476ee"
+      "hash": "sha256:afd8ea67125f3e2d6e8d556f52a571572172ff916fdade7c9c1ed30f94c9c281"
     },
     {
       "path": "src/ui/models/GameProfileRestModel.js",
@@ -19831,6 +19854,12 @@ export const gameProfileCatalog = {
       "hash": "sha256:6f37811a8a80ce7bb5fb1b840cb776a2421f805a14f500d7c0bd716ab835003a"
     },
     {
+      "path": "src/ui/models/SettingsCapabilitiesModel.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:fbd5dffac3b89d8c131646c1bcb3c35142760c7557c31ca237e877f41caba559"
+    },
+    {
       "path": "src/ui/models/SettingsWorkspaceModel.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
@@ -20062,7 +20091,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/screens/combat.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:da7ae40830f35f731bedef63d35b0eb779966c13487f8781f2b366bebfcc0966"
+      "hash": "sha256:2a5b0ab2f6a474b93c1a98bba499a09f10c2089cdce53c66f83f34df1e53c10f"
     },
     {
       "path": "src/ui/screens/combatTest.js",
@@ -20086,7 +20115,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/screens/coop.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:fb14da7bffe0e49a28a344f0892d2b0ac8ef24b7b387f05d992b7e2eba1f46fd"
+      "hash": "sha256:266236522b377d427c6c02f3f60c092ffaeef0575976c1cfb1f84395770ba398"
     },
     {
       "path": "src/ui/screens/customRun.js",
@@ -20158,7 +20187,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/screens/map.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:18a3961f929dfba992a4cbd035e48e014a3f583569ded1631a7b0eb3dba3485c"
+      "hash": "sha256:2668214afd36212b6c1fec7484a073fae73a08a4c008965ae3f41419b86f20b0"
     },
     {
       "path": "src/ui/screens/master.js",
@@ -20206,13 +20235,13 @@ export const gameProfileCatalog = {
       "path": "src/ui/screens/reward.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:25022778cc16e6ac3a8d59a9de21ee29e5ea7380e060d426062ef905dc818752"
+      "hash": "sha256:04441eccbe1b48afd50b10815f83c2da8924285f0cd674d1ad4addbab5a5ad4f"
     },
     {
       "path": "src/ui/screens/settings.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:bb7c8f506f7d5ac2567984ad74faf8bbb7aa60db00cb0546c03bd2c87f3a9a7b"
+      "hash": "sha256:ce5dbe11d0bb1821468822ba4f562e091e441f96738ba7fb3addd43983ea3d86"
     },
     {
       "path": "src/ui/screens/shop.js",
@@ -20317,7 +20346,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:23af16d4e9c9f6d88fe655d32ecf1a688b47df39f9e3a1d6d193ce63923593ab"
     }
   ],
-  "runtimeHash": "sha256:f87496fc10621fa7f05943a13b82d07d63372aab6ed7836325bc8c0e0ad8d4a4"
+  "runtimeHash": "sha256:01dd216fcd925d0b296745b387b4f0b127953dd5922f39a63593e341aac1fdc1"
 };
 export const gameProfileAuthors = {
   "default": {

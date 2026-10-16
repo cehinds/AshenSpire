@@ -1,3 +1,4 @@
+import { persistRewardChange as transactReward } from './model/rewardTransaction.js';
 import { applyViewViewport, resolveViewViewport } from './ui/viewViewport.js';
 import { screenshotRoutePath } from './ui/models/ScreenshotFixtureModel.js';
 import { t } from './ui/strings.js';
@@ -1925,7 +1926,9 @@ async function persistSettingsChange(changed) {
   if (Object.keys(changed || {}).some((key) => STAT_ROWS_CHANGED_MEANING.test(key))) activeSettings[STAT_ROWS_MARKER] = STAT_ROWS_VERSION;
   if (seed) activeSettings[SEED_KEY] = seed;
   activeMeta.settings = activeSettings;
-  const res = await saves.saveMeta(activeMeta);
+  let res;
+  try { res = await saves.saveMeta(activeMeta); }
+  catch (error) { res = { ok: false, error: String(error?.message || error) }; }
   if (res?.ok === false) {
     activeSettings = settingsBefore;
     activeMeta.settings = settingsBefore;
@@ -3804,16 +3807,19 @@ function beginGameProfileReward({ source = 'combat', after = 'map', levelOffers 
 function showGameProfileReward() {
   const pending = run.gameProfilePendingReward;
   const offer = run.gameProfileRewardOffers[pending.offerId];
+  const persistRewardChange = change => transactReward(run, pending.offerId, change, persist);
   mountGameProfileOffers(app, { registries, run, offer, title: pending.source === 'level' ? 'Level reward' : 'Victory rewards',
-    onTake: index => { claimGameProfileReward(registries, run, pending.offerId, index); persist(); showGameProfileReward(); },
+    onTake: index => persistRewardChange(() => claimGameProfileReward(registries, run, pending.offerId, index)),
     onContinue: () => {
-      delete run.gameProfilePendingReward; persist();
-      if (pending.levelOffers > 0) {
-        const offerId = `${pending.offerId}:level:${pending.levelOffers}`;
-        gameProfileRewardOffers(registries, run, rng, { offerId, source: 'level' });
-        run.gameProfilePendingReward = { ...pending, offerId, source: 'level', levelOffers: pending.levelOffers - 1 };
-        persist(); return showGameProfileReward();
-      }
+      persistRewardChange(() => {
+        delete run.gameProfilePendingReward;
+        if (pending.levelOffers > 0) {
+          const offerId = `${pending.offerId}:level:${pending.levelOffers}`;
+          gameProfileRewardOffers(registries, run, rng, { offerId, source: 'level' });
+          run.gameProfilePendingReward = { ...pending, offerId, source: 'level', levelOffers: pending.levelOffers - 1 };
+        }
+      });
+      if (pending.levelOffers > 0) return showGameProfileReward();
       if (pending.after === 'advanceAct') return advanceAct();
       showMap();
     } });
@@ -4214,6 +4220,21 @@ if (shotState) {
   // NOT a player-facing surface: what a PLAYER should be told when their save
   // was repaired is wording, and wording is not this seat's to write.
   window.__runstatus = () => saves.runStatus();
+  window.__rewardStateForShot = () => {
+    const snapshot = row => row ? structuredClone({
+      deckIDs: (row.deck || []).map(card => card.cardId),
+      sideboardIDs: (row.sideboard || []).map(card => card.cardId),
+      cinders: row.cinders,
+      loadout: row.loadout,
+      flasks: row.flasks,
+      relics: row.relics,
+      sigils: row.sigils,
+      consumables: row.consumables,
+      pendingReward: row.gameProfilePendingReward || row.pendingReward || null,
+      offers: row.gameProfileRewardOffers || null,
+    }) : null;
+    return { live: snapshot(run), saved: snapshot(saves.loadRun(registries, activeSlot)) };
+  };
   // Rest QA reads the live transaction and its actual persisted slot. No
   // mutable references escape, and this handle exists only in shot boots.
   if (shotState === 'rest' || shotState === 'smith') window.__restStateForShot = () => {
@@ -4701,6 +4722,12 @@ if (shotState === 'combat-test') {
     }
     showShop();
   } else if (shotState === 'reward') {
+    if (shotParams.get('shotReward') === 'configured') {
+      if (!isConfiguredRun(run)) throw new Error('Configured reward shot requires a configured game profile.');
+      // Enter the production offer/save/renderer callbacks; do not pose an
+      // alternate UI or grant a preselected option for this reach state.
+      beginGameProfileReward({ source: 'combat', after: 'map' });
+    } else {
     // A REACH STATE for the reward MENU (E11/#256), the same shape and reason
     // as `?shot=rest` and `?shot=shop` above: a screen without a ?shot= state
     // is a screen no instrument owns — release-shots derives its denominator
@@ -4812,6 +4839,7 @@ if (shotState === 'combat-test') {
         rewards: shotOffer,
         onDone: () => { rewardDoneCount++; showMap(); },
       });
+    }
     }
   } else if (shotState === 'combat' || shotState === 'fx') {
     // `?shotMaxPoise=<n>` — STAND AT A DIFFERENT STAGGER THRESHOLD. Unlike the

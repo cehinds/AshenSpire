@@ -62,9 +62,22 @@ export function closeCombatFullLog(state) {
 // Gap between a corner tool and the combat screen's edge, in CSS px.
 const CORNER_INSET = 16;
 
-export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
+export function mountCombatTools(combatEl, { state, onToggle, onViewChange, onGridToggle }) {
   const root = markUiComponent(el('aside', { class: 'combat-tools', 'data-combat-read-only': '' }), UI.combatTools);
   const logButton = button({ label: t('combat.log.title'), attrs: { 'data-combat-tool': 'log', 'aria-expanded': 'false', 'aria-controls': 'combat-log' } });
+  const gridLabel = el('label', { class: 'combat-grid-toggle' });
+  const gridCheckbox = el('input', { type: 'checkbox', 'data-combat-tool': 'grid', 'aria-label': 'Show battlefield grid' });
+  gridLabel.append(gridCheckbox, el('span', { text: 'Grid' }));
+  const gridRoot = document.documentElement;
+  const syncGrid = () => { gridCheckbox.checked = gridRoot?.dataset?.formationGrid !== 'false'; };
+  syncGrid();
+  gridCheckbox.addEventListener('change', async () => {
+    const enabled = gridCheckbox.checked;
+    gridCheckbox.disabled = true;
+    try { await onGridToggle?.(enabled); }
+    catch (error) { console.warn('[combat] grid preference refused:', error.message); }
+    finally { if (!released) { syncGrid(); gridCheckbox.disabled = false; } }
+  });
   logButton.style.touchAction = 'none';
   logButton.style.userSelect = 'none';
   logButton.setAttribute('aria-keyshortcuts', 'ArrowUp ArrowDown Home End');
@@ -89,7 +102,7 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
   head.append(title, fullLog);
   const list = el('div', { class: 'combat-log-entries', 'data-combat-tool': 'entries', tabindex: '0', role: 'region', 'aria-label': t('combat.log.actions') });
   list.addEventListener('scroll', () => { state.scrollTop = list.scrollTop; state.followLatest = list.scrollTop + list.clientHeight >= list.scrollHeight - 4; });
-  panel.append(head, list); root.append(panel, logButton, reaction); combatEl.append(root);
+  panel.append(head, list); root.append(panel, logButton, reaction, gridLabel); combatEl.append(root);
   let drag = null, suppressClick = false, released = false;
   const snapHeights = () => {
     const menuBottom = [...combatEl.querySelectorAll('.topbar button')].reduce((max, node) => Math.max(max, node.getBoundingClientRect().bottom), 0);
@@ -173,7 +186,8 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
     // ignored). Its height is read only for a raise: at 0 no layout is forced.
     const corners = true;
     const dockTop = combatEl.querySelector('.hand-area')?.getBoundingClientRect().top ?? handBox?.top ?? combatBox.bottom;
-    const top = dockTop - (combatEl.dataset.compactCombat === 'true' ? 0 : root.getBoundingClientRect().height / 2);
+    const split = combatEl.dataset.desktopFooter === 'true';
+    const top = split ? combatBox.top + parseFloat(getComputedStyle(combatEl).getPropertyValue('--desktop-tools-top')) * zoom : dockTop - (combatEl.dataset.compactCombat === 'true' ? 0 : root.getBoundingClientRect().height / 2);
     root.dataset.toolsPlacement = 'corners';
     const localDock = anchorLocalBox(combatEl, { left,
       top, width: 0, height: 0 }, { zoom });
@@ -182,8 +196,8 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
     root.style.right = 'auto';
     if (corners) {
       // The corners hug the combat screen's own edges, in its local px.
-      root.style.left = `${CORNER_INSET}px`;
-      root.style.right = `${CORNER_INSET}px`;
+      root.style.left = `${split ? parseFloat(getComputedStyle(combatEl).getPropertyValue('--desktop-corner-inset')) : CORNER_INSET}px`;
+      root.style.right = `${split ? parseFloat(getComputedStyle(combatEl).getPropertyValue('--desktop-corner-inset')) : CORNER_INSET}px`;
       root.style.width = 'auto';
     }
     const height = drag?.active ? drag.height : snapHeights()[state.size];
@@ -210,6 +224,8 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
     if (records.some(record => record.oldValue !== document.documentElement.getAttribute('data-form-factor'))) flushGeometry();
   });
   formFactorObserver.observe(document.documentElement, { attributes: true, attributeOldValue: true, attributeFilter: ['data-form-factor'] });
+  const gridObserver = new MutationObserver(syncGrid);
+  gridObserver.observe(gridRoot, { attributes: true, attributeFilter: ['data-formation-grid'] });
   function update(model) {
     const toggle = childModel(model, UI.reactionToggle).properties;
     const log = childModel(model, UI.combatLogDrawer).properties;
@@ -233,5 +249,5 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
     focusedTool() { return root.contains(document.activeElement) ? document.activeElement.dataset.combatTool || null : null; },
     restoreFocus(token) { if (token) root.querySelector(`[data-combat-tool="${CSS.escape(token)}"]`)?.focus({ preventScroll: true }); },
     // A remount releases this instance but leaves an open full log to the next one.
-    release() { released = true; observer.disconnect(); formFactorObserver.disconnect(); cancelAnimationFrame(frame); window.visualViewport?.removeEventListener('resize', schedule); removeEventListener('resize', schedule); root.remove(); } };
+    release() { released = true; observer.disconnect(); formFactorObserver.disconnect(); gridObserver.disconnect(); cancelAnimationFrame(frame); window.visualViewport?.removeEventListener('resize', schedule); removeEventListener('resize', schedule); root.remove(); } };
 }

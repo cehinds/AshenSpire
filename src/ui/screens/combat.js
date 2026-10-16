@@ -258,6 +258,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const combatEl = $('.combat');
   const combatToolsState = { open: false, size: COMBAT_LOG_DEFAULT_SIZE, followLatest: true };
   const combatTools = mountCombatTools(combatEl, { state: combatToolsState,
+    onGridToggle: enabled => onSettingsChange?.({ 'gameConfig.presentation.showFormationGrid': enabled }),
     onViewChange: () => renderCombatTools(),
     onToggle: enabled => {
       try { dispatch(combat, { type: 'setReactions', enabled }); }

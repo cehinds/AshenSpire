@@ -1,4 +1,5 @@
 // PLAYWRIGHT_MODULE=/path/to/playwright BASE_URL=http://localhost:4460/ BATTLEFIELD_ENTRY=AshenSpire.html node tests/battlefield-layout.browser.mjs
+// BATTLEFIELD_PROFILE_CASES_ONLY=1 runs only the crowded core/current cases.
 // Uses actual shot-initialized combat and real input; never freezes DOM or mutates simulation state.
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
@@ -22,12 +23,12 @@ const b = await chromium.launch({
 });
 const metrics = [];
 try {
-  for (const [width, height] of [
+  for (const [width, height] of (process.env.BATTLEFIELD_PROFILE_CASES_ONLY === "1" ? [] : [
     [1440, 900],
     [1920, 1080],
     [1024, 768],
     [390, 844],
-  ]) {
+  ])) {
     let reference;
     for (const hand of [3, 5]) {
       const p = await b.newPage({
@@ -35,6 +36,7 @@ try {
         reducedMotion: "reduce",
       });
       p.setDefaultTimeout(10000);
+      p.setDefaultNavigationTimeout(60000);
       const errors = [];
       p.on("pageerror", (e) => errors.push(e.message));
       await p.goto(
@@ -165,6 +167,7 @@ try {
         reducedMotion: "reduce",
       });
       p.setDefaultTimeout(10000);
+      p.setDefaultNavigationTimeout(60000);
       const errors = [];
       p.on("pageerror", (e) => errors.push(e.message));
       const kit =
@@ -212,12 +215,18 @@ try {
         await p.mouse.down();
         await p.waitForTimeout(750);
         await p.mouse.up();
-        await p.evaluate(
-          () =>
-            new Promise((r) =>
-              requestAnimationFrame(() => requestAnimationFrame(r)),
-            ),
+        // Wait for the real targeting affordance, rather than assuming that
+        // two animation frames finish the held-card action and stage refit.
+        await p.waitForFunction(() =>
+          document.querySelector('.combat')?.dataset.targetLayer === 'armed' &&
+          document.querySelector('.hand .card.selected')?.dataset.cardId === 'strike',
         );
+        await p.waitForFunction(() => {
+          const actor = document.querySelector('.combatant.enemy[data-visual-band="C"]');
+          const art = actor?.querySelector('.sprite')?.getBoundingClientRect();
+          return art && document.elementFromPoint(art.x + art.width / 2, art.y + art.height / 2)
+            ?.closest('[data-eid]')?.dataset.eid === actor.dataset.eid;
+        });
         await clickArt();
         await p.waitForFunction(
           (hp) => window.__combat.enemies.find((e) => e.id === "e7").hp < hp,

@@ -1,0 +1,40 @@
+{
+  "status": "passed",
+  "scope": "Ready/body head and feet inset; authored overhead arcs/airborne motion may exceed the upper host as agreed",
+  "artifact": {
+    "sourceCommit": "dd2e7eefd",
+    "embeddedSource": "d536bec1cf",
+    "version": "0.7.1.1534",
+    "sha256": "ae39e98e049da18e65927956fda399d897274a02fed2b7234ffe847e6a44288a"
+  },
+  "readyMetrics": [
+    {
+      "width": 1440,
+      "beforeHeadroom": -5.997500000000002,
+      "afterHeadroom": 18.002499999999998,
+      "afterReadyFootroom": 30.874500000000012
+    },
+    {
+      "width": 1366,
+      "beforeHeadroom": -5.241875000000022,
+      "afterHeadroom": 15.758124999999978,
+      "afterReadyFootroom": 27.010875
+    },
+    {
+      "width": 1920,
+      "beforeHeadroom": -7.381250000000023,
+      "afterHeadroom": 22.196874999999977,
+      "afterReadyFootroom": 38.07624999999996
+    }
+  ],
+  "descriptions": "zero-scroll visible in all9 sampled action/viewport cases",
+  "phone": "animation remains hidden after actual inspector interaction",
+  "captures": [
+    "1440-ready.png",
+    "1366-ready.png",
+    "1920-ready.png",
+    "390-phone.png"
+  ],
+  "beforeFolder": "/workspace/tmp/desk-clip-before",
+  "maxLowerInkOverflowRasterTolerance": 0.7092499999999973
+}

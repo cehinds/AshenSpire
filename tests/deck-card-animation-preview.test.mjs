@@ -6,6 +6,7 @@ import { createRunState } from '../src/model/state.js';
 import { alternativeCardAnimations } from '../src/content/alternativeCardAnimations.js';
 import { playerAttackSequence } from '../src/model/playerAttackSprites.js';
 import { playerCounterSweepSprites } from '../src/content/playerCounterSweepSprites.js';
+import { selectedWeaponSequence, selectedWeaponSequenceTiming } from '../src/model/selectedWeaponSequences.js';
 import { durationFor } from '../src/model/alternativeCardAnimation.js';
 import { ANIM_SPEEDS } from '../src/ui/animationPace.js';
 import { deckCardAnimationPlan, deckCardAnimationPreview } from '../src/ui/components/deckCardAnimationPreview.js';
@@ -26,11 +27,9 @@ test('all four classes preview the selected counter and sweep clips used by comb
     const before = structuredClone(run);
     for (const [cardId, action] of [['guardCounter', 'counter'], ['crimsonCleave', 'sweep']]) {
       const playback = deckCardAnimationPlan(registries, run, { cardId });
-      const selected = playerCounterSweepSprites[classId].sequences[action];
-      assert.equal(playback.sequence, selected);
-      assert.equal(playback.frames.length, 4);
-      assert.equal(playback.frames.at(-1), 'ready');
-      assert.equal(playback.duration, durationFor(selected, ANIM_SPEEDS.normal));
+      const selected = classId === 'reaver' ? selectedWeaponSequence(action === 'counter' ? 'counter-guard' : 'sweep') : playerCounterSweepSprites[classId].sequences[action];
+      assert.deepEqual(playback.sequence.poses, selected.poses);
+      assert.equal(playback.duration, classId === 'reaver' ? selectedWeaponSequenceTiming(selected, ANIM_SPEEDS.normal).totalMs : durationFor(selected, ANIM_SPEEDS.normal));
     }
     assert.deepEqual(run, before);
   }
@@ -50,9 +49,9 @@ test('preview routes card types through the same class defaults as combat withou
     const before = structuredClone(run);
     const playback = deckCardAnimationPlan(registries, run, ref);
     assert.equal(playback.plan.technique, technique);
-    const sequence=playerAttackSequence('reaver',technique) || alternativeCardAnimations.classes.reaver.sequences[technique];
+    const sequence=technique === 'attack' ? selectedWeaponSequence('attack') : alternativeCardAnimations.classes.reaver.sequences[technique];
     assert.deepEqual(playback.frames, sequence.poses);
-    assert.equal(playback.duration, durationFor(sequence,ANIM_SPEEDS.normal));
+    assert.equal(playback.duration, sequence.pilot ? selectedWeaponSequenceTiming(sequence, ANIM_SPEEDS.normal).totalMs : durationFor(sequence,ANIM_SPEEDS.normal));
     assert.deepEqual(run, before);
   }
 });
@@ -90,14 +89,14 @@ function withPreview(options, check) {
   Object.assign(globalThis, globals);
   let preview;
   try {
-    const run = freshRun();
+    const run = createRunState({ seed: 21, classId: options.classId || 'reaver', registries });
     const before = structuredClone(run);
     const ref = options.ref || { cardId: 'strike', profileId: 'bladeAttack', sourceArmamentId: 'straightSword' };
     const plan = deckCardAnimationPlan(registries, run, ref);
     preview = deckCardAnimationPreview({ registries, run, ref, paused: options.paused, onPaused: value => pauses.push(value) }, {
-      createStage() {
+      createStage(classId, armourId, presentation) {
         if (options.unavailable) return null;
-        const stage = { el: document.createElement('div'), poses: plan.frames, painted: [],
+        const stage = { classId, armourId, presentation, el: document.createElement('div'), poses: plan.frames, painted: [],
           setPose(pose) { this.painted.push(pose); }, dispose() { this.disposed = true; } };
         stages.push(stage);
         return stage;
@@ -214,8 +213,8 @@ test('reduced motion starts paused; defend cards have the authored guard sequenc
     assert.equal(raf.size, 1, 'explicit Play opts into motion');
   });
   withPreview({ ref: { cardId: 'dodgeRoll' } }, ({ plan, stages, button, raf }) => {
-    assert.equal(plan.plan.technique, 'defend');
-    assert.equal(plan.frames.length, 5);
+    assert.equal(plan.plan.technique, 'evade');
+    assert.equal(plan.frames.length, 3);
     assert.deepEqual(stages[0].painted, [plan.frames[0]]);
     assert.equal(button.disabled, false);
     assert.equal(raf.size, 1);
@@ -224,5 +223,31 @@ test('reduced motion starts paused; defend cards have the authored guard sequenc
     assert.equal(preview.root.querySelector('.deck-editor-animation-stage').hidden, true);
     assert.equal(button.disabled, true);
     assert.equal(raf.size, 0);
+  });
+});
+
+
+test('stage construction preserves the selected character and its reviewed sprite options', () => {
+  for (const classId of ['reaver', 'rogue', 'starseer', 'herald']) {
+    withPreview({ classId, ref: { cardId: 'bashingBlow' } }, ({ stages, plan }) => {
+      assert.equal(stages[0].classId, classId);
+      assert.equal(stages[0].presentation.weaponProfile, plan.presentation.weaponProfile);
+      assert.equal(stages[0].presentation.smashProfile, plan.presentation.smashProfile);
+    });
+  }
+});
+
+test('replacing an inspected card disposes its old stage and queued frame before another selection plays', () => {
+  withPreview({}, ({ preview, stages, raf, step }) => {
+    const old = stages[0];
+    const queued = [...raf.values()];
+    preview.dispose();
+    assert.equal(old.disposed, true);
+    assert.equal(raf.size, 0);
+    const count = old.painted.length;
+    for (const frame of queued) frame(100000);
+    step(100001);
+    assert.equal(old.painted.length, count, 'an already queued old callback cannot repaint the previous card');
+    assert.equal(raf.size, 0, 'disposal cannot restart the old animation');
   });
 });
