@@ -15,6 +15,43 @@ function inlinePadding(el) {
   return (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0);
 }
 
+// Move the live controls, preserving their exact original sibling slots and
+// listeners. A display change restores them instead of creating duplicate HUDs.
+export function wireDesktopCombatHeader(combatEl) {
+  const anchors = new Map();
+  const restore = () => {
+    for (const [node, anchor] of anchors) {
+      if (anchor.parentNode && combatEl.contains(node)) anchor.parentNode.insertBefore(node, anchor);
+      anchor.remove();
+    }
+    anchors.clear();
+    delete combatEl.dataset.desktopHeader;
+  };
+  const move = (node, host, before = null) => {
+    if (!node || !host || node.parentNode === host) return;
+    if (!anchors.has(node)) {
+      const anchor = combatEl.ownerDocument.createComment('combat HUD original slot');
+      node.parentNode.insertBefore(anchor, node);
+      anchors.set(node, anchor);
+    }
+    host.insertBefore(node, before);
+  };
+  return {
+    apply(enabled) {
+      if (!enabled) { restore(); return; }
+      // Re-query on each pass: a host repaint can replace header children.
+      for (const [node, anchor] of anchors) if (!combatEl.contains(node)) { anchor.remove(); anchors.delete(node); }
+      const header = combatEl.querySelector(':scope > .combat-hud.shared-hud');
+      if (!header) { restore(); return; }
+      move(combatEl.querySelector('.turn-ribbon'), header);
+      const actions = header.querySelector('.hud-actions');
+      move(header.querySelector('.hud-cinders-strip'), actions, actions?.firstElementChild || null);
+      combatEl.dataset.desktopHeader = 'true';
+    },
+    release: restore,
+  };
+}
+
 // Measures the combat root once per frame and writes the band and footer plans
 // as custom properties. CSS owns placement; the model owns every number.
 export function wireCombatLayout(combatEl) {
@@ -23,6 +60,8 @@ export function wireCombatLayout(combatEl) {
   let frame = 0;
   let observer = null;
   let formFactorObserver = null;
+  let headerObserver = null;
+  const desktopHeader = wireDesktopCombatHeader(combatEl);
 
   function apply() {
     frame = 0;
@@ -38,6 +77,11 @@ export function wireCombatLayout(combatEl) {
     combatEl.dataset.formFactor = formFactor || '';
     const split = desktopFooterEnabled({ formFactor, appearance: document.documentElement.dataset.displayAppearance, layout: combatEl.dataset.layout });
     combatEl.dataset.desktopFooter = String(split);
+    desktopHeader.apply(split && combatEl.dataset.targetHud === 'true');
+    if (combatEl.dataset.desktopHeader === 'true') {
+      const ribbonWidth = combatEl.querySelector('.combat-hud > .turn-ribbon')?.getBoundingClientRect().width / zoom || 0;
+      combatEl.style.setProperty('--desktop-header-left-width', Math.max(0, width / 2 - ribbonWidth / 2 - 32 / zoom) + 'px');
+    }
     if (split && row && handArea) {
       const plan = desktopFooterLayout({ width: combatEl.clientWidth, height: combatEl.clientHeight, zoom });
       const areaTop = (handArea.getBoundingClientRect().top - combatEl.getBoundingClientRect().top) / zoom;
@@ -106,6 +150,9 @@ export function wireCombatLayout(combatEl) {
     frame = 0;
     observer?.disconnect();
     observer = null;
+    desktopHeader.release();
+    headerObserver?.disconnect();
+    headerObserver = null;
     formFactorObserver?.disconnect();
     formFactorObserver = null;
   }
@@ -119,6 +166,8 @@ export function wireCombatLayout(combatEl) {
   // that stays mounted across the 1100px boundary can measure with the old
   // form factor. Re-plan when the attribute changes.
   if (typeof MutationObserver !== 'undefined') {
+    headerObserver = new MutationObserver(schedule);
+    headerObserver.observe(combatEl, { attributes: true, attributeFilter: ['data-target-hud', 'data-layout'], childList: true });
     formFactorObserver = new MutationObserver(schedule);
     formFactorObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-form-factor', 'data-display-appearance'] });
   }
