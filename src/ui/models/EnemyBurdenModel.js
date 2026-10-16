@@ -6,7 +6,8 @@ export function projectEnemyBurdenHand(enemy, { turn, registries } = {}) {
   const piles = enemy.burdenPiles || {};
   const cards = new Map();
   for (const instance of piles.hand || []) {
-    const def = registries?.cards?.get(instance.cardId);
+    const registry = registries?.cards;
+    const def = registry?.has(instance.cardId) ? registry.get(instance.cardId) : null;
     const key = instance.cardId;
     const prior = cards.get(key);
     if (prior) prior.count += 1;
