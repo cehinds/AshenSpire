@@ -1,10 +1,11 @@
 # Card-design base handoff
 
-**Scope: clarification pending.** The user asked to make the updated cards from `Feature/UpdateCharacterCreation` the base. It is not yet clear whether “base” means gameplay mechanics, card presentation, or both. This handoff records what the source branch contains; it does not promote its proposals into runtime content.
+**Scope: clarification pending.** The user asked to make the updated cards from `Feature/updateCharacterCreation` the base. It is not yet clear whether “base” means gameplay mechanics, card presentation, or both. This handoff records what the source branch contains; it does not promote its proposals into runtime content.
 
 ## Source and contents
 
-- Origin branch: `Feature/UpdateCharacterCreation`.
+- Origin branch: `Feature/updateCharacterCreation`.
+- Design commits are on `worker/updateCharacterCreation/card-tag-design`.
 - Current design-catalog commit: `fbee6162589ec2374664c19c4c78ee2795691d7e` (“Restore the game title fade in card previews”).
 - Catalog introduction: `67aa99e5f9647a30f054ea818bb928c43e1513aa` (“Add read-only card and tag design catalog”).
 - Preview publisher: `cecc2eff89986940858f0528d7d9aaf22ee54d55` (“Package card proposal preview for sandboxed Pages hosting”).
@@ -15,7 +16,7 @@ The catalog keeps the **304-card live snapshot** in `currentGame` separate from 
 
 ## What can be reused
 
-The branch contains no changes to runtime card definitions or the game renderer. The in-game-look preview imports the existing `illustratedCardHtml`, `illustratedArtwork`, and `fitIllustratedCards` helpers and current styles. The only renderer-like change in `fbee616` restores the existing dark `.card-title-fade` layer in the standalone gallery. That gallery, its audit and captures can be reused as a visual review harness; there is no presentation implementation to port into the game.
+The branch contains no changes to runtime card definitions or the game renderer. Its standalone in-game-look gallery imports existing `illustratedCardHtml`, `illustratedArtwork`, and `fitIllustratedCards` helpers and current styles, and adds reusable gallery presentation settings: `CARD_ART_SIMPLE` for simple art, plus `configureEffectBox` to narrow and center the effect-text area. The preview README documents the 360×540 design box changing from x30/y370/w300/h110 to x57/y383/w246/h84, with a three-line fit budget, 22–31 design-unit font bounds, and a 22-unit floor. `configurePreviewPresentation` also restores the existing dark `.card-title-fade` layer. These are gallery-level settings that could inform a later presentation change; they do not change the game renderer or production card styles. The gallery, audit, and captures remain useful as a visual review harness.
 
 The proposal JSON can be retained as the source for continued design review. It should remain separate from `games/ashenspire/packs/core/cards.json` until approved rules and costs exist. Preserve canonical references as art/visual references only; the preview README explicitly says they do not assign mechanics to proposals.
 
