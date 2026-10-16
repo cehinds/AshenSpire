@@ -44,7 +44,7 @@ import { cardArtLayersHtml } from '../cardArtLayers.js';
 import { registerCardArtRefresh } from '../cardArtStyle.js';
 import { assetUrl } from '../assetmap.js';
 import { markArtPlaceholder } from '../artFallback.js';
-import { cardShapeCssProperties, cardLevelWidthCss } from '../models/CardSizeModel.js';
+import { cardShape, cardShapeCssProperties, cardLevelWidthCss } from '../models/CardSizeModel.js';
 import { keywordExplanations } from '../components/tooltipGlossary.js';
 import { deckCardAnimationPreview } from '../components/deckCardAnimationPreview.js';
 import { deckEditorCollectionRows } from '../models/deckEditorCollectionRows.js';
@@ -100,6 +100,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   let animationPaused = false;
   let animationVisible = false;
   let closeConfirmationOpen = false;
+  let previewFitObserver = null;
 
 
   const root = el('div', { class: 'modal-veil deck-editor-veil' });
@@ -249,6 +250,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   }
 
   function inspectPane() {
+    previewFitObserver?.disconnect();
+    previewFitObserver = null;
     animationPreview?.dispose();
     animationPreview = null;
     const section = el('section', { class: 'deck-editor-inspector', 'aria-label': t('deckEditor.inspect') });
@@ -348,6 +351,23 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
         el('div', { class: 'deck-editor-selected-buttons' }, [...(removeOn ? [removeNode] : []), addNode]),
       ]),
     );
+    // Fit the preview against the live reading box, including UI zoom. The
+    // main effect text and collapsed reference heading own their height first.
+    if (!showAnimation && typeof ResizeObserver === 'function') {
+      const reading = section.querySelector('.deck-editor-reading');
+      const fitPreview = () => {
+        if (!section.isConnected || matchViewMedia('(max-width: 1000px)').matches) return;
+        const rootFont = parseFloat(getComputedStyle(document.documentElement).fontSize) || 10;
+        const referenceHeight = glossary?.querySelector('summary')?.offsetHeight || 0;
+        const available = reading.clientHeight - details.offsetHeight - previewControl.offsetHeight - referenceHeight - 3.5 * rootFont;
+        const width = Math.floor(Math.min(30 * rootFont, Math.max(22 * rootFont, available * cardShape().ratio)));
+        face.style.setProperty('--deck-preview-fitted-width', `${width}px`);
+      };
+      previewFitObserver = new ResizeObserver(fitPreview);
+      previewFitObserver.observe(reading);
+      previewFitObserver.observe(details);
+      previewFitObserver.observe(previewControl);
+    }
     return section;
   }
 
@@ -1090,6 +1110,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   function close() {
     if (closeConfirmationOpen) { closeConfirmationModal({ restoreFocus: false }); closeConfirmationOpen = false; }
     inspectObserver?.disconnect();
+    previewFitObserver?.disconnect();
+    previewFitObserver = null;
     animationPreview?.dispose();
     animationPreview = null;
     drop();

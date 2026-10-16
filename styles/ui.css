@@ -2049,3 +2049,15 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor.deck-editor-reading-desk .deck-editor-selected-buttons > button.deck-editor-primary:not(:disabled):not([aria-disabled="true"]) { color: #edffe9; background-color: #326b3b; border-color: #70a675; }
 .deck-editor-reading-desk #deck-editor-done:not(:disabled) { color: #edffe9; background-color: #326b3b; border-color: #70a675; }
 .deck-editor-reading-desk #deck-editor-done:disabled { color: #aaa69e; background-color: #3a3834; border-color: #5d5952; opacity: 1; }
+/* The live game UI zoom changes the available reading height. Preserve the
+   main effect below the preview before spending remaining space on the face. */
+.deck-editor-reading-desk .deck-editor-selected-reason { display: none; }
+.deck-editor.deck-editor-reading-desk .deck-editor-reading > .deck-editor-preview > .card {
+  width: min(var(--deck-preview-fitted-width, 30rem), 100%) !important;
+}
+@media (max-width: 1000px) {
+  .deck-editor.deck-editor-reading-desk .deck-editor-reading > .deck-editor-preview > .card { width: min(24rem, 100%) !important; }
+}
+@container game-viewport (max-width: 1000px) {
+  .deck-editor.deck-editor-reading-desk .deck-editor-reading > .deck-editor-preview > .card { width: min(24rem, 100%) !important; }
+}
