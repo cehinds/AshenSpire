@@ -1,3 +1,5 @@
+import * as Rounds from './combatRoundsAdapter.js';
+import { beginEnemyBurdens, endEnemyBurdens, allowBurdenMove } from './enemyBurdens.js';
 import { selectCardVariant } from './cardBehavior.js';
 import { hasCardChoice, chooseZoneCards } from './cardZones.js';
 import { decayStanceRoundStart } from './combatMatchups.js';
@@ -1151,6 +1153,7 @@ function enemyPhase(C) {
     if (C.result) return;
     if (!enemy.alive) continue;
     if (cursor.stage === 'start') {
+    beginEnemyBurdens(C,enemy,Rounds.enemyPool(C.registries.enemies.get(enemy.enemyId)));
     Reactions.revealActor(C, enemy);
     setActive(C, firstLiving(C));
     let tacticalProtection = { block: 0, barrier: 0 };
@@ -1205,7 +1208,7 @@ function enemyPhase(C) {
     drainQueue(C);
     if (Reactions.reactionPaused(C)) return;
     if (C.result) return;
-    if (enemy.alive) { setActive(C, firstLiving(C)); fireOwnerHooks(C, enemy, 'ownerTurnEnd'); drainQueue(C); if (C.result) return; if (enemy.alive) S.decayAtTurnEnd(C, enemy); }
+    if (enemy.alive) { endEnemyBurdens(C,enemy); setActive(C, firstLiving(C)); fireOwnerHooks(C, enemy, 'ownerTurnEnd'); drainQueue(C); if (C.result) return; if (enemy.alive) S.decayAtTurnEnd(C, enemy); }
   }
   C.emit('enemyTurnEnd', { turn: C.turn });
   setActive(C, firstLiving(C));
@@ -1257,6 +1260,7 @@ function executeMove(C, enemy, move, moveId) {
 const SEAT_PILE_OPS = new Set(['addCard', 'draw', 'discard', 'exhaust', 'shuffleDiscardIntoDraw']);
 
 function executeExpandedEnemyPayload(C, enemy, move, moveId, carrier, start = null, extraMeta = null) {
+  if(!allowBurdenMove(C,enemy,Rounds.enemyMoveSp(move,{enemy,moveId,combat:C}))) return;
   if (Reactions.usesReactions(C)) {
     const actions = [];
     for (const P of livingPlayers(C)) {

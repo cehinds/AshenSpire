@@ -1,3 +1,4 @@
+import { enemyBurdenProblems } from '../engine/enemyBurdens.js';
 import { validateZoneEffect } from '../engine/cardZones.js';
 import { validateGameProfileSnapshot, projectGameCard } from './gameProfile.js';
 import { combatExpansionRulesProblems } from './combatExpansionRules.js';
@@ -76,6 +77,7 @@ function entityProblems(entity, path, { player = false } = {}) {
   if (finite(entity.hp) && finite(entity.maxHp) && (entity.hp < 0 || entity.hp > entity.maxHp)) {
     problems.push(`${path}.hp must be between 0 and maxHp`);
   }
+  problems.push(...enemyBurdenProblems(entity));
   if (!record(entity.statuses)) problems.push(`${path}.statuses must be an object`);
   if (entity.ratings !== undefined && (!record(entity.ratings) || ['ar', 'dr', 'pr', 'poise', 'ward'].some(id => !Number.isFinite(entity.ratings[id]) || entity.ratings[id] < 0))) problems.push(`${path}.ratings must contain finite non-negative ratings`);
   if (entity.wardMeter !== undefined && (!record(entity.wardMeter) || !Number.isInteger(entity.wardMeter.max) || entity.wardMeter.max <= 0 || !Number.isFinite(entity.wardMeter.value) || entity.wardMeter.value < 0 || entity.wardMeter.value >= entity.wardMeter.max)) problems.push(`${path}.wardMeter is invalid`);
@@ -361,6 +363,7 @@ export function combatSnapshotReferenceProblems(snapshot, registries) {
   for (const id of Object.keys(snapshot.player?.statuses || {})) has(registries.statuses, id, 'player.statuses');
   for (let index = 0; index < (snapshot.enemies || []).length; index++) {
     const enemy = snapshot.enemies[index];
+    problems.push(...enemyBurdenProblems(enemy,registries));
     has(registries.enemies, enemy?.enemyId, `enemies[${index}].enemyId`);
     for (const id of Object.keys(enemy?.statuses || {})) has(registries.statuses, id, `enemies[${index}].statuses`);
   }
