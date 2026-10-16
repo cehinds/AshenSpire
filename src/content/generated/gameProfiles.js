@@ -3585,7 +3585,7 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "path": "src/** (excluding generated gameProfiles/changelog)",
-      "hash": "sha256:5237495ae48905047aa9068a9fce1512a28dd198e0115d012adcf9304d1256e7"
+      "hash": "sha256:77218de49d11301e372db3f87848546a35491e135072f4f922465b4a84f246c5"
     }
   ],
   "runtimeSources": [
@@ -6743,7 +6743,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/components/creationCards.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:7c2c5385d00203d398cf85f06a1368b5a5b76f9b27183ccb33b4686fec90dba7"
+      "hash": "sha256:2bad523f472fcb7a797b82983b81388f56eefc331a1b063c101124e98f218e1e"
     },
     {
       "path": "src/ui/components/creationFeatArt.js",
@@ -8444,7 +8444,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:23af16d4e9c9f6d88fe655d32ecf1a688b47df39f9e3a1d6d193ce63923593ab"
     }
   ],
-  "runtimeHash": "sha256:81276c0b6946ab7db7e274ae180d5ea3f1d94071451bec646dd208b47f2f2987"
+  "runtimeHash": "sha256:64b58de1c83b67664302e36495d590bc38eab22dd48c3af13cfcfcaa77772d3e"
 };
 export const gameProfileAuthors = {
   "default": {

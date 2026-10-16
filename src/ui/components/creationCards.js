@@ -203,10 +203,16 @@ export function classChoiceCard(cls, { selected = false, locked = false, lockIco
     // class not yet shipped, the milestone it arrives in.
     badge: lockedBadge,
     selected, disabled: locked, tag: locked ? 'div' : preview ? 'article' : 'button',
-    className: `class-pick cz-class${selected ? ' chosen' : ''}${locked ? ' locked' : ''}`,
+    className: `class-pick cz-class${selected ? ' chosen' : ''}${locked ? ' locked' : ''}${lockIcon && locked ? ' configured-class-lock' : ''}`,
     attrs: { dataset: { class: cls.id }, ...(lockIcon && locked ? { role: 'group', tabindex: '0', 'aria-label': `${cls.name}. ${hint || t('creation.feats.locked')}` } : {}), ...(preview ? { 'aria-label': t('creation.preview.selectedClass', { name: cls.name }), tabindex: '-1' } : {}) },
   });
   card.prepend(el('span', { class: 'og', 'aria-hidden': 'true' }, visualNode(visual)));
+  if (lockIcon && locked) {
+    const veil = el('span', { class: 'class-lock-veil', 'aria-hidden': 'true' });
+    veil.innerHTML = '<svg viewBox="0 0 56 56" focusable="false" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M14 23v-7a14 14 0 0 1 28 0v7h3a4 4 0 0 1 4 4v23a4 4 0 0 1-4 4H11a4 4 0 0 1-4-4V27a4 4 0 0 1 4-4h3Zm7 0h14v-7a7 7 0 0 0-14 0v7Z"/></svg>';
+    card.append(veil);
+    if (lockedBadge) card.append(lockedBadge);
+  }
   if (!locked && !preview && onChoose) card.addEventListener('click', onChoose);
   return markUiComponent(card, UI.classChoiceCard, locked ? 'locked' : 'available');
 }
