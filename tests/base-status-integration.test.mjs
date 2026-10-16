@@ -2,7 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { combatRules } from '../src/content/combatRules.js';
-import { baseCardDefinitions, baseCardStatuses, baseCardStatusRules, baseCardTagging } from '../src/content/generated/baseCards.js';
 import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createCombat, dispatch, previewIntent, resolvedCardPlayCosts } from '../src/engine/combat.js';
@@ -11,17 +10,13 @@ import { createRng } from '../src/engine/rng.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { projectEnemyBurdenHand } from '../src/ui/models/EnemyBurdenModel.js';
 
-// These are the authored pack definitions, never substitutes for its mechanics.
-function fight(profileId = 'current') {
+// Exercise the real aggregated catalog and profile adapter, not replacement definitions.
+function fight(profileId = 'current', expanded = false) {
   const gameProfile = resolveGameProfile(profileId);
-  const bundle = { ...contentBundle,
-    cards: [...contentBundle.cards.filter(row => !row.id.startsWith('base.')), ...baseCardDefinitions],
-    statuses: [...contentBundle.statuses.filter(row => !row.id.startsWith('base.')), ...baseCardStatuses],
-    tagging: [...contentBundle.tagging.filter(row => !row.objectId.startsWith('base.')), ...baseCardTagging],
-    proposalStatusRules: baseCardStatusRules };
-  const registries = { ...bindGameProfileRegistries(createRegistries(applyGameProfileToContent(bundle, gameProfile)), gameProfile), proposalStatusRules: baseCardStatusRules };
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, gameProfile)), gameProfile);
   const combat = createCombat({ registries, rng: createRng(311), gameProfile,
     ...(profileId === 'current' ? { ruleset: combatRules } : {}), ratingsRules: null,
+    ...(expanded ? { combatExpansionVersion: 2, reactionRulesVersion: 1 } : {}),
     enemyIds: ['wanderingSoldier', 'wanderingSoldier'], player: { classId: 'reaver',
       hp: 200, maxHp: 200, mana: 20, maxMana: 20, stamina: 20, maxStamina: 20,
       energyMax: 20, drawPerTurn: 1, attributes: {}, relicIds: [],
@@ -166,4 +161,67 @@ test('core explicitly disables elemental Poison and Grease mechanics while retai
   const normal = hit(fight('core'));
   const weak = fight('core'); status(weak, weak.player, 'base.weak');
   assert.ok(hit(weak) < normal, 'compatible status math still applies in core');
+});
+
+test('one multi-hit action reuses its failed Veil perception check instead of rerolling contact', () => {
+  const c = fight(), target = c.enemies[0]; status(c, target, 'base.veil', 2);
+  let checks = 0;
+  c.rng.float = () => (++checks === 1 ? 0.99 : 0);
+  executeAction(c, { effect: { op: 'damage', target: 'enemy', amount: 4, hits: 2 },
+    source: c.player, owner: c.player, target, card: physical, meta: {} }); drain(c);
+  assert.equal(target.hp, 200, 'a later hit cannot retry a failed target check');
+  assert.equal(checks, 1);
+});
+
+
+test('current expanded damage receipts apply shared numeric statuses as well as foundation hits', () => {
+  const plain = fight('current', true), baseline = hit(plain);
+  const weak = fight('current', true); status(weak, weak.player, 'base.weak');
+  assert.ok(hit(weak) < baseline);
+  const mirrors = fight('current', true); status(mirrors, mirrors.player, 'base.mirrors');
+  assert.ok(hit(mirrors) > baseline);
+  const intangible = fight('current', true); status(intangible, intangible.enemies[0], 'base.intangible');
+  assert.equal(hit(intangible), 1);
+});
+
+test('authored Ward Armor replenishes both protection pools at owner start and spends only a matching stack', () => {
+  const c = fight('current', true);
+  play(c, 'base.persistent-protection', c.player);
+  for (const enemy of c.enemies) enemy.skipNextTurn = true;
+  dispatch(c, { type: 'endTurn' });
+  const blockStacks = c.player.statuses['base.persistent-block'].stacks;
+  const barrierStacks = c.player.statuses['base.persistent-barrier'].stacks;
+  assert.equal(c.player.block, blockStacks, 'pool matches actual status potency, with no second rating bonus');
+  assert.equal(c.player.barrier, barrierStacks);
+  applyAttackDamage(c, c.enemies[0], c.player, 2, [], physical); drain(c);
+  assert.equal(c.player.statuses['base.persistent-block'].stacks, blockStacks - 1);
+  assert.equal(c.player.statuses['base.persistent-barrier'].stacks, barrierStacks);
+  applyAttackDamage(c, c.enemies[0], c.player, 2, [], { ...fire, resolvedSource: undefined }); drain(c);
+  assert.equal(c.player.statuses['base.persistent-block'].stacks, blockStacks - 1);
+  assert.equal(c.player.statuses['base.persistent-barrier'].stacks, barrierStacks - 1);
+});
+
+test('real tagged Decay spell becomes healing under Necrotic Renewal, without spending protection', () => {
+  const c = fight('current', true), target = c.enemies[0];
+  target.hp = 100; target.block = 5; target.barrier = 5;
+  status(c, target, 'base.necrotic-healing', 2);
+  const spell = c.registries.cards.get('blightTouch');
+  for (const effect of spell.effects) executeAction(c, { effect, source: c.player, owner: c.player,
+    target, card: { ...spell, resolvedSource: { ...fire.resolvedSource, damageType: 'decay' } }, meta: {} });
+  drain(c);
+  assert.ok(target.hp > 100, 'incoming tagged Decay converts to actual healing');
+  assert.equal(target.block, 5); assert.equal(target.barrier, 5);
+});
+
+test('real Divine healing becomes HP damage under Profane Inversion; ordinary healing remains healing', () => {
+  const c = fight(), target = c.player; target.hp = 100;
+  status(c, target, 'base.divine-harm', 2);
+  const sacred = c.registries.cards.get('urgentHeal');
+  for (const effect of sacred.effects) executeAction(c, { effect, source: target, owner: target,
+    target, card: sacred, meta: {} }); drain(c);
+  assert.ok(target.hp < 100, 'school:divine tagged healing is inverted');
+  const hp = target.hp, ordinary = c.registries.cards.get('base.exhaust');
+  for (const effect of ordinary.effects) executeAction(c, { effect, source: target, owner: target,
+    target, card: ordinary, meta: {} }); drain(c);
+  assert.ok(target.hp > hp, 'an untyped healing card is unaffected');
 });
