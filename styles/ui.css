@@ -2042,3 +2042,10 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor-reading-desk .deck-editor-refusal:not([hidden])::before { content: '* '; }
 
 .deck-editor.deck-editor-reading-desk .deck-editor-foot > .modal-btnrow { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
+/* Keep the name and cost on one reading line beneath the large preview. */
+.deck-editor-reading-desk .deck-editor-rules { display: flex; flex-wrap: wrap; align-items: baseline; gap: .4rem .8rem; }
+.deck-editor-reading-desk .deck-editor-rules > :is(.tt-title, .ti-meta) { margin: 0; }
+.deck-editor-reading-desk .deck-editor-rules > .ctext { flex: 1 0 100%; margin: .5rem 0; }
+.deck-editor.deck-editor-reading-desk .deck-editor-selected-buttons > button.deck-editor-primary:not(:disabled):not([aria-disabled="true"]) { color: #edffe9; background-color: #326b3b; border-color: #70a675; }
+.deck-editor-reading-desk #deck-editor-done:not(:disabled) { color: #edffe9; background-color: #326b3b; border-color: #70a675; }
+.deck-editor-reading-desk #deck-editor-done:disabled { color: #aaa69e; background-color: #3a3834; border-color: #5d5952; opacity: 1; }

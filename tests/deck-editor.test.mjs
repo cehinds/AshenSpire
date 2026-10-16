@@ -27,10 +27,13 @@ import { withModalDom as withBaseDom } from './helpers/modal-dom.mjs';
 // inside this synchronous DOM fixture instead of leaking into the next test.
 const withDom = fn => withBaseDom((...args) => {
   const nativeTimeout = globalThis.setTimeout;
+  const nativeElement = globalThis.HTMLElement;
+  globalThis.HTMLElement = args[0].document.body.constructor;
   const timers = new Set();
   globalThis.setTimeout = (...params) => { const id = nativeTimeout(...params); timers.add(id); return id; };
   try { return fn(...args); }
-  finally { for (const id of timers) clearTimeout(id); globalThis.setTimeout = nativeTimeout; }
+  finally { for (const id of timers) clearTimeout(id); globalThis.setTimeout = nativeTimeout;
+    if (nativeElement === undefined) delete globalThis.HTMLElement; else globalThis.HTMLElement = nativeElement; }
 });
 
 const REG = createRegistries(contentBundle);
@@ -1639,5 +1642,34 @@ test('Reading Desk: selecting or focusing a new row immediately replaces a previ
     assert.equal(editor.root.querySelector('.deck-editor-animation'), null);
     assert.deepEqual(editState(run), before);
     editor.close();
+  });
+});
+
+
+test('Reading Desk: Cancel and Escape guard edits, Keep editing preserves them, Accept uses the actual minimum', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  withDom(() => {
+    const run = freshRun(), minimum = run.deck.length;
+    let saved = 0;
+    const editor = mountDeckEditor(document.body, { registries: REG, run, settings: { deckMinSize: minimum }, onDone: () => saved++ });
+    const main = editor.root.querySelector('.deck-editor-tile .deck-editor-main');
+    main.click();
+    const buttons = editor.root.querySelector('.deck-editor-selected-buttons');
+    assert.equal(buttons.children[0].dataset.focusKey, 'selected-remove');
+    assert.equal(buttons.children[1].dataset.focusKey, 'selected-add');
+    editor.root.querySelector('.deck-editor-tile .deck-editor-step[data-action="remove"]').click();
+    assert.equal(editor.root.querySelector('#deck-editor-done').disabled, true);
+    assert.equal(editor.root.querySelector('.deck-editor-counter').getAttribute('aria-invalid'), 'true');
+    editor.root.querySelector('#deck-editor-cancel').click();
+    assert.ok(document.querySelector('.confirmation-modal'));
+    assert.equal(run.deck.length, minimum - 1, 'opening the confirmation does not discard');
+    document.querySelector('.confirmation-cancel').click();
+    assert.equal(editor.root.isConnected, true);
+    assert.equal(run.deck.length, minimum - 1, 'Keep editing preserves edits');
+    editor.root.querySelector('.deck-editor-tile .deck-editor-step[data-action="add"]').click();
+    assert.equal(editor.root.querySelector('#deck-editor-done').disabled, false);
+    assert.equal(editor.root.querySelector('.deck-editor-counter').getAttribute('aria-invalid'), 'false');
+    editor.root.querySelector('#deck-editor-done').click();
+    assert.equal(saved, 1);
   });
 });
