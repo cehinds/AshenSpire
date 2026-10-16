@@ -12,13 +12,18 @@
 
 import { TermRegistry } from './registries.js';
 
+// Entity IDs need not use the framework's narrower dotted identifier grammar.
+// Encode every code point at fixed width so punctuation cannot collide with an
+// authored alphanumeric ID. Public display lookups retain the original IDs.
+const termEntityId = id => 'e' + Array.from(String(id), char => char.codePointAt(0).toString(16).padStart(6, '0')).join('');
+
 function entityTermRows(kind, rows) {
   const terms = [];
   for (const row of rows || []) {
     if (!row || !row.id || typeof row.name !== 'string' || !row.name) continue;
-    terms.push({ id: `term.entity.${kind}.${row.id}.name`, canonicalText: row.name });
+    terms.push({ id: `term.entity.${kind}.${termEntityId(row.id)}.name`, canonicalText: row.name });
     if (typeof row.tooltip === 'string' && row.tooltip) {
-      terms.push({ id: `term.entity.${kind}.${row.id}.tooltip`, canonicalText: row.tooltip });
+      terms.push({ id: `term.entity.${kind}.${termEntityId(row.id)}.tooltip`, canonicalText: row.tooltip });
     }
   }
   return terms;
@@ -36,9 +41,9 @@ export function createEntityTermOverlay(bundle) {
     ...entityTermRows('stance', bundle.stances),
   ]);
   const display = (kind) => (id) => {
-    const nameId = `term.entity.${kind}.${id}.name`;
+    const nameId = `term.entity.${kind}.${termEntityId(id)}.name`;
     if (!terms.has(nameId)) return null;
-    const tooltipId = `term.entity.${kind}.${id}.tooltip`;
+    const tooltipId = `term.entity.${kind}.${termEntityId(id)}.tooltip`;
     return {
       name: terms.displayTerm(nameId),
       ...(terms.has(tooltipId) ? { tooltip: terms.displayTerm(tooltipId) } : {}),
