@@ -154,7 +154,7 @@ try {
         await p.screenshot({ path: resolve(output, `${width}-combat.png`) });
       }
       console.log(`layout ${width}x${height} hand${hand} passed`);
-      metrics.push({ viewport: `${width}x${height}`, hand, ...m });
+      metrics.push({ viewport: `${width}x${height}`, handCount: hand, ...m });
       await p.close();
     }
   }
