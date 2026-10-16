@@ -1,3 +1,4 @@
+import { rememberCombatStance, defensiveCombatStance, activeCombatStances, stanceCapacity } from './concurrentStances.js';
 import { configuredCombat, configuredModule, setProfileStance } from './gameProfileCombat.js';
 import { removeStatus } from './statuses.js';
 import { stanceOf, sameStance, stanceEntryBonuses, stanceRulesFor } from '../model/stanceRules.js';
@@ -303,11 +304,12 @@ export function setCombatStance(ctx, entity, carrier) {
   if (profile.evade?.whileStatus) profile.evadeEligible = entity.statuses?.[profile.evade.whileStatus]?.stacks > 0;
   const next = stanceOf({ combatProfile: profile }, entity);
   if (!next) return entity.combatStance || null;
+  const previous=entity.combatStance;
   const changed = !sameStance(entity, { combatProfile: profile });
   const provenance = { ...(entity.kind === 'enemy' ? { preparing: true } : {}),
     triggeredBy: { kind: 'stance', id: entity.kind === 'enemy' ? 'combatStance' : next.maneuver, ownerId: entity.id } };
   // A fresh non-Counter card cannot retain an older hybrid Counter just because both are Evade.
-  if (!changed && profile.maneuver !== 'counter') clearCombatCounter(entity, ctx);
+  if (!changed && profile.maneuver !== 'counter' && stanceCapacity(ctx,entity)<=1) clearCombatCounter(entity, ctx);
   // Range and school track the accepted card even when the stance identity stays the same.
   const expiry = entity.combatStance?.expiresOnOwnerCycle;
   entity.combatStance = { ...next,
@@ -315,8 +317,9 @@ export function setCombatStance(ctx, entity, carrier) {
       ? { expiresOnOwnerCycle: (entity.combatOwnerCycle || 0) + profile.stanceExpiry }
       : !changed && expiry != null ? { expiresOnOwnerCycle: expiry } : {}),
   };
+  rememberCombatStance(ctx,entity,previous);
   if (changed) {
-    clearCombatCounter(entity, ctx);
+    if(stanceCapacity(ctx,entity)<=1) clearCombatCounter(entity, ctx);
     syncWardMaximum(ctx, entity);
     const grants = stanceEntryBonuses({ combatProfile: profile }, ctx);
     if (grants.evade > 0 && (profile.evade?.advantage || profile.evade?.disadvantage)) {
@@ -429,7 +432,7 @@ export function counterCoverageMatches(coverage, profile, effect = 'damage') {
 function preparedCounter(ctx, target, carrier, options) {
   const counter = target?.combatCounter;
   if (!counter?.charges || (carrier?.combatReaction && carrier.manualCounterSerial !== counter.serial) || restrictions(ctx, target, options).counterDisabled) return null;
-  const stance = target.combatStance?.maneuver;
+  const stance = activeCombatStances(ctx,target).some(row=>row.maneuver==='counter') ? 'counter' : target.combatStance?.maneuver;
   const authoredCounter = counter.carrier?.combatProfile?.maneuver === 'counter';
   if (!(configuredCombat(ctx) && !configuredModule(ctx, 'stances')) && stance !== 'counter' && !(stance === 'evade' && authoredCounter)) return null;
   if ((target.combatOwnerCycle || 0) >= counter.expiresOnOwnerCycle) return null;
@@ -443,7 +446,7 @@ export function stancePressureMultiplier(ctx, source, target, carrier, hitReceip
   return stanceMultiplier(ctx, target, normalizedProfile(carrier), hit);
 }
 function stanceMultiplier(ctx, target, profile, hit) {
-  const stance = stanceOf(target?.combatStance);
+  const stance = stanceOf(defensiveCombatStance(ctx,target,{combatProfile:profile}));
   const incoming = profile.maneuver === 'counter' ? { maneuver: 'counter' } : stanceOf({ combatProfile: profile });
   if (!incoming) return 1;
   const cfg = stanceRulesFor(ctx);

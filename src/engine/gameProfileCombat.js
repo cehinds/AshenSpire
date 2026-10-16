@@ -1,3 +1,4 @@
+import { rememberCombatStance, defensiveCombatStance } from './concurrentStances.js';
 import { proposalHitPlan, proposalTargetPlan } from './proposalStatusRuntime.js';
 // Configured combat adapter. All rules are scoped to the saved resolved profile;
 // a missing/current profile leaves the existing interpreter untouched.
@@ -19,11 +20,13 @@ export function configuredStance(carrier) {
 }
 export function setProfileStance(ctx, entity, carrier) {
   if (!configuredCombat(ctx)) return false;
+  const previous=entity.combatStance;
   const rule = configuredModule(ctx, 'stances');
   const stance = configuredStance(carrier);
   entity.combatStance = rule?.include?.includes(stance)
     ? { maneuver: stance, camp: carrier?.combatProfile?.camp || 'physical', range: carrier?.combatProfile?.range || 'melee' }
     : { maneuver: 'neutral', camp: 'physical', range: 'melee' };
+  rememberCombatStance(ctx,entity,previous);
   ctx.emit?.('combatStanceChanged', { targetId: entity.id, maneuver: entity.combatStance.maneuver });
   return true;
 }
@@ -44,7 +47,7 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   const stances = configuredModule(ctx, 'stances');
   const defenses = configuredModule(ctx, 'defenses');
   const attacking = configuredStance(carrier);
-  const defending = configuredStance(target?.combatStance);
+  const defending = configuredStance(defensiveCombatStance(ctx,target,carrier));
   const advantage = !!stances?.include?.includes(attacking)
     && !!stances?.matchups?.[attacking]?.includes(defending);
   let raw = Math.max(0, Math.floor(base + rating(source, 'ar') * (effects?.attackRatingWeight || 0)));

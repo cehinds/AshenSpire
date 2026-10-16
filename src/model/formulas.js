@@ -184,7 +184,7 @@ function evalNode(node, ctx) {
     case 'metric': {
       const ent = resolveOne(ctx, node.of || 'self', node.f), state=(node.of===undefined || node.of==='self' || node.of==='owner') && ctx.metricsBefore ? ctx.metricsBefore : ent.abilityRiders || {};
       const active=Object.entries(ent.statuses || {}).filter(([id,row])=>(row.stacks || row.meter?.value || 0)>0 && (node.statuses || []).includes(id)).map(([,row])=>row);
-      const values={negativeStatusTypes:active.length,negativeStatusStacks:active.reduce((n,row)=>n+(row.stacks || row.meter?.value || 0),0),damageTakenThisTurn:state.hpLostSinceTurnStart || 0,sameCardPlays:state.cardUsesCombat?.[ctx.cardId] || 0,cardsPlayed:state.cardsPlayed || 0,distinctTypes:Object.keys(state.typePlays || {}).length,manaSpent:ctx.manaSpent || 0,staminaSpent:ctx.staminaSpent || 0};
+      const values={weaponDamage:ctx.weaponDamage || 0,negativeStatusTypes:active.length,negativeStatusStacks:active.reduce((n,row)=>n+(row.stacks || row.meter?.value || 0),0),damageTakenThisTurn:state.hpLostSinceTurnStart || 0,sameCardPlays:state.cardUsesCombat?.[ctx.cardId] || 0,cardsPlayed:state.cardsPlayed || 0,distinctTypes:Object.keys(state.typePlays || {}).length,manaSpent:ctx.manaSpent || 0,staminaSpent:ctx.staminaSpent || 0};
       if (!(node.metric in values)) throw new Error('Unknown combat metric');
       v=values[node.metric]*(node.per ?? 1);break;
     }
