@@ -1993,7 +1993,7 @@ function showSettings() {
     previewClassId: run?.class || null,
     onChange: persistSettingsChange,
     onOffline: showOfflinePlay,
-    gameProfile: { read: () => selectedGameProfile },
+    gameProfile: { read: () => selectedGameProfile, active: () => run?.gameProfile || selectedGameProfile },
   });
 }
 
