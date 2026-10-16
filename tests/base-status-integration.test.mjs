@@ -111,7 +111,9 @@ test('explicit Read Intent survives save/load with hand identities and expires w
   const restored = restoreCombatSnapshot({ registries: c.registries, snapshot,
     rng: createRng(c.rng.seed, c.rng.getCounters()), expectedGameProfile: c.gameProfile });
   assert.deepEqual(projectEnemyBurdenHand(restored.enemies[0], { turn: restored.turn, registries: c.registries }), before);
-  assert.equal(projectEnemyBurdenHand(restored.enemies[0], { turn: target.proposalIntentRevealedUntil, registries: c.registries }), null);
+  restored.turn = target.proposalIntentRevealedUntil;
+  assert.equal(projectEnemyBurdenHand(restored.enemies[0], { turn: restored.turn, registries: c.registries }), null);
+  assert.equal(previewIntent(restored, restored.enemies[0].id).hidden, true, 'the normal private read gate resumes at expiry');
 });
 
 function play(c, cardId, target = c.enemies[0]) {
@@ -224,4 +226,15 @@ test('real Divine healing becomes HP damage under Profane Inversion; ordinary he
   for (const effect of ordinary.effects) executeAction(c, { effect, source: target, owner: target,
     target, card: ordinary, meta: {} }); drain(c);
   assert.ok(target.hp > hp, 'an untyped healing card is unaffected');
+});
+
+test('automatic counter and sweep resolve their real reaction packets and consume one charge without looping', () => {
+  const c = fight(), target = c.enemies[0];
+  status(c, target, 'base.auto-counter'); status(c, target, 'base.auto-sweep');
+  status(c, c.player, 'base.reflect');
+  hit(c, 4);
+  assert.ok(c.player.hp < 200, 'counter and sweep hit the original attacker');
+  assert.equal(target.statuses['base.auto-counter'], undefined);
+  assert.equal(target.statuses['base.auto-sweep'], undefined);
+  assert.equal(c.queue.length, 0);
 });
