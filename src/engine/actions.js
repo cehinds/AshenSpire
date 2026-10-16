@@ -1,3 +1,5 @@
+import { weaponDamageBasis } from './cardBehavior.js';
+import { MANEUVERS, trimCombatStances } from './concurrentStances.js';
 import { proposalHitPlan, proposalAfterHit, proposalTargetPlan, applyProposalPlan, proposalThreshold, proposalHealingPlan } from './proposalStatusRuntime.js';
 import { addEnemyBurden } from './enemyBurdens.js';
 import { moveCards, hasCardChoice } from './cardZones.js';
@@ -94,7 +96,8 @@ export function computeAttackDamage(ctx, source, target, base, attackTags, carri
   if (configuredCombat(ctx)) return profileDamageReceipt(ctx, source, target, base, carrier,{proposal}).amount;
   const ratedBase = base + (carrier?.skipRatingBonus ? 0 : Ratings.cardRatingBonus(ctx, source, carrier, 'damage', base));
   if (ctx.foundation) {
-    const amount = F.foundationDamage(ctx, source, target, ratedBase, carrier, attackTags || [], { beforeDefense }).amount;
+    let amount = F.foundationDamage(ctx, source, target, ratedBase, carrier, attackTags || [], { beforeDefense }).amount;
+    if(proposal && target) amount=proposalHitPlan(ctx,source,target,amount,carrier || {}).amount;
     return matchups ? Matchups.prepareMatchupHit(ctx, source, target, carrier, amount).amount : amount;
   }
   let dmg = ratedBase;
@@ -231,10 +234,11 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
   if(!targetPlan.allowed || targetPlan.avoided) {ctx.emit('proposalHitAvoided',{sourceId:source?.id,targetId:target.id,perception:!targetPlan.allowed});return 0;}
   const raw=configuredCombat(ctx) ? profileDamageReceipt(ctx,source,target,base,resolved,{proposal:false}).raw : computeAttackDamage(ctx,source,target,base,attackTags,resolved,{matchups:false,beforeDefense:true,proposal:false});
   const plan=proposalHitPlan(ctx,source,target,raw,resolved);
-  const hp=target.hp;
+  const hp=target.hp,eventStart=ctx.eventLog.length;
   const amount=plan.healing>0 ? 0 : applyBaseAttackDamage(ctx,source,target,base,attackTags,resolved);
   if(plan.healing>0) applyHeal(ctx,target,plan.healing);
-  if(amount>0 || plan.healing>0){applyProposalPlan(ctx,plan,source,target,resolved);proposalAfterHit(ctx,source,target,amount,Math.max(0,hp-target.hp),resolved);}
+  const contact=ctx.eventLog.slice(eventStart).find(event=>event.type==='damageDealt' && event.targetId===target.id);
+  if(plan.healing>0 || raw>0 && contact && !contact.evaded && !contact.immune){applyProposalPlan(ctx,plan,source,target,resolved);proposalAfterHit(ctx,source,target,raw,Math.max(0,hp-target.hp),resolved);}
   return amount;
 }
 function applyBaseAttackDamage(ctx, source, target, base, attackTags, carrier = null) {
@@ -245,7 +249,7 @@ function applyBaseAttackDamage(ctx, source, target, base, attackTags, carrier = 
   if (F.consumeFoundationEvade(ctx, source, target, carrier)) return 0;
   const ratedBase = base + (carrier?.skipRatingBonus ? 0 : Ratings.cardRatingBonus(ctx, source, carrier, 'damage', base));
   const receipt = ctx.foundation ? F.foundationDamage(ctx, source, target, ratedBase, carrier, attackTags || []) : null;
-  const computed = receipt ? receipt.amount : computeAttackDamage(ctx, source, target, base, attackTags, carrier, { matchups: false });
+  const computed = receipt ? proposalHitPlan(ctx,source,target,receipt.amount,carrier || {}).amount : computeAttackDamage(ctx, source, target, base, attackTags, carrier, { matchups: false });
   // A critical hit multiplies the finished blow, before Block takes its share.
   const critical = carrier && carrier.critMultiplier > 1 ? Math.floor(computed * carrier.critMultiplier) : computed;
   if (critical > computed) ctx.emit('critHit', { sourceId: source?.id, targetId: target.id, ...critSeats(ctx, source, target), multiplier: carrier.critMultiplier, amount: critical });
@@ -928,7 +932,6 @@ export function applyLoseHp(ctx, target, amount, cause = 'effect', death = {}) {
   target.hp -= n;
   ctx.emit('hpLost', { ...seatOf(ctx, target), targetId: target.id, amount: n, cause });
   afterHpChange(ctx, target, death);
-  proposalThreshold(ctx,target);
   return n;
 }
 
@@ -1247,7 +1250,7 @@ export function formulaCtxFor(ctx, action, primaryTarget) {
       player: ctx.player || null,
       allEnemies: livingEnemies(ctx),
     },
-    cardId: action.card?.cardId, metricsBefore:meta.abilityBefore, manaSpent:meta.manaSpent || 0, staminaSpent:meta.staminaSpent || 0,
+    weaponDamage:weaponDamageBasis(ctx,action.source),cardId: action.card?.cardId, metricsBefore:meta.abilityBefore, manaSpent:meta.manaSpent || 0, staminaSpent:meta.staminaSpent || 0,
     energySpent: meta.energySpent != null ? meta.energySpent : 0,
     cardsPlayedThisTurn: ctx.player ? ctx.player.counters.cardsPlayedThisTurn : 0,
   };
@@ -1605,6 +1608,7 @@ function runOpcode(ctx, action, eff) {
     case 'removeStatus': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         statuses.removeStatus(ctx, t, eff.status, { reason: 'consumed', ...(eff.amount !== undefined ? { amount: Math.max(0, evalNum(ctx, action, eff.amount, 0, t)) } : {}) });
+        trimCombatStances(ctx,t);
       }
       break;
     }
@@ -1748,6 +1752,14 @@ function runOpcode(ctx, action, eff) {
       // A chosen stance (Warrior's Vow) is the play intent's pick, validated
       // before the card was paid for (model/cardChoices.js) and carried on meta.
       const stanceId = eff.choose ? action.meta && action.meta.choice : eff.stance;
+      if(eff.maneuver || eff.choose==='maneuver') {
+        const maneuver=eff.maneuver || stanceId;if(!MANEUVERS.includes(maneuver))throw new Error('Choose a valid maneuver');
+        for(const entity of resolveTargets(ctx,action,eff.target || 'self')) {
+          const carrier={...action.card,combatProfile:{...action.card?.combatProfile,maneuver,stanceTrigger:true,range:action.card?.combatProfile?.range || 'melee',camp:action.card?.combatProfile?.camp || 'physical'}};
+          Matchups.setCombatStance(ctx,entity,carrier);
+        }
+        break;
+      }
       // BOUNDARY (#1449 review, Codex P2): only a played card supplies a
       // choice. The validator checks `choose` wherever enterStance may appear
       // (stance onEnter, status hooks, enemy moves...), but no shipped row

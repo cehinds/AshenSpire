@@ -14,7 +14,7 @@
     {
       "id": "base.persistent-block",
       "name": "Persistent Block",
-      "icon": "▰",
+      "icon": "\u25b0",
       "stackMode": "add",
       "decay": "none",
       "tooltip": "Replenish Block up to remaining stacks at turn start. A connected physical hit consumes one stack, including fully blocked hits."
@@ -22,7 +22,7 @@
     {
       "id": "base.persistent-barrier",
       "name": "Persistent Barrier",
-      "icon": "◇",
+      "icon": "\u25c7",
       "stackMode": "add",
       "decay": "none",
       "tooltip": "Replenish Barrier up to remaining stacks at turn start. A connected magical hit consumes one stack, including fully protected hits."
@@ -30,7 +30,7 @@
     {
       "id": "base.greased",
       "name": "Greased",
-      "icon": "◒",
+      "icon": "\u25d2",
       "stackMode": "add",
       "decay": "none",
       "tooltip": "Melee/Reach accuracy -20. At turn start 25% chance to become Prone. Fire cannot miss: triple damage, Burn 3, and splash 1.5 times the original incoming fire damage to other same-side actors."
@@ -38,7 +38,7 @@
     {
       "id": "base.poison",
       "name": "Poison",
-      "icon": "☠",
+      "icon": "\u2620",
       "stackMode": "add",
       "decay": "none",
       "tooltip": "At turn start take 1 necrotic damage per stack. Unlike Venom, this is direct ongoing damage, without a buildup threshold. Lose one stack at turn end."
@@ -46,7 +46,7 @@
     {
       "id": "base.blight",
       "name": "Blight",
-      "icon": "◈",
+      "icon": "\u25c8",
       "stackMode": "add",
       "decay": "none",
       "tooltip": "If Blight stacks reach current HP, die immediately. Lose one stack at turn end."
@@ -54,7 +54,7 @@
     {
       "id": "base.weak",
       "name": "Weak",
-      "icon": "↓",
+      "icon": "\u2193",
       "stackMode": "add",
       "decay": "none",
       "tooltip": "Deal 25% less direct damage while active. Additional stacks extend duration; they do not multiply the penalty."
@@ -62,7 +62,7 @@
     {
       "id": "base.charm",
       "name": "Charm",
-      "icon": "♡",
+      "icon": "\u2661",
       "stackMode": "add",
       "decay": "none",
       "tooltip": "Direct attack accuracy -25 while active. Lose one stack at turn end."
@@ -70,7 +70,7 @@
     {
       "id": "base.bind",
       "name": "Bind",
-      "icon": "⌁",
+      "icon": "\u2301",
       "stackMode": "add",
       "decay": "none",
       "tooltip": "Cannot play Attack cards. Skill, Power and recovery cards remain available. Lose one stack at turn end."
@@ -78,7 +78,7 @@
     {
       "id": "base.restrained",
       "name": "Restrained",
-      "icon": "⊗",
+      "icon": "\u2297",
       "stackMode": "add",
       "decay": "none",
       "tooltip": "Melee and Reach cards cost 1 extra Stamina while active. This is separate from a generated Restrained burden card."
@@ -86,7 +86,7 @@
     {
       "id": "base.foresight",
       "name": "Foresight",
-      "icon": "◎",
+      "icon": "\u25ce",
       "stackMode": "add",
       "decay": "none",
       "tooltip": "Each stack grants +2 Perception for detecting Veil. Lose one stack at the next turn start."
@@ -94,7 +94,7 @@
     {
       "id": "base.evade",
       "name": "Evade",
-      "icon": "↝",
+      "icon": "\u219d",
       "stackMode": "add",
       "decay": "none",
       "tooltip": "Consume one stack when a direct physical hit is attempted: 25% chance to avoid the entire action. Failed attempts also consume the stack."
@@ -102,7 +102,7 @@
     {
       "id": "base.intangible",
       "name": "Intangible",
-      "icon": "◌",
+      "icon": "\u25cc",
       "stackMode": "add",
       "decay": "none",
       "tooltip": "Direct hit damage is capped at 1; ongoing damage is unaffected. Lose one stack at the next turn start."
@@ -110,7 +110,7 @@
     {
       "id": "base.mirrors",
       "name": "Mirrors",
-      "icon": "◇",
+      "icon": "\u25c7",
       "stackMode": "add",
       "decay": "none",
       "tooltip": "Double direct outgoing damage. Additional stacks extend duration, without exponential multiplication. Lose one stack at the next turn start."
@@ -118,7 +118,7 @@
     {
       "id": "base.elemental-weapon",
       "name": "Elemental Weapon",
-      "icon": "✦",
+      "icon": "\u2726",
       "stackMode": "add",
       "decay": "none",
       "tooltip": "Weapon attacks add a separate 3 Fire damage packet. The packet does not recursively trigger enchantments or reactions."
@@ -126,7 +126,7 @@
     {
       "id": "base.necrotic-healing",
       "name": "Necrotic Renewal",
-      "icon": "✚",
+      "icon": "\u271a",
       "stackMode": "add",
       "decay": "none",
       "tooltip": "Incoming necrotic damage becomes equal healing, before protection. Lose one stack at the next turn start."
@@ -134,7 +134,7 @@
     {
       "id": "base.divine-harm",
       "name": "Profane Inversion",
-      "icon": "†",
+      "icon": "\u2020",
       "stackMode": "add",
       "decay": "none",
       "tooltip": "Incoming Divine healing becomes equal Sacred damage. Ordinary healing is unchanged. Lose one stack at turn end."
@@ -142,7 +142,7 @@
     {
       "id": "base.extra-weapon",
       "name": "Extra Weapon",
-      "icon": "⚔",
+      "icon": "\u2694",
       "stackMode": "add",
       "decay": "none",
       "tooltip": "The next weapon Attack repeats its primary damage once, without repeating card payment or recursively creating another action."
@@ -150,7 +150,7 @@
     {
       "id": "base.extra-shield",
       "name": "Extra Shield",
-      "icon": "▰",
+      "icon": "\u25b0",
       "stackMode": "add",
       "decay": "none",
       "tooltip": "The next shield/guard card repeats its protection once, without repeating payment or reactions."
@@ -158,7 +158,7 @@
     {
       "id": "base.auto-counter",
       "name": "Automatic Counter",
-      "icon": "↶",
+      "icon": "\u21b6",
       "stackMode": "add",
       "decay": "none",
       "tooltip": "After a hostile direct Melee/Reach hit connects, consume a stack and return 6 physical damage. Reaction damage cannot trigger another automatic reaction."
@@ -166,7 +166,7 @@
     {
       "id": "base.auto-sweep",
       "name": "Automatic Sweep",
-      "icon": "↔",
+      "icon": "\u2194",
       "stackMode": "add",
       "decay": "none",
       "tooltip": "After a hostile direct hit connects, consume a stack and deal 4 physical damage to each opposing actor. Reaction damage cannot recurse."
@@ -174,7 +174,7 @@
     {
       "id": "base.reflect",
       "name": "Reflect",
-      "icon": "↩",
+      "icon": "\u21a9",
       "stackMode": "add",
       "decay": "none",
       "tooltip": "Reflect half actual HP damage from hostile direct hits, rounded down. Reflected damage never reflects again."
@@ -182,7 +182,7 @@
     {
       "id": "base.guard-allies",
       "name": "Interpose",
-      "icon": "▣",
+      "icon": "\u25a3",
       "stackMode": "add",
       "decay": "none",
       "tooltip": "Intercept up to 4 direct damage per stack for another ally, consuming one stack per interception. The lowest actor ID wins competing guards."
@@ -190,15 +190,15 @@
     {
       "id": "base.veil",
       "name": "Veil",
-      "icon": "◍",
+      "icon": "\u25cd",
       "stackMode": "add",
       "decay": "none",
-      "tooltip": "Single-target actions must detect the bearer. Chance is 50% plus 5% per Perception advantage, minus 10% per Veil stack, clamped to 5–95%. Area actions bypass Veil."
+      "tooltip": "Single-target actions must detect the bearer. Chance is 50% plus 5% per Perception advantage, minus 10% per Veil stack, clamped to 5\u201395%. Area actions bypass Veil."
     },
     {
       "id": "base.retain-block",
       "name": "Hold Block",
-      "icon": "▰",
+      "icon": "\u25b0",
       "stackMode": "add",
       "decay": "none",
       "tooltip": "Retain up to 4 existing Block per stack when Block would expire. This does not create protection or duplicate Persistent Block."
@@ -206,7 +206,7 @@
     {
       "id": "base.read-intent",
       "name": "Read Intent",
-      "icon": "◉",
+      "icon": "\u25c9",
       "stackMode": "add",
       "decay": "none",
       "tooltip": "Reveal opposing burden hand card identities and counts while active. Lose one stack at the next turn start."
@@ -214,7 +214,7 @@
     {
       "id": "base.stagger",
       "name": "Stagger",
-      "icon": "✦",
+      "icon": "\u2726",
       "stackMode": "add",
       "decay": "none",
       "tooltip": "Visible burden tracking only. The generated card owns its action loss or resource tax, so this marker never applies it twice."
@@ -222,7 +222,7 @@
     {
       "id": "base.paralysis",
       "name": "Paralysis",
-      "icon": "ϟ",
+      "icon": "\u03df",
       "stackMode": "add",
       "decay": "none",
       "tooltip": "Visible burden tracking only. The generated card owns its action loss or resource tax, so this marker never applies it twice."
@@ -230,7 +230,7 @@
     {
       "id": "base.restrained-burden",
       "name": "Restrained Burden",
-      "icon": "⊗",
+      "icon": "\u2297",
       "stackMode": "add",
       "decay": "none",
       "tooltip": "Visible burden tracking only. The generated card owns its action loss or resource tax, so this marker never applies it twice."
@@ -238,7 +238,7 @@
     {
       "id": "base.many-forms",
       "name": "Many Forms",
-      "icon": "✧",
+      "icon": "\u2727",
       "stackMode": "add",
       "decay": "none",
       "tooltip": "Each stack permits one additional concurrent stance. One stack allows two total stances. Lose one stack at the next turn start."
@@ -859,7 +859,17 @@
       "behaviors": [
         {
           "kind": "stanceCapacity",
-          "additionalPerStack": 1
+          "additionalPerStack": 1,
+          "maxStances": 2,
+          "defensePriority": [
+            "counter",
+            "defend",
+            "evade",
+            "casting",
+            "attack",
+            "smash",
+            "sweep"
+          ]
         }
       ]
     }

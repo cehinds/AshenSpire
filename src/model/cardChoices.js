@@ -11,7 +11,7 @@
 // co-op (engine/coopCombat.js) and the screens all read this one function.
 
 /** The closed set of choice selectors an `enterStance` effect may carry. */
-export const STANCE_CHOICE_SELECTORS = Object.freeze(['classStance']);
+export const STANCE_CHOICE_SELECTORS = Object.freeze(['classStance','maneuver']);
 
 /**
  * cardChoice(registries, def, classId, activeStanceId) → null when the card
@@ -27,6 +27,7 @@ export const STANCE_CHOICE_SELECTORS = Object.freeze(['classStance']);
 export function cardChoice(registries, def, classId, activeStanceId = null) {
   const effect = (def && def.effects || []).find((e) => e && e.op === 'enterStance' && e.choose);
   if (!effect) return null;
+  if(effect.choose==='maneuver') return {kind:'stance',options:['attack','smash','defend','sweep','counter','casting','evade'].map(id=>({id,name:id[0].toUpperCase()+id.slice(1),icon:'',tooltip:id,active:activeStanceId===id}))};
   const rows = registries.stances.all();
   let owned = rows.filter((s) => s.class && s.class === classId);
   if (!owned.length) owned = rows.filter((s) => s.class && s.class === def.class);
