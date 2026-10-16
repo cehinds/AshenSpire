@@ -1,10 +1,10 @@
-# Footer fade proposals — approval review
+# Footer fade proposals — B approved
 
-Design only. The game has not changed. Desktop reference: **1440×900**. Captured 2026-10-16 against the approved desktop composition at source `adbe7b07b`; the grey floor pattern is a wireframe illustration, not replacement game art.
+Archived design comparison. **B was approved and implemented on 2026-10-16.** [Real game screenshots and verification](../footer-fade/README.md). Desktop reference: **1440×900**. Captured 2026-10-16 against the approved desktop composition at source `adbe7b07b`; the grey floor pattern is a wireframe illustration, not replacement game art.
 
 [Interactive gallery](index.html) · [Footer close-ups](footer-comparison.html) · [Full-size B](option-b.html)
 
-**B is suggested:** a 90px fade from y700 to y790, then an opaque footer. The scenery floor continues behind the upper cards. Every option uses the existing #211d16 footer color.
+**B was selected:** a 90px fade from y700 to y790, then an opaque footer. The scenery floor continues behind the upper cards. Every option uses the existing #211d16 footer color.
 
 ![Footer comparison](footer-overview.png)
 
