@@ -60,6 +60,12 @@ export function combatantIntent(intent, content, registries = null, { onTarget =
   compact.className = 'intent-compact';
   if (badge.parts[0]) compact.append(intentIcon(badge.parts[0].icon));
   if (badge.visibility !== 'known') compact.append(document.createTextNode(' ?'));
+  else if (badge.parts.some(part => part.value != null)) {
+    const damage = document.createElement('span'); damage.className = 'intent-compact-damage';
+    damage.textContent = badge.parts.filter(part => part.value != null).map(part => part.value).join(' · ');
+    if (badge.projectedDamage?.tone) damage.dataset.damageTone = badge.projectedDamage.tone;
+    compact.append(damage);
+  }
   node.append(compact);
   node.setAttribute('aria-label', `${stanceLabel}. ${intent?.hidden ? 'Exact move and amounts hidden.' : badge.parts.map(part => `${part.icon}: ${part.value ?? ''}`).join('. ')}`);
   {
