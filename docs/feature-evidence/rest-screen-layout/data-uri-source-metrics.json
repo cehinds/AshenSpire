@@ -1,0 +1,27 @@
+{
+  "scope": "Local browser srcset/dataURI selection check only; not a standalone build validation.",
+  "canonicalLightBytes": 178522,
+  "errors": [],
+  "results": [
+    {
+      "width": 3440,
+      "height": 1440,
+      "dataUriSelected": true,
+      "desktopFallbackSelected": false,
+      "naturalWidth": 1718,
+      "naturalHeight": 720,
+      "loaded": true,
+      "horizontalOverflow": false
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "dataUriSelected": false,
+      "desktopFallbackSelected": true,
+      "naturalWidth": 1672,
+      "naturalHeight": 941,
+      "loaded": true,
+      "horizontalOverflow": false
+    }
+  ]
+}
