@@ -2,95 +2,119 @@
 
 Owner decisions, 2026-10-17. Branch: `feature/enemy-resources` (off `dev`).
 Supersedes the weighted `moves` picker for Core; extends SPEC §4.6 / §4.6a / §4.11.
+Follows the JSON module system (`docs/ai/json-game-modules/ARCHITECTURE.md`):
+rules and defaults in a module, enemy data in packs, everything overridable per bundle.
 
 ## Decisions (owner)
 
 1. Enemies are characters: same five attributes (STR/DEX/CON/WIS/INT) as the player.
    HP, SP, MP, AR, DR, PR, Ward, Poise, draw, hand size all come from the
-   player's `derivedStatRules` (`src/content/derivedStats.js`) — no separate formula.
-2. Tier sets stat level:
-   - minion → lower than a new player
-   - elite → comparable to the player at that act
-   - boss → higher base stats
-3. Enemies have a **deck of ~6 cards** using the player's card kinds:
-   attack, defend/block, smash, counter, sweep, cast. Cards cost SP/MP exactly as
-   player cards do (`applyActionCosts`, stance discounts, Reaction tag, output bonus).
+   player's derived-stat rules — no separate formula.
+2. Tier sets stat level: minion lower than a new player; elite comparable to the
+   player at that act; boss higher base stats.
+3. Enemies have a **deck** of the player's card kinds (attack, defend/block, smash,
+   counter, sweep, cast). **Size varies per enemy** (typical 6; fewer or more as the
+   enemy needs). Cards cost SP/MP exactly as player cards do (stance discounts,
+   Reaction tag, output bonus).
 4. **Shuffle and draw like the player**: draw pile → hand → play → discard → reshuffle.
-5. Enemy plays are visible: planned cards show as intents (SPEC §4.11 preview).
-6. Healing costs 2–3 SP/MP (heal ≤5 → 2, heal ≥6 → 3) unless the card authors its own cost.
-7. Gear and enemy relics add HP (and other stats) on top, like player equipment/relics.
+5. Planned plays are visible as intents (SPEC §4.11 preview).
+6. Healing costs 2–3 SP/MP (heal ≤5 → 2, ≥6 → 3) unless the card authors its own cost.
+7. Gear and enemy relics add HP and other stats on top, like player equipment/relics.
 8. Most minions land at **2 SP**.
+9. **JSON-configurable and modular**: every number above is module settings or pack data;
+   nothing tuned in JS. Disabling the module falls back to the legacy `moves` picker.
 
-Related decisions from the same session (core-0.8.0-feedback.md follow-up):
-breaking hit takes full damage; stagger = −1 SP next turn + Vulnerable 1
-(+25% damage taken) — now applies to enemies' real SP pool; rounding down.
+Related decisions from the same session: breaking hit takes full damage;
+stagger = −1 SP next turn + Vulnerable 1 (+25% damage taken), now applied to the
+enemy's real SP pool; rounding down.
 
-## Stat model
+## Module: `engine/modules/enemies/`
 
-Enemy stats = player rules + a **tier profile** (new, content-owned):
-
-```js
-// src/content/enemyTiers.js (new)
-export const ENEMY_TIERS = {
-  minion: { attributeBudget: [8, 12],  bases: { hp: -36, stamina: -1, mana: -1, draw: -1, handSize: -3 } },
-  elite:  { attributeBudget: [14, 18], bases: {} },
-  boss:   { attributeBudget: [20, 26], bases: { hp: +40, stamina: +1, mana: +1 } },
-};
+```
+module.json              id ashen.enemies@1, requires stats, cards, resources, intent
+settings.schema.json
+defaults.json            tier profiles, deck rules, heal-cost rule, AI weights
+state.schema.json        per-enemy draw/hand/discard/exhaust piles, sp, mp
+rules.json               turn order: refill → draw → plan → (enemy phase) play → discard
+cases.json               behaviour cases (draw/reshuffle, affordability, heal cost, stagger)
+guide.md
 ```
 
-- `bases` offsets each rule row's `base` (player HP base 51 → minion 15 + CON).
-- Each enemy authors `attributes` (sum inside its tier's budget); validator enforces.
-- Level growth uses the same `perLevel` terms (enemy `levelProfile`).
-- Gear/relics resolve through the player's modifier path (`resolveRelicModifiers`,
-  equipment pool bonuses) so one code path derives both.
-- Tier comes from `enemyTier()` (`src/model/encounterTier.js`); an explicit `tier` field may override.
-- Targets (tests hold these): minion SP 2 (most), elite SP 3, boss SP 4; minion HP within ±10% of today's authored range.
+`defaults.json` (all overridable from `game.json` / bundle):
 
-## Deck model
-
-```js
-// per enemy, replaces `moves`
-deck: ['soldierSlash', 'soldierSlash', 'soldierGuard', 'soldierSmash', 'soldierBrace', 'warcry'],
-gear: ['rustedMail'],   // optional
-relics: [],             // optional, enemy relic registry
-firstCard: 'warcry',    // optional opener (replaces firstMove)
+```json
+{
+  "tiers": {
+    "minion": { "attributeBudget": [8, 12],  "ruleBaseOffsets": { "hp": -36, "stamina": -1, "mana": -1, "draw": -1, "handSize": -3 } },
+    "elite":  { "attributeBudget": [14, 18], "ruleBaseOffsets": {} },
+    "boss":   { "attributeBudget": [20, 26], "ruleBaseOffsets": { "hp": 40, "stamina": 1, "mana": 1 } }
+  },
+  "deck": { "min": 3, "max": 15, "typical": 6, "reshuffle": "whenEmpty" },
+  "healCost": { "resource": "auto", "thresholds": [ { "upTo": 5, "cost": 2 }, { "from": 6, "cost": 3 } ] },
+  "ai": { "lowHpDefendBias": 1.5, "lowHpThreshold": 0.35, "smashIntoBlockBias": 1.3, "healMissingHpBias": 1.0 },
+  "fallback": "legacyMoves"
+}
 ```
 
-- Enemy cards live in the card registry (new `src/content/cards/enemies.js`), owner `enemy`,
-  same schema as player cards; never offered as rewards.
-- Turn: refill SP/MP → draw to hand → AI plans plays within SP/MP → intents show
-  the plan → plays resolve in the enemy phase → discard → reshuffle when empty.
-- AI: score each affordable card (damage/defense/heal value × situational weights:
-  low HP → defend/heal, player block high → smash, etc.); keep it deterministic
-  from the `enemyAI` RNG stream. Reuse `extendEnemyQueue` budget logic, drawing
-  candidates from the hand instead of `def.moves`.
+- `ruleBaseOffsets` shift each derived-stat row's `base` (player HP base 51 → minion 15 + CON).
+- Tier from `enemyTier()` (`src/model/encounterTier.js`); an enemy's own `tier` overrides.
+- Targets held by cases/tests: most minions SP 2, elites 3, bosses 4; minion HP within ±10% of today.
+
+## Pack data: `games/ashenspire/packs/core/`
+
+- `enemies.json` — one row per enemy:
+  ```json
+  { "id": "wanderingSoldier", "tier": "minion",
+    "attributes": { "strength": 3, "dexterity": 3, "constitution": 0, "wisdom": 1, "intelligence": 1 },
+    "deck": ["soldierSlash", "soldierSlash", "soldierGuard", "soldierSmash", "soldierBrace", "warcry"],
+    "firstCard": "warcry", "gear": ["rustedMail"], "relics": [],
+    "art": "...", "size": "medium", "levelProfile": { "min": 1, "max": 4 } }
+  ```
+  `deck` length is free within the module's `deck.min`/`deck.max`.
+- `enemyCards.json` — enemy cards, same schema as `cards.json`, `owner: "enemy"`,
+  never offered as rewards. Can also reference shared player cards by id.
+- `enemyGear.json`, `enemyRelics.json` — same modifier vocabulary as player
+  equipment/relics (`self.maxHp=+4`, `self.maxStamina=+1`, …).
+- Validator: unknown card/gear/relic ids, deck size outside bounds, attribute sum
+  outside tier budget → refuse at build.
+
+## Engine
+
+- Turn: refill SP/MP → draw to hand → plan affordable plays (AI weights from
+  settings, deterministic `enemyAI` RNG) → intents → enemy phase plays → discard →
+  reshuffle when draw pile empty.
+- Reuse `extendEnemyQueue` budget logic with candidates = hand, priced by
+  `applyActionCosts` + heal-cost rule; MP and SP both tracked.
+- Stats via `deriveStat` with tier offsets; gear/relics through the player's
+  modifier resolution, so one path derives both.
 - Delayed/charging cards keep `delay` semantics.
+- Saves: piles on the enemy entity; reader accepts old `plannedMoves`/`moveId` mid-fight.
+- Module disabled → legacy `moves` picker unchanged.
 
 ## Conversion
 
-- ~19 enemies, ~60 moves → map each move to a card by intent/stance;
-  build 6-card decks preserving each enemy's identity (signature move kept, ×1).
-- Heal-riders (Drain, Golden Guard, Sap Mend…) become cast cards at 2–3 SP/MP.
-- Keep a compatibility reader for saves holding `plannedMoves`/`moveId` mid-fight.
+- ~19 enemies / ~60 moves in `src/content/enemies/act1-3.js` → `enemies.json` +
+  `enemyCards.json`; decks keep each enemy's identity (signature card ×1).
+- Heal-riders (Drain, Golden Guard, Sap Mend…) become cast cards at 2–3.
 
 ## UI
 
-- Enemy mini-HUD: SP and MP pips; Inspect shows deck, discard, hand count, gear, relics.
+- Enemy mini-HUD: SP and MP pips; Inspect shows deck/draw/discard counts, gear, relics.
 - Intent shows each planned card with its cost.
 
 ## Phases (one PR each, owner review before dev)
 
-1. Stat derivation: tier profiles, enemy attributes through `deriveStat`, gear/relic hooks. Tests.
-2. Enemy card registry + deck/draw/discard state on the enemy entity; snapshot/save.
-3. Planner on hand + SP/MP; heal cost rule; stagger hits enemy SP.
-4. Content conversion (all acts) + balance report regen.
+1. Module skeleton + settings/defaults + stat derivation (tiers, gear/relic hooks) + cases.
+2. Enemy card schema/registry, pack loaders + validator; deck/draw/discard state; save.
+3. Planner on hand + SP/MP; heal-cost rule; stagger hits enemy SP.
+4. Content conversion (all acts) to pack JSON; balance report regen.
 5. UI: pips, multi-card intents, Inspect deck view.
 
-## Files
+## Touch points
 
-- `src/content/derivedStats.js` (read), `src/content/enemyTiers.js` (new)
+- `src/content/derivedStats.js` (read), `src/model/derivedStats.js` `deriveStat`
 - `src/model/state.js` `createEnemyCombatEntity`, `src/model/actionCosts.js` `enemyPoolOf`
 - `src/engine/combat.js` `rollIntents`, `src/engine/combatRoundsAdapter.js` `extendEnemyQueue` / `takePlannedMove`
-- `src/content/enemies/act1-3.js`, `src/content/cards/enemies.js` (new)
-- `src/model/enemyMoveCards.js` (becomes enemy card view)
-- tests: `enemy-action-pool`, `action-costs-formula`, new `enemy-deck`, `enemy-tier-stats`
+- `src/model/enemyMoveCards.js` → enemy card view
+- `games/ashenspire/bundles/core/bundle.json`, resolver output `src/content/generated/gameProfiles.js` (generated; do not hand-edit)
+- tests: `enemy-action-pool`, `action-costs-formula`, new `enemy-deck`, `enemy-tier-stats`, module `cases.json`
