@@ -324,12 +324,9 @@ async function main() {
     const normalizeLines = (text) => text.replace(/\r\n?/g, '\n');
     const selectedArtifact = artifact ? normalizeLines(readFileSync(artifact, 'utf8')) : null;
     const ownershipKind = selectedArtifact ? 'artifact' : 'source';
-    const ui = selectedArtifact ?? normalizeLines(readFileSync(resolve(ROOT, 'styles/ui.css'), 'utf8'));
-    // Both seams this tool reads now live in the kit: the foot under Next is
-    // the ModalFoot (creation moved onto the page door) and the top row's
-    // buttons take their box from the IconButton atom. So the seam that used to
-    // sit in ui.css is read from kit.css in source mode and from the artifact —
-    // which inlines both — in artifact mode.
+    // Kit owns the visible Class-stage Next action's workspace control floor,
+    // shared HUD quick-access tile sizes, quick-nav rows and overview tabs.
+    // Read those same authored rules from the selected artifact when shipped.
     const kit = selectedArtifact ?? normalizeLines(readFileSync(resolve(ROOT, 'styles/kit.css'), 'utf8'));
     const assets = selectedArtifact ?? readFileSync(resolve(ROOT, 'src/ui/assets.js'), 'utf8');
     const enemyStage = selectedArtifact ?? readFileSync(resolve(ROOT, 'src/ui/enemyExpansionStage.js'), 'utf8');
