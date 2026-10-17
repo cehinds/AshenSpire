@@ -19,7 +19,9 @@ try{
   assert.equal(await page.locator('#actor option').count(),13);
   assert.equal(await page.locator('#stance option').count(),9);
   assert.equal(await page.locator('#grid .card').count(),10);
-  assert.equal(await page.locator('#grid .missing').count(),10);
+  assert.equal(await page.locator('#grid img').count(),10);
+  await page.waitForFunction(()=>[...document.querySelectorAll('#grid img')].every(img=>img.complete&&img.naturalWidth===512));
+  assert.match(await page.locator('#notice').innerText(),/provisional draft design: v01/);
   await page.selectOption('#stance','evade');
   assert.equal(await page.locator('#grid .missing').count(),10);
   await page.locator('[data-pick="v01"]').check();await page.locator('[data-pick="v02"]').check();
@@ -37,10 +39,14 @@ try{
   assert.equal(await page.locator('#grid img').count(),0,'Missing rear art must not receive front fallback');
   const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);
   assert.equal(overflow,false,'No horizontal viewport overflow');
+  await page.selectOption('#actor','wyrmAspirant');await page.selectOption('#stance','neutral');
+  await page.locator('#anchors').check();
+  await page.locator('[data-pick="v01"]').check();await page.locator('[data-pick="v02"]').check();
+  await page.waitForFunction(()=>[...document.querySelectorAll('#grid img,#compare img')].every(img=>img.complete&&img.naturalWidth===512));
   await page.screenshot({path:output+'/'+name+'.png',fullPage:true});
   assert.deepEqual(errors,[]);
   records.push({name,width,height,url,status:'passed'});await page.close();
  }
- await writeFile(output+'/capture-record.json',JSON.stringify({sourceCommit:process.env.GITHUB_SHA,date:new Date().toISOString(),note:'Real browser captures of production proposal gallery missing-art state. No generated-art coverage claim.',records},null,2));
+ await writeFile(output+'/capture-record.json',JSON.stringify({sourceCommit:process.env.GITHUB_SHA,date:new Date().toISOString(),note:'Real browser captures of production gallery with ten normalized Wyrm Aspirant neutral rear designs; other stance and actor coverage remains pending.',records},null,2));
  console.log(JSON.stringify(records));
 }finally{await browser.close();server.close();}

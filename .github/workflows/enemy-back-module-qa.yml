@@ -18,10 +18,13 @@ jobs:
           sparse-checkout: |
             pose-studio/enemy-back-proposals
             src/ui/assetmap.js
+            art/enemy-back-proposals/wyrmAspirant
           sparse-checkout-cone-mode: false
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Verify normalized art hashes
+        run: node pose-studio/enemy-back-proposals/integrate-normalized.mjs wyrmAspirant
       - name: Model contract
         run: node --test pose-studio/enemy-back-proposals/model.test.mjs
       - name: Install isolated browser tooling

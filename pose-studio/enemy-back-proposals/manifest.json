@@ -8,10 +8,501 @@
       "id": "wyrmAspirant",
       "name": "Wyrm Aspirant",
       "role": "elite",
-      "defaultStance": null,
+      "defaultStance": "neutral",
       "reference": null,
-      "proposals": [],
-      "provisionalDefaultVersion": null
+      "proposals": [
+        {
+          "id": "v01",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "a31aa75b87658cbf642f2665663dfd6d8544746cd238ee522dff2de8e7a1074e",
+            "prompt": "Preserve the Wyrm Aspirant's red/russet reptilian anatomy, horned head, bronze/dark armor, curved right-hand blade, ragged waistcloth, claws and tail. Reconstruct the back at the player reference's rear three-quarter camera, facing away upper-right. Ten distinct neutral combat-ready back silhouette/armor overlap/tail-rest interpretations; consistent scale and palette; transparent 5x2 sheet without text or scenery.",
+            "promptKind": "summary",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "ref": "hd-assets-v23",
+                "path": "hd/assets/enemy-poses/wyrmAspirant_idle.webp",
+                "blob": "2787edb55ab531875b9c449ead8171f67ea0e424"
+              },
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "ref": "hd-assets-v23",
+                "path": "hd/assets/animations/player-attacks/reaver/sword-shield/anticipation.webp",
+                "blob": "a99cd631ccbbe30b05b32f460179e00e0dc898d5"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/wyrmAspirant/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/wyrmAspirant/v01.png",
+                  "sha256": "ea5beb41f4e0d63f182a5393fa3ed124ed73eab772f33a152094debbca52738d",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v02",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "a31aa75b87658cbf642f2665663dfd6d8544746cd238ee522dff2de8e7a1074e",
+            "prompt": "Preserve the Wyrm Aspirant's red/russet reptilian anatomy, horned head, bronze/dark armor, curved right-hand blade, ragged waistcloth, claws and tail. Reconstruct the back at the player reference's rear three-quarter camera, facing away upper-right. Ten distinct neutral combat-ready back silhouette/armor overlap/tail-rest interpretations; consistent scale and palette; transparent 5x2 sheet without text or scenery.",
+            "promptKind": "summary",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "ref": "hd-assets-v23",
+                "path": "hd/assets/enemy-poses/wyrmAspirant_idle.webp",
+                "blob": "2787edb55ab531875b9c449ead8171f67ea0e424"
+              },
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "ref": "hd-assets-v23",
+                "path": "hd/assets/animations/player-attacks/reaver/sword-shield/anticipation.webp",
+                "blob": "a99cd631ccbbe30b05b32f460179e00e0dc898d5"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/wyrmAspirant/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/wyrmAspirant/v02.png",
+                  "sha256": "198129cd9d308c83f8ae3560ef1801c73f126d78c223b4e2108afbac2c6ecba1",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v03",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "a31aa75b87658cbf642f2665663dfd6d8544746cd238ee522dff2de8e7a1074e",
+            "prompt": "Preserve the Wyrm Aspirant's red/russet reptilian anatomy, horned head, bronze/dark armor, curved right-hand blade, ragged waistcloth, claws and tail. Reconstruct the back at the player reference's rear three-quarter camera, facing away upper-right. Ten distinct neutral combat-ready back silhouette/armor overlap/tail-rest interpretations; consistent scale and palette; transparent 5x2 sheet without text or scenery.",
+            "promptKind": "summary",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "ref": "hd-assets-v23",
+                "path": "hd/assets/enemy-poses/wyrmAspirant_idle.webp",
+                "blob": "2787edb55ab531875b9c449ead8171f67ea0e424"
+              },
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "ref": "hd-assets-v23",
+                "path": "hd/assets/animations/player-attacks/reaver/sword-shield/anticipation.webp",
+                "blob": "a99cd631ccbbe30b05b32f460179e00e0dc898d5"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/wyrmAspirant/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/wyrmAspirant/v03.png",
+                  "sha256": "fb7dce4c258b2c050fe65ee1350bf8e4b05a8bea8cf20ecac8728ab1477d64ad",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v04",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "a31aa75b87658cbf642f2665663dfd6d8544746cd238ee522dff2de8e7a1074e",
+            "prompt": "Preserve the Wyrm Aspirant's red/russet reptilian anatomy, horned head, bronze/dark armor, curved right-hand blade, ragged waistcloth, claws and tail. Reconstruct the back at the player reference's rear three-quarter camera, facing away upper-right. Ten distinct neutral combat-ready back silhouette/armor overlap/tail-rest interpretations; consistent scale and palette; transparent 5x2 sheet without text or scenery.",
+            "promptKind": "summary",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "ref": "hd-assets-v23",
+                "path": "hd/assets/enemy-poses/wyrmAspirant_idle.webp",
+                "blob": "2787edb55ab531875b9c449ead8171f67ea0e424"
+              },
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "ref": "hd-assets-v23",
+                "path": "hd/assets/animations/player-attacks/reaver/sword-shield/anticipation.webp",
+                "blob": "a99cd631ccbbe30b05b32f460179e00e0dc898d5"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/wyrmAspirant/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/wyrmAspirant/v04.png",
+                  "sha256": "1a3f30fa7dc3b5985b72f0961e49f659ea6b7863571d14ededb3c656495dd159",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v05",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "a31aa75b87658cbf642f2665663dfd6d8544746cd238ee522dff2de8e7a1074e",
+            "prompt": "Preserve the Wyrm Aspirant's red/russet reptilian anatomy, horned head, bronze/dark armor, curved right-hand blade, ragged waistcloth, claws and tail. Reconstruct the back at the player reference's rear three-quarter camera, facing away upper-right. Ten distinct neutral combat-ready back silhouette/armor overlap/tail-rest interpretations; consistent scale and palette; transparent 5x2 sheet without text or scenery.",
+            "promptKind": "summary",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "ref": "hd-assets-v23",
+                "path": "hd/assets/enemy-poses/wyrmAspirant_idle.webp",
+                "blob": "2787edb55ab531875b9c449ead8171f67ea0e424"
+              },
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "ref": "hd-assets-v23",
+                "path": "hd/assets/animations/player-attacks/reaver/sword-shield/anticipation.webp",
+                "blob": "a99cd631ccbbe30b05b32f460179e00e0dc898d5"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/wyrmAspirant/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/wyrmAspirant/v05.png",
+                  "sha256": "c2023b32d1b072ad2e9c9e9a836b7447956947bf5424d3c3969511526365608e",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v06",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "a31aa75b87658cbf642f2665663dfd6d8544746cd238ee522dff2de8e7a1074e",
+            "prompt": "Preserve the Wyrm Aspirant's red/russet reptilian anatomy, horned head, bronze/dark armor, curved right-hand blade, ragged waistcloth, claws and tail. Reconstruct the back at the player reference's rear three-quarter camera, facing away upper-right. Ten distinct neutral combat-ready back silhouette/armor overlap/tail-rest interpretations; consistent scale and palette; transparent 5x2 sheet without text or scenery.",
+            "promptKind": "summary",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "ref": "hd-assets-v23",
+                "path": "hd/assets/enemy-poses/wyrmAspirant_idle.webp",
+                "blob": "2787edb55ab531875b9c449ead8171f67ea0e424"
+              },
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "ref": "hd-assets-v23",
+                "path": "hd/assets/animations/player-attacks/reaver/sword-shield/anticipation.webp",
+                "blob": "a99cd631ccbbe30b05b32f460179e00e0dc898d5"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/wyrmAspirant/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/wyrmAspirant/v06.png",
+                  "sha256": "214ce7eed1a31a2500f62d99cbc81f48befdfcc91c8549c359105a4c39c66f2d",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v07",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "a31aa75b87658cbf642f2665663dfd6d8544746cd238ee522dff2de8e7a1074e",
+            "prompt": "Preserve the Wyrm Aspirant's red/russet reptilian anatomy, horned head, bronze/dark armor, curved right-hand blade, ragged waistcloth, claws and tail. Reconstruct the back at the player reference's rear three-quarter camera, facing away upper-right. Ten distinct neutral combat-ready back silhouette/armor overlap/tail-rest interpretations; consistent scale and palette; transparent 5x2 sheet without text or scenery.",
+            "promptKind": "summary",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "ref": "hd-assets-v23",
+                "path": "hd/assets/enemy-poses/wyrmAspirant_idle.webp",
+                "blob": "2787edb55ab531875b9c449ead8171f67ea0e424"
+              },
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "ref": "hd-assets-v23",
+                "path": "hd/assets/animations/player-attacks/reaver/sword-shield/anticipation.webp",
+                "blob": "a99cd631ccbbe30b05b32f460179e00e0dc898d5"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/wyrmAspirant/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/wyrmAspirant/v07.png",
+                  "sha256": "686c6e63a920e637fd45999873f34161836dc8a114d24fcedcd0d661b0ec92a2",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v08",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "a31aa75b87658cbf642f2665663dfd6d8544746cd238ee522dff2de8e7a1074e",
+            "prompt": "Preserve the Wyrm Aspirant's red/russet reptilian anatomy, horned head, bronze/dark armor, curved right-hand blade, ragged waistcloth, claws and tail. Reconstruct the back at the player reference's rear three-quarter camera, facing away upper-right. Ten distinct neutral combat-ready back silhouette/armor overlap/tail-rest interpretations; consistent scale and palette; transparent 5x2 sheet without text or scenery.",
+            "promptKind": "summary",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "ref": "hd-assets-v23",
+                "path": "hd/assets/enemy-poses/wyrmAspirant_idle.webp",
+                "blob": "2787edb55ab531875b9c449ead8171f67ea0e424"
+              },
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "ref": "hd-assets-v23",
+                "path": "hd/assets/animations/player-attacks/reaver/sword-shield/anticipation.webp",
+                "blob": "a99cd631ccbbe30b05b32f460179e00e0dc898d5"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/wyrmAspirant/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/wyrmAspirant/v08.png",
+                  "sha256": "8c0d0eb883cbea130e9db99cb909184b199e77ef7b890dfeb33ddfa887bdb685",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v09",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "a31aa75b87658cbf642f2665663dfd6d8544746cd238ee522dff2de8e7a1074e",
+            "prompt": "Preserve the Wyrm Aspirant's red/russet reptilian anatomy, horned head, bronze/dark armor, curved right-hand blade, ragged waistcloth, claws and tail. Reconstruct the back at the player reference's rear three-quarter camera, facing away upper-right. Ten distinct neutral combat-ready back silhouette/armor overlap/tail-rest interpretations; consistent scale and palette; transparent 5x2 sheet without text or scenery.",
+            "promptKind": "summary",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "ref": "hd-assets-v23",
+                "path": "hd/assets/enemy-poses/wyrmAspirant_idle.webp",
+                "blob": "2787edb55ab531875b9c449ead8171f67ea0e424"
+              },
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "ref": "hd-assets-v23",
+                "path": "hd/assets/animations/player-attacks/reaver/sword-shield/anticipation.webp",
+                "blob": "a99cd631ccbbe30b05b32f460179e00e0dc898d5"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/wyrmAspirant/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/wyrmAspirant/v09.png",
+                  "sha256": "7ed1dceb33cb2b41bd4f94a6a7cdb30c38418ad44069acb6095e57e17ac121b2",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v10",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "a31aa75b87658cbf642f2665663dfd6d8544746cd238ee522dff2de8e7a1074e",
+            "prompt": "Preserve the Wyrm Aspirant's red/russet reptilian anatomy, horned head, bronze/dark armor, curved right-hand blade, ragged waistcloth, claws and tail. Reconstruct the back at the player reference's rear three-quarter camera, facing away upper-right. Ten distinct neutral combat-ready back silhouette/armor overlap/tail-rest interpretations; consistent scale and palette; transparent 5x2 sheet without text or scenery.",
+            "promptKind": "summary",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "ref": "hd-assets-v23",
+                "path": "hd/assets/enemy-poses/wyrmAspirant_idle.webp",
+                "blob": "2787edb55ab531875b9c449ead8171f67ea0e424"
+              },
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "ref": "hd-assets-v23",
+                "path": "hd/assets/animations/player-attacks/reaver/sword-shield/anticipation.webp",
+                "blob": "a99cd631ccbbe30b05b32f460179e00e0dc898d5"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/wyrmAspirant/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/wyrmAspirant/v10.png",
+                  "sha256": "f215277b4dcbba050f9b03824a906fe94d516963d83f629214ea7a9ccaa8260c",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "provisionalDefaultVersion": "v01"
     },
     {
       "id": "courtDuelist",
