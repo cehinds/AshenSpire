@@ -92,14 +92,15 @@ function assertContract(op, before, after, events, instanceId, effect) {
     case 'gainEnergy': assert.ok(after.energy > before.energy, 'energy gain survives card payment'); assert.ok(ownEvents.some(e => e.type === 'energyGained' && e.amount > 0)); break;
     case 'addCard': assert.ok(after.hand.includes('rogueShiv'), 'added card reaches its authored hand pile'); break;
     case 'grantRollMode': assert.equal(after.nextEvadeMode?.advantage, true); assert.equal(after.nextEvadeMode?.disadvantage, false); break;
-    // Every authored restoreMana card funds one point from its own payment, so
-    // the actual-pool effect is a valid neutral after payment, not a positive gain.
-    case 'restoreMana':
-      assert.equal(effect.amount, effect.funded, 'authored recovery is fully funded by this card');
-      assert.ok(before.mana < 50, 'Mana pool has room, so zero restoration is not a full-pool clamp');
-      assert.equal(after.mana, before.mana, 'funded recovery leaves the live pool unchanged');
-      assert.ok(matching.some(e => e.amount === 0), 'restoreMana emitted its actual zero-delta receipt');
+    case 'restoreMana': {
+      const paid = ownEvents.find(e => e.type === 'cardPlayed');
+      assert.ok(paid && Number.isFinite(paid.manaSpent), 'recovery has an actual paid Mana receipt');
+      assert.ok(before.mana < 50, 'Mana pool has room for authored restoration');
+      const restored = effect.amount - (effect.funded || 0);
+      assert.equal(after.mana, before.mana - paid.manaSpent + restored, 'recovery reconciles upfront payment and authored restoration');
+      assert.ok(matching.some(e => e.amount === restored), 'restoreMana emits the exact restored amount');
       break;
+    }
     case 'gainWard': assert.ok(after.ward + after.barrier > before.ward + before.barrier, 'ward effect adds persistent defense'); assert.ok(events.some(e => e.type === 'persistentWardChanged' || e.type === 'barrierGained')); break;
     case 'discard': assert.ok(after.discard.includes('audit:discard-candidate'), 'authored discard moves a real hand card'); assert.ok(events.some(e => e.type === 'cardDiscarded' && e.cardInstanceId === 'audit:discard-candidate')); break;
     case 'grantCardCharge': assert.notDeepEqual(after, before, 'authored charge creates a persistent ability rider'); assert.ok(Object.keys(after).length); break;
@@ -184,7 +185,7 @@ export async function auditCardEffectContracts({ mode = 'native' } = {}) {
       }
       const after = stateFor(op, combat, cardId, eff);
       assertContract(op, before, after, events, inst.instanceId, eff);
-      (op === 'restoreMana' ? report.neutral : report.contracts).push({ op, cardId, variant: variant.key, result: op === 'restoreMana' ? 'funded-neutral-after-payment' : 'positive', event: eventFor[op], condition: eff.if || null, ...(op === 'restoreMana' ? { authoredAmount: eff.amount, funded: eff.funded, beforeMana: before.mana, afterMana: after.mana, maxMana: combat.player.maxMana, paidReceipt: receipt[0] } : {}) });
+      report.contracts.push({ op, cardId, variant: variant.key, result: 'positive', event: eventFor[op], condition: eff.if || null, ...(op === 'restoreMana' ? { authoredAmount: eff.amount, funded: eff.funded, beforeMana: before.mana, afterMana: after.mana, maxMana: combat.player.maxMana, paidReceipt: receipt[0] } : {}) });
     }
     assert.ok(report.contracts.some(row => row.op === op) || report.neutral.some(row => row.op === op), `${op}: no real resolved representative was exercised`);
   }
