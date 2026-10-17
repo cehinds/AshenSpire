@@ -1,6 +1,6 @@
 {
   "id": "thornMatriarch",
-  "status": "draft-proposals-not-approved",
+  "status": "draft-proposals",
   "count": 10,
   "layout": {
     "columns": 5,
@@ -22,5 +22,22 @@
       "role": "camera only"
     }
   ],
-  "visualQA": "Ten rear three-quarter full figures observed with thorn crown, roots and entire red-gem staff. Draft pending normalized frame QA and art approval."
+  "visualQA": "Ten rear three-quarter full figures observed with thorn crown, roots and entire red-gem staff. Draft pending normalized frame QA and art approval.",
+  "actorId": "thornMatriarch",
+  "master": "proposal-sheet.png",
+  "sourceReferences": [
+    {
+      "repository": "cehinds/AshenSpire-art",
+      "path": "hd/assets/enemy-poses/expansion/thornMatriarch/idle.webp",
+      "ref": "hd-assets-v23",
+      "blob": "5751198871bd198d237587f94d11f37760ddac44"
+    },
+    {
+      "repository": "cehinds/AshenSpire",
+      "path": "assets-display/alternative/reaver-default.webp",
+      "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+      "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+      "role": "camera only"
+    }
+  ]
 }
