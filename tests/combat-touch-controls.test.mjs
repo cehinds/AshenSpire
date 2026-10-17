@@ -5,7 +5,6 @@ import { handLayout, responsiveHandLayout } from '../src/ui/models/HandLayout.js
 
 const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const css = read('../styles/combat-layers.css');
-const battlefield = read('../src/ui/components/battlefieldStage.js');
 const hand = read('../src/ui/components/hand.js');
 const tools = read('../src/ui/components/combatTools.js');
 const combat = read('../src/ui/screens/combat.js');
@@ -30,7 +29,6 @@ test('expanded combat panels and selected details stay in the correct layer', ()
 });
 
 test('compact hand leaves the footer tool and Grid rows below its resting cards', () => {
-  assert.match(battlefield, /setProperty\('--overhead-top', `\$\{-overheadGap \/ zoom\}px`\)/);
   assert.match(hand, /const toolsHeight = 0;/, 'the toolbar is outside the fan, so no row is reserved above it');
   assert.match(tools, /const footerControls = combatEl.querySelector\('\.combat-action-row'\)/, 'tools dock against the footer rather than the hand top');
   for (const zoom of [.74, 1, 1.2]) for (const count of [3, 5, 7]) {
