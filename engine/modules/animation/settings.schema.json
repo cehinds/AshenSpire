@@ -9,7 +9,7 @@
     },
     "enabled": {
       "type": "boolean",
-      "description": "Enable authored figure clips, action choreography and Reading Desk playback; combat timing and foundation feedback are preserved."
+      "description": "Enable solo-combat authored figure clips, action choreography and Reading Desk playback; combat timing and foundation feedback are preserved."
     }
   },
   "required": [

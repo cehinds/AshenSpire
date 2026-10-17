@@ -5,6 +5,7 @@ import { runInNewContext } from 'node:vm';
 import { playTimeline, setAnimSpeed, setBeatOrder, ANIM_SPEEDS } from '../src/ui/fx.js';
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
+import { reaverAttackTiming } from '../src/ui/reaverAttack.js';
 import { selectedWeaponSequence, selectedWeaponSequenceTiming } from '../src/model/selectedWeaponSequences.js';
 
 // Execute the shipped screen handler with instrumented presentation services.
@@ -103,4 +104,32 @@ test('disabled FX fallback cannot start CSS/action poses; defeated drawing remai
     assert.ok(!trace.some(row => row.what.startsWith('actor:') || row.what === 'target:hit'));
     timeline(t, false, { cancel: true });
   } finally { setAnimSpeed('normal'); setBeatOrder('sequential'); }
+});
+
+
+test('the specialized Reaver renderer honors module off while returning its original timing handle', () => {
+  const start = screen.indexOf('    animateActor: (beat, actorEl, speed) => {');
+  const finish = screen.indexOf('\n    },\n  };', start);
+  assert.ok(start > 0 && finish > start);
+  const actorSource = screen.slice(start, finish + 6).trim().replace(/^animateActor: /, '').replace(/,$/, '');
+  withKitDom(dom => {
+    for (const enabled of [true, false]) {
+      for (const speed of [ANIM_SPEEDS.normal, ANIM_SPEEDS.slow, ANIM_SPEEDS.instant]) {
+        const actor = dom.document.createElement('div'), calls = [];
+        const animate = runInNewContext('(' + actorSource + ')', {
+          fxCtx: { figureAnimations: enabled }, run: { class: 'reaver' }, combat: {}, registries: { cards: { get() {} } },
+          disp: { hand: [] }, findInst() {}, resolvePlayedCombatCard: () => null, selectedProfile: () => null,
+          stageFor: () => null, resolveActionAnimation: () => ({ family: 'slash', motion: 'lunge' }),
+          figureSpec: () => ({}), isReaverAttackEligible: () => true, spritesAreEnabled: () => true, reaverAttackTiming,
+          playReaverAttack: (node, timing) => { calls.push(node); return { ...timing, cancel() {} }; },
+        });
+        const result = animate({ actorId: 'player', kind: 'attack', events: [{ type: 'cardPlayed', cardId: 'strike', cardInstanceId: 'one' }] }, actor, speed);
+        const timing = reaverAttackTiming(speed);
+        assert.equal(result.totalMs, timing.totalMs); assert.equal(result.impactMs, timing.impactMs);
+        assert.equal(result.frameMs, timing.frameMs); assert.equal(typeof result.cancel, 'function');
+        result.cancel();
+        assert.equal(calls.length, enabled ? 1 : 0, 'off never enters the renderer that adds Reaver sequence DOM/classes');
+      }
+    }
+  });
 });

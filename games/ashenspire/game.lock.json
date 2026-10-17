@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:d0c4dbf781983cc9d57d3f51902c04b537d691159636a3dcc9ecc4517c8d7613",
+      "hash": "sha256:48e7c90cce1b54f573afb2d8cbb4035bb1f0b24f97b33ff2c2480ab1b2366827",
       "formatVersion": 1,
       "core": "ashen.core@1.0.0",
       "artifacts": [
@@ -40,13 +40,13 @@
           "path": "engine/modules/animation/module.json",
           "id": "animation",
           "version": "1.0.0",
-          "hash": "sha256:79e8e9bc51d549f17f6d719e1cb858028cc785f463ac6cc9985d95a87ca31e06"
+          "hash": "sha256:6bfd1bcc1e1cd2b0355a2134a428ff7f3d947cd3b8867a9f5f9f4bb0dd097999"
         },
         {
           "path": "engine/modules/animation/settings.schema.json",
           "id": "animation",
           "version": "1.0.0",
-          "hash": "sha256:cd31a5558d31f26c52ec26543a338758a0d290ef9bd39fd80249605ac3473dee"
+          "hash": "sha256:fe539a26c12f977e4c2c3c0ef4bd31e1dae836731ba1b14023d3b491be98e693"
         },
         {
           "path": "engine/modules/art/defaults.json",
@@ -490,15 +490,15 @@
           "id": "ashen.source-runtime",
           "version": "1.0.0",
           "path": "src/** (excluding generated gameProfiles/changelog)",
-          "hash": "sha256:008a8b85699bd955b5ecdd545d58c1f34ccd0e7d543cd4c03e15c18878804c98"
+          "hash": "sha256:9382ded067cbd8094741dbe21ab2e9bc557578fbe22fc8a2bb1ff9ee42641719"
         }
       ],
       "runtimeABI": "ashen.runtime@1",
       "numericPolicy": "ashen.adapter-numbers@1",
-      "runtimeHash": "sha256:d2a5c2e44488179290aad7fb64e725b9aee7cd9f247ba9a805d43e050251ee21"
+      "runtimeHash": "sha256:a4bc42f82cc83d3381cce6a723c604f4626d1ab75e2fd49e9dfc869338abeaea"
     },
     "core": {
-      "hash": "sha256:d0c4dbf781983cc9d57d3f51902c04b537d691159636a3dcc9ecc4517c8d7613",
+      "hash": "sha256:48e7c90cce1b54f573afb2d8cbb4035bb1f0b24f97b33ff2c2480ab1b2366827",
       "formatVersion": 1,
       "core": "ashen.core@1.0.0",
       "artifacts": [
@@ -536,13 +536,13 @@
           "path": "engine/modules/animation/module.json",
           "id": "animation",
           "version": "1.0.0",
-          "hash": "sha256:79e8e9bc51d549f17f6d719e1cb858028cc785f463ac6cc9985d95a87ca31e06"
+          "hash": "sha256:6bfd1bcc1e1cd2b0355a2134a428ff7f3d947cd3b8867a9f5f9f4bb0dd097999"
         },
         {
           "path": "engine/modules/animation/settings.schema.json",
           "id": "animation",
           "version": "1.0.0",
-          "hash": "sha256:cd31a5558d31f26c52ec26543a338758a0d290ef9bd39fd80249605ac3473dee"
+          "hash": "sha256:fe539a26c12f977e4c2c3c0ef4bd31e1dae836731ba1b14023d3b491be98e693"
         },
         {
           "path": "engine/modules/art/defaults.json",
@@ -986,15 +986,15 @@
           "id": "ashen.source-runtime",
           "version": "1.0.0",
           "path": "src/** (excluding generated gameProfiles/changelog)",
-          "hash": "sha256:008a8b85699bd955b5ecdd545d58c1f34ccd0e7d543cd4c03e15c18878804c98"
+          "hash": "sha256:9382ded067cbd8094741dbe21ab2e9bc557578fbe22fc8a2bb1ff9ee42641719"
         }
       ],
       "runtimeABI": "ashen.runtime@1",
       "numericPolicy": "ashen.adapter-numbers@1",
-      "runtimeHash": "sha256:d2a5c2e44488179290aad7fb64e725b9aee7cd9f247ba9a805d43e050251ee21"
+      "runtimeHash": "sha256:a4bc42f82cc83d3381cce6a723c604f4626d1ab75e2fd49e9dfc869338abeaea"
     },
     "current": {
-      "hash": "sha256:e1c6a1eb5da049930842846c774140b94c9c4a5761524da5547658799a8719e8",
+      "hash": "sha256:eaacc0edda68ad530d96e236dc625ea7208290c49c09f038e5f6e8d371bc848f",
       "formatVersion": 1,
       "core": "ashen.current@1.0.0",
       "artifacts": [
@@ -1050,13 +1050,13 @@
           "path": "engine/modules/animation/module.json",
           "id": "animation",
           "version": "1.0.0",
-          "hash": "sha256:79e8e9bc51d549f17f6d719e1cb858028cc785f463ac6cc9985d95a87ca31e06"
+          "hash": "sha256:6bfd1bcc1e1cd2b0355a2134a428ff7f3d947cd3b8867a9f5f9f4bb0dd097999"
         },
         {
           "path": "engine/modules/animation/settings.schema.json",
           "id": "animation",
           "version": "1.0.0",
-          "hash": "sha256:cd31a5558d31f26c52ec26543a338758a0d290ef9bd39fd80249605ac3473dee"
+          "hash": "sha256:fe539a26c12f977e4c2c3c0ef4bd31e1dae836731ba1b14023d3b491be98e693"
         },
         {
           "path": "engine/modules/art/defaults.json",
@@ -1572,12 +1572,12 @@
           "id": "ashen.source-runtime",
           "version": "1.0.0",
           "path": "src/** (excluding generated gameProfiles/changelog)",
-          "hash": "sha256:008a8b85699bd955b5ecdd545d58c1f34ccd0e7d543cd4c03e15c18878804c98"
+          "hash": "sha256:9382ded067cbd8094741dbe21ab2e9bc557578fbe22fc8a2bb1ff9ee42641719"
         }
       ],
       "runtimeABI": "ashen.runtime@1",
       "numericPolicy": "ashen.adapter-numbers@1",
-      "runtimeHash": "sha256:d2a5c2e44488179290aad7fb64e725b9aee7cd9f247ba9a805d43e050251ee21"
+      "runtimeHash": "sha256:a4bc42f82cc83d3381cce6a723c604f4626d1ab75e2fd49e9dfc869338abeaea"
     }
   }
 }
