@@ -1,0 +1,47 @@
+name: Rear proposal bounds schema check
+on:
+  push:
+    branches: ['worker/EnemyBackSprites/bounds-schema']
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            tools/enemy-back-normalize.py
+            art/enemy-back-proposals
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify report contract and unchanged image bytes
+        run: |
+          python -m py_compile tools/enemy-back-normalize.py
+          python - <<'PY'
+          import glob,hashlib,json
+          from pathlib import Path
+          reports=glob.glob('art/enemy-back-proposals/*/normalized.json')
+          assert len(reports)==11, f'Expected reviewed 11 actors, got {len(reports)}'
+          for path in reports:
+              p=Path(path); root=p.parent; r=json.loads(p.read_text())
+              assert 'anchor' not in r['output'] and r['output']['boundsAnchor']==[256,464]
+              assert r['qa']['errors']==[] and len(r['variants'])==10
+              assert hashlib.sha256(Path(r['source']['path']).read_bytes()).hexdigest()==r['source']['sha256']
+              for v in r['variants']:
+                  assert 'anchor' not in v and v['boundsAnchor']==[256,464]
+                  assert hashlib.sha256((root/(v['id']+'.png')).read_bytes()).hexdigest()==v['sha256']
+              override=root/'foot-anchors.json'
+              if override.exists():
+                  f=json.loads(override.read_text())
+                  assert f['sourceSha256']==r['source']['sha256']
+                  for v in r['variants']:
+                      foot=f['overrides'][v['id']]
+                      assert foot['imageSha256']==v['sha256']
+                      assert all(0<=n<=512 for n in foot['feetPixels'])
+              print(root.name+': report contract, source/frame hashes and foot overrides PASS')
+          print('PASS: 11 actors / 110 unchanged frame files')
+          PY
