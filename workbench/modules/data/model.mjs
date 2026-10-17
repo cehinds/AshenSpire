@@ -350,13 +350,31 @@ function parseJson(text, { keyed = false } = {}) {
   return { columns, rows: list, meta: { format: 'json', arrayKey, keyed: keyedMeta, document, canonical: JSON.stringify(document), text } };
 }
 
+const RESERVED_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
+/** The reasons a keyed pack table cannot be written as an object: empty, duplicate or reserved ids. */
+export function keyProblems(rows) {
+  const problems = [], seen = new Set();
+  rows.forEach((row, i) => {
+    const id = String(row.id ?? '').trim();
+    const at = `row ${i + 1}`;
+    if (!id) problems.push(`${at}: the id is empty`);
+    else if (RESERVED_KEYS.has(id)) problems.push(`${at}: "${id}" is a reserved key and cannot be an id`);
+    else if (seen.has(id)) problems.push(`${at}: the id "${id}" is used by another row`);
+    seen.add(id);
+  });
+  return problems;
+}
+
 function serializeJson(meta, { rows }) {
   let out;
   if (meta.keyed) {
-    out = {};
+    const problems = keyProblems(rows);
+    if (problems.length) throw Object.assign(Error(`Cannot save: ${problems.join('; ')}`), { keyProblems: problems });
+    out = Object.create(null);
     for (const row of rows) {
       const { id, ...rest } = row;
-      out[String(id ?? '')] = meta.keyed.idInside ? { id, ...rest } : rest;
+      out[String(id)] = meta.keyed.idInside ? { id, ...rest } : rest;
     }
   } else out = meta.arrayKey === null ? rows : { ...meta.document, [meta.arrayKey]: rows };
   if (JSON.stringify(out) === meta.canonical) return meta.text;
@@ -392,7 +410,7 @@ export function serializeTable(table, doc = { columns: table.columns, rows: tabl
 
 /** True when the grid's document differs from the file as read. */
 export function isDirty(table, doc) {
-  return serializeTable(table, doc) !== table.text;
+  try { return serializeTable(table, doc) !== table.text; } catch (e) { if (e.keyProblems) return true; throw e; }
 }
 
 /**
@@ -464,12 +482,17 @@ export function savedTable(path, text, hash) {
  * table is not parsed is skipped and its path returned in skipped, not thrown on.
  */
 export function reviewableChanges(entries) {
-  const changes = [], skipped = [];
+  const changes = [], skipped = [], blocked = [];
   for (const entry of entries) {
-    const change = changeFor(entry.table, entry.doc);
+    let change;
+    try { change = changeFor(entry.table, entry.doc); } catch (e) {
+      if (!e.keyProblems) throw e;
+      blocked.push({ path: entry.path, message: e.message });
+      continue;
+    }
     if (change) changes.push(change); else skipped.push(entry.path);
   }
-  return { changes, skipped };
+  return { changes, skipped, blocked };
 }
 
 /**

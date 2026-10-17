@@ -196,7 +196,12 @@ export default {
     async function openReview() {
       const paths = changedPaths();
       if (!paths.length) { ctx.toast({ kind: 'info', title: 'Nothing to save', detail: 'No table has changes.' }); return; }
-      const { changes, skipped } = reviewableChanges(paths.map((p) => ({ path: p, table: state.parsed.get(p), doc: state.drafts.get(p) })));
+      const { changes, skipped, blocked } = reviewableChanges(paths.map((p) => ({ path: p, table: state.parsed.get(p), doc: state.drafts.get(p) })));
+      // A table that cannot be written (empty, duplicate or reserved ids) blocks the whole save until it is fixed.
+      if (blocked.length) {
+        ctx.toast({ kind: 'error', title: 'Cannot save: fix the ids first', detail: blocked.map((b) => `${b.path}: ${b.message}`).join(' | ') });
+        return;
+      }
       if (skipped.length) ctx.toast({ kind: 'warn', title: `Skipped ${skipped.length} table${skipped.length === 1 ? '' : 's'} with no parsed copy`, detail: `${skipped.join(', ')}. Reopen the table to read it again.` });
       if (!changes.length) return;
       const diffs = await Promise.all(changes.map((c) => ctx.api('files/diff', { path: c.path, text: c.text })
@@ -431,7 +436,10 @@ export default {
     });
     function exportTable() {
       const table = state.parsed.get(state.selected);
-      const text = serializeTable(table, table.format === 'view' ? undefined : state.grid.getData());
+      let text;
+      try { text = serializeTable(table, table.format === 'view' ? undefined : state.grid.getData()); } catch (e) {
+        return ctx.toast({ kind: 'error', title: 'Export refused', detail: e.message });
+      }
       const url = URL.createObjectURL(new Blob([text], { type: table.format === 'csv' ? 'text/csv' : 'application/json' }));
       const a = document.createElement('a');
       a.href = url; a.download = basename(state.selected); a.click();

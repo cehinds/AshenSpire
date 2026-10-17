@@ -81,3 +81,24 @@ test('any other pack or HUD JSON opens as a read-only view that is never dirty',
 test('content/source JSON keeps its array-only rule', () => {
   assert.throws(() => D.parseTable('content/source/x.json', '{"a":{"n":1}}'), /Not a table/);
 });
+
+test('a keyed pack table with an empty, duplicate or reserved id cannot be serialized, and Review blocks it', () => {
+  const path = 'games/ashenspire/packs/x/y.json';
+  const text = '{\n  "a": { "n": 1 },\n  "b": { "n": 2 }\n}\n';
+  const table = D.parseTable(path, text, { hash: 'h' });
+  assert.equal(table.format, 'json');
+  assert.equal(D.serializeTable(table), text, 'a clean table round-trips byte-identical');
+  const withId = (id) => ({ columns: table.columns, rows: [{ id: 'a', n: 1 }, { id, n: 2 }] });
+  for (const [bad, re] of [['a', /used by another row/], ['', /id is empty/], ['  ', /id is empty/], ['__proto__', /reserved/], ['constructor', /reserved/]]) {
+    const doc = withId(bad);
+    assert.throws(() => D.serializeTable(table, doc), re, JSON.stringify(bad));
+    assert.equal(D.isDirty(table, doc), true, 'a table that cannot be saved still shows as changed');
+    const out = D.reviewableChanges([{ path, table, doc }]);
+    assert.equal(out.changes.length, 0);
+    assert.equal(out.blocked.length, 1);
+    assert.match(out.blocked[0].message, re);
+  }
+  const ok = D.reviewableChanges([{ path, table, doc: withId('c') }]);
+  assert.equal(ok.blocked.length, 0);
+  assert.deepEqual(Object.keys(JSON.parse(ok.changes[0].text)), ['a', 'c']);
+});
