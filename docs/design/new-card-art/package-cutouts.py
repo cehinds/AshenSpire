@@ -18,6 +18,8 @@ if data['revision'] >= 6:
     files += [str(path.relative_to(root)) for path in (root/'source-art-v6').glob('*.png')]
 if data['revision'] >= 7:
     files += ['revision-v7.json']
+if data['revision'] >= 8:
+    files += ['revision-v8.json', 'silhouette-reference.png', 'sword-scepter-preview.png']
 with zipfile.ZipFile(out, 'w', zipfile.ZIP_DEFLATED) as archive:
     for name in files:
         archive.write(root / name, name)

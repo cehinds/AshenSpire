@@ -4,19 +4,19 @@
     "kind": "effect",
     "category": "Y",
     "digit": 0,
-    "name": "Blue ethereal sword blade",
+    "name": "Blue ethereal sword silhouette",
     "src": "cutouts/Y/effects/0.png",
     "mimeType": "image/png",
     "width": 512,
     "height": 512,
     "hasTransparency": true,
     "alphaBounds": [
-      36,
-      32,
-      473,
-      480
+      75,
+      33,
+      437,
+      478
     ],
-    "sha256": "5787401dddefb3de432be056e5556f4abe26eaddfe31855b9a203017f9524928",
+    "sha256": "6a8dd01223a7a4d7dabada8dacd2b1e696727e9d9fb7dd191ff19880dc812146",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -59,30 +59,31 @@
     ],
     "references": {
       "method": "image-edit-derived-variant",
-      "sourceReference": "source-art-v6/V-reference.png",
-      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
-      "sourceFile": "exec-9cd7eea3-4698-4da5-9e72-287753d2f4ec.png",
-      "sourceSha256": "43ae75c8ed1662ca946734ba5faa039f14def4fee72ba71ff54c85d9d389514e",
+      "sourceReference": "cutouts/O/objects/0.png",
+      "referenceSha256": "71b36ad4db7d946f02231c33594177a8950ca33e3ede94d9b42c16f4c6db4f88",
+      "sourceFile": "exec-2af7e2f4-3270-471f-98e6-a13202fbc847.png",
+      "sourceSha256": "999445446647ca93ed5e4233cd027c441abc5b37f165d6ad4f601822c7f8c800",
       "sourceCell": {
-        "x": 92,
-        "y": 90,
-        "width": 283,
-        "height": 289
+        "x": 143,
+        "y": 13,
+        "width": 698,
+        "height": 864
       },
       "extractionCrop": {
-        "x": 92,
-        "y": 90,
-        "width": 283,
-        "height": 289
+        "x": 143,
+        "y": 13,
+        "width": 698,
+        "height": 864
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
-      "baseAssetId": "V.object.0",
-      "revisionIntent": "Broad blade/head wraps around the stone; proportions follow the user-annotated outline, without a long spectral connector."
+      "baseAssetId": "O.object.0",
+      "revisionIntent": "Reference-model silhouette with transparent core and flowing energy; full contour continues through the grip and pommel around the physical scepter.",
+      "baseAssetSha256": "71b36ad4db7d946f02231c33594177a8950ca33e3ede94d9b42c16f4c6db4f88"
     },
     "anchors": {
       "emissionRoot": {
-        "x": 0.23,
-        "y": 0.79
+        "x": 0.355,
+        "y": 0.668
       }
     },
     "magicRole": "ethereal-melee",
@@ -122,26 +123,26 @@
       }
     ],
     "displayCode": "Y00",
-    "displayLabel": "Y00 \u00b7 Blue ethereal sword blade \u00b7 effect"
+    "displayLabel": "Y00 \u00b7 Blue ethereal sword silhouette \u00b7 effect"
   },
   "Y.effect.1": {
     "id": "Y.effect.1",
     "kind": "effect",
     "category": "Y",
     "digit": 1,
-    "name": "Blue ethereal hammer head",
+    "name": "Blue ethereal hammer silhouette",
     "src": "cutouts/Y/effects/1.png",
     "mimeType": "image/png",
     "width": 512,
     "height": 512,
     "hasTransparency": true,
     "alphaBounds": [
-      32,
-      44,
-      480,
-      467
+      61,
+      33,
+      450,
+      480
     ],
-    "sha256": "04154bca424c7f0daacd02e8f906efd1a23712308fa072457af14caa0ec26956",
+    "sha256": "e566e4e1b1e688dcb4a8b5875cfac1895c651292f84211566e00985cf1ce6d89",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -184,30 +185,31 @@
     ],
     "references": {
       "method": "image-edit-derived-variant",
-      "sourceReference": "source-art-v6/V-reference.png",
-      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
-      "sourceFile": "exec-9cd7eea3-4698-4da5-9e72-287753d2f4ec.png",
-      "sourceSha256": "43ae75c8ed1662ca946734ba5faa039f14def4fee72ba71ff54c85d9d389514e",
+      "sourceReference": "cutouts/O/objects/1.png",
+      "referenceSha256": "a3ab159b0d2f66e17aa240eca11c75991f2f770841cae6b0009d5dc20349e583",
+      "sourceFile": "exec-75cc7ec1-ff47-4aa3-acad-80ec82b8624c.png",
+      "sourceSha256": "1bd63c4cc24a59bb1743b066e33cf43702a625480e905ba4cdc7b9b8bbec39ff",
       "sourceCell": {
-        "x": 490,
-        "y": 109,
-        "width": 269,
-        "height": 254
+        "x": 100,
+        "y": 25,
+        "width": 741,
+        "height": 853
       },
       "extractionCrop": {
-        "x": 490,
-        "y": 109,
-        "width": 269,
-        "height": 254
+        "x": 100,
+        "y": 25,
+        "width": 741,
+        "height": 853
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
-      "baseAssetId": "V.object.1",
-      "revisionIntent": "Broad blade/head wraps around the stone; proportions follow the user-annotated outline, without a long spectral connector."
+      "baseAssetId": "O.object.1",
+      "revisionIntent": "Reference-model silhouette with transparent core and flowing energy; full contour continues through the grip and pommel around the physical scepter.",
+      "baseAssetSha256": "a3ab159b0d2f66e17aa240eca11c75991f2f770841cae6b0009d5dc20349e583"
     },
     "anchors": {
       "emissionRoot": {
-        "x": 0.3,
-        "y": 0.76
+        "x": 0.557,
+        "y": 0.51
       }
     },
     "magicRole": "ethereal-melee",
@@ -247,14 +249,14 @@
       }
     ],
     "displayCode": "Y01",
-    "displayLabel": "Y01 \u00b7 Blue ethereal hammer head \u00b7 effect"
+    "displayLabel": "Y01 \u00b7 Blue ethereal hammer silhouette \u00b7 effect"
   },
   "Y.effect.2": {
     "id": "Y.effect.2",
     "kind": "effect",
     "category": "Y",
     "digit": 2,
-    "name": "Blue ethereal scythe blade",
+    "name": "Blue ethereal scythe silhouette",
     "src": "cutouts/Y/effects/2.png",
     "mimeType": "image/png",
     "width": 512,
@@ -262,11 +264,11 @@
     "hasTransparency": true,
     "alphaBounds": [
       32,
-      36,
+      42,
       480,
-      476
+      471
     ],
-    "sha256": "ece5c6518ddd5b60bae9b8db22f0e3933989c29328d605cb5fb195665607d0f6",
+    "sha256": "52c831dfa5f633283e0b69a8feb8996cb2305ad80e2567f6c9760bd29f6abab4",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -309,30 +311,31 @@
     ],
     "references": {
       "method": "image-edit-derived-variant",
-      "sourceReference": "source-art-v6/V-reference.png",
-      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
-      "sourceFile": "exec-9cd7eea3-4698-4da5-9e72-287753d2f4ec.png",
-      "sourceSha256": "43ae75c8ed1662ca946734ba5faa039f14def4fee72ba71ff54c85d9d389514e",
+      "sourceReference": "cutouts/L/objects/4.png",
+      "referenceSha256": "6914181c80ba9a59a7ca4f60ee267fe9cb919d199842ef7fc4430b97c2623fea",
+      "sourceFile": "exec-f6e975ae-75f5-4f78-a612-c09e8327debb.png",
+      "sourceSha256": "b2a7cf6f37667f63f7a6468b706ebdedad41849e56a97ca0e193cdb659a42106",
       "sourceCell": {
-        "x": 849,
-        "y": 89,
-        "width": 298,
-        "height": 293
+        "x": 73,
+        "y": 54,
+        "width": 814,
+        "height": 781
       },
       "extractionCrop": {
-        "x": 849,
-        "y": 89,
-        "width": 298,
-        "height": 293
+        "x": 73,
+        "y": 54,
+        "width": 814,
+        "height": 781
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
-      "baseAssetId": "V.object.2",
-      "revisionIntent": "Broad blade/head wraps around the stone; proportions follow the user-annotated outline, without a long spectral connector."
+      "baseAssetId": "L.object.4",
+      "revisionIntent": "Reference-model silhouette with transparent core and flowing energy; full contour continues through the grip and pommel around the physical scepter.",
+      "baseAssetSha256": "6914181c80ba9a59a7ca4f60ee267fe9cb919d199842ef7fc4430b97c2623fea"
     },
     "anchors": {
       "emissionRoot": {
-        "x": 0.29,
-        "y": 0.77
+        "x": 0.52,
+        "y": 0.182
       }
     },
     "magicRole": "ethereal-melee",
@@ -372,26 +375,26 @@
       }
     ],
     "displayCode": "Y02",
-    "displayLabel": "Y02 \u00b7 Blue ethereal scythe blade \u00b7 effect"
+    "displayLabel": "Y02 \u00b7 Blue ethereal scythe silhouette \u00b7 effect"
   },
   "Y.effect.3": {
     "id": "Y.effect.3",
     "kind": "effect",
     "category": "Y",
     "digit": 3,
-    "name": "Blue ethereal scimitar blade",
+    "name": "Blue ethereal scimitar silhouette",
     "src": "cutouts/Y/effects/3.png",
     "mimeType": "image/png",
     "width": 512,
     "height": 512,
     "hasTransparency": true,
     "alphaBounds": [
-      41,
+      35,
       32,
-      471,
+      476,
       480
     ],
-    "sha256": "977d6f600bd766a756f7dc2b66705c45d4a3452e56aa5b432f767bd27d83ae61",
+    "sha256": "963a1d2119b07e3299a5e22f2e16e7debf1b346edcb9cacaba1d6d66f0ed1666",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -434,30 +437,31 @@
     ],
     "references": {
       "method": "image-edit-derived-variant",
-      "sourceReference": "source-art-v6/V-reference.png",
-      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
-      "sourceFile": "exec-9cd7eea3-4698-4da5-9e72-287753d2f4ec.png",
-      "sourceSha256": "43ae75c8ed1662ca946734ba5faa039f14def4fee72ba71ff54c85d9d389514e",
+      "sourceReference": "cutouts/O/objects/2.png",
+      "referenceSha256": "e8921cc489a5c0a74ea222138180cbe06e1e73aebdf8a22df2ff57deb5351609",
+      "sourceFile": "exec-148d5d78-5937-4b85-8bac-8128c4358587.png",
+      "sourceSha256": "9eee6be3a53623d0d1535187c298ddebb199c3881ae0b02687e6dc419d4d3b48",
       "sourceCell": {
-        "x": 1249,
-        "y": 83,
-        "width": 281,
-        "height": 293
+        "x": 120,
+        "y": 61,
+        "width": 745,
+        "height": 756
       },
       "extractionCrop": {
-        "x": 1249,
-        "y": 83,
-        "width": 281,
-        "height": 293
+        "x": 120,
+        "y": 61,
+        "width": 745,
+        "height": 756
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
-      "baseAssetId": "V.object.3",
-      "revisionIntent": "Broad blade/head wraps around the stone; proportions follow the user-annotated outline, without a long spectral connector."
+      "baseAssetId": "O.object.2",
+      "revisionIntent": "Reference-model silhouette with transparent core and flowing energy; full contour continues through the grip and pommel around the physical scepter.",
+      "baseAssetSha256": "e8921cc489a5c0a74ea222138180cbe06e1e73aebdf8a22df2ff57deb5351609"
     },
     "anchors": {
       "emissionRoot": {
-        "x": 0.23,
-        "y": 0.79
+        "x": 0.27,
+        "y": 0.287
       }
     },
     "magicRole": "ethereal-melee",
@@ -497,26 +501,26 @@
       }
     ],
     "displayCode": "Y03",
-    "displayLabel": "Y03 \u00b7 Blue ethereal scimitar blade \u00b7 effect"
+    "displayLabel": "Y03 \u00b7 Blue ethereal scimitar silhouette \u00b7 effect"
   },
   "Y.effect.4": {
     "id": "Y.effect.4",
     "kind": "effect",
     "category": "Y",
     "digit": 4,
-    "name": "Blue ethereal shield ward",
+    "name": "Blue ethereal shield silhouette",
     "src": "cutouts/Y/effects/4.png",
     "mimeType": "image/png",
     "width": 512,
     "height": 512,
     "hasTransparency": true,
     "alphaBounds": [
-      68,
+      92,
       32,
-      444,
+      420,
       480
     ],
-    "sha256": "a801d3ff609e54e7f9096030679c1c56c5f7309e12cd0433d7aa5ba9624055c8",
+    "sha256": "34b31ab69d6bb9d8961c331b66125a72a30ca7c0f94e8750effce5517585f9e3",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -559,30 +563,31 @@
     ],
     "references": {
       "method": "image-edit-derived-variant",
-      "sourceReference": "source-art-v6/V-reference.png",
-      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
-      "sourceFile": "exec-9cd7eea3-4698-4da5-9e72-287753d2f4ec.png",
-      "sourceSha256": "43ae75c8ed1662ca946734ba5faa039f14def4fee72ba71ff54c85d9d389514e",
+      "sourceReference": "cutouts/O/objects/4.png",
+      "referenceSha256": "0a81e8f4448f52d4607a9c881c213016a7dbc4848c26f869b9f54e0c93a688d4",
+      "sourceFile": "exec-faca88be-84c3-454e-9e43-84e37002ed29.png",
+      "sourceSha256": "dfcf94b97702b530b7d6a39c720fb15e94d66d9515ed1ae290d8b48b9a4ec294",
       "sourceCell": {
-        "x": 1655,
-        "y": 89,
-        "width": 236,
-        "height": 281
+        "x": 154,
+        "y": 19,
+        "width": 613,
+        "height": 836
       },
       "extractionCrop": {
-        "x": 1655,
-        "y": 89,
-        "width": 236,
-        "height": 281
+        "x": 154,
+        "y": 19,
+        "width": 613,
+        "height": 836
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
-      "baseAssetId": "V.object.4",
-      "revisionIntent": "Broad blade/head wraps around the stone; proportions follow the user-annotated outline, without a long spectral connector."
+      "baseAssetId": "O.object.4",
+      "revisionIntent": "Reference-model silhouette with transparent core and flowing energy; full contour continues through the grip and pommel around the physical scepter.",
+      "baseAssetSha256": "0a81e8f4448f52d4607a9c881c213016a7dbc4848c26f869b9f54e0c93a688d4"
     },
     "anchors": {
       "emissionRoot": {
-        "x": 0.23,
-        "y": 0.79
+        "x": 0.5,
+        "y": 0.465
       }
     },
     "magicRole": "ethereal-melee",
@@ -622,26 +627,26 @@
       }
     ],
     "displayCode": "Y04",
-    "displayLabel": "Y04 \u00b7 Blue ethereal shield ward \u00b7 effect"
+    "displayLabel": "Y04 \u00b7 Blue ethereal shield silhouette \u00b7 effect"
   },
   "Y.effect.5": {
     "id": "Y.effect.5",
     "kind": "effect",
     "category": "Y",
     "digit": 5,
-    "name": "Violet ethereal sword blade",
+    "name": "Violet ethereal sword silhouette",
     "src": "cutouts/Y/effects/5.png",
     "mimeType": "image/png",
     "width": 512,
     "height": 512,
     "hasTransparency": true,
     "alphaBounds": [
-      35,
-      32,
-      477,
-      480
+      74,
+      33,
+      436,
+      478
     ],
-    "sha256": "c217fc250a2b3c0e04ad926ab9a79048666bb1f9f3f1d8f8354ea1e5aeb0df1e",
+    "sha256": "9ae1d5a1445fa20b55927fe9017cbf79f50edd1d732fa126e7dc5db3cd819f93",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -684,30 +689,31 @@
     ],
     "references": {
       "method": "image-edit-derived-variant",
-      "sourceReference": "source-art-v6/V-reference.png",
-      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
-      "sourceFile": "exec-9cd7eea3-4698-4da5-9e72-287753d2f4ec.png",
-      "sourceSha256": "43ae75c8ed1662ca946734ba5faa039f14def4fee72ba71ff54c85d9d389514e",
+      "sourceReference": "cutouts/O/objects/0.png",
+      "referenceSha256": "71b36ad4db7d946f02231c33594177a8950ca33e3ede94d9b42c16f4c6db4f88",
+      "sourceFile": "exec-2af7e2f4-3270-471f-98e6-a13202fbc847.png",
+      "sourceSha256": "999445446647ca93ed5e4233cd027c441abc5b37f165d6ad4f601822c7f8c800",
       "sourceCell": {
-        "x": 91,
-        "y": 459,
-        "width": 285,
-        "height": 289
+        "x": 1027,
+        "y": 13,
+        "width": 700,
+        "height": 864
       },
       "extractionCrop": {
-        "x": 91,
-        "y": 459,
-        "width": 285,
-        "height": 289
+        "x": 1027,
+        "y": 13,
+        "width": 700,
+        "height": 864
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
-      "baseAssetId": "V.object.5",
-      "revisionIntent": "Broad blade/head wraps around the stone; proportions follow the user-annotated outline, without a long spectral connector."
+      "baseAssetId": "O.object.0",
+      "revisionIntent": "Reference-model silhouette with transparent core and flowing energy; full contour continues through the grip and pommel around the physical scepter.",
+      "baseAssetSha256": "71b36ad4db7d946f02231c33594177a8950ca33e3ede94d9b42c16f4c6db4f88"
     },
     "anchors": {
       "emissionRoot": {
-        "x": 0.23,
-        "y": 0.79
+        "x": 0.355,
+        "y": 0.668
       }
     },
     "magicRole": "ethereal-melee",
@@ -747,26 +753,26 @@
       }
     ],
     "displayCode": "Y05",
-    "displayLabel": "Y05 \u00b7 Violet ethereal sword blade \u00b7 effect"
+    "displayLabel": "Y05 \u00b7 Violet ethereal sword silhouette \u00b7 effect"
   },
   "Y.effect.6": {
     "id": "Y.effect.6",
     "kind": "effect",
     "category": "Y",
     "digit": 6,
-    "name": "Violet ethereal hammer head",
+    "name": "Violet ethereal hammer silhouette",
     "src": "cutouts/Y/effects/6.png",
     "mimeType": "image/png",
     "width": 512,
     "height": 512,
     "hasTransparency": true,
     "alphaBounds": [
+      60,
       32,
-      42,
-      480,
-      469
+      451,
+      480
     ],
-    "sha256": "23aa10c14d7d0a25f1483d7ae97ea23547788640039ced72906f0c9b44c299bc",
+    "sha256": "43d94236d71a62e8622fb78c1ae0ccd8ceb862ab7408fef629b7c63ae48b34d1",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -809,30 +815,31 @@
     ],
     "references": {
       "method": "image-edit-derived-variant",
-      "sourceReference": "source-art-v6/V-reference.png",
-      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
-      "sourceFile": "exec-9cd7eea3-4698-4da5-9e72-287753d2f4ec.png",
-      "sourceSha256": "43ae75c8ed1662ca946734ba5faa039f14def4fee72ba71ff54c85d9d389514e",
+      "sourceReference": "cutouts/O/objects/1.png",
+      "referenceSha256": "a3ab159b0d2f66e17aa240eca11c75991f2f770841cae6b0009d5dc20349e583",
+      "sourceFile": "exec-75cc7ec1-ff47-4aa3-acad-80ec82b8624c.png",
+      "sourceSha256": "1bd63c4cc24a59bb1743b066e33cf43702a625480e905ba4cdc7b9b8bbec39ff",
       "sourceCell": {
-        "x": 488,
-        "y": 478,
-        "width": 271,
-        "height": 258
+        "x": 983,
+        "y": 25,
+        "width": 745,
+        "height": 854
       },
       "extractionCrop": {
-        "x": 488,
-        "y": 478,
-        "width": 271,
-        "height": 258
+        "x": 983,
+        "y": 25,
+        "width": 745,
+        "height": 854
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
-      "baseAssetId": "V.object.6",
-      "revisionIntent": "Broad blade/head wraps around the stone; proportions follow the user-annotated outline, without a long spectral connector."
+      "baseAssetId": "O.object.1",
+      "revisionIntent": "Reference-model silhouette with transparent core and flowing energy; full contour continues through the grip and pommel around the physical scepter.",
+      "baseAssetSha256": "a3ab159b0d2f66e17aa240eca11c75991f2f770841cae6b0009d5dc20349e583"
     },
     "anchors": {
       "emissionRoot": {
-        "x": 0.3,
-        "y": 0.76
+        "x": 0.557,
+        "y": 0.51
       }
     },
     "magicRole": "ethereal-melee",
@@ -872,26 +879,26 @@
       }
     ],
     "displayCode": "Y06",
-    "displayLabel": "Y06 \u00b7 Violet ethereal hammer head \u00b7 effect"
+    "displayLabel": "Y06 \u00b7 Violet ethereal hammer silhouette \u00b7 effect"
   },
   "Y.effect.7": {
     "id": "Y.effect.7",
     "kind": "effect",
     "category": "Y",
     "digit": 7,
-    "name": "Violet ethereal scythe blade",
+    "name": "Violet ethereal scythe silhouette",
     "src": "cutouts/Y/effects/7.png",
     "mimeType": "image/png",
     "width": 512,
     "height": 512,
     "hasTransparency": true,
     "alphaBounds": [
-      33,
       32,
-      479,
-      480
+      56,
+      480,
+      456
     ],
-    "sha256": "c907aa0cf7cb677346529dd6350a633924436cb3087809212200fa1958d8f586",
+    "sha256": "81c48169adea103091862eb945196dd108c7abaca174869656439c657c66e17b",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -934,30 +941,31 @@
     ],
     "references": {
       "method": "image-edit-derived-variant",
-      "sourceReference": "source-art-v6/V-reference.png",
-      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
-      "sourceFile": "exec-9cd7eea3-4698-4da5-9e72-287753d2f4ec.png",
-      "sourceSha256": "43ae75c8ed1662ca946734ba5faa039f14def4fee72ba71ff54c85d9d389514e",
+      "sourceReference": "cutouts/L/objects/4.png",
+      "referenceSha256": "6914181c80ba9a59a7ca4f60ee267fe9cb919d199842ef7fc4430b97c2623fea",
+      "sourceFile": "exec-f6e975ae-75f5-4f78-a612-c09e8327debb.png",
+      "sourceSha256": "b2a7cf6f37667f63f7a6468b706ebdedad41849e56a97ca0e193cdb659a42106",
       "sourceCell": {
-        "x": 852,
-        "y": 461,
-        "width": 296,
-        "height": 297
+        "x": 887,
+        "y": 49,
+        "width": 879,
+        "height": 784
       },
       "extractionCrop": {
-        "x": 852,
-        "y": 461,
-        "width": 296,
-        "height": 297
+        "x": 887,
+        "y": 49,
+        "width": 879,
+        "height": 784
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
-      "baseAssetId": "V.object.7",
-      "revisionIntent": "Broad blade/head wraps around the stone; proportions follow the user-annotated outline, without a long spectral connector."
+      "baseAssetId": "L.object.4",
+      "revisionIntent": "Reference-model silhouette with transparent core and flowing energy; full contour continues through the grip and pommel around the physical scepter.",
+      "baseAssetSha256": "6914181c80ba9a59a7ca4f60ee267fe9cb919d199842ef7fc4430b97c2623fea"
     },
     "anchors": {
       "emissionRoot": {
-        "x": 0.29,
-        "y": 0.77
+        "x": 0.52,
+        "y": 0.182
       }
     },
     "magicRole": "ethereal-melee",
@@ -997,26 +1005,26 @@
       }
     ],
     "displayCode": "Y07",
-    "displayLabel": "Y07 \u00b7 Violet ethereal scythe blade \u00b7 effect"
+    "displayLabel": "Y07 \u00b7 Violet ethereal scythe silhouette \u00b7 effect"
   },
   "Y.effect.8": {
     "id": "Y.effect.8",
     "kind": "effect",
     "category": "Y",
     "digit": 8,
-    "name": "Violet ethereal scimitar blade",
+    "name": "Violet ethereal scimitar silhouette",
     "src": "cutouts/Y/effects/8.png",
     "mimeType": "image/png",
     "width": 512,
     "height": 512,
     "hasTransparency": true,
     "alphaBounds": [
-      44,
+      36,
       32,
-      468,
+      475,
       480
     ],
-    "sha256": "be9a53f321c912cd7d99bd70cfa367a8e8357d77b5c90725026f08742e81cbca",
+    "sha256": "1ab1d3c130eeee377ff03fb77f75ffadbac4430a73c00f3efe04cb7747956d6e",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -1059,30 +1067,31 @@
     ],
     "references": {
       "method": "image-edit-derived-variant",
-      "sourceReference": "source-art-v6/V-reference.png",
-      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
-      "sourceFile": "exec-9cd7eea3-4698-4da5-9e72-287753d2f4ec.png",
-      "sourceSha256": "43ae75c8ed1662ca946734ba5faa039f14def4fee72ba71ff54c85d9d389514e",
+      "sourceReference": "cutouts/O/objects/2.png",
+      "referenceSha256": "e8921cc489a5c0a74ea222138180cbe06e1e73aebdf8a22df2ff57deb5351609",
+      "sourceFile": "exec-148d5d78-5937-4b85-8bac-8128c4358587.png",
+      "sourceSha256": "9eee6be3a53623d0d1535187c298ddebb199c3881ae0b02687e6dc419d4d3b48",
       "sourceCell": {
-        "x": 1249,
-        "y": 450,
-        "width": 283,
-        "height": 299
+        "x": 997,
+        "y": 61,
+        "width": 739,
+        "height": 754
       },
       "extractionCrop": {
-        "x": 1249,
-        "y": 450,
-        "width": 283,
-        "height": 299
+        "x": 997,
+        "y": 61,
+        "width": 739,
+        "height": 754
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
-      "baseAssetId": "V.object.8",
-      "revisionIntent": "Broad blade/head wraps around the stone; proportions follow the user-annotated outline, without a long spectral connector."
+      "baseAssetId": "O.object.2",
+      "revisionIntent": "Reference-model silhouette with transparent core and flowing energy; full contour continues through the grip and pommel around the physical scepter.",
+      "baseAssetSha256": "e8921cc489a5c0a74ea222138180cbe06e1e73aebdf8a22df2ff57deb5351609"
     },
     "anchors": {
       "emissionRoot": {
-        "x": 0.23,
-        "y": 0.79
+        "x": 0.27,
+        "y": 0.287
       }
     },
     "magicRole": "ethereal-melee",
@@ -1122,26 +1131,26 @@
       }
     ],
     "displayCode": "Y08",
-    "displayLabel": "Y08 \u00b7 Violet ethereal scimitar blade \u00b7 effect"
+    "displayLabel": "Y08 \u00b7 Violet ethereal scimitar silhouette \u00b7 effect"
   },
   "Y.effect.9": {
     "id": "Y.effect.9",
     "kind": "effect",
     "category": "Y",
     "digit": 9,
-    "name": "Violet ethereal shield ward",
+    "name": "Violet ethereal shield silhouette",
     "src": "cutouts/Y/effects/9.png",
     "mimeType": "image/png",
     "width": 512,
     "height": 512,
     "hasTransparency": true,
     "alphaBounds": [
-      68,
+      92,
       32,
-      441,
+      420,
       480
     ],
-    "sha256": "e870578c9cb4a593c81103da017d331bccaf74ca57459503a34ff30dd7c5822f",
+    "sha256": "216867963b606ae3dc4a6b66a630b3a21f35473057f576ed043e97bff708928a",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -1184,30 +1193,31 @@
     ],
     "references": {
       "method": "image-edit-derived-variant",
-      "sourceReference": "source-art-v6/V-reference.png",
-      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
-      "sourceFile": "exec-9cd7eea3-4698-4da5-9e72-287753d2f4ec.png",
-      "sourceSha256": "43ae75c8ed1662ca946734ba5faa039f14def4fee72ba71ff54c85d9d389514e",
+      "sourceReference": "cutouts/O/objects/4.png",
+      "referenceSha256": "0a81e8f4448f52d4607a9c881c213016a7dbc4848c26f869b9f54e0c93a688d4",
+      "sourceFile": "exec-faca88be-84c3-454e-9e43-84e37002ed29.png",
+      "sourceSha256": "dfcf94b97702b530b7d6a39c720fb15e94d66d9515ed1ae290d8b48b9a4ec294",
       "sourceCell": {
-        "x": 1655,
-        "y": 458,
-        "width": 237,
-        "height": 283
+        "x": 1006,
+        "y": 18,
+        "width": 613,
+        "height": 837
       },
       "extractionCrop": {
-        "x": 1655,
-        "y": 458,
-        "width": 237,
-        "height": 283
+        "x": 1006,
+        "y": 18,
+        "width": 613,
+        "height": 837
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
-      "baseAssetId": "V.object.9",
-      "revisionIntent": "Broad blade/head wraps around the stone; proportions follow the user-annotated outline, without a long spectral connector."
+      "baseAssetId": "O.object.4",
+      "revisionIntent": "Reference-model silhouette with transparent core and flowing energy; full contour continues through the grip and pommel around the physical scepter.",
+      "baseAssetSha256": "0a81e8f4448f52d4607a9c881c213016a7dbc4848c26f869b9f54e0c93a688d4"
     },
     "anchors": {
       "emissionRoot": {
-        "x": 0.23,
-        "y": 0.79
+        "x": 0.5,
+        "y": 0.465
       }
     },
     "magicRole": "ethereal-melee",
@@ -1247,6 +1257,6 @@
       }
     ],
     "displayCode": "Y09",
-    "displayLabel": "Y09 \u00b7 Violet ethereal shield ward \u00b7 effect"
+    "displayLabel": "Y09 \u00b7 Violet ethereal shield silhouette \u00b7 effect"
   }
 }

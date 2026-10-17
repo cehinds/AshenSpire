@@ -1,4 +1,8 @@
-## Current revision: broad melee heads and visible item labels
+## Current revision: full ethereal weapon silhouettes
+
+Revision 8 follows the supplied sword, hammer, L40 scythe, scimitar and shield models in blue and violet. Luminous outlines retain the full guards, grips and pommels around the physical scepters, with transparent cores and flowing energy. [View labelled references and compositions](expansion-v6.html), [edit layers](cutouts.html?category=Y), or [download revision 8](card-art-cutouts-v8.zip). Ten Y overlays are revised; the other 352 PNGs are unchanged. Reset previously saved compositions to use the new placement.
+
+## Revision 7: broad melee heads and visible item labels
 
 Revision 7 follows the annotated proportions: large ethereal blades/heads wrap around the scepter stone. All components, assembled options and intact references show their code and name. [View the labelled gallery](expansion-v6.html), [edit melee layers](cutouts.html?category=Y), or [download revision 7](card-art-cutouts-v7.zip). Ten Y overlays are revised; the other 352 PNGs are unchanged.
 

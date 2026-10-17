@@ -1,7 +1,7 @@
 # Actual PNG cutouts — selection set 07
 
 Open [cutouts.html](cutouts.html) to select, layer, rotate, resize and keep multiple
-choices. The downloadable `card-art-cutouts-v7.zip` includes the standalone
+choices. The downloadable `card-art-cutouts-v8.zip` includes the standalone
 viewer, all PNGs and the JSON. Extract the ZIP and open `cutouts.html`
 in a browser. It uses plain local scripts and needs no build step. If browser
 policy blocks local files, run `python3 -m http.server 8765` in the extracted
@@ -196,3 +196,11 @@ Every component has `displayCode` and `displayLabel`; every composition has `dis
 Y00 in an **assembled** title selects scepter 0 plus effect 0. Y01 in an **effect** label identifies effect 1 with object 0 hidden; V10 identifies scepter object 1 with effect 0 hidden. The explicit role disambiguates component and composition labels. The underlying IDs (for example `Y.effect.1`) remain authoritative in JSON. Zero is always a real option.
 
 This revision replaces ten Y PNGs and keeps the other 352 PNGs unchanged. V names now identify their stones. Earlier full packs preserve the previous proposals. Saved custom placements remain available; reset a composition to adopt the revised default proportions. `revise-v7.py` rebuilds this revision from the source sheet recorded in `revision-v7.json`, after revision 6 has been assembled.
+
+## Reference silhouettes and full grips (revision 8)
+
+The ten Y overlays now depict the supplied models: O.object.0 sword, O.object.1 hammer, L.object.4 scythe (L40), O.object.2 scimitar and O.object.4 shield. Digits 0–4 are blue; 5–9 are violet. Their full outlines retain the original guards, shafts and pommels, with transparent interiors and flowing energy. Each weapon and physical scepter remain independent PNGs. The shield silhouette encloses the scepter as a ward.
+
+The composition fits the scepter inside the spectral grip. Each shape has its own parent size, angle, stone position, relative projection angle and `referenceParentSize`; these remain editable numeric transforms in JSON. The foreground attaches to the gem and follows the parent's transform. Disabling attachment allows independent positioning. Reset a saved composition to adopt these defaults.
+
+`references.baseAssetId`, `baseAssetSha256`, `sourceReference`, `referenceSha256`, source atlas hash and extraction crop identify each model and generated interpretation. `revision-v8.json` records the ten replacements. The PNGs were generated with alpha; export only crops, resizes and pads them. `revise-v8.py` rebuilds the set from the recorded external source atlases. Labels remain outside PNGs; zero is a real variant. The complete pack contains 362 PNGs and 2,520 compositions.

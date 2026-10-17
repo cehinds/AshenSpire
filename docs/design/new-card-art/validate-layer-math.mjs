@@ -13,7 +13,7 @@ for(const letter of 'YZ')for(let i=0;i<10;i++)for(let j=0;j<10;j++){
   assert.ok(Math.abs(r.transform.x+root.x-r.attachmentPoint.x)<1e-8);
   assert.ok(Math.abs(r.transform.y+root.y-r.attachmentPoint.y)<1e-8);
   const stone=point(p.affine,anchorVector(pa,p.transform,'stoneHead'));
-  const f=Math.min(p.transform.width,p.transform.height)/300,offset=point(p.affine,{x:child.attachment.offset.x*f,y:child.attachment.offset.y*f});
+  const f=Math.min(p.transform.width,p.transform.height)/child.attachment.referenceParentSize,offset=point(p.affine,{x:child.attachment.offset.x*f,y:child.attachment.offset.y*f});
   assert.ok(Math.abs(p.transform.x+stone.x+offset.x-r.attachmentPoint.x)<1e-8);
   assert.ok(Math.abs(p.transform.y+stone.y+offset.y-r.attachmentPoint.y)<1e-8);
  }
