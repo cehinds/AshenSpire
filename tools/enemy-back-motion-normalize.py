@@ -39,8 +39,9 @@ def cut(alpha, axis, nominal, radius, span):
     return point, value
 
 def load_master(root, kind, spec, anchors, absolute=False):
-    cols, rows = LAYOUTS[kind]
-    if tuple(spec["grid"]) != (cols, rows):
+    cols, rows = spec["grid"]
+    allowed = ((3,3),(5,2)) if kind == "stances" else (LAYOUTS[kind],)
+    if (cols, rows) not in allowed:
         raise ValueError(f"{kind}: unexpected grid")
     labels = spec["labels"]
     if len(labels) != cols*rows or len(set(labels)) != len(labels):
@@ -120,7 +121,7 @@ def run(root):
         calibration = normalization.get("masterScale", {})
         report["manualReview"] = normalization.get("review", None)
         for kind in LAYOUTS:
-            if kind in anchors and len(anchors[kind]) != math.prod(LAYOUTS[kind]):
+            if kind in anchors and len(anchors[kind]) != math.prod(provenance["masters"][kind]["grid"]):
                 raise ValueError(f"{kind}: anchor count mismatch")
             try:
                 source, items = load_master(root, kind, provenance["masters"][kind], anchors, normalization.get("anchorCoordinates") == "source")
