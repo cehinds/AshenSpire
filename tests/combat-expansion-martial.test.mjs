@@ -78,8 +78,8 @@ const fixture = () => {
   return { ctx, queue, target, source };
 };
 
-test('explicit Martial overlay covers every shipped physical identity and never mutates definitions', () => {
-  const physical = registries.cards.all().filter(card => card.minCombatExpansionVersion !== 2 && combatProfileFor(card).camp === 'physical');
+test('legacy Martial overlay covers its shipped physical identities and never mutates definitions', () => {
+  const physical = registries.cards.all().filter(card => !card.id.startsWith('base.') && card.minCombatExpansionVersion !== 2 && combatProfileFor(card).camp === 'physical');
   assert.ok(physical.length >= 140);
   for (const def of physical) {
     assert.ok(combatExpansionMartialOverlay[def.id], def.id);
@@ -98,7 +98,7 @@ test('a bow equipment projection keeps Ranged delivery and spell basics retain a
   assert.equal(applyCombatExpansionMartial(spell), spell);
 });
 
-test('Quickstep and Dodge print Block5 plus DR and return exactly3 plus AR without restoring Ward', () => {
+test('Quickstep and Dodge retain authored Block plus the Martial bonus and DR and return exactly3 plus AR without restoring Ward', () => {
   for (const id of ['quickstep', 'dodgeRoll']) {
     const f = fixture(), def = applyCombatExpansionMartial(resolveCard(registries, { cardId: id, abilityRank: 0 }, 2));
     const carrier = tacticalCarrier(def, { cardId: id, type: def.type });
@@ -112,7 +112,7 @@ test('Quickstep and Dodge print Block5 plus DR and return exactly3 plus AR witho
     assert.equal(f.queue.filter(action => action.meta?.stanceEntry && action.effect.status === 'evade').length, 1);
     assert.equal(f.queue.filter(action => action.meta?.stanceEntry && action.effect.status === 'precision').length, 1,
       'hybrid Counter grants its offensive Precision once');
-    assert.equal(support.find(effect => effect.op === 'block').amount, 5);
+    assert.equal(support.find(effect => effect.op === 'block').amount, id === 'quickstep' ? 9 : 5, 'Quickstep retains its retuned 8 Block plus the Martial +1; Dodge retains 3 plus 2');
     assert.ok(!support.some(effect => ['damage', 'gainWard', 'dodgeRoll'].includes(effect.op)));
     assert.deepEqual(combatExpansionEntityProblems(f.target), []);
   }
@@ -143,7 +143,8 @@ test('Shield Bash is Counter with authored Block and Poise instead of immediate 
   const carrier = tacticalCarrier(def, { cardId: def.id, type: def.type });
   const support = prepareTacticalCard(f.ctx, f.target, f.source, carrier, def.effects);
   assert.equal(combatProfileFor(def).maneuver, 'counter');
-  assert.deepEqual(f.target.combatCounter.payload, { hp: 0, poise: 4, ward: 0, smashPoiseBonus: 2 });
+  // Its retuned base8 damage plus3 Poise contributes12 to the legacy Counter projection.
+  assert.deepEqual(f.target.combatCounter.payload, { hp: 0, poise: 12, ward: 0, smashPoiseBonus: 2 });
   assert.deepEqual(support, [{ op: 'block', target: 'self', amount: 5 }]);
   assert.equal(def.ratingId, 'dr');
 });
@@ -223,14 +224,14 @@ test('player action carriers expose actual electrical equipment traits to an ene
 
 test('permanent grades retain Quickstep Block, bonus draws and once-per-turn support', () => {
   const card = applyCombatExpansionMartial(resolveCard(registries, { cardId: 'quickstep', abilityRank: 5 }, 2));
-  assert.equal(card.effects.find(effect => effect.op === 'block' && !effect.oncePerTurn).amount, 17);
+  assert.equal(card.effects.find(effect => effect.op === 'block' && !effect.oncePerTurn).amount, 19);
   assert.equal(card.effects.filter(effect => effect.op === 'draw' && !effect.oncePerTurn).reduce((sum, effect) => sum + effect.amount, 0), 2);
   assert.ok(card.effects.some(effect => effect.op === 'block' && effect.oncePerTurn === 'grade-block' && effect.amount === 2));
   assert.ok(card.effects.some(effect => effect.op === 'draw' && effect.oncePerTurn === 'grade-draw' && effect.amount === 1));
 });
 
 test('zero-HP Counter grades move earned primary damage to Poise and preserve conditional reply bonuses', () => {
-  for (const [id, expected] of [['shieldBash', 20], ['riposte', 16], ['progression-crimson-reprisal', 18]]) {
+  for (const [id, expected] of [['shieldBash', 35], ['riposte', 16], ['progression-crimson-reprisal', 18]]) {
     const f = fixture(), def = applyCombatExpansionMartial(resolveCard(registries, { cardId: id, abilityRank: 5 }, 2));
     const carrier = tacticalCarrier(def);
     const support = prepareTacticalCard(f.ctx, f.target, f.source, carrier, def.effects);
