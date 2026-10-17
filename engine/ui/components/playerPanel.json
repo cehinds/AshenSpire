@@ -18,6 +18,9 @@
       "defense": "$entity.defense",
       "statuses": "$entity.statuses",
       "sprite": "$entity.sprite"
+    },
+    "visibility": {
+      "appliesTo": "player"
     }
   },
   "states": [
@@ -61,6 +64,13 @@
     {
       "component": "statusTray",
       "slot": "statuses"
+    },
+    {
+      "component": "inspect",
+      "slot": "info",
+      "props": {
+        "target": "$entity.id"
+      }
     }
   ],
   "assets": [

@@ -35,6 +35,10 @@
     {
       "component": "tooltip",
       "slot": "tag"
+    },
+    {
+      "component": "possession",
+      "slot": "variant"
     }
   ],
   "assets": [
