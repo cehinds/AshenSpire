@@ -44,7 +44,6 @@ export function wireDesktopCombatHeader(combatEl) {
       const header = combatEl.querySelector(':scope > .combat-hud.shared-hud');
       if (!header) { restore(); return; }
       move(combatEl.querySelector('.turn-ribbon'), header);
-      move(header.querySelector('.hud-cinders-strip'), header.querySelector('.hud-top'));
       combatEl.dataset.desktopHeader = 'true';
     },
     release: restore,
