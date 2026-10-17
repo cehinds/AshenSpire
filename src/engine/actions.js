@@ -1637,7 +1637,17 @@ function runOpcode(ctx, action, eff) {
     case 'addBurden':
       for(const enemy of resolveTargets(ctx,action,eff.target)) {if(enemy.kind!=='enemy') throw new Error('Burden targets enemies only');addEnemyBurden(ctx,enemy,eff.card,evalNum(ctx,action,eff.count,1),eff.pile || 'draw');}break;
     case 'revealIntent':
-      for(const enemy of resolveTargets(ctx,action,eff.target)) {if(enemy.kind!=='enemy') continue;enemy.proposalIntentRevealedUntil=ctx.turn+Math.max(1,Math.min(10,evalNum(ctx,action,eff.amount,1)));ctx.emit('intentRevealed',{targetId:enemy.id,until:enemy.proposalIntentRevealedUntil,burdenCards:(enemy.burdenPiles?.hand || []).map(c=>c.cardId),burdenCounts:Object.fromEntries(Object.entries(enemy.burdenPiles || {}).map(([k,v])=>[k,v.length]))});}break;
+      for (const enemy of resolveTargets(ctx, action, eff.target)) {
+        if (enemy.kind !== 'enemy') continue;
+        const until = ctx.turn + Math.max(1, Math.min(10, evalNum(ctx, action, eff.amount, 1)));
+        const owner = action.owner || action.source;
+        const ownerId = typeof owner === 'string' ? owner : ctx.playerIdForEntity?.(owner) || owner?.id || ctx.playerKey;
+        if (!ownerId) throw new Error('Read Intent requires an owning player');
+        enemy.proposalIntentRevealedUntilByOwner ||= {};
+        enemy.proposalIntentRevealedUntilByOwner[ownerId] = until;
+        ctx.emit('intentRevealed', { targetId: enemy.id, ownerId, until });
+      }
+      break;
     case 'modifyCards':
     case 'moveCards': {
       const resolved=eff.changes?.hideTurns && typeof eff.changes.hideTurns==='object' ? {...action,effect:{...eff,changes:{...eff.changes,hideTurns:Math.min(10,Math.max(1,evalNum(ctx,action,eff.changes.hideTurns,1)))}}} : action;

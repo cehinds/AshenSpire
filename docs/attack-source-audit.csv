@@ -265,7 +265,7 @@
 "card","","shatterOpportunity","power","false","false","spell","","spell","","frost","","","",""
 "card","","base.persistent-protection","skill","false","false","","","spell","casting","alteration","","","",""
 "card","","base.greased","skill","false","false","","","spell","casting","fire","","","",""
-"card","","base.divine-strike","attack","true","false","spell","equipped source","spell","casting","divine","","","",""
+"card","","base.divine-strike","attack","true","false","spell|weapon","equipped source","spell","casting","divine","","","",""
 "card","","base.poison","skill","false","false","","","spell","casting","decay","","","",""
 "card","","base.blight","skill","false","false","","","spell","casting","decay","","","",""
 "card","","base.weak","skill","false","false","","","spell","casting","illusion","","","",""

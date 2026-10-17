@@ -19,7 +19,12 @@ for (const [family, entries] of [['card', registries.cards.all()], ['armament', 
       : entry.damage != null || [...(entry.effects || []), ...(entry.upgrade?.effects || [])].some((e) => e.op === 'damage'));
     const direct = authoredDamage && !counterReply;
     const identity = attackDescriptor(entry);
-    if ((direct || counterReply) && !identity.source) errors.push(`${subject}: missing source assignment`);
+    const damageEffects = [...(entry.effects || []), ...(entry.upgrade?.effects || [])].filter(effect => effect.op === 'damage');
+    const explicitEffectSources = damageEffects.map(effect => effect.attack?.source);
+    const allEffectsSourced = damageEffects.length > 0 && explicitEffectSources.every(Boolean);
+    const sources = identity.source ? [identity.source]
+      : allEffectsSourced ? [...new Set(explicitEffectSources)].sort() : [];
+    if ((direct || counterReply) && !sources.length) errors.push(`${subject}: missing source assignment`);
     if ((family === 'armament' || (family === 'enemyMove' && (direct || counterReply))) && !identity.damageType) errors.push(`${subject}: missing base damage type`);
     // Status/burden cards are definitions inserted into enemy piles, not
     // combat actions. They have no camp or school by design; the burden route
@@ -30,7 +35,7 @@ for (const [family, entries] of [['card', registries.cards.all()], ['armament', 
     if (counterReply && !profile.counterMode) errors.push(`${subject}: missing Counter reach`);
     const tags = (domain) => (entry.tags || []).filter((id) => registries.tags.find((tag) => tag.id === id)?.domain === domain).join('|');
     rows.push([family, scope, entry.id, entry.type || entry.role || entry.kind || entry.intent, direct, counterReply,
-      identity.source || '', identity.damageType || ((direct || counterReply) ? 'equipped source' : ''),
+      sources.join('|'), identity.damageType || ((direct || counterReply) ? 'equipped source' : ''),
       profile.camp || '', profile.maneuver || '', profile.school || '', profile.counterMode || '', tags('delivery'), tags('technique'), tags('theme')]);
   }
 }

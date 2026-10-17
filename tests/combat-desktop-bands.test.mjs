@@ -1,8 +1,7 @@
 // Desktop and widescreen combat bands (owner, 2026-10-13: "should be mobile
 // placement"). The wide form factors no longer have a band table of their own:
-// they take the phone's sizing.bands (10 / 55 / 30 / 5), scaled to the viewport,
-// so the battlefield is the same share of the screen on every form factor and the
-// hand is 30%, not the 38% the retired sizing.desktopBands gave it.
+// they use approved sizing.bands (10 / 49 / 27 / 14), with physical hand and
+// footer minimums retained as viewport size and UI zoom change.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { allocateCombatBands } from '../src/ui/models/CombatLayout.js';
@@ -15,14 +14,14 @@ const w4a = uiConfig.scenes.w4a.sizing;
 
 test('the retired desktopBands table is gone; the wide form factors read sizing.bands', () => {
   assert.equal('desktopBands' in w4a, false, 'no desktop band table');
-  assert.deepEqual(w4a.bands, { hud: 10, scene: 55, context: 30, footer: 5 });
+  assert.deepEqual(w4a.bands, { hud: 10, scene: 49, context: 27, footer: 14 });
   assert.equal(Object.values(w4a.bands).reduce((sum, value) => sum + value, 0), 100);
 });
 
-test('the stacked plan on a tall host takes the phone shares, the footer at its 56px floor', () => {
+test('the stacked plan on a tall host takes the phone shares, the footer retains its approved share', () => {
   const bands = allocateCombatBands({ height: 1000 });
-  assert.ok(near(bands.hud, 100) && near(bands.hand, 300) && near(bands.footer, 56), JSON.stringify(bands));
-  assert.ok(near(bands.battlefield, 544));
+  assert.ok(near(bands.hud, 100) && near(bands.hand, 270) && near(bands.footer, 140), JSON.stringify(bands));
+  assert.ok(near(bands.battlefield, 490));
   assert.equal(bands.supported, true);
 });
 
@@ -32,17 +31,17 @@ test('at 1280x720 (UI zoom 0.99) desktop takes the phone shares of the viewport'
   const zoom = 0.99, width = 1280 / zoom, height = 720 / zoom;
   const bands = planCombatLayout({ formFactor: 'desktop', width, height, zoom });
   assert.ok(near(bands.hud, height * .10), `hud ${bands.hud}`);
-  assert.ok(near(bands.hand, height * .30), `hand ${bands.hand}`);
-  assert.ok(bands.battlefield >= height * .55 - 92 / zoom, `battlefield ${bands.battlefield}`);
+  assert.ok(near(bands.hand, Math.max(height * .27, 208 / zoom)), `hand ${bands.hand}`);
+  assert.ok(bands.battlefield >= height * .49 - 208 / zoom, `battlefield ${bands.battlefield}`);
   assert.equal(bands.supported, true);
 });
 
-test('at 1920x1080 (UI zoom 1.48) the desktop battlefield is the scene band, larger than the retired 50%', () => {
+test('at 1920x1080 (UI zoom 1.48) the desktop battlefield is the scene band, with its approved 49% share', () => {
   const zoom = 1.48, width = 1920 / zoom, height = 1080 / zoom;
   const bands = planCombatLayout({ formFactor: 'desktop', width, height, zoom });
   assert.ok(near(bands.hud, height * .10), `hud ${bands.hud}`);
-  assert.ok(near(bands.hand, height * .30), `hand ${bands.hand}`);
-  assert.ok(bands.battlefield / height > .5, `battlefield share ${bands.battlefield / height}`);
+  assert.ok(near(bands.hand, Math.max(height * .27, 208 / zoom)), `hand ${bands.hand}`);
+  assert.ok(near(bands.battlefield / height, .49), `battlefield share ${bands.battlefield / height}`);
   assert.equal(bands.supported, true);
 });
 
@@ -55,22 +54,23 @@ test('the hand keeps its physical minimum on every desktop size', () => {
   }
 });
 
-test('a desktop footer keeps the 92px footer height the phone footer floors at', () => {
+test('desktop footer artwork preserves its aspect ratio and 92px physical minimum', () => {
   const zoom = 1.2, width = 1440 / zoom;
-  assert.ok(near(footerArtWidth(width, zoom, 'desktop') * zoom, 450), 'width');
-  assert.ok(Math.abs(footerArtHeight(width, zoom, 'desktop') * zoom - 92) < 0.5, `height ${footerArtHeight(width, zoom, 'desktop') * zoom}`);
+  assert.ok(near(footerArtWidth(width, zoom, 'desktop') * zoom, 600), 'width');
+  assert.ok(footerArtHeight(width, zoom, 'desktop') * zoom >= 92);
+  assert.ok(near(footerArtHeight(width, zoom, 'desktop') * zoom, footerArtHeight(1440, 1, 'desktop')), 'UI zoom does not distort footer art');
 });
 
-test('widescreen footer art keeps the desktop 450px width and the same 92px height', () => {
+test('widescreen footer art keeps the desktop 600px maximum and matching artwork height', () => {
   for (const zoom of [1, 1.2]) {
     const width = 1440 / zoom;
-    assert.ok(near(footerArtWidth(width, zoom, 'widescreen') * zoom, 450), `widescreen width at zoom ${zoom}`);
+    assert.ok(near(footerArtWidth(width, zoom, 'widescreen') * zoom, 600), `widescreen width at zoom ${zoom}`);
     assert.ok(near(footerArtHeight(width, zoom, 'widescreen'), footerArtHeight(width, zoom, 'desktop')), 'widescreen footer height matches desktop');
   }
 });
 
-test('tablet and phone footer art keeps the 600px maximum', () => {
-  assert.ok(near(footerArtWidth(1024, 1, 'tablet'), 600));
-  assert.ok(near(footerArtWidth(1200, 1, 'mobile'), 600));
-  assert.ok(near(footerArtWidth(1200, 1, null), 600));
+test('tablet and phone footer art keep their 720px maximum', () => {
+  assert.ok(near(footerArtWidth(1024, 1, 'tablet'), 720));
+  assert.ok(near(footerArtWidth(1200, 1, 'mobile'), 720));
+  assert.ok(near(footerArtWidth(1200, 1, null), 720));
 });

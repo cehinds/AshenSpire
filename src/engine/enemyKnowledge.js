@@ -5,7 +5,7 @@ import { advancePerception, perceptionLevel, perceptionProblems, PERCEPTION_SKIL
 import { emptyEnemyKnowledge, mergeEnemyKnowledge, enemyKnowledgeProblems, knowledgeKey } from '../model/enemyKnowledgeProfile.js';
 import { addKnowledgeCounterBonus, reconcilePerception } from '../model/enemyKnowledgeRun.js';
 import { enemyMasteryTarget, enemyKnowledgeRuleProblems } from '../model/enemyKnowledgeRules.js';
-import { proposalCardPlan } from './proposalStatusRuntime.js';
+import { proposalIntentRevealUntil } from '../model/proposalIntentReveal.js';
 
 export function initializeCombatKnowledge(combat, { rules, encounter = null, bankable = false, profiles = {}, privateSeed = null }) {
   const problems = enemyKnowledgeRuleProblems(rules);
@@ -111,12 +111,11 @@ export function rollEnemyKnowledge(combat, enemy, { charging = false } = {}) {
   return true;
 }
 export function knowledgeIntentProjection(combat, enemy, ownerId = combat.playerKey || 'player') {
-  // Read Intent is a per-observer status. It reveals only the viewer's current
-  // projection and leaves the enemy's private read ledger untouched, so its
-  // ordinary unknown state resumes as soon as the status expires.
-  const observer = observerFor(combat, ownerId);
-  if (observer?.entity?.alive && observer.connected && !observer.ended
-    && proposalCardPlan(combat, observer.entity, {}).revealIntent) return { exact: true, source: 'status' };
+  // A marker status alone cannot reveal any enemy's move. The card records its
+  // read against one selected enemy and one owner.
+  const proposalUntil = proposalIntentRevealUntil(enemy, ownerId, combat.turn,
+    { legacySolo: !(combat.players instanceof Map) });
+  if (proposalUntil !== null) return { exact: true, source: 'proposal' };
   if (!combat.enemyKnowledge) return null;
   // Staggered is a currently public status, even when it cancels an older
   // unread selected action; the old read is retained for committed responses.

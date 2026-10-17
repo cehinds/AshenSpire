@@ -26,7 +26,7 @@ function fight(payload, { lethal = true, stagger = false } = {}) {
   });
   const combat = createCoopCombat({ registries, rng: createRng(50), ratingsRules: null,
     enemyIds: ['wanderingSoldier', 'gildedKnight'],
-    players: ['p1', 'p2'].map(id => ({ id, classId: 'reaver', hp: 200, maxHp: 200,
+    players: ['p1', 'p2'].map(id => ({ id, classId: 'reaver', hp: 200, maxHp: 200, mana: 10, maxMana: 10,
       energyMax: 10, drawPerTurn: 1, relicIds: [], deck: [{ instanceId: `reply-${id}`, cardId: 'riposte' }] })),
   });
   const enemy = combat.enemies[0];

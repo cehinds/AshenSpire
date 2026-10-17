@@ -61,7 +61,7 @@ export function proposalThresholdRules({ actor, rules = {}, capabilities } = {})
 /** Taxes are flat while active; stacks extend their duration, not their magnitude. */
 export function proposalCardRules({ actor, card, rules = {}, capabilities, reactive = false } = {}) {
   const out = { allowed: true, refusal: null, staminaTax: 0, manaTax: 0, additionalStanceCapacity: 0,
-    effects: [], statusChanges: [], revealIntent: false };
+    effects: [], statusChanges: [] };
   for (const { status, stacks, behavior: b } of active(actor, rules, capabilities)) {
     if (b.kind === 'restriction' && matches(b.cardTypes, card?.type)) {
       out.allowed = false; out.refusal = `Restricted by ${status}`;
@@ -69,7 +69,6 @@ export function proposalCardRules({ actor, card, rules = {}, capabilities, react
     if (b.kind === 'cardTax' && matches(b.ranges, rangeOf(card))) {
       out.staminaTax += b.stamina || 0; out.manaTax += b.mana || 0;
     }
-    if (b.kind === 'revealIntent') out.revealIntent = true;
     if (b.kind === 'stanceCapacity') out.additionalStanceCapacity += stacks * b.additionalPerStack;
     if (reactive || !hasAnyTag(card, b.requiredTags)) continue;
     if (b.kind === 'extraWeapon' && card?.type === 'attack') {
