@@ -1,0 +1,128 @@
+/* Shared combat identity palette. Keep the SVG path authored by its native
+   component; this layer supplies only color and the two outline rings. */
+:root {
+  --combat-symbol-outline: #171719;
+  --combat-symbol-gold: #e6c06b;
+  --combat-symbol-silver: #cbd0d7;
+  --combat-symbol-white: #f8f8f6;
+  --combat-symbol-blue-trim: #102f55;
+  --combat-symbol-black-trim: #050609;
+  --combat-symbol-red-trim: #601c28;
+  --combat-symbol-evade-trim: #37393b;
+}
+
+/* One mapping drives intent glyphs, card footer glyphs and their type labels. */
+:root .combat :is(.intent-icon, .card-action-icon svg)[data-intent='attack'],
+:root .card-sigil-band[data-primary-sigil='attack'] .card-action-icon,
+:root .card-sigil-band[data-primary-sigil='attack'] .card-type-name,
+:root .card-tag-symbol[data-tag-id$=':attack'] svg,
+:root .card-tag-symbol[data-tag-id='attack'] svg {
+  color: var(--combat-symbol-gold);
+  --combat-symbol-trim: var(--combat-symbol-blue-trim);
+}
+:root .combat :is(.intent-icon, .card-action-icon svg)[data-intent='sweep'],
+:root .card-sigil-band[data-primary-sigil='sweep'] .card-action-icon,
+:root .card-sigil-band[data-primary-sigil='sweep'] .card-type-name,
+:root .card-tag-symbol[data-tag-id$=':sweep'] svg,
+:root .card-tag-symbol[data-tag-id='sweep'] svg {
+  color: var(--combat-symbol-gold);
+  --combat-symbol-trim: var(--combat-symbol-black-trim);
+}
+:root .combat :is(.intent-icon, .card-action-icon svg)[data-intent='smash'],
+:root .card-sigil-band[data-primary-sigil='smash'] .card-action-icon,
+:root .card-sigil-band[data-primary-sigil='smash'] .card-type-name,
+:root .card-tag-symbol[data-tag-id$=':smash'] svg,
+:root .card-tag-symbol[data-tag-id='smash'] svg {
+  color: var(--combat-symbol-gold);
+  --combat-symbol-trim: var(--combat-symbol-red-trim);
+}
+:root .combat :is(.intent-icon, .card-action-icon svg)[data-intent='prepare'],
+:root .combat :is(.intent-icon, .card-action-icon svg)[data-intent='cast'],
+:root .combat :is(.intent-icon, .card-action-icon svg)[data-intent='buff'],
+:root .combat :is(.intent-icon, .card-action-icon svg)[data-intent='ready'],
+:root .card-sigil-band[data-primary-sigil='spell'] .card-action-icon,
+:root .card-sigil-band[data-primary-sigil='spell'] .card-type-name,
+:root .card-sigil-band[data-primary-sigil='power'] .card-action-icon,
+:root .card-sigil-band[data-primary-sigil='power'] .card-type-name,
+:root .card-sigil-band[data-primary-sigil='skill'] .card-action-icon,
+:root .card-sigil-band[data-primary-sigil='skill'] .card-type-name,
+:root .card-sigil-band[data-primary-sigil='stance'] .card-action-icon,
+:root .card-sigil-band[data-primary-sigil='stance'] .card-type-name,
+:root .card-tag-symbol[data-tag-id$=':prepare'] svg {
+  color: var(--combat-symbol-silver);
+  --combat-symbol-trim: var(--combat-symbol-blue-trim);
+}
+:root .combat :is(.intent-icon, .card-action-icon svg)[data-intent='defend'],
+:root .card-sigil-band[data-primary-sigil='defend'] .card-action-icon,
+:root .card-sigil-band[data-primary-sigil='defend'] .card-type-name,
+:root .card-sigil-band[data-primary-sigil='defense'] .card-action-icon,
+:root .card-sigil-band[data-primary-sigil='defense'] .card-type-name,
+:root .card-tag-symbol[data-tag-id$=':defend'] svg {
+  color: var(--combat-symbol-silver);
+  --combat-symbol-trim: var(--combat-symbol-black-trim);
+}
+:root .combat :is(.intent-icon, .card-action-icon svg)[data-intent='counter'],
+:root .card-sigil-band[data-primary-sigil='counter'] .card-action-icon,
+:root .card-sigil-band[data-primary-sigil='counter'] .card-type-name,
+:root .card-tag-symbol[data-tag-id$=':counter'] svg {
+  color: var(--combat-symbol-silver);
+  --combat-symbol-trim: var(--combat-symbol-red-trim);
+}
+:root .combat :is(.intent-icon, .card-action-icon svg)[data-intent='evade'],
+:root .card-tag-symbol[data-tag-id$=':evade'] svg {
+  color: var(--combat-symbol-white);
+  --combat-symbol-trim: var(--combat-symbol-evade-trim);
+}
+
+/* SVG alpha makes both rings follow the actual silhouette rather than a box. */
+:root .combat .intent-icon[data-intent],
+:root .card-sigil-band .card-action-icon svg,
+:root .card-tag-symbol[data-tag-id] svg {
+  filter: drop-shadow(0 0 .8px var(--combat-symbol-outline))
+          drop-shadow(0 0 1px var(--combat-symbol-outline))
+          drop-shadow(0 0 1px var(--combat-symbol-trim, var(--combat-symbol-black-trim)));
+}
+
+/* Status pip keeps its existing 18px badge group; only the glyph shrinks to
+   15.3px and the 7px count sits one pixel beyond the group's lower-right. */
+:root .combat .statuses .status-icon,
+:root .combat .target-hud-statuses .status-icon {
+  position: relative;
+  font-size: 15.3px;
+}
+:root .combat .statuses .status-icon > :is(svg, .tag-symbol-art),
+:root .combat .target-hud-statuses .status-icon > :is(svg, .tag-symbol-art) {
+  width: 15.3px;
+  height: 15.3px;
+  flex: none;
+}
+:root .combat .statuses .status-icon > .engraved-icon,
+:root .combat .target-hud-statuses .status-icon > .engraved-icon {
+  width: 15.3px;
+  height: 15.3px;
+  flex: none;
+}
+:root .combat .statuses .status-icon > .as-pill.round,
+:root .combat .target-hud-statuses .status-icon > .as-pill.round {
+  position: absolute;
+  inset: auto -1px -1px auto;
+  box-sizing: border-box;
+  width: auto;
+  min-width: 0;
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  overflow: visible;
+  border-radius: 50%;
+  font-size: 7px;
+  line-height: 1;
+}
+
+/* Cinders remains a white counter with a crisp black keyline. */
+:root .combat .hud-cinders {
+  color: #fff;
+  -webkit-text-stroke: .75px #000;
+  paint-order: stroke fill;
+}
