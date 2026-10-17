@@ -683,9 +683,13 @@ const PROBE = `(() => {
       // Their artwork, health meters and detail panel are the painted receipt;
       // overhead intent/inspection buttons keep their separate hit-test above.
       // Legacy layouts retain their complete frame boundary check.
-      const responsive = frame.closest('.combat')?.dataset.targetHud === 'true';
+      const combat = frame.closest('.combat');
+      const responsive = combat?.dataset.targetHud === 'true';
+      const detail = responsive ? [...combat.querySelectorAll('.target-hud-detail')]
+        .find(shell => shell.dataset.eid === frame.dataset.eid) : null;
       const receipts = responsive
-        ? [...frame.querySelectorAll('.combatant-card > .sprite, .target-hud-overhead-meters .meters, .target-hud-panel')]
+        ? [...frame.querySelectorAll('.combatant-card > .sprite, .target-hud-overhead-meters .meters'),
+          ...(detail?.querySelectorAll('.target-hud-panel, .target-hud-statuses') || [])]
         : [frame];
       for (const receipt of receipts) {
         const r = receipt.getBoundingClientRect();

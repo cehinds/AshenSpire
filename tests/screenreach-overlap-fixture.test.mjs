@@ -104,7 +104,7 @@ test('paint guard ignores transparent responsive owners but catches painted and 
     [false, [receipt(120, 200)], ['HUD']],
   ]) {
     const frame = {
-      dataset: { eid: 'e1' }, closest: () => ({ dataset: { targetHud: String(responsive) } }),
+      dataset: { eid: 'e1' }, closest: () => ({ dataset: { targetHud: String(responsive) }, querySelectorAll: () => [] }),
       querySelector: () => null, querySelectorAll: () => parts,
       getBoundingClientRect: () => box(50, 350),
     };
@@ -116,4 +116,23 @@ test('paint guard ignores transparent responsive owners but catches painted and 
     assert.equal(visual.length, want.length);
     for (const band of want) assert.match(visual[0], new RegExp('under the ' + band));
   }
+});
+
+
+test('responsive painted guard reads detached detail panels and status siblings from their combat layer', () => {
+  const start = tool.indexOf("    for (const frame of document.querySelectorAll('.enemy-row .combatant'))");
+  const end = tool.indexOf('    // Information is', start);
+  const guard = tool.slice(start, end);
+  const node = (top, bottom) => ({ getBoundingClientRect: () => ({ width: 40, height: bottom - top, top, bottom }) });
+  const sprite = node(120, 200), panel = node(80, 140), statuses = node(330, 370);
+  const shells = [{ dataset: { eid: 'e1' }, querySelectorAll: () => [panel, statuses] }];
+  const combat = { dataset: { targetHud: 'true' }, querySelectorAll: () => shells };
+  const frame = { dataset: { eid: 'e1' }, closest: () => combat, querySelector: () => null,
+    querySelectorAll: () => [sprite] };
+  const visual = [];
+  runInNewContext(guard, { document: { querySelectorAll: () => [frame] }, hud: { bottom: 100 },
+    hand: { top: 350 }, getComputedStyle: () => ({ visibility: 'visible' }), visual });
+  assert.equal(visual.length, 2);
+  assert.match(visual[0], /under the HUD/);
+  assert.match(visual[1], /under the hand/);
 });
