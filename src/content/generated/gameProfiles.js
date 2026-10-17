@@ -3780,7 +3780,8 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:spell",
-                "maneuver:casting"
+                "maneuver:casting",
+                "school:alteration"
               ],
               "groups": [
                 "base.current-rewards"
@@ -4045,7 +4046,8 @@ export const gameProfileCatalog = {
                 "classification.attack",
                 "camp:spell",
                 "maneuver:casting",
-                "school:divine"
+                "school:divine",
+                "source:spell"
               ],
               "groups": [
                 "base.current-rewards"
@@ -4292,7 +4294,8 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:spell",
-                "maneuver:casting"
+                "maneuver:casting",
+                "school:decay"
               ],
               "groups": [
                 "base.current-rewards",
@@ -4409,7 +4412,8 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:spell",
-                "maneuver:casting"
+                "maneuver:casting",
+                "school:illusion"
               ],
               "groups": [
                 "base.current-rewards",
@@ -4526,7 +4530,8 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:spell",
-                "maneuver:casting"
+                "maneuver:casting",
+                "school:illusion"
               ],
               "groups": [
                 "base.current-rewards",
@@ -4643,7 +4648,8 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:spell",
-                "maneuver:casting"
+                "maneuver:casting",
+                "school:frost"
               ],
               "groups": [
                 "base.current-rewards",
@@ -4767,7 +4773,8 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:spell",
-                "maneuver:casting"
+                "maneuver:casting",
+                "school:frost"
               ],
               "groups": [
                 "base.current-rewards",
@@ -4894,7 +4901,8 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:spell",
-                "maneuver:casting"
+                "maneuver:casting",
+                "school:illusion"
               ],
               "groups": [
                 "base.current-rewards",
@@ -5128,7 +5136,8 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:spell",
-                "maneuver:casting"
+                "maneuver:casting",
+                "school:illusion"
               ],
               "groups": [
                 "base.current-rewards",
@@ -5246,7 +5255,8 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:spell",
-                "maneuver:casting"
+                "maneuver:casting",
+                "school:illusion"
               ],
               "groups": [
                 "base.current-rewards",
@@ -5504,7 +5514,8 @@ export const gameProfileCatalog = {
                 "classification.skill",
                 "camp:spell",
                 "maneuver:casting",
-                "school:fire"
+                "school:fire",
+                "source:spell"
               ],
               "groups": [
                 "base.current-rewards"
@@ -6567,19 +6578,26 @@ export const gameProfileCatalog = {
                 "keywords": [],
                 "effects": [
                   {
+                    "op": "applyStatus",
+                    "target": "self",
+                    "status": "base.read-intent",
+                    "stacks": 1
+                  },
+                  {
                     "op": "revealIntent",
                     "target": "enemy",
                     "amount": 1
                   }
                 ],
-                "textTemplate": "Reveal the enemy’s intent for 1 turn.",
+                "textTemplate": "Reveal the selected enemy's intent for 1 turn. Reveal opponents' burden hands while active.",
                 "icon": "✦",
                 "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
               },
               "tags": [
                 "classification.skill",
                 "camp:spell",
-                "maneuver:casting"
+                "maneuver:casting",
+                "school:illusion"
               ],
               "groups": [
                 "base.current-rewards",
@@ -7042,7 +7060,8 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:spell",
-                "maneuver:casting"
+                "maneuver:casting",
+                "school:alteration"
               ],
               "groups": [
                 "base.current-rewards",
@@ -7156,7 +7175,8 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:spell",
-                "maneuver:casting"
+                "maneuver:casting",
+                "school:force"
               ],
               "groups": [
                 "base.current-rewards",
@@ -7275,7 +7295,8 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:spell",
-                "maneuver:casting"
+                "maneuver:casting",
+                "school:lightning"
               ],
               "groups": [
                 "base.current-rewards",
@@ -7887,7 +7908,8 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.attack",
                 "camp:physical",
-                "maneuver:attack"
+                "maneuver:attack",
+                "source:weapon"
               ],
               "groups": [
                 "base.current-rewards",
@@ -8013,7 +8035,8 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.attack",
                 "camp:physical",
-                "maneuver:attack"
+                "maneuver:attack",
+                "source:weapon"
               ],
               "groups": [
                 "base.current-rewards",
@@ -8260,7 +8283,8 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.attack",
                 "camp:physical",
-                "maneuver:attack"
+                "maneuver:attack",
+                "source:weapon"
               ],
               "groups": [
                 "base.current-rewards",
@@ -8386,7 +8410,8 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.attack",
                 "camp:physical",
-                "maneuver:attack"
+                "maneuver:attack",
+                "source:weapon"
               ],
               "groups": [
                 "base.current-rewards",
@@ -8504,7 +8529,9 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.attack",
                 "camp:spell",
-                "maneuver:casting"
+                "maneuver:casting",
+                "school:force",
+                "source:spell"
               ],
               "groups": [
                 "base.current-rewards",
@@ -8623,7 +8650,9 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.attack",
                 "camp:spell",
-                "maneuver:casting"
+                "maneuver:casting",
+                "school:force",
+                "source:spell"
               ],
               "groups": [
                 "base.current-rewards",
@@ -8754,7 +8783,8 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:spell",
-                "maneuver:casting"
+                "maneuver:casting",
+                "school:illusion"
               ],
               "groups": [
                 "base.current-rewards",
@@ -8874,7 +8904,8 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:spell",
-                "maneuver:casting"
+                "maneuver:casting",
+                "school:force"
               ],
               "groups": [
                 "base.current-rewards",
@@ -9139,7 +9170,8 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.attack",
                 "camp:physical",
-                "maneuver:attack"
+                "maneuver:attack",
+                "source:weapon"
               ],
               "groups": [
                 "base.current-rewards",
@@ -9285,7 +9317,9 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.attack",
                 "camp:spell",
-                "maneuver:casting"
+                "maneuver:casting",
+                "school:force",
+                "source:spell"
               ],
               "groups": [
                 "base.current-rewards",
@@ -9402,7 +9436,8 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.attack",
                 "camp:physical",
-                "maneuver:attack"
+                "maneuver:attack",
+                "source:weapon"
               ],
               "groups": [
                 "base.current-rewards",
@@ -10212,7 +10247,8 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:spell",
-                "maneuver:casting"
+                "maneuver:casting",
+                "school:alteration"
               ],
               "groups": [
                 "base.current-rewards",
@@ -10571,7 +10607,8 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:spell",
-                "maneuver:casting"
+                "maneuver:casting",
+                "school:illusion"
               ],
               "groups": [
                 "base.current-rewards",
@@ -10688,7 +10725,8 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:spell",
-                "maneuver:casting"
+                "maneuver:casting",
+                "school:alteration"
               ],
               "groups": [
                 "base.current-rewards",
@@ -10913,7 +10951,8 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:spell",
-                "maneuver:casting"
+                "maneuver:casting",
+                "school:force"
               ],
               "groups": [
                 "base.current-rewards"
@@ -11265,7 +11304,8 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.attack",
                 "camp:physical",
-                "maneuver:attack"
+                "maneuver:attack",
+                "source:weapon"
               ],
               "groups": [
                 "base.current-rewards",
@@ -11379,7 +11419,8 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.skill",
                 "camp:spell",
-                "maneuver:casting"
+                "maneuver:casting",
+                "school:illusion"
               ],
               "groups": [
                 "base.current-rewards",
@@ -11720,7 +11761,8 @@ export const gameProfileCatalog = {
                 "burden": {
                   "skipActions": 1,
                   "staminaTax": 0,
-                  "manaTax": 0
+                  "manaTax": 0,
+                  "status": "base.stagger"
                 }
               },
               "tags": [
@@ -11860,7 +11902,8 @@ export const gameProfileCatalog = {
               "tags": [
                 "classification.attack",
                 "camp:physical",
-                "maneuver:attack"
+                "maneuver:attack",
+                "source:weapon"
               ],
               "groups": [
                 "base.current-rewards"
@@ -11972,7 +12015,8 @@ export const gameProfileCatalog = {
                 "burden": {
                   "skipActions": 1,
                   "staminaTax": 0,
-                  "manaTax": 0
+                  "manaTax": 0,
+                  "status": "base.paralysis"
                 }
               },
               "tags": [
@@ -12100,7 +12144,8 @@ export const gameProfileCatalog = {
                   ],
                   "cardTypes": [
                     "attack"
-                  ]
+                  ],
+                  "status": "base.restrained-burden"
                 }
               },
               "tags": [
@@ -12228,7 +12273,8 @@ export const gameProfileCatalog = {
               "tags": [
                 "camp:physical",
                 "classification.attack",
-                "maneuver:attack"
+                "maneuver:attack",
+                "source:weapon"
               ],
               "groups": [
                 "base.generated-helpers"
@@ -12287,7 +12333,8 @@ export const gameProfileCatalog = {
               "tags": [
                 "camp:physical",
                 "classification.attack",
-                "maneuver:smash"
+                "maneuver:smash",
+                "source:weapon"
               ],
               "groups": [
                 "base.generated-helpers"
@@ -15340,7 +15387,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/base-cards/cards.json",
           "id": "ashen.base-cards",
           "version": "1.0.0",
-          "hash": "sha256:16a7d21ed1872f4c53ca37b711787721e4486801882bcfa95a009ecc8a1e693d"
+          "hash": "sha256:b2b190ed79073e3a4069a046b36e608fbe3ff957fd361f203417c2537126caab"
         },
         {
           "path": "games/ashenspire/packs/base-cards/groups.json",
@@ -15398,7 +15445,7 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "path": "src/** (excluding generated gameProfiles/changelog)",
-      "hash": "sha256:d174b8d3fd3a60e63245804ce96b3ca31f2c034711020801d48e7772f7775fe8"
+      "hash": "sha256:2cd512cb3e2d25112c0d546a54a23658c8abf3d8bf83afcee0c113649acc9dcf"
     }
   ],
   "runtimeSources": [
@@ -15580,7 +15627,7 @@ export const gameProfileCatalog = {
       "path": "src/content/combatBodyLandmarks.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:7850c7d1c6887b4d5e5536ad4d46034b24066e4ca82810af4456414af6028a35"
+      "hash": "sha256:79bb091110ecdc5b22cb8a2ed136a780461f00475e7d0c2a26729012111b3e44"
     },
     {
       "path": "src/content/combatCardTraits.js",
@@ -15784,7 +15831,7 @@ export const gameProfileCatalog = {
       "path": "src/content/enemyBodyLandmarks.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:d2561951dd98be889735934b6a3dad9b61f16bc022f5539611239643f95e177a"
+      "hash": "sha256:6340c4acdf0b32e810ba8b0898caae35ecf3f7b0c04278de19598692c7e84e1f"
     },
     {
       "path": "src/content/enemyExpansion.js",
@@ -15868,7 +15915,7 @@ export const gameProfileCatalog = {
       "path": "src/content/generated/baseCards.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:5055b04cc47e99a192808002f5fda65b60df6cbd3674227d1e522b54af21e18f"
+      "hash": "sha256:8e1911f08609d798c66aa6397263b2a3819f99df440a369c37674e26a9ce20a1"
     },
     {
       "path": "src/content/generated/basicCardProfiles.js",
@@ -16672,7 +16719,7 @@ export const gameProfileCatalog = {
       "path": "src/engine/enemyKnowledge.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:9d4901ba2ac2bd33f560fb6505b792eb510656e64bc218a1d8ff872690a5375a"
+      "hash": "sha256:cf8f9531ab4e5ff0b4100eabf1214ec1a4612a7f95c393354501cc20234121ed"
     },
     {
       "path": "src/engine/enemyKnowledgeSave.js",
@@ -18442,7 +18489,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/components/battlefieldStage.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:6870ca84f4ad2422819a28b285c5f1036839750a012dd478d03d5ebb5b406754"
+      "hash": "sha256:b1af0d17e441037fbcfe0a11c17d11c0ef68091c867b48dd91ec463d0381cad7"
     },
     {
       "path": "src/ui/components/bookArt.js",
@@ -18592,7 +18639,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/components/combatTargetHud.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:c29bdba8e3a7fdd2cad6ab5dd45887f03500375181c49f5c1b648780c1af8236"
+      "hash": "sha256:7dd457a3957734e376e4549ab186a6e8ef6d25950c5fae9b7958ea4d95b3a62c"
     },
     {
       "path": "src/ui/components/combatTools.js",
@@ -20194,7 +20241,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/screens/deckEditor.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:180358da1b750e0bc43e838ca2807d5f50396e3c84d24ea5e1d3a7907d037ed3"
+      "hash": "sha256:dfa7faacce7f6155e913d1fdd422f0ab272a9e9f4840c1d9a4225e4c95bf0bb6"
     },
     {
       "path": "src/ui/screens/dialogue.js",
@@ -20407,7 +20454,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:23af16d4e9c9f6d88fe655d32ecf1a688b47df39f9e3a1d6d193ce63923593ab"
     }
   ],
-  "runtimeHash": "sha256:9be6e995294ddec26bb220a6dae8f13dc176dbdccc9fe2d129fffa1f39f2d283"
+  "runtimeHash": "sha256:8e1ec0d00c20a58df2d7c66793f83ed292f43c33d273518efdfcdcbe141b7b54"
 };
 export const gameProfileAuthors = {
   "default": {

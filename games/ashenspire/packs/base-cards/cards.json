@@ -34,7 +34,8 @@
       "tags": [
         "classification.skill",
         "camp:spell",
-        "maneuver:casting"
+        "maneuver:casting",
+        "school:alteration"
       ],
       "groups": [
         "base.current-rewards"
@@ -299,7 +300,8 @@
         "classification.attack",
         "camp:spell",
         "maneuver:casting",
-        "school:divine"
+        "school:divine",
+        "source:spell"
       ],
       "groups": [
         "base.current-rewards"
@@ -546,7 +548,8 @@
       "tags": [
         "classification.skill",
         "camp:spell",
-        "maneuver:casting"
+        "maneuver:casting",
+        "school:decay"
       ],
       "groups": [
         "base.current-rewards",
@@ -663,7 +666,8 @@
       "tags": [
         "classification.skill",
         "camp:spell",
-        "maneuver:casting"
+        "maneuver:casting",
+        "school:illusion"
       ],
       "groups": [
         "base.current-rewards",
@@ -780,7 +784,8 @@
       "tags": [
         "classification.skill",
         "camp:spell",
-        "maneuver:casting"
+        "maneuver:casting",
+        "school:illusion"
       ],
       "groups": [
         "base.current-rewards",
@@ -897,7 +902,8 @@
       "tags": [
         "classification.skill",
         "camp:spell",
-        "maneuver:casting"
+        "maneuver:casting",
+        "school:frost"
       ],
       "groups": [
         "base.current-rewards",
@@ -1021,7 +1027,8 @@
       "tags": [
         "classification.skill",
         "camp:spell",
-        "maneuver:casting"
+        "maneuver:casting",
+        "school:frost"
       ],
       "groups": [
         "base.current-rewards",
@@ -1148,7 +1155,8 @@
       "tags": [
         "classification.skill",
         "camp:spell",
-        "maneuver:casting"
+        "maneuver:casting",
+        "school:illusion"
       ],
       "groups": [
         "base.current-rewards",
@@ -1382,7 +1390,8 @@
       "tags": [
         "classification.skill",
         "camp:spell",
-        "maneuver:casting"
+        "maneuver:casting",
+        "school:illusion"
       ],
       "groups": [
         "base.current-rewards",
@@ -1500,7 +1509,8 @@
       "tags": [
         "classification.skill",
         "camp:spell",
-        "maneuver:casting"
+        "maneuver:casting",
+        "school:illusion"
       ],
       "groups": [
         "base.current-rewards",
@@ -1758,7 +1768,8 @@
         "classification.skill",
         "camp:spell",
         "maneuver:casting",
-        "school:fire"
+        "school:fire",
+        "source:spell"
       ],
       "groups": [
         "base.current-rewards"
@@ -2821,19 +2832,26 @@
         "keywords": [],
         "effects": [
           {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "base.read-intent",
+            "stacks": 1
+          },
+          {
             "op": "revealIntent",
             "target": "enemy",
             "amount": 1
           }
         ],
-        "textTemplate": "Reveal the enemy\u2019s intent for 1 turn.",
+        "textTemplate": "Reveal the selected enemy's intent for 1 turn. Reveal opponents' burden hands while active.",
         "icon": "\u2726",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
       "tags": [
         "classification.skill",
         "camp:spell",
-        "maneuver:casting"
+        "maneuver:casting",
+        "school:illusion"
       ],
       "groups": [
         "base.current-rewards",
@@ -3296,7 +3314,8 @@
       "tags": [
         "classification.skill",
         "camp:spell",
-        "maneuver:casting"
+        "maneuver:casting",
+        "school:alteration"
       ],
       "groups": [
         "base.current-rewards",
@@ -3410,7 +3429,8 @@
       "tags": [
         "classification.skill",
         "camp:spell",
-        "maneuver:casting"
+        "maneuver:casting",
+        "school:force"
       ],
       "groups": [
         "base.current-rewards",
@@ -3529,7 +3549,8 @@
       "tags": [
         "classification.skill",
         "camp:spell",
-        "maneuver:casting"
+        "maneuver:casting",
+        "school:lightning"
       ],
       "groups": [
         "base.current-rewards",
@@ -4141,7 +4162,8 @@
       "tags": [
         "classification.attack",
         "camp:physical",
-        "maneuver:attack"
+        "maneuver:attack",
+        "source:weapon"
       ],
       "groups": [
         "base.current-rewards",
@@ -4267,7 +4289,8 @@
       "tags": [
         "classification.attack",
         "camp:physical",
-        "maneuver:attack"
+        "maneuver:attack",
+        "source:weapon"
       ],
       "groups": [
         "base.current-rewards",
@@ -4514,7 +4537,8 @@
       "tags": [
         "classification.attack",
         "camp:physical",
-        "maneuver:attack"
+        "maneuver:attack",
+        "source:weapon"
       ],
       "groups": [
         "base.current-rewards",
@@ -4640,7 +4664,8 @@
       "tags": [
         "classification.attack",
         "camp:physical",
-        "maneuver:attack"
+        "maneuver:attack",
+        "source:weapon"
       ],
       "groups": [
         "base.current-rewards",
@@ -4758,7 +4783,9 @@
       "tags": [
         "classification.attack",
         "camp:spell",
-        "maneuver:casting"
+        "maneuver:casting",
+        "school:force",
+        "source:spell"
       ],
       "groups": [
         "base.current-rewards",
@@ -4877,7 +4904,9 @@
       "tags": [
         "classification.attack",
         "camp:spell",
-        "maneuver:casting"
+        "maneuver:casting",
+        "school:force",
+        "source:spell"
       ],
       "groups": [
         "base.current-rewards",
@@ -5008,7 +5037,8 @@
       "tags": [
         "classification.skill",
         "camp:spell",
-        "maneuver:casting"
+        "maneuver:casting",
+        "school:illusion"
       ],
       "groups": [
         "base.current-rewards",
@@ -5128,7 +5158,8 @@
       "tags": [
         "classification.skill",
         "camp:spell",
-        "maneuver:casting"
+        "maneuver:casting",
+        "school:force"
       ],
       "groups": [
         "base.current-rewards",
@@ -5393,7 +5424,8 @@
       "tags": [
         "classification.attack",
         "camp:physical",
-        "maneuver:attack"
+        "maneuver:attack",
+        "source:weapon"
       ],
       "groups": [
         "base.current-rewards",
@@ -5539,7 +5571,9 @@
       "tags": [
         "classification.attack",
         "camp:spell",
-        "maneuver:casting"
+        "maneuver:casting",
+        "school:force",
+        "source:spell"
       ],
       "groups": [
         "base.current-rewards",
@@ -5656,7 +5690,8 @@
       "tags": [
         "classification.attack",
         "camp:physical",
-        "maneuver:attack"
+        "maneuver:attack",
+        "source:weapon"
       ],
       "groups": [
         "base.current-rewards",
@@ -6466,7 +6501,8 @@
       "tags": [
         "classification.skill",
         "camp:spell",
-        "maneuver:casting"
+        "maneuver:casting",
+        "school:alteration"
       ],
       "groups": [
         "base.current-rewards",
@@ -6825,7 +6861,8 @@
       "tags": [
         "classification.skill",
         "camp:spell",
-        "maneuver:casting"
+        "maneuver:casting",
+        "school:illusion"
       ],
       "groups": [
         "base.current-rewards",
@@ -6942,7 +6979,8 @@
       "tags": [
         "classification.skill",
         "camp:spell",
-        "maneuver:casting"
+        "maneuver:casting",
+        "school:alteration"
       ],
       "groups": [
         "base.current-rewards",
@@ -7167,7 +7205,8 @@
       "tags": [
         "classification.skill",
         "camp:spell",
-        "maneuver:casting"
+        "maneuver:casting",
+        "school:force"
       ],
       "groups": [
         "base.current-rewards"
@@ -7519,7 +7558,8 @@
       "tags": [
         "classification.attack",
         "camp:physical",
-        "maneuver:attack"
+        "maneuver:attack",
+        "source:weapon"
       ],
       "groups": [
         "base.current-rewards",
@@ -7633,7 +7673,8 @@
       "tags": [
         "classification.skill",
         "camp:spell",
-        "maneuver:casting"
+        "maneuver:casting",
+        "school:illusion"
       ],
       "groups": [
         "base.current-rewards",
@@ -7974,7 +8015,8 @@
         "burden": {
           "skipActions": 1,
           "staminaTax": 0,
-          "manaTax": 0
+          "manaTax": 0,
+          "status": "base.stagger"
         }
       },
       "tags": [
@@ -8114,7 +8156,8 @@
       "tags": [
         "classification.attack",
         "camp:physical",
-        "maneuver:attack"
+        "maneuver:attack",
+        "source:weapon"
       ],
       "groups": [
         "base.current-rewards"
@@ -8226,7 +8269,8 @@
         "burden": {
           "skipActions": 1,
           "staminaTax": 0,
-          "manaTax": 0
+          "manaTax": 0,
+          "status": "base.paralysis"
         }
       },
       "tags": [
@@ -8354,7 +8398,8 @@
           ],
           "cardTypes": [
             "attack"
-          ]
+          ],
+          "status": "base.restrained-burden"
         }
       },
       "tags": [
@@ -8482,7 +8527,8 @@
       "tags": [
         "camp:physical",
         "classification.attack",
-        "maneuver:attack"
+        "maneuver:attack",
+        "source:weapon"
       ],
       "groups": [
         "base.generated-helpers"
@@ -8541,7 +8587,8 @@
       "tags": [
         "camp:physical",
         "classification.attack",
-        "maneuver:smash"
+        "maneuver:smash",
+        "source:weapon"
       ],
       "groups": [
         "base.generated-helpers"
