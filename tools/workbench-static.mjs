@@ -243,6 +243,15 @@ async function main() {
       await copyTree(path.join(REPO, 'pose-studio', entry.name), path.join(game, 'pose-studio', entry.name), { textRe: GAME_TEXT, rewrite: gameRewrite });
     }
   }
+  // Scoped authoring review: nested module and its feature-local draft sources.
+  for (const dir of ['pose-studio/enemy-back-proposals', 'art/enemy-back-proposals']) {
+    const source = path.join(REPO, dir);
+    if (existsSync(source)) await copyTree(source, path.join(game, dir), { textRe: GAME_TEXT, rewrite: gameRewrite });
+    if (dir === 'pose-studio/enemy-back-proposals' && existsSync(path.join(game, dir, 'index.html'))) {
+      const page = path.join(game, dir, 'index.html');
+      await fs.writeFile(page, (await fs.readFile(page, 'utf8')).replace('../../workbench/index.html#mod=assets', `${base}index.html#mod=assets`));
+    }
+  }
   if (art) {
     const light = path.join(REPO, 'assets-mobile');
     if (existsSync(light)) await copyTree(light, path.join(game, 'assets'));
