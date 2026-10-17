@@ -1,0 +1,43 @@
+{
+  "sourceOutputPath": "/workspace/generated_images/exec-67a0061a-5d91-4f11-92db-0d4d4d02fcae.png",
+  "prompt": "Create exactly ONE isolated medieval fantasy world-map prop icon, centered on a square 1536 by 1536 transparent RGBA canvas. STYLE SET map-icons-painterly-v1: hand-painted fantasy miniatures, elevated three-quarter isometric camera looking down about 35 degrees showing front and right planes. Matte tactile materials, warm gray weathered stone, muted ochre/tan timber, desaturated moss green, dark iron, restrained amber details. Soft neutral daylight from upper left, gentle small contact shadow, consistent subtle painted edge definition. Broad clear silhouette readable at 64 pixels, restrained fine detail. Subject occupies approximately the central 70 percent of canvas, leaving generous fully transparent margins on every side. No heavy black cartoon outlines, no photorealism, no glossy 3D plastic, no frame, badge, text, lettering, numbers, people, scenic background or large terrain island. Quiet minimal footing only where structurally necessary. Keep the object fully opaque with transparent surroundings. SUBJECT: wooden iron-bound treasure chest partly open with restrained gold glint. Correct draft with substantially wider margins: scale the entire prop down to fit wholly inside x=20% to 80% and y=20% to 80%, leaving fully transparent blank surroundings. Broad matte painted shapes. Lid just slightly ajar with only a few dim gold coins; no gems, crown or goblet.",
+  "generator": "OpenAI image_gen",
+  "styleSetId": "map-icons-painterly-v1",
+  "referenceImagePath": "/workspace/generated_images/exec-f4936bd7-034c-46cd-bb43-a89a9563c1fb.png",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1254,
+    "height": 1254
+  },
+  "requestedDimensions": {
+    "width": 1536,
+    "height": 1536
+  },
+  "sha256": "29508536a52c0f9556f74550feb42a486a98f696445f617aa52e0cf9e02b3d83",
+  "sourceSha256": "29508536a52c0f9556f74550feb42a486a98f696445f617aa52e0cf9e02b3d83",
+  "processing": "Byte-identical copy of generated PNG. No resizing, trimming or painted-image editing.",
+  "qa": {
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "transparentFraction": 0.7182070007554772,
+    "visibleBoundsAt16": [
+      276,
+      275,
+      1040,
+      1054
+    ],
+    "edgePixelCountAt1": 15,
+    "edgePixelCountAt16": 0,
+    "normalizedMarginsAt16": [
+      0.22009569377990432,
+      0.21929824561403508,
+      0.17065390749601275,
+      0.1594896331738437
+    ]
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "sourceOutputPath": "/workspace/generated_images/exec-d76c8487-e5f1-409c-9fbb-c9cb89806954.png",
+  "prompt": "Create exactly ONE isolated medieval fantasy world-map prop icon, centered on a square 1536 by 1536 transparent RGBA canvas. STYLE SET map-icons-painterly-v1: hand-painted fantasy miniatures, elevated three-quarter isometric camera looking down about 35 degrees showing front and right planes. Matte tactile materials, warm gray weathered stone, muted ochre/tan timber, desaturated moss green, dark iron, restrained amber details. Soft neutral daylight from upper left, gentle small contact shadow, consistent subtle painted edge definition. Broad clear silhouette readable at 64 pixels, restrained fine detail. Subject occupies approximately the central 70 percent of canvas, leaving generous fully transparent margins on every side. No heavy black cartoon outlines, no photorealism, no glossy 3D plastic, no frame, badge, text, lettering, numbers, people, scenic background or large terrain island. Quiet minimal footing only where structurally necessary. Keep the object fully opaque with transparent surroundings. SUBJECT: \nwooden directional signpost blank boards no lettering",
+  "generator": "OpenAI image_gen",
+  "styleSetId": "map-icons-painterly-v1",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1254,
+    "height": 1254
+  },
+  "requestedDimensions": {
+    "width": 1536,
+    "height": 1536
+  },
+  "sha256": "f1e800f58d794822a6872ebc9614f1f6f1eaab92c1f5212a88443770353a8766",
+  "sourceSha256": "f1e800f58d794822a6872ebc9614f1f6f1eaab92c1f5212a88443770353a8766",
+  "processing": "Byte-identical copy of generated PNG. No resizing, trimming or painted-image editing.",
+  "qa": {
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "transparentFraction": 0.7110732100659071,
+    "visibleBoundsAt16": [
+      142,
+      64,
+      1137,
+      1185
+    ],
+    "edgePixelCountAt1": 10,
+    "edgePixelCountAt16": 0,
+    "normalizedMarginsAt16": [
+      0.11323763955342903,
+      0.051036682615629984,
+      0.09330143540669857,
+      0.05502392344497608
+    ]
+  }
+}

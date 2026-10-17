@@ -20,7 +20,8 @@
     "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
     "../batch-01/manifest.json",
     "../batch-02/manifest.json",
-    "../batch-03/manifest.json"
+    "../batch-03/manifest.json",
+    "../batch-07-map-icons/manifest.json"
   ],
   "placementDefaults": {
     "chancePerEligibleTile": 0.25,
@@ -33,7 +34,9 @@
     "emptyTileIsValid": true
   },
   "artPolicy": {
-    "allowTechnicalPlaceholders": true,
-    "selectionMode": "prefer-painted-then-placeholder"
+    "allowTechnicalPlaceholders": false,
+    "selectionMode": "prefer-painted-then-placeholder",
+    "requiredStyleSetId": "map-icons-painterly-v1",
+    "styleGuide": "../batch-07-map-icons/style-guide.json"
   }
 }

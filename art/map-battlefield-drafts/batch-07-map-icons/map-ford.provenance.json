@@ -1,0 +1,42 @@
+{
+  "sourceOutputPath": "/workspace/generated_images/exec-4998ae48-71e9-4331-b6cb-eb7f7ef62159.png",
+  "prompt": "Create exactly ONE isolated medieval fantasy world-map prop icon, centered on a square 1536 by 1536 transparent RGBA canvas. STYLE SET map-icons-painterly-v1: hand-painted fantasy miniatures, elevated three-quarter isometric camera looking down about 35 degrees showing front and right planes. Matte tactile materials, warm gray weathered stone, muted ochre/tan timber, desaturated moss green, dark iron, restrained amber details. Soft neutral daylight from upper left, gentle small contact shadow, consistent subtle painted edge definition. Broad clear silhouette readable at 64 pixels, restrained fine detail. Subject occupies approximately the central 70 percent of canvas, leaving generous fully transparent margins on every side. No heavy black cartoon outlines, no photorealism, no glossy 3D plastic, no frame, badge, text, lettering, numbers, people, scenic background or large terrain island. Quiet minimal footing only where structurally necessary. Keep the object fully opaque with transparent surroundings. SUBJECT: \nshallow narrow river crossing with stepping stones and tiny water strip",
+  "generator": "OpenAI image_gen",
+  "styleSetId": "map-icons-painterly-v1",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1254,
+    "height": 1254
+  },
+  "requestedDimensions": {
+    "width": 1536,
+    "height": 1536
+  },
+  "sha256": "c02d4da5dc4b982ca01e0e38cbe5dacf7d27fb6398fe98a3ddc63efa0b725f58",
+  "sourceSha256": "c02d4da5dc4b982ca01e0e38cbe5dacf7d27fb6398fe98a3ddc63efa0b725f58",
+  "processing": "Byte-identical copy of generated PNG. No resizing, trimming or painted-image editing.",
+  "qa": {
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "transparentFraction": 0.5912187856912108,
+    "visibleBoundsAt16": [
+      50,
+      200,
+      1229,
+      1062
+    ],
+    "edgePixelCountAt1": 53,
+    "edgePixelCountAt16": 0,
+    "normalizedMarginsAt16": [
+      0.03987240829346093,
+      0.1594896331738437,
+      0.019936204146730464,
+      0.15311004784688995
+    ]
+  }
+}

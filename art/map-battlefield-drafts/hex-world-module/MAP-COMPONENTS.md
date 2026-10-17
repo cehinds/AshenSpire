@@ -1,6 +1,6 @@
 # Map components and object mappings
 
-**25 component types, 39 mapped PNG variants, four authored map objects and two optional-discovery rules.**
+**25 component types, 25 active matching icons and 39 historical variants, four authored map objects and two optional-discovery rules.**
 
 ![All mapped component types](map-components-preview.png)
 
@@ -10,12 +10,12 @@
 | --- | --- |
 | [map-components.json](map-components.json) | Component module registry, sparse-placement defaults and art policy |
 | [components/](components/) | Nine smaller category catalogs: tags, art pool, visibility, orientation and gameplay defaults |
-| [art/map-props.json](art/map-props.json) | All 39 icon variants, exact source-manifest IDs and 25 art pools |
+| [art/map-props.json](art/map-props.json) | All 64 retained icon variants, exact source-manifest IDs and 25 art pools |
 | [map-objects.json](map-objects.json) | Authored object instances and optional placement rules |
 | [gameplay/discoveries.json](gameplay/discoveries.json) | Spawn chance, weights and component-to-gameplay mappings |
 | [map-component-mapping.json](map-component-mapping.json) | Generated portable mapping of every component and icon variant |
 
-Every map painting from batches 01–03 and every earlier technical icon is mapped. Battlefield grounds, skies, scene props and filters retain their independent catalogs; the 25-type catalog describes map landmarks and services.
+Every map painting from batches 01–03 and 07 and every earlier technical icon is mapped. Only batch 07 is eligible under the active style policy. Battlefield grounds, skies, scene props and filters retain their independent catalogs; the 25-type catalog describes map landmarks and services.
 
 ## Component families
 
@@ -90,7 +90,9 @@ This maps the chest picture to a loot table while preserving the same roll and e
 
 ## Art and gameplay resolution
 
-**Art:** filter eligible variants → prefer painted drafts → use technical placeholders only if allowed by the registry policy. Thus a bridge chooses from its two paintings while a town currently uses its explicit technical fallback. Painted rest camps from different batches have distinct scoped IDs.
+**Art:** filter by `artPolicy.requiredStyleSetId` → apply tile-tag predicates → choose a painted variant. All 25 types now use `map-icons-painterly-v1`; technical placeholder fallback is disabled. The original 39 variants retain their exact IDs and source links for history, but cannot enter this set. `activeVariantIds` in the portable export identifies the current style collection before context-dependent tag filtering. A missing matching style produces no candidate and fails validation; it never silently substitutes an older painting.
+
+The [editable style guide](../batch-07-map-icons/style-guide.json) defines the camera, palette, lighting, framing and readability checks. New variants must carry the same `styleSetId` in both their source manifest and art mapping, and pass visual review alongside the existing set. Tags still decide where an icon can appear; style IDs decide which collection it belongs to.
 
 **Gameplay:** start with the tile's values; non-null component scalar defaults replace their associations; component quest/effect arrays add unique IDs; explicit instance overrides replace fields, with null disabling a scalar association. Clearing an encounter pool also clears its inherited encounter chance. Level bands inherit from the tile unless overridden. Optional discovery entries supply their selected loot/rest/trainer binding as an override.
 

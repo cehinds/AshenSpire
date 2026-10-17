@@ -1,0 +1,35 @@
+{
+  "styleSetId": "map-icons-painterly-v1",
+  "status": "draft-unregistered",
+  "camera": "Elevated three-quarter isometric view, looking down about 35 degrees, showing front and right planes.",
+  "palette": [
+    "warm gray weathered stone",
+    "muted ochre and tan timber",
+    "desaturated moss green",
+    "dark iron",
+    "small restrained amber highlights"
+  ],
+  "lighting": "Soft neutral daylight from upper left; gentle contact shadow; no dramatic rim light.",
+  "rendering": "Hand-painted medieval fantasy miniatures, matte tactile materials, broad readable shapes, subtle edge definition, no heavy black cartoon outlines.",
+  "background": "True transparent RGBA; no opaque backdrop, badge, frame, text, numbers or people.",
+  "framing": {
+    "requestedCanvas": [
+      1536,
+      1536
+    ],
+    "subjectWithinNormalizedBounds": [
+      0.15,
+      0.15,
+      0.85,
+      0.85
+    ],
+    "anchor": "bottom-center",
+    "note": "Preserve generous transparent margins; measure actual delivered dimensions and alpha bounds."
+  },
+  "readabilitySizes": [
+    64,
+    128,
+    256
+  ],
+  "selectionPolicy": "Only this styleSetId is eligible for the current map preview and proposal selection; historical variants remain mapped for provenance."
+}

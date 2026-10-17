@@ -3,7 +3,7 @@
   "kind": "art",
   "id": "map-props",
   "assetBase": "../../..",
-  "status": "draft-and-technical-placeholder-variants",
+  "status": "matching-painted-set-with-historical-variants",
   "items": [
     {
       "id": "technical-bridge",
@@ -815,6 +815,536 @@
       "status": "draft-unregistered",
       "sourceManifest": "../batch-03/manifest.json",
       "sourceAssetId": "map-wooden-bridge"
+    },
+    {
+      "id": "batch-07-map-bridge",
+      "componentId": "bridge",
+      "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-bridge.png",
+      "weight": 1,
+      "tags": [
+        "bridge",
+        "water-crossing",
+        "stone"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-07-map-icons/manifest.json",
+      "sourceAssetId": "map-bridge"
+    },
+    {
+      "id": "batch-07-map-ford",
+      "componentId": "ford",
+      "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-ford.png",
+      "weight": 1,
+      "tags": [
+        "ford",
+        "river",
+        "water-crossing"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-07-map-icons/manifest.json",
+      "sourceAssetId": "map-ford"
+    },
+    {
+      "id": "batch-07-map-path",
+      "componentId": "path",
+      "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-path.png",
+      "weight": 1,
+      "tags": [
+        "road",
+        "junction",
+        "route"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-07-map-icons/manifest.json",
+      "sourceAssetId": "map-path"
+    },
+    {
+      "id": "batch-07-map-signpost",
+      "componentId": "signpost",
+      "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-signpost.png",
+      "weight": 1,
+      "tags": [
+        "road",
+        "junction",
+        "travel"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-07-map-icons/manifest.json",
+      "sourceAssetId": "map-signpost"
+    },
+    {
+      "id": "batch-07-map-tunnel",
+      "componentId": "tunnel",
+      "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-tunnel.png",
+      "weight": 1,
+      "tags": [
+        "tunnel",
+        "entrance",
+        "rock",
+        "paired-connection"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-07-map-icons/manifest.json",
+      "sourceAssetId": "map-tunnel"
+    },
+    {
+      "id": "batch-07-map-ferry",
+      "componentId": "ferry",
+      "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-ferry.png",
+      "weight": 1,
+      "tags": [
+        "ferry",
+        "dock",
+        "water",
+        "shore"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-07-map-icons/manifest.json",
+      "sourceAssetId": "map-ferry"
+    },
+    {
+      "id": "batch-07-map-portal",
+      "componentId": "portal",
+      "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-portal.png",
+      "weight": 1,
+      "tags": [
+        "portal",
+        "magic",
+        "paired-connection"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-07-map-icons/manifest.json",
+      "sourceAssetId": "map-portal"
+    },
+    {
+      "id": "batch-07-map-boat",
+      "componentId": "boat",
+      "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-boat.png",
+      "weight": 1,
+      "tags": [
+        "boat",
+        "landing",
+        "water"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-07-map-icons/manifest.json",
+      "sourceAssetId": "map-boat"
+    },
+    {
+      "id": "batch-07-map-cave",
+      "componentId": "cave",
+      "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-cave.png",
+      "weight": 1,
+      "tags": [
+        "cave",
+        "entrance",
+        "rock"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-07-map-icons/manifest.json",
+      "sourceAssetId": "map-cave"
+    },
+    {
+      "id": "batch-07-map-dungeon",
+      "componentId": "dungeon",
+      "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-dungeon.png",
+      "weight": 1,
+      "tags": [
+        "dungeon",
+        "gate",
+        "stone",
+        "danger"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-07-map-icons/manifest.json",
+      "sourceAssetId": "map-dungeon"
+    },
+    {
+      "id": "batch-07-map-mine",
+      "componentId": "mine",
+      "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-mine.png",
+      "weight": 1,
+      "tags": [
+        "mine",
+        "entrance",
+        "resource",
+        "rock"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-07-map-icons/manifest.json",
+      "sourceAssetId": "map-mine"
+    },
+    {
+      "id": "batch-07-map-city",
+      "componentId": "city",
+      "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-city.png",
+      "weight": 1,
+      "tags": [
+        "city",
+        "settlement",
+        "stone"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-07-map-icons/manifest.json",
+      "sourceAssetId": "map-city"
+    },
+    {
+      "id": "batch-07-map-town",
+      "componentId": "town",
+      "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-town.png",
+      "weight": 1,
+      "tags": [
+        "town",
+        "settlement",
+        "services"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-07-map-icons/manifest.json",
+      "sourceAssetId": "map-town"
+    },
+    {
+      "id": "batch-07-map-village",
+      "componentId": "village",
+      "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-village.png",
+      "weight": 1,
+      "tags": [
+        "village",
+        "settlement"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-07-map-icons/manifest.json",
+      "sourceAssetId": "map-village"
+    },
+    {
+      "id": "batch-07-map-ruins",
+      "componentId": "ruins",
+      "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-ruins.png",
+      "weight": 1,
+      "tags": [
+        "ruins",
+        "stone",
+        "danger"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-07-map-icons/manifest.json",
+      "sourceAssetId": "map-ruins"
+    },
+    {
+      "id": "batch-07-map-shrine",
+      "componentId": "shrine",
+      "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-shrine.png",
+      "weight": 1,
+      "tags": [
+        "shrine",
+        "blessing",
+        "stone"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-07-map-icons/manifest.json",
+      "sourceAssetId": "map-shrine"
+    },
+    {
+      "id": "batch-07-map-watchtower",
+      "componentId": "watchtower",
+      "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-watchtower.png",
+      "weight": 1,
+      "tags": [
+        "watchtower",
+        "scouting",
+        "stone"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-07-map-icons/manifest.json",
+      "sourceAssetId": "map-watchtower"
+    },
+    {
+      "id": "batch-07-map-treasure",
+      "componentId": "treasure",
+      "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-treasure.png",
+      "weight": 1,
+      "tags": [
+        "treasure",
+        "chest",
+        "reward"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-07-map-icons/manifest.json",
+      "sourceAssetId": "map-treasure"
+    },
+    {
+      "id": "batch-07-map-enemy-camp",
+      "componentId": "enemy-camp",
+      "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-enemy-camp.png",
+      "weight": 1,
+      "tags": [
+        "enemy",
+        "camp",
+        "danger"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-07-map-icons/manifest.json",
+      "sourceAssetId": "map-enemy-camp"
+    },
+    {
+      "id": "batch-07-map-rest-camp",
+      "componentId": "rest-camp",
+      "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-rest-camp.png",
+      "weight": 1,
+      "tags": [
+        "rest",
+        "camp",
+        "campfire",
+        "shelter"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-07-map-icons/manifest.json",
+      "sourceAssetId": "map-rest-camp"
+    },
+    {
+      "id": "batch-07-map-inn",
+      "componentId": "inn",
+      "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-inn.png",
+      "weight": 1,
+      "tags": [
+        "inn",
+        "settlement",
+        "rest",
+        "shelter"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-07-map-icons/manifest.json",
+      "sourceAssetId": "map-inn"
+    },
+    {
+      "id": "batch-07-map-trainer",
+      "componentId": "trainer",
+      "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-trainer.png",
+      "weight": 1,
+      "tags": [
+        "trainer",
+        "skills",
+        "weapons"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-07-map-icons/manifest.json",
+      "sourceAssetId": "map-trainer"
+    },
+    {
+      "id": "batch-07-map-merchant",
+      "componentId": "merchant",
+      "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-merchant.png",
+      "weight": 1,
+      "tags": [
+        "merchant",
+        "market",
+        "supplies"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-07-map-icons/manifest.json",
+      "sourceAssetId": "map-merchant"
+    },
+    {
+      "id": "batch-07-map-cartographer",
+      "componentId": "cartographer",
+      "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-cartographer.png",
+      "weight": 1,
+      "tags": [
+        "cartographer",
+        "map",
+        "reward"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-07-map-icons/manifest.json",
+      "sourceAssetId": "map-cartographer"
+    },
+    {
+      "id": "batch-07-map-fishing",
+      "componentId": "fishing",
+      "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-fishing.png",
+      "weight": 1,
+      "tags": [
+        "fishing",
+        "water",
+        "shore"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-07-map-icons/manifest.json",
+      "sourceAssetId": "map-fishing"
     }
   ],
   "pools": [
@@ -829,7 +1359,8 @@
       "itemIds": [
         "technical-bridge",
         "batch-01-map-bridge-stone",
-        "batch-03-map-wooden-bridge"
+        "batch-03-map-wooden-bridge",
+        "batch-07-map-bridge"
       ]
     },
     {
@@ -841,7 +1372,8 @@
       "replacement": false,
       "selectionPolicy": "prefer-painted-then-placeholder",
       "itemIds": [
-        "technical-path"
+        "technical-path",
+        "batch-07-map-path"
       ]
     },
     {
@@ -853,7 +1385,8 @@
       "replacement": false,
       "selectionPolicy": "prefer-painted-then-placeholder",
       "itemIds": [
-        "technical-tunnel"
+        "technical-tunnel",
+        "batch-07-map-tunnel"
       ]
     },
     {
@@ -866,7 +1399,8 @@
       "selectionPolicy": "prefer-painted-then-placeholder",
       "itemIds": [
         "technical-cave",
-        "batch-02-map-cave-entrance"
+        "batch-02-map-cave-entrance",
+        "batch-07-map-cave"
       ]
     },
     {
@@ -879,7 +1413,8 @@
       "selectionPolicy": "prefer-painted-then-placeholder",
       "itemIds": [
         "technical-ferry",
-        "batch-03-map-ferry"
+        "batch-03-map-ferry",
+        "batch-07-map-ferry"
       ]
     },
     {
@@ -891,7 +1426,8 @@
       "replacement": false,
       "selectionPolicy": "prefer-painted-then-placeholder",
       "itemIds": [
-        "technical-ford"
+        "technical-ford",
+        "batch-07-map-ford"
       ]
     },
     {
@@ -904,7 +1440,8 @@
       "selectionPolicy": "prefer-painted-then-placeholder",
       "itemIds": [
         "technical-portal",
-        "batch-02-map-portal"
+        "batch-02-map-portal",
+        "batch-07-map-portal"
       ]
     },
     {
@@ -916,7 +1453,8 @@
       "replacement": false,
       "selectionPolicy": "prefer-painted-then-placeholder",
       "itemIds": [
-        "technical-boat"
+        "technical-boat",
+        "batch-07-map-boat"
       ]
     },
     {
@@ -928,7 +1466,8 @@
       "replacement": false,
       "selectionPolicy": "prefer-painted-then-placeholder",
       "itemIds": [
-        "technical-city"
+        "technical-city",
+        "batch-07-map-city"
       ]
     },
     {
@@ -940,7 +1479,8 @@
       "replacement": false,
       "selectionPolicy": "prefer-painted-then-placeholder",
       "itemIds": [
-        "technical-town"
+        "technical-town",
+        "batch-07-map-town"
       ]
     },
     {
@@ -953,7 +1493,8 @@
       "selectionPolicy": "prefer-painted-then-placeholder",
       "itemIds": [
         "technical-village",
-        "batch-01-map-village"
+        "batch-01-map-village",
+        "batch-07-map-village"
       ]
     },
     {
@@ -966,7 +1507,8 @@
       "selectionPolicy": "prefer-painted-then-placeholder",
       "itemIds": [
         "technical-ruins",
-        "batch-01-map-ruins-arch"
+        "batch-01-map-ruins-arch",
+        "batch-07-map-ruins"
       ]
     },
     {
@@ -979,7 +1521,8 @@
       "selectionPolicy": "prefer-painted-then-placeholder",
       "itemIds": [
         "technical-dungeon",
-        "batch-02-map-dungeon-entrance"
+        "batch-02-map-dungeon-entrance",
+        "batch-07-map-dungeon"
       ]
     },
     {
@@ -992,7 +1535,8 @@
       "selectionPolicy": "prefer-painted-then-placeholder",
       "itemIds": [
         "technical-treasure",
-        "batch-01-map-treasure-chest"
+        "batch-01-map-treasure-chest",
+        "batch-07-map-treasure"
       ]
     },
     {
@@ -1005,7 +1549,8 @@
       "selectionPolicy": "prefer-painted-then-placeholder",
       "itemIds": [
         "technical-enemy-camp",
-        "batch-02-map-enemy-camp"
+        "batch-02-map-enemy-camp",
+        "batch-07-map-enemy-camp"
       ]
     },
     {
@@ -1019,7 +1564,8 @@
       "itemIds": [
         "technical-rest-camp",
         "batch-01-map-rest-camp",
-        "batch-02-map-rest-camp"
+        "batch-02-map-rest-camp",
+        "batch-07-map-rest-camp"
       ]
     },
     {
@@ -1031,7 +1577,8 @@
       "replacement": false,
       "selectionPolicy": "prefer-painted-then-placeholder",
       "itemIds": [
-        "technical-inn"
+        "technical-inn",
+        "batch-07-map-inn"
       ]
     },
     {
@@ -1043,7 +1590,8 @@
       "replacement": false,
       "selectionPolicy": "prefer-painted-then-placeholder",
       "itemIds": [
-        "technical-trainer"
+        "technical-trainer",
+        "batch-07-map-trainer"
       ]
     },
     {
@@ -1055,7 +1603,8 @@
       "replacement": false,
       "selectionPolicy": "prefer-painted-then-placeholder",
       "itemIds": [
-        "technical-merchant"
+        "technical-merchant",
+        "batch-07-map-merchant"
       ]
     },
     {
@@ -1068,7 +1617,8 @@
       "selectionPolicy": "prefer-painted-then-placeholder",
       "itemIds": [
         "technical-shrine",
-        "batch-02-map-shrine"
+        "batch-02-map-shrine",
+        "batch-07-map-shrine"
       ]
     },
     {
@@ -1081,7 +1631,8 @@
       "selectionPolicy": "prefer-painted-then-placeholder",
       "itemIds": [
         "technical-watchtower",
-        "batch-03-map-watchtower"
+        "batch-03-map-watchtower",
+        "batch-07-map-watchtower"
       ]
     },
     {
@@ -1093,7 +1644,8 @@
       "replacement": false,
       "selectionPolicy": "prefer-painted-then-placeholder",
       "itemIds": [
-        "technical-cartographer"
+        "technical-cartographer",
+        "batch-07-map-cartographer"
       ]
     },
     {
@@ -1105,7 +1657,8 @@
       "replacement": false,
       "selectionPolicy": "prefer-painted-then-placeholder",
       "itemIds": [
-        "technical-mine"
+        "technical-mine",
+        "batch-07-map-mine"
       ]
     },
     {
@@ -1117,7 +1670,8 @@
       "replacement": false,
       "selectionPolicy": "prefer-painted-then-placeholder",
       "itemIds": [
-        "technical-fishing"
+        "technical-fishing",
+        "batch-07-map-fishing"
       ]
     },
     {
@@ -1129,7 +1683,8 @@
       "replacement": false,
       "selectionPolicy": "prefer-painted-then-placeholder",
       "itemIds": [
-        "batch-03-map-road-signpost"
+        "batch-03-map-road-signpost",
+        "batch-07-map-signpost"
       ]
     }
   ]

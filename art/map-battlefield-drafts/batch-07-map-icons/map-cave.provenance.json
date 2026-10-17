@@ -1,0 +1,43 @@
+{
+  "sourceOutputPath": "/workspace/generated_images/exec-81ef3b10-ae0a-4a5f-b6f8-71e2aae56a31.png",
+  "prompt": "Create exactly ONE isolated medieval fantasy world-map prop icon, centered on a square 1536 by 1536 transparent RGBA canvas. STYLE SET map-icons-painterly-v1: hand-painted fantasy miniatures, elevated three-quarter isometric camera looking down about 35 degrees showing front and right planes. Matte tactile materials, warm gray weathered stone, muted ochre/tan timber, desaturated moss green, dark iron, restrained amber details. Soft neutral daylight from upper left, gentle small contact shadow, consistent subtle painted edge definition. Broad clear silhouette readable at 64 pixels, restrained fine detail. Subject occupies approximately the central 70 percent of canvas, leaving generous fully transparent margins on every side. No heavy black cartoon outlines, no photorealism, no glossy 3D plastic, no frame, badge, text, lettering, numbers, people, scenic background or large terrain island. Quiet minimal footing only where structurally necessary. Keep the object fully opaque with transparent surroundings. SUBJECT: Natural rock cave mouth with modest moss.",
+  "generator": "OpenAI image_gen",
+  "tool": "image_gen.imagegen",
+  "styleSetId": "map-icons-painterly-v1",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1254,
+    "height": 1254
+  },
+  "requestedDimensions": {
+    "width": 1536,
+    "height": 1536
+  },
+  "sha256": "372bb12e867628394dbbd6786f358105cdd87386fbcab655222dcd1fad65dda3",
+  "sourceSha256": "372bb12e867628394dbbd6786f358105cdd87386fbcab655222dcd1fad65dda3",
+  "processing": "Byte-identical copy of generated PNG. No resizing, trimming or painted-image editing.",
+  "qa": {
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "transparentFraction": 0.5107172200473636,
+    "visibleBoundsAt16": [
+      38,
+      150,
+      1220,
+      1102
+    ],
+    "edgePixelCountAt1": 59,
+    "edgePixelCountAt16": 0,
+    "normalizedMarginsAt16": [
+      0.030303030303030304,
+      0.11961722488038277,
+      0.02711323763955343,
+      0.12121212121212122
+    ]
+  }
+}

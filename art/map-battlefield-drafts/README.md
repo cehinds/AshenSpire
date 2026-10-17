@@ -1,6 +1,6 @@
 # Map and battlefield source-art library
 
-**90 retained source drafts across six batches.** Kept on `feature/ImproveMapBattleFieldArt`; the shared proposal and wiring examples are already in dev. These paintings remain unregistered drafts.
+**115 retained source drafts across seven batches.** Kept on `feature/ImproveMapBattleFieldArt`; the shared proposal and wiring examples are already in dev. These paintings remain unregistered drafts.
 
 | Batch | Source count | Contents |
 | --- | --- | --- |
@@ -10,11 +10,12 @@
 | [04](batch-04-atmosphere/README.md) | 15 | Oversized tint/fog fields, repeating particles and distant lightning |
 | [05](batch-05-regions/README.md) | 32 | Five regional sets, shared dungeon/mine layers and editable location mappings |
 | [06](batch-06-settlements/README.md) | 17 | Regional settlement buildings/streets, five dungeon floors and clearer frozen shore |
+| [07](batch-07-map-icons/README.md) | 25 | Complete matching painted map-icon collection and editable style guide |
 
 ![Regional settlement combinations](batch-06-settlements/preview-settlements.png)
 
 - [catalog.json](catalog.json) links the batch manifests and editable scene recipes.
-- [Map components and all object mappings](hex-world-module/MAP-COMPONENTS.md) connect 25 object types and 39 PNG variants to tile/discovery definitions.
+- [Map components and all object mappings](hex-world-module/MAP-COMPONENTS.md) connect 25 object types, 25 active matching icons and 39 historical variants to tile/discovery definitions.
 - [Standalone hex world module](hex-world-module/README.md) defines six-sided tile tags, rotation, art pools, encounters and discovery examples.
 - [Latest modular JSON](batch-06-settlements/modules/README.md) separates region pools/scenes from shared camera and selection rules, with portable single-file exports.
 - Manifest IDs are local to their batch; use the batch ID plus asset ID as a library key. Revised subjects can exist in multiple batches.

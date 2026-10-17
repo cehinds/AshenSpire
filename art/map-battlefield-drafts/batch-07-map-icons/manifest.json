@@ -1,0 +1,1214 @@
+{
+  "version": 1,
+  "status": "draft-not-runtime-bound",
+  "branch": "feature/ImproveMapBattleFieldArt",
+  "styleSetId": "map-icons-painterly-v1",
+  "styleGuide": "style-guide.json",
+  "assets": [
+    {
+      "id": "map-bridge",
+      "file": "map-bridge.png",
+      "componentId": "bridge",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "mapProp",
+      "tags": {
+        "purpose": [
+          "bridge",
+          "water-crossing",
+          "stone"
+        ],
+        "lighting": [
+          "diffuse-day"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "2f640826e336ba54f8b2fa50d2243d5bba05bf442dadacd38bdff36c4ea684fe",
+      "provenanceFile": "map-bridge.provenance.json",
+      "alpha": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentFraction": 0.6981754080721595,
+        "visibleBoundsAt16": [
+          67,
+          234,
+          1229,
+          1020
+        ],
+        "edgePixelCountAt1": 10,
+        "edgePixelCountAt16": 0,
+        "normalizedMarginsAt16": [
+          0.05342902711323764,
+          0.18660287081339713,
+          0.019936204146730464,
+          0.18660287081339713
+        ]
+      }
+    },
+    {
+      "id": "map-ford",
+      "file": "map-ford.png",
+      "componentId": "ford",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "mapProp",
+      "tags": {
+        "purpose": [
+          "ford",
+          "river",
+          "water-crossing"
+        ],
+        "lighting": [
+          "diffuse-day"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "c02d4da5dc4b982ca01e0e38cbe5dacf7d27fb6398fe98a3ddc63efa0b725f58",
+      "provenanceFile": "map-ford.provenance.json",
+      "alpha": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentFraction": 0.5912187856912108,
+        "visibleBoundsAt16": [
+          50,
+          200,
+          1229,
+          1062
+        ],
+        "edgePixelCountAt1": 53,
+        "edgePixelCountAt16": 0,
+        "normalizedMarginsAt16": [
+          0.03987240829346093,
+          0.1594896331738437,
+          0.019936204146730464,
+          0.15311004784688995
+        ]
+      }
+    },
+    {
+      "id": "map-path",
+      "file": "map-path.png",
+      "componentId": "path",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "mapProp",
+      "tags": {
+        "purpose": [
+          "road",
+          "junction",
+          "route"
+        ],
+        "lighting": [
+          "diffuse-day"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "3c782646d2bc482ee2b01795ff32dd558cddd53e21e4aae51f1e37a6ae25dab3",
+      "provenanceFile": "map-path.provenance.json",
+      "alpha": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentFraction": 0.6571418033266434,
+        "visibleBoundsAt16": [
+          55,
+          171,
+          1205,
+          1115
+        ],
+        "edgePixelCountAt1": 68,
+        "edgePixelCountAt16": 0,
+        "normalizedMarginsAt16": [
+          0.043859649122807015,
+          0.13636363636363635,
+          0.03907496012759171,
+          0.11084529505582137
+        ]
+      }
+    },
+    {
+      "id": "map-signpost",
+      "file": "map-signpost.png",
+      "componentId": "signpost",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "mapProp",
+      "tags": {
+        "purpose": [
+          "road",
+          "junction",
+          "travel"
+        ],
+        "lighting": [
+          "diffuse-day"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "f1e800f58d794822a6872ebc9614f1f6f1eaab92c1f5212a88443770353a8766",
+      "provenanceFile": "map-signpost.provenance.json",
+      "alpha": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentFraction": 0.7110732100659071,
+        "visibleBoundsAt16": [
+          142,
+          64,
+          1137,
+          1185
+        ],
+        "edgePixelCountAt1": 10,
+        "edgePixelCountAt16": 0,
+        "normalizedMarginsAt16": [
+          0.11323763955342903,
+          0.051036682615629984,
+          0.09330143540669857,
+          0.05502392344497608
+        ]
+      }
+    },
+    {
+      "id": "map-tunnel",
+      "file": "map-tunnel.png",
+      "componentId": "tunnel",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "mapProp",
+      "tags": {
+        "purpose": [
+          "tunnel",
+          "entrance",
+          "rock",
+          "paired-connection"
+        ],
+        "lighting": [
+          "diffuse-day"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "3c0738745f14e4e946aac41e36a0511bfe4052a77cfebf70d80ec2bd3a73b8ab",
+      "provenanceFile": "map-tunnel.provenance.json",
+      "alpha": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentFraction": 0.516191250200316,
+        "visibleBoundsAt16": [
+          52,
+          154,
+          1203,
+          1109
+        ],
+        "edgePixelCountAt1": 123,
+        "edgePixelCountAt16": 0,
+        "normalizedMarginsAt16": [
+          0.04146730462519936,
+          0.12280701754385964,
+          0.04066985645933014,
+          0.11562998405103668
+        ]
+      }
+    },
+    {
+      "id": "map-ferry",
+      "file": "map-ferry.png",
+      "componentId": "ferry",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "mapProp",
+      "tags": {
+        "purpose": [
+          "ferry",
+          "dock",
+          "water",
+          "shore"
+        ],
+        "lighting": [
+          "diffuse-day"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "bb5e0dafe1fa67df0361d7d91453857f915ea9f0318362e06d28a9fcfc48d8de",
+      "provenanceFile": "map-ferry.provenance.json",
+      "alpha": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentFraction": 0.6018902192410125,
+        "visibleBoundsAt16": [
+          59,
+          222,
+          1188,
+          1028
+        ],
+        "edgePixelCountAt1": 66,
+        "edgePixelCountAt16": 0,
+        "normalizedMarginsAt16": [
+          0.04704944178628389,
+          0.17703349282296652,
+          0.05263157894736842,
+          0.18022328548644337
+        ]
+      }
+    },
+    {
+      "id": "map-portal",
+      "file": "map-portal.png",
+      "componentId": "portal",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "mapProp",
+      "tags": {
+        "purpose": [
+          "portal",
+          "magic",
+          "paired-connection"
+        ],
+        "lighting": [
+          "diffuse-day"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "76aac6abe69ddc803bf3f3c4c924abe4ed8562736db02a0a24b3e711445b7645",
+      "provenanceFile": "map-portal.provenance.json",
+      "alpha": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentFraction": 0.6002743374312248,
+        "visibleBoundsAt16": [
+          227,
+          85,
+          1084,
+          1165
+        ],
+        "edgePixelCountAt1": 19,
+        "edgePixelCountAt16": 0,
+        "normalizedMarginsAt16": [
+          0.1810207336523126,
+          0.06778309409888357,
+          0.13556618819776714,
+          0.07097288676236045
+        ]
+      }
+    },
+    {
+      "id": "map-boat",
+      "file": "map-boat.png",
+      "componentId": "boat",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "mapProp",
+      "tags": {
+        "purpose": [
+          "boat",
+          "landing",
+          "water"
+        ],
+        "lighting": [
+          "diffuse-day"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "7f14a9ba0de97cfb5e0f875d0290b50ce91f115544ecba459121ebfc913c20a3",
+      "provenanceFile": "map-boat.provenance.json",
+      "alpha": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentFraction": 0.6599455903787307,
+        "visibleBoundsAt16": [
+          53,
+          209,
+          1208,
+          1049
+        ],
+        "edgePixelCountAt1": 93,
+        "edgePixelCountAt16": 0,
+        "normalizedMarginsAt16": [
+          0.04226475279106858,
+          0.16666666666666666,
+          0.03668261562998405,
+          0.1634768740031898
+        ]
+      }
+    },
+    {
+      "id": "map-cave",
+      "file": "map-cave.png",
+      "componentId": "cave",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "mapProp",
+      "tags": {
+        "purpose": [
+          "cave",
+          "entrance",
+          "rock"
+        ],
+        "lighting": [
+          "diffuse-day"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "372bb12e867628394dbbd6786f358105cdd87386fbcab655222dcd1fad65dda3",
+      "provenanceFile": "map-cave.provenance.json",
+      "alpha": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentFraction": 0.5107172200473636,
+        "visibleBoundsAt16": [
+          38,
+          150,
+          1220,
+          1102
+        ],
+        "edgePixelCountAt1": 59,
+        "edgePixelCountAt16": 0,
+        "normalizedMarginsAt16": [
+          0.030303030303030304,
+          0.11961722488038277,
+          0.02711323763955343,
+          0.12121212121212122
+        ]
+      }
+    },
+    {
+      "id": "map-dungeon",
+      "file": "map-dungeon.png",
+      "componentId": "dungeon",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "mapProp",
+      "tags": {
+        "purpose": [
+          "dungeon",
+          "gate",
+          "stone",
+          "danger"
+        ],
+        "lighting": [
+          "diffuse-day"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "40ee520fdd4b8848265b02fffb944caab2806b2f6fef7eff548ec14cc6040ddf",
+      "provenanceFile": "map-dungeon.provenance.json",
+      "alpha": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentFraction": 0.4489938417160779,
+        "visibleBoundsAt16": [
+          48,
+          45,
+          1218,
+          1213
+        ],
+        "edgePixelCountAt1": 50,
+        "edgePixelCountAt16": 0,
+        "normalizedMarginsAt16": [
+          0.03827751196172249,
+          0.03588516746411483,
+          0.028708133971291867,
+          0.03269537480063796
+        ]
+      }
+    },
+    {
+      "id": "map-mine",
+      "file": "map-mine.png",
+      "componentId": "mine",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "mapProp",
+      "tags": {
+        "purpose": [
+          "mine",
+          "entrance",
+          "resource",
+          "rock"
+        ],
+        "lighting": [
+          "diffuse-day"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "b64f0ed69a269fa9e2206a7901d62b83da342fc986a62d47546ce7731c590b8f",
+      "provenanceFile": "map-mine.provenance.json",
+      "alpha": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentFraction": 0.511264114323797,
+        "visibleBoundsAt16": [
+          54,
+          125,
+          1206,
+          1104
+        ],
+        "edgePixelCountAt1": 140,
+        "edgePixelCountAt16": 0,
+        "normalizedMarginsAt16": [
+          0.0430622009569378,
+          0.09968102073365231,
+          0.03827751196172249,
+          0.11961722488038277
+        ]
+      }
+    },
+    {
+      "id": "map-city",
+      "file": "map-city.png",
+      "componentId": "city",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "mapProp",
+      "tags": {
+        "purpose": [
+          "city",
+          "settlement",
+          "stone"
+        ],
+        "lighting": [
+          "diffuse-day"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "3dfcb150800589cf7e054d4055ac777acb45a4a705eaa9610caae7b17a528fd1",
+      "provenanceFile": "map-city.provenance.json",
+      "alpha": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentFraction": 0.5669614808370789,
+        "visibleBoundsAt16": [
+          77,
+          48,
+          1187,
+          1164
+        ],
+        "edgePixelCountAt1": 0,
+        "edgePixelCountAt16": 0,
+        "normalizedMarginsAt16": [
+          0.06140350877192982,
+          0.03827751196172249,
+          0.05342902711323764,
+          0.07177033492822966
+        ]
+      }
+    },
+    {
+      "id": "map-town",
+      "file": "map-town.png",
+      "componentId": "town",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "mapProp",
+      "tags": {
+        "purpose": [
+          "town",
+          "settlement",
+          "services"
+        ],
+        "lighting": [
+          "diffuse-day"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "21e7b66ca95f862055841a249d452805845a7a3ec8fc7c0ae3d08511d9506163",
+      "provenanceFile": "map-town.provenance.json",
+      "alpha": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentFraction": 0.6952107323550285,
+        "visibleBoundsAt16": [
+          197,
+          216,
+          1085,
+          1033
+        ],
+        "edgePixelCountAt1": 105,
+        "edgePixelCountAt16": 0,
+        "normalizedMarginsAt16": [
+          0.15709728867623604,
+          0.1722488038277512,
+          0.13476874003189793,
+          0.1762360446570973
+        ]
+      }
+    },
+    {
+      "id": "map-village",
+      "file": "map-village.png",
+      "componentId": "village",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "mapProp",
+      "tags": {
+        "purpose": [
+          "village",
+          "settlement"
+        ],
+        "lighting": [
+          "diffuse-day"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "18673746fab331b67d9307cebe3f4368333f92f8b54fde85289d35ed223ff089",
+      "provenanceFile": "map-village.provenance.json",
+      "alpha": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentFraction": 0.6999839747258534,
+        "visibleBoundsAt16": [
+          176,
+          236,
+          1126,
+          993
+        ],
+        "edgePixelCountAt1": 6,
+        "edgePixelCountAt16": 0,
+        "normalizedMarginsAt16": [
+          0.14035087719298245,
+          0.18819776714513556,
+          0.10207336523125997,
+          0.20813397129186603
+        ]
+      }
+    },
+    {
+      "id": "map-ruins",
+      "file": "map-ruins.png",
+      "componentId": "ruins",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "mapProp",
+      "tags": {
+        "purpose": [
+          "ruins",
+          "stone",
+          "danger"
+        ],
+        "lighting": [
+          "diffuse-day"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "03d1010b8a6511d0315ad82e6f83b2c760d03f6d430f986694ce384092ad586e",
+      "provenanceFile": "map-ruins.provenance.json",
+      "alpha": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentFraction": 0.7660367207710446,
+        "visibleBoundsAt16": [
+          213,
+          238,
+          1050,
+          1008
+        ],
+        "edgePixelCountAt1": 10,
+        "edgePixelCountAt16": 0,
+        "normalizedMarginsAt16": [
+          0.16985645933014354,
+          0.189792663476874,
+          0.16267942583732056,
+          0.19617224880382775
+        ]
+      }
+    },
+    {
+      "id": "map-shrine",
+      "file": "map-shrine.png",
+      "componentId": "shrine",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "mapProp",
+      "tags": {
+        "purpose": [
+          "shrine",
+          "blessing",
+          "stone"
+        ],
+        "lighting": [
+          "diffuse-day"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "588d3f30f00cecce9327fc522ca700f00f4afe26e19ef15f57331cd9c97b1bbe",
+      "provenanceFile": "map-shrine.provenance.json",
+      "alpha": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentFraction": 0.8067956065311895,
+        "visibleBoundsAt16": [
+          338,
+          251,
+          936,
+          1062
+        ],
+        "edgePixelCountAt1": 0,
+        "edgePixelCountAt16": 0,
+        "normalizedMarginsAt16": [
+          0.26953748006379585,
+          0.20015948963317384,
+          0.2535885167464115,
+          0.15311004784688995
+        ]
+      }
+    },
+    {
+      "id": "map-watchtower",
+      "file": "map-watchtower.png",
+      "componentId": "watchtower",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "mapProp",
+      "tags": {
+        "purpose": [
+          "watchtower",
+          "scouting",
+          "stone"
+        ],
+        "lighting": [
+          "diffuse-day"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "ad6eb0a34676003630eb472f9b957f0b9ff04b61ceef9d9d050bc745419eff63",
+      "provenanceFile": "map-watchtower.provenance.json",
+      "alpha": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentFraction": 0.7529894767366437,
+        "visibleBoundsAt16": [
+          348,
+          150,
+          972,
+          1131
+        ],
+        "edgePixelCountAt1": 0,
+        "edgePixelCountAt16": 0,
+        "normalizedMarginsAt16": [
+          0.27751196172248804,
+          0.11961722488038277,
+          0.22488038277511962,
+          0.09808612440191387
+        ]
+      }
+    },
+    {
+      "id": "map-treasure",
+      "file": "map-treasure.png",
+      "componentId": "treasure",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "mapProp",
+      "tags": {
+        "purpose": [
+          "treasure",
+          "chest",
+          "reward"
+        ],
+        "lighting": [
+          "diffuse-day"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "29508536a52c0f9556f74550feb42a486a98f696445f617aa52e0cf9e02b3d83",
+      "provenanceFile": "map-treasure.provenance.json",
+      "alpha": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentFraction": 0.7182070007554772,
+        "visibleBoundsAt16": [
+          276,
+          275,
+          1040,
+          1054
+        ],
+        "edgePixelCountAt1": 15,
+        "edgePixelCountAt16": 0,
+        "normalizedMarginsAt16": [
+          0.22009569377990432,
+          0.21929824561403508,
+          0.17065390749601275,
+          0.1594896331738437
+        ]
+      }
+    },
+    {
+      "id": "map-enemy-camp",
+      "file": "map-enemy-camp.png",
+      "componentId": "enemy-camp",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "mapProp",
+      "tags": {
+        "purpose": [
+          "enemy",
+          "camp",
+          "danger"
+        ],
+        "lighting": [
+          "diffuse-day"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "b7bc827bf39dc7377bb01628c0c337e591c479148866fe4e557d38882d222530",
+      "provenanceFile": "map-enemy-camp.provenance.json",
+      "alpha": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentFraction": 0.588877315079783,
+        "visibleBoundsAt16": [
+          56,
+          104,
+          1204,
+          1116
+        ],
+        "edgePixelCountAt1": 39,
+        "edgePixelCountAt16": 0,
+        "normalizedMarginsAt16": [
+          0.044657097288676235,
+          0.08293460925039872,
+          0.03987240829346093,
+          0.11004784688995216
+        ]
+      }
+    },
+    {
+      "id": "map-rest-camp",
+      "file": "map-rest-camp.png",
+      "componentId": "rest-camp",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "mapProp",
+      "tags": {
+        "purpose": [
+          "rest",
+          "camp",
+          "campfire",
+          "shelter"
+        ],
+        "lighting": [
+          "diffuse-day"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "c9a247502e08e14cee6889cea21615481498a1a8b0736c0e0d15e3fefb28fc05",
+      "provenanceFile": "map-rest-camp.provenance.json",
+      "alpha": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentFraction": 0.6181005471486458,
+        "visibleBoundsAt16": [
+          80,
+          127,
+          1194,
+          1088
+        ],
+        "edgePixelCountAt1": 250,
+        "edgePixelCountAt16": 0,
+        "normalizedMarginsAt16": [
+          0.06379585326953748,
+          0.10127591706539076,
+          0.04784688995215311,
+          0.13237639553429026
+        ]
+      }
+    },
+    {
+      "id": "map-inn",
+      "file": "map-inn.png",
+      "componentId": "inn",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "mapProp",
+      "tags": {
+        "purpose": [
+          "inn",
+          "settlement",
+          "rest",
+          "shelter"
+        ],
+        "lighting": [
+          "diffuse-day"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "96fa1a840343cb01110e148a1d852112933a55257fcb72f659410264616eb840",
+      "provenanceFile": "map-inn.provenance.json",
+      "alpha": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentFraction": 0.45859501588537094,
+        "visibleBoundsAt16": [
+          85,
+          45,
+          1222,
+          1168
+        ],
+        "edgePixelCountAt1": 36,
+        "edgePixelCountAt16": 0,
+        "normalizedMarginsAt16": [
+          0.06778309409888357,
+          0.03588516746411483,
+          0.025518341307814992,
+          0.0685805422647528
+        ]
+      }
+    },
+    {
+      "id": "map-trainer",
+      "file": "map-trainer.png",
+      "componentId": "trainer",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "mapProp",
+      "tags": {
+        "purpose": [
+          "trainer",
+          "skills",
+          "weapons"
+        ],
+        "lighting": [
+          "diffuse-day"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "6a2ed289a3614e359e49138d6e48ea97dd319eca1a402c01065b959a30ed9dd8",
+      "provenanceFile": "map-trainer.provenance.json",
+      "alpha": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentFraction": 0.6672994106260286,
+        "visibleBoundsAt16": [
+          107,
+          51,
+          1184,
+          1165
+        ],
+        "edgePixelCountAt1": 21,
+        "edgePixelCountAt16": 0,
+        "normalizedMarginsAt16": [
+          0.08532695374800638,
+          0.04066985645933014,
+          0.05582137161084529,
+          0.07097288676236045
+        ]
+      }
+    },
+    {
+      "id": "map-merchant",
+      "file": "map-merchant.png",
+      "componentId": "merchant",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "mapProp",
+      "tags": {
+        "purpose": [
+          "merchant",
+          "market",
+          "supplies"
+        ],
+        "lighting": [
+          "diffuse-day"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "6d09be272c4db626a50c61e862f8e1e62ba0365a078be9484b70c6d205a603de",
+      "provenanceFile": "map-merchant.provenance.json",
+      "alpha": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentFraction": 0.47597607909871825,
+        "visibleBoundsAt16": [
+          83,
+          47,
+          1205,
+          1194
+        ],
+        "edgePixelCountAt1": 8,
+        "edgePixelCountAt16": 0,
+        "normalizedMarginsAt16": [
+          0.06618819776714513,
+          0.037480063795853266,
+          0.03907496012759171,
+          0.04784688995215311
+        ]
+      }
+    },
+    {
+      "id": "map-cartographer",
+      "file": "map-cartographer.png",
+      "componentId": "cartographer",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "mapProp",
+      "tags": {
+        "purpose": [
+          "cartographer",
+          "map",
+          "reward"
+        ],
+        "lighting": [
+          "diffuse-day"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "345d6e6e8e45028fd49c8c2e4c8e94d5b45034845419c453802be93d58e90292",
+      "provenanceFile": "map-cartographer.provenance.json",
+      "alpha": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentFraction": 0.5528751376774544,
+        "visibleBoundsAt16": [
+          46,
+          107,
+          1218,
+          1148
+        ],
+        "edgePixelCountAt1": 54,
+        "edgePixelCountAt16": 0,
+        "normalizedMarginsAt16": [
+          0.03668261562998405,
+          0.08532695374800638,
+          0.028708133971291867,
+          0.08452950558213716
+        ]
+      }
+    },
+    {
+      "id": "map-fishing",
+      "file": "map-fishing.png",
+      "componentId": "fishing",
+      "styleSetId": "map-icons-painterly-v1",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "mapProp",
+      "tags": {
+        "purpose": [
+          "fishing",
+          "water",
+          "shore"
+        ],
+        "lighting": [
+          "diffuse-day"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "1f8a77f2f930337ef5ce78d93b838e4666b6074af116b81ee9a3b0d46f174c9b",
+      "provenanceFile": "map-fishing.provenance.json",
+      "alpha": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alphaRange": [
+          0,
+          255
+        ],
+        "transparentFraction": 0.6839040111515559,
+        "visibleBoundsAt16": [
+          141,
+          92,
+          1132,
+          1166
+        ],
+        "edgePixelCountAt1": 63,
+        "edgePixelCountAt16": 0,
+        "normalizedMarginsAt16": [
+          0.11244019138755981,
+          0.0733652312599681,
+          0.09728867623604466,
+          0.07017543859649122
+        ]
+      }
+    }
+  ]
+}

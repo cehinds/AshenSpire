@@ -1,0 +1,43 @@
+{
+  "sourceOutputPath": "/workspace/generated_images/exec-c9c9cfc6-209c-4bb8-a0c0-f55964a75414.png",
+  "prompt": "Create exactly ONE isolated medieval fantasy world-map prop icon, centered on a square 1536 by 1536 transparent RGBA canvas. STYLE SET map-icons-painterly-v1: hand-painted fantasy miniatures, elevated three-quarter isometric camera looking down about 35 degrees showing front and right planes. Matte tactile materials, warm gray weathered stone, muted ochre/tan timber, desaturated moss green, dark iron, restrained amber details. Soft neutral daylight from upper left, gentle small contact shadow, consistent subtle painted edge definition. Broad clear silhouette readable at 64 pixels, restrained fine detail. Subject occupies approximately the central 70 percent of canvas, leaving generous fully transparent margins on every side. No heavy black cartoon outlines, no photorealism, no glossy 3D plastic, no frame, badge, text, lettering, numbers, people, scenic background or large terrain island. Quiet minimal footing only where structurally necessary. Keep the object fully opaque with transparent surroundings. SUBJECT: small stone wayside altar with modest amber candle. Correct draft with substantially wider margins: scale the entire prop down to fit wholly inside x=20% to 80% and y=20% to 80%, leaving fully transparent blank surroundings. Broad matte painted shapes. Modest candle glow.",
+  "generator": "OpenAI image_gen",
+  "styleSetId": "map-icons-painterly-v1",
+  "referenceImagePath": "/workspace/generated_images/exec-3244c2e4-a128-4f8c-a5f8-ca59d1321d6d.png",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1254,
+    "height": 1254
+  },
+  "requestedDimensions": {
+    "width": 1536,
+    "height": 1536
+  },
+  "sha256": "588d3f30f00cecce9327fc522ca700f00f4afe26e19ef15f57331cd9c97b1bbe",
+  "sourceSha256": "588d3f30f00cecce9327fc522ca700f00f4afe26e19ef15f57331cd9c97b1bbe",
+  "processing": "Byte-identical copy of generated PNG. No resizing, trimming or painted-image editing.",
+  "qa": {
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "transparentFraction": 0.8067956065311895,
+    "visibleBoundsAt16": [
+      338,
+      251,
+      936,
+      1062
+    ],
+    "edgePixelCountAt1": 0,
+    "edgePixelCountAt16": 0,
+    "normalizedMarginsAt16": [
+      0.26953748006379585,
+      0.20015948963317384,
+      0.2535885167464115,
+      0.15311004784688995
+    ]
+  }
+}

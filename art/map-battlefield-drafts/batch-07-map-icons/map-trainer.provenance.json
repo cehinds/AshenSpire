@@ -1,0 +1,42 @@
+{
+  "sourceOutputPath": "/workspace/generated_images/exec-4ccaccb3-cb11-4984-84e5-3c4e4b7e7342.png",
+  "prompt": "Create exactly ONE isolated medieval fantasy world-map prop icon, centered on a square 1536 by 1536 transparent RGBA canvas. STYLE SET map-icons-painterly-v1: hand-painted fantasy miniatures, elevated three-quarter isometric camera looking down about 35 degrees showing front and right planes. Matte tactile materials, warm gray weathered stone, muted ochre/tan timber, desaturated moss green, dark iron, restrained amber details. Soft neutral daylight from upper left, gentle small contact shadow, consistent subtle painted edge definition. Broad clear silhouette readable at 64 pixels, restrained fine detail. Subject occupies approximately the central 70 percent of canvas, leaving generous fully transparent margins on every side. No heavy black cartoon outlines, no photorealism, no glossy 3D plastic, no frame, badge, text, lettering, numbers, people, scenic background or large terrain island. Quiet minimal footing only where structurally necessary. Keep the object fully opaque with transparent surroundings. SUBJECT: A straw training dummy beside a small wooden weapon rack.",
+  "generator": "OpenAI image_gen",
+  "styleSetId": "map-icons-painterly-v1",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1254,
+    "height": 1254
+  },
+  "requestedDimensions": {
+    "width": 1536,
+    "height": 1536
+  },
+  "sha256": "6a2ed289a3614e359e49138d6e48ea97dd319eca1a402c01065b959a30ed9dd8",
+  "sourceSha256": "6a2ed289a3614e359e49138d6e48ea97dd319eca1a402c01065b959a30ed9dd8",
+  "processing": "Byte-identical copy of generated PNG. No resizing, trimming or painted-image editing.",
+  "qa": {
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "transparentFraction": 0.6672994106260286,
+    "visibleBoundsAt16": [
+      107,
+      51,
+      1184,
+      1165
+    ],
+    "edgePixelCountAt1": 21,
+    "edgePixelCountAt16": 0,
+    "normalizedMarginsAt16": [
+      0.08532695374800638,
+      0.04066985645933014,
+      0.05582137161084529,
+      0.07097288676236045
+    ]
+  }
+}

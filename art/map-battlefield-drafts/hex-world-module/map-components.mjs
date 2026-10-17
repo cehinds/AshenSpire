@@ -20,9 +20,14 @@ export function mapArtVariants(data,componentId){
  if(!pool)throw new Error(`Missing art pool: ${component.artPoolId}`);
  return data.art.items.filter(i=>pool.itemIds.includes(i.id));
 }
+/** Apply the collection style before tag predicates or placeholder preferences. */
+export function mapArtStyleVariants(data,componentId){
+ const required=data.registry.artPolicy.requiredStyleSetId;
+ return mapArtVariants(data,componentId).filter(i=>required&&i.styleSetId===required);
+}
 /** Return eligible art choices; a caller still owns the seeded weighted choice. */
 export function mapArtCandidates(data,componentId,tags=[],allowPlaceholders=data.registry.artPolicy.allowTechnicalPlaceholders){
- const items=mapArtVariants(data,componentId).filter(i=>matches(i.selection,tags));
+ const items=mapArtStyleVariants(data,componentId).filter(i=>matches(i.selection,tags));
  const painted=items.filter(i=>i.variantRole==='painted-draft');
  return painted.length?painted:allowPlaceholders?items.filter(i=>i.variantRole==='technical-placeholder'):[];
 }
@@ -57,6 +62,12 @@ export function optionalComponentCandidates(data,rule,tile){
 export function validateMapComponents(data,tiles,runtime){
  const errors=[],check=(ok,message)=>{if(!ok)errors.push(message);};
  const {root,registry,components,art,objects}=data;
+ try{
+  const guide=read(root,registry.artPolicy.styleGuide);
+  check(guide.styleSetId===registry.artPolicy.requiredStyleSetId,'map components: style guide differs from required style set');
+ }catch{
+  errors.push('map components: missing or invalid style guide');
+ }
  const byId=new Map(components.map(c=>[c.id,c]));
  check(byId.size===components.length,'map components: duplicate component IDs across modules');
  const pools=new Map(art.pools.map(p=>[p.id,p]));
@@ -75,7 +86,10 @@ export function validateMapComponents(data,tiles,runtime){
   const key=item.sourceManifest+'#'+item.sourceAssetId,source=sourceKeys.get(key);
   check(!!source,`${item.id}: unknown source asset ${key}`);
   check(!seenSources.has(key),`${item.id}: duplicate source mapping ${key}`);seenSources.add(key);
-  if(source)check(source.file===path.resolve(root,art.assetBase,item.asset),`${item.id}: source asset path mismatch`);
+  if(source){
+   check(source.file===path.resolve(root,art.assetBase,item.asset),`${item.id}: source asset path mismatch`);
+   if(item.styleSetId)check(item.styleSetId===source.asset.styleSetId,`${item.id}: style set differs from source manifest`);
+  }
  }
  for(const key of sourceKeys.keys())check(seenSources.has(key),`unmapped source map asset: ${key}`);
  for(const component of components){
@@ -83,7 +97,7 @@ export function validateMapComponents(data,tiles,runtime){
   check(!!pool,`${component.id}: missing component art pool`);
   if(pool){check(pool.itemIds.length>0,`${component.id}: component art pool is empty`);for(const id of pool.itemIds)check(items.get(id)?.componentId===component.id,`${component.id}: art pool crosses component types`);}
   for(const item of art.items.filter(i=>i.componentId===component.id))check(pool?.itemIds.includes(item.id),`${item.id}: mapped variant missing from component pool`);
-  if(pool)check(mapArtVariants(data,component.id).some(i=>i.variantRole==='painted-draft'||registry.artPolicy.allowTechnicalPlaceholders&&i.variantRole==='technical-placeholder'),`${component.id}: no art under current placeholder policy`);
+  if(pool)check(mapArtStyleVariants(data,component.id).some(i=>i.variantRole==='painted-draft'||registry.artPolicy.allowTechnicalPlaceholders&&i.variantRole==='technical-placeholder'),`${component.id}: no art under current style and placeholder policy`);
  }
  const gameplay=new Map(Object.entries(data.index.gameplay).map(([key,file])=>[key,new Set(read(root,file).items.map(i=>i.id))]));
  const scalarRefs={levelBandId:'level-bands',encounterPoolId:'encounter-pools',lootTableId:'loot-tables',restSpotId:'rest-spots',trainerId:'trainers',revealRuleId:'reveal'};
@@ -145,7 +159,7 @@ export function validateMapComponents(data,tiles,runtime){
 
 export function buildComponentMapping(root=moduleRoot){
  const data=loadMapComponents(root);
- return {formatVersion:1,status:'generated-proposal-mapping',source:'map-components.json',assetBase:data.art.assetBase,artPolicy:data.registry.artPolicy,components:data.components.map(c=>({...c,variants:mapArtVariants(data,c.id).map(({id,...a})=>({artItemId:id,...a}))})),authoredObjects:data.objects.instances,optionalPlacementRules:data.objects.optionalRules};
+ return {formatVersion:1,status:'generated-proposal-mapping',source:'map-components.json',assetBase:data.art.assetBase,artPolicy:data.registry.artPolicy,components:data.components.map(c=>({...c,activeVariantIds:mapArtStyleVariants(data,c.id).map(a=>a.id),variants:mapArtVariants(data,c.id).map(({id,...a})=>({artItemId:id,...a}))})),authoredObjects:data.objects.instances,optionalPlacementRules:data.objects.optionalRules};
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(path.resolve(process.argv[1])).href){
  if(process.argv.length!==3||process.argv[2]!=='--export')throw new Error('Usage: node map-components.mjs --export');

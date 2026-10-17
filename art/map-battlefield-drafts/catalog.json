@@ -34,6 +34,12 @@
       "manifest": "batch-06-settlements/manifest.json",
       "sourceCount": 17,
       "authoringModules": "batch-06-settlements/modules/index.json"
+    },
+    {
+      "id": "batch-07-map-icons",
+      "manifest": "batch-07-map-icons/manifest.json",
+      "sourceCount": 25,
+      "styleSetId": "map-icons-painterly-v1"
     }
   ],
   "editableRecipes": [

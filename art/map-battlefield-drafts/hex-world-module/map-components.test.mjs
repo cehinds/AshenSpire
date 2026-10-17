@@ -12,16 +12,31 @@ function mutate(file,change,pattern){
  try{fs.cpSync(root,temp,{recursive:true});const p=path.join(temp,file),data=JSON.parse(fs.readFileSync(p));change(data);fs.writeFileSync(p,JSON.stringify(data));const errors=validate(temp).errors;if(pattern)assert.match(errors.join('\n'),pattern);else assert.deepEqual(errors,[]);}finally{fs.rmSync(temp,{recursive:true,force:true});}
 }
 
-test('all 24 technical icons and 15 painted map icons have component mappings',()=>{
- const data=loadMapComponents();assert.equal(data.components.length,25);assert.equal(data.art.items.length,39);
+test('all historical icons and 25 matching painted icons have component mappings',()=>{
+ const data=loadMapComponents();assert.equal(data.components.length,25);assert.equal(data.art.items.length,64);
  assert.deepEqual(validate().errors,[]);
 });
-test('painted variants are preferred and duplicate camp names retain scoped IDs',()=>{
+test('all component choices use one painted style without historical fallback',()=>{
  const data=loadMapComponents();
- const bridge=mapArtCandidates(data,'bridge');assert.equal(bridge.length,2);assert.ok(bridge.every(i=>i.variantRole==='painted-draft'));
- assert.deepEqual(mapArtCandidates(data,'rest-camp').map(i=>i.id).sort(),['batch-01-map-rest-camp','batch-02-map-rest-camp']);
- assert.equal(mapArtCandidates(data,'town')[0].variantRole,'technical-placeholder');
- assert.equal(mapArtCandidates(data,'town',[],false).length,0);
+ for(const component of data.components){
+  const candidates=mapArtCandidates(data,component.id);
+  assert.equal(candidates.length,1,component.id);
+  assert.equal(candidates[0].styleSetId,'map-icons-painterly-v1');
+  assert.equal(candidates[0].variantRole,'painted-draft');
+ }
+ assert.ok(data.art.items.some(i=>i.id==='batch-01-map-rest-camp'));
+ assert.ok(data.art.items.some(i=>i.id==='batch-02-map-rest-camp'));
+ const complete=structuredClone(data);delete complete.registry.artPolicy.requiredStyleSetId;assert.deepEqual(mapArtCandidates(complete,'bridge',[],true),[]);
+ data.art.items=data.art.items.filter(i=>i.componentId!=='town'||!i.styleSetId);
+ assert.deepEqual(mapArtCandidates(data,'town',[],true),[]);
+});
+test('missing style coverage and falsely relabeled history fail validation',()=>{
+ mutate('art/map-props.json',d=>delete d.items.find(i=>i.componentId==='town'&&i.styleSetId).styleSetId,/no art under current style/);
+ mutate('art/map-props.json',d=>d.items.find(i=>i.id==='technical-town').styleSetId='map-icons-painterly-v1',/style set differs from source/);
+ mutate('map-components.json',d=>delete d.artPolicy.requiredStyleSetId,/schema/);
+ mutate('map-components.json',d=>d.artPolicy.requiredStyleSetId='other-style',/style guide differs/);
+ mutate('map-components.json',d=>d.artPolicy.styleGuide='missing.json',/missing or invalid style guide/);
+ mutate('map-components.json',d=>delete d.artPolicy.styleGuide,/schema/);
 });
 test('optional discoveries resolve object types without occupying route slots',()=>{
  const data=loadMapComponents(),rule=data.objects.optionalRules.find(r=>r.id==='forest-road-landmarks'),tile=read('tiles/forest-road.json');
@@ -70,7 +85,7 @@ test('clearing an encounter association also clears its inherited chance',()=>{
  mutate('map-objects.json',d=>d.instances[1].gameplayOverrides.encounterPoolId=null);
 });
 test('conditional artwork validates and is selected in the right context',()=>{
- mutate('art/map-props.json',d=>d.items.find(i=>i.componentId==='signpost').selection.all=['road']);
- const data=loadMapComponents();data.art.items.find(i=>i.componentId==='signpost').selection.all=['road'];
+ mutate('art/map-props.json',d=>d.items.find(i=>i.componentId==='signpost'&&i.styleSetId).selection.all=['road']);
+ const data=loadMapComponents();data.art.items.find(i=>i.componentId==='signpost'&&i.styleSetId).selection.all=['road'];
  assert.equal(mapArtCandidates(data,'signpost').length,0);assert.equal(mapArtCandidates(data,'signpost',['road']).length,1);
 });

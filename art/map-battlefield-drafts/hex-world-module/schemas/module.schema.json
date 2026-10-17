@@ -1330,11 +1330,21 @@
               },
               "selectionMode": {
                 "const": "prefer-painted-then-placeholder"
+              },
+              "requiredStyleSetId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "styleGuide": {
+                "type": "string",
+                "minLength": 1
               }
             },
             "required": [
               "selectionMode",
-              "allowTechnicalPlaceholders"
+              "allowTechnicalPlaceholders",
+              "requiredStyleSetId",
+              "styleGuide"
             ]
           },
           "placementDefaults": {

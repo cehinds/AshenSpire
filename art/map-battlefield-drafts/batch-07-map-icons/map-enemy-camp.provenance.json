@@ -1,0 +1,42 @@
+{
+  "sourceOutputPath": "/workspace/generated_images/exec-7078f666-c96c-4c95-969b-06fe2b3b7a91.png",
+  "prompt": "Create exactly ONE isolated medieval fantasy world-map prop icon, centered on a square 1536 by 1536 transparent RGBA canvas. STYLE SET map-icons-painterly-v1: hand-painted fantasy miniatures, elevated three-quarter isometric camera looking down about 35 degrees showing front and right planes. Matte tactile materials, warm gray weathered stone, muted ochre/tan timber, desaturated moss green, dark iron, restrained amber details. Soft neutral daylight from upper left, gentle small contact shadow, consistent subtle painted edge definition. Broad clear silhouette readable at 64 pixels, restrained fine detail. Subject occupies approximately the central 70 percent of canvas, leaving generous fully transparent margins on every side. No heavy black cartoon outlines, no photorealism, no glossy 3D plastic, no frame, badge, text, lettering, numbers, people, scenic background or large terrain island. Quiet minimal footing only where structurally necessary. Keep the object fully opaque with transparent surroundings. SUBJECT: two dark ochre rough tents, sharpened timber barricade and red pennant no insignia, no people",
+  "generator": "OpenAI image_gen",
+  "styleSetId": "map-icons-painterly-v1",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1254,
+    "height": 1254
+  },
+  "requestedDimensions": {
+    "width": 1536,
+    "height": 1536
+  },
+  "sha256": "b7bc827bf39dc7377bb01628c0c337e591c479148866fe4e557d38882d222530",
+  "sourceSha256": "b7bc827bf39dc7377bb01628c0c337e591c479148866fe4e557d38882d222530",
+  "processing": "Byte-identical copy of generated PNG. No resizing, trimming or painted-image editing.",
+  "qa": {
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "transparentFraction": 0.588877315079783,
+    "visibleBoundsAt16": [
+      56,
+      104,
+      1204,
+      1116
+    ],
+    "edgePixelCountAt1": 39,
+    "edgePixelCountAt16": 0,
+    "normalizedMarginsAt16": [
+      0.044657097288676235,
+      0.08293460925039872,
+      0.03987240829346093,
+      0.11004784688995216
+    ]
+  }
+}

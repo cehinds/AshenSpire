@@ -35,7 +35,7 @@ Start with [index.json](index.json). This standalone module contains six connect
 
 [GENERATION.md](GENERATION.md) defines strict touching-edge profiles and a seeded offline layout generator.
 
-[MAP-COMPONENTS.md](MAP-COMPONENTS.md) connects all 25 object types to 39 icon variants, tile instances and discovery rules.
+[MAP-COMPONENTS.md](MAP-COMPONENTS.md) connects all 25 object types to 25 active matching icons and 39 historical variants, tile instances and discovery rules.
 
 [REWARDS-AND-LEVELS.md](REWARDS-AND-LEVELS.md) lists possible rewards and the four proposed level bands.
 
@@ -72,7 +72,7 @@ These six files form a small connected patch. Empty coordinates inside the examp
 - `all`, `any` and `exclude` are explicit tag predicates. Empty `all`/`any` lists add no restriction. Weights are normalized only among eligible entries.
 - Pool draw counts control how many items are selected. An empty, zero-draw prop/weather pool deliberately means no decoration/effect.
 - Enemy encounter chance is separate from enemy selection weights. Map discovery rolls are separate from encounters and fog reveal.
-- Map icons include 15 painted draft PNGs and 24 earlier technical placeholders. The map-component registry prefers painted variants and keeps placeholder fallback explicit. Dedicated 256/512px hex terrain exports remain pending with null references.
+- Map icons use a complete 25-piece painted collection with one required style ID. Fifteen earlier paintings and 24 technical placeholders remain mapped as inactive history. Dedicated 256/512px hex terrain exports remain pending with null references.
 - Town uses a courtyard candidate. Bridge uses a borrowed wet-stone floor while a bridge-deck painting is pending. These references demonstrate the data contract, not approved location art.
 - All file references resolve according to the index's path rules. Art files declare `assetBase`; this avoids repeating long PNG paths on every tile.
 

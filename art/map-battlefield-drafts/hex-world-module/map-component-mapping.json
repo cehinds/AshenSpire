@@ -4,8 +4,10 @@
   "source": "map-components.json",
   "assetBase": "../../..",
   "artPolicy": {
-    "allowTechnicalPlaceholders": true,
-    "selectionMode": "prefer-painted-then-placeholder"
+    "allowTechnicalPlaceholders": false,
+    "selectionMode": "prefer-painted-then-placeholder",
+    "requiredStyleSetId": "map-icons-painterly-v1",
+    "styleGuide": "../batch-07-map-icons/style-guide.json"
   },
   "components": [
     {
@@ -70,6 +72,9 @@
         "status": "illustrative-only",
         "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
       },
+      "activeVariantIds": [
+        "batch-07-map-bridge"
+      ],
       "variants": [
         {
           "artItemId": "technical-bridge",
@@ -133,6 +138,27 @@
           "status": "draft-unregistered",
           "sourceManifest": "../batch-03/manifest.json",
           "sourceAssetId": "map-wooden-bridge"
+        },
+        {
+          "artItemId": "batch-07-map-bridge",
+          "componentId": "bridge",
+          "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-bridge.png",
+          "weight": 1,
+          "tags": [
+            "bridge",
+            "water-crossing",
+            "stone"
+          ],
+          "selection": {
+            "all": [],
+            "any": [],
+            "exclude": []
+          },
+          "variantRole": "painted-draft",
+          "styleSetId": "map-icons-painterly-v1",
+          "status": "draft-unregistered",
+          "sourceManifest": "../batch-07-map-icons/manifest.json",
+          "sourceAssetId": "map-bridge"
         }
       ]
     },
@@ -197,6 +223,9 @@
         "status": "illustrative-only",
         "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
       },
+      "activeVariantIds": [
+        "batch-07-map-ford"
+      ],
       "variants": [
         {
           "artItemId": "technical-ford",
@@ -218,6 +247,27 @@
           "status": "technical-icon-placeholder",
           "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
           "sourceAssetId": "ford"
+        },
+        {
+          "artItemId": "batch-07-map-ford",
+          "componentId": "ford",
+          "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-ford.png",
+          "weight": 1,
+          "tags": [
+            "ford",
+            "river",
+            "water-crossing"
+          ],
+          "selection": {
+            "all": [],
+            "any": [],
+            "exclude": []
+          },
+          "variantRole": "painted-draft",
+          "styleSetId": "map-icons-painterly-v1",
+          "status": "draft-unregistered",
+          "sourceManifest": "../batch-07-map-icons/manifest.json",
+          "sourceAssetId": "map-ford"
         }
       ]
     },
@@ -282,6 +332,9 @@
         "status": "illustrative-only",
         "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
       },
+      "activeVariantIds": [
+        "batch-07-map-path"
+      ],
       "variants": [
         {
           "artItemId": "technical-path",
@@ -303,6 +356,27 @@
           "status": "technical-icon-placeholder",
           "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
           "sourceAssetId": "path"
+        },
+        {
+          "artItemId": "batch-07-map-path",
+          "componentId": "path",
+          "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-path.png",
+          "weight": 1,
+          "tags": [
+            "road",
+            "junction",
+            "route"
+          ],
+          "selection": {
+            "all": [],
+            "any": [],
+            "exclude": []
+          },
+          "variantRole": "painted-draft",
+          "styleSetId": "map-icons-painterly-v1",
+          "status": "draft-unregistered",
+          "sourceManifest": "../batch-07-map-icons/manifest.json",
+          "sourceAssetId": "map-path"
         }
       ]
     },
@@ -361,6 +435,9 @@
         "status": "illustrative-only",
         "note": "Uncalibrated center-bottom anchor; no collision geometry is asserted."
       },
+      "activeVariantIds": [
+        "batch-07-map-signpost"
+      ],
       "variants": [
         {
           "artItemId": "batch-03-map-road-signpost",
@@ -384,6 +461,27 @@
           "status": "draft-unregistered",
           "sourceManifest": "../batch-03/manifest.json",
           "sourceAssetId": "map-road-signpost"
+        },
+        {
+          "artItemId": "batch-07-map-signpost",
+          "componentId": "signpost",
+          "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-signpost.png",
+          "weight": 1,
+          "tags": [
+            "road",
+            "junction",
+            "travel"
+          ],
+          "selection": {
+            "all": [],
+            "any": [],
+            "exclude": []
+          },
+          "variantRole": "painted-draft",
+          "styleSetId": "map-icons-painterly-v1",
+          "status": "draft-unregistered",
+          "sourceManifest": "../batch-07-map-icons/manifest.json",
+          "sourceAssetId": "map-signpost"
         }
       ]
     },
@@ -447,6 +545,9 @@
         "status": "illustrative-only",
         "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
       },
+      "activeVariantIds": [
+        "batch-07-map-tunnel"
+      ],
       "variants": [
         {
           "artItemId": "technical-tunnel",
@@ -469,6 +570,28 @@
           "status": "technical-icon-placeholder",
           "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
           "sourceAssetId": "tunnel"
+        },
+        {
+          "artItemId": "batch-07-map-tunnel",
+          "componentId": "tunnel",
+          "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-tunnel.png",
+          "weight": 1,
+          "tags": [
+            "tunnel",
+            "entrance",
+            "rock",
+            "paired-connection"
+          ],
+          "selection": {
+            "all": [],
+            "any": [],
+            "exclude": []
+          },
+          "variantRole": "painted-draft",
+          "styleSetId": "map-icons-painterly-v1",
+          "status": "draft-unregistered",
+          "sourceManifest": "../batch-07-map-icons/manifest.json",
+          "sourceAssetId": "map-tunnel"
         }
       ]
     },
@@ -532,6 +655,9 @@
         "status": "illustrative-only",
         "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
       },
+      "activeVariantIds": [
+        "batch-07-map-ferry"
+      ],
       "variants": [
         {
           "artItemId": "technical-ferry",
@@ -575,6 +701,28 @@
           "variantRole": "painted-draft",
           "status": "draft-unregistered",
           "sourceManifest": "../batch-03/manifest.json",
+          "sourceAssetId": "map-ferry"
+        },
+        {
+          "artItemId": "batch-07-map-ferry",
+          "componentId": "ferry",
+          "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-ferry.png",
+          "weight": 1,
+          "tags": [
+            "ferry",
+            "dock",
+            "water",
+            "shore"
+          ],
+          "selection": {
+            "all": [],
+            "any": [],
+            "exclude": []
+          },
+          "variantRole": "painted-draft",
+          "styleSetId": "map-icons-painterly-v1",
+          "status": "draft-unregistered",
+          "sourceManifest": "../batch-07-map-icons/manifest.json",
           "sourceAssetId": "map-ferry"
         }
       ]
@@ -638,6 +786,9 @@
         "status": "illustrative-only",
         "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
       },
+      "activeVariantIds": [
+        "batch-07-map-portal"
+      ],
       "variants": [
         {
           "artItemId": "technical-portal",
@@ -676,6 +827,27 @@
           "variantRole": "painted-draft",
           "status": "draft-unregistered",
           "sourceManifest": "../batch-02/manifest.json",
+          "sourceAssetId": "map-portal"
+        },
+        {
+          "artItemId": "batch-07-map-portal",
+          "componentId": "portal",
+          "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-portal.png",
+          "weight": 1,
+          "tags": [
+            "portal",
+            "magic",
+            "paired-connection"
+          ],
+          "selection": {
+            "all": [],
+            "any": [],
+            "exclude": []
+          },
+          "variantRole": "painted-draft",
+          "styleSetId": "map-icons-painterly-v1",
+          "status": "draft-unregistered",
+          "sourceManifest": "../batch-07-map-icons/manifest.json",
           "sourceAssetId": "map-portal"
         }
       ]
@@ -739,6 +911,9 @@
         "status": "illustrative-only",
         "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
       },
+      "activeVariantIds": [
+        "batch-07-map-boat"
+      ],
       "variants": [
         {
           "artItemId": "technical-boat",
@@ -760,6 +935,27 @@
           "status": "technical-icon-placeholder",
           "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
           "sourceAssetId": "boat"
+        },
+        {
+          "artItemId": "batch-07-map-boat",
+          "componentId": "boat",
+          "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-boat.png",
+          "weight": 1,
+          "tags": [
+            "boat",
+            "landing",
+            "water"
+          ],
+          "selection": {
+            "all": [],
+            "any": [],
+            "exclude": []
+          },
+          "variantRole": "painted-draft",
+          "styleSetId": "map-icons-painterly-v1",
+          "status": "draft-unregistered",
+          "sourceManifest": "../batch-07-map-icons/manifest.json",
+          "sourceAssetId": "map-boat"
         }
       ]
     },
@@ -822,6 +1018,9 @@
         "status": "illustrative-only",
         "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
       },
+      "activeVariantIds": [
+        "batch-07-map-cave"
+      ],
       "variants": [
         {
           "artItemId": "technical-cave",
@@ -862,6 +1061,27 @@
           "status": "draft-unregistered",
           "sourceManifest": "../batch-02/manifest.json",
           "sourceAssetId": "map-cave-entrance"
+        },
+        {
+          "artItemId": "batch-07-map-cave",
+          "componentId": "cave",
+          "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-cave.png",
+          "weight": 1,
+          "tags": [
+            "cave",
+            "entrance",
+            "rock"
+          ],
+          "selection": {
+            "all": [],
+            "any": [],
+            "exclude": []
+          },
+          "variantRole": "painted-draft",
+          "styleSetId": "map-icons-painterly-v1",
+          "status": "draft-unregistered",
+          "sourceManifest": "../batch-07-map-icons/manifest.json",
+          "sourceAssetId": "map-cave"
         }
       ]
     },
@@ -925,6 +1145,9 @@
         "status": "illustrative-only",
         "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
       },
+      "activeVariantIds": [
+        "batch-07-map-dungeon"
+      ],
       "variants": [
         {
           "artItemId": "technical-dungeon",
@@ -966,6 +1189,28 @@
           "status": "draft-unregistered",
           "sourceManifest": "../batch-02/manifest.json",
           "sourceAssetId": "map-dungeon-entrance"
+        },
+        {
+          "artItemId": "batch-07-map-dungeon",
+          "componentId": "dungeon",
+          "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-dungeon.png",
+          "weight": 1,
+          "tags": [
+            "dungeon",
+            "gate",
+            "stone",
+            "danger"
+          ],
+          "selection": {
+            "all": [],
+            "any": [],
+            "exclude": []
+          },
+          "variantRole": "painted-draft",
+          "styleSetId": "map-icons-painterly-v1",
+          "status": "draft-unregistered",
+          "sourceManifest": "../batch-07-map-icons/manifest.json",
+          "sourceAssetId": "map-dungeon"
         }
       ]
     },
@@ -1029,6 +1274,9 @@
         "status": "illustrative-only",
         "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
       },
+      "activeVariantIds": [
+        "batch-07-map-mine"
+      ],
       "variants": [
         {
           "artItemId": "technical-mine",
@@ -1051,6 +1299,28 @@
           "status": "technical-icon-placeholder",
           "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
           "sourceAssetId": "mine"
+        },
+        {
+          "artItemId": "batch-07-map-mine",
+          "componentId": "mine",
+          "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-mine.png",
+          "weight": 1,
+          "tags": [
+            "mine",
+            "entrance",
+            "resource",
+            "rock"
+          ],
+          "selection": {
+            "all": [],
+            "any": [],
+            "exclude": []
+          },
+          "variantRole": "painted-draft",
+          "styleSetId": "map-icons-painterly-v1",
+          "status": "draft-unregistered",
+          "sourceManifest": "../batch-07-map-icons/manifest.json",
+          "sourceAssetId": "map-mine"
         }
       ]
     },
@@ -1113,6 +1383,9 @@
         "status": "illustrative-only",
         "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
       },
+      "activeVariantIds": [
+        "batch-07-map-city"
+      ],
       "variants": [
         {
           "artItemId": "technical-city",
@@ -1134,6 +1407,27 @@
           "status": "technical-icon-placeholder",
           "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
           "sourceAssetId": "city"
+        },
+        {
+          "artItemId": "batch-07-map-city",
+          "componentId": "city",
+          "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-city.png",
+          "weight": 1,
+          "tags": [
+            "city",
+            "settlement",
+            "stone"
+          ],
+          "selection": {
+            "all": [],
+            "any": [],
+            "exclude": []
+          },
+          "variantRole": "painted-draft",
+          "styleSetId": "map-icons-painterly-v1",
+          "status": "draft-unregistered",
+          "sourceManifest": "../batch-07-map-icons/manifest.json",
+          "sourceAssetId": "map-city"
         }
       ]
     },
@@ -1196,6 +1490,9 @@
         "status": "illustrative-only",
         "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
       },
+      "activeVariantIds": [
+        "batch-07-map-town"
+      ],
       "variants": [
         {
           "artItemId": "technical-town",
@@ -1217,6 +1514,27 @@
           "status": "technical-icon-placeholder",
           "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
           "sourceAssetId": "town"
+        },
+        {
+          "artItemId": "batch-07-map-town",
+          "componentId": "town",
+          "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-town.png",
+          "weight": 1,
+          "tags": [
+            "town",
+            "settlement",
+            "services"
+          ],
+          "selection": {
+            "all": [],
+            "any": [],
+            "exclude": []
+          },
+          "variantRole": "painted-draft",
+          "styleSetId": "map-icons-painterly-v1",
+          "status": "draft-unregistered",
+          "sourceManifest": "../batch-07-map-icons/manifest.json",
+          "sourceAssetId": "map-town"
         }
       ]
     },
@@ -1278,6 +1596,9 @@
         "status": "illustrative-only",
         "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
       },
+      "activeVariantIds": [
+        "batch-07-map-village"
+      ],
       "variants": [
         {
           "artItemId": "technical-village",
@@ -1316,6 +1637,26 @@
           "variantRole": "painted-draft",
           "status": "draft-unregistered",
           "sourceManifest": "../batch-01/manifest.json",
+          "sourceAssetId": "map-village"
+        },
+        {
+          "artItemId": "batch-07-map-village",
+          "componentId": "village",
+          "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-village.png",
+          "weight": 1,
+          "tags": [
+            "village",
+            "settlement"
+          ],
+          "selection": {
+            "all": [],
+            "any": [],
+            "exclude": []
+          },
+          "variantRole": "painted-draft",
+          "styleSetId": "map-icons-painterly-v1",
+          "status": "draft-unregistered",
+          "sourceManifest": "../batch-07-map-icons/manifest.json",
           "sourceAssetId": "map-village"
         }
       ]
@@ -1379,6 +1720,9 @@
         "status": "illustrative-only",
         "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
       },
+      "activeVariantIds": [
+        "batch-07-map-ruins"
+      ],
       "variants": [
         {
           "artItemId": "technical-ruins",
@@ -1420,6 +1764,27 @@
           "status": "draft-unregistered",
           "sourceManifest": "../batch-01/manifest.json",
           "sourceAssetId": "map-ruins-arch"
+        },
+        {
+          "artItemId": "batch-07-map-ruins",
+          "componentId": "ruins",
+          "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-ruins.png",
+          "weight": 1,
+          "tags": [
+            "ruins",
+            "stone",
+            "danger"
+          ],
+          "selection": {
+            "all": [],
+            "any": [],
+            "exclude": []
+          },
+          "variantRole": "painted-draft",
+          "styleSetId": "map-icons-painterly-v1",
+          "status": "draft-unregistered",
+          "sourceManifest": "../batch-07-map-icons/manifest.json",
+          "sourceAssetId": "map-ruins"
         }
       ]
     },
@@ -1482,6 +1847,9 @@
         "status": "illustrative-only",
         "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
       },
+      "activeVariantIds": [
+        "batch-07-map-shrine"
+      ],
       "variants": [
         {
           "artItemId": "technical-shrine",
@@ -1520,6 +1888,27 @@
           "variantRole": "painted-draft",
           "status": "draft-unregistered",
           "sourceManifest": "../batch-02/manifest.json",
+          "sourceAssetId": "map-shrine"
+        },
+        {
+          "artItemId": "batch-07-map-shrine",
+          "componentId": "shrine",
+          "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-shrine.png",
+          "weight": 1,
+          "tags": [
+            "shrine",
+            "blessing",
+            "stone"
+          ],
+          "selection": {
+            "all": [],
+            "any": [],
+            "exclude": []
+          },
+          "variantRole": "painted-draft",
+          "styleSetId": "map-icons-painterly-v1",
+          "status": "draft-unregistered",
+          "sourceManifest": "../batch-07-map-icons/manifest.json",
           "sourceAssetId": "map-shrine"
         }
       ]
@@ -1583,6 +1972,9 @@
         "status": "illustrative-only",
         "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
       },
+      "activeVariantIds": [
+        "batch-07-map-watchtower"
+      ],
       "variants": [
         {
           "artItemId": "technical-watchtower",
@@ -1626,6 +2018,27 @@
           "variantRole": "painted-draft",
           "status": "draft-unregistered",
           "sourceManifest": "../batch-03/manifest.json",
+          "sourceAssetId": "map-watchtower"
+        },
+        {
+          "artItemId": "batch-07-map-watchtower",
+          "componentId": "watchtower",
+          "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-watchtower.png",
+          "weight": 1,
+          "tags": [
+            "watchtower",
+            "scouting",
+            "stone"
+          ],
+          "selection": {
+            "all": [],
+            "any": [],
+            "exclude": []
+          },
+          "variantRole": "painted-draft",
+          "styleSetId": "map-icons-painterly-v1",
+          "status": "draft-unregistered",
+          "sourceManifest": "../batch-07-map-icons/manifest.json",
           "sourceAssetId": "map-watchtower"
         }
       ]
@@ -1689,6 +2102,9 @@
         "status": "illustrative-only",
         "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
       },
+      "activeVariantIds": [
+        "batch-07-map-treasure"
+      ],
       "variants": [
         {
           "artItemId": "technical-treasure",
@@ -1730,6 +2146,27 @@
           "status": "draft-unregistered",
           "sourceManifest": "../batch-01/manifest.json",
           "sourceAssetId": "map-treasure-chest"
+        },
+        {
+          "artItemId": "batch-07-map-treasure",
+          "componentId": "treasure",
+          "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-treasure.png",
+          "weight": 1,
+          "tags": [
+            "treasure",
+            "chest",
+            "reward"
+          ],
+          "selection": {
+            "all": [],
+            "any": [],
+            "exclude": []
+          },
+          "variantRole": "painted-draft",
+          "styleSetId": "map-icons-painterly-v1",
+          "status": "draft-unregistered",
+          "sourceManifest": "../batch-07-map-icons/manifest.json",
+          "sourceAssetId": "map-treasure"
         }
       ]
     },
@@ -1792,6 +2229,9 @@
         "status": "illustrative-only",
         "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
       },
+      "activeVariantIds": [
+        "batch-07-map-enemy-camp"
+      ],
       "variants": [
         {
           "artItemId": "technical-enemy-camp",
@@ -1831,6 +2271,27 @@
           "variantRole": "painted-draft",
           "status": "draft-unregistered",
           "sourceManifest": "../batch-02/manifest.json",
+          "sourceAssetId": "map-enemy-camp"
+        },
+        {
+          "artItemId": "batch-07-map-enemy-camp",
+          "componentId": "enemy-camp",
+          "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-enemy-camp.png",
+          "weight": 1,
+          "tags": [
+            "enemy",
+            "camp",
+            "danger"
+          ],
+          "selection": {
+            "all": [],
+            "any": [],
+            "exclude": []
+          },
+          "variantRole": "painted-draft",
+          "styleSetId": "map-icons-painterly-v1",
+          "status": "draft-unregistered",
+          "sourceManifest": "../batch-07-map-icons/manifest.json",
           "sourceAssetId": "map-enemy-camp"
         }
       ]
@@ -1895,6 +2356,9 @@
         "status": "illustrative-only",
         "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
       },
+      "activeVariantIds": [
+        "batch-07-map-rest-camp"
+      ],
       "variants": [
         {
           "artItemId": "technical-rest-camp",
@@ -1956,6 +2420,28 @@
           "variantRole": "painted-draft",
           "status": "draft-unregistered",
           "sourceManifest": "../batch-02/manifest.json",
+          "sourceAssetId": "map-rest-camp"
+        },
+        {
+          "artItemId": "batch-07-map-rest-camp",
+          "componentId": "rest-camp",
+          "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-rest-camp.png",
+          "weight": 1,
+          "tags": [
+            "rest",
+            "camp",
+            "campfire",
+            "shelter"
+          ],
+          "selection": {
+            "all": [],
+            "any": [],
+            "exclude": []
+          },
+          "variantRole": "painted-draft",
+          "styleSetId": "map-icons-painterly-v1",
+          "status": "draft-unregistered",
+          "sourceManifest": "../batch-07-map-icons/manifest.json",
           "sourceAssetId": "map-rest-camp"
         }
       ]
@@ -2020,6 +2506,9 @@
         "status": "illustrative-only",
         "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
       },
+      "activeVariantIds": [
+        "batch-07-map-inn"
+      ],
       "variants": [
         {
           "artItemId": "technical-inn",
@@ -2042,6 +2531,28 @@
           "status": "technical-icon-placeholder",
           "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
           "sourceAssetId": "inn"
+        },
+        {
+          "artItemId": "batch-07-map-inn",
+          "componentId": "inn",
+          "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-inn.png",
+          "weight": 1,
+          "tags": [
+            "inn",
+            "settlement",
+            "rest",
+            "shelter"
+          ],
+          "selection": {
+            "all": [],
+            "any": [],
+            "exclude": []
+          },
+          "variantRole": "painted-draft",
+          "styleSetId": "map-icons-painterly-v1",
+          "status": "draft-unregistered",
+          "sourceManifest": "../batch-07-map-icons/manifest.json",
+          "sourceAssetId": "map-inn"
         }
       ]
     },
@@ -2104,6 +2615,9 @@
         "status": "illustrative-only",
         "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
       },
+      "activeVariantIds": [
+        "batch-07-map-trainer"
+      ],
       "variants": [
         {
           "artItemId": "technical-trainer",
@@ -2125,6 +2639,27 @@
           "status": "technical-icon-placeholder",
           "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
           "sourceAssetId": "trainer"
+        },
+        {
+          "artItemId": "batch-07-map-trainer",
+          "componentId": "trainer",
+          "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-trainer.png",
+          "weight": 1,
+          "tags": [
+            "trainer",
+            "skills",
+            "weapons"
+          ],
+          "selection": {
+            "all": [],
+            "any": [],
+            "exclude": []
+          },
+          "variantRole": "painted-draft",
+          "styleSetId": "map-icons-painterly-v1",
+          "status": "draft-unregistered",
+          "sourceManifest": "../batch-07-map-icons/manifest.json",
+          "sourceAssetId": "map-trainer"
         }
       ]
     },
@@ -2187,6 +2722,9 @@
         "status": "illustrative-only",
         "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
       },
+      "activeVariantIds": [
+        "batch-07-map-merchant"
+      ],
       "variants": [
         {
           "artItemId": "technical-merchant",
@@ -2208,6 +2746,27 @@
           "status": "technical-icon-placeholder",
           "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
           "sourceAssetId": "merchant"
+        },
+        {
+          "artItemId": "batch-07-map-merchant",
+          "componentId": "merchant",
+          "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-merchant.png",
+          "weight": 1,
+          "tags": [
+            "merchant",
+            "market",
+            "supplies"
+          ],
+          "selection": {
+            "all": [],
+            "any": [],
+            "exclude": []
+          },
+          "variantRole": "painted-draft",
+          "styleSetId": "map-icons-painterly-v1",
+          "status": "draft-unregistered",
+          "sourceManifest": "../batch-07-map-icons/manifest.json",
+          "sourceAssetId": "map-merchant"
         }
       ]
     },
@@ -2270,6 +2829,9 @@
         "status": "illustrative-only",
         "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
       },
+      "activeVariantIds": [
+        "batch-07-map-cartographer"
+      ],
       "variants": [
         {
           "artItemId": "technical-cartographer",
@@ -2291,6 +2853,27 @@
           "status": "technical-icon-placeholder",
           "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
           "sourceAssetId": "cartographer"
+        },
+        {
+          "artItemId": "batch-07-map-cartographer",
+          "componentId": "cartographer",
+          "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-cartographer.png",
+          "weight": 1,
+          "tags": [
+            "cartographer",
+            "map",
+            "reward"
+          ],
+          "selection": {
+            "all": [],
+            "any": [],
+            "exclude": []
+          },
+          "variantRole": "painted-draft",
+          "styleSetId": "map-icons-painterly-v1",
+          "status": "draft-unregistered",
+          "sourceManifest": "../batch-07-map-icons/manifest.json",
+          "sourceAssetId": "map-cartographer"
         }
       ]
     },
@@ -2353,6 +2936,9 @@
         "status": "illustrative-only",
         "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
       },
+      "activeVariantIds": [
+        "batch-07-map-fishing"
+      ],
       "variants": [
         {
           "artItemId": "technical-fishing",
@@ -2374,6 +2960,27 @@
           "status": "technical-icon-placeholder",
           "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
           "sourceAssetId": "fishing"
+        },
+        {
+          "artItemId": "batch-07-map-fishing",
+          "componentId": "fishing",
+          "asset": "art/map-battlefield-drafts/batch-07-map-icons/map-fishing.png",
+          "weight": 1,
+          "tags": [
+            "fishing",
+            "water",
+            "shore"
+          ],
+          "selection": {
+            "all": [],
+            "any": [],
+            "exclude": []
+          },
+          "variantRole": "painted-draft",
+          "styleSetId": "map-icons-painterly-v1",
+          "status": "draft-unregistered",
+          "sourceManifest": "../batch-07-map-icons/manifest.json",
+          "sourceAssetId": "map-fishing"
         }
       ]
     }

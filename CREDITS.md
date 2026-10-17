@@ -785,3 +785,14 @@ No additional painted artwork was generated for this catalog update.
 The hex-generation compatibility diagram is an original technical SVG authored
 from the module's generated topology data; its PNG is a browser rendering of that
 SVG. Edge profiles, templates and matching code introduce no third-party artwork.
+
+### Consistent painted map-icon collection — batch 07 (2026-10-17)
+
+Twenty-five original OpenAI-generated transparent map-icon drafts in
+`art/map-battlefield-drafts/batch-07-map-icons/` use a shared first-party art brief
+for camera, palette, materials and lighting. Exact prompts, generated source paths,
+source hashes and measured dimensions are retained with each icon. PNG sources
+are copied unchanged; browser sheets demonstrate the collection and small-size
+contrast. Earlier technical and painted variants remain indexed as inactive
+history. These are unregistered feature-branch drafts; no third-party artwork or
+license is claimed.

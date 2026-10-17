@@ -1,0 +1,43 @@
+{
+  "sourceOutputPath": "/workspace/generated_images/exec-e0e1e4ec-5e3a-4c4e-8409-2c19d966b410.png",
+  "prompt": "Create exactly ONE isolated medieval fantasy world-map prop icon, centered on a square 1536 by 1536 transparent RGBA canvas. STYLE SET map-icons-painterly-v1: hand-painted fantasy miniatures, elevated three-quarter isometric camera looking down about 35 degrees showing front and right planes. Matte tactile materials, warm gray weathered stone, muted ochre/tan timber, desaturated moss green, dark iron, restrained amber details. Soft neutral daylight from upper left, gentle small contact shadow, consistent subtle painted edge definition. Broad clear silhouette readable at 64 pixels, restrained fine detail. Subject occupies approximately the central 70 percent of canvas, leaving generous fully transparent margins on every side. No heavy black cartoon outlines, no photorealism, no glossy 3D plastic, no frame, badge, text, lettering, numbers, people, scenic background or large terrain island. Quiet minimal footing only where structurally necessary. Keep the object fully opaque with transparent surroundings. SUBJECT: \ntimber-braced mine entrance with small ore cart",
+  "generator": "OpenAI image_gen",
+  "tool": "image_gen__imagegen",
+  "styleSetId": "map-icons-painterly-v1",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1254,
+    "height": 1254
+  },
+  "requestedDimensions": {
+    "width": 1536,
+    "height": 1536
+  },
+  "sha256": "b64f0ed69a269fa9e2206a7901d62b83da342fc986a62d47546ce7731c590b8f",
+  "sourceSha256": "b64f0ed69a269fa9e2206a7901d62b83da342fc986a62d47546ce7731c590b8f",
+  "processing": "Byte-identical copy of generated PNG. No resizing, trimming or painted-image editing.",
+  "qa": {
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "transparentFraction": 0.511264114323797,
+    "visibleBoundsAt16": [
+      54,
+      125,
+      1206,
+      1104
+    ],
+    "edgePixelCountAt1": 140,
+    "edgePixelCountAt16": 0,
+    "normalizedMarginsAt16": [
+      0.0430622009569378,
+      0.09968102073365231,
+      0.03827751196172249,
+      0.11961722488038277
+    ]
+  }
+}
