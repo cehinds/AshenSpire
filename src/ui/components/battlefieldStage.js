@@ -1228,7 +1228,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       || idleCores.slice(i + 1).some(other => near(core, other)))) {
       const boundary = Math.min(combat.querySelector('.combat-tools')?.getBoundingClientRect().top ?? Infinity,
         readRestingHand()?.clearanceTop ?? Infinity, fieldRect.top + fieldRect.height);
-      const obstacles = [...combat.querySelectorAll('.combat-hud, .turn-ribbon, .combatant-leading, .combatant-info, .combatant-card > .meters, .combatant-card > .nm, .target-hud-overhead-meters > .meters, .target-hud-overhead-meters > .intent, .target-hud-overhead-meters > .player-action-intent, .target-hud-inspect-info, .target-hud-panel')]
+      const obstacles = [...combat.querySelectorAll('.combat-hud, .turn-ribbon, .combatant-leading, .combatant-info, .combatant-card > .meters, .combatant-card > .nm, .target-hud-overhead-meters > .meters, .target-hud-overhead-meters > .intent, .target-hud-overhead-meters > .player-action-intent, .target-hud-inspect-info, .target-hud-panel, .target-hud-statuses')]
         .map(node => visibleCombatPanelRect(node, combat)).filter(Boolean)
         .map(box => ({ left:box.left-fieldRect.left, right:box.right-fieldRect.left,
           top:box.top-fieldRect.top, bottom:box.bottom-fieldRect.top }));
