@@ -18,7 +18,11 @@ rules and defaults in a module, enemy data in packs, everything overridable per 
    Reaction tag, output bonus).
 4. **Shuffle and draw like the player**: draw pile → hand → play → discard → reshuffle.
 5. Planned plays are visible as intents (SPEC §4.11 preview).
-6. Healing costs 2–3 SP/MP (heal ≤5 → 2, ≥6 → 3) unless the card authors its own cost.
+6. Healing (owner, 2026-10-17 06:19) — two shapes, chosen by card tags, all JSON:
+   - **full**: tag `heal` → costs **2 MP + 3 SP**, heals **10% max HP**.
+   - **cheap**: tags `heal` + `exhaust` → lower cost, card exhausts after use.
+   Costs, amount and which tags select which shape live in `healRules`; a card's own
+   authored cost still wins.
 7. Gear and enemy relics add HP and other stats on top, like player equipment/relics.
 8. Most minions land at **2 SP**.
 9. **JSON-configurable and modular**: every number above is module settings or pack data;
@@ -50,7 +54,15 @@ guide.md
     "boss":   { "attributeBudget": [20, 26], "ruleBaseOffsets": { "hp": 40, "stamina": 1, "mana": 1 } }
   },
   "deck": { "min": 3, "max": 15, "typical": 6, "reshuffle": "whenEmpty" },
-  "healCost": { "resource": "auto", "thresholds": [ { "upTo": 5, "cost": 2 }, { "from": 6, "cost": 3 } ] },
+  "healRules": {
+    "match": "mostSpecific",
+    "shapes": [
+      { "id": "full",  "tags": ["heal"],            "cost": { "mp": 2, "sp": 3 }, "amount": { "percentMaxHp": 10 } },
+      { "id": "cheap", "tags": ["heal", "exhaust"], "cost": { "mp": 1, "sp": 1 }, "amount": { "percentMaxHp": 10 }, "exhaust": true }
+    ],
+    "authoredCostWins": true,
+    "rounding": "down"
+  },
   "ai": { "lowHpDefendBias": 1.5, "lowHpThreshold": 0.35, "smashIntoBlockBias": 1.3, "healMissingHpBias": 1.0 },
   "fallback": "legacyMoves"
 }
@@ -95,7 +107,10 @@ guide.md
 
 - ~19 enemies / ~60 moves in `src/content/enemies/act1-3.js` → `enemies.json` +
   `enemyCards.json`; decks keep each enemy's identity (signature card ×1).
-- Heal-riders (Drain, Golden Guard, Sap Mend…) become cast cards at 2–3.
+- Heal-riders (Drain, Golden Guard, Sap Mend…) become `heal` cards: `full` shape for
+  elites/bosses; minions (2 SP) can only afford the `cheap` + `exhaust` shape, so
+  their heals are one-offs per shuffle.
+- `healRules.shapes` match on card tags, so any pack can add shapes (e.g. `heal`+`ritual`).
 
 ## UI
 
