@@ -54,3 +54,15 @@ test('lore type resolves unknown values to the defaults and stamps words, not le
   assert.ok(LORE_SIZES.includes(root.dataset.loreSize));
   for (const value of Object.values(root.dataset)) assert.ok(!/\d(px|rem|em)$/.test(value), `a length was written: ${value}`);
 });
+
+// The reusable Base pack ships authored lore, not design/build instructions.
+test('every Base identity has distinct three-part world lore', () => {
+  const cards = contentBundle.cards.filter(card => card.id.startsWith('base.'));
+  assert.equal(cards.length, 72);
+  assert.equal(new Set(cards.map(card => card.flavor)).size, cards.length);
+  for (const card of cards) {
+    const parts = loreParts(card.flavor);
+    assert.ok(parts.identity && parts.body.length && parts.closing, card.id);
+    assert.doesNotMatch(card.flavor, /approved base-card|JSON pack|authored.*costs/i, card.id);
+  }
+});
