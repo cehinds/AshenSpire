@@ -146,6 +146,13 @@ test('enemies: false ignores the enemy pack data even with characters on', () =>
   assert.ok(off.content.classes.length > 0);
 });
 
+test('enemies: false with characters off also ignores the enemy pack data', () => {
+  const off = resolveWith(() => {}, a => ({ ...a, modules: { ...a.modules, enemies: false, characters: false } }))();
+  assert.equal(off.content.enemyCards, undefined);
+  assert.equal(off.content.enemyRelics, undefined);
+  assert.ok(!(off.content.characters || []).some(c => c.tags?.includes('character.enemy')));
+});
+
 test('enemy SP/MP and other internals stay hidden unless a revealing tag is held', async () => {
   const { enemyVisibleFields } = await import('../engine/kernel/gameConfig.js');
   const bare = enemyVisibleFields(settings, []);

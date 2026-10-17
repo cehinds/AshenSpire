@@ -51,6 +51,10 @@ namespace Ashen.Runtime
         {
             Dictionary<string, object> d => d.ToDictionary(kv => kv.Key, kv => DeepCopy(kv.Value)),
             List<object> l => l.Select(DeepCopy).ToList(),
+            string => v,
+            // Typed host collections are normalized to JSON shapes so later caller mutation cannot leak in.
+            System.Collections.IDictionary td => td.Keys.Cast<object>().ToDictionary(k => k.ToString(), k => DeepCopy(td[k])),
+            System.Collections.IEnumerable e => e.Cast<object>().Select(DeepCopy).ToList(),
             _ => v,
         };
     }

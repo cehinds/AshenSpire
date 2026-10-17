@@ -91,3 +91,10 @@ test('Ashen Blight Core: STR +2, CON +2, WIS -1, SP -2, with SP floored at 1', a
   const bare = { ...minions[0], defaultGear: [], defaultRelics: [{ key: 'relic1', id: core.id }], attributes: {}, attributePoints: 0 };
   assert.equal(enemyPools(bare, e, 1, enemyItemBonuses(bare, profile.content, gearSettings)).sp, 1, 'max(2 - 2, 1)');
 });
+
+test('a pool whose min exceeds its max is refused', () => {
+  const merged = gearSettings.poolSizes.merged || {};
+  const rarity = Object.keys(merged)[0] || 'common';
+  const override = { ...author, modules: { ...author.modules, gear: { ...(author.modules?.gear || {}), poolSizes: { ...gearSettings.poolSizes, merged: { ...merged, [rarity]: { min: 9, max: 4 } } } } } };
+  assert.throws(() => resolveGameAuthor(override, catalog), /min 9 exceeds max 4/);
+});

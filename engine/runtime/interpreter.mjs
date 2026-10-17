@@ -30,7 +30,8 @@ export function loadMechanic(dir) {
   const read = (name, fallback) => {
     if (!files[name]) return fallback;
     const path = join(dir, files[name]);
-    return existsSync(path) ? readJson(path) : fallback;
+    if (!existsSync(path)) throw new Error(`${manifest.id}: mechanic.json names ${name} file '${files[name]}', which does not exist`);
+    return readJson(path);
   };
   return {
     manifest,

@@ -227,7 +227,10 @@ export function resolveGearItem(item, settings) {
   return { id: item.id, points, values, tags: [...(item.tags || [])], modifiers, tagCost, pools: { ratings: size('ratings'), bonus: size('bonus'), merged: settings.poolSizes.merged?.[item.rarity] || null, mode: settings.pools } };
 }
 function verifyGearContent(content, settings) {
-  if (!settings || !content.gear) return;
+  if (!settings) return;
+  for (const [pool, byRarity] of Object.entries(settings.poolSizes || {})) for (const [rarity, range] of Object.entries(byRarity || {}))
+    if (range && Number.isFinite(range.min) && Number.isFinite(range.max) && range.min > range.max) fail(`$/modules/gear/poolSizes/${pool}/${rarity}`, `min ${range.min} exceeds max ${range.max}`);
+  if (!content.gear) return;
   verifyNames(content.gear, '$/content/gear');
   const ids = new Set();
   for (const item of content.gear) {
@@ -438,12 +441,15 @@ export function characterSettings(modules) {
 // Derives the legacy views the game still reads (content.classes, content.enemies) and merges enemy cards
 // into the one shared card pool. HP etc. use the same algorithm for both (characterRule + statRules).
 function deriveCharacterContent(content, modules) {
+  // enemies off: the enemy pack data is ignored (enemies/guide.md, Disabled), whatever characters is set to.
+  if (!modules.enemies) {
+    delete content.enemyCards; delete content.enemies; delete content.enemyRelics;
+    if (!modules.characters && Array.isArray(content.characters)) content.characters = content.characters.filter(c => !c.tags?.includes('character.enemy'));
+  }
   if (!modules.characters || !Array.isArray(content.characters)) return;
   const settings = characterSettings(modules);
   // enemy-relics off: enemies carry no relics.
   if (!settings.equipment) for (const c of content.characters) if (c.tags?.includes('character.enemy')) c.defaultRelics = [];
-  // enemies off: the enemy pack data is ignored (enemies/guide.md, Disabled): no enemy cards, no enemy rows.
-  if (!modules.enemies) { delete content.enemyCards; delete content.enemies; }
   if (Array.isArray(content.enemyCards) && !content.enemyCardsMerged) {
     const existing = new Set((content.cards || []).map(card => card.id));
     const added = content.enemyCards.filter(card => !existing.has(card.id));

@@ -490,3 +490,14 @@ test('funded is a value: variables and formulas resolve before subtracting', () 
   out = run([{ op: 'restoreMana', target: 'self', amount: 5, funded: '$paid' }], state, { paid: 4 });
   assert.equal(out.state.entities.self.mp, 1);
 });
+
+test('a mechanic.json naming a missing file is refused at load', async () => {
+  const { mkdtempSync, writeFileSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+  const dir = mkdtempSync(join(tmpdir(), 'mech-'));
+  writeFileSync(join(dir, 'mechanic.json'), JSON.stringify({ id: 'x', files: { model: 'model.schema.json', interface: 'interface.json', service: 'nope.json' } }));
+  writeFileSync(join(dir, 'model.schema.json'), '{}'); writeFileSync(join(dir, 'interface.json'), '{"mechanic":"x"}');
+  const { loadMechanic } = await import('../engine/runtime/interpreter.mjs');
+  assert.throws(() => loadMechanic(dir), /names service file 'nope\.json'/);
+});
