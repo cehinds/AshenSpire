@@ -6,6 +6,11 @@ export function safeAsset(value) {
 }
 export function proposalsOf(actor) { return VERSION_IDS.map(id=>actor.proposals?.find(p=>p.id===id)||{id,status:'missing',perspective:'rear',stances:{}}); }
 export function framesOf(proposal,stance) { return proposal?.perspective==='rear' ? (proposal.stances?.[stance]?.frames||[]).filter(f=>safeAsset(f.asset)) : []; }
+export function animationFramesOf(proposal,stance) { return proposal?.perspective==='rear' ? (proposal.animations?.[stance]?.frames||[]).filter(f=>safeAsset(f.asset)) : []; }
+export function animationCoverage(actor) {
+ const proposals=proposalsOf(actor);
+ return {clips:proposals.reduce((n,p)=>n+STANCES.filter(s=>animationFramesOf(p,s).length>1).length,0),completeSets:proposals.filter(p=>STANCES.every(s=>animationFramesOf(p,s).length>1)).length};
+}
 export function frameAt(frames,time) {
  const duration=frames.reduce((n,f)=>n+f.durationMs,0);
  if(!duration)return null;
@@ -35,7 +40,7 @@ export function validateManifest(m) {
    if(!['missing','draft','reviewed','selected'].includes(p.status))fail(at+': invalid proposal status');
    if(p.perspective!=='rear')fail(at+': proposals must depict the rear');
    let painted=false;
-   for(const [stance,sequence] of Object.entries(p.stances||{})){
+   for(const [stance,sequence] of [...Object.entries(p.stances||{}),...Object.entries(p.animations||{})]){
     if(!STANCES.includes(stance))fail(at+': unknown stance');
     for(const f of sequence.frames||[]){
      painted=true;

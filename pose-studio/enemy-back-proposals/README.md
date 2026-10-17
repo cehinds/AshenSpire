@@ -15,3 +15,5 @@ Run `node --test pose-studio/enemy-back-proposals/model.test.mjs`. Parent integr
 Delivered `scope` stays `pending` until every audited actor satisfies the stated coverage; `targetScope` records the goal separately. A nullable `provisionalDefaultVersion` names an available draft design and never implies approved gameplay selection.
 
 After normalization outputs and their provenance have landed on the feature, run `node pose-studio/enemy-back-proposals/integrate-normalized.mjs <actorId>`. It verifies master/output SHA-256 bytes, refuses clipped/error outputs, converts floor anchors, and imports ten neutral draft designs. v01 is labelled provisional, crop review stays explicit, and no neutral design is copied into action slots. Prompt summaries are identified as summaries.
+
+Optional `proposal.animations[stance].frames` stores actual separately authored motion clips using the same timed frame and anchor schema. Held stance coverage and motion coverage are displayed separately; a one-frame stance does not count as an animation. `Play available motion` previews a clip only when present and otherwise shows the held pose.
