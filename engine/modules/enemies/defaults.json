@@ -10,7 +10,7 @@
   "levelFrom": "levelProfile.min",
   "statRules": {
     "hp": {
-      "constitution": 10,
+      "constitution": 20,
       "perLevel": 2
     },
     "sp": {
@@ -44,7 +44,7 @@
         4
       ],
       "pools": {
-        "hp": 40,
+        "hp": 10,
         "sp": 2,
         "mp": 0
       },
@@ -60,7 +60,7 @@
         5
       ],
       "pools": {
-        "hp": 40,
+        "hp": 10,
         "sp": 3,
         "mp": 1
       },
@@ -76,7 +76,7 @@
         7
       ],
       "pools": {
-        "hp": 40,
+        "hp": 10,
         "sp": 3,
         "mp": 1
       },
