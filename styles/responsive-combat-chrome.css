@@ -101,3 +101,18 @@
 :root[data-display-appearance='alternative'] .combat[data-layout='formation'] > .alternative-card-fade {
   background-image: linear-gradient(to bottom, transparent, #211d16 calc(60px / var(--ui-zoom,1)), #211d16) !important;
 }
+/* Purse sits immediately under the two quick controls, clear of intents. */
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .hud-info-row.hud-cinders-strip {
+  align-self: start; margin-top: calc(-1px / var(--ui-zoom,1)); min-height: 0;
+}
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .hud-cinders-strip :is(.hud-center,.hud-cinders) {
+  padding-block: 0; min-height: 0; line-height: calc(12px / var(--ui-zoom,1));
+}
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .hud-cinders-strip :is(.ck,.cv) {
+  font-size: calc(12px / var(--ui-zoom,1)); line-height: calc(12px / var(--ui-zoom,1));
+}
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .hud-info-row.hud-cinders-strip { margin-top: calc(-5px / var(--ui-zoom,1)); }
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .hud-cinders-strip :is(.hud-center,.hud-cinders) {
+  height: calc(12px / var(--ui-zoom,1)); max-height: calc(12px / var(--ui-zoom,1));
+  display: flex; flex-direction: row; align-items: center; white-space: nowrap;
+}
