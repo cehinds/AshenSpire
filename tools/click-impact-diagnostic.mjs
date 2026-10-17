@@ -68,7 +68,7 @@ const argOf = (flag) => { const i = args.indexOf(flag); return i >= 0 ? args[i +
 const browserPath = argOf('--browser') || BROWSERS.find((p) => existsSync(p));
 const PLAYS = Number(argOf('--plays') || 5);
 const SEED = Number(argOf('--seed') || CORE_ENTRY_SEED);
-if (PLAYS !== 3 || SEED !== CORE_ENTRY_SEED) throw new Error('This bounded helper captures exactly three plays of the native default seed');
+if (PLAYS !== 3 || SEED !== Number(CORE_ENTRY_SEED)) throw new Error('This bounded helper captures exactly three plays of the native default seed');
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function connectCdp(wsUrl, pageErrors = []) {
