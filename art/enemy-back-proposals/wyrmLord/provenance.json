@@ -14,5 +14,24 @@
     "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
     "sha": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd"
   },
-  "versions": 10
+  "versions": 10,
+  "actorId": "wyrmLord",
+  "master": "proposal-sheet.png",
+  "sourceReferences": [
+    {
+      "repository": "cehinds/AshenSpire-art",
+      "path": "hd/assets/enemy-poses/expansion/wyrmLord/idle.webp",
+      "ref": "hd-assets-v23",
+      "sha": "2c2dd97e1b807a303a99317466592ddc317f3bc9",
+      "blob": "2c2dd97e1b807a303a99317466592ddc317f3bc9"
+    },
+    {
+      "repository": "cehinds/AshenSpire",
+      "path": "assets-display/alternative/reaver-default.webp",
+      "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+      "sha": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+      "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd"
+    }
+  ],
+  "status": "draft-proposals"
 }
