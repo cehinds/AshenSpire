@@ -6,7 +6,7 @@ import { combatIntentPresentation } from '../models/CombatIntentModel.js';
 import { attachTooltip, esc, hideTooltip } from './tooltip.js';
 import { combatantInfo, intentParts } from './combatantOverhead.js';
 import { currentSpriteBodyBounds } from './combatSpriteGeometry.js';
-import { anchorLocalBox } from '../fx.js';
+import { anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { reducedMotionRequested } from '../motion.js';
 
 const rect = node => { const r = node.getBoundingClientRect(); return { left: r.left, top: r.top, width: r.width, height: r.height }; };
@@ -207,7 +207,8 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       panel.node.dataset.crowded = String(crowded);
       panel.node.style.setProperty('--target-hud-padding-block', `${crowded ? config.sizing.crowdedPaddingBlockEm : .65}em`);
       panel.node.style.setProperty('--target-hud-padding-inline', `${crowded ? config.sizing.crowdedPaddingInlineEm : .75}em`);
-      panel.node.style.width = `${width / zoom}px`;
+      const panelLocalWidth = anchorLocalBox(VIEWPORT_ORIGIN, { left: 0, top: 0, width, height: 0 }, { zoom }).width;
+      panel.node.style.width = `${panelLocalWidth}px`;
       panel.node.style.setProperty('--target-hud-font', `${font / zoom}px`);
       panel.node.style.setProperty('--target-hud-status-size', `${statusSize / zoom}px`);
       return [{ id, role: entry.role, lane, anchor, width: width + 25, height: panel.node.getBoundingClientRect().height || config.sizing.panelHeightPx + config.sizing.statusHeightPx }];
@@ -215,7 +216,8 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     const placed = placeTargetHudPanels({ bounds, panels: requests, obstacles, config });
     for (const box of placed) {
       const panel = panels.get(box.id)?.node; if (!panel) continue;
-      panel.style.left = `${(box.left + 25 - fieldBox.left) / zoom}px`; panel.style.top = `${(box.top - fieldBox.top) / zoom}px`;
+      const panelLocal = anchorLocalBox(field, { left: box.left + 25, top: box.top, width: 0, height: 0 }, { zoom });
+      panel.style.left = `${panelLocal.left}px`; panel.style.top = `${panelLocal.top}px`;
       panel.dataset.side = box.side; panel.classList.add('visible');
       // The separate root control escapes the detail's layer while sharing its measured position.
       const info = infoButtons.get(box.id);

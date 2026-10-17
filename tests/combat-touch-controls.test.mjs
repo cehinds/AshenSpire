@@ -30,7 +30,7 @@ test('expanded combat panels and selected details stay in the correct layer', ()
 });
 
 test('compact geometry reserves the measured controls and overhead gaps', () => {
-  assert.match(battlefield, /setProperty\('--overhead-top', `\$\{-overheadGap \/ zoom\}px`\)/);
+  assert.match(battlefield, /setProperty\('--combat-elev', `\$\{-overheadGap \/ zoom\}px`\)/);
   const reserve = COMBAT_TOOLS_HEIGHT_PX;
   assert.match(hand, /const toolsHeight = toolsPhysical \/ zoom;/);
   assert.match(hand, /!desktop \? COMBAT_TOOLS_HEIGHT_PX/, 'only the desktop form factor measures its tool row');
