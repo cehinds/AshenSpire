@@ -3,6 +3,7 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {pathToFileURL} from 'node:url';
+import {createRequire} from 'node:module';
 const api=p=>JSON.parse(execFileSync('gh',['api',p],{encoding:'utf8',maxBuffer:32*1024*1024}));
 const repo='cehinds/AshenSpire',branch='feature/EnemyBackSprites';
 const source=api('repos/'+repo+'/branches/'+encodeURIComponent(branch)).commit.sha;
@@ -26,7 +27,7 @@ for(let attempt=0;attempt<31;attempt++){
 assert.ok(bytes,'Exact final feature artifact was not published within bounded polling');
 const stamp=JSON.parse(await readFile(dir+'/buildordinal.json','utf8')),version=stamp.release+'.'+stamp.ordinal;
 const {chromium}=await import(pathToFileURL(process.env.PLAYWRIGHT_MODULE).href);
-const sharp=(await import(pathToFileURL(process.env.SHARP_MODULE).href)).default;
+const sharp=createRequire(import.meta.url)(process.env.SHARP_MODULE);
 const out='docs/preview/features/enemy-back-sprites';await mkdir(out,{recursive:true});
 const browser=await chromium.launch({headless:true}),records=[];
 try{
@@ -34,7 +35,7 @@ try{
   console.log('Capturing deployed viewport',name);const page=await browser.newPage({viewport:{width,height}});page.setDefaultTimeout(30000);page.setDefaultNavigationTimeout(90000);
   await page.goto(url,{waitUntil:'domcontentloaded',timeout:90000});
   const game=page.frameLocator('#preview');await game.locator('#enemy-rear-review-open').click({timeout:90000});
-  const gallery=game.frameLocator('iframe[title="Enemy rear design review"]');
+  const gallery=game.frameLocator('dialog iframe');
   await gallery.locator('#grid .card').first().waitFor({timeout:90000});
   const choices=await gallery.locator('#actor option').evaluateAll(opts=>opts.map(o=>o.value));assert.equal(choices.length,13);
   for(const candidate of choices){console.log('Checking deployed images',name,candidate);

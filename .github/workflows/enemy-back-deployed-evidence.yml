@@ -34,7 +34,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PLAYWRIGHT_MODULE: /tmp/enemy-rear-capture/node_modules/playwright/index.mjs
-          SHARP_MODULE: /tmp/enemy-rear-capture/node_modules/sharp/lib/index.js
+          SHARP_MODULE: /tmp/enemy-rear-capture/node_modules/sharp
         run: node pose-studio/enemy-back-proposals/capture-deployed.mjs
       - name: Commit evidence on its worker only
         run: |
