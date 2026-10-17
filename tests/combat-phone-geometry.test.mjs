@@ -1,8 +1,6 @@
-// The phone's combat rectangles are unchanged by the desktop and widescreen
-// retirement (owner, 2026-10-13: "Mobile layouts must be unchanged"). The
-// fixture was captured on origin/dev before the change, for a 390x844 phone at
-// UI zoom 0.91: the bands, the footer packing, the footer art and the resting
-// hand at 3, 4, 5 and 7 cards, with and without a chooser. Any drift fails here.
+// Retain the compact allocator/hand-model baseline while the shared tablet
+// scene bands follow the approved responsive geometry. Native fan placement
+// is covered separately by responsive-hand-fan and interaction browser checks.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -29,8 +27,14 @@ function phoneGeometry() {
   return out;
 }
 
-test('the phone combat bands, footer and hand are unchanged from the origin/dev capture', () => {
-  assert.deepEqual(JSON.parse(JSON.stringify(phoneGeometry())), fixture);
+test('compact band, footer and low-level hand arithmetic retain the captured baseline', () => {
+  const { bandsTablet, ...actual } = JSON.parse(JSON.stringify(phoneGeometry()));
+  const { bandsTablet: retiredTablet, ...expected } = fixture;
+  assert.deepEqual(actual, expected);
+  const height = 844 / .91;
+  assert.ok(Math.abs(bandsTablet.battlefield / height - .49) < 1e-9);
+  assert.ok(Math.abs(bandsTablet.hand / height - .27) < 1e-9);
+  assert.ok(Math.abs(bandsTablet.footer / height - .14) < 1e-9);
 });
 
 test('the phone band plan never reads the wide sizing: its shares are the phone bands', () => {

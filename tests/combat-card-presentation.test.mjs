@@ -6,8 +6,8 @@ import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js
 import { combatCardType, combatCardSummary } from '../src/model/playingCard.js';
 const reg = createRegistries(contentBundle);
 const card = id => applyCombatExpansionCard(reg.cards.get(id));
-test('large face labels match the maneuver while spell Counters remain Counter', () => {
-  for (const [id, label] of [['strike','Attack'],['defend','Defense'],['bashingBlow','Smash'],['shieldBash','Counter'],['dodgeRoll','Evade'],['barrageCounter','Counter'],['emberDart','Attack']]) assert.equal(combatCardType(card(id)), label, id);
+test('large face labels keep martial maneuvers and public Spell preparation categories', () => {
+  for (const [id, label] of [['strike','Attack'],['defend','Defense'],['bashingBlow','Smash'],['shieldBash','Counter'],['dodgeRoll','Evade'],['barrageCounter','Spell'],['emberDart','Spell']]) assert.equal(combatCardType(card(id)), label, id);
 });
 test('Counter summary distinguishes protection from return and includes card Evade', () => {
   assert.doesNotMatch(combatCardSummary(card('barrageCounter'), null, reg), /Counter|Area|Melee|attacks and spells/);
@@ -84,10 +84,11 @@ test('compact Counter face leaves complete delivery coverage in inspection', asy
   for (const term of ['Counter coverage:', 'Martial', 'Spell', 'Melee', 'Reach', 'Ranged', 'Area', 'status pressure']) assert.ok(html.includes(term), term);
 });
 
-test('primary Power and Status labels precede camps; utility skills remain Skill', () => {
+test('Power and Status labels precede camps while authored spell utilities remain Spell', () => {
   for (const id of ['emberCovenant','shatterOpportunity','rallyingStandard']) assert.equal(combatCardType(card(id)), 'Power', id);
   assert.equal(combatCardType({id:'fixture-status',type:'status',cardTags:['camp:spell']}), 'Status');
   assert.equal(combatCardType({id:'fixture-curse',type:'curse',cardTags:['camp:spell']}), 'Status');
-  assert.equal(combatCardType(card('dreamHarvest')), 'Skill');
-  assert.equal(combatCardType(card('emberDart')), 'Attack');
+  assert.equal(combatCardType(card('dreamHarvest')), 'Spell');
+  assert.equal(combatCardType({id:'fixture-utility',type:'skill',cardTags:[]}), 'Skill', 'a genuinely untyped utility remains a Skill');
+  assert.equal(combatCardType(card('emberDart')), 'Spell');
 });
