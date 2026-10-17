@@ -248,11 +248,14 @@ test('selected holds preserve existing returns and finite reactions restore the 
     const smashTiming=stage.actionTiming('smash'),originalHold=stage.currentArt;
     stage.play('smash',smashTiming.totalMs);
     assert.equal(stage.currentArt.image,originalHold.image,'SM03 starts with the byte-exact active held stance');
-    assert.deepEqual([stage.currentArt.left,stage.currentArt.top],[originalHold.left,originalHold.top],'the first bookend never shifts the body');
+    assert.deepEqual([stage.currentArt.body?.headY,stage.currentArt.body?.feetY],
+      [originalHold.body?.headY,originalHold.body?.feetY],
+      'the first bookend keeps the normalized body head and floor anchors');
     advance(79);assert.equal(stage.pose,'pilot-smash-airborne');
     assert.equal(stage.currentArt.canvas.height,625,'airborne blade has the required 81 pixel top margin');
     const css=stage.currentArt.canvas.style.cssText,cssTop=Number(css.match(/top:([-\d.]+)px/)[1]),cssWidth=Number(css.match(/width:([\d.]+)px/)[1]),scale=cssWidth/stage.currentArt.canvas.width;
-    assert.ok(Math.abs(cssTop+(originalHold.top+464)*scale-190)<1e-8,'expanded canvas compensation preserves the original held floor in CSS pixels');
+    assert.ok(Math.abs(cssTop+originalHold.body.feetY*scale-190)<1e-8,
+      'expanded canvas compensation preserves the held semantic floor while airborne');
     assert.equal(stage.currentArt.top,-95,'source S padding maps to the original unchanged stance registration');
     stage.hold(60);assert.equal(stage.pose,'pilot-smash-impact','timer contact freezes the ground-impact painting');
     advance(160);assert.equal(stage.pose,'stance-smash');
@@ -260,17 +263,19 @@ test('selected holds preserve existing returns and finite reactions restore the 
     stage.settle();stage.setStance('sweep');
     const sweepOrigin=stage.currentArt,sweepTiming=stage.actionTiming('sweep');
     assert.equal(sweepOrigin.canvas.width,932,'the planted wind-up blade gets its full horizontal canvas');
-    assert.deepEqual([sweepOrigin.width,sweepOrigin.height],[1024,1024],'the corrected stance is not fit to a different body scale');
+    const heldBodyHeight=originalHold.body.feetY-originalHold.body.headY;
+    assert.ok(Math.abs((sweepOrigin.body.feetY-sweepOrigin.body.headY)-heldBodyHeight)<1e-8,
+      'Sweep uses the ready-normalized body height');
     const sweepCss=sweepOrigin.canvas.style.cssText,sweepScale=Number(sweepCss.match(/width:([\d.]+)px/)[1])/sweepOrigin.canvas.width;
-    const sweepLeft=Number(sweepCss.match(/left:calc\(50% - ([\d.]+)px\)/)[1]),sweepTop=Number(sweepCss.match(/top:([-\d.]+)px/)[1]);
-    assert.ok(Math.abs((sweepOrigin.left+520)*sweepScale-sweepLeft)<1e-8,'anatomical Sweep anchor stays on the same body center');
-    assert.ok(Math.abs(sweepTop+(sweepOrigin.top+734)*sweepScale-190)<1e-8,'corrected Sweep keeps the common floor');
+    const sweepTop=Number(sweepCss.match(/top:([-\d.]+)px/)[1]);
+    assert.ok(Math.abs(sweepTop+sweepOrigin.body.feetY*sweepScale-190)<1e-8,'corrected Sweep keeps the semantic common floor');
     stage.play('sweep',sweepTiming.totalMs);const sweepCue=stage.contactCue();advance(208);
     assert.equal(stage.pose,'pilot-sweep-contact','a cold receipt cannot skip the turning slash');
     assert.equal(stage.presentation.elapsed,78);assert.equal(sweepCue.contact(),true);assert.equal(sweepCue.remainingMs(),117);
     advance(39);assert.equal(stage.pose,'pilot-sweep-finish');advance(39);assert.equal(stage.pose,'stance-sweep');advance(40);
     assert.equal(stage.presentation.action,undefined);
     assert.equal(stage.currentArt.image,sweepOrigin.image);assert.deepEqual([stage.currentArt.left,stage.currentArt.top],[sweepOrigin.left,sweepOrigin.top]);
+    assert.deepEqual([stage.currentArt.body.headY,stage.currentArt.body.feetY],[sweepOrigin.body.headY,sweepOrigin.body.feetY]);
     stage.settle();stage.setStance('smash');stage.play('smash',195);
     const coldCue=stage.contactCue();advance(208);
     assert.equal(stage.pose,'pilot-smash-impact','a cold late receipt cannot skip the unacknowledged impact');

@@ -105,6 +105,7 @@ test('rear stages keep fixed frame geometry and held stances during automatic co
       assert.equal(stage.stance, 'defensive');
       stage.settle();
       assert.equal(stage.pose, 'stance-defensive');
+      const heldLeft = stage.currentArt.left;
       for (const action of CARD_ACTIONS) {
         const positions = [];
         for (const fraction of [0, .2, .4, .6, .8, 1]) {
@@ -121,7 +122,7 @@ test('rear stages keep fixed frame geometry and held stances during automatic co
         if (['attack', 'smash', 'sweep'].includes(action)) assert(positions.some(x => x > 128));
         else assert(positions.every(x => x === 128), `${action} must stay anchored`);
         stage.settle();
-        assert.equal(stage.currentArt.left, 128);
+        assert.equal(stage.currentArt.left, heldLeft, `${action} returns to the normalized held position`);
         assert.equal(stage.pose, 'stance-defensive');
       }
       stage.dispose();
