@@ -15,7 +15,9 @@
         "all": [],
         "any": [],
         "exclude": []
-      }
+      },
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop"
     },
     {
       "id": "rest-tent",
@@ -30,7 +32,9 @@
         "exclude": []
       },
       "renderLayer": "rear-props",
-      "keepUpright": true
+      "keepUpright": true,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop"
     }
   ],
   "pools": [

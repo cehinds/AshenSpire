@@ -1,0 +1,206 @@
+{
+  "summary": {
+    "reviewed": 27,
+    "approved": 26,
+    "replace": 1,
+    "method": "Read batches 01\u201306 manifests and visually inspected every ground on three labeled contact sheets; full-size comparisons for forest day, tidal stone, frozen shore, frost vault and ice bank. Compared map-icons-painterly-v1 style guide against the required battlefield camera adaptation. Alpha edge and canvas issues are excluded from style verdicts.",
+    "finding": "Ground family is already substantially coherent. Preserve distinct coastal wetness, snow/frost, volcanic warmth, night and interior palettes. One ice surface needs softer painted material treatment and quieter center."
+  },
+  "items": [
+    {
+      "assetKey": "batch-01/scene-forest-ground-day",
+      "verdict": "approved",
+      "reason": "Broad hand-painted stone and dusty earth, soft upper-left daylight and quiet center; warm forest sunlight remains compatible with diffuse-day styling.",
+      "profileId": "battlefield-ground",
+      "sha256": "71601147dec61b16462739cae77a872088082e26e87ff9ffdca79a24919b527d"
+    },
+    {
+      "assetKey": "batch-02/scene-forest-ground-night",
+      "verdict": "approved",
+      "reason": "Painterly forest stones retain the same shallow ground plane and clear middle; blue low-key illumination is the intentional night variant.",
+      "profileId": "battlefield-ground",
+      "sha256": "29e320d9ec96083d3bda33ef8ce066b3119b223060a0fb2976b2336909f14644"
+    },
+    {
+      "assetKey": "batch-03/scene-forest-ground-misty",
+      "verdict": "approved",
+      "reason": "Soft gray-green stones, subdued mist lighting and unobstructed center match the ground profile.",
+      "profileId": "battlefield-ground",
+      "sha256": "e8b8a37fa31a98fdf24d1616a6cce311383da68abb9d92267d86f9cf3fc7e3b7"
+    },
+    {
+      "assetKey": "batch-03/scene-road-ground-misty",
+      "verdict": "approved",
+      "reason": "Painted muddy wheel ruts and subdued paving share the same shallow viewpoint; curved road stays low and leaves a usable combat surface.",
+      "profileId": "battlefield-ground",
+      "sha256": "c8dc881ec3591e52c1aa8bb86f13d8b8a6059716c6a398c81c7977a63653d1dc"
+    },
+    {
+      "assetKey": "batch-05-regions/ashen-crown/ground-dry-meadow",
+      "verdict": "approved",
+      "reason": "Desaturated ochre meadow, worn stones and soft tactile detail match the regional painterly benchmark.",
+      "profileId": "battlefield-ground",
+      "sha256": "4d2d6b044f2d2c903c1df3decb279b66db5092efe6e3aee02cd46ca8c93618aa"
+    },
+    {
+      "assetKey": "batch-05-regions/ashen-crown/ground-worn-courtyard",
+      "verdict": "approved",
+      "reason": "Broad worn gray-tan slabs, restrained seams and quiet center maintain the established matte medieval ground style.",
+      "profileId": "battlefield-ground",
+      "sha256": "efdcc77fce75eb660921103b832379b6f0592ddc4cfb0c40f631f6c8f2e7c6e5"
+    },
+    {
+      "assetKey": "batch-05-regions/cinder-reach/ground-ash-flagstones",
+      "verdict": "approved",
+      "reason": "Dark weathered flagstones and dusty ash have restrained highlights and coherent shallow perspective.",
+      "profileId": "battlefield-ground",
+      "sha256": "ecc0212163c99e1e6b7d8667085e0db5bd3fce9e2b64f90058d374a9dc9ab4e8"
+    },
+    {
+      "assetKey": "batch-05-regions/cinder-reach/ground-basalt-road",
+      "verdict": "approved",
+      "reason": "Matte charcoal basalt slabs use broad irregular forms and subdued detail; dark regional palette is intentional.",
+      "profileId": "battlefield-ground",
+      "sha256": "fd9a469415a55080e4b9ea62d6ba165d68de1a5766b5622abf1048c6aaa31365"
+    },
+    {
+      "assetKey": "batch-05-regions/drowned-coast/ground-tidal-stone",
+      "verdict": "approved",
+      "reason": "Wet stone has localized soft sheen, broad painterly faces and a subdued clear center; coastal moisture is a justified material variant.",
+      "profileId": "battlefield-ground",
+      "sha256": "7c20ebe21b58a00bee4e9c4efdc1f593eb5b4970e37bdd1c8c3a09d4c37f97fb"
+    },
+    {
+      "assetKey": "batch-05-regions/drowned-coast/ground-wet-sand",
+      "verdict": "approved",
+      "reason": "Painted tidal ripples and soft wet-sand reflections retain the low viewpoint and open middle; material sheen is restrained.",
+      "profileId": "battlefield-ground",
+      "sha256": "12b7ea4939adb691f379ed7c1530e620eb8c0af7caca6c6c614abefa5b02e9d5"
+    },
+    {
+      "assetKey": "batch-05-regions/hollow-weald/ground-bog-path",
+      "verdict": "approved",
+      "reason": "Dark olive mud and scattered stones use muted tactile brushwork with a quiet central route.",
+      "profileId": "battlefield-ground",
+      "sha256": "e9d81023c7cfc395ec6695343094637ea6e0d1f366ef8352cbd9e45469f9e2b7"
+    },
+    {
+      "assetKey": "batch-05-regions/hollow-weald/ground-moss-clearing",
+      "verdict": "approved",
+      "reason": "Moss and earth stay subdued and painterly, with foliage concentrated along the sides.",
+      "profileId": "battlefield-ground",
+      "sha256": "cb41a93c89de368a45b2f7131ba2db0202f3b3673e6e1f0af2b38762451ab198"
+    },
+    {
+      "assetKey": "batch-05-regions/interiors/ground-dungeon-flagstones",
+      "verdict": "approved",
+      "reason": "Broad matte dungeon slabs, soft side illumination and clear center fit the interior variant.",
+      "profileId": "battlefield-ground",
+      "sha256": "fe831787ad758b732b113ea357bf6492f3df33460188a6ceee2f32d8834005b6"
+    },
+    {
+      "assetKey": "batch-05-regions/interiors/ground-mine-gravel",
+      "verdict": "approved",
+      "reason": "Low gravel and rubble have subdued painted material detail; larger debris remains at the edges.",
+      "profileId": "battlefield-ground",
+      "sha256": "621ad452409730bdf74ad3c95ebbe23bf60ada8b0ad62c32959dc0cb2631742a"
+    },
+    {
+      "assetKey": "batch-05-regions/pale-marches/ground-frozen-shore",
+      "verdict": "approved",
+      "reason": "Cold snow and frost retain soft broad snow forms and a quiet middle; blue-white palette is a deliberate frozen biome difference.",
+      "profileId": "battlefield-ground",
+      "sha256": "767ae3d5d97288bbe79c938e243f9e1b395b3db6d057966ebaea1faa0faf7138"
+    },
+    {
+      "assetKey": "batch-05-regions/pale-marches/ground-snow-road",
+      "verdict": "approved",
+      "reason": "Snow-packed wheel tracks form a broad open lane with painted snowbanks and coherent shallow perspective.",
+      "profileId": "battlefield-ground",
+      "sha256": "7657efdb5f9e94b07873b92ad678106160f9da87f0a76926a7ba7e82818eeb18"
+    },
+    {
+      "assetKey": "batch-06-settlements/ashen-crown/ground-market-cobbles",
+      "verdict": "approved",
+      "reason": "Warm weathered cobbles use broad readable stones and soft light, with no obstructive central prop.",
+      "profileId": "battlefield-ground",
+      "sha256": "68d895df8108f58c2da554ebe3dd470d34697ac09a66036de296e58a0a5e94d6"
+    },
+    {
+      "assetKey": "batch-06-settlements/cinder-reach/ground-foundry-court",
+      "verdict": "approved",
+      "reason": "Charcoal paving has restrained ember-colored edge accents and matte painted wear; foundry warmth is intentional.",
+      "profileId": "battlefield-ground",
+      "sha256": "ff3bf7247edf48d16eadd1317ed535abdff6f8c5628f4247ad9c1e2c353e0238"
+    },
+    {
+      "assetKey": "batch-06-settlements/cinder-reach/ground-obsidian-vault",
+      "verdict": "approved",
+      "reason": "Dark slabs remain tactile and painterly; small warm perimeter reflections suit the vault interior without overpowering the center.",
+      "profileId": "battlefield-ground",
+      "sha256": "ae977bb5b9255bb9141e54cce4dc0b32430651795901acef9c03a7c9cec92059"
+    },
+    {
+      "assetKey": "batch-06-settlements/drowned-coast/ground-flooded-crypt",
+      "verdict": "approved",
+      "reason": "Subdued wet paving and moss share broad painted material treatment; localized watery highlights suit the flooded interior.",
+      "profileId": "battlefield-ground",
+      "sha256": "9244cfd87d6520bfddeb040cdcc282b3dbcf7e741ffeed816e3df93553a48691"
+    },
+    {
+      "assetKey": "batch-06-settlements/drowned-coast/ground-harbor-paving",
+      "verdict": "approved",
+      "reason": "Weathered harbor slabs have restrained wet reflections, subdued green-gray colors and a clear middle.",
+      "profileId": "battlefield-ground",
+      "sha256": "f792fdde2162cc3088035ff8736c2aab4a1fdf53d1e25eabf61627cce0299d1b"
+    },
+    {
+      "assetKey": "batch-06-settlements/hollow-weald/ground-root-cellar",
+      "verdict": "approved",
+      "reason": "Painted pavers and low roots retain the shallow ground view; roots stay at the sides and interior color is coherent.",
+      "profileId": "battlefield-ground",
+      "sha256": "95a915b629494004aa40b596fc57547476204d699c39d58df226103f4cd0d765"
+    },
+    {
+      "assetKey": "batch-06-settlements/hollow-weald/ground-village-pavers",
+      "verdict": "approved",
+      "reason": "Mossy village cobbles have muted greens and broad hand-painted wear; low repeating stones remain usable under combatants.",
+      "profileId": "battlefield-ground",
+      "sha256": "9f8fa06010f9aafd5591389c7fbac71fd1b34caa1b1c743e855119ec6642dd4a"
+    },
+    {
+      "assetKey": "batch-06-settlements/interiors/ground-dusty-keep",
+      "verdict": "approved",
+      "reason": "Warm dusty flagstones use broad matte faces and soft illumination, compatible with the interior setting.",
+      "profileId": "battlefield-ground",
+      "sha256": "593de5465bd22e625b337b80bee830db6fc58a8a992178988ba56bfb65f89650"
+    },
+    {
+      "assetKey": "batch-06-settlements/interiors/ground-frost-vault",
+      "verdict": "approved",
+      "reason": "Frost-lined broad stone slabs keep readable painted faces and shallow perspective; blue frost is the intentional interior material variant.",
+      "profileId": "battlefield-ground",
+      "sha256": "5d69cdaa00e3ec2bbe84dfff129f524709ce7dc32f87c284e1e61c14e8f6f0f1"
+    },
+    {
+      "assetKey": "batch-06-settlements/pale-marches/ground-ice-bank",
+      "verdict": "replace",
+      "reason": "The central ice plane reads as polished glass with sharp white fracture lines and dense bright crystalline detail across the combat area. This all-over specular treatment is harder and busier than the soft matte painterly ground family, beyond the legitimate cold biome palette.",
+      "profileId": "battlefield-ground",
+      "sha256": "1aa420875266e87e8de3f10554b81dac66d4ab64baceed901de6a3e585c9b050"
+    },
+    {
+      "assetKey": "batch-06-settlements/pale-marches/ground-snow-courtyard",
+      "verdict": "approved",
+      "reason": "Snow-covered courtyard slabs preserve broad matte faces and softened frost detail with the shared shallow ground plane.",
+      "profileId": "battlefield-ground",
+      "sha256": "07efbabf0d3607bc9fde63bf03003c230499c12903507b123ca19b30ec9d4901"
+    }
+  ],
+  "recommendedReplacements": [
+    {
+      "assetKey": "batch-06-settlements/pale-marches/ground-ice-bank",
+      "direction": "Retain blue-gray frozen lake and low snowy side banks, wide side-view shallow plane and transparent upper half. Paint ice as weathered frosted matte blue-gray masses with broad subtle texture; restrict a few softened cracks to foreground corners, reduce bright reflective white streaks, and keep middle combat area quiet. Use soft neutral upper-left daylight; preserve cold biome palette."
+    }
+  ]
+}

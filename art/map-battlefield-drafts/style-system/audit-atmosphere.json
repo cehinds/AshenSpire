@@ -1,0 +1,211 @@
+{
+  "summary": "Reviewed every unique manifest sky/backdrop and all 15 atmosphere PNG sources through source images, scene presets and dark/light/crop QA. 27 assets: 23 approved, 3 replace, 1 inactive. Batch-03 reuses the approved batch-02 misty sky and adds no unique backdrop.",
+  "items": [
+    {
+      "assetKey": "batch-01/scene-forest-sky-day",
+      "verdict": "replace",
+      "reason": "Soft painted trees and depth are compatible, but the cream sunlit sky, mint haze and golden foliage read as a pastoral storybook plate beside the subdued batch-05/06 regional skies. Repaint the daylight variant with overcast pewter sky, muted olive foliage and restrained warm breaks while preserving its valley layout.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "54282c1d324a59a38e4a2aca57a80043e9985a1537f748d2c02a23b56006b3be"
+    },
+    {
+      "assetKey": "batch-02/scene-forest-sky-misty",
+      "verdict": "approved",
+      "reason": "Muted gray-green forest, layered mist and softened distant ridges match the atmospheric painterly family. The overcast palette is intentional.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "33f1070d4e6f870b6e813f54e8db612a74d98e91c012bc5feea61aad75f0b3d3"
+    },
+    {
+      "assetKey": "batch-02/scene-forest-sky-night",
+      "verdict": "approved",
+      "reason": "Moonlit slate-blue values and layered valley haze preserve the same painted forest language. Moon and cloud edges provide justified night contrast without neon color.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "b28f937cc69be4ac1525b305036b23039aed89375be9a78b946f5b2ae2e0932f"
+    },
+    {
+      "assetKey": "batch-04-atmosphere/filter-cold",
+      "verdict": "approved",
+      "reason": "Visually checked in the eight-preset scene comparison: restrained translucent cold wash preserves painted materials, atmospheric depth and major shapes. Smooth vector wash is appropriate for this functional overlay.",
+      "profileId": "color-filter",
+      "sha256": "67aff39986172d764f7a212106b0aed5504e8aee7d5dfb7f86d27dbea8a1f71c"
+    },
+    {
+      "assetKey": "batch-04-atmosphere/filter-day",
+      "verdict": "approved",
+      "reason": "Visually checked in the eight-preset scene comparison: restrained translucent day wash preserves painted materials, atmospheric depth and major shapes. Smooth vector wash is appropriate for this functional overlay.",
+      "profileId": "color-filter",
+      "sha256": "5e01e1a0b4d246dbfa748f1f4bc774e024f7e8366ea164c69fa6c8510f9c0eef"
+    },
+    {
+      "assetKey": "batch-04-atmosphere/filter-fog",
+      "verdict": "approved",
+      "reason": "Visually checked in the eight-preset scene comparison: restrained translucent fog wash preserves painted materials, atmospheric depth and major shapes. Smooth vector wash is appropriate for this functional overlay.",
+      "profileId": "color-filter",
+      "sha256": "8ba97ae1ea6e4e4f655ad64e7234afb3f70153a8e86dc1db770caeed285c494d"
+    },
+    {
+      "assetKey": "batch-04-atmosphere/filter-hot",
+      "verdict": "approved",
+      "reason": "Visually checked in the eight-preset scene comparison: restrained translucent hot wash preserves painted materials, atmospheric depth and major shapes. Smooth vector wash is appropriate for this functional overlay.",
+      "profileId": "color-filter",
+      "sha256": "3a405a7d9bf00abecac059297fb186f81c70ac1a7d745617bd2ffe8bc157976c"
+    },
+    {
+      "assetKey": "batch-04-atmosphere/filter-night",
+      "verdict": "approved",
+      "reason": "Visually checked in the eight-preset scene comparison: restrained translucent night wash preserves painted materials, atmospheric depth and major shapes. Smooth vector wash is appropriate for this functional overlay.",
+      "profileId": "color-filter",
+      "sha256": "2b1ed3aadec271a639f4a82882d8faef02951474c3f7afac1b1159b317a7a706"
+    },
+    {
+      "assetKey": "batch-04-atmosphere/filter-rain",
+      "verdict": "approved",
+      "reason": "Visually checked in the eight-preset scene comparison: restrained translucent rain wash preserves painted materials, atmospheric depth and major shapes. Smooth vector wash is appropriate for this functional overlay.",
+      "profileId": "color-filter",
+      "sha256": "93b390da04b2e5b8c4ab8752b6933b49aec399a591a7cf9bcdef1619e8c1fde6"
+    },
+    {
+      "assetKey": "batch-04-atmosphere/filter-stormy",
+      "verdict": "approved",
+      "reason": "Visually checked in the eight-preset scene comparison: restrained translucent stormy wash preserves painted materials, atmospheric depth and major shapes. Smooth vector wash is appropriate for this functional overlay.",
+      "profileId": "color-filter",
+      "sha256": "dbbc83c7e7deffeb7f3ab52579655ae51cd8a5117397bbbf6bfa91a0173e9cb7"
+    },
+    {
+      "assetKey": "batch-04-atmosphere/filter-swamp",
+      "verdict": "approved",
+      "reason": "Visually checked in the eight-preset scene comparison: restrained translucent swamp wash preserves painted materials, atmospheric depth and major shapes. Smooth vector wash is appropriate for this functional overlay.",
+      "profileId": "color-filter",
+      "sha256": "ca80769a6b876bcd31f47f42fb0092827ebaa02621e5bc7bd9a24c8fff2e8ff2"
+    },
+    {
+      "assetKey": "batch-04-atmosphere/ash",
+      "verdict": "approved",
+      "reason": "Tiny irregular neutral flecks are non-emissive and unobtrusive in dark/light QA and the warm preset; appropriate subdued ash.",
+      "profileId": "weather-particles",
+      "sha256": "694429fc3874e7b5ae874d47ea0a50d2442fe66f06644db5db48887094d539af"
+    },
+    {
+      "assetKey": "batch-04-atmosphere/rain",
+      "verdict": "approved",
+      "reason": "Sparse fine gray-blue slanted streaks remain low contrast on dark and light QA backgrounds; reads as rain rather than UI decoration.",
+      "profileId": "weather-particles",
+      "sha256": "68d4f5bf58474d928fa8a6f683cdf8860db6e05eebe3a52b6aad90fed5ecdde8"
+    },
+    {
+      "assetKey": "batch-04-atmosphere/snow",
+      "verdict": "approved",
+      "reason": "Small varied gray-white dots remain soft and restrained in scene and dark/light QA; simple shapes suit a moving weather field.",
+      "profileId": "weather-particles",
+      "sha256": "a4a75a850b7653bb21c764e61fea3e13bfa2dbb53fe37378218766b1ae32451f"
+    },
+    {
+      "assetKey": "batch-04-atmosphere/fog-overscan-neutral",
+      "verdict": "approved",
+      "reason": "Soft low-opacity neutral field gives broad diffuse haze in the fog/swamp presets; no hard graphic contour or neon cast. Crop QA supports the same understated field.",
+      "profileId": "weather-field",
+      "sha256": "833677597d95da3b6a3f320e9ce400e9cd1080127c0d5a6470712b025788ad1e"
+    },
+    {
+      "assetKey": "batch-04-atmosphere/fog-wisps",
+      "verdict": "inactive",
+      "reason": "Disabled by default in the manifest. Source visually shows dense cloudlike white rolls with hard extracted boundaries, holes and blue fringe; keep as inactive legacy rather than count it as an active style failure.",
+      "profileId": "weather-field",
+      "sha256": "26f405065d978c712e26758480552a4944ab4dc9867683748a0fced8bc1019d1"
+    },
+    {
+      "assetKey": "batch-04-atmosphere/lightning-frame-01",
+      "verdict": "replace",
+      "reason": "Source inspection shows a thin leader enclosed in an unusually broad blue/lavender cutout with a crisp noisy outline; the halo reads as a luminous sticker against matte skies. Replace with a finer irregular desaturated off-white bolt and softly dispersed low-opacity atmospheric glow; register both frames together.",
+      "profileId": "weather-lightning",
+      "sha256": "c1ab96655188fd3f7e3a335dd8a19595f261bb60c7593c8ea2fdb971b5c1ac5d"
+    },
+    {
+      "assetKey": "batch-04-atmosphere/lightning-frame-02",
+      "verdict": "replace",
+      "reason": "Source inspection shows a thin leader enclosed in an unusually broad blue/lavender cutout with a crisp noisy outline; the halo reads as a luminous sticker against matte skies. Replace with a finer irregular desaturated off-white bolt and softly dispersed low-opacity atmospheric glow; register both frames together.",
+      "profileId": "weather-lightning",
+      "sha256": "18989051c814b5204c6b4a29b19c4893a20090e593d0cf1bc51526237bad25b0"
+    },
+    {
+      "assetKey": "batch-05-regions/ashen-crown/backdrop-ashen-highlands",
+      "verdict": "approved",
+      "reason": "Weathered ochre highlands, gray stone ruins and hazed mountain tiers establish the regional matte-painting benchmark; daylight warmth is restrained.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "cb7472e0405f21ad25be41d27e20963deff6a63886e5c6570a3d6d9f2d3687b0"
+    },
+    {
+      "assetKey": "batch-05-regions/cinder-reach/backdrop-volcanic-shore",
+      "verdict": "approved",
+      "reason": "Charcoal coastal landforms dissolve into warm ash haze; subdued sea reflections and tiny lava accents support the volcanic biome without a different rendering style.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "65a3a48cb7a931a5840e5ef73d34ad532f9724178faa221327231b1913aac959"
+    },
+    {
+      "assetKey": "batch-05-regions/cinder-reach/backdrop-volcanic",
+      "verdict": "approved",
+      "reason": "Muted umber volcanic terrain, smoke layers and sparse orange heat accents share the dark fantasy material treatment and atmospheric depth.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "6001d6e74db27b52e38af65fd591a0d3a6b85acf66537a0f8a67dc6495d04b7e"
+    },
+    {
+      "assetKey": "batch-05-regions/drowned-coast/backdrop-tidal-coast",
+      "verdict": "approved",
+      "reason": "Cold gray-blue sea and ruined silhouettes recede through horizon mist. Detailed foreground water remains consistent with the regional landscape family.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "121cd2e179386f6529351a6b06b5b89df23bcb9981330ca72590b1c1acd0dc23"
+    },
+    {
+      "assetKey": "batch-05-regions/hollow-weald/backdrop-deep-weald",
+      "verdict": "approved",
+      "reason": "Dense olive canopy, weathered hanging foliage and blue-gray depth haze form a coherent dark forest matte painting.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "46175c1a0e73d5b51bfcf2be085ca419608dd4a608e575e2bcd04de5c3f603ab"
+    },
+    {
+      "assetKey": "batch-05-regions/interiors/backdrop-mine-depths",
+      "verdict": "approved",
+      "reason": "Dark rough rock and timber frame cool hazed openings with small warm lamps; depth and subdued material values suit the same fantasy family.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "6d58c3b2258a86f828c09ecf4b180c2e45ad96d09468601bd1a6f4ab7f33d55f"
+    },
+    {
+      "assetKey": "batch-05-regions/interiors/backdrop-vaulted-depths",
+      "verdict": "approved",
+      "reason": "Worn Gothic masonry, diffuse cool shafts and restrained amber lamps share the regional painterly realism; distant arches soften convincingly.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "e835528c04de2da58a74929206a49c9e0d975fb8b18dbbe3bda725ec9bedcce2"
+    },
+    {
+      "assetKey": "batch-05-regions/pale-marches/backdrop-snow-valley",
+      "verdict": "approved",
+      "reason": "Cold snow and slate peaks use overlapping mist layers and a storm ceiling. Brighter snow is intentional biome value design, with no cartoon or neon treatment.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "2b7617b186b8b33a4f9bd6e9abd5f440be4170078c03d839f7c66731796cc8d5"
+    },
+    {
+      "assetKey": "batch-06-settlements/interiors/backdrop-frozen-inlet",
+      "verdict": "approved",
+      "reason": "Cold blue ice, gray ruined shores and hazed snow peaks match the winter biome. Cyan ice is the strongest natural color accent in this group but remains material-based, not emissive UI light.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "e229e00a854e73a250f21b34243589c8849f5cd251f5b5638a1b135bda1ec61b"
+    }
+  ],
+  "recommendedChanges": [
+    "Repaint batch-01 daylight sky toward muted overcast daylight while preserving composition; avoid applying one dark tint to every biome.",
+    "Replace both lightning frames as one registered effect with a fine off-white leader and diffuse restrained glow.",
+    "Keep fog-wisps disabled and explicitly labeled legacy; retain neutral vector fog as the main field.",
+    "Retain day/night and biome palette differences. Filters, particles and diffuse fog are functional vector overlays and need not imitate detailed brushwork."
+  ],
+  "evidence": [
+    "All 12 unique sky/backdrop PNGs viewed individually at native dimensions.",
+    "batch-04-atmosphere/preview-atmospheres.png",
+    "batch-04-atmosphere/particles/qa-preview.png",
+    "batch-04-atmosphere/fog-vector/qa-crops.png",
+    "Both lightning PNGs and fog/fog-wisps.png viewed individually."
+  ],
+  "scopeNotes": [
+    "Approval is visual style approval only, not production registration, alpha cleanup or camera-safe coverage.",
+    "Lightning frame canvas mismatch remains a technical issue in addition to halo style."
+  ]
+}

@@ -44,6 +44,8 @@ From the repository root:
 
 ```sh
 python art/map-battlefield-drafts/batch-07-map-icons/build-manifest.py
+node art/map-battlefield-drafts/style-system/build-library.mjs
+node art/map-battlefield-drafts/style-system/apply-metadata.mjs
 node art/map-battlefield-drafts/hex-world-module/map-components.mjs --export
 node art/map-battlefield-drafts/hex-world-module/render-map-components.mjs
 node art/map-battlefield-drafts/hex-world-module/validate.mjs

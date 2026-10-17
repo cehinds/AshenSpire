@@ -1,5 +1,7 @@
 # Weather and time-of-day atmosphere layers
 
+Active atmosphere/timing JSON now selects corrected batch-08 lightning frames. The original broad-halo frames remain historical; see [style corrections](../batch-08-style-alignment/README.md).
+
 **Independent, translucent art layers with generous edge coverage.** This batch supplies 15 source PNGs plus editable vector sources where applicable. It remains on the art feature branch; no runtime weather system is wired yet.
 
 ![Atmosphere presets](preview-atmospheres.png)

@@ -1,0 +1,37 @@
+{
+  "id": "lightning-frame-01",
+  "prompt": "REDRAW the referenced lightning effect from scratch on an otherwise empty fully TRANSPARENT 16:9 stage. Requested PNG 3072x1728. Reference is ONLY a guide for approximate location x=0.75 y=0.2 and small scale. DO NOT preserve its surrounding silhouette. ERASE ALL of the blue gray polygon/cloud surrounding the bolt. The ENTIRE result must consist ONLY of a single extremely THIN irregular broken hairline offwhite lightning filament, with two tiny hairline offshoots. Hairline width roughly 1 pixel at 1672px stage width; total effect height 180 pixels at that stage size. NO GLOW AT ALL is better than a wide halo. No filled areas, no cloud shapes, no gray blobs, no border, no outline, no neon, no background, no text. Faint leader, filament opacity 25 percent. Matte painted fantasy world ashen-spire-painted-v1 weather-lightning; spacious transparent margins.",
+  "sourceOutputPath": "/workspace/generated_images/exec-21ba259e-7db9-4943-b4bc-ae74242f993a.png",
+  "referenceSha256": {
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-04-atmosphere/lightning/lightning-frame-01.png": "c1ab96655188fd3f7e3a335dd8a19595f261bb60c7593c8ea2fdb971b5c1ac5d"
+  },
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "mode": "RGBA",
+  "sha256": "31179ff426a26de9ddf18dc7bc0287bcaa217d167512bdcfa5b9be3a13fb79fc",
+  "reviewNotes": [
+    "Visually inspected generated result before acceptance.",
+    "Native output dimensions retained; no upscaling.",
+    "Broad blue cutout halo removed. Fine offwhite filament on transparent stage.",
+    "Generated frames have slight branch-shape and position differences; production timing and registration review remains necessary.",
+    "Requested numeric opacity is not guaranteed by generation; tune compositing opacity in runtime."
+  ],
+  "alphaRange": [
+    0,
+    252
+  ],
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "weather-lightning",
+  "sourceSha256": "31179ff426a26de9ddf18dc7bc0287bcaa217d167512bdcfa5b9be3a13fb79fc",
+  "processing": "Unchanged byte-identical copy of imagegen output. No resizing, trimming or painted-image edits.",
+  "generator": "OpenAI image_gen",
+  "sourceReferences": [
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-04-atmosphere/lightning/lightning-frame-01.png"
+  ]
+}

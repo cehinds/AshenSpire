@@ -1,0 +1,32 @@
+{
+  "id": "backdrop-forest-day",
+  "prompt": "Edit reference 1 into an opaque wide 16:9 daylight conifer forest valley backdrop, requested 3072x1728 PNG. Preserve its valley and mountain composition and layered conifers. Use reference 2 ONLY as a muted matte painterly material/palette guide, never turn this scene into a swamp or night. Shared world art family ashen-spire-painted-v1, battlefield-backdrop: neutral soft daylight, muted moss and gray greens, warm-gray distant stone, painterly atmospheric depth and softened receding terrain. Reduce the existing cream sky / mint haze / golden wash markedly. Keep convincing daylight and subdued neutral pale gray cloud breaks, subtle warm light only. No foreground props, buildings, characters, ground platform, text or UI. Opaque full canvas.",
+  "sourceOutputPath": "/workspace/generated_images/exec-63208b19-65de-4893-8484-7911ad42f093.png",
+  "referenceSha256": {
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-01/scene-forest-sky-day.png": "54282c1d324a59a38e4a2aca57a80043e9985a1537f748d2c02a23b56006b3be",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/hollow-weald/backdrop-deep-weald.png": "46175c1a0e73d5b51bfcf2be085ca419608dd4a608e575e2bcd04de5c3f603ab"
+  },
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "mode": "RGB",
+  "sha256": "c885d817338dc1ea31375626f6478d196a6a20eb3b382060bb6221944c8e2e1b",
+  "reviewNotes": [
+    "Visually inspected generated result before acceptance.",
+    "Native output dimensions retained; no upscaling."
+  ],
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-backdrop",
+  "sourceSha256": "c885d817338dc1ea31375626f6478d196a6a20eb3b382060bb6221944c8e2e1b",
+  "processing": "Unchanged byte-identical copy of imagegen output. No resizing, trimming or painted-image edits.",
+  "generator": "OpenAI image_gen",
+  "sourceReferences": [
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-01/scene-forest-sky-day.png",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/hollow-weald/backdrop-deep-weald.png"
+  ]
+}

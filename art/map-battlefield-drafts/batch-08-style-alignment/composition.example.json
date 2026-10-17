@@ -1,0 +1,126 @@
+{
+  "formatVersion": 1,
+  "status": "preview-only",
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "canvas": {
+    "width": 1672,
+    "height": 941
+  },
+  "scenes": [
+    {
+      "id": "forest-day",
+      "label": "Forest \u00b7 shared painted materials",
+      "layers": [
+        {
+          "assetKey": "batch-08-style-alignment/backdrop-forest-day",
+          "opacity": 1
+        },
+        {
+          "assetKey": "batch-01/scene-forest-props-day",
+          "opacity": 1
+        },
+        {
+          "assetKey": "batch-01/scene-forest-ground-day",
+          "opacity": 1
+        }
+      ]
+    },
+    {
+      "id": "frozen-shore",
+      "label": "Snow \u00b7 matte quiet combat surface",
+      "layers": [
+        {
+          "assetKey": "batch-06-settlements/interiors/backdrop-frozen-inlet",
+          "opacity": 1
+        },
+        {
+          "assetKey": "batch-08-style-alignment/ground-ice-bank",
+          "opacity": 1
+        }
+      ]
+    },
+    {
+      "id": "storm-forest",
+      "label": "Storm \u00b7 thin distant lightning",
+      "layers": [
+        {
+          "assetKey": "batch-05-regions/hollow-weald/backdrop-deep-weald",
+          "opacity": 1
+        },
+        {
+          "assetKey": "batch-08-style-alignment/lightning-frame-02",
+          "opacity": 0.55
+        }
+      ]
+    }
+  ],
+  "comparisons": [
+    {
+      "label": "Daylight backdrop",
+      "before": [
+        {
+          "assetKey": "batch-01/scene-forest-sky-day",
+          "opacity": 1
+        }
+      ],
+      "after": [
+        {
+          "assetKey": "batch-08-style-alignment/backdrop-forest-day",
+          "opacity": 1
+        }
+      ]
+    },
+    {
+      "label": "Ice floor over the same backdrop",
+      "before": [
+        {
+          "assetKey": "batch-06-settlements/interiors/backdrop-frozen-inlet",
+          "opacity": 1
+        },
+        {
+          "assetKey": "batch-06-settlements/pale-marches/ground-ice-bank",
+          "opacity": 1
+        }
+      ],
+      "after": [
+        {
+          "assetKey": "batch-06-settlements/interiors/backdrop-frozen-inlet",
+          "opacity": 1
+        },
+        {
+          "assetKey": "batch-08-style-alignment/ground-ice-bank",
+          "opacity": 1
+        }
+      ]
+    },
+    {
+      "label": "Lightning over the same sky \u00b7 identical 55% layer opacity",
+      "before": [
+        {
+          "assetKey": "batch-05-regions/hollow-weald/backdrop-deep-weald",
+          "opacity": 1
+        },
+        {
+          "assetKey": "batch-04-atmosphere/lightning-frame-02",
+          "opacity": 0.55
+        }
+      ],
+      "after": [
+        {
+          "assetKey": "batch-05-regions/hollow-weald/backdrop-deep-weald",
+          "opacity": 1
+        },
+        {
+          "assetKey": "batch-08-style-alignment/lightning-frame-02",
+          "opacity": 0.55
+        }
+      ]
+    }
+  ],
+  "comparisonPolicy": "Before panels deliberately show superseded sources for review; only scenes are eligible compositions.",
+  "notes": [
+    "Composes original PNGs unchanged.",
+    "No actor-scale, registration or arbitrary camera motion claim.",
+    "Lightning remains a rare short event with existing timing; static panels show a single main frame."
+  ]
+}

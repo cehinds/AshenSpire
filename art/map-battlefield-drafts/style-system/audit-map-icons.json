@@ -1,0 +1,180 @@
+{
+  "scope": "25 icons from the matching collection; carries forward the completed batch-07 visual review.",
+  "items": [
+    {
+      "assetKey": "batch-07-map-icons/map-bridge",
+      "verdict": "approved",
+      "reason": "Main and independent Sol 6.1 review found coherent camera, palette, painted materials and 64/128px silhouettes; see batch-07 REVIEW.md.",
+      "profileId": "map-icon",
+      "sha256": "2f640826e336ba54f8b2fa50d2243d5bba05bf442dadacd38bdff36c4ea684fe"
+    },
+    {
+      "assetKey": "batch-07-map-icons/map-ford",
+      "verdict": "approved",
+      "reason": "Main and independent Sol 6.1 review found coherent camera, palette, painted materials and 64/128px silhouettes; see batch-07 REVIEW.md.",
+      "profileId": "map-icon",
+      "sha256": "c02d4da5dc4b982ca01e0e38cbe5dacf7d27fb6398fe98a3ddc63efa0b725f58"
+    },
+    {
+      "assetKey": "batch-07-map-icons/map-path",
+      "verdict": "approved",
+      "reason": "Main and independent Sol 6.1 review found coherent camera, palette, painted materials and 64/128px silhouettes; see batch-07 REVIEW.md.",
+      "profileId": "map-icon",
+      "sha256": "3c782646d2bc482ee2b01795ff32dd558cddd53e21e4aae51f1e37a6ae25dab3"
+    },
+    {
+      "assetKey": "batch-07-map-icons/map-signpost",
+      "verdict": "approved",
+      "reason": "Main and independent Sol 6.1 review found coherent camera, palette, painted materials and 64/128px silhouettes; see batch-07 REVIEW.md.",
+      "profileId": "map-icon",
+      "sha256": "f1e800f58d794822a6872ebc9614f1f6f1eaab92c1f5212a88443770353a8766"
+    },
+    {
+      "assetKey": "batch-07-map-icons/map-tunnel",
+      "verdict": "approved",
+      "reason": "Main and independent Sol 6.1 review found coherent camera, palette, painted materials and 64/128px silhouettes; see batch-07 REVIEW.md.",
+      "profileId": "map-icon",
+      "sha256": "3c0738745f14e4e946aac41e36a0511bfe4052a77cfebf70d80ec2bd3a73b8ab"
+    },
+    {
+      "assetKey": "batch-07-map-icons/map-ferry",
+      "verdict": "approved",
+      "reason": "Main and independent Sol 6.1 review found coherent camera, palette, painted materials and 64/128px silhouettes; see batch-07 REVIEW.md.",
+      "profileId": "map-icon",
+      "sha256": "bb5e0dafe1fa67df0361d7d91453857f915ea9f0318362e06d28a9fcfc48d8de"
+    },
+    {
+      "assetKey": "batch-07-map-icons/map-portal",
+      "verdict": "approved",
+      "reason": "Main and independent Sol 6.1 review found coherent camera, palette, painted materials and 64/128px silhouettes; see batch-07 REVIEW.md.",
+      "profileId": "map-icon",
+      "sha256": "76aac6abe69ddc803bf3f3c4c924abe4ed8562736db02a0a24b3e711445b7645"
+    },
+    {
+      "assetKey": "batch-07-map-icons/map-boat",
+      "verdict": "approved",
+      "reason": "Main and independent Sol 6.1 review found coherent camera, palette, painted materials and 64/128px silhouettes; see batch-07 REVIEW.md.",
+      "profileId": "map-icon",
+      "sha256": "7f14a9ba0de97cfb5e0f875d0290b50ce91f115544ecba459121ebfc913c20a3"
+    },
+    {
+      "assetKey": "batch-07-map-icons/map-cave",
+      "verdict": "approved",
+      "reason": "Main and independent Sol 6.1 review found coherent camera, palette, painted materials and 64/128px silhouettes; see batch-07 REVIEW.md.",
+      "profileId": "map-icon",
+      "sha256": "372bb12e867628394dbbd6786f358105cdd87386fbcab655222dcd1fad65dda3"
+    },
+    {
+      "assetKey": "batch-07-map-icons/map-dungeon",
+      "verdict": "approved",
+      "reason": "Main and independent Sol 6.1 review found coherent camera, palette, painted materials and 64/128px silhouettes; see batch-07 REVIEW.md.",
+      "profileId": "map-icon",
+      "sha256": "40ee520fdd4b8848265b02fffb944caab2806b2f6fef7eff548ec14cc6040ddf"
+    },
+    {
+      "assetKey": "batch-07-map-icons/map-mine",
+      "verdict": "approved",
+      "reason": "Main and independent Sol 6.1 review found coherent camera, palette, painted materials and 64/128px silhouettes; see batch-07 REVIEW.md.",
+      "profileId": "map-icon",
+      "sha256": "b64f0ed69a269fa9e2206a7901d62b83da342fc986a62d47546ce7731c590b8f"
+    },
+    {
+      "assetKey": "batch-07-map-icons/map-city",
+      "verdict": "approved",
+      "reason": "Main and independent Sol 6.1 review found coherent camera, palette, painted materials and 64/128px silhouettes; see batch-07 REVIEW.md.",
+      "profileId": "map-icon",
+      "sha256": "3dfcb150800589cf7e054d4055ac777acb45a4a705eaa9610caae7b17a528fd1"
+    },
+    {
+      "assetKey": "batch-07-map-icons/map-town",
+      "verdict": "approved",
+      "reason": "Main and independent Sol 6.1 review found coherent camera, palette, painted materials and 64/128px silhouettes; see batch-07 REVIEW.md.",
+      "profileId": "map-icon",
+      "sha256": "21e7b66ca95f862055841a249d452805845a7a3ec8fc7c0ae3d08511d9506163"
+    },
+    {
+      "assetKey": "batch-07-map-icons/map-village",
+      "verdict": "approved",
+      "reason": "Main and independent Sol 6.1 review found coherent camera, palette, painted materials and 64/128px silhouettes; see batch-07 REVIEW.md.",
+      "profileId": "map-icon",
+      "sha256": "18673746fab331b67d9307cebe3f4368333f92f8b54fde85289d35ed223ff089"
+    },
+    {
+      "assetKey": "batch-07-map-icons/map-ruins",
+      "verdict": "approved",
+      "reason": "Main and independent Sol 6.1 review found coherent camera, palette, painted materials and 64/128px silhouettes; see batch-07 REVIEW.md.",
+      "profileId": "map-icon",
+      "sha256": "03d1010b8a6511d0315ad82e6f83b2c760d03f6d430f986694ce384092ad586e"
+    },
+    {
+      "assetKey": "batch-07-map-icons/map-shrine",
+      "verdict": "approved",
+      "reason": "Main and independent Sol 6.1 review found coherent camera, palette, painted materials and 64/128px silhouettes; see batch-07 REVIEW.md.",
+      "profileId": "map-icon",
+      "sha256": "588d3f30f00cecce9327fc522ca700f00f4afe26e19ef15f57331cd9c97b1bbe"
+    },
+    {
+      "assetKey": "batch-07-map-icons/map-watchtower",
+      "verdict": "approved",
+      "reason": "Main and independent Sol 6.1 review found coherent camera, palette, painted materials and 64/128px silhouettes; see batch-07 REVIEW.md.",
+      "profileId": "map-icon",
+      "sha256": "ad6eb0a34676003630eb472f9b957f0b9ff04b61ceef9d9d050bc745419eff63"
+    },
+    {
+      "assetKey": "batch-07-map-icons/map-treasure",
+      "verdict": "approved",
+      "reason": "Main and independent Sol 6.1 review found coherent camera, palette, painted materials and 64/128px silhouettes; see batch-07 REVIEW.md.",
+      "profileId": "map-icon",
+      "sha256": "29508536a52c0f9556f74550feb42a486a98f696445f617aa52e0cf9e02b3d83"
+    },
+    {
+      "assetKey": "batch-07-map-icons/map-enemy-camp",
+      "verdict": "approved",
+      "reason": "Main and independent Sol 6.1 review found coherent camera, palette, painted materials and 64/128px silhouettes; see batch-07 REVIEW.md.",
+      "profileId": "map-icon",
+      "sha256": "b7bc827bf39dc7377bb01628c0c337e591c479148866fe4e557d38882d222530"
+    },
+    {
+      "assetKey": "batch-07-map-icons/map-rest-camp",
+      "verdict": "approved",
+      "reason": "Main and independent Sol 6.1 review found coherent camera, palette, painted materials and 64/128px silhouettes; see batch-07 REVIEW.md.",
+      "profileId": "map-icon",
+      "sha256": "c9a247502e08e14cee6889cea21615481498a1a8b0736c0e0d15e3fefb28fc05"
+    },
+    {
+      "assetKey": "batch-07-map-icons/map-inn",
+      "verdict": "approved",
+      "reason": "Main and independent Sol 6.1 review found coherent camera, palette, painted materials and 64/128px silhouettes; see batch-07 REVIEW.md.",
+      "profileId": "map-icon",
+      "sha256": "96fa1a840343cb01110e148a1d852112933a55257fcb72f659410264616eb840"
+    },
+    {
+      "assetKey": "batch-07-map-icons/map-trainer",
+      "verdict": "approved",
+      "reason": "Main and independent Sol 6.1 review found coherent camera, palette, painted materials and 64/128px silhouettes; see batch-07 REVIEW.md.",
+      "profileId": "map-icon",
+      "sha256": "6a2ed289a3614e359e49138d6e48ea97dd319eca1a402c01065b959a30ed9dd8"
+    },
+    {
+      "assetKey": "batch-07-map-icons/map-merchant",
+      "verdict": "approved",
+      "reason": "Main and independent Sol 6.1 review found coherent camera, palette, painted materials and 64/128px silhouettes; see batch-07 REVIEW.md.",
+      "profileId": "map-icon",
+      "sha256": "6d09be272c4db626a50c61e862f8e1e62ba0365a078be9484b70c6d205a603de"
+    },
+    {
+      "assetKey": "batch-07-map-icons/map-cartographer",
+      "verdict": "approved",
+      "reason": "Main and independent Sol 6.1 review found coherent camera, palette, painted materials and 64/128px silhouettes; see batch-07 REVIEW.md.",
+      "profileId": "map-icon",
+      "sha256": "345d6e6e8e45028fd49c8c2e4c8e94d5b45034845419c453802be93d58e90292"
+    },
+    {
+      "assetKey": "batch-07-map-icons/map-fishing",
+      "verdict": "approved",
+      "reason": "Main and independent Sol 6.1 review found coherent camera, palette, painted materials and 64/128px silhouettes; see batch-07 REVIEW.md.",
+      "profileId": "map-icon",
+      "sha256": "1f8a77f2f930337ef5ce78d93b838e4666b6074af116b81ee9a3b0d46f174c9b"
+    }
+  ]
+}

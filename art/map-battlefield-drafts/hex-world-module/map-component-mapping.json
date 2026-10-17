@@ -158,7 +158,9 @@
           "styleSetId": "map-icons-painterly-v1",
           "status": "draft-unregistered",
           "sourceManifest": "../batch-07-map-icons/manifest.json",
-          "sourceAssetId": "map-bridge"
+          "sourceAssetId": "map-bridge",
+          "styleFamilyId": "ashen-spire-painted-v1",
+          "styleProfileId": "map-icon"
         }
       ]
     },
@@ -267,7 +269,9 @@
           "styleSetId": "map-icons-painterly-v1",
           "status": "draft-unregistered",
           "sourceManifest": "../batch-07-map-icons/manifest.json",
-          "sourceAssetId": "map-ford"
+          "sourceAssetId": "map-ford",
+          "styleFamilyId": "ashen-spire-painted-v1",
+          "styleProfileId": "map-icon"
         }
       ]
     },
@@ -376,7 +380,9 @@
           "styleSetId": "map-icons-painterly-v1",
           "status": "draft-unregistered",
           "sourceManifest": "../batch-07-map-icons/manifest.json",
-          "sourceAssetId": "map-path"
+          "sourceAssetId": "map-path",
+          "styleFamilyId": "ashen-spire-painted-v1",
+          "styleProfileId": "map-icon"
         }
       ]
     },
@@ -481,7 +487,9 @@
           "styleSetId": "map-icons-painterly-v1",
           "status": "draft-unregistered",
           "sourceManifest": "../batch-07-map-icons/manifest.json",
-          "sourceAssetId": "map-signpost"
+          "sourceAssetId": "map-signpost",
+          "styleFamilyId": "ashen-spire-painted-v1",
+          "styleProfileId": "map-icon"
         }
       ]
     },
@@ -591,7 +599,9 @@
           "styleSetId": "map-icons-painterly-v1",
           "status": "draft-unregistered",
           "sourceManifest": "../batch-07-map-icons/manifest.json",
-          "sourceAssetId": "map-tunnel"
+          "sourceAssetId": "map-tunnel",
+          "styleFamilyId": "ashen-spire-painted-v1",
+          "styleProfileId": "map-icon"
         }
       ]
     },
@@ -723,7 +733,9 @@
           "styleSetId": "map-icons-painterly-v1",
           "status": "draft-unregistered",
           "sourceManifest": "../batch-07-map-icons/manifest.json",
-          "sourceAssetId": "map-ferry"
+          "sourceAssetId": "map-ferry",
+          "styleFamilyId": "ashen-spire-painted-v1",
+          "styleProfileId": "map-icon"
         }
       ]
     },
@@ -848,7 +860,9 @@
           "styleSetId": "map-icons-painterly-v1",
           "status": "draft-unregistered",
           "sourceManifest": "../batch-07-map-icons/manifest.json",
-          "sourceAssetId": "map-portal"
+          "sourceAssetId": "map-portal",
+          "styleFamilyId": "ashen-spire-painted-v1",
+          "styleProfileId": "map-icon"
         }
       ]
     },
@@ -955,7 +969,9 @@
           "styleSetId": "map-icons-painterly-v1",
           "status": "draft-unregistered",
           "sourceManifest": "../batch-07-map-icons/manifest.json",
-          "sourceAssetId": "map-boat"
+          "sourceAssetId": "map-boat",
+          "styleFamilyId": "ashen-spire-painted-v1",
+          "styleProfileId": "map-icon"
         }
       ]
     },
@@ -1081,7 +1097,9 @@
           "styleSetId": "map-icons-painterly-v1",
           "status": "draft-unregistered",
           "sourceManifest": "../batch-07-map-icons/manifest.json",
-          "sourceAssetId": "map-cave"
+          "sourceAssetId": "map-cave",
+          "styleFamilyId": "ashen-spire-painted-v1",
+          "styleProfileId": "map-icon"
         }
       ]
     },
@@ -1210,7 +1228,9 @@
           "styleSetId": "map-icons-painterly-v1",
           "status": "draft-unregistered",
           "sourceManifest": "../batch-07-map-icons/manifest.json",
-          "sourceAssetId": "map-dungeon"
+          "sourceAssetId": "map-dungeon",
+          "styleFamilyId": "ashen-spire-painted-v1",
+          "styleProfileId": "map-icon"
         }
       ]
     },
@@ -1320,7 +1340,9 @@
           "styleSetId": "map-icons-painterly-v1",
           "status": "draft-unregistered",
           "sourceManifest": "../batch-07-map-icons/manifest.json",
-          "sourceAssetId": "map-mine"
+          "sourceAssetId": "map-mine",
+          "styleFamilyId": "ashen-spire-painted-v1",
+          "styleProfileId": "map-icon"
         }
       ]
     },
@@ -1427,7 +1449,9 @@
           "styleSetId": "map-icons-painterly-v1",
           "status": "draft-unregistered",
           "sourceManifest": "../batch-07-map-icons/manifest.json",
-          "sourceAssetId": "map-city"
+          "sourceAssetId": "map-city",
+          "styleFamilyId": "ashen-spire-painted-v1",
+          "styleProfileId": "map-icon"
         }
       ]
     },
@@ -1534,7 +1558,9 @@
           "styleSetId": "map-icons-painterly-v1",
           "status": "draft-unregistered",
           "sourceManifest": "../batch-07-map-icons/manifest.json",
-          "sourceAssetId": "map-town"
+          "sourceAssetId": "map-town",
+          "styleFamilyId": "ashen-spire-painted-v1",
+          "styleProfileId": "map-icon"
         }
       ]
     },
@@ -1657,7 +1683,9 @@
           "styleSetId": "map-icons-painterly-v1",
           "status": "draft-unregistered",
           "sourceManifest": "../batch-07-map-icons/manifest.json",
-          "sourceAssetId": "map-village"
+          "sourceAssetId": "map-village",
+          "styleFamilyId": "ashen-spire-painted-v1",
+          "styleProfileId": "map-icon"
         }
       ]
     },
@@ -1784,7 +1812,9 @@
           "styleSetId": "map-icons-painterly-v1",
           "status": "draft-unregistered",
           "sourceManifest": "../batch-07-map-icons/manifest.json",
-          "sourceAssetId": "map-ruins"
+          "sourceAssetId": "map-ruins",
+          "styleFamilyId": "ashen-spire-painted-v1",
+          "styleProfileId": "map-icon"
         }
       ]
     },
@@ -1909,7 +1939,9 @@
           "styleSetId": "map-icons-painterly-v1",
           "status": "draft-unregistered",
           "sourceManifest": "../batch-07-map-icons/manifest.json",
-          "sourceAssetId": "map-shrine"
+          "sourceAssetId": "map-shrine",
+          "styleFamilyId": "ashen-spire-painted-v1",
+          "styleProfileId": "map-icon"
         }
       ]
     },
@@ -2039,7 +2071,9 @@
           "styleSetId": "map-icons-painterly-v1",
           "status": "draft-unregistered",
           "sourceManifest": "../batch-07-map-icons/manifest.json",
-          "sourceAssetId": "map-watchtower"
+          "sourceAssetId": "map-watchtower",
+          "styleFamilyId": "ashen-spire-painted-v1",
+          "styleProfileId": "map-icon"
         }
       ]
     },
@@ -2166,7 +2200,9 @@
           "styleSetId": "map-icons-painterly-v1",
           "status": "draft-unregistered",
           "sourceManifest": "../batch-07-map-icons/manifest.json",
-          "sourceAssetId": "map-treasure"
+          "sourceAssetId": "map-treasure",
+          "styleFamilyId": "ashen-spire-painted-v1",
+          "styleProfileId": "map-icon"
         }
       ]
     },
@@ -2292,7 +2328,9 @@
           "styleSetId": "map-icons-painterly-v1",
           "status": "draft-unregistered",
           "sourceManifest": "../batch-07-map-icons/manifest.json",
-          "sourceAssetId": "map-enemy-camp"
+          "sourceAssetId": "map-enemy-camp",
+          "styleFamilyId": "ashen-spire-painted-v1",
+          "styleProfileId": "map-icon"
         }
       ]
     },
@@ -2442,7 +2480,9 @@
           "styleSetId": "map-icons-painterly-v1",
           "status": "draft-unregistered",
           "sourceManifest": "../batch-07-map-icons/manifest.json",
-          "sourceAssetId": "map-rest-camp"
+          "sourceAssetId": "map-rest-camp",
+          "styleFamilyId": "ashen-spire-painted-v1",
+          "styleProfileId": "map-icon"
         }
       ]
     },
@@ -2552,7 +2592,9 @@
           "styleSetId": "map-icons-painterly-v1",
           "status": "draft-unregistered",
           "sourceManifest": "../batch-07-map-icons/manifest.json",
-          "sourceAssetId": "map-inn"
+          "sourceAssetId": "map-inn",
+          "styleFamilyId": "ashen-spire-painted-v1",
+          "styleProfileId": "map-icon"
         }
       ]
     },
@@ -2659,7 +2701,9 @@
           "styleSetId": "map-icons-painterly-v1",
           "status": "draft-unregistered",
           "sourceManifest": "../batch-07-map-icons/manifest.json",
-          "sourceAssetId": "map-trainer"
+          "sourceAssetId": "map-trainer",
+          "styleFamilyId": "ashen-spire-painted-v1",
+          "styleProfileId": "map-icon"
         }
       ]
     },
@@ -2766,7 +2810,9 @@
           "styleSetId": "map-icons-painterly-v1",
           "status": "draft-unregistered",
           "sourceManifest": "../batch-07-map-icons/manifest.json",
-          "sourceAssetId": "map-merchant"
+          "sourceAssetId": "map-merchant",
+          "styleFamilyId": "ashen-spire-painted-v1",
+          "styleProfileId": "map-icon"
         }
       ]
     },
@@ -2873,7 +2919,9 @@
           "styleSetId": "map-icons-painterly-v1",
           "status": "draft-unregistered",
           "sourceManifest": "../batch-07-map-icons/manifest.json",
-          "sourceAssetId": "map-cartographer"
+          "sourceAssetId": "map-cartographer",
+          "styleFamilyId": "ashen-spire-painted-v1",
+          "styleProfileId": "map-icon"
         }
       ]
     },
@@ -2980,7 +3028,9 @@
           "styleSetId": "map-icons-painterly-v1",
           "status": "draft-unregistered",
           "sourceManifest": "../batch-07-map-icons/manifest.json",
-          "sourceAssetId": "map-fishing"
+          "sourceAssetId": "map-fishing",
+          "styleFamilyId": "ashen-spire-painted-v1",
+          "styleProfileId": "map-icon"
         }
       ]
     }

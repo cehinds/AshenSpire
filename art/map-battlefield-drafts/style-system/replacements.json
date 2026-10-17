@@ -1,0 +1,21 @@
+{
+  "formatVersion": 1,
+  "items": [
+    {
+      "assetKey": "batch-01/scene-forest-sky-day",
+      "replacementAssetKey": "batch-08-style-alignment/backdrop-forest-day"
+    },
+    {
+      "assetKey": "batch-06-settlements/pale-marches/ground-ice-bank",
+      "replacementAssetKey": "batch-08-style-alignment/ground-ice-bank"
+    },
+    {
+      "assetKey": "batch-04-atmosphere/lightning-frame-01",
+      "replacementAssetKey": "batch-08-style-alignment/lightning-frame-01"
+    },
+    {
+      "assetKey": "batch-04-atmosphere/lightning-frame-02",
+      "replacementAssetKey": "batch-08-style-alignment/lightning-frame-02"
+    }
+  ]
+}

@@ -50,9 +50,9 @@
       "label": "Pale Marches frozen inlet",
       "group": "shore",
       "regionId": "pale-marches",
-      "ground": "pale-marches/ground-ice-bank.png",
+      "ground": "../batch-08-style-alignment/ground-ice-bank.png",
       "backdrop": "interiors/backdrop-frozen-inlet.png",
-      "groundContactY": 539,
+      "groundContactY": 534,
       "props": [
         {
           "file": "../batch-05-regions/pale-marches/prop-frozen-wall.png",

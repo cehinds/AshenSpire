@@ -18,7 +18,7 @@ modules/
         └── scenes.json        preview placement and layer choices
 ```
 
-Every region folder contains both `pools.json` and `scenes.json`.
+Every region folder contains both `pools.json` and `scenes.json`. The loader also checks all candidates against the [shared reviewed style library](../../style-system/README.md); historical outliers and wrong layer roles are rejected.
 
 ## What to edit
 

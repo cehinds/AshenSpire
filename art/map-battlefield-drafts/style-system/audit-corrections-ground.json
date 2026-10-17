@@ -1,0 +1,16 @@
+{
+  "summary": "Full-image visual review of the corrected ice bank: approved for common painterly material direction. Original audit remains historical.",
+  "items": [
+    {
+      "assetKey": "batch-08-style-alignment/ground-ice-bank",
+      "verdict": "approved",
+      "reason": "The hard white fracture grid and polished glass reflections are removed. Broad blue-gray frosted ice, soft painted scuffs and low snowy side banks now match the tactile painterly ground family while preserving the cold biome palette. The shallow ground plane and quiet central combat surface remain coherent with other battlefield grounds.",
+      "profileId": "battlefield-ground",
+      "sha256": "07513336fea651b4c316ba23720322ca5ac5811853aac58d683a6f7a79ad56a9"
+    }
+  ],
+  "separateTechnicalNotes": [
+    "Visible cyan/blue fringe and scattered light edge pixels remain along portions of the transparent upper boundary. This is an alpha-edge cleanup issue, not a material-style rejection.",
+    "Ground continues to the side and bottom canvas edges, consistent with a terrain layer; framing and alpha integration require their own compositor checks."
+  ]
+}

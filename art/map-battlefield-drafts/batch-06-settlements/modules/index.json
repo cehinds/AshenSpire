@@ -46,5 +46,7 @@
     "drowned-coast/city",
     "drowned-coast/dungeon",
     "pale-marches/shore"
-  ]
+  ],
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleGuide": "../../style-system/style-guide.json"
 }

@@ -1,0 +1,39 @@
+{
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "biomes": {
+    "ashen-crown": [
+      "dry ochre grass",
+      "warm gray masonry",
+      "aged tan timber"
+    ],
+    "hollow-weald": [
+      "muted moss green",
+      "cool teal depth",
+      "wet dark bark"
+    ],
+    "pale-marches": [
+      "snow white",
+      "steel-blue shadow",
+      "weathered gray stone"
+    ],
+    "cinder-reach": [
+      "charcoal basalt",
+      "desaturated ash",
+      "small ember-orange accents"
+    ],
+    "drowned-coast": [
+      "tidal teal",
+      "salt-worn gray stone",
+      "bleached timber"
+    ],
+    "interiors": [
+      "muted gray masonry",
+      "dark iron",
+      "localized amber lamps"
+    ]
+  },
+  "timeOfDay": {
+    "day": "Soft neutral daylight with restrained warmth.",
+    "night": "Low-key cool values, preserved silhouettes and restrained warm local lights."
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "formatVersion": 1,
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "name": "Ashen Spire painted fantasy world",
+  "status": "draft-art-direction",
+  "shared": {
+    "rendering": "Tactile hand-painted fantasy; matte broad forms, restrained fine detail, subtle material edges.",
+    "materials": [
+      "weathered stone",
+      "aged timber",
+      "dark iron",
+      "natural fabric",
+      "muted vegetation"
+    ],
+    "avoid": [
+      "heavy cartoon outlines",
+      "glossy plastic surfaces",
+      "neon halo cutouts",
+      "photographic sparkle across playable space",
+      "unplanned camera changes"
+    ],
+    "biomeVariation": "Change climate, vegetation, wear and accent palette while preserving brushwork/material vocabulary.",
+    "timeVariation": "Night, firelight and interiors intentionally change values; a tint alone does not relight a daytime painting.",
+    "review": "Style IDs record a visual review, not proof of visual similarity. Compare each new component within its role and in a layered scene."
+  },
+  "palettes": "palettes.json",
+  "profiles": [
+    "profiles/map-icon.json",
+    "profiles/battlefield-ground.json",
+    "profiles/battlefield-prop.json",
+    "profiles/battlefield-backdrop.json",
+    "profiles/color-filter.json",
+    "profiles/weather-field.json",
+    "profiles/weather-particles.json",
+    "profiles/weather-lightning.json"
+  ],
+  "sourceLibrary": "library.json",
+  "productionLimits": [
+    "Measured alpha cleanup, source overscan and calibrated anchors remain per-asset tasks.",
+    "Existing wide paintings do not automatically satisfy every portrait or ultrawide camera motion.",
+    "Never upscale a small draft and describe it as a new high-resolution master."
+  ]
+}

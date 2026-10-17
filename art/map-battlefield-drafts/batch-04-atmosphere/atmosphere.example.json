@@ -15,7 +15,7 @@
     "nativeRasterViewportLongestEdgeLimit": 2048,
     "largerViewportPolicy": "Re-export editable SVG at2x longest viewport edge; do not enlarge a small painted master.",
     "particlePolicy": "Repeat native tile across the entire overscan surface; source is mathematically periodic.",
-    "lightningPolicy": "Sparse framed effect with independent placement; source frames remain1672/1671x941 drafts, not4096px paintings."
+    "lightningPolicy": "Sparse corrected effect; native frames remain 1672x941 drafts on transparent stages. Production registration and wider coverage remain pending."
   },
   "layerOrder": [
     "sky",
@@ -245,12 +245,12 @@
     },
     "frames": [
       {
-        "file": "lightning/lightning-frame-01.png",
+        "file": "../batch-08-style-alignment/lightning-frame-01.png",
         "durationMs": 80,
         "opacity": 0.3
       },
       {
-        "file": "lightning/lightning-frame-02.png",
+        "file": "../batch-08-style-alignment/lightning-frame-02.png",
         "durationMs": 140,
         "opacity": 0.55
       }
@@ -349,5 +349,7 @@
         "height": 1080
       }
     ]
-  }
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleGuide": "../style-system/style-guide.json"
 }

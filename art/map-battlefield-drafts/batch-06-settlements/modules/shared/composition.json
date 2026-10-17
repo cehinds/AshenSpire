@@ -32,5 +32,7 @@
     "Landscape side margins are 356px; ultrawide side margins 196px; portrait top/bottom margins about 70px. Wider vertical motion requires more painted source.",
     "Regional dungeon floors reuse a shared vaulted backdrop and iron gate, pending bespoke architecture/lighting.",
     "House scales are rear-scene composition examples; actor-scale and contact-shadow checks remain pending."
-  ]
+  ],
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleGuide": "../style-system/style-guide.json"
 }

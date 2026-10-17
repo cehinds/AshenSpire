@@ -31,5 +31,7 @@
     128,
     256
   ],
-  "selectionPolicy": "Only this styleSetId is eligible for the current map preview and proposal selection; historical variants remain mapped for provenance."
+  "selectionPolicy": "Only this styleSetId is eligible for the current map preview and proposal selection; historical variants remain mapped for provenance.",
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "parentGuide": "../style-system/style-guide.json"
 }

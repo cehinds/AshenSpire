@@ -1,0 +1,30 @@
+{
+  "items": [
+    {
+      "assetKey": "batch-08-style-alignment/backdrop-forest-day",
+      "verdict": "approved",
+      "reason": "New neutral daylight cloud cover, gray-green conifers and gray mountain recession remove the pastoral cream/mint wash while keeping the forest valley and painterly depth.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "c885d817338dc1ea31375626f6478d196a6a20eb3b382060bb6221944c8e2e1b"
+    },
+    {
+      "assetKey": "batch-08-style-alignment/lightning-frame-01",
+      "verdict": "approved",
+      "reason": "Strict redraw removes the broad blue cutout halo, leaving narrow irregular offwhite natural filaments on a transparent stage; visually restrained enough for the muted fantasy sky. Runtime opacity and pair registration still require review.",
+      "profileId": "weather-lightning",
+      "sha256": "31179ff426a26de9ddf18dc7bc0287bcaa217d167512bdcfa5b9be3a13fb79fc"
+    },
+    {
+      "assetKey": "batch-08-style-alignment/lightning-frame-02",
+      "verdict": "approved",
+      "reason": "Strict redraw removes the broad blue cutout halo, leaving narrow irregular offwhite natural filaments on a transparent stage; visually restrained enough for the muted fantasy sky. Runtime opacity and pair registration still require review.",
+      "profileId": "weather-lightning",
+      "sha256": "1c011aea7f4d86ec6949c22fbeb43347b78a8db8680e11c6d9dad4ce09e2211d"
+    }
+  ],
+  "limitations": [
+    "All three tool outputs are native 1672x941, below requested 3072x1728; copied unchanged.",
+    "Lightning alphas reach near/full opacity despite requested low filament opacity; tune layer opacity.",
+    "Leader and main branches vary slightly in shape and position; no programmatic alignment applied."
+  ]
+}

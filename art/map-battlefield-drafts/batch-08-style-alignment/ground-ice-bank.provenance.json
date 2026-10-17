@@ -1,0 +1,27 @@
+{
+  "generator": "OpenAI image_gen",
+  "prompt": "Edit the first reference into a quieter painterly snowy frozen-bank GROUND layer for Ashen Spire layered combat scenery. Keep its wide landscape 16:9 ground-level side-view composition, with horizon/contact line around 54% canvas height and genuine transparent RGBA sky above. Requested 3072 by 1728 transparent PNG. Match the second reference's matte hand-painted snow, muted steel-blue shadows and soft diffuse upper-left daylight. Replace glossy glassy blue ice with frost-scuffed opaque blue-gray ice dusted in soft snow, broad understated brushwork, very few faint cracks, NO sharp white fracture network through center, NO wet mirror reflections or photographic sparkle. Center 60% must stay visually quiet and flat for actors. Slightly stronger snow/rock details only along far left/right edges and foreground corners. Extend ground fully to both sides and bottom, with broad lateral edge material for varied camera crops. No trees, buildings, characters, sky, clouds, weather particles, text, icon framing or large foreground rocks. Same coherent painterly dark-fantasy material language as regional stone/timber assets, cool biome color retained without neon cyan. Preserve transparent top and fully opaque ground interior; no colored alpha matte fringe.",
+  "sourceOutputPath": "/workspace/generated_images/exec-6e114ec3-f4fc-4de6-b61a-4bb389b056b0.png",
+  "sourceReferences": [
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-06-settlements/pale-marches/ground-ice-bank.png",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/pale-marches/ground-snow-road.png"
+  ],
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-ground",
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "status": "draft-unregistered",
+  "sha256": "07513336fea651b4c316ba23720322ca5ac5811853aac58d683a6f7a79ad56a9",
+  "sourceSha256": "07513336fea651b4c316ba23720322ca5ac5811853aac58d683a6f7a79ad56a9",
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "processing": "Unchanged byte-identical copy of imagegen output. No resizing, trimming or painted-image edits.",
+  "referenceSha256": {
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-06-settlements/pale-marches/ground-ice-bank.png": "1aa420875266e87e8de3f10554b81dac66d4ab64baceed901de6a3e585c9b050",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/pale-marches/ground-snow-road.png": "7657efdb5f9e94b07873b92ad678106160f9da87f0a76926a7ba7e82818eeb18"
+  }
+}

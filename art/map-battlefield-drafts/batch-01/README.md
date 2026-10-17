@@ -1,5 +1,7 @@
 # Map and battlefield art — batch 01
 
+The original daylight sky is now historical. Use the approved forest-day composition in [batch 08](../batch-08-style-alignment/README.md) and the [shared style module](../style-system/README.md).
+
 **Eight painted drafts, retained on `feature/ImproveMapBattleFieldArt`.** These are source art for review, not runtime-bound assets.
 
 ![Forest scene composition](scene-composition-preview.png)

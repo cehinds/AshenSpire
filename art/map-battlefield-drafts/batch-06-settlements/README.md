@@ -1,5 +1,7 @@
 # Settlement buildings, regional floors and frozen shore — batch 06
 
+Regional shore pools/scenes now select the corrected matte ice bank from [batch 08](../batch-08-style-alignment/README.md). The original glossy ice source remains historical.
+
 **17 new sources: 11 grounds, 5 independent buildings and 1 frozen-inlet backdrop.** These are reusable draft layers matched to the five existing map regions.
 
 ![Five regional settlement combinations](preview-settlements.png)

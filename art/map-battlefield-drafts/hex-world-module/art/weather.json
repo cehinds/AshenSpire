@@ -31,11 +31,13 @@
         "note": "Reference existing atmosphere overscan guidance; crop outside combat safe area."
       },
       "exclusiveGroup": "precipitation",
-      "renderLayer": "particles"
+      "renderLayer": "particles",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "weather-particles"
     },
     {
       "id": "lightning",
-      "asset": "lightning/lightning-frame-01.png",
+      "asset": "../batch-08-style-alignment/lightning-frame-01.png",
       "weight": 1,
       "tags": [
         "rain"
@@ -50,8 +52,8 @@
       "animation": {
         "mode": "rare-frame-loop",
         "frames": [
-          "lightning/lightning-frame-01.png",
-          "lightning/lightning-frame-02.png"
+          "../batch-08-style-alignment/lightning-frame-01.png",
+          "../batch-08-style-alignment/lightning-frame-02.png"
         ],
         "frameDurationMs": 80,
         "intervalSeconds": [
@@ -60,7 +62,9 @@
         ]
       },
       "exclusiveGroup": null,
-      "renderLayer": "distant-lightning"
+      "renderLayer": "distant-lightning",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "weather-lightning"
     },
     {
       "id": "fog",
@@ -94,7 +98,9 @@
         "descriptorFile": "../batch-04-atmosphere/atmosphere.example.json",
         "crop": "center safe area; retain overscan beyond viewport"
       },
-      "renderLayer": "fog"
+      "renderLayer": "fog",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "weather-field"
     }
   ],
   "pools": [

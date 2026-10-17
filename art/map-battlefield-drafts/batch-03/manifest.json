@@ -45,7 +45,13 @@
       "reviewNotes": [
         "Added mast with furled blue-gray cloth and curved bow after64px silhouette review.",
         "Body opacity is slightly below255 across much of the subject; test on contrasting terrain before export."
-      ]
+      ],
+      "styleProfileId": "map-icon",
+      "styleFamilyId": null,
+      "styleReview": {
+        "verdict": "inactive",
+        "replacedBy": null
+      }
     },
     {
       "id": "map-road-signpost",
@@ -86,6 +92,12 @@
         ],
         "edgePixelCountAt1": 113,
         "edgePixelCountAt16": 0
+      },
+      "styleProfileId": "map-icon",
+      "styleFamilyId": null,
+      "styleReview": {
+        "verdict": "inactive",
+        "replacedBy": null
       }
     },
     {
@@ -127,6 +139,12 @@
         ],
         "edgePixelCountAt1": 32,
         "edgePixelCountAt16": 0
+      },
+      "styleProfileId": "map-icon",
+      "styleFamilyId": null,
+      "styleReview": {
+        "verdict": "inactive",
+        "replacedBy": null
       }
     },
     {
@@ -167,6 +185,12 @@
         ],
         "edgePixelCountAt1": 2,
         "edgePixelCountAt16": 0
+      },
+      "styleProfileId": "map-icon",
+      "styleFamilyId": null,
+      "styleReview": {
+        "verdict": "inactive",
+        "replacedBy": null
       }
     },
     {
@@ -208,6 +232,12 @@
         ],
         "edgePixelCountAt1": 2618,
         "edgePixelCountAt16": 2589
+      },
+      "styleProfileId": "battlefield-ground",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
       }
     },
     {
@@ -249,6 +279,12 @@
         ],
         "edgePixelCountAt1": 110,
         "edgePixelCountAt16": 0
+      },
+      "styleProfileId": "battlefield-prop",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
       }
     },
     {
@@ -289,6 +325,12 @@
         ],
         "edgePixelCountAt1": 1,
         "edgePixelCountAt16": 0
+      },
+      "styleProfileId": "battlefield-prop",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
       }
     },
     {
@@ -330,6 +372,12 @@
         ],
         "edgePixelCountAt1": 2601,
         "edgePixelCountAt16": 2593
+      },
+      "styleProfileId": "battlefield-ground",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
       }
     }
   ],
@@ -353,5 +401,9 @@
     "Assign production anchors, bridge endpoints, ferry shore rules and final tag vocabulary.",
     "Export map512px/256px variants and registered scene components through art intake."
   ],
-  "authorship": "Original AI-generated artwork under user direction; source prompts and references retained. No third-party license asserted."
+  "authorship": "Original AI-generated artwork under user direction; source prompts and references retained. No third-party license asserted.",
+  "styleSystem": {
+    "guide": "../style-system/style-guide.json",
+    "library": "../style-system/library.json"
+  }
 }

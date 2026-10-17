@@ -1,6 +1,6 @@
 # Map and battlefield source-art library
 
-**115 retained source drafts across seven batches.** Kept on `feature/ImproveMapBattleFieldArt`; the shared proposal and wiring examples are already in dev. These paintings remain unregistered drafts.
+**119 retained source drafts across eight batches.** Kept on `feature/ImproveMapBattleFieldArt`; the shared proposal and wiring examples are already in dev. These paintings remain unregistered drafts.
 
 | Batch | Source count | Contents |
 | --- | --- | --- |
@@ -11,9 +11,11 @@
 | [05](batch-05-regions/README.md) | 32 | Five regional sets, shared dungeon/mine layers and editable location mappings |
 | [06](batch-06-settlements/README.md) | 17 | Regional settlement buildings/streets, five dungeon floors and clearer frozen shore |
 | [07](batch-07-map-icons/README.md) | 25 | Complete matching painted map-icon collection and editable style guide |
+| [08](batch-08-style-alignment/README.md) | 4 | Style corrections for the ice floor, daylight sky and distant lightning |
 
 ![Regional settlement combinations](batch-06-settlements/preview-settlements.png)
 
+- [Shared art direction for every component](style-system/README.md) maps 99 approved sources to eight role profiles, with hash-bound visual reviews and explicit historical exclusions.
 - [catalog.json](catalog.json) links the batch manifests and editable scene recipes.
 - [Map components and all object mappings](hex-world-module/MAP-COMPONENTS.md) connect 25 object types, 25 active matching icons and 39 historical variants to tile/discovery definitions.
 - [Standalone hex world module](hex-world-module/README.md) defines six-sided tile tags, rotation, art pools, encounters and discovery examples.

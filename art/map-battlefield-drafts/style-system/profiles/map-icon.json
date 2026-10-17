@@ -1,0 +1,9 @@
+{
+  "id": "map-icon",
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "camera": "Elevated three-quarter/isometric miniature; front and right planes visible.",
+  "materials": "Matte painted stone, timber, fabric and iron; broad readable silhouette.",
+  "light": "Soft upper-left daylight; small localized magical or fire accents.",
+  "framing": "Transparent square with measured clear margins.",
+  "collectionId": "map-icons-painterly-v1"
+}

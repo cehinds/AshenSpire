@@ -26,6 +26,12 @@
         ],
         "edgePixelCountAt1": 15,
         "edgePixelCountAt16": 0
+      },
+      "styleProfileId": "map-icon",
+      "styleFamilyId": null,
+      "styleReview": {
+        "verdict": "inactive",
+        "replacedBy": null
       }
     },
     {
@@ -51,6 +57,12 @@
         ],
         "edgePixelCountAt1": 89,
         "edgePixelCountAt16": 0
+      },
+      "styleProfileId": "map-icon",
+      "styleFamilyId": null,
+      "styleReview": {
+        "verdict": "inactive",
+        "replacedBy": null
       }
     },
     {
@@ -76,6 +88,12 @@
         ],
         "edgePixelCountAt1": 48,
         "edgePixelCountAt16": 0
+      },
+      "styleProfileId": "map-icon",
+      "styleFamilyId": null,
+      "styleReview": {
+        "verdict": "inactive",
+        "replacedBy": null
       }
     },
     {
@@ -101,6 +119,12 @@
         ],
         "edgePixelCountAt1": 213,
         "edgePixelCountAt16": 0
+      },
+      "styleProfileId": "map-icon",
+      "styleFamilyId": null,
+      "styleReview": {
+        "verdict": "inactive",
+        "replacedBy": null
       }
     },
     {
@@ -126,6 +150,12 @@
         ],
         "edgePixelCountAt1": 28,
         "edgePixelCountAt16": 0
+      },
+      "styleProfileId": "map-icon",
+      "styleFamilyId": null,
+      "styleReview": {
+        "verdict": "inactive",
+        "replacedBy": null
       }
     },
     {
@@ -151,6 +181,12 @@
         ],
         "edgePixelCountAt1": 2647,
         "edgePixelCountAt16": 2580
+      },
+      "styleProfileId": "battlefield-ground",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
       }
     },
     {
@@ -176,6 +212,12 @@
         ],
         "edgePixelCountAt1": 123,
         "edgePixelCountAt16": 27
+      },
+      "styleProfileId": "battlefield-prop",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
       }
     },
     {
@@ -187,7 +229,13 @@
       "height": 941,
       "mode": "RGB",
       "sha256": "54282c1d324a59a38e4a2aca57a80043e9985a1537f748d2c02a23b56006b3be",
-      "provenanceFile": "scene-forest-sky-day.provenance.json"
+      "provenanceFile": "scene-forest-sky-day.provenance.json",
+      "styleProfileId": "battlefield-backdrop",
+      "styleFamilyId": null,
+      "styleReview": {
+        "verdict": "replace",
+        "replacedBy": "batch-08-style-alignment/backdrop-forest-day"
+      }
     }
   ],
   "sceneComposition": {
@@ -208,14 +256,23 @@
     "preview": "scene-composition-preview.png",
     "previewMethod": "Chromium screenshot; each unchanged PNG drawn at native size, top-left aligned. Rear props are one pixel shorter.",
     "compatibility": "Rear props are 1672x940; sky and ground are 1672x941. Exact common-canvas registration required. All differ from the handoff 2048x1152 example contract.",
-    "cropWarning": "Side props approach source edges; example crop may trim tent and arch. Do not assume arbitrary camera travel is safe."
+    "cropWarning": "Side props approach source edges; example crop may trim tent and arch. Do not assume arbitrary camera travel is safe.",
+    "status": "historical-comparison",
+    "currentRecipe": {
+      "file": "../batch-08-style-alignment/composition.example.json",
+      "sceneId": "forest-day"
+    }
   },
   "reviewRequired": [
-    "Adjust bright pastoral palette toward the project dark muted style.",
+    "Original pastel daylight sky is superseded by batch-08 backdrop-forest-day; retain this source for comparison.",
     "Clean low-alpha edge pixels and color fringes on map props and the ground horizon.",
     "Register anchors and export 512px/256px map variants.",
     "Validate silhouettes at map display size.",
     "Align scene canvas dimensions, expand overscan and verify camera-safe crops.",
     "Complete art repository intake and bind production IDs."
-  ]
+  ],
+  "styleSystem": {
+    "guide": "../style-system/style-guide.json",
+    "library": "../style-system/library.json"
+  }
 }

@@ -25,5 +25,7 @@
     "profiles": 21,
     "nodeAssignments": 200,
     "note": "Ashen Crown forest is preserved with zero node assignments. Exact assignments remain in source, not copied here."
-  }
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleGuide": "../style-system/style-guide.json"
 }

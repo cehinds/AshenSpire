@@ -40,6 +40,11 @@
       "manifest": "batch-07-map-icons/manifest.json",
       "sourceCount": 25,
       "styleSetId": "map-icons-painterly-v1"
+    },
+    {
+      "id": "batch-08-style-alignment",
+      "manifest": "batch-08-style-alignment/manifest.json",
+      "sourceCount": 4
     }
   ],
   "editableRecipes": [
@@ -104,5 +109,11 @@
       "guide": "hex-world-module/GENERATION.md",
       "status": "offline-prototype"
     }
-  ]
+  ],
+  "artDirection": {
+    "styleFamilyId": "ashen-spire-painted-v1",
+    "guide": "style-system/style-guide.json",
+    "library": "style-system/library.json",
+    "validation": "style-system/validate.mjs"
+  }
 }

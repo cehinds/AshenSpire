@@ -25,19 +25,19 @@
     "yMax": 0.3
   },
   "pixelRegistrationVerified": false,
-  "registrationNote": "Source02 was edited from source01, but native width changed1672→1671 and alpha bounds changed. Similar location/path is visible; pixel-exact correspondence is not established.",
+  "registrationNote": "Corrected batch-08 frames share 1672x941 canvases; branches vary slightly in shape and position. Exact registration remains unverified.",
   "playback": {
     "mode": "one-shot-then-hidden",
     "autoplay": false,
     "continuousFastLoop": false,
     "frames": [
       {
-        "file": "lightning-frame-01.png",
+        "file": "../../batch-08-style-alignment/lightning-frame-01.png",
         "durationMs": 80,
         "recommendedOpacity": 0.3
       },
       {
-        "file": "lightning-frame-02.png",
+        "file": "../../batch-08-style-alignment/lightning-frame-02.png",
         "durationMs": 140,
         "recommendedOpacity": 0.55
       }
@@ -50,13 +50,12 @@
     "reducedMotion": "disable-lightning-flashes"
   },
   "draftConcerns": [
-    "Meaningful bolt extends down to normalized y0.36–0.37, beyond requested y0.30.",
-    "Blue-gray halo is broader than requested delicate distant-leader style.",
-    "Do not alternate these two frames as a perpetual fast loop.",
-    "No geometry alignment or background registration has been applied."
+    "Corrected fine branches replace the broad blue halo sources; original files remain historical.",
+    "Source opacity differs from requested numeric alpha; tune layer opacity.",
+    "Register branch placement before production; do not run as a perpetual fast loop."
   ],
   "provenanceFiles": [
-    "lightning-frame-01.provenance.json",
-    "lightning-frame-02.provenance.json"
+    "../../batch-08-style-alignment/lightning-frame-01.provenance.json",
+    "../../batch-08-style-alignment/lightning-frame-02.provenance.json"
   ]
 }

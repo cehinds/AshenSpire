@@ -1,6 +1,7 @@
 import {readFileSync, writeFileSync, existsSync} from 'node:fs';
 import {dirname, resolve} from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
+import {checkStyleAsset,loadStyleLibrary,familyId} from '../style-system/art-style.mjs';
 
 const defaultIndex = fileURLToPath(new URL('./modules/index.json', import.meta.url));
 const read = path => JSON.parse(readFileSync(path, 'utf8'));
@@ -22,6 +23,12 @@ export function loadArtModules(indexPath = defaultIndex) {
   if (index.schemaVersion !== 1) throw new Error('Unsupported art module schema version');
   const moduleRoot = dirname(indexPath);
   const assetBase = resolve(moduleRoot, index.assetBase);
+  if(index.styleFamilyId!==familyId)throw new Error('Missing or mismatched art module style family');
+  const styleLibrary=loadStyleLibrary();
+  const requireStyle=(file,role)=>{
+    const errors=checkStyleAsset(styleLibrary,resolve(assetBase,file),[role]);
+    if(errors.length)throw new Error(errors.join('\n'));
+  };
   const shared = name => read(resolve(moduleRoot, index.shared[name]));
   const profiles = [];
   const presets = [];
@@ -64,10 +71,16 @@ export function loadArtModules(indexPath = defaultIndex) {
     requireFile(profile.assignmentSource.path);
     for (const pool of [...profile.primaryPools, ...profile.fallbackPools]) {
       for (const path of [pool.ground, pool.backdrop, ...pool.props]) requireFile(path);
+      requireStyle(pool.ground,'battlefield-ground');
+      requireStyle(pool.backdrop,'battlefield-backdrop');
+      for(const file of pool.props)requireStyle(file,'battlefield-prop');
     }
   }
   for (const preset of presets) {
     for (const path of [preset.ground, preset.backdrop, ...preset.props.map(prop => prop.file)]) requireFile(path);
+    requireStyle(preset.ground,'battlefield-ground');
+    requireStyle(preset.backdrop,'battlefield-backdrop');
+    for(const prop of preset.props)requireStyle(prop.file,'battlefield-prop');
   }
   for (const name of ['locationPresentation', 'worldAtlas', 'fallbackCandidates']) {
     requireFile(locationPools.provenance[name]);

@@ -1,0 +1,12 @@
+{
+  "id": "color-filter",
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "camera": "Screen-space field; no perspective.",
+  "materials": "Simple translucent color wash; deliberately no painted object detail.",
+  "light": "Low opacity adjusts scene values without replacing painted lighting.",
+  "framing": "2 \u00d7 longest viewport dimension, centered; drift bounded to coverage.",
+  "exclusiveGroups": [
+    "time-of-day",
+    "weather-tint"
+  ]
+}

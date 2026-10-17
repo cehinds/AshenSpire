@@ -23,6 +23,12 @@
         "temperatureTone": [
           "cold"
         ]
+      },
+      "styleProfileId": "color-filter",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
       }
     },
     {
@@ -45,6 +51,12 @@
         "timeOfDay": [
           "day"
         ]
+      },
+      "styleProfileId": "color-filter",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
       }
     },
     {
@@ -67,6 +79,12 @@
         "weatherTone": [
           "fog"
         ]
+      },
+      "styleProfileId": "color-filter",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
       }
     },
     {
@@ -89,6 +107,12 @@
         "temperatureTone": [
           "hot"
         ]
+      },
+      "styleProfileId": "color-filter",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
       }
     },
     {
@@ -111,6 +135,12 @@
         "timeOfDay": [
           "night"
         ]
+      },
+      "styleProfileId": "color-filter",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
       }
     },
     {
@@ -133,6 +163,12 @@
         "weatherTone": [
           "rain"
         ]
+      },
+      "styleProfileId": "color-filter",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
       }
     },
     {
@@ -155,6 +191,12 @@
         "weatherTone": [
           "stormy"
         ]
+      },
+      "styleProfileId": "color-filter",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
       }
     },
     {
@@ -177,6 +219,12 @@
         "biomeTone": [
           "swamp"
         ]
+      },
+      "styleProfileId": "color-filter",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
       }
     },
     {
@@ -203,6 +251,12 @@
           "volcanic",
           "burned"
         ]
+      },
+      "styleProfileId": "weather-particles",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
       }
     },
     {
@@ -225,6 +279,12 @@
         "weather": [
           "rain"
         ]
+      },
+      "styleProfileId": "weather-particles",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
       }
     },
     {
@@ -247,6 +307,12 @@
         "weather": [
           "snow"
         ]
+      },
+      "styleProfileId": "weather-particles",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
       }
     },
     {
@@ -274,6 +340,12 @@
           "forest",
           "swamp"
         ]
+      },
+      "styleProfileId": "weather-field",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
       }
     },
     {
@@ -304,6 +376,12 @@
           "forest",
           "swamp"
         ]
+      },
+      "styleProfileId": "weather-field",
+      "styleFamilyId": null,
+      "styleReview": {
+        "verdict": "inactive",
+        "replacedBy": null
       }
     },
     {
@@ -326,6 +404,12 @@
           "stormy",
           "thunderstorm"
         ]
+      },
+      "styleProfileId": "weather-lightning",
+      "styleFamilyId": null,
+      "styleReview": {
+        "verdict": "replace",
+        "replacedBy": "batch-08-style-alignment/lightning-frame-01"
       }
     },
     {
@@ -348,6 +432,12 @@
           "stormy",
           "thunderstorm"
         ]
+      },
+      "styleProfileId": "weather-lightning",
+      "styleFamilyId": null,
+      "styleReview": {
+        "verdict": "replace",
+        "replacedBy": "batch-08-style-alignment/lightning-frame-02"
       }
     }
   ],
@@ -363,5 +453,9 @@
     "Verify actor and HUD readability in-game.",
     "Re-export editable vectors when viewport or device-pixel ratio requires more than4096px coverage.",
     "Earlier painted landscape sources still need expanded edges; these overlays do not solve their camera framing."
-  ]
+  ],
+  "styleSystem": {
+    "guide": "../style-system/style-guide.json",
+    "library": "../style-system/library.json"
+  }
 }

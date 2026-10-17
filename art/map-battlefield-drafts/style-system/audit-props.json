@@ -1,0 +1,160 @@
+{
+  "scope": "All 21 battlefield scene prop assets in batch01\u201306; map icons excluded. Batch04 has no scene props.",
+  "reviewMethod": "Visually reviewed all 21 actual PNGs in three contact sheets on a neutral gray backdrop, with an additional enlarged alpha-threshold crop review of the two early shared prop layers.",
+  "summary": {
+    "reviewed": 21,
+    "approved": 21,
+    "replace": 0,
+    "finding": "No material, camera or rendering-style replacement is warranted. Regional palette, night lighting and interior emissive accents are coherent intentional differences. Existing alpha, canvas margin and shared-layer layout limitations are separate production concerns."
+  },
+  "recommendedReplacements": [],
+  "items": [
+    {
+      "assetKey": "batch-01/scene-forest-props-day",
+      "verdict": "approved",
+      "reason": "Weathered canvas and mossy chipped stone use matte painterly shading and a low three-quarter view. Warm daylight and lantern accents fit the day variant; the wide shared-layer layout is a compositing limitation, not a style mismatch.",
+      "profileId": "battlefield-prop",
+      "sha256": "0a21b152da4b708908bdf999832242ab5045581425d8fdacc8c10c4dfeebecb5"
+    },
+    {
+      "assetKey": "batch-02/scene-forest-props-night",
+      "verdict": "approved",
+      "reason": "Matches the day layer in canvas treatment, broken masonry, camera and painted texture. Cool blue ambient light with warm lanterns is intentional night lighting, not a palette outlier.",
+      "profileId": "battlefield-prop",
+      "sha256": "4f24a40b802496e793bf15994c4b88c787b289b8650c14f18540f6d104e6b7c4"
+    },
+    {
+      "assetKey": "batch-03/scene-prop-ruined-arch-misty",
+      "verdict": "approved",
+      "reason": "Chipped, moss-flecked masonry has tactile matte detail, restrained color and soft directional shading consistent with the regional stone props. Near-frontal low camera suits an arch.",
+      "profileId": "battlefield-prop",
+      "sha256": "9d7f6ecb33a1234965321e54e4c547a9de225abea598aa4e2b85e09f2ad1af65"
+    },
+    {
+      "assetKey": "batch-03/scene-prop-tent-misty",
+      "verdict": "approved",
+      "reason": "Frayed gray canvas, sagging fabric, rope and rough poles share the weathered handpainted material language; soft light and a low three-quarter camera fit the benchmark.",
+      "profileId": "battlefield-prop",
+      "sha256": "b7ce8cc1c38196ab5f44b0e5a85ae8db9904b83d5923c8917e9e77a73149524d"
+    },
+    {
+      "assetKey": "batch-05-regions/ashen-crown/prop-broken-column",
+      "verdict": "approved",
+      "reason": "Broken fluted stone has granular matte wear, restrained ochre-gray color and soft upper-left illumination; camera agrees with the prop family.",
+      "profileId": "battlefield-prop",
+      "sha256": "b1de3d0c6cc79c694a9331a05bbc6e34ceea6199eb6437528aaed572076f01fe"
+    },
+    {
+      "assetKey": "batch-05-regions/ashen-crown/prop-market-stall",
+      "verdict": "approved",
+      "reason": "Rough timber, rope bindings and frayed canvas have tactile matte wear with coherent soft lighting and low three-quarter presentation.",
+      "profileId": "battlefield-prop",
+      "sha256": "a365d4d2aac30e29507557fce836827af289531b33f02af821236ed63daea680"
+    },
+    {
+      "assetKey": "batch-05-regions/cinder-reach/prop-basalt-spires",
+      "verdict": "approved",
+      "reason": "Angular basalt uses chipped, dry stone texture and muted charcoal values; the slightly raised view remains within the three-quarter prop family.",
+      "profileId": "battlefield-prop",
+      "sha256": "8aa61b5969c9be608114721f187a3056a8ca18c439c699f3c7ccf13eef585975"
+    },
+    {
+      "assetKey": "batch-05-regions/cinder-reach/prop-broken-forge",
+      "verdict": "approved",
+      "reason": "Broken soot-dark stone and rusty iron maintain matte handpainted material detail, grounded silhouette and consistent directional lighting.",
+      "profileId": "battlefield-prop",
+      "sha256": "19e322c0f20afabaa04d3f460454a1fd4f8f9a58d8f13e4415a1512643d1cdff"
+    },
+    {
+      "assetKey": "batch-05-regions/drowned-coast/prop-broken-jetty",
+      "verdict": "approved",
+      "reason": "Splintered gray timber, moss and dull iron bands match the weathered tactile treatment. Visible deck top is appropriate to a low jetty and does not constitute a camera outlier.",
+      "profileId": "battlefield-prop",
+      "sha256": "e09d90eadeb3588056a8243e9631936575b9a563ddeac13aafbb0c01861c096f"
+    },
+    {
+      "assetKey": "batch-05-regions/drowned-coast/prop-shipwreck-ribs",
+      "verdict": "approved",
+      "reason": "Splintered planks and curved ribs use subdued coastal gray timber and matte painted wear; the exposed interior reads consistently in three-quarter view.",
+      "profileId": "battlefield-prop",
+      "sha256": "56e445f50e6bffc0934a566ea867c51dcd8633f6d9f13aeb8e2ffa58b4a96829"
+    },
+    {
+      "assetKey": "batch-05-regions/hollow-weald/prop-gnarled-root",
+      "verdict": "approved",
+      "reason": "Twisted bark, moss and fern details retain the restrained handpainted finish; green biome accents and the low natural silhouette fit the family.",
+      "profileId": "battlefield-prop",
+      "sha256": "f94a9c3e3575da3acce6967634ed9def936b2172bb96f56a537dc743d6ffe65e"
+    },
+    {
+      "assetKey": "batch-05-regions/hollow-weald/prop-woodland-shrine",
+      "verdict": "approved",
+      "reason": "Weathered wood, moss and chipped roof shingles share the matte tactile finish and low three-quarter architecture treatment.",
+      "profileId": "battlefield-prop",
+      "sha256": "6604699dd360e9b8760528118b26c50b919ff301c11636bce0d0841847d3a42b"
+    },
+    {
+      "assetKey": "batch-05-regions/interiors/prop-iron-gate",
+      "verdict": "approved",
+      "reason": "Dull rusty iron and chipped stone pillars use consistent weathering, soft highlights and a grounded three-quarter view; no plastic shine or heavy contour.",
+      "profileId": "battlefield-prop",
+      "sha256": "e38a5c6fc3fd705750729f3477f697fc9e61076813e3f3bf4ec51e858887135c"
+    },
+    {
+      "assetKey": "batch-05-regions/interiors/prop-mine-cart",
+      "verdict": "approved",
+      "reason": "Timber grain, chipped coal and rusted metal retain the benchmark material language. Wheel and band highlights remain dull and directional.",
+      "profileId": "battlefield-prop",
+      "sha256": "cf9c2ac4e8e585d19585e77dd6f73ebe6c55b9ed8fbaacd836069fa1278a5c93"
+    },
+    {
+      "assetKey": "batch-05-regions/pale-marches/prop-frozen-wall",
+      "verdict": "approved",
+      "reason": "Rough masonry, snow and icicles are painted with tactile matte detail; cool snow light is intentional regional coloration, with a consistent low camera.",
+      "profileId": "battlefield-prop",
+      "sha256": "d39928e755aec3010bfc0508a73e66d84d43d0302264fe9104647cc2b405f551"
+    },
+    {
+      "assetKey": "batch-05-regions/pale-marches/prop-snowy-waystone",
+      "verdict": "approved",
+      "reason": "Chipped stone and snow use granular matte paint and soft upper-left illumination; the cold palette is coherent with the Pale Marches.",
+      "profileId": "battlefield-prop",
+      "sha256": "cdd4e0fe9c96554504bd0e4a303e9843a7bf6ba9c7139227cf62f249456867f3"
+    },
+    {
+      "assetKey": "batch-06-settlements/ashen-crown/prop-half-timber-house",
+      "verdict": "approved",
+      "reason": "Rough plaster, timber and stone have restrained handpainted wear with soft upper-left lighting and a grounded three-quarter camera.",
+      "profileId": "battlefield-prop",
+      "sha256": "051c25908904df0037cdacbc8485486a01da8b0b8dca3d8b483fe32351afb2f4"
+    },
+    {
+      "assetKey": "batch-06-settlements/cinder-reach/prop-foundry-hall",
+      "verdict": "approved",
+      "reason": "Soot-dark masonry, dull roof iron and restrained window glow match the tactile dark fantasy benchmark; warmer interior accents are intentional.",
+      "profileId": "battlefield-prop",
+      "sha256": "1a7122cfb84fee115813dabd046be8a943e376d3fd738d3a56daacba03192655"
+    },
+    {
+      "assetKey": "batch-06-settlements/drowned-coast/prop-fishers-house",
+      "verdict": "approved",
+      "reason": "Silvered timber, patched roof, rope and nets share matte coastal weathering and the grounded three-quarter camera used by the settlement family.",
+      "profileId": "battlefield-prop",
+      "sha256": "8f69f33680c3e66b824493e4fbdc08d6aeffb38203e27239d6e3aabd5d363460"
+    },
+    {
+      "assetKey": "batch-06-settlements/hollow-weald/prop-stilt-lodge",
+      "verdict": "approved",
+      "reason": "Mossy shingles, gnarled timber and worn steps have consistent tactile handpainted texture, low camera and subdued woodland greens.",
+      "profileId": "battlefield-prop",
+      "sha256": "1d70d1a197c5de7d355f33f602aa7814d561b5b6de8e5f1769426de22b50c1d3"
+    },
+    {
+      "assetKey": "batch-06-settlements/pale-marches/prop-snow-watchtower",
+      "verdict": "approved",
+      "reason": "Snow-covered chipped masonry keeps the family's matte surface detail and low three-quarter camera; cool regional lighting is intentional.",
+      "profileId": "battlefield-prop",
+      "sha256": "a594667d1354cba4e094875099241672a949170d3d56169a9f8a1a3938879eaf"
+    }
+  ]
+}

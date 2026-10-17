@@ -6,6 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {directions,neighbor,address} from './hex-geometry.mjs';
 import {validateEdge,compareEdges} from './hex-adjacency.mjs';
 import {loadGeneration,validateGenerationDefinitions,validateGeneratedLayout} from './hex-generation.mjs';
+import {loadStyleLibrary,validateArtCatalog} from '../style-system/art-style.mjs';
 export {directions,neighbor,address};
 export function eligible(rule,tags){return rule.all.every(t=>tags.includes(t))&&(!rule.any.length||rule.any.some(t=>tags.includes(t)))&&!rule.exclude.some(t=>tags.includes(t));}
 export function eligibleRewardEntries(table,rewards,level,claimed=[]){
@@ -37,12 +38,14 @@ for name in json.loads(sys.argv[2]):
  errors.push(...validateGenerationDefinitions(generationData));
  errors.push(...validateGeneratedLayout(read(index.generation.example),generationData));
  const tags=new Set(read(index.catalogs.tags).items.map(x=>x.id));
+ const styleLibrary=loadStyleLibrary();
  const sets={};
  for(const [p,d] of docs){
   check(fs.existsSync(path.resolve(root,path.dirname(p),d.$schema)),`${p}: missing schema`);
   const items=d.items??[];const ids=items.map(x=>x.id);check(new Set(ids).size===ids.length,`${p}: duplicate IDs`);sets[d.id]=new Set(ids);
   function walk(v){if(!v||typeof v!=='object')return;for(const [k,x]of Object.entries(v)){if(k==='tags'&&Array.isArray(x))for(const t of x)check(tags.has(t),`${p}: unknown tag ${t}`);if(k==='selection'){check(['all','any','exclude'].every(k=>Array.isArray(x[k])),`${p}: malformed selection`);for(const ts of Object.values(x))for(const t of ts)check(tags.has(t),`${p}: unknown selection tag ${t}`);}if(['spawnChance','encounterChance','encounterRisk','healFraction'].includes(k))check(Number.isFinite(x)&&x>=0&&x<=1,`${p}: invalid probability ${k}`);if(['levelRange','dropLevelRange','recommendedPlayerLevelRange','encounterLevelRange','rewardLevelRange','quantity'].includes(k)&&Array.isArray(x))check(Array.isArray(x)&&x.length===2&&x.every(n=>Number.isSafeInteger(n)&&n>=1)&&x[0]<=x[1],`${p}: invalid range ${k}`);if(k==='weight')check(Number.isFinite(x)&&x>0,`${p}: invalid weight`);if(k==='productionBinding')check(x===null,`${p}: proposal cannot bind production`);walk(x);}}walk(d);
   if(d.kind==='art'){
+   errors.push(...validateArtCatalog(d,path.resolve(root,d.assetBase),{library:styleLibrary,mapStyleSetId:componentData.registry.artPolicy.requiredStyleSetId}));
    const poolIds=d.pools.map(x=>x.id);check(new Set(poolIds).size===poolIds.length,`${p}: duplicate pool IDs`);sets[d.id+'-pools']=new Set(poolIds);
    for(const x of items){for(const file of [x.asset,...(x.animation?.frames??[])])check(fs.existsSync(path.resolve(root,d.assetBase,file)),`${p}: missing asset ${file}`);if(x.overscan?.descriptorFile)check(fs.existsSync(path.resolve(root,x.overscan.descriptorFile)),`${p}: missing overscan descriptor`);}
    for(const pool of d.pools){for(const id of pool.itemIds)check(ids.includes(id),`${p}: unknown art item ${id}`);check(pool.draw.min>=0&&pool.draw.max>=pool.draw.min,`${p}: invalid draw range`);check(pool.replacement||pool.draw.max<=pool.itemIds.length,`${p}: draw exceeds unique items`);}

@@ -226,9 +226,9 @@
       "file": "../batch-05-regions/pale-marches/prop-frozen-wall.png",
       "visibleBounds": {
         "left": 1027.9999999999998,
-        "top": 438.3563909774436,
+        "top": 433.3563909774436,
         "right": 1258.3999999999999,
-        "bottom": 555
+        "bottom": 550
       },
       "insideViewport": true
     },
@@ -598,9 +598,9 @@
       "file": "../batch-05-regions/pale-marches/prop-frozen-wall.png",
       "visibleBounds": {
         "left": 926,
-        "top": 500.3233082706767,
+        "top": 495.3233082706767,
         "right": 1034,
-        "bottom": 555
+        "bottom": 550
       },
       "insideViewport": true
     },
@@ -610,9 +610,9 @@
       "file": "../batch-05-regions/pale-marches/prop-frozen-wall.png",
       "visibleBounds": {
         "left": 1112.2707920792077,
-        "top": 420,
+        "top": 415,
         "right": 1378.929207920792,
-        "bottom": 555
+        "bottom": 550
       },
       "insideViewport": true
     }

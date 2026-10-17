@@ -32,6 +32,12 @@
         ],
         "edgePixelCountAt1": 137,
         "edgePixelCountAt16": 0
+      },
+      "styleProfileId": "map-icon",
+      "styleFamilyId": null,
+      "styleReview": {
+        "verdict": "inactive",
+        "replacedBy": null
       }
     },
     {
@@ -63,6 +69,12 @@
         ],
         "edgePixelCountAt1": 172,
         "edgePixelCountAt16": 0
+      },
+      "styleProfileId": "map-icon",
+      "styleFamilyId": null,
+      "styleReview": {
+        "verdict": "inactive",
+        "replacedBy": null
       }
     },
     {
@@ -94,6 +106,12 @@
         ],
         "edgePixelCountAt1": 5,
         "edgePixelCountAt16": 0
+      },
+      "styleProfileId": "map-icon",
+      "styleFamilyId": null,
+      "styleReview": {
+        "verdict": "inactive",
+        "replacedBy": null
       }
     },
     {
@@ -124,6 +142,12 @@
         ],
         "edgePixelCountAt1": 31,
         "edgePixelCountAt16": 0
+      },
+      "styleProfileId": "map-icon",
+      "styleFamilyId": null,
+      "styleReview": {
+        "verdict": "inactive",
+        "replacedBy": null
       }
     },
     {
@@ -155,6 +179,12 @@
         ],
         "edgePixelCountAt1": 46,
         "edgePixelCountAt16": 0
+      },
+      "styleProfileId": "map-icon",
+      "styleFamilyId": null,
+      "styleReview": {
+        "verdict": "inactive",
+        "replacedBy": null
       }
     },
     {
@@ -185,6 +215,12 @@
         ],
         "edgePixelCountAt1": 72,
         "edgePixelCountAt16": 0
+      },
+      "styleProfileId": "map-icon",
+      "styleFamilyId": null,
+      "styleReview": {
+        "verdict": "inactive",
+        "replacedBy": null
       }
     },
     {
@@ -217,6 +253,12 @@
         ],
         "edgePixelCountAt1": 2637,
         "edgePixelCountAt16": 2591
+      },
+      "styleProfileId": "battlefield-ground",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
       }
     },
     {
@@ -249,6 +291,12 @@
         ],
         "edgePixelCountAt1": 40,
         "edgePixelCountAt16": 0
+      },
+      "styleProfileId": "battlefield-prop",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
       }
     },
     {
@@ -267,7 +315,13 @@
       "mode": "RGB",
       "sha256": "33f1070d4e6f870b6e813f54e8db612a74d98e91c012bc5feea61aad75f0b3d3",
       "provenanceFile": "scene-forest-sky-misty.provenance.json",
-      "anchor": null
+      "anchor": null,
+      "styleProfileId": "battlefield-backdrop",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
     },
     {
       "id": "scene-forest-sky-night",
@@ -285,7 +339,13 @@
       "mode": "RGB",
       "sha256": "b28f937cc69be4ac1525b305036b23039aed89375be9a78b946f5b2ae2e0932f",
       "provenanceFile": "scene-forest-sky-night.provenance.json",
-      "anchor": null
+      "anchor": null,
+      "styleProfileId": "battlefield-backdrop",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
     }
   ],
   "previews": {
@@ -301,5 +361,9 @@
     "Export map variants at512px/256px through art intake.",
     "Generate ground and rear props matching misty background."
   ],
-  "authorship": "Original AI-generated artwork under user direction; source prompts and references retained. No third-party license asserted."
+  "authorship": "Original AI-generated artwork under user direction; source prompts and references retained. No third-party license asserted.",
+  "styleSystem": {
+    "guide": "../style-system/style-guide.json",
+    "library": "../style-system/library.json"
+  }
 }

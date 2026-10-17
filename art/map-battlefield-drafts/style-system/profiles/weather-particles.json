@@ -1,0 +1,8 @@
+{
+  "id": "weather-particles",
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "camera": "Screen-space particles with restrained apparent size.",
+  "materials": "Sparse fine rain/snow/ash marks, no bold cartoon flakes.",
+  "light": "Low-opacity neutral/cool marks; readable without obscuring actors.",
+  "framing": "Repeat verified seamless tiles across oversized field; movement wraps by complete repeat periods."
+}

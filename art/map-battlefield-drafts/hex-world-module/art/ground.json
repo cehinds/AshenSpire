@@ -15,7 +15,9 @@
         "all": [],
         "any": [],
         "exclude": []
-      }
+      },
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground"
     },
     {
       "id": "woodland",
@@ -28,7 +30,9 @@
         "all": [],
         "any": [],
         "exclude": []
-      }
+      },
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground"
     },
     {
       "id": "bank",
@@ -41,7 +45,9 @@
         "all": [],
         "any": [],
         "exclude": []
-      }
+      },
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground"
     },
     {
       "id": "courtyard",
@@ -56,7 +62,9 @@
         "any": [],
         "exclude": []
       },
-      "status": "existing-draft"
+      "status": "existing-draft",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground"
     },
     {
       "id": "wet-stone-bridge-candidate",
@@ -72,7 +80,9 @@
         "any": [],
         "exclude": []
       },
-      "status": "borrowed-candidate-bridge-deck-pending"
+      "status": "borrowed-candidate-bridge-deck-pending",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground"
     }
   ],
   "pools": [

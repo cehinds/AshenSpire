@@ -33,6 +33,8 @@
     "Regional dungeon floors reuse a shared vaulted backdrop and iron gate, pending bespoke architecture/lighting.",
     "House scales are rear-scene composition examples; actor-scale and contact-shadow checks remain pending."
   ],
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleGuide": "../style-system/style-guide.json",
   "presets": [
     {
       "id": "ashen-crown/city",
@@ -259,9 +261,9 @@
       "label": "Pale Marches frozen inlet",
       "group": "shore",
       "regionId": "pale-marches",
-      "ground": "pale-marches/ground-ice-bank.png",
+      "ground": "../batch-08-style-alignment/ground-ice-bank.png",
       "backdrop": "interiors/backdrop-frozen-inlet.png",
-      "groundContactY": 539,
+      "groundContactY": 534,
       "props": [
         {
           "file": "../batch-05-regions/pale-marches/prop-frozen-wall.png",

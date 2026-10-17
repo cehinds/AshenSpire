@@ -36,7 +36,13 @@
       "bottomAlphaRange": [
         237,
         253
-      ]
+      ],
+      "styleProfileId": "battlefield-ground",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
     },
     {
       "id": "ashen-crown/prop-half-timber-house",
@@ -68,7 +74,13 @@
         48,
         1235,
         1196
-      ]
+      ],
+      "styleProfileId": "battlefield-prop",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
     },
     {
       "id": "cinder-reach/ground-foundry-court",
@@ -104,7 +116,13 @@
       "bottomAlphaRange": [
         246,
         254
-      ]
+      ],
+      "styleProfileId": "battlefield-ground",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
     },
     {
       "id": "cinder-reach/ground-obsidian-vault",
@@ -140,7 +158,13 @@
       "bottomAlphaRange": [
         248,
         254
-      ]
+      ],
+      "styleProfileId": "battlefield-ground",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
     },
     {
       "id": "cinder-reach/prop-foundry-hall",
@@ -171,7 +195,13 @@
         325,
         1176,
         941
-      ]
+      ],
+      "styleProfileId": "battlefield-prop",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
     },
     {
       "id": "drowned-coast/ground-flooded-crypt",
@@ -207,7 +237,13 @@
       "bottomAlphaRange": [
         244,
         253
-      ]
+      ],
+      "styleProfileId": "battlefield-ground",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
     },
     {
       "id": "drowned-coast/ground-harbor-paving",
@@ -243,7 +279,13 @@
       "bottomAlphaRange": [
         241,
         254
-      ]
+      ],
+      "styleProfileId": "battlefield-ground",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
     },
     {
       "id": "drowned-coast/prop-fishers-house",
@@ -274,7 +316,13 @@
         350,
         1025,
         980
-      ]
+      ],
+      "styleProfileId": "battlefield-prop",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
     },
     {
       "id": "hollow-weald/ground-root-cellar",
@@ -310,7 +358,13 @@
       "bottomAlphaRange": [
         241,
         254
-      ]
+      ],
+      "styleProfileId": "battlefield-ground",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
     },
     {
       "id": "hollow-weald/ground-village-pavers",
@@ -346,7 +400,13 @@
       "bottomAlphaRange": [
         235,
         254
-      ]
+      ],
+      "styleProfileId": "battlefield-ground",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
     },
     {
       "id": "hollow-weald/prop-stilt-lodge",
@@ -377,7 +437,13 @@
         229,
         1087,
         1065
-      ]
+      ],
+      "styleProfileId": "battlefield-prop",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
     },
     {
       "id": "interiors/backdrop-frozen-inlet",
@@ -398,7 +464,13 @@
       "height": 941,
       "mode": "RGB",
       "sha256": "e229e00a854e73a250f21b34243589c8849f5cd251f5b5638a1b135bda1ec61b",
-      "provenanceFile": "interiors/backdrop-frozen-inlet.provenance.json"
+      "provenanceFile": "interiors/backdrop-frozen-inlet.provenance.json",
+      "styleProfileId": "battlefield-backdrop",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
     },
     {
       "id": "interiors/ground-dusty-keep",
@@ -434,7 +506,13 @@
       "bottomAlphaRange": [
         249,
         254
-      ]
+      ],
+      "styleProfileId": "battlefield-ground",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
     },
     {
       "id": "interiors/ground-frost-vault",
@@ -470,7 +548,13 @@
       "bottomAlphaRange": [
         232,
         253
-      ]
+      ],
+      "styleProfileId": "battlefield-ground",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
     },
     {
       "id": "pale-marches/ground-ice-bank",
@@ -506,7 +590,13 @@
       "bottomAlphaRange": [
         243,
         253
-      ]
+      ],
+      "styleProfileId": "battlefield-ground",
+      "styleFamilyId": null,
+      "styleReview": {
+        "verdict": "replace",
+        "replacedBy": "batch-08-style-alignment/ground-ice-bank"
+      }
     },
     {
       "id": "pale-marches/ground-snow-courtyard",
@@ -542,7 +632,13 @@
       "bottomAlphaRange": [
         223,
         251
-      ]
+      ],
+      "styleProfileId": "battlefield-ground",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
     },
     {
       "id": "pale-marches/prop-snow-watchtower",
@@ -573,7 +669,13 @@
         73,
         1041,
         1182
-      ]
+      ],
+      "styleProfileId": "battlefield-prop",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
     }
   ],
   "authoringModules": "modules/index.json",
@@ -589,5 +691,9 @@
     "Expanded native-resolution masters for larger camera travel.",
     "Region-specific interior backdrops and prop lighting.",
     "Actor feet, contact shadows and runtime integration."
-  ]
+  ],
+  "styleSystem": {
+    "guide": "../style-system/style-guide.json",
+    "library": "../style-system/library.json"
+  }
 }

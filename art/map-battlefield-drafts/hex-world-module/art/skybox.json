@@ -15,7 +15,9 @@
         "all": [],
         "any": [],
         "exclude": []
-      }
+      },
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop"
     },
     {
       "id": "deep-weald",
@@ -28,7 +30,9 @@
         "all": [],
         "any": [],
         "exclude": []
-      }
+      },
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop"
     }
   ],
   "pools": [

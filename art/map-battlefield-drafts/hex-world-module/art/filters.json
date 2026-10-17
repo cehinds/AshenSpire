@@ -23,7 +23,9 @@
       "exclusiveGroup": "time-of-day",
       "animation": {
         "mode": "static"
-      }
+      },
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "color-filter"
     },
     {
       "id": "night",
@@ -44,7 +46,9 @@
       "exclusiveGroup": "time-of-day",
       "animation": {
         "mode": "static"
-      }
+      },
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "color-filter"
     }
   ],
   "pools": [

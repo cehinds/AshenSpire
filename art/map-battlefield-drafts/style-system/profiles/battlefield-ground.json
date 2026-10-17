@@ -1,0 +1,8 @@
+{
+  "id": "battlefield-ground",
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "camera": "Low battlefield side view with shallow depth; no miniature-isometric camera.",
+  "materials": "Broad painterly ground planes; matte earth/stone/snow; wetness controlled by biome.",
+  "light": "Diffuse upper-left default; night/interior variants explicitly painted for that condition.",
+  "framing": "Ground spans full lower canvas; transparent upper field; quiet middle 60 percent for actors. Edge details may be stronger."
+}

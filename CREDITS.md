@@ -796,3 +796,15 @@ are copied unchanged; browser sheets demonstrate the collection and small-size
 contrast. Earlier technical and painted variants remain indexed as inactive
 history. These are unregistered feature-branch drafts; no third-party artwork or
 license is claimed.
+
+### Shared component art direction and corrections — batch 08 (2026-10-17)
+
+Four original OpenAI-generated edits in
+`art/map-battlefield-drafts/batch-08-style-alignment/` correct a frozen ground,
+daylight forest backdrop and two lightning frames using existing first-party
+references. Exact prompts, references, original outputs, hashes and measured
+native dimensions are retained. Sources are copied unchanged; browser sheets
+compose them for review. The adjacent `style-system/` JSON modules document a
+shared art direction, per-role profiles and hash-bound visual reviews for all
+retained component families. Earlier outliers remain indexed as history.
+These are unregistered feature drafts; no third-party artwork or license is claimed.

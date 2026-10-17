@@ -1,0 +1,118 @@
+{
+  "version": 1,
+  "status": "draft-not-runtime-bound",
+  "branch": "feature/ImproveMapBattleFieldArt",
+  "assets": [
+    {
+      "id": "ground-ice-bank",
+      "file": "ground-ice-bank.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "ground",
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "07513336fea651b4c316ba23720322ca5ac5811853aac58d683a6f7a79ad56a9",
+      "provenanceFile": "ground-ice-bank.provenance.json",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        485,
+        1672,
+        941
+      ],
+      "medianCenterHorizonY": 534,
+      "bottomAlphaRange": [
+        247,
+        254
+      ],
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "backdrop-forest-day",
+      "file": "backdrop-forest-day.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "backdrop",
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "c885d817338dc1ea31375626f6478d196a6a20eb3b382060bb6221944c8e2e1b",
+      "provenanceFile": "backdrop-forest-day.provenance.json",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "lightning-frame-01",
+      "file": "lightning-frame-01.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "lightning",
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "31179ff426a26de9ddf18dc7bc0287bcaa217d167512bdcfa5b9be3a13fb79fc",
+      "provenanceFile": "lightning-frame-01.provenance.json",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "weather-lightning",
+      "alphaRange": [
+        0,
+        252
+      ],
+      "visibleBoundsAt32": [
+        1201,
+        110,
+        1319,
+        340
+      ],
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "lightning-frame-02",
+      "file": "lightning-frame-02.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "lightning",
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "1c011aea7f4d86ec6949c22fbeb43347b78a8db8680e11c6d9dad4ce09e2211d",
+      "provenanceFile": "lightning-frame-02.provenance.json",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "weather-lightning",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        1195,
+        114,
+        1348,
+        381
+      ],
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    }
+  ],
+  "styleSystem": {
+    "guide": "../style-system/style-guide.json",
+    "library": "../style-system/library.json"
+  }
+}

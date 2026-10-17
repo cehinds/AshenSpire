@@ -1,0 +1,8 @@
+{
+  "id": "battlefield-prop",
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "camera": "Low three-quarter side view; upright verticals; consistent with ground plane.",
+  "materials": "Weathered tactile timber, stone, iron, fabric and vegetation.",
+  "light": "Soft upper-left default; localized lamps, lava and night variants allowed.",
+  "framing": "Isolated transparent silhouette with measured base/alpha bounds; avoid foreground scenery baked into prop."
+}
