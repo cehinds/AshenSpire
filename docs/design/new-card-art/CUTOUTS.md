@@ -1,7 +1,7 @@
-# Actual PNG cutouts — selection set 05
+# Actual PNG cutouts — selection set 06
 
 Open [cutouts.html](cutouts.html) to select, layer, rotate, resize and keep multiple
-choices. The downloadable `card-art-cutouts-v5.zip` includes the standalone
+choices. The downloadable `card-art-cutouts-v6.zip` includes the standalone
 viewer, all PNGs and the JSON. Extract the ZIP and open `cutouts.html`
 in a browser. It uses plain local scripts and needs no build step. If browser
 policy blocks local files, run `python3 -m http.server 8765` in the extracted
@@ -10,10 +10,10 @@ this environment used local HTTP because its policy blocks file URLs.
 
 ## Deliverables and codes
 
-- **132 object PNGs:** the original 70, 50 later spellbook/weapon options, and 12 components from existing artwork.
-- An additional ten Cleansed fire objects, 100 effect PNG exports, and twenty separate background PNGs.
-- Some compatible families reuse an effect source; effect exports are not claimed to be 100 unique effect designs.
-- A–N object/effect PNGs use 512×512 transparent canvases. O uses 512×640; P preserves native 256×256 pixels. Backgrounds are opaque; object/effect layers have real alpha.
+- **212 object PNGs:** the original 70, 50 later spellbook/weapon options, 12 components from existing artwork, and 80 objects in Q–X.
+- An additional ten Cleansed fire objects, 120 effect PNG exports, and twenty separate background PNGs.
+- Some compatible families reuse an effect source; effect exports are not claimed to be 120 unique effect designs.
+- A–N and Q–Z object/effect PNGs use 512×512 transparent canvases. O uses 512×640; P preserves native 256×256 pixels. Backgrounds are opaque; object/effect layers have real alpha.
 - Background PNGs are 512×640. The composed art crop is also 512×640.
 - `cutout-manifest.json` contains component references, dimensions, anchor,
   position, sizing, rotation, scale, opacity, blend mode, layer order and CSS.
@@ -37,10 +37,20 @@ this environment used local HTTP because its policy blocks file URLs.
 | N | Counter — ten starting shield-and-sword pairs using M and J |
 | O | Existing card art — ten reconstructed objects, effects and backgrounds |
 | P | Native inventory sword and shield — two unchanged objects |
+| Q | Broken swords — counterparts of J |
+| R | Broken hammers — counterparts of K |
+| S | Broken shields — counterparts of M |
+| T | Ruined spellbooks — counterparts of I |
+| U | Sweep scythes — ten new intact candidates |
+| V | Magic scepters — ten bases with stone-head anchors |
+| W | Broken scythes — counterparts of L |
+| X | Broken scimitars — counterparts of B |
+| Y | Ethereal melee — V scepter + separate weapon overlay |
+| Z | Ranged magic — V scepter + separate projectile overlay |
 
 **0 is a real option, not absence.** New weapon groups reuse compatible earlier effect files; isolated effect tiles retain the original component letter. Every selection code has one letter and two
 digits. `A34` selects sword object 3 and effect 4. `A00` selects object 0 and
-effect 0. A–O contain 100 combinations each, 00–99. P has two native objects and ten effects: P00–P19. Ten initial examples
+effect 0. A–O and Q–Z contain 100 combinations each, 00–99. P has two native objects and ten effects: P00–P19. Ten initial examples
 pair matching digits: A00, A11, A22, …, A99.
 
 An isolated view hides a layer; it does not replace its digit with “none.” The
@@ -142,7 +152,7 @@ For Counter, use two independent object layers referencing E (shield) and A (swo
 
 ## Verification
 
-`python3 validate-cutouts.py` checks all 262 PNG files, real alpha, dimensions, hashes, 132 physical objects plus ten cleansing fires and 1,520 combinations. Browser checks covered all families, image decoding, independent transforms, a second object, visibility, multiple kept choices, JSON download, persisted edits and 390px layouts. Existing combat identity validation also passes.
+`python3 validate-cutouts.py` checks all 362 PNG files, real alpha, dimensions, hashes, 212 physical objects plus ten cleansing fires and 2,520 combinations. Browser checks covered all families, image decoding, independent transforms, a second object, visibility, multiple kept choices, JSON download, persisted edits and 390px layouts. Existing combat identity validation also passes.
 
 
 ## Counter pair codes
@@ -162,3 +172,17 @@ The original cards are flattened. O components are image-edit reconstructions re
 P converts `icon_straightSwordInventory2026.webp` and `icon_kiteShieldInventory2026.webp` to PNG without altering decoded RGBA pixels, verified byte for byte. These remain 256×256. No matching painted spellbook was found in the existing library, so the I spellbooks remain the proposal options.
 
 Every new asset records its source path, original asset ID, source SHA-256, conversion/reconstruction method and CSS transform. Source copies are included in the portable pack. `reuse-v5.json` records the audit choices; `generation-sources-v5.json` records reconstruction sheets. Run `reuse-cutouts.py` against revision 4 or 5 to rebuild the new entries while preserving A–N. Then run the validator and package script. Source generation files live outside the portable pack.
+
+## Broken variants and scepter magic (revision 6)
+
+[expansion-v6.html](expansion-v6.html) shows the new 80 objects, intact references for the 60 broken versions, and assembled magic previews. Broken variants preserve recognizable designs and carry `intactAssetId` plus the original asset hash. They are generated interpretations, not pixel-identical edits. This is a visual condition only; no gameplay status is introduced.
+
+**Scythes are preferred for Sweep (`U`); scepters are preferred for magic (`V`).** Spellbooks remain alternatives. `Yxy` uses V scepter x with ethereal effect y: digits 0–4 are sword, hammer, scythe, scimitar and shield ward in blue; 5–9 repeat the shapes in violet. `Zxy` uses the same scepter x with a separate elemental projectile y. The ranged composition contains one scepter and one projectile above its background; no projectile is baked into the object.
+
+The scepter has a normalized `anchors.stoneHead` and each magic overlay has `anchors.emissionRoot`. `attachment` connects those points. `layer-math.js` resolves parent translation, rotation, scale and size into an affine CSS matrix. The matrix also supports unequal scales without losing alignment. Child rotation is relative to the scepter while attached. The stone and projection remain separate PNGs and JSON references.
+
+In the composer, select the foreground layer to toggle **Attach magic to scepter stone**. Disabling it preserves the current world position and affine pose. Changing X or Y also detaches it. Rotation/scale edits after detaching establish a new independent pose. Reattaching restores the prior relative overrides. Ranged projectiles use an explicit forward offset to read as fired shots. Resolved exports include CSS, matrix, attachment point, anchor data and source references.
+
+`tagReferences` uses IDs from the pinned combat catalog. The ten projectile visual proposals are Divine, Necrotic, Force, Earth, Frost, Fire, Lightning, Psychic, Alteration and Wind. Necrotic and Wind have no exact matching element identity in that catalog, so their metadata uses existing spell/magic/ranged tags and explicitly marks the element as a proposal. No new gameplay tags are fabricated.
+
+Rebuild individual sheets with `python3 expand-v6.py --family Q` (through Z), then `python3 expand-v6.py` to assemble. Run `python3 validate-cutouts.py`, `node validate-layer-math.mjs`, and `node validate.mjs`. `package-cutouts.py` builds the full portable pack. Generation source files remain external provenance. The source reference sheets are included in the pack. All 262 revision-five assets and 1,520 compositions remain unchanged.

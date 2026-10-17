@@ -11,12 +11,12 @@
     "height": 512,
     "hasTransparency": true,
     "alphaBounds": [
+      50,
       32,
-      40,
-      480,
-      472
+      461,
+      480
     ],
-    "sha256": "37d189a8cc93f099d22d9be6fcb1476235a231e1c895602ae4eff979ecf705fa",
+    "sha256": "cefb5396f426fc3843069aa0c5f828b99709758be5ca26a284e37fb0ef576356",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -70,22 +70,56 @@
         "height": 396
       },
       "extractionCrop": {
-        "x": 0,
-        "y": 0,
-        "width": 397,
-        "height": 396
+        "x": 119,
+        "y": 105,
+        "width": 219,
+        "height": 239
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "V.object.0"
     },
     "anchors": {
       "emissionRoot": {
-        "x": 0.14,
-        "y": 0.86
+        "x": 0.188315,
+        "y": 0.852984
       }
     },
     "magicRole": "ethereal-melee",
-    "weaponShape": "sword"
+    "weaponShape": "sword",
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "delivery:melee",
+        "binding": {
+          "domain": "delivery",
+          "role": "metadata",
+          "reason": "Retain identity; no additional art mark by default."
+        }
+      },
+      {
+        "id": "maneuver:attack",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "attack"
+        }
+      }
+    ]
   },
   "Y.effect.1": {
     "id": "Y.effect.1",
@@ -99,12 +133,12 @@
     "height": 512,
     "hasTransparency": true,
     "alphaBounds": [
+      59,
       32,
-      35,
-      480,
-      476
+      453,
+      480
     ],
-    "sha256": "b175d9990d4baa13594ab6f3295e2a535ab96d933efdec95e19e9b60c236ab4f",
+    "sha256": "261bfba1a9f94b673a9ad795cca63a77a57e1828750aaff3af54c59402054411",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -158,22 +192,56 @@
         "height": 396
       },
       "extractionCrop": {
-        "x": 397,
-        "y": 0,
-        "width": 396,
-        "height": 396
+        "x": 525,
+        "y": 96,
+        "width": 217,
+        "height": 247
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "V.object.1"
     },
     "anchors": {
       "emissionRoot": {
-        "x": 0.14,
-        "y": 0.86
+        "x": 0.198208,
+        "y": 0.842608
       }
     },
     "magicRole": "ethereal-melee",
-    "weaponShape": "hammer"
+    "weaponShape": "hammer",
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "delivery:melee",
+        "binding": {
+          "domain": "delivery",
+          "role": "metadata",
+          "reason": "Retain identity; no additional art mark by default."
+        }
+      },
+      {
+        "id": "maneuver:smash",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "smash"
+        }
+      }
+    ]
   },
   "Y.effect.2": {
     "id": "Y.effect.2",
@@ -187,12 +255,12 @@
     "height": 512,
     "hasTransparency": true,
     "alphaBounds": [
+      44,
       32,
-      37,
-      480,
-      474
+      468,
+      480
     ],
-    "sha256": "d9bc98871e6c188d3f11b0f5239e3e3d431e6b5a2e32251f59eeb9d18ec4723d",
+    "sha256": "546b5877d5d8cf8677324061dd641b2e70d5e728c13a92e4963f47c353b52087",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -246,22 +314,56 @@
         "height": 396
       },
       "extractionCrop": {
-        "x": 793,
-        "y": 0,
-        "width": 397,
-        "height": 396
+        "x": 904,
+        "y": 96,
+        "width": 234,
+        "height": 247
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "V.object.2"
     },
     "anchors": {
       "emissionRoot": {
-        "x": 0.14,
-        "y": 0.86
+        "x": 0.166386,
+        "y": 0.846142
       }
     },
     "magicRole": "ethereal-melee",
-    "weaponShape": "scythe"
+    "weaponShape": "scythe",
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "delivery:melee",
+        "binding": {
+          "domain": "delivery",
+          "role": "metadata",
+          "reason": "Retain identity; no additional art mark by default."
+        }
+      },
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ]
   },
   "Y.effect.3": {
     "id": "Y.effect.3",
@@ -275,12 +377,12 @@
     "height": 512,
     "hasTransparency": true,
     "alphaBounds": [
+      56,
       32,
-      37,
-      480,
-      475
+      455,
+      480
     ],
-    "sha256": "82f443a70ae17b7b08f0e75fb23fa656ce81132442c2f761ec73839f30038ec3",
+    "sha256": "12ee9a23437cd91d98afd69661766c93b394b706711c589735185f667b80bed2",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -334,22 +436,56 @@
         "height": 396
       },
       "extractionCrop": {
-        "x": 1190,
-        "y": 0,
-        "width": 396,
-        "height": 396
+        "x": 1279,
+        "y": 106,
+        "width": 210,
+        "height": 236
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "V.object.3"
     },
     "anchors": {
       "emissionRoot": {
-        "x": 0.14,
-        "y": 0.86
+        "x": 0.189952,
+        "y": 0.850371
       }
     },
     "magicRole": "ethereal-melee",
-    "weaponShape": "scimitar"
+    "weaponShape": "scimitar",
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "delivery:melee",
+        "binding": {
+          "domain": "delivery",
+          "role": "metadata",
+          "reason": "Retain identity; no additional art mark by default."
+        }
+      },
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ]
   },
   "Y.effect.4": {
     "id": "Y.effect.4",
@@ -363,12 +499,12 @@
     "height": 512,
     "hasTransparency": true,
     "alphaBounds": [
+      64,
       32,
-      37,
-      480,
-      474
+      447,
+      480
     ],
-    "sha256": "099b43fd9781d06368379defa3997ca2e5dddada09c13dde3764659316bddc42",
+    "sha256": "b590df03ef6ee76cd1cb8f950bd45b03b6ea1adc4d3bc3a295381c25a9441fcb",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -422,22 +558,56 @@
         "height": 396
       },
       "extractionCrop": {
-        "x": 1586,
-        "y": 0,
-        "width": 397,
-        "height": 396
+        "x": 1680,
+        "y": 98,
+        "width": 212,
+        "height": 248
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "V.object.4"
     },
     "anchors": {
       "emissionRoot": {
-        "x": 0.14,
-        "y": 0.86
+        "x": 0.216192,
+        "y": 0.846779
       }
     },
     "magicRole": "ethereal-melee",
-    "weaponShape": "shield ward"
+    "weaponShape": "shield ward",
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "delivery:melee",
+        "binding": {
+          "domain": "delivery",
+          "role": "metadata",
+          "reason": "Retain identity; no additional art mark by default."
+        }
+      },
+      {
+        "id": "maneuver:defend",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "defend"
+        }
+      }
+    ]
   },
   "Y.effect.5": {
     "id": "Y.effect.5",
@@ -451,12 +621,12 @@
     "height": 512,
     "hasTransparency": true,
     "alphaBounds": [
-      34,
+      56,
       32,
-      478,
+      455,
       480
     ],
-    "sha256": "274a616add4756c9fe84d5177fb842ae63c94a8a3d631e67f73098fb41534ee0",
+    "sha256": "db004f93a7904278170f7b82c913652acd650a62b1693e8c87e438b39a9dfbe9",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -510,22 +680,56 @@
         "height": 397
       },
       "extractionCrop": {
-        "x": 0,
-        "y": 396,
-        "width": 397,
-        "height": 397
+        "x": 121,
+        "y": 460,
+        "width": 218,
+        "height": 245
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "V.object.5"
     },
     "anchors": {
       "emissionRoot": {
-        "x": 0.14,
-        "y": 0.86
+        "x": 0.192401,
+        "y": 0.854644
       }
     },
     "magicRole": "ethereal-melee",
-    "weaponShape": "sword"
+    "weaponShape": "sword",
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "delivery:melee",
+        "binding": {
+          "domain": "delivery",
+          "role": "metadata",
+          "reason": "Retain identity; no additional art mark by default."
+        }
+      },
+      {
+        "id": "maneuver:attack",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "attack"
+        }
+      }
+    ]
   },
   "Y.effect.6": {
     "id": "Y.effect.6",
@@ -539,12 +743,12 @@
     "height": 512,
     "hasTransparency": true,
     "alphaBounds": [
-      35,
+      62,
       32,
-      476,
+      450,
       480
     ],
-    "sha256": "40a894580c2c18c2f901e5a358678b4642af4207fb5cf1ff3075ea3677240e35",
+    "sha256": "85425aab7cdc9d06506d1526151cccf64e5e9d0c7477f9cea2aac3f460daaf47",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -598,22 +802,56 @@
         "height": 397
       },
       "extractionCrop": {
-        "x": 397,
-        "y": 396,
-        "width": 396,
-        "height": 397
+        "x": 526,
+        "y": 449,
+        "width": 221,
+        "height": 255
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "V.object.6"
     },
     "anchors": {
       "emissionRoot": {
-        "x": 0.14,
-        "y": 0.86
+        "x": 0.202688,
+        "y": 0.847119
       }
     },
     "magicRole": "ethereal-melee",
-    "weaponShape": "hammer"
+    "weaponShape": "hammer",
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "delivery:melee",
+        "binding": {
+          "domain": "delivery",
+          "role": "metadata",
+          "reason": "Retain identity; no additional art mark by default."
+        }
+      },
+      {
+        "id": "maneuver:smash",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "smash"
+        }
+      }
+    ]
   },
   "Y.effect.7": {
     "id": "Y.effect.7",
@@ -627,12 +865,12 @@
     "height": 512,
     "hasTransparency": true,
     "alphaBounds": [
+      52,
       32,
-      32,
-      480,
+      460,
       480
     ],
-    "sha256": "e969f44aa1645d2757e7bae1ee05d862cb8f5f47a6786a5a758fa8e43ec68923",
+    "sha256": "5badf28f3aa6fc8029b4290f24dcb92f30a7ad792e31ac967d2aae953555e0c1",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -686,22 +924,56 @@
         "height": 397
       },
       "extractionCrop": {
-        "x": 793,
-        "y": 396,
-        "width": 397,
-        "height": 397
+        "x": 906,
+        "y": 448,
+        "width": 233,
+        "height": 256
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "V.object.7"
     },
     "anchors": {
       "emissionRoot": {
-        "x": 0.14,
-        "y": 0.86
+        "x": 0.178599,
+        "y": 0.851822
       }
     },
     "magicRole": "ethereal-melee",
-    "weaponShape": "scythe"
+    "weaponShape": "scythe",
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "delivery:melee",
+        "binding": {
+          "domain": "delivery",
+          "role": "metadata",
+          "reason": "Retain identity; no additional art mark by default."
+        }
+      },
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ]
   },
   "Y.effect.8": {
     "id": "Y.effect.8",
@@ -715,12 +987,12 @@
     "height": 512,
     "hasTransparency": true,
     "alphaBounds": [
+      58,
       32,
-      43,
-      480,
-      469
+      454,
+      480
     ],
-    "sha256": "d4bf745a01eae3c2cec9c16d540dae763b5356c40ce19af0f150a4108ebbc2b5",
+    "sha256": "76a5fabc9f5a3a6a63662b96986eeb2bfb847c1a2cad510e05557b0fdb0d4285",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -774,22 +1046,56 @@
         "height": 397
       },
       "extractionCrop": {
-        "x": 1190,
-        "y": 396,
-        "width": 396,
-        "height": 397
+        "x": 1282,
+        "y": 462,
+        "width": 215,
+        "height": 243
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "V.object.8"
     },
     "anchors": {
       "emissionRoot": {
-        "x": 0.14,
-        "y": 0.86
+        "x": 0.1922,
+        "y": 0.850629
       }
     },
     "magicRole": "ethereal-melee",
-    "weaponShape": "scimitar"
+    "weaponShape": "scimitar",
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "delivery:melee",
+        "binding": {
+          "domain": "delivery",
+          "role": "metadata",
+          "reason": "Retain identity; no additional art mark by default."
+        }
+      },
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ]
   },
   "Y.effect.9": {
     "id": "Y.effect.9",
@@ -803,12 +1109,12 @@
     "height": 512,
     "hasTransparency": true,
     "alphaBounds": [
+      69,
       32,
-      36,
-      480,
-      475
+      442,
+      480
     ],
-    "sha256": "d04cd6ecd15f0c852f079777045f0e39c3e0254588a9a35c17ac00097782f799",
+    "sha256": "44d90d0dcd3c202b2ee99f19904130b1d0411606d36d76f306db6de8cbca8c0d",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -862,21 +1168,55 @@
         "height": 397
       },
       "extractionCrop": {
-        "x": 1586,
-        "y": 396,
-        "width": 397,
-        "height": 397
+        "x": 1684,
+        "y": 456,
+        "width": 208,
+        "height": 250
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "V.object.9"
     },
     "anchors": {
       "emissionRoot": {
-        "x": 0.14,
-        "y": 0.86
+        "x": 0.227936,
+        "y": 0.848879
       }
     },
     "magicRole": "ethereal-melee",
-    "weaponShape": "shield ward"
+    "weaponShape": "shield ward",
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "delivery:melee",
+        "binding": {
+          "domain": "delivery",
+          "role": "metadata",
+          "reason": "Retain identity; no additional art mark by default."
+        }
+      },
+      {
+        "id": "maneuver:defend",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "defend"
+        }
+      }
+    ]
   }
 }

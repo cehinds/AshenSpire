@@ -7,9 +7,9 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parent
 data = json.loads((ROOT / 'cutout-manifest.json').read_text())
 assets = data['assets']
-assert len(assets) == (262 if data['revision'] >= 5 else 230 if data['revision'] >= 4 else 170)
-assert len(data['categories']) == (16 if data['revision'] >= 5 else 14 if data['revision'] >= 4 else 8)
-assert len(data['compositions']) == (1520 if data['revision'] >= 5 else 1400 if data['revision'] >= 4 else 800)
+assert len(assets) == (362 if data['revision'] >= 6 else 262 if data['revision'] >= 5 else 230 if data['revision'] >= 4 else 170)
+assert len(data['categories']) == (26 if data['revision'] >= 6 else 16 if data['revision'] >= 5 else 14 if data['revision'] >= 4 else 8)
+assert len(data['compositions']) == (2520 if data['revision'] >= 6 else 1520 if data['revision'] >= 5 else 1400 if data['revision'] >= 4 else 800)
 assert len([a for a in assets.values() if a['kind'] == 'object' and a['category'] in 'ABCDEFG']) == 70
 assert len([a for a in assets.values() if a['kind'] == 'object' and a['category'] == 'H']) == 10
 for asset in assets.values():
@@ -47,7 +47,7 @@ for c in data['categories']:
                 assert layer['assetId'] in assets
 if data['revision'] >= 4:
     assert len([a for a in assets.values() if a['kind'] == 'object' and a['category'] in 'IJKLM']) == 50
-    assert next(t for t in data['cardTypes'] if t['id'] == 'spell')['objectFamilies'] == ['I']
+    assert 'I' in next(t for t in data['cardTypes'] if t['id'] == 'spell')['objectFamilies']
     for i in range(10):
         for j in range(10):
             comp = data['compositions'][f'N{i}{j}']
@@ -78,3 +78,21 @@ if data['revision'] >= 5:
         assert layers['secondaryObject']['visible']
         assert layers['secondaryObject']['zIndex']<layers['object']['zIndex']
     print('Verified all reused source hashes, exact native decoded pixels, safe object margins and separate Counter swords.')
+
+if data['revision'] >= 6:
+    assert len([a for a in assets.values() if (a['category'] or '') in list('QRSTUVWX')])==80
+    assert len([a for a in assets.values() if (a['category'] or '') in list('YZ')])==20
+    for a in assets.values():
+        if a.get('intactAssetId'):
+            assert assets[a['intactAssetId']]['sha256']==a['references']['baseAssetSha256']
+        if (a['category'] or '') in list('QRSTUVWXYZ'):
+            assert hashlib.sha256((ROOT/a['references']['sourceReference']).read_bytes()).hexdigest()==a['references']['referenceSha256']
+    for letter in 'YZ':
+        for i in range(10):
+            for j in range(10):
+                c=data['compositions'][f'{letter}{i}{j}'];layers={l['id']:l for l in c['layers']}
+                assert layers['object']['assetId']==f'V.object.{i}'
+                assert layers['foreground']['assetId']==f'{letter}.effect.{j}'
+                assert layers['foreground']['attachment']['enabled']
+                assert not layers['backEffect']['visible']
+    print('Verified 80 new objects, 20 magic overlays, intact references and 200 linked magic compositions.')

@@ -10,11 +10,12 @@
  try{const saved=JSON.parse(localStorage.getItem('ashen-card-cutouts-families-v3')||'{}');kept=saved.kept||{};edits=saved.edits||{};}catch{}
  const fields=['rotationDeg','opacity','x','y','width','height','scaleX','scaleY'];
  const asset=id=>data.assets[id];
- function css(t){return {position:'absolute',left:`${t.x/512*100}%`,top:`${t.y/640*100}%`,width:`${t.width/512*100}%`,height:`${t.height/640*100}%`,objectFit:'contain',transformOrigin:'50% 50%',transform:`translate(-50%, -50%) rotate(${t.rotationDeg}deg) scale(${t.scaleX}, ${t.scaleY})`,opacity:String(t.opacity),mixBlendMode:t.blendMode,pointerEvents:'none'};}
- function resolved(layer){const a=asset(layer.assetId),t={...a.defaultTransform,...layer.overrides};return {...layer,src:a.src,references:a.references,transform:t,css:{...css(t),zIndex:String(layer.zIndex),display:layer.visible?'block':'none'}};}
+
+ function resolved(layer,composition=current){return CardLayerMath.resolve(data,composition,layer);}
+ function detach(l){const r=resolved(l);l.attachment.relativeOverrides=copy(l.overrides);l.overrides={...l.overrides,x:r.transform.x,y:r.transform.y,rotationDeg:Math.atan2(r.affine[1],r.affine[0])*180/Math.PI,scaleX:Math.hypot(r.affine[0],r.affine[1]),scaleY:Math.hypot(r.affine[2],r.affine[3])};l.detachedAffine=r.affine;l.attachment.enabled=false;}
  function save(){edits[activeCode]=copy(current);try{localStorage.setItem('ashen-card-cutouts-families-v3',JSON.stringify({kept,edits}));}catch{$('status').textContent='Browser storage is unavailable; export JSON to retain these edits.';}}
- function imageLayer(layer){const r=resolved(layer),img=document.createElement('img');img.src=r.src;img.alt='';img.dataset.layer=r.id;Object.assign(img.style,r.css);return img;}
- function paintStage(node,composition){node.replaceChildren(...composition.layers.map(imageLayer));}
+ function imageLayer(layer,composition){const r=resolved(layer,composition),img=document.createElement('img');img.src=r.src;img.alt='';img.dataset.layer=r.id;Object.assign(img.style,r.css);return img;}
+ function paintStage(node,composition){node.replaceChildren(...composition.layers.map(l=>imageLayer(l,composition)));}
  function syncEditor(){
   $('code').textContent=`${activeCode} · ${category.label}`;
   $('visibility').innerHTML=current.layers.map(l=>`<label><input type="checkbox" data-layer="${l.id}" ${l.visible?'checked':''}>${esc(l.id)}</label>`).join('');
@@ -22,6 +23,8 @@
   const r=resolved(current.layers.find(l=>l.id===$('layer').value));
   for(const field of fields)$(field).value=r.transform[field];
   $('blendMode').value=r.transform.blendMode;
+  $('attachment-row').hidden=!current.layers.find(l=>l.id===$('layer').value).attachment;
+  $('attach-stone').checked=Boolean(current.layers.find(l=>l.id===$('layer').value).attachment?.enabled);
   $('background').value=current.layers.find(l=>l.id==='background').assetId;
   const secondary=current.layers.find(l=>l.id==='secondaryObject');$('secondary-object').value=secondary.visible?secondary.assetId:'hidden';
   paintStage($('stage'),current);showJSON();renderKept();
@@ -45,7 +48,9 @@
   $('object').innerHTML=category.objectIds.map(id=>{const a=asset(id);return `<option value="${a.digit}">${a.digit} — ${esc(a.name)}</option>`;}).join('');
   $('effect').innerHTML=category.effectIds.map(id=>{const a=asset(id);return `<option value="${a.digit}">${a.digit} — ${esc(a.name)}</option>`;}).join('');
   selectCode(`${category.letter}00`);
-  $('object-heading').textContent=category.secondaryObjectIds?'Shield components alone':'Objects alone';
+  $('object-heading').textContent=category.magicMode?'Scepter bases alone':category.secondaryObjectIds?'Shield components alone':'Objects alone';
+  $('magic-note').hidden=!category.magicMode;
+  $('magic-note').textContent=category.magicMode==='melee'?'Y: the ethereal weapon grows from the stone. Rotate the scepter to move both layers; edit the foreground for relative rotation.':'Z: scepter plus separate projectile. The projectile has a small forward gap and remains its own PNG. Edit X/Y to detach it for free placement.';
   $('pair-note').hidden=!category.secondaryObjectIds;
   $('paired-objects').hidden=!category.secondaryObjectIds;
   $('paired-objects').innerHTML=category.secondaryObjectIds?'<h2>Sword components alone</h2><div class="grid">'+category.secondaryObjectIds.map(id=>{const a=asset(id);return `<article class="tile"><a href="${a.src}" download><img class="cutout" src="${a.src}" alt="${esc(a.name)}"></a><h3>${a.category}${a.digit}0 · sword alone</h3><a href="${a.src}" download>PNG</a></article>`;}).join('')+'</div>':'';
@@ -64,7 +69,8 @@
  for(const id of ['object','effect'])$(id).addEventListener('change',()=>selectCode(`${category.letter}${$('object').value}${$('effect').value}`));
  $('background').addEventListener('change',()=>{current.layers.find(l=>l.id==='background').assetId=$('background').value;save();syncEditor();});
  $('layer').addEventListener('change',syncEditor);
- for(const field of fields)$(field).addEventListener('input',()=>{const input=$(field),n=Number(input.value);if(input.value===''||!Number.isFinite(n))return;const value=Math.min(Number(input.max),Math.max(Number(input.min),n));current.layers.find(l=>l.id===$('layer').value).overrides[field]=value;save();paintStage($('stage'),current);showJSON();});
+ $('attach-stone').addEventListener('change',()=>{const l=current.layers.find(l=>l.id===$('layer').value);if(l.attachment){if($('attach-stone').checked){l.attachment.enabled=true;if(l.attachment.relativeOverrides)l.overrides=copy(l.attachment.relativeOverrides);delete l.detachedAffine;}else detach(l);save();syncEditor();}});
+ for(const field of fields)$(field).addEventListener('input',()=>{const input=$(field),n=Number(input.value);if(input.value===''||!Number.isFinite(n))return;const value=Math.min(Number(input.max),Math.max(Number(input.min),n));const l=current.layers.find(l=>l.id===$('layer').value);if((field==='x'||field==='y')&&l.attachment?.enabled){detach(l);$('attach-stone').checked=false;}if(['rotationDeg','scaleX','scaleY'].includes(field))delete l.detachedAffine;l.overrides[field]=value;save();paintStage($('stage'),current);showJSON();});
  $('blendMode').addEventListener('change',()=>{current.layers.find(l=>l.id===$('layer').value).overrides.blendMode=$('blendMode').value;save();paintStage($('stage'),current);showJSON();});
  $('reset').addEventListener('click',()=>{delete edits[activeCode];current=copy(data.compositions[activeCode]);save();syncEditor();});
  for(const kind of ['object','effect','composition'])$(`keep-${kind}`).addEventListener('click',()=>{
@@ -75,7 +81,7 @@
  $('export').addEventListener('click',()=>{
   save();const choices=Object.values(kept),needed=new Set(),compositions={};
   const codes=new Set([activeCode,...choices.filter(r=>r.kind==='composition').map(r=>r.id)]);
-  for(const code of codes){const c=copy(edits[code]||data.compositions[code]);c.layers=c.layers.map(layer=>{needed.add(layer.assetId);return resolved(layer);});compositions[code]=c;}
+  for(const code of codes){const c=copy(edits[code]||data.compositions[code]);c.layers=c.layers.map(layer=>{needed.add(layer.assetId);return resolved(layer,c);});compositions[code]=c;}
   for(const row of choices)if(row.kind!=='composition')needed.add(row.id);
   const result={formatVersion:1,coordinateSpace:data.coordinateSpace,codeScheme:data.codeScheme,references:data.references,keptChoices:choices,assets:Object.fromEntries([...needed].map(id=>[id,asset(id)])),compositions};
   const blob=new Blob([JSON.stringify(result,null,2)+'\n'],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='card-art-selection.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);$('status').textContent='Exported kept choices, PNG references, transforms and CSS.';

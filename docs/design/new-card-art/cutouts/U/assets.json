@@ -77,7 +77,17 @@
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "L.object.0",
       "baseAssetSha256": "1d97b8b2361a0c2d883df5f1feee8f9c023d8b7ce36c315e3660e96aff851dd6"
-    }
+    },
+    "tagReferences": [
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ]
   },
   "U.object.1": {
     "id": "U.object.1",
@@ -157,7 +167,17 @@
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "L.object.1",
       "baseAssetSha256": "719321c5868b332c29aa234136a4cfc95ede496c28394c9d285159529ed9e5bb"
-    }
+    },
+    "tagReferences": [
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ]
   },
   "U.object.2": {
     "id": "U.object.2",
@@ -237,7 +257,17 @@
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "L.object.2",
       "baseAssetSha256": "4893cd8da7cd0ea1e464391984e8eba3ea4dd8564a103d071d668a4aab9e2bde"
-    }
+    },
+    "tagReferences": [
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ]
   },
   "U.object.3": {
     "id": "U.object.3",
@@ -317,7 +347,17 @@
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "L.object.3",
       "baseAssetSha256": "30ef372d88cedf7fcf11549f3556f1dc13c06d054d89d6512c2c566d335180d2"
-    }
+    },
+    "tagReferences": [
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ]
   },
   "U.object.4": {
     "id": "U.object.4",
@@ -397,7 +437,17 @@
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "L.object.4",
       "baseAssetSha256": "6914181c80ba9a59a7ca4f60ee267fe9cb919d199842ef7fc4430b97c2623fea"
-    }
+    },
+    "tagReferences": [
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ]
   },
   "U.object.5": {
     "id": "U.object.5",
@@ -477,7 +527,17 @@
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "L.object.5",
       "baseAssetSha256": "8ce954e6258a6d401d6a1b24dd28667a8c65ca67152863060c0dcec4ce3ec1e3"
-    }
+    },
+    "tagReferences": [
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ]
   },
   "U.object.6": {
     "id": "U.object.6",
@@ -557,7 +617,17 @@
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "L.object.6",
       "baseAssetSha256": "b3b51c11ab38f9d0c5c5cfeb44f075643af6f0bfc892908ccd8712a119e416e3"
-    }
+    },
+    "tagReferences": [
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ]
   },
   "U.object.7": {
     "id": "U.object.7",
@@ -637,7 +707,17 @@
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "L.object.7",
       "baseAssetSha256": "e72bd4801b6727948131b186250bd1fac25b727a29ae4fadb464ae95b511ef8a"
-    }
+    },
+    "tagReferences": [
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ]
   },
   "U.object.8": {
     "id": "U.object.8",
@@ -717,7 +797,17 @@
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "L.object.8",
       "baseAssetSha256": "aabe352ce90163a679ad67d9e613375fc781978e4a203a187e05cff54b6e8328"
-    }
+    },
+    "tagReferences": [
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ]
   },
   "U.object.9": {
     "id": "U.object.9",
@@ -797,6 +887,16 @@
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "L.object.9",
       "baseAssetSha256": "8b72ee8d4d63557e6a543a80db6535e709da76771d92dd6749efdc11a34e8a05"
-    }
+    },
+    "tagReferences": [
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ]
   }
 }

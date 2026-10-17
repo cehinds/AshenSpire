@@ -82,10 +82,28 @@
     },
     "anchors": {
       "stoneHead": {
-        "x": 0.77,
-        "y": 0.24
+        "x": 0.74,
+        "y": 0.27
       }
-    }
+    },
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      }
+    ]
   },
   "V.object.1": {
     "id": "V.object.1",
@@ -170,10 +188,28 @@
     },
     "anchors": {
       "stoneHead": {
-        "x": 0.77,
-        "y": 0.24
+        "x": 0.74,
+        "y": 0.27
       }
-    }
+    },
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      }
+    ]
   },
   "V.object.2": {
     "id": "V.object.2",
@@ -258,10 +294,28 @@
     },
     "anchors": {
       "stoneHead": {
-        "x": 0.77,
-        "y": 0.24
+        "x": 0.74,
+        "y": 0.27
       }
-    }
+    },
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      }
+    ]
   },
   "V.object.3": {
     "id": "V.object.3",
@@ -346,10 +400,28 @@
     },
     "anchors": {
       "stoneHead": {
-        "x": 0.77,
-        "y": 0.24
+        "x": 0.74,
+        "y": 0.27
       }
-    }
+    },
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      }
+    ]
   },
   "V.object.4": {
     "id": "V.object.4",
@@ -434,10 +506,28 @@
     },
     "anchors": {
       "stoneHead": {
-        "x": 0.77,
-        "y": 0.24
+        "x": 0.74,
+        "y": 0.27
       }
-    }
+    },
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      }
+    ]
   },
   "V.object.5": {
     "id": "V.object.5",
@@ -522,10 +612,28 @@
     },
     "anchors": {
       "stoneHead": {
-        "x": 0.77,
-        "y": 0.24
+        "x": 0.74,
+        "y": 0.27
       }
-    }
+    },
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      }
+    ]
   },
   "V.object.6": {
     "id": "V.object.6",
@@ -610,10 +718,28 @@
     },
     "anchors": {
       "stoneHead": {
-        "x": 0.77,
-        "y": 0.24
+        "x": 0.74,
+        "y": 0.27
       }
-    }
+    },
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      }
+    ]
   },
   "V.object.7": {
     "id": "V.object.7",
@@ -698,10 +824,28 @@
     },
     "anchors": {
       "stoneHead": {
-        "x": 0.77,
-        "y": 0.24
+        "x": 0.74,
+        "y": 0.27
       }
-    }
+    },
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      }
+    ]
   },
   "V.object.8": {
     "id": "V.object.8",
@@ -786,10 +930,28 @@
     },
     "anchors": {
       "stoneHead": {
-        "x": 0.77,
-        "y": 0.24
+        "x": 0.74,
+        "y": 0.27
       }
-    }
+    },
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      }
+    ]
   },
   "V.object.9": {
     "id": "V.object.9",
@@ -874,9 +1036,27 @@
     },
     "anchors": {
       "stoneHead": {
-        "x": 0.77,
-        "y": 0.24
+        "x": 0.74,
+        "y": 0.27
       }
-    }
+    },
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      }
+    ]
   }
 }

@@ -79,7 +79,17 @@
       "baseAssetSha256": "12e6a6bc0e0675b6b3edf04c71415233da06b1a8c80cd5df836546d1a39b1327"
     },
     "condition": "broken",
-    "intactAssetId": "K.object.0"
+    "intactAssetId": "K.object.0",
+    "tagReferences": [
+      {
+        "id": "maneuver:smash",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "smash"
+        }
+      }
+    ]
   },
   "R.object.1": {
     "id": "R.object.1",
@@ -161,7 +171,17 @@
       "baseAssetSha256": "79c5091899673231cf406ee2e732345159c2e21054f0eefede4a4d4d44a73b3d"
     },
     "condition": "broken",
-    "intactAssetId": "K.object.1"
+    "intactAssetId": "K.object.1",
+    "tagReferences": [
+      {
+        "id": "maneuver:smash",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "smash"
+        }
+      }
+    ]
   },
   "R.object.2": {
     "id": "R.object.2",
@@ -243,7 +263,17 @@
       "baseAssetSha256": "1f5e17e6ee92846fb29f48e9e387ae9b7e542b9f6572e2cab4bb13a8c826e8a7"
     },
     "condition": "broken",
-    "intactAssetId": "K.object.2"
+    "intactAssetId": "K.object.2",
+    "tagReferences": [
+      {
+        "id": "maneuver:smash",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "smash"
+        }
+      }
+    ]
   },
   "R.object.3": {
     "id": "R.object.3",
@@ -325,7 +355,17 @@
       "baseAssetSha256": "fb576526b926e39b58ee363134b9649f971bddc891a73214d186d483b8cffae0"
     },
     "condition": "broken",
-    "intactAssetId": "K.object.3"
+    "intactAssetId": "K.object.3",
+    "tagReferences": [
+      {
+        "id": "maneuver:smash",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "smash"
+        }
+      }
+    ]
   },
   "R.object.4": {
     "id": "R.object.4",
@@ -407,7 +447,17 @@
       "baseAssetSha256": "e5053cbbd7fbe81d6214193bda778829c06aa13e0fe253037aed402753ac32ce"
     },
     "condition": "broken",
-    "intactAssetId": "K.object.4"
+    "intactAssetId": "K.object.4",
+    "tagReferences": [
+      {
+        "id": "maneuver:smash",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "smash"
+        }
+      }
+    ]
   },
   "R.object.5": {
     "id": "R.object.5",
@@ -489,7 +539,17 @@
       "baseAssetSha256": "d21d2d4a87c92780a769c33daeb4e4e543aa67937e51c3f1135c5a55765eb7a5"
     },
     "condition": "broken",
-    "intactAssetId": "K.object.5"
+    "intactAssetId": "K.object.5",
+    "tagReferences": [
+      {
+        "id": "maneuver:smash",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "smash"
+        }
+      }
+    ]
   },
   "R.object.6": {
     "id": "R.object.6",
@@ -571,7 +631,17 @@
       "baseAssetSha256": "7e84b4e93a5e4c2f91c4c719d9ddddd1341848ee2140a1742e10069df8bfe274"
     },
     "condition": "broken",
-    "intactAssetId": "K.object.6"
+    "intactAssetId": "K.object.6",
+    "tagReferences": [
+      {
+        "id": "maneuver:smash",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "smash"
+        }
+      }
+    ]
   },
   "R.object.7": {
     "id": "R.object.7",
@@ -653,7 +723,17 @@
       "baseAssetSha256": "11b8cb8e627f1a4af1d9f7d907101f0341e10958b73b1839570c2fbbe86f9ef6"
     },
     "condition": "broken",
-    "intactAssetId": "K.object.7"
+    "intactAssetId": "K.object.7",
+    "tagReferences": [
+      {
+        "id": "maneuver:smash",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "smash"
+        }
+      }
+    ]
   },
   "R.object.8": {
     "id": "R.object.8",
@@ -735,7 +815,17 @@
       "baseAssetSha256": "3eed4249c3ed4f82c9af1eeab185ca8056ed096a7bee6b0bbd6b531acad4957b"
     },
     "condition": "broken",
-    "intactAssetId": "K.object.8"
+    "intactAssetId": "K.object.8",
+    "tagReferences": [
+      {
+        "id": "maneuver:smash",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "smash"
+        }
+      }
+    ]
   },
   "R.object.9": {
     "id": "R.object.9",
@@ -817,6 +907,16 @@
       "baseAssetSha256": "93a53a66f743542a37811459b95bcf5e067047b7603fa7ec816abcabab34407b"
     },
     "condition": "broken",
-    "intactAssetId": "K.object.9"
+    "intactAssetId": "K.object.9",
+    "tagReferences": [
+      {
+        "id": "maneuver:smash",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "smash"
+        }
+      }
+    ]
   }
 }

@@ -12,11 +12,11 @@
     "hasTransparency": true,
     "alphaBounds": [
       32,
-      32,
+      36,
       480,
-      479
+      476
     ],
-    "sha256": "c560adee86e28197be8c6359c8bc564758dbcf80f3bd31ca8faab7f5ffa38432",
+    "sha256": "feb9dbd239faaa30d32a270e8fc7a5d26fa17efc06e64b05ae3bd251d9e1e3d5",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -69,22 +69,56 @@
         "height": 396
       },
       "extractionCrop": {
-        "x": 0,
-        "y": 0,
-        "width": 397,
-        "height": 396
+        "x": 78,
+        "y": 92,
+        "width": 277,
+        "height": 272
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "V.object.0"
     },
     "anchors": {
       "emissionRoot": {
-        "x": 0.14,
-        "y": 0.86
+        "x": 0.188459,
+        "y": 0.795168
       }
     },
     "magicRole": "ranged-projectile",
-    "elementProposal": "divine"
+    "elementProposal": "divine",
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "range:ranged",
+        "binding": {
+          "domain": "range",
+          "role": "secondary",
+          "recipe": "symbol.bow"
+        }
+      },
+      {
+        "id": "school:divine",
+        "binding": {
+          "domain": "school",
+          "role": "secondary",
+          "recipe": "symbol.sun"
+        }
+      }
+    ]
   },
   "Z.effect.1": {
     "id": "Z.effect.1",
@@ -99,11 +133,11 @@
     "hasTransparency": true,
     "alphaBounds": [
       32,
-      39,
+      36,
       480,
-      472
+      475
     ],
-    "sha256": "585796be5b14a2b519bc387b9c45a9a5cf1b40659ef96c4030585f48957c3b70",
+    "sha256": "dd450cebf23e31b571b0fe2907e0f257a564ac9ee4d68b66d37d63063f4b1734",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -156,22 +190,49 @@
         "height": 396
       },
       "extractionCrop": {
-        "x": 397,
-        "y": 0,
-        "width": 396,
-        "height": 396
+        "x": 471,
+        "y": 86,
+        "width": 285,
+        "height": 279
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "V.object.1"
     },
     "anchors": {
       "emissionRoot": {
-        "x": 0.14,
-        "y": 0.86
+        "x": 0.240551,
+        "y": 0.721945
       }
     },
     "magicRole": "ranged-projectile",
-    "elementProposal": "necrotic"
+    "elementProposal": "necrotic",
+    "elementMappingNote": "Visual proposal; no matching element tag exists in the pinned catalog. Uses existing spell/magic/ranged identities.",
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "range:ranged",
+        "binding": {
+          "domain": "range",
+          "role": "secondary",
+          "recipe": "symbol.bow"
+        }
+      }
+    ]
   },
   "Z.effect.2": {
     "id": "Z.effect.2",
@@ -186,11 +247,11 @@
     "hasTransparency": true,
     "alphaBounds": [
       32,
-      33,
+      37,
       480,
-      479
+      474
     ],
-    "sha256": "10f186887663f83447f0ff3d2942aaef0f61883e4449f358b057dcaeb32b4140",
+    "sha256": "359a32aa1956e9a1a3ff6db8b0176c040c4a31b1eb7d8ea59f8754ef323d8586",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -243,22 +304,56 @@
         "height": 396
       },
       "extractionCrop": {
-        "x": 793,
-        "y": 0,
-        "width": 397,
-        "height": 396
+        "x": 861,
+        "y": 90,
+        "width": 280,
+        "height": 273
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "V.object.2"
     },
     "anchors": {
       "emissionRoot": {
-        "x": 0.14,
-        "y": 0.86
+        "x": 0.194816,
+        "y": 0.794898
       }
     },
     "magicRole": "ranged-projectile",
-    "elementProposal": "force"
+    "elementProposal": "force",
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "range:ranged",
+        "binding": {
+          "domain": "range",
+          "role": "secondary",
+          "recipe": "symbol.bow"
+        }
+      },
+      {
+        "id": "school:force",
+        "binding": {
+          "domain": "school",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      }
+    ]
   },
   "Z.effect.3": {
     "id": "Z.effect.3",
@@ -273,11 +368,11 @@
     "hasTransparency": true,
     "alphaBounds": [
       32,
-      32,
+      54,
       480,
-      480
+      458
     ],
-    "sha256": "5721627cd435eec7731008b365d3bc3dbe0d2de0504440cfee3c46c95f4199e3",
+    "sha256": "caeba8a5a71af912ac16108db6d460e0827c0536a6a7d7c4259fd89b0b1279ac",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -330,22 +425,56 @@
         "height": 396
       },
       "extractionCrop": {
-        "x": 1190,
-        "y": 0,
-        "width": 396,
-        "height": 396
+        "x": 1248,
+        "y": 93,
+        "width": 303,
+        "height": 273
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "V.object.3"
     },
     "anchors": {
       "emissionRoot": {
-        "x": 0.14,
-        "y": 0.86
+        "x": 0.19506,
+        "y": 0.763931
       }
     },
     "magicRole": "ranged-projectile",
-    "elementProposal": "earth"
+    "elementProposal": "earth",
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "range:ranged",
+        "binding": {
+          "domain": "range",
+          "role": "secondary",
+          "recipe": "symbol.bow"
+        }
+      },
+      {
+        "id": "school:earth",
+        "binding": {
+          "domain": "school",
+          "role": "secondary",
+          "recipe": "symbol.stone"
+        }
+      }
+    ]
   },
   "Z.effect.4": {
     "id": "Z.effect.4",
@@ -359,12 +488,12 @@
     "height": 512,
     "hasTransparency": true,
     "alphaBounds": [
-      38,
+      42,
       32,
-      473,
+      469,
       480
     ],
-    "sha256": "fc841a50b39e3f1a5734332cb1e4d5bb217689023247ebf832f99cbd3e5a3b12",
+    "sha256": "4e1eec252a07ea227750def11e30102e1f5c1037627a66fda369fe1075a1c9bf",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -417,22 +546,56 @@
         "height": 396
       },
       "extractionCrop": {
-        "x": 1586,
-        "y": 0,
-        "width": 397,
-        "height": 396
+        "x": 1657,
+        "y": 94,
+        "width": 258,
+        "height": 271
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "V.object.4"
     },
     "anchors": {
       "emissionRoot": {
-        "x": 0.14,
-        "y": 0.86
+        "x": 0.226006,
+        "y": 0.815847
       }
     },
     "magicRole": "ranged-projectile",
-    "elementProposal": "frost"
+    "elementProposal": "frost",
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "range:ranged",
+        "binding": {
+          "domain": "range",
+          "role": "secondary",
+          "recipe": "symbol.bow"
+        }
+      },
+      {
+        "id": "school:frost",
+        "binding": {
+          "domain": "school",
+          "role": "secondary",
+          "recipe": "symbol.crystal"
+        }
+      }
+    ]
   },
   "Z.effect.5": {
     "id": "Z.effect.5",
@@ -446,12 +609,12 @@
     "height": 512,
     "hasTransparency": true,
     "alphaBounds": [
-      44,
       32,
-      468,
-      480
+      46,
+      480,
+      465
     ],
-    "sha256": "4e863cbb5c46d16aaba13454eb97810bd42c43b5d46faa6c14d90dbef03cc6a5",
+    "sha256": "fed347c223237ed7ea926916f8dadf97494ce2ff21c30aa7c9ca790f96b09b02",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -504,22 +667,56 @@
         "height": 397
       },
       "extractionCrop": {
-        "x": 0,
-        "y": 396,
-        "width": 397,
-        "height": 397
+        "x": 72,
+        "y": 462,
+        "width": 282,
+        "height": 264
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "V.object.5"
     },
     "anchors": {
       "emissionRoot": {
-        "x": 0.14,
-        "y": 0.86
+        "x": 0.182438,
+        "y": 0.798446
       }
     },
     "magicRole": "ranged-projectile",
-    "elementProposal": "fire"
+    "elementProposal": "fire",
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "range:ranged",
+        "binding": {
+          "domain": "range",
+          "role": "secondary",
+          "recipe": "symbol.bow"
+        }
+      },
+      {
+        "id": "school:fire",
+        "binding": {
+          "domain": "school",
+          "role": "secondary",
+          "recipe": "symbol.flame"
+        }
+      }
+    ]
   },
   "Z.effect.6": {
     "id": "Z.effect.6",
@@ -534,11 +731,11 @@
     "hasTransparency": true,
     "alphaBounds": [
       32,
-      39,
+      48,
       480,
-      472
+      463
     ],
-    "sha256": "1f434ba09f9ca9e668faf680935607550862b4df568ba233859670170879e4bb",
+    "sha256": "ed11de9ac9639a0efe3136cda85854b5e819df7f881fb87284ef2fcd98ac1f0e",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -591,22 +788,56 @@
         "height": 397
       },
       "extractionCrop": {
-        "x": 397,
-        "y": 396,
-        "width": 396,
-        "height": 397
+        "x": 471,
+        "y": 460,
+        "width": 285,
+        "height": 264
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "V.object.6"
     },
     "anchors": {
       "emissionRoot": {
-        "x": 0.14,
-        "y": 0.86
+        "x": 0.185491,
+        "y": 0.794824
       }
     },
     "magicRole": "ranged-projectile",
-    "elementProposal": "lightning"
+    "elementProposal": "lightning",
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "range:ranged",
+        "binding": {
+          "domain": "range",
+          "role": "secondary",
+          "recipe": "symbol.bow"
+        }
+      },
+      {
+        "id": "school:lightning",
+        "binding": {
+          "domain": "school",
+          "role": "secondary",
+          "recipe": "symbol.bolt"
+        }
+      }
+    ]
   },
   "Z.effect.7": {
     "id": "Z.effect.7",
@@ -621,11 +852,11 @@
     "hasTransparency": true,
     "alphaBounds": [
       32,
-      45,
+      33,
       480,
-      467
+      478
     ],
-    "sha256": "1382a0a9e06744705003a7f3c8b6e3578f195ad879a0f585ea4ddb7cc4b67699",
+    "sha256": "8141bf7def0f16efc007b015e20c05537a337dd29a0bfcedbc40078913ad2488",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -678,22 +909,56 @@
         "height": 397
       },
       "extractionCrop": {
-        "x": 793,
-        "y": 396,
-        "width": 397,
-        "height": 397
+        "x": 856,
+        "y": 458,
+        "width": 265,
+        "height": 263
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "V.object.7"
     },
     "anchors": {
       "emissionRoot": {
-        "x": 0.14,
-        "y": 0.86
+        "x": 0.191455,
+        "y": 0.807456
       }
     },
     "magicRole": "ranged-projectile",
-    "elementProposal": "psychic"
+    "elementProposal": "psychic",
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "range:ranged",
+        "binding": {
+          "domain": "range",
+          "role": "secondary",
+          "recipe": "symbol.bow"
+        }
+      },
+      {
+        "id": "damage:psychic",
+        "binding": {
+          "domain": "damageType",
+          "role": "secondary",
+          "recipe": "symbol.spiral"
+        }
+      }
+    ]
   },
   "Z.effect.8": {
     "id": "Z.effect.8",
@@ -707,12 +972,12 @@
     "height": 512,
     "hasTransparency": true,
     "alphaBounds": [
-      33,
       32,
-      478,
-      480
+      42,
+      480,
+      470
     ],
-    "sha256": "647610ef44561309d08190ff16bcf528f82435f9bee486130ad2e069137cf793",
+    "sha256": "b096bb2542c8af7dca5cdf32b1635fade02936c3dbd4e4d5572e9dcd581c0337",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -765,22 +1030,56 @@
         "height": 397
       },
       "extractionCrop": {
-        "x": 1190,
-        "y": 396,
-        "width": 396,
-        "height": 397
+        "x": 1256,
+        "y": 461,
+        "width": 275,
+        "height": 263
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "V.object.8"
     },
     "anchors": {
       "emissionRoot": {
-        "x": 0.14,
-        "y": 0.86
+        "x": 0.180136,
+        "y": 0.806894
       }
     },
     "magicRole": "ranged-projectile",
-    "elementProposal": "alteration"
+    "elementProposal": "alteration",
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "range:ranged",
+        "binding": {
+          "domain": "range",
+          "role": "secondary",
+          "recipe": "symbol.bow"
+        }
+      },
+      {
+        "id": "school:alteration",
+        "binding": {
+          "domain": "school",
+          "role": "secondary",
+          "recipe": "symbol.mirror"
+        }
+      }
+    ]
   },
   "Z.effect.9": {
     "id": "Z.effect.9",
@@ -795,11 +1094,11 @@
     "hasTransparency": true,
     "alphaBounds": [
       32,
-      32,
-      479,
-      480
+      45,
+      480,
+      467
     ],
-    "sha256": "6bd9b8141b7ce1ca78f851897d976655f097dab0b986a662a1ebde780925b2ba",
+    "sha256": "cdd61dbf3244cd0a6bcecea191102b3c1ecfbe25c5911934aafa4d2517f6698c",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -852,21 +1151,48 @@
         "height": 397
       },
       "extractionCrop": {
-        "x": 1586,
-        "y": 396,
-        "width": 397,
-        "height": 397
+        "x": 1650,
+        "y": 464,
+        "width": 274,
+        "height": 258
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "V.object.9"
     },
     "anchors": {
       "emissionRoot": {
-        "x": 0.14,
-        "y": 0.86
+        "x": 0.211246,
+        "y": 0.771929
       }
     },
     "magicRole": "ranged-projectile",
-    "elementProposal": "wind"
+    "elementProposal": "wind",
+    "elementMappingNote": "Visual proposal; no matching element tag exists in the pinned catalog. Uses existing spell/magic/ranged identities.",
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "range:ranged",
+        "binding": {
+          "domain": "range",
+          "role": "secondary",
+          "recipe": "symbol.bow"
+        }
+      }
+    ]
   }
 }

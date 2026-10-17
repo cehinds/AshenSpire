@@ -79,7 +79,8 @@
       "baseAssetSha256": "9f2f5770c2de5d8a6f48089fc423790a49ae8cf059a44deeff3b018075e24fef"
     },
     "condition": "broken",
-    "intactAssetId": "I.object.0"
+    "intactAssetId": "I.object.0",
+    "tagReferences": []
   },
   "T.object.1": {
     "id": "T.object.1",
@@ -161,7 +162,8 @@
       "baseAssetSha256": "3dffea62c7babafb6d42b07d06244bbbb7da588bc33ff05e1c1b10a7ac319971"
     },
     "condition": "broken",
-    "intactAssetId": "I.object.1"
+    "intactAssetId": "I.object.1",
+    "tagReferences": []
   },
   "T.object.2": {
     "id": "T.object.2",
@@ -243,7 +245,8 @@
       "baseAssetSha256": "51174fb593b5cae636bff4e949d0b9a278268589f700c86039bee1f0e2e0850e"
     },
     "condition": "broken",
-    "intactAssetId": "I.object.2"
+    "intactAssetId": "I.object.2",
+    "tagReferences": []
   },
   "T.object.3": {
     "id": "T.object.3",
@@ -325,7 +328,8 @@
       "baseAssetSha256": "2177cdd3f6a2b71f1b737a1b0a94870a56f3fbecef65de4d61b5c686c3865751"
     },
     "condition": "broken",
-    "intactAssetId": "I.object.3"
+    "intactAssetId": "I.object.3",
+    "tagReferences": []
   },
   "T.object.4": {
     "id": "T.object.4",
@@ -407,7 +411,8 @@
       "baseAssetSha256": "74a442ddd63123f2ad7754f09d873ce5c6f667e8bbbabe757e89467fafe89e51"
     },
     "condition": "broken",
-    "intactAssetId": "I.object.4"
+    "intactAssetId": "I.object.4",
+    "tagReferences": []
   },
   "T.object.5": {
     "id": "T.object.5",
@@ -489,7 +494,8 @@
       "baseAssetSha256": "d9f4e6c2307f659a03776314e9b59d71f17cbc1c918940f27e8b7bf71a85dd5c"
     },
     "condition": "broken",
-    "intactAssetId": "I.object.5"
+    "intactAssetId": "I.object.5",
+    "tagReferences": []
   },
   "T.object.6": {
     "id": "T.object.6",
@@ -571,7 +577,8 @@
       "baseAssetSha256": "87954d8bfb0550163cc540ecb339968750a52406647732bc9ab8a14ef67cbea8"
     },
     "condition": "broken",
-    "intactAssetId": "I.object.6"
+    "intactAssetId": "I.object.6",
+    "tagReferences": []
   },
   "T.object.7": {
     "id": "T.object.7",
@@ -653,7 +660,8 @@
       "baseAssetSha256": "196c04d0b8032110a51f51b7692ee1f5216e67838f03cff2f88ce1162f43f125"
     },
     "condition": "broken",
-    "intactAssetId": "I.object.7"
+    "intactAssetId": "I.object.7",
+    "tagReferences": []
   },
   "T.object.8": {
     "id": "T.object.8",
@@ -735,7 +743,8 @@
       "baseAssetSha256": "7d8432d16d8434604073a18370cd0230e643c6a4a7274fcea047721d88bee0b6"
     },
     "condition": "broken",
-    "intactAssetId": "I.object.8"
+    "intactAssetId": "I.object.8",
+    "tagReferences": []
   },
   "T.object.9": {
     "id": "T.object.9",
@@ -817,6 +826,7 @@
       "baseAssetSha256": "8304a7725298bda52b7f67bfd9e4c4490f69ce623c38950fe5ac0c8253059cfd"
     },
     "condition": "broken",
-    "intactAssetId": "I.object.9"
+    "intactAssetId": "I.object.9",
+    "tagReferences": []
   }
 }

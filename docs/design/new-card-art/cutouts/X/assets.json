@@ -79,7 +79,17 @@
       "baseAssetSha256": "e758a1690cf44436dfa75f7110a4427ae970c9a5f5e3d492449b3a6a9b246b1f"
     },
     "condition": "broken",
-    "intactAssetId": "B.object.0"
+    "intactAssetId": "B.object.0",
+    "tagReferences": [
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ]
   },
   "X.object.1": {
     "id": "X.object.1",
@@ -161,7 +171,17 @@
       "baseAssetSha256": "da1a8925014789482bc59d82328a97b52fc33291ad761e553ddf3ea3d3441980"
     },
     "condition": "broken",
-    "intactAssetId": "B.object.1"
+    "intactAssetId": "B.object.1",
+    "tagReferences": [
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ]
   },
   "X.object.2": {
     "id": "X.object.2",
@@ -243,7 +263,17 @@
       "baseAssetSha256": "fd945583e750ff93a7bf7d624b7d36d216bd212911c579b82279c47fc77dcdce"
     },
     "condition": "broken",
-    "intactAssetId": "B.object.2"
+    "intactAssetId": "B.object.2",
+    "tagReferences": [
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ]
   },
   "X.object.3": {
     "id": "X.object.3",
@@ -325,7 +355,17 @@
       "baseAssetSha256": "3f8b1892f5fd249910e33a4cadbe16f5dc76ae91d18fe52089ff86b15b828b81"
     },
     "condition": "broken",
-    "intactAssetId": "B.object.3"
+    "intactAssetId": "B.object.3",
+    "tagReferences": [
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ]
   },
   "X.object.4": {
     "id": "X.object.4",
@@ -407,7 +447,17 @@
       "baseAssetSha256": "97a96e13440deffbf15ff7e5b70c4a086e9d160122eaa5236eb83e09d6f95c26"
     },
     "condition": "broken",
-    "intactAssetId": "B.object.4"
+    "intactAssetId": "B.object.4",
+    "tagReferences": [
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ]
   },
   "X.object.5": {
     "id": "X.object.5",
@@ -489,7 +539,17 @@
       "baseAssetSha256": "95d5bb6e6a1d709558bd204ec274a269331acc6eaeea19aa2b77053bb80dbd50"
     },
     "condition": "broken",
-    "intactAssetId": "B.object.5"
+    "intactAssetId": "B.object.5",
+    "tagReferences": [
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ]
   },
   "X.object.6": {
     "id": "X.object.6",
@@ -571,7 +631,17 @@
       "baseAssetSha256": "83c6e0a1f357c452113f26449948399ddbf8c152995ec874e4ddc7cc0079d335"
     },
     "condition": "broken",
-    "intactAssetId": "B.object.6"
+    "intactAssetId": "B.object.6",
+    "tagReferences": [
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ]
   },
   "X.object.7": {
     "id": "X.object.7",
@@ -653,7 +723,17 @@
       "baseAssetSha256": "a3f12ac647d02c2be098308592a5b729c361162d686c0cf4776c1ad1bd4c21ef"
     },
     "condition": "broken",
-    "intactAssetId": "B.object.7"
+    "intactAssetId": "B.object.7",
+    "tagReferences": [
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ]
   },
   "X.object.8": {
     "id": "X.object.8",
@@ -735,7 +815,17 @@
       "baseAssetSha256": "f71bcb94e2e65e37364f5fc780e51b01b0a42a79e1bb48740cbe8ad5df0c101c"
     },
     "condition": "broken",
-    "intactAssetId": "B.object.8"
+    "intactAssetId": "B.object.8",
+    "tagReferences": [
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ]
   },
   "X.object.9": {
     "id": "X.object.9",
@@ -817,6 +907,16 @@
       "baseAssetSha256": "d7757063b087d26927c6292be1b51befd3ede9b0dd27f8f2159e10def0af1dec"
     },
     "condition": "broken",
-    "intactAssetId": "B.object.9"
+    "intactAssetId": "B.object.9",
+    "tagReferences": [
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ]
   }
 }

@@ -1,6 +1,10 @@
-## Current set: existing-art components
+## Current set: broken objects, Sweep scythes and magic scepters
 
-Revision 5 adds 30 reconstructed components from ten existing card illustrations and two unchanged native inventory PNGs. [Compare sources and layers](source-breakdown.html), [edit compositions](cutouts.html?category=O), or [download the current pack](card-art-cutouts-v5.zip). JSON includes source provenance and CSS transforms. A–N IDs remain unchanged. Total: 262 PNGs, 132 physical objects plus ten cleansing fires, and 1,520 compositions.
+Revision 6 adds 80 objects and 20 separate magic overlays. [View broken variants and scepter magic](expansion-v6.html), [edit melee layers](cutouts.html?category=Y), [edit projectiles](cutouts.html?category=Z), or [download the current pack](card-art-cutouts-v6.zip). Ethereal weapons attach to the stone; ranged projectiles remain separate PNGs. All A–P IDs are preserved. Total: 362 PNGs and 2,520 compositions.
+
+## Previous set: existing-art components
+
+Revision 5 adds 30 reconstructed components from ten existing card illustrations and two unchanged native inventory PNGs. [Compare sources and layers](source-breakdown.html), [edit compositions](cutouts.html?category=O), or [download revision 5](card-art-cutouts-v5.zip). JSON includes source provenance and CSS transforms. A–N IDs remain unchanged. Total: 262 PNGs, 132 physical objects plus ten cleansing fires, and 1,520 compositions.
 
 ## Previous expansion: spellbooks and more weapons
 
