@@ -1,0 +1,22 @@
+{
+  "$schema": "../schemas/module.schema.json",
+  "kind": "catalog",
+  "id": "effects",
+  "items": [
+    {
+      "id": "muddy-footing",
+      "productionBinding": null,
+      "movementCostMultiplier": 1.25
+    },
+    {
+      "id": "reveal-connected-fragment",
+      "productionBinding": null,
+      "revealRuleId": "connected-fragment-reveal"
+    },
+    {
+      "id": "reveal-road-map",
+      "productionBinding": null,
+      "revealRuleId": "road-map-reveal"
+    }
+  ]
+}

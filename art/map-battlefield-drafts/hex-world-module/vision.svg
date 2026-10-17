@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="880" viewBox="0 0 1280 880"><style>text{font-family:Arial,sans-serif;fill:#e4ebe6}.title{font-size:28px;font-weight:bold}.heading{font-size:20px;font-weight:bold}.body{font-size:16px}.small{font-size:14px;fill:#a9bdc0}.address{font-size:21px;font-weight:bold}</style><rect width="1280" height="880" fill="#142126"/><text x="32" y="46" class="title">HEX WORLD MODULE · authored map + reusable content pools</text><text x="32" y="75" class="body">Six example tiles · prototype coordinates · grid and address labels are debug views</text>
+<rect x="24" y="100" width="700" height="460" rx="12" fill="#1e3035"/>
+<rect x="744" y="100" width="512" height="460" rx="12" fill="#1e3035"/>
+<text x="44" y="134" class="heading" text-anchor="start">1 · Connected example patch</text>
+<text x="764" y="134" class="heading" text-anchor="start">2 · Six sides + one rotation</text>
+<polygon points="170.4,257.0 225.9,289.0 225.9,353.0 170.4,385.0 115.0,353.0 115.0,289.0" fill="#66583d" stroke="#9db7a7" stroke-width="2"/>
+<polygon points="281.3,257.0 336.7,289.0 336.7,353.0 281.3,385.0 225.9,353.0 225.9,289.0" fill="#536252" stroke="#9db7a7" stroke-width="2"/>
+<polygon points="392.1,257.0 447.6,289.0 447.6,353.0 392.1,385.0 336.7,353.0 336.7,289.0" fill="#365a45" stroke="#9db7a7" stroke-width="2"/>
+<polygon points="336.7,161.0 392.1,193.0 392.1,257.0 336.7,289.0 281.3,257.0 281.3,193.0" fill="#295d6d" stroke="#9db7a7" stroke-width="2"/>
+<polygon points="225.9,353.0 281.3,385.0 281.3,449.0 225.9,481.0 170.4,449.0 170.4,385.0" fill="#295d6d" stroke="#9db7a7" stroke-width="2"/>
+<polygon points="447.6,353.0 503.0,385.0 503.0,449.0 447.6,481.0 392.1,449.0 392.1,385.0" fill="#365a45" stroke="#9db7a7" stroke-width="2"/>
+<polyline points="336.7,225.0 281.3,321.0 225.9,417.0" fill="none" stroke="#55c3df" stroke-width="11" stroke-linejoin="round" opacity=".85"/>
+<polyline points="170.4,321.0 281.3,321.0 392.1,321.0 447.6,417.0" fill="none" stroke="#e7c386" stroke-width="7" stroke-linejoin="round" opacity=".85"/>
+<text x="170.42562584220406" y="299.0" class="address" text-anchor="middle">A2</text>
+<text x="170.42562584220406" y="351.0" class="small" text-anchor="middle">Town</text>
+<text x="281.2768775266122" y="299.0" class="address" text-anchor="middle">B2</text>
+<text x="281.2768775266122" y="351.0" class="small" text-anchor="middle">Bridge</text>
+<text x="392.12812921102034" y="299.0" class="address" text-anchor="middle">C2</text>
+<text x="392.12812921102034" y="351.0" class="small" text-anchor="middle">Forest road</text>
+<text x="336.7025033688163" y="203.0" class="address" text-anchor="middle">C1</text>
+<text x="336.7025033688163" y="255.0" class="small" text-anchor="middle">River in</text>
+<text x="225.85125168440814" y="395.0" class="address" text-anchor="middle">B3</text>
+<text x="225.85125168440814" y="447.0" class="small" text-anchor="middle">River out</text>
+<text x="447.55375505322445" y="395.0" class="address" text-anchor="middle">D3</text>
+<text x="447.55375505322445" y="447.0" class="small" text-anchor="middle">Rest camp</text>
+<text x="44" y="520" class="body" text-anchor="start">Gold = road connections     Blue = river connections</text>
+<text x="44" y="543" class="small" text-anchor="start">Tags on every edge; connectors must agree with the neighboring edge.</text>
+<polygon points="996.0,187.0 1072.2,231.0 1072.2,319.0 996.0,363.0 919.8,319.0 919.8,231.0" fill="#536252" stroke="#b1c5b9" stroke-width="3"/>
+<text x="996" y="272" class="address" text-anchor="middle">B2</text>
+<text x="996" y="298" class="small" text-anchor="middle">60° clockwise</text>
+<text x="1156" y="280" class="small" text-anchor="middle">E · road</text>
+<text x="1116" y="374" class="small" text-anchor="middle">SE · bank</text>
+<text x="866" y="374" class="small" text-anchor="middle">SW · river OUT</text>
+<text x="837" y="280" class="small" text-anchor="middle">W · road</text>
+<text x="866" y="184" class="small" text-anchor="middle">NW · bank</text>
+<text x="1116" y="184" class="small" text-anchor="middle">NE · river IN</text>
+<text x="770" y="421" class="heading" text-anchor="start">Authored local side → world-facing side</text>
+<text x="770" y="451" class="body" text-anchor="start">NE → E road     SW → W road</text>
+<text x="770" y="479" class="body" text-anchor="start">NW → NE river in     SE → SW river out</text>
+<text x="770" y="518" class="small" text-anchor="start">Only map terrain/connectors use the hex rotation.</text>
+<text x="770" y="541" class="small" text-anchor="start">Buildings, skies and combat layers stay upright.</text>
+<rect x="24" y="580" width="700" height="272" rx="12" fill="#1e3035"/>
+<rect x="744" y="580" width="512" height="272" rx="12" fill="#1e3035"/>
+<text x="44" y="616" class="heading" text-anchor="start">3 · A tile references reusable JSON pools</text>
+<rect x="44" y="640" width="126" height="33" rx="6" fill="#4b6650"/>
+<text x="107" y="662" class="small" text-anchor="middle">TILE</text>
+<text x="185" y="662" class="body" text-anchor="start">position · biome · six sides · discovery</text>
+<rect x="44" y="685" width="126" height="33" rx="6" fill="#315c70"/>
+<text x="107" y="707" class="small" text-anchor="middle">ART</text>
+<text x="185" y="707" class="body" text-anchor="start">ground · skybox · props · filters · weather</text>
+<rect x="44" y="730" width="126" height="33" rx="6" fill="#675544"/>
+<text x="107" y="752" class="small" text-anchor="middle">GAMEPLAY</text>
+<text x="185" y="752" class="body" text-anchor="start">enemies · loot · quests · rest · effects</text>
+<rect x="44" y="775" width="126" height="33" rx="6" fill="#53506d"/>
+<text x="107" y="797" class="small" text-anchor="middle">SAVE STATE</text>
+<text x="185" y="797" class="body" text-anchor="start">revealed · visited · collected · defeated</text>
+<text x="764" y="616" class="heading" text-anchor="start">4 · Battlefield draw order</text>
+<text x="770" y="654" class="body" text-anchor="start">Skybox → lightning → rear props → ground</text>
+<text x="770" y="686" class="body" text-anchor="start">Actors → tint filters → fog / particles</text>
+<text x="770" y="718" class="body" text-anchor="start">HUD remains on top</text>
+<text x="770" y="772" class="small" text-anchor="start">One tag dictionary; no duplicated enemy definitions.</text>
+<text x="770" y="800" class="small" text-anchor="start">Seeded sparse placement + explicit reveal rules.</text>
+<text x="770" y="828" class="small" text-anchor="start">Draft data contract; game wiring is a separate step.</text>
+</svg>

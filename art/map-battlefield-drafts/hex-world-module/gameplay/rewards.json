@@ -1,0 +1,33 @@
+{
+  "$schema": "../schemas/module.schema.json",
+  "kind": "catalog",
+  "id": "rewards",
+  "items": [
+    {
+      "id": "proposed-provisions",
+      "productionBinding": null,
+      "description": "Proposed travel provision reward"
+    },
+    {
+      "id": "proposed-coin-cache",
+      "productionBinding": null,
+      "description": "Proposed currency reward"
+    },
+    {
+      "id": "connected-map-fragment",
+      "productionBinding": null,
+      "description": "Reveal a connected patch of three hexes",
+      "effectIds": [
+        "reveal-connected-fragment"
+      ]
+    },
+    {
+      "id": "road-map",
+      "productionBinding": null,
+      "description": "Reveal the road from town through bridge to camp",
+      "effectIds": [
+        "reveal-road-map"
+      ]
+    }
+  ]
+}

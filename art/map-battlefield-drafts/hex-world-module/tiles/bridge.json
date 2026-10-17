@@ -1,0 +1,105 @@
+{
+  "$schema": "../schemas/module.schema.json",
+  "kind": "tile",
+  "id": "bridge",
+  "name": "Bridge",
+  "position": {
+    "column": 1,
+    "row": 1,
+    "label": "B2"
+  },
+  "regionId": "proposed-greenward",
+  "productionBinding": null,
+  "biomeId": "riverbank",
+  "tags": [
+    "bridge",
+    "road",
+    "river"
+  ],
+  "orientationSteps": 1,
+  "sides": {
+    "E": {
+      "tags": [
+        "bank"
+      ],
+      "connector": null,
+      "missingNeighbor": "boundary"
+    },
+    "SE": {
+      "tags": [
+        "river"
+      ],
+      "connector": {
+        "kind": "river",
+        "flow": "out"
+      },
+      "missingNeighbor": "boundary"
+    },
+    "SW": {
+      "tags": [
+        "road"
+      ],
+      "connector": {
+        "kind": "road",
+        "flow": null
+      },
+      "missingNeighbor": "boundary"
+    },
+    "W": {
+      "tags": [
+        "bank"
+      ],
+      "connector": null,
+      "missingNeighbor": "boundary"
+    },
+    "NW": {
+      "tags": [
+        "river"
+      ],
+      "connector": {
+        "kind": "river",
+        "flow": "in"
+      },
+      "missingNeighbor": "boundary"
+    },
+    "NE": {
+      "tags": [
+        "road"
+      ],
+      "connector": {
+        "kind": "road",
+        "flow": null
+      },
+      "missingNeighbor": "boundary"
+    }
+  },
+  "art": {
+    "groundPoolId": "bridge-ground",
+    "skyboxPoolId": "open-sky",
+    "propsPoolId": "no-props",
+    "filtersPoolId": "time-of-day-filter",
+    "weatherPoolId": "clear-weather",
+    "spriteRotationDegrees": 0,
+    "rotateBattleSceneWithTile": false
+  },
+  "gameplay": {
+    "encounterPoolId": "river-encounters",
+    "encounterChance": 0.35,
+    "lootTableId": "travel-supplies",
+    "revealRuleId": "adjacent-reveal",
+    "restSpotId": null,
+    "trainerId": null,
+    "questIds": [],
+    "environmentEffectIds": [],
+    "movementCost": 1,
+    "difficultyTier": 1,
+    "entryRequirements": [],
+    "discoveryPoolId": "sparse-road-discoveries"
+  },
+  "mapArt": {
+    "terrainPoolId": null,
+    "propsPoolId": "map-bridge",
+    "rotateTerrainWithTile": true,
+    "keepMapPropsUpright": true
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "$schema": "./schemas/module.schema.json",
+  "kind": "map",
+  "id": "greenward-six-hex-example",
+  "status": "proposal-only",
+  "grid": {
+    "orientation": "pointy-top",
+    "layout": "odd-r",
+    "origin": "northwest",
+    "coordinates": "zero-based",
+    "addressStyle": "A1",
+    "clockwiseSides": [
+      "E",
+      "SE",
+      "SW",
+      "W",
+      "NW",
+      "NE"
+    ],
+    "rotationRule": "worldSideIndex = (localSideIndex + orientationSteps) % 6"
+  },
+  "bounds": {
+    "minColumn": 0,
+    "maxColumn": 3,
+    "minRow": 0,
+    "maxRow": 2
+  },
+  "allowHoles": true,
+  "regions": [
+    {
+      "id": "proposed-greenward",
+      "productionBinding": null
+    }
+  ],
+  "tiles": [
+    "tiles/westwatch.json",
+    "tiles/bridge.json",
+    "tiles/forest-road.json",
+    "tiles/upstream.json",
+    "tiles/downstream.json",
+    "tiles/rest-camp.json"
+  ],
+  "display": {
+    "showGridLines": false,
+    "showTileLabels": false
+  }
+}

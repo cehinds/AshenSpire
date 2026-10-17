@@ -1,0 +1,41 @@
+{
+  "$schema": "../schemas/module.schema.json",
+  "kind": "catalog",
+  "id": "reveal",
+  "items": [
+    {
+      "id": "adjacent-reveal",
+      "revealRadius": 1,
+      "onEnter": "reveal-neighbors",
+      "initialVisibility": "hidden"
+    },
+    {
+      "id": "connected-fragment-reveal",
+      "mode": "connected-patch",
+      "tileIds": [
+        "bridge",
+        "forest-road",
+        "rest-camp"
+      ],
+      "visibilityResult": "revealed",
+      "revealsFogOnly": true,
+      "triggersOnEnterDiscoveries": false,
+      "marksVisited": false
+    },
+    {
+      "id": "road-map-reveal",
+      "mode": "ordered-path",
+      "tileIds": [
+        "westwatch",
+        "bridge",
+        "forest-road",
+        "rest-camp"
+      ],
+      "visibilityResult": "revealed",
+      "revealsFogOnly": true,
+      "triggersOnEnterDiscoveries": false,
+      "marksVisited": false,
+      "requiredConnector": "road"
+    }
+  ]
+}

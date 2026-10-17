@@ -767,3 +767,12 @@ Exact prompts, reference paths, original outputs, measured dimensions and hashes
 are retained. Browser previews combine these unchanged sources with earlier
 backdrops and accents through editable recipes. The source library remains
 unregistered feature-branch art; no third-party artwork or license is claimed.
+
+### Hex world authoring module (2026-10-17)
+
+The JSON templates, connected example tiles, schemas and editable SVG overview in
+`art/map-battlefield-drafts/hex-world-module/` were authored with Codex under human
+direction. The diagram's PNG is a browser rendering of its adjacent SVG. Existing
+first-party draft paintings and technical map icons are referenced without new
+image generation or changes to their source files. This remains a proposal module
+with no production world bindings. No third-party artwork or license is claimed.

@@ -1,0 +1,16 @@
+{
+  "$schema": "../schemas/module.schema.json",
+  "kind": "catalog",
+  "id": "quests",
+  "items": [
+    {
+      "id": "secure-greenward",
+      "productionBinding": null,
+      "objective": "Scout the bridge and reach the rest camp",
+      "targetTileIds": [
+        "bridge",
+        "rest-camp"
+      ]
+    }
+  ]
+}

@@ -77,5 +77,13 @@
     "alpha-and-contact-cleanup"
   ],
   "productionBindings": null,
-  "overscanPolicy": "Atmosphere fields use twice the longest viewport edge. Regional landscape crops have measured edge room; portrait vertical camera travel and older paintings still need expanded source edges."
+  "overscanPolicy": "Atmosphere fields use twice the longest viewport edge. Regional landscape crops have measured edge room; portrait vertical camera travel and older paintings still need expanded source edges.",
+  "authoringModules": [
+    {
+      "id": "hex-world",
+      "file": "hex-world-module/index.json",
+      "guide": "hex-world-module/README.md",
+      "status": "proposal-only"
+    }
+  ]
 }

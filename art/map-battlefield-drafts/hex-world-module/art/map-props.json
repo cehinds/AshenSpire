@@ -1,0 +1,89 @@
+{
+  "$schema": "../schemas/module.schema.json",
+  "kind": "art",
+  "id": "map-props",
+  "assetBase": "../../../docs/design/improve-map-battlefield-art/props-examples",
+  "status": "technical-icon-placeholders",
+  "items": [
+    {
+      "id": "map-town",
+      "asset": "town.png",
+      "weight": 1,
+      "tags": [
+        "settlement",
+        "placeholder"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "status": "technical-icon-placeholder"
+    },
+    {
+      "id": "map-bridge",
+      "asset": "bridge.png",
+      "weight": 1,
+      "tags": [
+        "bridge",
+        "placeholder"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "status": "technical-icon-placeholder"
+    },
+    {
+      "id": "map-rest-camp",
+      "asset": "rest-camp.png",
+      "weight": 1,
+      "tags": [
+        "rest",
+        "placeholder"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "status": "technical-icon-placeholder"
+    }
+  ],
+  "pools": [
+    {
+      "id": "map-town",
+      "draw": {
+        "min": 1,
+        "max": 1
+      },
+      "replacement": false,
+      "itemIds": [
+        "map-town"
+      ]
+    },
+    {
+      "id": "map-bridge",
+      "draw": {
+        "min": 1,
+        "max": 1
+      },
+      "replacement": false,
+      "itemIds": [
+        "map-bridge"
+      ]
+    },
+    {
+      "id": "map-rest-camp",
+      "draw": {
+        "min": 1,
+        "max": 1
+      },
+      "replacement": false,
+      "itemIds": [
+        "map-rest-camp"
+      ]
+    }
+  ]
+}

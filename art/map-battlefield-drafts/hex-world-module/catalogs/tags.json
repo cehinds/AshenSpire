@@ -1,0 +1,95 @@
+{
+  "$schema": "../schemas/module.schema.json",
+  "kind": "catalog",
+  "id": "tags",
+  "items": [
+    {
+      "id": "grass",
+      "description": "grass"
+    },
+    {
+      "id": "stone",
+      "description": "stone"
+    },
+    {
+      "id": "road",
+      "description": "road"
+    },
+    {
+      "id": "river",
+      "description": "river"
+    },
+    {
+      "id": "bank",
+      "description": "bank"
+    },
+    {
+      "id": "forest",
+      "description": "forest"
+    },
+    {
+      "id": "wetland",
+      "description": "wetland"
+    },
+    {
+      "id": "settlement",
+      "description": "settlement"
+    },
+    {
+      "id": "bridge",
+      "description": "bridge"
+    },
+    {
+      "id": "rest",
+      "description": "rest"
+    },
+    {
+      "id": "safe",
+      "description": "safe"
+    },
+    {
+      "id": "outdoors",
+      "description": "outdoors"
+    },
+    {
+      "id": "day",
+      "description": "day"
+    },
+    {
+      "id": "night",
+      "description": "night"
+    },
+    {
+      "id": "rain",
+      "description": "rain"
+    },
+    {
+      "id": "clear",
+      "description": "clear"
+    },
+    {
+      "id": "bandit",
+      "description": "bandit"
+    },
+    {
+      "id": "beast",
+      "description": "beast"
+    },
+    {
+      "id": "undead",
+      "description": "undead"
+    },
+    {
+      "id": "courtyard",
+      "description": "Settlement courtyard ground"
+    },
+    {
+      "id": "wet-stone",
+      "description": "Wet stone ground surface"
+    },
+    {
+      "id": "placeholder",
+      "description": "Technical or borrowed art awaiting final export"
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "$schema": "../schemas/module.schema.json",
+  "kind": "runtime",
+  "mapId": "greenward-six-hex-example",
+  "runId": "example-only",
+  "tiles": [
+    {
+      "tileId": "westwatch",
+      "visibility": "revealed",
+      "visited": false,
+      "lootClaimed": false,
+      "restUses": 0,
+      "encounterCleared": false
+    },
+    {
+      "tileId": "bridge",
+      "visibility": "hidden",
+      "visited": false,
+      "lootClaimed": false,
+      "restUses": 0,
+      "encounterCleared": false
+    },
+    {
+      "tileId": "forest-road",
+      "visibility": "hidden",
+      "visited": false,
+      "lootClaimed": false,
+      "restUses": 0,
+      "encounterCleared": false
+    },
+    {
+      "tileId": "upstream",
+      "visibility": "hidden",
+      "visited": false,
+      "lootClaimed": false,
+      "restUses": 0,
+      "encounterCleared": false
+    },
+    {
+      "tileId": "downstream",
+      "visibility": "hidden",
+      "visited": false,
+      "lootClaimed": false,
+      "restUses": 0,
+      "encounterCleared": false
+    },
+    {
+      "tileId": "rest-camp",
+      "visibility": "hidden",
+      "visited": false,
+      "lootClaimed": false,
+      "restUses": 0,
+      "encounterCleared": false
+    }
+  ]
+}

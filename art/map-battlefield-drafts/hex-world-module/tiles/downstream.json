@@ -1,0 +1,100 @@
+{
+  "$schema": "../schemas/module.schema.json",
+  "kind": "tile",
+  "id": "downstream",
+  "name": "Downstream",
+  "position": {
+    "column": 1,
+    "row": 2,
+    "label": "B3"
+  },
+  "regionId": "proposed-greenward",
+  "productionBinding": null,
+  "biomeId": "temperate-wetland",
+  "tags": [
+    "wetland",
+    "river"
+  ],
+  "orientationSteps": 0,
+  "sides": {
+    "E": {
+      "tags": [
+        "bank"
+      ],
+      "connector": null,
+      "missingNeighbor": "boundary"
+    },
+    "SE": {
+      "tags": [
+        "bank"
+      ],
+      "connector": null,
+      "missingNeighbor": "boundary"
+    },
+    "SW": {
+      "tags": [
+        "river"
+      ],
+      "connector": {
+        "kind": "river",
+        "flow": "out"
+      },
+      "missingNeighbor": "continues"
+    },
+    "W": {
+      "tags": [
+        "bank"
+      ],
+      "connector": null,
+      "missingNeighbor": "boundary"
+    },
+    "NW": {
+      "tags": [
+        "bank"
+      ],
+      "connector": null,
+      "missingNeighbor": "boundary"
+    },
+    "NE": {
+      "tags": [
+        "river"
+      ],
+      "connector": {
+        "kind": "river",
+        "flow": "in"
+      },
+      "missingNeighbor": "boundary"
+    }
+  },
+  "art": {
+    "groundPoolId": "wetland-ground",
+    "skyboxPoolId": "forest-sky",
+    "propsPoolId": "no-props",
+    "filtersPoolId": "time-of-day-filter",
+    "weatherPoolId": "wetland-mist",
+    "spriteRotationDegrees": 0,
+    "rotateBattleSceneWithTile": false
+  },
+  "gameplay": {
+    "encounterPoolId": "river-encounters",
+    "encounterChance": 0.35,
+    "lootTableId": "travel-supplies",
+    "revealRuleId": "adjacent-reveal",
+    "restSpotId": null,
+    "trainerId": null,
+    "questIds": [],
+    "environmentEffectIds": [
+      "muddy-footing"
+    ],
+    "movementCost": 1,
+    "difficultyTier": 1,
+    "entryRequirements": [],
+    "discoveryPoolId": "sparse-road-discoveries"
+  },
+  "mapArt": {
+    "terrainPoolId": null,
+    "propsPoolId": null,
+    "rotateTerrainWithTile": true,
+    "keepMapPropsUpright": true
+  }
+}

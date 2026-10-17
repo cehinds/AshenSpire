@@ -1,0 +1,35 @@
+{
+  "$schema": "../schemas/module.schema.json",
+  "kind": "catalog",
+  "id": "biomes",
+  "items": [
+    {
+      "id": "grassland",
+      "tags": [
+        "grass"
+      ],
+      "productionBinding": null
+    },
+    {
+      "id": "temperate-forest",
+      "tags": [
+        "forest"
+      ],
+      "productionBinding": null
+    },
+    {
+      "id": "temperate-wetland",
+      "tags": [
+        "wetland"
+      ],
+      "productionBinding": null
+    },
+    {
+      "id": "riverbank",
+      "tags": [
+        "bank"
+      ],
+      "productionBinding": null
+    }
+  ]
+}

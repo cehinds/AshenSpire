@@ -1,0 +1,1306 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Standalone proposed hex authoring modules",
+  "type": "object",
+  "required": [
+    "kind"
+  ],
+  "properties": {
+    "kind": {
+      "enum": [
+        "index",
+        "map",
+        "catalog",
+        "art",
+        "encounters",
+        "runtime",
+        "tile"
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "index"
+          }
+        }
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "formatVersion": {
+            "const": 1
+          },
+          "status": {
+            "const": "proposal-only"
+          },
+          "map": {
+            "type": "string",
+            "minLength": 1
+          },
+          "catalogs": {
+            "type": "object"
+          },
+          "art": {
+            "type": "object"
+          },
+          "gameplay": {
+            "type": "object"
+          },
+          "runtimeExample": {
+            "type": "string",
+            "minLength": 1
+          },
+          "mapArt": {
+            "type": "object",
+            "required": [
+              "props",
+              "terrain"
+            ],
+            "properties": {
+              "props": {
+                "type": "string"
+              },
+              "terrain": {
+                "type": "null"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "formatVersion",
+          "status",
+          "map",
+          "catalogs",
+          "art",
+          "gameplay",
+          "runtimeExample",
+          "mapArt"
+        ],
+        "additionalProperties": true
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "map"
+          }
+        }
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "const": "proposal-only"
+          },
+          "grid": {
+            "type": "object",
+            "properties": {
+              "orientation": {
+                "const": "pointy-top"
+              },
+              "layout": {
+                "const": "odd-r"
+              },
+              "clockwiseSides": {
+                "const": [
+                  "E",
+                  "SE",
+                  "SW",
+                  "W",
+                  "NW",
+                  "NE"
+                ]
+              }
+            },
+            "required": [
+              "orientation",
+              "layout",
+              "clockwiseSides"
+            ],
+            "additionalProperties": true
+          },
+          "bounds": {
+            "type": "object",
+            "properties": {
+              "minColumn": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "maxColumn": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "minRow": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "maxRow": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "minColumn",
+              "maxColumn",
+              "minRow",
+              "maxRow"
+            ],
+            "additionalProperties": true
+          },
+          "allowHoles": {
+            "type": "boolean"
+          },
+          "regions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "productionBinding": {
+                  "type": "null"
+                }
+              },
+              "required": [
+                "id",
+                "productionBinding"
+              ],
+              "additionalProperties": true
+            },
+            "uniqueItems": true
+          },
+          "tiles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "display": {
+            "type": "object",
+            "properties": {
+              "showGridLines": {
+                "type": "boolean",
+                "default": false
+              },
+              "showTileLabels": {
+                "type": "boolean",
+                "default": false
+              }
+            },
+            "required": [
+              "showGridLines",
+              "showTileLabels"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "grid",
+          "bounds",
+          "allowHoles",
+          "regions",
+          "tiles",
+          "display"
+        ],
+        "additionalProperties": true
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "catalog"
+          }
+        }
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "id"
+              ],
+              "additionalProperties": true
+            },
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "id",
+          "items"
+        ],
+        "additionalProperties": true
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "art"
+          }
+        }
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "enum": [
+              "ground",
+              "skybox",
+              "props",
+              "filters",
+              "weather",
+              "map-props"
+            ]
+          },
+          "assetBase": {
+            "type": "string",
+            "minLength": 1
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "asset": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "weight": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true
+                },
+                "selection": {
+                  "type": "object",
+                  "properties": {
+                    "all": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "uniqueItems": true
+                    },
+                    "any": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "uniqueItems": true
+                    },
+                    "exclude": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "uniqueItems": true
+                    }
+                  },
+                  "required": [
+                    "all",
+                    "any",
+                    "exclude"
+                  ],
+                  "additionalProperties": false
+                },
+                "renderLayer": {
+                  "enum": [
+                    "skybox",
+                    "distant-lightning",
+                    "rear-props",
+                    "ground",
+                    "actors",
+                    "filters",
+                    "fog",
+                    "particles",
+                    "HUD"
+                  ]
+                },
+                "animation": {
+                  "type": "object",
+                  "required": [
+                    "mode"
+                  ],
+                  "properties": {
+                    "mode": {
+                      "enum": [
+                        "static",
+                        "scroll",
+                        "rare-frame-loop",
+                        "bounded-pingpong"
+                      ]
+                    },
+                    "wrap": {
+                      "type": "boolean"
+                    },
+                    "amplitudeViewportUnits": {
+                      "type": "array",
+                      "minItems": 2,
+                      "maxItems": 2,
+                      "items": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 0.2
+                      }
+                    },
+                    "periodSeconds": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    }
+                  },
+                  "allOf": [
+                    {
+                      "if": {
+                        "properties": {
+                          "mode": {
+                            "const": "bounded-pingpong"
+                          }
+                        }
+                      },
+                      "then": {
+                        "required": [
+                          "wrap",
+                          "amplitudeViewportUnits",
+                          "periodSeconds"
+                        ],
+                        "properties": {
+                          "wrap": {
+                            "const": false
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "asset",
+                "weight",
+                "tags",
+                "selection"
+              ],
+              "additionalProperties": true
+            },
+            "uniqueItems": true
+          },
+          "pools": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "draw": {
+                  "type": "object",
+                  "properties": {
+                    "min": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "max": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "min",
+                    "max"
+                  ],
+                  "additionalProperties": true
+                },
+                "replacement": {
+                  "type": "boolean"
+                },
+                "itemIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "id",
+                "draw",
+                "replacement",
+                "itemIds"
+              ],
+              "additionalProperties": true
+            },
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "id",
+          "assetBase",
+          "items",
+          "pools"
+        ],
+        "additionalProperties": true
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "encounters"
+          }
+        }
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "selection": {
+                  "type": "object",
+                  "properties": {
+                    "all": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "uniqueItems": true
+                    },
+                    "any": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "uniqueItems": true
+                    },
+                    "exclude": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "uniqueItems": true
+                    }
+                  },
+                  "required": [
+                    "all",
+                    "any",
+                    "exclude"
+                  ],
+                  "additionalProperties": false
+                },
+                "enemyCount": {
+                  "type": "object",
+                  "properties": {
+                    "min": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "max": {
+                      "type": "integer",
+                      "minimum": 1
+                    }
+                  },
+                  "required": [
+                    "min",
+                    "max"
+                  ],
+                  "additionalProperties": true
+                },
+                "replacement": {
+                  "type": "boolean"
+                },
+                "entries": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "enemyTypeId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "weight": {
+                        "type": "number",
+                        "exclusiveMinimum": 0
+                      },
+                      "selection": {
+                        "type": "object",
+                        "properties": {
+                          "all": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "uniqueItems": true
+                          },
+                          "any": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "uniqueItems": true
+                          },
+                          "exclude": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "uniqueItems": true
+                          }
+                        },
+                        "required": [
+                          "all",
+                          "any",
+                          "exclude"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "enemyTypeId",
+                      "weight",
+                      "selection"
+                    ],
+                    "additionalProperties": true
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "id",
+                "selection",
+                "enemyCount",
+                "replacement",
+                "entries"
+              ],
+              "additionalProperties": true
+            },
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "id",
+          "items"
+        ],
+        "additionalProperties": true
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "runtime"
+          }
+        }
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "mapId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "runId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "tiles": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "tileId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "visibility": {
+                  "enum": [
+                    "hidden",
+                    "revealed",
+                    "explored"
+                  ]
+                },
+                "visited": {
+                  "type": "boolean"
+                },
+                "lootClaimed": {
+                  "type": "boolean"
+                },
+                "restUses": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "encounterCleared": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "tileId",
+                "visibility",
+                "visited",
+                "lootClaimed",
+                "restUses",
+                "encounterCleared"
+              ],
+              "additionalProperties": false
+            },
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "mapId",
+          "runId",
+          "tiles"
+        ],
+        "additionalProperties": true
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "tile"
+          }
+        }
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "position": {
+            "type": "object",
+            "properties": {
+              "column": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "row": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "label": {
+                "type": "string",
+                "pattern": "^[A-Z]+[1-9][0-9]*$"
+              }
+            },
+            "required": [
+              "column",
+              "row",
+              "label"
+            ],
+            "additionalProperties": false
+          },
+          "regionId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "productionBinding": {
+            "type": "null"
+          },
+          "biomeId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "orientationSteps": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 5
+          },
+          "sides": {
+            "type": "object",
+            "properties": {
+              "E": {
+                "type": "object",
+                "properties": {
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "uniqueItems": true
+                  },
+                  "connector": {
+                    "oneOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "road",
+                              "river"
+                            ]
+                          },
+                          "flow": {
+                            "enum": [
+                              null,
+                              "in",
+                              "out"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "flow"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "missingNeighbor": {
+                    "enum": [
+                      "boundary",
+                      "continues"
+                    ]
+                  }
+                },
+                "required": [
+                  "tags",
+                  "connector",
+                  "missingNeighbor"
+                ],
+                "additionalProperties": false
+              },
+              "SE": {
+                "type": "object",
+                "properties": {
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "uniqueItems": true
+                  },
+                  "connector": {
+                    "oneOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "road",
+                              "river"
+                            ]
+                          },
+                          "flow": {
+                            "enum": [
+                              null,
+                              "in",
+                              "out"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "flow"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "missingNeighbor": {
+                    "enum": [
+                      "boundary",
+                      "continues"
+                    ]
+                  }
+                },
+                "required": [
+                  "tags",
+                  "connector",
+                  "missingNeighbor"
+                ],
+                "additionalProperties": false
+              },
+              "SW": {
+                "type": "object",
+                "properties": {
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "uniqueItems": true
+                  },
+                  "connector": {
+                    "oneOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "road",
+                              "river"
+                            ]
+                          },
+                          "flow": {
+                            "enum": [
+                              null,
+                              "in",
+                              "out"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "flow"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "missingNeighbor": {
+                    "enum": [
+                      "boundary",
+                      "continues"
+                    ]
+                  }
+                },
+                "required": [
+                  "tags",
+                  "connector",
+                  "missingNeighbor"
+                ],
+                "additionalProperties": false
+              },
+              "W": {
+                "type": "object",
+                "properties": {
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "uniqueItems": true
+                  },
+                  "connector": {
+                    "oneOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "road",
+                              "river"
+                            ]
+                          },
+                          "flow": {
+                            "enum": [
+                              null,
+                              "in",
+                              "out"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "flow"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "missingNeighbor": {
+                    "enum": [
+                      "boundary",
+                      "continues"
+                    ]
+                  }
+                },
+                "required": [
+                  "tags",
+                  "connector",
+                  "missingNeighbor"
+                ],
+                "additionalProperties": false
+              },
+              "NW": {
+                "type": "object",
+                "properties": {
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "uniqueItems": true
+                  },
+                  "connector": {
+                    "oneOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "road",
+                              "river"
+                            ]
+                          },
+                          "flow": {
+                            "enum": [
+                              null,
+                              "in",
+                              "out"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "flow"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "missingNeighbor": {
+                    "enum": [
+                      "boundary",
+                      "continues"
+                    ]
+                  }
+                },
+                "required": [
+                  "tags",
+                  "connector",
+                  "missingNeighbor"
+                ],
+                "additionalProperties": false
+              },
+              "NE": {
+                "type": "object",
+                "properties": {
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "uniqueItems": true
+                  },
+                  "connector": {
+                    "oneOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "road",
+                              "river"
+                            ]
+                          },
+                          "flow": {
+                            "enum": [
+                              null,
+                              "in",
+                              "out"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "flow"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "missingNeighbor": {
+                    "enum": [
+                      "boundary",
+                      "continues"
+                    ]
+                  }
+                },
+                "required": [
+                  "tags",
+                  "connector",
+                  "missingNeighbor"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "E",
+              "SE",
+              "SW",
+              "W",
+              "NW",
+              "NE"
+            ],
+            "additionalProperties": false
+          },
+          "art": {
+            "type": "object",
+            "properties": {
+              "groundPoolId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "skyboxPoolId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "propsPoolId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "filtersPoolId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "weatherPoolId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "spriteRotationDegrees": {
+                "type": "number"
+              },
+              "rotateBattleSceneWithTile": {
+                "const": false
+              }
+            },
+            "required": [
+              "groundPoolId",
+              "skyboxPoolId",
+              "propsPoolId",
+              "filtersPoolId",
+              "weatherPoolId",
+              "spriteRotationDegrees",
+              "rotateBattleSceneWithTile"
+            ],
+            "additionalProperties": false
+          },
+          "gameplay": {
+            "type": "object",
+            "properties": {
+              "encounterPoolId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "lootTableId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "revealRuleId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "restSpotId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "trainerId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "discoveryPoolId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "encounterChance": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "questIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "uniqueItems": true
+              },
+              "environmentEffectIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "uniqueItems": true
+              },
+              "movementCost": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "difficultyTier": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "entryRequirements": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "uniqueItems": true
+              }
+            },
+            "required": [
+              "encounterPoolId",
+              "lootTableId",
+              "revealRuleId",
+              "restSpotId",
+              "trainerId",
+              "discoveryPoolId",
+              "encounterChance",
+              "questIds",
+              "environmentEffectIds",
+              "movementCost",
+              "difficultyTier",
+              "entryRequirements"
+            ],
+            "additionalProperties": false
+          },
+          "mapArt": {
+            "type": "object",
+            "required": [
+              "terrainPoolId",
+              "propsPoolId",
+              "rotateTerrainWithTile",
+              "keepMapPropsUpright"
+            ],
+            "properties": {
+              "terrainPoolId": {
+                "type": "null"
+              },
+              "propsPoolId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "rotateTerrainWithTile": {
+                "const": true
+              },
+              "keepMapPropsUpright": {
+                "const": true
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "position",
+          "regionId",
+          "productionBinding",
+          "biomeId",
+          "tags",
+          "orientationSteps",
+          "sides",
+          "art",
+          "gameplay",
+          "mapArt"
+        ],
+        "additionalProperties": true
+      }
+    }
+  ]
+}

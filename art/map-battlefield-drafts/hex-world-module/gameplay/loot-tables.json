@@ -1,0 +1,45 @@
+{
+  "$schema": "../schemas/module.schema.json",
+  "kind": "catalog",
+  "id": "loot-tables",
+  "items": [
+    {
+      "id": "travel-supplies",
+      "rolls": 1,
+      "entries": [
+        {
+          "rewardId": "proposed-provisions",
+          "weight": 3,
+          "quantity": [
+            1,
+            2
+          ]
+        },
+        {
+          "rewardId": "proposed-coin-cache",
+          "weight": 1,
+          "quantity": [
+            3,
+            8
+          ]
+        },
+        {
+          "rewardId": "connected-map-fragment",
+          "weight": 0.15,
+          "quantity": [
+            1,
+            1
+          ]
+        },
+        {
+          "rewardId": "road-map",
+          "weight": 0.15,
+          "quantity": [
+            1,
+            1
+          ]
+        }
+      ]
+    }
+  ]
+}

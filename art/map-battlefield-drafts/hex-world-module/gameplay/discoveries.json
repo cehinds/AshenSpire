@@ -1,0 +1,33 @@
+{
+  "$schema": "../schemas/module.schema.json",
+  "kind": "catalog",
+  "id": "discoveries",
+  "items": [
+    {
+      "id": "sparse-road-discoveries",
+      "seedScope": "runId + tileId + discoveryId",
+      "rollOnce": true,
+      "spawnChance": 0.2,
+      "revealTrigger": "on-enter-tile",
+      "fogExplorationIndependent": true,
+      "entries": [
+        {
+          "kind": "trainer",
+          "refId": "westwatch-trainer",
+          "weight": 1
+        },
+        {
+          "kind": "rest",
+          "refId": "road-camp",
+          "weight": 2
+        },
+        {
+          "kind": "loot",
+          "refId": "travel-supplies",
+          "weight": 3
+        }
+      ],
+      "spawnsEnemies": false
+    }
+  ]
+}

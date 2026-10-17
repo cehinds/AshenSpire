@@ -1,0 +1,97 @@
+{
+  "$schema": "../schemas/module.schema.json",
+  "kind": "tile",
+  "id": "westwatch",
+  "name": "Westwatch",
+  "position": {
+    "column": 0,
+    "row": 1,
+    "label": "A2"
+  },
+  "regionId": "proposed-greenward",
+  "productionBinding": null,
+  "biomeId": "grassland",
+  "tags": [
+    "settlement",
+    "safe"
+  ],
+  "orientationSteps": 0,
+  "sides": {
+    "E": {
+      "tags": [
+        "road"
+      ],
+      "connector": {
+        "kind": "road",
+        "flow": null
+      },
+      "missingNeighbor": "boundary"
+    },
+    "SE": {
+      "tags": [
+        "grass"
+      ],
+      "connector": null,
+      "missingNeighbor": "boundary"
+    },
+    "SW": {
+      "tags": [
+        "grass"
+      ],
+      "connector": null,
+      "missingNeighbor": "boundary"
+    },
+    "W": {
+      "tags": [
+        "grass"
+      ],
+      "connector": null,
+      "missingNeighbor": "boundary"
+    },
+    "NW": {
+      "tags": [
+        "grass"
+      ],
+      "connector": null,
+      "missingNeighbor": "boundary"
+    },
+    "NE": {
+      "tags": [
+        "grass"
+      ],
+      "connector": null,
+      "missingNeighbor": "boundary"
+    }
+  },
+  "art": {
+    "groundPoolId": "courtyard-ground",
+    "skyboxPoolId": "open-sky",
+    "propsPoolId": "city-props",
+    "filtersPoolId": "time-of-day-filter",
+    "weatherPoolId": "clear-weather",
+    "spriteRotationDegrees": 0,
+    "rotateBattleSceneWithTile": false
+  },
+  "gameplay": {
+    "encounterPoolId": null,
+    "encounterChance": 0,
+    "lootTableId": "travel-supplies",
+    "revealRuleId": "adjacent-reveal",
+    "restSpotId": null,
+    "trainerId": "westwatch-trainer",
+    "questIds": [
+      "secure-greenward"
+    ],
+    "environmentEffectIds": [],
+    "movementCost": 1,
+    "difficultyTier": 1,
+    "entryRequirements": [],
+    "discoveryPoolId": "sparse-road-discoveries"
+  },
+  "mapArt": {
+    "terrainPoolId": null,
+    "propsPoolId": "map-town",
+    "rotateTerrainWithTile": true,
+    "keepMapPropsUpright": true
+  }
+}

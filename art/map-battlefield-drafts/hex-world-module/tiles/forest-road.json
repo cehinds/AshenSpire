@@ -1,0 +1,98 @@
+{
+  "$schema": "../schemas/module.schema.json",
+  "kind": "tile",
+  "id": "forest-road",
+  "name": "Forest Road",
+  "position": {
+    "column": 2,
+    "row": 1,
+    "label": "C2"
+  },
+  "regionId": "proposed-greenward",
+  "productionBinding": null,
+  "biomeId": "temperate-forest",
+  "tags": [
+    "forest",
+    "road"
+  ],
+  "orientationSteps": 0,
+  "sides": {
+    "E": {
+      "tags": [
+        "forest"
+      ],
+      "connector": null,
+      "missingNeighbor": "boundary"
+    },
+    "SE": {
+      "tags": [
+        "road"
+      ],
+      "connector": {
+        "kind": "road",
+        "flow": null
+      },
+      "missingNeighbor": "boundary"
+    },
+    "SW": {
+      "tags": [
+        "forest"
+      ],
+      "connector": null,
+      "missingNeighbor": "boundary"
+    },
+    "W": {
+      "tags": [
+        "road"
+      ],
+      "connector": {
+        "kind": "road",
+        "flow": null
+      },
+      "missingNeighbor": "boundary"
+    },
+    "NW": {
+      "tags": [
+        "forest"
+      ],
+      "connector": null,
+      "missingNeighbor": "boundary"
+    },
+    "NE": {
+      "tags": [
+        "forest"
+      ],
+      "connector": null,
+      "missingNeighbor": "boundary"
+    }
+  },
+  "art": {
+    "groundPoolId": "forest-ground",
+    "skyboxPoolId": "forest-sky",
+    "propsPoolId": "no-props",
+    "filtersPoolId": "time-of-day-filter",
+    "weatherPoolId": "clear-weather",
+    "spriteRotationDegrees": 0,
+    "rotateBattleSceneWithTile": false
+  },
+  "gameplay": {
+    "encounterPoolId": "forest-encounters",
+    "encounterChance": 0.35,
+    "lootTableId": "travel-supplies",
+    "revealRuleId": "adjacent-reveal",
+    "restSpotId": null,
+    "trainerId": null,
+    "questIds": [],
+    "environmentEffectIds": [],
+    "movementCost": 1,
+    "difficultyTier": 1,
+    "entryRequirements": [],
+    "discoveryPoolId": "sparse-road-discoveries"
+  },
+  "mapArt": {
+    "terrainPoolId": null,
+    "propsPoolId": null,
+    "rotateTerrainWithTile": true,
+    "keepMapPropsUpright": true
+  }
+}

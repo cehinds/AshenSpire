@@ -1,0 +1,25 @@
+{
+  "$schema": "../schemas/module.schema.json",
+  "kind": "catalog",
+  "id": "rest-spots",
+  "items": [
+    {
+      "id": "road-camp",
+      "productionBinding": null,
+      "healFraction": 0.35,
+      "usesPerRun": 1,
+      "encounterRisk": 0,
+      "battleArtOverride": {
+        "groundPoolId": "forest-ground",
+        "skyboxPoolId": "forest-sky",
+        "propsPoolId": "rest-camp-props",
+        "filtersPoolId": "time-of-day-filter",
+        "weatherPoolId": "clear-weather"
+      },
+      "artSelectionContextTags": [
+        "rest",
+        "forest"
+      ]
+    }
+  ]
+}

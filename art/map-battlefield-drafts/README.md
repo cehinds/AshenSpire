@@ -14,6 +14,7 @@
 ![Regional settlement combinations](batch-06-settlements/preview-settlements.png)
 
 - [catalog.json](catalog.json) links the batch manifests and editable scene recipes.
+- [Standalone hex world module](hex-world-module/README.md) defines six-sided tile tags, rotation, art pools, encounters and discovery examples.
 - [Latest modular JSON](batch-06-settlements/modules/README.md) separates region pools/scenes from shared camera and selection rules, with portable single-file exports.
 - Manifest IDs are local to their batch; use the batch ID plus asset ID as a library key. Revised subjects can exist in multiple batches.
 - Source PNGs, prompts, provenance and measured dimensions are retained together. Previews demonstrate composition and small-size readability; they are not production exports.
