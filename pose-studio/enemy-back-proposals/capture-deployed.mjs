@@ -3,6 +3,7 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {pathToFileURL} from 'node:url';
+import {createRequire} from 'node:module';
 const api=p=>JSON.parse(execFileSync('gh',['api',p],{encoding:'utf8',maxBuffer:32*1024*1024}));
 const repo='cehinds/AshenSpire',branch='feature/EnemyBackSprites';
 const source=api('repos/'+repo+'/branches/'+encodeURIComponent(branch)).commit.sha;
@@ -26,7 +27,7 @@ for(let attempt=0;attempt<31;attempt++){
 assert.ok(bytes,'Exact final feature artifact was not published within bounded polling');
 const stamp=JSON.parse(await readFile(dir+'/buildordinal.json','utf8')),version=stamp.release+'.'+stamp.ordinal;
 const {chromium}=await import(pathToFileURL(process.env.PLAYWRIGHT_MODULE).href);
-const sharp=(await import(pathToFileURL(process.env.SHARP_MODULE).href)).default;
+const sharp=createRequire(import.meta.url)(process.env.SHARP_MODULE);
 const out='docs/preview/features/enemy-back-sprites';await mkdir(out,{recursive:true});
 const browser=await chromium.launch({headless:true}),records=[];
 try{
@@ -34,7 +35,7 @@ try{
   console.log('Capturing deployed viewport',name);const page=await browser.newPage({viewport:{width,height}});page.setDefaultTimeout(30000);page.setDefaultNavigationTimeout(90000);
   await page.goto(url,{waitUntil:'domcontentloaded',timeout:90000});
   const game=page.frameLocator('#preview');await game.locator('#enemy-rear-review-open').click({timeout:90000});
-  const gallery=game.frameLocator('iframe[title="Enemy rear design review"]');
+  const gallery=game.frameLocator('dialog iframe');
   await gallery.locator('#grid .card').first().waitFor({timeout:90000});
   const choices=await gallery.locator('#actor option').evaluateAll(opts=>opts.map(o=>o.value));assert.equal(choices.length,13);
   for(const candidate of choices){console.log('Checking deployed images',name,candidate);
@@ -55,7 +56,7 @@ try{
 const tiles=await Promise.all(records.map(async(r,i)=>({input:await sharp(out+'/'+r.name+'.png').resize(512,384,{fit:'contain',background:'#111414'}).png().toBuffer(),left:(i%2)*512,top:Math.floor(i/2)*384})));
 await sharp({create:{width:1024,height:768,channels:4,background:'#111414'}}).composite(tiles).png().toFile(out+'/contact-sheet.png');
 const readme=await readFile('README.md','utf8'),releasePaths=[...readme.matchAll(/docs\/preview\/releases\/([^/]+)\/[^)\s]+/g)].map(m=>m[1]);
-const inventoryResponse=await fetch('https://cehinds.github.io/AshenSpire/builds.json',{cache:'no-store'});assert.ok(inventoryResponse.ok);
+const inventoryResponse=await fetch('https://cehinds.github.io/AshenSpire/builds.json',{cache:'no-store',signal:AbortSignal.timeout(60000)});assert.ok(inventoryResponse.ok);
 const inventory=await inventoryResponse.json(),release=inventory.branches.find(b=>b.branch==='release')?.builds?.[0];assert.ok(release);
 const releaseVersion=release.version&&release.version.endsWith('.'+release.ordinal)?release.version:release.version+'.'+release.ordinal;
 assert.ok(releasePaths.length&&releasePaths.every(v=>v===releaseVersion),'Existing release gallery changed; refresh it before README evidence');
