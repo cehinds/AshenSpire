@@ -19,7 +19,7 @@ import { enqueueExpandedAction, previewExpandedActions } from './combatExpansion
 import { combatExpansionEquipment } from '../content/combatExpansionEquipment.js';
 import { expandedEquipmentProjection, expandedEnemyProjection } from './combatExpansionEquipment.js';
 import { settleExpandedPools, refreshExpandedLoadout } from './combatExpansionProjection.js';
-import { tacticalCarrier, counterEffectPreview, prepareTacticalCard, enqueueCounterWard, enemyMoveCarrier, expandedEnemyMove, primeEnemyCounter, enemyCounterDefensePrimed } from './combatCardTactics.js';
+import { tacticalCarrier, counterEffectPreview, prepareTacticalCard, previewTacticalEffects, enqueueCounterWard, enemyMoveCarrier, expandedEnemyMove, primeEnemyCounter, enemyCounterDefensePrimed } from './combatCardTactics.js';
 import { clearCombatCounter, startTacticalTurn, setCombatStance, prepareCombatEvade, liveCounterCovers } from './combatMatchups.js';
 import { damagePreviewState, previewDamageHits } from './combatDamagePreview.js';
 import { hiddenIntentChance, concealIntent, combatIntentStance } from '../model/combatIntentVisibility.js';
@@ -2430,6 +2430,11 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
   };
 
   Object.assign(action.card, tacticalCarrier(def, action.card, combat, p));
+  // Execution enters the accepted card's stance before planning its contacts.
+  // Prices above use the current stance; effect values use the prospective one.
+  // This combat is already the detached preparing preview, so entry grants and
+  // rating changes cannot spend or alter the live fight.
+  if (combat.combatExpansionVersion === 2) setCombatStance(combat, p, action.card);
   const bindings = computeTokenBindings(def.effects || []);
   const tokenByIndexField = new Map();
   for (const bd of bindings) tokenByIndexField.set(`${bd.index}:${bd.field}`, bd.token);
@@ -2443,12 +2448,13 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
     if (target && (!target.alive || target.kind !== 'enemy')) throw new Error('Buildup charge requires a living enemy target');
     action.target ||= living[0] || null;
   }
+  const preparedEffects = previewTacticalEffects(combat, p, action.target, action.card, chargedEffects, action.meta);
   const applied = new Set();
   const expandedPreviewTargets = new Map();
   const expandedPreview = (enemy, effectIndex) => {
     if (!expandedPreviewTargets.has(enemy.id)) {
       const used = new Set();
-      const actions = chargedEffects.map((effect, index) => {
+      const actions = preparedEffects.map((effect, index) => {
         const row = { effect, source: p, owner: p, target: enemy, card: action.card,
           meta: { ...R.beforeAbilityPlay(combat, p), energySpent: shownCost, abilityEffectIndex: index } };
         R.attachAbilityCharges(row, charges, used, combat);
@@ -2498,9 +2504,9 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
   // Damage effects execute in authored order, so later effects must see a
   // Counter, Guard, Ward, and rider budget spent by earlier contacts.
   const damagePreviewStates = new Map(living.map(enemy => [enemy.id, damagePreviewState(combat, enemy)]));
-  chargedEffects.forEach((eff, i) => {
+  preparedEffects.forEach((eff, i) => {
     if (typeof eff.op !== 'string') return;
-    const authoredIndex = (def.effects || []).indexOf(eff);
+    const authoredIndex = (def.effects || []).indexOf(chargedEffects[i]);
     const entry = { op: eff.op, target: eff.target || null };
     const primary = firstResolvedTarget(combat, action, eff);
     action.effect = eff;
@@ -2658,7 +2664,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
 
   return {
     // The effects the play will run, a charge's added rows included; `values` follow this list (the card face reads it).
-    resolvedDefinition: def, chargedEffects, combatExpansionVersion: combat.combatExpansionVersion || 1,
+    resolvedDefinition: def, chargedEffects: preparedEffects, combatExpansionVersion: combat.combatExpansionVersion || 1,
     cardId: inst.cardId,
     upgraded: inst.upgraded,
     name: def.name,

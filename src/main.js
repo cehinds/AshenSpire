@@ -168,6 +168,7 @@ import { refreshCardDoorShape } from './ui/components/cardInspection.js';
 import { setSpritesEnabled, classGlyph, setClassGlyphs } from './ui/assets.js';
 import { mountLobby } from './ui/screens/lobby.js';
 import { mountCoop } from './ui/screens/coop.js';
+import { mountQuitScreen } from './ui/quitGame.js';
 import { lanInfo } from './net/lan.js';
 import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum, playEventCues } from './ui/fx.js';
 import { sfx } from './ui/sfx.js';
@@ -2146,19 +2147,14 @@ function showCompendium() {
 // graceful "safe to close" screen; in a standalone/launcher window the close
 // succeeds. Any in-progress run is persisted first, so nothing is lost.
 function quitGame() {
-  if (run) persist();
+  const savedRun = !!run;
+  // Use the existing save failure/retry door; a failed save must keep the run.
+  if (run && saveNow({ returnFocusElement: document.activeElement }) === false) return;
   closeOverlay();
   dropLanLink();
   audio.stopMusic();
-  audio.setVolumes({ muteAudio: true });
-  sfx.sink = null;
   run = null;
-  app.replaceChildren();
-  const screen = document.createElement('div'); screen.className = 'screen farewell';
-  const heading = document.createElement('h1'); heading.className = 'title-big'; heading.textContent = t('quit.title');
-  const message = document.createElement('p'); message.className = 'subtitle'; message.textContent = t('quit.message');
-  screen.append(heading, message); app.append(screen);
-  try { window.close(); } catch { /* Browser tabs may only be closed by their opener. */ }
+  mountQuitScreen(app, { savedRun, onBack: showCollapsedTitle });
 }
 
 // The in-run overlay keeps only Settings and Controls. Armoury owns inventory,

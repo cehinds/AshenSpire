@@ -65,17 +65,23 @@ let registries = null;
 export function mountSettingsPreview(host, settings, onChange) {
   const strip = host?.querySelector('[data-settings-preview]');
   if (!strip) return;
-  const slot = strip.querySelector('[data-settings-preview-card]');
-  if (slot && !slot.firstChild) {
-    try {
-      registries ||= createRegistries(contentBundle);
-      slot.append(renderCard(registries, { cardId: slot.dataset.settingsPreviewCard, upgraded: false }, { small: true, inspection: false }));
-    } catch (error) {
-      // The sample must never take Settings down with it; say why it is empty.
-      slot.textContent = `Card sample unavailable: ${error.message}`;
+  // Building registries and a card while this strip is folded made Settings
+  // wait for a sample the player could not see. Prepare it on first opening.
+  const ensureCard = () => {
+    const slot = strip.querySelector('[data-settings-preview-card]');
+    if (slot && !slot.firstChild) {
+      try {
+        registries ||= createRegistries(contentBundle);
+        slot.append(renderCard(registries, { cardId: slot.dataset.settingsPreviewCard, upgraded: false }, { small: true, inspection: false }));
+      } catch (error) {
+        // The sample must never take Settings down with it; say why it is empty.
+        slot.textContent = `Card sample unavailable: ${error.message}`;
+      }
     }
-  }
+  };
+  if (strip.open) ensureCard();
   strip.addEventListener('toggle', () => {
+    if (strip.open) ensureCard();
     if ((settings[SETTINGS_PREVIEW_OPEN_KEY] === true) === strip.open) return;
     settings[SETTINGS_PREVIEW_OPEN_KEY] = strip.open;
     onChange?.({ [SETTINGS_PREVIEW_OPEN_KEY]: strip.open });

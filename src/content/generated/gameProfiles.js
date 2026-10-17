@@ -15398,7 +15398,7 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "path": "src/** (excluding generated gameProfiles/changelog)",
-      "hash": "sha256:c101277a37c26b497d4e07bb16ad9d7cd32eeabe37f75ace8902b438ca0930e8"
+      "hash": "sha256:406ab24a5ea01d3975e5ea85f8a9a13e97aae8e8831904edb03b812e2312f775"
     }
   ],
   "runtimeSources": [
@@ -16480,7 +16480,7 @@ export const gameProfileCatalog = {
       "path": "src/engine/combat.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:8d8c059606ebad7a2c858a014fd81dc64174254a6a30936fc50e976d1f9a2fd5"
+      "hash": "sha256:faf20a2492d47e003c0f99a9db6b7ee96fa579606047754cff1af6d9e05b7cb0"
     },
     {
       "path": "src/engine/combatAvoidance.js",
@@ -16492,7 +16492,7 @@ export const gameProfileCatalog = {
       "path": "src/engine/combatCardTactics.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:7024dea27554e545283c5e7b7a7112a15b3f730a008955490e8da3386bd7a6ef"
+      "hash": "sha256:c0982896f6310c76a2d2b9c8c588e2351797a285cb986ed8cab7bbc76511354a"
     },
     {
       "path": "src/engine/combatCardTraitMath.js",
@@ -16990,7 +16990,7 @@ export const gameProfileCatalog = {
       "path": "src/main.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:a42a87d7a86164623ce7a2afedf79ffe1ca1390c97183943fe59b36a50e21b9a"
+      "hash": "sha256:fae5589dccf47f5008be4865c065177504c58dd08268ea6b54b8887f431f052d"
     },
     {
       "path": "src/model/abilityDraftReceipts.js",
@@ -17068,7 +17068,7 @@ export const gameProfileCatalog = {
       "path": "src/model/attackCardDamage.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:0ff1b72895151ead0a62edd338da3c80a1c84daaab306fb760ddc3f85c416dc1"
+      "hash": "sha256:937f6eb3bc82839845936d1a4515636abea7509c6fd99a2ac9e321b03b825d55"
     },
     {
       "path": "src/model/attackTags.js",
@@ -19108,7 +19108,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/components/settingsPreview.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:5a1837ddef4b0ccd494a2912b343c051673e463e0a20e2efb8bc90cb0ea5fe44"
+      "hash": "sha256:a147824856998e5e55aba6292d4ae894d8171acf92d842d62b35f113e3b7254a"
     },
     {
       "path": "src/ui/components/settingsSync.js",
@@ -20089,6 +20089,12 @@ export const gameProfileCatalog = {
       "hash": "sha256:22beaa4834f7a053f58d5df1b210da37861464c40ed88e4aada46d8f206d1b0e"
     },
     {
+      "path": "src/ui/quitGame.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:2a0fa1cdc9ab3045a8c4c6208dd6d0c5e492710fc4b52d06613fe0350a3a8b9f"
+    },
+    {
       "path": "src/ui/reaverAttack.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
@@ -20383,7 +20389,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:23af16d4e9c9f6d88fe655d32ecf1a688b47df39f9e3a1d6d193ce63923593ab"
     }
   ],
-  "runtimeHash": "sha256:a413b937014f73d692aa73563be0e72febe390d89e4d4a7fbdac171f4f12829d"
+  "runtimeHash": "sha256:e4683308100d129e72b919b7c66ef4cdcd0b73ab24ea5fdde225bf0a686b222c"
 };
 export const gameProfileAuthors = {
   "default": {
