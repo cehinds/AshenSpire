@@ -136,3 +136,23 @@ test('responsive painted guard reads detached detail panels and status siblings 
   assert.match(visual[0], /under the HUD/);
   assert.match(visual[1], /under the hand/);
 });
+
+test('zero-size proxies use artwork; undersized or noninteractive drawn proxies still face the patch check', () => {
+  const start = tool.indexOf("    if (c.matches('.combatant[data-ui-component=");
+  const end = tool.indexOf('    // A tall neighbouring enemy', start);
+  const check = tool.slice(start, end);
+  for (const [width, height, expectFrame] of [[0, 0, false], [0, 44, false], [10, 10, true], [44, 44, true]]) {
+    const sprite = { getBoundingClientRect: () => ({ width: 64, height: 64 }) };
+    const frame = { dataset: {}, querySelector: () => sprite, contains: () => false,
+      matches: selector => selector !== '.player' };
+    const calls = [];
+    runInNewContext('for (const c of [frame]) {\n' + check + '\n}', {
+      frame, z: 1, r: { left: 0, top: 0 }, frameOwnsHit: () => false,
+      getComputedStyle: () => ({ display: 'block', content: '""', left: '32px', top: '32px',
+        width: width + 'px', height: height + 'px', pointerEvents: 'none' }),
+      exposedPatch: target => { calls.push(target); return true; },
+    });
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0], expectFrame ? frame : sprite);
+  }
+});

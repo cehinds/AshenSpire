@@ -543,8 +543,10 @@ const PROBE = `(() => {
       const halfWidth = parseFloat(targetStyle.width) * z / 2, halfHeight = parseFloat(targetStyle.height) * z / 2;
       // Waist-overlap players expose their artwork; their plate is hidden.
       // A core that packing explicitly gave up (data-core-obstructed) takes no
-      // input by design; that enemy is reached through its artwork.
+      // input by design; that enemy is reached through its artwork. A zero-size
+      // proxy also supplies no tap surface (unmeasured responsive fallback).
       const hasPlate = targetStyle.display !== 'none' && targetStyle.content !== 'none'
+        && parseFloat(targetStyle.width) > 0 && parseFloat(targetStyle.height) > 0
         && c.dataset.coreObstructed !== 'true';
       const reach = hasPlate && c.matches('.enemy-target-hitbox,.player-target-hitbox') && sr
         ? exposedPatch(c, 24, { left: tx - halfWidth, right: tx + halfWidth,
