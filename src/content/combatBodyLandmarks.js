@@ -1,6 +1,7 @@
+import { ENEMY_BODY_LANDMARKS } from './enemyBodyLandmarks.js';
 // Semantic head/helmet and supporting sole landmarks, in source raster pixels.
 // Reviewed against the shipped art; weapons, capes and effects do not define height.
-export const COMBAT_BODY_LANDMARKS = {
+const PLAYER_BODY_LANDMARKS = {
   "assets-display/alternative/card-reaver-ready.webp": {
     "headY": 101.5,
     "feetY": 232,
@@ -176,3 +177,5 @@ export const COMBAT_BODY_LANDMARKS = {
     "height": 256
   }
 };
+
+export const COMBAT_BODY_LANDMARKS = Object.freeze({ ...PLAYER_BODY_LANDMARKS, ...ENEMY_BODY_LANDMARKS });
