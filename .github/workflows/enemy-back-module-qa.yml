@@ -39,6 +39,7 @@ jobs:
       - name: Verify normalized art hashes
         run: |
           node pose-studio/enemy-back-proposals/integrate-normalized.mjs wyrmAspirant
+          node pose-studio/enemy-back-proposals/integrate-normalized.mjs wyrmLord
           node pose-studio/enemy-back-proposals/integrate-normalized.mjs courtDuelist
           node pose-studio/enemy-back-proposals/integrate-normalized.mjs fellWarden
       - name: Model contract

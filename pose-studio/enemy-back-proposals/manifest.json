@@ -1088,10 +1088,601 @@
       "id": "wyrmLord",
       "name": "Wyrm Lord",
       "role": "elite",
-      "defaultStance": null,
+      "defaultStance": "neutral",
       "reference": null,
-      "proposals": [],
-      "provisionalDefaultVersion": null
+      "proposals": [
+        {
+          "id": "v01",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "fd3b5be8a5a9df1cf890ff4ae722856dcb8ba140245431293ada409df4f149a4",
+            "prompt": "Create EXACTLY TEN distinct rear-view design proposals of the Wyrm Lord in reference1, in 5 columns by 2 rows, transparent background. Reference2 is ONLY the player camera: back toward viewer, facing upper-right in rear three-quarter view, ready for combat. Preserve Wyrm Lord dragon head horns, black-red-gold articulated armor, red bat wings, lava-fissured tail, taloned feet, red cloth; NOT human knight anatomy or sword. Each design differs visibly in back armor, wing folding silhouette, red cloth and tail posture yet unmistakably the same original character. Back shoulders/spine visible, no front chest facing camera. All ten full bodies with entire wings/tails inside their own widely spaced cells; generous fully transparent horizontal and vertical gutters and outside margin. Same overall height, feet baseline per row, painted dark-fantasy game sprite rendering, no scenery, no text, no labels, no ground shadows. These are ten alternate neutral-ready designs, not animation frames. Keep wings compact enough to fit cleanly without overlaps.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/wyrmLord/idle.webp",
+                "ref": "hd-assets-v23",
+                "sha": "2c2dd97e1b807a303a99317466592ddc317f3bc9",
+                "blob": "2c2dd97e1b807a303a99317466592ddc317f3bc9"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "sha": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/wyrmLord/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/wyrmLord/v01.png",
+                  "sha256": "0cac89ff3a73b42c79dd8bbf8e5b993d5f117bf6f95cd1fbe0d020045d50caa8",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.69140625,
+                      0.888671875
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "manual-visible-foot-draft",
+                    "footReviewStatus": "draft-manual-anchor-review"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v02",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "fd3b5be8a5a9df1cf890ff4ae722856dcb8ba140245431293ada409df4f149a4",
+            "prompt": "Create EXACTLY TEN distinct rear-view design proposals of the Wyrm Lord in reference1, in 5 columns by 2 rows, transparent background. Reference2 is ONLY the player camera: back toward viewer, facing upper-right in rear three-quarter view, ready for combat. Preserve Wyrm Lord dragon head horns, black-red-gold articulated armor, red bat wings, lava-fissured tail, taloned feet, red cloth; NOT human knight anatomy or sword. Each design differs visibly in back armor, wing folding silhouette, red cloth and tail posture yet unmistakably the same original character. Back shoulders/spine visible, no front chest facing camera. All ten full bodies with entire wings/tails inside their own widely spaced cells; generous fully transparent horizontal and vertical gutters and outside margin. Same overall height, feet baseline per row, painted dark-fantasy game sprite rendering, no scenery, no text, no labels, no ground shadows. These are ten alternate neutral-ready designs, not animation frames. Keep wings compact enough to fit cleanly without overlaps.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/wyrmLord/idle.webp",
+                "ref": "hd-assets-v23",
+                "sha": "2c2dd97e1b807a303a99317466592ddc317f3bc9",
+                "blob": "2c2dd97e1b807a303a99317466592ddc317f3bc9"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "sha": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/wyrmLord/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/wyrmLord/v02.png",
+                  "sha256": "777bfda5b80da0be144bbed5004b1015f93732c1c2d96d1dfd254746ceb32a1e",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5078125,
+                      0.892578125
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "manual-visible-foot-draft",
+                    "footReviewStatus": "draft-manual-anchor-review"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v03",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "fd3b5be8a5a9df1cf890ff4ae722856dcb8ba140245431293ada409df4f149a4",
+            "prompt": "Create EXACTLY TEN distinct rear-view design proposals of the Wyrm Lord in reference1, in 5 columns by 2 rows, transparent background. Reference2 is ONLY the player camera: back toward viewer, facing upper-right in rear three-quarter view, ready for combat. Preserve Wyrm Lord dragon head horns, black-red-gold articulated armor, red bat wings, lava-fissured tail, taloned feet, red cloth; NOT human knight anatomy or sword. Each design differs visibly in back armor, wing folding silhouette, red cloth and tail posture yet unmistakably the same original character. Back shoulders/spine visible, no front chest facing camera. All ten full bodies with entire wings/tails inside their own widely spaced cells; generous fully transparent horizontal and vertical gutters and outside margin. Same overall height, feet baseline per row, painted dark-fantasy game sprite rendering, no scenery, no text, no labels, no ground shadows. These are ten alternate neutral-ready designs, not animation frames. Keep wings compact enough to fit cleanly without overlaps.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/wyrmLord/idle.webp",
+                "ref": "hd-assets-v23",
+                "sha": "2c2dd97e1b807a303a99317466592ddc317f3bc9",
+                "blob": "2c2dd97e1b807a303a99317466592ddc317f3bc9"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "sha": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/wyrmLord/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/wyrmLord/v03.png",
+                  "sha256": "938729422d8ea3f047b187d6c8d5810d6bdad8405a5bcf158eca3f2e30365110",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.517578125,
+                      0.900390625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "manual-visible-foot-draft",
+                    "footReviewStatus": "draft-manual-anchor-review"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v04",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "fd3b5be8a5a9df1cf890ff4ae722856dcb8ba140245431293ada409df4f149a4",
+            "prompt": "Create EXACTLY TEN distinct rear-view design proposals of the Wyrm Lord in reference1, in 5 columns by 2 rows, transparent background. Reference2 is ONLY the player camera: back toward viewer, facing upper-right in rear three-quarter view, ready for combat. Preserve Wyrm Lord dragon head horns, black-red-gold articulated armor, red bat wings, lava-fissured tail, taloned feet, red cloth; NOT human knight anatomy or sword. Each design differs visibly in back armor, wing folding silhouette, red cloth and tail posture yet unmistakably the same original character. Back shoulders/spine visible, no front chest facing camera. All ten full bodies with entire wings/tails inside their own widely spaced cells; generous fully transparent horizontal and vertical gutters and outside margin. Same overall height, feet baseline per row, painted dark-fantasy game sprite rendering, no scenery, no text, no labels, no ground shadows. These are ten alternate neutral-ready designs, not animation frames. Keep wings compact enough to fit cleanly without overlaps.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/wyrmLord/idle.webp",
+                "ref": "hd-assets-v23",
+                "sha": "2c2dd97e1b807a303a99317466592ddc317f3bc9",
+                "blob": "2c2dd97e1b807a303a99317466592ddc317f3bc9"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "sha": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/wyrmLord/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/wyrmLord/v04.png",
+                  "sha256": "086b4571ba07c757bf962e25c4d0258882856da5c0f4f197da83fc7f21a112b6",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.490234375,
+                      0.8984375
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "manual-visible-foot-draft",
+                    "footReviewStatus": "draft-manual-anchor-review"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v05",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "fd3b5be8a5a9df1cf890ff4ae722856dcb8ba140245431293ada409df4f149a4",
+            "prompt": "Create EXACTLY TEN distinct rear-view design proposals of the Wyrm Lord in reference1, in 5 columns by 2 rows, transparent background. Reference2 is ONLY the player camera: back toward viewer, facing upper-right in rear three-quarter view, ready for combat. Preserve Wyrm Lord dragon head horns, black-red-gold articulated armor, red bat wings, lava-fissured tail, taloned feet, red cloth; NOT human knight anatomy or sword. Each design differs visibly in back armor, wing folding silhouette, red cloth and tail posture yet unmistakably the same original character. Back shoulders/spine visible, no front chest facing camera. All ten full bodies with entire wings/tails inside their own widely spaced cells; generous fully transparent horizontal and vertical gutters and outside margin. Same overall height, feet baseline per row, painted dark-fantasy game sprite rendering, no scenery, no text, no labels, no ground shadows. These are ten alternate neutral-ready designs, not animation frames. Keep wings compact enough to fit cleanly without overlaps.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/wyrmLord/idle.webp",
+                "ref": "hd-assets-v23",
+                "sha": "2c2dd97e1b807a303a99317466592ddc317f3bc9",
+                "blob": "2c2dd97e1b807a303a99317466592ddc317f3bc9"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "sha": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/wyrmLord/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/wyrmLord/v05.png",
+                  "sha256": "673932c0a9b57a7632640eca3fe01e6928949ba2d42852d58b144ba1ad454b34",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.732421875,
+                      0.900390625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "manual-visible-foot-draft",
+                    "footReviewStatus": "draft-manual-anchor-review"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v06",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "fd3b5be8a5a9df1cf890ff4ae722856dcb8ba140245431293ada409df4f149a4",
+            "prompt": "Create EXACTLY TEN distinct rear-view design proposals of the Wyrm Lord in reference1, in 5 columns by 2 rows, transparent background. Reference2 is ONLY the player camera: back toward viewer, facing upper-right in rear three-quarter view, ready for combat. Preserve Wyrm Lord dragon head horns, black-red-gold articulated armor, red bat wings, lava-fissured tail, taloned feet, red cloth; NOT human knight anatomy or sword. Each design differs visibly in back armor, wing folding silhouette, red cloth and tail posture yet unmistakably the same original character. Back shoulders/spine visible, no front chest facing camera. All ten full bodies with entire wings/tails inside their own widely spaced cells; generous fully transparent horizontal and vertical gutters and outside margin. Same overall height, feet baseline per row, painted dark-fantasy game sprite rendering, no scenery, no text, no labels, no ground shadows. These are ten alternate neutral-ready designs, not animation frames. Keep wings compact enough to fit cleanly without overlaps.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/wyrmLord/idle.webp",
+                "ref": "hd-assets-v23",
+                "sha": "2c2dd97e1b807a303a99317466592ddc317f3bc9",
+                "blob": "2c2dd97e1b807a303a99317466592ddc317f3bc9"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "sha": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/wyrmLord/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/wyrmLord/v06.png",
+                  "sha256": "1667a793a43f0e45f26e09bf4be5c24cee2af24b8b22f96c381ded77c55b80c5",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.703125,
+                      0.884765625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "manual-visible-foot-draft",
+                    "footReviewStatus": "draft-manual-anchor-review"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v07",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "fd3b5be8a5a9df1cf890ff4ae722856dcb8ba140245431293ada409df4f149a4",
+            "prompt": "Create EXACTLY TEN distinct rear-view design proposals of the Wyrm Lord in reference1, in 5 columns by 2 rows, transparent background. Reference2 is ONLY the player camera: back toward viewer, facing upper-right in rear three-quarter view, ready for combat. Preserve Wyrm Lord dragon head horns, black-red-gold articulated armor, red bat wings, lava-fissured tail, taloned feet, red cloth; NOT human knight anatomy or sword. Each design differs visibly in back armor, wing folding silhouette, red cloth and tail posture yet unmistakably the same original character. Back shoulders/spine visible, no front chest facing camera. All ten full bodies with entire wings/tails inside their own widely spaced cells; generous fully transparent horizontal and vertical gutters and outside margin. Same overall height, feet baseline per row, painted dark-fantasy game sprite rendering, no scenery, no text, no labels, no ground shadows. These are ten alternate neutral-ready designs, not animation frames. Keep wings compact enough to fit cleanly without overlaps.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/wyrmLord/idle.webp",
+                "ref": "hd-assets-v23",
+                "sha": "2c2dd97e1b807a303a99317466592ddc317f3bc9",
+                "blob": "2c2dd97e1b807a303a99317466592ddc317f3bc9"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "sha": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/wyrmLord/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/wyrmLord/v07.png",
+                  "sha256": "74fc90342c8f0e2b9979cae6bf3a79453878a2143b28585ab2788dd435883b87",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.458984375,
+                      0.884765625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "manual-visible-foot-draft",
+                    "footReviewStatus": "draft-manual-anchor-review"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v08",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "fd3b5be8a5a9df1cf890ff4ae722856dcb8ba140245431293ada409df4f149a4",
+            "prompt": "Create EXACTLY TEN distinct rear-view design proposals of the Wyrm Lord in reference1, in 5 columns by 2 rows, transparent background. Reference2 is ONLY the player camera: back toward viewer, facing upper-right in rear three-quarter view, ready for combat. Preserve Wyrm Lord dragon head horns, black-red-gold articulated armor, red bat wings, lava-fissured tail, taloned feet, red cloth; NOT human knight anatomy or sword. Each design differs visibly in back armor, wing folding silhouette, red cloth and tail posture yet unmistakably the same original character. Back shoulders/spine visible, no front chest facing camera. All ten full bodies with entire wings/tails inside their own widely spaced cells; generous fully transparent horizontal and vertical gutters and outside margin. Same overall height, feet baseline per row, painted dark-fantasy game sprite rendering, no scenery, no text, no labels, no ground shadows. These are ten alternate neutral-ready designs, not animation frames. Keep wings compact enough to fit cleanly without overlaps.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/wyrmLord/idle.webp",
+                "ref": "hd-assets-v23",
+                "sha": "2c2dd97e1b807a303a99317466592ddc317f3bc9",
+                "blob": "2c2dd97e1b807a303a99317466592ddc317f3bc9"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "sha": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/wyrmLord/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/wyrmLord/v08.png",
+                  "sha256": "8e4415f64c1052fc78c97f4c9b66e1bd2e546bdc3f9f2335239a67a08acc2009",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.59765625,
+                      0.90234375
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "manual-visible-foot-draft",
+                    "footReviewStatus": "draft-manual-anchor-review"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v09",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "fd3b5be8a5a9df1cf890ff4ae722856dcb8ba140245431293ada409df4f149a4",
+            "prompt": "Create EXACTLY TEN distinct rear-view design proposals of the Wyrm Lord in reference1, in 5 columns by 2 rows, transparent background. Reference2 is ONLY the player camera: back toward viewer, facing upper-right in rear three-quarter view, ready for combat. Preserve Wyrm Lord dragon head horns, black-red-gold articulated armor, red bat wings, lava-fissured tail, taloned feet, red cloth; NOT human knight anatomy or sword. Each design differs visibly in back armor, wing folding silhouette, red cloth and tail posture yet unmistakably the same original character. Back shoulders/spine visible, no front chest facing camera. All ten full bodies with entire wings/tails inside their own widely spaced cells; generous fully transparent horizontal and vertical gutters and outside margin. Same overall height, feet baseline per row, painted dark-fantasy game sprite rendering, no scenery, no text, no labels, no ground shadows. These are ten alternate neutral-ready designs, not animation frames. Keep wings compact enough to fit cleanly without overlaps.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/wyrmLord/idle.webp",
+                "ref": "hd-assets-v23",
+                "sha": "2c2dd97e1b807a303a99317466592ddc317f3bc9",
+                "blob": "2c2dd97e1b807a303a99317466592ddc317f3bc9"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "sha": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/wyrmLord/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/wyrmLord/v09.png",
+                  "sha256": "46efb5b8312a7165e915f5c3ec65664bae400d1929866d82d80ee95f6e08255d",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5625,
+                      0.90234375
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "manual-visible-foot-draft",
+                    "footReviewStatus": "draft-manual-anchor-review"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v10",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "fd3b5be8a5a9df1cf890ff4ae722856dcb8ba140245431293ada409df4f149a4",
+            "prompt": "Create EXACTLY TEN distinct rear-view design proposals of the Wyrm Lord in reference1, in 5 columns by 2 rows, transparent background. Reference2 is ONLY the player camera: back toward viewer, facing upper-right in rear three-quarter view, ready for combat. Preserve Wyrm Lord dragon head horns, black-red-gold articulated armor, red bat wings, lava-fissured tail, taloned feet, red cloth; NOT human knight anatomy or sword. Each design differs visibly in back armor, wing folding silhouette, red cloth and tail posture yet unmistakably the same original character. Back shoulders/spine visible, no front chest facing camera. All ten full bodies with entire wings/tails inside their own widely spaced cells; generous fully transparent horizontal and vertical gutters and outside margin. Same overall height, feet baseline per row, painted dark-fantasy game sprite rendering, no scenery, no text, no labels, no ground shadows. These are ten alternate neutral-ready designs, not animation frames. Keep wings compact enough to fit cleanly without overlaps.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/wyrmLord/idle.webp",
+                "ref": "hd-assets-v23",
+                "sha": "2c2dd97e1b807a303a99317466592ddc317f3bc9",
+                "blob": "2c2dd97e1b807a303a99317466592ddc317f3bc9"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "sha": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/wyrmLord/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/wyrmLord/v10.png",
+                  "sha256": "ea02bea96e8a54e3982012e38c0fe5c7ead080321fadab7e83c3e4c477ac667e",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.53515625,
+                      0.875
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "manual-visible-foot-draft",
+                    "footReviewStatus": "draft-manual-anchor-review"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "provisionalDefaultVersion": "v01"
     },
     {
       "id": "fellWarden",
