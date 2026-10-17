@@ -1,6 +1,6 @@
 # Core default: native visual evidence
 
-Captured on 2026-10-17 from the portable **0.7.1.1543** build at `http://127.0.0.1:4462/AshenSpire.html`, using Chromium and JPEG quality 85. [Open the screenshot gallery](index.html).
+Captured on 2026-10-17 from the portable **0.7.1.1548** build at `http://127.0.0.1:4462/AshenSpire.html`, using Chromium and JPEG quality 85. [Open the screenshot gallery](index.html).
 
 These are native screenshot fixtures (`shot=combat` / `shot=map`, `gameProfile=core`, seed 3). The combat fixture requests three enemies. Ready and Smash use the mounted stage's own `setStance` method. No DOM cloning, replacement artwork, or CSS overrides were used. The fixture captures appearance; it does not certify a card play, damage, rewards, or a completed run.
 
