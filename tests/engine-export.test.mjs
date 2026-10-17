@@ -369,14 +369,33 @@ test('profile.profiles has one row per game profile, matching game-config and th
   const entry = manifest.tables.find((t) => t.id === 'profile.profiles');
   assert.ok(entry, 'no table profile.profiles');
   const rows = readJson(first.out, entry.file);
-  assert.deepEqual(rows.map((r) => r.Name), ['core', 'current']);
+  assert.deepEqual(rows.map((r) => r.Name), ['core', 'current', 'default']);
   const lock = JSON.parse(readFileSync(join(root, 'games', 'ashenspire', 'game.lock.json'), 'utf8'));
   for (const row of rows) {
     assert.equal(row.hash, lock.profiles[row.Name].hash, `${row.Name} hash matches game.lock.json`);
     assert.equal(row.runtimeHash, lock.profiles[row.Name].runtimeHash);
     assert.ok(row.enabledModules.length > 0 && Array.isArray(row.disabledModules));
   }
-  assert.equal(rows.filter((r) => r.isGameDefault).length, 1, 'exactly one preset equals games/ashenspire/game.json');
+  const flagged = rows.filter((r) => r.isGameDefault);
+  assert.deepEqual(flagged.map((r) => r.Name), ['default'], 'the default row is the one game-default row');
+  const gameJson = readFileSync(join(root, 'games', 'ashenspire', 'game.json'), 'utf8');
+  for (const name of ['core', 'current']) {
+    const row = rows.find((r) => r.Name === name);
+    const sameHash = row.hash === flagged[0].hash;
+    assert.equal(row.sameAsDefault === true, sameHash, `${name}.sameAsDefault follows the resolved hash`);
+    assert.equal(row.isGameDefault, false);
+    if (JSON.stringify(JSON.parse(gameJson)) === JSON.stringify(JSON.parse(readFileSync(join(root, 'games', 'ashenspire', 'presets', `${name}.json`), 'utf8')))) {
+      assert.equal(row.sameAsDefault, true, `${name} equals game.json, so it is flagged sameAsDefault`);
+    }
+  }
+});
+
+test('sameResolvedHash compares resolved hashes, not JSON text', async () => {
+  const { sameResolvedHash } = await import('../tools/engine-export.mjs');
+  assert.equal(sameResolvedHash('sha256:a', 'sha256:a'), true);
+  assert.equal(sameResolvedHash('sha256:a', 'sha256:b'), false);
+  assert.equal(sameResolvedHash('', ''), false);
+  assert.equal(sameResolvedHash(undefined, undefined), false);
 });
 
 test('module.modules lists every engine module; module.settings.<id> carries the module settings schema', () => {

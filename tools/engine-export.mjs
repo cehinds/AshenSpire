@@ -270,24 +270,33 @@ export async function staleGenerated({ root = ROOT, build = true, builders = BUI
   return failed;
 }
 
-/** The game profiles (core, current) resolved exactly as `game-config.mjs export` resolves them: one compact row each, plus the resolved profiles for later tables. */
+/** True when a preset resolves to the same profile as the game default: equal resolved hashes (the lock's per-profile hash), not equal JSON text. */
+export function sameResolvedHash(a, b) {
+  return typeof a === 'string' && a !== '' && a === b;
+}
+
+/**
+ * The game profiles (default, core, current) resolved exactly as `game-config.mjs export` resolves them: one compact row each, plus the resolved profiles for later tables.
+ * `default` is the profile the game launches (games/ashenspire/game.json); it gets its own row, flagged isGameDefault, and
+ * a preset that resolves to the same hash carries sameAsDefault.
+ */
 export async function collectProfiles() {
   const { gameProfileCatalog, gameProfileAuthors } = await import('../src/content/generated/gameProfiles.js');
   const { resolveGameAuthor } = await import('../engine/kernel/gameConfig.js');
-  const gameAuthor = JSON.stringify(gameProfileAuthors.default);
   const resolved = {};
   const rows = [];
+  const defaultHash = resolveGameAuthor(gameProfileAuthors.default, gameProfileCatalog).hash;
   for (const key of Object.keys(gameProfileAuthors).sort()) {
     const author = gameProfileAuthors[key];
-    if (key === 'default') continue; // games/ashenspire/game.json: flagged on the preset it equals
     const p = resolveGameAuthor(author, gameProfileCatalog);
-    resolved[p.id] = p;
+    // The row is keyed by the author name (the lock's profile key): `default` resolves with the id of the core it names.
+    resolved[key] = p;
     const ids = Object.keys(p.modules).sort();
-    rows.push({
-      id: p.id,
+    const row = {
+      id: key,
       core: author.core,
       hash: p.hash,
-      isGameDefault: JSON.stringify(author) === gameAuthor,
+      isGameDefault: key === 'default',
       enabledModules: ids.filter((m) => p.modules[m]),
       disabledModules: ids.filter((m) => !p.modules[m]),
       portable: p.portability.portable,
@@ -298,7 +307,9 @@ export async function collectProfiles() {
       runtimeHash: p.lock.runtimeHash,
       artifactCount: p.lock.artifacts.length,
       contentKinds: Object.keys(p.content).sort(),
-    });
+    };
+    if (key !== 'default' && sameResolvedHash(p.hash, defaultHash)) row.sameAsDefault = true;
+    rows.push(row);
   }
   return { catalog: gameProfileCatalog, authors: gameProfileAuthors, resolved, rows };
 }

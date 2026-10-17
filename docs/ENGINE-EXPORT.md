@@ -68,16 +68,20 @@ Every row is keyed by `Name`, as in every table. These tables are written with
 the rest of the export and can be selected with `--only profile`, `module`,
 `hudLayout` or `baseCards`.
 
-- `profile.profiles`: one row per game profile (`Name` is the profile `id`). Fields
-  include `core`, `hash`, `isGameDefault`, `enabledModules`, `disabledModules`,
-  `portable`, `requiredCapabilities`, `runtimeABI`, `runtimeHash`, `artifactCount`
-  and `contentKinds`.
+- `profile.profiles`: one row per game profile: `default` (the profile the game
+  launches, from `games/ashenspire/game.json`, flagged `isGameDefault: true`) and
+  each preset (`core`, `current`). `Name` is the profile key in `game.lock.json`. A
+  preset that resolves to the same `hash` as `default` carries `sameAsDefault: true`
+  (resolved hashes are compared, not the JSON text). Fields include `core`, `hash`,
+  `isGameDefault`, `sameAsDefault`, `enabledModules`, `disabledModules`, `portable`,
+  `requiredCapabilities`, `runtimeABI`, `runtimeHash`, `artifactCount` and
+  `contentKinds`.
 - `module.modules`: one row per engine module (`Name` is the module `id`). Fields
   include `version`, `description` (the first line of its `guide.md`), `runtimeABI`,
   `implementation`, `configuredAdapter`, `defaults`, `enabledIn` (the profiles that
   enable it) and `settingsTable`.
 - `module.settings.<id>`: one per module that a profile enables with settings.
-  `Name` is the profile `id`. Its schema is the module's `settings.schema.json`.
+  `Name` is the profile key (`default`, `core`, `current`). Its schema is the module's `settings.schema.json`.
 - `hudLayout.layouts`: one row per form factor (`Name` is the `formFactor`), with
   the layout's own fields.
 - `hudLayout.tokens`: one row per form factor and token (`Name` is
