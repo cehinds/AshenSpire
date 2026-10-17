@@ -143,9 +143,11 @@ def load_components(root, kind, spec, anchors, absolute=False):
     owners = core_owner[tuple(nearest)]
     frames = []
     assigned = 0
+    assigned_meaningful = 0
     for index, label in enumerate(spec["labels"]):
         selected = (owners==index+1) & (array[:,:,3]>0)
         assigned += int(selected.sum())
+        assigned_meaningful += int((selected & meaningful).sum())
         pixels = array.copy()
         pixels[~selected] = 0
         isolated = Image.fromarray(pixels,"RGBA")
@@ -161,12 +163,12 @@ def load_components(root, kind, spec, anchors, absolute=False):
             anchor = [anchor[0]-full_source[0],anchor[1]-full_source[1]]
         frames.append({"kind":kind,"label":label,"rect":full_source,"bounds":bounds,
                        "full":channel.getbbox(),"anchor":anchor,"reviewedAnchor":reviewed,"cell":cell})
-    if assigned != int((array[:,:,3]>0).sum()):
+    if assigned_meaningful != total or assigned != int((array[:,:,3]>0).sum()):
         raise ValueError("component partition lost or duplicated source pixels")
     source = {"path":str(path),"sha256":digest(path),"size":image.size,
               "sourceBoundary":boundary(alpha),"extraction":"connected-components",
               "assignment":sorted(assignments,key=lambda entry:entry["slot"]),
-              "partitionAlphaPixels":assigned,
+              "partitionAlphaPixels":assigned,"sourceMeaningfulPixels":total,"assignedMeaningfulPixels":assigned_meaningful,
               "warning":"Disconnected details and faint pixels assigned to nearest figure core; visual assignment review required"}
     return source, frames
 
