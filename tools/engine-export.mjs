@@ -349,6 +349,37 @@ export function collectModules({ catalog, resolved }) {
   return { tables, schemas };
 }
 
+/** HUD layout tokens (content/hud-layout/<form factor>.json): `hudLayout.layouts` (one row per form factor) and `hudLayout.tokens` (one row per form factor and token). */
+export function collectHudLayout() {
+  const dir = join(ROOT, 'content', 'hud-layout');
+  const layouts = [];
+  const tokens = [];
+  for (const file of listDir(dir, /\.json$/)) {
+    const layout = JSON.parse(readFileSync(join(dir, file), 'utf8'));
+    const id = layout.formFactor || basename(file, '.json');
+    layouts.push({ id, ...layout, formFactor: id });
+    for (const token of Object.keys(layout.tokens || {}).sort()) tokens.push({ id: `${id}:${token}`, formFactor: id, token, value: layout.tokens[token] });
+  }
+  return [['hudLayout.layouts', layouts], ['hudLayout.tokens', tokens]];
+}
+
+/** The base-card pack (games/ashenspire/packs/base-cards), from the compiled module plus the pack's groups and resource variants. */
+export async function collectBaseCards() {
+  const m = await import('../src/content/generated/baseCards.js');
+  const pack = join(ROOT, 'games', 'ashenspire', 'packs', 'base-cards');
+  const readPack = (name) => JSON.parse(readFileSync(join(pack, name), 'utf8'));
+  return [
+    ['baseCards.definitions', m.baseCardDefinitions],
+    ['baseCards.tagging', m.baseCardTagging.map((t) => ({ id: `${t.objectId}:${t.tagId}`, ...t }))],
+    ['baseCards.rewardIds', m.baseCardRewardIds.map((id, order) => ({ id, order }))],
+    ['baseCards.presentation', m.baseCardPresentation],
+    ['baseCards.statuses', m.baseCardStatuses],
+    ['baseCards.statusRules', m.baseCardStatusRules],
+    ['baseCards.groups', readPack('groups.json')],
+    ['baseCards.resourceVariants', readPack('resourceVariants.json')],
+  ];
+}
+
 async function collect() {
   const raw = []; // [id, value]
   const schemaOverrides = new Map(); // table id → items schema
@@ -357,6 +388,8 @@ async function collect() {
   const modules = collectModules(profiles);
   raw.push(...modules.tables);
   for (const [id, schema] of modules.schemas) schemaOverrides.set(id, schema);
+  raw.push(...collectHudLayout());
+  raw.push(...await collectBaseCards());
   const { contentBundle } = await import('../src/content/index.js');
   for (const key of Object.keys(contentBundle).sort()) {
     if (key === 'version') continue;

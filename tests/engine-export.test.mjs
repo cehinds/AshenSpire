@@ -399,6 +399,34 @@ test('module.modules lists every engine module; module.settings.<id> carries the
   }
 });
 
+test('hudLayout.* carries every content/hud-layout file and token', () => {
+  const files = readdirSync(join(root, 'content', 'hud-layout')).filter((f) => f.endsWith('.json')).sort();
+  const layouts = readJson(first.out, 'tables/hudLayout.layouts.json');
+  assert.deepEqual(layouts.map((r) => r.Name), files.map((f) => f.replace(/\.json$/, '')));
+  let tokenCount = 0;
+  for (const f of files) {
+    const src = JSON.parse(readFileSync(join(root, 'content', 'hud-layout', f), 'utf8'));
+    assert.deepEqual(layouts.find((r) => r.Name === src.formFactor).tokens, src.tokens);
+    tokenCount += Object.keys(src.tokens).length;
+  }
+  const tokens = readJson(first.out, 'tables/hudLayout.tokens.json');
+  assert.equal(tokens.length, tokenCount);
+  assert.ok(tokens.every((t) => t.Name === `${t.formFactor}:${t.token}`));
+});
+
+test('baseCards.* mirrors the compiled base-card pack', async () => {
+  const m = await import('../src/content/generated/baseCards.js');
+  const rows = (id) => readJson(first.out, `tables/baseCards.${id}.json`);
+  assert.deepEqual(rows('definitions').map((r) => r.Name), m.baseCardDefinitions.map((d) => d.id));
+  assert.equal(rows('tagging').length, m.baseCardTagging.length);
+  assert.deepEqual(rows('rewardIds').map((r) => r.Name), m.baseCardRewardIds);
+  assert.equal(rows('presentation').length, Object.keys(m.baseCardPresentation).length);
+  assert.equal(rows('statuses').length, m.baseCardStatuses.length);
+  assert.equal(rows('statusRules').length, Object.keys(m.baseCardStatusRules).length);
+  assert.ok(rows('groups').some((r) => r.Name === 'base.current-rewards'));
+  assert.equal(rows('resourceVariants').length, m.baseCardDefinitions.length);
+});
+
 test('the new tables are additive: every legacy namespace is still exported and no config or art id changed', () => {
   const ids = manifest.tables.map((t) => t.id);
   for (const prefix of ['content.', 'source.', 'framework.']) assert.ok(ids.some((id) => id.startsWith(prefix)), `no ${prefix} tables`);
