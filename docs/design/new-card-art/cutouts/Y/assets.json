@@ -334,8 +334,8 @@
     },
     "anchors": {
       "emissionRoot": {
-        "x": 0.52,
-        "y": 0.182
+        "x": 0.583,
+        "y": 0.35752
       }
     },
     "magicRole": "ethereal-melee",
@@ -964,8 +964,8 @@
     },
     "anchors": {
       "emissionRoot": {
-        "x": 0.52,
-        "y": 0.182
+        "x": 0.583,
+        "y": 0.35752
       }
     },
     "magicRole": "ethereal-melee",

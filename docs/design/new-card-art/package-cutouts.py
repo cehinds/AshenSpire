@@ -20,6 +20,8 @@ if data['revision'] >= 7:
     files += ['revision-v7.json']
 if data['revision'] >= 8:
     files += ['revision-v8.json', 'silhouette-reference.png', 'sword-scepter-preview.png']
+if data['revision'] >= 9:
+    files += ['revision-v9.json', 'scythe-scepter-preview.png']
 with zipfile.ZipFile(out, 'w', zipfile.ZIP_DEFLATED) as archive:
     for name in files:
         archive.write(root / name, name)

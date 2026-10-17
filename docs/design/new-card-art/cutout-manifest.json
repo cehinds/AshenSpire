@@ -1,6 +1,6 @@
 {
   "formatVersion": 1,
-  "revision": 8,
+  "revision": 9,
   "runtimeEnabled": false,
   "coordinateSpace": {
     "width": 512,
@@ -105,7 +105,8 @@
     "effectFileCount": 120,
     "totalPngCount": 362,
     "latestBatchNewPngCount": 0,
-    "latestBatchRevisedEffectCount": 10
+    "latestBatchRevisedEffectCount": 0,
+    "latestBatchRevisedCompositionCount": 20
   },
   "cardTypes": [
     {
@@ -339,7 +340,7 @@
     "proposalCatalog": "art-proposals-v2.json",
     "expansionCatalog": "expansion-v6.json",
     "reuseCatalog": "reuse-v5.json",
-    "meleeRevision": "revision-v8.json"
+    "meleeRevision": "revision-v9.json"
   },
   "assets": {
     "background.0": {
@@ -28941,8 +28942,8 @@
       },
       "anchors": {
         "emissionRoot": {
-          "x": 0.52,
-          "y": 0.182
+          "x": 0.583,
+          "y": 0.35752
         }
       },
       "magicRole": "ethereal-melee",
@@ -29571,8 +29572,8 @@
       },
       "anchors": {
         "emissionRoot": {
-          "x": 0.52,
-          "y": 0.182
+          "x": 0.583,
+          "y": 0.35752
         }
       },
       "magicRole": "ethereal-melee",
@@ -32343,7 +32344,7 @@
       "letter": "Y",
       "id": "ethereal-melee",
       "label": "Ethereal melee",
-      "revision": 8,
+      "revision": 9,
       "references": [
         {
           "kind": "tag",
@@ -164149,7 +164150,7 @@
           "zIndex": 20,
           "visible": true,
           "overrides": {
-            "x": 324.94,
+            "x": 373.94,
             "y": 317.32,
             "width": 437,
             "height": 437,
@@ -164179,7 +164180,9 @@
             "height": 470,
             "rotationDeg": 75,
             "opacity": 0.8,
-            "blendMode": "screen"
+            "blendMode": "screen",
+            "scaleX": 1.2,
+            "scaleY": 1.35
           },
           "attachment": {
             "enabled": true,
@@ -164195,7 +164198,7 @@
         }
       ],
       "magicMode": "melee",
-      "designRevision": 8,
+      "designRevision": 9,
       "displayName": "Blue ethereal scythe silhouette / Amber scepter",
       "displayLabel": "Y02 \u00b7 Blue ethereal scythe silhouette / Amber scepter"
     },
@@ -164539,7 +164542,7 @@
           "zIndex": 20,
           "visible": true,
           "overrides": {
-            "x": 324.94,
+            "x": 373.94,
             "y": 317.32,
             "width": 437,
             "height": 437,
@@ -164569,7 +164572,9 @@
             "height": 470,
             "rotationDeg": 75,
             "opacity": 0.8,
-            "blendMode": "screen"
+            "blendMode": "screen",
+            "scaleX": 1.2,
+            "scaleY": 1.35
           },
           "attachment": {
             "enabled": true,
@@ -164585,7 +164590,7 @@
         }
       ],
       "magicMode": "melee",
-      "designRevision": 8,
+      "designRevision": 9,
       "displayName": "Violet ethereal scythe silhouette / Amber scepter",
       "displayLabel": "Y07 \u00b7 Violet ethereal scythe silhouette / Amber scepter"
     },
@@ -164929,7 +164934,7 @@
           "zIndex": 20,
           "visible": true,
           "overrides": {
-            "x": 324.94,
+            "x": 373.94,
             "y": 317.32,
             "width": 437,
             "height": 437,
@@ -164959,7 +164964,9 @@
             "height": 470,
             "rotationDeg": 75,
             "opacity": 0.8,
-            "blendMode": "screen"
+            "blendMode": "screen",
+            "scaleX": 1.2,
+            "scaleY": 1.35
           },
           "attachment": {
             "enabled": true,
@@ -164975,7 +164982,7 @@
         }
       ],
       "magicMode": "melee",
-      "designRevision": 8,
+      "designRevision": 9,
       "displayName": "Blue ethereal scythe silhouette / Ivory scepter",
       "displayLabel": "Y12 \u00b7 Blue ethereal scythe silhouette / Ivory scepter"
     },
@@ -165319,7 +165326,7 @@
           "zIndex": 20,
           "visible": true,
           "overrides": {
-            "x": 324.94,
+            "x": 373.94,
             "y": 317.32,
             "width": 437,
             "height": 437,
@@ -165349,7 +165356,9 @@
             "height": 470,
             "rotationDeg": 75,
             "opacity": 0.8,
-            "blendMode": "screen"
+            "blendMode": "screen",
+            "scaleX": 1.2,
+            "scaleY": 1.35
           },
           "attachment": {
             "enabled": true,
@@ -165365,7 +165374,7 @@
         }
       ],
       "magicMode": "melee",
-      "designRevision": 8,
+      "designRevision": 9,
       "displayName": "Violet ethereal scythe silhouette / Ivory scepter",
       "displayLabel": "Y17 \u00b7 Violet ethereal scythe silhouette / Ivory scepter"
     },
@@ -165709,7 +165718,7 @@
           "zIndex": 20,
           "visible": true,
           "overrides": {
-            "x": 324.94,
+            "x": 373.94,
             "y": 317.32,
             "width": 437,
             "height": 437,
@@ -165739,7 +165748,9 @@
             "height": 470,
             "rotationDeg": 75,
             "opacity": 0.8,
-            "blendMode": "screen"
+            "blendMode": "screen",
+            "scaleX": 1.2,
+            "scaleY": 1.35
           },
           "attachment": {
             "enabled": true,
@@ -165755,7 +165766,7 @@
         }
       ],
       "magicMode": "melee",
-      "designRevision": 8,
+      "designRevision": 9,
       "displayName": "Blue ethereal scythe silhouette / Ruby scepter",
       "displayLabel": "Y22 \u00b7 Blue ethereal scythe silhouette / Ruby scepter"
     },
@@ -166099,7 +166110,7 @@
           "zIndex": 20,
           "visible": true,
           "overrides": {
-            "x": 324.94,
+            "x": 373.94,
             "y": 317.32,
             "width": 437,
             "height": 437,
@@ -166129,7 +166140,9 @@
             "height": 470,
             "rotationDeg": 75,
             "opacity": 0.8,
-            "blendMode": "screen"
+            "blendMode": "screen",
+            "scaleX": 1.2,
+            "scaleY": 1.35
           },
           "attachment": {
             "enabled": true,
@@ -166145,7 +166158,7 @@
         }
       ],
       "magicMode": "melee",
-      "designRevision": 8,
+      "designRevision": 9,
       "displayName": "Violet ethereal scythe silhouette / Ruby scepter",
       "displayLabel": "Y27 \u00b7 Violet ethereal scythe silhouette / Ruby scepter"
     },
@@ -166489,7 +166502,7 @@
           "zIndex": 20,
           "visible": true,
           "overrides": {
-            "x": 324.94,
+            "x": 373.94,
             "y": 317.32,
             "width": 437,
             "height": 437,
@@ -166519,7 +166532,9 @@
             "height": 470,
             "rotationDeg": 75,
             "opacity": 0.8,
-            "blendMode": "screen"
+            "blendMode": "screen",
+            "scaleX": 1.2,
+            "scaleY": 1.35
           },
           "attachment": {
             "enabled": true,
@@ -166535,7 +166550,7 @@
         }
       ],
       "magicMode": "melee",
-      "designRevision": 8,
+      "designRevision": 9,
       "displayName": "Blue ethereal scythe silhouette / Amethyst scepter",
       "displayLabel": "Y32 \u00b7 Blue ethereal scythe silhouette / Amethyst scepter"
     },
@@ -166879,7 +166894,7 @@
           "zIndex": 20,
           "visible": true,
           "overrides": {
-            "x": 324.94,
+            "x": 373.94,
             "y": 317.32,
             "width": 437,
             "height": 437,
@@ -166909,7 +166924,9 @@
             "height": 470,
             "rotationDeg": 75,
             "opacity": 0.8,
-            "blendMode": "screen"
+            "blendMode": "screen",
+            "scaleX": 1.2,
+            "scaleY": 1.35
           },
           "attachment": {
             "enabled": true,
@@ -166925,7 +166942,7 @@
         }
       ],
       "magicMode": "melee",
-      "designRevision": 8,
+      "designRevision": 9,
       "displayName": "Violet ethereal scythe silhouette / Amethyst scepter",
       "displayLabel": "Y37 \u00b7 Violet ethereal scythe silhouette / Amethyst scepter"
     },
@@ -167269,7 +167286,7 @@
           "zIndex": 20,
           "visible": true,
           "overrides": {
-            "x": 324.94,
+            "x": 373.94,
             "y": 317.32,
             "width": 437,
             "height": 437,
@@ -167299,7 +167316,9 @@
             "height": 470,
             "rotationDeg": 75,
             "opacity": 0.8,
-            "blendMode": "screen"
+            "blendMode": "screen",
+            "scaleX": 1.2,
+            "scaleY": 1.35
           },
           "attachment": {
             "enabled": true,
@@ -167315,7 +167334,7 @@
         }
       ],
       "magicMode": "melee",
-      "designRevision": 8,
+      "designRevision": 9,
       "displayName": "Blue ethereal scythe silhouette / Teal crystal scepter",
       "displayLabel": "Y42 \u00b7 Blue ethereal scythe silhouette / Teal crystal scepter"
     },
@@ -167659,7 +167678,7 @@
           "zIndex": 20,
           "visible": true,
           "overrides": {
-            "x": 324.94,
+            "x": 373.94,
             "y": 317.32,
             "width": 437,
             "height": 437,
@@ -167689,7 +167708,9 @@
             "height": 470,
             "rotationDeg": 75,
             "opacity": 0.8,
-            "blendMode": "screen"
+            "blendMode": "screen",
+            "scaleX": 1.2,
+            "scaleY": 1.35
           },
           "attachment": {
             "enabled": true,
@@ -167705,7 +167726,7 @@
         }
       ],
       "magicMode": "melee",
-      "designRevision": 8,
+      "designRevision": 9,
       "displayName": "Violet ethereal scythe silhouette / Teal crystal scepter",
       "displayLabel": "Y47 \u00b7 Violet ethereal scythe silhouette / Teal crystal scepter"
     },
@@ -168049,7 +168070,7 @@
           "zIndex": 20,
           "visible": true,
           "overrides": {
-            "x": 324.94,
+            "x": 373.94,
             "y": 317.32,
             "width": 437,
             "height": 437,
@@ -168079,7 +168100,9 @@
             "height": 470,
             "rotationDeg": 75,
             "opacity": 0.8,
-            "blendMode": "screen"
+            "blendMode": "screen",
+            "scaleX": 1.2,
+            "scaleY": 1.35
           },
           "attachment": {
             "enabled": true,
@@ -168095,7 +168118,7 @@
         }
       ],
       "magicMode": "melee",
-      "designRevision": 8,
+      "designRevision": 9,
       "displayName": "Blue ethereal scythe silhouette / Smoky quartz scepter",
       "displayLabel": "Y52 \u00b7 Blue ethereal scythe silhouette / Smoky quartz scepter"
     },
@@ -168439,7 +168462,7 @@
           "zIndex": 20,
           "visible": true,
           "overrides": {
-            "x": 324.94,
+            "x": 373.94,
             "y": 317.32,
             "width": 437,
             "height": 437,
@@ -168469,7 +168492,9 @@
             "height": 470,
             "rotationDeg": 75,
             "opacity": 0.8,
-            "blendMode": "screen"
+            "blendMode": "screen",
+            "scaleX": 1.2,
+            "scaleY": 1.35
           },
           "attachment": {
             "enabled": true,
@@ -168485,7 +168510,7 @@
         }
       ],
       "magicMode": "melee",
-      "designRevision": 8,
+      "designRevision": 9,
       "displayName": "Violet ethereal scythe silhouette / Smoky quartz scepter",
       "displayLabel": "Y57 \u00b7 Violet ethereal scythe silhouette / Smoky quartz scepter"
     },
@@ -168829,7 +168854,7 @@
           "zIndex": 20,
           "visible": true,
           "overrides": {
-            "x": 324.94,
+            "x": 373.94,
             "y": 317.32,
             "width": 437,
             "height": 437,
@@ -168859,7 +168884,9 @@
             "height": 470,
             "rotationDeg": 75,
             "opacity": 0.8,
-            "blendMode": "screen"
+            "blendMode": "screen",
+            "scaleX": 1.2,
+            "scaleY": 1.35
           },
           "attachment": {
             "enabled": true,
@@ -168875,7 +168902,7 @@
         }
       ],
       "magicMode": "melee",
-      "designRevision": 8,
+      "designRevision": 9,
       "displayName": "Blue ethereal scythe silhouette / Moonstone scepter",
       "displayLabel": "Y62 \u00b7 Blue ethereal scythe silhouette / Moonstone scepter"
     },
@@ -169219,7 +169246,7 @@
           "zIndex": 20,
           "visible": true,
           "overrides": {
-            "x": 324.94,
+            "x": 373.94,
             "y": 317.32,
             "width": 437,
             "height": 437,
@@ -169249,7 +169276,9 @@
             "height": 470,
             "rotationDeg": 75,
             "opacity": 0.8,
-            "blendMode": "screen"
+            "blendMode": "screen",
+            "scaleX": 1.2,
+            "scaleY": 1.35
           },
           "attachment": {
             "enabled": true,
@@ -169265,7 +169294,7 @@
         }
       ],
       "magicMode": "melee",
-      "designRevision": 8,
+      "designRevision": 9,
       "displayName": "Violet ethereal scythe silhouette / Moonstone scepter",
       "displayLabel": "Y67 \u00b7 Violet ethereal scythe silhouette / Moonstone scepter"
     },
@@ -169609,7 +169638,7 @@
           "zIndex": 20,
           "visible": true,
           "overrides": {
-            "x": 324.94,
+            "x": 373.94,
             "y": 317.32,
             "width": 437,
             "height": 437,
@@ -169639,7 +169668,9 @@
             "height": 470,
             "rotationDeg": 75,
             "opacity": 0.8,
-            "blendMode": "screen"
+            "blendMode": "screen",
+            "scaleX": 1.2,
+            "scaleY": 1.35
           },
           "attachment": {
             "enabled": true,
@@ -169655,7 +169686,7 @@
         }
       ],
       "magicMode": "melee",
-      "designRevision": 8,
+      "designRevision": 9,
       "displayName": "Blue ethereal scythe silhouette / Black opal scepter",
       "displayLabel": "Y72 \u00b7 Blue ethereal scythe silhouette / Black opal scepter"
     },
@@ -169999,7 +170030,7 @@
           "zIndex": 20,
           "visible": true,
           "overrides": {
-            "x": 324.94,
+            "x": 373.94,
             "y": 317.32,
             "width": 437,
             "height": 437,
@@ -170029,7 +170060,9 @@
             "height": 470,
             "rotationDeg": 75,
             "opacity": 0.8,
-            "blendMode": "screen"
+            "blendMode": "screen",
+            "scaleX": 1.2,
+            "scaleY": 1.35
           },
           "attachment": {
             "enabled": true,
@@ -170045,7 +170078,7 @@
         }
       ],
       "magicMode": "melee",
-      "designRevision": 8,
+      "designRevision": 9,
       "displayName": "Violet ethereal scythe silhouette / Black opal scepter",
       "displayLabel": "Y77 \u00b7 Violet ethereal scythe silhouette / Black opal scepter"
     },
@@ -170389,7 +170422,7 @@
           "zIndex": 20,
           "visible": true,
           "overrides": {
-            "x": 324.94,
+            "x": 373.94,
             "y": 317.32,
             "width": 437,
             "height": 437,
@@ -170419,7 +170452,9 @@
             "height": 470,
             "rotationDeg": 75,
             "opacity": 0.8,
-            "blendMode": "screen"
+            "blendMode": "screen",
+            "scaleX": 1.2,
+            "scaleY": 1.35
           },
           "attachment": {
             "enabled": true,
@@ -170435,7 +170470,7 @@
         }
       ],
       "magicMode": "melee",
-      "designRevision": 8,
+      "designRevision": 9,
       "displayName": "Blue ethereal scythe silhouette / Sapphire scepter",
       "displayLabel": "Y82 \u00b7 Blue ethereal scythe silhouette / Sapphire scepter"
     },
@@ -170779,7 +170814,7 @@
           "zIndex": 20,
           "visible": true,
           "overrides": {
-            "x": 324.94,
+            "x": 373.94,
             "y": 317.32,
             "width": 437,
             "height": 437,
@@ -170809,7 +170844,9 @@
             "height": 470,
             "rotationDeg": 75,
             "opacity": 0.8,
-            "blendMode": "screen"
+            "blendMode": "screen",
+            "scaleX": 1.2,
+            "scaleY": 1.35
           },
           "attachment": {
             "enabled": true,
@@ -170825,7 +170862,7 @@
         }
       ],
       "magicMode": "melee",
-      "designRevision": 8,
+      "designRevision": 9,
       "displayName": "Violet ethereal scythe silhouette / Sapphire scepter",
       "displayLabel": "Y87 \u00b7 Violet ethereal scythe silhouette / Sapphire scepter"
     },
@@ -171169,7 +171206,7 @@
           "zIndex": 20,
           "visible": true,
           "overrides": {
-            "x": 324.94,
+            "x": 373.94,
             "y": 317.32,
             "width": 437,
             "height": 437,
@@ -171199,7 +171236,9 @@
             "height": 470,
             "rotationDeg": 75,
             "opacity": 0.8,
-            "blendMode": "screen"
+            "blendMode": "screen",
+            "scaleX": 1.2,
+            "scaleY": 1.35
           },
           "attachment": {
             "enabled": true,
@@ -171215,7 +171254,7 @@
         }
       ],
       "magicMode": "melee",
-      "designRevision": 8,
+      "designRevision": 9,
       "displayName": "Blue ethereal scythe silhouette / Emerald scepter",
       "displayLabel": "Y92 \u00b7 Blue ethereal scythe silhouette / Emerald scepter"
     },
@@ -171559,7 +171598,7 @@
           "zIndex": 20,
           "visible": true,
           "overrides": {
-            "x": 324.94,
+            "x": 373.94,
             "y": 317.32,
             "width": 437,
             "height": 437,
@@ -171589,7 +171628,9 @@
             "height": 470,
             "rotationDeg": 75,
             "opacity": 0.8,
-            "blendMode": "screen"
+            "blendMode": "screen",
+            "scaleX": 1.2,
+            "scaleY": 1.35
           },
           "attachment": {
             "enabled": true,
@@ -171605,7 +171646,7 @@
         }
       ],
       "magicMode": "melee",
-      "designRevision": 8,
+      "designRevision": 9,
       "displayName": "Violet ethereal scythe silhouette / Emerald scepter",
       "displayLabel": "Y97 \u00b7 Violet ethereal scythe silhouette / Emerald scepter"
     },

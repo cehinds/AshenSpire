@@ -1,4 +1,8 @@
-## Current revision: full ethereal weapon silhouettes
+## Current revision: larger scythe projections
+
+Revision 9 makes both ethereal scythes 35% taller and 20% wider, with the full blade inside the art crop and the spectral shaft extending to the physical pommel. All 362 component PNGs and the approved Y00 sword remain unchanged. [View the gallery](expansion-v6.html), [edit the scythe](cutouts.html?category=Y&code=Y22), or [download revision 9](card-art-cutouts-v9.zip). Reset saved scythe compositions to use the enlarged placement.
+
+## Revision 8: full ethereal weapon silhouettes
 
 Revision 8 follows the supplied sword, hammer, L40 scythe, scimitar and shield models in blue and violet. Luminous outlines retain the full guards, grips and pommels around the physical scepters, with transparent cores and flowing energy. [View labelled references and compositions](expansion-v6.html), [edit layers](cutouts.html?category=Y), or [download revision 8](card-art-cutouts-v8.zip). Ten Y overlays are revised; the other 352 PNGs are unchanged. Reset previously saved compositions to use the new placement.
 

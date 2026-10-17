@@ -1,7 +1,7 @@
 # Actual PNG cutouts — selection set 07
 
 Open [cutouts.html](cutouts.html) to select, layer, rotate, resize and keep multiple
-choices. The downloadable `card-art-cutouts-v8.zip` includes the standalone
+choices. The downloadable `card-art-cutouts-v9.zip` includes the standalone
 viewer, all PNGs and the JSON. Extract the ZIP and open `cutouts.html`
 in a browser. It uses plain local scripts and needs no build step. If browser
 policy blocks local files, run `python3 -m http.server 8765` in the extracted
@@ -204,3 +204,7 @@ The ten Y overlays now depict the supplied models: O.object.0 sword, O.object.1 
 The composition fits the scepter inside the spectral grip. Each shape has its own parent size, angle, stone position, relative projection angle and `referenceParentSize`; these remain editable numeric transforms in JSON. The foreground attaches to the gem and follows the parent's transform. Disabling attachment allows independent positioning. Reset a saved composition to adopt these defaults.
 
 `references.baseAssetId`, `baseAssetSha256`, `sourceReference`, `referenceSha256`, source atlas hash and extraction crop identify each model and generated interpretation. `revision-v8.json` records the ten replacements. The PNGs were generated with alpha; export only crops, resizes and pads them. `revise-v8.py` rebuilds the set from the recorded external source atlases. Labels remain outside PNGs; zero is a real variant. The complete pack contains 362 PNGs and 2,520 compositions.
+
+## Larger scythe projections (revision 9)
+
+Y effect digits 2 and 7 now use `scaleX: 1.2` and `scaleY: 1.35` in all 20 scepter combinations. The projection anchor moves along the spectral shaft to keep the enlarged outline reaching the physical pommel. The assembly moves right to keep the full blade within the 512 × 640 art area. The original transparent PNGs are unchanged. Reset saved scythe placements to adopt these defaults. `revision-v9.json` records the change; `resize-scythes-v9.py` reapplies it after revision 8.
