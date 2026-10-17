@@ -119,3 +119,7 @@
 :root .combat[data-layout='formation'] > .combat-hud.shared-hud .hud-cinders-strip > .hud-center {
   position: relative; top: calc(-5px / var(--ui-zoom,1));
 }
+/* The quick-access group and its purse share clearance above the front line. */
+:root[data-form-factor='tablet'] .combat[data-layout='formation'] > .combat-hud.shared-hud :is(.hud-control-grid,.hud-cinders-strip) {
+  translate: 0 calc(-10px / var(--ui-zoom,1));
+}
