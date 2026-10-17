@@ -1,0 +1,176 @@
+{
+  "id": "act1",
+  "label": "Act 1",
+  "act": 1,
+  "description": "Act 1 climb. The shape is shared by all three acts today (src/content/mapconfig.js mapConfigs); difficulty lives in the encounter pools.",
+  "generator": {
+    "kind": "branching",
+    "steps": 12,
+    "paths": 6,
+    "weights": {
+      "monster": 45,
+      "event": 22,
+      "shrine": 12,
+      "elite": 8,
+      "merchant": 5
+    },
+    "constraints": [
+      {
+        "rule": "columns",
+        "value": 7,
+        "source": "src/content/mapconfig.js:53"
+      },
+      {
+        "rule": "entries",
+        "value": 1,
+        "source": "src/content/mapconfig.js:74"
+      },
+      {
+        "rule": "fixedFloor",
+        "node": "monster",
+        "anchor": {
+          "at": "first"
+        },
+        "source": "src/content/mapconfig.js:82"
+      },
+      {
+        "rule": "fixedFloor",
+        "node": "treasure",
+        "anchor": {
+          "at": "fraction",
+          "of": 0.64
+        },
+        "source": "src/content/mapconfig.js:83"
+      },
+      {
+        "rule": "noShrineBefore",
+        "anchor": {
+          "at": "fraction",
+          "of": 0.27
+        },
+        "source": "src/content/mapconfig.js:99"
+      },
+      {
+        "rule": "noEliteBefore",
+        "anchor": {
+          "at": "fraction",
+          "of": 0.43
+        },
+        "source": "src/content/mapconfig.js:100"
+      },
+      {
+        "rule": "noShrineOn",
+        "anchor": {
+          "at": "last"
+        },
+        "source": "src/content/mapconfig.js:101"
+      },
+      {
+        "rule": "restBeforeElite",
+        "value": true,
+        "source": "src/content/mapconfig.js:120"
+      },
+      {
+        "rule": "minElites",
+        "value": 2,
+        "source": "src/content/mapconfig.js:121"
+      },
+      {
+        "rule": "minMerchants",
+        "value": 1,
+        "source": "src/content/mapconfig.js:122"
+      },
+      {
+        "rule": "topFloorShrine",
+        "node": "shrine",
+        "value": 1,
+        "note": "steps is the floor count; the top floor is a lone shrine and the boss sits one floor above it",
+        "source": "src/engine/mapgen.js:162"
+      },
+      {
+        "rule": "noSameTypeAdjacent",
+        "except": "monster",
+        "source": "src/engine/mapgen.js:214"
+      },
+      {
+        "rule": "unknownWeights",
+        "weights": {
+          "event": 55,
+          "fight": 25,
+          "shrine": 12,
+          "treasure": 8
+        },
+        "source": "src/content/mapconfig.js:79"
+      },
+      {
+        "rule": "typingRetries",
+        "value": 40,
+        "source": "src/engine/mapgen.js:14"
+      }
+    ],
+    "seedStream": "map",
+    "proposed": {
+      "status": "owner ruling for 0.8.0, not yet in the generator",
+      "source": "docs/plans/core-0.8.0-feedback.md section 7",
+      "steps": 10,
+      "bossStep": 10,
+      "paths": 3,
+      "weights": {
+        "monster": 50,
+        "elite": 10,
+        "merchant": 15,
+        "shrine": 15,
+        "treasure": 10
+      },
+      "constraints": [
+        {
+          "rule": "firstNode",
+          "node": "monster"
+        },
+        {
+          "rule": "noEliteBefore",
+          "anchor": {
+            "at": "floor",
+            "index": 3
+          }
+        },
+        {
+          "rule": "minEliteChances",
+          "value": 2,
+          "note": "reachable and optional, never forced"
+        },
+        {
+          "rule": "restOnEveryRouteBeforeBoss",
+          "node": "shrine",
+          "note": "coordinator interpretation, stronger than at least one"
+        },
+        {
+          "rule": "divergentRoutes",
+          "value": 3
+        }
+      ],
+      "names": {
+        "fight": "monster",
+        "store": "merchant",
+        "rest": "shrine"
+      }
+    }
+  },
+  "nodes": [
+    "monster",
+    "event",
+    "elite",
+    "shrine",
+    "merchant",
+    "treasure",
+    "boss"
+  ],
+  "environment": "bg.bg_act1",
+  "atlas": {
+    "ref": "content/source/worldAtlas.json",
+    "path": "world_maps[mapId=fractured-realm]"
+  },
+  "assets": [
+    "map.parchment_act1"
+  ]
+}
