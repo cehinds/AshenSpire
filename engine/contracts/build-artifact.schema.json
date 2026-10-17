@@ -47,6 +47,9 @@
           },
           "service": {
             "type": "object"
+          },
+          "cases": {
+            "type": "array"
           }
         },
         "required": [
