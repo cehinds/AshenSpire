@@ -5,7 +5,7 @@ const target=process.argv[2];if(!target)throw Error('Provide the built feature H
 const dir='pose-studio/enemy-back-proposals';
 const manifest=JSON.parse(await readFile(dir+'/manifest.json','utf8')),errors=validateManifest(manifest);if(errors.length)throw Error(errors.join('; '));
 const assets={};
-for(const actor of manifest.actors)for(const p of actor.proposals)for(const sequence of [...Object.values(p.stances||{}),...Object.values(p.animations||{})])for(const frame of sequence.frames||[]){
+for(const actor of manifest.actors)for(const p of actor.proposals)for(const sequence of [...Object.values(p.stances||{}),...Object.values(p.animations||{}),...Object.values(p.reactions||{}),...(p.designFrame?[{frames:[p.designFrame]}]:[])])for(const frame of sequence.frames||[]){
  if(!safeAsset(frame.asset))throw Error('Unsafe asset path');
  if(!assets[frame.asset])assets[frame.asset]='data:image/'+(frame.asset.endsWith('.png')?'png':'webp')+';base64,'+(await readFile(frame.asset)).toString('base64');
 }

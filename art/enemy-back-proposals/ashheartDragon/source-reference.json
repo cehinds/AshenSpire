@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "actorId": "ashheartDragon",
+  "role": "original identity reference used for rear proposals",
+  "asset": "source-reference.webp",
+  "repository": "cehinds/AshenSpire-art",
+  "path": "hd/assets/enemy-poses/expansion/ashheartDragon/idle.webp",
+  "tag": "hd-assets-v23",
+  "blob": "7883ef7266de128bbf47d494b9f1fe45a8abfdc6",
+  "copyPolicy": "Literal WebP bytes; no decoding, re-encoding, crop, resize, masking or creative edits",
+  "note": "Player camera reference intentionally excluded."
+}

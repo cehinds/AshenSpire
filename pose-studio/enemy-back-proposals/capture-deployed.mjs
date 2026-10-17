@@ -22,17 +22,17 @@ const out='docs/preview/features/enemy-back-sprites';await mkdir(out,{recursive:
 const browser=await chromium.launch({headless:true}),records=[];
 try{
  for(const [name,width,height,actor] of [['mobile',390,844,'wyrmAspirant'],['desktop',1440,900,'courtDuelist'],['wide',1920,1080,'wyrmLord'],['tablet',820,1180,'fellWarden']]){
-  const page=await browser.newPage({viewport:{width,height}});
+  console.log('Capturing deployed viewport',name);const page=await browser.newPage({viewport:{width,height}});page.setDefaultTimeout(30000);page.setDefaultNavigationTimeout(90000);
   await page.goto(url,{waitUntil:'domcontentloaded',timeout:90000});
   const game=page.frameLocator('#preview');await game.locator('#enemy-rear-review-open').click({timeout:90000});
   const gallery=game.frameLocator('iframe[title="Enemy rear design review"]');
   await gallery.locator('#grid .card').first().waitFor({timeout:90000});
   const choices=await gallery.locator('#actor option').evaluateAll(opts=>opts.map(o=>o.value));assert.equal(choices.length,13);
-  for(const candidate of choices){
+  for(const candidate of choices){console.log('Checking deployed images',name,candidate);
    await gallery.locator('#actor').selectOption(candidate);await gallery.locator('#stance').selectOption('neutral');
    await gallery.locator('#grid img').first().waitFor();
-   await gallery.locator('#grid img').evaluateAll(images=>Promise.all(images.map(img=>img.decode())));
-   assert.equal(await gallery.locator('#grid img').count(),10);
+   await gallery.locator('#grid img').evaluateAll(images=>Promise.race([Promise.all(images.map(img=>img.decode())),new Promise((_,reject)=>setTimeout(()=>reject(Error('Rear images failed to decode within 30 seconds')),30000))]));
+   assert.equal(await gallery.locator('#reference img').count(),1,'Original identity reference is required');await gallery.locator('#reference img').evaluate(img=>Promise.race([img.decode(),new Promise((_,reject)=>setTimeout(()=>reject(Error('Source identity image failed to decode')),30000))]));assert.equal(await gallery.locator('#reference img').evaluate(img=>img.naturalWidth>0),true);assert.match(await gallery.locator('#reference').innerText(),/identity reference/);assert.equal(await gallery.locator('#grid img').count(),10);
    assert.equal(await gallery.locator('#grid img').evaluateAll(images=>images.every(img=>img.naturalWidth===512)),true);
   }
   await gallery.locator('#actor').selectOption(actor);await gallery.locator('#stance').selectOption('neutral');
@@ -58,3 +58,8 @@ const cleaned=readme.replace(/<!-- feature-preview:start -->[\s\S]*?<!-- feature
 await writeFile('README.md',cleaned.replace(/^(# [^\r\n]+\r?\n)/,'$1\n'+block+'\n\n'));
 execFileSync(process.execPath,['tools/feature-preview.mjs','--check'],{stdio:'inherit'});
 console.log(JSON.stringify(record));
+
+const box=JSON.parse(await readFile('buildordinal.json','utf8')),changelog=await readFile('CHANGELOG.md','utf8');
+const receipt='- **Rear enemy designs have a feature-only review gallery** ([#2071](https://github.com/cehinds/AshenSpire/pull/2071), `'+box.release+'.'+box.ordinal+'`). Compare 130 rear design drafts, original identity references, and three elite pilot sets with nine held poses, attack and evade clips, and static hurt and defeated reactions. Missing clips stay explicit. This draft review is not promoted: runtime alignment, playable unlocks, other motion sets, and external art publication remain pending.\n\n';
+if(!changelog.includes('/pull/2071)'))await writeFile('CHANGELOG.md',changelog.replace('## 2026-10-17\n\n','## 2026-10-17\n\n'+receipt));
+execFileSync(process.execPath,['tools/receipts.mjs','--check','--pr','2071'],{stdio:'inherit'});

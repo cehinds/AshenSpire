@@ -1,0 +1,191 @@
+{
+  "status": "draft-generated-not-normalized",
+  "seed": {
+    "path": "art/enemy-back-proposals/wyrmLord/v01.png",
+    "ref": "12744f2f1eca51993c1e42bb95e23ae8f6b0d2d3",
+    "repository": "cehinds/AshenSpire",
+    "sha256": "0cac89ff3a73b42c79dd8bbf8e5b993d5f117bf6f95cd1fbe0d020045d50caa8"
+  },
+  "generator": "image_gen.imagegen",
+  "generationDate": "2026-10-17",
+  "prompts": {
+    "stances": "Create TEN transparent cutout sprites of this exact armored winged Wyrm Lord dragon humanoid. Five columns by two rows. Same black red gold armor, folded red bat wings, horned dragon head, thick ember tail, red cloth. Rear threequarter upper-right camera, back toward viewer. SMALL complete figures occupying50% width and60%height of cells, enormous empty alpha gutters and outside margin. All wings folded compactly, tails curled close so characters never overlap. Held poses in reading order: neutral ready; smash fist overhead; attack forward claw strike; sweep sideways claw strike; counter raised claw ready riposte; defend crouched forearms guard; evade low sidestep lean; spell palm raised with small flame; preparing both fists cocked; neutral relaxed spare. Distinct articulated poses, consistent anatomy and scale. Full wings/horns/tails/claws inside each cell. No front chest, no human equipment. Transparent PNG only, no background, ground, shadows, labels, text or scenery.",
+    "motion": "Create transparent PNG cutout sprites. Eight sprites FOURcolumns TWOrows. Exact reference rear WyrmLord charcoal dragon orange lava blackgoldarmor redcape leftwing thicktail. Each figure SMALL55%slotwidth55%slotheight INCLUDING tail wing hands. HUGE EMPTY TRANSPARENT gutters margins all sides. No colored background. Row1 four attack animation poses: fistcocked anticipation, rightpunch strike, low followthrough, readyrecovery. Row2 four evade poses: kneebend, deep leftsidestep, lowcrouch, ready. Same identity outfit proportions palette camera rear upperright, real articulated limbs. Transparent alpha between every sprite, no shadows scenery text.",
+    "damage": "Transparent game sprite sheet exactly TWO fullbody cutout sprites one row two equal square slots. Edit exact rear Wyrm Lord seed identity charcoal dragon humanoid lava orange joints blackgold ornate plate armor torn red cape left reddish membranous wing curled thick tail clawfeet. Same scale detailed painterly style rear threequarter facing upperright no face. Left HURT recoil hunched forward left hand ribs right arm dropped knees bent wing contracted. Right DEFEATED non-graphic collapsed kneeling slump left forearm braced bowed head wing folded down tail limp. All body tail wing contained own slot with generous transparent gaps. No labels blood scenery background colors shadows borders. Different real anatomical poses."
+  },
+  "masters": {
+    "stances": {
+      "grid": [
+        5,
+        2
+      ],
+      "labels": [
+        "neutral",
+        "smash",
+        "attack",
+        "sweep",
+        "counter",
+        "defend",
+        "evade",
+        "spell",
+        "preparing",
+        "neutral-alt"
+      ]
+    },
+    "motion": {
+      "grid": [
+        4,
+        2
+      ],
+      "labels": [
+        "attack-01",
+        "attack-02",
+        "attack-03",
+        "attack-04",
+        "evade-01",
+        "evade-02",
+        "evade-03",
+        "evade-04"
+      ]
+    },
+    "damage": {
+      "grid": [
+        2,
+        1
+      ],
+      "labels": [
+        "hurt",
+        "defeated"
+      ]
+    }
+  },
+  "qa": {
+    "visual": "Root regenerated transparent 5x2 held stances. Last cell neutral-alt is spare, not a tenth stance. Requires new manual contact anchors and normalization review.",
+    "inEngine": false,
+    "motionRegeneration": "Regenerated from original rear v01 with small figures, wider transparent gutters; actual fist/torso attack articulation and crouched evade."
+  },
+  "clips": {
+    "attack": {
+      "durations": [
+        180,
+        90,
+        150,
+        200
+      ],
+      "status": "draft-generated"
+    },
+    "evade": {
+      "durations": [
+        140,
+        90,
+        130,
+        200
+      ],
+      "status": "draft-generated"
+    }
+  },
+  "otherClips": "unbuilt",
+  "normalization": {
+    "anchorCoordinates": "source",
+    "masterScale": {
+      "stances": 1.22,
+      "motion": 1.2,
+      "damage": 0.54
+    },
+    "footAnchors": {
+      "motion": [
+        [
+          285,
+          455
+        ],
+        [
+          775,
+          450
+        ],
+        [
+          1205,
+          455
+        ],
+        [
+          1625,
+          455
+        ],
+        [
+          295,
+          815
+        ],
+        [
+          795,
+          815
+        ],
+        [
+          1250,
+          815
+        ],
+        [
+          1650,
+          820
+        ]
+      ],
+      "damage": [
+        [
+          620,
+          780
+        ],
+        [
+          1460,
+          770
+        ]
+      ],
+      "stances": [
+        [
+          284,
+          368
+        ],
+        [
+          712,
+          368
+        ],
+        [
+          1106,
+          359
+        ],
+        [
+          1506,
+          359
+        ],
+        [
+          1887,
+          362
+        ],
+        [
+          262,
+          710
+        ],
+        [
+          676,
+          699
+        ],
+        [
+          1100,
+          735
+        ],
+        [
+          1504,
+          730
+        ],
+        [
+          1856,
+          741
+        ]
+      ]
+    },
+    "review": {
+      "reviewer": "elite_motion agent",
+      "method": "manual source-image visual estimate",
+      "status": "draft-estimates-pending-normalized-preview",
+      "notes": "Anchors identify visible foot or support-contact baseline, using midpoint where both feet visible. Rear feet can be occluded. Values are visual estimates, not pixel-exact detections. Tail/cape alpha bottom is not used as floor. MasterScale calibrates separately generated damage anatomy to stances and preserves action crouch/height; shared scale then applies. Root must inspect normalized frames before accepting. Lord repaired10stances measured from native512 support-foot positions using anchor-delta conversion; rear feet occluded, tail bottom excluded. Source stance anatomy~300px, calibrated1.17 toward authored350px. Recovery-body visual comparison by elite_motion: updated stance calibration1.22; excludes raised weapons, estimated remaining body-height drift under approximately6percent. Root final native-frame QA pending."
+    },
+    "stanceBodyHeightPixels": 300
+  }
+}

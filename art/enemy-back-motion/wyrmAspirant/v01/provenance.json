@@ -1,0 +1,185 @@
+{
+  "status": "draft-generated-not-normalized",
+  "seed": {
+    "path": "art/enemy-back-proposals/wyrmAspirant/v01.png",
+    "ref": "12744f2f1eca51993c1e42bb95e23ae8f6b0d2d3",
+    "repository": "cehinds/AshenSpire",
+    "sha256": "ea5beb41f4e0d63f182a5393fa3ed124ed73eab772f33a152094debbca52738d"
+  },
+  "generator": "image_gen.imagegen",
+  "generationDate": "2026-10-17",
+  "prompts": {
+    "stances": "Edit the provided rear-view Wyrm Aspirant seed into ONE production game sprite sheet: EXACTLY 9 frames in a strict 3 columns by 3 rows uniform square-slot grid, reading left to right then top to bottom. Transparent background. Same draconic humanoid warrior in every frame, same rear three-quarter camera facing upper right, same red-orange scales, layered bronze dark plate back armor, hooked spines, long thick red curling tail, tattered blue-black rear tabard, huge curved metallic blade in right hand, spiked left forearm. Preserve identity, realistic painterly game-sprite rendering and outfit proportions of seed exactly. Full body and weapon entirely inside each slot, ample transparent gap, equal scale, feet on same baseline, no labels borders shadows scenery. Nine DISTINCT readable poses: 1 neutral ready stance matching seed; 2 SMASH both knees deeply flexed and sword raised far overhead; 3 ATTACK strong forward sword chop with arm extended; 4 SWEEP sword sweeping horizontally right to left with torso rotation seen from rear; 5 COUNTER weight on back foot, blade cocked diagonally beside right shoulder; 6 DEFEND crouched with spiked left forearm raised shielding head and blade crossed inward; 7 EVADE deep lateral sidestep left with bent knees and tail counterbalance; 8 SPELL left arm extended upward casting small contained orange ember flame, right sword lowered; 9 PREPARING hunched forward charging stance sword held back low. Genuine distinct anatomical limb poses, no duplicates or rotations of the entire sprite. Keep all heads turned away with no front face. Asset sheet, no poster composition.",
+    "motion": "Edit this exact Wyrm Aspirant rear sprite into ONE transparent production animation sheet EXACTLY 8 distinct full-body frames, strict uniform FOUR COLUMNS by TWO ROWS grid. Same character identity, rear three-quarter view facing upper right, red-orange scale palette, layered bronze plate back, hooked spines, long red tail, blue-black tattered rear tabard, large curved sword right hand, spiked left forearm. Preserve seed outfit proportions and detailed painterly game sprite style. Each equal square slot contains one complete character and entire sword with clear empty margins; shared character scale and foot floor baseline. No text, numbers, borders, scenery, ground, shadows, duplicates, global image rotation, or motion blur. TOP ROW is 4 successive real sword attack animation keyframes: anticipation winding blade back and up with torso coiled; decisive downward-forward strike in wide step with right arm fully extended; follow-through blade swept low across opposite side and shoulders turned away; recovery withdrawing arm and bringing feet back to ready. BOTTOM ROW is 4 successive real dodge animation keyframes: anticipation lowering center of gravity and bending knees; evasion sharply leaning and stepping laterally left with tail extended counterbalance; follow-through crouched side lean with sword kept close; recovery rising back to ready. Movement is actual articulated limbs/torso/tail change, no fake translation. Character always shows armored back and no face. Deliver all eight frames in one clean sprite sheet. CRITICAL LAYOUT: Draw every character SMALL, only 55% of each slot width and 65% of each slot height maximum including ALL sword tail and hands. Every slot must have at least 15% totally empty transparent margin on all four edges. Characters must NEVER touch or overlap adjacent frames. Smaller figures and wide gutters are mandatory; do not fill the canvas. Each equal slot is isolated.",
+    "damage": "Edit exact rear Wyrm Aspirant seed into production game sprite sheet EXACTLY TWO FRAMES in one horizontal row, equal square slots, transparent background, generous empty gap and all parts contained within own slot. Same dragon humanoid identity red-orange scales bronze back armor spines long red tail torn blue-black rear tabard curved sword, same rear three-quarter view facing upper right, no face, same scale and detailed painterly style. Left frame HURT: visibly recoiling from impact, hunched shoulders, twisted torso, left hand pressed to ribs, bent knees, sword dropping low. Right frame DEFEATED: non-graphic collapsed kneeling slump resting on left forearm with bowed head and sword laid low beside right hand, limp curved tail. Real different articulated poses, not duplicated standing sprite, no blood scenery labels borders or shadows."
+  },
+  "masters": {
+    "stances": {
+      "grid": [
+        3,
+        3
+      ],
+      "labels": [
+        "neutral",
+        "smash",
+        "attack",
+        "sweep",
+        "counter",
+        "defend",
+        "evade",
+        "spell",
+        "preparing"
+      ]
+    },
+    "motion": {
+      "grid": [
+        4,
+        2
+      ],
+      "labels": [
+        "attack-01",
+        "attack-02",
+        "attack-03",
+        "attack-04",
+        "evade-01",
+        "evade-02",
+        "evade-03",
+        "evade-04"
+      ]
+    },
+    "damage": {
+      "grid": [
+        2,
+        1
+      ],
+      "labels": [
+        "hurt",
+        "defeated"
+      ]
+    }
+  },
+  "qa": {
+    "visual": "Rear identity, armor, palette, silhouette consistent. Distinct articulated poses. Motion strip swords may approach neighbor slots; requires safe gutter crop review before integration.",
+    "inEngine": false,
+    "motionRegeneration": "Regenerated from original seed with smaller figures and wide gutters after rejected overlapping master. Foot anchors visual estimates pending normalized review."
+  },
+  "clips": {
+    "attack": {
+      "durations": [
+        180,
+        90,
+        150,
+        200
+      ],
+      "status": "draft-generated"
+    },
+    "evade": {
+      "durations": [
+        140,
+        90,
+        130,
+        200
+      ],
+      "status": "draft-generated"
+    }
+  },
+  "otherClips": "unbuilt",
+  "normalization": {
+    "anchorCoordinates": "source",
+    "masterScale": {
+      "stances": 1,
+      "motion": 1.2,
+      "damage": 0.54
+    },
+    "footAnchors": {
+      "stances": [
+        [
+          235,
+          400
+        ],
+        [
+          670,
+          400
+        ],
+        [
+          1090,
+          400
+        ],
+        [
+          255,
+          790
+        ],
+        [
+          680,
+          790
+        ],
+        [
+          1060,
+          790
+        ],
+        [
+          265,
+          1170
+        ],
+        [
+          670,
+          1195
+        ],
+        [
+          1090,
+          1175
+        ]
+      ],
+      "motion": [
+        [
+          245,
+          410
+        ],
+        [
+          650,
+          410
+        ],
+        [
+          1130,
+          410
+        ],
+        [
+          1550,
+          410
+        ],
+        [
+          225,
+          800
+        ],
+        [
+          650,
+          800
+        ],
+        [
+          1130,
+          800
+        ],
+        [
+          1550,
+          810
+        ]
+      ],
+      "damage": [
+        [
+          515,
+          780
+        ],
+        [
+          1350,
+          780
+        ]
+      ]
+    },
+    "review": {
+      "reviewer": "elite_motion agent",
+      "method": "manual source-image visual estimate",
+      "status": "draft-estimates-pending-normalized-preview",
+      "notes": "Anchors identify visible foot or support-contact baseline, using midpoint where both feet visible. Rear feet can be occluded. Values are visual estimates, not pixel-exact detections. Tail/cape alpha bottom is not used as floor. MasterScale calibrates separately generated damage anatomy to stances and preserves action crouch/height; shared scale then applies. Root must inspect normalized frames before accepting."
+    }
+  }
+}

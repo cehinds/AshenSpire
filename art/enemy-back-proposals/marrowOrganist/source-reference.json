@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "actorId": "marrowOrganist",
+  "role": "original identity reference used for rear proposals",
+  "asset": "source-reference.webp",
+  "repository": "cehinds/AshenSpire-art",
+  "path": "hd/assets/enemy-poses/expansion/marrowOrganist/idle.webp",
+  "tag": "hd-assets-v23",
+  "blob": "4da89f3915d65392564b682ead0b9f55fd46f38a",
+  "copyPolicy": "Literal WebP bytes; no decoding, re-encoding, crop, resize, masking or creative edits",
+  "note": "Player camera reference intentionally excluded."
+}

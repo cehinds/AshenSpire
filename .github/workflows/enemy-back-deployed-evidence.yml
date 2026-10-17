@@ -17,6 +17,10 @@ jobs:
           sparse-checkout: |
             pose-studio/enemy-back-proposals
             tools/feature-preview.mjs
+            tools/receipts.mjs
+            tools/buildversion.mjs
+            CHANGELOG.md
+            buildordinal.json
             README.md
           sparse-checkout-cone-mode: false
       - uses: actions/setup-node@v4
@@ -37,7 +41,7 @@ jobs:
           test "$GITHUB_REF_NAME" = worker/EnemyBackSprites/deployed-evidence
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f -- README.md docs/preview/features/enemy-back-sprites/
+          git add -f -- README.md CHANGELOG.md docs/preview/features/enemy-back-sprites/
           git commit -m "Record deployed enemy rear review evidence"
           git push origin HEAD:worker/EnemyBackSprites/deployed-evidence
       - uses: actions/upload-artifact@v4

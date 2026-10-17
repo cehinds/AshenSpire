@@ -1,0 +1,578 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "path": "art/enemy-back-proposals/blightedValkyrie/proposal-sheet.png",
+    "sha256": "13bf1bc5b4aaddd57e04f893505122fd50a47adc5629db4fd023c0dd57aca08e",
+    "size": [
+      1983,
+      793
+    ]
+  },
+  "grid": {
+    "columns": 5,
+    "rows": 2,
+    "rectPolicy": "adaptive zero meaningful-alpha gutters; prefer full zero alpha"
+  },
+  "output": {
+    "size": [
+      512,
+      512
+    ],
+    "boundsAnchor": [
+      256,
+      464
+    ],
+    "sharedScale": 1.0
+  },
+  "alphaThreshold": 32,
+  "sourceBoundary": {
+    "alphaAbove0": 0,
+    "alphaAbove32": 0
+  },
+  "variants": [
+    {
+      "id": "v01",
+      "sourceRect": [
+        0,
+        0,
+        397,
+        397
+      ],
+      "sourceAlphaBounds": [
+        41,
+        43,
+        383,
+        379
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 3,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        85,
+        128,
+        427,
+        464
+      ],
+      "boundsAnchor": [
+        256,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "f71d87f511e11922bf1c81f3cd099165782b37a79002a54d55f36026a9f3c10c",
+      "translation": [
+        81,
+        102
+      ]
+    },
+    {
+      "id": "v02",
+      "sourceRect": [
+        397,
+        0,
+        793,
+        397
+      ],
+      "sourceAlphaBounds": [
+        67,
+        40,
+        394,
+        378
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 9,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        92,
+        126,
+        419,
+        464
+      ],
+      "boundsAnchor": [
+        256,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "64ecb426233e3efe86f731c56ee117829bbc3d730ac7b58ea1feed770e2a3ed8",
+      "translation": [
+        26,
+        121
+      ]
+    },
+    {
+      "id": "v03",
+      "sourceRect": [
+        793,
+        0,
+        1193,
+        397
+      ],
+      "sourceAlphaBounds": [
+        54,
+        40,
+        372,
+        375
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 7,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        97,
+        129,
+        415,
+        464
+      ],
+      "boundsAnchor": [
+        256,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "f3baf9c97501fff0d3ccaf0059b8c3eaa8bac74a6867f2cfcb2ebf7614557977",
+      "translation": [
+        44,
+        126
+      ]
+    },
+    {
+      "id": "v04",
+      "sourceRect": [
+        1193,
+        0,
+        1586,
+        397
+      ],
+      "sourceAlphaBounds": [
+        41,
+        43,
+        391,
+        377
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 6,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        81,
+        130,
+        431,
+        464
+      ],
+      "boundsAnchor": [
+        256,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "5c0b1c7d9f68db6138c327e8a3c1181f1afb302d42868f6b92cc7beb3ce1fbac",
+      "translation": [
+        53,
+        124
+      ]
+    },
+    {
+      "id": "v05",
+      "sourceRect": [
+        1586,
+        0,
+        1983,
+        397
+      ],
+      "sourceAlphaBounds": [
+        49,
+        43,
+        351,
+        378
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 1,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        105,
+        129,
+        407,
+        464
+      ],
+      "boundsAnchor": [
+        256,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "70a7bae6afce5cf7faa938957147d1d69ab6ceb19655b4c439ec01d37dfa4d4b",
+      "translation": [
+        57,
+        126
+      ]
+    },
+    {
+      "id": "v06",
+      "sourceRect": [
+        0,
+        397,
+        397,
+        793
+      ],
+      "sourceAlphaBounds": [
+        28,
+        18,
+        383,
+        355
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 5,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        78,
+        127,
+        433,
+        464
+      ],
+      "boundsAnchor": [
+        256,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "f20685d88a804698abd13e798ad7508544d535e27312b4e118eccc424e0b961d",
+      "translation": [
+        74,
+        109
+      ]
+    },
+    {
+      "id": "v07",
+      "sourceRect": [
+        397,
+        397,
+        808,
+        793
+      ],
+      "sourceAlphaBounds": [
+        47,
+        18,
+        405,
+        354
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 6,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        77,
+        128,
+        435,
+        464
+      ],
+      "boundsAnchor": [
+        256,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "e5ab8e4b1e53632df9f7763e2c03e15401e51d991e819d687b233df2541d2425",
+      "translation": [
+        31,
+        111
+      ]
+    },
+    {
+      "id": "v08",
+      "sourceRect": [
+        808,
+        397,
+        1203,
+        793
+      ],
+      "sourceAlphaBounds": [
+        23,
+        18,
+        378,
+        355
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 5,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        78,
+        127,
+        433,
+        464
+      ],
+      "boundsAnchor": [
+        256,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "18599a411482c86d62f7f645a0353f1ee852a9b01973ad993bb083313009a518",
+      "translation": [
+        56,
+        109
+      ]
+    },
+    {
+      "id": "v09",
+      "sourceRect": [
+        1203,
+        397,
+        1602,
+        793
+      ],
+      "sourceAlphaBounds": [
+        45,
+        18,
+        395,
+        354
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 2,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        81,
+        128,
+        431,
+        464
+      ],
+      "boundsAnchor": [
+        256,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "f10a54a5de59d95d3c5fd1fea692621fca4a0404121ef7e54bac3f317d8224a3",
+      "translation": [
+        47,
+        110
+      ]
+    },
+    {
+      "id": "v10",
+      "sourceRect": [
+        1602,
+        397,
+        1983,
+        793
+      ],
+      "sourceAlphaBounds": [
+        58,
+        18,
+        346,
+        351
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 2,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        112,
+        131,
+        400,
+        464
+      ],
+      "boundsAnchor": [
+        256,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "3da91a65bbc831ae714ea31cfe70056a8d11ba8c0087567e5aa9f6867ad29572",
+      "translation": [
+        55,
+        113
+      ]
+    }
+  ],
+  "qa": {
+    "errors": [],
+    "warnings": [
+      "v01: boundary antialias noise",
+      "v02: boundary antialias noise",
+      "v03: boundary antialias noise",
+      "v04: boundary antialias noise",
+      "v05: boundary antialias noise",
+      "v06: boundary antialias noise",
+      "v07: boundary antialias noise",
+      "v08: boundary antialias noise",
+      "v09: boundary antialias noise",
+      "v10: boundary antialias noise"
+    ]
+  },
+  "cropPlan": {
+    "status": "draft-pending-crop-review",
+    "method": "zero meaningful-alpha gutters; prefer full zero alpha",
+    "horizontal": {
+      "band": [
+        379,
+        415
+      ],
+      "width": 36,
+      "cut": 397,
+      "criterion": "alpha <= 32",
+      "alphaAbove0": 10,
+      "alphaAbove32": 0,
+      "bandAlphaAbove0": 568,
+      "bandAlphaAbove32": 0
+    },
+    "rows": [
+      {
+        "y": [
+          0,
+          397
+        ],
+        "gutters": [
+          {
+            "band": [
+              397,
+              398
+            ],
+            "width": 1,
+            "cut": 397,
+            "criterion": "alpha == 0",
+            "alphaAbove0": 0,
+            "alphaAbove32": 0,
+            "bandAlphaAbove0": 0,
+            "bandAlphaAbove32": 0
+          },
+          {
+            "band": [
+              793,
+              794
+            ],
+            "width": 1,
+            "cut": 793,
+            "criterion": "alpha == 0",
+            "alphaAbove0": 0,
+            "alphaAbove32": 0,
+            "bandAlphaAbove0": 0,
+            "bandAlphaAbove32": 0
+          },
+          {
+            "band": [
+              1181,
+              1206
+            ],
+            "width": 25,
+            "cut": 1193,
+            "criterion": "alpha == 0",
+            "alphaAbove0": 0,
+            "alphaAbove32": 0,
+            "bandAlphaAbove0": 0,
+            "bandAlphaAbove32": 0
+          },
+          {
+            "band": [
+              1586,
+              1587
+            ],
+            "width": 1,
+            "cut": 1586,
+            "criterion": "alpha == 0",
+            "alphaAbove0": 0,
+            "alphaAbove32": 0,
+            "bandAlphaAbove0": 0,
+            "bandAlphaAbove32": 0
+          }
+        ]
+      },
+      {
+        "y": [
+          397,
+          793
+        ],
+        "gutters": [
+          {
+            "band": [
+              397,
+              398
+            ],
+            "width": 1,
+            "cut": 397,
+            "criterion": "alpha == 0",
+            "alphaAbove0": 0,
+            "alphaAbove32": 0,
+            "bandAlphaAbove0": 0,
+            "bandAlphaAbove32": 0
+          },
+          {
+            "band": [
+              808,
+              809
+            ],
+            "width": 1,
+            "cut": 808,
+            "criterion": "alpha == 0",
+            "alphaAbove0": 0,
+            "alphaAbove32": 0,
+            "bandAlphaAbove0": 0,
+            "bandAlphaAbove32": 0
+          },
+          {
+            "band": [
+              1193,
+              1214
+            ],
+            "width": 21,
+            "cut": 1203,
+            "criterion": "alpha == 0",
+            "alphaAbove0": 0,
+            "alphaAbove32": 0,
+            "bandAlphaAbove0": 0,
+            "bandAlphaAbove32": 0
+          },
+          {
+            "band": [
+              1601,
+              1603
+            ],
+            "width": 2,
+            "cut": 1602,
+            "criterion": "alpha == 0",
+            "alphaAbove0": 0,
+            "alphaAbove32": 0,
+            "bandAlphaAbove0": 0,
+            "bandAlphaAbove32": 0
+          }
+        ]
+      }
+    ]
+  }
+}
