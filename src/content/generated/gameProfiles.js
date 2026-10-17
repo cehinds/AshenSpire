@@ -15398,7 +15398,7 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "path": "src/** (excluding generated gameProfiles/changelog)",
-      "hash": "sha256:582cc249ae511d51c87f7892c18d0fdc4d2d3eda89af6eb95764af8710449a84"
+      "hash": "sha256:d174b8d3fd3a60e63245804ce96b3ca31f2c034711020801d48e7772f7775fe8"
     }
   ],
   "runtimeSources": [
@@ -15580,7 +15580,7 @@ export const gameProfileCatalog = {
       "path": "src/content/combatBodyLandmarks.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:57e9f15eca19559cb7248df528e18cf8de6b4ec98fc383c0cf503b727d2f3b69"
+      "hash": "sha256:7850c7d1c6887b4d5e5536ad4d46034b24066e4ca82810af4456414af6028a35"
     },
     {
       "path": "src/content/combatCardTraits.js",
@@ -15779,6 +15779,12 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "hash": "sha256:beb73ccbe77ac74bf53265e68b7dd26186e6d59fef2451294fc07bfbf281f0ab"
+    },
+    {
+      "path": "src/content/enemyBodyLandmarks.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:d2561951dd98be889735934b6a3dad9b61f16bc022f5539611239643f95e177a"
     },
     {
       "path": "src/content/enemyExpansion.js",
@@ -18580,7 +18586,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/components/combatSpriteGeometry.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:a4962b89aba062b065819132e3278a7182ac087ebba2f37406200cd7ac716ce9"
+      "hash": "sha256:7d44f37ad72add94f759d6e9a837aeb008c8e8fa77fe8ef11bf5196e6c01b527"
     },
     {
       "path": "src/ui/components/combatTargetHud.js",
@@ -19252,7 +19258,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/enemyExpansionStage.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:f44ed43bf0e610d901091161dc13d89fddba274df4a3d14edba9057f6e7894f4"
+      "hash": "sha256:c3fd4b39a8a1abfe34399e2d4c3d462d70ae44790b4b50f42ac190f56ec7dfaf"
     },
     {
       "path": "src/ui/enemyPoseStage.js",
@@ -20401,7 +20407,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:23af16d4e9c9f6d88fe655d32ecf1a688b47df39f9e3a1d6d193ce63923593ab"
     }
   ],
-  "runtimeHash": "sha256:c1fba21570f211e9ce536c7e12a4b54768a63cc7b1cd8f73551b659a2b629486"
+  "runtimeHash": "sha256:9be6e995294ddec26bb220a6dae8f13dc176dbdccc9fe2d129fffa1f39f2d283"
 };
 export const gameProfileAuthors = {
   "default": {
