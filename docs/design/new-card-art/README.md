@@ -1,4 +1,8 @@
-## Current revision: half-size scepters aligned with the spectral staff
+## Current revision: more transparent ethereal weapons
+
+Revision 12 halves spectral opacity from 80% to 40% across all 100 melee scepter combinations. The approved shapes, sizes and physical scepter placements remain unchanged. [View all five weapons and both scepter colors](weapon-scepter-gallery.html), [open the labelled overview](weapons-and-scepters-v12.png), or [download revision 12](card-art-cutouts-v12.zip). The gallery includes isolated energy-layer previews and direct PNG links.
+
+## Revision 11: half-size scepters aligned with the spectral staff
 
 Revision 11 halves the physical scythe scepters from 305.9 to 152.95 pixels and aligns their grips with the spectral staff. The spectral scythes keep exactly the same size and position. [View the comparison](scythe-scepter-comparison-v11.png), [open the gallery](expansion-v6.html), or [download revision 11](card-art-cutouts-v11.zip). Reset saved scythe compositions to use the new placement.
 

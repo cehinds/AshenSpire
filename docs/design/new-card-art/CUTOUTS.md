@@ -1,7 +1,7 @@
 # Actual PNG cutouts — selection set 07
 
 Open [cutouts.html](cutouts.html) to select, layer, rotate, resize and keep multiple
-choices. The downloadable `card-art-cutouts-v11.zip` includes the standalone
+choices. The downloadable `card-art-cutouts-v12.zip` includes the standalone
 viewer, all PNGs and the JSON. Extract the ZIP and open `cutouts.html`
 in a browser. It uses plain local scripts and needs no build step. If browser
 policy blocks local files, run `python3 -m http.server 8765` in the extracted
@@ -216,3 +216,7 @@ All 20 scythe compositions shrink the physical scepter from 437 to 305.9 pixels,
 ## Half-size aligned scepters (revision 11)
 
 The physical scepter is now exactly 50% of its revision-10 dimensions: 152.95 × 152.95 instead of 305.9 × 305.9. The grip follows the transformed spectral staff centerline and its pommel sits at the spectral lower cap. Attachment offset, relative rotation and reference size compensate for the new physical pose, preserving the spectral scythe's world position and matrix. All 20 blue/violet scythe combinations are updated; all other compositions and PNG assets are unchanged. `resize-scepters-v11.mjs` applies this once after revision 10. Reset saved scythe placements to use the revised defaults. Revision-specific preview filenames distinguish this result from earlier previews.
+
+## More transparent ethereal weapons (revision 12)
+
+“50% more ethereal” is implemented as halving the spectral layer opacity from 0.8 to 0.4 in all 100 Y compositions. Y asset defaults and CSS also use 0.4, so isolated previews match the composed projections. This changes rendering, leaving all original PNG pixels and the approved geometry intact. The physical weapons and scepters retain their opacity. `weapon-scepter-gallery.html` shows the five physical model references, ten scepter previews, and isolated blue/violet energy layers with labels and direct PNG links. Reset saved compositions to use the revised defaults.
