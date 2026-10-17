@@ -300,6 +300,11 @@ test('a content/config change runs the config compiler before the reload; a fail
   assert.deepEqual(buildsFor(['games/ashenspire/packs/core/pack.json'], root), ['tools/game-config.mjs build']);
   assert.deepEqual(buildsFor(['engine/modules/animation/defaults.json'], root), ['tools/game-config.mjs build']);
   assert.deepEqual(buildsFor(['engine/kernel/kernel.json'], root), ['tools/game-config.mjs build']);
+  assert.deepEqual(buildsFor(['content/hud-layout/mobile.json'], root), [], 'no tools/hud-layout-css.mjs in this checkout: no step');
+  await fs.writeFile(path.join(root, 'tools/hud-layout-css.mjs'), '');
+  assert.deepEqual(buildsFor(['content/hud-layout/mobile.json'], root), ['tools/hud-layout-css.mjs --write']);
+  assert.deepEqual(buildsFor(['content/source/a.csv', 'content/config/ui/tokens.json', 'content/hud-layout/mobile.json'], root),
+    ['tools/config-build.mjs', 'tools/hud-layout-css.mjs --write', 'tools/content-build.mjs'], 'config, then the HUD stylesheet, then the content compiler');
   assert.deepEqual(buildsFor(['games/ashenspire/game.lock.json'], root), [], 'the lock is generated: saving it is no build input');
   assert.deepEqual(buildsFor(['engine/docs/notes.md'], root), [], 'only the engine trees the compiler reads are inputs');
   await fs.rm(path.join(root, 'tools/framework-data-build.mjs'));
