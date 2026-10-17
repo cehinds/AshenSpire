@@ -209,8 +209,8 @@
       "digest": "24624c63c8967959"
     },
     "tools/hand-side-probe.mjs": {
-      "count": 4,
-      "digest": "202b7aeba2b2cf9e"
+      "count": 5,
+      "digest": "e1ee0130ed5f11a3"
     },
     "tools/hintstrip.mjs": {
       "count": 14,
@@ -313,8 +313,8 @@
       "digest": "25b8ff56b0445600"
     },
     "tools/startup-gate.mjs": {
-      "count": 26,
-      "digest": "6a9e39a11d46196c"
+      "count": 28,
+      "digest": "c68e9388e48fc3bb"
     },
     "tools/status-presentation-authority.mjs": {
       "count": 4,
