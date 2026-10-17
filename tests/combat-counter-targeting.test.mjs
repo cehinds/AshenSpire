@@ -29,7 +29,7 @@ test('Counter client and engine plans agree on immediate self support', () => {
 
 test('expanded Shield Bash targets its defender, not the deferred reply enemy', () => {
   const def = resolveCombatCard({ registries, combatExpansionVersion: 2 }, { cardId: 'shieldBash' });
-  assert.equal(def.counterPayload.poise, 4);
+  assert.equal(def.counterPayload.poise, 12, 'grade-zero Poise 8 plus the canonical Counter conversion preserves its payload');
   assert.deepEqual(immediateCardEffects(def).map(effect => effect.op), ['block']);
   assert.deepEqual(cardTargetPlan(def, 'a', enemies, players), { mode: 'friendly', legalIds: ['a'] });
 });

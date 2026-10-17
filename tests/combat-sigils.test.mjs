@@ -103,7 +103,7 @@ test('every base, upgrade, authored rank and equipment profile uses the shared i
     assert.ok(Object.isFrozen(model.sigils));
     actions.add(model.sigils.action); if(model.sigils.school)schools.add(model.sigils.school);
   }
-  assert.deepEqual([...actions].sort(), ['attack','counter','defense','evade','power','skill','smash','status','sweep']); assert.equal(schools.size, 8);
+  assert.deepEqual([...actions].sort(), ['attack','counter','defense','evade','power','skill','smash','spell','status','sweep']); assert.equal(schools.size, 8);
 });
 
 test('approved solid footer symbols stay distinct and have a visible action name', () => {
@@ -124,10 +124,10 @@ test('long rank effects keep their Starstone condition, values and draw limit', 
   assert.equal(compactCardRules('If you have starstoneCharge: Deal 4 damage to every living enemy. Apply <span class="val">1</span> starstoneCharge to yourself. Draw <span class="val">1</span> card(s), once per turn from this family.'), 'With Starstone: 4 damage to all enemies. Gain <span class="val">1</span> Starstone. Draw <span class="val">1</span>, once per turn per family.');
 });
 
-test('Ritual Ward keeps Defend below and category followed by effect type on the right', () => {
+test('Ritual Ward keeps its canonical Spell category below and category followed by effect type on the right', () => {
   const reg=createRegistries(contentBundle),ref={cardId:'defend',profileId:'sceptreGuard'};
   const model=playingCardModel(reg,ref),def=resolveCard(reg,ref);
-  assert.equal(model.sigils.action,'defense');
+  assert.equal(model.sigils.action,'spell');
   assert.deepEqual(cardSideTags(model,def,reg).map(t=>t.label),['Spell','Divine']);
 });
 
