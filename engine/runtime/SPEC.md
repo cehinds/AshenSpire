@@ -57,6 +57,7 @@ mechanic's state.
 | --- | --- |
 | number, boolean, null | itself |
 | `"$name"` | variable `name`; `"$name.a.b"` reads a field path. If the value so far is an entity ref, the next key reads that entity's field. `"$state.a.b"` reads the current mechanic's state. Unresolved: error `Unresolved $name`. |
+| `"$model.a.b"` | the calling mechanic's model: its own state `state.mechanics[slug]` merged over the defaults of its `model.schema.json` (`properties.<key>.default`, recursing into object `properties`). State wins, key by key, at every depth. Unresolved: error `Unresolved $model.a.b`. |
 | other string | itself (entity ref, status id, card id) |
 | `{ "f": op, ... }` | formula, section 7, evaluated to an integer |
 | condition object | boolean (section 5) |
@@ -100,6 +101,11 @@ Steps (the first key found decides the kind, in this order):
 order, for every handler in file order with `on == "event." + name`, runs the handler with the payload
 as variables. Events raised by those handlers append after, depth first.
 
+Handlers may listen to runtime events like any other: `{ "on": "event.runtime.poiseBroken" }` runs
+when `poiseDamage` takes a target with poise above 0 to 0, with the variable `target` bound to the ref
+(`runtime.staggered`, raised by `stagger`, works the same way). The runtime events belong to no mechanic,
+so they are never a listed `emit` target of a mechanic and need no `requires`.
+
 Load order is folder-name order (sorted ascending by folder name).
 
 ## 7. Formulas
@@ -129,7 +135,7 @@ Common rules:
 - `target` selects entities (section 4). If absent: the variable `target` when defined, else `self`.
   The op applies to each target in order.
 - Numeric params are values. Amounts are floored and not below 0 (`max(0, floor(v))`) except
-  `stacks`, which is floored and may be negative.
+  `stacks` and `restoreStamina`, which are floored and may be negative.
 - Pools never go below 0.
 
 | Op | Effect on each target |
@@ -141,7 +147,7 @@ Common rules:
 | `applyStatus` status, stacks (default 1) | `statuses[status] += stacks`; delete at 0 or below |
 | `removeStatus` status, amount | no `amount`: delete the status. Else subtract `amount`; delete at 0 or below. |
 | `gainEnergy` amount (default 1), funded | `sp += max(0, amount - funded)`, capped at `spMax` if present |
-| `restoreStamina` amount (default 1) | `sp += amount`, capped at `spMax` if present |
+| `restoreStamina` amount (default 1) | `sp = max(0, sp + amount)`, capped at `spMax` if present. A negative amount takes stamina away (the only portable way to lose sp). |
 | `restoreMana` amount (default 1), funded, toFloorPct | by amount: `mp += max(0, amount - funded)`, capped at `mpMax` if present. With `toFloorPct`: `cap = mpMax or mp`; `floor = min(cap, floor(cap * pct / 100))`; `mp = cap` if `mp >= floor` else `floor`. |
 | `poiseDamage` amount | `poise = max(0, poise - amount)`. If it was above 0 and is now 0, raise `runtime.poiseBroken { target }`. |
 | `gainPoise` amount | `poise += amount`, no cap |
@@ -186,6 +192,8 @@ r = ((t xor (t >> 14)) as uint32) / 4294967296
   other value, arrays included, must be deeply equal.
 - `then.events`: event names that must appear in the result events in this order (other events may sit between).
 - `then.value`: for a query, deep equal to the returned value.
+- `when: { "event": "slug.event", "with": {...} }` raises the event with that payload (runtime events such as
+  `runtime.poiseBroken` included), so a listener is tested without a command that causes it.
 - `then.error`: the call must fail with a message containing this text.
 
 A case passes when every part of `then` holds.
