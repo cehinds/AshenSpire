@@ -105,14 +105,14 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
   const restPose = () => rest === 'defeated' ? 'defeated' : stance ? 'stance-'+stance : rest === 'counter' ? (pilotFrames ? 'pilot-counter' : selected.stances.counter) : ['defend','guard','evade'].includes(rest) ? 'guard-brace' : 'ready';
   const filterFor = (frame, action, paid = resources, active = !!action) =>
     auraFilter(action === 'spell' ? 'power2' : frame, ['defend','counter'].includes(rest) ? 'guard' : rest, paid, active);
-  function paint(now=performance.now(), materialize=false) {
+  function paint(now=performance.now(), materialize=false, inspection=false) {
     if (disposed) return;
     ctx.clearRect(0,0,canvas.width,canvas.height);
     currentArt=null;
     let x=0, effect=null;
     el.dataset.effect='';
     if (playing) {
-      const sampled=sampleSequence(playing.sequence,elapsed,playing.duration,{reduced:reducedMotionRequested()});
+      const sampled=sampleSequence(playing.sequence,elapsed,playing.duration,{reduced:!inspection&&reducedMotionRequested()});
       pose=playing.sequence.poses[sampled.index];
       // A swing leaves from and returns to the held stance, not the neutral ready frame.
       if(pose==='origin')pose=restPose();
@@ -121,7 +121,7 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
       x=['attack','smash','sweep'].includes(playing.action)?sampled.x:0;
     }
     if (rest !== 'defeated' && bodyReaction) {
-      const sampled=sampleSequence(bodyReaction.sequence,bodyReaction.elapsed,bodyReaction.duration,{reduced:still||reducedMotionRequested()||!ANIM_SPEEDS[getAnimSpeed()]});
+      const sampled=sampleSequence(bodyReaction.sequence,bodyReaction.elapsed,bodyReaction.duration,{reduced:!inspection&&(still||reducedMotionRequested()||!ANIM_SPEEDS[getAnimSpeed()])});
       pose=bodyReaction.sequence.poses[sampled.index];
     }
     el.dataset.pose=pose;
@@ -231,19 +231,19 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
       return !!stance;
     },
     setPose(next){if(family.frames[next]){playing=null;pose=next;paint();return true;}return false;},
-    seek(action, time, duration=260){
+    seek(action, time, duration=260, {inspection=false}={}){
       const sequence=family.sequences[action];if(!sequence||disposed)return false;
       if(request!==null)cancelAnimationFrame(request);request=null;
-      playing={action,sequence,duration};elapsed=time;paint();return true;
+      playing={action,sequence,duration};elapsed=time;paint(performance.now(),false,inspection);return true;
     },
     /** Inspection transport: use the real reaction painter without starting its wall clock. */
-    seekReaction(kind, time, duration=280){
+    seekReaction(kind, time, duration=280, {inspection=false}={}){
       if(disposed || rest==='defeated' || !pilotFrames || !['evade','guard-break','fully-defended','defend'].includes(kind))return false;
       const sequence=selectedWeaponSequence(kind);
       if(!sequence.poses.every(pose=>frames[pose]))return false;
       if(request!==null)cancelAnimationFrame(request);request=null;
       playing=null;bodyReaction={kind,sequence,elapsed:time,last:performance.now(),duration};
-      paint();return true;
+      paint(performance.now(),false,inspection);return true;
     },
     setRestPose(next='idle',{resume,immediate=false}={}){
       if(next===rest&&playing&&!resume)return;

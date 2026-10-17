@@ -327,6 +327,14 @@ test('selected holds preserve existing returns and finite reactions restore the 
     advance(50);assert.equal(stage.pose,'pilot-impact-v','inspection never starts a wall clock');
     stage.seekReaction('fully-defended',full.totalMs,full.totalMs);assert.equal(stage.pose,'pilot-defend','scrubbing to the end shows the final authored phase');
     stage.endReaction();assert.equal(stage.pose,'stance-counter');
+    reduced=true;
+    const beforeInspection=raf.size;
+    stage.seek('smash',117,195);assert.equal(stage.pose,'stance-counter','default inspection API still honors reduced motion');
+    stage.seek('smash',117,195,{inspection:true});assert.equal(stage.pose,'pilot-smash-impact','explicit editor sampling reveals the requested painted phase');
+    stage.seekReaction('fully-defended',66,full.totalMs);assert.equal(stage.pose,'pilot-defend','default reaction sampling retains reduced-motion origin');
+    stage.seekReaction('fully-defended',66,full.totalMs,{inspection:true});assert.equal(stage.pose,'pilot-impact-v','explicit editor sampling reveals the weighted reaction phase');
+    assert.equal(raf.size,beforeInspection,'explicit phase inspection starts no animation clock');
+    stage.endReaction();reduced=false;
     stage.settle();stage.setStance('smash');stage.play('smash',500);advance(150);
     assert.equal(stage.pose,'pilot-smash-takeoff');
     assert.equal(stage.reactPose('guard-break',180),true);assert.equal(stage.pose,'pilot-guard-break');

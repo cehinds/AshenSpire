@@ -68,8 +68,8 @@ function drawCombat(entry, state) {
   box.append(combatStage.el);
   stage.append(box);
   const sampled = sampleCombatSequenceReview(entry, state.time);
-  if (entry.reaction) combatStage.seekReaction(entry.actionId, state.time, entry.totalMs);
-  else combatStage.seek(entry.actionId, state.time, entry.totalMs);
+  if (entry.reaction) combatStage.seekReaction(entry.actionId, state.time, entry.totalMs, { inspection: true });
+  else combatStage.seek(entry.actionId, state.time, entry.totalMs, { inspection: true });
   stage.dataset.pose = combatStage.pose;
   stage.dataset.poseIndex = String(sampled.index);
   stage.dataset.combatReady = String(combatReady);

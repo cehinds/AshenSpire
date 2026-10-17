@@ -110,6 +110,13 @@ try {
   await scrub(78, 'pilot-sweep-contact');
   await scrub(195, 'stance-sweep');
   checks.push('SW09 78ms contact and return to held Sweep');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await open('reaver', 'smash');
+  await scrub(117, 'pilot-smash-impact');
+  await open('reaver', 'fully-defended');
+  await scrub(66, 'pilot-impact-v');
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  checks.push('Explicit action and weighted reaction scrubbing selects exact phases under OS Reduced motion');
   await open('reaver', 'fully-defended');
   const ticks = await page.locator('.mo-tick').evaluateAll(nodes => nodes.map(node => parseFloat(node.style.left)));
   assert.equal(ticks.length, 6);

@@ -86,6 +86,8 @@ and fallback labels; it contains no copied phase lists, artwork or timings.
 profiles and timing, and the render page uses the actual combat stage. Normal
 game pace is the reference; the speed selector changes review playback only.
 The 350 ms art-review exposure never becomes gameplay timing.
+Explicit editor scrubbing samples the requested painted phase even under OS
+Reduced motion; the game's playback and default stage APIs retain their motion policy.
 
 These entries are read-only views of registered production data. The inspector
 identifies each class's source and links the current frame to Asset Gallery.
