@@ -10,10 +10,15 @@
     "crowdedFrom": 4,
     "crowdedPanelWidthPx": 180,
     "crowdedPaddingBlockEm": 0.3,
-    "crowdedPaddingInlineEm": 0.6
+    "crowdedPaddingInlineEm": 0.6,
+    "narrowCrowdedBelowPx": 600,
+    "narrowCrowdedFrom": 2,
+    "narrowCrowdedPanelWidthPx": 145,
+    "narrowCrowdedFontPx": 11,
+    "narrowCrowdedStatusIconPx": 22
   },
   "positioning": {
-    "gapPx": 12,
+    "gapPx": 8,
     "edgeInsetPx": 12,
     "staggerStepPx": 36,
     "enemyLaneSides": [
@@ -33,6 +38,8 @@
   },
   "behavior": {
     "formFactors": [
+      "mobile",
+      "tablet",
       "desktop",
       "widescreen"
     ],

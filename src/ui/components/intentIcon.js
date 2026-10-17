@@ -16,6 +16,7 @@ export function intentIcon(id) {
   const node = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   node.setAttribute('viewBox', '0 0 32 32');
   node.setAttribute('class', 'intent-icon');
+  node.dataset.intent = id;
   node.setAttribute('aria-hidden', 'true');
   node.setAttribute('focusable', 'false');
   const action = id === 'cast' ? 'spell' : id === 'buff' ? 'power' : id;

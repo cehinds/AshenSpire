@@ -9,8 +9,8 @@ export function validatePerspectiveGrid(grid) {
     || grid.bands.some((band, i) => band.id !== ids[i] || band.index !== i
       || ![band.anchor?.x, band.anchor?.y].every(n => Number.isFinite(n) && n > 0 && n < 1)
       || !(band.depth > 0) || !Number.isFinite(band.layer))) throw new Error('Invalid perspective visual bands');
-  for (const key of ['wide','narrow','short']) {
-    const p = grid[key];
+  for (const key of ['wide','narrow','short', ...Object.keys(grid.profiles || {}).map(key => `profiles.${key}`)]) {
+    const p = key.startsWith('profiles.') ? grid.profiles[key.slice(9)] : grid[key];
     if (![p?.left,p?.right,p?.top,p?.rowHeight,p?.skew].every(Number.isFinite)
       || p.left < 0 || p.right > 1 || p.left >= p.right || p.top < 0 || p.rowHeight <= 0
       || p.top + p.rowHeight * ids.length > 1 || p.skew < 0) throw new Error(`Invalid perspective ${key} profile`);
@@ -39,7 +39,8 @@ export function perspectiveLanePattern(count, lanes) {
 export function alternativeFormation(plan, width, height, narrow, presentation = {}) {
   // A short strip (landscape phone) has no room for depth above the bodies'
   // overhead controls; its ranks sit low and close together.
-  const profile = height < GRID.shortBelowPx ? GRID.short : narrow ? GRID.narrow : GRID.wide;
+  const formFactor = presentation.formFactor || (narrow ? 'mobile' : width <= 1024 ? 'tablet' : 'desktop');
+  const profile = height < GRID.shortBelowPx ? GRID.short : GRID.profiles?.[formFactor] || (narrow ? GRID.narrow : GRID.wide);
   const lanes = plan.rows || 3;
   // The grid is sheared: every row slides right in proportion to its height
   // above the party's baseline, so lanes run on a diagonal and cells are
@@ -68,7 +69,8 @@ export function alternativeFormation(plan, width, height, narrow, presentation =
       x: laneLeft + band.anchor.x * laneWidth + shear(ground), ground, fitGround: ground,
       box: { left, top, width: laneWidth, height: rowHeight, skew: profile.skew },
       width: Math.min(laneWidth * GRID.bodyWidthFraction, GRID.bodyWidthMaxPx),
-      artWidth: laneWidth, depth: band.depth, layer: band.layer };
+      artWidth: laneWidth, miniHudLeft: left + profile.skew * rowHeight / 2 + GRID.miniHudInsetPx,
+      miniHudWidth: laneWidth - 2 * GRID.miniHudInsetPx, miniHudTop: top, depth: band.depth, layer: band.layer };
   };
   plan.cells = plan.cells.map(place).filter(Boolean);
   // Display the full four-band lattice even when Core forbids extra-row
@@ -121,8 +123,12 @@ export function fitAlternativeSprites({ width, height, actors, narrow }) {
     // Owner (2026-10-12): an enemy class stands one height in every rank, so
     // the rank depth shrink applies to the party only.
     const requested = height * (enemy ? (narrow ? .46 : .73) : (narrow ? .46 : .31)) * ratio * (enemy ? 1 : a.slot.depth * GRID.playerArtworkScale);
-    const widthLimit = Math.min(width * (narrow ? (sideCount > 2 ? .24 : .34) : (sideCount > 2 ? .20 : .31)),
-      a.slot.artWidth ? a.slot.artWidth * (enemy ? .96 : GRID.playerArtworkScale) : Infinity);
+    // Reserve the complete artwork envelope, including weapons and capes,
+    // inside the common horizontal intersection of the cell's two edges.
+    const boxWidth = a.slot.box ? a.slot.box.width - Math.abs(a.slot.box.skew || 0) * a.slot.box.height - 2 * Math.abs((a.slot.box.skew || 0) * (a.slot.box.top + a.slot.box.height / 2 - a.slot.ground)) : a.slot.artWidth;
+    // The browser rounds scaled sprite boxes separately from their alpha bounds.
+    // Half a physical pixel reserves that rounding at each hard cell edge.
+    const widthLimit = Math.min(width - 12, boxWidth ? Math.max(1, boxWidth - 2 * (GRID.footprintInsetPx + .5)) : Infinity);
     // Enemy foot anchors can move inward inside their own cell after fitting.
     // Reserve screen edges at that available centre as well as the preferred
     // side-biased anchor, so a newly occupied right lane cannot shrink the
@@ -145,7 +151,7 @@ export function fitAlternativeSprites({ width, height, actors, narrow }) {
     const visibleHeight = Math.max(shortFloor, spaciousFloor, Math.min(requested * Math.min(1.25, a.multiplier || 1),
       a.slot.ground - a.leading - 6, widthLimit * a.visibleHeight / a.visibleWidth,
       2 * edgeRoom * a.visibleHeight / a.visibleWidth));
-    return { a, enemy, low, visibleHeight };
+    return { a, enemy, low, visibleHeight: Math.min(visibleHeight, widthLimit * a.visibleHeight / a.visibleWidth) };
   });
   // Every enemy of one class takes the class's smallest fitted height, so no
   // member outgrows its own lane, headroom or edge. Low creatures stay at half

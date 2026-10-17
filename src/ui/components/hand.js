@@ -1,5 +1,5 @@
 import { desktopHandLayout } from '../models/DesktopCombatFooter.js';
-import { COMBAT_TOOLS_HEIGHT_PX, COMBAT_TOOLS_DESKTOP_HEIGHT_PX, handLayout, handGeometryKey, reconcileHandOrder, moveHandInstance } from '../models/HandLayout.js';
+import { handLayout, responsiveHandLayout, handGeometryKey, reconcileHandOrder, moveHandInstance } from '../models/HandLayout.js';
 import { mountHandInspectionOverlay } from './handInspectionOverlay.js';
 // src/ui/components/hand.js — THE hand strip. One renderer, two surfaces.
 //
@@ -131,20 +131,8 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // The HUD form factor main.js writes to <html>. Read the live root first: the
       // combat root's mirror (combatLayout) can lag a debounced change.
       const formFactor = document.documentElement.dataset.formFactor || handEl.closest('.combat')?.dataset.formFactor || null;
-      const desktop = formFactor === 'desktop';
-      // The compact toolbar occupies a 30px compact row at the top of the hand.
-      // Keep four physical pixels between that row and the resting card fan.
-      // Desktop measures the live 36px tool row and keeps the same four physical
-      // px beneath it; phone, tablet and widescreen keep the 34px constant.
-      const toolsRow = desktop ? handEl.closest('.combat')?.querySelector('.combat-tools') : null;
-      const measuredRow = toolsRow ? toolsRow.getBoundingClientRect().height : 0;
-      // Desktop keeps its tools in the screen corners (combatTools.js), so the
-      // fan reserves no tool row above the cards there. Read from the form
-      // factor, not the row's placement mark: a freshly rebuilt row has no
-      // mark until its queued measure runs, after this layout.
-      const cornerTools = !compact;
-      const toolsPhysical = cornerTools ? 0 : COMBAT_TOOLS_HEIGHT_PX;
-      const toolsHeight = toolsPhysical / zoom;
+      // Log and reactions are below the resting fan on every form factor.
+      const toolsHeight = 0;
       handEl.style.setProperty('--hand-controls-max-width', `${Math.max(0, handEl.clientWidth - 2 / zoom)}px`);
       // Measure the complete row, including the normally hidden native picker.
       // Hidden, inert clones reserve its space before a press selects a face;
@@ -161,8 +149,9 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // On a phone the selected card's lift rises over the tool row (it paints
       // above the row), so no empty lift band separates the row from the fan.
       const layoutHand = handEl.closest('.combat')?.dataset.desktopFooter === 'true' ? desktopHandLayout : handLayout;
-      const plan = layoutHand({ width: handEl.clientWidth, height: handEl.clientHeight - toolsHeight,
-        count: cards.length, rem, zoom, compact, controlsHeight, controlled, headroom: compact ? toolsHeight : 0 });
+      const input = { width: handEl.clientWidth, height: handEl.clientHeight - toolsHeight,
+        count: cards.length, rem, zoom, compact, controlsHeight, controlled, headroom: compact ? toolsHeight : 0, formFactor };
+      const plan = responsiveHandLayout(input, layoutHand(input));
       handEl.dataset.wireframeHand = 'true';
       handEl.style.setProperty('--hand-card-zoom', '1');
       handEl.style.setProperty('--hand-span', plan.span + 'px');
