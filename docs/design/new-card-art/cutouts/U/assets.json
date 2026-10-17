@@ -1,0 +1,802 @@
+{
+  "U.object.0": {
+    "id": "U.object.0",
+    "kind": "object",
+    "category": "U",
+    "digit": 0,
+    "name": "Sweep scythes 0",
+    "src": "cutouts/U/objects/0.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      42,
+      480,
+      469
+    ],
+    "sha256": "89478a3301a897d6a2f53f26a4e24412445f2feff92e0e764c4c88aeabb92716",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/W-reference.png",
+      "referenceSha256": "5c9cb30825c139f5d1b1865a5bd6ccb5150f507ace2af76345a7363480d6ffed",
+      "sourceFile": "exec-9ac221bc-ed09-445e-8d27-0d88d8f29868.png",
+      "sourceSha256": "89d6819fa7141aac4db7e71bf7385cee4241df4dc12846272312cad6275b9c4a",
+      "sourceCell": {
+        "x": 0,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 38,
+        "y": 41,
+        "width": 344,
+        "height": 328
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "L.object.0",
+      "baseAssetSha256": "1d97b8b2361a0c2d883df5f1feee8f9c023d8b7ce36c315e3660e96aff851dd6"
+    }
+  },
+  "U.object.1": {
+    "id": "U.object.1",
+    "kind": "object",
+    "category": "U",
+    "digit": 1,
+    "name": "Sweep scythes 1",
+    "src": "cutouts/U/objects/1.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      38,
+      480,
+      473
+    ],
+    "sha256": "b029be1c5ac92afc2daad92a7b686a873105eb43114ba6e0660fe6cbc4a25449",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/W-reference.png",
+      "referenceSha256": "5c9cb30825c139f5d1b1865a5bd6ccb5150f507ace2af76345a7363480d6ffed",
+      "sourceFile": "exec-9ac221bc-ed09-445e-8d27-0d88d8f29868.png",
+      "sourceSha256": "89d6819fa7141aac4db7e71bf7385cee4241df4dc12846272312cad6275b9c4a",
+      "sourceCell": {
+        "x": 397,
+        "y": 0,
+        "width": 396,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 446,
+        "y": 37,
+        "width": 337,
+        "height": 327
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "L.object.1",
+      "baseAssetSha256": "719321c5868b332c29aa234136a4cfc95ede496c28394c9d285159529ed9e5bb"
+    }
+  },
+  "U.object.2": {
+    "id": "U.object.2",
+    "kind": "object",
+    "category": "U",
+    "digit": 2,
+    "name": "Sweep scythes 2",
+    "src": "cutouts/U/objects/2.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      84,
+      32,
+      428,
+      480
+    ],
+    "sha256": "39c402079963f0eea932ea5475d7557492c56e634d535bff1689adc148f91b58",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/W-reference.png",
+      "referenceSha256": "5c9cb30825c139f5d1b1865a5bd6ccb5150f507ace2af76345a7363480d6ffed",
+      "sourceFile": "exec-9ac221bc-ed09-445e-8d27-0d88d8f29868.png",
+      "sourceSha256": "89d6819fa7141aac4db7e71bf7385cee4241df4dc12846272312cad6275b9c4a",
+      "sourceCell": {
+        "x": 793,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 884,
+        "y": 34,
+        "width": 258,
+        "height": 336
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "L.object.2",
+      "baseAssetSha256": "4893cd8da7cd0ea1e464391984e8eba3ea4dd8564a103d071d668a4aab9e2bde"
+    }
+  },
+  "U.object.3": {
+    "id": "U.object.3",
+    "kind": "object",
+    "category": "U",
+    "digit": 3,
+    "name": "Sweep scythes 3",
+    "src": "cutouts/U/objects/3.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      47,
+      480,
+      465
+    ],
+    "sha256": "c780a5eb392eab6947d123e0d578af86f71995940f6af3332105b1a1b2a05093",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/W-reference.png",
+      "referenceSha256": "5c9cb30825c139f5d1b1865a5bd6ccb5150f507ace2af76345a7363480d6ffed",
+      "sourceFile": "exec-9ac221bc-ed09-445e-8d27-0d88d8f29868.png",
+      "sourceSha256": "89d6819fa7141aac4db7e71bf7385cee4241df4dc12846272312cad6275b9c4a",
+      "sourceCell": {
+        "x": 1190,
+        "y": 0,
+        "width": 396,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 1235,
+        "y": 37,
+        "width": 358,
+        "height": 334
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "L.object.3",
+      "baseAssetSha256": "30ef372d88cedf7fcf11549f3556f1dc13c06d054d89d6512c2c566d335180d2"
+    }
+  },
+  "U.object.4": {
+    "id": "U.object.4",
+    "kind": "object",
+    "category": "U",
+    "digit": 4,
+    "name": "Sweep scythes 4",
+    "src": "cutouts/U/objects/4.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      40,
+      32,
+      471,
+      480
+    ],
+    "sha256": "8da432f81b5f813610412d5643db2d7db82813430a44b148d4a43d523f51e8b0",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/W-reference.png",
+      "referenceSha256": "5c9cb30825c139f5d1b1865a5bd6ccb5150f507ace2af76345a7363480d6ffed",
+      "sourceFile": "exec-9ac221bc-ed09-445e-8d27-0d88d8f29868.png",
+      "sourceSha256": "89d6819fa7141aac4db7e71bf7385cee4241df4dc12846272312cad6275b9c4a",
+      "sourceCell": {
+        "x": 1586,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 1639,
+        "y": 42,
+        "width": 311,
+        "height": 323
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "L.object.4",
+      "baseAssetSha256": "6914181c80ba9a59a7ca4f60ee267fe9cb919d199842ef7fc4430b97c2623fea"
+    }
+  },
+  "U.object.5": {
+    "id": "U.object.5",
+    "kind": "object",
+    "category": "U",
+    "digit": 5,
+    "name": "Sweep scythes 5",
+    "src": "cutouts/U/objects/5.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      40,
+      480,
+      471
+    ],
+    "sha256": "818ae4302df601c7f51879370fdc1b21addd847fc2ccfdb77f231f428db41641",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/W-reference.png",
+      "referenceSha256": "5c9cb30825c139f5d1b1865a5bd6ccb5150f507ace2af76345a7363480d6ffed",
+      "sourceFile": "exec-9ac221bc-ed09-445e-8d27-0d88d8f29868.png",
+      "sourceSha256": "89d6819fa7141aac4db7e71bf7385cee4241df4dc12846272312cad6275b9c4a",
+      "sourceCell": {
+        "x": 0,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 40,
+        "y": 416,
+        "width": 335,
+        "height": 322
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "L.object.5",
+      "baseAssetSha256": "8ce954e6258a6d401d6a1b24dd28667a8c65ca67152863060c0dcec4ce3ec1e3"
+    }
+  },
+  "U.object.6": {
+    "id": "U.object.6",
+    "kind": "object",
+    "category": "U",
+    "digit": 6,
+    "name": "Sweep scythes 6",
+    "src": "cutouts/U/objects/6.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      32,
+      480,
+      480
+    ],
+    "sha256": "ad7bd4faebf1ee9a689c40621b182e30bcc755d910cd15120865323c9941755c",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/W-reference.png",
+      "referenceSha256": "5c9cb30825c139f5d1b1865a5bd6ccb5150f507ace2af76345a7363480d6ffed",
+      "sourceFile": "exec-9ac221bc-ed09-445e-8d27-0d88d8f29868.png",
+      "sourceSha256": "89d6819fa7141aac4db7e71bf7385cee4241df4dc12846272312cad6275b9c4a",
+      "sourceCell": {
+        "x": 397,
+        "y": 396,
+        "width": 396,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 436,
+        "y": 416,
+        "width": 322,
+        "height": 322
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "L.object.6",
+      "baseAssetSha256": "b3b51c11ab38f9d0c5c5cfeb44f075643af6f0bfc892908ccd8712a119e416e3"
+    }
+  },
+  "U.object.7": {
+    "id": "U.object.7",
+    "kind": "object",
+    "category": "U",
+    "digit": 7,
+    "name": "Sweep scythes 7",
+    "src": "cutouts/U/objects/7.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      51,
+      480,
+      460
+    ],
+    "sha256": "c673b112b88ded30ffff9463040f8547a37f470d8c4f6998c28bda7b64e2c23f",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/W-reference.png",
+      "referenceSha256": "5c9cb30825c139f5d1b1865a5bd6ccb5150f507ace2af76345a7363480d6ffed",
+      "sourceFile": "exec-9ac221bc-ed09-445e-8d27-0d88d8f29868.png",
+      "sourceSha256": "89d6819fa7141aac4db7e71bf7385cee4241df4dc12846272312cad6275b9c4a",
+      "sourceCell": {
+        "x": 793,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 841,
+        "y": 423,
+        "width": 334,
+        "height": 305
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "L.object.7",
+      "baseAssetSha256": "e72bd4801b6727948131b186250bd1fac25b727a29ae4fadb464ae95b511ef8a"
+    }
+  },
+  "U.object.8": {
+    "id": "U.object.8",
+    "kind": "object",
+    "category": "U",
+    "digit": 8,
+    "name": "Sweep scythes 8",
+    "src": "cutouts/U/objects/8.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      49,
+      480,
+      462
+    ],
+    "sha256": "7a90f7151dfa0c063d3ee943728022d024293158d7ff23715ccfcc44525b0402",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/W-reference.png",
+      "referenceSha256": "5c9cb30825c139f5d1b1865a5bd6ccb5150f507ace2af76345a7363480d6ffed",
+      "sourceFile": "exec-9ac221bc-ed09-445e-8d27-0d88d8f29868.png",
+      "sourceSha256": "89d6819fa7141aac4db7e71bf7385cee4241df4dc12846272312cad6275b9c4a",
+      "sourceCell": {
+        "x": 1190,
+        "y": 396,
+        "width": 396,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 1240,
+        "y": 422,
+        "width": 336,
+        "height": 310
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "L.object.8",
+      "baseAssetSha256": "aabe352ce90163a679ad67d9e613375fc781978e4a203a187e05cff54b6e8328"
+    }
+  },
+  "U.object.9": {
+    "id": "U.object.9",
+    "kind": "object",
+    "category": "U",
+    "digit": 9,
+    "name": "Sweep scythes 9",
+    "src": "cutouts/U/objects/9.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      36,
+      32,
+      475,
+      480
+    ],
+    "sha256": "bf67f623b85f9c570f5fec681968ff43b53d5de828d4c46550904e7d1842f5a9",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/W-reference.png",
+      "referenceSha256": "5c9cb30825c139f5d1b1865a5bd6ccb5150f507ace2af76345a7363480d6ffed",
+      "sourceFile": "exec-9ac221bc-ed09-445e-8d27-0d88d8f29868.png",
+      "sourceSha256": "89d6819fa7141aac4db7e71bf7385cee4241df4dc12846272312cad6275b9c4a",
+      "sourceCell": {
+        "x": 1586,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 1619,
+        "y": 415,
+        "width": 325,
+        "height": 332
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "L.object.9",
+      "baseAssetSha256": "8b72ee8d4d63557e6a543a80db6535e709da76771d92dd6749efdc11a34e8a05"
+    }
+  }
+}
