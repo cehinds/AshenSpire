@@ -9,6 +9,9 @@ import { applyAttackDamage, executeAction } from '../src/engine/actions.js';
 import { createRng } from '../src/engine/rng.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { projectEnemyBurdenHand } from '../src/ui/models/EnemyBurdenModel.js';
+import { knowledgeIntentProjection } from '../src/engine/enemyKnowledge.js';
+import { proposalTurn } from '../src/engine/proposalStatusRuntime.js';
+import { beginEnemyBurdens, endEnemyBurdens } from '../src/engine/enemyBurdens.js';
 
 // Exercise the real aggregated catalog and profile adapter, not replacement definitions.
 function fight(profileId = 'current', expanded = false) {
@@ -103,7 +106,9 @@ test('explicit Read Intent survives save/load with hand identities and expires w
   target.burdenPiles = { draw: [], hand: [{ instanceId: 'burden-1', cardId: 'base.stagger-status-card' }], discard: [], exhaust: [] };
   target.intentReads = { [c.playerKey]: false };
   const read = c.registries.cards.get('base.reveal-opponent-hand');
+  assert.ok(read.effects.some(effect => effect.op === 'applyStatus' && effect.target === 'self' && effect.status === 'base.read-intent'));
   for (const effect of read.effects) action(c, effect);
+  assert.equal(c.player.statuses['base.read-intent']?.stacks, 1);
   assert.equal(previewIntent(c, target.id).hidden, false, 'the explicit card read overrides a failed private intent read');
   const before = projectEnemyBurdenHand(target, { turn: c.turn, registries: c.registries });
   assert.equal(before.cards[0].name, c.registries.cards.get('base.stagger-status-card').name);
@@ -112,8 +117,51 @@ test('explicit Read Intent survives save/load with hand identities and expires w
     rng: createRng(c.rng.seed, c.rng.getCounters()), expectedGameProfile: c.gameProfile });
   assert.deepEqual(projectEnemyBurdenHand(restored.enemies[0], { turn: restored.turn, registries: c.registries }), before);
   restored.turn = target.proposalIntentRevealedUntil;
+  proposalTurn(restored, restored.player, 'start'); drain(restored);
   assert.equal(projectEnemyBurdenHand(restored.enemies[0], { turn: restored.turn, registries: c.registries }), null);
   assert.equal(previewIntent(restored, restored.enemies[0].id).hidden, true, 'the normal private read gate resumes at expiry');
+});
+
+test('Read Intent status reveals only to its living co-op owner and restores unknown after decay', () => {
+  const c = fight('core'), target = c.enemies[0];
+  target.intentRevealed = false;
+  target.intentReads = { [c.playerKey]: false };
+  status(c, c.player, 'base.read-intent');
+  assert.equal(previewIntent(c, target.id).hidden, false, 'the active status opens this observer\'s projection');
+  proposalTurn(c, c.player, 'start'); drain(c);
+  assert.equal(c.player.statuses['base.read-intent'], undefined, 'the authored start decay removes one stack');
+  assert.equal(previewIntent(c, target.id).hidden, true, 'the prior private unknown state resumes after decay');
+
+  const gameProfile = resolveGameProfile('core');
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, gameProfile)), gameProfile);
+  const p1 = { id: 'p1', kind: 'player', alive: true, statuses: { 'base.read-intent': { stacks: 1 } } };
+  const p2 = { id: 'p2', kind: 'player', alive: true, statuses: {} };
+  const coop = { playerKey: 'p1', gameProfile, registries,
+    players: new Map([['p1', { entity: p1, connected: true }], ['p2', { entity: p2, connected: true }]]),
+    enemyKnowledge: {}, enemies: [] };
+  const hiddenEnemy = { id: 'e1', intent: { kind: 'attack' }, knowledgeAction: { reads: {
+    p1: { visibility: 'unknown' }, p2: { visibility: 'unknown' },
+  } } };
+  assert.equal(knowledgeIntentProjection(coop, hiddenEnemy, 'p1').exact, true, 'the owner sees the active status result');
+  assert.equal(knowledgeIntentProjection(coop, hiddenEnemy, 'p2').exact, false, 'another co-op observer remains unknown');
+  p1.statuses = {};
+  assert.equal(knowledgeIntentProjection(coop, hiddenEnemy, 'p1').exact, false, 'the owner also returns to unknown after decay');
+});
+
+test('generated burden cards apply their authored marker while held and remove it on exit', () => {
+  const cases = [
+    ['base.stagger-status-card', 'base.stagger'],
+    ['base.paralysis-status-card', 'base.paralysis'],
+    ['base.restrained-status-card', 'base.restrained-burden'],
+  ];
+  for (const [cardId, statusId] of cases) {
+    const c = fight('core'), enemy = c.enemies[0];
+    action(c, { op: 'addBurden', target: 'enemy', card: cardId, count: 1, pile: 'hand' });
+    beginEnemyBurdens(c, enemy, 0); drain(c);
+    assert.equal(enemy.statuses[statusId]?.stacks, 1, `${cardId} applies ${statusId} on draw`);
+    endEnemyBurdens(c, enemy); drain(c);
+    assert.equal(enemy.statuses[statusId], undefined, `${cardId} removes ${statusId} when it leaves hand`);
+  }
 });
 
 function play(c, cardId, target = c.enemies[0]) {

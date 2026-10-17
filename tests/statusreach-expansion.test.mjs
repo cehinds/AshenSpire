@@ -16,6 +16,10 @@ test('status census reaches all expanded statuses through actual projected speak
   for (const id of ['bleeding', 'frozen', 'chilled', 'paralysis', 'dazed', 'offBalance', 'prone', 'concealed']) {
     assert.ok(report.witness.get(id)?.some(route => route.startsWith('R7')), id);
   }
+  for (const id of ['base.stagger', 'base.paralysis', 'base.restrained-burden']) {
+    assert.ok(report.witness.get(id)?.some(route => route.startsWith('R8 burden ')), id);
+  }
+  assert.ok(report.witness.get('base.read-intent')?.some(route => route.startsWith('R1 cards:base.reveal-opponent-hand')));
 });
 
 test('Star Path grants its printed Concealed utility at either grade and Sweep reveals it', () => {
