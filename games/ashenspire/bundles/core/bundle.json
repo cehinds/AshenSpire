@@ -36,6 +36,12 @@
       "version": "1.0.0",
       "settings": {}
     },
+    "gear": {
+      "version": "1.0.0",
+      "settings": {
+        "pools": "merged"
+      }
+    },
     "class-selection": {
       "version": "1.0.0",
       "settings": {}

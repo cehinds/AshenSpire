@@ -392,6 +392,33 @@
         "levelProfile.max",
         "encounter"
       ]
+    },
+    "equipment": {
+      "type": "object",
+      "properties": {
+        "maxPoints": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 99
+        },
+        "maxStats": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5
+        },
+        "source": {
+          "enum": [
+            "player",
+            "enemy"
+          ]
+        }
+      },
+      "required": [
+        "maxPoints",
+        "maxStats",
+        "source"
+      ],
+      "additionalProperties": false
     }
   },
   "required": [
@@ -406,7 +433,8 @@
     "stagger",
     "ai",
     "statRules",
-    "levelFrom"
+    "levelFrom",
+    "equipment"
   ],
   "additionalProperties": false
 }

@@ -1,0 +1,477 @@
+{
+  "type": "object",
+  "properties": {
+    "mode": {
+      "enum": [
+        "legacy",
+        "configured"
+      ]
+    },
+    "pools": {
+      "enum": [
+        "split",
+        "merged"
+      ]
+    },
+    "rarities": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "poolSizes": {
+      "type": "object",
+      "properties": {
+        "ratings": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "min": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 99
+              },
+              "max": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 99
+              }
+            },
+            "required": [
+              "min",
+              "max"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "bonus": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "min": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 99
+              },
+              "max": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 99
+              }
+            },
+            "required": [
+              "min",
+              "max"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "ratings",
+        "bonus"
+      ],
+      "additionalProperties": false
+    },
+    "mergedShare": {
+      "type": "object",
+      "properties": {
+        "ratings": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "bonus": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "required": [
+        "ratings",
+        "bonus"
+      ],
+      "additionalProperties": false
+    },
+    "fillTo": {
+      "enum": [
+        "max",
+        "min",
+        "none"
+      ]
+    },
+    "maxAttributes": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 5
+    },
+    "pointValues": {
+      "type": "object",
+      "properties": {
+        "ar": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "dr": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "poise": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "strength": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "dexterity": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "constitution": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "wisdom": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "intelligence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        }
+      },
+      "required": [
+        "ar",
+        "dr",
+        "poise",
+        "strength",
+        "dexterity",
+        "constitution",
+        "wisdom",
+        "intelligence"
+      ],
+      "additionalProperties": false
+    },
+    "tags": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "group": {
+            "enum": [
+              "type",
+              "effect",
+              "penalty"
+            ]
+          },
+          "cost": {
+            "type": "integer",
+            "minimum": -5,
+            "maximum": 5
+          },
+          "modifier": {
+            "type": "string",
+            "minLength": 1
+          },
+          "amount": {
+            "type": "number",
+            "minimum": -100,
+            "maximum": 100
+          },
+          "priority": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000
+          },
+          "weights": {
+            "type": "object",
+            "properties": {
+              "ratings": {
+                "type": "object",
+                "properties": {
+                  "ar": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "dr": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "poise": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  }
+                },
+                "additionalProperties": false
+              },
+              "bonus": {
+                "type": "object",
+                "properties": {
+                  "strength": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "dexterity": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "constitution": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "wisdom": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "intelligence": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "group",
+          "cost",
+          "priority",
+          "weights"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "weights": {
+      "type": "object",
+      "properties": {
+        "kinds": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "ratings": {
+                "type": "object",
+                "properties": {
+                  "ar": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "dr": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "poise": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  }
+                },
+                "additionalProperties": false
+              },
+              "bonus": {
+                "type": "object",
+                "properties": {
+                  "strength": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "dexterity": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "constitution": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "wisdom": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "intelligence": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          }
+        },
+        "slots": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "ratings": {
+                "type": "object",
+                "properties": {
+                  "ar": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "dr": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "poise": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  }
+                },
+                "additionalProperties": false
+              },
+              "bonus": {
+                "type": "object",
+                "properties": {
+                  "strength": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "dexterity": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "constitution": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "wisdom": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "intelligence": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          }
+        },
+        "global": {
+          "type": "object",
+          "properties": {
+            "ratings": {
+              "type": "object",
+              "properties": {
+                "ar": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "dr": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "poise": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                }
+              },
+              "additionalProperties": false
+            },
+            "bonus": {
+              "type": "object",
+              "properties": {
+                "strength": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "dexterity": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "constitution": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "wisdom": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "intelligence": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "kinds",
+        "slots",
+        "global"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "mode",
+    "pools",
+    "rarities",
+    "poolSizes",
+    "mergedShare",
+    "fillTo",
+    "maxAttributes",
+    "pointValues",
+    "tags",
+    "weights"
+  ],
+  "additionalProperties": false
+}

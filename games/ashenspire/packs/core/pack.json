@@ -15,7 +15,7 @@
     "shops": "shops.json",
     "enemies": "enemies.json",
     "enemyCards": "enemyCards.json",
-    "enemyGear": "enemyGear.json",
-    "enemyRelics": "enemyRelics.json"
+    "enemyRelics": "enemyRelics.json",
+    "gear": "gear.json"
   }
 }

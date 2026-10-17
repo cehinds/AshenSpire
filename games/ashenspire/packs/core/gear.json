@@ -1,0 +1,866 @@
+[
+  {
+    "id": "straightSword",
+    "name": "Straight Sword",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "common",
+    "tags": [
+      "sword"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "straightSword"
+    }
+  },
+  {
+    "id": "greatsword",
+    "name": "Greatsword",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "uncommon",
+    "tags": [
+      "greatsword",
+      "heavy",
+      "stagger"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "greatsword"
+    }
+  },
+  {
+    "id": "dagger",
+    "name": "Dagger",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "common",
+    "tags": [
+      "dagger",
+      "flurry"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "dagger"
+    }
+  },
+  {
+    "id": "shortbow",
+    "name": "Shortbow",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "common",
+    "tags": [
+      "bow"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "shortbow"
+    }
+  },
+  {
+    "id": "katana",
+    "name": "Katana",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "uncommon",
+    "tags": [
+      "katana",
+      "bleed"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "katana"
+    }
+  },
+  {
+    "id": "halberd",
+    "name": "Halberd",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "uncommon",
+    "tags": [
+      "polearm",
+      "heavy",
+      "stagger"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "halberd"
+    }
+  },
+  {
+    "id": "warhammer",
+    "name": "Warhammer",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "uncommon",
+    "tags": [
+      "hammer",
+      "stagger"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "warhammer"
+    }
+  },
+  {
+    "id": "twinblade",
+    "name": "Twinblade",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "rare",
+    "tags": [
+      "twinblade",
+      "flurry",
+      "light"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "twinblade"
+    }
+  },
+  {
+    "id": "battleaxe",
+    "name": "Battleaxe",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "common",
+    "tags": [
+      "axe",
+      "heavy"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "battleaxe"
+    }
+  },
+  {
+    "id": "buckler",
+    "name": "Buckler",
+    "slot": "leftHand",
+    "kind": "shield",
+    "rarity": "common",
+    "tags": [
+      "buckler"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "buckler"
+    }
+  },
+  {
+    "id": "kiteShield",
+    "name": "Kite Shield",
+    "slot": "leftHand",
+    "kind": "shield",
+    "rarity": "common",
+    "tags": [
+      "kiteShield"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "kiteShield"
+    }
+  },
+  {
+    "id": "towerShield",
+    "name": "Tower Shield",
+    "slot": "leftHand",
+    "kind": "shield",
+    "rarity": "rare",
+    "tags": [
+      "towerShield"
+    ],
+    "points": {
+      "constitution": 1
+    },
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "towerShield"
+    }
+  },
+  {
+    "id": "roundShield",
+    "name": "Round Shield",
+    "slot": "leftHand",
+    "kind": "shield",
+    "rarity": "common",
+    "tags": [
+      "roundShield"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "roundShield"
+    }
+  },
+  {
+    "id": "spikedShield",
+    "name": "Spiked Shield",
+    "slot": "leftHand",
+    "kind": "shield",
+    "rarity": "uncommon",
+    "tags": [
+      "spikedShield"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "spikedShield"
+    }
+  },
+  {
+    "id": "lantern",
+    "name": "Lantern",
+    "slot": "leftHand",
+    "kind": "shield",
+    "rarity": "common",
+    "tags": [
+      "lantern",
+      "regen"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "lantern"
+    }
+  },
+  {
+    "id": "torch",
+    "name": "Torch",
+    "slot": "leftHand",
+    "kind": "shield",
+    "rarity": "common",
+    "tags": [
+      "torch",
+      "burn"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "torch"
+    }
+  },
+  {
+    "id": "parryDagger",
+    "name": "Parrying Dagger",
+    "slot": "leftHand",
+    "kind": "shield",
+    "rarity": "uncommon",
+    "tags": [
+      "parryingDagger",
+      "stagger"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "parryDagger"
+    }
+  },
+  {
+    "id": "ashStaff",
+    "name": "Ash Staff",
+    "slot": "rightHand",
+    "kind": "staff",
+    "rarity": "common",
+    "tags": [
+      "staff"
+    ],
+    "points": {
+      "intelligence": 1
+    },
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "ashStaff"
+    }
+  },
+  {
+    "id": "starstoneStaff",
+    "name": "Starstone Staff",
+    "slot": "rightHand",
+    "kind": "staff",
+    "rarity": "uncommon",
+    "tags": [
+      "staff",
+      "frost"
+    ],
+    "points": {
+      "intelligence": 1
+    },
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "starstoneStaff"
+    }
+  },
+  {
+    "id": "boneSceptre",
+    "name": "Bone Sceptre",
+    "slot": "rightHand",
+    "kind": "staff",
+    "rarity": "uncommon",
+    "tags": [
+      "sceptre",
+      "blight"
+    ],
+    "points": {
+      "intelligence": 1
+    },
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "boneSceptre"
+    }
+  },
+  {
+    "id": "emberlightSceptre",
+    "name": "Emberlight Sceptre",
+    "slot": "rightHand",
+    "kind": "staff",
+    "rarity": "rare",
+    "tags": [
+      "sceptre"
+    ],
+    "points": {
+      "intelligence": 1
+    },
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "emberlightSceptre"
+    }
+  },
+  {
+    "id": "goldboughBranch",
+    "name": "Goldbough Branch",
+    "slot": "rightHand",
+    "kind": "staff",
+    "rarity": "rare",
+    "tags": [
+      "staff",
+      "regen"
+    ],
+    "points": {
+      "intelligence": 1
+    },
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "goldboughBranch"
+    }
+  },
+  {
+    "id": "blightRod",
+    "name": "Blight Rod",
+    "slot": "rightHand",
+    "kind": "staff",
+    "rarity": "uncommon",
+    "tags": [
+      "rod",
+      "blight"
+    ],
+    "points": {
+      "wisdom": 1
+    },
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "blightRod"
+    }
+  },
+  {
+    "id": "gorefireBrand",
+    "name": "Gorefire Brand",
+    "slot": "rightHand",
+    "kind": "staff",
+    "rarity": "rare",
+    "tags": [
+      "sceptre",
+      "burn",
+      "bleed"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "gorefireBrand"
+    }
+  },
+  {
+    "id": "wyrmhornStaff",
+    "name": "Wyrmhorn Staff",
+    "slot": "rightHand",
+    "kind": "staff",
+    "rarity": "rare",
+    "tags": [
+      "staff",
+      "stagger",
+      "insanity"
+    ],
+    "points": {
+      "intelligence": 1
+    },
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "wyrmhornStaff"
+    }
+  },
+  {
+    "id": "frostSpear",
+    "name": "Frost Spear",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "uncommon",
+    "tags": [
+      "spear",
+      "frost"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "frostSpear"
+    }
+  },
+  {
+    "id": "cinderAxe",
+    "name": "Cinder Axe",
+    "slot": "rightHand",
+    "kind": "weapon",
+    "rarity": "uncommon",
+    "tags": [
+      "axe",
+      "heavy",
+      "burn"
+    ],
+    "points": {},
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "cinderAxe"
+    }
+  },
+  {
+    "id": "duskChime",
+    "name": "Dusk Chime",
+    "slot": "rightHand",
+    "kind": "staff",
+    "rarity": "rare",
+    "tags": [
+      "chime",
+      "blight"
+    ],
+    "points": {
+      "wisdom": 1
+    },
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "duskChime"
+    }
+  },
+  {
+    "id": "armor.wayfarerPlate",
+    "name": "Wayfarer Plate",
+    "slot": "armor",
+    "kind": "armor",
+    "rarity": "common",
+    "tags": [
+      "plate"
+    ],
+    "points": {
+      "dr": 1,
+      "constitution": 1
+    },
+    "classes": [
+      "herald",
+      "reaver",
+      "rogue",
+      "starseer"
+    ],
+    "source": {
+      "file": "content/source/outfits.csv",
+      "id": "wayfarerPlate"
+    }
+  },
+  {
+    "id": "armor.ashenVigil",
+    "name": "Ashen Vigil",
+    "slot": "armor",
+    "kind": "armor",
+    "rarity": "uncommon",
+    "tags": [
+      "mail"
+    ],
+    "points": {
+      "dr": 1
+    },
+    "classes": [
+      "reaver"
+    ],
+    "source": {
+      "file": "content/source/outfits.csv",
+      "id": "vigil"
+    }
+  },
+  {
+    "id": "armor.gildedOathsworn",
+    "name": "Gilded Oathsworn",
+    "slot": "armor",
+    "kind": "armor",
+    "rarity": "uncommon",
+    "tags": [
+      "plate"
+    ],
+    "points": {
+      "dr": 1,
+      "strength": 1
+    },
+    "classes": [
+      "reaver"
+    ],
+    "source": {
+      "file": "content/source/outfits.csv",
+      "id": "oathsworn"
+    }
+  },
+  {
+    "id": "armor.wardenMail",
+    "name": "Warden Mail",
+    "slot": "armor",
+    "kind": "armor",
+    "rarity": "uncommon",
+    "tags": [
+      "mail",
+      "unwieldy"
+    ],
+    "points": {
+      "dr": 1
+    },
+    "classes": [
+      "reaver"
+    ],
+    "source": {
+      "file": "content/source/outfits.csv",
+      "id": "warden"
+    }
+  },
+  {
+    "id": "armor.nightweave",
+    "name": "Nightweave",
+    "slot": "armor",
+    "kind": "armor",
+    "rarity": "common",
+    "tags": [
+      "robes"
+    ],
+    "points": {
+      "intelligence": 1,
+      "wisdom": 1
+    },
+    "classes": [
+      "herald",
+      "reaver",
+      "rogue",
+      "starseer"
+    ],
+    "source": {
+      "file": "content/source/outfits.csv",
+      "id": "nightweave"
+    }
+  },
+  {
+    "id": "armor.eclipseHabit",
+    "name": "Eclipse Habit",
+    "slot": "armor",
+    "kind": "armor",
+    "rarity": "uncommon",
+    "tags": [
+      "robes"
+    ],
+    "points": {
+      "intelligence": 1
+    },
+    "classes": [
+      "starseer"
+    ],
+    "source": {
+      "file": "content/source/outfits.csv",
+      "id": "eclipse"
+    }
+  },
+  {
+    "id": "armor.starlitSilks",
+    "name": "Starlit Silks",
+    "slot": "armor",
+    "kind": "armor",
+    "rarity": "uncommon",
+    "tags": [
+      "robes",
+      "flurry",
+      "unwieldy"
+    ],
+    "points": {},
+    "classes": [
+      "starseer"
+    ],
+    "source": {
+      "file": "content/source/outfits.csv",
+      "id": "starlit"
+    }
+  },
+  {
+    "id": "armor.astralVestment",
+    "name": "Astral Vestment",
+    "slot": "armor",
+    "kind": "armor",
+    "rarity": "uncommon",
+    "tags": [
+      "robes",
+      "thin"
+    ],
+    "points": {
+      "intelligence": 1
+    },
+    "classes": [
+      "starseer"
+    ],
+    "source": {
+      "file": "content/source/outfits.csv",
+      "id": "astral"
+    }
+  },
+  {
+    "id": "armor.riteVestments",
+    "name": "Rite Vestments",
+    "slot": "armor",
+    "kind": "armor",
+    "rarity": "common",
+    "tags": [
+      "robes"
+    ],
+    "points": {
+      "dr": 1,
+      "constitution": 1
+    },
+    "classes": [
+      "herald",
+      "reaver",
+      "rogue",
+      "starseer"
+    ],
+    "source": {
+      "file": "content/source/outfits.csv",
+      "id": "riteVestments"
+    }
+  },
+  {
+    "id": "armor.ossuaryWeave",
+    "name": "Ossuary Weave",
+    "slot": "armor",
+    "kind": "armor",
+    "rarity": "uncommon",
+    "tags": [
+      "robes",
+      "blight"
+    ],
+    "points": {},
+    "classes": [
+      "herald"
+    ],
+    "source": {
+      "file": "content/source/outfits.csv",
+      "id": "ossuary"
+    }
+  },
+  {
+    "id": "armor.emberlightHabit",
+    "name": "Emberlight Habit",
+    "slot": "armor",
+    "kind": "armor",
+    "rarity": "uncommon",
+    "tags": [
+      "robes",
+      "regen"
+    ],
+    "points": {
+      "intelligence": 1
+    },
+    "classes": [
+      "herald"
+    ],
+    "source": {
+      "file": "content/source/outfits.csv",
+      "id": "emberhabit"
+    }
+  },
+  {
+    "id": "armor.pilgrimWrap",
+    "name": "Pilgrim Wrap",
+    "slot": "armor",
+    "kind": "armor",
+    "rarity": "uncommon",
+    "tags": [
+      "robes"
+    ],
+    "points": {
+      "dr": 1,
+      "constitution": 1
+    },
+    "classes": [
+      "herald"
+    ],
+    "source": {
+      "file": "content/source/outfits.csv",
+      "id": "pilgrim"
+    }
+  },
+  {
+    "id": "armor.gutterLeathers",
+    "name": "Gutter Leathers",
+    "slot": "armor",
+    "kind": "armor",
+    "rarity": "common",
+    "tags": [
+      "leathers",
+      "light"
+    ],
+    "points": {
+      "strength": 1
+    },
+    "classes": [
+      "herald",
+      "reaver",
+      "rogue",
+      "starseer"
+    ],
+    "source": {
+      "file": "content/source/outfits.csv",
+      "id": "gutterLeathers"
+    }
+  },
+  {
+    "id": "armor.nightveilCoat",
+    "name": "Nightveil Coat",
+    "slot": "armor",
+    "kind": "armor",
+    "rarity": "uncommon",
+    "tags": [
+      "leathers"
+    ],
+    "points": {
+      "dr": 1
+    },
+    "classes": [
+      "rogue"
+    ],
+    "source": {
+      "file": "content/source/outfits.csv",
+      "id": "nightveil"
+    }
+  },
+  {
+    "id": "armor.duelistJerkin",
+    "name": "Duelist Jerkin",
+    "slot": "armor",
+    "kind": "armor",
+    "rarity": "uncommon",
+    "tags": [
+      "leathers",
+      "flurry",
+      "unwieldy"
+    ],
+    "points": {},
+    "classes": [
+      "rogue"
+    ],
+    "source": {
+      "file": "content/source/outfits.csv",
+      "id": "duelist"
+    }
+  },
+  {
+    "id": "armor.shadowMantle",
+    "name": "Shadow Mantle",
+    "slot": "armor",
+    "kind": "armor",
+    "rarity": "uncommon",
+    "tags": [
+      "leathers"
+    ],
+    "points": {
+      "strength": 1
+    },
+    "classes": [
+      "rogue"
+    ],
+    "source": {
+      "file": "content/source/outfits.csv",
+      "id": "shadow"
+    }
+  },
+  {
+    "id": "armor.bastionHarness",
+    "name": "Bastion Harness",
+    "slot": "armor",
+    "kind": "armor",
+    "rarity": "uncommon",
+    "tags": [
+      "plate",
+      "encumbered"
+    ],
+    "points": {
+      "dr": 1
+    },
+    "classes": [
+      "reaver"
+    ],
+    "source": {
+      "file": "content/source/outfits.csv",
+      "id": "bastion"
+    }
+  },
+  {
+    "id": "armor.rimeweaveRobes",
+    "name": "Rimeweave Robes",
+    "slot": "armor",
+    "kind": "armor",
+    "rarity": "uncommon",
+    "tags": [
+      "robes",
+      "frost",
+      "thin"
+    ],
+    "points": {},
+    "classes": [
+      "starseer"
+    ],
+    "source": {
+      "file": "content/source/outfits.csv",
+      "id": "rimeweave"
+    }
+  },
+  {
+    "id": "armor.waywatcherCoat",
+    "name": "Waywatcher Coat",
+    "slot": "armor",
+    "kind": "armor",
+    "rarity": "uncommon",
+    "tags": [
+      "leathers",
+      "light",
+      "unwieldy"
+    ],
+    "points": {},
+    "classes": [
+      "rogue"
+    ],
+    "source": {
+      "file": "content/source/outfits.csv",
+      "id": "waywatcher"
+    }
+  }
+]

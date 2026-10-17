@@ -155,43 +155,152 @@ function verifyContent(content) {
   for (const row of content.classes) if (!cards.has(row.specialCardId)) fail(`$/content/classes/${row.id}/specialCardId`, 'unresolved card reference');
   for (const row of content.starterDeck.shared) if (!cards.has(row.card) || !Number.isSafeInteger(row.copies) || row.copies < 1) fail('$/content/starterDeck/shared', 'invalid starter card reference/count');
 }
+// Gear module (owner 2026-10-17): every item has a ratings pool (AR/DR/Poise) and a bonus pool
+// (attributes; effect tags cost points, penalty tags refund), sized by rarity; `pools: merged`
+// joins them. Points an item sets are kept; the rest are filled by weights: the item's own,
+// else the sum of its tags' weights scaled by tag priority (gear-type tags such as
+// `greatsword` lead), else kind, then slot, then global. Largest remainder, deterministic.
+const GEAR_RATINGS = ['ar', 'dr', 'poise'];
+const GEAR_KEYS = [...GEAR_RATINGS, ...['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence']];
+function gearSplit(total, weights) {
+  const keys = Object.keys(weights).filter(k => weights[k] > 0), out = Object.fromEntries(keys.map(k => [k, 0]));
+  const sum = keys.reduce((s, k) => s + weights[k], 0);
+  if (total <= 0 || !sum) return out;
+  const raw = keys.map(k => [k, (weights[k] / sum) * total]);
+  for (const [k, v] of raw) out[k] = Math.floor(v);
+  let left = total - keys.reduce((s, k) => s + out[k], 0);
+  for (const [k] of raw.sort((a, b) => (b[1] - Math.floor(b[1])) - (a[1] - Math.floor(a[1])) || keys.indexOf(a[0]) - keys.indexOf(b[0]))) if (left-- > 0) out[k]++;
+  return out;
+}
+function gearWeights(item, settings, pool) {
+  if (record(item.weights?.[pool]) && Object.keys(item.weights[pool]).length) return { ...item.weights[pool] };
+  const summed = {};
+  for (const tag of item.tags || []) {
+    const rule = settings.tags[tag], w = rule?.weights?.[pool];
+    if (w) for (const [k, v] of Object.entries(w)) summed[k] = (summed[k] || 0) + v * rule.priority / 100;
+  }
+  if (Object.keys(summed).length) return summed;
+  return { ...(settings.weights.kinds[item.kind]?.[pool] || settings.weights.slots[item.slot]?.[pool] || settings.weights.global[pool] || {}) };
+}
+export function resolveGearItem(item, settings) {
+  const size = pool => settings.poolSizes[pool][item.rarity] || { min: 0, max: 0 };
+  const target = pool => settings.fillTo === 'none' ? 0 : settings.fillTo === 'min' ? size(pool).min : size(pool).max;
+  const explicit = Object.fromEntries(GEAR_KEYS.map(k => [k, item.points?.[k] || 0]));
+  const tagCost = (item.tags || []).reduce((s, t) => s + (settings.tags[t]?.cost || 0), 0);
+  const sum = keys => keys.reduce((s, k) => s + explicit[k], 0);
+  const attrKeys = GEAR_KEYS.slice(3);
+  // At most maxAttributes attributes: those the item set, then the heaviest-weighted.
+  const limitAttributes = weights => {
+    const chosen = attrKeys.filter(k => explicit[k] > 0);
+    for (const k of attrKeys.filter(k => !chosen.includes(k) && weights[k] > 0).sort((a, b) => weights[b] - weights[a])) if (chosen.length < settings.maxAttributes) chosen.push(k);
+    return Object.fromEntries(Object.entries(weights).filter(([k]) => GEAR_RATINGS.includes(k) || chosen.includes(k)));
+  };
+  const ratingsW = gearWeights(item, settings, 'ratings'), bonusW = limitAttributes(gearWeights(item, settings, 'bonus'));
+  let fill;
+  if (settings.pools === 'merged') {
+    const norm = (w, share) => { const s = Object.values(w).reduce((a, b) => a + b, 0) || 1; return Object.fromEntries(Object.entries(w).map(([k, v]) => [k, v / s * share])); };
+    const remaining = target('ratings') + target('bonus') - sum(GEAR_KEYS) - tagCost;
+    fill = gearSplit(remaining, { ...norm(ratingsW, settings.mergedShare.ratings), ...norm(bonusW, settings.mergedShare.bonus) });
+  } else {
+    fill = { ...gearSplit(target('ratings') - sum(GEAR_RATINGS), ratingsW), ...gearSplit(target('bonus') - sum(attrKeys) - tagCost, bonusW) };
+  }
+  const points = Object.fromEntries(GEAR_KEYS.map(k => [k, explicit[k] + (fill[k] || 0)]));
+  const values = Object.fromEntries(GEAR_KEYS.map(k => [k, points[k] * settings.pointValues[k]]));
+  const modifiers = (item.tags || []).map(t => settings.tags[t]).filter(r => r?.modifier).map(r => `${r.modifier}=${r.amount >= 0 ? '+' : ''}${r.amount}`);
+  return { id: item.id, points, values, tags: [...(item.tags || [])], modifiers, tagCost, pools: { ratings: size('ratings'), bonus: size('bonus'), mode: settings.pools } };
+}
+function verifyGearContent(content, settings) {
+  if (!settings || !content.gear) return;
+  const ids = new Set();
+  for (const item of content.gear) {
+    const at = `$/content/gear/${item.id}`;
+    if (!item.id || ids.has(item.id)) fail('$/content/gear', `duplicate or missing gear ID '${item.id}'`);
+    ids.add(item.id);
+    if (!settings.rarities.includes(item.rarity)) fail(`${at}/rarity`, `unknown rarity '${item.rarity}'`);
+    for (const t of item.tags || []) if (!settings.tags[t]) fail(`${at}/tags`, `unknown tag '${t}'`);
+    for (const k of Object.keys(item.points || {})) if (!GEAR_KEYS.includes(k) || !Number.isSafeInteger(item.points[k]) || item.points[k] < 0) fail(`${at}/points/${k}`, 'expected known key and nonnegative integer');
+    const attrs = GEAR_KEYS.slice(3).filter(k => item.points?.[k] > 0);
+    if (attrs.length > settings.maxAttributes) fail(`${at}/points`, `more than ${settings.maxAttributes} attributes`);
+    const r = settings.poolSizes.ratings[item.rarity], b = settings.poolSizes.bonus[item.rarity];
+    const setR = GEAR_RATINGS.reduce((s, k) => s + (item.points?.[k] || 0), 0), setB = attrs.reduce((s, k) => s + item.points[k], 0);
+    const cost = (item.tags || []).reduce((s, t) => s + (settings.tags[t]?.cost || 0), 0);
+    if (settings.pools === 'merged' ? setR + setB + cost > r.max + b.max : setR > r.max || setB + cost > b.max) fail(`${at}/points`, 'set points and tag costs exceed the pool');
+  }
+}
 // Enemies module (docs/plans/enemy-decks.md): enemies are characters with decks. Refuses unknown
 // card/gear/relic references, decks outside the configured bounds, attribute totals outside the
 // tier budget, and any deck card the enemy's own pools can never pay for.
 const ENEMY_ATTRIBUTES = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
 // Same shape as the player's derived-stat rows (src/content/derivedStats.js): base, plus each
 // attribute's contribution and the level term, each floored on its own (owner 2026-10-17:
-// HP = 40 + 10 per CON; other stats and level feed in through the existing rows).
-// Gear/relic modifiers are not included; this is the character before equipment.
+// HP, SP and MP from attributes and level via statRules).
+// Pass enemyItemBonuses() as `bonus` to include gear and relics.
 export function enemyLevel(row, settings) {
   const profile = row.levelProfile || {};
   return Math.max(1, settings.levelFrom === 'levelProfile.max' ? profile.max ?? 1 : profile.min ?? 1);
 }
-export function enemyPools(row, settings, level = enemyLevel(row, settings)) {
+// Gear and relics grant attribute points only (owner 2026-10-17): `self.<attribute>=+N`,
+// 0-5 points across at most 3 attributes per item. Returns the summed bonus for one enemy.
+const ITEM_MODIFIER = /^self\.(strength|dexterity|constitution|wisdom|intelligence)=\+(\d+)$/;
+// Gear is the player's gear (content.gear, resolved by the gear module) so it can be looted;
+// relics are enemy relics (content.enemyRelics) with attribute modifiers.
+export function enemyItemBonuses(row, content = {}, gearSettings = null) {
+  const bonus = Object.fromEntries(ENEMY_ATTRIBUTES.map(id => [id, 0]));
+  const gear = new Map((content.gear || []).map(item => [item.id, item]));
+  for (const id of row.gear || []) {
+    const item = gear.get(id);
+    if (item && gearSettings) { const resolved = resolveGearItem(item, gearSettings); for (const a of ENEMY_ATTRIBUTES) bonus[a] += resolved.points[a]; }
+  }
+  const relics = new Map((content.enemyRelics || []).map(item => [item.id, item]));
+  for (const id of row.relics || []) for (const modifier of relics.get(id)?.modifiers || []) {
+    const match = ITEM_MODIFIER.exec(modifier);
+    if (match) bonus[match[1]] += Number(match[2]);
+  }
+  return bonus;
+}
+export function enemyPools(row, settings, level = enemyLevel(row, settings), bonus = null) {
   const tier = settings.tiers[row.tier], round = settings.rounding === 'up' ? Math.ceil : settings.rounding === 'nearest' ? Math.round : Math.floor;
   const base = { hp: tier.pools.hp, sp: tier.pools.sp, mp: tier.pools.mp, hand: tier.hand, ar: 0, dr: 0 };
+  const attributes = Object.fromEntries(ENEMY_ATTRIBUTES.map(id => [id, (row.attributes[id] || 0) + (bonus?.[id] || 0)]));
   const pools = {};
   for (const [stat, rule] of Object.entries(settings.statRules)) {
     let value = base[stat] ?? 0;
-    for (const id of ENEMY_ATTRIBUTES) if (rule[id]) value += round((row.attributes[id] || 0) * rule[id]);
+    for (const id of ENEMY_ATTRIBUTES) if (rule[id]) value += round((attributes[id] || 0) * rule[id]);
     if (rule.perLevel) value += round((level - 1) * rule.perLevel);
     pools[stat] = value;
   }
   return pools;
 }
-function verifyEnemyContent(content, settings) {
+function verifyEnemyContent(content, settings, gearSettings = null) {
   if (!settings) return;
   const base = '$/content/enemies';
   if (!Array.isArray(content.enemies) || !Array.isArray(content.enemyCards)) fail(base, 'enemies module requires enemies and enemyCards pack content');
   const cards = new Map(content.enemyCards.map(card => [card.id, card]));
   if (cards.size !== content.enemyCards.length) fail('$/content/enemyCards', 'duplicate enemy card ID');
   const playerCards = new Set((content.cards || []).map(card => card.id));
-  const gear = new Set((content.enemyGear || []).map(row => row.id)), relics = new Set((content.enemyRelics || []).map(row => row.id));
-  for (const [kind, rows] of [['enemyGear', content.enemyGear || []], ['enemyRelics', content.enemyRelics || []]])
-    for (const row of rows) if (!Array.isArray(row.modifiers) || row.modifiers.some(m => typeof m !== 'string' || !/^self\.\w+=[+-]\d+(\.\d+)?%?$/.test(m))) fail(`$/content/${kind}/${row.id}/modifiers`, 'expected self.<stat>=±N modifiers');
+  // Enemy gear is player gear (lootable); relics are enemy relics with attribute modifiers.
+  const gear = new Set((content.gear || []).map(row => row.id)), relics = new Set((content.enemyRelics || []).map(row => row.id));
+  for (const [kind, rows] of [['enemyRelics', content.enemyRelics || []]])
+    for (const row of rows) {
+      const at = `$/content/${kind}/${row.id}/modifiers`, rules = settings.equipment;
+      if (!Array.isArray(row.modifiers) || row.modifiers.some(m => typeof m !== 'string' || !ITEM_MODIFIER.test(m))) fail(at, 'expected self.<attribute>=+N attribute modifiers');
+      const stats = row.modifiers.map(m => ITEM_MODIFIER.exec(m)[1]), points = row.modifiers.reduce((sum, m) => sum + Number(ITEM_MODIFIER.exec(m)[2]), 0);
+      if (new Set(stats).size !== stats.length) fail(at, 'duplicate attribute');
+      if (stats.length > rules.maxStats) fail(at, `more than ${rules.maxStats} attributes`);
+      if (points > rules.maxPoints) fail(at, `grants ${points} points; at most ${rules.maxPoints}`);
+    }
+  // Enemy cards are player cards (same fields, same price and amount rules); targets are relative to
+  // the card's owner (`enemy` = the opponent), so a future module can hand an enemy's deck to any controller.
+  const TARGETS = new Set(['enemy', 'self', 'allEnemies', 'randomEnemy', 'ally', 'allAllies']);
   for (const card of content.enemyCards) {
-    for (const key of ['staminaCost', 'manaCost']) if (!Number.isSafeInteger(card[key]) || card[key] < 0) fail(`$/content/enemyCards/${card.id}/${key}`, 'expected nonnegative integer price');
-    if (!Array.isArray(card.tags) || !Array.isArray(card.effects)) fail(`$/content/enemyCards/${card.id}`, 'expected tags and effects arrays');
+    const at = `$/content/enemyCards/${card.id}`;
+    for (const key of ['cost', 'staminaCost', 'manaCost']) if (!(key === 'cost' && card[key] === 'X') && (!Number.isSafeInteger(card[key]) || card[key] < 0)) fail(`${at}/${key}`, 'expected nonnegative integer price');
+    for (const key of ['name', 'class', 'rarity', 'costRule', 'type', 'textTemplate']) if (typeof card[key] !== 'string') fail(`${at}/${key}`, 'expected player-card string field');
+    if (!Array.isArray(card.tags) || !Array.isArray(card.effects) || !Array.isArray(card.keywords)) fail(at, 'expected tags, keywords and effects arrays');
+    for (const [i, effect] of card.effects.entries()) {
+      if (effect.target !== undefined && !TARGETS.has(effect.target)) fail(`${at}/effects/${i}/target`, `unknown owner-relative target '${effect.target}'`);
+      if ((effect.amount !== undefined || ['damage', 'block'].includes(effect.op)) && !adapterAmount(effect.amount)) fail(`${at}/effects/${i}/amount`, 'expected nonnegative finite adapter amount');
+    }
     if (card.costSource === 'healRules') {
       const shapes = settings.healRules.shapes.filter(s => s.tags.every(t => card.tags.includes(t)));
       if (!shapes.length) fail(`$/content/enemyCards/${card.id}/tags`, 'healRules cost source but no heal shape matches its tags');
@@ -212,7 +321,7 @@ function verifyEnemyContent(content, settings) {
     if (!Array.isArray(row.deck)) fail(`${at}/deck`, 'expected deck array');
     const [min, max] = [Math.max(settings.deck.min, tier.deckSize[0]), Math.min(settings.deck.max, tier.deckSize[1])];
     if (row.deck.length < min || row.deck.length > max) fail(`${at}/deck`, `deck size ${row.deck.length} outside ${min}-${max}`);
-    const pools = enemyPools(row, settings);
+    const pools = enemyPools(row, settings, enemyLevel(row, settings), enemyItemBonuses(row, content, gearSettings));
     if (tier.spRange && (pools.sp < tier.spRange[0] || pools.sp > tier.spRange[1])) fail(`${at}/attributes`, `SP ${pools.sp} outside ${row.tier} range ${tier.spRange[0]}-${tier.spRange[1]}`);
     for (const id of [...row.deck, ...(row.unlockCards || []), ...(row.firstCard ? [row.firstCard] : [])]) {
       const card = cards.get(id);
@@ -294,7 +403,7 @@ export function resolveGameAuthor(author, catalog) {
     for (const [field, setting] of Object.entries(binding.settings)) policy[field] = dataClone(modules[binding.module][setting]);
   }
   verifySettings(modules, instances);
-  verifyContent(content); verifyEnemyContent(content, modules.enemies);
+  verifyContent(content); verifyGearContent(content, modules.gear); verifyEnemyContent(content, modules.enemies, modules.gear);
   if (content.classes) {
     content.classAttributes = Object.fromEntries(content.classes.map(row => [row.id, row.attributes]));
     content.startingHands = Object.fromEntries(content.classes.map(row => [row.id, content.stats.handBase + row.attributes.intelligence]));
@@ -319,6 +428,6 @@ export function validateResolvedGameProfile(snapshot, supportedRuntimeHash) {
     if (!value.schemas[id]) fail(`$/modules/${id}`, 'missing pinned settings schema');
     validateGameSchema(settings,value.schemas[id],`$/modules/${id}`);
   }
-  verifySettings(value.modules, value.instances); verifyContent(value.content); verifyEnemyContent(value.content, value.modules.enemies);
+  verifySettings(value.modules, value.instances); verifyContent(value.content); verifyGearContent(value.content, value.modules.gear); verifyEnemyContent(value.content, value.modules.enemies, value.modules.gear);
   return freezeGameData({...value,hash});
 }

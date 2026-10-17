@@ -1,42 +1,47 @@
 [
   {
-    "id": "enemy.relic.abyssalCrown",
-    "name": "Abyssal Crown",
+    "id": "enemy.relic.emberBand",
+    "name": "Ember Band",
     "modifiers": [
-      "self.maxHp=+100"
+      "self.constitution=+1"
     ],
-    "text": "+100 max HP."
-  },
-  {
-    "id": "enemy.relic.ashenCore",
-    "name": "Ashen Core",
-    "modifiers": [
-      "self.maxHp=+60"
-    ],
-    "text": "+60 max HP."
-  },
-  {
-    "id": "enemy.relic.titanHeart",
-    "name": "Titan Heart",
-    "modifiers": [
-      "self.maxHp=+30"
-    ],
-    "text": "+30 max HP."
+    "text": "CON +1"
   },
   {
     "id": "enemy.relic.graveSeal",
     "name": "Grave Seal",
     "modifiers": [
-      "self.maxHp=+20"
+      "self.strength=+2"
     ],
-    "text": "+20 max HP."
+    "text": "STR +2"
   },
   {
-    "id": "enemy.relic.emberBand",
-    "name": "Ember Band",
+    "id": "enemy.relic.titanHeart",
+    "name": "Titan Heart",
     "modifiers": [
-      "self.maxHp=+10"
+      "self.constitution=+2",
+      "self.strength=+1"
     ],
-    "text": "+10 max HP."
+    "text": "CON +2, STR +1"
+  },
+  {
+    "id": "enemy.relic.ashenCore",
+    "name": "Ashen Core",
+    "modifiers": [
+      "self.constitution=+2",
+      "self.strength=+2",
+      "self.wisdom=+1"
+    ],
+    "text": "CON +2, STR +2, WIS +1"
+  },
+  {
+    "id": "enemy.relic.abyssalCrown",
+    "name": "Abyssal Crown",
+    "modifiers": [
+      "self.constitution=+2",
+      "self.wisdom=+2",
+      "self.intelligence=+1"
+    ],
+    "text": "CON +2, WIS +2, INT +1"
   }
 ]

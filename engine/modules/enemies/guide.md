@@ -44,7 +44,9 @@ Arrays replace; objects merge.
   `manaCost`, `costSource` (`stance` | `healRules` | `authored`), `tags`, `effects`,
   optional `delay`, `aiWeight`, `maxConsecutive`, `textTemplate`. A deck may also name a
   player card id.
-- `enemyGear.json`, `enemyRelics.json`: `id`, `name`, `modifiers` (`self.maxHp=+12`), `text`.
+- `gear`: ids from the player's `gear.json` (gear module) — enemies wear real, lootable gear.
+- `enemyRelics.json`: `id`, `name`, `modifiers` (attribute points only, `self.constitution=+1`; 0–5 points, at most 3 attributes), `text`.
+- Enemy cards are player cards: same fields; targets are owner-relative (`enemy` = the opponent, `self` = the owner), so another module can control an enemy deck.
 
 ## Validation (build fails on)
 
