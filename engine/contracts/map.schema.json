@@ -52,6 +52,9 @@
         "seedStream": {
           "type": "string",
           "minLength": 1
+        },
+        "proposed": {
+          "type": "object"
         }
       },
       "required": [
