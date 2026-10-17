@@ -187,7 +187,11 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange, onGr
     const corners = true;
     const dockTop = combatEl.querySelector('.hand-area')?.getBoundingClientRect().top ?? handBox?.top ?? combatBox.bottom;
     const split = combatEl.dataset.desktopFooter === 'true';
-    const top = split ? combatBox.top + parseFloat(getComputedStyle(combatEl).getPropertyValue('--desktop-tools-top')) * zoom : dockTop - (combatEl.dataset.compactCombat === 'true' ? 0 : root.getBoundingClientRect().height / 2);
+    const footerControls = combatEl.querySelector('.combat-action-row');
+    const footerTop = split
+      ? combatBox.top + parseFloat(getComputedStyle(combatEl).getPropertyValue('--desktop-tools-top')) * zoom
+      : footerControls?.getBoundingClientRect().top ?? dockTop;
+    const top = split ? footerTop : footerTop - root.getBoundingClientRect().height - 4 / zoom;
     root.dataset.toolsPlacement = 'corners';
     const localDock = anchorLocalBox(combatEl, { left,
       top, width: 0, height: 0 }, { zoom });

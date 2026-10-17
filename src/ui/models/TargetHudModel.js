@@ -10,7 +10,7 @@ export function targetHudSide(role, lane, config = targetHudConfig()) {
   return sides[Math.min(2, Math.max(0, index))];
 }
 const clamp = (value, low, high) => Math.min(Math.max(low, high), Math.max(low, value));
-export const targetHudOverlaps = (a, b, gap = 0) => a.left < b.left + b.width + gap && a.left + a.width + gap > b.left
+export const targetHudOverlaps = (a, b, gap = 0) => a.width > 0 && a.height > 0 && b.width > 0 && b.height > 0 && a.left < b.left + b.width + gap && a.left + a.width + gap > b.left
   && a.top < b.top + b.height + gap && a.top + a.height + gap > b.top;
 
 // Physical pixels, including viewport scaling. A lane owns its preferred side;
@@ -38,6 +38,12 @@ export function placeTargetHudPanels({ bounds, panels, obstacles = [], config = 
     }
     for (let top = area.top; top <= area.top + area.height - height; top += step)
       for (let left = area.left; left <= area.left + area.width - width; left += width + gap) add(left, top, 1800 + Math.abs(left - a.left) + Math.abs(top - a.top));
+    // A narrow free strip can fall between lattice rows. Try measured
+    // obstacle edges so an available sprite-safe slot survives quantization.
+    for (const obstacle of obstacles.filter(other => other.width > 0 && other.height > 0))
+      for (const top of [obstacle.top + obstacle.height + gap, obstacle.top - height - gap])
+        for (const left of [area.left, area.left + area.width - width])
+          add(left, top, 1200 + Math.abs(left - a.left) + Math.abs(top - a.top));
     const obstacleCount = rect => obstacles.filter(other => targetHudOverlaps(rect, other)).length;
     choices.sort((a, b) => obstacleCount(a) - obstacleCount(b) || a.penalty - b.penalty);
     const clear = choices.filter(choice => obstacleCount(choice) === 0);
@@ -88,4 +94,28 @@ export function createTargetHudDwell({ onChange, delay = targetHudConfig().motio
     reset() { if (timer !== null) cancel(timer); timer = null; current = []; pending = []; },
     dispose() { disposed = true; if (timer !== null) cancel(timer); timer = null; },
   };
+}
+
+export const TARGET_HUD_AURA = Object.freeze({ advantage: '#72d78c', neutral: '#e4cd59', disadvantage: '#f07870' });
+export function targetHudMatchup(action, intent, rules = {}) {
+  if (!action || !intent || intent.hidden || intent.revealed === false) return 'neutral';
+  const normalize = value => ({ casting: 'prepared', preparing: 'prepared', cast: 'prepared', ranged: 'attack', attacking: 'attack', smashing: 'smash', sweeping: 'sweep', defending: 'defend', countering: 'counter', evading: 'evade', block: 'defend' })[value] || value;
+  const attack = normalize(action.maneuver || 'prepared'), defense = normalize(intent.profile?.maneuver || intent.stance);
+  const table = rules?.matchups || {};
+  if (table[attack]?.includes(defense)) return 'advantage';
+  if (table[defense]?.includes(attack)) return 'disadvantage';
+  return 'neutral';
+}
+
+// Reserve enough horizontal room for two narrow detail/control groups before
+// the placement solver considers its overlap fallback. Single details keep
+// the original readable width and type scale. Values are physical pixels.
+export function targetHudPanelSizing({ viewportWidth, count }, config = targetHudConfig()) {
+  const sizing = config.sizing;
+  const narrow = viewportWidth < (sizing.narrowCrowdedBelowPx ?? 600) && count >= (sizing.narrowCrowdedFrom ?? 2);
+  const crowded = narrow || count >= sizing.crowdedFrom;
+  return { crowded, narrow, width: narrow ? sizing.narrowCrowdedPanelWidthPx ?? 145
+    : crowded ? sizing.crowdedPanelWidthPx : viewportWidth < sizing.compactBelowPx ? sizing.compactPanelWidthPx : sizing.panelWidthPx,
+  font: narrow ? sizing.narrowCrowdedFontPx ?? 11 : sizing.fontPx,
+  statusSize: narrow ? sizing.narrowCrowdedStatusIconPx ?? 22 : sizing.statusIconPx };
 }
