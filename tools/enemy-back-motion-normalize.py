@@ -111,12 +111,20 @@ def run(root):
               "masters": {}, "frames": [], "errors": [], "warnings": []}
     frames = []
     try:
-        anchors = provenance.get("normalization", {}).get("footAnchors", {})
+        normalization = provenance.get("normalization", {})
+        anchors = normalization.get("footAnchors", {})
+        calibration = normalization.get("masterScale", {})
+        report["manualReview"] = normalization.get("review", None)
         for kind in LAYOUTS:
             if kind in anchors and len(anchors[kind]) != math.prod(LAYOUTS[kind]):
                 raise ValueError(f"{kind}: anchor count mismatch")
             source, items = load_master(root, kind, provenance["masters"][kind], anchors)
             report["masters"][kind] = source
+            factor = calibration.get(kind, 1.0)
+            if not isinstance(factor, (int,float)) or not math.isfinite(factor) or factor <= 0:
+                raise ValueError(f"{kind}: invalid measured masterScale")
+            for item in items:
+                item["calibration"] = factor
             frames.extend(items)
         # One scale across every master in this actor, including transparent antialias extents.
         scale = 1.0
@@ -125,17 +133,18 @@ def run(root):
             ax, ay = frame["anchor"]
             for distance, room in ((ax-left,224), (right-ax,224), (ay-top,432), (bottom-ay,16)):
                 if distance > 0:
-                    scale = min(scale, room/distance)
+                    scale = min(scale, room/(distance*frame["calibration"]))
         report["output"]["sharedScale"] = scale
         contact = Image.new("RGB", (5*256, math.ceil(len(frames)/5)*280), (36,39,43))
         draw = ImageDraw.Draw(contact)
         previews = {}
         for index, frame in enumerate(frames):
             full, cell = frame["full"], frame["cell"]
+            frame_scale = scale*frame["calibration"]
             crop = cell.crop(full)
-            crop = crop.resize((max(1,round(crop.width*scale)), max(1,round(crop.height*scale))), Image.Resampling.LANCZOS)
-            x = round(256-(frame["anchor"][0]-full[0])*scale)
-            y = round(464-(frame["anchor"][1]-full[1])*scale)
+            crop = crop.resize((max(1,round(crop.width*frame_scale)), max(1,round(crop.height*frame_scale))), Image.Resampling.LANCZOS)
+            x = round(256-(frame["anchor"][0]-full[0])*frame_scale)
+            y = round(464-(frame["anchor"][1]-full[1])*frame_scale)
             if x < 0 or y < 0 or x+crop.width > 512 or y+crop.height > 512:
                 raise ValueError(f'{frame["kind"]}/{frame["label"]}: output clips alpha')
             result = Image.new("RGBA", (512,512))
@@ -148,7 +157,7 @@ def run(root):
             result.save(destination)
             entry = {key: frame[key] for key in ("kind","label","rect","bounds","anchor","reviewedAnchor")}
             entry.update(path=str(destination), sha256=digest(destination), translation=[x,y],
-                         outputAnchor=[256,464], outputAlphaBounds=result.getchannel("A").getbbox())
+                         outputAnchor=[256,464], calibratedScale=frame_scale, outputAlphaBounds=result.getchannel("A").getbbox())
             report["frames"].append(entry)
             thumb = result.resize((256,256), Image.Resampling.LANCZOS)
             tx, ty = index%5*256, index//5*280
@@ -160,8 +169,22 @@ def run(root):
             previews.setdefault(frame["kind"],[]).append(background)
         contact.save(output/"contact-sheet.png")
         for kind, images in previews.items():
-            images[0].save(output/(kind+"-preview.gif"), save_all=True, append_images=images[1:],
-                           duration=220, loop=0, disposal=2)
+            if kind == "motion":
+                for clip, subset in (("attack", images[:4]), ("evade", images[4:])):
+                    durations = provenance.get("clips", {}).get(clip, {}).get("durations", [220]*4)
+                    if len(durations) != 4 or any(not isinstance(v, int) or v <= 0 for v in durations):
+                        raise ValueError(f"{clip}: invalid clip durations")
+                    subset[0].save(output/(clip+"-preview.gif"), save_all=True, append_images=subset[1:],
+                                   duration=durations, loop=0, disposal=2)
+            else:
+                images[0].save(output/(kind+"-pose-slideshow.gif"), save_all=True, append_images=images[1:],
+                               duration=650, loop=0, disposal=2)
+        report["previewPolicy"] = "Separate four-frame attack/evade loops; stances and damage are labeled pose slideshows."
+        report["masterScaleCalibration"] = calibration
+        if not calibration:
+            report["warnings"].append("Separate generated masters have no measured body-height calibration; inspect against seed before accepting scale.")
+        if not report["manualReview"]:
+            report["warnings"].append("No manual anchor/body-height review recorded; metadata presence alone does not establish review.")
         if any(not frame["reviewedAnchor"] for frame in frames):
             report["warnings"].append("Automatic bounds-bottom anchors require visual foot/root/weapon review; no anatomical foot detection is claimed.")
         for source in report["masters"].values():
