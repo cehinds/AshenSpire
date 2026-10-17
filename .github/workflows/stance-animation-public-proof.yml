@@ -1,0 +1,70 @@
+name: stance animation public delivery proof
+
+on:
+  push:
+    branches: ['worker/stance-animation/public-proof']
+
+permissions:
+  contents: read
+
+jobs:
+  public-proof:
+    if: github.ref == 'refs/heads/worker/stance-animation/public-proof'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out only the trusted public delivery checker
+        uses: actions/checkout@v5
+        with:
+          ref: b1b4d91c2c7758137d315a941096eee18a6fbcef
+          persist-credentials: false
+          sparse-checkout: tools/check-feature-pages.mjs
+          sparse-checkout-cone-mode: false
+      - name: Verify public wrapper and build identity as text
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { checkFeaturePages } from './tools/check-feature-pages.mjs';
+          const baseUrl = 'https://cehinds.github.io/AshenSpire/';
+          const target = { dir: 'feature/StanceAnimationModule', sha: 'a7e4d21abff5cdc817d79cbfc6f5f305570934fe' };
+          const buildUrl = new URL(`branches/${target.dir}/latest/build.txt`, baseUrl);
+          const nonce = `${Date.now()}-${target.sha.slice(0, 10)}`;
+          const freshUrl = (input) => {
+            const url = new URL(input);
+            if (url.origin !== new URL(baseUrl).origin) throw new Error('Unexpected probe origin');
+            url.searchParams.set('probe', nonce);
+            return url;
+          };
+          const identity = (payload) => ({
+            source: payload.match(/\/\* BUILD_SOURCE_START \*\/\s*(?:export\s+)?const SOURCE = '([a-f0-9]+)';\s*\/\* BUILD_SOURCE_END \*\//)?.[1] ?? null,
+            ordinal: payload.match(/\/\* BUILD_ORDINAL_START \*\/\s*(?:export\s+)?const ORDINAL = '(\d+)';\s*\/\* BUILD_ORDINAL_END \*\//)?.[1] ?? null,
+            release: payload.match(/\bversion:\s*'([0-9]+\.[0-9]+\.[0-9]+)'/)?.[1] ?? null,
+          });
+          // Diagnostics precede assertions. Hosted responses remain text only.
+          for (const [resource, input] of [['index', new URL(baseUrl)], ['build', buildUrl]]) {
+            for (const mode of ['normal', 'fresh']) {
+              const url = mode === 'fresh' ? freshUrl(input) : input;
+              try {
+                const response = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(10_000) });
+                const payload = await response.text();
+                const card = resource === 'index' ? (payload.match(/<section\b[^>]*>[\s\S]*?<\/section>/g) || []).find(row => row.includes(`href="branches/${target.dir}/latest/"`)) : null;
+                console.log(JSON.stringify({ diagnostic: resource, mode, url: url.href, status: response.status, age: response.headers.get('age'), etag: response.headers.get('etag'), lastModified: response.headers.get('last-modified'), contentType: response.headers.get('content-type'), ...(resource === 'index' ? { cardFound: Boolean(card), cardCommits: [...(card || '').matchAll(/\/commit\/([a-f0-9]{7,40})/g)].map(match => match[1]) } : identity(payload)) }));
+              } catch (error) {
+                console.log(JSON.stringify({ diagnostic: resource, mode, url: url.href, error: error.message }));
+              }
+            }
+          }
+          const fetchFresh = (input, options) => fetch(freshUrl(input), options);
+          await checkFeaturePages({ baseUrl, targets: [target], attempts: 1, fetchImpl: fetchFresh });
+          const response = await fetchFresh(buildUrl, { cache: 'no-store', signal: AbortSignal.timeout(10_000) });
+          if (response.status !== 200 || !/^text\/plain\b/i.test(response.headers.get('content-type') || '')) {
+            throw new Error('build.txt GET must return HTTP 200 and text/plain');
+          }
+          // Treat the hosted game strictly as text; never import, evaluate, or execute it.
+          const payload = await response.text();
+          const { source, ordinal, release } = identity(payload);
+          if (source !== '1779e6f1ff' || ordinal !== '1550' || release !== '0.7.1') {
+            throw new Error(`Unexpected public build identity: ${JSON.stringify({ source, ordinal, release })}`);
+          }
+          console.log(JSON.stringify({ checkedAt: new Date().toISOString(), checkerCommit: 'b1b4d91c2c7758137d315a941096eee18a6fbcef', baseUrl, ...target, buildUrl: freshUrl(buildUrl).href, freshness: 'same-origin query nonce', source, ordinal, release, payloadCharacters: payload.length }));
+          NODE
