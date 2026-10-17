@@ -636,7 +636,7 @@ export const baseCardDefinitions = [
         "amount": 1
       }
     ],
-    "textTemplate": "Reveal the selected enemy's intent for 1 turn. Reveal opponents' burden hands while active.",
+    "textTemplate": "Gain {base.read-intent}. Reveal the selected enemy's intent and burden hand for 1 turn.",
     "icon": "✦",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
   },
@@ -2032,11 +2032,6 @@ export const baseCardTagging = [
     "family": "card",
     "objectId": "base.divine-strike",
     "tagId": "school:divine"
-  },
-  {
-    "family": "card",
-    "objectId": "base.divine-strike",
-    "tagId": "source:spell"
   },
   {
     "family": "card",
@@ -3569,7 +3564,7 @@ export const baseCardPresentation = {
       "Reveal ? enemy cards",
       "For ? turns"
     ],
-    "textTemplate": "Reveal the selected enemy's intent for 1 turn. Reveal opponents' burden hands while active."
+    "textTemplate": "Gain {base.read-intent}. Reveal the selected enemy's intent and burden hand for 1 turn."
   },
   "base.recall-choose": {
     "canonicalCardRef": "ironSkin",
@@ -4267,7 +4262,7 @@ export const baseCardStatuses = [
     "icon": "◉",
     "stackMode": "add",
     "decay": "none",
-    "tooltip": "Reveal opposing burden hand card identities and counts while active. Lose one stack at the next turn start."
+    "tooltip": "Marks a targeted Read Intent. The read belongs to its owner and selected enemy. Lose one stack at the next turn start."
   },
   {
     "id": "base.stagger",
@@ -4874,11 +4869,7 @@ export const baseCardStatusRules = {
       "phase": "start",
       "stacks": 1
     },
-    "behaviors": [
-      {
-        "kind": "revealIntent"
-      }
-    ]
+    "behaviors": []
   },
   "base.stagger": {
     "requires": {

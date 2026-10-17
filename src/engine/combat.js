@@ -24,6 +24,7 @@ import { clearCombatCounter, startTacticalTurn, setCombatStance, prepareCombatEv
 import { damagePreviewState, previewDamageHits } from './combatDamagePreview.js';
 import { hiddenIntentChance, concealIntent, combatIntentStance } from '../model/combatIntentVisibility.js';
 import { initializeCombatKnowledge, rollEnemyKnowledge, knowledgeIntentProjection, predictEnemyIntent, cancelKnowledgeAction } from './enemyKnowledge.js';
+import { proposalIntentRevealUntil } from '../model/proposalIntentReveal.js';
 import { passiveMax } from '../model/registries.js';
 import { formationMovePlan } from '../model/formationMovement.js';
 import { cardTargetPlan, assertCardTarget, immediateCardEffects } from '../model/cardTargets.js';
@@ -2713,7 +2714,8 @@ export function previewIntent(combat, enemyInstanceId) {
   const intent = enemy.intent || { kind: 'unknown', moveId: null };
   const profile = intent.combatProfile || {};
   const knowledge = knowledgeIntentProjection(combat, enemy);
-  const proposalRead=(enemy.proposalIntentRevealedUntil || 0)>combat.turn;
+  const proposalRead = proposalIntentRevealUntil(enemy, combat.playerKey || 'player', combat.turn,
+    { legacySolo: !(combat.players instanceof Map) }) !== null;
   if (!proposalRead && knowledge && !knowledge.exact) return knowledge.intent;
   const revealed = proposalRead || enemy.actorIntentRevealed || (enemy.intentReads ? enemy.intentReads[combat.playerKey] === true : enemy.intentRevealed !== false);
   if (!knowledge && !revealed && profile.camp && intent.kind !== 'staggered') return concealIntent(intent, profile);

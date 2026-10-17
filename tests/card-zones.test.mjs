@@ -163,7 +163,7 @@ test('stance variant validation accepts combat maneuvers while refusing invented
 test('Read Intent overrides observer concealment only for its authored duration',()=>{
  const combat=fixture([{op:'revealIntent',target:'enemy',amount:1}]);const enemy=combat.enemies[0];enemy.intentReads={player:false};enemy.intentRevealed=false;
  play(combat);assert.equal(previewIntent(combat,enemy.id).revealed,true);
- combat.turn=enemy.proposalIntentRevealedUntil;assert.equal(previewIntent(combat,enemy.id).hidden,true);
+ combat.turn=enemy.proposalIntentRevealedUntilByOwner[combat.playerKey || 'player'];assert.equal(previewIntent(combat,enemy.id).hidden,true);
 });
 test('one Veil perception decision gates every hit of the same hostile action',()=>{
  const combat=fixture([{op:'block',amount:1,target:'self'}]);combat.registries={...combat.registries,proposalStatusRules:{weak:{behaviors:[{kind:'veil',minimum:50,maximum:50,baseChance:50,perceptionScale:0,penaltyPerStack:0}]}}};

@@ -110,27 +110,30 @@ test('explicit Read Intent survives save/load with hand identities and expires w
   for (const effect of read.effects) action(c, effect);
   assert.equal(c.player.statuses['base.read-intent']?.stacks, 1);
   assert.equal(previewIntent(c, target.id).hidden, false, 'the explicit card read overrides a failed private intent read');
-  const before = projectEnemyBurdenHand(target, { turn: c.turn, registries: c.registries });
+  const before = projectEnemyBurdenHand(target, { turn: c.turn, registries: c.registries,
+    ownerId: c.playerKey || 'player', legacySolo: true });
   assert.equal(before.cards[0].name, c.registries.cards.get('base.stagger-status-card').name);
   const snapshot = serializeCombatSnapshot(c);
   const restored = restoreCombatSnapshot({ registries: c.registries, snapshot,
     rng: createRng(c.rng.seed, c.rng.getCounters()), expectedGameProfile: c.gameProfile });
-  assert.deepEqual(projectEnemyBurdenHand(restored.enemies[0], { turn: restored.turn, registries: c.registries }), before);
-  restored.turn = target.proposalIntentRevealedUntil;
+  assert.deepEqual(projectEnemyBurdenHand(restored.enemies[0], { turn: restored.turn, registries: c.registries,
+    ownerId: restored.playerKey || 'player', legacySolo: true }), before);
+  restored.turn = target.proposalIntentRevealedUntilByOwner[c.playerKey || 'player'];
   proposalTurn(restored, restored.player, 'start'); drain(restored);
-  assert.equal(projectEnemyBurdenHand(restored.enemies[0], { turn: restored.turn, registries: c.registries }), null);
+  assert.equal(projectEnemyBurdenHand(restored.enemies[0], { turn: restored.turn, registries: c.registries,
+    ownerId: restored.playerKey || 'player', legacySolo: true }), null);
   assert.equal(previewIntent(restored, restored.enemies[0].id).hidden, true, 'the normal private read gate resumes at expiry');
 });
 
-test('Read Intent status reveals only to its living co-op owner and restores unknown after decay', () => {
+test('Read Intent status alone does not reveal enemy intents, including to its living owner', () => {
   const c = fight('core'), target = c.enemies[0];
   target.intentRevealed = false;
   target.intentReads = { [c.playerKey]: false };
   status(c, c.player, 'base.read-intent');
-  assert.equal(previewIntent(c, target.id).hidden, false, 'the active status opens this observer\'s projection');
+  assert.equal(previewIntent(c, target.id).hidden, true, 'the marker status does not bypass the selected-target read gate');
   proposalTurn(c, c.player, 'start'); drain(c);
   assert.equal(c.player.statuses['base.read-intent'], undefined, 'the authored start decay removes one stack');
-  assert.equal(previewIntent(c, target.id).hidden, true, 'the prior private unknown state resumes after decay');
+  assert.equal(previewIntent(c, target.id).hidden, true, 'the enemy remains unknown after status decay');
 
   const gameProfile = resolveGameProfile('core');
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, gameProfile)), gameProfile);
@@ -142,7 +145,7 @@ test('Read Intent status reveals only to its living co-op owner and restores unk
   const hiddenEnemy = { id: 'e1', intent: { kind: 'attack' }, knowledgeAction: { reads: {
     p1: { visibility: 'unknown' }, p2: { visibility: 'unknown' },
   } } };
-  assert.equal(knowledgeIntentProjection(coop, hiddenEnemy, 'p1').exact, true, 'the owner sees the active status result');
+  assert.equal(knowledgeIntentProjection(coop, hiddenEnemy, 'p1').exact, false, 'the status alone cannot reveal an enemy');
   assert.equal(knowledgeIntentProjection(coop, hiddenEnemy, 'p2').exact, false, 'another co-op observer remains unknown');
   p1.statuses = {};
   assert.equal(knowledgeIntentProjection(coop, hiddenEnemy, 'p1').exact, false, 'the owner also returns to unknown after decay');

@@ -300,8 +300,7 @@
         "classification.attack",
         "camp:spell",
         "maneuver:casting",
-        "school:divine",
-        "source:spell"
+        "school:divine"
       ],
       "groups": [
         "base.current-rewards"
@@ -2843,7 +2842,7 @@
             "amount": 1
           }
         ],
-        "textTemplate": "Reveal the selected enemy's intent for 1 turn. Reveal opponents' burden hands while active.",
+        "textTemplate": "Gain {base.read-intent}. Reveal the selected enemy's intent and burden hand for 1 turn.",
         "icon": "\u2726",
         "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
       },
