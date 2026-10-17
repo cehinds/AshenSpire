@@ -92,6 +92,9 @@
     "terrainPoolId": null,
     "propsPoolId": "map-rest-camp",
     "rotateTerrainWithTile": true,
-    "keepMapPropsUpright": true
+    "keepMapPropsUpright": true,
+    "objectIds": [
+      "rest-camp-object"
+    ]
   }
 }

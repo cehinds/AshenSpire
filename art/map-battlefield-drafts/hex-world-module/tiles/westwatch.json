@@ -93,6 +93,9 @@
     "terrainPoolId": null,
     "propsPoolId": "map-town",
     "rotateTerrainWithTile": true,
-    "keepMapPropsUpright": true
+    "keepMapPropsUpright": true,
+    "objectIds": [
+      "westwatch-object"
+    ]
   }
 }

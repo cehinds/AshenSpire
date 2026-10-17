@@ -2,14 +2,228 @@
   "$schema": "../schemas/module.schema.json",
   "kind": "art",
   "id": "map-props",
-  "assetBase": "../../../docs/design/improve-map-battlefield-art/props-examples",
-  "status": "technical-icon-placeholders",
+  "assetBase": "../../..",
+  "status": "draft-and-technical-placeholder-variants",
   "items": [
     {
-      "id": "map-town",
-      "asset": "town.png",
+      "id": "technical-bridge",
+      "componentId": "bridge",
+      "asset": "docs/design/improve-map-battlefield-art/props-examples/bridge.png",
       "weight": 1,
       "tags": [
+        "bridge",
+        "water-crossing",
+        "stone",
+        "placeholder"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "technical-placeholder",
+      "status": "technical-icon-placeholder",
+      "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+      "sourceAssetId": "bridge"
+    },
+    {
+      "id": "technical-path",
+      "componentId": "path",
+      "asset": "docs/design/improve-map-battlefield-art/props-examples/path.png",
+      "weight": 1,
+      "tags": [
+        "road",
+        "junction",
+        "route",
+        "placeholder"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "technical-placeholder",
+      "status": "technical-icon-placeholder",
+      "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+      "sourceAssetId": "path"
+    },
+    {
+      "id": "technical-tunnel",
+      "componentId": "tunnel",
+      "asset": "docs/design/improve-map-battlefield-art/props-examples/tunnel.png",
+      "weight": 1,
+      "tags": [
+        "tunnel",
+        "entrance",
+        "rock",
+        "paired-connection",
+        "placeholder"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "technical-placeholder",
+      "status": "technical-icon-placeholder",
+      "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+      "sourceAssetId": "tunnel"
+    },
+    {
+      "id": "technical-cave",
+      "componentId": "cave",
+      "asset": "docs/design/improve-map-battlefield-art/props-examples/cave.png",
+      "weight": 1,
+      "tags": [
+        "cave",
+        "entrance",
+        "rock",
+        "placeholder"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "technical-placeholder",
+      "status": "technical-icon-placeholder",
+      "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+      "sourceAssetId": "cave"
+    },
+    {
+      "id": "technical-ferry",
+      "componentId": "ferry",
+      "asset": "docs/design/improve-map-battlefield-art/props-examples/ferry.png",
+      "weight": 1,
+      "tags": [
+        "ferry",
+        "dock",
+        "water",
+        "shore",
+        "placeholder"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "technical-placeholder",
+      "status": "technical-icon-placeholder",
+      "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+      "sourceAssetId": "ferry"
+    },
+    {
+      "id": "technical-ford",
+      "componentId": "ford",
+      "asset": "docs/design/improve-map-battlefield-art/props-examples/ford.png",
+      "weight": 1,
+      "tags": [
+        "ford",
+        "river",
+        "water-crossing",
+        "placeholder"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "technical-placeholder",
+      "status": "technical-icon-placeholder",
+      "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+      "sourceAssetId": "ford"
+    },
+    {
+      "id": "technical-portal",
+      "componentId": "portal",
+      "asset": "docs/design/improve-map-battlefield-art/props-examples/portal.png",
+      "weight": 1,
+      "tags": [
+        "portal",
+        "magic",
+        "paired-connection",
+        "placeholder"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "technical-placeholder",
+      "status": "technical-icon-placeholder",
+      "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+      "sourceAssetId": "portal"
+    },
+    {
+      "id": "technical-boat",
+      "componentId": "boat",
+      "asset": "docs/design/improve-map-battlefield-art/props-examples/boat.png",
+      "weight": 1,
+      "tags": [
+        "boat",
+        "landing",
+        "water",
+        "placeholder"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "technical-placeholder",
+      "status": "technical-icon-placeholder",
+      "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+      "sourceAssetId": "boat"
+    },
+    {
+      "id": "technical-city",
+      "componentId": "city",
+      "asset": "docs/design/improve-map-battlefield-art/props-examples/city.png",
+      "weight": 1,
+      "tags": [
+        "city",
+        "settlement",
+        "stone",
+        "placeholder"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "technical-placeholder",
+      "status": "technical-icon-placeholder",
+      "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+      "sourceAssetId": "city"
+    },
+    {
+      "id": "technical-town",
+      "componentId": "town",
+      "asset": "docs/design/improve-map-battlefield-art/props-examples/town.png",
+      "weight": 1,
+      "tags": [
+        "town",
+        "settlement",
+        "services",
+        "placeholder"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "technical-placeholder",
+      "status": "technical-icon-placeholder",
+      "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+      "sourceAssetId": "town"
+    },
+    {
+      "id": "technical-village",
+      "componentId": "village",
+      "asset": "docs/design/improve-map-battlefield-art/props-examples/village.png",
+      "weight": 1,
+      "tags": [
+        "village",
         "settlement",
         "placeholder"
       ],
@@ -18,14 +232,20 @@
         "any": [],
         "exclude": []
       },
-      "status": "technical-icon-placeholder"
+      "variantRole": "technical-placeholder",
+      "status": "technical-icon-placeholder",
+      "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+      "sourceAssetId": "village"
     },
     {
-      "id": "map-bridge",
-      "asset": "bridge.png",
+      "id": "technical-ruins",
+      "componentId": "ruins",
+      "asset": "docs/design/improve-map-battlefield-art/props-examples/ruins.png",
       "weight": 1,
       "tags": [
-        "bridge",
+        "ruins",
+        "stone",
+        "danger",
         "placeholder"
       ],
       "selection": {
@@ -33,14 +253,85 @@
         "any": [],
         "exclude": []
       },
-      "status": "technical-icon-placeholder"
+      "variantRole": "technical-placeholder",
+      "status": "technical-icon-placeholder",
+      "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+      "sourceAssetId": "ruins"
     },
     {
-      "id": "map-rest-camp",
-      "asset": "rest-camp.png",
+      "id": "technical-dungeon",
+      "componentId": "dungeon",
+      "asset": "docs/design/improve-map-battlefield-art/props-examples/dungeon.png",
+      "weight": 1,
+      "tags": [
+        "dungeon",
+        "gate",
+        "stone",
+        "danger",
+        "placeholder"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "technical-placeholder",
+      "status": "technical-icon-placeholder",
+      "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+      "sourceAssetId": "dungeon"
+    },
+    {
+      "id": "technical-treasure",
+      "componentId": "treasure",
+      "asset": "docs/design/improve-map-battlefield-art/props-examples/treasure.png",
+      "weight": 1,
+      "tags": [
+        "treasure",
+        "chest",
+        "reward",
+        "placeholder"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "technical-placeholder",
+      "status": "technical-icon-placeholder",
+      "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+      "sourceAssetId": "treasure"
+    },
+    {
+      "id": "technical-enemy-camp",
+      "componentId": "enemy-camp",
+      "asset": "docs/design/improve-map-battlefield-art/props-examples/enemy-camp.png",
+      "weight": 1,
+      "tags": [
+        "enemy",
+        "camp",
+        "danger",
+        "placeholder"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "technical-placeholder",
+      "status": "technical-icon-placeholder",
+      "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+      "sourceAssetId": "enemy-camp"
+    },
+    {
+      "id": "technical-rest-camp",
+      "componentId": "rest-camp",
+      "asset": "docs/design/improve-map-battlefield-art/props-examples/rest-camp.png",
       "weight": 1,
       "tags": [
         "rest",
+        "camp",
+        "campfire",
+        "shelter",
         "placeholder"
       ],
       "selection": {
@@ -48,10 +339,598 @@
         "any": [],
         "exclude": []
       },
-      "status": "technical-icon-placeholder"
+      "variantRole": "technical-placeholder",
+      "status": "technical-icon-placeholder",
+      "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+      "sourceAssetId": "rest-camp"
+    },
+    {
+      "id": "technical-inn",
+      "componentId": "inn",
+      "asset": "docs/design/improve-map-battlefield-art/props-examples/inn.png",
+      "weight": 1,
+      "tags": [
+        "inn",
+        "settlement",
+        "rest",
+        "shelter",
+        "placeholder"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "technical-placeholder",
+      "status": "technical-icon-placeholder",
+      "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+      "sourceAssetId": "inn"
+    },
+    {
+      "id": "technical-trainer",
+      "componentId": "trainer",
+      "asset": "docs/design/improve-map-battlefield-art/props-examples/trainer.png",
+      "weight": 1,
+      "tags": [
+        "trainer",
+        "skills",
+        "weapons",
+        "placeholder"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "technical-placeholder",
+      "status": "technical-icon-placeholder",
+      "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+      "sourceAssetId": "trainer"
+    },
+    {
+      "id": "technical-merchant",
+      "componentId": "merchant",
+      "asset": "docs/design/improve-map-battlefield-art/props-examples/merchant.png",
+      "weight": 1,
+      "tags": [
+        "merchant",
+        "market",
+        "supplies",
+        "placeholder"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "technical-placeholder",
+      "status": "technical-icon-placeholder",
+      "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+      "sourceAssetId": "merchant"
+    },
+    {
+      "id": "technical-shrine",
+      "componentId": "shrine",
+      "asset": "docs/design/improve-map-battlefield-art/props-examples/shrine.png",
+      "weight": 1,
+      "tags": [
+        "shrine",
+        "blessing",
+        "stone",
+        "placeholder"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "technical-placeholder",
+      "status": "technical-icon-placeholder",
+      "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+      "sourceAssetId": "shrine"
+    },
+    {
+      "id": "technical-watchtower",
+      "componentId": "watchtower",
+      "asset": "docs/design/improve-map-battlefield-art/props-examples/watchtower.png",
+      "weight": 1,
+      "tags": [
+        "watchtower",
+        "scouting",
+        "stone",
+        "placeholder"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "technical-placeholder",
+      "status": "technical-icon-placeholder",
+      "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+      "sourceAssetId": "watchtower"
+    },
+    {
+      "id": "technical-cartographer",
+      "componentId": "cartographer",
+      "asset": "docs/design/improve-map-battlefield-art/props-examples/cartographer.png",
+      "weight": 1,
+      "tags": [
+        "cartographer",
+        "map",
+        "reward",
+        "placeholder"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "technical-placeholder",
+      "status": "technical-icon-placeholder",
+      "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+      "sourceAssetId": "cartographer"
+    },
+    {
+      "id": "technical-mine",
+      "componentId": "mine",
+      "asset": "docs/design/improve-map-battlefield-art/props-examples/mine.png",
+      "weight": 1,
+      "tags": [
+        "mine",
+        "entrance",
+        "resource",
+        "rock",
+        "placeholder"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "technical-placeholder",
+      "status": "technical-icon-placeholder",
+      "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+      "sourceAssetId": "mine"
+    },
+    {
+      "id": "technical-fishing",
+      "componentId": "fishing",
+      "asset": "docs/design/improve-map-battlefield-art/props-examples/fishing.png",
+      "weight": 1,
+      "tags": [
+        "fishing",
+        "water",
+        "shore",
+        "placeholder"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "technical-placeholder",
+      "status": "technical-icon-placeholder",
+      "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+      "sourceAssetId": "fishing"
+    },
+    {
+      "id": "batch-01-map-bridge-stone",
+      "componentId": "bridge",
+      "asset": "art/map-battlefield-drafts/batch-01/map-bridge-stone.png",
+      "weight": 1,
+      "tags": [
+        "bridge",
+        "water-crossing",
+        "stone"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-01/manifest.json",
+      "sourceAssetId": "map-bridge-stone"
+    },
+    {
+      "id": "batch-01-map-rest-camp",
+      "componentId": "rest-camp",
+      "asset": "art/map-battlefield-drafts/batch-01/map-rest-camp.png",
+      "weight": 1,
+      "tags": [
+        "rest",
+        "camp",
+        "campfire",
+        "shelter"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-01/manifest.json",
+      "sourceAssetId": "map-rest-camp"
+    },
+    {
+      "id": "batch-01-map-ruins-arch",
+      "componentId": "ruins",
+      "asset": "art/map-battlefield-drafts/batch-01/map-ruins-arch.png",
+      "weight": 1,
+      "tags": [
+        "ruins",
+        "stone",
+        "danger"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-01/manifest.json",
+      "sourceAssetId": "map-ruins-arch"
+    },
+    {
+      "id": "batch-01-map-treasure-chest",
+      "componentId": "treasure",
+      "asset": "art/map-battlefield-drafts/batch-01/map-treasure-chest.png",
+      "weight": 1,
+      "tags": [
+        "treasure",
+        "chest",
+        "reward"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-01/manifest.json",
+      "sourceAssetId": "map-treasure-chest"
+    },
+    {
+      "id": "batch-01-map-village",
+      "componentId": "village",
+      "asset": "art/map-battlefield-drafts/batch-01/map-village.png",
+      "weight": 1,
+      "tags": [
+        "village",
+        "settlement"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-01/manifest.json",
+      "sourceAssetId": "map-village"
+    },
+    {
+      "id": "batch-02-map-cave-entrance",
+      "componentId": "cave",
+      "asset": "art/map-battlefield-drafts/batch-02/map-cave-entrance.png",
+      "weight": 1,
+      "tags": [
+        "cave",
+        "entrance"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-02/manifest.json",
+      "sourceAssetId": "map-cave-entrance"
+    },
+    {
+      "id": "batch-02-map-dungeon-entrance",
+      "componentId": "dungeon",
+      "asset": "art/map-battlefield-drafts/batch-02/map-dungeon-entrance.png",
+      "weight": 1,
+      "tags": [
+        "dungeon",
+        "entrance"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-02/manifest.json",
+      "sourceAssetId": "map-dungeon-entrance"
+    },
+    {
+      "id": "batch-02-map-enemy-camp",
+      "componentId": "enemy-camp",
+      "asset": "art/map-battlefield-drafts/batch-02/map-enemy-camp.png",
+      "weight": 1,
+      "tags": [
+        "enemy",
+        "camp"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-02/manifest.json",
+      "sourceAssetId": "map-enemy-camp"
+    },
+    {
+      "id": "batch-02-map-portal",
+      "componentId": "portal",
+      "asset": "art/map-battlefield-drafts/batch-02/map-portal.png",
+      "weight": 1,
+      "tags": [
+        "portal"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-02/manifest.json",
+      "sourceAssetId": "map-portal"
+    },
+    {
+      "id": "batch-02-map-rest-camp",
+      "componentId": "rest-camp",
+      "asset": "art/map-battlefield-drafts/batch-02/map-rest-camp.png",
+      "weight": 1,
+      "tags": [
+        "rest",
+        "camp"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-02/manifest.json",
+      "sourceAssetId": "map-rest-camp"
+    },
+    {
+      "id": "batch-02-map-shrine",
+      "componentId": "shrine",
+      "asset": "art/map-battlefield-drafts/batch-02/map-shrine.png",
+      "weight": 1,
+      "tags": [
+        "shrine"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-02/manifest.json",
+      "sourceAssetId": "map-shrine"
+    },
+    {
+      "id": "batch-03-map-ferry",
+      "componentId": "ferry",
+      "asset": "art/map-battlefield-drafts/batch-03/map-ferry.png",
+      "weight": 1,
+      "tags": [
+        "travel",
+        "river-crossing",
+        "river",
+        "shore",
+        "diffuse-day"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-03/manifest.json",
+      "sourceAssetId": "map-ferry"
+    },
+    {
+      "id": "batch-03-map-road-signpost",
+      "componentId": "signpost",
+      "asset": "art/map-battlefield-drafts/batch-03/map-road-signpost.png",
+      "weight": 1,
+      "tags": [
+        "travel",
+        "junction",
+        "road",
+        "town",
+        "forest",
+        "diffuse-day"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-03/manifest.json",
+      "sourceAssetId": "map-road-signpost"
+    },
+    {
+      "id": "batch-03-map-watchtower",
+      "componentId": "watchtower",
+      "asset": "art/map-battlefield-drafts/batch-03/map-watchtower.png",
+      "weight": 1,
+      "tags": [
+        "landmark",
+        "vantage-point",
+        "forest",
+        "grassland",
+        "town",
+        "diffuse-day"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-03/manifest.json",
+      "sourceAssetId": "map-watchtower"
+    },
+    {
+      "id": "batch-03-map-wooden-bridge",
+      "componentId": "bridge",
+      "asset": "art/map-battlefield-drafts/batch-03/map-wooden-bridge.png",
+      "weight": 1,
+      "tags": [
+        "travel",
+        "bridge",
+        "river",
+        "ravine",
+        "diffuse-day"
+      ],
+      "selection": {
+        "all": [],
+        "any": [],
+        "exclude": []
+      },
+      "variantRole": "painted-draft",
+      "status": "draft-unregistered",
+      "sourceManifest": "../batch-03/manifest.json",
+      "sourceAssetId": "map-wooden-bridge"
     }
   ],
   "pools": [
+    {
+      "id": "map-bridge",
+      "draw": {
+        "min": 1,
+        "max": 1
+      },
+      "replacement": false,
+      "selectionPolicy": "prefer-painted-then-placeholder",
+      "itemIds": [
+        "technical-bridge",
+        "batch-01-map-bridge-stone",
+        "batch-03-map-wooden-bridge"
+      ]
+    },
+    {
+      "id": "map-path",
+      "draw": {
+        "min": 1,
+        "max": 1
+      },
+      "replacement": false,
+      "selectionPolicy": "prefer-painted-then-placeholder",
+      "itemIds": [
+        "technical-path"
+      ]
+    },
+    {
+      "id": "map-tunnel",
+      "draw": {
+        "min": 1,
+        "max": 1
+      },
+      "replacement": false,
+      "selectionPolicy": "prefer-painted-then-placeholder",
+      "itemIds": [
+        "technical-tunnel"
+      ]
+    },
+    {
+      "id": "map-cave",
+      "draw": {
+        "min": 1,
+        "max": 1
+      },
+      "replacement": false,
+      "selectionPolicy": "prefer-painted-then-placeholder",
+      "itemIds": [
+        "technical-cave",
+        "batch-02-map-cave-entrance"
+      ]
+    },
+    {
+      "id": "map-ferry",
+      "draw": {
+        "min": 1,
+        "max": 1
+      },
+      "replacement": false,
+      "selectionPolicy": "prefer-painted-then-placeholder",
+      "itemIds": [
+        "technical-ferry",
+        "batch-03-map-ferry"
+      ]
+    },
+    {
+      "id": "map-ford",
+      "draw": {
+        "min": 1,
+        "max": 1
+      },
+      "replacement": false,
+      "selectionPolicy": "prefer-painted-then-placeholder",
+      "itemIds": [
+        "technical-ford"
+      ]
+    },
+    {
+      "id": "map-portal",
+      "draw": {
+        "min": 1,
+        "max": 1
+      },
+      "replacement": false,
+      "selectionPolicy": "prefer-painted-then-placeholder",
+      "itemIds": [
+        "technical-portal",
+        "batch-02-map-portal"
+      ]
+    },
+    {
+      "id": "map-boat",
+      "draw": {
+        "min": 1,
+        "max": 1
+      },
+      "replacement": false,
+      "selectionPolicy": "prefer-painted-then-placeholder",
+      "itemIds": [
+        "technical-boat"
+      ]
+    },
+    {
+      "id": "map-city",
+      "draw": {
+        "min": 1,
+        "max": 1
+      },
+      "replacement": false,
+      "selectionPolicy": "prefer-painted-then-placeholder",
+      "itemIds": [
+        "technical-city"
+      ]
+    },
     {
       "id": "map-town",
       "draw": {
@@ -59,19 +938,74 @@
         "max": 1
       },
       "replacement": false,
+      "selectionPolicy": "prefer-painted-then-placeholder",
       "itemIds": [
-        "map-town"
+        "technical-town"
       ]
     },
     {
-      "id": "map-bridge",
+      "id": "map-village",
       "draw": {
         "min": 1,
         "max": 1
       },
       "replacement": false,
+      "selectionPolicy": "prefer-painted-then-placeholder",
       "itemIds": [
-        "map-bridge"
+        "technical-village",
+        "batch-01-map-village"
+      ]
+    },
+    {
+      "id": "map-ruins",
+      "draw": {
+        "min": 1,
+        "max": 1
+      },
+      "replacement": false,
+      "selectionPolicy": "prefer-painted-then-placeholder",
+      "itemIds": [
+        "technical-ruins",
+        "batch-01-map-ruins-arch"
+      ]
+    },
+    {
+      "id": "map-dungeon",
+      "draw": {
+        "min": 1,
+        "max": 1
+      },
+      "replacement": false,
+      "selectionPolicy": "prefer-painted-then-placeholder",
+      "itemIds": [
+        "technical-dungeon",
+        "batch-02-map-dungeon-entrance"
+      ]
+    },
+    {
+      "id": "map-treasure",
+      "draw": {
+        "min": 1,
+        "max": 1
+      },
+      "replacement": false,
+      "selectionPolicy": "prefer-painted-then-placeholder",
+      "itemIds": [
+        "technical-treasure",
+        "batch-01-map-treasure-chest"
+      ]
+    },
+    {
+      "id": "map-enemy-camp",
+      "draw": {
+        "min": 1,
+        "max": 1
+      },
+      "replacement": false,
+      "selectionPolicy": "prefer-painted-then-placeholder",
+      "itemIds": [
+        "technical-enemy-camp",
+        "batch-02-map-enemy-camp"
       ]
     },
     {
@@ -81,8 +1015,121 @@
         "max": 1
       },
       "replacement": false,
+      "selectionPolicy": "prefer-painted-then-placeholder",
       "itemIds": [
-        "map-rest-camp"
+        "technical-rest-camp",
+        "batch-01-map-rest-camp",
+        "batch-02-map-rest-camp"
+      ]
+    },
+    {
+      "id": "map-inn",
+      "draw": {
+        "min": 1,
+        "max": 1
+      },
+      "replacement": false,
+      "selectionPolicy": "prefer-painted-then-placeholder",
+      "itemIds": [
+        "technical-inn"
+      ]
+    },
+    {
+      "id": "map-trainer",
+      "draw": {
+        "min": 1,
+        "max": 1
+      },
+      "replacement": false,
+      "selectionPolicy": "prefer-painted-then-placeholder",
+      "itemIds": [
+        "technical-trainer"
+      ]
+    },
+    {
+      "id": "map-merchant",
+      "draw": {
+        "min": 1,
+        "max": 1
+      },
+      "replacement": false,
+      "selectionPolicy": "prefer-painted-then-placeholder",
+      "itemIds": [
+        "technical-merchant"
+      ]
+    },
+    {
+      "id": "map-shrine",
+      "draw": {
+        "min": 1,
+        "max": 1
+      },
+      "replacement": false,
+      "selectionPolicy": "prefer-painted-then-placeholder",
+      "itemIds": [
+        "technical-shrine",
+        "batch-02-map-shrine"
+      ]
+    },
+    {
+      "id": "map-watchtower",
+      "draw": {
+        "min": 1,
+        "max": 1
+      },
+      "replacement": false,
+      "selectionPolicy": "prefer-painted-then-placeholder",
+      "itemIds": [
+        "technical-watchtower",
+        "batch-03-map-watchtower"
+      ]
+    },
+    {
+      "id": "map-cartographer",
+      "draw": {
+        "min": 1,
+        "max": 1
+      },
+      "replacement": false,
+      "selectionPolicy": "prefer-painted-then-placeholder",
+      "itemIds": [
+        "technical-cartographer"
+      ]
+    },
+    {
+      "id": "map-mine",
+      "draw": {
+        "min": 1,
+        "max": 1
+      },
+      "replacement": false,
+      "selectionPolicy": "prefer-painted-then-placeholder",
+      "itemIds": [
+        "technical-mine"
+      ]
+    },
+    {
+      "id": "map-fishing",
+      "draw": {
+        "min": 1,
+        "max": 1
+      },
+      "replacement": false,
+      "selectionPolicy": "prefer-painted-then-placeholder",
+      "itemIds": [
+        "technical-fishing"
+      ]
+    },
+    {
+      "id": "map-signpost",
+      "draw": {
+        "min": 1,
+        "max": 1
+      },
+      "replacement": false,
+      "selectionPolicy": "prefer-painted-then-placeholder",
+      "itemIds": [
+        "batch-03-map-road-signpost"
       ]
     }
   ]

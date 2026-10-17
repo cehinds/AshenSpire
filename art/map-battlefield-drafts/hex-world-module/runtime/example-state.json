@@ -53,5 +53,32 @@
       "encounterCleared": false
     }
   ],
-  "claimedRewardIds": []
+  "claimedRewardIds": [],
+  "mapObjectStates": [
+    {
+      "objectId": "westwatch-object",
+      "discovered": true,
+      "completed": false,
+      "uses": 0
+    },
+    {
+      "objectId": "bridge-object",
+      "discovered": false,
+      "completed": false,
+      "uses": 0
+    },
+    {
+      "objectId": "forest-road-object",
+      "discovered": false,
+      "completed": false,
+      "uses": 0
+    },
+    {
+      "objectId": "rest-camp-object",
+      "discovered": false,
+      "completed": false,
+      "uses": 0
+    }
+  ],
+  "placementRolls": []
 }

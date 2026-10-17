@@ -1,0 +1,369 @@
+{
+  "$schema": "../schemas/module.schema.json",
+  "kind": "catalog",
+  "id": "map-components-service",
+  "items": [
+    {
+      "id": "rest-camp",
+      "name": "Rest camp",
+      "category": "service",
+      "tags": [
+        "rest",
+        "camp",
+        "campfire",
+        "shelter"
+      ],
+      "artPoolId": "map-rest-camp",
+      "placement": {
+        "mode": "optional",
+        "requiresConnectorKinds": [],
+        "selection": {
+          "all": [],
+          "any": [],
+          "exclude": []
+        },
+        "minSpacing": 3,
+        "maxPerTile": 1,
+        "occupiesLandmarkSlot": true
+      },
+      "visibility": {
+        "trigger": "terrain-revealed",
+        "mapItemsRevealMarker": true
+      },
+      "orientation": {
+        "keepUpright": true,
+        "alignToConnectors": false
+      },
+      "gameplayDefaults": {
+        "encounterPoolId": null,
+        "lootTableId": null,
+        "restSpotId": "road-camp",
+        "trainerId": null,
+        "revealRuleId": null,
+        "questIds": [],
+        "environmentEffectIds": []
+      },
+      "links": {
+        "required": false,
+        "kind": null
+      },
+      "productionBinding": null,
+      "schematicPlacement": {
+        "anchor": {
+          "x": 0.5,
+          "y": 0.85
+        },
+        "footprint": {
+          "shape": "rectangle",
+          "x": 0.12,
+          "y": 0.78,
+          "width": 0.76,
+          "height": 0.14
+        },
+        "status": "illustrative-only",
+        "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
+      }
+    },
+    {
+      "id": "inn",
+      "name": "Inn",
+      "category": "service",
+      "tags": [
+        "inn",
+        "settlement",
+        "rest",
+        "shelter"
+      ],
+      "artPoolId": "map-inn",
+      "placement": {
+        "mode": "optional",
+        "requiresConnectorKinds": [],
+        "selection": {
+          "all": [],
+          "any": [],
+          "exclude": []
+        },
+        "minSpacing": 3,
+        "maxPerTile": 1,
+        "occupiesLandmarkSlot": true
+      },
+      "visibility": {
+        "trigger": "terrain-revealed",
+        "mapItemsRevealMarker": true
+      },
+      "orientation": {
+        "keepUpright": true,
+        "alignToConnectors": false
+      },
+      "gameplayDefaults": {
+        "encounterPoolId": null,
+        "lootTableId": null,
+        "restSpotId": "road-camp",
+        "trainerId": null,
+        "revealRuleId": null,
+        "questIds": [],
+        "environmentEffectIds": []
+      },
+      "links": {
+        "required": false,
+        "kind": null
+      },
+      "productionBinding": null,
+      "schematicPlacement": {
+        "anchor": {
+          "x": 0.5,
+          "y": 0.85
+        },
+        "footprint": {
+          "shape": "rectangle",
+          "x": 0.22,
+          "y": 0.78,
+          "width": 0.56,
+          "height": 0.14
+        },
+        "status": "illustrative-only",
+        "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
+      }
+    },
+    {
+      "id": "trainer",
+      "name": "Trainer",
+      "category": "service",
+      "tags": [
+        "trainer",
+        "skills",
+        "weapons"
+      ],
+      "artPoolId": "map-trainer",
+      "placement": {
+        "mode": "optional",
+        "requiresConnectorKinds": [],
+        "selection": {
+          "all": [],
+          "any": [],
+          "exclude": []
+        },
+        "minSpacing": 3,
+        "maxPerTile": 1,
+        "occupiesLandmarkSlot": true
+      },
+      "visibility": {
+        "trigger": "tile-entered",
+        "mapItemsRevealMarker": false
+      },
+      "orientation": {
+        "keepUpright": true,
+        "alignToConnectors": false
+      },
+      "gameplayDefaults": {
+        "encounterPoolId": null,
+        "lootTableId": null,
+        "restSpotId": null,
+        "trainerId": "westwatch-trainer",
+        "revealRuleId": null,
+        "questIds": [],
+        "environmentEffectIds": []
+      },
+      "links": {
+        "required": false,
+        "kind": null
+      },
+      "productionBinding": null,
+      "schematicPlacement": {
+        "anchor": {
+          "x": 0.5,
+          "y": 0.85
+        },
+        "footprint": {
+          "shape": "rectangle",
+          "x": 0.15,
+          "y": 0.79,
+          "width": 0.7,
+          "height": 0.14
+        },
+        "status": "illustrative-only",
+        "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
+      }
+    },
+    {
+      "id": "merchant",
+      "name": "Merchant",
+      "category": "service",
+      "tags": [
+        "merchant",
+        "market",
+        "supplies"
+      ],
+      "artPoolId": "map-merchant",
+      "placement": {
+        "mode": "optional",
+        "requiresConnectorKinds": [],
+        "selection": {
+          "all": [],
+          "any": [],
+          "exclude": []
+        },
+        "minSpacing": 3,
+        "maxPerTile": 1,
+        "occupiesLandmarkSlot": true
+      },
+      "visibility": {
+        "trigger": "terrain-revealed",
+        "mapItemsRevealMarker": true
+      },
+      "orientation": {
+        "keepUpright": true,
+        "alignToConnectors": false
+      },
+      "gameplayDefaults": {
+        "encounterPoolId": null,
+        "lootTableId": null,
+        "restSpotId": null,
+        "trainerId": null,
+        "revealRuleId": null,
+        "questIds": [],
+        "environmentEffectIds": []
+      },
+      "links": {
+        "required": false,
+        "kind": null
+      },
+      "productionBinding": null,
+      "schematicPlacement": {
+        "anchor": {
+          "x": 0.5,
+          "y": 0.85
+        },
+        "footprint": {
+          "shape": "rectangle",
+          "x": 0.22,
+          "y": 0.78,
+          "width": 0.56,
+          "height": 0.14
+        },
+        "status": "illustrative-only",
+        "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
+      }
+    },
+    {
+      "id": "cartographer",
+      "name": "Cartographer",
+      "category": "service",
+      "tags": [
+        "cartographer",
+        "map",
+        "reward"
+      ],
+      "artPoolId": "map-cartographer",
+      "placement": {
+        "mode": "optional",
+        "requiresConnectorKinds": [],
+        "selection": {
+          "all": [],
+          "any": [],
+          "exclude": []
+        },
+        "minSpacing": 3,
+        "maxPerTile": 1,
+        "occupiesLandmarkSlot": true
+      },
+      "visibility": {
+        "trigger": "tile-entered",
+        "mapItemsRevealMarker": false
+      },
+      "orientation": {
+        "keepUpright": true,
+        "alignToConnectors": false
+      },
+      "gameplayDefaults": {
+        "encounterPoolId": null,
+        "lootTableId": null,
+        "restSpotId": null,
+        "trainerId": null,
+        "revealRuleId": "adjacent-reveal",
+        "questIds": [],
+        "environmentEffectIds": []
+      },
+      "links": {
+        "required": false,
+        "kind": null
+      },
+      "productionBinding": null,
+      "schematicPlacement": {
+        "anchor": {
+          "x": 0.5,
+          "y": 0.85
+        },
+        "footprint": {
+          "shape": "rectangle",
+          "x": 0.15,
+          "y": 0.76,
+          "width": 0.7,
+          "height": 0.17
+        },
+        "status": "illustrative-only",
+        "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
+      }
+    },
+    {
+      "id": "fishing",
+      "name": "Fishing spot",
+      "category": "service",
+      "tags": [
+        "fishing",
+        "water",
+        "shore"
+      ],
+      "artPoolId": "map-fishing",
+      "placement": {
+        "mode": "optional",
+        "requiresConnectorKinds": [],
+        "selection": {
+          "all": [],
+          "any": [],
+          "exclude": []
+        },
+        "minSpacing": 3,
+        "maxPerTile": 1,
+        "occupiesLandmarkSlot": true
+      },
+      "visibility": {
+        "trigger": "tile-entered",
+        "mapItemsRevealMarker": false
+      },
+      "orientation": {
+        "keepUpright": true,
+        "alignToConnectors": false
+      },
+      "gameplayDefaults": {
+        "encounterPoolId": null,
+        "lootTableId": null,
+        "restSpotId": null,
+        "trainerId": null,
+        "revealRuleId": null,
+        "questIds": [],
+        "environmentEffectIds": []
+      },
+      "links": {
+        "required": false,
+        "kind": null
+      },
+      "productionBinding": null,
+      "schematicPlacement": {
+        "anchor": {
+          "x": 0.5,
+          "y": 0.85
+        },
+        "footprint": {
+          "shape": "rectangle",
+          "x": 0.14,
+          "y": 0.79,
+          "width": 0.72,
+          "height": 0.14
+        },
+        "status": "illustrative-only",
+        "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
+      }
+    }
+  ]
+}

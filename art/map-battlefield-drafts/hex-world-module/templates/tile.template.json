@@ -87,6 +87,7 @@
     "terrainPoolId": null,
     "propsPoolId": null,
     "rotateTerrainWithTile": true,
-    "keepMapPropsUpright": true
+    "keepMapPropsUpright": true,
+    "objectIds": []
   }
 }

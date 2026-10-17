@@ -75,5 +75,7 @@
   },
   "templates": {
     "tile": "templates/tile.template.json"
-  }
+  },
+  "components": "map-components.json",
+  "objects": "map-objects.json"
 }

@@ -1,0 +1,186 @@
+{
+  "$schema": "../schemas/module.schema.json",
+  "kind": "catalog",
+  "id": "map-components-settlement",
+  "items": [
+    {
+      "id": "city",
+      "name": "City",
+      "category": "settlement",
+      "tags": [
+        "city",
+        "settlement",
+        "stone"
+      ],
+      "artPoolId": "map-city",
+      "placement": {
+        "mode": "authored",
+        "requiresConnectorKinds": [],
+        "selection": {
+          "all": [],
+          "any": [],
+          "exclude": []
+        },
+        "minSpacing": 3,
+        "maxPerTile": 1,
+        "occupiesLandmarkSlot": true
+      },
+      "visibility": {
+        "trigger": "terrain-revealed",
+        "mapItemsRevealMarker": true
+      },
+      "orientation": {
+        "keepUpright": true,
+        "alignToConnectors": false
+      },
+      "gameplayDefaults": {
+        "encounterPoolId": null,
+        "lootTableId": null,
+        "restSpotId": null,
+        "trainerId": null,
+        "revealRuleId": null,
+        "questIds": [],
+        "environmentEffectIds": []
+      },
+      "links": {
+        "required": false,
+        "kind": null
+      },
+      "productionBinding": null,
+      "schematicPlacement": {
+        "anchor": {
+          "x": 0.5,
+          "y": 0.85
+        },
+        "footprint": {
+          "shape": "rectangle",
+          "x": 0.15,
+          "y": 0.77,
+          "width": 0.7,
+          "height": 0.16
+        },
+        "status": "illustrative-only",
+        "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
+      }
+    },
+    {
+      "id": "town",
+      "name": "Town",
+      "category": "settlement",
+      "tags": [
+        "town",
+        "settlement",
+        "services"
+      ],
+      "artPoolId": "map-town",
+      "placement": {
+        "mode": "authored",
+        "requiresConnectorKinds": [],
+        "selection": {
+          "all": [],
+          "any": [],
+          "exclude": []
+        },
+        "minSpacing": 3,
+        "maxPerTile": 1,
+        "occupiesLandmarkSlot": true
+      },
+      "visibility": {
+        "trigger": "terrain-revealed",
+        "mapItemsRevealMarker": true
+      },
+      "orientation": {
+        "keepUpright": true,
+        "alignToConnectors": false
+      },
+      "gameplayDefaults": {
+        "encounterPoolId": null,
+        "lootTableId": null,
+        "restSpotId": null,
+        "trainerId": null,
+        "revealRuleId": null,
+        "questIds": [],
+        "environmentEffectIds": []
+      },
+      "links": {
+        "required": false,
+        "kind": null
+      },
+      "productionBinding": null,
+      "schematicPlacement": {
+        "anchor": {
+          "x": 0.5,
+          "y": 0.85
+        },
+        "footprint": {
+          "shape": "rectangle",
+          "x": 0.14,
+          "y": 0.77,
+          "width": 0.72,
+          "height": 0.16
+        },
+        "status": "illustrative-only",
+        "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
+      }
+    },
+    {
+      "id": "village",
+      "name": "Village",
+      "category": "settlement",
+      "tags": [
+        "village",
+        "settlement"
+      ],
+      "artPoolId": "map-village",
+      "placement": {
+        "mode": "authored",
+        "requiresConnectorKinds": [],
+        "selection": {
+          "all": [],
+          "any": [],
+          "exclude": []
+        },
+        "minSpacing": 3,
+        "maxPerTile": 1,
+        "occupiesLandmarkSlot": true
+      },
+      "visibility": {
+        "trigger": "terrain-revealed",
+        "mapItemsRevealMarker": true
+      },
+      "orientation": {
+        "keepUpright": true,
+        "alignToConnectors": false
+      },
+      "gameplayDefaults": {
+        "encounterPoolId": null,
+        "lootTableId": null,
+        "restSpotId": null,
+        "trainerId": null,
+        "revealRuleId": null,
+        "questIds": [],
+        "environmentEffectIds": []
+      },
+      "links": {
+        "required": false,
+        "kind": null
+      },
+      "productionBinding": null,
+      "schematicPlacement": {
+        "anchor": {
+          "x": 0.5,
+          "y": 0.85
+        },
+        "footprint": {
+          "shape": "rectangle",
+          "x": 0.18,
+          "y": 0.78,
+          "width": 0.64,
+          "height": 0.14
+        },
+        "status": "illustrative-only",
+        "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
+      }
+    }
+  ]
+}

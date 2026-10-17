@@ -14,7 +14,9 @@
         "art",
         "encounters",
         "runtime",
-        "tile"
+        "tile",
+        "map-components",
+        "map-objects"
       ]
     }
   },
@@ -68,6 +70,14 @@
               }
             },
             "additionalProperties": false
+          },
+          "components": {
+            "type": "string",
+            "minLength": 1
+          },
+          "objects": {
+            "type": "string",
+            "minLength": 1
           }
         },
         "required": [
@@ -78,7 +88,9 @@
           "art",
           "gameplay",
           "runtimeExample",
-          "mapArt"
+          "mapArt",
+          "components",
+          "objects"
         ],
         "additionalProperties": true
       }
@@ -711,13 +723,47 @@
               "minLength": 1
             },
             "uniqueItems": true
+          },
+          "mapObjectStates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "objectId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "discovered": {
+                  "type": "boolean"
+                },
+                "completed": {
+                  "type": "boolean"
+                },
+                "uses": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "objectId",
+                "discovered",
+                "completed",
+                "uses"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "placementRolls": {
+            "type": "array"
           }
         },
         "required": [
           "mapId",
           "runId",
           "tiles",
-          "claimedRewardIds"
+          "claimedRewardIds",
+          "mapObjectStates",
+          "placementRolls"
         ],
         "additionalProperties": true
       }
@@ -1277,7 +1323,8 @@
               "terrainPoolId",
               "propsPoolId",
               "rotateTerrainWithTile",
-              "keepMapPropsUpright"
+              "keepMapPropsUpright",
+              "objectIds"
             ],
             "properties": {
               "terrainPoolId": {
@@ -1294,6 +1341,14 @@
               },
               "keepMapPropsUpright": {
                 "const": true
+              },
+              "objectIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "uniqueItems": true
               }
             },
             "additionalProperties": false
@@ -1521,6 +1576,283 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "catalog"
+          },
+          "id": {
+            "pattern": "^map-components-"
+          }
+        },
+        "required": [
+          "kind",
+          "id"
+        ]
+      },
+      "then": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/$defs/mapComponent"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "map-components"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "properties": {
+          "componentModules": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "sourceManifests": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "artPolicy": {
+            "type": "object",
+            "properties": {
+              "allowTechnicalPlaceholders": {
+                "type": "boolean"
+              },
+              "selectionMode": {
+                "const": "prefer-painted-then-placeholder"
+              }
+            },
+            "required": [
+              "selectionMode",
+              "allowTechnicalPlaceholders"
+            ]
+          },
+          "placementDefaults": {
+            "type": "object",
+            "properties": {
+              "chancePerEligibleTile": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "maxOccupiedFraction": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "maxOptionalLandmarksPerTile": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "minimumDistanceSameType": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "chancePerEligibleTile",
+              "maxOccupiedFraction",
+              "maxOptionalLandmarksPerTile",
+              "minimumDistanceSameType"
+            ]
+          }
+        },
+        "required": [
+          "componentModules",
+          "sourceManifests",
+          "artPolicy",
+          "placementDefaults"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "map-objects"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "properties": {
+          "instances": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "tileId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "componentId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "placement": {
+                  "type": "object",
+                  "properties": {
+                    "u": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "v": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "scale": {
+                      "type": "number",
+                      "exclusiveMinimum": 0,
+                      "maximum": 1
+                    },
+                    "rotationDegrees": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 359
+                    }
+                  },
+                  "required": [
+                    "u",
+                    "v",
+                    "scale",
+                    "rotationDegrees"
+                  ],
+                  "additionalProperties": false
+                },
+                "linkedInstanceId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "gameplayOverrides": {
+                  "$ref": "#/$defs/mapGameplayRefs"
+                }
+              },
+              "required": [
+                "id",
+                "tileId",
+                "componentId",
+                "placement",
+                "linkedInstanceId",
+                "gameplayOverrides"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "optionalRules": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "discoveryPoolId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "eligibleTileIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "id",
+                "discoveryPoolId",
+                "eligibleTileIds"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "instances",
+          "optionalRules"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "art"
+          },
+          "id": {
+            "const": "map-props"
+          }
+        },
+        "required": [
+          "kind",
+          "id"
+        ]
+      },
+      "then": {
+        "properties": {
+          "items": {
+            "items": {
+              "properties": {
+                "componentId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "sourceManifest": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "sourceAssetId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "variantRole": {
+                  "enum": [
+                    "painted-draft",
+                    "technical-placeholder"
+                  ]
+                }
+              },
+              "required": [
+                "componentId",
+                "sourceManifest",
+                "sourceAssetId",
+                "variantRole"
+              ]
+            }
+          }
+        }
+      }
     }
   ],
   "$defs": {
@@ -1539,6 +1871,244 @@
       "items": false,
       "minItems": 2,
       "maxItems": 2
+    },
+    "mapGameplayRefs": {
+      "type": "object",
+      "properties": {
+        "levelBandId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "encounterPoolId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "lootTableId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "restSpotId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "trainerId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "revealRuleId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "questIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "environmentEffectIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "mapComponent": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "category",
+        "tags",
+        "artPoolId",
+        "placement",
+        "visibility",
+        "orientation",
+        "gameplayDefaults",
+        "links",
+        "productionBinding"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "category": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "artPoolId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "productionBinding": {
+          "type": "null"
+        },
+        "placement": {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "enum": [
+                "authored",
+                "optional"
+              ]
+            },
+            "requiresConnectorKinds": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "road",
+                  "river"
+                ]
+              },
+              "uniqueItems": true
+            },
+            "selection": {
+              "type": "object",
+              "properties": {
+                "all": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true
+                },
+                "any": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true
+                },
+                "exclude": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "all",
+                "any",
+                "exclude"
+              ],
+              "additionalProperties": false
+            },
+            "minSpacing": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "maxPerTile": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "occupiesLandmarkSlot": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "mode",
+            "requiresConnectorKinds",
+            "selection",
+            "minSpacing",
+            "maxPerTile",
+            "occupiesLandmarkSlot"
+          ],
+          "additionalProperties": false
+        },
+        "visibility": {
+          "type": "object",
+          "properties": {
+            "trigger": {
+              "enum": [
+                "terrain-revealed",
+                "tile-entered",
+                "section-entered"
+              ]
+            },
+            "mapItemsRevealMarker": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "trigger",
+            "mapItemsRevealMarker"
+          ],
+          "additionalProperties": false
+        },
+        "orientation": {
+          "type": "object",
+          "properties": {
+            "keepUpright": {
+              "type": "boolean"
+            },
+            "alignToConnectors": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "keepUpright",
+            "alignToConnectors"
+          ],
+          "additionalProperties": false
+        },
+        "gameplayDefaults": {
+          "$ref": "#/$defs/mapGameplayRefs"
+        },
+        "links": {
+          "type": "object",
+          "properties": {
+            "required": {
+              "type": "boolean"
+            },
+            "kind": {
+              "enum": [
+                "paired-endpoint",
+                null
+              ]
+            }
+          },
+          "required": [
+            "required",
+            "kind"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": true
     }
   }
 }

@@ -1,0 +1,132 @@
+{
+  "$schema": "../schemas/module.schema.json",
+  "kind": "catalog",
+  "id": "map-components-crossing",
+  "items": [
+    {
+      "id": "bridge",
+      "name": "Bridge",
+      "category": "crossing",
+      "tags": [
+        "bridge",
+        "water-crossing",
+        "stone"
+      ],
+      "artPoolId": "map-bridge",
+      "placement": {
+        "mode": "authored",
+        "requiresConnectorKinds": [
+          "road",
+          "river"
+        ],
+        "selection": {
+          "all": [],
+          "any": [],
+          "exclude": []
+        },
+        "minSpacing": 3,
+        "maxPerTile": 1,
+        "occupiesLandmarkSlot": true
+      },
+      "visibility": {
+        "trigger": "terrain-revealed",
+        "mapItemsRevealMarker": true
+      },
+      "orientation": {
+        "keepUpright": true,
+        "alignToConnectors": true
+      },
+      "gameplayDefaults": {
+        "encounterPoolId": null,
+        "lootTableId": null,
+        "restSpotId": null,
+        "trainerId": null,
+        "revealRuleId": null,
+        "questIds": [],
+        "environmentEffectIds": []
+      },
+      "links": {
+        "required": false,
+        "kind": null
+      },
+      "productionBinding": null,
+      "schematicPlacement": {
+        "anchor": {
+          "x": 0.5,
+          "y": 0.85
+        },
+        "footprint": {
+          "shape": "rectangle",
+          "x": 0.12,
+          "y": 0.78,
+          "width": 0.76,
+          "height": 0.14
+        },
+        "status": "illustrative-only",
+        "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
+      }
+    },
+    {
+      "id": "ford",
+      "name": "River ford",
+      "category": "crossing",
+      "tags": [
+        "ford",
+        "river",
+        "water-crossing"
+      ],
+      "artPoolId": "map-ford",
+      "placement": {
+        "mode": "authored",
+        "requiresConnectorKinds": [
+          "river"
+        ],
+        "selection": {
+          "all": [],
+          "any": [],
+          "exclude": []
+        },
+        "minSpacing": 3,
+        "maxPerTile": 1,
+        "occupiesLandmarkSlot": true
+      },
+      "visibility": {
+        "trigger": "terrain-revealed",
+        "mapItemsRevealMarker": true
+      },
+      "orientation": {
+        "keepUpright": true,
+        "alignToConnectors": true
+      },
+      "gameplayDefaults": {
+        "encounterPoolId": null,
+        "lootTableId": null,
+        "restSpotId": null,
+        "trainerId": null,
+        "revealRuleId": null,
+        "questIds": [],
+        "environmentEffectIds": []
+      },
+      "links": {
+        "required": false,
+        "kind": null
+      },
+      "productionBinding": null,
+      "schematicPlacement": {
+        "anchor": {
+          "x": 0.5,
+          "y": 0.85
+        },
+        "footprint": {
+          "shape": "rectangle",
+          "x": 0.12,
+          "y": 0.36,
+          "width": 0.76,
+          "height": 0.5
+        },
+        "status": "illustrative-only",
+        "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
+      }
+    }
+  ]
+}

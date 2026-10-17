@@ -101,6 +101,9 @@
     "terrainPoolId": null,
     "propsPoolId": "map-bridge",
     "rotateTerrainWithTile": true,
-    "keepMapPropsUpright": true
+    "keepMapPropsUpright": true,
+    "objectIds": [
+      "bridge-object"
+    ]
   }
 }

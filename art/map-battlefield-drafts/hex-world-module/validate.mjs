@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import {loadMapComponents,validateMapComponents} from './map-components.mjs';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
@@ -19,6 +20,9 @@ export function validate(root=path.dirname(fileURLToPath(import.meta.url))){
  const errors=[];const check=(ok,msg)=>{if(!ok)errors.push(msg);};
  const read=p=>JSON.parse(fs.readFileSync(path.resolve(root,p),'utf8'));const index=read('index.json');const map=read(index.map);
  const docs=new Map([['index.json',index],[index.map,map]]);
+ const componentData=loadMapComponents(root);
+ docs.set(index.components,componentData.registry);docs.set(index.objects,componentData.objects);
+ for(const module of componentData.modules)docs.set(module.file,module.data);
  for(const p of [...Object.values(index.templates??{}),...Object.values(index.catalogs),...Object.values(index.art),...Object.values(index.mapArt).filter(Boolean),...Object.values(index.gameplay),index.runtimeExample,...map.tiles])docs.set(p,read(p));
  const schemaCheck=spawnSync('python',['-c',`import json,sys,jsonschema,pathlib
 root=pathlib.Path(sys.argv[1]); schema=json.loads((root/'schemas/module.schema.json').read_text()); validator=jsonschema.Draft202012Validator(schema)
@@ -111,6 +115,7 @@ for name in json.loads(sys.argv[2]):
   check(rule.revealsFogOnly===true&&rule.triggersOnEnterDiscoveries===false&&rule.marksVisited===false,`${rule.id}: reward reveal must affect fog only`);
  }
  const runtime=read(index.runtimeExample);for(const id of runtime.claimedRewardIds??[])ref('rewards',id,'runtime claimedRewardIds');check(runtime.mapId===map.id,'runtime map mismatch');check(new Set(runtime.tiles.map(x=>x.tileId)).size===runtime.tiles.length,'duplicate runtime tile');for(const t of runtime.tiles)check(ids.has(t.tileId),`runtime unknown tile ${t.tileId}`);
+ errors.push(...validateMapComponents(componentData,tiles,runtime));
  return {errors,documents:docs.size,tiles:tiles.length};
 }
 if(process.argv[1]===fileURLToPath(import.meta.url)){const result=validate(process.argv[2]);console.log(JSON.stringify(result,null,2));if(result.errors.length)process.exitCode=1;}

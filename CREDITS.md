@@ -776,3 +776,8 @@ direction. The diagram's PNG is a browser rendering of its adjacent SVG. Existin
 first-party draft paintings and technical map icons are referenced without new
 image generation or changes to their source files. This remains a proposal module
 with no production world bindings. No third-party artwork or license is claimed.
+
+The map-component catalog sheet in the same module is a browser composition of
+39 existing first-party map icon variants, indexed into 25 object types. Its
+adjacent render script and JSON mappings preserve the original PNG sources.
+No additional painted artwork was generated for this catalog update.

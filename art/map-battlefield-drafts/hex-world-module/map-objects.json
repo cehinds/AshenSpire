@@ -1,0 +1,85 @@
+{
+  "$schema": "./schemas/module.schema.json",
+  "kind": "map-objects",
+  "id": "map-objects",
+  "status": "proposal-only",
+  "instances": [
+    {
+      "id": "westwatch-object",
+      "tileId": "westwatch",
+      "componentId": "town",
+      "placement": {
+        "u": 0.5,
+        "v": 0.55,
+        "scale": 0.55,
+        "rotationDegrees": 0
+      },
+      "linkedInstanceId": null,
+      "gameplayOverrides": {}
+    },
+    {
+      "id": "bridge-object",
+      "tileId": "bridge",
+      "componentId": "bridge",
+      "placement": {
+        "u": 0.5,
+        "v": 0.55,
+        "scale": 0.55,
+        "rotationDegrees": 0
+      },
+      "linkedInstanceId": null,
+      "gameplayOverrides": {}
+    },
+    {
+      "id": "forest-road-object",
+      "tileId": "forest-road",
+      "componentId": "path",
+      "placement": {
+        "u": 0.5,
+        "v": 0.55,
+        "scale": 0.55,
+        "rotationDegrees": 0
+      },
+      "linkedInstanceId": null,
+      "gameplayOverrides": {}
+    },
+    {
+      "id": "rest-camp-object",
+      "tileId": "rest-camp",
+      "componentId": "rest-camp",
+      "placement": {
+        "u": 0.5,
+        "v": 0.55,
+        "scale": 0.55,
+        "rotationDegrees": 0
+      },
+      "linkedInstanceId": null,
+      "gameplayOverrides": {}
+    }
+  ],
+  "optionalRules": [
+    {
+      "id": "forest-road-landmarks",
+      "discoveryPoolId": "sparse-road-discoveries",
+      "eligibleTileIds": [
+        "forest-road"
+      ]
+    },
+    {
+      "id": "riverbank-landmarks",
+      "discoveryPoolId": "riverbank-discoveries",
+      "eligibleTileIds": [
+        "upstream",
+        "downstream"
+      ]
+    }
+  ],
+  "resolutionRules": {
+    "component": "Instances reference a map component; artPoolId and behavior defaults come from its catalog record.",
+    "gameplay": "Start with owner tile gameplay; non-null component scalar defaults replace associations, component arrays add unique IDs; explicit instance overrides replace a field (null disables an association).",
+    "optional": "A placement rule reuses its discovery pool spawnChance, weights, entry componentId and revealTrigger. Do not roll a second independent spawn chance.",
+    "density": "Routes do not occupy the landmark slot. Optional placement excludes authored landmark tiles and uses a global cap ceil(eligibleTileCount * maxOccupiedFraction), with at most one optional landmark per tile.",
+    "art": "Tile propsPoolId mirrors the first authored object for compatibility; objectIds/componentId are authoritative.",
+    "level": "Objects inherit the tile level band unless an instance explicitly overrides it."
+  }
+}

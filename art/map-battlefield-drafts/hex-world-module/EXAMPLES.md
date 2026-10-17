@@ -241,3 +241,7 @@ The tile references `gameplay.levelBandId`, while reward definitions keep their 
   "description": "Proposed signature dungeon reward; effects and unique identity remain unbound."
 }
 ```
+
+## 7. Map object mapping
+
+The [map-component guide](MAP-COMPONENTS.md) shows how a tile references an object instance, the instance references a component, and the component selects icon variants plus gameplay defaults. All 39 map icons are covered by the generated [portable mapping](map-component-mapping.json).

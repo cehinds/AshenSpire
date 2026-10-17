@@ -16,7 +16,9 @@ Start with [index.json](index.json). This standalone module contains six connect
 | Tile position, biome, sides, rotation and content references | [tiles/bridge.json](tiles/bridge.json), or another file under `tiles/` |
 | Shared tag vocabulary | [catalogs/tags.json](catalogs/tags.json) |
 | Biome definitions | [catalogs/biomes.json](catalogs/biomes.json) |
-| Map icons, separate from combat props | [art/map-props.json](art/map-props.json) |
+| Map component definitions | [map-components.json](map-components.json) + category catalogs under `components/` |
+| Object instances and discovery mappings | [map-objects.json](map-objects.json) |
+| All map icon variants, separate from combat props | [art/map-props.json](art/map-props.json) |
 | Battlefield grounds | [art/ground.json](art/ground.json) |
 | Backgrounds / skyboxes | [art/skybox.json](art/skybox.json) |
 | Battlefield props | [art/props.json](art/props.json) |
@@ -29,6 +31,8 @@ Start with [index.json](index.json). This standalone module contains six connect
 | Reveals, discoveries and rest | [reveal rules](gameplay/reveal.json), [discoveries](gameplay/discoveries.json), [rest spots](gameplay/rest-spots.json) |
 | Trainers, quests and buffs/debuffs | [trainers](gameplay/trainers.json), [quests](gameplay/quests.json), [effects](gameplay/effects.json) |
 | Example player progress, separate from authored content | [runtime/example-state.json](runtime/example-state.json) |
+
+[MAP-COMPONENTS.md](MAP-COMPONENTS.md) connects all 25 object types to 39 icon variants, tile instances and discovery rules.
 
 [REWARDS-AND-LEVELS.md](REWARDS-AND-LEVELS.md) lists possible rewards and the four proposed level bands.
 
@@ -65,7 +69,7 @@ These six files form a small connected patch. Empty coordinates inside the examp
 - `all`, `any` and `exclude` are explicit tag predicates. Empty `all`/`any` lists add no restriction. Weights are normalized only among eligible entries.
 - Pool draw counts control how many items are selected. An empty, zero-draw prop/weather pool deliberately means no decoration/effect.
 - Enemy encounter chance is separate from enemy selection weights. Map discovery rolls are separate from encounters and fog reveal.
-- Map icons use the earlier technical PNG placeholders. Dedicated 256/512px hex terrain exports are still pending and have null references.
+- Map icons include 15 painted draft PNGs and 24 earlier technical placeholders. The map-component registry prefers painted variants and keeps placeholder fallback explicit. Dedicated 256/512px hex terrain exports remain pending with null references.
 - Town uses a courtyard candidate. Bridge uses a borrowed wet-stone floor while a bridge-deck painting is pending. These references demonstrate the data contract, not approved location art.
 - All file references resolve according to the index's path rules. Art files declare `assetBase`; this avoids repeating long PNG paths on every tile.
 
@@ -82,7 +86,7 @@ Requires Node.js and Python with `jsonschema` installed:
 
 ```sh
 node art/map-battlefield-drafts/hex-world-module/validate.mjs
-node --test art/map-battlefield-drafts/hex-world-module/validate.test.mjs
+node --test art/map-battlefield-drafts/hex-world-module/validate.test.mjs art/map-battlefield-drafts/hex-world-module/map-components.test.mjs
 ```
 
 The [JSON Schema](schemas/module.schema.json) checks document structure. The validator checks cross-file IDs, tags, asset paths, tile positions, all six sides, rotation and reciprocal road/river connections. Use both: JSON syntax alone cannot detect a road that ends against an incompatible neighbor.

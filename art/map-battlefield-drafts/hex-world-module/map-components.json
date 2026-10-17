@@ -1,0 +1,39 @@
+{
+  "$schema": "./schemas/module.schema.json",
+  "kind": "map-components",
+  "id": "map-components",
+  "formatVersion": 1,
+  "status": "proposal-only",
+  "productionBinding": null,
+  "componentModules": [
+    "components/crossing.json",
+    "components/route.json",
+    "components/transport.json",
+    "components/adventure.json",
+    "components/settlement.json",
+    "components/landmark.json",
+    "components/accessory.json",
+    "components/encounter.json",
+    "components/service.json"
+  ],
+  "sourceManifests": [
+    "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+    "../batch-01/manifest.json",
+    "../batch-02/manifest.json",
+    "../batch-03/manifest.json"
+  ],
+  "placementDefaults": {
+    "chancePerEligibleTile": 0.25,
+    "maxOptionalLandmarksPerTile": 1,
+    "maxOccupiedFraction": 0.3,
+    "minimumDistanceSameType": 3,
+    "excludeAuthoredLandmarks": true,
+    "seedScope": "runId + tileId + ruleId",
+    "persistOutcomes": true,
+    "emptyTileIsValid": true
+  },
+  "artPolicy": {
+    "allowTechnicalPlaceholders": true,
+    "selectionMode": "prefer-painted-then-placeholder"
+  }
+}

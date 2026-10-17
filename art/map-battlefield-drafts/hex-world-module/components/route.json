@@ -1,0 +1,125 @@
+{
+  "$schema": "../schemas/module.schema.json",
+  "kind": "catalog",
+  "id": "map-components-route",
+  "items": [
+    {
+      "id": "path",
+      "name": "Road / junction",
+      "category": "route",
+      "tags": [
+        "road",
+        "junction",
+        "route"
+      ],
+      "artPoolId": "map-path",
+      "placement": {
+        "mode": "authored",
+        "requiresConnectorKinds": [
+          "road"
+        ],
+        "selection": {
+          "all": [],
+          "any": [],
+          "exclude": []
+        },
+        "minSpacing": 3,
+        "maxPerTile": 1,
+        "occupiesLandmarkSlot": false
+      },
+      "visibility": {
+        "trigger": "terrain-revealed",
+        "mapItemsRevealMarker": true
+      },
+      "orientation": {
+        "keepUpright": true,
+        "alignToConnectors": true
+      },
+      "gameplayDefaults": {
+        "encounterPoolId": null,
+        "lootTableId": null,
+        "restSpotId": null,
+        "trainerId": null,
+        "revealRuleId": null,
+        "questIds": [],
+        "environmentEffectIds": []
+      },
+      "links": {
+        "required": false,
+        "kind": null
+      },
+      "productionBinding": null,
+      "schematicPlacement": {
+        "anchor": {
+          "x": 0.5,
+          "y": 0.85
+        },
+        "footprint": {
+          "shape": "rectangle",
+          "x": 0.14,
+          "y": 0.17,
+          "width": 0.72,
+          "height": 0.76
+        },
+        "status": "illustrative-only",
+        "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
+      }
+    },
+    {
+      "id": "signpost",
+      "name": "Road signpost",
+      "category": "route",
+      "tags": [
+        "road",
+        "junction",
+        "travel"
+      ],
+      "artPoolId": "map-signpost",
+      "placement": {
+        "mode": "optional",
+        "requiresConnectorKinds": [
+          "road"
+        ],
+        "selection": {
+          "all": [],
+          "any": [],
+          "exclude": []
+        },
+        "minSpacing": 3,
+        "maxPerTile": 1,
+        "occupiesLandmarkSlot": false
+      },
+      "visibility": {
+        "trigger": "terrain-revealed",
+        "mapItemsRevealMarker": true
+      },
+      "orientation": {
+        "keepUpright": true,
+        "alignToConnectors": false
+      },
+      "gameplayDefaults": {
+        "encounterPoolId": null,
+        "lootTableId": null,
+        "restSpotId": null,
+        "trainerId": null,
+        "revealRuleId": null,
+        "questIds": [],
+        "environmentEffectIds": []
+      },
+      "links": {
+        "required": false,
+        "kind": null
+      },
+      "productionBinding": null,
+      "schematicPlacement": {
+        "anchor": {
+          "x": 0.5,
+          "y": 1
+        },
+        "footprint": null,
+        "status": "illustrative-only",
+        "note": "Uncalibrated center-bottom anchor; no collision geometry is asserted."
+      }
+    }
+  ]
+}

@@ -1,0 +1,189 @@
+{
+  "$schema": "../schemas/module.schema.json",
+  "kind": "catalog",
+  "id": "map-components-adventure",
+  "items": [
+    {
+      "id": "cave",
+      "name": "Cave entrance",
+      "category": "adventure",
+      "tags": [
+        "cave",
+        "entrance",
+        "rock"
+      ],
+      "artPoolId": "map-cave",
+      "placement": {
+        "mode": "optional",
+        "requiresConnectorKinds": [],
+        "selection": {
+          "all": [],
+          "any": [],
+          "exclude": []
+        },
+        "minSpacing": 3,
+        "maxPerTile": 1,
+        "occupiesLandmarkSlot": true
+      },
+      "visibility": {
+        "trigger": "terrain-revealed",
+        "mapItemsRevealMarker": true
+      },
+      "orientation": {
+        "keepUpright": true,
+        "alignToConnectors": false
+      },
+      "gameplayDefaults": {
+        "encounterPoolId": null,
+        "lootTableId": null,
+        "restSpotId": null,
+        "trainerId": null,
+        "revealRuleId": null,
+        "questIds": [],
+        "environmentEffectIds": []
+      },
+      "links": {
+        "required": false,
+        "kind": null
+      },
+      "productionBinding": null,
+      "schematicPlacement": {
+        "anchor": {
+          "x": 0.5,
+          "y": 0.85
+        },
+        "footprint": {
+          "shape": "rectangle",
+          "x": 0.14,
+          "y": 0.78,
+          "width": 0.72,
+          "height": 0.14
+        },
+        "status": "illustrative-only",
+        "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
+      }
+    },
+    {
+      "id": "dungeon",
+      "name": "Dungeon gate",
+      "category": "adventure",
+      "tags": [
+        "dungeon",
+        "gate",
+        "stone",
+        "danger"
+      ],
+      "artPoolId": "map-dungeon",
+      "placement": {
+        "mode": "optional",
+        "requiresConnectorKinds": [],
+        "selection": {
+          "all": [],
+          "any": [],
+          "exclude": []
+        },
+        "minSpacing": 3,
+        "maxPerTile": 1,
+        "occupiesLandmarkSlot": true
+      },
+      "visibility": {
+        "trigger": "terrain-revealed",
+        "mapItemsRevealMarker": true
+      },
+      "orientation": {
+        "keepUpright": true,
+        "alignToConnectors": false
+      },
+      "gameplayDefaults": {
+        "encounterPoolId": null,
+        "lootTableId": null,
+        "restSpotId": null,
+        "trainerId": null,
+        "revealRuleId": null,
+        "questIds": [],
+        "environmentEffectIds": []
+      },
+      "links": {
+        "required": false,
+        "kind": null
+      },
+      "productionBinding": null,
+      "schematicPlacement": {
+        "anchor": {
+          "x": 0.5,
+          "y": 0.85
+        },
+        "footprint": {
+          "shape": "rectangle",
+          "x": 0.18,
+          "y": 0.78,
+          "width": 0.64,
+          "height": 0.14
+        },
+        "status": "illustrative-only",
+        "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
+      }
+    },
+    {
+      "id": "mine",
+      "name": "Mine entrance",
+      "category": "adventure",
+      "tags": [
+        "mine",
+        "entrance",
+        "resource",
+        "rock"
+      ],
+      "artPoolId": "map-mine",
+      "placement": {
+        "mode": "optional",
+        "requiresConnectorKinds": [],
+        "selection": {
+          "all": [],
+          "any": [],
+          "exclude": []
+        },
+        "minSpacing": 3,
+        "maxPerTile": 1,
+        "occupiesLandmarkSlot": true
+      },
+      "visibility": {
+        "trigger": "terrain-revealed",
+        "mapItemsRevealMarker": true
+      },
+      "orientation": {
+        "keepUpright": true,
+        "alignToConnectors": false
+      },
+      "gameplayDefaults": {
+        "encounterPoolId": null,
+        "lootTableId": null,
+        "restSpotId": null,
+        "trainerId": null,
+        "revealRuleId": null,
+        "questIds": [],
+        "environmentEffectIds": []
+      },
+      "links": {
+        "required": false,
+        "kind": null
+      },
+      "productionBinding": null,
+      "schematicPlacement": {
+        "anchor": {
+          "x": 0.5,
+          "y": 0.85
+        },
+        "footprint": {
+          "shape": "rectangle",
+          "x": 0.16,
+          "y": 0.78,
+          "width": 0.68,
+          "height": 0.14
+        },
+        "status": "illustrative-only",
+        "note": "Technical schematic placement only; not alpha bounds, tile occupancy, click target or validated collision geometry. Does not calibrate painted variants."
+      }
+    }
+  ]
+}

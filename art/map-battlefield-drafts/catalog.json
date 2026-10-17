@@ -84,6 +84,13 @@
       "file": "hex-world-module/index.json",
       "guide": "hex-world-module/README.md",
       "status": "proposal-only"
+    },
+    {
+      "id": "map-components",
+      "file": "hex-world-module/map-components.json",
+      "mapping": "hex-world-module/map-component-mapping.json",
+      "guide": "hex-world-module/MAP-COMPONENTS.md",
+      "status": "proposal-only"
     }
   ]
 }

@@ -89,13 +89,14 @@
     "movementCost": 1,
     "difficultyTier": 3,
     "entryRequirements": [],
-    "discoveryPoolId": "sparse-road-discoveries",
+    "discoveryPoolId": "riverbank-discoveries",
     "levelBandId": "danger"
   },
   "mapArt": {
     "terrainPoolId": null,
     "propsPoolId": null,
     "rotateTerrainWithTile": true,
-    "keepMapPropsUpright": true
+    "keepMapPropsUpright": true,
+    "objectIds": []
   }
 }

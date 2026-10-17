@@ -92,8 +92,11 @@
   },
   "mapArt": {
     "terrainPoolId": null,
-    "propsPoolId": null,
+    "propsPoolId": "map-path",
     "rotateTerrainWithTile": true,
-    "keepMapPropsUpright": true
+    "keepMapPropsUpright": true,
+    "objectIds": [
+      "forest-road-object"
+    ]
   }
 }
