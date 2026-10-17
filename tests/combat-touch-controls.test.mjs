@@ -60,5 +60,9 @@ test('the log drawer opens beside the left-aligned Log button', () => {
   assert.ok(panels.length, 'the drawer has a formation anchor');
   const last = panels.at(-1);
   assert.match(last, /left:\s*0/); assert.match(last, /right:\s*auto/);
-  assert.match(top, /\.combat-tools > \[data-combat-tool='log'\]\s*\{\s*justify-self:\s*start/);
+  const logRules = [...top.matchAll(/\.combat-tools > \[data-combat-tool='log'\]\s*\{([^}]*)\}/g)];
+  assert.ok(logRules.length, 'the Log button has a formation anchor');
+  const declarations = logRules.at(-1)[1];
+  assert.match(declarations, /(?:^|;)\s*justify-self:\s*start\s*(?:;|$)/);
+  assert.match(declarations, /(?:^|;)\s*grid-column:\s*1\s*(?:;|$)/, 'Log occupies the leftmost tools column');
 });
