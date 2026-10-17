@@ -5,6 +5,7 @@ import { classicAppearance } from '../displayAppearance.js';
 import { combatIntentPresentation } from '../models/CombatIntentModel.js';
 import { attachTooltip, esc, hideTooltip } from './tooltip.js';
 import { combatantInfo, intentParts } from './combatantOverhead.js';
+import { anchorLocalBox } from '../fx.js';
 import { reducedMotionRequested } from '../motion.js';
 
 const rect = node => { const r = node.getBoundingClientRect(); return { left: r.left, top: r.top, width: r.width, height: r.height }; };
@@ -218,10 +219,12 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       const info = infoButtons.get(box.id);
       if (info) {
         const panelBox = panel.querySelector('.target-hud-panel').getBoundingClientRect();
-        const combatZoom = rootBox.width / combat.clientWidth || 1;
-        info.style.left = `${(panelBox.left - rootBox.left - 25) / combatZoom}px`;
-        info.style.top = `${(panelBox.top + panelBox.height / 2 - rootBox.top - 10) / combatZoom}px`;
-        info.style.width = info.style.height = `${20 / combatZoom}px`;
+        const infoBox = anchorLocalBox(combat, { left: panelBox.left - 25,
+          top: panelBox.top + panelBox.height / 2 - 10, width: 20, height: 20 });
+        info.style.left = `${infoBox.left}px`;
+        info.style.top = `${infoBox.top}px`;
+        info.style.width = `${infoBox.width}px`;
+        info.style.height = `${infoBox.height}px`;
       }
     }
     cells.setAttribute('viewBox', `0 0 ${fieldBox.width} ${fieldBox.height}`);
