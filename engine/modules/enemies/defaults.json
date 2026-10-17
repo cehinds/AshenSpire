@@ -8,30 +8,71 @@
   "fallback": "legacyMoves",
   "rounding": "down",
   "attributeGains": {
-    "strength": { "ar": 1 },
-    "dexterity": { "dr": 1 },
-    "constitution": { "hp": 10, "sp": 0.5 },
-    "wisdom": { "mp": 1 },
-    "intelligence": { "hand": 1 }
+    "strength": {
+      "ar": 1
+    },
+    "dexterity": {
+      "dr": 1
+    },
+    "constitution": {
+      "hp": 10,
+      "sp": 0.5
+    },
+    "wisdom": {
+      "mp": 1
+    },
+    "intelligence": {
+      "hand": 1
+    }
   },
   "tiers": {
     "minion": {
-      "attributeBudget": [3, 5],
-      "pools": { "hp": 14, "sp": 2, "mp": 0 },
+      "attributeBudget": [
+        3,
+        5
+      ],
+      "pools": {
+        "hp": 14,
+        "sp": 2,
+        "mp": 0
+      },
       "hand": 2,
-      "deckSize": [4, 8]
+      "deckSize": [
+        4,
+        8
+      ]
     },
     "elite": {
-      "attributeBudget": [6, 8],
-      "pools": { "hp": 50, "sp": 2, "mp": 0 },
+      "attributeBudget": [
+        6,
+        8
+      ],
+      "pools": {
+        "hp": 50,
+        "sp": 3,
+        "mp": 0
+      },
       "hand": 3,
-      "deckSize": [6, 10]
+      "deckSize": [
+        6,
+        10
+      ]
     },
     "boss": {
-      "attributeBudget": [9, 12],
-      "pools": { "hp": 80, "sp": 2, "mp": 0 },
+      "attributeBudget": [
+        9,
+        12
+      ],
+      "pools": {
+        "hp": 80,
+        "sp": 3,
+        "mp": 0
+      },
       "hand": 4,
-      "deckSize": [8, 14]
+      "deckSize": [
+        8,
+        14
+      ]
     }
   },
   "deck": {
@@ -42,12 +83,30 @@
     "discardUnplayed": true
   },
   "stanceCosts": {
-    "attack": { "sp": 1, "mp": 0 },
-    "defend": { "sp": 1, "mp": 0 },
-    "smash": { "sp": 2, "mp": 0 },
-    "counter": { "sp": 2, "mp": 0 },
-    "sweep": { "sp": 2, "mp": 0 },
-    "casting": { "sp": 0, "mp": 1 }
+    "attack": {
+      "sp": 1,
+      "mp": 0
+    },
+    "defend": {
+      "sp": 1,
+      "mp": 0
+    },
+    "smash": {
+      "sp": 2,
+      "mp": 0
+    },
+    "counter": {
+      "sp": 2,
+      "mp": 0
+    },
+    "sweep": {
+      "sp": 2,
+      "mp": 0
+    },
+    "casting": {
+      "sp": 0,
+      "mp": 1
+    }
   },
   "healRules": {
     "match": "mostSpecific",
@@ -55,16 +114,31 @@
     "shapes": [
       {
         "id": "full",
-        "tags": ["heal"],
-        "cost": { "sp": 3, "mp": 2 },
-        "amount": { "percentMaxHp": 10 },
+        "tags": [
+          "heal"
+        ],
+        "cost": {
+          "sp": 3,
+          "mp": 2
+        },
+        "amount": {
+          "percentMaxHp": 10
+        },
         "exhaust": false
       },
       {
         "id": "cheap",
-        "tags": ["heal", "exhaust"],
-        "cost": { "sp": 1, "mp": 1 },
-        "amount": { "percentMaxHp": 10 },
+        "tags": [
+          "heal",
+          "exhaust"
+        ],
+        "cost": {
+          "sp": 1,
+          "mp": 1
+        },
+        "amount": {
+          "percentMaxHp": 10
+        },
         "exhaust": true
       }
     ]

@@ -38,8 +38,8 @@ function tierOf(id) {
 // Owner targets: most minions 2 SP (CON 0); elites comparable to a new player (attributes 6); bosses higher.
 const PLAN = {
   minion: { budget: 4, constitution: 0, deck: 6 },
-  elite: { budget: 6, constitution: 2, deck: 8 },
-  boss: { budget: 10, constitution: 4, deck: 10 },
+  elite: { budget: 6, constitution: 1, deck: 8 },
+  boss: { budget: 10, constitution: 2, deck: 10 },
 };
 const ATTRS = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
 

@@ -1003,7 +1003,7 @@ export const gameProfileCatalog = {
             ],
             "pools": {
               "hp": 50,
-              "sp": 2,
+              "sp": 3,
               "mp": 0
             },
             "hand": 3,
@@ -1019,7 +1019,7 @@ export const gameProfileCatalog = {
             ],
             "pools": {
               "hp": 80,
-              "sp": 2,
+              "sp": 3,
               "mp": 0
             },
             "hand": 4,
@@ -1508,7 +1508,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/enemies/defaults.json",
           "id": "enemies",
           "version": "1.0.0",
-          "hash": "sha256:28ef1010b9b1a86fef222fb30c52b9f2ea99c6687898dfdea4a7a7755de21961"
+          "hash": "sha256:dc20f654ab21e080cd0187a24a65cdb7de747216553087f8b665f01606c3a4a4"
         },
         {
           "path": "engine/modules/enemies/settings.schema.json",
@@ -4398,8 +4398,8 @@ export const gameProfileCatalog = {
             "attributes": {
               "strength": 1,
               "dexterity": 1,
-              "constitution": 2,
-              "wisdom": 2,
+              "constitution": 1,
+              "wisdom": 3,
               "intelligence": 0
             },
             "deck": [
@@ -4414,10 +4414,11 @@ export const gameProfileCatalog = {
             ],
             "firstCard": "wyrmAspirant.consecrate",
             "gear": [
-              "enemy.gear.mail",
-              "enemy.gear.luckyTooth"
+              "enemy.gear.hide"
             ],
-            "relics": [],
+            "relics": [
+              "enemy.relic.graveSeal"
+            ],
             "poiseMax": 24,
             "levelProfile": {
               "min": 4,
@@ -4432,9 +4433,9 @@ export const gameProfileCatalog = {
             "name": "The Fell Warden",
             "tier": "boss",
             "attributes": {
-              "strength": 3,
-              "dexterity": 1,
-              "constitution": 4,
+              "strength": 4,
+              "dexterity": 2,
+              "constitution": 2,
               "wisdom": 1,
               "intelligence": 1
             },
@@ -4454,7 +4455,9 @@ export const gameProfileCatalog = {
               "fellWarden.twinDaggers"
             ],
             "firstCard": "fellWarden.caneStrike",
-            "gear": [],
+            "gear": [
+              "enemy.gear.heavyPlate"
+            ],
             "relics": [],
             "poiseMax": 30,
             "levelProfile": {
@@ -4599,10 +4602,10 @@ export const gameProfileCatalog = {
             "name": "The Bell Keeper",
             "tier": "boss",
             "attributes": {
-              "strength": 3,
+              "strength": 4,
               "dexterity": 1,
-              "constitution": 4,
-              "wisdom": 1,
+              "constitution": 2,
+              "wisdom": 2,
               "intelligence": 1
             },
             "deck": [
@@ -4621,8 +4624,12 @@ export const gameProfileCatalog = {
               "bellKeeper.crackedPeal"
             ],
             "firstCard": "bellKeeper.bronzeToll",
-            "gear": [],
-            "relics": [],
+            "gear": [
+              "enemy.gear.ironTalisman"
+            ],
+            "relics": [
+              "enemy.relic.emberBand"
+            ],
             "poiseMax": 25,
             "levelProfile": {
               "min": 5,
@@ -4648,10 +4655,10 @@ export const gameProfileCatalog = {
             "tier": "boss",
             "attributes": {
               "strength": 2,
-              "dexterity": 1,
-              "constitution": 4,
+              "dexterity": 2,
+              "constitution": 2,
               "wisdom": 2,
-              "intelligence": 1
+              "intelligence": 2
             },
             "deck": [
               "thornMatriarch.rootCrown",
@@ -4667,7 +4674,9 @@ export const gameProfileCatalog = {
             ],
             "firstCard": "thornMatriarch.rootCrown",
             "gear": [],
-            "relics": [],
+            "relics": [
+              "enemy.relic.emberBand"
+            ],
             "poiseMax": 22,
             "levelProfile": {
               "min": 5,
@@ -4865,9 +4874,9 @@ export const gameProfileCatalog = {
             "name": "Duelist of the Court",
             "tier": "elite",
             "attributes": {
-              "strength": 1,
+              "strength": 2,
               "dexterity": 1,
-              "constitution": 2,
+              "constitution": 1,
               "wisdom": 2,
               "intelligence": 0
             },
@@ -4883,10 +4892,11 @@ export const gameProfileCatalog = {
             ],
             "firstCard": "courtDuelist.enGarde",
             "gear": [
-              "enemy.gear.heavyPlate",
               "enemy.gear.luckyTooth"
             ],
-            "relics": [],
+            "relics": [
+              "enemy.relic.titanHeart"
+            ],
             "poiseMax": 26,
             "levelProfile": {
               "min": 10,
@@ -4901,9 +4911,9 @@ export const gameProfileCatalog = {
             "name": "The Stitched King",
             "tier": "boss",
             "attributes": {
-              "strength": 3,
-              "dexterity": 1,
-              "constitution": 4,
+              "strength": 4,
+              "dexterity": 2,
+              "constitution": 2,
               "wisdom": 1,
               "intelligence": 1
             },
@@ -4924,11 +4934,11 @@ export const gameProfileCatalog = {
             ],
             "firstCard": "stitchedKing.courtlyDecree",
             "gear": [
-              "enemy.gear.mail",
-              "enemy.gear.luckyTooth"
+              "enemy.gear.ironTalisman"
             ],
             "relics": [
-              "enemy.relic.ashenCore"
+              "enemy.relic.ashenCore",
+              "enemy.relic.titanHeart"
             ],
             "poiseMax": 34,
             "levelProfile": {
@@ -5035,10 +5045,10 @@ export const gameProfileCatalog = {
             "tier": "boss",
             "attributes": {
               "strength": 2,
-              "dexterity": 1,
-              "constitution": 4,
+              "dexterity": 2,
+              "constitution": 2,
               "wisdom": 2,
-              "intelligence": 1
+              "intelligence": 2
             },
             "deck": [
               "glassRegent.prismGuard",
@@ -5056,7 +5066,9 @@ export const gameProfileCatalog = {
               "glassRegent.shatteredCourt"
             ],
             "firstCard": "glassRegent.prismGuard",
-            "gear": [],
+            "gear": [
+              "enemy.gear.heavyPlate"
+            ],
             "relics": [
               "enemy.relic.ashenCore"
             ],
@@ -5091,10 +5103,10 @@ export const gameProfileCatalog = {
             "name": "The Marrow Organist",
             "tier": "boss",
             "attributes": {
-              "strength": 1,
+              "strength": 2,
               "dexterity": 1,
-              "constitution": 4,
-              "wisdom": 3,
+              "constitution": 2,
+              "wisdom": 4,
               "intelligence": 1
             },
             "deck": [
@@ -5113,7 +5125,7 @@ export const gameProfileCatalog = {
             "gear": [],
             "relics": [
               "enemy.relic.ashenCore",
-              "enemy.relic.emberBand"
+              "enemy.relic.titanHeart"
             ],
             "poiseMax": 30,
             "levelProfile": {
@@ -5284,8 +5296,8 @@ export const gameProfileCatalog = {
             "attributes": {
               "strength": 1,
               "dexterity": 1,
-              "constitution": 2,
-              "wisdom": 2,
+              "constitution": 1,
+              "wisdom": 3,
               "intelligence": 0
             },
             "deck": [
@@ -5300,7 +5312,8 @@ export const gameProfileCatalog = {
             ],
             "firstCard": "wyrmLord.consecration",
             "gear": [
-              "enemy.gear.ironTalisman"
+              "enemy.gear.mail",
+              "enemy.gear.luckyTooth"
             ],
             "relics": [
               "enemy.relic.ashenCore"
@@ -5320,10 +5333,10 @@ export const gameProfileCatalog = {
             "tier": "boss",
             "attributes": {
               "strength": 2,
-              "dexterity": 1,
-              "constitution": 4,
+              "dexterity": 2,
+              "constitution": 2,
               "wisdom": 2,
-              "intelligence": 1
+              "intelligence": 2
             },
             "deck": [
               "blightedValkyrie.spiralThrust",
@@ -5341,7 +5354,9 @@ export const gameProfileCatalog = {
               "blightedValkyrie.scarletDance"
             ],
             "firstCard": "blightedValkyrie.spiralThrust",
-            "gear": [],
+            "gear": [
+              "enemy.gear.heavyPlate"
+            ],
             "relics": [
               "enemy.relic.abyssalCrown",
               "enemy.relic.titanHeart"
@@ -5465,9 +5480,9 @@ export const gameProfileCatalog = {
             "name": "The Furnace Saint",
             "tier": "boss",
             "attributes": {
-              "strength": 3,
-              "dexterity": 1,
-              "constitution": 4,
+              "strength": 4,
+              "dexterity": 2,
+              "constitution": 2,
               "wisdom": 1,
               "intelligence": 1
             },
@@ -5484,12 +5499,10 @@ export const gameProfileCatalog = {
               "furnaceSaint.coolingAsh"
             ],
             "firstCard": "furnaceSaint.openFurnace",
-            "gear": [
-              "enemy.gear.heavyPlate"
-            ],
+            "gear": [],
             "relics": [
               "enemy.relic.abyssalCrown",
-              "enemy.relic.graveSeal"
+              "enemy.relic.ashenCore"
             ],
             "poiseMax": 40,
             "levelProfile": {
@@ -5521,9 +5534,9 @@ export const gameProfileCatalog = {
             "attributes": {
               "strength": 2,
               "dexterity": 1,
-              "constitution": 4,
-              "wisdom": 2,
-              "intelligence": 1
+              "constitution": 2,
+              "wisdom": 3,
+              "intelligence": 2
             },
             "deck": [
               "hollowAstronomer.starChart",
@@ -5542,6 +5555,7 @@ export const gameProfileCatalog = {
             ],
             "firstCard": "hollowAstronomer.starChart",
             "gear": [
+              "enemy.gear.heavyPlate",
               "enemy.gear.ironTalisman"
             ],
             "relics": [
@@ -5571,10 +5585,10 @@ export const gameProfileCatalog = {
             "name": "The Ashheart Dragon",
             "tier": "boss",
             "attributes": {
-              "strength": 2,
+              "strength": 3,
               "dexterity": 1,
-              "constitution": 4,
-              "wisdom": 2,
+              "constitution": 2,
+              "wisdom": 3,
               "intelligence": 1
             },
             "deck": [
@@ -5598,7 +5612,8 @@ export const gameProfileCatalog = {
               "enemy.gear.ironTalisman"
             ],
             "relics": [
-              "enemy.relic.abyssalCrown"
+              "enemy.relic.abyssalCrown",
+              "enemy.relic.graveSeal"
             ],
             "poiseMax": 34,
             "levelProfile": {
@@ -8813,7 +8828,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/enemies.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:4ccd9e01cfee6ec23d2f525f3007a21b403828060c75eb573c7511df50ee19d6"
+          "hash": "sha256:ebfda751ae2ae0484e41e67a1b3ae4473c53e706dd8e2d58c3291b670940c15a"
         },
         {
           "path": "games/ashenspire/packs/core/enemyCards.json",

@@ -29,11 +29,13 @@ test('core profile enables the enemies module with its JSON defaults', () => {
   assert.equal(settings.healRules.shapes.find(s => s.id === 'cheap').exhaust, true);
 });
 
-test('pools derive from attributes: most minions 2 SP with 0 CON, elites 3, bosses 4', () => {
+test('pools derive from attributes: minions CON 0 / 2 SP, elites CON 1 / 3 SP, bosses CON 2 / 4 SP', () => {
   const byTier = tier => enemies.filter(e => e.tier === tier).map(e => enemyPools(e, settings));
-  const minions = enemies.filter(e => e.tier === 'minion');
-  assert.ok(minions.length > 0);
-  assert.ok(minions.every(e => e.attributes.constitution === 0), 'minions carry no CON');
+  const con = tier => new Set(enemies.filter(e => e.tier === tier).map(e => e.attributes.constitution));
+  assert.ok(enemies.some(e => e.tier === 'minion'));
+  assert.deepEqual([...con('minion')], [0], 'minions carry no CON');
+  assert.deepEqual([...con('elite')], [1], 'elites CON 1');
+  assert.deepEqual([...con('boss')], [2], 'bosses CON 2');
   assert.ok(byTier('minion').every(p => p.sp === 2), 'minion SP 2');
   assert.ok(byTier('elite').every(p => p.sp === 3), 'elite SP 3');
   assert.ok(byTier('boss').every(p => p.sp === 4), 'boss SP 4');
