@@ -241,7 +241,8 @@ export function createFileService({ root, stateDir, keepBackups = () => 50, onSa
     // would break the live build (e.g. a group naming a removed card) is refused here.
     const gameChanges = changes.filter((c) => c.kind === 'json' && GAME_CFG_INPUT.test(c.path));
     if (gameChanges.length) {
-      const tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'wb-gamecfg-'));
+      // Real path: game-config.mjs runs main() only when argv[1] is its own resolved path (macOS /var is a symlink).
+      const tmp = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'wb-gamecfg-')));
       try {
         for (const rel of ['src', 'engine', 'games/ashenspire', 'tools/game-config.mjs', 'tools/base-cards.mjs']) {
           await fs.mkdir(path.dirname(path.join(tmp, rel)), { recursive: true });
@@ -251,7 +252,10 @@ export function createFileService({ root, stateDir, keepBackups = () => 50, onSa
           await fs.mkdir(path.dirname(path.join(tmp, c.path)), { recursive: true });
           await fs.writeFile(path.join(tmp, c.path), c.text);
         }
-        await execFileP(process.execPath, [path.join(tmp, 'tools/game-config.mjs'), 'validate'], { cwd: tmp, timeout: 60000 });
+        const { stdout } = await execFileP(process.execPath, [path.join(tmp, 'tools/game-config.mjs'), 'validate'], { cwd: tmp, timeout: 60000 });
+        let valid = false;
+        try { valid = JSON.parse(stdout).valid === true; } catch {}
+        if (!valid) throw Error('tools/game-config.mjs validate did not report a valid profile');
       } catch (e) {
         const detail = String(e.stderr || '').trim() || e.message;
         problems.push({ path: gameChanges[0].path, message: detail.slice(-2000) });
