@@ -12,9 +12,19 @@ const implementation = execFileSync('git', ['show', `${baselineCommit}:src/model
 const digest = text => createHash('sha256').update(text).digest('hex');
 const modelSha256 = digest(implementation);
 if (modelSha256 !== '0ff1b72895151ead0a62edd338da3c80a1c84daaab306fb760ddc3f85c416dc1') throw new Error('Historical oracle implementation identity changed');
-const oracle = await import(`data:text/javascript;base64,${Buffer.from(implementation).toString('base64')}`);
+// Reviewed correction to historical semantics: fixed upgrades keep their base
+// resource budget for effect valuation, then retain the upgraded authored
+// numeric delta. Apply this independently at the old call boundary; tag lookup
+// and all other historical projection/validation behavior remain unchanged.
+const oldCall = 'projectEffects(source, configs, references)';
+if (implementation.split(oldCall).length !== 2) throw new Error('Historical correction boundary changed');
+const correctedImplementation = implementation.replace(oldCall,
+  `projectEffects(source === upgradedFace && source.costRule === 'fixed' ? {
+    ...source, cost: baseFace.cost, manaCost: baseFace.manaCost, staminaCost: baseFace.staminaCost,
+  } : source, configs, references)`);
+const oracle = await import(`data:text/javascript;base64,${Buffer.from(correctedImplementation).toString('base64')}`);
 const baseline = { baselineCommit, baselineImplementation: 'unindexed Dev model with integrated Core/default and base-card content',
-  modelSha256, contentSha256: digest(JSON.stringify(contentBundle)),
+  modelSha256, correction: 'fixed-upgrade-base-resource-budget-v1', correctedModelSha256: digest(correctedImplementation), contentSha256: digest(JSON.stringify(contentBundle)),
   scope: 'damage configuration, projected card definitions, validation problem rows', cases: {} };
 for (const [name, bundle] of cardValueIndexCases()) {
   baseline.cases[name] = {};

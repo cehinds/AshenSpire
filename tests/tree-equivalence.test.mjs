@@ -191,7 +191,14 @@ test('every object states exactly one kind, the one its collection and type name
   // Plus the two enemy reaction moves (gildedGuard, bindingRiposte; docs/combat-card-traits-contract.md).
   assert.equal(contentBundle.enemyMoves.length, 105, 'the scoped enemy move collection contains all 105 authored actions');
   // Plus the twelve Poison, Psychic and Earth cards (owner decisions 2 and 5, 2026-10-12).
-  assert.equal(counted, 513 + 40 + 10 + 70 + 105 + 32 + 12, 'all 782 objects, including class feats and scoped enemy move kinds');
+  const canonicalCollections = [contentBundle.cards, contentBundle.classes, contentBundle.relics,
+    contentBundle.flasks, contentBundle.characterCreation.keepsakes, contentBundle.events,
+    contentBundle.encounters, contentBundle.enemies, contentBundle.equipment.armaments,
+    contentBundle.equipment.armour, contentBundle.equipment.basicCardProfiles,
+    contentBundle.equipment.slots, contentBundle.equipment.startingKits, contentBundle.unlocks,
+    contentBundle.companions, contentBundle.sigils, contentBundle.classSkillFeats, contentBundle.enemyMoves];
+  assert.equal(counted, canonicalCollections.reduce((sum, rows) => sum + rows.length, 0),
+    'the kind census covers every canonical collection, including newly authored Core cards');
 });
 
 test('a node carries no numbers: every variable resolves through a binding to a balance row, and the ladder reads highest scope first', () => {

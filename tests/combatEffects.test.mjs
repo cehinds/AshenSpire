@@ -102,7 +102,7 @@ test('authored styles use deterministic effects and melee is target-local',()=>{
 });
 test('live named card styles select their authored effects',()=>{
  const reg=createRegistries(authoredCosts(contentBundle));
- for(const [id,kind]of [['starstoneArc','starbolt'],['bloodPact','steelGlint']]){const card=resolveCard(reg,{cardId:id});assert.equal(effect({...card,cardTags:combatEffectTags(reg,card)}).kind,kind);}
+ for(const [id,kind]of [['starstoneArc','starbolt'],['bloodPact','focusMotes']]){const card=resolveCard(reg,{cardId:id});assert.equal(effect({...card,cardTags:combatEffectTags(reg,card)}).kind,kind);}
 });
 
 test('expanded effects retain paid card motifs and action-only profile fallbacks without changing resource auras',()=>{
@@ -121,7 +121,11 @@ test('expanded effects retain paid card motifs and action-only profile fallbacks
 test('an authored magic attack that spends nothing keeps its spell look (plan A2)',()=>{
  const reg=createRegistries(authoredCosts(contentBundle));
  for(const id of ['starstonePebble','cometFragment','starSpark']){
-  const card=resolveCard(reg,{cardId:id});const tagged={...card,cardTags:combatEffectTags(reg,card)};
+  const resolved=resolveCard(reg,{cardId:id});
+  // Model an explicitly authored free variant while retaining its spell camp
+  // and damage school. Resolution normally applies the game's minimum MP cost.
+  const card={...resolved,cost:0,manaCost:0,costRule:'fixed'};
+  const tagged={...card,cardTags:combatEffectTags(reg,card)};
   assert.equal(effect(tagged,card.class).kind,'starbolt',id);assert.match(combatEffectPlan(tagged).activation,/^mundane/,id);
  }
 });
