@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "status": "approved-for-draft-proposals",
+  "reviewer": "root agent",
+  "reviewDate": "2026-10-17",
+  "sourceSha256": "b64d1af2f376da5b80a89ec7535b8fcc888d0f7e3f99955925ebfc153da699ae",
+  "normalizedCommit": "d6dad381bfdd1293bb902dec89872b14f905e446",
+  "horizontalCut": 393,
+  "rowCuts": [
+    [
+      397,
+      798,
+      1193,
+      1596
+    ],
+    [
+      395,
+      793,
+      1193,
+      1596
+    ]
+  ],
+  "review": "Root visually inspected contact sheet: all ten rear figures have complete hats, capes and blades with consistent rear identity. Draft authoring only; no runtime publication approval."
+}
