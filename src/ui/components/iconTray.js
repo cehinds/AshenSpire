@@ -70,6 +70,20 @@ export function trayIcon({
 } = {}) {
   const node = pip({ glyph: art ? '' : glyph, count, tone, ring, attrs: { ...attrs, class: ['tray-icon', attrs.class].filter(Boolean).join(' ') } });
   if (art) node.prepend(art);
+  // Status pips can use a text glyph, an engraved icon, or caller-supplied
+  // artwork. Give only those pips a stable box so the HUD can size and center
+  // the glyph independently from its count pill.
+  if (node.classList.contains('status-icon')) {
+    const countPill = node.querySelector('.stk');
+    const glyphNodes = [...node.childNodes].filter(child => child !== countPill);
+    if (glyphNodes.length) {
+      const glyph = document.createElement('span');
+      glyph.className = 'status-icon-glyph';
+      glyph.setAttribute('aria-hidden', 'true');
+      node.insertBefore(glyph, countPill || null);
+      glyph.append(...glyphNodes);
+    }
+  }
   node.tabIndex = 0;
   node.setAttribute('role', 'button');
   if (label) node.setAttribute('aria-label', label);

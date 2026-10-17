@@ -197,7 +197,11 @@ function bindNativeCardTooltips(card) {
     });
   };
   bind(face.querySelector('[data-card-binding="name"]'), 'Card title');
-  bind(card.querySelector('.card-cost-rail'), 'Cost');
+  bind(face.querySelector('[data-card-binding="stamina"]'), 'Stamina cost');
+  bind(face.querySelector('[data-card-binding="mana"]'), 'Mana cost');
+  const rankedCost = face.querySelector('.card-rank[title]');
+  if (rankedCost) bind(rankedCost, 'Cost', rankedCost.title || rankedCost.textContent);
+  else bind(face.querySelector('.card-rank'), 'Cost');
   bind(face.querySelector('.card-type-name'), 'Card type');
   bind(face.querySelector('.ic-text[data-card-binding="tags"]'), 'Card tags');
   bind(face.querySelector('.ic-text[data-card-binding="rules"]'), 'Rules');
