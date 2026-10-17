@@ -1,4 +1,4 @@
-# Origin branches deleted 2026-10-17 (chore/BranchCleanup).
+# Origin branches slated for deletion 2026-10-17 (chore/BranchCleanup); not deleted until the owner confirms.
 # Before deletion, every tip marked ARCHIVED (not reachable from dev) is pushed as tag archive/2026-10-17/<branch>,
 # so its commits survive garbage collection. Tips marked in-dev are ancestors of dev.
 # Restore: git push origin refs/tags/archive/2026-10-17/<branch>:refs/heads/<branch>   (ARCHIVED)
