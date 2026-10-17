@@ -1,0 +1,772 @@
+{
+  "J.object.0": {
+    "id": "J.object.0",
+    "kind": "object",
+    "category": "J",
+    "digit": 0,
+    "name": "Sword variant 0",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:attack",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "attack"
+    ],
+    "src": "cutouts/J/objects/0.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      45,
+      480,
+      466
+    ],
+    "sha256": "153f739463bbb22a9178aae66d6d50c9231acb2969d1f4d424d32c554881e147",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "J-objects",
+      "sourceFile": "exec-eefef2f2-6a43-42ee-af85-04707069167f.png",
+      "sourceSha256": "036d72a1649aa50220b9e7e3ddd8749a0530d15aa760ec9e1825becfbaf43bf2",
+      "sourceCell": {
+        "x": 0,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 48,
+        "y": 42,
+        "width": 351,
+        "height": 330
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "proposalDescription": "Broad straight iron longsword, simple thick bronze crossguard, tip upper-right"
+  },
+  "J.object.1": {
+    "id": "J.object.1",
+    "kind": "object",
+    "category": "J",
+    "digit": 1,
+    "name": "Sword variant 1",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:attack",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "attack"
+    ],
+    "src": "cutouts/J/objects/1.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      45,
+      480,
+      466
+    ],
+    "sha256": "522aa2d2ec112387b87ce17412ddd515102750a6000b6a5f2fd885126df49388",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "J-objects",
+      "sourceFile": "exec-eefef2f2-6a43-42ee-af85-04707069167f.png",
+      "sourceSha256": "036d72a1649aa50220b9e7e3ddd8749a0530d15aa760ec9e1825becfbaf43bf2",
+      "sourceCell": {
+        "x": 397,
+        "y": 0,
+        "width": 396,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 465,
+        "y": 74,
+        "width": 303,
+        "height": 285
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "proposalDescription": "Short wide straight arming sword, square bronze guard, opposite diagonal"
+  },
+  "J.object.2": {
+    "id": "J.object.2",
+    "kind": "object",
+    "category": "J",
+    "digit": 2,
+    "name": "Sword variant 2",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:attack",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "attack"
+    ],
+    "src": "cutouts/J/objects/2.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      37,
+      32,
+      474,
+      480
+    ],
+    "sha256": "7b32fd27a71eaff585ca81c745558e31cc5866dca8205df7745b003218c64413",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "J-objects",
+      "sourceFile": "exec-eefef2f2-6a43-42ee-af85-04707069167f.png",
+      "sourceSha256": "036d72a1649aa50220b9e7e3ddd8749a0530d15aa760ec9e1825becfbaf43bf2",
+      "sourceCell": {
+        "x": 793,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 851,
+        "y": 41,
+        "width": 324,
+        "height": 332
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "proposalDescription": "Long slender straight blade, round iron pommel, steep right diagonal"
+  },
+  "J.object.3": {
+    "id": "J.object.3",
+    "kind": "object",
+    "category": "J",
+    "digit": 3,
+    "name": "Sword variant 3",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:attack",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "attack"
+    ],
+    "src": "cutouts/J/objects/3.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      42,
+      480,
+      469
+    ],
+    "sha256": "2139cb9203fa1c0eb57bf9a974b5634942a26e469c85cd0776493c2400b47a25",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "J-objects",
+      "sourceFile": "exec-eefef2f2-6a43-42ee-af85-04707069167f.png",
+      "sourceSha256": "036d72a1649aa50220b9e7e3ddd8749a0530d15aa760ec9e1825becfbaf43bf2",
+      "sourceCell": {
+        "x": 1190,
+        "y": 0,
+        "width": 396,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 1227,
+        "y": 27,
+        "width": 370,
+        "height": 353
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "proposalDescription": "Heavy straight two-handed greatsword, blunt square shoulders, lower-left diagonal"
+  },
+  "J.object.4": {
+    "id": "J.object.4",
+    "kind": "object",
+    "category": "J",
+    "digit": 4,
+    "name": "Sword variant 4",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:attack",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "attack"
+    ],
+    "src": "cutouts/J/objects/4.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      178,
+      32,
+      333,
+      480
+    ],
+    "sha256": "0debcbca0a5e7d56af71380cc1ae5e31595ebca79340f961d7d0784d31cbb924",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "J-objects",
+      "sourceFile": "exec-eefef2f2-6a43-42ee-af85-04707069167f.png",
+      "sourceSha256": "036d72a1649aa50220b9e7e3ddd8749a0530d15aa760ec9e1825becfbaf43bf2",
+      "sourceCell": {
+        "x": 1586,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 1725,
+        "y": 12,
+        "width": 131,
+        "height": 378
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "proposalDescription": "Broad straight fuller blade, black leather grip, near upright"
+  },
+  "J.object.5": {
+    "id": "J.object.5",
+    "kind": "object",
+    "category": "J",
+    "digit": 5,
+    "name": "Sword variant 5",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:attack",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "attack"
+    ],
+    "src": "cutouts/J/objects/5.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      41,
+      32,
+      470,
+      480
+    ],
+    "sha256": "041a1a133e298732f33505a1ed724872bd3694362c714c42cc130f5df44d1d4f",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "J-objects",
+      "sourceFile": "exec-eefef2f2-6a43-42ee-af85-04707069167f.png",
+      "sourceSha256": "036d72a1649aa50220b9e7e3ddd8749a0530d15aa760ec9e1825becfbaf43bf2",
+      "sourceCell": {
+        "x": 0,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 51,
+        "y": 417,
+        "width": 314,
+        "height": 328
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "proposalDescription": "Straight single-edge backsword, plain knuckle bow, slant right"
+  },
+  "J.object.6": {
+    "id": "J.object.6",
+    "kind": "object",
+    "category": "J",
+    "digit": 6,
+    "name": "Sword variant 6",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:attack",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "attack"
+    ],
+    "src": "cutouts/J/objects/6.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      73,
+      32,
+      439,
+      480
+    ],
+    "sha256": "21d5c0869909aed984751111fcde9690d8b944cd5f53746021760d51e4674b83",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "J-objects",
+      "sourceFile": "exec-eefef2f2-6a43-42ee-af85-04707069167f.png",
+      "sourceSha256": "036d72a1649aa50220b9e7e3ddd8749a0530d15aa760ec9e1825becfbaf43bf2",
+      "sourceCell": {
+        "x": 397,
+        "y": 396,
+        "width": 396,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 470,
+        "y": 427,
+        "width": 265,
+        "height": 324
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "proposalDescription": "Short straight leaf-point sword, worn black bronze hilt, slant left"
+  },
+  "J.object.7": {
+    "id": "J.object.7",
+    "kind": "object",
+    "category": "J",
+    "digit": 7,
+    "name": "Sword variant 7",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:attack",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "attack"
+    ],
+    "src": "cutouts/J/objects/7.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      47,
+      480,
+      465
+    ],
+    "sha256": "a26647d955728ef5f81c714f266e03a3b5a956b10b6aaa30434ceaad3216c709",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "J-objects",
+      "sourceFile": "exec-eefef2f2-6a43-42ee-af85-04707069167f.png",
+      "sourceSha256": "036d72a1649aa50220b9e7e3ddd8749a0530d15aa760ec9e1825becfbaf43bf2",
+      "sourceCell": {
+        "x": 793,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 829,
+        "y": 438,
+        "width": 333,
+        "height": 311
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "proposalDescription": "Wide straight battle sword, uneven chipped tip edges, low diagonal"
+  },
+  "J.object.8": {
+    "id": "J.object.8",
+    "kind": "object",
+    "category": "J",
+    "digit": 8,
+    "name": "Sword variant 8",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:attack",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "attack"
+    ],
+    "src": "cutouts/J/objects/8.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      54,
+      32,
+      457,
+      480
+    ],
+    "sha256": "9cf75004b5a9642ab23b5e62b43e3442e00c92f3a4dae0b8267a7341558462e0",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "J-objects",
+      "sourceFile": "exec-eefef2f2-6a43-42ee-af85-04707069167f.png",
+      "sourceSha256": "036d72a1649aa50220b9e7e3ddd8749a0530d15aa760ec9e1825becfbaf43bf2",
+      "sourceCell": {
+        "x": 1190,
+        "y": 396,
+        "width": 396,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 1237,
+        "y": 424,
+        "width": 296,
+        "height": 329
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "proposalDescription": "Narrow straight estoc, simple compact guard, steep left diagonal"
+  },
+  "J.object.9": {
+    "id": "J.object.9",
+    "kind": "object",
+    "category": "J",
+    "digit": 9,
+    "name": "Sword variant 9",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:attack",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "attack"
+    ],
+    "src": "cutouts/J/objects/9.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      39,
+      32,
+      472,
+      480
+    ],
+    "sha256": "67bbb9979eb43ba82f0b6c27410fa137d4fe6c779044df9505e748799284a5fc",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "J-objects",
+      "sourceFile": "exec-eefef2f2-6a43-42ee-af85-04707069167f.png",
+      "sourceSha256": "036d72a1649aa50220b9e7e3ddd8749a0530d15aa760ec9e1825becfbaf43bf2",
+      "sourceCell": {
+        "x": 1586,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 1616,
+        "y": 409,
+        "width": 341,
+        "height": 353
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "proposalDescription": "Massive straight hand-and-a-half sword, iron pommel and bronze crossguard, strong diagonal"
+  }
+}
