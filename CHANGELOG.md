@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-17
 
+- **Stale origin branches are listed for cleanup, with restore points** ([#2029](https://github.com/cehinds/AshenSpire/pull/2029), `0.7.1.1553`). Records which merged or week-old branches are removed and the commit each one pointed at, so any of them can be restored; the game is unchanged.
 - **Combat figure animations follow the saved game module settings** ([#2067](https://github.com/cehinds/AshenSpire/pull/2067), `0.7.1.1551`). Core and Current keep the approved class-default weapon sequences enabled by default. Authors can disable figure motion through the animation module JSON while retaining static artwork, targeting, combat timing and damage feedback; Reading Desk playback follows the same setting.
 
 - **Core combat and route feedback is preserved for implementation** ([#2030](https://github.com/cehinds/AshenSpire/pull/2030), `0.7.1.1549`). Record the corrected stance bonuses, reaction costs, HUD, poise, potion, and map requests with examples, assumptions, and QA criteria. Gameplay and release work remain pending.
