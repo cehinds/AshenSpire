@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-17
 
+- **Rear enemy designs have a feature-only review gallery** ([#2071](https://github.com/cehinds/AshenSpire/pull/2071), `0.7.1.1549`). Compare 130 rear design drafts, original identity references, and three elite pilot sets with nine held poses, attack and evade clips, and static hurt and defeated reactions. Missing clips stay explicit. This draft review is not promoted: runtime alignment, playable unlocks, other motion sets, and external art publication remain pending.
+
 - **Core combat and route feedback is preserved for implementation** ([#2030](https://github.com/cehinds/AshenSpire/pull/2030), `0.7.1.1549`). Record the corrected stance bonuses, reaction costs, HUD, poise, potion, and map requests with examples, assumptions, and QA criteria. Gameplay and release work remain pending.
 
 - **Layered map and battlefield art has an editable design handoff** ([#2028](https://github.com/cehinds/AshenSpire/pull/2028), `0.7.1.1547`). Document sharper hex terrain, reusable map and combat/rest layers, independent grid and label controls, region and tile authoring, sparse landmarks, and map-item discovery rewards. Includes illustrated proposals, validated JSON examples, 24 transparent prop placeholders with editable SVGs, and stable component contracts; gameplay and rendering are unchanged.
