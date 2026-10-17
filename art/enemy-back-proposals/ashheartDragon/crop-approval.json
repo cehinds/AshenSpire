@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "status": "approved-for-draft-proposals",
+  "reviewer": "boss_proposals_b independent review",
+  "reviewDate": "2026-10-17",
+  "sourceSha256": "9dd62d26438f9d1849215fa6acc4686c3c25b87ecd0c94cc1dd6da3bb3b814b8",
+  "horizontalCut": 400,
+  "rowCuts": [
+    [
+      402,
+      797,
+      1192,
+      1594
+    ],
+    [
+      398,
+      794,
+      1183,
+      1586
+    ]
+  ],
+  "review": "Ten complete rear dragons inspected; tails below soles require foot-anchors.json. One visible sole measured per variant; other foot occluded. v09 has two tiny detached low-alpha red flecks near y85, retained as draft warning. Draft authoring only."
+}

@@ -1,0 +1,277 @@
+{
+  "schemaVersion": 1,
+  "status": "draft-approved-for-preview",
+  "runtimeVerified": false,
+  "reviewedCommit": "21ced03332abc66c9fca021c94d97e46ef1eec46",
+  "report": {
+    "path": "art/enemy-back-motion/wyrmLord/v01/normalized/normalized.json",
+    "gitBlobSha": "48c8463624090808c3924764544df63d08f6163b"
+  },
+  "sourceMasters": {
+    "stances": {
+      "path": "art/enemy-back-motion/wyrmLord/v01/stances-master.png",
+      "sha256": "e6b5bfda3ed6f6c9f332ae7d90e9a3dff74cadaac70f457af6317a87f974c11f"
+    },
+    "motion": {
+      "path": "art/enemy-back-motion/wyrmLord/v01/motion-master.png",
+      "sha256": "0752225fe71040cfc1bcdffde8dead7dfbfd562ce90fb954764e48de68ffb4e8"
+    },
+    "damage": {
+      "path": "art/enemy-back-motion/wyrmLord/v01/damage-master.png",
+      "sha256": "76b89ccbf5614e823e179214aad8de8c6bf8f4e21079ec0e8ad72dcc2fa5edea"
+    }
+  },
+  "frames": [
+    {
+      "kind": "stances",
+      "label": "neutral",
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/stances/neutral.png",
+      "sha256": "1076f77ac15629d6ebebc3cd466aea7f6fa74a6f012c074d72034d1a2e76dc09",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.6964322120285423
+    },
+    {
+      "kind": "stances",
+      "label": "smash",
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/stances/smash.png",
+      "sha256": "d8adc9e69839fbca264769679dfe90a33d2ad43a324ff5ef4c2e428678123b3f",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.6964322120285423
+    },
+    {
+      "kind": "stances",
+      "label": "attack",
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/stances/attack.png",
+      "sha256": "140c5c6b920f5fabe09e91e81206c66e8d967af9e1113896eeb359c57ea662b1",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.6964322120285423
+    },
+    {
+      "kind": "stances",
+      "label": "sweep",
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/stances/sweep.png",
+      "sha256": "d7a280fd262e68591ae731c26c5af908524d7042b18296e25753b090afe45e07",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.6964322120285423
+    },
+    {
+      "kind": "stances",
+      "label": "counter",
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/stances/counter.png",
+      "sha256": "21f29e3174d0d9b81e44799d745cc08772b6b36ead81f3505d604747413f1fb2",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.6964322120285423
+    },
+    {
+      "kind": "stances",
+      "label": "defend",
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/stances/defend.png",
+      "sha256": "fdee01c381c55084e8bb27369d814dbd98b684b277ef672439bccfc232989262",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.6964322120285423
+    },
+    {
+      "kind": "stances",
+      "label": "evade",
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/stances/evade.png",
+      "sha256": "b69aa661f5970373fce7bffb6e86ac273ce66845d8e2f4438f454621f530392e",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.6964322120285423
+    },
+    {
+      "kind": "stances",
+      "label": "spell",
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/stances/spell.png",
+      "sha256": "bb079e48622c2485c0cedfd3542f4ea07ab32e45d35d06bf22f7eb41be722112",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.6964322120285423
+    },
+    {
+      "kind": "stances",
+      "label": "preparing",
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/stances/preparing.png",
+      "sha256": "eece804d16cea8035b88c3ff2cfc8ec469ad9efe7a6e542742519e13d28fda22",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.6964322120285423
+    },
+    {
+      "kind": "stances",
+      "label": "neutral-alt",
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/stances/neutral-alt.png",
+      "sha256": "bbf679685901c951eb66b072474457c83f193be3b7d3b3cddf65836899068312",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.6964322120285423
+    },
+    {
+      "kind": "motion",
+      "label": "attack-01",
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/motion/attack-01.png",
+      "sha256": "07887d4923c1e1a8e73a750af9b4ac941d3dcdf045d2a1928a7b98ae4ead140a",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.6850152905198776
+    },
+    {
+      "kind": "motion",
+      "label": "attack-02",
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/motion/attack-02.png",
+      "sha256": "0a8980efe21a018ebe9318827375ce0837913ac066aa79546b802895a349f281",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.6850152905198776
+    },
+    {
+      "kind": "motion",
+      "label": "attack-03",
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/motion/attack-03.png",
+      "sha256": "47c4c04ceb80ad9aafd27fec253fe30a5f4849c96635c96cbbea644c2ba94d0d",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.6850152905198776
+    },
+    {
+      "kind": "motion",
+      "label": "attack-04",
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/motion/attack-04.png",
+      "sha256": "2861c7d6981e06d2bf292247b325b1ace734f613218c5b8a1248acf691f3b2a8",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.6850152905198776
+    },
+    {
+      "kind": "motion",
+      "label": "evade-01",
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/motion/evade-01.png",
+      "sha256": "3892a80a587562878cd44e5ae64e54ea5fdf6d553bc3f85f66aba11d48c49565",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.6850152905198776
+    },
+    {
+      "kind": "motion",
+      "label": "evade-02",
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/motion/evade-02.png",
+      "sha256": "5a986da58c0107a1d71972e1d677586b502c55474fb9200d9ce80ccbd6f3296f",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.6850152905198776
+    },
+    {
+      "kind": "motion",
+      "label": "evade-03",
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/motion/evade-03.png",
+      "sha256": "6bc8f15eb7644bcdb5a137ec20b11c416af5050773d89897c59ee09265878cc9",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.6850152905198776
+    },
+    {
+      "kind": "motion",
+      "label": "evade-04",
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/motion/evade-04.png",
+      "sha256": "c6699a6fd467baf2296a702d3e8d1c6cea7058c0b43213e0200860a77bd07478",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.6850152905198776
+    },
+    {
+      "kind": "damage",
+      "label": "hurt",
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/damage/hurt.png",
+      "sha256": "244aa59c713f3c90888368de289a23bc1aa525138a5c8b1f838bf59d33169ddd",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.30825688073394497
+    },
+    {
+      "kind": "damage",
+      "label": "defeated",
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/damage/defeated.png",
+      "sha256": "0faf70f43e5eb620ea8197f4fb8bb2a5f02a7038505a361369082c41f7768a04",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.30825688073394497
+    }
+  ],
+  "reviews": [
+    {
+      "reviewer": "boss_proposals_a",
+      "scope": "Final immutable contact sheet and numeric report: complete rear anatomy/equipment, articulated poses, no meaningful clipping, source hashes intact."
+    },
+    {
+      "reviewer": "root",
+      "scope": "Final immutable native/contact review approved for all three actors; draft preview only."
+    },
+    {
+      "reviewer": "elite_inventory",
+      "scope": "Final immutable Court/Lord contact review reported to root."
+    },
+    {
+      "reviewer": "elite_motion",
+      "scope": "Manual source-foot anchors and recovery anatomy comparison; Court 213/204/226px head-to-sole, Lord 204/215/206px; approx 6% residual drift acceptable for draft."
+    }
+  ],
+  "numeric": {
+    "frameCount": 20,
+    "meaningfulOutputPixelsOmitted": 0,
+    "maxOmittedFaintAlpha": 0,
+    "allAnchorsManuallyReviewed": true,
+    "componentConservation": null
+  },
+  "limitations": [
+    "Preview approval only; no in-engine/runtime alignment approval.",
+    "Native PNG fitting may change displayed size relative to proposal seed; authored-scale compensation is in normalized report.",
+    "Court/Lord each include a neutral-alt spare; select only the nine named gameplay stances."
+  ],
+  "actorId": "wyrmLord"
+}

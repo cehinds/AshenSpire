@@ -1,0 +1,138 @@
+{
+  "schemaVersion": 1,
+  "actorId": "wyrmLord",
+  "status": "draft-manual-anchor-review",
+  "method": "Manual visual inspection of native 512x512 PNGs; midpoint of visible foot contact extent, baseline at lowest visible foot contact; no image edits",
+  "sourceSha256": "fd3b5be8a5a9df1cf890ff4ae722856dcb8ba140245431293ada409df4f149a4",
+  "canvas": [
+    512,
+    512
+  ],
+  "boundsAnchor": [
+    256,
+    464
+  ],
+  "reviewer": "sprite_reference_pipeline agent",
+  "overrides": {
+    "v01": {
+      "imageSha256": "0cac89ff3a73b42c79dd8bbf8e5b993d5f117bf6f95cd1fbe0d020045d50caa8",
+      "feetPixels": [
+        354,
+        455
+      ],
+      "feet": [
+        0.69140625,
+        0.888671875
+      ],
+      "notes": "Rear foot is obscured by tail/cloth; anchor uses the clearly visible support foot rather than inventing hidden anatomy. Draft manual estimate; review before production."
+    },
+    "v02": {
+      "imageSha256": "777bfda5b80da0be144bbed5004b1015f93732c1c2d96d1dfd254746ceb32a1e",
+      "feetPixels": [
+        260,
+        457
+      ],
+      "feet": [
+        0.5078125,
+        0.892578125
+      ],
+      "notes": "Visible feet inspected; tail or cloth may extend below this anatomical anchor. Draft manual estimate; review before production."
+    },
+    "v03": {
+      "imageSha256": "938729422d8ea3f047b187d6c8d5810d6bdad8405a5bcf158eca3f2e30365110",
+      "feetPixels": [
+        265,
+        461
+      ],
+      "feet": [
+        0.517578125,
+        0.900390625
+      ],
+      "notes": "Visible feet inspected; tail or cloth may extend below this anatomical anchor. Draft manual estimate; review before production."
+    },
+    "v04": {
+      "imageSha256": "086b4571ba07c757bf962e25c4d0258882856da5c0f4f197da83fc7f21a112b6",
+      "feetPixels": [
+        251,
+        460
+      ],
+      "feet": [
+        0.490234375,
+        0.8984375
+      ],
+      "notes": "Visible feet inspected; tail or cloth may extend below this anatomical anchor. Draft manual estimate; review before production."
+    },
+    "v05": {
+      "imageSha256": "673932c0a9b57a7632640eca3fe01e6928949ba2d42852d58b144ba1ad454b34",
+      "feetPixels": [
+        375,
+        461
+      ],
+      "feet": [
+        0.732421875,
+        0.900390625
+      ],
+      "notes": "Rear foot is obscured by tail/cloth; anchor uses the clearly visible support foot rather than inventing hidden anatomy. Draft manual estimate; review before production."
+    },
+    "v06": {
+      "imageSha256": "1667a793a43f0e45f26e09bf4be5c24cee2af24b8b22f96c381ded77c55b80c5",
+      "feetPixels": [
+        360,
+        453
+      ],
+      "feet": [
+        0.703125,
+        0.884765625
+      ],
+      "notes": "Rear foot is obscured by tail/cloth; anchor uses the clearly visible support foot rather than inventing hidden anatomy. Draft manual estimate; review before production."
+    },
+    "v07": {
+      "imageSha256": "74fc90342c8f0e2b9979cae6bf3a79453878a2143b28585ab2788dd435883b87",
+      "feetPixels": [
+        235,
+        453
+      ],
+      "feet": [
+        0.458984375,
+        0.884765625
+      ],
+      "notes": "Visible feet inspected; tail or cloth may extend below this anatomical anchor. Draft manual estimate; review before production."
+    },
+    "v08": {
+      "imageSha256": "8e4415f64c1052fc78c97f4c9b66e1bd2e546bdc3f9f2335239a67a08acc2009",
+      "feetPixels": [
+        306,
+        462
+      ],
+      "feet": [
+        0.59765625,
+        0.90234375
+      ],
+      "notes": "Visible feet inspected; tail or cloth may extend below this anatomical anchor. Draft manual estimate; review before production."
+    },
+    "v09": {
+      "imageSha256": "46efb5b8312a7165e915f5c3ec65664bae400d1929866d82d80ee95f6e08255d",
+      "feetPixels": [
+        288,
+        462
+      ],
+      "feet": [
+        0.5625,
+        0.90234375
+      ],
+      "notes": "Visible feet inspected; tail or cloth may extend below this anatomical anchor. Draft manual estimate; review before production."
+    },
+    "v10": {
+      "imageSha256": "ea02bea96e8a54e3982012e38c0fe5c7ead080321fadab7e83c3e4c477ac667e",
+      "feetPixels": [
+        274,
+        448
+      ],
+      "feet": [
+        0.53515625,
+        0.875
+      ],
+      "notes": "Visible feet inspected; tail or cloth may extend below this anatomical anchor. Draft manual estimate; review before production."
+    }
+  }
+}

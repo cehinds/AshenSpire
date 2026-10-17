@@ -1,0 +1,44 @@
+{
+  "id": "stitchedKing",
+  "status": "draft-proposals",
+  "count": 10,
+  "layout": {
+    "columns": 5,
+    "rows": 2
+  },
+  "prompt": "Create exactly TEN rear three-quarter sprite design alternatives for the SAME Stitched King in reference1. Reference2 supplies ONLY gameplay camera, back dominant, turned away facing upper-right. Preserve reference1's very bulky stout heavy humanoid body, squat powerful legs, dark patched stitched leather and iron armor, enclosed black cylindrical helmet topped by dull golden crown, worn belt, crimson ragged cape, massive rectangular chipped butcher cleaver with circular hole near corner, same dark brown iron muted red and gold palette. Do not turn him slender or copy player gear. All ten show BACK of crowned helmet, shoulders, patchwork back armor and cape, no front chest or face, no front poses. Ten subtle distinct back stitch layouts, cape tears and strap routes preserving same costume proportions and silhouette family. Complete full bodies including boots, full cleaver blade and handle in every cell, dark fantasy painterly production game sprite style as reference1. Single transparent PNG canvas exact regular 5 columns by 2 rows, ten independent figures same scale and foot baselines with generous transparent gaps and outer margins. No cropping, no touching, no scene ground text labels numbers. Draft designs not animation. CRITICAL LAYOUT: shrink each figure to occupy at most 78 percent of cell height and 78 percent cell width. Leave fully empty transparent padding above every crown and below every boot, at least 40 pixels on outer canvas edges. Crowns MUST NOT touch top canvas edge. Five equal cells across two equal rows.",
+  "sources": [
+    {
+      "repository": "cehinds/AshenSpire-art",
+      "path": "hd/assets/enemy-poses/expansion/stitchedKing/idle.webp",
+      "ref": "hd-assets-v23",
+      "blob": "2ed7af50b795df6dd094393d8c5111d7e63379cc"
+    },
+    {
+      "repository": "cehinds/AshenSpire",
+      "path": "assets-display/alternative/reaver-default.webp",
+      "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+      "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+      "role": "camera only"
+    }
+  ],
+  "generationNotes": "Second generation edited the initial proposal sheet to restore top crown padding, also included as the third recent image reference.",
+  "visualQA": "Ten rear three-quarter full figures observed with complete crowns and cleavers. Initial crown-edge clipping corrected in second pass. Draft pending normalization and art approval.",
+  "actorId": "stitchedKing",
+  "master": "proposal-sheet.png",
+  "sourceReferences": [
+    {
+      "repository": "cehinds/AshenSpire-art",
+      "path": "hd/assets/enemy-poses/expansion/stitchedKing/idle.webp",
+      "ref": "hd-assets-v23",
+      "blob": "2ed7af50b795df6dd094393d8c5111d7e63379cc"
+    },
+    {
+      "repository": "cehinds/AshenSpire",
+      "path": "assets-display/alternative/reaver-default.webp",
+      "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+      "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+      "role": "camera only"
+    }
+  ]
+}

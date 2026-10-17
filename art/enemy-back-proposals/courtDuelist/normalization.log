@@ -1,0 +1,579 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "path": "art/enemy-back-proposals/courtDuelist/proposal-sheet.png",
+    "sha256": "b64d1af2f376da5b80a89ec7535b8fcc888d0f7e3f99955925ebfc153da699ae",
+    "size": [
+      1983,
+      793
+    ]
+  },
+  "grid": {
+    "columns": 5,
+    "rows": 2,
+    "rectPolicy": "adaptive zero meaningful-alpha gutters; prefer full zero alpha"
+  },
+  "output": {
+    "size": [
+      512,
+      512
+    ],
+    "anchor": [
+      256,
+      464
+    ],
+    "sharedScale": 1.0
+  },
+  "alphaThreshold": 32,
+  "sourceBoundary": {
+    "alphaAbove0": 47,
+    "alphaAbove32": 0
+  },
+  "variants": [
+    {
+      "id": "v01",
+      "sourceRect": [
+        0,
+        0,
+        397,
+        393
+      ],
+      "sourceAlphaBounds": [
+        15,
+        15,
+        357,
+        378
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 6,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        85,
+        101,
+        427,
+        464
+      ],
+      "anchor": [
+        256,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "a9d30e6c5c92040a073e388b70ebf2665340afc93cbe3d59ca51a0384cbb6e8e",
+      "translation": [
+        82,
+        97
+      ]
+    },
+    {
+      "id": "v02",
+      "sourceRect": [
+        397,
+        0,
+        798,
+        393
+      ],
+      "sourceAlphaBounds": [
+        26,
+        12,
+        371,
+        378
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 15,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        83,
+        98,
+        428,
+        464
+      ],
+      "anchor": [
+        256,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "9889ad21ad41e051c0b4681021862f4162eb1eda0316fb33a33c4552cd29366e",
+      "translation": [
+        58,
+        87
+      ]
+    },
+    {
+      "id": "v03",
+      "sourceRect": [
+        798,
+        0,
+        1193,
+        393
+      ],
+      "sourceAlphaBounds": [
+        43,
+        13,
+        389,
+        378
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 6,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        83,
+        99,
+        429,
+        464
+      ],
+      "anchor": [
+        256,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "9400fe4a6271788ca3c1fc34c57668e744538581fc78e86dad40565e579bef21",
+      "translation": [
+        41,
+        86
+      ]
+    },
+    {
+      "id": "v04",
+      "sourceRect": [
+        1193,
+        0,
+        1596,
+        393
+      ],
+      "sourceAlphaBounds": [
+        43,
+        18,
+        399,
+        378
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 29,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        78,
+        104,
+        434,
+        464
+      ],
+      "anchor": [
+        256,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "2821cc22cc44227152db6a7633519843d7eed049818d2a53cfe6bd09c25c620e",
+      "translation": [
+        36,
+        94
+      ]
+    },
+    {
+      "id": "v05",
+      "sourceRect": [
+        1596,
+        0,
+        1983,
+        393
+      ],
+      "sourceAlphaBounds": [
+        61,
+        14,
+        381,
+        378
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 13,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        96,
+        100,
+        416,
+        464
+      ],
+      "anchor": [
+        256,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "a83bd9e1264356ea5ea8a98bf116bc7f5c41273b2707718eaaeef0b0d96f663a",
+      "translation": [
+        36,
+        96
+      ]
+    },
+    {
+      "id": "v06",
+      "sourceRect": [
+        0,
+        393,
+        395,
+        793
+      ],
+      "sourceAlphaBounds": [
+        16,
+        20,
+        371,
+        381
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 4,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        78,
+        103,
+        433,
+        464
+      ],
+      "anchor": [
+        256,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "0d6ed4d9094adf818175282b7ff99edbf76ed93942815f576df3528d66fb4e47",
+      "translation": [
+        62,
+        93
+      ]
+    },
+    {
+      "id": "v07",
+      "sourceRect": [
+        395,
+        393,
+        793,
+        793
+      ],
+      "sourceAlphaBounds": [
+        35,
+        23,
+        393,
+        381
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 27,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        77,
+        106,
+        435,
+        464
+      ],
+      "anchor": [
+        256,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "e4c08907ac44ab1369c148388c7468f18164489210597ecc91294da3abddb623",
+      "translation": [
+        43,
+        83
+      ]
+    },
+    {
+      "id": "v08",
+      "sourceRect": [
+        793,
+        393,
+        1193,
+        793
+      ],
+      "sourceAlphaBounds": [
+        55,
+        17,
+        397,
+        381
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 7,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        85,
+        100,
+        427,
+        464
+      ],
+      "anchor": [
+        256,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "bb4919f24048d3fd44930122aa2cdc8d2be11b076b080ca6c04eb83df886bed7",
+      "translation": [
+        32,
+        93
+      ]
+    },
+    {
+      "id": "v09",
+      "sourceRect": [
+        1193,
+        393,
+        1596,
+        793
+      ],
+      "sourceAlphaBounds": [
+        52,
+        21,
+        400,
+        381
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 9,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        82,
+        104,
+        430,
+        464
+      ],
+      "anchor": [
+        256,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "10264b1b356f602bf03434c795365200ae08e6ed193fa68e56e264963d80bfef",
+      "translation": [
+        31,
+        83
+      ]
+    },
+    {
+      "id": "v10",
+      "sourceRect": [
+        1596,
+        393,
+        1983,
+        793
+      ],
+      "sourceAlphaBounds": [
+        47,
+        16,
+        381,
+        382
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 16,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        89,
+        98,
+        423,
+        464
+      ],
+      "anchor": [
+        256,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "b7aaf67b8a4bc7c29a7ecad5a66a59099fc765ffc5fad66c13063d41dcc17477",
+      "translation": [
+        43,
+        92
+      ]
+    }
+  ],
+  "qa": {
+    "errors": [],
+    "warnings": [
+      "v01: boundary antialias noise",
+      "v02: boundary antialias noise",
+      "v03: boundary antialias noise",
+      "v04: boundary antialias noise",
+      "v05: boundary antialias noise",
+      "v06: boundary antialias noise",
+      "v07: boundary antialias noise",
+      "v08: boundary antialias noise",
+      "v09: boundary antialias noise",
+      "v10: boundary antialias noise"
+    ]
+  },
+  "cropPlan": {
+    "status": "draft-pending-crop-review",
+    "method": "zero meaningful-alpha gutters; prefer full zero alpha",
+    "horizontal": {
+      "band": [
+        378,
+        409
+      ],
+      "width": 31,
+      "cut": 393,
+      "criterion": "alpha <= 32",
+      "alphaAbove0": 19,
+      "alphaAbove32": 0,
+      "bandAlphaAbove0": 2102,
+      "bandAlphaAbove32": 0
+    },
+    "rows": [
+      {
+        "y": [
+          0,
+          393
+        ],
+        "gutters": [
+          {
+            "band": [
+              397,
+              398
+            ],
+            "width": 1,
+            "cut": 397,
+            "criterion": "alpha == 0",
+            "alphaAbove0": 0,
+            "alphaAbove32": 0,
+            "bandAlphaAbove0": 0,
+            "bandAlphaAbove32": 0
+          },
+          {
+            "band": [
+              798,
+              799
+            ],
+            "width": 1,
+            "cut": 798,
+            "criterion": "alpha == 0",
+            "alphaAbove0": 0,
+            "alphaAbove32": 0,
+            "bandAlphaAbove0": 0,
+            "bandAlphaAbove32": 0
+          },
+          {
+            "band": [
+              1193,
+              1194
+            ],
+            "width": 1,
+            "cut": 1193,
+            "criterion": "alpha == 0",
+            "alphaAbove0": 0,
+            "alphaAbove32": 0,
+            "bandAlphaAbove0": 0,
+            "bandAlphaAbove32": 0
+          },
+          {
+            "band": [
+              1596,
+              1597
+            ],
+            "width": 1,
+            "cut": 1596,
+            "criterion": "alpha == 0",
+            "alphaAbove0": 0,
+            "alphaAbove32": 0,
+            "bandAlphaAbove0": 0,
+            "bandAlphaAbove32": 0
+          }
+        ]
+      },
+      {
+        "y": [
+          393,
+          793
+        ],
+        "gutters": [
+          {
+            "band": [
+              395,
+              396
+            ],
+            "width": 1,
+            "cut": 395,
+            "criterion": "alpha == 0",
+            "alphaAbove0": 0,
+            "alphaAbove32": 0,
+            "bandAlphaAbove0": 0,
+            "bandAlphaAbove32": 0
+          },
+          {
+            "band": [
+              792,
+              795
+            ],
+            "width": 3,
+            "cut": 793,
+            "criterion": "alpha == 0",
+            "alphaAbove0": 0,
+            "alphaAbove32": 0,
+            "bandAlphaAbove0": 0,
+            "bandAlphaAbove32": 0
+          },
+          {
+            "band": [
+              1193,
+              1194
+            ],
+            "width": 1,
+            "cut": 1193,
+            "criterion": "alpha == 0",
+            "alphaAbove0": 0,
+            "alphaAbove32": 0,
+            "bandAlphaAbove0": 0,
+            "bandAlphaAbove32": 0
+          },
+          {
+            "band": [
+              1596,
+              1597
+            ],
+            "width": 1,
+            "cut": 1596,
+            "criterion": "alpha == 0",
+            "alphaAbove0": 0,
+            "alphaAbove32": 0,
+            "bandAlphaAbove0": 0,
+            "bandAlphaAbove32": 0
+          }
+        ]
+      }
+    ]
+  }
+}
+PASS: ten RGBA frames, shared scale, common floor and center, source unchanged

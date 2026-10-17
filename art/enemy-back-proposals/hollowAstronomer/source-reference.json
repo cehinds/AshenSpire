@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "actorId": "hollowAstronomer",
+  "role": "original identity reference used for rear proposals",
+  "asset": "source-reference.webp",
+  "repository": "cehinds/AshenSpire-art",
+  "path": "hd/assets/enemy-poses/expansion/hollowAstronomer/idle.webp",
+  "tag": "hd-assets-v23",
+  "blob": "21a726b235b161ed1d84e630e7ceaf82a89cc7b5",
+  "copyPolicy": "Literal WebP bytes; no decoding, re-encoding, crop, resize, masking or creative edits",
+  "note": "Player camera reference intentionally excluded."
+}

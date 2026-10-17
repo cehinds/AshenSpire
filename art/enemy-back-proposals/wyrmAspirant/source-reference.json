@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "actorId": "wyrmAspirant",
+  "role": "original identity reference used for rear proposals",
+  "asset": "source-reference.webp",
+  "repository": "cehinds/AshenSpire-art",
+  "path": "hd/assets/enemy-poses/wyrmAspirant_idle.webp",
+  "tag": "hd-assets-v23",
+  "blob": "2787edb55ab531875b9c449ead8171f67ea0e424",
+  "copyPolicy": "Literal WebP bytes; no decoding, re-encoding, crop, resize, masking or creative edits",
+  "note": "Preserves the actual older base idle reference used for this proposal generation, rather than substituting expansion idle."
+}

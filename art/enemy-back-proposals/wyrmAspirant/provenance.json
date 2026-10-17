@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "actorId": "wyrmAspirant",
+  "status": "draft-proposals",
+  "generator": "OpenAI image generation",
+  "purpose": "Ten rear three-quarter design alternatives; not an animation strip or approved runtime art.",
+  "sourceReferences": [
+    {
+      "repository": "cehinds/AshenSpire-art",
+      "ref": "hd-assets-v23",
+      "path": "hd/assets/enemy-poses/wyrmAspirant_idle.webp",
+      "blob": "2787edb55ab531875b9c449ead8171f67ea0e424"
+    },
+    {
+      "repository": "cehinds/AshenSpire-art",
+      "ref": "hd-assets-v23",
+      "path": "hd/assets/animations/player-attacks/reaver/sword-shield/anticipation.webp",
+      "blob": "a99cd631ccbbe30b05b32f460179e00e0dc898d5"
+    }
+  ],
+  "master": "proposal-sheet.png",
+  "grid": {
+    "columns": 5,
+    "rows": 2,
+    "order": "row-major v01 to v10"
+  },
+  "promptSummary": "Preserve the Wyrm Aspirant's red/russet reptilian anatomy, horned head, bronze/dark armor, curved right-hand blade, ragged waistcloth, claws and tail. Reconstruct the back at the player reference's rear three-quarter camera, facing away upper-right. Ten distinct neutral combat-ready back silhouette/armor overlap/tail-rest interpretations; consistent scale and palette; transparent 5x2 sheet without text or scenery.",
+  "qa": {
+    "visualReview": "pending independent review and slot-boundary inspection",
+    "normalization": "pending",
+    "runtimePublication": "not published"
+  },
+  "licensing": "Original AI-generated proposal derived from the project's existing reference assets; no third-party license claim."
+}

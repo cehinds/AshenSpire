@@ -1,0 +1,577 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "path": "art/enemy-back-proposals/fellWarden/proposal-sheet.png",
+    "sha256": "2222ea4b6a253963d0b3811c66e3936f5ce96b2104fb249ccdf48f741bae924d",
+    "size": [
+      1983,
+      793
+    ]
+  },
+  "grid": {
+    "columns": 5,
+    "rows": 2,
+    "rectPolicy": "adaptive zero meaningful-alpha gutters; prefer full zero alpha"
+  },
+  "output": {
+    "size": [
+      512,
+      512
+    ],
+    "sharedScale": 1,
+    "boundsAnchor": [
+      256,
+      464
+    ]
+  },
+  "alphaThreshold": 32,
+  "sourceBoundary": {
+    "alphaAbove0": 62,
+    "alphaAbove32": 0
+  },
+  "variants": [
+    {
+      "id": "v01",
+      "sourceRect": [
+        0,
+        0,
+        409,
+        388
+      ],
+      "sourceAlphaBounds": [
+        21,
+        13,
+        407,
+        374
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 9,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        63,
+        103,
+        449,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "039ac9b80a7369a2264addec1109a4e0e4f30e1b571e1acf591f717c8c7c458c",
+      "translation": [
+        51,
+        100
+      ],
+      "boundsAnchor": [
+        256,
+        464
+      ]
+    },
+    {
+      "id": "v02",
+      "sourceRect": [
+        409,
+        0,
+        814,
+        388
+      ],
+      "sourceAlphaBounds": [
+        26,
+        13,
+        399,
+        374
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 4,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        69,
+        103,
+        442,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "bfed95dfa8183337755effef67c0a36abc918ea7a4b96403fc2ebd7a0de3389d",
+      "translation": [
+        44,
+        100
+      ],
+      "boundsAnchor": [
+        256,
+        464
+      ]
+    },
+    {
+      "id": "v03",
+      "sourceRect": [
+        814,
+        0,
+        1211,
+        388
+      ],
+      "sourceAlphaBounds": [
+        18,
+        14,
+        392,
+        374
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 17,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        69,
+        104,
+        443,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "fc22539491099353c9de087e801c24d7860396be45afe25e01711e9ff47616d4",
+      "translation": [
+        54,
+        90
+      ],
+      "boundsAnchor": [
+        256,
+        464
+      ]
+    },
+    {
+      "id": "v04",
+      "sourceRect": [
+        1211,
+        0,
+        1610,
+        388
+      ],
+      "sourceAlphaBounds": [
+        9,
+        13,
+        393,
+        374
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 19,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        64,
+        103,
+        448,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "d85f49d12fe81178c08d6a575bcb8521f17009333ab0b3e42e1ae0d9744c6afe",
+      "translation": [
+        56,
+        100
+      ],
+      "boundsAnchor": [
+        256,
+        464
+      ]
+    },
+    {
+      "id": "v05",
+      "sourceRect": [
+        1610,
+        0,
+        1983,
+        388
+      ],
+      "sourceAlphaBounds": [
+        11,
+        14,
+        369,
+        374
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 20,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        77,
+        104,
+        435,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "c2cadfc027eb529367b51dbc598bfb1bf423f504efc27a52ab9c6612a078f6a1",
+      "translation": [
+        67,
+        101
+      ],
+      "boundsAnchor": [
+        256,
+        464
+      ]
+    },
+    {
+      "id": "v06",
+      "sourceRect": [
+        0,
+        388,
+        414,
+        793
+      ],
+      "sourceAlphaBounds": [
+        23,
+        18,
+        407,
+        382
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 2,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        64,
+        100,
+        448,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "4709d9c93e79614cd75a95615edfc9bd57f449ab0134292036e26d6eaa501b5b",
+      "translation": [
+        58,
+        83
+      ],
+      "boundsAnchor": [
+        256,
+        464
+      ]
+    },
+    {
+      "id": "v07",
+      "sourceRect": [
+        414,
+        388,
+        822,
+        793
+      ],
+      "sourceAlphaBounds": [
+        7,
+        18,
+        395,
+        381
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 21,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        62,
+        101,
+        450,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "05f528ed515aaa68a160d6d7b76c2b42c6e318c7ba7bb525235bd6677a301a38",
+      "translation": [
+        55,
+        84
+      ],
+      "boundsAnchor": [
+        256,
+        464
+      ]
+    },
+    {
+      "id": "v08",
+      "sourceRect": [
+        822,
+        388,
+        1213,
+        793
+      ],
+      "sourceAlphaBounds": [
+        8,
+        19,
+        386,
+        382
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 0,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        67,
+        101,
+        445,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "3130aff6e1c7546f1255c55cbba12572a9de18141d1462ccef940cf6d481a7a8",
+      "translation": [
+        60,
+        89
+      ],
+      "boundsAnchor": [
+        256,
+        464
+      ]
+    },
+    {
+      "id": "v09",
+      "sourceRect": [
+        1213,
+        388,
+        1613,
+        793
+      ],
+      "sourceAlphaBounds": [
+        14,
+        18,
+        394,
+        380
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 1,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        66,
+        102,
+        446,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "1ef60a3867f1f3b3a2b7686db366176f3c52f574c0aca614d2bc16cb26b9962a",
+      "translation": [
+        55,
+        85
+      ],
+      "boundsAnchor": [
+        256,
+        464
+      ]
+    },
+    {
+      "id": "v10",
+      "sourceRect": [
+        1613,
+        388,
+        1983,
+        793
+      ],
+      "sourceAlphaBounds": [
+        6,
+        18,
+        366,
+        382
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 39,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        76,
+        100,
+        436,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "dc6b7f3ecaf686959e6e8518d53561528b57173e410c94452345d3fb3695cf9c",
+      "translation": [
+        70,
+        89
+      ],
+      "boundsAnchor": [
+        256,
+        464
+      ]
+    }
+  ],
+  "qa": {
+    "errors": [],
+    "warnings": [
+      "v01: boundary antialias noise",
+      "v02: boundary antialias noise",
+      "v03: boundary antialias noise",
+      "v04: boundary antialias noise",
+      "v05: boundary antialias noise",
+      "v06: boundary antialias noise",
+      "v07: boundary antialias noise",
+      "v09: boundary antialias noise",
+      "v10: boundary antialias noise"
+    ]
+  },
+  "cropPlan": {
+    "status": "draft-pending-crop-review",
+    "method": "zero meaningful-alpha gutters; prefer full zero alpha",
+    "horizontal": {
+      "band": [
+        388,
+        389
+      ],
+      "width": 1,
+      "cut": 388,
+      "criterion": "alpha == 0",
+      "alphaAbove0": 0,
+      "alphaAbove32": 0,
+      "bandAlphaAbove0": 0,
+      "bandAlphaAbove32": 0
+    },
+    "rows": [
+      {
+        "y": [
+          0,
+          388
+        ],
+        "gutters": [
+          {
+            "band": [
+              409,
+              410
+            ],
+            "width": 1,
+            "cut": 409,
+            "criterion": "alpha == 0",
+            "alphaAbove0": 0,
+            "alphaAbove32": 0,
+            "bandAlphaAbove0": 0,
+            "bandAlphaAbove32": 0
+          },
+          {
+            "band": [
+              812,
+              817
+            ],
+            "width": 5,
+            "cut": 814,
+            "criterion": "alpha == 0",
+            "alphaAbove0": 0,
+            "alphaAbove32": 0,
+            "bandAlphaAbove0": 0,
+            "bandAlphaAbove32": 0
+          },
+          {
+            "band": [
+              1211,
+              1212
+            ],
+            "width": 1,
+            "cut": 1211,
+            "criterion": "alpha == 0",
+            "alphaAbove0": 0,
+            "alphaAbove32": 0,
+            "bandAlphaAbove0": 0,
+            "bandAlphaAbove32": 0
+          },
+          {
+            "band": [
+              1610,
+              1611
+            ],
+            "width": 1,
+            "cut": 1610,
+            "criterion": "alpha == 0",
+            "alphaAbove0": 0,
+            "alphaAbove32": 0,
+            "bandAlphaAbove0": 0,
+            "bandAlphaAbove32": 0
+          }
+        ]
+      },
+      {
+        "y": [
+          388,
+          793
+        ],
+        "gutters": [
+          {
+            "band": [
+              407,
+              421
+            ],
+            "width": 14,
+            "cut": 414,
+            "criterion": "alpha <= 32",
+            "alphaAbove0": 7,
+            "alphaAbove32": 0,
+            "bandAlphaAbove0": 175,
+            "bandAlphaAbove32": 0
+          },
+          {
+            "band": [
+              822,
+              823
+            ],
+            "width": 1,
+            "cut": 822,
+            "criterion": "alpha == 0",
+            "alphaAbove0": 0,
+            "alphaAbove32": 0,
+            "bandAlphaAbove0": 0,
+            "bandAlphaAbove32": 0
+          },
+          {
+            "band": [
+              1211,
+              1216
+            ],
+            "width": 5,
+            "cut": 1213,
+            "criterion": "alpha == 0",
+            "alphaAbove0": 0,
+            "alphaAbove32": 0,
+            "bandAlphaAbove0": 0,
+            "bandAlphaAbove32": 0
+          },
+          {
+            "band": [
+              1607,
+              1619
+            ],
+            "width": 12,
+            "cut": 1613,
+            "criterion": "alpha <= 32",
+            "alphaAbove0": 8,
+            "alphaAbove32": 0,
+            "bandAlphaAbove0": 216,
+            "bandAlphaAbove32": 0
+          }
+        ]
+      }
+    ]
+  }
+}

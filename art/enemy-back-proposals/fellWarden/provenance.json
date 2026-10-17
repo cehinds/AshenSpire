@@ -1,0 +1,43 @@
+{
+  "id": "fellWarden",
+  "status": "draft-proposals",
+  "count": 10,
+  "layout": {
+    "columns": 5,
+    "rows": 2
+  },
+  "prompt": "Create exactly TEN distinct rear-view sprite design proposals for the SAME Fell Warden boss shown in reference image 1. Reference image 2 is ONLY the required rear three-quarter gameplay camera: character turned away from viewer, back of head/back armor and cape prominent, facing toward upper-right. Do not copy reference 2's identity or equipment. Preserve Fell Warden's black scorched heavy full plate armor, sealed angular helmet, broad heavy body, jagged dark crimson shredded cape, fiery orange ember fissures and enormous two-handed flaming poleaxe from image 1. Every variant must show his BACK from this camera, never front or front three-quarter, no visible facial/front chest view. Ten alternatives vary plausible rear cape tears, backplate construction and ember seam arrangements subtly while retaining identical character identity, anatomy, palette, silhouette and outfit proportions. Production dark fantasy painterly game sprite style matching reference 1, isolated FULL bodies including boots and entire poleaxe blades and shaft. ONE transparent PNG canvas, exact 5 columns by 2 rows regular grid, one full character per cell, exactly ten characters, generous transparent gaps and external margins, consistent scale and foot baselines, no touching/overlap between cells, no cropping, no labels, no numbering, no scenery, no poster composition. These are ten design proposals, not animation or ten front-facing poses.",
+  "sources": [
+    {
+      "repository": "cehinds/AshenSpire-art",
+      "path": "hd/assets/enemy-poses/expansion/fellWarden/idle.webp",
+      "ref": "hd-assets-v23",
+      "blob": "1aab912c5dcef9cd91f37c6a1dc5e49b5981162b"
+    },
+    {
+      "repository": "cehinds/AshenSpire",
+      "path": "assets-display/alternative/reaver-default.webp",
+      "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+      "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+      "role": "camera only"
+    }
+  ],
+  "visualQA": "Ten full-body rear three-quarter figures observed; consistent fiery dark armor and torn red cape. Proposal sheet awaits normalized frame QA and art approval.",
+  "actorId": "fellWarden",
+  "master": "proposal-sheet.png",
+  "sourceReferences": [
+    {
+      "repository": "cehinds/AshenSpire-art",
+      "path": "hd/assets/enemy-poses/expansion/fellWarden/idle.webp",
+      "ref": "hd-assets-v23",
+      "blob": "1aab912c5dcef9cd91f37c6a1dc5e49b5981162b"
+    },
+    {
+      "repository": "cehinds/AshenSpire",
+      "path": "assets-display/alternative/reaver-default.webp",
+      "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+      "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+      "role": "camera only"
+    }
+  ]
+}

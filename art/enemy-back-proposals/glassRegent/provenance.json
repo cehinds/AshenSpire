@@ -1,0 +1,43 @@
+{
+  "id": "glassRegent",
+  "status": "draft-proposals",
+  "count": 10,
+  "layout": {
+    "columns": 5,
+    "rows": 2
+  },
+  "prompt": "Create exactly TEN rear three-quarter sprite design alternatives for the SAME Glass Regent boss shown in reference1. Reference2 supplies ONLY gameplay camera: back dominant turned away facing upper-right. Preserve Glass Regent identity: tall humanoid regal armored knight, angular silver crystal plate with fine gold structural trim, jagged crystalline crown helmet, dark teal underlayers, flowing shredded teal-blue glassy cape, long icy pale blue sword, broad elongated angular silver crystal shield trimmed gold. Same anatomy proportions equipment silhouette and silver gold teal palette. Do not copy red player clothing. Show BACK of helmet, cape and rear armor on all ten, no face or chest/front view. Ten subtle distinct rear facet patterns, gold trim routes and cape shard splits, same character outfit proportions and production dark fantasy painterly sprite style matching ref1. Full body boots and ENTIRE sword and shield contained independently in each cell. Single transparent PNG canvas exact regular 5 columns by 2 rows grid, ten figures identical scale and foot baselines. Each figure occupies at most 78 percent of its cell in both directions, ample transparent gutters and at least 40 pixels clear outer padding including above crown tips and below feet. No cropping, contact, text labels numbers scene floor or poster. Design proposals not animation.",
+  "sources": [
+    {
+      "repository": "cehinds/AshenSpire-art",
+      "path": "hd/assets/enemy-poses/expansion/glassRegent/idle.webp",
+      "ref": "hd-assets-v23",
+      "blob": "ea65e4c6e7be07b93002a3d6dff3de5420598710"
+    },
+    {
+      "repository": "cehinds/AshenSpire",
+      "path": "assets-display/alternative/reaver-default.webp",
+      "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+      "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+      "role": "camera only"
+    }
+  ],
+  "visualQA": "Ten rear three-quarter full figures observed with crystal crown, silver/gold/teal identity and swords/shields. Strong saturated cyan/blue fringe also exists in source and remains in generation; requires art review. Draft pending normalized frame QA and art approval.",
+  "actorId": "glassRegent",
+  "master": "proposal-sheet.png",
+  "sourceReferences": [
+    {
+      "repository": "cehinds/AshenSpire-art",
+      "path": "hd/assets/enemy-poses/expansion/glassRegent/idle.webp",
+      "ref": "hd-assets-v23",
+      "blob": "ea65e4c6e7be07b93002a3d6dff3de5420598710"
+    },
+    {
+      "repository": "cehinds/AshenSpire",
+      "path": "assets-display/alternative/reaver-default.webp",
+      "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+      "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+      "role": "camera only"
+    }
+  ]
+}

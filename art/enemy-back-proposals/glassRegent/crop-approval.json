@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "status": "approved-for-draft-proposals",
+  "reviewer": "elite_inventory independent review",
+  "reviewDate": "2026-10-17",
+  "sourceSha256": "181e0bce04106ad31013ff5e4c379e5e7c2bfa3e3d36f68fda1c7162cd2ddd2f",
+  "horizontalCut": 388,
+  "rowCuts": [
+    [
+      432,
+      818,
+      1201,
+      1599
+    ],
+    [
+      421,
+      821,
+      1209,
+      1602
+    ]
+  ],
+  "review": "Ten complete rear figures inspected. No meaningful-alpha clipping; draft authoring only."
+}

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "actorId": "stitchedKing",
+  "role": "original identity reference used for rear proposals",
+  "asset": "source-reference.webp",
+  "repository": "cehinds/AshenSpire-art",
+  "path": "hd/assets/enemy-poses/expansion/stitchedKing/idle.webp",
+  "tag": "hd-assets-v23",
+  "blob": "2ed7af50b795df6dd094393d8c5111d7e63379cc",
+  "copyPolicy": "Literal WebP bytes; no decoding, re-encoding, crop, resize, masking or creative edits",
+  "note": "Player camera reference intentionally excluded."
+}

@@ -63,6 +63,9 @@ jobs:
           writeFileSync(`${directory}/README.md`, instructions);
           appendFileSync(process.env.GITHUB_STEP_SUMMARY, instructions);
           NODE
+      - name: Embed feature authoring review
+        if: github.ref_name == 'feature/EnemyBackSprites'
+        run: node pose-studio/enemy-back-proposals/embed-gallery.mjs feature-preview/AshenSpire.html
       - uses: actions/upload-artifact@v4
         with:
           name: feature-preview-${{ github.sha }}

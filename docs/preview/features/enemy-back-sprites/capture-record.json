@@ -1,0 +1,213 @@
+{
+  "priorRosterCheck": {
+    "record": "docs/preview/features/enemy-back-sprites/roster-check-a017.json",
+    "sourceCommit": "a017ef6b78f7a60101065871778693d0358e5383",
+    "workflowRun": 39061742409,
+    "artifactId": 12111867054,
+    "manifestSha256": "ee64a8133375bf373404adb517b3ed12c4b0a56d5faf5fe3181047f4dd38df13",
+    "artworkChanged": false
+  },
+  "evidenceKind": "exact-artifact-browser-capture",
+  "publicVerification": "pending-final-source-publication",
+  "feature": "EnemyBackSprites",
+  "sourceCommit": "3013b3d778de946b854d2940b28aa965af2d7638",
+  "version": "0.7.1.1549",
+  "digest": "d1b78c9f38",
+  "buildSha256": "0b9a3a99767594af84129727a922a37c411d2dbf5dcd8d9ac75541f5ecc4eb06",
+  "buildBytes": 125697351,
+  "capturedAt": "2026-10-17T19:38:26.585Z",
+  "playableUrl": "https://cehinds.github.io/AshenSpire/branches/feature/EnemyBackSprites/latest/",
+  "workflowRun": 39062852872,
+  "artifactId": 12111784011,
+  "artifactUrl": "https://github.com/cehinds/AshenSpire/actions/runs/39062852872/artifacts/12111784011",
+  "releaseGallery": {
+    "version": "0.7.1.1517",
+    "status": "verified unchanged"
+  },
+  "records": [
+    {
+      "hostBounds": {
+        "dialog": {
+          "x": 7.796875,
+          "y": 25.3125,
+          "width": 374.390625,
+          "height": 793.359375,
+          "top": 25.3125,
+          "right": 382.1875,
+          "bottom": 818.671875,
+          "left": 7.796875
+        },
+        "frame": {
+          "x": 10.796875,
+          "y": 88.3125,
+          "width": 368.390625,
+          "height": 727.359375,
+          "top": 88.3125,
+          "right": 379.1875,
+          "bottom": 815.671875,
+          "left": 10.796875
+        },
+        "close": {
+          "x": 247.59375,
+          "y": 36.3125,
+          "width": 119.59375,
+          "height": 44,
+          "top": 36.3125,
+          "right": 367.1875,
+          "bottom": 80.3125,
+          "left": 247.59375
+        }
+      },
+      "visibleProposalImages": 4,
+      "attackPlaybackVerified": false,
+      "name": "mobile",
+      "width": 390,
+      "height": 844,
+      "actor": "wyrmAspirant",
+      "sourceCommit": "3013b3d778de946b854d2940b28aa965af2d7638",
+      "version": "0.7.1.1549",
+      "digest": "d1b78c9f38",
+      "playableUrl": "https://cehinds.github.io/AshenSpire/branches/feature/EnemyBackSprites/latest/",
+      "verifiedActors": 1,
+      "verifiedNeutralDesigns": 10
+    },
+    {
+      "hostBounds": {
+        "dialog": {
+          "x": 28.796875,
+          "y": 27,
+          "width": 1382.390625,
+          "height": 846,
+          "top": 27,
+          "right": 1411.1875,
+          "bottom": 873,
+          "left": 28.796875
+        },
+        "frame": {
+          "x": 31.796875,
+          "y": 90,
+          "width": 1376.390625,
+          "height": 780,
+          "top": 90,
+          "right": 1408.1875,
+          "bottom": 870,
+          "left": 31.796875
+        },
+        "close": {
+          "x": 1276.59375,
+          "y": 38,
+          "width": 119.59375,
+          "height": 44,
+          "top": 38,
+          "right": 1396.1875,
+          "bottom": 82,
+          "left": 1276.59375
+        }
+      },
+      "visibleProposalImages": 10,
+      "attackPlaybackVerified": true,
+      "name": "desktop",
+      "width": 1440,
+      "height": 900,
+      "actor": "courtDuelist",
+      "sourceCommit": "3013b3d778de946b854d2940b28aa965af2d7638",
+      "version": "0.7.1.1549",
+      "digest": "d1b78c9f38",
+      "playableUrl": "https://cehinds.github.io/AshenSpire/branches/feature/EnemyBackSprites/latest/",
+      "verifiedActors": 1,
+      "verifiedNeutralDesigns": 10
+    },
+    {
+      "hostBounds": {
+        "dialog": {
+          "x": 38.40625,
+          "y": 32.40625,
+          "width": 1843.1875,
+          "height": 1015.1875,
+          "top": 32.40625,
+          "right": 1881.59375,
+          "bottom": 1047.59375,
+          "left": 38.40625
+        },
+        "frame": {
+          "x": 41.40625,
+          "y": 95.40625,
+          "width": 1837.1875,
+          "height": 949.1875,
+          "top": 95.40625,
+          "right": 1878.59375,
+          "bottom": 1044.59375,
+          "left": 41.40625
+        },
+        "close": {
+          "x": 1747,
+          "y": 43.40625,
+          "width": 119.59375,
+          "height": 44,
+          "top": 43.40625,
+          "right": 1866.59375,
+          "bottom": 87.40625,
+          "left": 1747
+        }
+      },
+      "visibleProposalImages": 10,
+      "attackPlaybackVerified": false,
+      "name": "wide",
+      "width": 1920,
+      "height": 1080,
+      "actor": "wyrmLord",
+      "sourceCommit": "3013b3d778de946b854d2940b28aa965af2d7638",
+      "version": "0.7.1.1549",
+      "digest": "d1b78c9f38",
+      "playableUrl": "https://cehinds.github.io/AshenSpire/branches/feature/EnemyBackSprites/latest/",
+      "verifiedActors": 1,
+      "verifiedNeutralDesigns": 10
+    },
+    {
+      "hostBounds": {
+        "dialog": {
+          "x": 16.40625,
+          "y": 35.40625,
+          "width": 787.1875,
+          "height": 1109.1875,
+          "top": 35.40625,
+          "right": 803.59375,
+          "bottom": 1144.59375,
+          "left": 16.40625
+        },
+        "frame": {
+          "x": 19.40625,
+          "y": 98.40625,
+          "width": 781.1875,
+          "height": 1043.1875,
+          "top": 98.40625,
+          "right": 800.59375,
+          "bottom": 1141.59375,
+          "left": 19.40625
+        },
+        "close": {
+          "x": 669,
+          "y": 46.40625,
+          "width": 119.59375,
+          "height": 44,
+          "top": 46.40625,
+          "right": 788.59375,
+          "bottom": 90.40625,
+          "left": 669
+        }
+      },
+      "visibleProposalImages": 9,
+      "attackPlaybackVerified": false,
+      "name": "tablet",
+      "width": 820,
+      "height": 1180,
+      "actor": "fellWarden",
+      "sourceCommit": "3013b3d778de946b854d2940b28aa965af2d7638",
+      "version": "0.7.1.1549",
+      "digest": "d1b78c9f38",
+      "playableUrl": "https://cehinds.github.io/AshenSpire/branches/feature/EnemyBackSprites/latest/",
+      "verifiedActors": 1,
+      "verifiedNeutralDesigns": 10
+    }
+  ]
+}
