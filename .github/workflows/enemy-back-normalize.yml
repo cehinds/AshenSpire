@@ -1,0 +1,52 @@
+name: Enemy back proposal normalization
+on:
+  push:
+    branches: ['worker/EnemyBackSprites/normalize-duelist']
+    paths:
+      - 'tools/enemy-back-normalize.py'
+      - '.github/workflows/enemy-back-normalize.yml'
+      - 'art/enemy-back-proposals/*/proposal-sheet.png'
+permissions:
+  contents: write
+jobs:
+  normalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install Pillow==11.1.0
+      - name: Normalize and verify source
+        id: normalize
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          python tools/enemy-back-normalize.py art/enemy-back-proposals/courtDuelist | tee normalization.log
+      - name: Preserve generated evidence on this worker only
+        if: always()
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f -- art/enemy-back-proposals/courtDuelist/normalized.json
+          for p in art/enemy-back-proposals/courtDuelist/v??.png art/enemy-back-proposals/courtDuelist/contact-sheet.png; do
+            if test -f "$p"; then git add -f -- "$p"; fi
+          done
+          if ! git diff --cached --quiet; then
+            git commit -m "Record mechanical enemy back normalization evidence"
+            git push origin HEAD:worker/EnemyBackSprites/normalize-duelist
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: enemy-back-normalization-evidence
+          path: |
+            normalization.log
+            art/enemy-back-proposals/courtDuelist/normalized.json
+            art/enemy-back-proposals/courtDuelist/v??.png
+            art/enemy-back-proposals/courtDuelist/contact-sheet.png
+      - name: Enforce source and output gates
+        if: steps.normalize.outcome != 'success'
+        run: exit 1
