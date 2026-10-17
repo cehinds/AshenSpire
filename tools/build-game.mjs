@@ -95,6 +95,21 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   const mapComponents = loadDir('engine/maps/components');
   const mapDocs = loadDir(`games/${game}/maps`);
   patch?.({ content, mechanics, uiComponents, uiScreens, mapComponents, mapDocs });
+  // Op parameter literals by catalog type; '$var' strings and { f } formulas are resolved at run time.
+  const isVar = x => typeof x === 'string' && x.startsWith('$');
+  const isFormula = x => x && typeof x === 'object' && !Array.isArray(x) && 'f' in x;
+  const paramOk = (type, x) => {
+    if (isVar(x)) return true;
+    switch (type) {
+      case 'value': case 'number': return typeof x === 'number' || isFormula(x);
+      case 'integer': return Number.isInteger(x) || isFormula(x);
+      case 'boolean': return typeof x === 'boolean';
+      case 'string': case 'cardRef': return typeof x === 'string';
+      case 'entityRef': return typeof x === 'string' || (Array.isArray(x) && x.every(y => typeof y === 'string'));
+      case 'object': return x !== null && typeof x === 'object' && !Array.isArray(x);
+      default: return true;
+    }
+  };
   // Every card effect op (cards, enemy cards, effect variants) is a catalog op: the engine throws
   // 'Unknown opcode' on play otherwise (src/engine/actions.js).
   {
@@ -103,6 +118,10 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
       if (Array.isArray(v)) return v.forEach((x, i) => walk(x, `${where}[${i}]`));
       if (!v || typeof v !== 'object') return;
       if ('op' in v && !catalog[v.op]) fail(`${where}: unknown effect op '${v.op}'`);
+      else if ('op' in v) for (const [name, param] of Object.entries(catalog[v.op].params || {})) {
+        if (param.required && v[name] === undefined) fail(`${where}: op ${v.op} needs '${name}'`);
+        else if (v[name] !== undefined && !paramOk(param.type, v[name])) fail(`${where}: op ${v.op} param '${name}' is not a ${param.type}`);
+      }
       for (const [k, x] of Object.entries(v)) walk(x, `${where}.${k}`);
     };
     for (const key of ['cards', 'enemyCards', 'resourceVariants', 'effectVariants']) if (content[key]) walk(content[key], `content.${key}`);
@@ -137,21 +156,6 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
     : /^(entity ref|status id|metric name)/.test(desc) ? typeof x === 'string'
     : /^number/.test(desc) ? isValue(x)
     : true;
-  // Op parameter literals by catalog type; '$var' strings and { f } formulas are resolved at run time.
-  const isVar = x => typeof x === 'string' && x.startsWith('$');
-  const isFormula = x => x && typeof x === 'object' && !Array.isArray(x) && 'f' in x;
-  const paramOk = (type, x) => {
-    if (isVar(x)) return true;
-    switch (type) {
-      case 'value': case 'number': return typeof x === 'number' || isFormula(x);
-      case 'integer': return Number.isInteger(x) || isFormula(x);
-      case 'boolean': return typeof x === 'boolean';
-      case 'string': case 'cardRef': return typeof x === 'string';
-      case 'entityRef': return typeof x === 'string' || (Array.isArray(x) && x.every(y => typeof y === 'string'));
-      case 'object': return x !== null && typeof x === 'object' && !Array.isArray(x);
-      default: return true;
-    }
-  };
   const formulaCatalog = readJson('engine/runtime/formulas.json').ops || {};
   const formulaOps = new Set(Object.keys(formulaCatalog));
   // formulas.json marks each operand "…, required"; a recognized operator missing one fails at run time.
@@ -162,6 +166,7 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
     if (!v || typeof v !== 'object') return [];
     const own = !('f' in v) ? [] : !formulaOps.has(v.f) ? [`${where}: unknown formula '${v.f}'`]
       : [...formulaRequired[v.f].filter(k => v[k] === undefined).map(k => `${where}: formula '${v.f}' needs '${k}'`),
+         ...(typeof v.per === 'number' && !(v.per > 0) ? [`${where}: formula '${v.f}' per must be a positive number`] : []),
          ...Object.entries(formulaCatalog[v.f].fields || {}).filter(([k]) => v[k] !== undefined && !operandOk(String(formulaCatalog[v.f].fields[k]), v[k])).map(([k]) => `${where}: formula '${v.f}' operand '${k}' has the wrong type (${formulaCatalog[v.f].fields[k]})`)];
     return [...own, ...Object.values(v).flatMap(x => formulaErrors(x, where))];
   };
@@ -177,7 +182,8 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
       if (on.startsWith('command.')) { if (!commandsOf(slug).includes(on.slice(8))) fail(`${slug}: handler '${on}' is not a command in its interface`); }
       else if (on.startsWith('event.')) {
         const full = on.slice(6);
-        if (!full.startsWith('runtime.')) {
+        if (full.startsWith('runtime.')) { if (!['runtime.poiseBroken', 'runtime.staggered'].includes(full)) fail(`${slug}: handler '${on}' listens to a runtime event the runtime never raises`); }
+        else {
           const hit = splitName(full, slugs);
           if (!hit || !eventsOf(hit.slug).includes(hit.name)) fail(`${slug}: handler '${on}' listens to an event no mechanic declares`);
         }

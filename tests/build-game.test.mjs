@@ -86,6 +86,9 @@ test('the build fails on dangling references', () => {
   assert.throws(() => buildGame({ patch: ({ mechanics }) => { const m = Object.values(mechanics).find(x => (x.service.handlers || []).length); m.service.handlers[0].when = { all: [true] }; } }), /condition must be an object/);
   assert.throws(() => buildGame({ patch: ({ mechanics }) => { const m = Object.values(mechanics).find(x => (x.service.handlers || []).length); m.service.handlers[0].do = [{ emit: 'runtime.poiseBorken' }]; } }), /runtime events are raised by ops/);
   assert.throws(() => buildGame({ patch: ({ mechanics }) => { const m = Object.values(mechanics).find(x => (x.service.handlers || []).length); m.service.handlers[0].do = [{ op: 'heal', amount: 'five' }]; } }), /param 'amount' is not a value/);
+  assert.throws(() => buildGame({ patch: ({ content }) => { const c = content.cards.find(x => (x.effects || []).some(e => e.op === 'damage')); c.effects.find(e => e.op === 'damage').amount = 'five'; } }), /op damage param 'amount' is not a value/);
+  assert.throws(() => buildGame({ patch: ({ mechanics }) => { const m = Object.values(mechanics).find(x => (x.service.handlers || []).length); m.service.handlers[0].do = [{ op: 'heal', amount: { f: 'stacks', of: 'self', status: 'bleed', per: 0 } }]; } }), /per must be a positive number/);
+  assert.throws(() => buildGame({ patch: ({ mechanics }) => { const m = Object.values(mechanics).find(x => (x.service.handlers || []).length); m.service.handlers.push({ on: 'event.runtime.poiseBorken', do: [] }); } }), /runtime event the runtime never raises/);
   assert.throws(() => buildGame({ game: 'nonexistent-game' }));
 });
 

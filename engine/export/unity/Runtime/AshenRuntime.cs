@@ -155,7 +155,10 @@ namespace Ashen.Runtime
                 ? ctx.AllEnemies.Sum(e => e.Statuses.GetValueOrDefault(status))
                 : Of(f, ctx).Statuses.GetValueOrDefault(status);
             // "per" floors the division at once.
-            return f.TryGetValue("per", out var per) ? Math.Floor(total / (AshenRuntime.AsDouble(per) ?? throw new InvalidOperationException("per must be a number"))) : total;
+            if (!f.TryGetValue("per", out var per)) return total;
+            var d = AshenRuntime.AsDouble(per) ?? throw new InvalidOperationException("per must be a number");
+            if (!(double.IsFinite(d) && d > 0)) throw new InvalidOperationException($"stacks per must be a positive number, got {d}");
+            return Math.Floor(total / d);
         }
     }
 
