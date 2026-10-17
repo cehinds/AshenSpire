@@ -1,0 +1,8 @@
+{
+  "mechanic": "cost.stamina",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

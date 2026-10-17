@@ -1,0 +1,22 @@
+{
+  "id": "classification.startingKit",
+  "tag": "classification.startingKit",
+  "version": "1.0.0",
+  "family": "classification",
+  "label": "StartingKit",
+  "description": "What a startingKit is. Every object in the startingKit collection carries this, and nothing outside it may.",
+  "attaches": [
+    "gear"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "classification.startingKit"
+  },
+  "portability": "data"
+}

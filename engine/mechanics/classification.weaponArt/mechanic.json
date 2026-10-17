@@ -1,0 +1,22 @@
+{
+  "id": "classification.weaponArt",
+  "tag": "classification.weaponArt",
+  "version": "1.0.0",
+  "family": "classification",
+  "label": "WeaponArt",
+  "description": "Tag classification.weaponArt in the classification family.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "classification.weaponArt"
+  },
+  "portability": "data"
+}

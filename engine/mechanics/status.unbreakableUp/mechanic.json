@@ -1,0 +1,25 @@
+{
+  "id": "status.unbreakableUp",
+  "tag": "status.unbreakableUp",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Unbreakable+",
+  "description": "Block no longer expires at the start of your turn. Block is capped at 40.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.unbreakableUp"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js"
+  }
+}

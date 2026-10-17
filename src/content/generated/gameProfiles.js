@@ -208,6 +208,74 @@ export const gameProfileCatalog = {
         }
       ]
     },
+    "attribute-variance": {
+      "manifest": {
+        "manifestVersion": 1,
+        "id": "attribute-variance",
+        "version": "1.0.0",
+        "runtimeABI": "ashen.runtime@1",
+        "defaults": "defaults.json",
+        "settingsSchema": "settings.schema.json",
+        "implementation": {
+          "kind": "legacy-adapter",
+          "portable": false
+        },
+        "guide": "guide.md",
+        "configuredAdapter": true
+      },
+      "defaults": {
+        "mode": "configured",
+        "points": 1,
+        "among": 3
+      },
+      "schema": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "enum": [
+              "legacy",
+              "configured"
+            ]
+          },
+          "points": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10
+          },
+          "among": {
+            "type": "integer",
+            "minimum": 2,
+            "maximum": 5
+          }
+        },
+        "required": [
+          "mode",
+          "points",
+          "among"
+        ],
+        "additionalProperties": false
+      },
+      "artifacts": [
+        {
+          "path": "engine/modules/attribute-variance/module.json",
+          "id": "attribute-variance",
+          "version": "1.0.0",
+          "hash": "sha256:799c43f76e4039402dd5a7c5731d3479a5a6a9688dd27f7c98c57cb523ea038f"
+        },
+        {
+          "path": "engine/modules/attribute-variance/defaults.json",
+          "id": "attribute-variance",
+          "version": "1.0.0",
+          "hash": "sha256:7e692dc6d0b91e006b50c7b5ab6ba479bbe65c55c0b43e83631b1c1e84240f6e"
+        },
+        {
+          "path": "engine/modules/attribute-variance/settings.schema.json",
+          "id": "attribute-variance",
+          "version": "1.0.0",
+          "hash": "sha256:a5dc40287aedb074dfd9acbbd04f799af48c96696536131282af3df98f3a2845"
+        }
+      ]
+    },
     "audio": {
       "manifest": {
         "manifestVersion": 1,
@@ -264,6 +332,65 @@ export const gameProfileCatalog = {
           "id": "audio",
           "version": "1.0.0",
           "hash": "sha256:cd31a5558d31f26c52ec26543a338758a0d290ef9bd39fd80249605ac3473dee"
+        }
+      ]
+    },
+    "card-pools": {
+      "manifest": {
+        "manifestVersion": 1,
+        "id": "card-pools",
+        "version": "1.0.0",
+        "runtimeABI": "ashen.runtime@1",
+        "defaults": "defaults.json",
+        "settingsSchema": "settings.schema.json",
+        "implementation": {
+          "kind": "legacy-adapter",
+          "portable": false
+        },
+        "guide": "guide.md",
+        "configuredAdapter": true
+      },
+      "defaults": {
+        "mode": "configured",
+        "weaponTypes": true
+      },
+      "schema": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "enum": [
+              "legacy",
+              "configured"
+            ]
+          },
+          "weaponTypes": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "mode",
+          "weaponTypes"
+        ],
+        "additionalProperties": false
+      },
+      "artifacts": [
+        {
+          "path": "engine/modules/card-pools/module.json",
+          "id": "card-pools",
+          "version": "1.0.0",
+          "hash": "sha256:0f3e1c83e40cd1519700c55d148f70ed9c30892fb1e91e90f6aba114b15fca7a"
+        },
+        {
+          "path": "engine/modules/card-pools/defaults.json",
+          "id": "card-pools",
+          "version": "1.0.0",
+          "hash": "sha256:e85550e29fecbe721560bbd83f94161c47a881202373447b33da6916929a018f"
+        },
+        {
+          "path": "engine/modules/card-pools/settings.schema.json",
+          "id": "card-pools",
+          "version": "1.0.0",
+          "hash": "sha256:d4e8df90fc7057568ad90a92b550ed06ecf15e07c7156f1b62782d5dd87f9ab2"
         }
       ]
     },
@@ -448,6 +575,484 @@ export const gameProfileCatalog = {
         }
       ]
     },
+    "characters": {
+      "manifest": {
+        "manifestVersion": 1,
+        "id": "characters",
+        "version": "1.0.0",
+        "runtimeABI": "ashen.runtime@1",
+        "defaults": "defaults.json",
+        "settingsSchema": "settings.schema.json",
+        "implementation": {
+          "kind": "legacy-adapter",
+          "portable": false
+        },
+        "guide": "guide.md",
+        "configuredAdapter": true
+      },
+      "defaults": {
+        "mode": "configured",
+        "rounding": "down",
+        "levelFrom": "levelProfile.min",
+        "statRules": {
+          "hp": {
+            "strength": 5,
+            "dexterity": 3,
+            "constitution": 10,
+            "wisdom": 2,
+            "intelligence": 1,
+            "perLevel": 5
+          },
+          "sp": {
+            "dexterity": 0.25,
+            "constitution": 0.25,
+            "wisdom": 0.2,
+            "intelligence": 0.2,
+            "perLevel": 0.1
+          },
+          "mp": {
+            "strength": 0.125,
+            "constitution": 0.25,
+            "wisdom": 0.5,
+            "intelligence": 0.125,
+            "perLevel": 0.2
+          },
+          "ar": {
+            "strength": 1
+          },
+          "dr": {
+            "dexterity": 1
+          },
+          "hand": {
+            "intelligence": 1
+          }
+        },
+        "attributeFill": {
+          "defaultPriority": [
+            "strength",
+            "dexterity",
+            "constitution",
+            "wisdom",
+            "intelligence"
+          ],
+          "priorityWeights": [
+            4,
+            3,
+            2,
+            1,
+            0
+          ],
+          "caps": {
+            "constitution": 1
+          }
+        },
+        "penaltyFloor": {
+          "sp": 1,
+          "mp": 0,
+          "hp": 1
+        },
+        "tagRules": {
+          "character.player": {
+            "requires": [
+              "player"
+            ],
+            "attributeBudget": [
+              6,
+              6
+            ],
+            "deckSize": [
+              5,
+              40
+            ],
+            "deckDefault": 11,
+            "pools": {
+              "hp": 10,
+              "sp": 0,
+              "mp": 0
+            }
+          },
+          "character.enemy": {
+            "requires": [
+              "enemy"
+            ],
+            "variance": true
+          },
+          "tier.minion": {
+            "pools": {
+              "hp": 10,
+              "sp": 2,
+              "mp": 1
+            },
+            "hand": 2,
+            "attributeBudget": [
+              2,
+              2
+            ],
+            "deckSize": [
+              2,
+              8
+            ],
+            "deckDefault": 3
+          },
+          "tier.elite": {
+            "pools": {
+              "hp": 10,
+              "sp": 3,
+              "mp": 1
+            },
+            "hand": 3,
+            "attributeBudget": [
+              4,
+              4
+            ],
+            "deckSize": [
+              3,
+              10
+            ],
+            "deckDefault": 5
+          },
+          "tier.boss": {
+            "pools": {
+              "hp": 10,
+              "sp": 3,
+              "mp": 1
+            },
+            "hand": 4,
+            "attributeBudget": [
+              6,
+              6
+            ],
+            "deckSize": [
+              4,
+              14
+            ],
+            "deckDefault": 7
+          },
+          "class.reaver": {
+            "pools": {
+              "hp": 0,
+              "sp": 3,
+              "mp": 0
+            },
+            "hand": 4
+          },
+          "class.starseer": {
+            "pools": {
+              "hp": 0,
+              "sp": 3,
+              "mp": 1
+            },
+            "hand": 4
+          },
+          "class.rogue": {
+            "pools": {
+              "hp": 0,
+              "sp": 3,
+              "mp": 1
+            },
+            "hand": 4
+          },
+          "class.herald": {
+            "pools": {
+              "hp": 0,
+              "sp": 3,
+              "mp": 1
+            },
+            "hand": 4
+          }
+        }
+      },
+      "schema": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "enum": [
+              "legacy",
+              "configured"
+            ]
+          },
+          "rounding": {
+            "enum": [
+              "down",
+              "nearest",
+              "up"
+            ]
+          },
+          "levelFrom": {
+            "enum": [
+              "levelProfile.min",
+              "levelProfile.max",
+              "encounter"
+            ]
+          },
+          "statRules": {
+            "type": "object",
+            "properties": {
+              "hp": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1000
+                }
+              },
+              "sp": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1000
+                }
+              },
+              "mp": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1000
+                }
+              },
+              "ar": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1000
+                }
+              },
+              "dr": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1000
+                }
+              },
+              "hand": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1000
+                }
+              }
+            },
+            "required": [
+              "hp",
+              "sp",
+              "mp",
+              "ar",
+              "dr",
+              "hand"
+            ],
+            "additionalProperties": false
+          },
+          "attributeFill": {
+            "type": "object",
+            "properties": {
+              "defaultPriority": {
+                "type": "array",
+                "uniqueItems": true,
+                "minItems": 1,
+                "items": {
+                  "enum": [
+                    "strength",
+                    "dexterity",
+                    "constitution",
+                    "wisdom",
+                    "intelligence"
+                  ]
+                }
+              },
+              "priorityWeights": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 5,
+                "items": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                }
+              },
+              "caps": {
+                "type": "object",
+                "properties": {
+                  "strength": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 99
+                  },
+                  "dexterity": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 99
+                  },
+                  "constitution": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 99
+                  },
+                  "wisdom": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 99
+                  },
+                  "intelligence": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 99
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "defaultPriority",
+              "priorityWeights",
+              "caps"
+            ],
+            "additionalProperties": false
+          },
+          "penaltyFloor": {
+            "type": "object",
+            "properties": {
+              "sp": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 99
+              },
+              "mp": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 99
+              },
+              "hp": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 99
+              }
+            },
+            "required": [
+              "sp",
+              "mp",
+              "hp"
+            ],
+            "additionalProperties": false
+          },
+          "tagRules": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "requires": {
+                  "type": "array",
+                  "uniqueItems": true,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "variance": {
+                  "type": "boolean"
+                },
+                "pools": {
+                  "type": "object",
+                  "properties": {
+                    "hp": {
+                      "type": "integer",
+                      "minimum": -1000,
+                      "maximum": 100000
+                    },
+                    "sp": {
+                      "type": "integer",
+                      "minimum": -99,
+                      "maximum": 99
+                    },
+                    "mp": {
+                      "type": "integer",
+                      "minimum": -99,
+                      "maximum": 99
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "hand": {
+                  "type": "integer",
+                  "minimum": -20,
+                  "maximum": 20
+                },
+                "attributeBudget": {
+                  "type": "array",
+                  "minItems": 2,
+                  "maxItems": 2,
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 200
+                  }
+                },
+                "deckSize": {
+                  "type": "array",
+                  "minItems": 2,
+                  "maxItems": 2,
+                  "items": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 99
+                  }
+                },
+                "spRange": {
+                  "type": "array",
+                  "minItems": 2,
+                  "maxItems": 2,
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 99
+                  }
+                },
+                "deckDefault": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 99
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "mode",
+          "rounding",
+          "levelFrom",
+          "statRules",
+          "attributeFill",
+          "penaltyFloor",
+          "tagRules"
+        ],
+        "additionalProperties": false
+      },
+      "artifacts": [
+        {
+          "path": "engine/modules/characters/module.json",
+          "id": "characters",
+          "version": "1.0.0",
+          "hash": "sha256:4dbbabc9cd349464138a943b4e586727c39b48d3442d715385d19516276761cd"
+        },
+        {
+          "path": "engine/modules/characters/defaults.json",
+          "id": "characters",
+          "version": "1.0.0",
+          "hash": "sha256:d902f3986fcc864651785d18087029c4d668a5c315ad302b0f8802d46624a87f"
+        },
+        {
+          "path": "engine/modules/characters/settings.schema.json",
+          "id": "characters",
+          "version": "1.0.0",
+          "hash": "sha256:da42d5faa9a9221e38bcd75fd91f791e790fa254fe615a8ac147c365cd85e2f2"
+        }
+      ]
+    },
     "class-selection": {
       "manifest": {
         "manifestVersion": 1,
@@ -590,6 +1195,198 @@ export const gameProfileCatalog = {
           "id": "damage-types",
           "version": "1.0.0",
           "hash": "sha256:df98d4f5b099d98b25cc3325266fe539673d9c844c94f312a120884f4943ea7e"
+        }
+      ]
+    },
+    "deck-training": {
+      "manifest": {
+        "manifestVersion": 1,
+        "id": "deck-training",
+        "version": "1.0.0",
+        "runtimeABI": "ashen.runtime@1",
+        "defaults": "defaults.json",
+        "settingsSchema": "settings.schema.json",
+        "implementation": {
+          "kind": "legacy-adapter",
+          "portable": false
+        },
+        "guide": "guide.md",
+        "configuredAdapter": true
+      },
+      "defaults": {
+        "mode": "configured",
+        "default": "owned",
+        "unlimited": [
+          {
+            "id": "basicTraining",
+            "requiresTag": "training.basic",
+            "pools": [
+              "strike",
+              "defend",
+              "counter",
+              "smash",
+              "sweep",
+              "evade"
+            ],
+            "cards": {
+              "rarity": [
+                "starter"
+              ],
+              "tagsAny": [
+                "maneuver:attack",
+                "maneuver:defend",
+                "maneuver:counter",
+                "maneuver:smash",
+                "maneuver:sweep"
+              ]
+            }
+          },
+          {
+            "id": "graduate",
+            "requiresTag": "training.graduate",
+            "pools": [],
+            "cards": {
+              "rarity": [
+                "starter"
+              ],
+              "tagsAll": [
+                "camp:spell"
+              ]
+            }
+          }
+        ],
+        "owned": {
+          "pools": [
+            "special"
+          ],
+          "tags": [
+            "classification.weaponArt"
+          ]
+        }
+      },
+      "schema": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "enum": [
+              "legacy",
+              "configured"
+            ]
+          },
+          "default": {
+            "enum": [
+              "owned",
+              "unlimited"
+            ]
+          },
+          "unlimited": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "requiresTag": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "pools": {
+                  "type": "array",
+                  "uniqueItems": true,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "cards": {
+                  "type": "object",
+                  "properties": {
+                    "rarity": {
+                      "type": "array",
+                      "uniqueItems": true,
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "tagsAny": {
+                      "type": "array",
+                      "uniqueItems": true,
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "tagsAll": {
+                      "type": "array",
+                      "uniqueItems": true,
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "id",
+                "requiresTag"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "owned": {
+            "type": "object",
+            "properties": {
+              "pools": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "tags": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "mode",
+          "default",
+          "unlimited",
+          "owned"
+        ],
+        "additionalProperties": false
+      },
+      "artifacts": [
+        {
+          "path": "engine/modules/deck-training/module.json",
+          "id": "deck-training",
+          "version": "1.0.0",
+          "hash": "sha256:4688931f5dee21a793a5b4c3321168039775cfcad75f89be0d6619f76a0f0922"
+        },
+        {
+          "path": "engine/modules/deck-training/defaults.json",
+          "id": "deck-training",
+          "version": "1.0.0",
+          "hash": "sha256:5f18b4661e237722f7ba320a5efc650a3d52c60eaedb9719f460744894cde3f8"
+        },
+        {
+          "path": "engine/modules/deck-training/settings.schema.json",
+          "id": "deck-training",
+          "version": "1.0.0",
+          "hash": "sha256:516f735ebeca22c8aa3d4c98a0c0e4118d6ba8f443e8985c9f5d0607de0e703c"
         }
       ]
     },
@@ -933,6 +1730,543 @@ export const gameProfileCatalog = {
         }
       ]
     },
+    "enemies": {
+      "manifest": {
+        "manifestVersion": 1,
+        "id": "enemies",
+        "version": "1.0.0",
+        "runtimeABI": "ashen.runtime@1",
+        "defaults": "defaults.json",
+        "settingsSchema": "settings.schema.json",
+        "implementation": {
+          "kind": "legacy-adapter",
+          "portable": false
+        },
+        "guide": "guide.md",
+        "configuredAdapter": true,
+        "instances": [
+          "minion",
+          "elite",
+          "boss"
+        ],
+        "unsupportedConfiguredInstances": []
+      },
+      "defaults": {
+        "mode": "configured",
+        "include": [
+          "minion",
+          "elite",
+          "boss"
+        ],
+        "fallback": "legacyMoves",
+        "deck": {
+          "min": 3,
+          "max": 15,
+          "reshuffle": "whenEmpty",
+          "drawTo": "hand",
+          "discardUnplayed": true
+        },
+        "stanceCosts": {
+          "attack": {
+            "sp": 1,
+            "mp": 0
+          },
+          "defend": {
+            "sp": 1,
+            "mp": 0
+          },
+          "smash": {
+            "sp": 2,
+            "mp": 0
+          },
+          "counter": {
+            "sp": 2,
+            "mp": 0
+          },
+          "sweep": {
+            "sp": 2,
+            "mp": 0
+          },
+          "casting": {
+            "sp": 1,
+            "mp": 1
+          }
+        },
+        "ai": {
+          "weightField": "aiWeight",
+          "lowHpThreshold": 0.35,
+          "lowHpDefendBias": 1.5,
+          "lowHpHealBias": 2,
+          "smashIntoBlockBias": 1.3,
+          "respectMaxConsecutive": true
+        }
+      },
+      "schema": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "enum": [
+              "legacy",
+              "configured"
+            ]
+          },
+          "include": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "fallback": {
+            "enum": [
+              "legacyMoves",
+              "none"
+            ]
+          },
+          "deck": {
+            "type": "object",
+            "properties": {
+              "min": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 99
+              },
+              "max": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 99
+              },
+              "reshuffle": {
+                "enum": [
+                  "whenEmpty",
+                  "endOfTurn",
+                  "never"
+                ]
+              },
+              "drawTo": {
+                "enum": [
+                  "hand"
+                ]
+              },
+              "discardUnplayed": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "min",
+              "max",
+              "reshuffle",
+              "drawTo",
+              "discardUnplayed"
+            ],
+            "additionalProperties": false
+          },
+          "stanceCosts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "sp": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 99
+                },
+                "mp": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 99
+                }
+              },
+              "required": [
+                "sp",
+                "mp"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "ai": {
+            "type": "object",
+            "properties": {
+              "weightField": {
+                "type": "string",
+                "minLength": 1
+              },
+              "lowHpThreshold": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "lowHpDefendBias": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "lowHpHealBias": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "smashIntoBlockBias": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "respectMaxConsecutive": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "weightField",
+              "lowHpThreshold",
+              "lowHpDefendBias",
+              "lowHpHealBias",
+              "smashIntoBlockBias",
+              "respectMaxConsecutive"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "mode",
+          "include",
+          "fallback",
+          "deck",
+          "stanceCosts",
+          "ai"
+        ],
+        "additionalProperties": false
+      },
+      "artifacts": [
+        {
+          "path": "engine/modules/enemies/module.json",
+          "id": "enemies",
+          "version": "1.0.0",
+          "hash": "sha256:75c630a22e3cb883e429f621984063870fec4c8f998f440ee3b06a2d21ddc954"
+        },
+        {
+          "path": "engine/modules/enemies/defaults.json",
+          "id": "enemies",
+          "version": "1.0.0",
+          "hash": "sha256:e3b2b049f509a22ea2ba9d996e329dc4256f525a0c3cd753332ee301733d3ad9"
+        },
+        {
+          "path": "engine/modules/enemies/settings.schema.json",
+          "id": "enemies",
+          "version": "1.0.0",
+          "hash": "sha256:34fefaade15673baa80535b21fee8fa7d54d6cae7ba3cdfe965fe56e25c08aa3"
+        }
+      ]
+    },
+    "enemy-relics": {
+      "manifest": {
+        "manifestVersion": 1,
+        "id": "enemy-relics",
+        "version": "1.0.0",
+        "runtimeABI": "ashen.runtime@1",
+        "defaults": "defaults.json",
+        "settingsSchema": "settings.schema.json",
+        "implementation": {
+          "kind": "legacy-adapter",
+          "portable": false
+        },
+        "guide": "guide.md",
+        "configuredAdapter": true
+      },
+      "defaults": {
+        "mode": "configured",
+        "equipment": {
+          "maxPoints": 5,
+          "maxStats": 3,
+          "source": "player"
+        }
+      },
+      "schema": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "enum": [
+              "legacy",
+              "configured"
+            ]
+          },
+          "equipment": {
+            "type": "object",
+            "properties": {
+              "maxPoints": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 99
+              },
+              "maxStats": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 5
+              },
+              "source": {
+                "enum": [
+                  "player",
+                  "enemy"
+                ]
+              }
+            },
+            "required": [
+              "maxPoints",
+              "maxStats",
+              "source"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "mode",
+          "equipment"
+        ],
+        "additionalProperties": false
+      },
+      "artifacts": [
+        {
+          "path": "engine/modules/enemy-relics/module.json",
+          "id": "enemy-relics",
+          "version": "1.0.0",
+          "hash": "sha256:54a4774c4f94d56ecc7906ff7c17475ba92687000ad773442f2a34981802f019"
+        },
+        {
+          "path": "engine/modules/enemy-relics/defaults.json",
+          "id": "enemy-relics",
+          "version": "1.0.0",
+          "hash": "sha256:df4439e71646c5b7468b333476edb60af4b556d68eba075b16c82dbcd504c397"
+        },
+        {
+          "path": "engine/modules/enemy-relics/settings.schema.json",
+          "id": "enemy-relics",
+          "version": "1.0.0",
+          "hash": "sha256:5887810e29a1c4b750053b7e1063ae08f8c584659ff7e37ecc8cf8104d7918a0"
+        }
+      ]
+    },
+    "enemy-visibility": {
+      "manifest": {
+        "manifestVersion": 1,
+        "id": "enemy-visibility",
+        "version": "1.0.0",
+        "runtimeABI": "ashen.runtime@1",
+        "defaults": "defaults.json",
+        "settingsSchema": "settings.schema.json",
+        "implementation": {
+          "kind": "legacy-adapter",
+          "portable": false
+        },
+        "guide": "guide.md",
+        "configuredAdapter": true
+      },
+      "defaults": {
+        "mode": "configured",
+        "shown": [
+          "hp",
+          "poise",
+          "intent",
+          "defense",
+          "statuses"
+        ],
+        "revealedBy": {
+          "sp": [
+            "insight",
+            "bestiary"
+          ],
+          "mp": [
+            "insight",
+            "bestiary"
+          ],
+          "cardCosts": [
+            "insight"
+          ],
+          "deck": [
+            "bestiary"
+          ],
+          "hand": [
+            "insight"
+          ],
+          "gear": [
+            "bestiary"
+          ],
+          "relics": [
+            "bestiary"
+          ],
+          "attributes": [
+            "bestiary"
+          ]
+        }
+      },
+      "schema": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "enum": [
+              "legacy",
+              "configured"
+            ]
+          },
+          "shown": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "hp",
+                "poise",
+                "intent",
+                "defense",
+                "statuses",
+                "sp",
+                "mp",
+                "cardCosts",
+                "deck",
+                "hand",
+                "gear",
+                "relics",
+                "attributes"
+              ]
+            }
+          },
+          "revealedBy": {
+            "type": "object",
+            "properties": {
+              "hp": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "poise": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "intent": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "defense": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "statuses": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "sp": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "mp": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "cardCosts": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "deck": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "hand": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "gear": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "relics": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "attributes": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "mode",
+          "shown",
+          "revealedBy"
+        ],
+        "additionalProperties": false
+      },
+      "artifacts": [
+        {
+          "path": "engine/modules/enemy-visibility/module.json",
+          "id": "enemy-visibility",
+          "version": "1.0.0",
+          "hash": "sha256:d7c01eaebb117b5b228e7c4b80028028e7c48cba81153ecd326177ec23828960"
+        },
+        {
+          "path": "engine/modules/enemy-visibility/defaults.json",
+          "id": "enemy-visibility",
+          "version": "1.0.0",
+          "hash": "sha256:081a77c34dd65f338ee5e59573692de6f4342ea44d2031ed1c6b58a6616c1692"
+        },
+        {
+          "path": "engine/modules/enemy-visibility/settings.schema.json",
+          "id": "enemy-visibility",
+          "version": "1.0.0",
+          "hash": "sha256:ac6ec1272f3d6300626c2c2bc614bd12bfc23f399ea57bc1bc073abbc35d7b6a"
+        }
+      ]
+    },
     "equipment": {
       "manifest": {
         "manifestVersion": 1,
@@ -1126,6 +2460,1493 @@ export const gameProfileCatalog = {
           "id": "formation",
           "version": "1.0.0",
           "hash": "sha256:7604d8c6c2694a06b50aba59a963f4da528d3c39d6547f412f12f7c249f5b869"
+        }
+      ]
+    },
+    "gear": {
+      "manifest": {
+        "manifestVersion": 1,
+        "id": "gear",
+        "version": "1.0.0",
+        "runtimeABI": "ashen.runtime@1",
+        "defaults": "defaults.json",
+        "settingsSchema": "settings.schema.json",
+        "implementation": {
+          "kind": "legacy-adapter",
+          "portable": false
+        },
+        "guide": "guide.md",
+        "configuredAdapter": true
+      },
+      "defaults": {
+        "mode": "configured",
+        "pools": "merged",
+        "rarities": [
+          "common",
+          "uncommon",
+          "rare",
+          "epic"
+        ],
+        "poolSizes": {
+          "ratings": {
+            "common": {
+              "min": 3,
+              "max": 3
+            },
+            "uncommon": {
+              "min": 4,
+              "max": 4
+            },
+            "rare": {
+              "min": 5,
+              "max": 5
+            },
+            "epic": {
+              "min": 6,
+              "max": 6
+            }
+          },
+          "bonus": {
+            "common": {
+              "min": 2,
+              "max": 3
+            },
+            "uncommon": {
+              "min": 2,
+              "max": 4
+            },
+            "rare": {
+              "min": 2,
+              "max": 5
+            },
+            "epic": {
+              "min": 2,
+              "max": 6
+            }
+          },
+          "merged": {
+            "common": {
+              "min": 4,
+              "max": 4
+            },
+            "uncommon": {
+              "min": 5,
+              "max": 5
+            },
+            "rare": {
+              "min": 6,
+              "max": 6
+            },
+            "epic": {
+              "min": 7,
+              "max": 7
+            }
+          }
+        },
+        "mergedShare": {
+          "default": {
+            "ratings": 0.5,
+            "bonus": 0.5
+          },
+          "common": {
+            "ratings": 1,
+            "bonus": 0
+          }
+        },
+        "fillTo": "max",
+        "maxAttributes": 3,
+        "pointValues": {
+          "ar": 1,
+          "dr": 2,
+          "poise": 3,
+          "strength": 1,
+          "dexterity": 1,
+          "constitution": 1,
+          "wisdom": 1,
+          "intelligence": 1
+        },
+        "tags": {
+          "sword": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "ar": 2,
+                "dr": 1,
+                "poise": 1
+              },
+              "bonus": {
+                "strength": 1,
+                "dexterity": 1
+              }
+            }
+          },
+          "greatsword": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "ar": 3,
+                "poise": 3
+              },
+              "bonus": {
+                "strength": 3,
+                "constitution": 1
+              }
+            }
+          },
+          "dagger": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "ar": 2,
+                "dr": 1
+              },
+              "bonus": {
+                "dexterity": 3
+              }
+            }
+          },
+          "bow": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "ar": 3
+              },
+              "bonus": {
+                "dexterity": 3
+              }
+            }
+          },
+          "katana": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "ar": 3,
+                "dr": 1
+              },
+              "bonus": {
+                "dexterity": 2,
+                "strength": 1
+              }
+            }
+          },
+          "polearm": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "ar": 3,
+                "poise": 2
+              },
+              "bonus": {
+                "strength": 2,
+                "dexterity": 1
+              }
+            }
+          },
+          "hammer": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "ar": 1,
+                "poise": 3
+              },
+              "bonus": {
+                "strength": 2,
+                "constitution": 1
+              }
+            }
+          },
+          "twinblade": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "ar": 3,
+                "dr": 1
+              },
+              "bonus": {
+                "dexterity": 3
+              }
+            }
+          },
+          "axe": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "ar": 3,
+                "poise": 1
+              },
+              "bonus": {
+                "strength": 3
+              }
+            }
+          },
+          "spear": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "ar": 2,
+                "poise": 1
+              },
+              "bonus": {
+                "strength": 1,
+                "dexterity": 1
+              }
+            }
+          },
+          "buckler": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "dr": 2,
+                "ar": 1
+              },
+              "bonus": {
+                "dexterity": 2,
+                "constitution": 1
+              }
+            }
+          },
+          "kiteShield": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "dr": 2,
+                "poise": 2
+              },
+              "bonus": {
+                "constitution": 2,
+                "dexterity": 1
+              }
+            }
+          },
+          "towerShield": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "dr": 3,
+                "poise": 3
+              },
+              "bonus": {
+                "constitution": 3,
+                "strength": 1
+              }
+            }
+          },
+          "roundShield": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "dr": 2,
+                "poise": 1
+              },
+              "bonus": {
+                "constitution": 1,
+                "dexterity": 1
+              }
+            }
+          },
+          "spikedShield": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "dr": 2,
+                "ar": 1,
+                "poise": 1
+              },
+              "bonus": {
+                "constitution": 1,
+                "strength": 1
+              }
+            }
+          },
+          "lantern": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "dr": 2
+              },
+              "bonus": {
+                "wisdom": 2
+              }
+            }
+          },
+          "torch": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "dr": 1,
+                "ar": 1
+              },
+              "bonus": {
+                "wisdom": 1,
+                "intelligence": 1
+              }
+            }
+          },
+          "parryingDagger": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "dr": 2,
+                "poise": 1
+              },
+              "bonus": {
+                "dexterity": 3
+              }
+            }
+          },
+          "staff": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "ar": 1,
+                "dr": 1
+              },
+              "bonus": {
+                "intelligence": 2,
+                "wisdom": 1
+              }
+            }
+          },
+          "sceptre": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "ar": 2
+              },
+              "bonus": {
+                "intelligence": 2,
+                "wisdom": 1
+              }
+            }
+          },
+          "rod": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "ar": 2
+              },
+              "bonus": {
+                "wisdom": 2,
+                "intelligence": 1
+              }
+            }
+          },
+          "chime": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "ar": 1,
+                "dr": 1
+              },
+              "bonus": {
+                "wisdom": 2,
+                "intelligence": 1
+              }
+            }
+          },
+          "plate": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "dr": 2,
+                "poise": 2
+              },
+              "bonus": {
+                "constitution": 2,
+                "strength": 1
+              }
+            }
+          },
+          "mail": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "dr": 3,
+                "poise": 1
+              },
+              "bonus": {
+                "constitution": 2,
+                "dexterity": 1
+              }
+            }
+          },
+          "robes": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "dr": 1,
+                "poise": 1
+              },
+              "bonus": {
+                "wisdom": 2,
+                "intelligence": 2
+              }
+            }
+          },
+          "leathers": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "dr": 2,
+                "poise": 1
+              },
+              "bonus": {
+                "dexterity": 2,
+                "strength": 1
+              }
+            }
+          },
+          "heavy": {
+            "group": "penalty",
+            "cost": -1,
+            "modifier": "strike.cost",
+            "amount": 1,
+            "priority": 80,
+            "weights": {
+              "ratings": {
+                "ar": 2,
+                "poise": 3
+              },
+              "bonus": {
+                "strength": 3,
+                "constitution": 1
+              }
+            }
+          },
+          "flurry": {
+            "group": "effect",
+            "cost": 1,
+            "modifier": "strike.hits",
+            "amount": 1,
+            "priority": 70,
+            "weights": {
+              "ratings": {
+                "ar": 3,
+                "dr": 1
+              },
+              "bonus": {
+                "dexterity": 3
+              }
+            }
+          },
+          "stagger": {
+            "group": "effect",
+            "cost": 1,
+            "modifier": "strike.poise",
+            "amount": 3,
+            "priority": 60,
+            "weights": {
+              "ratings": {
+                "poise": 3,
+                "ar": 1
+              },
+              "bonus": {
+                "strength": 2
+              }
+            }
+          },
+          "encumbered": {
+            "group": "penalty",
+            "cost": -1,
+            "modifier": "self.maxStamina",
+            "amount": -1,
+            "priority": 60,
+            "weights": {
+              "ratings": {
+                "dr": 3,
+                "poise": 2
+              },
+              "bonus": {
+                "constitution": 3
+              }
+            }
+          },
+          "light": {
+            "group": "effect",
+            "cost": 1,
+            "modifier": "self.maxStamina",
+            "amount": 1,
+            "priority": 40,
+            "weights": {
+              "ratings": {},
+              "bonus": {
+                "dexterity": 1
+              }
+            }
+          },
+          "bleed": {
+            "group": "effect",
+            "cost": 1,
+            "modifier": "strike.bleed",
+            "amount": 2,
+            "priority": 30,
+            "weights": {
+              "ratings": {},
+              "bonus": {
+                "dexterity": 1
+              }
+            }
+          },
+          "burn": {
+            "group": "effect",
+            "cost": 1,
+            "modifier": "strike.burn",
+            "amount": 2,
+            "priority": 30,
+            "weights": {
+              "ratings": {},
+              "bonus": {
+                "intelligence": 1
+              }
+            }
+          },
+          "frost": {
+            "group": "effect",
+            "cost": 1,
+            "modifier": "strike.frost",
+            "amount": 2,
+            "priority": 30,
+            "weights": {
+              "ratings": {},
+              "bonus": {
+                "intelligence": 1
+              }
+            }
+          },
+          "blight": {
+            "group": "effect",
+            "cost": 1,
+            "modifier": "strike.blight",
+            "amount": 2,
+            "priority": 30,
+            "weights": {
+              "ratings": {},
+              "bonus": {
+                "wisdom": 1
+              }
+            }
+          },
+          "insanity": {
+            "group": "effect",
+            "cost": 1,
+            "modifier": "strike.insanity",
+            "amount": 2,
+            "priority": 30,
+            "weights": {
+              "ratings": {},
+              "bonus": {
+                "intelligence": 1
+              }
+            }
+          },
+          "regen": {
+            "group": "effect",
+            "cost": 1,
+            "modifier": "self.regen",
+            "amount": 1,
+            "priority": 20,
+            "weights": {
+              "ratings": {},
+              "bonus": {
+                "wisdom": 1
+              }
+            }
+          },
+          "unwieldy": {
+            "group": "penalty",
+            "cost": -1,
+            "modifier": "strike.damage",
+            "amount": -1,
+            "priority": 10,
+            "weights": {
+              "ratings": {},
+              "bonus": {}
+            }
+          },
+          "thin": {
+            "group": "penalty",
+            "cost": -1,
+            "modifier": "defend.block",
+            "amount": -1,
+            "priority": 10,
+            "weights": {
+              "ratings": {},
+              "bonus": {}
+            }
+          }
+        },
+        "weights": {
+          "kinds": {
+            "weapon": {
+              "ratings": {
+                "ar": 3,
+                "poise": 1
+              },
+              "bonus": {
+                "strength": 2,
+                "dexterity": 1
+              }
+            },
+            "shield": {
+              "ratings": {
+                "dr": 3,
+                "poise": 2
+              },
+              "bonus": {
+                "constitution": 2,
+                "dexterity": 1
+              }
+            },
+            "staff": {
+              "ratings": {
+                "ar": 2,
+                "dr": 1
+              },
+              "bonus": {
+                "intelligence": 2,
+                "wisdom": 1
+              }
+            },
+            "armor": {
+              "ratings": {
+                "dr": 2,
+                "poise": 2
+              },
+              "bonus": {
+                "constitution": 2,
+                "dexterity": 1
+              }
+            },
+            "head": {
+              "ratings": {
+                "dr": 1,
+                "poise": 1
+              },
+              "bonus": {
+                "wisdom": 1,
+                "intelligence": 1
+              }
+            },
+            "hands": {
+              "ratings": {
+                "ar": 1,
+                "dr": 1
+              },
+              "bonus": {
+                "strength": 1,
+                "dexterity": 1
+              }
+            },
+            "feet": {
+              "ratings": {
+                "dr": 1,
+                "poise": 1
+              },
+              "bonus": {
+                "dexterity": 2,
+                "constitution": 1
+              }
+            },
+            "talisman": {
+              "ratings": {
+                "dr": 1
+              },
+              "bonus": {
+                "wisdom": 1,
+                "intelligence": 1,
+                "constitution": 1
+              }
+            }
+          },
+          "slots": {
+            "rightHand": {
+              "ratings": {
+                "ar": 3,
+                "poise": 1
+              },
+              "bonus": {
+                "strength": 2,
+                "dexterity": 1
+              }
+            },
+            "leftHand": {
+              "ratings": {
+                "dr": 3,
+                "poise": 1
+              },
+              "bonus": {
+                "constitution": 2,
+                "dexterity": 1
+              }
+            },
+            "armor": {
+              "ratings": {
+                "dr": 2,
+                "poise": 2
+              },
+              "bonus": {
+                "constitution": 2,
+                "dexterity": 1
+              }
+            }
+          },
+          "global": {
+            "ratings": {
+              "ar": 1,
+              "dr": 1,
+              "poise": 1
+            },
+            "bonus": {
+              "strength": 1,
+              "dexterity": 1,
+              "constitution": 1
+            }
+          }
+        }
+      },
+      "schema": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "enum": [
+              "legacy",
+              "configured"
+            ]
+          },
+          "pools": {
+            "enum": [
+              "split",
+              "merged"
+            ]
+          },
+          "rarities": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "poolSizes": {
+            "type": "object",
+            "properties": {
+              "ratings": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "min": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 99
+                    },
+                    "max": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 99
+                    }
+                  },
+                  "required": [
+                    "min",
+                    "max"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "bonus": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "min": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 99
+                    },
+                    "max": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 99
+                    }
+                  },
+                  "required": [
+                    "min",
+                    "max"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "merged": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "min": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 99
+                    },
+                    "max": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 99
+                    }
+                  },
+                  "required": [
+                    "min",
+                    "max"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "ratings",
+              "bonus",
+              "merged"
+            ],
+            "additionalProperties": false
+          },
+          "mergedShare": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "ratings": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "bonus": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              },
+              "required": [
+                "ratings",
+                "bonus"
+              ],
+              "additionalProperties": false
+            },
+            "required": [
+              "default"
+            ]
+          },
+          "fillTo": {
+            "enum": [
+              "max",
+              "min",
+              "none"
+            ]
+          },
+          "maxAttributes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 5
+          },
+          "pointValues": {
+            "type": "object",
+            "properties": {
+              "ar": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "dr": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "poise": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "strength": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "dexterity": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "constitution": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "wisdom": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "intelligence": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              }
+            },
+            "required": [
+              "ar",
+              "dr",
+              "poise",
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "additionalProperties": false
+          },
+          "tags": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "group": {
+                  "enum": [
+                    "type",
+                    "effect",
+                    "penalty"
+                  ]
+                },
+                "cost": {
+                  "type": "integer",
+                  "minimum": -5,
+                  "maximum": 5
+                },
+                "modifier": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "amount": {
+                  "type": "number",
+                  "minimum": -100,
+                  "maximum": 100
+                },
+                "priority": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 1000
+                },
+                "weights": {
+                  "type": "object",
+                  "properties": {
+                    "ratings": {
+                      "type": "object",
+                      "properties": {
+                        "ar": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 100
+                        },
+                        "dr": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 100
+                        },
+                        "poise": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 100
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "bonus": {
+                      "type": "object",
+                      "properties": {
+                        "strength": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 100
+                        },
+                        "dexterity": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 100
+                        },
+                        "constitution": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 100
+                        },
+                        "wisdom": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 100
+                        },
+                        "intelligence": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 100
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "group",
+                "cost",
+                "priority",
+                "weights"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "weights": {
+            "type": "object",
+            "properties": {
+              "kinds": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "ratings": {
+                      "type": "object",
+                      "properties": {
+                        "ar": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 100
+                        },
+                        "dr": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 100
+                        },
+                        "poise": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 100
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "bonus": {
+                      "type": "object",
+                      "properties": {
+                        "strength": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 100
+                        },
+                        "dexterity": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 100
+                        },
+                        "constitution": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 100
+                        },
+                        "wisdom": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 100
+                        },
+                        "intelligence": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 100
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [],
+                  "additionalProperties": false
+                }
+              },
+              "slots": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "ratings": {
+                      "type": "object",
+                      "properties": {
+                        "ar": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 100
+                        },
+                        "dr": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 100
+                        },
+                        "poise": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 100
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "bonus": {
+                      "type": "object",
+                      "properties": {
+                        "strength": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 100
+                        },
+                        "dexterity": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 100
+                        },
+                        "constitution": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 100
+                        },
+                        "wisdom": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 100
+                        },
+                        "intelligence": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 100
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [],
+                  "additionalProperties": false
+                }
+              },
+              "global": {
+                "type": "object",
+                "properties": {
+                  "ratings": {
+                    "type": "object",
+                    "properties": {
+                      "ar": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 100
+                      },
+                      "dr": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 100
+                      },
+                      "poise": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 100
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "bonus": {
+                    "type": "object",
+                    "properties": {
+                      "strength": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 100
+                      },
+                      "dexterity": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 100
+                      },
+                      "constitution": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 100
+                      },
+                      "wisdom": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 100
+                      },
+                      "intelligence": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 100
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "required": [],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "kinds",
+              "slots",
+              "global"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "mode",
+          "pools",
+          "rarities",
+          "poolSizes",
+          "mergedShare",
+          "fillTo",
+          "maxAttributes",
+          "pointValues",
+          "tags",
+          "weights"
+        ],
+        "additionalProperties": false
+      },
+      "artifacts": [
+        {
+          "path": "engine/modules/gear/module.json",
+          "id": "gear",
+          "version": "1.0.0",
+          "hash": "sha256:1dd5905be7f4c47e6b87ec5c1d5f36c36af7bcafaa8a505d886428ebbefcdc8c"
+        },
+        {
+          "path": "engine/modules/gear/defaults.json",
+          "id": "gear",
+          "version": "1.0.0",
+          "hash": "sha256:475f55fe842ba90f921228143cb065e233c53f7a07e9fb1781a396a3d6832263"
+        },
+        {
+          "path": "engine/modules/gear/settings.schema.json",
+          "id": "gear",
+          "version": "1.0.0",
+          "hash": "sha256:9d9b32dde89343b278b5823a682b85ccc27fd512c2e4ffe86d5df05abb0f7c3b"
+        }
+      ]
+    },
+    "heal-rules": {
+      "manifest": {
+        "manifestVersion": 1,
+        "id": "heal-rules",
+        "version": "1.0.0",
+        "runtimeABI": "ashen.runtime@1",
+        "defaults": "defaults.json",
+        "settingsSchema": "settings.schema.json",
+        "implementation": {
+          "kind": "legacy-adapter",
+          "portable": false
+        },
+        "guide": "guide.md",
+        "configuredAdapter": true
+      },
+      "defaults": {
+        "mode": "configured",
+        "match": "mostSpecific",
+        "authoredCostWins": true,
+        "shapes": [
+          {
+            "id": "full",
+            "tags": [
+              "fx:heal"
+            ],
+            "cost": {
+              "sp": 3,
+              "mp": 2
+            },
+            "amount": {
+              "percentMaxHp": 10
+            },
+            "exhaust": false
+          },
+          {
+            "id": "cheap",
+            "tags": [
+              "fx:heal",
+              "lifecycle.exhaust"
+            ],
+            "cost": {
+              "sp": 1,
+              "mp": 1
+            },
+            "amount": {
+              "percentMaxHp": 10
+            },
+            "exhaust": true
+          }
+        ]
+      },
+      "schema": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "enum": [
+              "legacy",
+              "configured"
+            ]
+          },
+          "match": {
+            "enum": [
+              "mostSpecific",
+              "first"
+            ]
+          },
+          "authoredCostWins": {
+            "type": "boolean"
+          },
+          "shapes": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "tags": {
+                  "type": "array",
+                  "minItems": 1,
+                  "uniqueItems": true,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "cost": {
+                  "type": "object",
+                  "properties": {
+                    "sp": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 99
+                    },
+                    "mp": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 99
+                    }
+                  },
+                  "required": [
+                    "sp",
+                    "mp"
+                  ],
+                  "additionalProperties": false
+                },
+                "amount": {
+                  "type": "object",
+                  "properties": {
+                    "percentMaxHp": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 100
+                    }
+                  },
+                  "required": [
+                    "percentMaxHp"
+                  ],
+                  "additionalProperties": false
+                },
+                "exhaust": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "id",
+                "tags",
+                "cost",
+                "amount",
+                "exhaust"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "mode",
+          "match",
+          "authoredCostWins",
+          "shapes"
+        ],
+        "additionalProperties": false
+      },
+      "artifacts": [
+        {
+          "path": "engine/modules/heal-rules/module.json",
+          "id": "heal-rules",
+          "version": "1.0.0",
+          "hash": "sha256:96ba05ad114ba32c86103d5080318e8438a9575fd2b5bd7f3263c0eec0e834b5"
+        },
+        {
+          "path": "engine/modules/heal-rules/defaults.json",
+          "id": "heal-rules",
+          "version": "1.0.0",
+          "hash": "sha256:b0e67562237082c8dac12cc401140877fe94747b5d30bc056a4d29b80f5b5056"
+        },
+        {
+          "path": "engine/modules/heal-rules/settings.schema.json",
+          "id": "heal-rules",
+          "version": "1.0.0",
+          "hash": "sha256:857be96cfa609d570d1593cf478d64955b74467592a0a02737a39d444f3f97fb"
         }
       ]
     },
@@ -1744,6 +4565,94 @@ export const gameProfileCatalog = {
         }
       ]
     },
+    "reward-ranks": {
+      "manifest": {
+        "manifestVersion": 1,
+        "id": "reward-ranks",
+        "version": "1.0.0",
+        "runtimeABI": "ashen.runtime@1",
+        "defaults": "defaults.json",
+        "settingsSchema": "settings.schema.json",
+        "implementation": {
+          "kind": "legacy-adapter",
+          "portable": false
+        },
+        "guide": "guide.md",
+        "configuredAdapter": true
+      },
+      "defaults": {
+        "mode": "configured",
+        "minRank": 1,
+        "lowerRankChance": 0.1,
+        "rankOfRarity": {
+          "starter": 0,
+          "common": 1,
+          "uncommon": 2,
+          "rare": 3
+        },
+        "skipOwnedBasics": true
+      },
+      "schema": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "enum": [
+              "legacy",
+              "configured"
+            ]
+          },
+          "minRank": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10
+          },
+          "lowerRankChance": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "rankOfRarity": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10
+            }
+          },
+          "skipOwnedBasics": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "mode",
+          "minRank",
+          "lowerRankChance",
+          "rankOfRarity",
+          "skipOwnedBasics"
+        ],
+        "additionalProperties": false
+      },
+      "artifacts": [
+        {
+          "path": "engine/modules/reward-ranks/module.json",
+          "id": "reward-ranks",
+          "version": "1.0.0",
+          "hash": "sha256:60a7c6539a0f192ef1b3271bb4061d722f9825ed4331d71f6b23bf371bab5468"
+        },
+        {
+          "path": "engine/modules/reward-ranks/defaults.json",
+          "id": "reward-ranks",
+          "version": "1.0.0",
+          "hash": "sha256:c99153c3ca8f3bedb632f3be2d83a000b133383324f854c7368f8e324dca6c19"
+        },
+        {
+          "path": "engine/modules/reward-ranks/settings.schema.json",
+          "id": "reward-ranks",
+          "version": "1.0.0",
+          "hash": "sha256:97d419a7cf2cdbf16a04b0270804349e31cc450d2e887052fbccf3e0f42187c7"
+        }
+      ]
+    },
     "rewards": {
       "manifest": {
         "manifestVersion": 1,
@@ -1998,6 +4907,87 @@ export const gameProfileCatalog = {
           "id": "shops",
           "version": "1.0.0",
           "hash": "sha256:b997b20e7344c52165b9fe737b4a46bf0c2a38636d25b173fcbb1aa3cbb34bba"
+        }
+      ]
+    },
+    "stagger": {
+      "manifest": {
+        "manifestVersion": 1,
+        "id": "stagger",
+        "version": "1.0.0",
+        "runtimeABI": "ashen.runtime@1",
+        "defaults": "defaults.json",
+        "settingsSchema": "settings.schema.json",
+        "implementation": {
+          "kind": "legacy-adapter",
+          "portable": false
+        },
+        "guide": "guide.md",
+        "configuredAdapter": true
+      },
+      "defaults": {
+        "mode": "configured",
+        "spLoss": 1,
+        "status": "vulnerable",
+        "stacks": 1,
+        "damageTakenMultiplier": 1.25
+      },
+      "schema": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "enum": [
+              "legacy",
+              "configured"
+            ]
+          },
+          "spLoss": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 99
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "stacks": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 99
+          },
+          "damageTakenMultiplier": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 10
+          }
+        },
+        "required": [
+          "mode",
+          "spLoss",
+          "status",
+          "stacks",
+          "damageTakenMultiplier"
+        ],
+        "additionalProperties": false
+      },
+      "artifacts": [
+        {
+          "path": "engine/modules/stagger/module.json",
+          "id": "stagger",
+          "version": "1.0.0",
+          "hash": "sha256:bf2311362adc54a6e6902e834b00c2fa39db71ca819228e3585b6d447522a552"
+        },
+        {
+          "path": "engine/modules/stagger/defaults.json",
+          "id": "stagger",
+          "version": "1.0.0",
+          "hash": "sha256:10dc5d9f08dabd93f6fde9469d7f23df34f031c8b2405c56877a39e8208bb4f7"
+        },
+        {
+          "path": "engine/modules/stagger/settings.schema.json",
+          "id": "stagger",
+          "version": "1.0.0",
+          "hash": "sha256:7fa78b3c409cf5996eb143b0c941dc5a66abd0a20d414a3124cd35aab2b86be8"
         }
       ]
     },
@@ -2391,6 +5381,12 @@ export const gameProfileCatalog = {
             "version": "1.0.0",
             "settings": {}
           },
+          "gear": {
+            "version": "1.0.0",
+            "settings": {
+              "pools": "merged"
+            }
+          },
           "class-selection": {
             "version": "1.0.0",
             "settings": {}
@@ -2431,6 +5427,14 @@ export const gameProfileCatalog = {
             "version": "1.0.0",
             "settings": {}
           },
+          "characters": {
+            "version": "1.0.0",
+            "settings": {}
+          },
+          "enemies": {
+            "version": "1.0.0",
+            "settings": {}
+          },
           "formation": {
             "version": "1.0.0",
             "settings": {
@@ -2443,6 +5447,38 @@ export const gameProfileCatalog = {
                 "capacityPerLane": 1
               }
             }
+          },
+          "heal-rules": {
+            "version": "1.0.0",
+            "settings": {}
+          },
+          "stagger": {
+            "version": "1.0.0",
+            "settings": {}
+          },
+          "enemy-visibility": {
+            "version": "1.0.0",
+            "settings": {}
+          },
+          "enemy-relics": {
+            "version": "1.0.0",
+            "settings": {}
+          },
+          "attribute-variance": {
+            "version": "1.0.0",
+            "settings": {}
+          },
+          "deck-training": {
+            "version": "1.0.0",
+            "settings": {}
+          },
+          "card-pools": {
+            "version": "1.0.0",
+            "settings": {}
+          },
+          "reward-ranks": {
+            "version": "1.0.0",
+            "settings": {}
           }
         },
         "packs": [
@@ -2521,7 +5557,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/bundles/core/bundle.json",
           "id": "ashen.core",
           "version": "1.0.0",
-          "hash": "sha256:0220ddc8a73947935a7479031123c6083da00a99a9d3dc5ee3f89e1036824b6f"
+          "hash": "sha256:05906b73b977762b0cad9d842acb3f106294f98c2b64cd7489737c11c817d14d"
         }
       ]
     },
@@ -2739,7 +5775,8 @@ export const gameProfileCatalog = {
         "id": "ashen.core-content",
         "version": "1.0.0",
         "content": {
-          "classes": "classes.json",
+          "characters": "characters.json",
+          "cardPools": "cardPools.json",
           "cards": "cards.json",
           "starterDeck": "starterDeck.json",
           "stats": "stats.json",
@@ -2749,14 +5786,22 @@ export const gameProfileCatalog = {
           "rewards": "rewards.json",
           "provisionalPolicies": "provisionalPolicies.json",
           "resourceVariants": "resourceVariants.json",
-          "shops": "shops.json"
+          "shops": "shops.json",
+          "enemyCards": "enemyCards.json",
+          "enemyRelics": "enemyRelics.json",
+          "gear": "gear.json"
         }
       },
       "content": {
-        "classes": [
+        "characters": [
           {
             "id": "reaver",
             "name": "Reaver",
+            "tags": [
+              "character.player",
+              "class.reaver",
+              "training.basic"
+            ],
             "attributes": {
               "strength": 2,
               "dexterity": 1,
@@ -2764,17 +5809,72 @@ export const gameProfileCatalog = {
               "wisdom": 1,
               "intelligence": 1
             },
-            "loadout": {
-              "rightHand": "greatsword",
-              "leftHand": null
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "level": 1,
+            "defaultDeck": [
+              {
+                "pool": "strike",
+                "copies": 3
+              },
+              {
+                "pool": "defend",
+                "copies": 2
+              },
+              {
+                "pool": "counter",
+                "copies": 1
+              },
+              {
+                "pool": "smash",
+                "copies": 1
+              },
+              {
+                "pool": "sweep",
+                "copies": 1
+              },
+              {
+                "pool": "evade",
+                "copies": 1
+              },
+              {
+                "card": "base.draw",
+                "copies": 1
+              },
+              {
+                "pool": "special",
+                "copies": 1
+              }
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "greatsword"
+              }
+            ],
+            "defaultRelics": [],
+            "presentation": {
+              "art": "reaver",
+              "size": "medium"
             },
-            "specialCardId": "core.reaverSpecial",
-            "maxHp": 84,
-            "description": "Strength-focused fighter with a greatsword and heavy attacks."
+            "player": {
+              "specialCardId": "core.reaverSpecial",
+              "description": "Strength-focused fighter with a greatsword and heavy attacks."
+            }
           },
           {
             "id": "starseer",
             "name": "Starseer",
+            "tags": [
+              "character.player",
+              "class.starseer",
+              "training.basic"
+            ],
             "attributes": {
               "strength": 1,
               "dexterity": 1,
@@ -2782,17 +5882,72 @@ export const gameProfileCatalog = {
               "wisdom": 1,
               "intelligence": 2
             },
-            "loadout": {
-              "rightHand": "boneSceptre",
-              "leftHand": null
+            "attributePriority": [
+              "intelligence",
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom"
+            ],
+            "level": 1,
+            "defaultDeck": [
+              {
+                "pool": "strike",
+                "copies": 3
+              },
+              {
+                "pool": "defend",
+                "copies": 2
+              },
+              {
+                "pool": "counter",
+                "copies": 1
+              },
+              {
+                "pool": "smash",
+                "copies": 1
+              },
+              {
+                "pool": "sweep",
+                "copies": 1
+              },
+              {
+                "pool": "evade",
+                "copies": 1
+              },
+              {
+                "card": "base.draw",
+                "copies": 1
+              },
+              {
+                "pool": "special",
+                "copies": 1
+              }
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "boneSceptre"
+              }
+            ],
+            "defaultRelics": [],
+            "presentation": {
+              "art": "starseer",
+              "size": "medium"
             },
-            "specialCardId": "core.starseerSpecial",
-            "maxHp": 72,
-            "description": "Intelligence-focused caster with a sceptre and Star Spark."
+            "player": {
+              "specialCardId": "core.starseerSpecial",
+              "description": "Intelligence-focused caster with a sceptre and Star Spark."
+            }
           },
           {
             "id": "rogue",
             "name": "Rogue",
+            "tags": [
+              "character.player",
+              "class.rogue",
+              "training.basic"
+            ],
             "attributes": {
               "strength": 1,
               "dexterity": 2,
@@ -2800,17 +5955,76 @@ export const gameProfileCatalog = {
               "wisdom": 1,
               "intelligence": 1
             },
-            "loadout": {
-              "rightHand": "dagger",
-              "leftHand": "dagger"
+            "attributePriority": [
+              "dexterity",
+              "strength",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "level": 1,
+            "defaultDeck": [
+              {
+                "pool": "strike",
+                "copies": 3
+              },
+              {
+                "pool": "defend",
+                "copies": 2
+              },
+              {
+                "pool": "counter",
+                "copies": 1
+              },
+              {
+                "pool": "smash",
+                "copies": 1
+              },
+              {
+                "pool": "sweep",
+                "copies": 1
+              },
+              {
+                "pool": "evade",
+                "copies": 1
+              },
+              {
+                "card": "base.draw",
+                "copies": 1
+              },
+              {
+                "pool": "special",
+                "copies": 1
+              }
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "dagger"
+              },
+              {
+                "key": "offHand",
+                "id": "dagger"
+              }
+            ],
+            "defaultRelics": [],
+            "presentation": {
+              "art": "rogue",
+              "size": "medium"
             },
-            "specialCardId": "core.rogueSpecial",
-            "maxHp": 74,
-            "description": "Dexterity-focused fighter with two daggers and Quick Guard."
+            "player": {
+              "specialCardId": "core.rogueSpecial",
+              "description": "Dexterity-focused fighter with two daggers and Quick Guard."
+            }
           },
           {
             "id": "herald",
             "name": "Herald",
+            "tags": [
+              "character.player",
+              "class.herald",
+              "training.basic"
+            ],
             "attributes": {
               "strength": 1,
               "dexterity": 1,
@@ -2818,15 +6032,2653 @@ export const gameProfileCatalog = {
               "wisdom": 2,
               "intelligence": 1
             },
-            "loadout": {
-              "rightHand": "boneSceptre",
-              "leftHand": null
+            "attributePriority": [
+              "wisdom",
+              "strength",
+              "dexterity",
+              "constitution",
+              "intelligence"
+            ],
+            "level": 1,
+            "defaultDeck": [
+              {
+                "pool": "strike",
+                "copies": 3
+              },
+              {
+                "pool": "defend",
+                "copies": 2
+              },
+              {
+                "pool": "counter",
+                "copies": 1
+              },
+              {
+                "pool": "smash",
+                "copies": 1
+              },
+              {
+                "pool": "sweep",
+                "copies": 1
+              },
+              {
+                "pool": "evade",
+                "copies": 1
+              },
+              {
+                "card": "base.draw",
+                "copies": 1
+              },
+              {
+                "pool": "special",
+                "copies": 1
+              }
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "boneSceptre"
+              }
+            ],
+            "defaultRelics": [],
+            "presentation": {
+              "art": "herald",
+              "size": "medium"
             },
-            "specialCardId": "core.heraldSpecial",
-            "maxHp": 78,
-            "description": "Wisdom-focused fighter with a sceptre and Lasting Resolve."
+            "player": {
+              "specialCardId": "core.heraldSpecial",
+              "description": "Wisdom-focused fighter with a sceptre and Lasting Resolve."
+            }
+          },
+          {
+            "id": "wanderingSoldier",
+            "name": "Wandering_Soldier",
+            "tags": [
+              "character.enemy",
+              "tier.minion"
+            ],
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "levelProfile": {
+              "min": 1,
+              "max": 4
+            },
+            "defaultDeck": [
+              "wanderingSoldier.slash",
+              "wanderingSoldier.guard",
+              "wanderingSoldier.warcry"
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "dagger"
+              }
+            ],
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.ashenBlightCore"
+              }
+            ],
+            "presentation": {
+              "art": "wanderingSoldier",
+              "size": "medium"
+            },
+            "enemy": {
+              "poiseMax": 10,
+              "arcaneExposure": {
+                "mode": "configured",
+                "threshold": 8,
+                "buildupMultiplier": 1,
+                "resetMode": "zero",
+                "overflowPolicy": "discard",
+                "lockPolicy": "whileMagicVulnerable",
+                "onBreak": {
+                  "status": "magicVulnerable",
+                  "value": 25,
+                  "duration": 2
+                }
+              },
+              "cardHints": {
+                "wanderingSoldier.slash": {
+                  "aiWeight": 45,
+                  "maxConsecutive": 2,
+                  "costSource": "stance",
+                  "legacyMove": "slash"
+                },
+                "wanderingSoldier.guard": {
+                  "aiWeight": 30,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "guard"
+                },
+                "wanderingSoldier.warcry": {
+                  "aiWeight": 25,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "warcry"
+                }
+              }
+            }
+          },
+          {
+            "id": "blightHound",
+            "name": "Blight_Hound",
+            "tags": [
+              "character.enemy",
+              "tier.minion"
+            ],
+            "attributePriority": [
+              "dexterity",
+              "strength",
+              "wisdom",
+              "intelligence",
+              "constitution"
+            ],
+            "levelProfile": {
+              "min": 1,
+              "max": 3
+            },
+            "defaultDeck": [
+              "blightHound.bite",
+              "blightHound.bite",
+              "blightHound.lunge"
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "battleaxe"
+              }
+            ],
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.ashenBlightCore"
+              }
+            ],
+            "presentation": {
+              "art": "blightHound",
+              "size": "small",
+              "tint": "rot",
+              "artFaces": "left"
+            },
+            "enemy": {
+              "poiseMax": 6,
+              "blighted": true,
+              "cardHints": {
+                "blightHound.bite": {
+                  "aiWeight": 60,
+                  "costSource": "stance",
+                  "legacyMove": "bite"
+                },
+                "blightHound.lunge": {
+                  "aiWeight": 40,
+                  "costSource": "stance",
+                  "legacyMove": "lunge"
+                }
+              }
+            }
+          },
+          {
+            "id": "huskBrute",
+            "name": "Husk_Brute",
+            "tags": [
+              "character.enemy",
+              "tier.minion"
+            ],
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "levelProfile": {
+              "min": 2,
+              "max": 5
+            },
+            "defaultDeck": [
+              "huskBrute.club",
+              "huskBrute.bellow",
+              "huskBrute.brace"
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "dagger"
+              }
+            ],
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.ashenBlightCore"
+              }
+            ],
+            "presentation": {
+              "art": "huskBrute",
+              "size": "medium"
+            },
+            "enemy": {
+              "poiseMax": 16,
+              "cardHints": {
+                "huskBrute.club": {
+                  "aiWeight": 50,
+                  "costSource": "stance",
+                  "legacyMove": "club"
+                },
+                "huskBrute.bellow": {
+                  "aiWeight": 25,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "bellow"
+                },
+                "huskBrute.brace": {
+                  "aiWeight": 25,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "brace"
+                }
+              }
+            }
+          },
+          {
+            "id": "graveWisp",
+            "name": "Grave_Wisp",
+            "tags": [
+              "character.enemy",
+              "tier.minion"
+            ],
+            "attributePriority": [
+              "wisdom",
+              "intelligence",
+              "strength",
+              "dexterity",
+              "constitution"
+            ],
+            "levelProfile": {
+              "min": 1,
+              "max": 4
+            },
+            "defaultDeck": [
+              "graveWisp.curse",
+              "graveWisp.curse",
+              "graveWisp.drain"
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "ashStaff"
+              }
+            ],
+            "defaultRelics": [],
+            "presentation": {
+              "art": "graveWisp",
+              "size": "small",
+              "tint": "grace"
+            },
+            "enemy": {
+              "poiseMax": 4,
+              "cardHints": {
+                "graveWisp.curse": {
+                  "aiWeight": 50,
+                  "maxConsecutive": 2,
+                  "costSource": "stance",
+                  "legacyMove": "curse"
+                },
+                "graveWisp.drain": {
+                  "aiWeight": 50,
+                  "costSource": "healRules",
+                  "legacyMove": "drain"
+                }
+              }
+            }
+          },
+          {
+            "id": "wyrmAspirant",
+            "name": "Wyrm_Aspirant",
+            "tags": [
+              "character.enemy",
+              "tier.elite"
+            ],
+            "attributes": {
+              "wisdom": 2
+            },
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "levelProfile": {
+              "min": 4,
+              "max": 6
+            },
+            "defaultDeck": [
+              "wyrmAspirant.consecrate",
+              "wyrmAspirant.halberdSweep",
+              "wyrmAspirant.halberdSweep",
+              "wyrmAspirant.tailSlam",
+              "wyrmAspirant.goldenGuard"
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "greatsword"
+              },
+              {
+                "key": "armor",
+                "id": "armor.nightweave"
+              }
+            ],
+            "defaultRelics": [],
+            "presentation": {
+              "art": "wyrmAspirant",
+              "size": "large",
+              "tint": "gold"
+            },
+            "enemy": {
+              "firstCard": "wyrmAspirant.consecrate",
+              "poiseMax": 24,
+              "cardHints": {
+                "wyrmAspirant.consecrate": {
+                  "aiWeight": 10,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "consecrate"
+                },
+                "wyrmAspirant.halberdSweep": {
+                  "aiWeight": 50,
+                  "maxConsecutive": 2,
+                  "costSource": "stance",
+                  "legacyMove": "halberdSweep"
+                },
+                "wyrmAspirant.tailSlam": {
+                  "aiWeight": 30,
+                  "costSource": "stance",
+                  "legacyMove": "tailSlam"
+                },
+                "wyrmAspirant.goldenGuard": {
+                  "aiWeight": 20,
+                  "maxConsecutive": 1,
+                  "costSource": "healRules",
+                  "legacyMove": "goldenGuard"
+                }
+              }
+            }
+          },
+          {
+            "id": "fellWarden",
+            "name": "The_Fell_Warden",
+            "tags": [
+              "character.enemy",
+              "tier.boss"
+            ],
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "levelProfile": {
+              "min": 5,
+              "max": 7
+            },
+            "defaultDeck": [
+              "fellWarden.caneStrike",
+              "fellWarden.caneStrike",
+              "fellWarden.caneStrike",
+              "fellWarden.hammerToss",
+              "fellWarden.hammerToss",
+              "fellWarden.heldBlade",
+              "fellWarden.heldBlade"
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "greatsword"
+              },
+              {
+                "key": "offHand",
+                "id": "parryDagger"
+              },
+              {
+                "key": "armor",
+                "id": "armor.gutterLeathers"
+              }
+            ],
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.graveSeal"
+              }
+            ],
+            "presentation": {
+              "art": "fellWarden",
+              "size": "large",
+              "tint": "blood"
+            },
+            "enemy": {
+              "unlockCards": [
+                "fellWarden.twinDaggers"
+              ],
+              "firstCard": "fellWarden.caneStrike",
+              "poiseMax": 30,
+              "phases": [
+                {
+                  "on": "hpBelowPct",
+                  "pct": 50,
+                  "do": [
+                    {
+                      "op": "applyStatus",
+                      "target": "enemy",
+                      "status": "frail",
+                      "stacks": 1
+                    },
+                    {
+                      "op": "applyStatus",
+                      "target": "enemy",
+                      "status": "weak",
+                      "stacks": 1
+                    },
+                    {
+                      "op": "applyStatus",
+                      "target": "self",
+                      "status": "strength",
+                      "stacks": 2
+                    }
+                  ],
+                  "unlockCards": [
+                    "fellWarden.twinDaggers"
+                  ]
+                }
+              ],
+              "cardHints": {
+                "fellWarden.caneStrike": {
+                  "aiWeight": 40,
+                  "maxConsecutive": 2,
+                  "costSource": "authored",
+                  "legacyMove": "caneStrike"
+                },
+                "fellWarden.hammerToss": {
+                  "aiWeight": 30,
+                  "maxConsecutive": 2,
+                  "costSource": "authored",
+                  "legacyMove": "hammerToss"
+                },
+                "fellWarden.heldBlade": {
+                  "aiWeight": 30,
+                  "maxConsecutive": 1,
+                  "delay": {
+                    "turns": 1,
+                    "whileCharging": {
+                      "block": 8
+                    }
+                  },
+                  "costSource": "authored",
+                  "legacyMove": "heldBlade"
+                },
+                "fellWarden.twinDaggers": {
+                  "aiWeight": 35,
+                  "costSource": "authored",
+                  "legacyMove": "twinDaggers"
+                }
+              }
+            }
+          },
+          {
+            "id": "lanternMoth",
+            "name": "Lantern_Moth",
+            "tags": [
+              "character.enemy",
+              "tier.minion"
+            ],
+            "attributePriority": [
+              "wisdom",
+              "intelligence",
+              "strength",
+              "dexterity",
+              "constitution"
+            ],
+            "levelProfile": {
+              "min": 2,
+              "max": 5
+            },
+            "defaultDeck": [
+              "lanternMoth.lanternDust",
+              "lanternMoth.wingSparks",
+              "lanternMoth.wingSparks"
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "ashStaff"
+              }
+            ],
+            "defaultRelics": [],
+            "presentation": {
+              "art": "lanternMoth",
+              "size": "small",
+              "artFaces": "left"
+            },
+            "enemy": {
+              "poiseMax": 5,
+              "cardHints": {
+                "lanternMoth.lanternDust": {
+                  "aiWeight": 35,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "lanternDust"
+                },
+                "lanternMoth.wingSparks": {
+                  "aiWeight": 65,
+                  "costSource": "authored",
+                  "legacyMove": "wingSparks"
+                }
+              }
+            }
+          },
+          {
+            "id": "briarHermit",
+            "name": "Briar_Hermit",
+            "tags": [
+              "character.enemy",
+              "tier.minion"
+            ],
+            "attributePriority": [
+              "strength",
+              "wisdom",
+              "dexterity",
+              "constitution",
+              "intelligence"
+            ],
+            "levelProfile": {
+              "min": 2,
+              "max": 5
+            },
+            "defaultDeck": [
+              "briarHermit.rootShelter",
+              "briarHermit.briarCast",
+              "briarHermit.sapMend"
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "battleaxe"
+              }
+            ],
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.ashenBlightCore"
+              }
+            ],
+            "presentation": {
+              "art": "briarHermit",
+              "size": "medium",
+              "artFaces": "left"
+            },
+            "enemy": {
+              "firstCard": "briarHermit.rootShelter",
+              "poiseMax": 9,
+              "cardHints": {
+                "briarHermit.rootShelter": {
+                  "aiWeight": 30,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "rootShelter"
+                },
+                "briarHermit.briarCast": {
+                  "aiWeight": 45,
+                  "costSource": "authored",
+                  "legacyMove": "briarCast"
+                },
+                "briarHermit.sapMend": {
+                  "aiWeight": 25,
+                  "maxConsecutive": 1,
+                  "costSource": "healRules",
+                  "legacyMove": "sapMend"
+                }
+              }
+            }
+          },
+          {
+            "id": "chainScavenger",
+            "name": "Chain_Scavenger",
+            "tags": [
+              "character.enemy",
+              "tier.minion"
+            ],
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "levelProfile": {
+              "min": 2,
+              "max": 5
+            },
+            "defaultDeck": [
+              "chainScavenger.hookCast",
+              "chainScavenger.chainSnare",
+              "chainScavenger.draggingBlow"
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "dagger"
+              }
+            ],
+            "defaultRelics": [],
+            "presentation": {
+              "art": "chainScavenger",
+              "size": "medium",
+              "artFaces": "left"
+            },
+            "enemy": {
+              "poiseMax": 8,
+              "cardHints": {
+                "chainScavenger.hookCast": {
+                  "aiWeight": 60,
+                  "costSource": "stance",
+                  "legacyMove": "hookCast"
+                },
+                "chainScavenger.chainSnare": {
+                  "aiWeight": 20,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "chainSnare"
+                },
+                "chainScavenger.draggingBlow": {
+                  "aiWeight": 20,
+                  "maxConsecutive": 1,
+                  "delay": {
+                    "turns": 1,
+                    "whileCharging": {
+                      "block": 3
+                    }
+                  },
+                  "costSource": "stance",
+                  "legacyMove": "draggingBlow"
+                }
+              }
+            }
+          },
+          {
+            "id": "bellKeeper",
+            "name": "The_Bell_Keeper",
+            "tags": [
+              "character.enemy",
+              "tier.boss"
+            ],
+            "attributePriority": [
+              "strength",
+              "wisdom",
+              "dexterity",
+              "constitution",
+              "intelligence"
+            ],
+            "levelProfile": {
+              "min": 5,
+              "max": 7
+            },
+            "defaultDeck": [
+              "bellKeeper.bronzeToll",
+              "bellKeeper.bronzeToll",
+              "bellKeeper.clapperSwing",
+              "bellKeeper.clapperSwing",
+              "bellKeeper.clapperSwing",
+              "bellKeeper.muffledPrayer",
+              "bellKeeper.muffledPrayer"
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "cinderAxe"
+              },
+              {
+                "key": "offHand",
+                "id": "parryDagger"
+              },
+              {
+                "key": "armor",
+                "id": "armor.nightweave"
+              }
+            ],
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.graveSeal"
+              }
+            ],
+            "presentation": {
+              "art": "bellKeeper",
+              "size": "large",
+              "artFaces": "left"
+            },
+            "enemy": {
+              "unlockCards": [
+                "bellKeeper.crackedPeal"
+              ],
+              "firstCard": "bellKeeper.bronzeToll",
+              "poiseMax": 25,
+              "phases": [
+                {
+                  "on": "hpBelowPct",
+                  "pct": 45,
+                  "do": [],
+                  "unlockCards": [
+                    "bellKeeper.crackedPeal"
+                  ]
+                }
+              ],
+              "cardHints": {
+                "bellKeeper.bronzeToll": {
+                  "aiWeight": 35,
+                  "maxConsecutive": 1,
+                  "delay": {
+                    "turns": 1,
+                    "whileCharging": {
+                      "block": 6
+                    }
+                  },
+                  "costSource": "authored",
+                  "legacyMove": "bronzeToll"
+                },
+                "bellKeeper.clapperSwing": {
+                  "aiWeight": 45,
+                  "maxConsecutive": 2,
+                  "costSource": "authored",
+                  "legacyMove": "clapperSwing"
+                },
+                "bellKeeper.muffledPrayer": {
+                  "aiWeight": 20,
+                  "maxConsecutive": 1,
+                  "costSource": "authored",
+                  "legacyMove": "muffledPrayer"
+                },
+                "bellKeeper.crackedPeal": {
+                  "aiWeight": 25,
+                  "maxConsecutive": 1,
+                  "costSource": "authored",
+                  "legacyMove": "crackedPeal"
+                }
+              }
+            }
+          },
+          {
+            "id": "thornMatriarch",
+            "name": "The_Thorn_Matriarch",
+            "tags": [
+              "character.enemy",
+              "tier.boss"
+            ],
+            "attributePriority": [
+              "strength",
+              "wisdom",
+              "intelligence",
+              "dexterity",
+              "constitution"
+            ],
+            "levelProfile": {
+              "min": 5,
+              "max": 7
+            },
+            "defaultDeck": [
+              "thornMatriarch.rootCrown",
+              "thornMatriarch.rootCrown",
+              "thornMatriarch.thornNeedles",
+              "thornMatriarch.thornNeedles",
+              "thornMatriarch.thornNeedles",
+              "thornMatriarch.entwiningRoots",
+              "thornMatriarch.entwiningRoots"
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "cinderAxe"
+              },
+              {
+                "key": "offHand",
+                "id": "parryDagger"
+              },
+              {
+                "key": "armor",
+                "id": "armor.nightweave"
+              }
+            ],
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.graveSeal"
+              }
+            ],
+            "presentation": {
+              "art": "thornMatriarch",
+              "size": "large",
+              "artFaces": "left"
+            },
+            "enemy": {
+              "firstCard": "thornMatriarch.rootCrown",
+              "poiseMax": 22,
+              "phases": [
+                {
+                  "on": "hpBelowPct",
+                  "pct": 40,
+                  "do": [
+                    {
+                      "op": "heal",
+                      "target": "self",
+                      "rule": "healRules"
+                    },
+                    {
+                      "op": "applyStatus",
+                      "target": "self",
+                      "status": "strength",
+                      "stacks": 2
+                    }
+                  ]
+                }
+              ],
+              "cardHints": {
+                "thornMatriarch.rootCrown": {
+                  "aiWeight": 25,
+                  "maxConsecutive": 1,
+                  "costSource": "authored",
+                  "legacyMove": "rootCrown"
+                },
+                "thornMatriarch.thornNeedles": {
+                  "aiWeight": 45,
+                  "maxConsecutive": 2,
+                  "costSource": "authored",
+                  "legacyMove": "thornNeedles"
+                },
+                "thornMatriarch.entwiningRoots": {
+                  "aiWeight": 30,
+                  "maxConsecutive": 1,
+                  "delay": {
+                    "turns": 1,
+                    "whileCharging": {
+                      "block": 4
+                    }
+                  },
+                  "costSource": "authored",
+                  "legacyMove": "entwiningRoots"
+                }
+              }
+            }
+          },
+          {
+            "id": "gildedKnight",
+            "name": "Gilded_Knight",
+            "tags": [
+              "character.enemy",
+              "tier.minion"
+            ],
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "levelProfile": {
+              "min": 6,
+              "max": 9
+            },
+            "defaultDeck": [
+              "gildedKnight.thrust",
+              "gildedKnight.parry",
+              "gildedKnight.rally",
+              "gildedKnight.gildedGuard"
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "battleaxe"
+              }
+            ],
+            "defaultRelics": [],
+            "presentation": {
+              "art": "gildedKnight",
+              "size": "medium",
+              "tint": "gold"
+            },
+            "enemy": {
+              "poiseMax": 18,
+              "cardHints": {
+                "gildedKnight.thrust": {
+                  "aiWeight": 50,
+                  "maxConsecutive": 2,
+                  "costSource": "stance",
+                  "legacyMove": "thrust"
+                },
+                "gildedKnight.parry": {
+                  "aiWeight": 30,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "parry"
+                },
+                "gildedKnight.rally": {
+                  "aiWeight": 20,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "rally"
+                },
+                "gildedKnight.gildedGuard": {
+                  "aiWeight": 1,
+                  "costSource": "stance",
+                  "legacyMove": "gildedGuard"
+                }
+              }
+            }
+          },
+          {
+            "id": "courtSurgeon",
+            "name": "Court_Surgeon",
+            "tags": [
+              "character.enemy",
+              "tier.minion"
+            ],
+            "attributePriority": [
+              "wisdom",
+              "intelligence",
+              "strength",
+              "dexterity",
+              "constitution"
+            ],
+            "levelProfile": {
+              "min": 6,
+              "max": 9
+            },
+            "defaultDeck": [
+              "courtSurgeon.scalpel",
+              "courtSurgeon.sedate",
+              "courtSurgeon.stitch"
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "ashStaff"
+              }
+            ],
+            "defaultRelics": [],
+            "presentation": {
+              "art": "courtSurgeon",
+              "size": "medium",
+              "tint": "grace"
+            },
+            "enemy": {
+              "poiseMax": 10,
+              "cardHints": {
+                "courtSurgeon.scalpel": {
+                  "aiWeight": 40,
+                  "costSource": "stance",
+                  "legacyMove": "scalpel"
+                },
+                "courtSurgeon.sedate": {
+                  "aiWeight": 30,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "sedate"
+                },
+                "courtSurgeon.stitch": {
+                  "aiWeight": 30,
+                  "maxConsecutive": 1,
+                  "costSource": "healRules",
+                  "legacyMove": "stitch"
+                }
+              }
+            }
+          },
+          {
+            "id": "stitchedHound",
+            "name": "Stitched_Hound",
+            "tags": [
+              "character.enemy",
+              "tier.minion"
+            ],
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "levelProfile": {
+              "min": 6,
+              "max": 8
+            },
+            "defaultDeck": [
+              "stitchedHound.maul",
+              "stitchedHound.maul",
+              "stitchedHound.rend"
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "battleaxe"
+              }
+            ],
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.ashenBlightCore"
+              }
+            ],
+            "presentation": {
+              "art": "stitchedHound",
+              "size": "small",
+              "tint": "blood",
+              "artFaces": "left"
+            },
+            "enemy": {
+              "poiseMax": 8,
+              "cardHints": {
+                "stitchedHound.maul": {
+                  "aiWeight": 60,
+                  "costSource": "stance",
+                  "legacyMove": "maul"
+                },
+                "stitchedHound.rend": {
+                  "aiWeight": 40,
+                  "costSource": "stance",
+                  "legacyMove": "rend"
+                }
+              }
+            }
+          },
+          {
+            "id": "courtMarionette",
+            "name": "Court_Marionette",
+            "tags": [
+              "character.enemy",
+              "tier.minion"
+            ],
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "levelProfile": {
+              "min": 6,
+              "max": 9
+            },
+            "defaultDeck": [
+              "courtMarionette.dart",
+              "courtMarionette.dart",
+              "courtMarionette.blowdart"
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "dagger"
+              }
+            ],
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.ashenBlightCore"
+              }
+            ],
+            "presentation": {
+              "art": "courtMarionette",
+              "size": "small",
+              "tint": "rot"
+            },
+            "enemy": {
+              "poiseMax": 6,
+              "cardHints": {
+                "courtMarionette.dart": {
+                  "aiWeight": 50,
+                  "costSource": "stance",
+                  "legacyMove": "dart"
+                },
+                "courtMarionette.blowdart": {
+                  "aiWeight": 50,
+                  "costSource": "stance",
+                  "legacyMove": "blowdart"
+                }
+              }
+            }
+          },
+          {
+            "id": "livingArmor",
+            "name": "Living_Armor",
+            "tags": [
+              "character.enemy",
+              "tier.minion"
+            ],
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "levelProfile": {
+              "min": 7,
+              "max": 10
+            },
+            "defaultDeck": [
+              "livingArmor.slam",
+              "livingArmor.fortify",
+              "livingArmor.crush",
+              "livingArmor.rimeCrush"
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "battleaxe"
+              }
+            ],
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.ashenBlightCore"
+              }
+            ],
+            "presentation": {
+              "art": "livingArmor",
+              "size": "medium",
+              "tint": "frost"
+            },
+            "enemy": {
+              "poiseMax": 22,
+              "cardHints": {
+                "livingArmor.slam": {
+                  "aiWeight": 30,
+                  "costSource": "stance",
+                  "legacyMove": "slam"
+                },
+                "livingArmor.fortify": {
+                  "aiWeight": 25,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "fortify"
+                },
+                "livingArmor.crush": {
+                  "aiWeight": 20,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "crush"
+                },
+                "livingArmor.rimeCrush": {
+                  "aiWeight": 25,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "rimeCrush"
+                }
+              }
+            }
+          },
+          {
+            "id": "courtDuelist",
+            "name": "Duelist_of_the_Court",
+            "tags": [
+              "character.enemy",
+              "tier.elite"
+            ],
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "levelProfile": {
+              "min": 10,
+              "max": 11
+            },
+            "defaultDeck": [
+              "courtDuelist.enGarde",
+              "courtDuelist.flurry",
+              "courtDuelist.lunge",
+              "courtDuelist.riposte",
+              "courtDuelist.bindingRiposte"
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "greatsword"
+              },
+              {
+                "key": "armor",
+                "id": "armor.wayfarerPlate"
+              }
+            ],
+            "defaultRelics": [],
+            "presentation": {
+              "art": "courtDuelist",
+              "size": "large",
+              "tint": "frost"
+            },
+            "enemy": {
+              "firstCard": "courtDuelist.enGarde",
+              "poiseMax": 26,
+              "cardHints": {
+                "courtDuelist.enGarde": {
+                  "aiWeight": 10,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "enGarde"
+                },
+                "courtDuelist.flurry": {
+                  "aiWeight": 40,
+                  "maxConsecutive": 2,
+                  "costSource": "stance",
+                  "legacyMove": "flurry"
+                },
+                "courtDuelist.lunge": {
+                  "aiWeight": 30,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "lunge"
+                },
+                "courtDuelist.riposte": {
+                  "aiWeight": 20,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "riposte"
+                },
+                "courtDuelist.bindingRiposte": {
+                  "aiWeight": 1,
+                  "costSource": "stance",
+                  "legacyMove": "bindingRiposte"
+                }
+              }
+            }
+          },
+          {
+            "id": "stitchedKing",
+            "name": "The_Stitched_King",
+            "tags": [
+              "character.enemy",
+              "tier.boss"
+            ],
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "levelProfile": {
+              "min": 11,
+              "max": 12
+            },
+            "defaultDeck": [
+              "stitchedKing.scepterBlow",
+              "stitchedKing.scepterBlow",
+              "stitchedKing.scepterBlow",
+              "stitchedKing.graspingHands",
+              "stitchedKing.graspingHands",
+              "stitchedKing.courtlyDecree",
+              "stitchedKing.courtlyDecree"
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "greatsword"
+              },
+              {
+                "key": "offHand",
+                "id": "towerShield"
+              },
+              {
+                "key": "armor",
+                "id": "armor.wayfarerPlate"
+              }
+            ],
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.ashenCore"
+              }
+            ],
+            "presentation": {
+              "art": "stitchedKing",
+              "size": "large",
+              "tint": "gold"
+            },
+            "enemy": {
+              "unlockCards": [
+                "stitchedKing.thousandHands"
+              ],
+              "firstCard": "stitchedKing.courtlyDecree",
+              "poiseMax": 34,
+              "phases": [
+                {
+                  "on": "hpBelowPct",
+                  "pct": 50,
+                  "do": [
+                    {
+                      "op": "applyStatus",
+                      "target": "self",
+                      "status": "strength",
+                      "stacks": 2
+                    },
+                    {
+                      "op": "applyStatus",
+                      "target": "enemy",
+                      "status": "frail",
+                      "stacks": 1
+                    }
+                  ],
+                  "unlockCards": [
+                    "stitchedKing.thousandHands"
+                  ]
+                }
+              ],
+              "cardHints": {
+                "stitchedKing.scepterBlow": {
+                  "aiWeight": 40,
+                  "maxConsecutive": 2,
+                  "costSource": "stance",
+                  "legacyMove": "scepterBlow"
+                },
+                "stitchedKing.graspingHands": {
+                  "aiWeight": 30,
+                  "maxConsecutive": 2,
+                  "costSource": "stance",
+                  "legacyMove": "graspingHands"
+                },
+                "stitchedKing.courtlyDecree": {
+                  "aiWeight": 30,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "courtlyDecree"
+                },
+                "stitchedKing.thousandHands": {
+                  "aiWeight": 40,
+                  "costSource": "stance",
+                  "legacyMove": "thousandHands"
+                }
+              }
+            }
+          },
+          {
+            "id": "mirrorScribe",
+            "name": "Mirror_Scribe",
+            "tags": [
+              "character.enemy",
+              "tier.minion"
+            ],
+            "attributePriority": [
+              "wisdom",
+              "intelligence",
+              "strength",
+              "dexterity",
+              "constitution"
+            ],
+            "levelProfile": {
+              "min": 7,
+              "max": 10
+            },
+            "defaultDeck": [
+              "mirrorScribe.silverScript",
+              "mirrorScribe.shardVolley",
+              "mirrorScribe.polishedWard"
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "ashStaff"
+              }
+            ],
+            "defaultRelics": [],
+            "presentation": {
+              "art": "mirrorScribe",
+              "size": "medium",
+              "artFaces": "left"
+            },
+            "enemy": {
+              "poiseMax": 8,
+              "cardHints": {
+                "mirrorScribe.silverScript": {
+                  "aiWeight": 30,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "silverScript"
+                },
+                "mirrorScribe.shardVolley": {
+                  "aiWeight": 50,
+                  "costSource": "stance",
+                  "legacyMove": "shardVolley"
+                },
+                "mirrorScribe.polishedWard": {
+                  "aiWeight": 20,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "polishedWard"
+                }
+              }
+            }
+          },
+          {
+            "id": "stitchCrab",
+            "name": "Stitch_Crab",
+            "tags": [
+              "character.enemy",
+              "tier.minion"
+            ],
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "levelProfile": {
+              "min": 7,
+              "max": 10
+            },
+            "defaultDeck": [
+              "stitchCrab.shellFold",
+              "stitchCrab.seamShears",
+              "stitchCrab.scuttleRush"
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "dagger"
+              }
+            ],
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.ashenBlightCore"
+              }
+            ],
+            "presentation": {
+              "art": "stitchCrab",
+              "size": "small",
+              "artFaces": "left"
+            },
+            "enemy": {
+              "firstCard": "stitchCrab.shellFold",
+              "poiseMax": 17,
+              "cardHints": {
+                "stitchCrab.shellFold": {
+                  "aiWeight": 30,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "shellFold"
+                },
+                "stitchCrab.seamShears": {
+                  "aiWeight": 45,
+                  "costSource": "stance",
+                  "legacyMove": "seamShears"
+                },
+                "stitchCrab.scuttleRush": {
+                  "aiWeight": 25,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "scuttleRush"
+                }
+              }
+            }
+          },
+          {
+            "id": "glassRegent",
+            "name": "The_Glass_Regent",
+            "tags": [
+              "character.enemy",
+              "tier.boss"
+            ],
+            "attributePriority": [
+              "strength",
+              "wisdom",
+              "intelligence",
+              "dexterity",
+              "constitution"
+            ],
+            "levelProfile": {
+              "min": 11,
+              "max": 12
+            },
+            "defaultDeck": [
+              "glassRegent.prismGuard",
+              "glassRegent.prismGuard",
+              "glassRegent.crystalRapier",
+              "glassRegent.crystalRapier",
+              "glassRegent.crystalRapier",
+              "glassRegent.splinterRain",
+              "glassRegent.splinterRain"
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "greatsword"
+              },
+              {
+                "key": "offHand",
+                "id": "parryDagger"
+              },
+              {
+                "key": "armor",
+                "id": "armor.nightweave"
+              }
+            ],
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.titanHeart"
+              }
+            ],
+            "presentation": {
+              "art": "glassRegent",
+              "size": "large",
+              "artFaces": "left"
+            },
+            "enemy": {
+              "unlockCards": [
+                "glassRegent.shatteredCourt"
+              ],
+              "firstCard": "glassRegent.prismGuard",
+              "poiseMax": 26,
+              "phases": [
+                {
+                  "on": "hpBelowPct",
+                  "pct": 50,
+                  "do": [
+                    {
+                      "op": "applyStatus",
+                      "target": "self",
+                      "status": "strength",
+                      "stacks": 4
+                    }
+                  ],
+                  "unlockCards": [
+                    "glassRegent.shatteredCourt"
+                  ]
+                }
+              ],
+              "cardHints": {
+                "glassRegent.prismGuard": {
+                  "aiWeight": 25,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "prismGuard"
+                },
+                "glassRegent.crystalRapier": {
+                  "aiWeight": 45,
+                  "maxConsecutive": 2,
+                  "costSource": "stance",
+                  "legacyMove": "crystalRapier"
+                },
+                "glassRegent.splinterRain": {
+                  "aiWeight": 30,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "splinterRain"
+                },
+                "glassRegent.shatteredCourt": {
+                  "aiWeight": 35,
+                  "maxConsecutive": 1,
+                  "delay": {
+                    "turns": 1,
+                    "whileCharging": {
+                      "block": 0
+                    }
+                  },
+                  "costSource": "stance",
+                  "legacyMove": "shatteredCourt"
+                }
+              }
+            }
+          },
+          {
+            "id": "marrowOrganist",
+            "name": "The_Marrow_Organist",
+            "tags": [
+              "character.enemy",
+              "tier.boss"
+            ],
+            "attributePriority": [
+              "strength",
+              "wisdom",
+              "intelligence",
+              "dexterity",
+              "constitution"
+            ],
+            "levelProfile": {
+              "min": 11,
+              "max": 12
+            },
+            "defaultDeck": [
+              "marrowOrganist.bonePrelude",
+              "marrowOrganist.bonePrelude",
+              "marrowOrganist.ivoryKeys",
+              "marrowOrganist.ivoryKeys",
+              "marrowOrganist.funeralChord",
+              "marrowOrganist.funeralChord",
+              "marrowOrganist.quietRefrain"
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "greatsword"
+              },
+              {
+                "key": "offHand",
+                "id": "parryDagger"
+              },
+              {
+                "key": "armor",
+                "id": "armor.nightweave"
+              }
+            ],
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.titanHeart"
+              }
+            ],
+            "presentation": {
+              "art": "marrowOrganist",
+              "size": "large",
+              "artFaces": "left"
+            },
+            "enemy": {
+              "firstCard": "marrowOrganist.bonePrelude",
+              "poiseMax": 30,
+              "phases": [
+                {
+                  "on": "hpBelowPct",
+                  "pct": 35,
+                  "do": [
+                    {
+                      "op": "applyStatus",
+                      "target": "self",
+                      "status": "strength",
+                      "stacks": 6
+                    }
+                  ]
+                }
+              ],
+              "cardHints": {
+                "marrowOrganist.bonePrelude": {
+                  "aiWeight": 20,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "bonePrelude"
+                },
+                "marrowOrganist.ivoryKeys": {
+                  "aiWeight": 40,
+                  "maxConsecutive": 2,
+                  "costSource": "stance",
+                  "legacyMove": "ivoryKeys"
+                },
+                "marrowOrganist.funeralChord": {
+                  "aiWeight": 25,
+                  "maxConsecutive": 1,
+                  "delay": {
+                    "turns": 1,
+                    "whileCharging": {
+                      "block": 5
+                    }
+                  },
+                  "costSource": "stance",
+                  "legacyMove": "funeralChord"
+                },
+                "marrowOrganist.quietRefrain": {
+                  "aiWeight": 15,
+                  "maxConsecutive": 1,
+                  "costSource": "healRules",
+                  "legacyMove": "quietRefrain"
+                }
+              }
+            }
+          },
+          {
+            "id": "ashRevenant",
+            "name": "Ash_Revenant",
+            "tags": [
+              "character.enemy",
+              "tier.minion"
+            ],
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "levelProfile": {
+              "min": 13,
+              "max": 16
+            },
+            "defaultDeck": [
+              "ashRevenant.cinderSlash",
+              "ashRevenant.cinderSlash",
+              "ashRevenant.reform"
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "dagger"
+              }
+            ],
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.ashenBlightCore"
+              }
+            ],
+            "presentation": {
+              "art": "ashRevenant",
+              "size": "medium",
+              "tint": "ember"
+            },
+            "enemy": {
+              "poiseMax": 10,
+              "cardHints": {
+                "ashRevenant.cinderSlash": {
+                  "aiWeight": 55,
+                  "maxConsecutive": 2,
+                  "costSource": "stance",
+                  "legacyMove": "cinderSlash"
+                },
+                "ashRevenant.reform": {
+                  "aiWeight": 45,
+                  "maxConsecutive": 1,
+                  "costSource": "healRules",
+                  "legacyMove": "reform"
+                }
+              }
+            }
+          },
+          {
+            "id": "emberStarvedPilgrim",
+            "name": "Ember-Starved_Pilgrim",
+            "tags": [
+              "character.enemy",
+              "tier.minion"
+            ],
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "levelProfile": {
+              "min": 13,
+              "max": 15
+            },
+            "defaultDeck": [
+              "emberStarvedPilgrim.desperateClaw",
+              "emberStarvedPilgrim.desperateClaw",
+              "emberStarvedPilgrim.wail"
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "battleaxe"
+              }
+            ],
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.ashenBlightCore"
+              }
+            ],
+            "presentation": {
+              "art": "emberStarvedPilgrim",
+              "size": "small",
+              "tint": "grace"
+            },
+            "enemy": {
+              "poiseMax": 8,
+              "cardHints": {
+                "emberStarvedPilgrim.desperateClaw": {
+                  "aiWeight": 60,
+                  "costSource": "stance",
+                  "legacyMove": "desperateClaw"
+                },
+                "emberStarvedPilgrim.wail": {
+                  "aiWeight": 40,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "wail"
+                }
+              }
+            }
+          },
+          {
+            "id": "valkyrieShade",
+            "name": "Valkyrie_Shade",
+            "tags": [
+              "character.enemy",
+              "tier.minion"
+            ],
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "levelProfile": {
+              "min": 14,
+              "max": 17
+            },
+            "defaultDeck": [
+              "valkyrieShade.spiralLance",
+              "valkyrieShade.spiralLance",
+              "valkyrieShade.bloodFeather"
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "battleaxe"
+              }
+            ],
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.ashenBlightCore"
+              }
+            ],
+            "presentation": {
+              "art": "valkyrieShade",
+              "size": "medium",
+              "tint": "blood"
+            },
+            "enemy": {
+              "poiseMax": 14,
+              "cardHints": {
+                "valkyrieShade.spiralLance": {
+                  "aiWeight": 50,
+                  "costSource": "stance",
+                  "legacyMove": "spiralLance"
+                },
+                "valkyrieShade.bloodFeather": {
+                  "aiWeight": 50,
+                  "costSource": "stance",
+                  "legacyMove": "bloodFeather"
+                }
+              }
+            }
+          },
+          {
+            "id": "charredColossus",
+            "name": "Charred_Colossus",
+            "tags": [
+              "character.enemy",
+              "tier.minion"
+            ],
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "levelProfile": {
+              "min": 15,
+              "max": 18
+            },
+            "defaultDeck": [
+              "charredColossus.smash",
+              "charredColossus.ashCloud",
+              "charredColossus.harden"
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "battleaxe"
+              }
+            ],
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.ashenBlightCore"
+              }
+            ],
+            "presentation": {
+              "art": "charredColossus",
+              "size": "large",
+              "tint": "ember"
+            },
+            "enemy": {
+              "poiseMax": 30,
+              "arcaneExposure": {
+                "mode": "immune"
+              },
+              "cardHints": {
+                "charredColossus.smash": {
+                  "aiWeight": 50,
+                  "maxConsecutive": 2,
+                  "costSource": "stance",
+                  "legacyMove": "smash"
+                },
+                "charredColossus.ashCloud": {
+                  "aiWeight": 25,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "ashCloud"
+                },
+                "charredColossus.harden": {
+                  "aiWeight": 25,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "harden"
+                }
+              }
+            }
+          },
+          {
+            "id": "wyrmLord",
+            "name": "Wyrm_Lord",
+            "tags": [
+              "character.enemy",
+              "tier.elite"
+            ],
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "levelProfile": {
+              "min": 18,
+              "max": 19
+            },
+            "defaultDeck": [
+              "wyrmLord.consecration",
+              "wyrmLord.halberdReign",
+              "wyrmLord.halberdReign",
+              "wyrmLord.tailSweep",
+              "wyrmLord.goldenBulwark"
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "cinderAxe"
+              },
+              {
+                "key": "armor",
+                "id": "armor.wayfarerPlate"
+              }
+            ],
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.ashenBlightCore"
+              }
+            ],
+            "presentation": {
+              "art": "wyrmLord",
+              "size": "large",
+              "tint": "gold"
+            },
+            "enemy": {
+              "firstCard": "wyrmLord.consecration",
+              "poiseMax": 30,
+              "cardHints": {
+                "wyrmLord.consecration": {
+                  "aiWeight": 10,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "consecration"
+                },
+                "wyrmLord.halberdReign": {
+                  "aiWeight": 45,
+                  "maxConsecutive": 2,
+                  "costSource": "stance",
+                  "legacyMove": "halberdReign"
+                },
+                "wyrmLord.tailSweep": {
+                  "aiWeight": 30,
+                  "costSource": "stance",
+                  "legacyMove": "tailSweep"
+                },
+                "wyrmLord.goldenBulwark": {
+                  "aiWeight": 25,
+                  "maxConsecutive": 1,
+                  "costSource": "healRules",
+                  "legacyMove": "goldenBulwark"
+                }
+              }
+            }
+          },
+          {
+            "id": "blightedValkyrie",
+            "name": "The_Blighted_Valkyrie",
+            "tags": [
+              "character.enemy",
+              "tier.boss"
+            ],
+            "attributePriority": [
+              "strength",
+              "wisdom",
+              "dexterity",
+              "intelligence",
+              "constitution"
+            ],
+            "levelProfile": {
+              "min": 19,
+              "max": 20
+            },
+            "defaultDeck": [
+              "blightedValkyrie.spiralThrust",
+              "blightedValkyrie.spiralThrust",
+              "blightedValkyrie.spiralThrust",
+              "blightedValkyrie.whirlwind",
+              "blightedValkyrie.whirlwind",
+              "blightedValkyrie.rotWings",
+              "blightedValkyrie.rotWings"
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "halberd"
+              },
+              {
+                "key": "offHand",
+                "id": "parryDagger"
+              },
+              {
+                "key": "armor",
+                "id": "armor.nightweave"
+              }
+            ],
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.ashenBlightCore"
+              }
+            ],
+            "presentation": {
+              "art": "blightedValkyrie",
+              "size": "large",
+              "tint": "rot"
+            },
+            "enemy": {
+              "unlockCards": [
+                "blightedValkyrie.scarletDance"
+              ],
+              "firstCard": "blightedValkyrie.spiralThrust",
+              "poiseMax": 36,
+              "blighted": true,
+              "phases": [
+                {
+                  "on": "damageDealt",
+                  "once": false,
+                  "if": {
+                    "p": "eventSourceIsOwner"
+                  },
+                  "do": [
+                    {
+                      "op": "heal",
+                      "target": "self",
+                      "rule": "healRules"
+                    }
+                  ]
+                },
+                {
+                  "on": "hpBelowPct",
+                  "pct": 50,
+                  "do": [
+                    {
+                      "op": "applyStatus",
+                      "target": "self",
+                      "status": "strength",
+                      "stacks": 3
+                    },
+                    {
+                      "op": "applyStatus",
+                      "target": "enemy",
+                      "status": "crimsonBlight",
+                      "stacks": 4
+                    }
+                  ],
+                  "unlockCards": [
+                    "blightedValkyrie.scarletDance"
+                  ]
+                }
+              ],
+              "cardHints": {
+                "blightedValkyrie.spiralThrust": {
+                  "aiWeight": 35,
+                  "maxConsecutive": 2,
+                  "costSource": "stance",
+                  "legacyMove": "spiralThrust"
+                },
+                "blightedValkyrie.whirlwind": {
+                  "aiWeight": 30,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "whirlwind"
+                },
+                "blightedValkyrie.rotWings": {
+                  "aiWeight": 20,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "rotWings"
+                },
+                "blightedValkyrie.scarletDance": {
+                  "aiWeight": 35,
+                  "costSource": "stance",
+                  "legacyMove": "scarletDance"
+                }
+              }
+            }
+          },
+          {
+            "id": "cinderMantis",
+            "name": "Cinder_Mantis",
+            "tags": [
+              "character.enemy",
+              "tier.minion"
+            ],
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "levelProfile": {
+              "min": 14,
+              "max": 17
+            },
+            "defaultDeck": [
+              "cinderMantis.scythePair",
+              "cinderMantis.emberPounce",
+              "cinderMantis.foldedBlades"
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "dagger"
+              }
+            ],
+            "defaultRelics": [],
+            "presentation": {
+              "art": "cinderMantis",
+              "size": "medium",
+              "artFaces": "left"
+            },
+            "enemy": {
+              "poiseMax": 11,
+              "cardHints": {
+                "cinderMantis.scythePair": {
+                  "aiWeight": 55,
+                  "costSource": "stance",
+                  "legacyMove": "scythePair"
+                },
+                "cinderMantis.emberPounce": {
+                  "aiWeight": 30,
+                  "maxConsecutive": 1,
+                  "delay": {
+                    "turns": 1,
+                    "whileCharging": {
+                      "block": 2
+                    }
+                  },
+                  "costSource": "stance",
+                  "legacyMove": "emberPounce"
+                },
+                "cinderMantis.foldedBlades": {
+                  "aiWeight": 15,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "foldedBlades"
+                }
+              }
+            }
+          },
+          {
+            "id": "eclipseCantor",
+            "name": "Eclipse_Cantor",
+            "tags": [
+              "character.enemy",
+              "tier.minion"
+            ],
+            "attributePriority": [
+              "wisdom",
+              "intelligence",
+              "strength",
+              "dexterity",
+              "constitution"
+            ],
+            "levelProfile": {
+              "min": 14,
+              "max": 17
+            },
+            "defaultDeck": [
+              "eclipseCantor.darkHymn",
+              "eclipseCantor.lunarRay",
+              "eclipseCantor.fadingEcho"
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "ashStaff"
+              }
+            ],
+            "defaultRelics": [],
+            "presentation": {
+              "art": "eclipseCantor",
+              "size": "medium",
+              "artFaces": "left"
+            },
+            "enemy": {
+              "poiseMax": 7,
+              "cardHints": {
+                "eclipseCantor.darkHymn": {
+                  "aiWeight": 30,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "darkHymn"
+                },
+                "eclipseCantor.lunarRay": {
+                  "aiWeight": 50,
+                  "costSource": "stance",
+                  "legacyMove": "lunarRay"
+                },
+                "eclipseCantor.fadingEcho": {
+                  "aiWeight": 20,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "fadingEcho"
+                }
+              }
+            }
+          },
+          {
+            "id": "furnaceSaint",
+            "name": "The_Furnace_Saint",
+            "tags": [
+              "character.enemy",
+              "tier.boss"
+            ],
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "levelProfile": {
+              "min": 19,
+              "max": 20
+            },
+            "defaultDeck": [
+              "furnaceSaint.openFurnace",
+              "furnaceSaint.openFurnace",
+              "furnaceSaint.censerSweep",
+              "furnaceSaint.censerSweep",
+              "furnaceSaint.censerSweep",
+              "furnaceSaint.coolingAsh",
+              "furnaceSaint.coolingAsh"
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "cinderAxe"
+              },
+              {
+                "key": "offHand",
+                "id": "towerShield"
+              },
+              {
+                "key": "armor",
+                "id": "armor.wayfarerPlate"
+              }
+            ],
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.titanHeart"
+              }
+            ],
+            "presentation": {
+              "art": "furnaceSaint",
+              "size": "large",
+              "artFaces": "left"
+            },
+            "enemy": {
+              "firstCard": "furnaceSaint.openFurnace",
+              "poiseMax": 40,
+              "phases": [
+                {
+                  "on": "hpBelowPct",
+                  "pct": 50,
+                  "do": [
+                    {
+                      "op": "applyStatus",
+                      "target": "self",
+                      "status": "strength",
+                      "stacks": 8
+                    }
+                  ]
+                }
+              ],
+              "cardHints": {
+                "furnaceSaint.openFurnace": {
+                  "aiWeight": 30,
+                  "maxConsecutive": 1,
+                  "delay": {
+                    "turns": 1,
+                    "whileCharging": {
+                      "block": 10
+                    }
+                  },
+                  "costSource": "stance",
+                  "legacyMove": "openFurnace"
+                },
+                "furnaceSaint.censerSweep": {
+                  "aiWeight": 45,
+                  "maxConsecutive": 2,
+                  "costSource": "stance",
+                  "legacyMove": "censerSweep"
+                },
+                "furnaceSaint.coolingAsh": {
+                  "aiWeight": 25,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "coolingAsh"
+                }
+              }
+            }
+          },
+          {
+            "id": "hollowAstronomer",
+            "name": "The_Hollow_Astronomer",
+            "tags": [
+              "character.enemy",
+              "tier.boss"
+            ],
+            "attributePriority": [
+              "strength",
+              "wisdom",
+              "intelligence",
+              "dexterity",
+              "constitution"
+            ],
+            "levelProfile": {
+              "min": 19,
+              "max": 20
+            },
+            "defaultDeck": [
+              "hollowAstronomer.starChart",
+              "hollowAstronomer.starChart",
+              "hollowAstronomer.orbitalShards",
+              "hollowAstronomer.orbitalShards",
+              "hollowAstronomer.orbitalShards",
+              "hollowAstronomer.totalEclipse",
+              "hollowAstronomer.totalEclipse"
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "cinderAxe"
+              },
+              {
+                "key": "offHand",
+                "id": "parryDagger"
+              },
+              {
+                "key": "armor",
+                "id": "armor.nightweave"
+              }
+            ],
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.titanHeart"
+              }
+            ],
+            "presentation": {
+              "art": "hollowAstronomer",
+              "size": "large",
+              "artFaces": "left"
+            },
+            "enemy": {
+              "unlockCards": [
+                "hollowAstronomer.fallingHeavens"
+              ],
+              "firstCard": "hollowAstronomer.starChart",
+              "poiseMax": 25,
+              "phases": [
+                {
+                  "on": "hpBelowPct",
+                  "pct": 40,
+                  "do": [],
+                  "unlockCards": [
+                    "hollowAstronomer.fallingHeavens"
+                  ]
+                }
+              ],
+              "cardHints": {
+                "hollowAstronomer.starChart": {
+                  "aiWeight": 20,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "starChart"
+                },
+                "hollowAstronomer.orbitalShards": {
+                  "aiWeight": 45,
+                  "maxConsecutive": 2,
+                  "costSource": "stance",
+                  "legacyMove": "orbitalShards"
+                },
+                "hollowAstronomer.totalEclipse": {
+                  "aiWeight": 35,
+                  "maxConsecutive": 1,
+                  "delay": {
+                    "turns": 1,
+                    "whileCharging": {
+                      "block": 6
+                    }
+                  },
+                  "costSource": "stance",
+                  "legacyMove": "totalEclipse"
+                },
+                "hollowAstronomer.fallingHeavens": {
+                  "aiWeight": 30,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "fallingHeavens"
+                }
+              }
+            }
+          },
+          {
+            "id": "ashheartDragon",
+            "name": "The_Ashheart_Dragon",
+            "tags": [
+              "character.enemy",
+              "tier.boss"
+            ],
+            "attributePriority": [
+              "strength",
+              "wisdom",
+              "dexterity",
+              "constitution",
+              "intelligence"
+            ],
+            "levelProfile": {
+              "min": 19,
+              "max": 20
+            },
+            "defaultDeck": [
+              "ashheartDragon.obsidianClaws",
+              "ashheartDragon.obsidianClaws",
+              "ashheartDragon.obsidianClaws",
+              "ashheartDragon.tailBastion",
+              "ashheartDragon.tailBastion",
+              "ashheartDragon.heartRumble",
+              "ashheartDragon.heartRumble"
+            ],
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "halberd"
+              },
+              {
+                "key": "offHand",
+                "id": "parryDagger"
+              },
+              {
+                "key": "armor",
+                "id": "armor.nightweave"
+              }
+            ],
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.ashenBlightCore"
+              }
+            ],
+            "presentation": {
+              "art": "ashheartDragon",
+              "size": "large",
+              "artFaces": "left"
+            },
+            "enemy": {
+              "unlockCards": [
+                "ashheartDragon.ashBreath"
+              ],
+              "firstCard": "ashheartDragon.obsidianClaws",
+              "poiseMax": 34,
+              "phases": [
+                {
+                  "on": "hpBelowPct",
+                  "pct": 60,
+                  "do": [
+                    {
+                      "op": "applyStatus",
+                      "target": "enemy",
+                      "status": "frail",
+                      "stacks": 1
+                    },
+                    {
+                      "op": "applyStatus",
+                      "target": "self",
+                      "status": "strength",
+                      "stacks": 2
+                    }
+                  ],
+                  "unlockCards": [
+                    "ashheartDragon.ashBreath"
+                  ]
+                }
+              ],
+              "cardHints": {
+                "ashheartDragon.obsidianClaws": {
+                  "aiWeight": 45,
+                  "maxConsecutive": 2,
+                  "costSource": "stance",
+                  "legacyMove": "obsidianClaws"
+                },
+                "ashheartDragon.tailBastion": {
+                  "aiWeight": 25,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "tailBastion"
+                },
+                "ashheartDragon.heartRumble": {
+                  "aiWeight": 15,
+                  "maxConsecutive": 1,
+                  "costSource": "stance",
+                  "legacyMove": "heartRumble"
+                },
+                "ashheartDragon.ashBreath": {
+                  "aiWeight": 35,
+                  "maxConsecutive": 1,
+                  "delay": {
+                    "turns": 1,
+                    "whileCharging": {
+                      "block": 5
+                    }
+                  },
+                  "costSource": "stance",
+                  "legacyMove": "ashBreath"
+                }
+              }
+            }
           }
         ],
+        "cardPools": {
+          "strike": {
+            "slot": "mainHand",
+            "byTag": {
+              "default": "core.strike"
+            },
+            "byClass": {}
+          },
+          "defend": {
+            "slot": "offHand",
+            "fallbackSlot": "mainHand",
+            "byTag": {
+              "default": "core.defend"
+            },
+            "byClass": {}
+          },
+          "counter": {
+            "slot": "mainHand",
+            "byTag": {
+              "default": "core.counter"
+            },
+            "byClass": {}
+          },
+          "smash": {
+            "slot": "mainHand",
+            "byTag": {
+              "default": "core.smash"
+            },
+            "byClass": {}
+          },
+          "sweep": {
+            "slot": "mainHand",
+            "byTag": {
+              "default": "core.sweep"
+            },
+            "byClass": {}
+          },
+          "evade": {
+            "slot": "offHand",
+            "fallbackSlot": "mainHand",
+            "byTag": {
+              "default": "core.evade"
+            },
+            "byClass": {}
+          },
+          "special": {
+            "slot": "mainHand",
+            "byTag": {},
+            "byClass": {
+              "class.reaver": {
+                "default": "core.reaverSpecial"
+              },
+              "class.starseer": {
+                "default": "core.starseerSpecial"
+              },
+              "class.rogue": {
+                "default": "core.rogueSpecial"
+              },
+              "class.herald": {
+                "default": "core.heraldSpecial"
+              }
+            }
+          }
+        },
         "cards": [
           {
             "id": "core.strike",
@@ -3656,20 +9508,4073 @@ export const gameProfileCatalog = {
         "shops": {
           "offerCount": 3,
           "price": 10
-        }
+        },
+        "enemyCards": [
+          {
+            "id": "wanderingSoldier.slash",
+            "name": "Slash",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 8
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "wanderingSoldier.guard",
+            "name": "Guard",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "skill",
+            "icon": "defend",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "block",
+                "target": "self",
+                "amount": 6
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:defend",
+              "classification.skill",
+              "trait:reaction"
+            ],
+            "textTemplate": "Gain {block} Block."
+          },
+          {
+            "id": "wanderingSoldier.warcry",
+            "name": "Warcry",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 1,
+            "costRule": "fixed",
+            "type": "power",
+            "icon": "casting",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "applyStatus",
+                "target": "self",
+                "status": "strength",
+                "stacks": 2
+              }
+            ],
+            "tags": [
+              "camp:spell",
+              "maneuver:casting",
+              "classification.power"
+            ],
+            "textTemplate": "Apply {strength} Strength to yourself."
+          },
+          {
+            "id": "blightHound.bite",
+            "name": "Bite",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 6
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "blightHound.lunge",
+            "name": "Lunge",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 3,
+                "hits": 2
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage {hits} times.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "huskBrute.club",
+            "name": "Club",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 15
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "huskBrute.bellow",
+            "name": "Bellow",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 1,
+            "costRule": "fixed",
+            "type": "power",
+            "icon": "casting",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "applyStatus",
+                "target": "enemy",
+                "status": "frail",
+                "stacks": 1
+              },
+              {
+                "op": "addCard",
+                "target": "enemy",
+                "card": "slimed",
+                "pile": "discard"
+              }
+            ],
+            "tags": [
+              "camp:spell",
+              "maneuver:casting",
+              "classification.power"
+            ],
+            "textTemplate": "Apply {frail} Frail to the enemy. Shuffle Slimed into the enemy's discard."
+          },
+          {
+            "id": "huskBrute.brace",
+            "name": "Brace",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "skill",
+            "icon": "defend",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "block",
+                "target": "self",
+                "amount": 8
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:defend",
+              "classification.skill",
+              "trait:reaction"
+            ],
+            "textTemplate": "Gain {block} Block."
+          },
+          {
+            "id": "graveWisp.curse",
+            "name": "Curse",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 1,
+            "costRule": "fixed",
+            "type": "power",
+            "icon": "casting",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "addCard",
+                "card": "dazed",
+                "pile": "draw",
+                "position": "random",
+                "target": "enemy"
+              }
+            ],
+            "tags": [
+              "camp:spell",
+              "maneuver:casting",
+              "classification.power"
+            ],
+            "textTemplate": "Shuffle Dazed into the enemy's draw."
+          },
+          {
+            "id": "graveWisp.drain",
+            "name": "Drain",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 1,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [
+              "exhaust"
+            ],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 8
+              },
+              {
+                "op": "heal",
+                "target": "self",
+                "amount": 1
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack",
+              "fx:heal",
+              "lifecycle.exhaust"
+            ],
+            "textTemplate": "Deal {damage} damage. Heal {heal} HP.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "wyrmAspirant.consecrate",
+            "name": "Consecrate",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 1,
+            "costRule": "fixed",
+            "type": "power",
+            "icon": "casting",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "applyStatus",
+                "target": "self",
+                "status": "strength",
+                "stacks": 3
+              }
+            ],
+            "tags": [
+              "camp:spell",
+              "maneuver:casting",
+              "classification.power"
+            ],
+            "textTemplate": "Apply {strength} Strength to yourself."
+          },
+          {
+            "id": "wyrmAspirant.halberdSweep",
+            "name": "Halberd_Sweep",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 17
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "wyrmAspirant.tailSlam",
+            "name": "Tail_Slam",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 11
+              },
+              {
+                "op": "applyStatus",
+                "target": "enemy",
+                "status": "weak",
+                "stacks": 1
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage. Apply {weak} Weak to the enemy.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "wyrmAspirant.goldenGuard",
+            "name": "Golden_Guard",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 3,
+            "staminaCost": 3,
+            "manaCost": 2,
+            "costRule": "fixed",
+            "type": "skill",
+            "icon": "defend",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "block",
+                "target": "self",
+                "amount": 12
+              },
+              {
+                "op": "heal",
+                "target": "self",
+                "amount": 4
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:defend",
+              "classification.skill",
+              "trait:reaction",
+              "fx:heal"
+            ],
+            "textTemplate": "Gain {block} Block. Heal {heal} HP."
+          },
+          {
+            "id": "fellWarden.caneStrike",
+            "name": "Cane_Strike",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 8
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "fellWarden.hammerToss",
+            "name": "Hammer_Toss",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 5,
+                "hits": 2
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage {hits} times.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "fellWarden.heldBlade",
+            "name": "Held_Blade",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "smash",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 14
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:smash",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage. Charges for 1 turn.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "fellWarden.twinDaggers",
+            "name": "Twin_Daggers",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 3,
+            "staminaCost": 3,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 3,
+                "hits": 4
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage {hits} times.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "lanternMoth.lanternDust",
+            "name": "Lantern_Dust",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 1,
+            "costRule": "fixed",
+            "type": "power",
+            "icon": "casting",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "applyStatus",
+                "target": "enemy",
+                "status": "weak",
+                "stacks": 1
+              }
+            ],
+            "tags": [
+              "camp:spell",
+              "maneuver:casting",
+              "classification.power"
+            ],
+            "textTemplate": "Apply {weak} Weak to the enemy."
+          },
+          {
+            "id": "lanternMoth.wingSparks",
+            "name": "Wing_Sparks",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 3,
+                "hits": 3
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage {hits} times.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "briarHermit.rootShelter",
+            "name": "Root_Shelter",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "skill",
+            "icon": "defend",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "block",
+                "target": "self",
+                "amount": 7
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:defend",
+              "classification.skill",
+              "trait:reaction"
+            ],
+            "textTemplate": "Gain {block} Block."
+          },
+          {
+            "id": "briarHermit.briarCast",
+            "name": "Briar_Cast",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 16
+              },
+              {
+                "op": "applyStatus",
+                "target": "enemy",
+                "status": "bleed",
+                "stacks": 1
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage. Apply {bleed} Bleed to the enemy.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "briarHermit.sapMend",
+            "name": "Sap_Mend",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 1,
+            "costRule": "fixed",
+            "type": "power",
+            "icon": "casting",
+            "keywords": [
+              "exhaust"
+            ],
+            "effects": [
+              {
+                "op": "heal",
+                "target": "self",
+                "amount": 5
+              }
+            ],
+            "tags": [
+              "camp:spell",
+              "maneuver:casting",
+              "classification.power",
+              "fx:heal",
+              "lifecycle.exhaust"
+            ],
+            "textTemplate": "Heal {heal} HP."
+          },
+          {
+            "id": "chainScavenger.hookCast",
+            "name": "Hook_Cast",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 20
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "chainScavenger.chainSnare",
+            "name": "Chain_Snare",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 2,
+            "staminaCost": 2,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "counter",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 6
+              },
+              {
+                "op": "applyStatus",
+                "target": "enemy",
+                "status": "frail",
+                "stacks": 1
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:counter",
+              "classification.attack",
+              "trait:reaction"
+            ],
+            "textTemplate": "Prepare Counter: return {damage} damage. Apply {frail} Frail to the enemy.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "chainScavenger.draggingBlow",
+            "name": "Dragging_Blow",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 2,
+            "staminaCost": 2,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "smash",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 41
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:smash",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage. Charges for 1 turn.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "bellKeeper.bronzeToll",
+            "name": "Bronze_Toll",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "smash",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 19
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:smash",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage. Charges for 1 turn.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "bellKeeper.clapperSwing",
+            "name": "Clapper_Swing",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 9
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "bellKeeper.muffledPrayer",
+            "name": "Muffled_Prayer",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "skill",
+            "icon": "defend",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "block",
+                "target": "self",
+                "amount": 9
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:defend",
+              "classification.skill",
+              "trait:reaction"
+            ],
+            "textTemplate": "Gain {block} Block."
+          },
+          {
+            "id": "bellKeeper.crackedPeal",
+            "name": "Cracked_Peal",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 6,
+                "hits": 3
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage {hits} times.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "thornMatriarch.rootCrown",
+            "name": "Root_Crown",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "skill",
+            "icon": "defend",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "block",
+                "target": "self",
+                "amount": 8
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:defend",
+              "classification.skill",
+              "trait:reaction"
+            ],
+            "textTemplate": "Gain {block} Block."
+          },
+          {
+            "id": "thornMatriarch.thornNeedles",
+            "name": "Thorn_Needles",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 4,
+                "hits": 3
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage {hits} times.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "thornMatriarch.entwiningRoots",
+            "name": "Entwining_Roots",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 2,
+            "staminaCost": 2,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "smash",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 15
+              },
+              {
+                "op": "applyStatus",
+                "target": "enemy",
+                "status": "bleed",
+                "stacks": 2
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:smash",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage. Apply {bleed} Bleed to the enemy. Charges for 1 turn.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "gildedKnight.thrust",
+            "name": "Thrust",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 11
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "gildedKnight.parry",
+            "name": "Parry",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 2,
+            "staminaCost": 2,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "counter",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "block",
+                "target": "self",
+                "amount": 9
+              },
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 6
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:counter",
+              "classification.attack",
+              "trait:reaction"
+            ],
+            "textTemplate": "Gain {block} Block. Prepare Counter: return {damage} damage.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "gildedKnight.rally",
+            "name": "Rally",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 1,
+            "costRule": "fixed",
+            "type": "power",
+            "icon": "casting",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "applyStatus",
+                "target": "self",
+                "status": "strength",
+                "stacks": 2
+              }
+            ],
+            "tags": [
+              "camp:spell",
+              "maneuver:casting",
+              "classification.power"
+            ],
+            "textTemplate": "Apply {strength} Strength to yourself."
+          },
+          {
+            "id": "gildedKnight.gildedGuard",
+            "name": "Gilded_Guard",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "block",
+                "target": "self",
+                "amount": 6
+              },
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 3
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Gain {block} Block. Deal {damage} damage.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "courtSurgeon.scalpel",
+            "name": "Scalpel",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 7
+              },
+              {
+                "op": "addCard",
+                "target": "enemy",
+                "card": "wound",
+                "pile": "discard"
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage. Shuffle Wound into the enemy's discard.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "courtSurgeon.sedate",
+            "name": "Sedate",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 1,
+            "costRule": "fixed",
+            "type": "power",
+            "icon": "casting",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "applyStatus",
+                "target": "enemy",
+                "status": "weak",
+                "stacks": 1
+              },
+              {
+                "op": "applyStatus",
+                "target": "enemy",
+                "status": "frail",
+                "stacks": 1
+              }
+            ],
+            "tags": [
+              "camp:spell",
+              "maneuver:casting",
+              "classification.power"
+            ],
+            "textTemplate": "Apply {weak} Weak to the enemy. Apply {frail} Frail to the enemy."
+          },
+          {
+            "id": "courtSurgeon.stitch",
+            "name": "Stitch",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 1,
+            "costRule": "fixed",
+            "type": "power",
+            "icon": "casting",
+            "keywords": [
+              "exhaust"
+            ],
+            "effects": [
+              {
+                "op": "heal",
+                "target": "self",
+                "amount": 3
+              }
+            ],
+            "tags": [
+              "camp:spell",
+              "maneuver:casting",
+              "classification.power",
+              "fx:heal",
+              "lifecycle.exhaust"
+            ],
+            "textTemplate": "Heal {heal} HP."
+          },
+          {
+            "id": "stitchedHound.maul",
+            "name": "Maul",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 4,
+                "hits": 2
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage {hits} times.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "stitchedHound.rend",
+            "name": "Rend",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 6
+              },
+              {
+                "op": "applyStatus",
+                "target": "enemy",
+                "status": "bleed",
+                "stacks": 2
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage. Apply {bleed} Bleed to the enemy.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "courtMarionette.dart",
+            "name": "Dart",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 4,
+                "hits": 2
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage {hits} times.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "courtMarionette.blowdart",
+            "name": "Blowdart",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 3
+              },
+              {
+                "op": "applyStatus",
+                "target": "enemy",
+                "status": "crimsonBlight",
+                "stacks": 2
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage. Apply {crimsonBlight} Crimson Blight to the enemy.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "livingArmor.slam",
+            "name": "Slam",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 10
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "livingArmor.fortify",
+            "name": "Fortify",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "skill",
+            "icon": "defend",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "block",
+                "target": "self",
+                "amount": 12
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:defend",
+              "classification.skill",
+              "trait:reaction"
+            ],
+            "textTemplate": "Gain {block} Block."
+          },
+          {
+            "id": "livingArmor.crush",
+            "name": "Crush",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 14
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "livingArmor.rimeCrush",
+            "name": "Rime_Crush",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 8
+              },
+              {
+                "op": "applyStatus",
+                "target": "enemy",
+                "status": "frost",
+                "stacks": 3
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage. Apply {frost} Frost to the enemy.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "courtDuelist.enGarde",
+            "name": "En_Garde",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 1,
+            "costRule": "fixed",
+            "type": "power",
+            "icon": "casting",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "applyStatus",
+                "target": "self",
+                "status": "strength",
+                "stacks": 3
+              }
+            ],
+            "tags": [
+              "camp:spell",
+              "maneuver:casting",
+              "classification.power"
+            ],
+            "textTemplate": "Apply {strength} Strength to yourself."
+          },
+          {
+            "id": "courtDuelist.flurry",
+            "name": "Flurry",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 5,
+                "hits": 3
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage {hits} times.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "courtDuelist.lunge",
+            "name": "Lunge",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 14
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "courtDuelist.riposte",
+            "name": "Riposte",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 2,
+            "staminaCost": 2,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "counter",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "block",
+                "target": "self",
+                "amount": 10
+              },
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 6
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:counter",
+              "classification.attack",
+              "trait:reaction"
+            ],
+            "textTemplate": "Gain {block} Block. Prepare Counter: return {damage} damage.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "courtDuelist.bindingRiposte",
+            "name": "Binding_Riposte",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 4
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "stitchedKing.scepterBlow",
+            "name": "Scepter_Blow",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 11
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "stitchedKing.graspingHands",
+            "name": "Grasping_Hands",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 5,
+                "hits": 3
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage {hits} times.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "stitchedKing.courtlyDecree",
+            "name": "Courtly_Decree",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "skill",
+            "icon": "defend",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "block",
+                "target": "self",
+                "amount": 15
+              },
+              {
+                "op": "applyStatus",
+                "target": "self",
+                "status": "strength",
+                "stacks": 2
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:defend",
+              "classification.skill",
+              "trait:reaction"
+            ],
+            "textTemplate": "Gain {block} Block. Apply {strength} Strength to yourself."
+          },
+          {
+            "id": "stitchedKing.thousandHands",
+            "name": "Thousand_Hands",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 3,
+                "hits": 6
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage {hits} times.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "mirrorScribe.silverScript",
+            "name": "Silver_Script",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 1,
+            "costRule": "fixed",
+            "type": "power",
+            "icon": "casting",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "addCard",
+                "card": "dazed",
+                "pile": "discard",
+                "target": "enemy"
+              }
+            ],
+            "tags": [
+              "camp:spell",
+              "maneuver:casting",
+              "classification.power"
+            ],
+            "textTemplate": "Shuffle Dazed into the enemy's discard."
+          },
+          {
+            "id": "mirrorScribe.shardVolley",
+            "name": "Shard_Volley",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 3,
+                "hits": 3
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage {hits} times.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "mirrorScribe.polishedWard",
+            "name": "Polished_Ward",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 2,
+            "staminaCost": 2,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "counter",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "block",
+                "target": "self",
+                "amount": 6
+              },
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 6
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:counter",
+              "classification.attack",
+              "trait:reaction"
+            ],
+            "textTemplate": "Gain {block} Block. Prepare Counter: return {damage} damage.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "stitchCrab.shellFold",
+            "name": "Shell_Fold",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "skill",
+            "icon": "defend",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "block",
+                "target": "self",
+                "amount": 11
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:defend",
+              "classification.skill",
+              "trait:reaction"
+            ],
+            "textTemplate": "Gain {block} Block."
+          },
+          {
+            "id": "stitchCrab.seamShears",
+            "name": "Seam_Shears",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 4,
+                "hits": 2
+              },
+              {
+                "op": "applyStatus",
+                "target": "enemy",
+                "status": "bleed",
+                "stacks": 1
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage {hits} times. Apply {bleed} Bleed to the enemy.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "stitchCrab.scuttleRush",
+            "name": "Scuttle_Rush",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 13
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "glassRegent.prismGuard",
+            "name": "Prism_Guard",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "skill",
+            "icon": "defend",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "block",
+                "target": "self",
+                "amount": 16
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:defend",
+              "classification.skill",
+              "trait:reaction"
+            ],
+            "textTemplate": "Gain {block} Block."
+          },
+          {
+            "id": "glassRegent.crystalRapier",
+            "name": "Crystal_Rapier",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 15
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "glassRegent.splinterRain",
+            "name": "Splinter_Rain",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 6,
+                "hits": 3
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage {hits} times.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "glassRegent.shatteredCourt",
+            "name": "Shattered_Court",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 2,
+            "staminaCost": 2,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "smash",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 7,
+                "hits": 5
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:smash",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage {hits} times. Charges for 1 turn.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "marrowOrganist.bonePrelude",
+            "name": "Bone_Prelude",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 1,
+            "costRule": "fixed",
+            "type": "power",
+            "icon": "casting",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "applyStatus",
+                "target": "enemy",
+                "status": "weak",
+                "stacks": 1
+              }
+            ],
+            "tags": [
+              "camp:spell",
+              "maneuver:casting",
+              "classification.power"
+            ],
+            "textTemplate": "Apply {weak} Weak to the enemy."
+          },
+          {
+            "id": "marrowOrganist.ivoryKeys",
+            "name": "Ivory_Keys",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 8,
+                "hits": 3
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage {hits} times.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "marrowOrganist.funeralChord",
+            "name": "Funeral_Chord",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 2,
+            "staminaCost": 2,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "smash",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 28
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:smash",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage. Charges for 1 turn.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "marrowOrganist.quietRefrain",
+            "name": "Quiet_Refrain",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 3,
+            "staminaCost": 3,
+            "manaCost": 2,
+            "costRule": "fixed",
+            "type": "power",
+            "icon": "casting",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "heal",
+                "target": "self",
+                "amount": 12
+              }
+            ],
+            "tags": [
+              "camp:spell",
+              "maneuver:casting",
+              "classification.power",
+              "fx:heal"
+            ],
+            "textTemplate": "Heal {heal} HP."
+          },
+          {
+            "id": "ashRevenant.cinderSlash",
+            "name": "Cinder_Slash",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 12
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "ashRevenant.reform",
+            "name": "Reform",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 1,
+            "costRule": "fixed",
+            "type": "power",
+            "icon": "casting",
+            "keywords": [
+              "exhaust"
+            ],
+            "effects": [
+              {
+                "op": "heal",
+                "target": "self",
+                "amount": 10
+              },
+              {
+                "op": "block",
+                "target": "self",
+                "amount": 6
+              }
+            ],
+            "tags": [
+              "camp:spell",
+              "maneuver:casting",
+              "classification.power",
+              "fx:heal",
+              "lifecycle.exhaust"
+            ],
+            "textTemplate": "Heal {heal} HP. Gain {block} Block."
+          },
+          {
+            "id": "emberStarvedPilgrim.desperateClaw",
+            "name": "Desperate_Claw",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 9
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "emberStarvedPilgrim.wail",
+            "name": "Wail",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 1,
+            "costRule": "fixed",
+            "type": "power",
+            "icon": "casting",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "applyStatus",
+                "target": "enemy",
+                "status": "weak",
+                "stacks": 1
+              },
+              {
+                "op": "applyStatus",
+                "target": "enemy",
+                "status": "frail",
+                "stacks": 1
+              },
+              {
+                "op": "applyStatus",
+                "target": "enemy",
+                "status": "insanity",
+                "stacks": 3
+              }
+            ],
+            "tags": [
+              "camp:spell",
+              "maneuver:casting",
+              "classification.power"
+            ],
+            "textTemplate": "Apply {weak} Weak to the enemy. Apply {frail} Frail to the enemy. Apply {insanity} Insanity to the enemy."
+          },
+          {
+            "id": "valkyrieShade.spiralLance",
+            "name": "Spiral_Lance",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 5,
+                "hits": 2
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage {hits} times.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "valkyrieShade.bloodFeather",
+            "name": "Blood_Feather",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 5
+              },
+              {
+                "op": "applyStatus",
+                "target": "enemy",
+                "status": "bleed",
+                "stacks": 3
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage. Apply {bleed} Bleed to the enemy.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "charredColossus.smash",
+            "name": "Smash",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 16
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "charredColossus.ashCloud",
+            "name": "Ash_Cloud",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 1,
+            "costRule": "fixed",
+            "type": "power",
+            "icon": "casting",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "applyStatus",
+                "target": "enemy",
+                "status": "weak",
+                "stacks": 2
+              }
+            ],
+            "tags": [
+              "camp:spell",
+              "maneuver:casting",
+              "classification.power"
+            ],
+            "textTemplate": "Apply {weak} Weak to the enemy."
+          },
+          {
+            "id": "charredColossus.harden",
+            "name": "Harden",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "skill",
+            "icon": "defend",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "block",
+                "target": "self",
+                "amount": 14
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:defend",
+              "classification.skill",
+              "trait:reaction"
+            ],
+            "textTemplate": "Gain {block} Block."
+          },
+          {
+            "id": "wyrmLord.consecration",
+            "name": "Consecration",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 1,
+            "costRule": "fixed",
+            "type": "power",
+            "icon": "casting",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "applyStatus",
+                "target": "self",
+                "status": "strength",
+                "stacks": 4
+              }
+            ],
+            "tags": [
+              "camp:spell",
+              "maneuver:casting",
+              "classification.power"
+            ],
+            "textTemplate": "Apply {strength} Strength to yourself."
+          },
+          {
+            "id": "wyrmLord.halberdReign",
+            "name": "Halberd_Reign",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 15
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "wyrmLord.tailSweep",
+            "name": "Tail_Sweep",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 8
+              },
+              {
+                "op": "applyStatus",
+                "target": "enemy",
+                "status": "weak",
+                "stacks": 1
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage. Apply {weak} Weak to the enemy.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "wyrmLord.goldenBulwark",
+            "name": "Golden_Bulwark",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 3,
+            "staminaCost": 3,
+            "manaCost": 2,
+            "costRule": "fixed",
+            "type": "skill",
+            "icon": "defend",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "block",
+                "target": "self",
+                "amount": 16
+              },
+              {
+                "op": "heal",
+                "target": "self",
+                "amount": 17
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:defend",
+              "classification.skill",
+              "trait:reaction",
+              "fx:heal"
+            ],
+            "textTemplate": "Gain {block} Block. Heal {heal} HP."
+          },
+          {
+            "id": "blightedValkyrie.spiralThrust",
+            "name": "Spiral_Thrust",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 12
+              },
+              {
+                "op": "applyStatus",
+                "target": "enemy",
+                "status": "bleed",
+                "stacks": 2
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage. Apply {bleed} Bleed to the enemy.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "blightedValkyrie.whirlwind",
+            "name": "Whirlwind",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 4,
+                "hits": 5
+              },
+              {
+                "op": "applyStatus",
+                "target": "enemy",
+                "status": "bleed",
+                "stacks": 2
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage {hits} times. Apply {bleed} Bleed to the enemy.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "blightedValkyrie.rotWings",
+            "name": "Rot_Wings",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "skill",
+            "icon": "defend",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "block",
+                "target": "self",
+                "amount": 10
+              },
+              {
+                "op": "applyStatus",
+                "target": "enemy",
+                "status": "crimsonBlight",
+                "stacks": 3
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:defend",
+              "classification.skill",
+              "trait:reaction"
+            ],
+            "textTemplate": "Gain {block} Block. Apply {crimsonBlight} Crimson Blight to the enemy."
+          },
+          {
+            "id": "blightedValkyrie.scarletDance",
+            "name": "Scarlet_Dance",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 5,
+                "hits": 5
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage {hits} times.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "cinderMantis.scythePair",
+            "name": "Scythe_Pair",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 5,
+                "hits": 2
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage {hits} times.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "cinderMantis.emberPounce",
+            "name": "Ember_Pounce",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 2,
+            "staminaCost": 2,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "smash",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 18
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:smash",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage. Charges for 1 turn.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "cinderMantis.foldedBlades",
+            "name": "Folded_Blades",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 2,
+            "staminaCost": 2,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "counter",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "block",
+                "target": "self",
+                "amount": 8
+              },
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 6
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:counter",
+              "classification.attack",
+              "trait:reaction"
+            ],
+            "textTemplate": "Gain {block} Block. Prepare Counter: return {damage} damage.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "eclipseCantor.darkHymn",
+            "name": "Dark_Hymn",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 1,
+            "costRule": "fixed",
+            "type": "power",
+            "icon": "casting",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "applyStatus",
+                "target": "enemy",
+                "status": "insanity",
+                "stacks": 3
+              }
+            ],
+            "tags": [
+              "camp:spell",
+              "maneuver:casting",
+              "classification.power"
+            ],
+            "textTemplate": "Apply {insanity} Insanity to the enemy."
+          },
+          {
+            "id": "eclipseCantor.lunarRay",
+            "name": "Lunar_Ray",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 11
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "eclipseCantor.fadingEcho",
+            "name": "Fading_Echo",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 6
+              },
+              {
+                "op": "addCard",
+                "card": "dazed",
+                "pile": "discard",
+                "target": "enemy"
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage. Shuffle Dazed into the enemy's discard.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "furnaceSaint.openFurnace",
+            "name": "Open_Furnace",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 2,
+            "staminaCost": 2,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "smash",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 32
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:smash",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage. Charges for 1 turn.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "furnaceSaint.censerSweep",
+            "name": "Censer_Sweep",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 22
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "furnaceSaint.coolingAsh",
+            "name": "Cooling_Ash",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "skill",
+            "icon": "defend",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "block",
+                "target": "self",
+                "amount": 14
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:defend",
+              "classification.skill",
+              "trait:reaction"
+            ],
+            "textTemplate": "Gain {block} Block."
+          },
+          {
+            "id": "hollowAstronomer.starChart",
+            "name": "Star_Chart",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 1,
+            "costRule": "fixed",
+            "type": "power",
+            "icon": "casting",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "addCard",
+                "card": "dazed",
+                "pile": "discard",
+                "target": "enemy"
+              }
+            ],
+            "tags": [
+              "camp:spell",
+              "maneuver:casting",
+              "classification.power"
+            ],
+            "textTemplate": "Shuffle Dazed into the enemy's discard."
+          },
+          {
+            "id": "hollowAstronomer.orbitalShards",
+            "name": "Orbital_Shards",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 8,
+                "hits": 4
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage {hits} times.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "hollowAstronomer.totalEclipse",
+            "name": "Total_Eclipse",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 2,
+            "staminaCost": 2,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "smash",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 30
+              },
+              {
+                "op": "applyStatus",
+                "target": "enemy",
+                "status": "insanity",
+                "stacks": 3
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:smash",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage. Apply {insanity} Insanity to the enemy. Charges for 1 turn.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "hollowAstronomer.fallingHeavens",
+            "name": "Falling_Heavens",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 10,
+                "hits": 3
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage {hits} times.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "ashheartDragon.obsidianClaws",
+            "name": "Obsidian_Claws",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "attack",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 12,
+                "hits": 2
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:attack",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage {hits} times.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          },
+          {
+            "id": "ashheartDragon.tailBastion",
+            "name": "Tail_Bastion",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "skill",
+            "icon": "defend",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "block",
+                "target": "self",
+                "amount": 12
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:defend",
+              "classification.skill",
+              "trait:reaction"
+            ],
+            "textTemplate": "Gain {block} Block."
+          },
+          {
+            "id": "ashheartDragon.heartRumble",
+            "name": "Heart_Rumble",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 1,
+            "staminaCost": 1,
+            "manaCost": 1,
+            "costRule": "fixed",
+            "type": "power",
+            "icon": "casting",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "applyStatus",
+                "target": "self",
+                "status": "strength",
+                "stacks": 1
+              }
+            ],
+            "tags": [
+              "camp:spell",
+              "maneuver:casting",
+              "classification.power"
+            ],
+            "textTemplate": "Apply {strength} Strength to yourself."
+          },
+          {
+            "id": "ashheartDragon.ashBreath",
+            "name": "Ash_Breath",
+            "class": "colorless",
+            "rarity": "special",
+            "cost": 2,
+            "staminaCost": 2,
+            "manaCost": 0,
+            "costRule": "fixed",
+            "type": "attack",
+            "icon": "smash",
+            "keywords": [],
+            "effects": [
+              {
+                "op": "damage",
+                "target": "enemy",
+                "amount": 9,
+                "hits": 4
+              }
+            ],
+            "tags": [
+              "camp:physical",
+              "maneuver:smash",
+              "classification.attack"
+            ],
+            "textTemplate": "Deal {damage} damage {hits} times. Charges for 1 turn.",
+            "damageSchool": "physical",
+            "exposureBuildupPerHit": 0
+          }
+        ],
+        "enemyRelics": [
+          {
+            "id": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "modifiers": [
+              "self.strength=+2",
+              "self.constitution=+2",
+              "self.wisdom=-1",
+              "self.sp=-2"
+            ],
+            "text": "STR +2, CON +2, WIS -1, SP -2"
+          },
+          {
+            "id": "enemy.relic.emberBand",
+            "name": "Ember_Band",
+            "modifiers": [
+              "self.constitution=+1"
+            ],
+            "text": "CON +1"
+          },
+          {
+            "id": "enemy.relic.graveSeal",
+            "name": "Grave_Seal",
+            "modifiers": [
+              "self.strength=+2"
+            ],
+            "text": "STR +2"
+          },
+          {
+            "id": "enemy.relic.titanHeart",
+            "name": "Titan_Heart",
+            "modifiers": [
+              "self.constitution=+2",
+              "self.strength=+1"
+            ],
+            "text": "CON +2, STR +1"
+          },
+          {
+            "id": "enemy.relic.ashenCore",
+            "name": "Ashen_Core",
+            "modifiers": [
+              "self.constitution=+2",
+              "self.strength=+2",
+              "self.wisdom=+1"
+            ],
+            "text": "CON +2, STR +2, WIS +1"
+          },
+          {
+            "id": "enemy.relic.abyssalCrown",
+            "name": "Abyssal_Crown",
+            "modifiers": [
+              "self.constitution=+2",
+              "self.wisdom=+2",
+              "self.intelligence=+1"
+            ],
+            "text": "CON +2, WIS +2, INT +1"
+          }
+        ],
+        "gear": [
+          {
+            "id": "straightSword",
+            "name": "Straight_Sword",
+            "slot": "rightHand",
+            "kind": "weapon",
+            "rarity": "common",
+            "tags": [
+              "sword"
+            ],
+            "points": {},
+            "source": {
+              "file": "content/source/weapons.csv",
+              "id": "straightSword"
+            }
+          },
+          {
+            "id": "greatsword",
+            "name": "Greatsword",
+            "slot": "rightHand",
+            "kind": "weapon",
+            "rarity": "uncommon",
+            "tags": [
+              "greatsword",
+              "heavy",
+              "stagger"
+            ],
+            "points": {},
+            "source": {
+              "file": "content/source/weapons.csv",
+              "id": "greatsword"
+            }
+          },
+          {
+            "id": "dagger",
+            "name": "Dagger",
+            "slot": "rightHand",
+            "kind": "weapon",
+            "rarity": "common",
+            "tags": [
+              "dagger",
+              "flurry"
+            ],
+            "points": {},
+            "source": {
+              "file": "content/source/weapons.csv",
+              "id": "dagger"
+            }
+          },
+          {
+            "id": "shortbow",
+            "name": "Shortbow",
+            "slot": "rightHand",
+            "kind": "weapon",
+            "rarity": "common",
+            "tags": [
+              "bow"
+            ],
+            "points": {
+              "dexterity": 1
+            },
+            "source": {
+              "file": "content/source/weapons.csv",
+              "id": "shortbow"
+            }
+          },
+          {
+            "id": "katana",
+            "name": "Katana",
+            "slot": "rightHand",
+            "kind": "weapon",
+            "rarity": "uncommon",
+            "tags": [
+              "katana",
+              "bleed"
+            ],
+            "points": {},
+            "source": {
+              "file": "content/source/weapons.csv",
+              "id": "katana"
+            }
+          },
+          {
+            "id": "halberd",
+            "name": "Halberd",
+            "slot": "rightHand",
+            "kind": "weapon",
+            "rarity": "uncommon",
+            "tags": [
+              "polearm",
+              "heavy",
+              "stagger"
+            ],
+            "points": {},
+            "source": {
+              "file": "content/source/weapons.csv",
+              "id": "halberd"
+            }
+          },
+          {
+            "id": "warhammer",
+            "name": "Warhammer",
+            "slot": "rightHand",
+            "kind": "weapon",
+            "rarity": "uncommon",
+            "tags": [
+              "hammer",
+              "stagger"
+            ],
+            "points": {},
+            "source": {
+              "file": "content/source/weapons.csv",
+              "id": "warhammer"
+            }
+          },
+          {
+            "id": "twinblade",
+            "name": "Twinblade",
+            "slot": "rightHand",
+            "kind": "weapon",
+            "rarity": "rare",
+            "tags": [
+              "twinblade",
+              "flurry",
+              "light"
+            ],
+            "points": {},
+            "source": {
+              "file": "content/source/weapons.csv",
+              "id": "twinblade"
+            }
+          },
+          {
+            "id": "battleaxe",
+            "name": "Battleaxe",
+            "slot": "rightHand",
+            "kind": "weapon",
+            "rarity": "common",
+            "tags": [
+              "axe",
+              "heavy"
+            ],
+            "points": {},
+            "source": {
+              "file": "content/source/weapons.csv",
+              "id": "battleaxe"
+            }
+          },
+          {
+            "id": "buckler",
+            "name": "Buckler",
+            "slot": "leftHand",
+            "kind": "shield",
+            "rarity": "common",
+            "tags": [
+              "buckler"
+            ],
+            "points": {},
+            "source": {
+              "file": "content/source/weapons.csv",
+              "id": "buckler"
+            }
+          },
+          {
+            "id": "kiteShield",
+            "name": "Kite_Shield",
+            "slot": "leftHand",
+            "kind": "shield",
+            "rarity": "common",
+            "tags": [
+              "kiteShield"
+            ],
+            "points": {},
+            "source": {
+              "file": "content/source/weapons.csv",
+              "id": "kiteShield"
+            }
+          },
+          {
+            "id": "towerShield",
+            "name": "Tower_Shield",
+            "slot": "leftHand",
+            "kind": "shield",
+            "rarity": "rare",
+            "tags": [
+              "towerShield"
+            ],
+            "points": {
+              "constitution": 1
+            },
+            "source": {
+              "file": "content/source/weapons.csv",
+              "id": "towerShield"
+            }
+          },
+          {
+            "id": "roundShield",
+            "name": "Round_Shield",
+            "slot": "leftHand",
+            "kind": "shield",
+            "rarity": "common",
+            "tags": [
+              "roundShield"
+            ],
+            "points": {},
+            "source": {
+              "file": "content/source/weapons.csv",
+              "id": "roundShield"
+            }
+          },
+          {
+            "id": "spikedShield",
+            "name": "Spiked_Shield",
+            "slot": "leftHand",
+            "kind": "shield",
+            "rarity": "uncommon",
+            "tags": [
+              "spikedShield"
+            ],
+            "points": {},
+            "source": {
+              "file": "content/source/weapons.csv",
+              "id": "spikedShield"
+            }
+          },
+          {
+            "id": "lantern",
+            "name": "Lantern",
+            "slot": "leftHand",
+            "kind": "shield",
+            "rarity": "common",
+            "tags": [
+              "lantern",
+              "regen"
+            ],
+            "points": {
+              "wisdom": 1
+            },
+            "source": {
+              "file": "content/source/weapons.csv",
+              "id": "lantern"
+            }
+          },
+          {
+            "id": "torch",
+            "name": "Torch",
+            "slot": "leftHand",
+            "kind": "shield",
+            "rarity": "common",
+            "tags": [
+              "torch",
+              "burn"
+            ],
+            "points": {},
+            "source": {
+              "file": "content/source/weapons.csv",
+              "id": "torch"
+            }
+          },
+          {
+            "id": "parryDagger",
+            "name": "Parrying_Dagger",
+            "slot": "leftHand",
+            "kind": "shield",
+            "rarity": "uncommon",
+            "tags": [
+              "parryingDagger",
+              "stagger"
+            ],
+            "points": {},
+            "source": {
+              "file": "content/source/weapons.csv",
+              "id": "parryDagger"
+            }
+          },
+          {
+            "id": "ashStaff",
+            "name": "Ash_Staff",
+            "slot": "rightHand",
+            "kind": "staff",
+            "rarity": "common",
+            "tags": [
+              "staff"
+            ],
+            "points": {
+              "intelligence": 1
+            },
+            "source": {
+              "file": "content/source/weapons.csv",
+              "id": "ashStaff"
+            }
+          },
+          {
+            "id": "starstoneStaff",
+            "name": "Starstone_Staff",
+            "slot": "rightHand",
+            "kind": "staff",
+            "rarity": "uncommon",
+            "tags": [
+              "staff",
+              "frost"
+            ],
+            "points": {
+              "intelligence": 1
+            },
+            "source": {
+              "file": "content/source/weapons.csv",
+              "id": "starstoneStaff"
+            }
+          },
+          {
+            "id": "boneSceptre",
+            "name": "Bone_Sceptre",
+            "slot": "rightHand",
+            "kind": "staff",
+            "rarity": "uncommon",
+            "tags": [
+              "sceptre",
+              "blight"
+            ],
+            "points": {
+              "intelligence": 1
+            },
+            "source": {
+              "file": "content/source/weapons.csv",
+              "id": "boneSceptre"
+            }
+          },
+          {
+            "id": "emberlightSceptre",
+            "name": "Emberlight_Sceptre",
+            "slot": "rightHand",
+            "kind": "staff",
+            "rarity": "rare",
+            "tags": [
+              "sceptre"
+            ],
+            "points": {
+              "intelligence": 1
+            },
+            "source": {
+              "file": "content/source/weapons.csv",
+              "id": "emberlightSceptre"
+            }
+          },
+          {
+            "id": "goldboughBranch",
+            "name": "Goldbough_Branch",
+            "slot": "rightHand",
+            "kind": "staff",
+            "rarity": "rare",
+            "tags": [
+              "staff",
+              "regen"
+            ],
+            "points": {
+              "intelligence": 1
+            },
+            "source": {
+              "file": "content/source/weapons.csv",
+              "id": "goldboughBranch"
+            }
+          },
+          {
+            "id": "blightRod",
+            "name": "Blight_Rod",
+            "slot": "rightHand",
+            "kind": "staff",
+            "rarity": "uncommon",
+            "tags": [
+              "rod",
+              "blight"
+            ],
+            "points": {
+              "wisdom": 1
+            },
+            "source": {
+              "file": "content/source/weapons.csv",
+              "id": "blightRod"
+            }
+          },
+          {
+            "id": "gorefireBrand",
+            "name": "Gorefire_Brand",
+            "slot": "rightHand",
+            "kind": "staff",
+            "rarity": "rare",
+            "tags": [
+              "sceptre",
+              "burn",
+              "bleed"
+            ],
+            "points": {},
+            "source": {
+              "file": "content/source/weapons.csv",
+              "id": "gorefireBrand"
+            }
+          },
+          {
+            "id": "wyrmhornStaff",
+            "name": "Wyrmhorn_Staff",
+            "slot": "rightHand",
+            "kind": "staff",
+            "rarity": "rare",
+            "tags": [
+              "staff",
+              "stagger",
+              "insanity"
+            ],
+            "points": {
+              "intelligence": 1
+            },
+            "source": {
+              "file": "content/source/weapons.csv",
+              "id": "wyrmhornStaff"
+            }
+          },
+          {
+            "id": "frostSpear",
+            "name": "Frost_Spear",
+            "slot": "rightHand",
+            "kind": "weapon",
+            "rarity": "uncommon",
+            "tags": [
+              "spear",
+              "frost"
+            ],
+            "points": {},
+            "source": {
+              "file": "content/source/weapons.csv",
+              "id": "frostSpear"
+            }
+          },
+          {
+            "id": "cinderAxe",
+            "name": "Cinder_Axe",
+            "slot": "rightHand",
+            "kind": "weapon",
+            "rarity": "uncommon",
+            "tags": [
+              "axe",
+              "heavy",
+              "burn"
+            ],
+            "points": {},
+            "source": {
+              "file": "content/source/weapons.csv",
+              "id": "cinderAxe"
+            }
+          },
+          {
+            "id": "duskChime",
+            "name": "Dusk_Chime",
+            "slot": "rightHand",
+            "kind": "staff",
+            "rarity": "rare",
+            "tags": [
+              "chime",
+              "blight"
+            ],
+            "points": {
+              "wisdom": 1
+            },
+            "source": {
+              "file": "content/source/weapons.csv",
+              "id": "duskChime"
+            }
+          },
+          {
+            "id": "armor.wayfarerPlate",
+            "name": "Wayfarer_Plate",
+            "slot": "armor",
+            "kind": "armor",
+            "rarity": "common",
+            "tags": [
+              "plate"
+            ],
+            "points": {
+              "dr": 1,
+              "constitution": 1
+            },
+            "classes": [
+              "herald",
+              "reaver",
+              "rogue",
+              "starseer"
+            ],
+            "source": {
+              "file": "content/source/outfits.csv",
+              "id": "wayfarerPlate"
+            }
+          },
+          {
+            "id": "armor.ashenVigil",
+            "name": "Ashen_Vigil",
+            "slot": "armor",
+            "kind": "armor",
+            "rarity": "uncommon",
+            "tags": [
+              "mail"
+            ],
+            "points": {
+              "dr": 1
+            },
+            "classes": [
+              "reaver"
+            ],
+            "source": {
+              "file": "content/source/outfits.csv",
+              "id": "vigil"
+            }
+          },
+          {
+            "id": "armor.gildedOathsworn",
+            "name": "Gilded_Oathsworn",
+            "slot": "armor",
+            "kind": "armor",
+            "rarity": "uncommon",
+            "tags": [
+              "plate"
+            ],
+            "points": {
+              "dr": 1,
+              "strength": 1
+            },
+            "classes": [
+              "reaver"
+            ],
+            "source": {
+              "file": "content/source/outfits.csv",
+              "id": "oathsworn"
+            }
+          },
+          {
+            "id": "armor.wardenMail",
+            "name": "Warden_Mail",
+            "slot": "armor",
+            "kind": "armor",
+            "rarity": "uncommon",
+            "tags": [
+              "mail",
+              "unwieldy"
+            ],
+            "points": {
+              "dr": 1
+            },
+            "classes": [
+              "reaver"
+            ],
+            "source": {
+              "file": "content/source/outfits.csv",
+              "id": "warden"
+            }
+          },
+          {
+            "id": "armor.nightweave",
+            "name": "Nightweave",
+            "slot": "armor",
+            "kind": "armor",
+            "rarity": "common",
+            "tags": [
+              "robes"
+            ],
+            "points": {
+              "wisdom": 1
+            },
+            "classes": [
+              "herald",
+              "reaver",
+              "rogue",
+              "starseer"
+            ],
+            "source": {
+              "file": "content/source/outfits.csv",
+              "id": "nightweave"
+            }
+          },
+          {
+            "id": "armor.eclipseHabit",
+            "name": "Eclipse_Habit",
+            "slot": "armor",
+            "kind": "armor",
+            "rarity": "uncommon",
+            "tags": [
+              "robes"
+            ],
+            "points": {
+              "intelligence": 1
+            },
+            "classes": [
+              "starseer"
+            ],
+            "source": {
+              "file": "content/source/outfits.csv",
+              "id": "eclipse"
+            }
+          },
+          {
+            "id": "armor.starlitSilks",
+            "name": "Starlit_Silks",
+            "slot": "armor",
+            "kind": "armor",
+            "rarity": "uncommon",
+            "tags": [
+              "robes",
+              "flurry",
+              "unwieldy"
+            ],
+            "points": {},
+            "classes": [
+              "starseer"
+            ],
+            "source": {
+              "file": "content/source/outfits.csv",
+              "id": "starlit"
+            }
+          },
+          {
+            "id": "armor.astralVestment",
+            "name": "Astral_Vestment",
+            "slot": "armor",
+            "kind": "armor",
+            "rarity": "uncommon",
+            "tags": [
+              "robes",
+              "thin"
+            ],
+            "points": {
+              "intelligence": 1
+            },
+            "classes": [
+              "starseer"
+            ],
+            "source": {
+              "file": "content/source/outfits.csv",
+              "id": "astral"
+            }
+          },
+          {
+            "id": "armor.riteVestments",
+            "name": "Rite_Vestments",
+            "slot": "armor",
+            "kind": "armor",
+            "rarity": "common",
+            "tags": [
+              "robes"
+            ],
+            "points": {
+              "dr": 1
+            },
+            "classes": [
+              "herald",
+              "reaver",
+              "rogue",
+              "starseer"
+            ],
+            "source": {
+              "file": "content/source/outfits.csv",
+              "id": "riteVestments"
+            }
+          },
+          {
+            "id": "armor.ossuaryWeave",
+            "name": "Ossuary_Weave",
+            "slot": "armor",
+            "kind": "armor",
+            "rarity": "uncommon",
+            "tags": [
+              "robes",
+              "blight"
+            ],
+            "points": {},
+            "classes": [
+              "herald"
+            ],
+            "source": {
+              "file": "content/source/outfits.csv",
+              "id": "ossuary"
+            }
+          },
+          {
+            "id": "armor.emberlightHabit",
+            "name": "Emberlight_Habit",
+            "slot": "armor",
+            "kind": "armor",
+            "rarity": "uncommon",
+            "tags": [
+              "robes",
+              "regen"
+            ],
+            "points": {
+              "intelligence": 1
+            },
+            "classes": [
+              "herald"
+            ],
+            "source": {
+              "file": "content/source/outfits.csv",
+              "id": "emberhabit"
+            }
+          },
+          {
+            "id": "armor.pilgrimWrap",
+            "name": "Pilgrim_Wrap",
+            "slot": "armor",
+            "kind": "armor",
+            "rarity": "uncommon",
+            "tags": [
+              "robes"
+            ],
+            "points": {
+              "dr": 1,
+              "constitution": 1
+            },
+            "classes": [
+              "herald"
+            ],
+            "source": {
+              "file": "content/source/outfits.csv",
+              "id": "pilgrim"
+            }
+          },
+          {
+            "id": "armor.gutterLeathers",
+            "name": "Gutter_Leathers",
+            "slot": "armor",
+            "kind": "armor",
+            "rarity": "common",
+            "tags": [
+              "leathers",
+              "light"
+            ],
+            "points": {},
+            "classes": [
+              "herald",
+              "reaver",
+              "rogue",
+              "starseer"
+            ],
+            "source": {
+              "file": "content/source/outfits.csv",
+              "id": "gutterLeathers"
+            }
+          },
+          {
+            "id": "armor.nightveilCoat",
+            "name": "Nightveil_Coat",
+            "slot": "armor",
+            "kind": "armor",
+            "rarity": "uncommon",
+            "tags": [
+              "leathers"
+            ],
+            "points": {
+              "dr": 1
+            },
+            "classes": [
+              "rogue"
+            ],
+            "source": {
+              "file": "content/source/outfits.csv",
+              "id": "nightveil"
+            }
+          },
+          {
+            "id": "armor.duelistJerkin",
+            "name": "Duelist_Jerkin",
+            "slot": "armor",
+            "kind": "armor",
+            "rarity": "uncommon",
+            "tags": [
+              "leathers",
+              "flurry",
+              "unwieldy"
+            ],
+            "points": {},
+            "classes": [
+              "rogue"
+            ],
+            "source": {
+              "file": "content/source/outfits.csv",
+              "id": "duelist"
+            }
+          },
+          {
+            "id": "armor.shadowMantle",
+            "name": "Shadow_Mantle",
+            "slot": "armor",
+            "kind": "armor",
+            "rarity": "uncommon",
+            "tags": [
+              "leathers"
+            ],
+            "points": {
+              "strength": 1
+            },
+            "classes": [
+              "rogue"
+            ],
+            "source": {
+              "file": "content/source/outfits.csv",
+              "id": "shadow"
+            }
+          },
+          {
+            "id": "armor.bastionHarness",
+            "name": "Bastion_Harness",
+            "slot": "armor",
+            "kind": "armor",
+            "rarity": "uncommon",
+            "tags": [
+              "plate",
+              "encumbered"
+            ],
+            "points": {
+              "dr": 1
+            },
+            "classes": [
+              "reaver"
+            ],
+            "source": {
+              "file": "content/source/outfits.csv",
+              "id": "bastion"
+            }
+          },
+          {
+            "id": "armor.rimeweaveRobes",
+            "name": "Rimeweave_Robes",
+            "slot": "armor",
+            "kind": "armor",
+            "rarity": "uncommon",
+            "tags": [
+              "robes",
+              "frost",
+              "thin"
+            ],
+            "points": {},
+            "classes": [
+              "starseer"
+            ],
+            "source": {
+              "file": "content/source/outfits.csv",
+              "id": "rimeweave"
+            }
+          },
+          {
+            "id": "armor.waywatcherCoat",
+            "name": "Waywatcher_Coat",
+            "slot": "armor",
+            "kind": "armor",
+            "rarity": "uncommon",
+            "tags": [
+              "leathers",
+              "light",
+              "unwieldy"
+            ],
+            "points": {},
+            "classes": [
+              "rogue"
+            ],
+            "source": {
+              "file": "content/source/outfits.csv",
+              "id": "waywatcher"
+            }
+          }
+        ]
       },
       "artifacts": [
         {
           "path": "games/ashenspire/packs/core/pack.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:c8d7eedd366830005c1d7f717259de8655682c961b54d034b4de0ea470545cf8"
+          "hash": "sha256:0beecb10deeca566a1d0bff26b1d0cb728f84608ba2ced3b0fbbdb205eb78dca"
         },
         {
-          "path": "games/ashenspire/packs/core/classes.json",
+          "path": "games/ashenspire/packs/core/characters.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:836998f30d4bae5284d1003be84e4966065f20dcd4349cf9871b8cdb10905df4"
+          "hash": "sha256:1b1e961af0fe6059ccada8e285fa39ac626d96c0739e443271002bd9cd9e1c6e"
+        },
+        {
+          "path": "games/ashenspire/packs/core/cardPools.json",
+          "id": "ashen.core-content",
+          "version": "1.0.0",
+          "hash": "sha256:d8d7d4beeecdac9977eb2803f90f755e46f66b32fc7798c74ecec3424cae28f1"
         },
         {
           "path": "games/ashenspire/packs/core/cards.json",
@@ -3730,6 +13635,24 @@ export const gameProfileCatalog = {
           "id": "ashen.core-content",
           "version": "1.0.0",
           "hash": "sha256:ba77194603609da10b1f2960d5f5784e1256cabb2fb99e22d909a27e86bbca8c"
+        },
+        {
+          "path": "games/ashenspire/packs/core/enemyCards.json",
+          "id": "ashen.core-content",
+          "version": "1.0.0",
+          "hash": "sha256:9f6be3e74eabe62511df385eb15ac9f5c5083f9a65b370defb07bac3dea43b09"
+        },
+        {
+          "path": "games/ashenspire/packs/core/enemyRelics.json",
+          "id": "ashen.core-content",
+          "version": "1.0.0",
+          "hash": "sha256:15bc7dbf01f9fb64d7b25119cae43e1aec64e0c9c5dbcc748660fe1ffb26d0e2"
+        },
+        {
+          "path": "games/ashenspire/packs/core/gear.json",
+          "id": "ashen.core-content",
+          "version": "1.0.0",
+          "hash": "sha256:6586aba5bfbc68d0c659fbeeb99f37151c74c6a5132ba218624b06ba75266867"
         }
       ]
     },
@@ -15426,7 +25349,7 @@ export const gameProfileCatalog = {
       "path": "engine/kernel/gameConfig.js",
       "id": "ashen.runtime",
       "version": "1.0.0",
-      "hash": "sha256:01a1453dc377cece747e128e779d83bf2f0eb6bde6691a51dfa1ad8e7dbb9e5d"
+      "hash": "sha256:0dbffe2a4d100f7685ee77d459e686452ecfc6267814d6fd778a0467a484283e"
     },
     {
       "path": "engine/contracts/game-profile.json",
@@ -15444,7 +25367,7 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "path": "src/** (excluding generated gameProfiles/changelog)",
-      "hash": "sha256:9449f200ae2cb7040ec80200aecdecd3214f1c8c1ba11ae79b03afa9e24b807a"
+      "hash": "sha256:2173b946a4bc92a446acc343062d28cbaf4dc130e70266dfcd211f0e6c4aa68d"
     }
   ],
   "runtimeSources": [
@@ -15464,7 +25387,7 @@ export const gameProfileCatalog = {
       "path": "src/config/generated/ui.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:7e5a093972c43e7c008f4e4ab3abfd52a8db05512ccd32e477d5fbba1c28eacc"
+      "hash": "sha256:76e5b87e87b365d6484d4b4171106b9c7f6302069f751c365a1d05feed68c100"
     },
     {
       "path": "src/content/actionAnimations.js",
@@ -17756,7 +27679,7 @@ export const gameProfileCatalog = {
       "path": "src/model/gameProfileRewards.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:85fc18caea2f0e344f49af1c13a0a14e51f1d9427351c936724cf6429a1794ad"
+      "hash": "sha256:b08604a719d8ace9a02efdb579614a75407ce9be6236b371ef79a83e0c3e5d9c"
     },
     {
       "path": "src/model/gameProfileRun.js",
@@ -18500,7 +28423,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/components/battlefieldStage.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:1227a62c34ba2065a2722e60b0926a62ae0b51daaf570f18b65b9594d808b562"
+      "hash": "sha256:f877925d873978a12b0f686f0b7e6134e5f6c626b472479c78bebc0f6e1dc457"
     },
     {
       "path": "src/ui/components/bookArt.js",
@@ -20018,7 +29941,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/models/TargetHudModel.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:444a7a891455f05eed7bc6e109054cb0075b99b4c26bfb9a82e71c106149d97e"
+      "hash": "sha256:f6a5406af998d4ad79919e50db120d348d13a559cd939330dbf07ddb5f0a90e4"
     },
     {
       "path": "src/ui/models/TargetLayerModel.js",
@@ -20465,7 +30388,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:23af16d4e9c9f6d88fe655d32ecf1a688b47df39f9e3a1d6d193ce63923593ab"
     }
   ],
-  "runtimeHash": "sha256:6aa4f51072c794bba5689f3adecf1a09e7ace44eee5baa647a8b39026f657023"
+  "runtimeHash": "sha256:813f7203ff9293f007e840fcac4e7b71ad4c80020fcc20fd37151216d887b8a3"
 };
 export const gameProfileAuthors = {
   "default": {

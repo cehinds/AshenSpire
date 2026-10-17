@@ -1,0 +1,27 @@
+{
+  "id": "maneuver_attack",
+  "tag": "maneuver:attack",
+  "version": "1.0.0",
+  "family": "maneuver",
+  "label": "Attack",
+  "description": "Fast strike. Gains extra Poise pressure against a prepared Smash or casting enemy.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "maneuver_attack",
+    "color": "D7B36B"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/model/actionCosts.js",
+    "symbol": "actionStance"
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "id": "deckList",
+  "description": "Deck editing list with cost rows. Reads src/ui/screens/deckEditor.js, src/ui/components/piles.js and src/ui/models/DeckEditorModel.js, deckEditorCollectionRows.js, deckEditorCosts.js.",
+  "layout": {
+    "ref": "content/config/ui/presentation/deckEditorCosts.json"
+  },
+  "viewModel": {
+    "props": {
+      "run": "runRef",
+      "filter": "string"
+    },
+    "bindings": {
+      "deck": "$run.deck",
+      "collection": "$run.collection",
+      "rows": "deckEditor.rows($run, $filter)",
+      "costs": "deckEditor.costs($run)"
+    }
+  },
+  "states": [
+    "browsing",
+    "dragging",
+    "searching"
+  ],
+  "events": {
+    "tap": "deck.selectCard",
+    "move": "deck.moveCard",
+    "hold": "inspect.open",
+    "done": "deck.done",
+    "cancel": "deck.cancel"
+  },
+  "children": [
+    {
+      "component": "card",
+      "slot": "row",
+      "props": {
+        "card": "$rows[i].card",
+        "level": "row"
+      }
+    }
+  ],
+  "assets": [],
+  "platforms": [
+    "mobile",
+    "tablet",
+    "desktop"
+  ]
+}

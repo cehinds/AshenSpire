@@ -1,0 +1,27 @@
+{
+  "id": "camp_physical",
+  "tag": "camp:physical",
+  "version": "1.0.0",
+  "family": "camp",
+  "label": "Physical",
+  "description": "Selects physical Guard or magical Ward combat rules.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "camp_physical",
+    "color": "D7B36B"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/actions.js",
+    "symbol": "ratingBonusPart"
+  }
+}

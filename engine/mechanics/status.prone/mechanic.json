@@ -1,0 +1,26 @@
+{
+  "id": "status.prone",
+  "tag": "status.prone",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Prone",
+  "description": "+25% Contact damage, -25% Single Near/Far damage. +2/+4 Evade against Near/Far Martial weapons. Stand Up: 1 SP after hand locks clear.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.prone"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/combatMatchups.js",
+    "symbol": "completeTacticalAction"
+  }
+}

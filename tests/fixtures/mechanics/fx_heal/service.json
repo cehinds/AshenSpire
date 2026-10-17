@@ -1,0 +1,12 @@
+{
+  "mechanic": "fx_heal",
+  "handlers": [
+    { "on": "command.heal",
+      "do": [ { "op": "heal", "target": "$target", "amount": "$amount" },
+              { "set": "healed", "value": "$amount" },
+              { "emit": "fx_heal.healed", "with": { "target": "$target", "amount": "$amount" } } ] },
+    { "on": "command.healPct",
+      "do": [ { "op": "heal", "target": "$target", "amount": { "f": "percentMaxHp", "of": "target", "pct": "$pct" } },
+              { "emit": "fx_heal.healed", "with": { "target": "$target", "amount": 0 } } ] }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "id": "dialogue",
+  "description": "Dialogue. Mounted by src/ui/screens/dialogue.js (mountDialogue).",
+  "route": "dialogue",
+  "scene": {
+    "ref": "content/config/ui/scenes/w4c-dialogue.json"
+  },
+  "viewModel": {
+    "props": {
+      "dialogue": "dialogueRef"
+    }
+  },
+  "regions": [
+    {
+      "slot": "stage",
+      "component": "dialogueFrame",
+      "props": {
+        "speaker": "$dialogue.speaker",
+        "line": "$dialogue.line",
+        "responses": "$dialogue.responses"
+      }
+    },
+    {
+      "slot": "portrait",
+      "component": "identity",
+      "props": {
+        "character": "$dialogue.speakerEntity"
+      }
+    },
+    {
+      "slot": "footer",
+      "component": "buttons",
+      "props": {
+        "items": [
+          "continue",
+          "leave"
+        ]
+      }
+    }
+  ],
+  "events": {
+    "advance": "dialogue.advance",
+    "respond": "dialogue.respond",
+    "leave": "dialogue.leave"
+  },
+  "assets": [
+    "scene.dialogue",
+    "portrait"
+  ]
+}

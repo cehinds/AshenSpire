@@ -1,0 +1,25 @@
+{
+  "id": "status.thornHalo",
+  "tag": "status.thornHalo",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Thorn Halo",
+  "description": "At the start of your turn, apply 1 Crimson Blight per stack to ALL enemies.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.thornHalo"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js"
+  }
+}

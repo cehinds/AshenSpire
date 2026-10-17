@@ -1,0 +1,26 @@
+{
+  "id": "lifecycle.retain",
+  "tag": "lifecycle.retain",
+  "version": "1.0.0",
+  "family": "lifecycle",
+  "label": "Retain",
+  "description": "Tag lifecycle.retain in the lifecycle family.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "lifecycle.retain"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/actions.js",
+    "symbol": "silencedForceContacts"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "id": "from_class",
+  "tag": "from:class",
+  "version": "1.0.0",
+  "family": "from",
+  "label": "Class",
+  "description": "The class signature card.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "from_class",
+    "color": "9FC3E8"
+  },
+  "portability": "data"
+}

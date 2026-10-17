@@ -26,7 +26,7 @@ test('runtime source edits change the exact behavior pin independently of game d
  try{writeFileSync(marker,'export const probe = 1;\n',{flag:'wx'});const after=loadGameProfileCatalog();assert.notEqual(after.runtimeHash,before.runtimeHash);}finally{rmSync(marker,{force:true});}
 });
 test('unresolved pack/class card references fail before a game can start',()=>{
- const {catalog,authors}=compileGameProfiles(),changed=JSON.parse(JSON.stringify(catalog));changed.packs['ashen.core-content@1.0.0'].content.classes[0].specialCardId='missing';
+ const {catalog,authors}=compileGameProfiles(),changed=JSON.parse(JSON.stringify(catalog));changed.packs['ashen.core-content@1.0.0'].content.characters.find(c=>c.tags.includes('character.player')).player.specialCardId='missing';
  assert.throws(()=>resolveGameAuthor(authors.core,changed),/unresolved card reference/);
 });
 

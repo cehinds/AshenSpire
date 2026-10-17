@@ -1,0 +1,12 @@
+{
+  "mode": "configured",
+  "minRank": 1,
+  "lowerRankChance": 0.1,
+  "rankOfRarity": {
+    "starter": 0,
+    "common": 1,
+    "uncommon": 2,
+    "rare": 3
+  },
+  "skipOwnedBasics": true
+}

@@ -1,0 +1,29 @@
+{
+  "_": "DERIVED by node tools/asset-catalog.mjs, never by hand. The full catalog is build output (buildAssetCatalog()); this file pins it by sha256.",
+  "format": "ashen.assets.summary@1",
+  "source": [
+    "art-manifest.json",
+    "games/ashenspire/assets/missing.json"
+  ],
+  "tiers": [
+    "placeholder",
+    "light",
+    "high",
+    "common"
+  ],
+  "count": 7542,
+  "byKind": {
+    "audio": 13,
+    "data": 1,
+    "font": 15,
+    "image": 7512,
+    "text": 1
+  },
+  "byTier": {
+    "common": 146,
+    "high": 7348,
+    "light": 7348
+  },
+  "placeholderOnly": 48,
+  "sha256": "92617a3e6642ef490520ccbc291ed976831ae52e96d045ce1a68ec06b545eab7"
+}

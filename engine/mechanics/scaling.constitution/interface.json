@@ -1,0 +1,8 @@
+{
+  "mechanic": "scaling.constitution",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

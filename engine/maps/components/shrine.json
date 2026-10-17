@@ -1,0 +1,33 @@
+{
+  "id": "shrine",
+  "kind": "node",
+  "label": "Shrine of Emberlight",
+  "description": "Rest to heal, smith an owned armament, or mend an ally. Also the lone pre-boss rest.",
+  "icon": "node-shrine",
+  "encounter": {},
+  "placement": {
+    "shrineFrom": {
+      "at": "fraction",
+      "of": 0.27
+    },
+    "noShrineOn": {
+      "at": "last"
+    },
+    "preBossShrine": {
+      "floor": "floors",
+      "count": 1
+    },
+    "noSameTypeAdjacent": true,
+    "source": "src/content/mapconfig.js:99,101; src/engine/mapgen.js:162,219,220"
+  },
+  "rewards": {
+    "heal": true,
+    "smith": true
+  },
+  "assets": [
+    "node-shrine"
+  ],
+  "tags": [
+    "rest"
+  ]
+}

@@ -1,0 +1,133 @@
+[
+  {
+    "name": "applies Frail to a clean target",
+    "given": {
+      "entities": {
+        "enemy": {
+          "hp": 30,
+          "maxHp": 30,
+          "statuses": {}
+        }
+      }
+    },
+    "when": {
+      "command": "status.frail.apply",
+      "with": {
+        "stacks": 2,
+        "target": "enemy"
+      }
+    },
+    "then": {
+      "entities": {
+        "enemy": {
+          "statuses": {
+            "frail": 2
+          }
+        }
+      },
+      "events": [
+        "status.frail.applied"
+      ]
+    }
+  },
+  {
+    "name": "stacks add onto existing Frail",
+    "given": {
+      "entities": {
+        "enemy": {
+          "hp": 30,
+          "maxHp": 30,
+          "statuses": {
+            "frail": 2
+          }
+        }
+      }
+    },
+    "when": {
+      "command": "status.frail.apply",
+      "with": {
+        "stacks": 3,
+        "target": "enemy"
+      }
+    },
+    "then": {
+      "entities": {
+        "enemy": {
+          "statuses": {
+            "frail": 5
+          }
+        }
+      },
+      "events": [
+        "status.frail.applied"
+      ]
+    }
+  },
+  {
+    "name": "removes part of the Frail stacks",
+    "given": {
+      "entities": {
+        "enemy": {
+          "hp": 30,
+          "maxHp": 30,
+          "statuses": {
+            "frail": 4
+          }
+        }
+      }
+    },
+    "when": {
+      "command": "status.frail.remove",
+      "with": {
+        "amount": 1,
+        "target": "enemy"
+      }
+    },
+    "then": {
+      "entities": {
+        "enemy": {
+          "statuses": {
+            "frail": 3
+          }
+        }
+      },
+      "events": [
+        "status.frail.removed"
+      ]
+    }
+  },
+  {
+    "name": "leaves other statuses on the target alone",
+    "given": {
+      "entities": {
+        "enemy": {
+          "hp": 30,
+          "maxHp": 30,
+          "statuses": {
+            "dazed": 1
+          }
+        }
+      }
+    },
+    "when": {
+      "command": "status.frail.apply",
+      "with": {
+        "target": "enemy",
+        "stacks": 1
+      }
+    },
+    "then": {
+      "entities": {
+        "enemy": {
+          "statuses": {
+            "dazed": 1,
+            "frail": 1
+          }
+        }
+      },
+      "events": [
+        "status.frail.applied"
+      ]
+    }
+  }
+]

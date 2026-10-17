@@ -1,0 +1,27 @@
+{
+  "id": "maneuver_smash",
+  "tag": "maneuver:smash",
+  "version": "1.0.0",
+  "family": "maneuver",
+  "label": "Smash",
+  "description": "Heavy strike. Deals extra damage against physical Guard and extra Poise damage when Guard breaks. Fast Attack and Counter answer it.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "maneuver_smash",
+    "color": "DB9871"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/combatRounds/stance.js",
+    "symbol": "stanceFor"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "id": "classification.basicCardProfile",
+  "tag": "classification.basicCardProfile",
+  "version": "1.0.0",
+  "family": "classification",
+  "label": "BasicCardProfile",
+  "description": "What a basicCardProfile is. Every object in the basicCardProfile collection carries this, and nothing outside it may.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "classification.basicCardProfile"
+  },
+  "portability": "data"
+}

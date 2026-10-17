@@ -1,0 +1,26 @@
+{
+  "id": "status.slowed",
+  "tag": "status.slowed",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Slowed",
+  "description": "Deals 10% less damage and gains 25% less Block. 1 stack expires each turn.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.slowed"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/model/combatExpansionRules.js",
+    "symbol": "createCombatExpansionRuleSnapshot"
+  }
+}

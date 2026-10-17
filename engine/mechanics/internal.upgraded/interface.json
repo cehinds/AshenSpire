@@ -1,0 +1,8 @@
+{
+  "mechanic": "internal.upgraded",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

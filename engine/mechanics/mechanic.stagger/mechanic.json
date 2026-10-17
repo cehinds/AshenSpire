@@ -1,0 +1,28 @@
+{
+  "id": "mechanic.stagger",
+  "tag": "mechanic.stagger",
+  "version": "1.0.0",
+  "family": "mechanic",
+  "label": "Stagger",
+  "description": "Breaking poise staggers the target: it gains Vulnerable and loses stamina (SP).",
+  "attaches": [
+    "entity",
+    "combat"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "mechanic.stagger"
+  },
+  "portability": "portable",
+  "legacy": {
+    "file": "src/engine/actions.js",
+    "symbol": "breakEnemy"
+  },
+  "authored": true
+}

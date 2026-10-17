@@ -1,0 +1,36 @@
+{
+  "id": "statusTray",
+  "description": "Row of status icons on a combatant. Reads src/ui/components/combatantFrame.js, src/model/statuses and src/ui/models/CombatantStackModel.js.",
+  "layout": {
+    "ref": "content/config/ui/components/combatTargetHud.json",
+    "path": "sizing.statusIconPx"
+  },
+  "viewModel": {
+    "props": {
+      "entity": "entityRef"
+    },
+    "bindings": {
+      "statuses": "$entity.statuses"
+    },
+    "visibility": {
+      "query": "enemy_visibility.visibleFields",
+      "appliesTo": "enemy",
+      "fields": {
+        "statuses": "statuses"
+      }
+    }
+  },
+  "states": [
+    "empty",
+    "shown"
+  ],
+  "events": {
+    "tap": "inspect.open"
+  },
+  "assets": [],
+  "platforms": [
+    "mobile",
+    "tablet",
+    "desktop"
+  ]
+}
