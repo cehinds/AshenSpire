@@ -329,7 +329,11 @@ async function renderedMeasure(cdp, S, port, pieces) {
     ]);
     const registries = { equipment: { armaments: ARMAMENTS, armour: ARMOUR, slots: SLOTS } };
     document.body.innerHTML = '';
-    document.body.style.cssText = 'margin:0;background:#ff00ff;width:400px;height:500px;overflow:hidden';
+    // The shipped stylesheet applies UI zoom to body. This
+    // fixture measures compositor pixels in a fixed 400 x 500 coordinate space;
+    // inheriting that zoom leaves page background outside its magenta extent,
+    // which the ink reader would count as figure pixels.
+    document.body.style.cssText = 'margin:0;background:#ff00ff;width:400px;height:500px;overflow:hidden;zoom:1!important';
     const host = document.createElement('div');
     host.style.cssText = 'position:absolute;left:0;top:0;width:400px;height:500px;background:#ff00ff;';
     document.body.appendChild(host);
@@ -365,6 +369,10 @@ async function renderedMeasure(cdp, S, port, pieces) {
     return true;
   })()`;
   await mount(HARNESS);
+  // Prove the full captured extent is backdrop before introducing any ink.
+  // Otherwise page background can dominate every armament's centroid.
+  if (await shoot()) throw new Error('blank fixture produced ink — the rendered measurement is contaminated by page background');
+  console.log('  blank-fixture control — no ink outside the rendered subject');
   const show = (wrapper, piece) => mount(`window.__probeShow(${JSON.stringify(wrapper)}, ${JSON.stringify(piece)})`);
 
   await show('bare', null);
@@ -440,6 +448,13 @@ if (process.argv.includes('--selftest')) {
         replace: "    const hands = [authoredHand];",
         expectRed: /POPULATION WRONG.*hand=either.*both left and right/,
       },
+      {
+        name: 'P7 inherited UI zoom contaminates the fixture with page background',
+        file: 'tools/hand-side-probe.mjs',
+        find: 'overflow:hidden;zoom:1!important',
+        replace: 'overflow:hidden;zoom:0.64!important',
+        expectRed: /blank fixture produced ink/,
+      },
   ];
   const selftestCode = await doorSelftest({
     tool: 'hand-side-probe.mjs',
@@ -478,8 +493,18 @@ async function run(port, pieces) {
     const { sessionId: S } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
     await cdp.send('Page.enable', {}, S);
     await cdp.send('Runtime.enable', {}, S);
-    await cdp.send('Page.navigate', { url: `http://localhost:${port}/` }, S);
-    await new Promise((r) => setTimeout(r, 1200));
+    // Establish the served origin without starting the game. Its asynchronous
+    // bootstrap/resize handlers otherwise keep changing body zoom after the
+    // fixture mounts, so unrelated page background becomes measured ink.
+    await cdp.send('Page.navigate', { url: `http://localhost:${port}/styles/ui.css` }, S);
+    const styles = readFileSync(resolve(ROOT, 'index.html'), 'utf8')
+      .match(/<link\b[^>]*rel=["']stylesheet["'][^>]*>/g) || [];
+    if (!styles.length) throw new Error('no shipped stylesheets found for the rendered fixture');
+    const fixtureHtml = `<html><head><base href="http://localhost:${port}/">${styles.join('')}</head><body></body></html>`;
+    await cdp.send('Runtime.evaluate', {
+      expression: `new Promise((done) => { document.open(); document.write(${JSON.stringify(fixtureHtml)}); document.close(); if (document.readyState === 'complete') done(); else window.addEventListener('load', done, { once: true }); })`,
+      awaitPromise: true,
+    }, S);
     const sources = [...new Map(pieces.map((piece) => [piece.pieceId, {
       ...piece, id: piece.pieceId, hand: piece.authoredHand,
     }])).values()];
