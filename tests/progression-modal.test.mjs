@@ -6,6 +6,7 @@ import { createRunState } from '../src/model/state.js';
 import { awardLevelXp, xpToNext } from '../src/model/levelup.js';
 import { withModalDom } from './helpers/modal-dom.mjs';
 import { openCharacterSheet } from '../src/ui/screens/characterSheet.js';
+import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { t } from '../src/ui/strings.js';
 
 const registries = createRegistries(contentBundle);
@@ -89,5 +90,25 @@ test('Progression hub hands rewards and respec to their writers after closing an
     clickLabel(open(), t('common.back'));
     assert.deepEqual(events, ['closed', 'rewards', 'closed', 'respec', 'closed']);
     assert.deepEqual(run, before, 'opening and leaving the hub never claims or rebuilds progression');
+  });
+});
+
+test('configured progression opens Character directly without legacy reward or respec actions', () => {
+  withModalDom(() => {
+    const profile = resolveGameProfile('core');
+    const coreRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+    const run = createRunState({ seed: 4242, classId: 'reaver', registries: coreRegistries });
+    const before = structuredClone(run), events = [];
+    const sheet = openCharacterSheet({ registries: coreRegistries, run, tab: 'skills',
+      onRewards: () => events.push('rewards'), onRespec: () => events.push('respec') });
+    assert.equal(sheet.panel.querySelector('.character-sheet-body').dataset.tab, 'character');
+    const labels = [...sheet.panel.querySelectorAll('button')].map(node => node.textContent);
+    assert.equal(labels.includes(t('progression.tab.skills')), false);
+    assert.equal(labels.includes(t('progression.tab.class')), false);
+    assert.equal(labels.includes(t('progression.rewards')), false);
+    assert.equal(labels.includes(t('classRespec.title')), false);
+    assert.deepEqual(events, []);
+    assert.deepEqual(run, before, 'opening the configured character page does not mutate progression');
+    sheet.close();
   });
 });
