@@ -50,7 +50,20 @@
     {
       "role": "ground",
       "asset": "city-street-night/ground.png"
+    },
+    {
+      "role": "filter",
+      "purpose": "time-of-day",
+      "filterId": "night",
+      "asset": "../batch-04-atmosphere/filters/filter-night.png",
+      "opacity": 0.3,
+      "tags": {
+        "timeOfDay": [
+          "night"
+        ]
+      }
     }
   ],
-  "reuse": {}
+  "reuse": {},
+  "backdropType": "sky-and-distance"
 }

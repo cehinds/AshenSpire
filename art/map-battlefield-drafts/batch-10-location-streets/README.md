@@ -2,9 +2,11 @@
 
 **86 new source PNGs · 27 location sets · 28 editable scenes · 12 Crownfall map candidates.**
 
-The camera stands inside the location. Nearby facades, rock walls and trees frame an open center. Each scene references separate paintings: backdrop → side props → ground → optional filters → particles. Ground covers prop bases; it is not an image of a complete environment.
+The camera stands inside the location. Nearby facades, rock walls and trees frame an open center. Each scene references separate paintings: backdrop → side props → ground → optional floor props → filters → particles. Ground covers prop bases; it is not an image of a complete environment.
 
 ## Look at the art
+
+[Independent components and rug-on/off example](preview-components.png) · [Separate rug PNG and provenance](../batch-11-floor-props/README.md)
 
 - [Crownfall intro-map locations](preview-intro-map.png)
 - [City, desert, jungle, snow, night and village streets](preview-streets.png)
@@ -15,6 +17,16 @@ The camera stands inside the location. Nearby facades, rock walls and trees fram
 - [All 28 scenes](preview-all-scenes.png)
 
 Source sheets show the actual individual layers on contrasting backgrounds: [streets](preview-sources-streets.png), [nature](preview-sources-nature.png), [interiors](preview-sources-interiors.png), [landmarks](preview-sources-landmarks.png), [intro](preview-sources-intro.png).
+
+## Indoor and outdoor skyboxes
+
+`modules/index.json.componentSlots` names the artist-facing slots. The existing JSON role `backdrop` is the skybox slot: outdoors it holds sky and distant scenery; indoors it is the back wall or fixed room shell. Each scene declares `backdropType: "room-shell"` or `"sky-and-distance"`. Pillars, bookshelves, stairs, thrones and furniture are separate transparent props. Existing backdrop paintings still contain some fixed architectural detail; these drafts do not isolate every distant wall fixture or architectural feature.
+
+## Time of day is its own component
+
+[Editable time-of-day module](modules/time-of-day.json) references existing transparent day and night PNGs (4096×4096), separately from weather filters. Each outdoor scene now contains one `filter` layer tagged `purpose: "time-of-day"`; rain adds a second filter tagged `purpose: "weather"`. Opacity is editable. Interior rooms keep local ambient lighting by default, but can opt into one time tint without admitting outdoor precipitation. Filters cover twice the longest viewport edge, within the documented native-resolution limit. HUD belongs above the tint stack.
+
+[Filter on/off comparison](preview-time-filters.png). Day/night tint supports the lighting; a tint alone does not recreate painted night windows or lamps.
 
 ## Edit or import the JSON
 
@@ -83,7 +95,7 @@ The map module covers Crownfall, Blacksmith, Old Market, Wayfarer's Inn, Chapel 
 | Specialist rooms | Astrologer chamber, Crownfall archive |
 | Intro service props | Forge workstation, Chapel of Embers frontage |
 
-The rain example adds existing translucent filter/particle layers to the city scene and records a modest preview grade. Night has separately painted ground, backdrop and facades. Interior scenes exclude outdoor rain/snow/sky overlays. Desert, jungle and snowy streets currently use daylight; earlier batch09 supplies additional biome weather/night components.
+The rain example adds existing translucent filter/particle layers to the city scene and records a modest preview grade. Night has separately painted ground, backdrop and facades. Interior scenes exclude outdoor rain/snow/sky overlays; a time-of-day tint is independently optional. Desert, jungle and snowy streets currently use daylight; earlier batch09 supplies additional biome weather/night components.
 
 ## Placement and resolution
 
@@ -108,6 +120,8 @@ node art/map-battlefield-drafts/batch-10-location-streets/render-previews.mjs
 node --test art/map-battlefield-drafts/batch-10-location-streets/scenes.test.mjs
 ```
 
-`build-manifest.py` requires original generation outputs at each provenance `sourceOutputPath`; it verifies byte identity and reviewed hashes. Those temporary original paths are provenance, not portable build inputs. Existing manifest validation and preview rendering work from checked-in assets. `create-modules.py` initializes templates and **overwrites hand-edited module JSON**; it is not part of routine validation.
+`build-manifest.py` requires original generation outputs at each provenance `sourceOutputPath`; it verifies byte identity and reviewed hashes. Those temporary original paths are provenance, not portable build inputs. Existing manifest validation and preview rendering work from checked-in assets. `create-modules.py` initializes templates from the brief plus the checked-in component definitions and rug placement and **overwrites hand-edited module JSON**; it is not part of routine validation.
 
 All art remains proposal assets with `productionBinding: null`. Runtime map, combat and intro presentation wiring belongs to integration branches.
+
+The default throne-room recipe uses the bare dungeon floor with a separately placed batch11 rug. The original batch10 floor/runner painting remains a legacy source, not the default floor. Flat floor props draw above ground; chairs, pillars and other rear props continue below ground at their bases.

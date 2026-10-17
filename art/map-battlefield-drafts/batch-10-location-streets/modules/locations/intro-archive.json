@@ -56,5 +56,6 @@
     "ground": "dungeon-corridor/ground",
     "prop-left": "dungeon-corridor/prop-left",
     "prop-right": "astrologer-chamber/prop-right"
-  }
+  },
+  "backdropType": "room-shell"
 }

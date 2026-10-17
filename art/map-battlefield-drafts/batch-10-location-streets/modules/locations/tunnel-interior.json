@@ -52,5 +52,6 @@
       "asset": "tunnel-interior/ground.png"
     }
   ],
-  "reuse": {}
+  "reuse": {},
+  "backdropType": "room-shell"
 }

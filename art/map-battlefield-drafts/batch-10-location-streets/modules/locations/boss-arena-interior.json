@@ -55,5 +55,6 @@
   "reuse": {
     "ground": "dungeon-corridor/ground",
     "prop-right": "dungeon-corridor/prop-right"
-  }
+  },
+  "backdropType": "room-shell"
 }

@@ -55,5 +55,6 @@
   "reuse": {
     "ground": "volcanic-castle-exterior/ground",
     "prop-right": "volcanic-castle-exterior/prop-right"
-  }
+  },
+  "backdropType": "room-shell"
 }

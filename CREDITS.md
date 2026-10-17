@@ -835,3 +835,7 @@ define 28 layered scenes and [12 Crownfall intro-map art candidates](art/map-bat
 Preview crops and declared viewport-edge prop framing do not alter source files.
 These remain unregistered feature-branch drafts; no third-party artwork or
 license is claimed.
+
+### Separate throne-room floor decoration (2026-10-17)
+
+One original OpenAI image_gen transparent rug PNG in `art/map-battlefield-drafts/batch-11-floor-props/`, with exact prompt, native1672×941 dimensions, original output path and SHA-256 provenance. Original bytes preserved. The recipe combines existing bare ground, separate throne, room backdrop and independent translucent day/night filters. No production binding or third-party artwork is claimed.

@@ -1,0 +1,12 @@
+{
+  "scope": "One separate floor-decoration source; visually reviewed by main agent.",
+  "items": [
+    {
+      "assetKey": "batch-11-floor-props/prop-throne-runner",
+      "verdict": "approved",
+      "profileId": "battlefield-prop",
+      "sha256": "b142b8280f5c4e32cfb74263d45831ffc71e37d0eee77a49bf50103cc9476f40",
+      "reason": "Complete separate low-perspective faded burgundy rug on transparency; no baked floor or furniture. Narrow top/bottom margins retained and documented."
+    }
+  ]
+}

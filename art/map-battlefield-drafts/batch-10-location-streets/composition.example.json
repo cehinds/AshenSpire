@@ -41,15 +41,89 @@
     "sideProps": "Large near left/right pieces may intentionally extend beyond the viewport. Original source silhouettes remain intact. Keep the inner40% open except explicit rear focal props above the ground.",
     "layerOrder": [
       "backdrop",
-      "prop",
+      "prop:rear",
       "ground",
+      "prop:floor-surface",
       "filter",
       "particles"
     ],
     "groundContact": "Use measured center horizon; prop base overlaps ground by declared pixels.",
     "overscan": "Review static crops only; arbitrary camera motion needs expanded source edges."
   },
+  "componentSlots": {
+    "skybox": {
+      "layerRole": "backdrop",
+      "outside": "Sky and distant scenery.",
+      "inside": "Back wall or fixed room shell.",
+      "propBoundary": "Movable or interchangeable pillars, bookshelves, stairs and furniture use separate prop PNGs."
+    },
+    "props": {
+      "layerRole": "prop",
+      "description": "Separate transparent PNGs for buildings, pillars, bookshelves, stairs, rocks, trees and furniture."
+    },
+    "ground": {
+      "layerRole": "ground",
+      "description": "Separate floor surface, transparent above the ground plane, drawn over prop bases."
+    },
+    "timeOfDay": {
+      "layerRole": "filter",
+      "purpose": "time-of-day",
+      "module": "time-of-day.json"
+    },
+    "weather": {
+      "layerRoles": [
+        "filter",
+        "particles"
+      ],
+      "description": "Independent weather tint and effects; outdoors by default."
+    },
+    "floorProps": {
+      "layerRole": "prop",
+      "placementMode": "floor-surface",
+      "description": "Separate rugs and flat floor decorations, drawn above ground and below actors."
+    }
+  },
   "assetBase": ".",
+  "timeOfDayFilters": {
+    "formatVersion": 1,
+    "id": "time-of-day-filters",
+    "selection": "Choose one day or night tint; tune opacity independently of weather.",
+    "status": "draft-art-components",
+    "coverage": {
+      "mode": "centered-square",
+      "sideMultiplierOfLongestViewportEdge": 2,
+      "sourcePixels": 4096,
+      "maximumNativeViewportEdge": 2048
+    },
+    "items": {
+      "day": {
+        "role": "filter",
+        "purpose": "time-of-day",
+        "filterId": "day",
+        "asset": "../batch-04-atmosphere/filters/filter-day.png",
+        "editableSource": "../batch-04-atmosphere/filters/filter-day.svg",
+        "opacity": 0.35,
+        "tags": {
+          "timeOfDay": [
+            "day"
+          ]
+        }
+      },
+      "night": {
+        "role": "filter",
+        "purpose": "time-of-day",
+        "filterId": "night",
+        "asset": "../batch-04-atmosphere/filters/filter-night.png",
+        "editableSource": "../batch-04-atmosphere/filters/filter-night.svg",
+        "opacity": 0.3,
+        "tags": {
+          "timeOfDay": [
+            "night"
+          ]
+        }
+      }
+    }
+  },
   "scenes": [
     {
       "id": "city-street",
@@ -103,9 +177,22 @@
         {
           "role": "ground",
           "asset": "city-street/ground.png"
+        },
+        {
+          "role": "filter",
+          "purpose": "time-of-day",
+          "filterId": "day",
+          "asset": "../batch-04-atmosphere/filters/filter-day.png",
+          "opacity": 0.35,
+          "tags": {
+            "timeOfDay": [
+              "day"
+            ]
+          }
         }
       ],
-      "reuse": {}
+      "reuse": {},
+      "backdropType": "sky-and-distance"
     },
     {
       "id": "desert-street",
@@ -159,9 +246,22 @@
         {
           "role": "ground",
           "asset": "desert-street/ground.png"
+        },
+        {
+          "role": "filter",
+          "purpose": "time-of-day",
+          "filterId": "day",
+          "asset": "../batch-04-atmosphere/filters/filter-day.png",
+          "opacity": 0.35,
+          "tags": {
+            "timeOfDay": [
+              "day"
+            ]
+          }
         }
       ],
-      "reuse": {}
+      "reuse": {},
+      "backdropType": "sky-and-distance"
     },
     {
       "id": "jungle-street",
@@ -215,9 +315,22 @@
         {
           "role": "ground",
           "asset": "jungle-street/ground.png"
+        },
+        {
+          "role": "filter",
+          "purpose": "time-of-day",
+          "filterId": "day",
+          "asset": "../batch-04-atmosphere/filters/filter-day.png",
+          "opacity": 0.35,
+          "tags": {
+            "timeOfDay": [
+              "day"
+            ]
+          }
         }
       ],
-      "reuse": {}
+      "reuse": {},
+      "backdropType": "sky-and-distance"
     },
     {
       "id": "snowy-street",
@@ -271,9 +384,22 @@
         {
           "role": "ground",
           "asset": "snowy-street/ground.png"
+        },
+        {
+          "role": "filter",
+          "purpose": "time-of-day",
+          "filterId": "day",
+          "asset": "../batch-04-atmosphere/filters/filter-day.png",
+          "opacity": 0.35,
+          "tags": {
+            "timeOfDay": [
+              "day"
+            ]
+          }
         }
       ],
-      "reuse": {}
+      "reuse": {},
+      "backdropType": "sky-and-distance"
     },
     {
       "id": "city-street-night",
@@ -327,9 +453,22 @@
         {
           "role": "ground",
           "asset": "city-street-night/ground.png"
+        },
+        {
+          "role": "filter",
+          "purpose": "time-of-day",
+          "filterId": "night",
+          "asset": "../batch-04-atmosphere/filters/filter-night.png",
+          "opacity": 0.3,
+          "tags": {
+            "timeOfDay": [
+              "night"
+            ]
+          }
         }
       ],
-      "reuse": {}
+      "reuse": {},
+      "backdropType": "sky-and-distance"
     },
     {
       "id": "village-lane",
@@ -383,9 +522,22 @@
         {
           "role": "ground",
           "asset": "village-lane/ground.png"
+        },
+        {
+          "role": "filter",
+          "purpose": "time-of-day",
+          "filterId": "day",
+          "asset": "../batch-04-atmosphere/filters/filter-day.png",
+          "opacity": 0.35,
+          "tags": {
+            "timeOfDay": [
+              "day"
+            ]
+          }
         }
       ],
-      "reuse": {}
+      "reuse": {},
+      "backdropType": "sky-and-distance"
     },
     {
       "id": "dungeon-corridor",
@@ -441,7 +593,8 @@
           "asset": "dungeon-corridor/ground.png"
         }
       ],
-      "reuse": {}
+      "reuse": {},
+      "backdropType": "room-shell"
     },
     {
       "id": "cave-interior",
@@ -497,7 +650,8 @@
           "asset": "cave-interior/ground.png"
         }
       ],
-      "reuse": {}
+      "reuse": {},
+      "backdropType": "room-shell"
     },
     {
       "id": "cave-approach",
@@ -551,9 +705,22 @@
         {
           "role": "ground",
           "asset": "cave-approach/ground.png"
+        },
+        {
+          "role": "filter",
+          "purpose": "time-of-day",
+          "filterId": "day",
+          "asset": "../batch-04-atmosphere/filters/filter-day.png",
+          "opacity": 0.35,
+          "tags": {
+            "timeOfDay": [
+              "day"
+            ]
+          }
         }
       ],
-      "reuse": {}
+      "reuse": {},
+      "backdropType": "sky-and-distance"
     },
     {
       "id": "forest-path",
@@ -607,9 +774,22 @@
         {
           "role": "ground",
           "asset": "forest-path/ground.png"
+        },
+        {
+          "role": "filter",
+          "purpose": "time-of-day",
+          "filterId": "day",
+          "asset": "../batch-04-atmosphere/filters/filter-day.png",
+          "opacity": 0.35,
+          "tags": {
+            "timeOfDay": [
+              "day"
+            ]
+          }
         }
       ],
-      "reuse": {}
+      "reuse": {},
+      "backdropType": "sky-and-distance"
     },
     {
       "id": "mountain-road",
@@ -663,9 +843,22 @@
         {
           "role": "ground",
           "asset": "mountain-road/ground.png"
+        },
+        {
+          "role": "filter",
+          "purpose": "time-of-day",
+          "filterId": "day",
+          "asset": "../batch-04-atmosphere/filters/filter-day.png",
+          "opacity": 0.35,
+          "tags": {
+            "timeOfDay": [
+              "day"
+            ]
+          }
         }
       ],
-      "reuse": {}
+      "reuse": {},
+      "backdropType": "sky-and-distance"
     },
     {
       "id": "castle-grounds",
@@ -719,9 +912,22 @@
         {
           "role": "ground",
           "asset": "castle-grounds/ground.png"
+        },
+        {
+          "role": "filter",
+          "purpose": "time-of-day",
+          "filterId": "day",
+          "asset": "../batch-04-atmosphere/filters/filter-day.png",
+          "opacity": 0.35,
+          "tags": {
+            "timeOfDay": [
+              "day"
+            ]
+          }
         }
       ],
-      "reuse": {}
+      "reuse": {},
+      "backdropType": "sky-and-distance"
     },
     {
       "id": "fortress-gate",
@@ -775,9 +981,22 @@
         {
           "role": "ground",
           "asset": "fortress-gate/ground.png"
+        },
+        {
+          "role": "filter",
+          "purpose": "time-of-day",
+          "filterId": "day",
+          "asset": "../batch-04-atmosphere/filters/filter-day.png",
+          "opacity": 0.35,
+          "tags": {
+            "timeOfDay": [
+              "day"
+            ]
+          }
         }
       ],
-      "reuse": {}
+      "reuse": {},
+      "backdropType": "sky-and-distance"
     },
     {
       "id": "great-tree",
@@ -831,9 +1050,22 @@
         {
           "role": "ground",
           "asset": "great-tree/ground.png"
+        },
+        {
+          "role": "filter",
+          "purpose": "time-of-day",
+          "filterId": "day",
+          "asset": "../batch-04-atmosphere/filters/filter-day.png",
+          "opacity": 0.35,
+          "tags": {
+            "timeOfDay": [
+              "day"
+            ]
+          }
         }
       ],
-      "reuse": {}
+      "reuse": {},
+      "backdropType": "sky-and-distance"
     },
     {
       "id": "tunnel-interior",
@@ -889,7 +1121,8 @@
           "asset": "tunnel-interior/ground.png"
         }
       ],
-      "reuse": {}
+      "reuse": {},
+      "backdropType": "room-shell"
     },
     {
       "id": "open-road",
@@ -943,9 +1176,22 @@
         {
           "role": "ground",
           "asset": "open-road/ground.png"
+        },
+        {
+          "role": "filter",
+          "purpose": "time-of-day",
+          "filterId": "day",
+          "asset": "../batch-04-atmosphere/filters/filter-day.png",
+          "opacity": 0.35,
+          "tags": {
+            "timeOfDay": [
+              "day"
+            ]
+          }
         }
       ],
-      "reuse": {}
+      "reuse": {},
+      "backdropType": "sky-and-distance"
     },
     {
       "id": "dungeon-stairs",
@@ -1004,7 +1250,8 @@
       "reuse": {
         "ground": "dungeon-corridor/ground",
         "prop-right": "dungeon-corridor/prop-right"
-      }
+      },
+      "backdropType": "room-shell"
     },
     {
       "id": "boss-arena-interior",
@@ -1063,7 +1310,8 @@
       "reuse": {
         "ground": "dungeon-corridor/ground",
         "prop-right": "dungeon-corridor/prop-right"
-      }
+      },
+      "backdropType": "room-shell"
     },
     {
       "id": "boss-arena-exterior",
@@ -1117,13 +1365,26 @@
         {
           "role": "ground",
           "asset": "castle-grounds/ground.png"
+        },
+        {
+          "role": "filter",
+          "purpose": "time-of-day",
+          "filterId": "day",
+          "asset": "../batch-04-atmosphere/filters/filter-day.png",
+          "opacity": 0.35,
+          "tags": {
+            "timeOfDay": [
+              "day"
+            ]
+          }
         }
       ],
       "reuse": {
         "ground": "castle-grounds/ground",
         "prop-left": "fortress-gate/prop-left",
         "prop-right": "fortress-gate/prop-right"
-      }
+      },
+      "backdropType": "sky-and-distance"
     },
     {
       "id": "castle-throne-room",
@@ -1176,12 +1437,35 @@
         },
         {
           "role": "ground",
-          "asset": "castle-throne-room/ground.png"
+          "asset": "dungeon-corridor/ground.png"
+        },
+        {
+          "id": "runner-rug",
+          "role": "prop",
+          "asset": "../batch-11-floor-props/prop-throne-runner.png",
+          "placement": {
+            "mode": "floor-surface",
+            "anchorU": 0.5,
+            "anchorV": 0.78,
+            "visibleWidthFraction": 0.6,
+            "heightFraction": 0.36,
+            "intentionalViewportCrop": false
+          },
+          "tags": {
+            "propType": [
+              "rug"
+            ],
+            "surface": [
+              "floor"
+            ]
+          }
         }
       ],
       "reuse": {
-        "prop-right": "dungeon-corridor/prop-right"
-      }
+        "prop-right": "dungeon-corridor/prop-right",
+        "ground": "dungeon-corridor/ground"
+      },
+      "backdropType": "room-shell"
     },
     {
       "id": "volcanic-castle-exterior",
@@ -1235,9 +1519,22 @@
         {
           "role": "ground",
           "asset": "volcanic-castle-exterior/ground.png"
+        },
+        {
+          "role": "filter",
+          "purpose": "time-of-day",
+          "filterId": "day",
+          "asset": "../batch-04-atmosphere/filters/filter-day.png",
+          "opacity": 0.35,
+          "tags": {
+            "timeOfDay": [
+              "day"
+            ]
+          }
         }
       ],
-      "reuse": {}
+      "reuse": {},
+      "backdropType": "sky-and-distance"
     },
     {
       "id": "volcanic-castle-interior",
@@ -1297,7 +1594,8 @@
         "ground": "volcanic-castle-exterior/ground",
         "prop-left": "volcanic-castle-exterior/prop-left",
         "prop-right": "volcanic-castle-exterior/prop-right"
-      }
+      },
+      "backdropType": "room-shell"
     },
     {
       "id": "cinder-tower",
@@ -1356,7 +1654,8 @@
       "reuse": {
         "ground": "volcanic-castle-exterior/ground",
         "prop-right": "volcanic-castle-exterior/prop-right"
-      }
+      },
+      "backdropType": "room-shell"
     },
     {
       "id": "astrologer-chamber",
@@ -1412,7 +1711,8 @@
           "asset": "astrologer-chamber/ground.png"
         }
       ],
-      "reuse": {}
+      "reuse": {},
+      "backdropType": "room-shell"
     },
     {
       "id": "intro-forge",
@@ -1466,13 +1766,26 @@
         {
           "role": "ground",
           "asset": "city-street/ground.png"
+        },
+        {
+          "role": "filter",
+          "purpose": "time-of-day",
+          "filterId": "day",
+          "asset": "../batch-04-atmosphere/filters/filter-day.png",
+          "opacity": 0.35,
+          "tags": {
+            "timeOfDay": [
+              "day"
+            ]
+          }
         }
       ],
       "reuse": {
         "backdrop": "city-street/backdrop",
         "ground": "city-street/ground",
         "prop-right": "city-street/prop-right"
-      }
+      },
+      "backdropType": "sky-and-distance"
     },
     {
       "id": "intro-chapel",
@@ -1526,13 +1839,26 @@
         {
           "role": "ground",
           "asset": "city-street/ground.png"
+        },
+        {
+          "role": "filter",
+          "purpose": "time-of-day",
+          "filterId": "day",
+          "asset": "../batch-04-atmosphere/filters/filter-day.png",
+          "opacity": 0.35,
+          "tags": {
+            "timeOfDay": [
+              "day"
+            ]
+          }
         }
       ],
       "reuse": {
         "backdrop": "city-street/backdrop",
         "ground": "city-street/ground",
         "prop-right": "city-street/prop-right"
-      }
+      },
+      "backdropType": "sky-and-distance"
     },
     {
       "id": "intro-archive",
@@ -1592,7 +1918,8 @@
         "ground": "dungeon-corridor/ground",
         "prop-left": "dungeon-corridor/prop-left",
         "prop-right": "astrologer-chamber/prop-right"
-      }
+      },
+      "backdropType": "room-shell"
     },
     {
       "id": "city-street-rain",
@@ -1668,8 +1995,21 @@
         },
         {
           "role": "filter",
+          "purpose": "time-of-day",
+          "filterId": "day",
+          "asset": "../batch-04-atmosphere/filters/filter-day.png",
+          "opacity": 0.35,
+          "tags": {
+            "timeOfDay": [
+              "day"
+            ]
+          }
+        },
+        {
+          "role": "filter",
           "asset": "../batch-04-atmosphere/filters/filter-rain.png",
-          "opacity": 0.65
+          "opacity": 0.65,
+          "purpose": "weather"
         },
         {
           "role": "particles",
@@ -1678,7 +2018,8 @@
           "repeat": true
         }
       ],
-      "reuse": {}
+      "reuse": {},
+      "backdropType": "sky-and-distance"
     }
   ],
   "introMap": {

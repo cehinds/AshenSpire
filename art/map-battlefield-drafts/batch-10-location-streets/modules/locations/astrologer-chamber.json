@@ -52,5 +52,6 @@
       "asset": "astrologer-chamber/ground.png"
     }
   ],
-  "reuse": {}
+  "reuse": {},
+  "backdropType": "room-shell"
 }

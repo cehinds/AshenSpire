@@ -1,6 +1,6 @@
 # Map and battlefield source-art library
 
-**250 retained source drafts across ten batches.** Kept on `feature/ImproveMapBattleFieldArt`; the shared proposal and wiring examples are already in dev. These paintings remain unregistered drafts.
+**251 retained source drafts across eleven batches.** Kept on `feature/ImproveMapBattleFieldArt`; the shared proposal and wiring examples are already in dev. These paintings remain unregistered drafts.
 
 | Batch | Source count | Contents |
 | --- | --- | --- |
@@ -14,10 +14,11 @@
 | [08](batch-08-style-alignment/README.md) | 4 | Style corrections for the ice floor, daylight sky and distant lightning |
 | [09](batch-09-biome-architecture/README.md) | 45 | Near/distant mountains, desert/jungle/snowy architecture, streets and dungeons in day/rain/night conditions |
 | [10](batch-10-location-streets/README.md) | 86 | 25 backdrops, 19 grounds and 42 props for close streets, interiors and landmarks; 28 scenes and 12 intro-map candidates |
+| [11](batch-11-floor-props/README.md) | 1 | Separate transparent rug for floor decoration; reused with bare ground and a separate throne |
 
 ![Regional settlement combinations](batch-06-settlements/preview-settlements.png)
 
-- [Shared art direction for every component](style-system/README.md) maps 230 approved sources to eight role profiles, with hash-bound visual reviews and explicit historical exclusions.
+- [Shared art direction for every component](style-system/README.md) maps 231 approved sources to eight role profiles, with hash-bound visual reviews and explicit historical exclusions.
 - [catalog.json](catalog.json) links the batch manifests and editable scene recipes.
 - [Map components and all object mappings](hex-world-module/MAP-COMPONENTS.md) connect 25 object types, 25 active matching icons and 39 historical variants to tile/discovery definitions.
 - [Standalone hex world module](hex-world-module/README.md) defines six-sided tile tags, rotation, art pools, encounters and discovery examples.

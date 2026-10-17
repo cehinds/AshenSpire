@@ -21,12 +21,20 @@ for setting,spec in settings.items():
   layers.append({'id':role,'role':'prop','asset':ref(setting,role),'placement':placement})
  layers.append({'role':'ground','asset':ref(setting,'ground')})
  scene={'id':setting,'label':spec['label'],'condition':spec['condition'],'interior':spec['condition']=='interior','tags':{'location':[setting],'lighting':[spec['condition']],'camera':['player-height','close-location']},'productionBinding':None,'layers':layers,'reuse':spec.get('reuse',{})}
+ if not scene['interior']:
+  time='night' if scene['condition']=='night' else 'day'
+  time_layer=dict(read(ROOT/'modules/time-of-day.json')['items'][time]);time_layer.pop('editableSource',None);scene['layers'].append(time_layer)
+ scene['backdropType']='room-shell' if scene['interior'] else 'sky-and-distance'
+ if setting=='castle-throne-room':
+  next(l for l in scene['layers'] if l['role']=='ground')['asset']='dungeon-corridor/ground.png'
+  scene['reuse']['ground']='dungeon-corridor/ground'
+  scene['layers'].append(read(ROOT/'modules/locations/castle-throne-room.json')['layers'][-1])
  write(ROOT/'modules/locations'/f'{setting}.json',scene)
 # A damp/overcast preview of the city base, with weather separate and explicit grading.
 rain=read(ROOT/'modules/locations/city-street.json');rain.update(id='city-street-rain',label='Crownfall city street in rain',condition='rain');rain['tags']['lighting']=['overcast'];rain['tags']['weather']=['rain']
 for layer in rain['layers']:
  if layer['role'] in ['prop','backdrop','ground']:layer['previewAmbientGrade']={'brightness':.8,'saturation':.85}
-rain['layers'] += [{'role':'filter','asset':'../batch-04-atmosphere/filters/filter-rain.png','opacity':.65},{'role':'particles','asset':'../batch-04-atmosphere/particles/rain.png','opacity':.3,'repeat':True}]
+rain['layers'] += [{'role':'filter','purpose':'weather','asset':'../batch-04-atmosphere/filters/filter-rain.png','opacity':.65},{'role':'particles','asset':'../batch-04-atmosphere/particles/rain.png','opacity':.3,'repeat':True}]
 write(ROOT/'modules/locations/city-street-rain.json',rain);index['sceneFiles'].append('locations/city-street-rain.json')
 atlas_path=REPO/'content/source/worldAtlas.json';atlas=read(atlas_path);nodes={n['nodeId']:n for n in atlas['nodes']};local=[n for n in atlas['local_map_nodes'] if n['mapId']=='local:crownfall']
 choices={'crownfall':'city-street','crownfall/forge':'intro-forge','crownfall/market':'city-street','crownfall/inn':'city-street-night','crownfall/chapel':'intro-chapel','crownfall/archive':'intro-archive','crownfall/warden':'fortress-gate'}
@@ -38,5 +46,8 @@ for node_id in ['crownfall']+[n['nodeId'] for n in local]:
  if node_id.startswith('crownfall/gate:'):row['destinationRegionId']=node_id.split(':',1)[1]
  items.append(row)
 write(ROOT/'modules/intro-map.json',{'formatVersion':1,'status':'candidate-art-mapping','mapId':'local:crownfall','ownerNodeId':'crownfall','sourceAtlas':'../../../content/source/worldAtlas.json','sourceSha256':hashlib.sha256(atlas_path.read_bytes()).hexdigest(),'mapAsset':'../../../assets-mobile/environments/crownfall-local.webp','prologueArtReferences':['../../../assets-mobile/prologue/road-desktop.webp','../../../assets-mobile/prologue/step-crownfall-desktop.webp'],'bindingPolicy':'Candidate art references only; does not alter the intro, atlas nodes or live presentation bindings. Regional gates remain in Crownfall; destination tags do not move them into another biome.','items':items})
+index['timeOfDayFilters']='time-of-day.json'
+index['componentSlots']=read(ROOT/'modules/index.json')['componentSlots']
+index['framingPolicy']['layerOrder']=read(ROOT/'modules/index.json')['framingPolicy']['layerOrder']
 write(ROOT/'modules/index.json',index)
 print(f'Initialized {len(index["sceneFiles"])} editable scenes and {len(items)} Crownfall mappings.')

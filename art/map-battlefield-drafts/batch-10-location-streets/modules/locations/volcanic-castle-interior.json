@@ -56,5 +56,6 @@
     "ground": "volcanic-castle-exterior/ground",
     "prop-left": "volcanic-castle-exterior/prop-left",
     "prop-right": "volcanic-castle-exterior/prop-right"
-  }
+  },
+  "backdropType": "room-shell"
 }

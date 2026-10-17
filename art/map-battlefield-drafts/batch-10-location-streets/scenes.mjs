@@ -8,8 +8,8 @@ const read=file=>JSON.parse(fs.readFileSync(file,'utf8'));
 const roleProfiles={backdrop:'battlefield-backdrop',prop:'battlefield-prop',ground:'battlefield-ground',filter:'color-filter',particles:'weather-particles'};
 export function exportLocationScenes(moduleRoot=path.join(directory,'modules')){
  const index=read(path.join(moduleRoot,'index.json'));
- const {sceneFiles,introMap,assetBase,...shared}=index;
- return {...shared,assetBase:'.',scenes:sceneFiles.map(f=>read(path.join(moduleRoot,f))),introMap:read(path.join(moduleRoot,introMap))};
+ const {sceneFiles,introMap,timeOfDayFilters,assetBase,...shared}=index;
+ return {...shared,assetBase:'.',timeOfDayFilters:read(path.join(moduleRoot,timeOfDayFilters)),scenes:sceneFiles.map(f=>read(path.join(moduleRoot,f))),introMap:read(path.join(moduleRoot,introMap))};
 }
 export function validateLocationScenes(data,{exists=fs.existsSync,library=null,atlas=null,atlasBytes=null,manifest=[]}={}){
  const errors=[],check=(yes,message)=>{if(!yes)errors.push(message);},bounded=(n,lo,hi)=>Number.isFinite(n)&&n>=lo&&n<=hi;
@@ -26,23 +26,33 @@ export function validateLocationScenes(data,{exists=fs.existsSync,library=null,a
   if(layer.opacity!==undefined)check(bounded(layer.opacity,0,1),`invalid opacity: ${layer.asset}`);
   if(layer.previewAmbientGrade)check(bounded(layer.previewAmbientGrade.brightness,0,2)&&bounded(layer.previewAmbientGrade.saturation,0,2),`invalid ambient grade: ${layer.asset}`);
   if(layer.role==='prop'){
-   const p=layer.placement??{};check(bounded(p.heightFraction,.01,2)&&bounded(p.baseOcclusionPixels,0,256),`invalid prop size: ${layer.asset}`);
+   const p=layer.placement??{};check(bounded(p.heightFraction,.01,2)&&(p.mode==='floor-surface'||bounded(p.baseOcclusionPixels,0,256)),`invalid prop size: ${layer.asset}`);
    if(p.mode==='side-framing'){
     check(['left','right'].includes(p.side),`invalid framing side: ${layer.asset}`);
     check(p.intentionalViewportCrop===true,`edge crop must be explicit: ${layer.asset}`);
     check(p.side==='left'?bounded(p.innerEdgeU,0,.4):bounded(p.innerEdgeU,.6,1),`framing prop blocks center: ${layer.asset}`);
    }else if(p.mode==='rear-focal')check(p.intentionalViewportCrop===false&&bounded(p.anchorU,0,1)&&bounded(p.visibleWidthFraction,.01,1),`invalid rear focal prop: ${layer.asset}`);
+   else if(p.mode==='floor-surface')check(p.intentionalViewportCrop===false&&bounded(p.anchorU,0,1)&&bounded(p.anchorV,0,1)&&bounded(p.visibleWidthFraction,.01,1),`invalid floor prop: ${layer.asset}`);
    else check(false,`invalid prop placement mode: ${layer.asset}`);
   }
  };
+ const filterCatalog=data.timeOfDayFilters;
+ check(filterCatalog?.id==='time-of-day-filters','missing time-of-day component module');
+ for(const component of Object.values(filterCatalog?.items??{}))inspect(component);
  const order={backdrop:0,prop:1,ground:2,filter:3,particles:4};
+ const rank=layer=>layer.role==='prop'&&layer.placement?.mode==='floor-surface'?2.5:order[layer.role];
  for(const scene of data.scenes){
   check(!ids.has(scene.id),`duplicate scene: ${scene.id}`);ids.add(scene.id);check(scene.productionBinding===null,`${scene.id}: cannot bind production`);
+  check(scene.backdropType===(scene.interior?'room-shell':'sky-and-distance'),`${scene.id}: incorrect skybox context`);
   check(['day','night','rain','interior'].includes(scene.condition),`${scene.id}: unknown condition`);
   check(scene.layers.filter(l=>l.role==='backdrop').length===1&&scene.layers.filter(l=>l.role==='ground').length===1,`${scene.id}: needs one backdrop and ground`);
   let previous=-1;
-  for(const layer of scene.layers){inspect(layer);const source=manifest.find(a=>path.resolve(data.assetBase,a.file)===path.resolve(data.assetBase,layer.asset));if(scene.condition==='night'&&source&&['backdrop','ground'].includes(layer.role))check(source.tags?.lighting?.includes('night'),`${scene.id}: painted night source required`);check(order[layer.role]>=previous,`${scene.id}: invalid layer order`);previous=order[layer.role];}
-  if(scene.interior)check(scene.condition==='interior'&&!scene.layers.some(l=>['filter','particles'].includes(l.role)),`${scene.id}: outdoor weather cannot enter interior`);
+  for(const layer of scene.layers){inspect(layer);const source=manifest.find(a=>path.resolve(data.assetBase,a.file)===path.resolve(data.assetBase,layer.asset));if(scene.condition==='night'&&source&&['backdrop','ground'].includes(layer.role))check(source.tags?.lighting?.includes('night'),`${scene.id}: painted night source required`);check(rank(layer)>=previous,`${scene.id}: invalid layer order`);previous=rank(layer);}
+  const timeLayers=scene.layers.filter(l=>l.role==='filter'&&l.purpose==='time-of-day');
+  check(timeLayers.length<2,`${scene.id}: choose only one time-of-day filter`);
+  if(!scene.interior)check(timeLayers.length===1,`${scene.id}: missing time-of-day filter`);
+  for(const layer of timeLayers){const component=filterCatalog?.items?.[layer.filterId];check(!!component&&component.asset===layer.asset,`${scene.id}: unknown time-of-day component`);}
+  if(scene.interior)check(scene.condition==='interior'&&!scene.layers.some(l=>l.role==='particles'||l.role==='filter'&&l.purpose!=='time-of-day'),`${scene.id}: outdoor weather cannot enter interior`);
  }
  const intro=data.introMap;check(intro.mapId==='local:crownfall'&&intro.ownerNodeId==='crownfall','intro map identity differs');
  const mapped=new Set();

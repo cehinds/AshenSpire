@@ -247,7 +247,8 @@
           "visibleWidthFraction": 0.22,
           "heightFraction": 0.45
         }
-      }
+      },
+      "recipeNote": "Default recipe reuses the bare dungeon floor with a separate batch11 rug prop. Original combined floor/runner PNG is retained as a legacy variant."
     },
     "volcanic-castle-exterior": {
       "label": "Outside a volcanic castle",

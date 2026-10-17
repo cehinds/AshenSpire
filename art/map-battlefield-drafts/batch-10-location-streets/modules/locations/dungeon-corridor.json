@@ -52,5 +52,6 @@
       "asset": "dungeon-corridor/ground.png"
     }
   ],
-  "reuse": {}
+  "reuse": {},
+  "backdropType": "room-shell"
 }

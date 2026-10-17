@@ -3505,6 +3505,20 @@
       }
     },
     {
+      "assetKey": "batch-11-floor-props/prop-throne-runner",
+      "replacedBy": null,
+      "asset": "art/map-battlefield-drafts/batch-11-floor-props/prop-throne-runner.png",
+      "sourceManifest": "../batch-11-floor-props/manifest.json",
+      "sourceAssetId": "prop-throne-runner",
+      "sha256": "b142b8280f5c4e32cfb74263d45831ffc71e37d0eee77a49bf50103cc9476f40",
+      "profileId": "battlefield-prop",
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "review": {
+        "verdict": "approved",
+        "reason": "Complete separate low-perspective faded burgundy rug on transparency; no baked floor or furniture. Narrow top/bottom margins retained and documented."
+      }
+    },
+    {
       "assetKey": "technical-map-icons/bridge",
       "replacedBy": null,
       "asset": "docs/design/improve-map-battlefield-art/props-examples/bridge.png",

@@ -52,5 +52,6 @@
       "asset": "cave-interior/ground.png"
     }
   ],
-  "reuse": {}
+  "reuse": {},
+  "backdropType": "room-shell"
 }

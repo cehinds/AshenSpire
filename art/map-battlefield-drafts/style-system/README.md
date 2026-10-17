@@ -1,6 +1,6 @@
 # One art direction for every component
 
-**230 approved active sources:** 25 map icons, 58 grounds, 84 battlefield props, 49 backdrops and 14 atmosphere components.
+**231 approved active sources:** 25 map icons, 58 grounds, 85 battlefield props, 49 backdrops and 14 atmosphere components.
 
 All use `ashen-spire-painted-v1`: tactile painted materials, muted biome palettes, restrained highlights and consistent scene lighting. Map miniatures retain their elevated camera; battlefield layers use a low side view. Smooth translucent filters and sparse particles remain simple so they support the paintings.
 
@@ -17,12 +17,12 @@ All use `ashen-spire-painted-v1`: tactile painted materials, muted biome palette
 | `audit-*.json` | Asset-by-asset visual review, tied to the reviewed source hash |
 | [replacements.json](replacements.json) | Four original outliers and their approved replacements |
 
-The library indexes **274 retained sources**: 250 source-art drafts plus 24 earlier technical icons. Of these, 230 are approved, 40 are inactive history, and four are superseded by corrected sources. Historical assets remain available for comparison; active catalogs and regional scene pools reject them.
+The library indexes **275 retained sources**: 251 source-art drafts plus 24 earlier technical icons. Of these, 231 are approved, 40 are inactive history, and four are superseded by corrected sources. Historical assets remain available for comparison; active catalogs and regional scene pools reject them.
 
 ## Visual checks
 
 - [Grounds · all 58](preview-grounds.png)
-- [Battlefield props · all 84](preview-props.png)
+- [Battlefield props · all 85](preview-props.png)
 - [Skies/backdrops · all 49](preview-backdrops.png)
 - [Atmosphere · all 14](preview-atmosphere.png)
 - [Map icons · all 25](../hex-world-module/map-components-preview.png)

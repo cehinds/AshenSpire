@@ -50,7 +50,20 @@
     {
       "role": "ground",
       "asset": "volcanic-castle-exterior/ground.png"
+    },
+    {
+      "role": "filter",
+      "purpose": "time-of-day",
+      "filterId": "day",
+      "asset": "../batch-04-atmosphere/filters/filter-day.png",
+      "opacity": 0.35,
+      "tags": {
+        "timeOfDay": [
+          "day"
+        ]
+      }
     }
   ],
-  "reuse": {}
+  "reuse": {},
+  "backdropType": "sky-and-distance"
 }

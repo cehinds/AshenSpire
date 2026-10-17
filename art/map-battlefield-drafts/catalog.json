@@ -57,6 +57,11 @@
       "manifest": "batch-10-location-streets/manifest.json",
       "sourceCount": 86,
       "authoringModules": "batch-10-location-streets/modules/index.json"
+    },
+    {
+      "id": "batch-11-floor-props",
+      "manifest": "batch-11-floor-props/manifest.json",
+      "sourceCount": 1
     }
   ],
   "editableRecipes": [

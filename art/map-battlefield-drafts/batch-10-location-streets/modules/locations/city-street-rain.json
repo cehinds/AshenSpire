@@ -72,8 +72,21 @@
     },
     {
       "role": "filter",
+      "purpose": "time-of-day",
+      "filterId": "day",
+      "asset": "../batch-04-atmosphere/filters/filter-day.png",
+      "opacity": 0.35,
+      "tags": {
+        "timeOfDay": [
+          "day"
+        ]
+      }
+    },
+    {
+      "role": "filter",
       "asset": "../batch-04-atmosphere/filters/filter-rain.png",
-      "opacity": 0.65
+      "opacity": 0.65,
+      "purpose": "weather"
     },
     {
       "role": "particles",
@@ -82,5 +95,6 @@
       "repeat": true
     }
   ],
-  "reuse": {}
+  "reuse": {},
+  "backdropType": "sky-and-distance"
 }

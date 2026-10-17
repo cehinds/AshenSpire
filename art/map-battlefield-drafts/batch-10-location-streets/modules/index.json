@@ -73,12 +73,47 @@
     "sideProps": "Large near left/right pieces may intentionally extend beyond the viewport. Original source silhouettes remain intact. Keep the inner40% open except explicit rear focal props above the ground.",
     "layerOrder": [
       "backdrop",
-      "prop",
+      "prop:rear",
       "ground",
+      "prop:floor-surface",
       "filter",
       "particles"
     ],
     "groundContact": "Use measured center horizon; prop base overlaps ground by declared pixels.",
     "overscan": "Review static crops only; arbitrary camera motion needs expanded source edges."
+  },
+  "timeOfDayFilters": "time-of-day.json",
+  "componentSlots": {
+    "skybox": {
+      "layerRole": "backdrop",
+      "outside": "Sky and distant scenery.",
+      "inside": "Back wall or fixed room shell.",
+      "propBoundary": "Movable or interchangeable pillars, bookshelves, stairs and furniture use separate prop PNGs."
+    },
+    "props": {
+      "layerRole": "prop",
+      "description": "Separate transparent PNGs for buildings, pillars, bookshelves, stairs, rocks, trees and furniture."
+    },
+    "ground": {
+      "layerRole": "ground",
+      "description": "Separate floor surface, transparent above the ground plane, drawn over prop bases."
+    },
+    "timeOfDay": {
+      "layerRole": "filter",
+      "purpose": "time-of-day",
+      "module": "time-of-day.json"
+    },
+    "weather": {
+      "layerRoles": [
+        "filter",
+        "particles"
+      ],
+      "description": "Independent weather tint and effects; outdoors by default."
+    },
+    "floorProps": {
+      "layerRole": "prop",
+      "placementMode": "floor-surface",
+      "description": "Separate rugs and flat floor decorations, drawn above ground and below actors."
+    }
   }
 }

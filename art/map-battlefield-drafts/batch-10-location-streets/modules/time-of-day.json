@@ -1,0 +1,40 @@
+{
+  "formatVersion": 1,
+  "id": "time-of-day-filters",
+  "selection": "Choose one day or night tint; tune opacity independently of weather.",
+  "status": "draft-art-components",
+  "coverage": {
+    "mode": "centered-square",
+    "sideMultiplierOfLongestViewportEdge": 2,
+    "sourcePixels": 4096,
+    "maximumNativeViewportEdge": 2048
+  },
+  "items": {
+    "day": {
+      "role": "filter",
+      "purpose": "time-of-day",
+      "filterId": "day",
+      "asset": "../batch-04-atmosphere/filters/filter-day.png",
+      "editableSource": "../batch-04-atmosphere/filters/filter-day.svg",
+      "opacity": 0.35,
+      "tags": {
+        "timeOfDay": [
+          "day"
+        ]
+      }
+    },
+    "night": {
+      "role": "filter",
+      "purpose": "time-of-day",
+      "filterId": "night",
+      "asset": "../batch-04-atmosphere/filters/filter-night.png",
+      "editableSource": "../batch-04-atmosphere/filters/filter-night.svg",
+      "opacity": 0.3,
+      "tags": {
+        "timeOfDay": [
+          "night"
+        ]
+      }
+    }
+  }
+}

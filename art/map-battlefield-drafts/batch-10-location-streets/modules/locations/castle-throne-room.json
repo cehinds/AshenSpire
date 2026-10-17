@@ -49,10 +49,33 @@
     },
     {
       "role": "ground",
-      "asset": "castle-throne-room/ground.png"
+      "asset": "dungeon-corridor/ground.png"
+    },
+    {
+      "id": "runner-rug",
+      "role": "prop",
+      "asset": "../batch-11-floor-props/prop-throne-runner.png",
+      "placement": {
+        "mode": "floor-surface",
+        "anchorU": 0.5,
+        "anchorV": 0.78,
+        "visibleWidthFraction": 0.6,
+        "heightFraction": 0.36,
+        "intentionalViewportCrop": false
+      },
+      "tags": {
+        "propType": [
+          "rug"
+        ],
+        "surface": [
+          "floor"
+        ]
+      }
     }
   ],
   "reuse": {
-    "prop-right": "dungeon-corridor/prop-right"
-  }
+    "prop-right": "dungeon-corridor/prop-right",
+    "ground": "dungeon-corridor/ground"
+  },
+  "backdropType": "room-shell"
 }

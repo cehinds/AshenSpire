@@ -50,11 +50,24 @@
     {
       "role": "ground",
       "asset": "castle-grounds/ground.png"
+    },
+    {
+      "role": "filter",
+      "purpose": "time-of-day",
+      "filterId": "day",
+      "asset": "../batch-04-atmosphere/filters/filter-day.png",
+      "opacity": 0.35,
+      "tags": {
+        "timeOfDay": [
+          "day"
+        ]
+      }
     }
   ],
   "reuse": {
     "ground": "castle-grounds/ground",
     "prop-left": "fortress-gate/prop-left",
     "prop-right": "fortress-gate/prop-right"
-  }
+  },
+  "backdropType": "sky-and-distance"
 }

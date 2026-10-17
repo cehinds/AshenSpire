@@ -31,3 +31,13 @@ Status: main source and static composition review passed for proposal use; indep
 Straight floor/backdrop boundaries and mismatched matte floor versus more reflective backdrop lighting remain visible in several rooms. The floor can make far architecture feel slightly sunken, especially dungeon/tunnel/astrologer scenes. This is a placement, perspective and lighting integration follow-up; source layers remain reusable. Static geometry checks do not certify seamless painting transitions.
 
 The Crownfall gate candidates intentionally share one scene. The inn uses the night street candidate and still needs its own distinct frontage. Outdoor weather loops are reused from the earlier atmosphere module; this batch adds no new weather animation.
+
+## Time-of-day component follow-up
+
+Outdoor recipes now reference the existing4096-square translucent day/night filters as separate tagged layers. Weather filters remain independent; interiors default to local ambient light and can opt into one time tint. Main reviewed the updated filter comparison and refreshed scene sheets. Original86 PNGs are unchanged. The original independent review above predates this small tint-layer follow-up.
+
+## Independent floor decoration follow-up
+
+The default throne room now references bare floor plus a separate batch11 rug; throne remains its own PNG. Original combined floor/runner retained as a legacy alternate. New `floor-surface` props render above ground, are measured against camera bounds and remain flat beneath the actor layer. Main reviewed component and rug-on/off previews. The earlier independent review predates this change.
+
+Final follow-up validation: all99 targeted tests passed; style library275 sources/231 approved;330 static prop/camera checks passed. Nine scene/comparison sheets rendered. Original independent review is retained with its original scope.

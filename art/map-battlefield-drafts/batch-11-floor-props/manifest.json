@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "status": "draft-not-runtime-bound",
+  "branch": "feature/ImproveMapBattleFieldArt",
+  "assets": [
+    {
+      "id": "prop-throne-runner",
+      "file": "prop-throne-runner.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "propType": [
+          "rug"
+        ],
+        "location": [
+          "throne-room",
+          "castle",
+          "interior"
+        ],
+        "surface": [
+          "floor"
+        ],
+        "placement": [
+          "floor-surface"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "b142b8280f5c4e32cfb74263d45831ffc71e37d0eee77a49bf50103cc9476f40",
+      "visibleBoundsAt32": [
+        113,
+        38,
+        1559,
+        891
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "provenanceFile": "prop-throne-runner.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    }
+  ],
+  "styleSystem": {
+    "guide": "../style-system/style-guide.json",
+    "library": "../style-system/library.json"
+  }
+}
