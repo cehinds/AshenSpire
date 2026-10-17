@@ -994,6 +994,10 @@ export const gameProfileCatalog = {
             "deckSize": [
               4,
               8
+            ],
+            "spRange": [
+              1,
+              2
             ]
           },
           "elite": {
@@ -1010,6 +1014,10 @@ export const gameProfileCatalog = {
             "deckSize": [
               6,
               10
+            ],
+            "spRange": [
+              2,
+              3
             ]
           },
           "boss": {
@@ -1019,13 +1027,17 @@ export const gameProfileCatalog = {
             ],
             "pools": {
               "hp": 80,
-              "sp": 3,
+              "sp": 2,
               "mp": 0
             },
             "hand": 4,
             "deckSize": [
               8,
               14
+            ],
+            "spRange": [
+              2,
+              3
             ]
           }
         },
@@ -1250,13 +1262,24 @@ export const gameProfileCatalog = {
                     "minimum": 1,
                     "maximum": 99
                   }
+                },
+                "spRange": {
+                  "type": "array",
+                  "minItems": 2,
+                  "maxItems": 2,
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 99
+                  }
                 }
               },
               "required": [
                 "attributeBudget",
                 "pools",
                 "hand",
-                "deckSize"
+                "deckSize",
+                "spRange"
               ],
               "additionalProperties": false
             }
@@ -1508,13 +1531,13 @@ export const gameProfileCatalog = {
           "path": "engine/modules/enemies/defaults.json",
           "id": "enemies",
           "version": "1.0.0",
-          "hash": "sha256:dc20f654ab21e080cd0187a24a65cdb7de747216553087f8b665f01606c3a4a4"
+          "hash": "sha256:991625b0c6abf0038413cc9e9e3e1cbffd3e40784d966be4fd45df930f8479c3"
         },
         {
           "path": "engine/modules/enemies/settings.schema.json",
           "id": "enemies",
           "version": "1.0.0",
-          "hash": "sha256:16a88afed5a587e3e39bd9fc526ef9bb24f5a4b87214f4f14682c82b79a26670"
+          "hash": "sha256:211332fbe4912b8ed7ad753ee62a736bfb2b2d2de4337626de841fce6717b345"
         }
       ]
     },
@@ -20543,7 +20566,7 @@ export const gameProfileCatalog = {
       "path": "engine/kernel/gameConfig.js",
       "id": "ashen.runtime",
       "version": "1.0.0",
-      "hash": "sha256:ff8eb8875edc4a90382ae885a6c6afae298cac7cd2a29cde41c1a08cda6773a1"
+      "hash": "sha256:d02a6360f5f5ff691e8798016c568e22a051bb5075bebabd6817d75be076bfba"
     },
     {
       "path": "engine/contracts/game-profile.json",
@@ -25576,7 +25599,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:3f9a67884765cb5f920ef530e66ccdcc2d826819e6f981359b771d44a5b5bf66"
     }
   ],
-  "runtimeHash": "sha256:f7085eadd08fe5979202614e07dd9b515564c0eacb8b88a8f16ba6b0808220f7"
+  "runtimeHash": "sha256:131bca5d0f011af435bd4854822f85b636fe6051bbf062e5913e502db44ee963"
 };
 export const gameProfileAuthors = {
   "default": {

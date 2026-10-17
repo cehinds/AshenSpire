@@ -136,13 +136,24 @@
               "minimum": 1,
               "maximum": 99
             }
+          },
+          "spRange": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 99
+            }
           }
         },
         "required": [
           "attributeBudget",
           "pools",
           "hand",
-          "deckSize"
+          "deckSize",
+          "spRange"
         ],
         "additionalProperties": false
       }

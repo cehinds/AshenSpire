@@ -29,7 +29,7 @@ test('core profile enables the enemies module with its JSON defaults', () => {
   assert.equal(settings.healRules.shapes.find(s => s.id === 'cheap').exhaust, true);
 });
 
-test('pools derive from attributes: minions CON 0 / 2 SP, elites CON 1 / 3 SP, bosses CON 2 / 4 SP', () => {
+test('pools derive from attributes: minions CON 0 / 2 SP, elites CON 1 / 3 SP, bosses CON 2 / 2-3 SP', () => {
   const byTier = tier => enemies.filter(e => e.tier === tier).map(e => enemyPools(e, settings));
   const con = tier => new Set(enemies.filter(e => e.tier === tier).map(e => e.attributes.constitution));
   assert.ok(enemies.some(e => e.tier === 'minion'));
@@ -38,7 +38,8 @@ test('pools derive from attributes: minions CON 0 / 2 SP, elites CON 1 / 3 SP, b
   assert.deepEqual([...con('boss')], [2], 'bosses CON 2');
   assert.ok(byTier('minion').every(p => p.sp === 2), 'minion SP 2');
   assert.ok(byTier('elite').every(p => p.sp === 3), 'elite SP 3');
-  assert.ok(byTier('boss').every(p => p.sp === 4), 'boss SP 4');
+  assert.ok(byTier('boss').every(p => p.sp >= 2 && p.sp <= 3), 'boss SP 2-3');
+  assert.deepEqual(settings.tiers.boss.spRange, [2, 3]);
 });
 
 test('enemy decks vary in size within the configured bounds and resolve every reference', () => {
@@ -61,6 +62,10 @@ test('heal cards take their cost from healRules; minion heals are the cheap exha
     }
     assert.ok(card.effects.some(e => e.op === 'heal' && e.rule === 'healRules'));
   }
+});
+
+test('validator refuses a boss whose SP leaves the 2-3 range', () => {
+  assert.throws(resolveWith(p => { const b = p.enemies.find(e => e.tier === 'boss'); b.attributes.constitution = 4; b.attributes.strength = Math.max(0, b.attributes.strength - 2); }), /SP 4 outside boss range 2-3/);
 });
 
 test('validator refuses an unknown card reference', () => {

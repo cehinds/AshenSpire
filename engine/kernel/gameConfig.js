@@ -200,6 +200,7 @@ function verifyEnemyContent(content, settings) {
     const [min, max] = [Math.max(settings.deck.min, tier.deckSize[0]), Math.min(settings.deck.max, tier.deckSize[1])];
     if (row.deck.length < min || row.deck.length > max) fail(`${at}/deck`, `deck size ${row.deck.length} outside ${min}-${max}`);
     const pools = enemyPools(row, settings);
+    if (tier.spRange && (pools.sp < tier.spRange[0] || pools.sp > tier.spRange[1])) fail(`${at}/attributes`, `SP ${pools.sp} outside ${row.tier} range ${tier.spRange[0]}-${tier.spRange[1]}`);
     for (const id of [...row.deck, ...(row.unlockCards || []), ...(row.firstCard ? [row.firstCard] : [])]) {
       const card = cards.get(id);
       if (!card && !playerCards.has(id)) fail(`${at}/deck`, `unresolved card reference '${id}'`);
