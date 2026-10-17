@@ -1,0 +1,15 @@
+{
+  "_": "Asset ids the game's JSON names that ship no file yet. The catalog lists each as a placeholder-only asset; the style guide draws it from the id (SPEC 2.4). Delete an entry the day art-manifest.json carries the id.",
+  "missing": {
+    "node-monster": { "reason": "Map node icon is a text glyph in content/config/ui/presentation/uiContent.json (nodeTypes) today; no art file exists." },
+    "node-event": { "reason": "Map node icon is a text glyph in content/config/ui/presentation/uiContent.json (nodeTypes) today; no art file exists." },
+    "node-elite": { "reason": "Map node icon is a text glyph in content/config/ui/presentation/uiContent.json (nodeTypes) today; no art file exists." },
+    "node-shrine": { "reason": "Map node icon is a text glyph in content/config/ui/presentation/uiContent.json (nodeTypes) today; no art file exists." },
+    "node-merchant": { "reason": "Map node icon is a text glyph in content/config/ui/presentation/uiContent.json (nodeTypes) today; no art file exists." },
+    "node-treasure": { "reason": "Map node icon is a text glyph in content/config/ui/presentation/uiContent.json (nodeTypes) today; no art file exists." },
+    "node-boss": { "reason": "Map node icon is a text glyph in content/config/ui/presentation/uiContent.json (nodeTypes) today; no art file exists." },
+    "route-line": { "reason": "Routes are drawn as SVG strokes (mapPresentation.json routeWidth); no art file exists." },
+    "landmark-pin": { "reason": "Atlas landmarks use per-node cut-out art named in worldAtlas.json; the generic pin has no art file yet." },
+    "region-banner": { "reason": "Atlas regions use per-region map art; the generic banner has no art file yet." }
+  }
+}
