@@ -393,14 +393,21 @@ export function resolveCharacterDeck(row, content = {}, gearSettings = null) {
 // Deck editing copy limits (owner 2026-10-17): basic cards (whatever the basic pools resolve to for this
 // character, or a basic tag) have no limit; weapon arts, spells, specials and picked-up cards are limited
 // to the copies owned. "owned" rules win over "unlimited" when a card matches both.
+// Unlimited copies are earned by character tags (owner 2026-10-17): training.basic → basic-rank combat
+// maneuvers; training.graduate → cantrips. Without the tag, those cards count owned copies.
 export function deckCopyLimit(cardId, row, content = {}, settings = {}, gearSettings = null, owned = {}) {
   const rules = settings.deckEditing, card = (content.cards || []).find(c => c.id === cardId);
   if (!rules || !card) return owned[cardId] || 0;
-  const tags = card.tags || [];
-  if ((rules.owned.tags || []).some(t => tags.includes(t))) return owned[cardId] || 0;
-  const basics = new Set((rules.unlimited.pools || []).flatMap(pool => resolveCharacterDeck({ ...row, defaultDeck: [{ pool, copies: 1 }] }, content, gearSettings)));
-  if (basics.has(cardId) || (rules.unlimited.tags || []).some(t => tags.includes(t))) return Infinity;
-  return rules.default === 'unlimited' ? Infinity : owned[cardId] || 0;
+  const tags = card.tags || [], have = owned[cardId] || 0, charTags = characterTags(row);
+  const fromPools = pools => new Set((pools || []).flatMap(pool => content.cardPools?.[pool] ? resolveCharacterDeck({ ...row, defaultDeck: [{ pool, copies: 1 }] }, content, gearSettings) : []));
+  if ((rules.owned.tags || []).some(t => tags.includes(t)) || fromPools(rules.owned.pools).has(cardId)) return have;
+  for (const rule of rules.unlimited) {
+    if (!charTags.includes(rule.requiresTag)) continue;
+    const c = rule.cards || {};
+    const matches = (!c.rarity || c.rarity.includes(card.rarity)) && (!c.tagsAny || c.tagsAny.some(t => tags.includes(t))) && (!c.tagsAll || c.tagsAll.every(t => tags.includes(t)));
+    if (fromPools(rule.pools).has(cardId) || ((c.rarity || c.tagsAny || c.tagsAll) && matches)) return Infinity;
+  }
+  return rules.default === 'unlimited' ? Infinity : have;
 }
 // Enemies and players share the characters module's rules; enemy-only rules stay in the enemies module.
 export function characterSettings(modules) {

@@ -41,11 +41,15 @@ Players and enemies draw from one card pool (`content.cards`): enemy cards are p
 
 ## Deck editing
 
-`deckEditing` sets copy limits. Basic cards — whatever the `unlimited.pools` (strike, defend, counter,
-smash, sweep, evade) resolve to for the character's class and weapon, or cards tagged `basic` — have no
-limit, so ten Strikes and a weapon art is a legal deck. Weapon arts, spells (`owned.tags`), class
-specials and anything picked up count only the copies owned. `deckCopyLimit()` in the kernel is the one
-check the deck editor reads.
+`deckEditing` sets copy limits; unlimited copies are earned by character tags:
+
+- `training.basic` (all classes start with it): unlimited basic-rank combat maneuvers — starter
+  cards with an attack/defend/counter/smash/sweep maneuver, and whatever the strike, defend, counter,
+  smash, sweep and evade pools give this character for its weapon. Ten Strikes and a weapon art is legal.
+- `training.graduate`: unlimited cantrips (starter-rank spells).
+
+Weapon arts, class specials (`owned`) and anything picked up count only the copies owned; `owned`
+wins over `unlimited`. `deckCopyLimit()` in the kernel is the one check the deck editor reads.
 
 ## Compatibility
 

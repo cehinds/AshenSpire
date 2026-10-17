@@ -208,14 +208,27 @@ test('default decks are pool keys resolved by class and weapon type, from the sh
   assert.equal(changed.find(c => c.id === 'rogue').defaultDeck.filter(id => id === 'core.smash').length, 1);
 });
 
-test('deck editing: basic cards are unlimited; weapon arts, spells, specials and pickups are capped at owned copies', async () => {
+test('unlimited copies are earned: training.basic for basic maneuvers, training.graduate for cantrips', async () => {
   const { deckCopyLimit, characterSettings: cs } = await import('../engine/kernel/gameConfig.js');
-  const s = cs(profile.modules), reaver = profile.content.characters.find(c => c.id === 'reaver');
-  const limit = (id, owned = {}) => deckCopyLimit(id, reaver, profile.content, s, profile.modules.gear, owned);
-  for (const id of ['core.strike', 'core.defend', 'core.counter', 'core.smash', 'core.sweep', 'core.evade']) assert.equal(limit(id), Infinity, id);
-  assert.equal(limit('core.reaverSpecial'), 0);
-  assert.equal(limit('core.reaverSpecial', { 'core.reaverSpecial': 1 }), 1);
-  const spell = profile.content.cards.find(c => (c.tags || []).includes('camp:spell'));
-  assert.equal(limit(spell.id, { [spell.id]: 2 }), 2);
-  assert.deepEqual(s.deckEditing.unlimited.pools, ['strike', 'defend', 'counter', 'smash', 'sweep', 'evade']);
+  const s = cs(profile.modules), base = profile.content.characters.find(c => c.id === 'reaver');
+  const limit = (row, id, owned = {}) => deckCopyLimit(id, row, profile.content, s, profile.modules.gear, owned);
+  assert.ok(base.tags.includes('training.basic'));
+  for (const id of ['core.strike', 'core.defend', 'core.counter', 'core.smash', 'core.sweep', 'core.evade']) assert.equal(limit(base, id), Infinity, id);
+  const untrained = { ...base, tags: base.tags.filter(t => t !== 'training.basic') };
+  assert.equal(limit(untrained, 'core.strike', { 'core.strike': 3 }), 3, 'no tag: owned copies');
+  assert.equal(limit(base, 'core.reaverSpecial', { 'core.reaverSpecial': 1 }), 1, 'class special stays owned');
+  const cantrip = profile.content.cards.find(c => c.rarity === 'starter' && (c.tags || []).includes('camp:spell') && c.id !== 'core.starseerSpecial');
+  if (cantrip) {
+    assert.equal(limit(base, cantrip.id, { [cantrip.id]: 1 }), 1, 'cantrip owned without graduate');
+    assert.equal(limit({ ...base, tags: [...base.tags, 'training.graduate'] }, cantrip.id), Infinity, 'graduate: unlimited cantrips');
+  }
+});
+
+test('card rewards are mostly rank 1+: starter (rank 0) cards only through a small authored chance', () => {
+  const rule = profile.content.rewards.eligibility.combatCards;
+  assert.equal(rule.minRank, 1);
+  assert.ok(rule.lowerRankChance > 0 && rule.lowerRankChance <= 0.25, 'most, not all');
+  assert.equal(rule.rankOfRarity.starter, 0);
+  const src = readFileSync(new URL('../src/model/gameProfileRewards.js', import.meta.url), 'utf8');
+  assert.match(src, /lowerRankChance/);
 });

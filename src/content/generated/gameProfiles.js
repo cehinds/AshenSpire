@@ -633,23 +633,51 @@ export const gameProfileCatalog = {
         },
         "deckEditing": {
           "default": "owned",
-          "unlimited": {
+          "unlimited": [
+            {
+              "id": "basicTraining",
+              "requiresTag": "training.basic",
+              "pools": [
+                "strike",
+                "defend",
+                "counter",
+                "smash",
+                "sweep",
+                "evade"
+              ],
+              "cards": {
+                "rarity": [
+                  "starter"
+                ],
+                "tagsAny": [
+                  "maneuver:attack",
+                  "maneuver:defend",
+                  "maneuver:counter",
+                  "maneuver:smash",
+                  "maneuver:sweep"
+                ]
+              }
+            },
+            {
+              "id": "graduate",
+              "requiresTag": "training.graduate",
+              "pools": [],
+              "cards": {
+                "rarity": [
+                  "starter"
+                ],
+                "tagsAll": [
+                  "camp:spell"
+                ]
+              }
+            }
+          ],
+          "owned": {
             "pools": [
-              "strike",
-              "defend",
-              "counter",
-              "smash",
-              "sweep",
-              "evade"
+              "special"
             ],
             "tags": [
-              "basic"
-            ]
-          },
-          "owned": {
-            "tags": [
-              "classification.weaponArt",
-              "camp:spell"
+              "classification.weaponArt"
             ]
           }
         }
@@ -943,26 +971,63 @@ export const gameProfileCatalog = {
                 ]
               },
               "unlimited": {
-                "type": "object",
-                "properties": {
-                  "pools": {
-                    "type": "array",
-                    "uniqueItems": true,
-                    "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
                       "type": "string",
                       "minLength": 1
+                    },
+                    "requiresTag": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "pools": {
+                      "type": "array",
+                      "uniqueItems": true,
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "cards": {
+                      "type": "object",
+                      "properties": {
+                        "rarity": {
+                          "type": "array",
+                          "uniqueItems": true,
+                          "items": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "tagsAny": {
+                          "type": "array",
+                          "uniqueItems": true,
+                          "items": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "tagsAll": {
+                          "type": "array",
+                          "uniqueItems": true,
+                          "items": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        }
+                      },
+                      "additionalProperties": false
                     }
                   },
-                  "tags": {
-                    "type": "array",
-                    "uniqueItems": true,
-                    "items": {
-                      "type": "string",
-                      "minLength": 1
-                    }
-                  }
-                },
-                "additionalProperties": false
+                  "required": [
+                    "id",
+                    "requiresTag"
+                  ],
+                  "additionalProperties": false
+                }
               },
               "owned": {
                 "type": "object",
@@ -1018,13 +1083,13 @@ export const gameProfileCatalog = {
           "path": "engine/modules/characters/defaults.json",
           "id": "characters",
           "version": "1.0.0",
-          "hash": "sha256:e9b32eefaa81975d1b0c5598339053682b9cff7d10146220730d1b2080c524db"
+          "hash": "sha256:cc22b869303d616a092c280c652e9bf3debe28b11c704d7b740f26c55e85de42"
         },
         {
           "path": "engine/modules/characters/settings.schema.json",
           "id": "characters",
           "version": "1.0.0",
-          "hash": "sha256:9c3d0fbcfa807a98f46ce7b58f6f87f1dc75086f2b587b431192e3ef2f51a8c1"
+          "hash": "sha256:4b97d6acd5ea6cf33a394e772e92c1881a66e60eccae0b4dfc79e3ec8f8d96aa"
         }
       ]
     },
@@ -5279,7 +5344,8 @@ export const gameProfileCatalog = {
             "name": "Reaver",
             "tags": [
               "character.player",
-              "class.reaver"
+              "class.reaver",
+              "training.basic"
             ],
             "attributes": {
               "strength": 2,
@@ -5352,7 +5418,8 @@ export const gameProfileCatalog = {
             "name": "Starseer",
             "tags": [
               "character.player",
-              "class.starseer"
+              "class.starseer",
+              "training.basic"
             ],
             "attributes": {
               "strength": 1,
@@ -5425,7 +5492,8 @@ export const gameProfileCatalog = {
             "name": "Rogue",
             "tags": [
               "character.player",
-              "class.rogue"
+              "class.rogue",
+              "training.basic"
             ],
             "attributes": {
               "strength": 1,
@@ -5502,7 +5570,8 @@ export const gameProfileCatalog = {
             "name": "Herald",
             "tags": [
               "character.player",
-              "class.herald"
+              "class.herald",
+              "training.basic"
             ],
             "attributes": {
               "strength": 1,
@@ -8741,6 +8810,16 @@ export const gameProfileCatalog = {
               "cardIds": [
                 "core.reaverSpecial"
               ]
+            },
+            "combatCards": {
+              "minRank": 1,
+              "lowerRankChance": 0.1,
+              "rankOfRarity": {
+                "starter": 0,
+                "common": 1,
+                "uncommon": 2,
+                "rare": 3
+              }
             }
           }
         },
@@ -13048,7 +13127,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/characters.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:0ae3d69f1ff4e0adb1b423089e7f360fc7c0f0294b381e0d3265c4e437328e72"
+          "hash": "sha256:02e9592efe8e4a44b32356e8a4017b64b10d18de0727f748e3d686c1f8a75343"
         },
         {
           "path": "games/ashenspire/packs/core/cardPools.json",
@@ -13096,7 +13175,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/rewards.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:1f48daac4730f5a4161a413124d681d0614644777bc1ff6ed3624db50274c65d"
+          "hash": "sha256:d9e4b719e1cc3d6df5815d4fbe25ae7bc94acd5951957749b862021142f6265a"
         },
         {
           "path": "games/ashenspire/packs/core/provisionalPolicies.json",
@@ -24829,7 +24908,7 @@ export const gameProfileCatalog = {
       "path": "engine/kernel/gameConfig.js",
       "id": "ashen.runtime",
       "version": "1.0.0",
-      "hash": "sha256:6e155df6001dd047c55c867903964e75982065dcf22119198121d03357734c1e"
+      "hash": "sha256:e9b7391269655385e4c37d9092cfa69db41d62a3fa484e0c80e1cc096f942f9b"
     },
     {
       "path": "engine/contracts/game-profile.json",
@@ -24847,7 +24926,7 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "path": "src/** (excluding generated gameProfiles/changelog)",
-      "hash": "sha256:1f4817c2ac627483738ca24acfa209e515d767291f99ac2a23030c40b476b90c"
+      "hash": "sha256:34f511928158b5f6a8bd7a8591f9873ef5a0874f9dd2221c6d69e450426e57d9"
     }
   ],
   "runtimeSources": [
@@ -27153,7 +27232,7 @@ export const gameProfileCatalog = {
       "path": "src/model/gameProfileRewards.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:79d0cbfcdd7664ee49b510153b07eb5ceb2dc6e426d059edffa632bbe3c6a214"
+      "hash": "sha256:e1a77b2ab7cf97b5a36f5f9992b7f713da35fa6ed7f0e781ec32d96dac8c781c"
     },
     {
       "path": "src/model/gameProfileRun.js",
@@ -29862,7 +29941,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:3f9a67884765cb5f920ef530e66ccdcc2d826819e6f981359b771d44a5b5bf66"
     }
   ],
-  "runtimeHash": "sha256:0142f0dc2af002f876e9e9f1124e8fd5f856cf20a099f1e02302bfe03c423352"
+  "runtimeHash": "sha256:0e0db5c191d9ed07539a975b68b5fc6df222ba36ea93b230081adddd2133b7e4"
 };
 export const gameProfileAuthors = {
   "default": {

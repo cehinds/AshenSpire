@@ -46,7 +46,7 @@ function playersFromClasses() {
   return classes.map(c => {
     CARD_POOLS.special.byClass[`class.${c.id}`] = { default: c.specialCardId };
     return {
-      id: c.id, name: c.name.replace(/\s+/g, '_'), tags: ['character.player', `class.${c.id}`],
+      id: c.id, name: c.name.replace(/\s+/g, '_'), tags: ['character.player', `class.${c.id}`, 'training.basic'],
       attributes: c.attributes,
       attributePriority: Object.keys(c.attributes).sort((a, b) => c.attributes[b] - c.attributes[a]),
       level: 1,

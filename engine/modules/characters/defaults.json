@@ -170,23 +170,51 @@
   },
   "deckEditing": {
     "default": "owned",
-    "unlimited": {
+    "unlimited": [
+      {
+        "id": "basicTraining",
+        "requiresTag": "training.basic",
+        "pools": [
+          "strike",
+          "defend",
+          "counter",
+          "smash",
+          "sweep",
+          "evade"
+        ],
+        "cards": {
+          "rarity": [
+            "starter"
+          ],
+          "tagsAny": [
+            "maneuver:attack",
+            "maneuver:defend",
+            "maneuver:counter",
+            "maneuver:smash",
+            "maneuver:sweep"
+          ]
+        }
+      },
+      {
+        "id": "graduate",
+        "requiresTag": "training.graduate",
+        "pools": [],
+        "cards": {
+          "rarity": [
+            "starter"
+          ],
+          "tagsAll": [
+            "camp:spell"
+          ]
+        }
+      }
+    ],
+    "owned": {
       "pools": [
-        "strike",
-        "defend",
-        "counter",
-        "smash",
-        "sweep",
-        "evade"
+        "special"
       ],
       "tags": [
-        "basic"
-      ]
-    },
-    "owned": {
-      "tags": [
-        "classification.weaponArt",
-        "camp:spell"
+        "classification.weaponArt"
       ]
     }
   }
