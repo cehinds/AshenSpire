@@ -4,6 +4,11 @@ name: combat feedback diagnostic (observational)
 on:
   push:
     branches: ['worker/CombatHudLayoutBatch/timing-diagnostic']
+    # Configuration-only edits require manual dispatch or a driver/test change.
+    # This prevents summary-workflow publication from replaying gameplay.
+    paths:
+      - 'tools/click-impact-diagnostic.mjs'
+      - 'tests/click-impact-diagnostic.test.mjs'
   workflow_dispatch:
 
 permissions:

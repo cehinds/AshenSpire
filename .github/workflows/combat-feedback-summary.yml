@@ -1,0 +1,32 @@
+name: summarize immutable combat feedback artifact
+on:
+  push:
+    branches: ['worker/CombatHudLayoutBatch/timing-diagnostic']
+    paths:
+      - '.github/workflows/combat-feedback-summary.yml'
+      - 'tools/combat-feedback-summary.mjs'
+      - 'tests/combat-feedback-summary.test.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  summarize:
+    if: github.ref == 'refs/heads/worker/CombatHudLayoutBatch/timing-diagnostic'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          lfs: false
+      - name: Download only the corrected recorder run artifact
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 39080448998
+          name: combat-feedback-499ecee90255201d99be6b18d7e5cf620332f1fe-39080448998
+          path: ${{ runner.temp }}/diagnostic-artifact
+      - name: Render bounded phase summaries without executing gameplay
+        run: node tools/combat-feedback-summary.mjs "$RUNNER_TEMP/diagnostic-artifact"
