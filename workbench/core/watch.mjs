@@ -44,7 +44,8 @@ function walk(dir, out = new Map()) {
  */
 export const BUILD_OUTPUTS = {
   'tools/content-build.mjs': ['src/content/generated/', 'src/framework/data/'],
-  'tools/game-config.mjs': ['src/content/generated/gameProfiles.js', 'games/ashenspire/game.lock.json'],
+  'tools/game-config.mjs': ['src/content/generated/gameProfiles.js', 'src/content/generated/baseCards.js', 'games/ashenspire/game.lock.json'],
+  'tools/hud-layout-css.mjs': ['styles/hud-layout.generated.css', 'docs/hud-layout-tokens.md'],
   'tools/framework-data-build.mjs': ['src/framework/data/'],
   'tools/config-build.mjs': ['src/config/generated/'],
   'tools/card-components.mjs': ['src/content/cardComponents.generated.js'],

@@ -336,6 +336,16 @@ async function collectEvents(app, name, done, { onEvent, onOpen, timeoutMs = 800
   } finally { reader.cancel().catch(() => {}); }
 }
 
+test('the game profile, base card and HUD layout outputs are build outputs', () => {
+  assert.equal(isBuildOutput('src/content/generated/gameProfiles.js'), true);
+  assert.equal(isBuildOutput('src/content/generated/baseCards.js'), true);
+  assert.equal(isBuildOutput('games/ashenspire/game.lock.json'), true);
+  assert.equal(isBuildOutput('styles/hud-layout.generated.css'), true);
+  assert.equal(isBuildOutput('docs/hud-layout-tokens.md'), true);
+  assert.equal(isBuildOutput('games/ashenspire/game.json'), false, 'authored game JSON is an input, not an output');
+  assert.equal(isBuildOutput('content/hud-layout/mobile.json'), false, 'authored HUD layout JSON is an input');
+});
+
 test('an edit made while a build runs is kept for the next reload; only the build output is ignored', async (t) => {
   assert.equal(isBuildOutput('src/config/generated/ui.js'), true);
   assert.equal(isBuildOutput('src/content/generated/cards.js'), true);
