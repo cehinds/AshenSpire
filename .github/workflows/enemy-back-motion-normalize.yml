@@ -1,0 +1,106 @@
+name: Enemy back motion normalization
+on:
+  push:
+    branches: ['worker/EnemyBackSprites/motion-normalize-*']
+    paths:
+      - 'tools/enemy-back-motion-normalize.py'
+      - '.github/workflows/enemy-back-motion-normalize.yml'
+      - 'art/enemy-back-motion/**'
+permissions:
+  contents: write
+concurrency:
+  group: motion-normalize-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  normalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            tools/enemy-back-motion-normalize.py
+            art/enemy-back-motion
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install Pillow==11.1.0
+      - name: Verify rejection and shared scale gates
+        run: |
+          python - <<'PY'
+          import importlib.util,json,tempfile
+          from pathlib import Path
+          from PIL import Image,ImageDraw
+          spec=importlib.util.spec_from_file_location('normalizer','tools/enemy-back-motion-normalize.py')
+          module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+          with tempfile.TemporaryDirectory() as temporary:
+              root=Path(temporary); masters={}
+              for kind,(cols,rows) in module.LAYOUTS.items():
+                  image=Image.new('RGBA',(cols*100,rows*100)); draw=ImageDraw.Draw(image)
+                  for row in range(rows):
+                      for col in range(cols):
+                          draw.rectangle((col*100+30,row*100+20,col*100+69,row*100+79),fill=(100,50,30,255))
+                  image.save(root/(kind+'-master.png'))
+                  masters[kind]={'grid':[cols,rows],'labels':[f'f{i}' for i in range(cols*rows)]}
+              (root/'provenance.json').write_text(json.dumps({'masters':masters}))
+              assert module.run(root)
+              report=json.loads((root/'normalized/normalized.json').read_text())
+              assert len(report['frames'])==19 and report['output']['sharedScale']==1
+              assert all(frame['outputAnchor']==[256,464] for frame in report['frames'])
+              image=Image.open(root/'motion-master.png').convert('RGB'); image.save(root/'motion-master.png')
+              assert not module.run(root), 'opaque RGB sheet accepted'
+              assert not list((root/'normalized').glob('*/*.png')), 'partial exports survived rejection'
+              image=image.convert('RGBA'); image.putalpha(0)
+              ImageDraw.Draw(image).rectangle((0,0,40,40),fill=(100,50,30,255))
+              image.save(root/'motion-master.png')
+              assert not module.run(root), 'source-boundary clipping accepted'
+          PY
+      - name: Normalize all available actor masters
+        id: exports
+        continue-on-error: true
+        run: |
+          python - <<'PY'
+          import subprocess
+          from pathlib import Path
+          failures=[]
+          roots=sorted(Path('art/enemy-back-motion').glob('*/v*/provenance.json'))
+          if not roots: raise SystemExit('No motion source manifests')
+          for provenance in roots:
+              root=provenance.parent
+              result=subprocess.run(['python','tools/enemy-back-motion-normalize.py',str(root)],capture_output=True,text=True)
+              (root/'normalized/normalization.log').write_text(result.stdout+result.stderr)
+              if result.returncode: failures.append(str(root))
+          if failures: raise SystemExit('Rejected: '+', '.join(failures))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: enemy-back-motion-review
+          path: art/enemy-back-motion/**/normalized/
+      - name: Preserve exports and rejection reports
+        if: always()
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          python - <<'PY'
+          import hashlib,json,subprocess
+          from pathlib import Path
+          paths=[]
+          for report in Path('art/enemy-back-motion').glob('*/v*/normalized/normalized.json'):
+              data=json.loads(report.read_text())
+              for source in data['masters'].values():
+                  assert hashlib.sha256(Path(source['path']).read_bytes()).hexdigest()==source['sha256']
+              folder=report.parent
+              paths.extend(str(p) for p in folder.rglob('*') if p.is_file())
+              paths.extend(subprocess.check_output(['git','ls-files','--',str(folder)],text=True).splitlines())
+          if paths: subprocess.run(['git','add','-A','-f','--',*sorted(set(paths))],check=True)
+          PY
+          if ! git diff --cached --quiet; then
+            git commit -m "Record normalized elite motion exports and QA"
+            git push origin "HEAD:$GITHUB_REF_NAME"
+          fi
+      - name: Enforce normalization gates
+        if: steps.exports.outcome != 'success'
+        run: exit 1
