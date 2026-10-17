@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-2028",
+    "date": "2026-10-17",
+    "group": "2026-10-17",
+    "summary": "Layered map and battlefield art has an editable design handoff",
+    "detail": "Document sharper hex terrain, reusable map and combat/rest layers, independent grid and label controls, region and tile authoring, sparse landmarks, and map-item discovery rewards. Includes illustrated proposals, validated JSON examples, 24 transparent prop placeholders with editable SVGs, and stable component contracts; gameplay and rendering are unchanged.",
+    "build": "0.7.1.1547",
+    "pullRequest": 2028,
+    "url": "https://github.com/cehinds/AshenSpire/pull/2028"
+  },
+  {
     "id": "pr-2025",
     "date": "2026-10-17",
     "group": "2026-10-17",
