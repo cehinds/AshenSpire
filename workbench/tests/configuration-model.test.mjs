@@ -70,12 +70,29 @@ test('parseFieldValue validates against the field', () => {
   assert.deepEqual(C.parseFieldValue({ kind: 'boolean' }, ''), { ok: true, value: undefined });
 });
 
+test('switching a module back on restores what switching it off replaced', () => {
+  const sw = (d, id, v, scope = 'p') => C.setModuleEnabled(d, id, v, scope);
+  const obj = '{"formatVersion":1,"modules":{"cards":{"mode":"legacy","n":2}}}';
+  const off = sw(obj, 'cards', false);
+  assert.equal(JSON.parse(off).modules.cards, false);
+  assert.deepEqual(JSON.parse(sw(off, 'cards', true)).modules.cards, { mode: 'legacy', n: 2 }, 'the settings object comes back');
+  const off2 = sw('{"formatVersion":1,"modules":{"rest":true}}', 'cards', false);
+  assert.equal(JSON.parse(off2).modules.cards, false);
+  const back = JSON.parse(sw(off2, 'cards', true));
+  assert.equal('cards' in back.modules, false, 'an inheriting module goes back to inheriting: the key is removed');
+  assert.equal(back.modules.rest, true);
+  assert.equal(JSON.parse(sw('{"formatVersion":1,"modules":{"cards":false}}', 'cards', true)).modules.cards, true, 'an authored false becomes true');
+  assert.equal(JSON.parse(sw(sw('{"formatVersion":1,"modules":{"cards":true}}', 'cards', false), 'cards', true)).modules.cards, true, 'true stays true');
+  const offA = sw(obj, 'cards', false, 'a');
+  assert.equal(JSON.parse(sw(offA, 'cards', true, 'b')).modules.cards, true, 'another draft path has no memory of it');
+});
+
 test('setModuleEnabled edits modules.<id> in the draft and keeps the rest', () => {
   const base = '{"formatVersion":1,"core":"c","$comment":"k","modules":{"cards":{"mode":"legacy"}}}';
   const off = JSON.parse(C.setModuleEnabled(base, 'cards', false));
   assert.equal(off.modules.cards, false);
   assert.equal(off.$comment, 'k');
-  assert.equal(JSON.parse(C.setModuleEnabled(JSON.stringify(off), 'cards', true)).modules.cards, true);
+  assert.deepEqual(JSON.parse(C.setModuleEnabled(JSON.stringify(off), 'cards', true)).modules.cards, { mode: 'legacy' }, 'on restores the settings object that off replaced');
   assert.deepEqual(JSON.parse(C.setModuleEnabled(base, 'cards', true)).modules.cards, { mode: 'legacy' }, 'on keeps an existing settings object');
   assert.equal(JSON.parse(C.setModuleEnabled('{"formatVersion":1}', 'x', false)).modules.x, false);
   assert.throws(() => C.setModuleEnabled('{nope', 'x', true));

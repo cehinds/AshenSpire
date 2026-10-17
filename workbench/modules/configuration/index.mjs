@@ -183,7 +183,7 @@ export default {
       const box = event.target.closest('input[data-toggle]');
       if (!box) return;
       event.stopPropagation(); // a click on the switch does not open or close the row
-      try { applyDraft(setModuleEnabled(textarea.value, box.dataset.toggle, box.checked)); }
+      try { applyDraft(setModuleEnabled(textarea.value, box.dataset.toggle, box.checked, pathSelect.value)); }
       catch (error) { box.checked = !box.checked; setStatus(error.message, 'error'); }
     });
     modBody.addEventListener('change', (event) => {

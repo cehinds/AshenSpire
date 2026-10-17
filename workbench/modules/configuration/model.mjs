@@ -118,12 +118,30 @@ function parseAuthor(draft) {
   return doc;
 }
 
-/** The draft text with modules.<id> switched on or off. Off writes `false`; on turns a `false` into `true`. Throws on bad JSON. */
-export function setModuleEnabled(draft, id, enabled) {
+/** What switching a module off replaced, so switching it back on restores it: key -> { object } or { absent: true }. */
+const switchedOff = new Map();
+const memoryKey = (scope, id) => `${scope}\u0000${id}`;
+
+/**
+ * The draft text with modules.<id> switched on or off. Off writes `false` and remembers what it replaced (a settings
+ * object, or an absent entry that inherited); on restores that (the object, or removes the key to inherit again),
+ * and otherwise turns a `false` into `true`. `scope` (the draft's file path) keeps two profiles' memories apart.
+ * Throws on bad JSON.
+ */
+export function setModuleEnabled(draft, id, enabled, scope = '') {
   const doc = parseAuthor(draft);
   const entry = doc.modules[id];
-  if (!enabled) doc.modules[id] = false;
-  else if (entry === false || entry === undefined || entry === null) doc.modules[id] = true;
+  const key = memoryKey(scope, id);
+  if (!enabled) {
+    if (entry !== false) switchedOff.set(key, isObject(entry) ? { object: entry } : (entry === undefined || entry === null) ? { absent: true } : {});
+    doc.modules[id] = false;
+  } else if (entry === false) {
+    const was = switchedOff.get(key);
+    switchedOff.delete(key);
+    if (was?.object) doc.modules[id] = was.object;
+    else if (was?.absent) delete doc.modules[id];
+    else doc.modules[id] = true;
+  } else if (entry === undefined || entry === null) doc.modules[id] = true;
   return toText(doc);
 }
 
