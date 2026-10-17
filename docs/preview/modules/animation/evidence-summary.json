@@ -40,12 +40,33 @@
   ],
   "build": {
     "version": "0.7.1.1550",
+    "ordinal": 1550,
     "artifactId": 12111476110,
     "workflowRunId": 39060894016,
+    "artifactArchiveSha256": "78313b852a1ec7ae823b2930e94fee4d9502b879e8126c30c200084886588174",
+    "runtimeSourceCommit": "a7e4d21abff5cdc817d79cbfc6f5f305570934fe",
     "sourceDigest": "1779e6f1ff"
   },
   "expectedPlayUrl": "https://cehinds.github.io/AshenSpire/branches/feature/StanceAnimationModule/latest/",
-  "publicRouteVerification": "pending; do not treat this local capture as public-route verification",
+  "publicRouteVerification": {
+    "status": "verified",
+    "verifiedAt": "2026-10-17T19:46:06.049Z",
+    "workflowRunId": 39063856405,
+    "jobId": 117487255334,
+    "method": "read-only feature-page verification; normal and cache-busted identity checks",
+    "url": "https://cehinds.github.io/AshenSpire/branches/feature/StanceAnimationModule/latest/",
+    "checks": {
+      "normalIndexHttpStatus": 200,
+      "normalIndexRuntimeSourceCommit": "a7e4d21abff5cdc817d79cbfc6f5f305570934fe",
+      "normalBuildTextHttpStatus": 200,
+      "normalBuildTextContentType": "text/plain",
+      "normalBuildTextSourceDigest": "1779e6f1ff",
+      "normalBuildTextOrdinal": 1550,
+      "normalBuildTextRelease": "0.7.1",
+      "cacheBustedIdentityMatches": true
+    },
+    "limits": "Confirms public publication and identity only; no hosted browser execution. The 14-scene browser evidence was collected locally."
+  },
   "settingsExample": {
     "formatVersion": 1,
     "core": "ashen.core@1.0.0",
