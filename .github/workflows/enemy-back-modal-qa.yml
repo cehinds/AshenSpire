@@ -16,6 +16,7 @@ jobs:
         with:
           filter: blob:none
           sparse-checkout: |
+            styles/base.css
             pose-studio/enemy-back-proposals
             art/enemy-back-proposals/wyrmAspirant/v02.png
           sparse-checkout-cone-mode: false
