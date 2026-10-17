@@ -4,6 +4,7 @@ import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {pathToFileURL} from 'node:url';
 import {createRequire} from 'node:module';
+import {createServer} from 'node:http';
 const api=p=>JSON.parse(execFileSync('gh',['api',p],{encoding:'utf8',maxBuffer:32*1024*1024}));
 const repo='cehinds/AshenSpire',branch='feature/EnemyBackSprites';
 const source=api('repos/'+repo+'/branches/'+encodeURIComponent(branch)).commit.sha;
@@ -21,11 +22,12 @@ const stamp=JSON.parse(await readFile(dir+'/buildordinal.json','utf8')),version=
 const {chromium}=await import(pathToFileURL(process.env.PLAYWRIGHT_MODULE).href);
 const sharp=createRequire(import.meta.url)(process.env.SHARP_MODULE);
 const out='docs/preview/features/enemy-back-sprites';await mkdir(out,{recursive:true});
+const server=createServer((req,res)=>{res.writeHead(200,{'Content-Type':'text/html'});res.end(download);});await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const artifactPage='http://127.0.0.1:'+server.address().port+'/AshenSpire.html';
 const browser=await chromium.launch({headless:true}),records=[];
 try{
  for(const [name,width,height,actor] of [['mobile',390,844,'wyrmAspirant'],['desktop',1440,900,'courtDuelist'],['wide',1920,1080,'wyrmLord'],['tablet',820,1180,'fellWarden']]){
-  console.log('Capturing exact artifact viewport',name);const page=await browser.newPage({viewport:{width,height}});page.setDefaultTimeout(30000);page.setDefaultNavigationTimeout(90000);
-  await page.goto(pathToFileURL(dir+'/AshenSpire.html').href,{waitUntil:'domcontentloaded',timeout:90000});
+  console.log('Capturing exact artifact viewport',name);const page=await browser.newPage({viewport:{width,height}});page.on('pageerror',error=>console.log('BROWSER PAGE ERROR',error.message));page.on('console',message=>{if(message.type()==='error')console.log('BROWSER CONSOLE ERROR',message.text());});page.on('requestfailed',request=>console.log('BROWSER REQUEST FAILED',request.url().slice(0,150),request.failure()?.errorText));page.setDefaultTimeout(30000);page.setDefaultNavigationTimeout(90000);
+  await page.goto(artifactPage,{waitUntil:'domcontentloaded',timeout:90000});
   const game=page;await game.locator('#enemy-rear-review-open').click({timeout:90000});
   const gallery=game.frameLocator('iframe[title="Enemy rear design review"]');
   await gallery.locator('#grid .card').first().waitFor({timeout:90000});
@@ -44,7 +46,7 @@ try{
   records.push({name,width,height,actor,sourceCommit:source,version,digest:stamp.digest,playableUrl:url,verifiedActors:13,verifiedNeutralDesigns:130});
   await page.close();
  }
-}finally{await browser.close();}
+}catch(error){for(const page of browser.contexts().flatMap(context=>context.pages())){await page.screenshot({path:out+'/failure.png'}).catch(()=>{});console.log('FAILURE FRAMES',await Promise.all(page.frames().map(async frame=>({url:frame.url().slice(0,180),text:await frame.locator('body').innerText({timeout:3000}).then(text=>text.slice(0,1500)).catch(()=>null)}))));}throw error;}finally{await browser.close();await new Promise(resolve=>server.close(resolve));}
 const tiles=await Promise.all(records.map(async(r,i)=>({input:await sharp(out+'/'+r.name+'.png').resize(512,384,{fit:'contain',background:'#111414'}).png().toBuffer(),left:(i%2)*512,top:Math.floor(i/2)*384})));
 await sharp({create:{width:1024,height:768,channels:4,background:'#111414'}}).composite(tiles).png().toFile(out+'/contact-sheet.png');
 const readme=await readFile('README.md','utf8'),releasePaths=[...readme.matchAll(/docs\/preview\/releases\/([^/]+)\/[^)\s]+/g)].map(m=>m[1]);
