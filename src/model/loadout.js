@@ -3106,6 +3106,11 @@ export function stampDeck(registries, run, cards, {
       // instance instead of adopting live content changes.
       const authored = registries.cards.get(inst.cardId);
       carrier = schoolAbsent ? applyAbilityGrade(authored, inst.abilityRank) : inst;
+      // A non-attack card may name a school for its status or presentation
+      // without dealing per-hit exposure. Persist its school with an explicit
+      // zero carrier so new instances satisfy the same saved-pair contract.
+      if (schoolAbsent && authored.type !== 'attack' && typeof carrier.damageSchool === 'string'
+        && carrier.exposureBuildupPerHit === undefined) carrier = {...carrier,exposureBuildupPerHit:0};
     }
     const priorSchool = inst.damageSchool;
     const priorBuildup = inst.exposureBuildupPerHit;
