@@ -109,7 +109,19 @@ test('a preview-off save is byte-identical to the save before the preview saved 
   // Re-recorded from ae2899cf CI for the stance continuation: ordinary fight
   // saves now carry stance entry, Accuracy and round-start Evasion receipts.
   // The exact SHA commits to every byte, including the saved text's length.
-  assert.equal(createHash('sha256').update(all).digest('hex'), '3838c6297bf49a523a78e4c35b805bf0b9a3e199e316a47243b8c268cef8a57a');
+  // Base abilities add three empty per-combat bookkeeping maps. Independently
+  // compared with origin/dev 37c414acd: these are the only twelve differences
+  // across the four snapshots; removing exactly those fields preserves its SHA.
+  const legacyText = out.map(text => {
+    const snapshot = JSON.parse(text);
+    for (const key of ['typePlays', 'instanceUsesCombat', 'cardUsesCombat']) {
+      assert.deepEqual(snapshot.player.abilityRiders[key], {});
+      delete snapshot.player.abilityRiders[key];
+    }
+    return JSON.stringify(snapshot);
+  }).join('\n');
+  assert.equal(createHash('sha256').update(legacyText).digest('hex'), '3838c6297bf49a523a78e4c35b805bf0b9a3e199e316a47243b8c268cef8a57a');
+  assert.equal(createHash('sha256').update(all).digest('hex'), 'dda5335e3fdf198f3a00ed7d040e1597a028e75a845941623ab2f215d917ce99');
 });
 
 test('a preview fight with queued cards saves and restores: queues and paid SP intact, End Turn works after restore', () => {

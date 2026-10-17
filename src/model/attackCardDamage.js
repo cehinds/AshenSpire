@@ -125,23 +125,23 @@ function projectOperation(face, effects, op, baseValue, authoredReference) {
   // (#1247 review). eligibleCards gives such a face no row for this operation.
 }
 
-function projectEffects(face, configs, references) {
+function projectEffects(face, configs, references, priceFace = face) {
   const effects = (face.effects || []).map((effect) => ({ ...effect }));
   const magical = cardIsMagical(face);
   if (face.type === 'attack') {
     const config = magical ? configs.potencyCards : configs.attackCards;
     const name = magical ? 'potencyCards' : 'attackCards';
-    projectOperation(face, effects, 'damage', attackCardBaseDamage(face, config), references[name]);
+    projectOperation(face, effects, 'damage', attackCardBaseDamage(priceFace, config), references[name]);
   }
   if (effects.some((effect) => effect.op === 'block')) {
     const config = magical ? configs.potencyCards : configs.defenseCards;
     const name = magical ? 'potencyCards' : 'defenseCards';
-    projectOperation(face, effects, 'block', attackCardBaseDamage(face, config), references[name]);
+    projectOperation(face, effects, 'block', attackCardBaseDamage(priceFace, config), references[name]);
   }
   if (face.type === 'attack' && effects.some((effect) => effect.op === 'poiseDamage')) {
     const config = magical ? configs.wardCards : configs.poiseCards;
     const name = magical ? 'wardCards' : 'poiseCards';
-    projectOperation(face, effects, 'poiseDamage', attackCardBaseDamage(face, config), references[name]);
+    projectOperation(face, effects, 'poiseDamage', attackCardBaseDamage(priceFace, config), references[name]);
   }
   return effects;
 }
@@ -180,7 +180,13 @@ function projectFaces(card, configs, tags, school) {
   const face = (source) => {
     const values = ratingValues(source, configs);
     return {
-      effects: projectEffects(source, configs, references),
+      // Fixed upgrades author their value delta explicitly. Their higher payment
+      // must not add a second upgrade bonus; advanced multipliers still value
+      // the base resource budget before applying the authored effect delta.
+      effects: projectEffects(source, configs, references,
+        source === upgradedFace && source.costRule === 'fixed'
+          ? { ...source, cost: baseFace.cost, manaCost: baseFace.manaCost, staminaCost: baseFace.staminaCost }
+          : source),
       ...(values ? { cardRatingValues: values } : {}),
     };
   };

@@ -3775,7 +3775,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Gain Persistent Block {base.persistent-block} and Persistent Barrier {base.persistent-barrier}.",
                 "icon": "✦",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "Armor charm of the Bastion watch.\n\nThe ridge gates were held through long winters by guards too few to relieve one another. Their warding knots were tied into the lining, renewing a thin defense whenever the wearer could stand and breathe.\n\nThe cloth outlasted several suits of iron."
               },
               "tags": [
                 "classification.skill",
@@ -3896,7 +3896,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Apply Greased {base.greased}: fire detonates the coating.",
                 "icon": "✦",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "flavor": "Lamp oil prepared for the lower city's alleys.\n\nBefore the Burning, porters spread this heavy mixture beneath wheels to move stone uphill. The desperate later poured it across thresholds instead. Those who slipped could rise again, provided no one brought a torch.\n\nThe stair keeps both kinds of stain.",
                 "damageSchool": "fire"
               },
               "tags": [
@@ -4038,7 +4038,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Deal {damage} weapon damage and {damage.2} Sacred damage.",
                 "icon": "✦",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "flavor": "Consecrated stroke of the Citadel knights.\n\nA knight once carried the Court Flame's promise along the edge of a plain weapon. The oath was spoken before each watch, whether anyone remained to hear it or not. Some blades still answer the gesture.\n\nThe promise survived its intended keeper.",
                 "damageSchool": "physical",
                 "exposureBuildupPerHit": 0
               },
@@ -4164,7 +4164,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Apply {base.poison} Poison: 15 total Necrotic damage as it decays.",
                 "icon": "✦",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "flavor": "Bitter preparation of the weald's abandoned gardens.\n\nThe gardeners marked dangerous roots with white stakes so children could gather safely. When the Field Flame failed, the stakes were burned for warmth and the beds grew together. Their harvest now travels in stoppered bottles.\n\nNothing on the label promises a cure.",
                 "damageSchool": "magic"
               },
               "tags": [
@@ -4288,7 +4288,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Apply Blight {base.blight}: lethal when its stacks reach current HP.",
                 "icon": "✦",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A wasting drawn from the Field Flame's ruins.\n\nThe first dark patches were cut from the orchards and buried beyond the walls. Shoots rose from the burial ground the following spring. By winter, the fruit within the city bore the same marks beneath its skin.\n\nThe gardeners ran out of clean ground."
               },
               "tags": [
                 "classification.skill",
@@ -4406,7 +4406,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Apply Weak {base.weak}.",
                 "icon": "✦",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A loosening charm once laid upon dangerous beasts.\n\nWardens used these small workings to bring wounded animals home without further harm. After the Burning, the same gestures were taught at the gate. It was easier to carry a prisoner who could no longer struggle.\n\nThe hand remembers its gentler purpose."
               },
               "tags": [
                 "classification.skill",
@@ -4524,7 +4524,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Apply Charm {base.charm}.",
                 "icon": "✦",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A courtly working carried beyond the frozen bridges.\n\nPetitioners learned to soften the attention of armed doorwardens before presenting their claims. The words lost their courtesy as the queues grew hungry. Their cadence still causes a raised weapon to hesitate before its appointed stroke.\n\nAn audience can be won without consent."
               },
               "tags": [
                 "classification.skill",
@@ -4642,7 +4642,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Apply Bind {base.bind}.",
                 "icon": "✦",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "Restraint of the Bastion's old holding rooms.\n\nThe Wardens preferred a knot that checked the striking arm and left its bearer able to eat. Several survived on the empty cells after the keys were lost. Their pattern needs no rope when traced in ash.\n\nMercy had a shape before a name."
               },
               "tags": [
                 "classification.skill",
@@ -4767,7 +4767,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Apply Restrained {base.restrained}. Add a Restrained burden to the enemy hand.",
                 "icon": "✦",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A burdening seal of the Court's prisoners.\n\nThose brought over the bridges wore weighted cords beneath their sleeves. They could walk to judgment, but every movement reminded them of the escort. The cords rotted in the river vaults; the imposed weight remained in their knots.\n\nThe sentence travels lighter than its iron."
               },
               "tags": [
                 "classification.skill",
@@ -4895,7 +4895,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Gain {base.foresight} Foresight and draw {draw} cards.",
                 "icon": "✦",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "An exercise of the Observatory's night students.\n\nApprentices watched a candle's reflection through a bowl of dark water before they were allowed near the lenses. The practice taught them to notice a movement before seeking its cause. Few saw farther than the next breath.\n\nThat breath was sometimes sufficient."
               },
               "tags": [
                 "classification.skill",
@@ -5013,7 +5013,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Gain Evade {base.evade}.",
                 "icon": "🛡",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "Footwork of the weald's narrow river crossings.\n\nBridge keepers taught travelers to turn sideways when a laden cart passed. During the fighting, the movement became a way to let steel pass just as closely. It requires little ground, and leaves little room for doubt.\n\nThe river took those who stepped twice."
               },
               "tags": [
                 "classification.skill",
@@ -5130,7 +5130,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Gain Intangible {base.intangible}.",
                 "icon": "✦",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A thinning learned among the Observatory's cold rooms.\n\nStudents were told to stand where the lens cast no image and listen for their own footsteps. Those who mastered the lesson could cross a door without stirring its hanging cloth. They returned colder than the stone.\n\nThe cloth never marked their passage."
               },
               "tags": [
                 "classification.skill",
@@ -5249,7 +5249,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Gain Mirrors {base.mirrors}.",
                 "icon": "✦",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A fractured defense of the river city's salons.\n\nThe old houses hung polished plates beside their doors to multiply a guest's arrival. After the bridges froze, household magicians learned to give those reflections a brief weight. Intruders struck the nearest figure and heard glass break.\n\nThe remaining guest need not be real."
               },
               "tags": [
                 "classification.skill",
@@ -5366,7 +5366,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Enchant your weapon with Fire for {base.elemental-weapon} turns.",
                 "icon": "✦",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "flavor": "A furnace blessing carried on ordinary steel.\n\nThe Saints warmed the tools of workers assigned to the Observatory's outer stair. When the fuel carts stopped, a few tools retained their borrowed heat. Their owners discovered that the same blessing could be laid upon a blade.\n\nThe furnace asks no purpose of iron.",
                 "damageSchool": "fire"
               },
               "tags": [
@@ -5505,7 +5505,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Take {damage} Fire damage. Remove Poison and Greased.",
                 "icon": "✦",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "flavor": "A harsh remedy of the Cinder Reach.\n\nMine workers burned spoiled dressings before returning beneath the ridge. In the last winters, the remedy was applied before the cloth was removed. Those who endured it escaped the creeping sickness, though none called the treatment gentle.\n\nClean flesh still bears the fire's account.",
                 "damageSchool": "fire",
                 "exposureBuildupPerHit": 0
               },
@@ -5639,7 +5639,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Remove Weak, Bind and Restrained.",
                 "icon": "✦",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "flavor": "An unbinding rite of the Court Flame's attendants.\n\nThe attendants washed petitioners' hands before an oath could be heard. Later, they traced the washing gesture over fetters and old curses. The water was long gone, but the motion still persuaded certain bonds to loosen.\n\nA clean hand can carry an old wound.",
                 "damageSchool": "holy"
               },
               "tags": [
@@ -5762,7 +5762,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Convert incoming Necrotic damage to healing for {base.necrotic-healing} turns.",
                 "icon": "✦",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "flavor": "A forbidden recovery of the Furnace Chapel.\n\nThe sick were once kept apart from the Chapel's warm stones. A few learned to draw sustenance from the very cold that gathered around their beds. They survived to leave the rooms, carrying no warmth that others could share.\n\nThe cure did not restore their welcome.",
                 "damageSchool": "magic"
               },
               "tags": [
@@ -5885,7 +5885,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Convert the enemy’s Sacred healing into damage for {base.divine-harm} turns.",
                 "icon": "✦",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "flavor": "An inversion found beneath the river city's shrines.\n\nThe shrines offered comfort to those whom the Court would not hear. After the Burning, their bowls filled with black water and the comforting words turned bitter. A practiced hand can direct that bitterness toward another's blessing.\n\nThe prayer arrives with its meaning reversed.",
                 "damageSchool": "holy"
               },
               "tags": [
@@ -6014,7 +6014,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Shuffle up to {draw} random hand cards into draw. Draw 3.",
                 "icon": "🛡",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A road lesson taught with a traveler's worn cards.\n\nCaravan guards changed their watches whenever the same sequence grew familiar. A dangerous habit could be broken by putting every expected duty aside and taking another. The method survived on roads where there were no caravans left.\n\nFamiliarity is a route an enemy learns."
               },
               "tags": [
                 "classification.skill",
@@ -6128,7 +6128,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Shuffle the entire draw pile.",
                 "icon": "🛡",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "An ordering exercise of the Observatory's apprentices.\n\nThe students sorted loose charts until each could name their place by touch. Their teachers then scattered the stack and ordered them to begin again. The exercise continued after the charts ceased to describe the sky outside.\n\nNo arrangement was permitted to become certain."
               },
               "tags": [
                 "classification.skill",
@@ -6238,7 +6238,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Draw {draw} cards.",
                 "icon": "🛡",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A preparation shared by the ring road's survivors.\n\nTravelers kept a useful thing within reach and another beneath it, wrapped against the wet. Those who returned from the towers made the same small preparations before sleeping. A ready hand mattered more than a crowded pack.\n\nThe next necessity rarely announces itself."
               },
               "tags": [
                 "classification.skill",
@@ -6353,7 +6353,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Choose up to 2 hand cards to retain.",
                 "icon": "🛡",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A keeper's habit from the Bastion granaries.\n\nWhen the harvest was sound, each storekeeper set aside a measure that could not be touched at market. The custom remained after the stores were emptied. Fighters learned to reserve a useful movement with the same stubborn care.\n\nHunger is not the only thing to anticipate."
               },
               "tags": [
                 "classification.skill",
@@ -6471,7 +6471,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Look at the top 3 cards. Choose their order.",
                 "icon": "🛡",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A pathfinder's method on the old viaducts.\n\nThe first travelers after the Burning tested each arch with a weighted cord before bringing the others forward. They marked the sound stones in an order the wind could not erase. Later parties sometimes found the marks rearranged.\n\nA known road must still be examined."
               },
               "tags": [
                 "classification.skill",
@@ -6590,7 +6590,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Gain {base.read-intent}. Reveal the selected enemy's intent and burden hand for 1 turn.",
                 "icon": "✦",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A watcher's discipline of the Citadel bridges.\n\nDoorwardens learned to read a visitor's hands before accepting any spoken purpose. The habit became more exact when the river froze and armed supplicants arrived together. A pause at the wrist could reveal more than a drawn blade.\n\nIntent leaves a mark before iron moves."
               },
               "tags": [
                 "classification.skill",
@@ -6707,7 +6707,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Choose a discarded card to return to hand.",
                 "icon": "🛡",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A recovery drill of the Bastion's shield yard.\n\nNovices were made to repeat a failed movement after every other student had taken a turn. The delay stripped away haste and left the motion clear. Veterans carried the drill into fights that offered no patient teacher.\n\nWhat was abandoned need not be lost."
               },
               "tags": [
                 "classification.skill",
@@ -6821,7 +6821,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Choose an exhausted card to return to hand.",
                 "icon": "🛡",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "An old retrieval practiced at the Observatory's refuse stair.\n\nBroken instruments were cast into a pit beneath the workshops. Poor apprentices climbed down for pieces the masters considered spent. Sometimes a discarded lens revealed a star the great glass had missed for an entire season.\n\nThe refuse retained its own small light."
               },
               "tags": [
                 "classification.skill",
@@ -6937,7 +6937,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Choose a hand card to exhaust.",
                 "icon": "🛡",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A deliberate sacrifice of the road's traveling schools.\n\nA climber cannot carry every lesson into every chamber. Teachers made their pupils lay one practiced movement aside before opening a difficult door. The empty place left room for attention, though the surrendered habit sometimes proved hard to recover.\n\nReadiness has always required a leaving behind."
               },
               "tags": [
                 "classification.skill",
@@ -7054,7 +7054,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Transform a chosen hand card into Strike for this combat.",
                 "icon": "✦",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A simplifying art of the Bastion's oldest instructors.\n\nThe instructors stripped elaborate exercises back to the first straight blow whenever a pupil grew confused. Finer details could be learned again after the hands stopped trembling. In the towers, that patient correction became a swift and necessary spell.\n\nA beginning can still serve an ending."
               },
               "tags": [
                 "classification.skill",
@@ -7169,7 +7169,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Add 2 Stagger burdens to the enemy deck.",
                 "icon": "✦",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A stumbling curse carried in the Court's broken bells.\n\nThe bridge bells once kept the procession moving at a measured pace. When their towers fell, the sound arrived in uneven fragments. Those who caught its rhythm faltered in midstride, as though the next stone had been taken away.\n\nThe missing beat leaves a place for steel."
               },
               "tags": [
                 "classification.skill",
@@ -7289,7 +7289,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Add 2 Paralysis burdens to the enemy deck.",
                 "icon": "✦",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A locking curse of the river city's empty cells.\n\nThe gaolers kept certain prisoners still without tightening their chains. Its pattern was scratched into the doorframes for a replacement watch to learn. The cells are open now, but the old instruction can still seize a living limb.\n\nAn open door does not release everything."
               },
               "tags": [
                 "classification.skill",
@@ -7410,7 +7410,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Heal {heal} HP. Exhaust.",
                 "icon": "🛡",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A final reserve of the road's exhausted climbers.\n\nThose who reached a landing wounded sometimes bound their last clean cloth around their chest and stood. There would be no second dressing at the next stair. The resolve of that moment became a working taught without ceremony.\n\nThe cloth is spent before the climb is."
               },
               "tags": [
                 "classification.skill",
@@ -7525,7 +7525,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Gain {block} Block. Ethereal.",
                 "icon": "🛡",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A brief shelter drawn from the Observatory's fading glass.\n\nThe outer windows once softened the heat that gathered beneath the great lens. Shards carried away after the Burning could still hold a pale screen for an instant. In an unwatched hand, they crumbled before the next breath.\n\nThe shelter lasts only while it is needed."
               },
               "tags": [
                 "classification.skill",
@@ -7641,7 +7641,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Gain {strength} Strength for this combat.",
                 "icon": "🛡",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A strengthening rite of the Bastion's stone carriers.\n\nLaborers pressed both palms against the first block before beginning the morning's lift. The gesture steadied tired arms through a day on the ridge. Their descendants found the same borrowed resolve useful beneath a weapon's weight.\n\nStone taught the hand before steel did."
               },
               "tags": [
                 "classification.skill",
@@ -7761,7 +7761,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "All allies lose {loseHp} HP. Gain {block} Block.",
                 "icon": "🛡",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A shared defense of the ring road's last escorts.\n\nAn escort sometimes closed ranks around the weakest traveler and bore the blows together. A harsher working drew the price from every companion before any enemy struck. The traveler it saved was left to remember each willing face.\n\nShelter can leave wounds on either side."
               },
               "tags": [
                 "classification.skill",
@@ -7900,7 +7900,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Deal {damage} damage, scaling with distinct negative statuses.",
                 "icon": "⚔",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "flavor": "A cruel calculation of the river city's interrogators.\n\nThe interrogators kept separate marks for cold, hunger, and the smaller pains inflicted between questions. Each new mark narrowed a prisoner's remaining resistance. Their successors learned to strike where several afflictions had already begun their work.\n\nThe ledger counted injuries as opportunities.",
                 "damageSchool": "physical",
                 "exposureBuildupPerHit": 0
               },
@@ -8027,7 +8027,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Deal {damage} damage, scaling with HP lost this turn.",
                 "icon": "⚔",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "flavor": "A reprisal taught among the Bastion's battered gate guards.\n\nRelief seldom came before the second assault. The guards learned to turn the force that drove them backward into the next blow forward. Those who survived could tell the cost of a watch by its last strike.\n\nThe gate remembered every attempt to break it.",
                 "damageSchool": "physical",
                 "exposureBuildupPerHit": 0
               },
@@ -8154,7 +8154,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Gain {block} Block, scaling with distinct types played this turn.",
                 "icon": "🛡",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A defense assembled from the ring road's scattered schools.\n\nThe towers once demanded separate loyalties from their fighters. On the roads between them, survivors exchanged the movements that had kept them alive. A guard became stronger when it could answer more than one kind of danger.\n\nNo ruined school could afford its old pride."
               },
               "tags": [
                 "classification.skill",
@@ -8269,7 +8269,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Deal {damage} damage. Costs +1 SP per prior play this combat (maximum +3).",
                 "icon": "⚔",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "flavor": "An exacting stroke of the Citadel's formal duels.\n\nA duelist was expected to end the matter before fatigue spoiled the prescribed line. Those forced to repeat it found the weapon heavier on each return. The body paid for an elegance that the watching Court rarely questioned.\n\nA perfect motion does not become easier.",
                 "damageSchool": "physical",
                 "exposureBuildupPerHit": 0,
                 "costGrowth": {
@@ -8402,7 +8402,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Deal {damage} damage, increasing each time this card is played.",
                 "icon": "⚔",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "flavor": "A relentless exercise of the Bastion's quarry fighters.\n\nStone breakers struck along one line until the hidden fault yielded. Their children brought the practice into the shield yard, refusing to change a stroke that had not yet found its depth. Each return carried the weight of the last.\n\nThe fracture arrives before the stone admits it.",
                 "damageSchool": "physical",
                 "exposureBuildupPerHit": 0
               },
@@ -8521,7 +8521,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Spend all remaining SP. Deal {damage} damage.",
                 "icon": "✦",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "flavor": "An undivided exertion of the road's solitary climbers.\n\nA locked stair offers no promise of another attempt. Some climbers learned to gather every remaining measure of effort into one committed motion. What followed depended on whether the obstruction or the climber gave way first.\n\nNothing was kept for the next landing.",
                 "damageSchool": "physical",
                 "exposureBuildupPerHit": 0
               },
@@ -8638,7 +8638,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Spend all remaining SP. Deal {damage} damage to up to X enemies.",
                 "icon": "✦",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "flavor": "A widening assault of the Bastion's crowded breach drills.\n\nThe instructors packed the yard with wooden figures when recruits grew too certain of a single opponent. A fighter learned to carry one movement across as many openings as their strength allowed. The yard left no place to rest.\n\nA breach seldom admits only one enemy.",
                 "damageSchool": "physical",
                 "exposureBuildupPerHit": 0,
                 "targetLimit": {
@@ -8777,7 +8777,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Gain {base.conceal} Conceal. Hide X hand cards for X turns, where X is your Conceal stacks.",
                 "icon": "✦",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A concealment practiced by the river city's couriers.\n\nMessages were sewn inside an empty fold rather than beneath a conspicuous seal. Some couriers learned to put the fold itself beyond a searcher's touch. What they hid returned later, sometimes after its appointed recipient was gone.\n\nAn absent thing can still keep its appointment."
               },
               "tags": [
                 "classification.skill",
@@ -8898,7 +8898,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Force the enemy into Defend.",
                 "icon": "✦",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A coercive feint of the Citadel's shield masters.\n\nThe masters taught a threatening step that made an opponent cover before choosing to do so. In practice the wooden blade stopped short. Beyond the yard, the same step could close a fighter inside a defense they had not intended.\n\nA guard can become its own confinement."
               },
               "tags": [
                 "classification.skill",
@@ -9013,7 +9013,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Gain {base.many-forms} Many Forms: hold up to 2 stances until next turn.",
                 "icon": "🛡",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A divided discipline of the road's wandering instructors.\n\nNo tower trained a pupil to hold two answers at once. The travelers who taught between the seats had fewer certainties and more scars. They learned to keep one motion ready while the body seemed committed to another.\n\nThe road required room for a second lesson."
               },
               "tags": [
                 "classification.skill",
@@ -9132,7 +9132,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Smash: deal 12 damage. Otherwise gain {damage} Block.",
                 "icon": "⚔",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "flavor": "An answering form of the Bastion's shield yard.\n\nThe same turn of the shoulder served different purposes under different weights. With a raised weapon it drove forward; behind a settled guard it closed the opening. Instructors judged the footing before they corrected the hands.\n\nThe body gives a motion its meaning.",
                 "damageSchool": "physical",
                 "exposureBuildupPerHit": 0,
                 "effectVariants": [
@@ -9278,7 +9278,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "If MP was paid, deal {damage} damage; otherwise gain 8 Block.",
                 "icon": "✦",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "flavor": "A borrowed cadence of the Observatory's armed attendants.\n\nSome attendants could kindle a spell along the motion of a blade. Others repeated the same motion without its light and found it settled into a serviceable guard. Both remained in the drills after the teachers stopped distinguishing them.\n\nThe hand remembers whether it carried fire.",
                 "damageSchool": "physical",
                 "exposureBuildupPerHit": 0,
                 "effectVariants": [
@@ -9428,7 +9428,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Deal {damage} damage, then choose a maneuver stance.",
                 "icon": "⚔",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "flavor": "A returning stroke of the Bastion's gate watches.\n\nThe first instruction was never to leave the weapon where the blow ended. Guards practiced finding a new footing while the edge was still returning. Those who forgot were corrected by a wooden staff across the unprotected ribs.\n\nA strike ends only when its bearer is ready.",
                 "damageSchool": "physical",
                 "exposureBuildupPerHit": 0
               },
@@ -9550,7 +9550,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Choose a hand card. Change its maneuver to Smash this combat.",
                 "icon": "🛡",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A forceful correction of the Citadel's dueling schools.\n\nInstructors sometimes placed a heavier practice blade into a pupil's hands without warning. A familiar technique then required a different commitment of shoulder and hip. The lesson was carried into battle by fighters who could no longer choose their tools.\n\nThe old motion accepted a different weight."
               },
               "tags": [
                 "classification.skill",
@@ -9669,7 +9669,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Choose a hand card. Change its range to Reach this combat.",
                 "icon": "🛡",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "An extending art of the weald's polearm keepers.\n\nThe keepers borrowed the motions of shorter weapons when the bridge left no room for a proper swing. A loosened grip and a careful step gave the remembered stroke another span. Its origin remained visible only to a patient teacher.\n\nDistance changes the reach of an old lesson."
               },
               "tags": [
                 "classification.skill",
@@ -9783,7 +9783,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Gain {base.extra-weapon} extra weapon action this turn.",
                 "icon": "🛡",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A second opening of the Bastion's veteran guards.\n\nThe newest recruits counted attacks as separate exertions. Veterans learned to keep the weapon moving while the first opponent still recoiled, finding another opening before the line closed. The extra stroke depended on preparation made before either enemy moved.\n\nThe interval belonged to the ready hand."
               },
               "tags": [
                 "classification.skill",
@@ -9898,7 +9898,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Gain {base.extra-shield} extra shield action this turn.",
                 "icon": "🛡",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A returning defense of the Citadel's bridge watches.\n\nTwo guards once shared each narrow post, turning their shields in a practiced sequence. After the watches thinned, a survivor had to answer both parts alone. Their descendants learned the second turn without ever seeing the partner it replaced.\n\nThe empty post still has its appointed movement."
               },
               "tags": [
                 "classification.skill",
@@ -10013,7 +10013,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Prepare one automatic counterattack. base.auto-counter: {base.auto-counter}.",
                 "icon": "🛡",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A waiting answer of the Bastion's shield masters.\n\nPupils stood behind a raised board while the instructor struck it without a count. They were forbidden to pursue the staff and taught instead to answer its contact. Years later, some could begin the reply before knowing they had been attacked.\n\nThe lesson waited in the arm."
               },
               "tags": [
                 "classification.skill",
@@ -10127,7 +10127,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Prepare one automatic sweep. base.auto-sweep: {base.auto-sweep}.",
                 "icon": "🛡",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A prepared circle of the ring road's caravan guards.\n\nAn escort surrounded by thieves could not watch every approach. Guards planted their feet and learned to turn at the first touch of a blade. The motion cleared space for the travelers, even when its bearer never saw the attacker.\n\nThe road was measured by the weapon's return."
               },
               "tags": [
                 "classification.skill",
@@ -10241,7 +10241,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Reflect eligible incoming damage for {base.reflect} turn.",
                 "icon": "✦",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A returning ward of the Observatory's polished chambers.\n\nThe lens workers fitted their masks with silvered plates against sudden flares. A few plates sent more than light back toward its origin. The attendants preserved the pattern after the workshops emptied, though the reflected pain had no brightness.\n\nWhat strikes the surface finds its way home."
               },
               "tags": [
                 "classification.skill",
@@ -10363,7 +10363,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Gain {block} Block and guard allies for {base.guard-allies} turn.",
                 "icon": "🛡",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A sheltering oath of the Bastion's road wardens.\n\nThe Wardens walked between the wagons and the tree line, keeping their shields toward the unseen ground. An escort was judged by who arrived behind them, rather than by wounds received. The oath endured after the wagons stopped coming.\n\nAn empty road can still be guarded."
               },
               "tags": [
                 "classification.skill",
@@ -10486,7 +10486,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Exhaust a chosen hand card. Gain {addCinders} cinders.",
                 "icon": "🛡",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A frugal working of the Cinder Reach's traveling smiths.\n\nBroken tools were weighed before they entered the furnace, and nothing useful was thrown away whole. Some smiths learned to draw cinders from a spent working with the same care. The recovered warmth bought another small necessity along the road.\n\nWhat is surrendered leaves something in the palm."
               },
               "tags": [
                 "classification.skill",
@@ -10600,7 +10600,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Cast Foresight. One play per combat; exhaust this scroll.",
                 "icon": "✦",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "flavor": "A foresight exercise copied by an Observatory apprentice.\n\nThe student traced each curve slowly enough to remember the next before the ink dried. A traveler could later borrow that moment of clarity by opening the sheet. Its careful lines blackened as soon as they were read.\n\nThe lesson survived for one more pupil.",
                 "playLimit": 1
               },
               "tags": [
@@ -10719,7 +10719,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Restore {restoreStamina} SP.",
                 "icon": "✦",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A measured recovery of the weald's ridge workers.\n\nWorkers rested at marked stones on the climb to the Bastion, setting their loads down before their knees failed. The short interval was counted in steady breaths. Fighters learned to find the same recovery without leaving their place in the line.\n\nRest need not wait for a safe road."
               },
               "tags": [
                 "classification.skill",
@@ -10832,7 +10832,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Give an ally {strength} Strength for this combat.",
                 "icon": "🛡",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "An encouragement kept by the Bastion's shared watches.\n\nThe guards touched a companion's shoulder before exchanging places at the gate. A small working grew around the gesture, lending tired arms some of the giver's resolve. It passed between survivors long after the gate ceased to stand.\n\nThe hand is withdrawn; the steadiness remains."
               },
               "tags": [
                 "classification.skill",
@@ -10945,7 +10945,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Deal 8 Ward damage.",
                 "icon": "✦",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A disrupting touch of the Observatory's instrument keepers.\n\nThe keepers tested old seals before moving a lens from its housing. A precise disturbance could loosen a ward without shattering the glass beneath it. The method later found use against defenses made to protect less delicate things.\n\nThe opening is smaller than the harm it permits."
               },
               "tags": [
                 "classification.skill",
@@ -11062,7 +11062,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Deal {poiseDamage} Poise damage.",
                 "icon": "🛡",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A staggering blow of the Bastion's quarry crews.\n\nQuarry workers drove wedges where the weight of a block already strained its bed. A short stroke could unsettle stone too large to break outright. Their fighting descendants sought the same yielding place beneath armor and planted feet.\n\nWhat cannot be broken can still be moved."
               },
               "tags": [
                 "classification.skill",
@@ -11176,7 +11176,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Add a temporary Smash to hand.",
                 "icon": "🛡",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A recalled stroke of the Citadel's heavy weapon drills.\n\nA recruit carried a wooden mallet before being trusted with the armory's iron. Instructors made its simple downward path the last exercise of every watch. Even an empty hand could remember the weight when no suitable weapon remained.\n\nThe practiced burden waits for another shape."
               },
               "tags": [
                 "classification.skill",
@@ -11296,7 +11296,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Deal {damage} damage. In Smash stance, deal {damage.2} more.",
                 "icon": "⚔",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "flavor": "A committed strike of the Bastion's breach fighters.\n\nThe guards held their heavier blows until their footing could carry the whole body forward. Striking from an unsettled guard wasted the opening and often the weapon. The old drill made patience part of an apparently reckless motion.\n\nThe strength was waiting beneath the stance.",
                 "damageSchool": "physical",
                 "exposureBuildupPerHit": 0
               },
@@ -11413,7 +11413,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Become untargetable without a perception check for {base.veil} turns.",
                 "icon": "✦",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A veiling art of the river city's hidden messengers.\n\nCouriers crossed occupied bridges by moving where a watcher's attention had just departed. A small working deepened that omission until a searching gaze passed over them. Those with a practiced eye could still find the disturbance in the crowd.\n\nA missing figure leaves an occupied space."
               },
               "tags": [
                 "classification.skill",
@@ -11533,7 +11533,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Gain {block} Block. Retain Block for {base.retain-block} turn.",
                 "icon": "🛡",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A settled guard of the Citadel's long watches.\n\nThe bridge guards learned to hold their shields through the quiet between assaults without letting the shoulders slacken. Their stance preserved work already done instead of demanding it anew. The practice remained useful when the bridges became a frozen road.\n\nThe pause does not belong to the attacker."
               },
               "tags": [
                 "classification.skill",
@@ -11646,7 +11646,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Immediately choose a maneuver stance.",
                 "icon": "🛡",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
+                "flavor": "A passing form of the road's traveling duelists.\n\nA lesson borrowed in one city rarely answered every danger in the next. Travelers practiced changing their footing between breaths rather than between engagements. Those who managed it could leave an old commitment before an enemy found its opening.\n\nThe road did not wait for a formal beginning."
               },
               "tags": [
                 "classification.skill",
@@ -11756,7 +11756,7 @@ export const gameProfileCatalog = {
                 "effects": [],
                 "textTemplate": "Skip your next action when drawn. Ethereal.",
                 "icon": "🛡",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "flavor": "An interruption carried by a broken bell's cadence.\n\nThe body seeks the missing beat and finds no footing. By the time its balance returns, the opening has already passed.\n\nThe next step belongs to someone else.",
                 "burden": {
                   "skipActions": 1,
                   "staminaTax": 0,
@@ -11894,7 +11894,7 @@ export const gameProfileCatalog = {
                 ],
                 "textTemplate": "Strike {hits} times for {damage} damage. Deal {poiseDamage} Ward and 3 Poise damage total.",
                 "icon": "⚔",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "flavor": "A repeated stroke of the weald's short-blade escorts.\n\nIn a crowded passage, there was no room to draw back for a great blow. Escorts learned to strike along the returning path, turning small openings into a succession of wounds. The enemy's guard had to answer every movement separately.\n\nA narrow space need not mean a single chance.",
                 "damageSchool": "physical",
                 "exposureBuildupPerHit": 0
               },
@@ -12010,7 +12010,7 @@ export const gameProfileCatalog = {
                 "effects": [],
                 "textTemplate": "Skip your next action when drawn. Ethereal.",
                 "icon": "🛡",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "flavor": "A lingering command of the river city's gaolers.\n\nThe fingers close without taking hold of anything. The old restraint needs neither a chain nor a prisoner who remembers the charge.\n\nRelease comes after the moment it was needed.",
                 "burden": {
                   "skipActions": 1,
                   "staminaTax": 0,
@@ -12132,7 +12132,7 @@ export const gameProfileCatalog = {
                 "effects": [],
                 "textTemplate": "Your actions cost +1 SP while this burden is held. Ethereal.",
                 "icon": "🛡",
-                "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack.",
+                "flavor": "A remembered weight from the Court's holding rooms.\n\nThe cord is gone, but each movement still pays its toll. Prisoners learned to make fewer gestures while waiting for a door to open.\n\nThe burden has outlived its fastening.",
                 "burden": {
                   "skipActions": 0,
                   "staminaTax": 1,
@@ -12267,7 +12267,8 @@ export const gameProfileCatalog = {
                 "textTemplate": "Deal {damage} damage.",
                 "icon": "⚔",
                 "damageSchool": "physical",
-                "exposureBuildupPerHit": 0
+                "exposureBuildupPerHit": 0,
+                "flavor": "A plain stroke shared by the ring road's survivors.\n\nEach tower claimed a finer school, and each school began by teaching the hand to carry an edge straight toward its mark. Travelers kept that first lesson when the schools and their quarrels were left behind.\n\nThe simplest instruction still has work to do."
               },
               "tags": [
                 "camp:physical",
@@ -12327,7 +12328,8 @@ export const gameProfileCatalog = {
                 "textTemplate": "Deal {damage} damage.",
                 "icon": "⚔",
                 "damageSchool": "physical",
-                "exposureBuildupPerHit": 0
+                "exposureBuildupPerHit": 0,
+                "flavor": "A heavy stroke remembered from the Bastion's stone yards.\n\nA block that resisted the first careful blow sometimes needed the whole weight of the worker behind the next. The motion passed from mallet to weapon without losing its patient preparation or its unkind finish.\n\nThe arm follows where the body has committed."
               },
               "tags": [
                 "camp:physical",
@@ -15382,7 +15384,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/base-cards/cards.json",
           "id": "ashen.base-cards",
           "version": "1.0.0",
-          "hash": "sha256:1d183787989af1718dbd2a703cb78ae93d2a7ec0344a2af6013a6b7853257854"
+          "hash": "sha256:06776c599472e6532ad1d4e9f392ebc51ba1f564d33459d2dc11cc979969ed09"
         },
         {
           "path": "games/ashenspire/packs/base-cards/groups.json",
@@ -15440,7 +15442,7 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "path": "src/** (excluding generated gameProfiles/changelog)",
-      "hash": "sha256:3e9cb41acc66d47d65cdd04c89e2f627ca1515a5e1be1f1a819249289ec28d75"
+      "hash": "sha256:01c6cd07ef9e2b8ea80a60e12f56dae74fc445a505ec7e0eb84c6b56e282508b"
     }
   ],
   "runtimeSources": [
@@ -15472,7 +15474,7 @@ export const gameProfileCatalog = {
       "path": "src/content/actionCosts.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:d75bd0f83ded2d17b869b09841c0543eff670718deedc111065fc36e2ac2a9eb"
+      "hash": "sha256:62f1e319f47d4215f4477efd903de71a7135375f1d6dfbca7969bbc69be3fa2a"
     },
     {
       "path": "src/content/aiDisclosure.js",
@@ -15910,7 +15912,7 @@ export const gameProfileCatalog = {
       "path": "src/content/generated/baseCards.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:fe8b60254c9445f9ff6643182be92430f769bda631ca949400f4d28f2eaf742f"
+      "hash": "sha256:ebc3d7fc9064d35f3963e09f1295521e0973b8999b43e15ceb658042c7523fbb"
     },
     {
       "path": "src/content/generated/basicCardProfiles.js",
@@ -16534,7 +16536,7 @@ export const gameProfileCatalog = {
       "path": "src/engine/combat.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:b3e6b9d64c780a0302c42825b4fe1b6d15eb32b18c24da08254d0c6f7ba8a1c0"
+      "hash": "sha256:6b7ad22b98613ed54aca8df8a6446560cca9b7c3faa8d9a373ef082ea32e974c"
     },
     {
       "path": "src/engine/combatAvoidance.js",
@@ -17086,13 +17088,13 @@ export const gameProfileCatalog = {
       "path": "src/model/advancedConfig.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:e39bcfa21ecd293c072a58cc2ed9ab58af821158485891c3f087ecf2de3bdf90"
+      "hash": "sha256:dacf7bd63374942d9dd4e7df11bad0369cd101d3e7fdd7ecbd6f2d784f670c4b"
     },
     {
       "path": "src/model/alternativeCardAnimation.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:55e9fedb5c48d319853c34f4011f2d7d142443bb5a4643621273323991d1ae74"
+      "hash": "sha256:4f4e9cc380ba430c974445979eda13657dbd50ef5b48d1f79285cf455c7d9275"
     },
     {
       "path": "src/model/alternativeStance.js",
@@ -17122,7 +17124,7 @@ export const gameProfileCatalog = {
       "path": "src/model/attackCardDamage.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:937f6eb3bc82839845936d1a4515636abea7509c6fd99a2ac9e321b03b825d55"
+      "hash": "sha256:d69ddf0668b93d372961a7c42f9e5f6aa388fccb7656a2b8cd9c51dcd91fd50f"
     },
     {
       "path": "src/model/attackTags.js",
@@ -17140,7 +17142,7 @@ export const gameProfileCatalog = {
       "path": "src/model/balanceNotes.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:cd8513082f1621a2890e929885a8a082a2513a732fb08b6f2e5a918a256421c1"
+      "hash": "sha256:cc9fd8ccc46dc656bbc118fe056194c98942a2631efea29997b6eaf763fc68e1"
     },
     {
       "path": "src/model/blacksmith.js",
@@ -17326,7 +17328,7 @@ export const gameProfileCatalog = {
       "path": "src/model/classRespec.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:a716473af0d7db923f1d907447c7fdd7cb21f3ebb7b31dfb32006595f72ad873"
+      "hash": "sha256:081f5811a7f59074d5fd377897a06f08e5099e5e611750fac005c65de4416a19"
     },
     {
       "path": "src/model/classRespecResources.js",
@@ -17440,7 +17442,7 @@ export const gameProfileCatalog = {
       "path": "src/model/combatRatings.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:2ffa12e23efe9fc68419661f1cca01c08b971dc0e801c8dbf4e66271f261e23f"
+      "hash": "sha256:dd6ad992190090f6dcab112102f974713f7f39e75ea331ce0d9d26a6984c6cf9"
     },
     {
       "path": "src/model/combatReactionState.js",
@@ -17722,7 +17724,7 @@ export const gameProfileCatalog = {
       "path": "src/model/formulas.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:692dd782293687bacf250ea0de37852d77b144c28ae898a2c0a56277a01e0cc7"
+      "hash": "sha256:dceb81e76464e11c040931f16e25a3ea7255cfc3f9ecd04c9d099135cdc8d205"
     },
     {
       "path": "src/model/friendlyTargets.js",
@@ -17818,7 +17820,7 @@ export const gameProfileCatalog = {
       "path": "src/model/loadout.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:8dba1a50376c3be4ced67ff1088f7e54207e25f73fc2e88e4ba1adba3bebe0da"
+      "hash": "sha256:666986efba4c64cf2c4058807d94486c392618efc3dfdd5197abcfaf915b0793"
     },
     {
       "path": "src/model/locationPresentation.js",
@@ -17896,7 +17898,7 @@ export const gameProfileCatalog = {
       "path": "src/model/playingCard.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:e0ca8d0a44c2e0e0f9939ca8787463625020527f24c0d91fb24ffc32eaf0a307"
+      "hash": "sha256:9523ba7bebbdac610cf49c57cabea9bc3a92472bed4973d7d22d1b8387ed0392"
     },
     {
       "path": "src/model/presentationPoseCatalog.js",
@@ -18310,7 +18312,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/alternativeCardStage.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:df2c7974565bfc2c7232391629efcd984da50dadb053fdb7285b71378b20872e"
+      "hash": "sha256:96621369fb1bb233bc1593dc4f906a93c9fbae98e2e109b025fa45211a515e67"
     },
     {
       "path": "src/ui/alternativeStanceStage.js",
@@ -20350,7 +20352,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/screens/settings.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:ce5dbe11d0bb1821468822ba4f562e091e441f96738ba7fb3addd43983ea3d86"
+      "hash": "sha256:71baa9a0c681613f6864762d02255ae49021864ff3e4fbddc8bc5df65e7fdbb5"
     },
     {
       "path": "src/ui/screens/shop.js",
@@ -20455,7 +20457,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:23af16d4e9c9f6d88fe655d32ecf1a688b47df39f9e3a1d6d193ce63923593ab"
     }
   ],
-  "runtimeHash": "sha256:ae37e87fd8fb69d50187c010a4ad24f4d531d43640da0c20b59724ddf49dde87"
+  "runtimeHash": "sha256:0abe7f215144a64ed2b708141eab9367c6ed7c4057eb791a8ccc57464015b6ff"
 };
 export const gameProfileAuthors = {
   "default": {
