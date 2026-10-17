@@ -23,8 +23,8 @@
 :root .combat[data-target-hud='true'] .combatant.target-hud-selected > .target-hud-overhead-meters > .meters { display:none!important; }
 :root .combat[data-target-hud='true'] .target-hud-overhead-meters > :is(.intent,.player-action-intent) {
   position:static!important; inset:auto!important; transform:none!important; translate:none!important; zoom:1!important;
-  display:flex!important; justify-content:center; align-items:center; min-width:0!important; width:100%!important;
-  height:auto!important; min-height:calc(36px / var(--ui-zoom,1))!important; margin:0!important; padding:0!important;
+  display:flex!important; justify-content:center; align-items:flex-end; min-width:0!important; width:100%!important;
+  height:calc(37px / var(--ui-zoom,1))!important; min-height:calc(37px / var(--ui-zoom,1))!important; max-height:calc(37px / var(--ui-zoom,1))!important; flex:0 0 calc(37px / var(--ui-zoom,1)); margin:0!important; padding:0!important;
   background:transparent!important; border:0!important; box-shadow:none!important; color:#ffe7ab;
 }
 :root .combat[data-target-hud='true'] .intent > :not(.intent-compact) { display:none!important; }
@@ -65,7 +65,7 @@
 :root .combat[data-target-hud='true'] .target-hud-detail .combat-health-meter .m-track {
   box-shadow:0 0 0 1px var(--combat-matchup-color,#f07870),0 0 4px var(--combat-matchup-color,#f07870);
 }
-:root .combat[data-target-hud='true'] .target-hud-overhead-meters > .meters { position:relative; z-index:700; }
+:root .combat[data-target-hud='true'] .target-hud-overhead-meters > .meters { position:relative; z-index:700!important; }
 :root .combat[data-target-hud='true'] .target-hud-overhead-meters > :is(.intent,.player-action-intent) { position:relative!important; z-index:800; }
 :root .combat[data-target-hud='true'] .intent-action[data-value-kind='count'] .intent-action-value { color:#eee2c8; }
 :root .combat[data-target-hud='true'] .intent-action[data-value-kind='damage'] .intent-action-value { color:#f07870; }
