@@ -1,0 +1,1841 @@
+{
+  "formatVersion": 1,
+  "proposalRevision": 2,
+  "status": "art-direction-proposal",
+  "runtimeEnabled": false,
+  "baseCatalog": "art-catalog.json",
+  "referenceCommit": "63ee50d0ff5f241d1259207f230ccbfcab315939",
+  "artDirection": {
+    "centralObjects": "Reuse one master per object family, including repeated instances in a composition. A sword, scimitar and scythe are different families; every appearance of each family uses its same master.",
+    "allowedVariation": [
+      "camera angle",
+      "rotation",
+      "scale",
+      "crop",
+      "light tint",
+      "non-destructive effect masks"
+    ],
+    "lockedFeatures": [
+      "silhouette proportions",
+      "blade curvature",
+      "guard shape",
+      "handle wrapping",
+      "shield boss and border",
+      "card outline",
+      "leaf vein"
+    ],
+    "edgeColor": "#030508",
+    "edgeRule": "Outer 20 percent of the crop falls to near-black, without a visible frame.",
+    "material": "Charcoal object faces with dim silver or colored rim; simple planes, no ornate engraving.",
+    "effectRule": "A narrow broken luminous contour releases soft fog from the object surface. Fog hugs and then diffuses away from the object, with a small occluded section behind it.",
+    "avoid": [
+      "generic smoke cloud disconnected from the object",
+      "bright full-frame bloom",
+      "solid white object fills",
+      "flame covering the silhouette",
+      "more than two central objects"
+    ],
+    "layerOrder": [
+      "background",
+      "backEffect",
+      "object",
+      "foreground"
+    ],
+    "normalVisibleIdentities": 2,
+    "maxVisibleIdentities": 4,
+    "maxCentralObjects": 2,
+    "colorPolicy": "Main action supplies dark ground and subdued center tint; an explicit element may tint emitted contour fog. Additional conditions use shapes and keep lower brightness. Avoid four competing saturated colors.",
+    "productionConsistency": "Use the same asset/mesh ID for every occurrence. Image-generated proposal boards illustrate the rule but do not guarantee pixel-identical objects or constitute reusable transparent layer assets."
+  },
+  "objectMasters": {
+    "sword": {
+      "assetId": "master.sword",
+      "description": "Straight double-edged steel blade, tiny triangular notch at base, straight dark brass guard, black wrapped grip.",
+      "asset": null,
+      "views": [
+        "front",
+        "three-quarter",
+        "tilted"
+      ],
+      "viewPolicy": "Pre-render from one master; do not redraw a new design per view."
+    },
+    "scimitar": {
+      "assetId": "master.scimitar",
+      "description": "Single curved steel blade, black wrapped grip and simple brass guard; preserve curvature.",
+      "asset": null,
+      "views": [
+        "front",
+        "three-quarter",
+        "tilted"
+      ],
+      "viewPolicy": "Pre-render from one master; do not redraw a new design per view."
+    },
+    "scythe": {
+      "assetId": "master.scythe",
+      "description": "Long black shaft with one short crescent steel blade; preserve blade-to-shaft ratio.",
+      "asset": null,
+      "views": [
+        "front",
+        "three-quarter",
+        "tilted"
+      ],
+      "viewPolicy": "Pre-render from one master; do not redraw a new design per view."
+    },
+    "hammer": {
+      "assetId": "master.hammer",
+      "description": "Rectangular charcoal iron head, narrow brass band, straight black handle.",
+      "asset": null,
+      "views": [
+        "front",
+        "three-quarter",
+        "tilted"
+      ],
+      "viewPolicy": "Pre-render from one master; do not redraw a new design per view."
+    },
+    "shield": {
+      "assetId": "master.shield",
+      "description": "Plain charcoal kite shield, narrow silver border, circular brass boss; no crest.",
+      "asset": null,
+      "views": [
+        "front",
+        "three-quarter",
+        "tilted"
+      ],
+      "viewPolicy": "Pre-render from one master; do not redraw a new design per view."
+    },
+    "card": {
+      "assetId": "master.card",
+      "description": "Blank charcoal rectangle, thin silver double outline, fixed corner radius and aspect ratio.",
+      "asset": null,
+      "views": [
+        "front",
+        "three-quarter",
+        "tilted"
+      ],
+      "viewPolicy": "Pre-render from one master; do not redraw a new design per view."
+    },
+    "leaf": {
+      "assetId": "master.leaf",
+      "description": "Single pointed olive-silver leaf, one central vein and short stem.",
+      "asset": null,
+      "views": [
+        "front",
+        "three-quarter",
+        "tilted"
+      ],
+      "viewPolicy": "Pre-render from one master; do not redraw a new design per view."
+    },
+    "orb": {
+      "assetId": "master.orb",
+      "description": "Plain dark glass sphere, no changing interior symbol or ornament.",
+      "asset": null,
+      "views": [
+        "front",
+        "three-quarter",
+        "tilted"
+      ],
+      "viewPolicy": "Pre-render from one master; do not redraw a new design per view."
+    },
+    "vial": {
+      "assetId": "master.vial",
+      "description": "Small round dark glass flask, short silver neck and dark stopper.",
+      "asset": null,
+      "views": [
+        "front",
+        "three-quarter",
+        "tilted"
+      ],
+      "viewPolicy": "Pre-render from one master; do not redraw a new design per view."
+    },
+    "chain": {
+      "assetId": "master.chain",
+      "description": "Three thick dark iron links of identical cross-section.",
+      "asset": null,
+      "views": [
+        "front",
+        "three-quarter",
+        "tilted"
+      ],
+      "viewPolicy": "Pre-render from one master; do not redraw a new design per view."
+    },
+    "flame": {
+      "assetId": "master.flame",
+      "kind": "effect-symbol",
+      "description": "Single simple upright flame silhouette, reused for fire-based condition symbols; Cleansed is ivory-white with a muted gold edge.",
+      "asset": null,
+      "views": [
+        "front"
+      ],
+      "viewPolicy": "Reuse this contour; vary color and emitted fog only."
+    }
+  },
+  "cardTypes": {
+    "attack": {
+      "label": "Attack",
+      "objects": [
+        "master.sword"
+      ],
+      "palette": "attack",
+      "fog": "Thin gold fog follows blade edges and ends in one tip glint.",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "maneuver:attack",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ]
+    },
+    "defend": {
+      "label": "Defend",
+      "objects": [
+        "master.shield"
+      ],
+      "palette": "defend",
+      "fog": "Silver fog wraps the same shield rim and folds behind its upper edge.",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "maneuver:defend",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ]
+    },
+    "counter": {
+      "label": "Counter",
+      "objects": [
+        "master.shield",
+        "master.sword"
+      ],
+      "palette": "counter",
+      "fog": "Red fog traces a returning arc from the shield rim to the same sword.",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "maneuver:counter",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ]
+    },
+    "smash": {
+      "label": "Smash",
+      "objects": [
+        "master.hammer"
+      ],
+      "palette": "smash",
+      "fog": "Red smoky outline clings to hammer head, compressing below its striking face.",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "maneuver:smash",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ]
+    },
+    "sweep": {
+      "label": "Sweep",
+      "objects": [
+        "master.scimitar"
+      ],
+      "palette": "sweep",
+      "fog": "One red fog crescent follows the curved blade. Scythe is an explicit alternate object choice, not a redesigned scimitar.",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "maneuver:sweep",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "alternateObjects": [
+        "master.scythe"
+      ]
+    },
+    "spell": {
+      "label": "Spell",
+      "objects": [
+        "master.orb"
+      ],
+      "palette": "skill",
+      "fog": "Pale violet contour fog orbits the same dark sphere.",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "maneuver:casting",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ]
+    },
+    "skill": {
+      "label": "Skill",
+      "objects": [
+        "master.card",
+        "master.card"
+      ],
+      "palette": "skill",
+      "fog": "Green contour vapor lifts from the same two blank-card instances; use the leaf master for healing skills.",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "classification.skill",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "alternateObjects": [
+        "master.leaf"
+      ]
+    },
+    "power": {
+      "label": "Power",
+      "objects": [
+        "master.sword"
+      ],
+      "palette": "attack",
+      "fog": "Amber contour fog climbs the same sword in two sustained vertical wisps, suggesting ongoing power.",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "classification.power",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ]
+    },
+    "consumable": {
+      "label": "Consumable",
+      "objects": [
+        "master.vial"
+      ],
+      "palette": "skill",
+      "fog": "Pale green vapor touches the same vial lip and outline; glass stays dark.",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "classification.flask",
+          "scope": "current",
+          "relation": "related-not-equivalent"
+        }
+      ],
+      "availability": "Proposed art category; flask classification is related, not an existing consumable card classification."
+    },
+    "status": {
+      "label": "Status",
+      "objects": [
+        "master.card",
+        "master.chain"
+      ],
+      "palette": "neutral",
+      "fog": "Muted violet fog traces the blank card edge; the same chain crosses its lower corner.",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "classification.statusCard",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ]
+    },
+    "evade": {
+      "label": "Evade",
+      "objects": [
+        "master.leaf"
+      ],
+      "palette": "evade",
+      "fog": "White contour fog peels away from the same leaf; replaces the earlier feather suggestion.",
+      "references": [
+        {
+          "kind": "operation",
+          "id": "dodgeRoll",
+          "scope": "current",
+          "relation": "exact"
+        },
+        {
+          "kind": "status",
+          "id": "evade",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ]
+    }
+  },
+  "elements": {
+    "divine": {
+      "label": "Divine",
+      "demonstrationObject": "master.sword",
+      "accent": "#e4d6a4",
+      "fog": "Thin warm ivory halo, short straight rays dissolving into fog.",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "school:divine",
+          "scope": "current",
+          "relation": "exact"
+        },
+        {
+          "kind": "tag",
+          "id": "damage:sacred",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity"
+    },
+    "necrotic": {
+      "label": "Necrotic",
+      "demonstrationObject": "master.sword",
+      "accent": "#98ab78",
+      "fog": "Desaturated green tendrils curling inward, small breaks in the contour.",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "school:decay",
+          "scope": "current",
+          "relation": "exact"
+        },
+        {
+          "kind": "tag",
+          "id": "damage:decay",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity"
+    },
+    "force": {
+      "label": "Force",
+      "demonstrationObject": "master.sword",
+      "accent": "#b3afde",
+      "fog": "Pale lavender concentric pressure arcs, smooth rather than electric.",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "school:force",
+          "scope": "current",
+          "relation": "exact"
+        },
+        {
+          "kind": "tag",
+          "id": "damage:arcane",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity"
+    },
+    "earth": {
+      "label": "Earth",
+      "demonstrationObject": "master.sword",
+      "accent": "#b69b73",
+      "fog": "Dusty ochre outline, two angular dust fragments suspended near the edge.",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "school:earth",
+          "scope": "current",
+          "relation": "exact"
+        },
+        {
+          "kind": "tag",
+          "id": "damage:earth",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity"
+    },
+    "frost": {
+      "label": "Frost",
+      "demonstrationObject": "master.sword",
+      "accent": "#a2d2e5",
+      "fog": "Ice-blue crystalline rim with short cold vapor trails.",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "school:frost",
+          "scope": "current",
+          "relation": "exact"
+        },
+        {
+          "kind": "tag",
+          "id": "damage:frost",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity"
+    },
+    "fire": {
+      "label": "Fire",
+      "demonstrationObject": "master.sword",
+      "accent": "#dc9566",
+      "fog": "Muted ember-orange rim with one upward flame-shaped fog tongue.",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "school:fire",
+          "scope": "current",
+          "relation": "exact"
+        },
+        {
+          "kind": "tag",
+          "id": "damage:fire",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity"
+    },
+    "lightning": {
+      "label": "Lightning",
+      "demonstrationObject": "master.sword",
+      "accent": "#e1d58c",
+      "fog": "Fine pale-yellow branching filaments with very little smoke.",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "school:lightning",
+          "scope": "current",
+          "relation": "exact"
+        },
+        {
+          "kind": "tag",
+          "id": "damage:lightning",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity"
+    },
+    "psychic": {
+      "label": "Psychic",
+      "demonstrationObject": "master.sword",
+      "accent": "#c39dc6",
+      "fog": "Mauve double contours slightly out of register, one incomplete ripple.",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "damage:psychic",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity"
+    },
+    "alteration": {
+      "label": "Alteration",
+      "demonstrationObject": "master.sword",
+      "accent": "#8cc1b5",
+      "fog": "Sea-green refracted contour bending from angular to rounded.",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "school:alteration",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity",
+      "userSpelling": "alternation"
+    },
+    "wind": {
+      "label": "Wind",
+      "demonstrationObject": "master.sword",
+      "accent": "#b8d4d0",
+      "fog": "Desaturated pale teal streamlined ribbons, little sparkle or branching.",
+      "references": [],
+      "availability": "proposed-new-element"
+    }
+  },
+  "effectComponents": {
+    "piercing": {
+      "label": "Piercing",
+      "group": "technique",
+      "demonstrationObject": "master.sword",
+      "variants": [
+        {
+          "id": "piercing.contour",
+          "layer": "backEffect+foreground",
+          "description": "Fog narrows to a single needle beyond the sword tip."
+        },
+        {
+          "id": "piercing.mark",
+          "layer": "foreground",
+          "description": "One fine line passes through a broken ring."
+        }
+      ],
+      "references": [
+        {
+          "kind": "tag",
+          "id": "damage:piercing",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity",
+      "note": ""
+    },
+    "evasion": {
+      "label": "Evasion",
+      "group": "technique",
+      "demonstrationObject": "master.leaf",
+      "variants": [
+        {
+          "id": "evasion.contour",
+          "layer": "backEffect+foreground",
+          "description": "Two faint offset contours peel away from the leaf."
+        },
+        {
+          "id": "evasion.mark",
+          "layer": "foreground",
+          "description": "One offset crescent echo."
+        }
+      ],
+      "references": [
+        {
+          "kind": "status",
+          "id": "evade",
+          "scope": "current",
+          "relation": "exact"
+        },
+        {
+          "kind": "tag",
+          "id": "utility.evasion",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity",
+      "note": "Evasion is an ongoing evasive benefit; Dodge is the action."
+    },
+    "dodge": {
+      "label": "Dodge",
+      "group": "technique",
+      "demonstrationObject": "master.leaf",
+      "variants": [
+        {
+          "id": "dodge.contour",
+          "layer": "backEffect+foreground",
+          "description": "A short hooked motion trail bends clear of an incoming line."
+        },
+        {
+          "id": "dodge.mark",
+          "layer": "foreground",
+          "description": "One bent escape arrow."
+        }
+      ],
+      "references": [
+        {
+          "kind": "operation",
+          "id": "dodgeRoll",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity",
+      "note": ""
+    },
+    "area": {
+      "label": "Area",
+      "group": "technique",
+      "demonstrationObject": "master.scimitar",
+      "variants": [
+        {
+          "id": "area.contour",
+          "layer": "backEffect+foreground",
+          "description": "A low spreading contour wave opens outward from the blade."
+        },
+        {
+          "id": "area.mark",
+          "layer": "foreground",
+          "description": "Three small radial ticks around a partial ring."
+        }
+      ],
+      "references": [
+        {
+          "kind": "tag",
+          "id": "targeting:area",
+          "scope": "current",
+          "relation": "exact"
+        },
+        {
+          "kind": "tag",
+          "id": "delivery:area",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity",
+      "note": "Use Area for general AoE; Cleave only for a weapon sweep."
+    },
+    "precision": {
+      "label": "Precision",
+      "group": "technique",
+      "demonstrationObject": "master.sword",
+      "variants": [
+        {
+          "id": "precision.contour",
+          "layer": "backEffect+foreground",
+          "description": "Two thin fog lines converge exactly at the tip."
+        },
+        {
+          "id": "precision.mark",
+          "layer": "foreground",
+          "description": "A tiny interrupted reticle."
+        }
+      ],
+      "references": [
+        {
+          "kind": "status",
+          "id": "precision",
+          "scope": "current",
+          "relation": "exact"
+        },
+        {
+          "kind": "tag",
+          "id": "precision",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity",
+      "note": ""
+    },
+    "reflect": {
+      "label": "Reflect",
+      "group": "technique",
+      "demonstrationObject": "master.shield",
+      "variants": [
+        {
+          "id": "reflect.contour",
+          "layer": "backEffect+foreground",
+          "description": "A thin incident line reverses from the shield rim."
+        },
+        {
+          "id": "reflect.mark",
+          "layer": "foreground",
+          "description": "Two opposed chevrons around a short mirrored line."
+        }
+      ],
+      "references": [
+        {
+          "kind": "status",
+          "id": "base.reflect",
+          "scope": "reference-base-cards",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity",
+      "note": "Reserve this name for an actual reflect mechanic, not WIS."
+    },
+    "retaliation": {
+      "label": "Retaliation",
+      "group": "technique",
+      "demonstrationObject": "master.shield",
+      "variants": [
+        {
+          "id": "retaliation.contour",
+          "layer": "backEffect+foreground",
+          "description": "One short hook of fog returns toward the source."
+        },
+        {
+          "id": "retaliation.mark",
+          "layer": "foreground",
+          "description": "A single return arrow."
+        }
+      ],
+      "references": [
+        {
+          "kind": "tag",
+          "id": "technique:counter",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity",
+      "note": ""
+    },
+    "drain": {
+      "label": "Drain",
+      "group": "technique",
+      "demonstrationObject": "master.sword",
+      "variants": [
+        {
+          "id": "drain.contour",
+          "layer": "backEffect+foreground",
+          "description": "A narrow ribbon of fog returns toward the hilt."
+        },
+        {
+          "id": "drain.mark",
+          "layer": "foreground",
+          "description": "One drop with an inward hook."
+        }
+      ],
+      "references": [
+        {
+          "kind": "tag",
+          "id": "siphon",
+          "scope": "current",
+          "relation": "related-not-equivalent"
+        }
+      ],
+      "availability": "existing-identity",
+      "note": "Added suggestion; verify the authored effect before selecting this cue."
+    },
+    "paralyzed": {
+      "label": "Paralyzed",
+      "group": "condition",
+      "demonstrationObject": "master.chain",
+      "variants": [
+        {
+          "id": "paralyzed.contour",
+          "layer": "backEffect+foreground",
+          "description": "Pale electrical threads lock across the same rigid chain."
+        },
+        {
+          "id": "paralyzed.mark",
+          "layer": "foreground",
+          "description": "A bolt trapped between two short bars."
+        }
+      ],
+      "references": [
+        {
+          "kind": "status",
+          "id": "paralysis",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity",
+      "note": ""
+    },
+    "asleep": {
+      "label": "Asleep",
+      "group": "condition",
+      "demonstrationObject": "master.leaf",
+      "variants": [
+        {
+          "id": "asleep.contour",
+          "layer": "backEffect+foreground",
+          "description": "Soft indigo fog settles downward from the leaf."
+        },
+        {
+          "id": "asleep.mark",
+          "layer": "foreground",
+          "description": "A crescent over one low wave."
+        }
+      ],
+      "references": [
+        {
+          "kind": "status",
+          "id": "sleep",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity",
+      "note": ""
+    },
+    "prone": {
+      "label": "Prone",
+      "group": "condition",
+      "demonstrationObject": "master.sword",
+      "variants": [
+        {
+          "id": "prone.contour",
+          "layer": "backEffect+foreground",
+          "description": "Same sword laid almost horizontally, low fog settling underneath."
+        },
+        {
+          "id": "prone.mark",
+          "layer": "foreground",
+          "description": "One down chevron meeting a horizontal line."
+        }
+      ],
+      "references": [
+        {
+          "kind": "status",
+          "id": "prone",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity",
+      "note": ""
+    },
+    "frozen": {
+      "label": "Frozen",
+      "group": "condition",
+      "demonstrationObject": "master.sword",
+      "variants": [
+        {
+          "id": "frozen.contour",
+          "layer": "backEffect+foreground",
+          "description": "A continuous faceted ice outline encloses the same sword."
+        },
+        {
+          "id": "frozen.mark",
+          "layer": "foreground",
+          "description": "One closed angular ice shell."
+        }
+      ],
+      "references": [
+        {
+          "kind": "status",
+          "id": "frozen",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity",
+      "note": ""
+    },
+    "burning": {
+      "label": "Burning",
+      "group": "condition",
+      "demonstrationObject": "master.leaf",
+      "variants": [
+        {
+          "id": "burning.contour",
+          "layer": "backEffect+foreground",
+          "description": "Small ember curls rise directly from the same leaf edge."
+        },
+        {
+          "id": "burning.mark",
+          "layer": "foreground",
+          "description": "One flame-shaped contour and ember."
+        }
+      ],
+      "references": [
+        {
+          "kind": "status",
+          "id": "burn",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity",
+      "note": "Prefer Burning for an ongoing condition; Burned implies aftermath."
+    },
+    "chilled": {
+      "label": "Chilled",
+      "group": "condition",
+      "demonstrationObject": "master.sword",
+      "variants": [
+        {
+          "id": "chilled.contour",
+          "layer": "backEffect+foreground",
+          "description": "Only two short ice patches and thin cold fog on the edge."
+        },
+        {
+          "id": "chilled.mark",
+          "layer": "foreground",
+          "description": "One small open crystal branch."
+        }
+      ],
+      "references": [
+        {
+          "kind": "status",
+          "id": "chilled",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity",
+      "note": "Less coverage than Frozen; never a full ice shell."
+    },
+    "shocked": {
+      "label": "Shocked",
+      "group": "condition",
+      "demonstrationObject": "master.sword",
+      "variants": [
+        {
+          "id": "shocked.contour",
+          "layer": "backEffect+foreground",
+          "description": "Two brief residual filaments flicker from the metal edge."
+        },
+        {
+          "id": "shocked.mark",
+          "layer": "foreground",
+          "description": "A short broken bolt."
+        }
+      ],
+      "references": [],
+      "availability": "proposal",
+      "note": "Proposed condition, distinct from the Lightning element and Paralyzed lock."
+    },
+    "drenched": {
+      "label": "Drenched",
+      "group": "condition",
+      "demonstrationObject": "master.leaf",
+      "variants": [
+        {
+          "id": "drenched.contour",
+          "layer": "backEffect+foreground",
+          "description": "Thin wet rim and two falling beads on the leaf."
+        },
+        {
+          "id": "drenched.mark",
+          "layer": "foreground",
+          "description": "Two drops with one short wet underline."
+        }
+      ],
+      "references": [],
+      "availability": "proposal",
+      "note": "Proposed condition. Do not invent water/electric interactions."
+    },
+    "blighted": {
+      "label": "Blighted",
+      "group": "condition",
+      "demonstrationObject": "master.leaf",
+      "variants": [
+        {
+          "id": "blighted.contour",
+          "layer": "backEffect+foreground",
+          "description": "Desaturated olive fog and dark branching patches on the same leaf."
+        },
+        {
+          "id": "blighted.mark",
+          "layer": "foreground",
+          "description": "One split leaf-shaped vein."
+        }
+      ],
+      "references": [
+        {
+          "kind": "status",
+          "id": "crimsonBlight",
+          "scope": "current",
+          "relation": "exact"
+        },
+        {
+          "kind": "status",
+          "id": "necroticBlight",
+          "scope": "current",
+          "relation": "exact"
+        },
+        {
+          "kind": "status",
+          "id": "base.blight",
+          "scope": "reference-base-cards",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity",
+      "note": "Visual family only; keep these mechanically different IDs separate."
+    },
+    "bleeding": {
+      "label": "Bleeding",
+      "group": "condition",
+      "demonstrationObject": "master.sword",
+      "variants": [
+        {
+          "id": "bleeding.contour",
+          "layer": "backEffect+foreground",
+          "description": "One dark crimson contour bead descends from the edge."
+        },
+        {
+          "id": "bleeding.mark",
+          "layer": "foreground",
+          "description": "One red drop with a tiny downward trail."
+        }
+      ],
+      "references": [
+        {
+          "kind": "status",
+          "id": "bleed",
+          "scope": "current",
+          "relation": "exact"
+        },
+        {
+          "kind": "status",
+          "id": "bleeding",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity",
+      "note": ""
+    },
+    "confused": {
+      "label": "Confused",
+      "group": "condition",
+      "demonstrationObject": "master.orb",
+      "variants": [
+        {
+          "id": "confused.contour",
+          "layer": "backEffect+foreground",
+          "description": "Two short offset fog loops cross around the same orb."
+        },
+        {
+          "id": "confused.mark",
+          "layer": "foreground",
+          "description": "Two opposed hooks."
+        }
+      ],
+      "references": [
+        {
+          "kind": "status",
+          "id": "confused",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity",
+      "note": "Keep separate from the single Dazed spiral."
+    },
+    "restrained": {
+      "label": "Restrained",
+      "group": "condition",
+      "demonstrationObject": "master.chain",
+      "variants": [
+        {
+          "id": "restrained.contour",
+          "layer": "backEffect+foreground",
+          "description": "Cold gray fog traces the same taut links across an object."
+        },
+        {
+          "id": "restrained.mark",
+          "layer": "foreground",
+          "description": "Two interlocked link outlines."
+        }
+      ],
+      "references": [
+        {
+          "kind": "status",
+          "id": "base.restrained",
+          "scope": "reference-base-cards",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity",
+      "note": "Bind is a separate attack lock; share the chain family but keep distinct link arrangements."
+    },
+    "weakened": {
+      "label": "Weakened",
+      "group": "condition",
+      "demonstrationObject": "master.sword",
+      "variants": [
+        {
+          "id": "weakened.contour",
+          "layer": "backEffect+foreground",
+          "description": "A non-destructive broken contour mask interrupts the same sword edge."
+        },
+        {
+          "id": "weakened.mark",
+          "layer": "foreground",
+          "description": "A short downward chevron over a fracture."
+        }
+      ],
+      "references": [
+        {
+          "kind": "status",
+          "id": "weak",
+          "scope": "current",
+          "relation": "exact"
+        },
+        {
+          "kind": "status",
+          "id": "base.weak",
+          "scope": "reference-base-cards",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity",
+      "note": ""
+    },
+    "vulnerable": {
+      "label": "Vulnerable",
+      "group": "condition",
+      "demonstrationObject": "master.shield",
+      "variants": [
+        {
+          "id": "vulnerable.contour",
+          "layer": "backEffect+foreground",
+          "description": "One rim gap releases a short outward fog leak."
+        },
+        {
+          "id": "vulnerable.mark",
+          "layer": "foreground",
+          "description": "One open shield outline with a breach."
+        }
+      ],
+      "references": [
+        {
+          "kind": "status",
+          "id": "vulnerable",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity",
+      "note": ""
+    },
+    "silenced": {
+      "label": "Silenced",
+      "group": "condition",
+      "demonstrationObject": "master.orb",
+      "variants": [
+        {
+          "id": "silenced.contour",
+          "layer": "backEffect+foreground",
+          "description": "Two smooth muted arcs stop at a narrow contour bar."
+        },
+        {
+          "id": "silenced.mark",
+          "layer": "foreground",
+          "description": "One crossed resonance ring."
+        }
+      ],
+      "references": [
+        {
+          "kind": "status",
+          "id": "silenced",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity",
+      "note": ""
+    },
+    "dazed": {
+      "label": "Dazed",
+      "group": "condition",
+      "demonstrationObject": "master.orb",
+      "variants": [
+        {
+          "id": "dazed.contour",
+          "layer": "backEffect+foreground",
+          "description": "One short fog spiral loosens from the surface."
+        },
+        {
+          "id": "dazed.mark",
+          "layer": "foreground",
+          "description": "One open spiral."
+        }
+      ],
+      "references": [
+        {
+          "kind": "status",
+          "id": "dazed",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity",
+      "note": ""
+    },
+    "might": {
+      "label": "Might",
+      "group": "attribute-buff",
+      "demonstrationObject": "master.hammer",
+      "variants": [
+        {
+          "id": "might.contour",
+          "layer": "backEffect+foreground",
+          "description": "Two compact amber pressure wisps cling to the hammer head."
+        },
+        {
+          "id": "might.mark",
+          "layer": "foreground",
+          "description": "One broad upward chevron."
+        }
+      ],
+      "references": [],
+      "availability": "proposal",
+      "note": "Proposed STR buff art; no attribute-modifying status is added."
+    },
+    "insight": {
+      "label": "Insight",
+      "group": "attribute-buff",
+      "demonstrationObject": "master.orb",
+      "variants": [
+        {
+          "id": "insight.contour",
+          "layer": "backEffect+foreground",
+          "description": "A fine blue-white contour opens into one clear pupil-like gap."
+        },
+        {
+          "id": "insight.mark",
+          "layer": "foreground",
+          "description": "An open eye with a small central light."
+        }
+      ],
+      "references": [],
+      "availability": "proposal",
+      "note": "Proposed INT buff art; no attribute-modifying status is added."
+    },
+    "haste": {
+      "label": "Haste",
+      "group": "attribute-buff",
+      "demonstrationObject": "master.leaf",
+      "variants": [
+        {
+          "id": "haste.contour",
+          "layer": "backEffect+foreground",
+          "description": "Two closely spaced mint trails follow the same leaf."
+        },
+        {
+          "id": "haste.mark",
+          "layer": "foreground",
+          "description": "Two short forward chevrons."
+        }
+      ],
+      "references": [],
+      "availability": "proposal",
+      "note": "Proposed DEX buff art; no attribute-modifying status is added."
+    },
+    "fortitude": {
+      "label": "Fortitude",
+      "group": "attribute-buff",
+      "demonstrationObject": "master.shield",
+      "variants": [
+        {
+          "id": "fortitude.contour",
+          "layer": "backEffect+foreground",
+          "description": "A thickened ochre contour hugs the same shield."
+        },
+        {
+          "id": "fortitude.mark",
+          "layer": "foreground",
+          "description": "Two nested corner braces."
+        }
+      ],
+      "references": [],
+      "availability": "proposal",
+      "note": "Proposed CON buff art; no attribute-modifying status is added."
+    },
+    "attunement": {
+      "label": "Attunement",
+      "group": "attribute-buff",
+      "demonstrationObject": "master.orb",
+      "variants": [
+        {
+          "id": "attunement.contour",
+          "layer": "backEffect+foreground",
+          "description": "Two balanced ivory rings settle around the same orb."
+        },
+        {
+          "id": "attunement.mark",
+          "layer": "foreground",
+          "description": "Two nested arcs around one central point."
+        }
+      ],
+      "references": [],
+      "availability": "proposal",
+      "note": "Proposed WIS buff art; no attribute-modifying status is added."
+    },
+    "reshuffle-hand": {
+      "label": "Reshuffle hand",
+      "group": "hand",
+      "demonstrationObject": "master.card",
+      "variants": [
+        {
+          "id": "reshuffle-hand.contour",
+          "layer": "backEffect+foreground",
+          "description": "Two identical card instances exchange positions along one closed fog loop."
+        },
+        {
+          "id": "reshuffle-hand.mark",
+          "layer": "foreground",
+          "description": "Two opposed curved arrows around a card outline."
+        }
+      ],
+      "references": [],
+      "availability": "proposal",
+      "note": "Intent needs a gameplay decision: cycling the hand is not the existing shuffleDiscardIntoDraw operation."
+    },
+    "recycle": {
+      "label": "Recycle discard",
+      "group": "hand",
+      "demonstrationObject": "master.card",
+      "variants": [
+        {
+          "id": "recycle.contour",
+          "layer": "backEffect+foreground",
+          "description": "A short circular fog route returns the same card to a dim stack outline."
+        },
+        {
+          "id": "recycle.mark",
+          "layer": "foreground",
+          "description": "One return loop."
+        }
+      ],
+      "references": [
+        {
+          "kind": "operation",
+          "id": "shuffleDiscardIntoDraw",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity",
+      "note": ""
+    },
+    "retain": {
+      "label": "Retain",
+      "group": "hand",
+      "demonstrationObject": "master.card",
+      "variants": [
+        {
+          "id": "retain.contour",
+          "layer": "backEffect+foreground",
+          "description": "A steady corner contour holds the same card in place."
+        },
+        {
+          "id": "retain.mark",
+          "layer": "foreground",
+          "description": "A small clasp on one corner."
+        }
+      ],
+      "references": [
+        {
+          "kind": "operation",
+          "id": "retain",
+          "scope": "current",
+          "relation": "exact"
+        },
+        {
+          "kind": "tag",
+          "id": "lifecycle.retain",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity",
+      "note": ""
+    },
+    "draw": {
+      "label": "Draw",
+      "group": "hand",
+      "demonstrationObject": "master.card",
+      "variants": [
+        {
+          "id": "draw.contour",
+          "layer": "backEffect+foreground",
+          "description": "A second identical card rises on one faint contour ribbon."
+        },
+        {
+          "id": "draw.mark",
+          "layer": "foreground",
+          "description": "One upward card-edge arrow."
+        }
+      ],
+      "references": [
+        {
+          "kind": "operation",
+          "id": "draw",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity",
+      "note": ""
+    },
+    "discard": {
+      "label": "Discard",
+      "group": "hand",
+      "demonstrationObject": "master.card",
+      "variants": [
+        {
+          "id": "discard.contour",
+          "layer": "backEffect+foreground",
+          "description": "A short downward fog ribbon leaves the same card edge."
+        },
+        {
+          "id": "discard.mark",
+          "layer": "foreground",
+          "description": "One downward card-edge arrow."
+        }
+      ],
+      "references": [
+        {
+          "kind": "operation",
+          "id": "discard",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity",
+      "note": ""
+    },
+    "exhaust": {
+      "label": "Exhaust",
+      "group": "hand",
+      "demonstrationObject": "master.card",
+      "variants": [
+        {
+          "id": "exhaust.contour",
+          "layer": "backEffect+foreground",
+          "description": "The same card contour dissolves only at its far corner."
+        },
+        {
+          "id": "exhaust.mark",
+          "layer": "foreground",
+          "description": "One fading corner and two motes."
+        }
+      ],
+      "references": [
+        {
+          "kind": "operation",
+          "id": "exhaust",
+          "scope": "current",
+          "relation": "exact"
+        },
+        {
+          "kind": "tag",
+          "id": "lifecycle.exhaust",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity",
+      "note": ""
+    },
+    "recovery": {
+      "label": "Regeneration",
+      "group": "benefit",
+      "demonstrationObject": "master.leaf",
+      "variants": [
+        {
+          "id": "recovery.contour",
+          "layer": "backEffect+foreground",
+          "description": "One green contour vein grows outward and gently repeats."
+        },
+        {
+          "id": "recovery.mark",
+          "layer": "foreground",
+          "description": "One sprout-shaped line."
+        }
+      ],
+      "references": [
+        {
+          "kind": "status",
+          "id": "regen",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity",
+      "note": ""
+    },
+    "barrier": {
+      "label": "Barrier",
+      "group": "benefit",
+      "demonstrationObject": "master.shield",
+      "variants": [
+        {
+          "id": "barrier.contour",
+          "layer": "backEffect+foreground",
+          "description": "A second thin translucent contour surrounds the same shield."
+        },
+        {
+          "id": "barrier.mark",
+          "layer": "foreground",
+          "description": "One enclosing ring."
+        }
+      ],
+      "references": [
+        {
+          "kind": "operation",
+          "id": "gainBarrier",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity",
+      "note": ""
+    },
+    "cleanse": {
+      "label": "Cleansed",
+      "group": "benefit",
+      "demonstrationObject": "master.flame",
+      "variants": [
+        {
+          "id": "cleanse.contour",
+          "layer": "backEffect+foreground",
+          "description": "One ivory-white purifying flame with a soft gold edge; clean fog curls upward directly from the flame contour."
+        },
+        {
+          "id": "cleanse.mark",
+          "layer": "foreground",
+          "description": "A small upright ivory-gold flame outline; no leaf, brush or sweeping arc."
+        }
+      ],
+      "references": [
+        {
+          "kind": "operation",
+          "id": "removeStatus",
+          "scope": "current",
+          "relation": "related-not-equivalent"
+        }
+      ],
+      "availability": "existing-identity",
+      "note": "User-confirmed flame symbol. Cleanse is the action; Cleansed is the state. Keep distinct from orange-red Burning. Select only for removal of harmful conditions, not every removeStatus operation.",
+      "userConfirmedSymbol": "purifying flame"
+    },
+    "concealed": {
+      "label": "Concealed",
+      "group": "benefit",
+      "demonstrationObject": "master.leaf",
+      "variants": [
+        {
+          "id": "concealed.contour",
+          "layer": "backEffect+foreground",
+          "description": "Part of the same leaf contour disappears beneath a low smoke fold."
+        },
+        {
+          "id": "concealed.mark",
+          "layer": "foreground",
+          "description": "One interrupted eye-shaped arc."
+        }
+      ],
+      "references": [
+        {
+          "kind": "status",
+          "id": "concealed",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity",
+      "note": ""
+    },
+    "poisoned": {
+      "label": "Poisoned",
+      "group": "condition",
+      "demonstrationObject": "master.vial",
+      "variants": [
+        {
+          "id": "poisoned.contour",
+          "layer": "backEffect+foreground",
+          "description": "A dull green rim releases two low-hanging droplets of fog."
+        },
+        {
+          "id": "poisoned.mark",
+          "layer": "foreground",
+          "description": "A small vial bead."
+        }
+      ],
+      "references": [
+        {
+          "kind": "status",
+          "id": "venom",
+          "scope": "current",
+          "relation": "exact"
+        },
+        {
+          "kind": "status",
+          "id": "base.poison",
+          "scope": "reference-base-cards",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity",
+      "note": "Added visual family; Venom buildup and ongoing Poison are not mechanically interchangeable."
+    },
+    "slowed": {
+      "label": "Slowed",
+      "group": "condition",
+      "demonstrationObject": "master.leaf",
+      "variants": [
+        {
+          "id": "slowed.contour",
+          "layer": "backEffect+foreground",
+          "description": "Two low trailing contours lag far behind the same leaf."
+        },
+        {
+          "id": "slowed.mark",
+          "layer": "foreground",
+          "description": "A short hourglass-shaped mark."
+        }
+      ],
+      "references": [
+        {
+          "kind": "status",
+          "id": "slowed",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "availability": "existing-identity",
+      "note": ""
+    }
+  },
+  "naming": {
+    "policy": "Display-name suggestions only. Existing IDs and mechanics remain unchanged. References marked related-not-equivalent must not be used as automatic aliases.",
+    "attributeBuffs": [
+      {
+        "attribute": "STR",
+        "preferred": "Might",
+        "adjective": "Empowered",
+        "component": "might",
+        "availability": "proposal"
+      },
+      {
+        "attribute": "INT",
+        "preferred": "Insight",
+        "adjective": "Enlightened",
+        "component": "insight",
+        "availability": "proposal"
+      },
+      {
+        "attribute": "DEX",
+        "preferred": "Haste",
+        "adjective": "Quickened",
+        "component": "haste",
+        "availability": "proposal"
+      },
+      {
+        "attribute": "CON",
+        "preferred": "Fortitude",
+        "adjective": "Fortified",
+        "component": "fortitude",
+        "availability": "proposal"
+      },
+      {
+        "attribute": "WIS",
+        "preferred": "Attunement",
+        "adjective": "Attuned",
+        "component": "attunement",
+        "availability": "proposal"
+      }
+    ],
+    "additionalSuggestions": [
+      "Use nouns for techniques: Piercing, Precision, Evasion, Area.",
+      "Use condition labels consistently: Burning, Bleeding, Chilled, Frozen, Paralyzed, Asleep, Prone, Confused, Restrained.",
+      "Use Dazed for the open spiral and Confused for opposed hooks.",
+      "Keep Frost (element), Chilled (condition) and Frozen (condition) visually distinct.",
+      "Use Alteration, not alternation.",
+      "Use Reflect for reflection; Attunement for the proposed WIS buff.",
+      "Use Reshuffle hand only after deciding whether the hand is discarded/redrawn or mixed back into the draw pile.",
+      "Cleansed uses an ivory-gold purifying flame, per user correction. Cleanse is the action name."
+    ]
+  },
+  "boards": [
+    {
+      "id": "masters",
+      "label": "Shared object masters",
+      "items": [
+        "sword",
+        "scimitar",
+        "scythe",
+        "hammer",
+        "shield",
+        "card",
+        "leaf",
+        "orb",
+        "vial",
+        "chain"
+      ],
+      "image": "proposals/masters.png",
+      "source": "AI-generated art proposal using the shared master sheet as visual reference; not production layer assets."
+    },
+    {
+      "id": "card-types",
+      "label": "Card type art",
+      "items": [
+        "attack",
+        "defend",
+        "counter",
+        "smash",
+        "sweep",
+        "spell",
+        "skill",
+        "power",
+        "consumable",
+        "status",
+        "evade"
+      ],
+      "image": "proposals/card-types.png",
+      "source": "AI-generated art proposal using the shared master sheet as visual reference; not production layer assets."
+    },
+    {
+      "id": "elements",
+      "label": "Element contour fog",
+      "items": [
+        "divine",
+        "necrotic",
+        "force",
+        "earth",
+        "frost",
+        "fire",
+        "lightning",
+        "psychic",
+        "alteration",
+        "wind"
+      ],
+      "image": "proposals/elements.png",
+      "source": "AI-generated art proposal using the shared master sheet as visual reference; not production layer assets."
+    },
+    {
+      "id": "techniques",
+      "label": "Technique components",
+      "items": [
+        "piercing",
+        "evasion",
+        "dodge",
+        "area",
+        "precision",
+        "reflect",
+        "retaliation",
+        "drain"
+      ],
+      "image": "proposals/techniques.png",
+      "source": "AI-generated art proposal using the shared master sheet as visual reference; not production layer assets."
+    },
+    {
+      "id": "conditions",
+      "label": "Condition components",
+      "items": [
+        "paralyzed",
+        "asleep",
+        "prone",
+        "frozen",
+        "burning",
+        "chilled",
+        "shocked",
+        "drenched",
+        "blighted",
+        "bleeding",
+        "confused",
+        "restrained",
+        "weakened",
+        "vulnerable",
+        "silenced",
+        "dazed",
+        "poisoned",
+        "slowed"
+      ],
+      "image": "proposals/conditions.png",
+      "source": "AI-generated art proposal using the shared master sheet as visual reference; not production layer assets."
+    },
+    {
+      "id": "buffs-hand",
+      "label": "Attribute buffs and hand components",
+      "items": [
+        "might",
+        "insight",
+        "haste",
+        "fortitude",
+        "attunement",
+        "reshuffle-hand",
+        "recycle",
+        "retain",
+        "draw",
+        "discard",
+        "exhaust",
+        "recovery",
+        "barrier",
+        "cleanse",
+        "concealed"
+      ],
+      "image": "proposals/buffs-hand.png",
+      "source": "AI-generated art proposal using the shared master sheet as visual reference; not production layer assets."
+    }
+  ],
+  "renderingNote": "Each effect offers a contour treatment and a compact attached mark as alternatives. Use one variant per selected identity, not both; preserve the four-identity budget."
+}
