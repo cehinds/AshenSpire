@@ -88,6 +88,12 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
       tags[m.manifest.tag] = slug;
     }
   }
+  // Every layer is loaded before any check so tests can patch one document (patch hook).
+  const uiComponents = loadDir('engine/ui/components');
+  const uiScreens = loadDir(`games/${game}/ui/screens`);
+  const mapComponents = loadDir('engine/maps/components');
+  const mapDocs = loadDir(`games/${game}/maps`);
+  patch?.({ mechanics, uiComponents, uiScreens, mapComponents, mapDocs });
   const slugs = new Set(Object.keys(mechanics));
   for (const row of index.mechanics) {
     if (!slugs.has(row.id)) fail(`engine/mechanics/index.json lists ${row.id}, which has no mechanic folder`);
@@ -100,6 +106,19 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   const eventsOf = slug => Object.keys(mechanics[slug].interface.events || {});
   const catalogOps = loadOps();
   for (const [slug, m] of Object.entries(mechanics)) {
+    // Handler entry points: command.<name> is a declared command; event.<slug>.<event> names a declared event (or runtime.*) the mechanic lists in listens.
+    for (const handler of m.service.handlers || []) {
+      const on = String(handler.on || '');
+      if (on.startsWith('command.')) { if (!commandsOf(slug).includes(on.slice(8))) fail(`${slug}: handler '${on}' is not a command in its interface`); }
+      else if (on.startsWith('event.')) {
+        const full = on.slice(6);
+        if (!full.startsWith('runtime.')) {
+          const hit = splitName(full, slugs);
+          if (!hit || !eventsOf(hit.slug).includes(hit.name)) fail(`${slug}: handler '${on}' listens to an event no mechanic declares`);
+        }
+        if (Array.isArray(m.interface.listens) && !m.interface.listens.includes(full)) fail(`${slug}: handler '${on}' is not in its interface listens`);
+      }
+    }
     for (const req of m.interface.requires || []) if (!slugs.has(req)) fail(`${slug}: requires unknown mechanic '${req}'`);
     for (const handler of m.service.handlers || []) {
       for (const step of walkSteps(handler.do)) {
@@ -130,11 +149,9 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   const runtime = { ops, formulas, specVersion: sha(readText('engine/runtime/SPEC.md')) };
 
   // ----- ui -----
-  const uiComponents = loadDir('engine/ui/components');
-  const uiScreens = loadDir(`games/${game}/ui/screens`);
-  const mapComponents = loadDir('engine/maps/components');
-  const mapDocs = loadDir(`games/${game}/maps`);
-  patch?.({ uiComponents, uiScreens, mapComponents, mapDocs });
+  // A document's id is its file name (tools/ui-validate.mjs, tools/maps-validate.mjs): the artifact is keyed by it.
+  for (const [where, docs] of [['ui/components', uiComponents], ['ui/screens', uiScreens], ['maps/components', mapComponents], ['maps', mapDocs]])
+    for (const [key, doc] of Object.entries(docs)) if (doc?.id !== key) fail(`${where}/${key}: id '${doc?.id}' does not match the file name`);
   const layout = {};
   const addLayout = (ref, where) => {
     if (!ref) return;

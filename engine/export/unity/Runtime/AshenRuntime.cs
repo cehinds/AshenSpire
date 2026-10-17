@@ -211,14 +211,14 @@ namespace Ashen.Runtime
         public CallResult Command(GameState state, string full, Dictionary<string, object> parameters = null)
         {
             var call = Start(state);
-            InvokeCommand(call, full, parameters ?? new());
+            InvokeCommand(call, full, HostRecord(parameters));
             return new CallResult { State = call.State, Events = call.Events };
         }
 
         public CallResult Emit(GameState state, string full, Dictionary<string, object> payload = null)
         {
             var call = Start(state);
-            Dispatch(call, full, payload != null ? new(payload) : new());
+            Dispatch(call, full, HostRecord(payload));
             return new CallResult { State = call.State, Events = call.Events };
         }
 
@@ -229,8 +229,12 @@ namespace Ashen.Runtime
             var queries = _build.Mechanics[slug].Interface;
             if (queries.ValueKind != JsonValueKind.Object || !queries.TryGetProperty("queries", out var qs) || !qs.TryGetProperty(name, out var def))
                 throw new InvalidOperationException($"Unknown query '{full}'");
-            return Value(call, new Scope { Slug = slug, Vars = parameters != null ? new(parameters) : new() }, def.GetProperty("value"));
+            return Value(call, new Scope { Slug = slug, Vars = HostRecord(parameters) }, def.GetProperty("value"));
         }
+
+        // Host values (typed dictionaries, lists, arrays, boxed ints) become JSON shapes once, at the boundary.
+        static Dictionary<string, object> HostRecord(Dictionary<string, object> v) =>
+            v == null ? new() : (Dictionary<string, object>)GameState.DeepCopy(v);
 
         Call Start(GameState state) => new() { State = state.Clone() };
 

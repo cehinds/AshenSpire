@@ -70,6 +70,8 @@ test('the build fails on dangling references', () => {
   assert.throws(() => buildGame({ patch: ({ uiComponents }) => { const vm = uiComponents.enemyPanel.viewModel; vm.bindings = { ...vm.bindings, spShown: '$entity.pools.sp' }; delete vm.visibility; } }), /enemyPanel: binds sp without the enemy_visibility\.visibleFields visibility query/);
   assert.throws(() => buildGame({ patch: ({ mapDocs }) => { const m = Object.values(mapDocs).find(x => x.atlas); m.atlas = { ...m.atlas, path: 'nope.nothing' }; } }), /atlas path 'nope\.nothing' does not resolve/);
   assert.throws(() => buildGame({ patch: ({ mapDocs }) => { const m = Object.values(mapDocs)[0]; m.generator.proposed = { ...(m.generator.proposed || {}), names: { elite: 'node.nope' } }; } }), /proposed\.names elite -> 'node\.nope' is not a node component/);
+  assert.throws(() => buildGame({ patch: ({ uiComponents }) => { uiComponents.hud.id = 'wrong'; } }), /ui\/components\/hud: id 'wrong' does not match the file name/);
+  assert.throws(() => buildGame({ patch: ({ mechanics }) => { const m = Object.values(mechanics).find(x => (x.service.handlers || []).some(h => h.on?.startsWith('command.'))); const h = m.service.handlers.find(x => x.on.startsWith('command.')); h.on = 'command.typo'; } }), /handler 'command\.typo' is not a command in its interface/);
   assert.throws(() => buildGame({ game: 'nonexistent-game' }));
 });
 
