@@ -1,0 +1,955 @@
+{
+  "schemaVersion": 1,
+  "status": "draft-pending-visual-review",
+  "alphaThreshold": 32,
+  "output": {
+    "size": [
+      512,
+      512
+    ],
+    "anchor": [
+      256,
+      464
+    ],
+    "sharedScale": 0.5072463768115942
+  },
+  "masters": {
+    "stances": {
+      "path": "art/enemy-back-motion/wyrmLord/v01/stances-master.png",
+      "sha256": "e6b5bfda3ed6f6c9f332ae7d90e9a3dff74cadaac70f457af6317a87f974c11f",
+      "size": [
+        1983,
+        793
+      ],
+      "sourceBoundary": {
+        "above0": 0,
+        "above32": 0
+      },
+      "gutters": [
+        {
+          "axis": "y",
+          "cut": 397,
+          "above0": 0,
+          "above32": 0
+        },
+        {
+          "axis": "x",
+          "row": 0,
+          "cut": 397,
+          "above0": 0,
+          "above32": 0
+        },
+        {
+          "axis": "x",
+          "row": 0,
+          "cut": 793,
+          "above0": 0,
+          "above32": 0
+        },
+        {
+          "axis": "x",
+          "row": 0,
+          "cut": 1197,
+          "above0": 0,
+          "above32": 0
+        },
+        {
+          "axis": "x",
+          "row": 0,
+          "cut": 1602,
+          "above0": 0,
+          "above32": 0
+        },
+        {
+          "axis": "x",
+          "row": 1,
+          "cut": 397,
+          "above0": 0,
+          "above32": 0
+        },
+        {
+          "axis": "x",
+          "row": 1,
+          "cut": 792,
+          "above0": 0,
+          "above32": 0
+        },
+        {
+          "axis": "x",
+          "row": 1,
+          "cut": 1190,
+          "above0": 0,
+          "above32": 0
+        },
+        {
+          "axis": "x",
+          "row": 1,
+          "cut": 1586,
+          "above0": 0,
+          "above32": 0
+        }
+      ]
+    },
+    "motion": {
+      "path": "art/enemy-back-motion/wyrmLord/v01/motion-master.png",
+      "sha256": "0752225fe71040cfc1bcdffde8dead7dfbfd562ce90fb954764e48de68ffb4e8",
+      "size": [
+        1774,
+        887
+      ],
+      "sourceBoundary": {
+        "above0": 5,
+        "above32": 0
+      },
+      "gutters": [
+        {
+          "axis": "y",
+          "cut": 496,
+          "above0": 0,
+          "above32": 0
+        },
+        {
+          "axis": "x",
+          "row": 0,
+          "cut": 450,
+          "above0": 0,
+          "above32": 0
+        },
+        {
+          "axis": "x",
+          "row": 0,
+          "cut": 885,
+          "above0": 0,
+          "above32": 0
+        },
+        {
+          "axis": "x",
+          "row": 0,
+          "cut": 1328,
+          "above0": 0,
+          "above32": 0
+        },
+        {
+          "axis": "x",
+          "row": 1,
+          "cut": 443,
+          "above0": 0,
+          "above32": 0
+        },
+        {
+          "axis": "x",
+          "row": 1,
+          "cut": 881,
+          "above0": 0,
+          "above32": 0
+        },
+        {
+          "axis": "x",
+          "row": 1,
+          "cut": 1314,
+          "above0": 0,
+          "above32": 0
+        }
+      ]
+    },
+    "damage": {
+      "path": "art/enemy-back-motion/wyrmLord/v01/damage-master.png",
+      "sha256": "76b89ccbf5614e823e179214aad8de8c6bf8f4e21079ec0e8ad72dcc2fa5edea",
+      "size": [
+        1774,
+        887
+      ],
+      "sourceBoundary": {
+        "above0": 0,
+        "above32": 0
+      },
+      "gutters": [
+        {
+          "axis": "x",
+          "row": 0,
+          "cut": 885,
+          "above0": 0,
+          "above32": 0
+        }
+      ]
+    }
+  },
+  "frames": [
+    {
+      "kind": "stances",
+      "label": "neutral",
+      "rect": [
+        0,
+        0,
+        398,
+        398
+      ],
+      "bounds": [
+        66,
+        75,
+        323,
+        375
+      ],
+      "anchor": [
+        194.5,
+        375
+      ],
+      "reviewedAnchor": false,
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/stances/neutral.png",
+      "sha256": "2cc121c5fb899d620a4dcd648647efd481eeb6311de12786f25a613b2e3a831e",
+      "translation": [
+        186,
+        307
+      ],
+      "outputAnchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.5072463768115942,
+      "outputAlphaBounds": [
+        186,
+        307,
+        349,
+        466
+      ]
+    },
+    {
+      "kind": "stances",
+      "label": "smash",
+      "rect": [
+        397,
+        0,
+        794,
+        398
+      ],
+      "bounds": [
+        66,
+        16,
+        351,
+        380
+      ],
+      "anchor": [
+        208.5,
+        380
+      ],
+      "reviewedAnchor": false,
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/stances/smash.png",
+      "sha256": "5449c87568a16489cadcc1aa9d458f5136561b132474eefa4bee0363377a23f2",
+      "translation": [
+        162,
+        278
+      ],
+      "outputAnchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.5072463768115942,
+      "outputAlphaBounds": [
+        178,
+        278,
+        343,
+        473
+      ]
+    },
+    {
+      "kind": "stances",
+      "label": "attack",
+      "rect": [
+        793,
+        0,
+        1198,
+        398
+      ],
+      "bounds": [
+        13,
+        76,
+        396,
+        375
+      ],
+      "anchor": [
+        204.5,
+        375
+      ],
+      "reviewedAnchor": false,
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/stances/attack.png",
+      "sha256": "18aad0373cc0b29a494983b789cd700b8211ce106adac68987689e04613c4b68",
+      "translation": [
+        157,
+        296
+      ],
+      "outputAnchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.5072463768115942,
+      "outputAlphaBounds": [
+        157,
+        296,
+        357,
+        465
+      ]
+    },
+    {
+      "kind": "stances",
+      "label": "sweep",
+      "rect": [
+        1197,
+        0,
+        1603,
+        398
+      ],
+      "bounds": [
+        13,
+        76,
+        399,
+        375
+      ],
+      "anchor": [
+        206.0,
+        375
+      ],
+      "reviewedAnchor": false,
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/stances/sweep.png",
+      "sha256": "9615b4e13533f7deb39d4c06f3b162f1659addef67ba60e2d06ca0fc81dda9d9",
+      "translation": [
+        152,
+        295
+      ],
+      "outputAnchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.5072463768115942,
+      "outputAlphaBounds": [
+        152,
+        295,
+        357,
+        467
+      ]
+    },
+    {
+      "kind": "stances",
+      "label": "counter",
+      "rect": [
+        1602,
+        0,
+        1983,
+        398
+      ],
+      "bounds": [
+        50,
+        68,
+        328,
+        376
+      ],
+      "anchor": [
+        189.0,
+        376
+      ],
+      "reviewedAnchor": false,
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/stances/counter.png",
+      "sha256": "277de420d1e0969b30816b9d41d1676e0c7b8c521955e0d2dd9f65badbc68a07",
+      "translation": [
+        165,
+        278
+      ],
+      "outputAnchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.5072463768115942,
+      "outputAlphaBounds": [
+        169,
+        278,
+        329,
+        471
+      ]
+    },
+    {
+      "kind": "stances",
+      "label": "defend",
+      "rect": [
+        0,
+        397,
+        398,
+        793
+      ],
+      "bounds": [
+        56,
+        68,
+        292,
+        341
+      ],
+      "anchor": [
+        174.0,
+        341
+      ],
+      "reviewedAnchor": false,
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/stances/defend.png",
+      "sha256": "61a5cc618f866451b2ca5bfe4c270e96cee4bc9b9b1dc01b3f114686760313b4",
+      "translation": [
+        192,
+        296
+      ],
+      "outputAnchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.5072463768115942,
+      "outputAlphaBounds": [
+        192,
+        303,
+        364,
+        471
+      ]
+    },
+    {
+      "kind": "stances",
+      "label": "evade",
+      "rect": [
+        397,
+        397,
+        793,
+        793
+      ],
+      "bounds": [
+        49,
+        92,
+        389,
+        335
+      ],
+      "anchor": [
+        219.0,
+        335
+      ],
+      "reviewedAnchor": false,
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/stances/evade.png",
+      "sha256": "f56903ab85e41dc5dd0e96f8acdb773a7fd257d304702fae01490437e7073d25",
+      "translation": [
+        147,
+        296
+      ],
+      "outputAnchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.5072463768115942,
+      "outputAlphaBounds": [
+        165,
+        299,
+        345,
+        471
+      ]
+    },
+    {
+      "kind": "stances",
+      "label": "spell",
+      "rect": [
+        792,
+        397,
+        1191,
+        793
+      ],
+      "bounds": [
+        77,
+        25,
+        342,
+        350
+      ],
+      "anchor": [
+        209.5,
+        350
+      ],
+      "reviewedAnchor": false,
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/stances/spell.png",
+      "sha256": "f6b097ded5a658c3fce9a97f4f506002690a010d9aaa3b5c5dd8de4460a4f1fd",
+      "translation": [
+        150,
+        290
+      ],
+      "outputAnchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.5072463768115942,
+      "outputAlphaBounds": [
+        150,
+        290,
+        328,
+        467
+      ]
+    },
+    {
+      "kind": "stances",
+      "label": "preparing",
+      "rect": [
+        1190,
+        397,
+        1587,
+        793
+      ],
+      "bounds": [
+        65,
+        52,
+        345,
+        349
+      ],
+      "anchor": [
+        205.0,
+        349
+      ],
+      "reviewedAnchor": false,
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/stances/preparing.png",
+      "sha256": "157e10005e4109b4371e9a157f639fd4d7baf2ec87f05d009ae1affcdab11c02",
+      "translation": [
+        153,
+        288
+      ],
+      "outputAnchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.5072463768115942,
+      "outputAlphaBounds": [
+        162,
+        311,
+        334,
+        468
+      ]
+    },
+    {
+      "kind": "stances",
+      "label": "neutral-alt",
+      "rect": [
+        1586,
+        397,
+        1983,
+        793
+      ],
+      "bounds": [
+        83,
+        41,
+        303,
+        353
+      ],
+      "anchor": [
+        193.0,
+        353
+      ],
+      "reviewedAnchor": false,
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/stances/neutral-alt.png",
+      "sha256": "a3721773118ae579b9fca34c498cbd62926559d3849c921f30c2c29ba81da86d",
+      "translation": [
+        159,
+        291
+      ],
+      "outputAnchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.5072463768115942,
+      "outputAlphaBounds": [
+        159,
+        302,
+        319,
+        472
+      ]
+    },
+    {
+      "kind": "motion",
+      "label": "attack-01",
+      "rect": [
+        0,
+        0,
+        451,
+        497
+      ],
+      "bounds": [
+        39,
+        152,
+        337,
+        460
+      ],
+      "anchor": [
+        285,
+        455
+      ],
+      "reviewedAnchor": true,
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/motion/attack-01.png",
+      "sha256": "16d0481010dc4fb48676d86ea827abc51f782cc493d56158f58b6c1555b8835a",
+      "translation": [
+        83,
+        201
+      ],
+      "outputAnchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.6086956521739131,
+      "outputAlphaBounds": [
+        83,
+        202,
+        357,
+        487
+      ]
+    },
+    {
+      "kind": "motion",
+      "label": "attack-02",
+      "rect": [
+        450,
+        0,
+        886,
+        497
+      ],
+      "bounds": [
+        27,
+        155,
+        414,
+        460
+      ],
+      "anchor": [
+        325,
+        450
+      ],
+      "reviewedAnchor": true,
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/motion/attack-02.png",
+      "sha256": "728109289dfa505d9a7d3c7d5c328b43916111834b2e0e6333074fae2211c4b0",
+      "translation": [
+        62,
+        199
+      ],
+      "outputAnchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.6086956521739131,
+      "outputAlphaBounds": [
+        63,
+        200,
+        323,
+        491
+      ]
+    },
+    {
+      "kind": "motion",
+      "label": "attack-03",
+      "rect": [
+        885,
+        0,
+        1329,
+        497
+      ],
+      "bounds": [
+        58,
+        193,
+        404,
+        463
+      ],
+      "anchor": [
+        320,
+        455
+      ],
+      "reviewedAnchor": true,
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/motion/attack-03.png",
+      "sha256": "1f6441ff40328381fb995374013e4f8ca414d40e1ebd13f8f2b049ce3e58b110",
+      "translation": [
+        62,
+        211
+      ],
+      "outputAnchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.6086956521739131,
+      "outputAlphaBounds": [
+        62,
+        211,
+        330,
+        476
+      ]
+    },
+    {
+      "kind": "motion",
+      "label": "attack-04",
+      "rect": [
+        1328,
+        0,
+        1774,
+        497
+      ],
+      "bounds": [
+        81,
+        141,
+        372,
+        459
+      ],
+      "anchor": [
+        297,
+        455
+      ],
+      "reviewedAnchor": true,
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/motion/attack-04.png",
+      "sha256": "83a0d95a93e34ed91b4c206a48ba46b56b7f3a3d64a1db34ce032f1191f8339c",
+      "translation": [
+        76,
+        202
+      ],
+      "outputAnchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.6086956521739131,
+      "outputAlphaBounds": [
+        76,
+        208,
+        332,
+        475
+      ]
+    },
+    {
+      "kind": "motion",
+      "label": "evade-01",
+      "rect": [
+        0,
+        496,
+        444,
+        887
+      ],
+      "bounds": [
+        64,
+        53,
+        353,
+        327
+      ],
+      "anchor": [
+        295,
+        319
+      ],
+      "reviewedAnchor": true,
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/motion/evade-01.png",
+      "sha256": "1d1d445469be9f1d7cda8dab50f3ff975004395722b3d4853851e1bc33bf56df",
+      "translation": [
+        95,
+        275
+      ],
+      "outputAnchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.6086956521739131,
+      "outputAlphaBounds": [
+        95,
+        276,
+        342,
+        496
+      ]
+    },
+    {
+      "kind": "motion",
+      "label": "evade-02",
+      "rect": [
+        443,
+        496,
+        882,
+        887
+      ],
+      "bounds": [
+        25,
+        75,
+        412,
+        328
+      ],
+      "anchor": [
+        352,
+        319
+      ],
+      "reviewedAnchor": true,
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/motion/evade-02.png",
+      "sha256": "078cc4ffb5d6c8d3786d36c896727b25b2f84430c279dfc4a683cef71b0d0653",
+      "translation": [
+        52,
+        270
+      ],
+      "outputAnchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.6086956521739131,
+      "outputAlphaBounds": [
+        52,
+        270,
+        308,
+        496
+      ]
+    },
+    {
+      "kind": "motion",
+      "label": "evade-03",
+      "rect": [
+        881,
+        496,
+        1315,
+        887
+      ],
+      "bounds": [
+        76,
+        107,
+        423,
+        326
+      ],
+      "anchor": [
+        369,
+        319
+      ],
+      "reviewedAnchor": true,
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/motion/evade-03.png",
+      "sha256": "f92e964073c891903b4c773d779db84f28147c34040ddc003f7a7871d6a5fd74",
+      "translation": [
+        32,
+        275
+      ],
+      "outputAnchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.6086956521739131,
+      "outputAlphaBounds": [
+        32,
+        275,
+        295,
+        473
+      ]
+    },
+    {
+      "kind": "motion",
+      "label": "evade-04",
+      "rect": [
+        1314,
+        496,
+        1774,
+        887
+      ],
+      "bounds": [
+        99,
+        23,
+        381,
+        328
+      ],
+      "anchor": [
+        336,
+        324
+      ],
+      "reviewedAnchor": true,
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/motion/evade-04.png",
+      "sha256": "d8e719966fc273679f1f73d4e0b77dedd2365d9f62e750a2a2f2372b289e4f95",
+      "translation": [
+        52,
+        278
+      ],
+      "outputAnchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.6086956521739131,
+      "outputAlphaBounds": [
+        52,
+        278,
+        310,
+        469
+      ]
+    },
+    {
+      "kind": "damage",
+      "label": "hurt",
+      "rect": [
+        0,
+        0,
+        886,
+        887
+      ],
+      "bounds": [
+        90,
+        62,
+        775,
+        831
+      ],
+      "anchor": [
+        620,
+        780
+      ],
+      "reviewedAnchor": true,
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/damage/hurt.png",
+      "sha256": "126138e42d09e91a191b67094d3f80ce84e2ea711c5ead71160d168d67851014",
+      "translation": [
+        101,
+        257
+      ],
+      "outputAnchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.2739130434782609,
+      "outputAlphaBounds": [
+        108,
+        265,
+        328,
+        480
+      ]
+    },
+    {
+      "kind": "damage",
+      "label": "defeated",
+      "rect": [
+        885,
+        0,
+        1774,
+        887
+      ],
+      "bounds": [
+        12,
+        253,
+        843,
+        827
+      ],
+      "anchor": [
+        575,
+        770
+      ],
+      "reviewedAnchor": true,
+      "path": "art/enemy-back-motion/wyrmLord/v01/normalized/damage/defeated.png",
+      "sha256": "dcde187254034a48c228653c10cb2e734461c55efa4a5982c5888864372079dd",
+      "translation": [
+        99,
+        277
+      ],
+      "outputAnchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.2739130434782609,
+      "outputAlphaBounds": [
+        100,
+        289,
+        331,
+        481
+      ]
+    }
+  ],
+  "errors": [],
+  "warnings": [
+    "Automatic bounds-bottom anchors require visual foot/root/weapon review; no anatomical foot detection is claimed."
+  ],
+  "manualReview": {
+    "reviewer": "elite_motion agent",
+    "method": "manual source-image visual estimate",
+    "status": "draft-estimates-pending-normalized-preview",
+    "notes": "Anchors identify visible foot or support-contact baseline, using midpoint where both feet visible. Rear feet can be occluded. Values are visual estimates, not pixel-exact detections. Tail/cape alpha bottom is not used as floor. MasterScale calibrates separately generated damage anatomy to stances and preserves action crouch/height; shared scale then applies. Root must inspect normalized frames before accepting."
+  },
+  "previewPolicy": "Separate four-frame attack/evade loops; stances and damage are labeled pose slideshows.",
+  "masterScaleCalibration": {
+    "stances": 1,
+    "motion": 1.2,
+    "damage": 0.54
+  }
+}

@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "status": "rejected",
+  "alphaThreshold": 32,
+  "output": {
+    "size": [
+      512,
+      512
+    ],
+    "anchor": [
+      256,
+      464
+    ]
+  },
+  "masters": {
+    "motion": {
+      "path": "art/enemy-back-motion/courtDuelist/v01/motion-master.png",
+      "sha256": "77a9d6e8ce81c7a99be46036b3967645aa1738f2eb9ac1dbf1ff3ba5334e7319",
+      "size": [
+        1774,
+        887
+      ],
+      "sourceBoundary": {
+        "above0": 0,
+        "above32": 0
+      },
+      "gutters": [
+        {
+          "axis": "y",
+          "cut": 468,
+          "above0": 0,
+          "above32": 0
+        },
+        {
+          "axis": "x",
+          "row": 0,
+          "cut": 452,
+          "above0": 0,
+          "above32": 0
+        },
+        {
+          "axis": "x",
+          "row": 0,
+          "cut": 933,
+          "above0": 0,
+          "above32": 0
+        },
+        {
+          "axis": "x",
+          "row": 0,
+          "cut": 1377,
+          "above0": 0,
+          "above32": 0
+        },
+        {
+          "axis": "x",
+          "row": 1,
+          "cut": 452,
+          "above0": 0,
+          "above32": 0
+        },
+        {
+          "axis": "x",
+          "row": 1,
+          "cut": 901,
+          "above0": 0,
+          "above32": 0
+        },
+        {
+          "axis": "x",
+          "row": 1,
+          "cut": 1346,
+          "above0": 0,
+          "above32": 0
+        }
+      ]
+    },
+    "damage": {
+      "path": "art/enemy-back-motion/courtDuelist/v01/damage-master.png",
+      "sha256": "c8951c707ced28897456adebb61e9703b1ef845e9dc1a7c2a99b7e34fbe76e90",
+      "size": [
+        1774,
+        887
+      ],
+      "sourceBoundary": {
+        "above0": 162,
+        "above32": 0
+      },
+      "gutters": [
+        {
+          "axis": "x",
+          "row": 0,
+          "cut": 857,
+          "above0": 0,
+          "above32": 0
+        }
+      ]
+    }
+  },
+  "frames": [],
+  "errors": [
+    "stances: no safe x gutter near 1064.4",
+    "One or more source masters rejected; no frames exported"
+  ],
+  "warnings": [],
+  "manualReview": {
+    "reviewer": "elite_motion agent",
+    "method": "manual source-image visual estimate",
+    "status": "draft-estimates-pending-normalized-preview",
+    "notes": "Anchors identify visible foot or support-contact baseline, using midpoint where both feet visible. Rear feet can be occluded. Values are visual estimates, not pixel-exact detections. Tail/cape alpha bottom is not used as floor. MasterScale calibrates separately generated damage anatomy to stances and preserves action crouch/height; shared scale then applies. Root must inspect normalized frames before accepting."
+  }
+}
