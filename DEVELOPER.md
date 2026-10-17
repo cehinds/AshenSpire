@@ -916,6 +916,34 @@ are CSS lengths under the page's `--ui-zoom` (they are not divided by it).
 `<html data-form-factor>` is written by `applyUiScale` in `src/main.js` from
 `balance.ui.uiScale.formFactor`.
 
+## Game profiles (`games/ashenspire/`, `engine/modules/<id>/`)
+
+The Core game profile is JSON, not code. `games/ashenspire/game.json` is the
+default profile's author; `presets/` (`core.json`, `current.json`), `bundles/` and
+`packs/` (the base-card pack is `packs/base-cards/`) hold the rest. Each engine
+module is one folder, `engine/modules/<id>/`, with its `module.json`,
+`defaults.json`, `settings.schema.json` and `guide.md`. The profiles are resolved
+against the modules and the pack, and the result is locked in
+`games/ashenspire/game.lock.json`: a hash per profile. The lock and the
+generated modules are output. Edit the JSON, never them.
+
+```
+node tools/game-config.mjs validate   # resolve games/ashenspire/game.json; exit 1 on an error (the default command)
+node tools/game-config.mjs build      # write src/content/generated/gameProfiles.js, game.lock.json and baseCards.js
+node tools/game-config.mjs check      # exit 1 when gameProfiles.js or game.lock.json is stale
+node tools/base-cards.mjs [--check]   # the base-card pack alone: packs/base-cards → src/content/generated/baseCards.js
+node tools/hud-layout-css.mjs --write # content/hud-layout/*.json → styles/hud-layout.generated.css (see above)
+```
+
+`node tools/launch.mjs --build-only` already runs `game-config build` and the
+HUD layout step before it bundles, so a build from a clean checkout is current.
+Use `game-config check` to see whether the generated files are stale without
+rewriting them. The Workbench does the same work on save: a change under `games/ashenspire/` or in an engine module's
+contracts, foundation, kernel or modules rebuilds the profiles, and a change under
+`content/hud-layout/` rebuilds the HUD layout. The Build & Checks jobs
+**Game profiles**, **Check game profiles** and **HUD layout** run the same commands.
+The engine export (`docs/ENGINE-EXPORT.md`) reads these tables too.
+
 ## Reword the interface (one file: `content/source/uiStrings.csv`)
 
 Every sentence a screen says is a row in `content/source/uiStrings.csv`, and a
