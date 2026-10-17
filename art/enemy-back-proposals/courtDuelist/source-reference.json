@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "actorId": "courtDuelist",
+  "role": "original identity reference used for rear proposals",
+  "asset": "source-reference.webp",
+  "repository": "cehinds/AshenSpire-art",
+  "path": "hd/assets/enemy-poses/expansion/courtDuelist/idle.webp",
+  "tag": "hd-assets-v23",
+  "blob": "4382381506498b6215e63c0b698090812f4630e2",
+  "copyPolicy": "Literal WebP bytes; no decoding, re-encoding, crop, resize, masking or creative edits",
+  "note": "Player camera reference intentionally excluded."
+}

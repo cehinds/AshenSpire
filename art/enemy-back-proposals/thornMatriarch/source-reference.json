@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "actorId": "thornMatriarch",
+  "role": "original identity reference used for rear proposals",
+  "asset": "source-reference.webp",
+  "repository": "cehinds/AshenSpire-art",
+  "path": "hd/assets/enemy-poses/expansion/thornMatriarch/idle.webp",
+  "tag": "hd-assets-v23",
+  "blob": "5751198871bd198d237587f94d11f37760ddac44",
+  "copyPolicy": "Literal WebP bytes; no decoding, re-encoding, crop, resize, masking or creative edits",
+  "note": "Player camera reference intentionally excluded."
+}

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "actorId": "bellKeeper",
+  "role": "original identity reference used for rear proposals",
+  "asset": "source-reference.webp",
+  "repository": "cehinds/AshenSpire-art",
+  "path": "hd/assets/enemy-poses/expansion/bellKeeper/idle.webp",
+  "tag": "hd-assets-v23",
+  "blob": "74397997f43c8fbafc8f33abe861ea161ce7bc74",
+  "copyPolicy": "Literal WebP bytes; no decoding, re-encoding, crop, resize, masking or creative edits",
+  "note": "Player camera reference intentionally excluded."
+}
