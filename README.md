@@ -1,5 +1,17 @@
 # AshenSpire
 
+<!-- feature-preview:start -->
+## Feature preview — Stance Animation Module
+
+[Feature build — public publication pending](https://cehinds.github.io/AshenSpire/branches/feature/StanceAnimationModule/latest/) · [Capture details](docs/preview/features/stance-animation-module/README.md).
+
+Authored combat poses and Reading Desk playback follow the saved animation module JSON. These captures show disabled playback while target geometry and combat outcomes stay intact.
+
+| Phone · 390 × 844 | Desktop · 1440 × 900 | Wide · 1280 × 720 | Tablet · 768 × 1024 |
+| --- | --- | --- | --- |
+| ![Feature preview on phone](docs/preview/features/stance-animation-module/mobile.png) | ![Feature preview on desktop](docs/preview/features/stance-animation-module/desktop.png) | ![Feature preview in wide layout](docs/preview/features/stance-animation-module/wide.png) | ![Feature preview on tablet](docs/preview/features/stance-animation-module/tablet.png) |
+<!-- feature-preview:end -->
+
 
 
 A browser roguelike: build a character, explore a seeded world, and fight with cards.

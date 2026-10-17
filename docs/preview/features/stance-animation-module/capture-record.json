@@ -1,0 +1,64 @@
+{
+  "title": "Stance animation module browser capture",
+  "capturedAt": "2026-10-17T19:07:22.000638Z",
+  "sourceCommit": "a7e4d21abff5cdc817d79cbfc6f5f305570934fe",
+  "sourcePreview": "local source server (index.html)",
+  "evidenceFile": "/workspace/scratch/stance-animation-browser-a7e4d21/evidence.json",
+  "evidenceSha256": "01bb4215845ccce8798a4de47d3ee460880ecd8df28e5ba6472e88ce7a6d5a08",
+  "browserCoverage": {
+    "scenes": 14,
+    "core": {
+      "cases": 8,
+      "viewports": [
+        "1440x900",
+        "1280x720",
+        "390x844",
+        "768x1024"
+      ],
+      "enabledAndDisabled": true
+    },
+    "current": {
+      "cases": 4,
+      "profiles": [
+        "normal",
+        "Classic"
+      ],
+      "enabledAndDisabled": true
+    },
+    "readingDesk": {
+      "cases": 2,
+      "autoplayAndStaticDisabled": true
+    },
+    "errors": 0,
+    "artFailures": 0,
+    "offTraceBodyTransitions": 0
+  },
+  "scope": "Core viewport cases compare enabled and disabled outcomes and geometry; Current normal and Classic cases compare enabled and disabled combat behavior including a range miss, one payment, optional reaction passes, and turn progression; Reading Desk checks enabled autoplay and disabled static preview.",
+  "limitations": [
+    "Does not prove every character class or card.",
+    "Does not establish behavior on every hardware configuration."
+  ],
+  "build": {
+    "version": "0.7.1.1550",
+    "artifactId": 12111476110,
+    "workflowRunId": 39060894016,
+    "sourceDigest": "1779e6f1ff"
+  },
+  "expectedPlayUrl": "https://cehinds.github.io/AshenSpire/branches/feature/StanceAnimationModule/latest/",
+  "publicRouteVerification": "pending; do not treat this local capture as public-route verification",
+  "settingsExample": {
+    "formatVersion": 1,
+    "core": "ashen.core@1.0.0",
+    "modules": {
+      "animation": {
+        "enabled": false
+      }
+    }
+  },
+  "screenshots": {
+    "mobile": "mobile.png",
+    "desktop": "desktop.png",
+    "wide": "wide.png",
+    "tablet": "tablet.png"
+  }
+}
