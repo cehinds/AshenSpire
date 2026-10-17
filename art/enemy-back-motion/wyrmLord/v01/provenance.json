@@ -88,7 +88,7 @@
   "normalization": {
     "anchorCoordinates": "source",
     "masterScale": {
-      "stances": 1.17,
+      "stances": 1.22,
       "motion": 1.2,
       "damage": 0.54
     },
@@ -184,7 +184,7 @@
       "reviewer": "elite_motion agent",
       "method": "manual source-image visual estimate",
       "status": "draft-estimates-pending-normalized-preview",
-      "notes": "Anchors identify visible foot or support-contact baseline, using midpoint where both feet visible. Rear feet can be occluded. Values are visual estimates, not pixel-exact detections. Tail/cape alpha bottom is not used as floor. MasterScale calibrates separately generated damage anatomy to stances and preserves action crouch/height; shared scale then applies. Root must inspect normalized frames before accepting. Lord repaired10stances measured from native512 support-foot positions using anchor-delta conversion; rear feet occluded, tail bottom excluded. Source stance anatomy~300px, calibrated1.17 toward authored350px."
+      "notes": "Anchors identify visible foot or support-contact baseline, using midpoint where both feet visible. Rear feet can be occluded. Values are visual estimates, not pixel-exact detections. Tail/cape alpha bottom is not used as floor. MasterScale calibrates separately generated damage anatomy to stances and preserves action crouch/height; shared scale then applies. Root must inspect normalized frames before accepting. Lord repaired10stances measured from native512 support-foot positions using anchor-delta conversion; rear feet occluded, tail bottom excluded. Source stance anatomy~300px, calibrated1.17 toward authored350px. Recovery-body visual comparison by elite_motion: updated stance calibration1.22; excludes raised weapons, estimated remaining body-height drift under approximately6percent. Root final native-frame QA pending."
     },
     "stanceBodyHeightPixels": 300
   }
