@@ -1,7 +1,7 @@
 import {STANCES,proposalsOf,framesOf,coverage,validateManifest,frameAt,safeAsset,animationFramesOf,animationCoverage} from './model.mjs';
 import {assetUrl} from '../../src/ui/assetmap.js';
 const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const resolve=id=>typeof globalThis.ASHEN_ASSET_URL==='function'?globalThis.ASHEN_ASSET_URL(id):new URL('../../'+assetUrl(id),location.href).href;
+const resolve=id=>{const value=typeof globalThis.ASHEN_ASSET_URL==='function'?globalThis.ASHEN_ASSET_URL(id):assetUrl(id);return /^(?:data:|blob:|https?:)/.test(value)?value:new URL('../../'+value,location.href).href;};
 const motion=document.createElement('label');motion.innerHTML='<input id="motion" type="checkbox"> Play available motion';$('anchors').closest('label').after(motion);$('motion').onchange=render;
 const reviewFrames=p=>$('motion').checked&&animationFramesOf(p,$('stance').value).length?animationFramesOf(p,$('stance').value):framesOf(p,$('stance').value);
 let manifest,actor,picks=[],start=performance.now();

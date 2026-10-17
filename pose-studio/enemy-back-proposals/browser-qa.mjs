@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {mkdir,writeFile,readFile} from 'node:fs/promises';
 import {createServer} from 'node:http';
+import {execFileSync} from 'node:child_process';
 import {resolve,extname} from 'node:path';
 import {pathToFileURL} from 'node:url';
 const {chromium}=await import(pathToFileURL(process.env.PLAYWRIGHT_MODULE).href);
@@ -10,6 +11,9 @@ const types={'.html':'text/html','.mjs':'text/javascript','.js':'text/javascript
 const server=createServer(async(req,res)=>{try{const name=decodeURIComponent(new URL(req.url,'http://localhost').pathname),file=resolve(root,'.'+name);if(!file.startsWith(root+'/'))throw Error('Invalid path');const data=await readFile(file);res.writeHead(200,{'Content-Type':types[extname(file)]||'application/octet-stream'});res.end(data);}catch{res.writeHead(404);res.end('Not found');}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const url='http://127.0.0.1:'+server.address().port+'/pose-studio/enemy-back-proposals/index.html';
+const embedTarget='pose-studio/enemy-back-proposals/embedded-check.html';
+await writeFile(embedTarget,'<!doctype html><html><body><h1>Embedding test host</h1></body></html>');
+execFileSync(process.execPath,['pose-studio/enemy-back-proposals/embed-gallery.mjs',embedTarget],{stdio:'inherit'});
 const browser=await chromium.launch({headless:true}),records=[];
 try{
  for(const [name,width,height] of [['mobile',390,844],['tablet',820,1180],['desktop',1440,900],['wide',1920,1080]]){
@@ -44,6 +48,15 @@ try{
   await page.locator('[data-pick="v01"]').check();await page.locator('[data-pick="v02"]').check();
   await page.waitForFunction(()=>[...document.querySelectorAll('#grid img,#compare img')].every(img=>img.complete&&img.naturalWidth===512));
   await page.screenshot({path:output+'/'+name+'.png',fullPage:true});
+  await page.goto('http://127.0.0.1:'+server.address().port+'/'+embedTarget);
+  await page.locator('#enemy-rear-review-open').click();
+  const embedded=page.frameLocator('iframe');
+  await embedded.locator('#grid .card').first().waitFor();
+  assert.equal(await embedded.locator('#grid img').count(),10);
+  await embedded.locator('#grid img').first().waitFor({state:'visible'});
+  assert.equal(await embedded.locator('#grid img').first().evaluate(img=>img.complete&&img.naturalWidth===512),true);
+  await page.getByText('Close review',{exact:true}).click();
+  assert.equal(await page.locator('dialog').evaluate(d=>d.open),false);
   assert.deepEqual(errors,[]);
   records.push({name,width,height,url,status:'passed'});await page.close();
  }
