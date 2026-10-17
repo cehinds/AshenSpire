@@ -1,6 +1,6 @@
 import { t } from '../strings.js';
 import { setCombatantTargetHud } from './combatantFrame.js';
-import { targetHudConfig, targetHudEnabled, placeTargetHudPanels, createTargetHudDwell } from '../models/TargetHudModel.js';
+import { targetHudConfig, targetHudEnabled, targetHudPanelSizing, placeTargetHudPanels, createTargetHudDwell } from '../models/TargetHudModel.js';
 import { classicAppearance } from '../displayAppearance.js';
 import { combatIntentPresentation } from '../models/CombatIntentModel.js';
 import { attachTooltip, esc, hideTooltip } from './tooltip.js';
@@ -200,14 +200,13 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       const anchor = rect(frame.querySelector('.sprite'));
       const lane = frame.dataset.targetHudLane != null ? frame.dataset.targetHudLane
         : Math.max(0, Math.min(2, 'ABCDEF'.indexOf(frame.dataset.formationCell?.[0])));
-      const crowded = panels.size >= config.sizing.crowdedFrom;
-      const width = crowded ? config.sizing.crowdedPanelWidthPx : rootBox.width < config.sizing.compactBelowPx ? config.sizing.compactPanelWidthPx : config.sizing.panelWidthPx;
+      const { crowded, width, font, statusSize } = targetHudPanelSizing({ viewportWidth: rootBox.width, count: panels.size }, config);
       panel.node.dataset.crowded = String(crowded);
       panel.node.style.setProperty('--target-hud-padding-block', `${crowded ? config.sizing.crowdedPaddingBlockEm : .65}em`);
       panel.node.style.setProperty('--target-hud-padding-inline', `${crowded ? config.sizing.crowdedPaddingInlineEm : .75}em`);
       panel.node.style.width = `${width / zoom}px`;
-      panel.node.style.setProperty('--target-hud-font', `${config.sizing.fontPx / zoom}px`);
-      panel.node.style.setProperty('--target-hud-status-size', `${config.sizing.statusIconPx / zoom}px`);
+      panel.node.style.setProperty('--target-hud-font', `${font / zoom}px`);
+      panel.node.style.setProperty('--target-hud-status-size', `${statusSize / zoom}px`);
       return [{ id, role: entry.role, lane, anchor, width: width + 25, height: panel.node.getBoundingClientRect().height || config.sizing.panelHeightPx + config.sizing.statusHeightPx }];
     });
     const placed = placeTargetHudPanels({ bounds, panels: requests, obstacles, config });

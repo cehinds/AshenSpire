@@ -56,6 +56,27 @@ try {
     await panel.locator('.as-meter[data-res="hp"]').click();
     await page.locator('#tooltip[data-open="true"]').waitFor({ state: 'visible' });
     assert.equal(await inspector.count(), 0, 'an individual resource tap explains without inspecting');
+    if (width === 390) {
+      await page.goto(`${process.env.BASE_URL || server.url}index.html?shot=combat&gameProfile=core&shotSeed=3&shotEnemyCount=3&shotHand=5`, { waitUntil: 'networkidle' });
+      const strike = page.locator('.hand .card[data-card-id="core.strike"]').first();
+      const card = await strike.boundingBox();
+      await page.mouse.click(card.x + card.width / 2, card.y + card.height / 2);
+      await page.mouse.move(0, 500);
+      await page.waitForFunction(() => document.querySelectorAll('.target-hud-detail.visible:not(.leaving)').length === 3);
+      const geometry = await page.evaluate(() => ({
+        panels: [...document.querySelectorAll('.target-hud-detail.visible:not(.leaving)')].map(node => {
+          const box = node.getBoundingClientRect();
+          return { left: box.left - 25, top: box.top, right: box.right, bottom: box.bottom };
+        }),
+        obstacles: [...document.querySelectorAll('.combatant .sprite, .hand .card')].map(node => node.getBoundingClientRect().toJSON()),
+      }));
+      const overlaps = (a, b) => a.left < b.right - 1 && a.right > b.left + 1 && a.top < b.bottom - 1 && a.bottom > b.top + 1;
+      for (const panel of geometry.panels) {
+        assert.ok(panel.left >= 0 && panel.right <= 390);
+        for (const obstacle of geometry.obstacles) assert.equal(overlaps(panel, obstacle), false, 'eligible detail/control group avoids artwork and cards');
+        for (const other of geometry.panels) if (panel !== other) assert.equal(overlaps(panel, other), false, 'three mobile detail groups remain separate');
+      }
+    }
     assert.deepEqual(errors, []);
     await page.close();
   }

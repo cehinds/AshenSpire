@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { targetHudMatchup, TARGET_HUD_AURA, targetHudConfig, targetHudEnabled, targetHudSide, placeTargetHudPanels, targetHudOverlaps, createTargetHudDwell } from '../src/ui/models/TargetHudModel.js';
+import { targetHudMatchup, targetHudPanelSizing, TARGET_HUD_AURA, targetHudConfig, targetHudEnabled, targetHudSide, placeTargetHudPanels, targetHudOverlaps, createTargetHudDwell } from '../src/ui/models/TargetHudModel.js';
 
 test('target details support every alternative formation form factor', () => {
   const config = JSON.parse(readFileSync(new URL('../content/config/ui/components/combatTargetHud.json', import.meta.url)));
@@ -60,4 +60,27 @@ test('selected-card matchup follows authored stances and never reads hidden amou
   assert.equal(targetHudMatchup(action, { profile: { maneuver: 'smash' } }, null), 'neutral');
   assert.equal(targetHudMatchup(null, { profile: { maneuver: 'smash' } }, rules), 'neutral');
   assert.deepEqual(Object.keys(TARGET_HUD_AURA), ['advantage','neutral','disadvantage']);
+});
+
+test('three mobile detail groups fit at 390x844 without covering sprites or the hand', () => {
+  const config = JSON.parse(readFileSync(new URL('../content/config/ui/components/combatTargetHud.json', import.meta.url)));
+  const sizing = targetHudPanelSizing({ viewportWidth: 390, count: 3 }, config);
+  assert.equal(sizing.width, 145); assert.equal(sizing.font, 11);
+  assert.equal(targetHudPanelSizing({ viewportWidth: 390, count: 1 }, config).width, 198);
+  const sprites = [{ left: 22, top: 349, width: 90, height: 95 },
+    ...[66, 180, 294].map(left => ({ left, top: 148, width: 66, height: 81 }))];
+  const panels = sprites.slice(1).map((anchor, index) => ({ id: `e${index}`, role: 'enemy', lane: index, anchor, width: sizing.width + 25, height: 98 }));
+  const result = placeTargetHudPanels({ bounds: { left: 0, top: 100, width: 390, height: 460 }, panels, obstacles: sprites, config });
+  assert.equal(result.length, 3);
+  for (const panel of result) {
+    assert.ok(panel.left >= 0 && panel.left + panel.width <= 390);
+    assert.ok(panel.top >= 100 && panel.top + panel.height <= 560, 'detail stays above hand at 600px');
+    for (const sprite of sprites) assert.equal(targetHudOverlaps(panel, sprite), false, `${panel.id} covers sprite`);
+    for (const other of result) if (other !== panel) assert.equal(targetHudOverlaps(panel, other), false, `${panel.id}/${other.id}`);
+  }
+});
+
+test('empty legacy leading hosts do not block otherwise clear panel space', () => {
+  assert.equal(targetHudOverlaps({ left: 12, top: 267, width: 170, height: 80 }, { left: 2, top: 325, width: 130, height: 0 }), false);
+  assert.equal(targetHudOverlaps({ left: 12, top: 267, width: 170, height: 80 }, { left: 20, top: 290, width: 0, height: 100 }), false);
 });

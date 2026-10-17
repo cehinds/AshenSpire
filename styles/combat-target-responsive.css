@@ -84,3 +84,7 @@
 :root .combat[data-target-hud='true'] .combatant.enemy:not([data-matchup-active='true']) .sprite { filter:none!important; }
 :root .combat[data-target-hud='true'] .combatant.enemy:not([data-matchup-active='true']):is(.target-hud-selected,.target-hud-focused) .sprite { filter:drop-shadow(0 0 2px #f07870) drop-shadow(0 0 2px #f07870)!important; }
 :root .combat[data-target-hud='true'] .target-hud-detail[data-role='enemy'][data-matchup-active='false'] { --combat-matchup-color:#f07870!important; }
+
+:root .combat[data-target-hud='true'] .target-hud-detail[data-crowded='true'] .target-hud-panel {
+  padding:var(--target-hud-padding-block,.3em) var(--target-hud-padding-inline,.6em);
+}
