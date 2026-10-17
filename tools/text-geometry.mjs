@@ -29,11 +29,13 @@ if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
   const sourceCode = await doorSelftest({
     tool: 'text-geometry.mjs',
+    // Browser source copies need the same verified art as the real checkout.
+    extraCopy: ['assets', 'music', 'map-detail'],
     timeoutMs: 240000,
     plants: [
       {
         // The creation foot is the kit's ModalFoot now (customize.js on the page
-        // door), so the floor under BEGIN is the shell's one rule in kit.css.
+        // door), so the floor under the visible Next action is the shell's one rule in kit.css.
         name: 'the primary action floor follows root Text size again',
         file: 'styles/kit.css',
         find: '.modal-foot-actions button { min-height: var(--tap-floor); }',
@@ -42,9 +44,9 @@ if (process.argv.includes('--selftest')) {
       },
       {
         name: 'enemy sprite dimensions are emitted as rem again',
-        file: 'src/ui/assets.js',
-        find: 'const px = (value) => `${value}px`;',
-        replace: 'const px = (value) => `${value / 10}rem`;',
+        file: 'src/ui/enemyExpansionStage.js',
+        find: 'root.style.cssText = `position:relative;width:${art.idleWidth * scale}px;height:190px;flex:none;overflow:visible`;',
+        replace: 'root.style.cssText = `position:relative;width:${art.idleWidth * scale / 10}rem;height:19rem;flex:none;overflow:visible`;',
         expectRed: /enemy sprite geometry changed with Text size/,
       },
       {
@@ -54,10 +56,9 @@ if (process.argv.includes('--selftest')) {
         replace: "el.style.cssText = 'width:15rem;height:19rem;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:center;position:relative;';",
         expectRed: /class sprite geometry changed with Text size/,
       },
-      // The fighter used to have its own fixed-px box in playerSprite(); since
-      // AS-HD-040 a fight draws the class sprite, so the class-sprite plant
-      // above is the one that guards the combat figure too. A plant against a
-      // string that is no longer in the file can never turn red.
+      // Customization and combat use separate sprite stages now; the class
+      // plant above owns the customization figure, and combat bounds are also
+      // measured independently at each Text size.
       {
         // WHERE THE TOP-ROW BUTTON'S BOX LIVES NOW: it is the kit's IconButton
         // (styles/kit.css § IconButton), sized from `--iconbtn-size`, and the
@@ -107,26 +108,23 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'the shipped quick-nav row restores its rem-owned floor',
         file: 'AshenSpire.html',
-        find: '  min-height: var(--tap-floor); height: auto; padding: 0.6rem 1.6rem; text-align: left;',
-        replace: '  min-height: 4.4rem; height: auto; padding: 0.6rem 1.6rem; text-align: left;',
-        expectRed: /artifact ownership seam missing: min-height: var\(--tap-floor\); height: auto; padding: 0\.6rem 1\.6rem; text-align: left;/,
+        find: '.as-row {\n  display: flex; align-items: center; gap: 1.05rem;\n  width: 100%; min-height: var(--tap-floor);',
+        replace: '.as-row {\n  display: flex; align-items: center; gap: 1.05rem;\n  width: 100%; min-height: 4.4rem;',
+        expectRed: /artifact ownership seam missing: \.as-row/,
       },
       {
         name: 'the shipped overview switcher restores its rem-owned floor',
         file: 'AshenSpire.html',
-        // `8px` became `var(--r-3)` when the corner scale landed (styles/
-        // base.css). The plant's subject is the MIN-HEIGHT — the rem-owned
-        // floor this seam exists to catch — so only the neighbouring literal
-        // moved; the mutation and its assertion are unchanged.
-        find: '  min-height: var(--tap-floor); height: auto; padding: 0 1.6rem; border-radius: var(--r-3); cursor: pointer;',
-        replace: '  min-height: 4.4rem; height: auto; padding: 0 1.6rem; border-radius: var(--r-3); cursor: pointer;',
-        expectRed: /artifact ownership seam missing: min-height: var\(--tap-floor\); height: auto; padding: 0 1\.6rem;/,
+        // Overview subjects now use Kit tabs, whose floor owns the switcher.
+        find: '.as-tab, .modal-tab {\n  min-height: var(--tap-floor);',
+        replace: '.as-tab, .modal-tab {\n  min-height: 4.4rem;',
+        expectRed: /artifact ownership seam missing: \.as-tab/,
       },
       {
         name: 'the shipped Settings copy restores the broad non-text promise',
         file: 'AshenSpire.html',
-        find: '"full": "Scale interface text from the browser baseline. Auto follows the browser stylesheet; S/L/XL aid readability. Stacks with UI size."',
-        replace: '"full": "Scale interface text without resizing controls or artwork. M is default; L/XL aid readability. Stacks with UI size."',
+        find: '"full":"Scale interface text from the browser baseline. Auto follows the browser stylesheet; S/L/XL aid readability. Stacks with UI size."',
+        replace: '"full":"Scale interface text without resizing controls or artwork. M is default; L/XL aid readability. Stacks with UI size."',
         expectRed: /text size setting overclaims non-text stability/,
       },
     ],
@@ -227,7 +225,10 @@ async function main() {
     };
 
     const pageUrl = (params) => {
+      // This artwork geometry contract exercises Current's real class sprites;
+      // configured Core intentionally renders foundation stand-ins instead.
       const url = new URL(base);
+      url.searchParams.set('gameProfile', 'current');
       for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
       return url.href;
     };
@@ -242,15 +243,18 @@ async function main() {
       const viewport = `${width}x${height}`;
       rows[viewport] = {};
       for (const [key, value] of Object.entries(values)) {
-        await cdp.send('Page.navigate', { url: base }, sessionId);
-        await until(`!!([...document.querySelectorAll('button')].find((b) => /BEGIN A CLIMB/i.test(b.textContent)))`, `${viewport} Text ${key} title action`);
-        await evalIn(`[...document.querySelectorAll('button')].find((b) => /BEGIN A CLIMB/i.test(b.textContent)).click(); true`);
+        await cdp.send('Page.navigate', { url: pageUrl({ shot: 'title' }) }, sessionId);
+        await until(`!!document.querySelector('[data-title-action="new"]')`, `${viewport} Text ${key} title action`);
+        for (const action of ['new', 'modal-continue', 'review-new']) {
+          await until(`!!document.querySelector('[data-title-action="${action}"]')`, `${viewport} ${action} door`);
+          await evalIn(`document.querySelector('[data-title-action="${action}"]').click(); true`);
+        }
         await until(`!!document.querySelector('#cz-start') && !!document.querySelector('.class-sprite')`, `${viewport} Text ${key} customization geometry`);
         await evalIn(`document.documentElement.style.fontSize=${JSON.stringify(value)}; true`);
         await wait(650);
         const action = await evalIn(`(() => {
           const n = (v) => +Number(v).toFixed(2);
-          const action = document.querySelector('#cz-start');
+          const action = document.querySelector('#cz-next');
           const ar = action.getBoundingClientRect();
           const classSprite = document.querySelector('.class-sprite');
           const cr = classSprite.getBoundingClientRect();
@@ -270,8 +274,8 @@ async function main() {
           mkdirSync(dirname(path), { recursive: true });
           writeFileSync(path, Buffer.from(shot.data, 'base64'));
         }
-        await cdp.send('Page.navigate', { url: pageUrl({ shot: 'combat' }) }, sessionId);
-        await until(`!!document.querySelector('.combatant.enemy .sprite > :first-child') && !!document.querySelector('.combatant.player .sprite .class-sprite')`, `${viewport} Text ${key} combat sprites`);
+        await cdp.send('Page.navigate', { url: pageUrl({ shot: 'combat', shotClass: 'starseer' }) }, sessionId);
+        await until(`!!document.querySelector('.combatant.enemy .sprite > :first-child') && !!document.querySelector('.combatant.player .sprite > :first-child')`, `${viewport} Text ${key} combat sprites`);
         await evalIn(`document.documentElement.style.fontSize=${JSON.stringify(value)}; true`);
         await wait(300);
         const sprite = await evalIn(`(() => {
@@ -287,7 +291,7 @@ async function main() {
           };
           return {
             ...read('.combatant.enemy .sprite > :first-child', 'enemy'),
-            ...read('.combatant.player .sprite .class-sprite', 'player'),
+            ...read('.combatant.player .sprite > :first-child', 'player'),
           };
         })()`);
         rows[viewport][key] = { ...action, ...sprite };
@@ -325,30 +329,33 @@ async function main() {
     const selectedArtifact = artifact ? normalizeLines(readFileSync(artifact, 'utf8')) : null;
     const ownershipKind = selectedArtifact ? 'artifact' : 'source';
     const ui = selectedArtifact ?? normalizeLines(readFileSync(resolve(ROOT, 'styles/ui.css'), 'utf8'));
-    // Both seams this tool reads now live in the kit: the foot under BEGIN is
+    // Both seams this tool reads now live in the kit: the foot under Next is
     // the ModalFoot (creation moved onto the page door) and the top row's
     // buttons take their box from the IconButton atom. So the seam that used to
     // sit in ui.css is read from kit.css in source mode and from the artifact —
     // which inlines both — in artifact mode.
     const kit = selectedArtifact ?? normalizeLines(readFileSync(resolve(ROOT, 'styles/kit.css'), 'utf8'));
     const assets = selectedArtifact ?? readFileSync(resolve(ROOT, 'src/ui/assets.js'), 'utf8');
+    const enemyStage = selectedArtifact ?? readFileSync(resolve(ROOT, 'src/ui/enemyExpansionStage.js'), 'utf8');
     // The Text size row's note is the `full` form of settings.row.textSize in
     // content/source/uiStrings.csv (#1489 moved it out of settings.js); the
     // artifact carries the same sentence in its generated table.
     const settings = selectedArtifact ?? readFileSync(resolve(ROOT, 'content/source/uiStrings.csv'), 'utf8');
     if (!kit.includes('.modal-foot-actions button { min-height: var(--tap-floor); }')) failures.push(`${ownershipKind} ownership seam missing: .modal-foot-actions button { min-height: var(--tap-floor); }`);
+    // Quick-nav rows and overview tabs now share the Kit atoms. The legacy
+    // ui.css copies no longer own their floors.
     for (const seam of [
-      'min-height: var(--tap-floor); height: auto; padding: 0 1.6rem;',
-      'min-height: var(--tap-floor); height: auto; padding: 0.6rem 1.6rem; text-align: left;',
+      '.as-row {\n  display: flex; align-items: center; gap: 1.05rem;\n  width: 100%; min-height: var(--tap-floor);',
+      '.as-tab, .modal-tab {\n  min-height: var(--tap-floor);',
     ]) {
-      if (!ui.includes(seam)) failures.push(`${ownershipKind} ownership seam missing: ${seam}`);
+      if (!kit.includes(seam)) failures.push(`${ownershipKind} ownership seam missing: ${seam}`);
     }
     for (const seam of [
       '  width: var(--iconbtn-size); height: var(--iconbtn-size); flex: 0 0 auto;\n  min-width: var(--iconbtn-size); min-height: var(--iconbtn-size);',
     ]) {
       if (!kit.includes(seam)) failures.push(`${ownershipKind} ownership seam missing (kit): ${seam}`);
     }
-    if (!assets.includes('const px = (value) => `${value}px`;')) failures.push(`${ownershipKind} ownership seam missing: sprite px emitter`);
+    if (!enemyStage.includes('root.style.cssText = `position:relative;width:${art.idleWidth * scale}px;height:190px;flex:none;overflow:visible`;')) failures.push(`${ownershipKind} ownership seam missing: enemy sprite fixed px geometry`);
     if (!assets.includes("width:150px;height:190px;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:center;position:relative;")) failures.push(`${ownershipKind} ownership seam missing: class sprite fixed px geometry`);
     // #498: this pinned the pre-rework copy after the Text-size rework shipped
     // the browser-baseline wording in both settings.js and the built artifact,
@@ -372,6 +379,11 @@ async function main() {
         failures.push(`${viewport}: action floor changed with Text size: M ${M.actionMinH}px, XL ${XL.actionMinH}px`);
       }
       for (const [name, prefix] of [['class', 'class'], ['player', 'player'], ['enemy', 'enemy']]) {
+        for (const [size, measurement] of Object.entries({ M, XL })) {
+          if (!['W', 'H', 'CssW', 'CssH'].every((suffix) => Number.isFinite(measurement[`${prefix}${suffix}`]) && measurement[`${prefix}${suffix}`] > 0)) {
+            failures.push(`${viewport}: ${name} sprite has no measurable geometry at Text ${size}`);
+          }
+        }
         if (!close(M[`${prefix}W`], XL[`${prefix}W`]) || !close(M[`${prefix}H`], XL[`${prefix}H`])
           || !close(M[`${prefix}CssW`], XL[`${prefix}CssW`]) || !close(M[`${prefix}CssH`], XL[`${prefix}CssH`])) {
           failures.push(`${viewport}: ${name} sprite geometry changed with Text size: M rendered ${M[`${prefix}W`]}×${M[`${prefix}H`]}px / CSS ${M[`${prefix}CssW`]}×${M[`${prefix}CssH`]}px, XL rendered ${XL[`${prefix}W`]}×${XL[`${prefix}H`]}px / CSS ${XL[`${prefix}CssW`]}×${XL[`${prefix}CssH`]}px`);
