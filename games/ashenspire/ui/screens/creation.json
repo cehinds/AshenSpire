@@ -1,0 +1,62 @@
+{
+  "id": "creation",
+  "description": "Character creation. Mounted by src/ui/screens/customize.js (mountCustomize) with equipment.js for the armament step.",
+  "route": "creation",
+  "layout": {
+    "ref": "content/config/ui/screens/creation.json"
+  },
+  "viewModel": {
+    "props": {
+      "classId": "string",
+      "seed": "string"
+    }
+  },
+  "regions": [
+    {
+      "slot": "workspace",
+      "component": "workspace"
+    },
+    {
+      "slot": "rail",
+      "component": "categoryNav",
+      "props": {
+        "categories": "creation.flowCategories"
+      }
+    },
+    {
+      "slot": "head",
+      "component": "identity",
+      "props": {
+        "character": "$draft"
+      }
+    },
+    {
+      "slot": "preview",
+      "component": "card",
+      "props": {
+        "card": "$draft.startingHand",
+        "level": "creation"
+      }
+    },
+    {
+      "slot": "footer",
+      "component": "buttons",
+      "props": {
+        "items": [
+          "back",
+          "start"
+        ]
+      }
+    }
+  ],
+  "events": {
+    "back": "nav.back",
+    "start": "run.start",
+    "selectCategory": "nav.selectCategory",
+    "settings": "settings.open"
+  },
+  "assets": [
+    "portrait",
+    "card.art"
+  ]
+}
