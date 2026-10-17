@@ -140,7 +140,7 @@ export function slotOption({ slot, summary, selected = false, selectable = true,
  * → the <section class="modal"> for a slot list — LOAD GAME and NEW GAME wear
  * exactly this. The caller wraps it in its own veil and wires by delegation.
  */
-export function slotDoor({ eyebrow, title, closeLabel, rows, backLabel = 'Back', continueLabel = 'Continue', canContinue = false, actionSlot = null, backAction = 'back', className = '' }) {
+export function slotDoor({ eyebrow, title, closeLabel, rows, backLabel = t('common.back'), continueLabel = t('common.continue'), canContinue = false, actionSlot = null, backAction = 'back', className = '' }) {
   const head = modalHead({ eyebrow, title, titleId: 'title-modal-heading', closeLabel });
   const close = head.querySelector('.modal-close');
   close.classList.add('title-modal-close');

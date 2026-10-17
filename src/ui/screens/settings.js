@@ -451,7 +451,7 @@ const ROWS = [
   { cat: 'Advanced', advancedGroup: 'Rewards', key: 'useRestorativeFlasksOutsideCombat', def: true, label: t('settings.row.useRestorativeFlasksOutsideCombat'),
     note: tFull('settings.row.useRestorativeFlasksOutsideCombat') },
   { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victorySummaryMode', type: 'choice', def: 'continue',
-    choices: ['continue', 'anywhere', 'auto'], choiceLabels: { continue: 'Continue', anywhere: 'Click anywhere', auto: 'Expand automatically' },
+    choices: ['continue', 'anywhere', 'auto'], choiceLabels: { continue: t('common.continue'), anywhere: 'Click anywhere', auto: 'Expand automatically' },
     label: t('settings.row.victorySummaryMode'), note: tFull('settings.row.victorySummaryMode') },
   { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryReceiptSeconds', type: 'number', def: VICTORY_XP_DEFAULTS.seconds, min: 0, max: 12, step: 0.1,
     label: t('settings.row.victoryReceiptSeconds'), note: tFull('settings.row.victoryReceiptSeconds') },
@@ -521,7 +521,7 @@ const ROWS = [
   // built-in. 'Built-in', the old default, reads as Auto. A per-device key
   // (LOCAL_ONLY_KEYS, never synced): a folder here means nothing on another device.
   { cat: 'Display', key: ART_QUALITY_KEY, type: 'choice', def: ART_AUTO,
-    choices: ART_QUALITY_CHOICES, legacyChoices: LEGACY_ART_QUALITY, choiceDisabled: tierChoiceDisabled, describedBy: 'set-artQuality-tier',
+    choices: ART_QUALITY_CHOICES, choiceLabels: { [ART_AUTO]: t('settings.viewPreset.auto') }, legacyChoices: LEGACY_ART_QUALITY, choiceDisabled: tierChoiceDisabled, describedBy: 'set-artQuality-tier',
     label: t('settings.row.artQuality'), applied: artQualityHtml,
     note: tFull('settings.row.artQuality') },
   { cat: 'Display', key: CARD_ART_STYLE_KEY, type: 'choice', def: CARD_ART_SIMPLE,
@@ -532,7 +532,7 @@ const ROWS = [
     choiceLabels: Object.fromEntries(['auto', 'desktop', 'mobile', 'widescreen', 'tablet'].map(id => [id, t(`settings.viewPreset.${id}`)])),
     label: t('settings.row.viewPreset'), note: tFull('settings.row.viewPreset') },
   { cat: 'Display', key: 'uiScale', type: 'choice', def: 'Auto',
-    choices: ['Auto', 'S', 'M', 'L', 'XL'], label: t('settings.row.uiScale'), applied: appliedHtml,
+    choices: ['Auto', 'S', 'M', 'L', 'XL'], choiceLabels: { Auto: t('settings.viewPreset.auto') }, label: t('settings.row.uiScale'), applied: appliedHtml,
     note: tFull('settings.row.uiScale') },
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'cardMotif', type: 'choice', def: UI_DEFAULTS.cardMotif,
     choices: UI_DEFAULTS.cardMotifModes, label: t('settings.row.cardMotif'),
@@ -643,7 +643,7 @@ const ROWS = [
   { cat: 'Accessibility', key: 'highContrast', def: true, label: t('settings.row.highContrast'),
     note: tFull('settings.row.highContrast') },
   { cat: 'Accessibility', key: 'textSize', type: 'choice', def: 'Auto',
-    choices: ['Auto', 'S', 'L', 'XL'], label: t('settings.row.textSize'),
+    choices: ['Auto', 'S', 'L', 'XL'], choiceLabels: { Auto: t('settings.viewPreset.auto') }, label: t('settings.row.textSize'),
     note: tFull('settings.row.textSize') },
   // Constantine, twice: "just make the tabs about 20% smaller or the size
   // configurable or scalable with UI or both", then "actually, I think it

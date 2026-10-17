@@ -149,9 +149,9 @@ export function resourceStrip(rows, poise, { compact = false } = {}) {
 export function viewModeToggle(value, onChoose, label = 'View choices') {
   const group = segmented({
     options: ['list', 'grid'].map((mode) => ({
-      label: mode === 'list' ? 'List' : 'Grid', value: mode, pressed: value === mode,
+      label: t(`creation.view.${mode}Label`), value: mode, pressed: value === mode,
       className: 'cc-view-option',
-      attrs: { dataset: { viewMode: mode }, 'aria-label': `${mode === 'list' ? 'List' : 'Grid'} view` },
+      attrs: { dataset: { viewMode: mode }, 'aria-label': t(`creation.view.${mode}`) },
     })),
     attrs: { class: 'cc-view-toggle', role: 'group', 'aria-label': label },
   });

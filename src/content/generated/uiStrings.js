@@ -10830,5 +10830,103 @@ export const uiStrings = [
     "short": "Defend",
     "full": "",
     "tip": ""
+  },
+  {
+    "id": "common.choose",
+    "extends": "",
+    "short": "Choose",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "common.chooseNamed",
+    "extends": "",
+    "short": "Choose {name}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "cardChoice.stanceTitle",
+    "extends": "",
+    "short": "Choose a stance",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "mastery.treeAria",
+    "extends": "",
+    "short": "Choose {name} class tree node",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.view.gridLabel",
+    "extends": "",
+    "short": "Grid",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.view.listLabel",
+    "extends": "",
+    "short": "List",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.chooseRank",
+    "extends": "",
+    "short": "Choose {name}, rank {rank}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.chooseSection",
+    "extends": "",
+    "short": "Choose {name}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "event.defaultOption",
+    "extends": "",
+    "short": "this event option",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "lobby.ready",
+    "extends": "",
+    "short": "Ready",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "lobby.beginWaiting",
+    "extends": "",
+    "short": "Begin the climb (waiting for ready)",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "sceneEditor.grid",
+    "extends": "",
+    "short": "Grid",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.view.grid",
+    "extends": "",
+    "short": "Grid view",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.view.list",
+    "extends": "",
+    "short": "List view",
+    "full": "",
+    "tip": ""
   }
 ];
