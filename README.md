@@ -3,7 +3,7 @@
 <!-- feature-preview:start -->
 ## Feature preview — Module Browser Compatibility
 
-[Feature build — publication pending](https://cehinds.github.io/AshenSpire/branches/fix/ModuleBrowserCompatibility/latest/) · [Capture details](docs/preview/features/module-browser-compatibility/README.md).
+[Play this feature build](https://cehinds.github.io/AshenSpire/branches/fix/ModuleBrowserCompatibility/latest/) · [Capture details](docs/preview/features/module-browser-compatibility/README.md).
 
 This consolidated follow-up includes module browser compatibility work and a co-op HUD top-band correction. These local screenshots show the co-op fixture only; the host snapshot and transport are canned, and placeholder seats have no player appearance. They do not show a live co-op connection or public-route gameplay.
 

@@ -59,7 +59,7 @@
     }
   },
   "finalArtifactIdentity": {
-    "status": "artifact verified; public-route verification pending",
+    "status": "artifact verified; public-route identity verified read-only",
     "runtimeSourceCommit": "c9eecc45d8641ccfaa132777715b0ba4ef7c3aa1",
     "artifactId": 12115253921,
     "artifactUrl": "https://github.com/cehinds/AshenSpire/actions/runs/39071922844/artifacts/12115253921",
@@ -74,11 +74,24 @@
   },
   "expectedFeatureUrl": "https://cehinds.github.io/AshenSpire/branches/fix/ModuleBrowserCompatibility/latest/",
   "publicRouteVerification": {
-    "status": "pending",
+    "status": "verified read-only",
     "url": "https://cehinds.github.io/AshenSpire/branches/fix/ModuleBrowserCompatibility/latest/",
-    "note": "Artifact identity is verified, but the public Pages route has not yet been verified read-only."
+    "checkedAt": "2026-10-17T22:05:47.145Z",
+    "workflowRunId": 39073305472,
+    "attempt": 2,
+    "workflowJobId": 117516200345,
+    "runtimeSourceCommit": "c9eecc45d8641ccfaa132777715b0ba4ef7c3aa1",
+    "normalAndCacheBustedIndexStatus": 200,
+    "normalAndCacheBustedBuildStatus": 200,
+    "buildContentType": "text/plain",
+    "sourceDigest": "cf58726889",
+    "ordinal": 1554,
+    "release": "0.7.1",
+    "wrapperLoaderPayloadHead": "passed trusted checker",
+    "payloadCharacters": 80777943,
+    "scope": "Publication and payload identity only; no hosted browser execution or live co-op demonstrated."
   },
-  "verificationScope": "Future public proof should establish publication and payload identity. The screenshots and 6/6 browser probe are local/source evidence; no live co-op connection is demonstrated.",
+  "verificationScope": "Read-only public proof establishes publication and payload identity. Screenshots and 6/6 browser probe are local/source evidence; no hosted browser execution or live co-op connection is demonstrated.",
   "permanentCaptureReadme": "docs/preview/modules/animation/browser-followup/CAPTURE.md",
   "releaseGalleryVerification": {
     "status": "verified",
