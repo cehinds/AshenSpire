@@ -40,13 +40,13 @@
   "tiers": {
     "minion": {
       "attributeBudget": [
-        4,
-        4
+        2,
+        2
       ],
       "pools": {
         "hp": 10,
         "sp": 2,
-        "mp": 0
+        "mp": 1
       },
       "hand": 2,
       "deckSize": [
@@ -56,8 +56,8 @@
     },
     "elite": {
       "attributeBudget": [
-        5,
-        5
+        4,
+        4
       ],
       "pools": {
         "hp": 10,
@@ -73,7 +73,7 @@
     "boss": {
       "attributeBudget": [
         6,
-        7
+        6
       ],
       "pools": {
         "hp": 10,

@@ -29,10 +29,10 @@ test('core profile enables the enemies module with its JSON defaults', () => {
   assert.equal(settings.healRules.shapes.find(s => s.id === 'cheap').exhaust, true);
 });
 
-test('attributes start at 0 and are assigned freely: minion 4, elite 5, boss 6-7 points', () => {
+test('attributes start at 0 and are assigned freely: minion 2, elite 4, boss 6 points', () => {
   const total = e => Object.values(e.attributes).reduce((a, b) => a + b, 0);
   for (const e of enemies) {
-    const [lo, hi] = { minion: [4, 4], elite: [5, 5], boss: [6, 7] }[e.tier];
+    const [lo, hi] = { minion: [2, 2], elite: [4, 4], boss: [6, 6] }[e.tier];
     assert.ok(total(e) >= lo && total(e) <= hi, `${e.id} (${e.tier}) assigns ${total(e)}`);
     assert.deepEqual(settings.tiers[e.tier].attributeBudget, [lo, hi]);
   }

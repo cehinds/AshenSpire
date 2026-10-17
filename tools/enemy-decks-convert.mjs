@@ -36,11 +36,11 @@ function tierOf(id) {
   return tier;
 }
 
-// Attribute points (owner 2026-10-17): minion 4, elite 5, boss 6-7 (7 for bosses whose legacy stat block totals 25+).
+// Attribute points (owner 2026-10-17): minion 2, elite 4, boss 6.
 const PLAN = {
-  minion: { budget: () => 4, deck: 6 },
-  elite: { budget: () => 5, deck: 8 },
-  boss: { budget: enemy => (Object.values(enemy.attributes || {}).reduce((a, b) => a + b, 0) >= 25 ? 7 : 6), deck: 10 },
+  minion: { budget: () => 2, deck: 6 },
+  elite: { budget: () => 4, deck: 8 },
+  boss: { budget: () => 6, deck: 10 },
 };
 const ATTRS = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
 

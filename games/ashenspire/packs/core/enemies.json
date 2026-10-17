@@ -4,10 +4,10 @@
     "name": "Wandering Soldier",
     "tier": "minion",
     "attributes": {
-      "strength": 0,
+      "strength": 1,
       "dexterity": 1,
-      "constitution": 1,
-      "wisdom": 2,
+      "constitution": 0,
+      "wisdom": 0,
       "intelligence": 0
     },
     "deck": [
@@ -21,7 +21,9 @@
     "gear": [
       "enemy.gear.hide"
     ],
-    "relics": [],
+    "relics": [
+      "enemy.relic.graveSeal"
+    ],
     "poiseMax": 10,
     "levelProfile": {
       "min": 1,
@@ -49,9 +51,9 @@
     "tier": "minion",
     "attributes": {
       "strength": 1,
-      "dexterity": 2,
+      "dexterity": 1,
       "constitution": 0,
-      "wisdom": 1,
+      "wisdom": 0,
       "intelligence": 0
     },
     "deck": [
@@ -82,10 +84,10 @@
     "name": "Husk Brute",
     "tier": "minion",
     "attributes": {
-      "strength": 0,
+      "strength": 1,
       "dexterity": 1,
-      "constitution": 1,
-      "wisdom": 2,
+      "constitution": 0,
+      "wisdom": 0,
       "intelligence": 0
     },
     "deck": [
@@ -96,7 +98,9 @@
       "huskBrute.brace",
       "huskBrute.brace"
     ],
-    "gear": [],
+    "gear": [
+      "enemy.gear.heavyPlate"
+    ],
     "relics": [],
     "poiseMax": 16,
     "levelProfile": {
@@ -111,11 +115,11 @@
     "name": "Grave Wisp",
     "tier": "minion",
     "attributes": {
-      "strength": 1,
-      "dexterity": 1,
+      "strength": 0,
+      "dexterity": 0,
       "constitution": 0,
-      "wisdom": 2,
-      "intelligence": 0
+      "wisdom": 1,
+      "intelligence": 1
     },
     "deck": [
       "graveWisp.curse",
@@ -143,7 +147,7 @@
     "name": "Wyrm Aspirant",
     "tier": "elite",
     "attributes": {
-      "strength": 1,
+      "strength": 0,
       "dexterity": 1,
       "constitution": 1,
       "wisdom": 2,
@@ -253,11 +257,11 @@
     "name": "Lantern Moth",
     "tier": "minion",
     "attributes": {
-      "strength": 1,
-      "dexterity": 1,
+      "strength": 0,
+      "dexterity": 0,
       "constitution": 0,
-      "wisdom": 2,
-      "intelligence": 0
+      "wisdom": 1,
+      "intelligence": 1
     },
     "deck": [
       "lanternMoth.lanternDust",
@@ -286,9 +290,9 @@
     "tier": "minion",
     "attributes": {
       "strength": 1,
-      "dexterity": 1,
+      "dexterity": 0,
       "constitution": 0,
-      "wisdom": 2,
+      "wisdom": 1,
       "intelligence": 0
     },
     "deck": [
@@ -320,9 +324,9 @@
     "name": "Chain Scavenger",
     "tier": "minion",
     "attributes": {
-      "strength": 2,
+      "strength": 1,
       "dexterity": 1,
-      "constitution": 1,
+      "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
@@ -334,7 +338,9 @@
       "chainScavenger.chainSnare",
       "chainScavenger.draggingBlow"
     ],
-    "gear": [],
+    "gear": [
+      "enemy.gear.heavyPlate"
+    ],
     "relics": [],
     "poiseMax": 8,
     "levelProfile": {
@@ -352,7 +358,7 @@
     "attributes": {
       "strength": 4,
       "dexterity": 1,
-      "constitution": 1,
+      "constitution": 0,
       "wisdom": 1,
       "intelligence": 0
     },
@@ -373,11 +379,11 @@
     ],
     "firstCard": "bellKeeper.bronzeToll",
     "gear": [
-      "enemy.gear.mail",
-      "enemy.gear.ironTalisman"
+      "enemy.gear.plating"
     ],
     "relics": [
-      "enemy.relic.ashenCore"
+      "enemy.relic.ashenCore",
+      "enemy.relic.titanHeart"
     ],
     "poiseMax": 25,
     "levelProfile": {
@@ -461,9 +467,9 @@
     "name": "Gilded Knight",
     "tier": "minion",
     "attributes": {
-      "strength": 2,
+      "strength": 1,
       "dexterity": 1,
-      "constitution": 1,
+      "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
@@ -478,7 +484,9 @@
     "gear": [
       "enemy.gear.hide"
     ],
-    "relics": [],
+    "relics": [
+      "enemy.relic.graveSeal"
+    ],
     "poiseMax": 18,
     "levelProfile": {
       "min": 6,
@@ -493,8 +501,8 @@
     "name": "Court Surgeon",
     "tier": "minion",
     "attributes": {
-      "strength": 1,
-      "dexterity": 1,
+      "strength": 0,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 1,
       "intelligence": 1
@@ -525,7 +533,7 @@
     "name": "Stitched Hound",
     "tier": "minion",
     "attributes": {
-      "strength": 3,
+      "strength": 1,
       "dexterity": 1,
       "constitution": 0,
       "wisdom": 0,
@@ -558,7 +566,7 @@
     "name": "Court Marionette",
     "tier": "minion",
     "attributes": {
-      "strength": 3,
+      "strength": 1,
       "dexterity": 1,
       "constitution": 0,
       "wisdom": 0,
@@ -588,7 +596,7 @@
     "name": "Living Armor",
     "tier": "minion",
     "attributes": {
-      "strength": 3,
+      "strength": 1,
       "dexterity": 1,
       "constitution": 0,
       "wisdom": 0,
@@ -622,7 +630,7 @@
     "name": "Duelist of the Court",
     "tier": "elite",
     "attributes": {
-      "strength": 3,
+      "strength": 2,
       "dexterity": 1,
       "constitution": 1,
       "wisdom": 0,
@@ -727,8 +735,8 @@
     "name": "Mirror Scribe",
     "tier": "minion",
     "attributes": {
-      "strength": 1,
-      "dexterity": 1,
+      "strength": 0,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 1,
       "intelligence": 1
@@ -759,7 +767,7 @@
     "name": "Stitch Crab",
     "tier": "minion",
     "attributes": {
-      "strength": 3,
+      "strength": 1,
       "dexterity": 1,
       "constitution": 0,
       "wisdom": 0,
@@ -902,7 +910,7 @@
     "name": "Ash Revenant",
     "tier": "minion",
     "attributes": {
-      "strength": 3,
+      "strength": 1,
       "dexterity": 1,
       "constitution": 0,
       "wisdom": 0,
@@ -934,7 +942,7 @@
     "name": "Ember-Starved Pilgrim",
     "tier": "minion",
     "attributes": {
-      "strength": 3,
+      "strength": 1,
       "dexterity": 1,
       "constitution": 0,
       "wisdom": 0,
@@ -964,7 +972,7 @@
     "name": "Valkyrie Shade",
     "tier": "minion",
     "attributes": {
-      "strength": 3,
+      "strength": 1,
       "dexterity": 1,
       "constitution": 0,
       "wisdom": 0,
@@ -996,9 +1004,9 @@
     "name": "Charred Colossus",
     "tier": "minion",
     "attributes": {
-      "strength": 2,
+      "strength": 1,
       "dexterity": 1,
-      "constitution": 1,
+      "constitution": 0,
       "wisdom": 0,
       "intelligence": 0
     },
@@ -1010,7 +1018,9 @@
       "charredColossus.harden",
       "charredColossus.harden"
     ],
-    "gear": [],
+    "gear": [
+      "enemy.gear.heavyPlate"
+    ],
     "relics": [],
     "poiseMax": 30,
     "levelProfile": {
@@ -1029,7 +1039,7 @@
     "name": "Wyrm Lord",
     "tier": "elite",
     "attributes": {
-      "strength": 3,
+      "strength": 2,
       "dexterity": 1,
       "constitution": 1,
       "wisdom": 0,
@@ -1068,7 +1078,7 @@
     "attributes": {
       "strength": 2,
       "dexterity": 1,
-      "constitution": 1,
+      "constitution": 0,
       "wisdom": 2,
       "intelligence": 1
     },
@@ -1093,8 +1103,7 @@
     ],
     "relics": [
       "enemy.relic.abyssalCrown",
-      "enemy.relic.ashenCore",
-      "enemy.relic.graveSeal"
+      "enemy.relic.abyssalCrown"
     ],
     "poiseMax": 36,
     "levelProfile": {
@@ -1148,7 +1157,7 @@
     "name": "Cinder Mantis",
     "tier": "minion",
     "attributes": {
-      "strength": 3,
+      "strength": 1,
       "dexterity": 1,
       "constitution": 0,
       "wisdom": 0,
@@ -1180,8 +1189,8 @@
     "name": "Eclipse Cantor",
     "tier": "minion",
     "attributes": {
-      "strength": 1,
-      "dexterity": 1,
+      "strength": 0,
+      "dexterity": 0,
       "constitution": 0,
       "wisdom": 1,
       "intelligence": 1
@@ -1318,7 +1327,7 @@
     "attributes": {
       "strength": 4,
       "dexterity": 1,
-      "constitution": 1,
+      "constitution": 0,
       "wisdom": 1,
       "intelligence": 0
     },
@@ -1338,12 +1347,10 @@
       "ashheartDragon.ashBreath"
     ],
     "firstCard": "ashheartDragon.obsidianClaws",
-    "gear": [
-      "enemy.gear.heavyPlate"
-    ],
+    "gear": [],
     "relics": [
       "enemy.relic.abyssalCrown",
-      "enemy.relic.ashenCore"
+      "enemy.relic.abyssalCrown"
     ],
     "poiseMax": 34,
     "levelProfile": {

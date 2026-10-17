@@ -994,13 +994,13 @@ export const gameProfileCatalog = {
         "tiers": {
           "minion": {
             "attributeBudget": [
-              4,
-              4
+              2,
+              2
             ],
             "pools": {
               "hp": 10,
               "sp": 2,
-              "mp": 0
+              "mp": 1
             },
             "hand": 2,
             "deckSize": [
@@ -1010,8 +1010,8 @@ export const gameProfileCatalog = {
           },
           "elite": {
             "attributeBudget": [
-              5,
-              5
+              4,
+              4
             ],
             "pools": {
               "hp": 10,
@@ -1027,7 +1027,7 @@ export const gameProfileCatalog = {
           "boss": {
             "attributeBudget": [
               6,
-              7
+              6
             ],
             "pools": {
               "hp": 10,
@@ -1547,7 +1547,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/enemies/defaults.json",
           "id": "enemies",
           "version": "1.0.0",
-          "hash": "sha256:3a171dca4b02ab54ed3c1b512bf87bd0f251c8614de9124a3f4cc096776da59c"
+          "hash": "sha256:859ede645383e4dc80d71e646b7efcafa389afc02a595259512b8a79196e4d88"
         },
         {
           "path": "engine/modules/enemies/settings.schema.json",
@@ -4295,10 +4295,10 @@ export const gameProfileCatalog = {
             "name": "Wandering Soldier",
             "tier": "minion",
             "attributes": {
-              "strength": 0,
+              "strength": 1,
               "dexterity": 1,
-              "constitution": 1,
-              "wisdom": 2,
+              "constitution": 0,
+              "wisdom": 0,
               "intelligence": 0
             },
             "deck": [
@@ -4312,7 +4312,9 @@ export const gameProfileCatalog = {
             "gear": [
               "enemy.gear.hide"
             ],
-            "relics": [],
+            "relics": [
+              "enemy.relic.graveSeal"
+            ],
             "poiseMax": 10,
             "levelProfile": {
               "min": 1,
@@ -4340,9 +4342,9 @@ export const gameProfileCatalog = {
             "tier": "minion",
             "attributes": {
               "strength": 1,
-              "dexterity": 2,
+              "dexterity": 1,
               "constitution": 0,
-              "wisdom": 1,
+              "wisdom": 0,
               "intelligence": 0
             },
             "deck": [
@@ -4373,10 +4375,10 @@ export const gameProfileCatalog = {
             "name": "Husk Brute",
             "tier": "minion",
             "attributes": {
-              "strength": 0,
+              "strength": 1,
               "dexterity": 1,
-              "constitution": 1,
-              "wisdom": 2,
+              "constitution": 0,
+              "wisdom": 0,
               "intelligence": 0
             },
             "deck": [
@@ -4387,7 +4389,9 @@ export const gameProfileCatalog = {
               "huskBrute.brace",
               "huskBrute.brace"
             ],
-            "gear": [],
+            "gear": [
+              "enemy.gear.heavyPlate"
+            ],
             "relics": [],
             "poiseMax": 16,
             "levelProfile": {
@@ -4402,11 +4406,11 @@ export const gameProfileCatalog = {
             "name": "Grave Wisp",
             "tier": "minion",
             "attributes": {
-              "strength": 1,
-              "dexterity": 1,
+              "strength": 0,
+              "dexterity": 0,
               "constitution": 0,
-              "wisdom": 2,
-              "intelligence": 0
+              "wisdom": 1,
+              "intelligence": 1
             },
             "deck": [
               "graveWisp.curse",
@@ -4434,7 +4438,7 @@ export const gameProfileCatalog = {
             "name": "Wyrm Aspirant",
             "tier": "elite",
             "attributes": {
-              "strength": 1,
+              "strength": 0,
               "dexterity": 1,
               "constitution": 1,
               "wisdom": 2,
@@ -4544,11 +4548,11 @@ export const gameProfileCatalog = {
             "name": "Lantern Moth",
             "tier": "minion",
             "attributes": {
-              "strength": 1,
-              "dexterity": 1,
+              "strength": 0,
+              "dexterity": 0,
               "constitution": 0,
-              "wisdom": 2,
-              "intelligence": 0
+              "wisdom": 1,
+              "intelligence": 1
             },
             "deck": [
               "lanternMoth.lanternDust",
@@ -4577,9 +4581,9 @@ export const gameProfileCatalog = {
             "tier": "minion",
             "attributes": {
               "strength": 1,
-              "dexterity": 1,
+              "dexterity": 0,
               "constitution": 0,
-              "wisdom": 2,
+              "wisdom": 1,
               "intelligence": 0
             },
             "deck": [
@@ -4611,9 +4615,9 @@ export const gameProfileCatalog = {
             "name": "Chain Scavenger",
             "tier": "minion",
             "attributes": {
-              "strength": 2,
+              "strength": 1,
               "dexterity": 1,
-              "constitution": 1,
+              "constitution": 0,
               "wisdom": 0,
               "intelligence": 0
             },
@@ -4625,7 +4629,9 @@ export const gameProfileCatalog = {
               "chainScavenger.chainSnare",
               "chainScavenger.draggingBlow"
             ],
-            "gear": [],
+            "gear": [
+              "enemy.gear.heavyPlate"
+            ],
             "relics": [],
             "poiseMax": 8,
             "levelProfile": {
@@ -4643,7 +4649,7 @@ export const gameProfileCatalog = {
             "attributes": {
               "strength": 4,
               "dexterity": 1,
-              "constitution": 1,
+              "constitution": 0,
               "wisdom": 1,
               "intelligence": 0
             },
@@ -4664,11 +4670,11 @@ export const gameProfileCatalog = {
             ],
             "firstCard": "bellKeeper.bronzeToll",
             "gear": [
-              "enemy.gear.mail",
-              "enemy.gear.ironTalisman"
+              "enemy.gear.plating"
             ],
             "relics": [
-              "enemy.relic.ashenCore"
+              "enemy.relic.ashenCore",
+              "enemy.relic.titanHeart"
             ],
             "poiseMax": 25,
             "levelProfile": {
@@ -4752,9 +4758,9 @@ export const gameProfileCatalog = {
             "name": "Gilded Knight",
             "tier": "minion",
             "attributes": {
-              "strength": 2,
+              "strength": 1,
               "dexterity": 1,
-              "constitution": 1,
+              "constitution": 0,
               "wisdom": 0,
               "intelligence": 0
             },
@@ -4769,7 +4775,9 @@ export const gameProfileCatalog = {
             "gear": [
               "enemy.gear.hide"
             ],
-            "relics": [],
+            "relics": [
+              "enemy.relic.graveSeal"
+            ],
             "poiseMax": 18,
             "levelProfile": {
               "min": 6,
@@ -4784,8 +4792,8 @@ export const gameProfileCatalog = {
             "name": "Court Surgeon",
             "tier": "minion",
             "attributes": {
-              "strength": 1,
-              "dexterity": 1,
+              "strength": 0,
+              "dexterity": 0,
               "constitution": 0,
               "wisdom": 1,
               "intelligence": 1
@@ -4816,7 +4824,7 @@ export const gameProfileCatalog = {
             "name": "Stitched Hound",
             "tier": "minion",
             "attributes": {
-              "strength": 3,
+              "strength": 1,
               "dexterity": 1,
               "constitution": 0,
               "wisdom": 0,
@@ -4849,7 +4857,7 @@ export const gameProfileCatalog = {
             "name": "Court Marionette",
             "tier": "minion",
             "attributes": {
-              "strength": 3,
+              "strength": 1,
               "dexterity": 1,
               "constitution": 0,
               "wisdom": 0,
@@ -4879,7 +4887,7 @@ export const gameProfileCatalog = {
             "name": "Living Armor",
             "tier": "minion",
             "attributes": {
-              "strength": 3,
+              "strength": 1,
               "dexterity": 1,
               "constitution": 0,
               "wisdom": 0,
@@ -4913,7 +4921,7 @@ export const gameProfileCatalog = {
             "name": "Duelist of the Court",
             "tier": "elite",
             "attributes": {
-              "strength": 3,
+              "strength": 2,
               "dexterity": 1,
               "constitution": 1,
               "wisdom": 0,
@@ -5018,8 +5026,8 @@ export const gameProfileCatalog = {
             "name": "Mirror Scribe",
             "tier": "minion",
             "attributes": {
-              "strength": 1,
-              "dexterity": 1,
+              "strength": 0,
+              "dexterity": 0,
               "constitution": 0,
               "wisdom": 1,
               "intelligence": 1
@@ -5050,7 +5058,7 @@ export const gameProfileCatalog = {
             "name": "Stitch Crab",
             "tier": "minion",
             "attributes": {
-              "strength": 3,
+              "strength": 1,
               "dexterity": 1,
               "constitution": 0,
               "wisdom": 0,
@@ -5193,7 +5201,7 @@ export const gameProfileCatalog = {
             "name": "Ash Revenant",
             "tier": "minion",
             "attributes": {
-              "strength": 3,
+              "strength": 1,
               "dexterity": 1,
               "constitution": 0,
               "wisdom": 0,
@@ -5225,7 +5233,7 @@ export const gameProfileCatalog = {
             "name": "Ember-Starved Pilgrim",
             "tier": "minion",
             "attributes": {
-              "strength": 3,
+              "strength": 1,
               "dexterity": 1,
               "constitution": 0,
               "wisdom": 0,
@@ -5255,7 +5263,7 @@ export const gameProfileCatalog = {
             "name": "Valkyrie Shade",
             "tier": "minion",
             "attributes": {
-              "strength": 3,
+              "strength": 1,
               "dexterity": 1,
               "constitution": 0,
               "wisdom": 0,
@@ -5287,9 +5295,9 @@ export const gameProfileCatalog = {
             "name": "Charred Colossus",
             "tier": "minion",
             "attributes": {
-              "strength": 2,
+              "strength": 1,
               "dexterity": 1,
-              "constitution": 1,
+              "constitution": 0,
               "wisdom": 0,
               "intelligence": 0
             },
@@ -5301,7 +5309,9 @@ export const gameProfileCatalog = {
               "charredColossus.harden",
               "charredColossus.harden"
             ],
-            "gear": [],
+            "gear": [
+              "enemy.gear.heavyPlate"
+            ],
             "relics": [],
             "poiseMax": 30,
             "levelProfile": {
@@ -5320,7 +5330,7 @@ export const gameProfileCatalog = {
             "name": "Wyrm Lord",
             "tier": "elite",
             "attributes": {
-              "strength": 3,
+              "strength": 2,
               "dexterity": 1,
               "constitution": 1,
               "wisdom": 0,
@@ -5359,7 +5369,7 @@ export const gameProfileCatalog = {
             "attributes": {
               "strength": 2,
               "dexterity": 1,
-              "constitution": 1,
+              "constitution": 0,
               "wisdom": 2,
               "intelligence": 1
             },
@@ -5384,8 +5394,7 @@ export const gameProfileCatalog = {
             ],
             "relics": [
               "enemy.relic.abyssalCrown",
-              "enemy.relic.ashenCore",
-              "enemy.relic.graveSeal"
+              "enemy.relic.abyssalCrown"
             ],
             "poiseMax": 36,
             "levelProfile": {
@@ -5439,7 +5448,7 @@ export const gameProfileCatalog = {
             "name": "Cinder Mantis",
             "tier": "minion",
             "attributes": {
-              "strength": 3,
+              "strength": 1,
               "dexterity": 1,
               "constitution": 0,
               "wisdom": 0,
@@ -5471,8 +5480,8 @@ export const gameProfileCatalog = {
             "name": "Eclipse Cantor",
             "tier": "minion",
             "attributes": {
-              "strength": 1,
-              "dexterity": 1,
+              "strength": 0,
+              "dexterity": 0,
               "constitution": 0,
               "wisdom": 1,
               "intelligence": 1
@@ -5609,7 +5618,7 @@ export const gameProfileCatalog = {
             "attributes": {
               "strength": 4,
               "dexterity": 1,
-              "constitution": 1,
+              "constitution": 0,
               "wisdom": 1,
               "intelligence": 0
             },
@@ -5629,12 +5638,10 @@ export const gameProfileCatalog = {
               "ashheartDragon.ashBreath"
             ],
             "firstCard": "ashheartDragon.obsidianClaws",
-            "gear": [
-              "enemy.gear.heavyPlate"
-            ],
+            "gear": [],
             "relics": [
               "enemy.relic.abyssalCrown",
-              "enemy.relic.ashenCore"
+              "enemy.relic.abyssalCrown"
             ],
             "poiseMax": 34,
             "levelProfile": {
@@ -8849,7 +8856,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/enemies.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:f511b876c50e205fb291992b8c239af0bfc05e85dec712df4bdf7a7bbdf7f38c"
+          "hash": "sha256:062ac35ef8ac9c174e10c350a16c716f24aed315a303378a0eee29410336f668"
         },
         {
           "path": "games/ashenspire/packs/core/enemyCards.json",
