@@ -1,10 +1,11 @@
 import { t } from '../strings.js';
 import { setCombatantTargetHud } from './combatantFrame.js';
-import { targetHudConfig, targetHudEnabled, targetHudPanelSizing, placeTargetHudPanels, createTargetHudDwell } from '../models/TargetHudModel.js';
+import { targetHudConfig, targetHudEnabled, targetHudPanelSizing, targetBodyHudPlacement, placeTargetHudPanels, createTargetHudDwell } from '../models/TargetHudModel.js';
 import { classicAppearance } from '../displayAppearance.js';
 import { combatIntentPresentation } from '../models/CombatIntentModel.js';
 import { attachTooltip, esc, hideTooltip } from './tooltip.js';
 import { combatantInfo, intentParts } from './combatantOverhead.js';
+import { currentSpriteBodyBounds } from './combatSpriteGeometry.js';
 import { anchorLocalBox } from '../fx.js';
 import { reducedMotionRequested } from '../motion.js';
 
@@ -174,10 +175,11 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     const frames = [...field.querySelectorAll('.combatant:not(.dead)')];
     const sprites = frames.map(frame => ({ id: frame.dataset.eid, ...rect(frame.querySelector('.sprite')) }));
     for (const frame of frames) {
-      const spriteBox = rect(frame.querySelector('.sprite')), frameBox = rect(frame);
+      const body = currentSpriteBodyBounds(frame.querySelector('.sprite'), scheduleGeometry);
       const intentHeight = frame.querySelector(':scope > .target-hud-overhead-meters > :is(.intent,.player-action-intent)')?.getBoundingClientRect().height || 37;
-      frame.style.setProperty('--combat-selected-intent-top', `${(spriteBox.top - frameBox.top - intentHeight - 5) / zoom}px`);
-      frame.style.setProperty('--combat-selected-intent-center', `${(spriteBox.left + spriteBox.width / 2 - frameBox.left) / zoom}px`);
+      const placement = targetBodyHudPlacement({ body, frame: rect(frame), intentHeight, zoom });
+      frame.style.setProperty('--combat-selected-intent-top', `${placement.selectedTop}px`);
+      frame.style.setProperty('--combat-selected-intent-center', `${placement.center}px`);
     }
     const obstacles = [...sprites, ...frames.map(frame => frame.querySelector('.combatant-leading')).filter(Boolean).map(rect),
       ...combat.querySelectorAll(':scope > .topbar, .combat-hud, .combat-tools, .combat-action-row, .turn-ribbon, .hand .card')].map(value => value?.nodeType ? rect(value) : value);
