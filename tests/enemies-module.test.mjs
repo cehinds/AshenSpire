@@ -51,13 +51,14 @@ test('CON stays small (at most 1) and every enemy can pay its dearest card', () 
   }
 });
 
-test('HP is 10 + 20 per CON, plus the level term; SP/MP/AR/DR/hand follow the existing stat rows', () => {
-  assert.equal(settings.statRules.hp.constitution, 20);
+test('HP is 10 + CON 10 / STR 5 / DEX 3 / WIS 2 / INT 2 per point + 5 per level, plus the level term; SP/MP/AR/DR/hand follow the existing stat rows', () => {
+  assert.deepEqual(settings.statRules.hp, { strength: 5, dexterity: 3, constitution: 10, wisdom: 2, intelligence: 2, perLevel: 5 });
   for (const tier of ['minion', 'elite', 'boss']) assert.equal(settings.tiers[tier].pools.hp, 10);
   for (const e of enemies) {
     const level = Math.max(1, e.levelProfile?.min ?? 1);
     const p = enemyPools(e, settings);
-    assert.equal(p.hp, 10 + 20 * e.attributes.constitution + Math.floor((level - 1) * settings.statRules.hp.perLevel), e.id);
+    const a = e.attributes;
+    assert.equal(p.hp, 10 + 10 * a.constitution + 5 * a.strength + 3 * a.dexterity + 2 * a.wisdom + 2 * a.intelligence + 5 * (level - 1), e.id);
     assert.equal(p.ar, e.attributes.strength, e.id);
     assert.equal(p.dr, e.attributes.dexterity, e.id);
   }

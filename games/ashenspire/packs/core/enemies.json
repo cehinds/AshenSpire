@@ -19,10 +19,10 @@
       "wanderingSoldier.warcry"
     ],
     "gear": [
-      "enemy.gear.hide"
+      "enemy.gear.ironTalisman"
     ],
     "relics": [
-      "enemy.relic.graveSeal"
+      "enemy.relic.emberBand"
     ],
     "poiseMax": 10,
     "levelProfile": {
@@ -64,9 +64,7 @@
       "blightHound.lunge",
       "blightHound.lunge"
     ],
-    "gear": [
-      "enemy.gear.ironTalisman"
-    ],
+    "gear": [],
     "relics": [],
     "poiseMax": 6,
     "levelProfile": {
@@ -99,8 +97,7 @@
       "huskBrute.brace"
     ],
     "gear": [
-      "enemy.gear.mail",
-      "enemy.gear.ironTalisman"
+      "enemy.gear.plating"
     ],
     "relics": [],
     "poiseMax": 16,
@@ -130,9 +127,7 @@
       "graveWisp.drain",
       "graveWisp.drain"
     ],
-    "gear": [
-      "enemy.gear.luckyTooth"
-    ],
+    "gear": [],
     "relics": [],
     "poiseMax": 4,
     "levelProfile": {
@@ -166,10 +161,10 @@
     ],
     "firstCard": "wyrmAspirant.consecrate",
     "gear": [
-      "enemy.gear.heavyPlate"
+      "enemy.gear.mail"
     ],
     "relics": [
-      "enemy.relic.graveSeal"
+      "enemy.relic.titanHeart"
     ],
     "poiseMax": 24,
     "levelProfile": {
@@ -207,10 +202,12 @@
       "fellWarden.twinDaggers"
     ],
     "firstCard": "fellWarden.caneStrike",
-    "gear": [],
+    "gear": [
+      "enemy.gear.heavyPlate",
+      "enemy.gear.ironTalisman"
+    ],
     "relics": [
-      "enemy.relic.ashenCore",
-      "enemy.relic.emberBand"
+      "enemy.relic.titanHeart"
     ],
     "poiseMax": 30,
     "levelProfile": {
@@ -269,9 +266,7 @@
       "lanternMoth.wingSparks",
       "lanternMoth.wingSparks"
     ],
-    "gear": [
-      "enemy.gear.luckyTooth"
-    ],
+    "gear": [],
     "relics": [],
     "poiseMax": 5,
     "levelProfile": {
@@ -302,9 +297,7 @@
       "briarHermit.sapMend"
     ],
     "firstCard": "briarHermit.rootShelter",
-    "gear": [
-      "enemy.gear.ironTalisman"
-    ],
+    "gear": [],
     "relics": [
       "enemy.relic.titanHeart"
     ],
@@ -337,11 +330,9 @@
       "chainScavenger.draggingBlow"
     ],
     "gear": [
-      "enemy.gear.ironTalisman"
+      "enemy.gear.plating"
     ],
-    "relics": [
-      "enemy.relic.emberBand"
-    ],
+    "relics": [],
     "poiseMax": 8,
     "levelProfile": {
       "min": 2,
@@ -378,10 +369,7 @@
       "bellKeeper.crackedPeal"
     ],
     "firstCard": "bellKeeper.bronzeToll",
-    "gear": [
-      "enemy.gear.heavyPlate",
-      "enemy.gear.ironTalisman"
-    ],
+    "gear": [],
     "relics": [
       "enemy.relic.ashenCore"
     ],
@@ -428,9 +416,12 @@
       "thornMatriarch.entwiningRoots"
     ],
     "firstCard": "thornMatriarch.rootCrown",
-    "gear": [],
+    "gear": [
+      "enemy.gear.heavyPlate",
+      "enemy.gear.luckyTooth"
+    ],
     "relics": [
-      "enemy.relic.ashenCore"
+      "enemy.relic.titanHeart"
     ],
     "poiseMax": 22,
     "levelProfile": {
@@ -479,9 +470,7 @@
       "gildedKnight.rally",
       "gildedKnight.gildedGuard"
     ],
-    "gear": [
-      "enemy.gear.plating"
-    ],
+    "gear": [],
     "relics": [],
     "poiseMax": 18,
     "levelProfile": {
@@ -637,7 +626,7 @@
     "firstCard": "courtDuelist.enGarde",
     "gear": [
       "enemy.gear.mail",
-      "enemy.gear.ironTalisman"
+      "enemy.gear.luckyTooth"
     ],
     "relics": [],
     "poiseMax": 26,
@@ -677,7 +666,6 @@
     ],
     "firstCard": "stitchedKing.courtlyDecree",
     "gear": [
-      "enemy.gear.mail",
       "enemy.gear.luckyTooth"
     ],
     "relics": [
@@ -803,9 +791,12 @@
       "glassRegent.shatteredCourt"
     ],
     "firstCard": "glassRegent.prismGuard",
-    "gear": [],
+    "gear": [
+      "enemy.gear.luckyTooth"
+    ],
     "relics": [
-      "enemy.relic.abyssalCrown"
+      "enemy.relic.ashenCore",
+      "enemy.relic.titanHeart"
     ],
     "poiseMax": 26,
     "levelProfile": {
@@ -857,10 +848,11 @@
       "marrowOrganist.quietRefrain"
     ],
     "firstCard": "marrowOrganist.bonePrelude",
-    "gear": [],
+    "gear": [
+      "enemy.gear.mail"
+    ],
     "relics": [
-      "enemy.relic.abyssalCrown",
-      "enemy.relic.titanHeart"
+      "enemy.relic.abyssalCrown"
     ],
     "poiseMax": 30,
     "levelProfile": {
@@ -1031,7 +1023,8 @@
     ],
     "firstCard": "wyrmLord.consecration",
     "gear": [
-      "enemy.gear.heavyPlate"
+      "enemy.gear.mail",
+      "enemy.gear.ironTalisman"
     ],
     "relics": [],
     "poiseMax": 30,
@@ -1070,9 +1063,7 @@
       "blightedValkyrie.scarletDance"
     ],
     "firstCard": "blightedValkyrie.spiralThrust",
-    "gear": [
-      "enemy.gear.heavyPlate"
-    ],
+    "gear": [],
     "relics": [
       "enemy.relic.abyssalCrown",
       "enemy.relic.titanHeart"
@@ -1209,11 +1200,11 @@
     ],
     "firstCard": "furnaceSaint.openFurnace",
     "gear": [
-      "enemy.gear.heavyPlate"
+      "enemy.gear.heavyPlate",
+      "enemy.gear.ironTalisman"
     ],
     "relics": [
-      "enemy.relic.abyssalCrown",
-      "enemy.relic.graveSeal"
+      "enemy.relic.abyssalCrown"
     ],
     "poiseMax": 40,
     "levelProfile": {
@@ -1266,10 +1257,11 @@
     ],
     "firstCard": "hollowAstronomer.starChart",
     "gear": [
-      "enemy.gear.ironTalisman"
+      "enemy.gear.plating"
     ],
     "relics": [
-      "enemy.relic.abyssalCrown"
+      "enemy.relic.ashenCore",
+      "enemy.relic.titanHeart"
     ],
     "poiseMax": 25,
     "levelProfile": {
@@ -1318,12 +1310,10 @@
     ],
     "firstCard": "ashheartDragon.obsidianClaws",
     "gear": [
-      "enemy.gear.heavyPlate",
-      "enemy.gear.ironTalisman"
+      "enemy.gear.heavyPlate"
     ],
     "relics": [
-      "enemy.relic.abyssalCrown",
-      "enemy.relic.graveSeal"
+      "enemy.relic.abyssalCrown"
     ],
     "poiseMax": 34,
     "levelProfile": {
