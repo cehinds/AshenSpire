@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-2023",
+    "date": "2026-10-16",
+    "group": "2026-10-16",
+    "summary": "Core becomes the default, with consistent combat and shared HUD presentation",
+    "detail": "New runs use the configurable Core game; existing saves retain their original rules. Map, combat, rest, and other run screens share the same responsive header. Combat uses cell-aligned sprites and health bars, head-relative intent and mini HUDs, consistent body height across held stances, native inspection gestures, readable card fans, and explicit scene layering.",
+    "build": "0.7.1.1539",
+    "pullRequest": 2023,
+    "url": "https://github.com/cehinds/AshenSpire/pull/2023"
+  },
+  {
     "id": "pr-2017",
     "date": "2026-10-15",
     "group": "2026-10-15",

@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-16
+
+- **Core becomes the default, with consistent combat and shared HUD presentation** ([#2023](https://github.com/cehinds/AshenSpire/pull/2023), `0.7.1.1539`). New runs use the configurable Core game; existing saves retain their original rules. Map, combat, rest, and other run screens share the same responsive header. Combat uses cell-aligned sprites and health bars, head-relative intent and mini HUDs, consistent body height across held stances, native inspection gestures, readable card fans, and explicit scene layering.
+
 ## 2026-10-15
 
 - **Card previews use the stance the card will enter** ([#2017](https://github.com/cehinds/AshenSpire/pull/2017), `0.7.1.1539`). Rogue Piercing Flurry now previews both damage hits with its accepted Attack rating before play. Spell Counter previews include their Counterstrike protection boost. Previewing a card leaves the live fight and its resources unchanged. Combat audit tools distinguish configured new-run defaults from raw authored fixtures, and the real-browser full-run check avoids unnecessarily scrolling visible controls before clicking.
