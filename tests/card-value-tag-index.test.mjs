@@ -6,7 +6,7 @@ import { cardValueIndexCases, cardValueOracleOutput } from './helpers/card-value
 import { contentBundle } from '../src/content/index.js';
 import * as model from '../src/model/attackCardDamage.js';
 // Recorded from the unindexed Dev model at 04adc68513b3f13f2b5c28702edce4ec513202a1
-// against integrated Core/default and base-card content, not the indexed model.
+// plus the reviewed fixed-upgrade base-resource-budget correction, against integrated Core/default and base-card content, not the indexed model.
 // The fixture records the exact model and content SHA256 used for provenance.
 // Regenerate after content changes with node tools/card-value-index-oracle.mjs.
 // Each hash covers the serialized card definitions/damage configuration/problem list.
@@ -17,7 +17,7 @@ for (const [name, bundle] of cardValueIndexCases()) {
     let observed;
     try { observed = { sha256: createHash('sha256').update(JSON.stringify(cardValueOracleOutput(method, model[method](bundle))) ?? 'undefined').digest('hex') }; }
     catch (error) { observed = { error: error.message, type: error.constructor.name }; }
-    test(`${method} preserves the pre-index result for ${name}`, () => {
+    test(`${method} preserves the corrected pre-index result for ${name}`, () => {
       assert.deepEqual(observed, baseline.cases[name][method]);
     });
   }
