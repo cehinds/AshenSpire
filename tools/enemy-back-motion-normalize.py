@@ -145,6 +145,14 @@ def run(root):
                 if distance > 0:
                     scale = min(scale, room/(distance*frame["calibration"]))
         report["output"]["sharedScale"] = scale
+        report["output"]["authoredScaleCompensation"] = 1/scale
+        report["output"]["runtimeAlignment"] = "unverified; native PNG size includes fit scale, compensate when comparing with authored seed"
+        report["seedReference"] = provenance.get("seed")
+        report["bodyScaleRelation"] = {"fitScale": scale, "perMasterCalibration": calibration,
+                                      "previewScaleToAuthoredStances": 1/scale,
+                                      "seedBodyHeightPixels": normalization.get("seedBodyHeightPixels"),
+                                      "stanceBodyHeightPixels": normalization.get("stanceBodyHeightPixels"),
+                                      "status": "authored anatomy calibrated by manual estimates; exact seed body-height alignment pending"}
         contact = Image.new("RGB", (5*256, math.ceil(len(frames)/5)*280), (36,39,43))
         draw = ImageDraw.Draw(contact)
         previews = {}
