@@ -21,7 +21,7 @@
 // median against NUMBER_BUDGET_MS.
 //
 //   node tools/click-impact-probe.mjs                 (judge the median)
-//   node tools/click-impact-probe.mjs --plays 6 --seed 3
+//   node tools/click-impact-probe.mjs --plays 6 --seed 4
 //   CHROME=/path/to/chrome node tools/click-impact-probe.mjs
 //
 // Exit 0 when both medians are within budget, 1 when it is not or the drive
@@ -300,8 +300,8 @@ async function main() {
     const passed = Number(contactOkay) + Number(numberOkay);
     const okay = passed === 2;
     console.log(`${passed} passed, ${2 - passed} failed`);
-    console.log('  boundary: real Chromium headless, 1440x900, Normal pacing, the Quick start class and seed, mouse clicks only.');
-    console.log('  Not checked: touch input, slow or fast pacing, phone layouts, or classes other than the Quick start one.');
+    console.log('  boundary: real Chromium headless, 1440x900, Normal pacing, default Core Reaver with an entered seed, mouse clicks only.');
+    console.log('  Not checked: touch input, slow or fast pacing, phone layouts, or classes other than Core Reaver.');
     process.exitCode = okay ? 0 : 1;
   } catch (e) {
     console.error(`click-impact-probe: ${e.message}`);
