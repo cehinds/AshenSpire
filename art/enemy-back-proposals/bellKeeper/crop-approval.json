@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "status": "approved-for-draft-proposals",
+  "reviewer": "root agent and elite_inventory independent review",
+  "reviewDate": "2026-10-17",
+  "sourceSha256": "caf7a98887e43c2135b47f07b7a5a83ced2d42ce0fc786710d881b3c2c4a4361",
+  "horizontalCut": 398,
+  "rowCuts": [
+    [
+      437,
+      822,
+      1196,
+      1588
+    ],
+    [
+      440,
+      837,
+      1210,
+      1586
+    ]
+  ],
+  "review": "Ten complete rear bell helmets, bodies, mace heads/handles and boots inspected. Feet coincide with registration baseline. Zero meaningful-alpha cuts, faint counts recorded. Draft authoring only."
+}
