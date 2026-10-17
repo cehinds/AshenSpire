@@ -8,6 +8,7 @@ import { validateContent } from '../src/model/validate.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries, projectGameCard } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
 import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
+import { executeAction } from '../src/engine/actions.js';
 import { createRng } from '../src/engine/rng.js';
 import { rollCardRewardIds } from '../src/engine/encounters.js';
 import { gameProfileRewardOffers } from '../src/model/gameProfileRewards.js';
@@ -134,10 +135,10 @@ test('authored rule clauses and namespaced numeric tokens survive the real card 
 });
 
 test('generated Paralysis burdens consume their finite skips instead of recycling permanent action denial',()=>{
-  const enemy={id:'burden-target',alive:true},skips=[];let next=0;
-  const ctx={registries:legacy,rng:createRng(9),nextInstanceId:()=>`burden-${next++}`,emit:()=>{}};
+  const ctx=fixture('base.strike'),enemy=ctx.enemies[0],skips=[];
+  const drain=()=>{let jobs=0;while(ctx.queue.length){assert.ok(++jobs<100);executeAction(ctx,ctx.queue.shift());}};
   addEnemyBurden(ctx,enemy,'base.paralysis-status-card',2);
-  for(let turn=0;turn<3;turn++){beginEnemyBurdens(ctx,enemy,3);skips.push(!!enemy.skipNextTurn);endEnemyBurdens(ctx,enemy);enemy.skipNextTurn=false;}
+  for(let turn=0;turn<3;turn++){beginEnemyBurdens(ctx,enemy,3);drain();skips.push(!!enemy.skipNextTurn);endEnemyBurdens(ctx,enemy);drain();enemy.skipNextTurn=false;}
   assert.deepEqual(skips,[true,true,false]);
   assert.equal(enemy.burdenPiles.exhaust.length,2);
 });
