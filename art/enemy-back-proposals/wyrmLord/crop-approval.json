@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "status": "approved-for-draft-proposals",
+  "reviewer": "root agent and elite_inventory independent review",
+  "reviewDate": "2026-10-17",
+  "sourceSha256": "fd3b5be8a5a9df1cf890ff4ae722856dcb8ba140245431293ada409df4f149a4",
+  "horizontalCut": 388,
+  "rowCuts": [
+    [
+      397,
+      792,
+      1211,
+      1610
+    ],
+    [
+      397,
+      824,
+      1191,
+      1586
+    ]
+  ],
+  "review": "Complete rear silhouettes, wings and tails inspected. Foot placement must use foot-anchors.json because tail coils vary below the boots. Draft authoring only."
+}
