@@ -15,8 +15,9 @@ function inlinePadding(el) {
   return (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0);
 }
 
-// Move the live controls, preserving their exact original sibling slots and
-// listeners. A display change restores them instead of creating duplicate HUDs.
+// Attach only the live combat turn to the shared header on every form factor.
+// The shared renderer owns HP, relics, quick controls and the purse; these never
+// move. Disabling the overlay restores the turn to its original sibling slot.
 export function wireDesktopCombatHeader(combatEl) {
   const anchors = new Map();
   const restore = () => {
