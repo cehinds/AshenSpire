@@ -16,6 +16,7 @@ import { canonicalGameJSON, resolveGameAuthor, validateGameSchema } from '../eng
 import { loadGameProfileCatalog } from './game-config.mjs';
 import { loadMechanics, loadOps } from '../engine/runtime/interpreter.mjs';
 import { buildAssetCatalog } from './asset-catalog.mjs';
+import { resolveAtlasPath } from './maps-validate.mjs';
 import { visibilityErrors } from './ui-validate.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -97,6 +98,7 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   // requires / call / emit targets exist
   const commandsOf = slug => Object.keys(mechanics[slug].interface.commands || {});
   const eventsOf = slug => Object.keys(mechanics[slug].interface.events || {});
+  const catalogOps = loadOps();
   for (const [slug, m] of Object.entries(mechanics)) {
     for (const req of m.interface.requires || []) if (!slugs.has(req)) fail(`${slug}: requires unknown mechanic '${req}'`);
     for (const handler of m.service.handlers || []) {
@@ -111,6 +113,12 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
         };
         if ('call' in step) check('call', step.call);
         if ('emit' in step) check('emit', step.emit);
+        // Ops: every op is in the catalog; a portable mechanic uses only portable ops (SPEC section 8).
+        if ('op' in step) {
+          const entry = catalogOps.ops[step.op];
+          if (!entry) fail(`${slug}: op '${step.op}' is not in engine/runtime/ops.json`);
+          else if (m.manifest.portability === 'portable' && entry.reference !== 'portable') fail(`${slug}: portable mechanic uses legacy op '${step.op}'`);
+        }
       }
     }
   }
@@ -155,8 +163,13 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   const maps = { components: mapComponents, maps: mapDocs };
   // Same rules as tools/maps-validate.mjs: every node has a component, every weighted type is a listed node component.
   const nodeComponents = new Set(Object.values(mapComponents).filter(c => c.kind === 'node').map(c => c.id));
+  for (const c of Object.values(mapComponents)) if (c.placement?.atlas && !existsSync(path.join(ROOT, c.placement.atlas))) fail(`map component ${c.id}: atlas '${c.placement.atlas}' does not exist`);
   for (const [id, m] of Object.entries(mapDocs)) {
     for (const n of m.nodes || []) if (!mapComponents[n]) fail(`map ${id}: node '${n}' has no map component`);
+    if (m.atlas) {
+      if (!m.atlas.ref || !existsSync(path.join(ROOT, m.atlas.ref))) fail(`map ${id}: atlas ref '${m.atlas.ref}' does not exist`);
+      else if (m.atlas.path && resolveAtlasPath(readJson(m.atlas.ref), m.atlas.path) === undefined) fail(`map ${id}: atlas path '${m.atlas.path}' does not resolve in ${m.atlas.ref}`);
+    }
     for (const [label, w] of Object.entries({ weights: m.generator?.weights, 'proposed.weights': m.generator?.proposed?.weights })) {
       for (const k of Object.keys(w || {})) {
         if (!nodeComponents.has(k)) fail(`map ${id}: ${label} names '${k}', which is not a node component`);

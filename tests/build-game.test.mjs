@@ -68,6 +68,7 @@ test('the build fails on dangling references', () => {
   assert.throws(() => buildGame({ patch: ({ uiComponents }) => { const c = Object.values(uiComponents).find(x => x.layout?.ref); c.layout = { ...c.layout, path: 'no.such.path' }; } }), /layout path 'no\.such\.path' not found/);
   assert.throws(() => buildGame({ patch: ({ uiComponents }) => { delete uiComponents.hud.viewModel; } }), /ui\/components\/hud.*viewModel/);
   assert.throws(() => buildGame({ patch: ({ uiComponents }) => { const vm = uiComponents.enemyPanel.viewModel; vm.bindings = { ...vm.bindings, spShown: '$entity.pools.sp' }; delete vm.visibility; } }), /enemyPanel: binds sp without the enemy_visibility\.visibleFields visibility query/);
+  assert.throws(() => buildGame({ patch: ({ mapDocs }) => { const m = Object.values(mapDocs).find(x => x.atlas); m.atlas = { ...m.atlas, path: 'nope.nothing' }; } }), /atlas path 'nope\.nothing' does not resolve/);
   assert.throws(() => buildGame({ game: 'nonexistent-game' }));
 });
 

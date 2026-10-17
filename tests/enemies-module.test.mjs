@@ -153,6 +153,12 @@ test('enemies: false with characters off also ignores the enemy pack data', () =
   assert.ok(!(off.content.characters || []).some(c => c.tags?.includes('character.enemy')));
 });
 
+test('enemies.include fields only the selected tiers', () => {
+  const only = resolveWith(() => {}, a => ({ ...a, modules: { ...a.modules, enemies: { ...(a.modules?.enemies || {}), include: ['minion'] } } }))();
+  assert.ok(only.content.enemies.length > 0);
+  assert.ok(only.content.enemies.every(e => e.tier === 'minion'));
+});
+
 test('enemy SP/MP and other internals stay hidden unless a revealing tag is held', async () => {
   const { enemyVisibleFields } = await import('../engine/kernel/gameConfig.js');
   const bare = enemyVisibleFields(settings, []);

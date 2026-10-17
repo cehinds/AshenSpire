@@ -463,7 +463,9 @@ function deriveCharacterContent(content, modules) {
   const players = content.characters.filter(c => c.tags?.includes('character.player'));
   const enemies = content.characters.filter(c => c.tags?.includes('character.enemy'));
   const flat = c => ({ ...c, ...(c.presentation || {}), ...(c.enemy || {}), ...(c.player || {}) });
-  if (modules.enemies) content.enemies = enemies.map(c => { const row = flat(c); row.defaultDeck = resolveCharacterDeck(c, content, modules.gear, settings.cardPoolRules); row.tier = (c.tags.find(t => t.startsWith('tier.')) || 'tier.minion').slice(5); delete row.presentation; delete row.enemy; return row; });
+  if (modules.enemies) content.enemies = enemies.map(c => { const row = flat(c); row.defaultDeck = resolveCharacterDeck(c, content, modules.gear, settings.cardPoolRules); row.tier = (c.tags.find(t => t.startsWith('tier.')) || 'tier.minion').slice(5); delete row.presentation; delete row.enemy; return row; })
+    // include picks the fielded tiers: rows of a known but unselected tier are dropped; an unknown tier still fails validation.
+    .filter(row => !Array.isArray(settings.include) || settings.include.includes(row.tier) || !settings.tagRules?.[`tier.${row.tier}`]);
   content.classes = players.map(c => {
     const row = flat(c), gear = Object.fromEntries((c.defaultGear || []).map(g => [g.key, g.id]));
     const attributes = resolveEnemyAttributes(c, settings);
