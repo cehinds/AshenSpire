@@ -1,12 +1,13 @@
 // JSON contracts for mechanics, UI, maps, assets and the build artifact
 // (docs/ai/json-game-modules/MECHANICS-ARCHITECTURE.md, owner 2026-10-17).
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { validateGameSchema } from '../engine/kernel/gameConfig.js';
 
-const dir = new URL('../engine/contracts/', import.meta.url);
-const schema = name => JSON.parse(readFileSync(new URL(name, dir), 'utf8'));
+const dir = fileURLToPath(new URL('../engine/contracts/', import.meta.url));
+const schema = name => JSON.parse(readFileSync(`${dir}${name}`, 'utf8'));
 const NEW = ['mechanic', 'mechanic-interface', 'mechanic-service', 'mechanic-cases', 'ui-component', 'ui-screen', 'map-component', 'map', 'asset-catalog', 'build-artifact'];
 
 test('every contract schema parses and has an id and title', () => {

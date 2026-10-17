@@ -1,9 +1,10 @@
 // Every portable mechanic runs its own cases through the interpreter (engine/runtime/SPEC.md).
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 import { createRuntime, loadMechanics, loadOps, runCases } from '../engine/runtime/interpreter.mjs';
 
-const mechanics = loadMechanics(new URL('../engine/mechanics/', import.meta.url).pathname);
+const mechanics = loadMechanics(fileURLToPath(new URL('../engine/mechanics/', import.meta.url)));
 const ops = loadOps();
 const runtime = createRuntime({ mechanics, ops });
 const portable = [...mechanics.values()].filter(m => m.manifest.portability === 'portable');

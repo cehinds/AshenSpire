@@ -1,11 +1,12 @@
 // Portable rules runtime: engine/runtime/interpreter.mjs (docs/ai/json-game-modules/MECHANICS-ARCHITECTURE.md).
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createRuntime, loadMechanic, loadMechanics, runCases, createState, PORTABLE_OPS, MAX_DEPTH } from '../engine/runtime/interpreter.mjs';
 
 const ops = JSON.parse(readFileSync(new URL('../engine/runtime/ops.json', import.meta.url), 'utf8'));
-const fixtures = new URL('./fixtures/mechanics/', import.meta.url).pathname;
+const fixtures = fileURLToPath(new URL('./fixtures/mechanics/', import.meta.url));
 
 // Build an in-memory mechanic: slug, handlers [{ on, do, when? }], optional interface.
 function mech(slug, handlers, iface = {}) {
