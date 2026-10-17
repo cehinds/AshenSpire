@@ -470,6 +470,8 @@ function deriveCharacterContent(content, modules) {
     .filter(row => !Array.isArray(settings.include) || settings.include.includes(row.tier) || !settings.tagRules?.[`tier.${row.tier}`]);
   content.classes = players.map(c => {
     const row = flat(c), gear = Object.fromEntries((c.defaultGear || []).map(g => [g.key, g.id]));
+    // Player loadouts slot real items (createLoadout): an unknown gear id would start the run without its cards/stats.
+    if (Array.isArray(content.gear)) { const known = new Set(content.gear.map(g => g.id)); for (const g of c.defaultGear || []) if (!known.has(g.id)) fail(`$/content/characters/${c.id}/defaultGear`, `unresolved gear '${g.id}'`); }
     const attributes = resolveEnemyAttributes(c, settings);
     const pools = enemyPools({ ...c, resolvedAttributes: attributes }, settings, enemyLevel(c, settings), enemyItemBonuses(c, content, modules.gear));
     const deck = resolveCharacterDeck(c, content, modules.gear, settings.cardPoolRules), cards = new Set((content.cards || []).map(card => card.id));

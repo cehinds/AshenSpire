@@ -163,6 +163,10 @@ test('enemies on with characters off is refused with a clear dependency error', 
   assert.throws(resolveWith(() => {}, a => ({ ...a, modules: { ...a.modules, characters: false } })), /enemies.*requires the characters module/);
 });
 
+test('validator refuses an unknown gear id in a player loadout', () => {
+  assert.throws(resolveWith(p => { const pc = p.characters.find(c => c.tags.includes('character.player') && (c.defaultGear || []).length); pc.defaultGear[0].id = 'nope.gear'; }), /unresolved gear 'nope\.gear'/);
+});
+
 test('enemy SP/MP and other internals stay hidden unless a revealing tag is held', async () => {
   const { enemyVisibleFields } = await import('../engine/kernel/gameConfig.js');
   const bare = enemyVisibleFields(settings, []);

@@ -137,6 +137,21 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
     : /^(entity ref|status id|metric name)/.test(desc) ? typeof x === 'string'
     : /^number/.test(desc) ? isValue(x)
     : true;
+  // Op parameter literals by catalog type; '$var' strings and { f } formulas are resolved at run time.
+  const isVar = x => typeof x === 'string' && x.startsWith('$');
+  const isFormula = x => x && typeof x === 'object' && !Array.isArray(x) && 'f' in x;
+  const paramOk = (type, x) => {
+    if (isVar(x)) return true;
+    switch (type) {
+      case 'value': case 'number': return typeof x === 'number' || isFormula(x);
+      case 'integer': return Number.isInteger(x) || isFormula(x);
+      case 'boolean': return typeof x === 'boolean';
+      case 'string': case 'cardRef': return typeof x === 'string';
+      case 'entityRef': return typeof x === 'string' || (Array.isArray(x) && x.every(y => typeof y === 'string'));
+      case 'object': return x !== null && typeof x === 'object' && !Array.isArray(x);
+      default: return true;
+    }
+  };
   const formulaCatalog = readJson('engine/runtime/formulas.json').ops || {};
   const formulaOps = new Set(Object.keys(formulaCatalog));
   // formulas.json marks each operand "…, required"; a recognized operator missing one fails at run time.
@@ -201,7 +216,10 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
           const entry = catalogOps.ops[step.op];
           if (!entry) fail(`${slug}: op '${step.op}' is not in engine/runtime/ops.json`);
           else if (m.manifest.portability === 'portable' && entry.reference !== 'portable') fail(`${slug}: portable mechanic uses legacy op '${step.op}'`);
-          else for (const [name, param] of Object.entries(entry.params || {})) if (param.required && step[name] === undefined) fail(`${slug}: op ${step.op} needs '${name}'`);
+          else for (const [name, param] of Object.entries(entry.params || {})) {
+            if (param.required && step[name] === undefined) fail(`${slug}: op ${step.op} needs '${name}'`);
+            else if (step[name] !== undefined && !paramOk(param.type, step[name])) fail(`${slug}: op ${step.op} param '${name}' is not a ${param.type}`);
+          }
         }
       }
     }

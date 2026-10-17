@@ -85,6 +85,7 @@ test('the build fails on dangling references', () => {
   assert.throws(() => buildGame({ patch: ({ mechanics }) => { const m = Object.values(mechanics).find(x => (x.service.handlers || []).length); m.service.handlers[0].do = [{ op: 'heal', amount: { f: 'add', args: 5 } }]; } }), /operand 'args' has the wrong type/);
   assert.throws(() => buildGame({ patch: ({ mechanics }) => { const m = Object.values(mechanics).find(x => (x.service.handlers || []).length); m.service.handlers[0].when = { all: [true] }; } }), /condition must be an object/);
   assert.throws(() => buildGame({ patch: ({ mechanics }) => { const m = Object.values(mechanics).find(x => (x.service.handlers || []).length); m.service.handlers[0].do = [{ emit: 'runtime.poiseBorken' }]; } }), /runtime events are raised by ops/);
+  assert.throws(() => buildGame({ patch: ({ mechanics }) => { const m = Object.values(mechanics).find(x => (x.service.handlers || []).length); m.service.handlers[0].do = [{ op: 'heal', amount: 'five' }]; } }), /param 'amount' is not a value/);
   assert.throws(() => buildGame({ game: 'nonexistent-game' }));
 });
 
