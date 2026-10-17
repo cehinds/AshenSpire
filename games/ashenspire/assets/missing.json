@@ -1,15 +1,149 @@
 {
   "_": "Asset ids the game's JSON names that ship no file yet. The catalog lists each as a placeholder-only asset; the style guide draws it from the id (SPEC 2.4). Delete an entry the day art-manifest.json carries the id.",
   "missing": {
-    "node-monster": { "reason": "Map node icon is a text glyph in content/config/ui/presentation/uiContent.json (nodeTypes) today; no art file exists." },
-    "node-event": { "reason": "Map node icon is a text glyph in content/config/ui/presentation/uiContent.json (nodeTypes) today; no art file exists." },
-    "node-elite": { "reason": "Map node icon is a text glyph in content/config/ui/presentation/uiContent.json (nodeTypes) today; no art file exists." },
-    "node-shrine": { "reason": "Map node icon is a text glyph in content/config/ui/presentation/uiContent.json (nodeTypes) today; no art file exists." },
-    "node-merchant": { "reason": "Map node icon is a text glyph in content/config/ui/presentation/uiContent.json (nodeTypes) today; no art file exists." },
-    "node-treasure": { "reason": "Map node icon is a text glyph in content/config/ui/presentation/uiContent.json (nodeTypes) today; no art file exists." },
-    "node-boss": { "reason": "Map node icon is a text glyph in content/config/ui/presentation/uiContent.json (nodeTypes) today; no art file exists." },
-    "route-line": { "reason": "Routes are drawn as SVG strokes (mapPresentation.json routeWidth); no art file exists." },
-    "landmark-pin": { "reason": "Atlas landmarks use per-node cut-out art named in worldAtlas.json; the generic pin has no art file yet." },
-    "region-banner": { "reason": "Atlas regions use per-region map art; the generic banner has no art file yet." }
+    "node-monster": {
+      "reason": "Map node icon is a text glyph in content/config/ui/presentation/uiContent.json (nodeTypes) today; no art file exists."
+    },
+    "node-event": {
+      "reason": "Map node icon is a text glyph in content/config/ui/presentation/uiContent.json (nodeTypes) today; no art file exists."
+    },
+    "node-elite": {
+      "reason": "Map node icon is a text glyph in content/config/ui/presentation/uiContent.json (nodeTypes) today; no art file exists."
+    },
+    "node-shrine": {
+      "reason": "Map node icon is a text glyph in content/config/ui/presentation/uiContent.json (nodeTypes) today; no art file exists."
+    },
+    "node-merchant": {
+      "reason": "Map node icon is a text glyph in content/config/ui/presentation/uiContent.json (nodeTypes) today; no art file exists."
+    },
+    "node-treasure": {
+      "reason": "Map node icon is a text glyph in content/config/ui/presentation/uiContent.json (nodeTypes) today; no art file exists."
+    },
+    "node-boss": {
+      "reason": "Map node icon is a text glyph in content/config/ui/presentation/uiContent.json (nodeTypes) today; no art file exists."
+    },
+    "route-line": {
+      "reason": "Routes are drawn as SVG strokes (mapPresentation.json routeWidth); no art file exists."
+    },
+    "landmark-pin": {
+      "reason": "Atlas landmarks use per-node cut-out art named in worldAtlas.json; the generic pin has no art file yet."
+    },
+    "region-banner": {
+      "reason": "Atlas regions use per-region map art; the generic banner has no art file yet."
+    },
+    "card.frame": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "card.art": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "portrait": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "enemy.sprite": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "icon.gold": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "icon.health": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "icon.inspect": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "icon.attack": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "icon.smash": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "icon.sweep": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "icon.counter": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "icon.defend": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "icon.evade": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "icon.prepare": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "icon.cast": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "icon.buff": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "node.combat": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "node.elite": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "node.rest": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "node.shop": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "node.treasure": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "node.boss": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "node.event": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "map.background": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "icon.poise": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "icon.stamina": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "icon.mana": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "player.sprite": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "scene.combat": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "scene.dialogue": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "scene.gameOver": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "scene.prologue": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "scene.rest": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "scene.reward": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "scene.shop": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "scene.smith": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "scene.title": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    },
+    "scene.victory": {
+      "reason": "Logical UI asset slot named by an engine/ui component or screen; the web UI draws it in CSS or code today and no art file exists."
+    }
   }
 }

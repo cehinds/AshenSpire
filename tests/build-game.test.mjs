@@ -68,7 +68,7 @@ test('the build fails on a dangling reference', () => {
 // Case data that does not yet pass on the base branch (wrong state shapes, scalar-vs-object statuses, $model.*).
 // The worker on worker/JsonBuildExport/reconcile fixes it; once that merges every slug here passes, this test
 // then fails on purpose so the set is emptied and the loop below is fully strict.
-const KNOWN_FAILING = new Set(['lifecycle.exhaust', 'mechanic.stagger', 'status.bleed', 'status.frail', 'status.strength', 'status.vulnerable', 'status.weak']);
+const KNOWN_FAILING = new Set([]);
 
 test('every portable mechanic in the artifact passes its cases through the interpreter loaded from the artifact', () => {
   const parsed = JSON.parse(first.text); // what a consumer reads, not what is on disk
