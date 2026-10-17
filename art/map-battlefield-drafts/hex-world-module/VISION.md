@@ -13,7 +13,7 @@ The player save belongs beside this content, not inside it. A chest being collec
 
 ## 2. Let geography guide the art
 
-- A road can enter a grassland tile and leave through a forest edge. The center biome chooses the main ground palette; edge tags guide the transition art.
+- A road can enter a grassland tile and leave through a forest edge. The center biome chooses the main ground palette; explicit side profiles carry transitions, and touching sides must match their full signatures.
 - A bridge carries road connections across a river. Validate road continuity and river direction independently of what the art looks like.
 - A snowy settlement can reuse a town layout while choosing snowy paving, roofs, cold filters and snow particles.
 - A rest scene can reuse the tile's ground/background family, with its own tent, fire or shelter props. It does not have to reuse the combat layout.

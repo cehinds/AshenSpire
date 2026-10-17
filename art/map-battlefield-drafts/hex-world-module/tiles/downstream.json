@@ -22,48 +22,57 @@
         "bank"
       ],
       "connector": null,
-      "missingNeighbor": "boundary"
+      "missingNeighbor": "boundary",
+      "edgeProfileId": "bank"
     },
     "SE": {
       "tags": [
         "bank"
       ],
       "connector": null,
-      "missingNeighbor": "boundary"
+      "missingNeighbor": "boundary",
+      "edgeProfileId": "bank"
     },
     "SW": {
       "tags": [
+        "water",
         "river"
       ],
       "connector": {
         "kind": "river",
         "flow": "out"
       },
-      "missingNeighbor": "continues"
+      "missingNeighbor": "continues",
+      "edgeProfileId": "river-water"
     },
     "W": {
       "tags": [
         "bank"
       ],
       "connector": null,
-      "missingNeighbor": "boundary"
+      "missingNeighbor": "boundary",
+      "edgeProfileId": "bank"
     },
     "NW": {
       "tags": [
+        "grass",
         "bank"
       ],
       "connector": null,
-      "missingNeighbor": "boundary"
+      "missingNeighbor": "boundary",
+      "edgeProfileId": "grass-bank"
     },
     "NE": {
       "tags": [
+        "water",
         "river"
       ],
       "connector": {
         "kind": "river",
         "flow": "in"
       },
-      "missingNeighbor": "boundary"
+      "missingNeighbor": "boundary",
+      "edgeProfileId": "river-water"
     }
   },
   "art": {

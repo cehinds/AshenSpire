@@ -11,6 +11,7 @@ Start with [index.json](index.json). This standalone module contains six connect
 | Edit | JSON module |
 | --- | --- |
 | Module registry and selection rules | [index.json](index.json) |
+| Edge compatibility and procedural templates | [GENERATION.md](GENERATION.md), [generation/rules.json](generation/rules.json) |
 | Grid, map bounds and tile file list | [map.json](map.json) |
 | Blank tile template | [templates/tile.template.json](templates/tile.template.json) |
 | Tile position, biome, sides, rotation and content references | [tiles/bridge.json](tiles/bridge.json), or another file under `tiles/` |
@@ -31,6 +32,8 @@ Start with [index.json](index.json). This standalone module contains six connect
 | Reveals, discoveries and rest | [reveal rules](gameplay/reveal.json), [discoveries](gameplay/discoveries.json), [rest spots](gameplay/rest-spots.json) |
 | Trainers, quests and buffs/debuffs | [trainers](gameplay/trainers.json), [quests](gameplay/quests.json), [effects](gameplay/effects.json) |
 | Example player progress, separate from authored content | [runtime/example-state.json](runtime/example-state.json) |
+
+[GENERATION.md](GENERATION.md) defines strict touching-edge profiles and a seeded offline layout generator.
 
 [MAP-COMPONENTS.md](MAP-COMPONENTS.md) connects all 25 object types to 39 icon variants, tile instances and discovery rules.
 
@@ -61,7 +64,7 @@ These six files form a small connected patch. Empty coordinates inside the examp
 - `worldSideIndex = (localSideIndex + orientationSteps) % 6`.
 - At B2, local NE/SW road exits become world E/W. Local NW river-in becomes world NE; local SE river-out becomes world SW.
 - Rotation affects the authored edge layout. Map terrain can follow it; buildings and other upright icons do not. Battlefield layers are composed separately and never rotated as one hex sprite.
-- Each side has tags, an optional connector and a missing-neighbor policy. Connector compatibility is checked separately from terrain tags, allowing bank/grass/forest boundaries.
+- Each side has an `edgeProfileId`, its exact matching tags, an optional connector and a missing-neighbor policy. Neighboring edges must share the profile and complete tag set. Transitions expose different profiles on different sides; river flows must be opposite.
 
 ## Pools and references
 
@@ -86,9 +89,9 @@ Requires Node.js and Python with `jsonschema` installed:
 
 ```sh
 node art/map-battlefield-drafts/hex-world-module/validate.mjs
-node --test art/map-battlefield-drafts/hex-world-module/validate.test.mjs art/map-battlefield-drafts/hex-world-module/map-components.test.mjs
+node --test art/map-battlefield-drafts/hex-world-module/validate.test.mjs art/map-battlefield-drafts/hex-world-module/map-components.test.mjs art/map-battlefield-drafts/hex-world-module/hex-generation.test.mjs
 ```
 
 The [JSON Schema](schemas/module.schema.json) checks document structure. The validator checks cross-file IDs, tags, asset paths, tile positions, all six sides, rotation and reciprocal road/river connections. Use both: JSON syntax alone cannot detect a road that ends against an incompatible neighbor.
 
-This is an authoring contract and example data. It does not implement rendering, procedural placement, enemy spawning, loot, weather, reveal rules or persistence in the game. [vision.svg](vision.svg) is the editable illustration source.
+This is an authoring contract with a working offline topology generator. Rendering, procedural object placement, enemy spawning, loot, weather, reveal rules and persistence remain game integration work. [vision.svg](vision.svg) is the editable illustration source.

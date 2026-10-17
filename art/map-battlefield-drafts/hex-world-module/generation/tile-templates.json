@@ -1,0 +1,549 @@
+{
+  "$schema": "../schemas/module.schema.json",
+  "kind": "tile-templates",
+  "id": "tile-templates",
+  "items": [
+    {
+      "id": "grass-fill",
+      "name": "Grass filler",
+      "weight": 4,
+      "allowedRotations": [
+        0
+      ],
+      "biomeId": "grassland",
+      "tags": [
+        "grass"
+      ],
+      "sides": {
+        "E": {
+          "edgeProfileId": "grass",
+          "flow": null
+        },
+        "SE": {
+          "edgeProfileId": "grass",
+          "flow": null
+        },
+        "SW": {
+          "edgeProfileId": "grass",
+          "flow": null
+        },
+        "W": {
+          "edgeProfileId": "grass",
+          "flow": null
+        },
+        "NW": {
+          "edgeProfileId": "grass",
+          "flow": null
+        },
+        "NE": {
+          "edgeProfileId": "grass",
+          "flow": null
+        }
+      }
+    },
+    {
+      "id": "forest-fill",
+      "name": "Forest filler",
+      "weight": 1,
+      "allowedRotations": [
+        0
+      ],
+      "biomeId": "temperate-forest",
+      "tags": [
+        "forest"
+      ],
+      "sides": {
+        "E": {
+          "edgeProfileId": "forest",
+          "flow": null
+        },
+        "SE": {
+          "edgeProfileId": "forest",
+          "flow": null
+        },
+        "SW": {
+          "edgeProfileId": "forest",
+          "flow": null
+        },
+        "W": {
+          "edgeProfileId": "forest",
+          "flow": null
+        },
+        "NW": {
+          "edgeProfileId": "forest",
+          "flow": null
+        },
+        "NE": {
+          "edgeProfileId": "forest",
+          "flow": null
+        }
+      }
+    },
+    {
+      "id": "grass-forest-transition",
+      "name": "Grass and forest boundary",
+      "weight": 1,
+      "allowedRotations": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "biomeId": "temperate-forest",
+      "tags": [
+        "grass",
+        "forest"
+      ],
+      "sides": {
+        "E": {
+          "edgeProfileId": "forest",
+          "flow": null
+        },
+        "SE": {
+          "edgeProfileId": "forest",
+          "flow": null
+        },
+        "SW": {
+          "edgeProfileId": "forest",
+          "flow": null
+        },
+        "W": {
+          "edgeProfileId": "grass",
+          "flow": null
+        },
+        "NW": {
+          "edgeProfileId": "grass",
+          "flow": null
+        },
+        "NE": {
+          "edgeProfileId": "grass",
+          "flow": null
+        }
+      }
+    },
+    {
+      "id": "dirt-fill",
+      "name": "Dirt filler",
+      "weight": 1,
+      "allowedRotations": [
+        0
+      ],
+      "biomeId": "grassland",
+      "tags": [
+        "dirt"
+      ],
+      "sides": {
+        "E": {
+          "edgeProfileId": "dirt",
+          "flow": null
+        },
+        "SE": {
+          "edgeProfileId": "dirt",
+          "flow": null
+        },
+        "SW": {
+          "edgeProfileId": "dirt",
+          "flow": null
+        },
+        "W": {
+          "edgeProfileId": "dirt",
+          "flow": null
+        },
+        "NW": {
+          "edgeProfileId": "dirt",
+          "flow": null
+        },
+        "NE": {
+          "edgeProfileId": "dirt",
+          "flow": null
+        }
+      }
+    },
+    {
+      "id": "stone-fill",
+      "name": "Stone filler",
+      "weight": 1,
+      "allowedRotations": [
+        0
+      ],
+      "biomeId": "grassland",
+      "tags": [
+        "stone"
+      ],
+      "sides": {
+        "E": {
+          "edgeProfileId": "stone",
+          "flow": null
+        },
+        "SE": {
+          "edgeProfileId": "stone",
+          "flow": null
+        },
+        "SW": {
+          "edgeProfileId": "stone",
+          "flow": null
+        },
+        "W": {
+          "edgeProfileId": "stone",
+          "flow": null
+        },
+        "NW": {
+          "edgeProfileId": "stone",
+          "flow": null
+        },
+        "NE": {
+          "edgeProfileId": "stone",
+          "flow": null
+        }
+      }
+    },
+    {
+      "id": "road-end",
+      "name": "Road End",
+      "weight": 1,
+      "allowedRotations": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "biomeId": "grassland",
+      "tags": [
+        "road"
+      ],
+      "sides": {
+        "E": {
+          "edgeProfileId": "dirt-road",
+          "flow": null
+        },
+        "SE": {
+          "edgeProfileId": "grass",
+          "flow": null
+        },
+        "SW": {
+          "edgeProfileId": "grass",
+          "flow": null
+        },
+        "W": {
+          "edgeProfileId": "grass",
+          "flow": null
+        },
+        "NW": {
+          "edgeProfileId": "grass",
+          "flow": null
+        },
+        "NE": {
+          "edgeProfileId": "grass",
+          "flow": null
+        }
+      }
+    },
+    {
+      "id": "road-straight",
+      "name": "Road Straight",
+      "weight": 1,
+      "allowedRotations": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "biomeId": "grassland",
+      "tags": [
+        "road"
+      ],
+      "sides": {
+        "E": {
+          "edgeProfileId": "dirt-road",
+          "flow": null
+        },
+        "SE": {
+          "edgeProfileId": "grass",
+          "flow": null
+        },
+        "SW": {
+          "edgeProfileId": "grass",
+          "flow": null
+        },
+        "W": {
+          "edgeProfileId": "dirt-road",
+          "flow": null
+        },
+        "NW": {
+          "edgeProfileId": "grass",
+          "flow": null
+        },
+        "NE": {
+          "edgeProfileId": "grass",
+          "flow": null
+        }
+      }
+    },
+    {
+      "id": "road-bend",
+      "name": "Road Bend",
+      "weight": 1,
+      "allowedRotations": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "biomeId": "grassland",
+      "tags": [
+        "road"
+      ],
+      "sides": {
+        "E": {
+          "edgeProfileId": "dirt-road",
+          "flow": null
+        },
+        "SE": {
+          "edgeProfileId": "grass",
+          "flow": null
+        },
+        "SW": {
+          "edgeProfileId": "dirt-road",
+          "flow": null
+        },
+        "W": {
+          "edgeProfileId": "grass",
+          "flow": null
+        },
+        "NW": {
+          "edgeProfileId": "grass",
+          "flow": null
+        },
+        "NE": {
+          "edgeProfileId": "grass",
+          "flow": null
+        }
+      }
+    },
+    {
+      "id": "road-junction",
+      "name": "Road Junction",
+      "weight": 1,
+      "allowedRotations": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "biomeId": "grassland",
+      "tags": [
+        "road"
+      ],
+      "sides": {
+        "E": {
+          "edgeProfileId": "dirt-road",
+          "flow": null
+        },
+        "SE": {
+          "edgeProfileId": "grass",
+          "flow": null
+        },
+        "SW": {
+          "edgeProfileId": "dirt-road",
+          "flow": null
+        },
+        "W": {
+          "edgeProfileId": "grass",
+          "flow": null
+        },
+        "NW": {
+          "edgeProfileId": "dirt-road",
+          "flow": null
+        },
+        "NE": {
+          "edgeProfileId": "grass",
+          "flow": null
+        }
+      }
+    },
+    {
+      "id": "river-straight",
+      "name": "River straight",
+      "weight": 1,
+      "allowedRotations": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "biomeId": "temperate-wetland",
+      "tags": [
+        "river"
+      ],
+      "sides": {
+        "E": {
+          "edgeProfileId": "grass",
+          "flow": null
+        },
+        "SE": {
+          "edgeProfileId": "grass",
+          "flow": null
+        },
+        "SW": {
+          "edgeProfileId": "river-water",
+          "flow": "out"
+        },
+        "W": {
+          "edgeProfileId": "grass",
+          "flow": null
+        },
+        "NW": {
+          "edgeProfileId": "grass",
+          "flow": null
+        },
+        "NE": {
+          "edgeProfileId": "river-water",
+          "flow": "in"
+        }
+      }
+    },
+    {
+      "id": "river-source",
+      "name": "River source",
+      "weight": 1,
+      "allowedRotations": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "biomeId": "temperate-wetland",
+      "tags": [
+        "river"
+      ],
+      "sides": {
+        "E": {
+          "edgeProfileId": "grass",
+          "flow": null
+        },
+        "SE": {
+          "edgeProfileId": "grass",
+          "flow": null
+        },
+        "SW": {
+          "edgeProfileId": "river-water",
+          "flow": "out"
+        },
+        "W": {
+          "edgeProfileId": "grass",
+          "flow": null
+        },
+        "NW": {
+          "edgeProfileId": "grass",
+          "flow": null
+        },
+        "NE": {
+          "edgeProfileId": "grass",
+          "flow": null
+        }
+      }
+    },
+    {
+      "id": "river-sink",
+      "name": "River sink",
+      "weight": 1,
+      "allowedRotations": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "biomeId": "temperate-wetland",
+      "tags": [
+        "river"
+      ],
+      "sides": {
+        "E": {
+          "edgeProfileId": "grass",
+          "flow": null
+        },
+        "SE": {
+          "edgeProfileId": "grass",
+          "flow": null
+        },
+        "SW": {
+          "edgeProfileId": "grass",
+          "flow": null
+        },
+        "W": {
+          "edgeProfileId": "grass",
+          "flow": null
+        },
+        "NW": {
+          "edgeProfileId": "grass",
+          "flow": null
+        },
+        "NE": {
+          "edgeProfileId": "river-water",
+          "flow": "in"
+        }
+      }
+    },
+    {
+      "id": "bridge",
+      "name": "Bridge crossing",
+      "weight": 1,
+      "allowedRotations": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "biomeId": "riverbank",
+      "tags": [
+        "bridge",
+        "road",
+        "river"
+      ],
+      "sides": {
+        "E": {
+          "edgeProfileId": "grass",
+          "flow": null
+        },
+        "SE": {
+          "edgeProfileId": "river-water",
+          "flow": "out"
+        },
+        "SW": {
+          "edgeProfileId": "dirt-road",
+          "flow": null
+        },
+        "W": {
+          "edgeProfileId": "grass",
+          "flow": null
+        },
+        "NW": {
+          "edgeProfileId": "river-water",
+          "flow": "in"
+        },
+        "NE": {
+          "edgeProfileId": "dirt-road",
+          "flow": null
+        }
+      }
+    }
+  ]
+}

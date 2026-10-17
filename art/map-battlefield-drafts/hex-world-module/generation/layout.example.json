@@ -1,0 +1,653 @@
+{
+  "$schema": "../schemas/module.schema.json",
+  "kind": "procedural-layout",
+  "formatVersion": 1,
+  "status": "proposal-only",
+  "generatorVersion": 1,
+  "sourceFingerprint": "1ff93a80676bc44a94344d50af5a5fd8a8de7b7a3120e1b55b643fd97777d89d",
+  "request": {
+    "width": 3,
+    "height": 3,
+    "seed": "greenward-crossing-v1",
+    "fixed": [
+      {
+        "column": 1,
+        "row": 1,
+        "templateId": "bridge",
+        "orientationSteps": 1
+      }
+    ]
+  },
+  "cells": [
+    {
+      "id": "A1",
+      "position": {
+        "column": 0,
+        "row": 0,
+        "label": "A1"
+      },
+      "templateId": "road-end",
+      "orientationSteps": 1,
+      "biomeId": "grassland",
+      "tags": [
+        "road"
+      ],
+      "sides": {
+        "E": {
+          "edgeProfileId": "dirt-road",
+          "tags": [
+            "dirt",
+            "road"
+          ],
+          "connector": {
+            "kind": "road",
+            "flow": null
+          },
+          "missingNeighbor": "boundary"
+        },
+        "SE": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        },
+        "SW": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        },
+        "W": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        },
+        "NW": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        },
+        "NE": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        }
+      }
+    },
+    {
+      "id": "B1",
+      "position": {
+        "column": 1,
+        "row": 0,
+        "label": "B1"
+      },
+      "templateId": "grass-fill",
+      "orientationSteps": 0,
+      "biomeId": "grassland",
+      "tags": [
+        "grass"
+      ],
+      "sides": {
+        "E": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        },
+        "SE": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        },
+        "SW": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        },
+        "W": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        },
+        "NW": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        },
+        "NE": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        }
+      }
+    },
+    {
+      "id": "C1",
+      "position": {
+        "column": 2,
+        "row": 0,
+        "label": "C1"
+      },
+      "templateId": "river-source",
+      "orientationSteps": 0,
+      "biomeId": "temperate-wetland",
+      "tags": [
+        "river"
+      ],
+      "sides": {
+        "E": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        },
+        "SE": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        },
+        "SW": {
+          "edgeProfileId": "river-water",
+          "tags": [
+            "water",
+            "river"
+          ],
+          "connector": {
+            "kind": "river",
+            "flow": "out"
+          },
+          "missingNeighbor": "boundary"
+        },
+        "W": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        },
+        "NW": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        },
+        "NE": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        }
+      }
+    },
+    {
+      "id": "A2",
+      "position": {
+        "column": 0,
+        "row": 1,
+        "label": "A2"
+      },
+      "templateId": "road-junction",
+      "orientationSteps": 0,
+      "biomeId": "grassland",
+      "tags": [
+        "road"
+      ],
+      "sides": {
+        "E": {
+          "edgeProfileId": "dirt-road",
+          "tags": [
+            "dirt",
+            "road"
+          ],
+          "connector": {
+            "kind": "road",
+            "flow": null
+          },
+          "missingNeighbor": "boundary"
+        },
+        "SE": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        },
+        "SW": {
+          "edgeProfileId": "dirt-road",
+          "tags": [
+            "dirt",
+            "road"
+          ],
+          "connector": {
+            "kind": "road",
+            "flow": null
+          },
+          "missingNeighbor": "boundary"
+        },
+        "W": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        },
+        "NW": {
+          "edgeProfileId": "dirt-road",
+          "tags": [
+            "dirt",
+            "road"
+          ],
+          "connector": {
+            "kind": "road",
+            "flow": null
+          },
+          "missingNeighbor": "boundary"
+        },
+        "NE": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        }
+      }
+    },
+    {
+      "id": "B2",
+      "position": {
+        "column": 1,
+        "row": 1,
+        "label": "B2"
+      },
+      "templateId": "bridge",
+      "orientationSteps": 1,
+      "biomeId": "riverbank",
+      "tags": [
+        "bridge",
+        "road",
+        "river"
+      ],
+      "sides": {
+        "E": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        },
+        "SE": {
+          "edgeProfileId": "river-water",
+          "tags": [
+            "water",
+            "river"
+          ],
+          "connector": {
+            "kind": "river",
+            "flow": "out"
+          },
+          "missingNeighbor": "boundary"
+        },
+        "SW": {
+          "edgeProfileId": "dirt-road",
+          "tags": [
+            "dirt",
+            "road"
+          ],
+          "connector": {
+            "kind": "road",
+            "flow": null
+          },
+          "missingNeighbor": "boundary"
+        },
+        "W": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        },
+        "NW": {
+          "edgeProfileId": "river-water",
+          "tags": [
+            "water",
+            "river"
+          ],
+          "connector": {
+            "kind": "river",
+            "flow": "in"
+          },
+          "missingNeighbor": "boundary"
+        },
+        "NE": {
+          "edgeProfileId": "dirt-road",
+          "tags": [
+            "dirt",
+            "road"
+          ],
+          "connector": {
+            "kind": "road",
+            "flow": null
+          },
+          "missingNeighbor": "boundary"
+        }
+      }
+    },
+    {
+      "id": "C2",
+      "position": {
+        "column": 2,
+        "row": 1,
+        "label": "C2"
+      },
+      "templateId": "road-end",
+      "orientationSteps": 3,
+      "biomeId": "grassland",
+      "tags": [
+        "road"
+      ],
+      "sides": {
+        "E": {
+          "edgeProfileId": "dirt-road",
+          "tags": [
+            "dirt",
+            "road"
+          ],
+          "connector": {
+            "kind": "road",
+            "flow": null
+          },
+          "missingNeighbor": "boundary"
+        },
+        "SE": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        },
+        "SW": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        },
+        "W": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        },
+        "NW": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        },
+        "NE": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        }
+      }
+    },
+    {
+      "id": "A3",
+      "position": {
+        "column": 0,
+        "row": 2,
+        "label": "A3"
+      },
+      "templateId": "road-end",
+      "orientationSteps": 5,
+      "biomeId": "grassland",
+      "tags": [
+        "road"
+      ],
+      "sides": {
+        "E": {
+          "edgeProfileId": "dirt-road",
+          "tags": [
+            "dirt",
+            "road"
+          ],
+          "connector": {
+            "kind": "road",
+            "flow": null
+          },
+          "missingNeighbor": "boundary"
+        },
+        "SE": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        },
+        "SW": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        },
+        "W": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        },
+        "NW": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        },
+        "NE": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        }
+      }
+    },
+    {
+      "id": "B3",
+      "position": {
+        "column": 1,
+        "row": 2,
+        "label": "B3"
+      },
+      "templateId": "river-sink",
+      "orientationSteps": 0,
+      "biomeId": "temperate-wetland",
+      "tags": [
+        "river"
+      ],
+      "sides": {
+        "E": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        },
+        "SE": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        },
+        "SW": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        },
+        "W": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        },
+        "NW": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        },
+        "NE": {
+          "edgeProfileId": "river-water",
+          "tags": [
+            "water",
+            "river"
+          ],
+          "connector": {
+            "kind": "river",
+            "flow": "in"
+          },
+          "missingNeighbor": "boundary"
+        }
+      }
+    },
+    {
+      "id": "C3",
+      "position": {
+        "column": 2,
+        "row": 2,
+        "label": "C3"
+      },
+      "templateId": "grass-fill",
+      "orientationSteps": 0,
+      "biomeId": "grassland",
+      "tags": [
+        "grass"
+      ],
+      "sides": {
+        "E": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        },
+        "SE": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        },
+        "SW": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        },
+        "W": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        },
+        "NW": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        },
+        "NE": {
+          "edgeProfileId": "grass",
+          "tags": [
+            "grass"
+          ],
+          "connector": null,
+          "missingNeighbor": "boundary"
+        }
+      }
+    }
+  ],
+  "diagnostics": {
+    "assignments": 9,
+    "backtracks": 0
+  }
+}

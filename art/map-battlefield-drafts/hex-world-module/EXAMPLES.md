@@ -47,13 +47,16 @@ These side tags rotate with the topology. They are authored directions before th
 {
   "sides": {
     "E": {
+      "edgeProfileId": "bank",
       "tags": [
         "bank"
       ],
       "connector": null
     },
     "SE": {
+      "edgeProfileId": "river-water",
       "tags": [
+        "water",
         "river"
       ],
       "connector": {
@@ -62,7 +65,9 @@ These side tags rotate with the topology. They are authored directions before th
       }
     },
     "SW": {
+      "edgeProfileId": "dirt-road",
       "tags": [
+        "dirt",
         "road"
       ],
       "connector": {
@@ -71,13 +76,16 @@ These side tags rotate with the topology. They are authored directions before th
       }
     },
     "W": {
+      "edgeProfileId": "bank",
       "tags": [
         "bank"
       ],
       "connector": null
     },
     "NW": {
+      "edgeProfileId": "river-water",
       "tags": [
+        "water",
         "river"
       ],
       "connector": {
@@ -86,7 +94,9 @@ These side tags rotate with the topology. They are authored directions before th
       }
     },
     "NE": {
+      "edgeProfileId": "dirt-road",
       "tags": [
+        "dirt",
         "road"
       ],
       "connector": {
@@ -245,3 +255,7 @@ The tile references `gameplay.levelBandId`, while reward definitions keep their 
 ## 7. Map object mapping
 
 The [map-component guide](MAP-COMPONENTS.md) shows how a tile references an object instance, the instance references a component, and the component selects icon variants plus gameplay defaults. All 39 map icons are covered by the generated [portable mapping](map-component-mapping.json).
+
+## 8. Touching edge profiles
+
+A `dirt-road` edge requires the complete `["dirt", "road"]` signature on its neighbor's opposite-facing edge. See [GENERATION.md](GENERATION.md) for transition examples, rotation filtering and a generated nine-hex layout.

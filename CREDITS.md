@@ -781,3 +781,7 @@ The map-component catalog sheet in the same module is a browser composition of
 39 existing first-party map icon variants, indexed into 25 object types. Its
 adjacent render script and JSON mappings preserve the original PNG sources.
 No additional painted artwork was generated for this catalog update.
+
+The hex-generation compatibility diagram is an original technical SVG authored
+from the module's generated topology data; its PNG is a browser rendering of that
+SVG. Edge profiles, templates and matching code introduce no third-party artwork.

@@ -22,48 +22,57 @@
         "forest"
       ],
       "connector": null,
-      "missingNeighbor": "boundary"
+      "missingNeighbor": "boundary",
+      "edgeProfileId": "forest"
     },
     "SE": {
       "tags": [
+        "dirt",
         "road"
       ],
       "connector": {
         "kind": "road",
         "flow": null
       },
-      "missingNeighbor": "boundary"
+      "missingNeighbor": "boundary",
+      "edgeProfileId": "dirt-road"
     },
     "SW": {
       "tags": [
         "forest"
       ],
       "connector": null,
-      "missingNeighbor": "boundary"
+      "missingNeighbor": "boundary",
+      "edgeProfileId": "forest"
     },
     "W": {
       "tags": [
+        "dirt",
         "road"
       ],
       "connector": {
         "kind": "road",
         "flow": null
       },
-      "missingNeighbor": "boundary"
+      "missingNeighbor": "boundary",
+      "edgeProfileId": "dirt-road"
     },
     "NW": {
       "tags": [
-        "forest"
+        "forest",
+        "bank"
       ],
       "connector": null,
-      "missingNeighbor": "boundary"
+      "missingNeighbor": "boundary",
+      "edgeProfileId": "forest-bank"
     },
     "NE": {
       "tags": [
         "forest"
       ],
       "connector": null,
-      "missingNeighbor": "boundary"
+      "missingNeighbor": "boundary",
+      "edgeProfileId": "forest"
     }
   },
   "art": {

@@ -91,6 +91,12 @@
       "mapping": "hex-world-module/map-component-mapping.json",
       "guide": "hex-world-module/MAP-COMPONENTS.md",
       "status": "proposal-only"
+    },
+    {
+      "id": "hex-generation",
+      "file": "hex-world-module/generation/rules.json",
+      "guide": "hex-world-module/GENERATION.md",
+      "status": "offline-prototype"
     }
   ]
 }

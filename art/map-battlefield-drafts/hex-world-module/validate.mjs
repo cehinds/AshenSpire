@@ -3,10 +3,11 @@ import {loadMapComponents,validateMapComponents} from './map-components.mjs';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-export const directions=['E','SE','SW','W','NW','NE'];
-export function neighbor(c,r,i){const parity=((r%2)+2)%2;return [[c+1,r],[c+parity,r+1],[c-1+parity,r+1],[c-1,r],[c-1+parity,r-1],[c+parity,r-1]][i];}
+import {directions,neighbor,address} from './hex-geometry.mjs';
+import {validateEdge,compareEdges} from './hex-adjacency.mjs';
+import {loadGeneration,validateGenerationDefinitions,validateGeneratedLayout} from './hex-generation.mjs';
+export {directions,neighbor,address};
 export function eligible(rule,tags){return rule.all.every(t=>tags.includes(t))&&(!rule.any.length||rule.any.some(t=>tags.includes(t)))&&!rule.exclude.some(t=>tags.includes(t));}
-export function address(c,r){if(!Number.isInteger(c)||!Number.isInteger(r)||c<0||r<0)return null;let s='';for(c++;c;c=Math.floor((c-1)/26))s=String.fromCharCode(65+(c-1)%26)+s;return s+(r+1);}
 export function eligibleRewardEntries(table,rewards,level,claimed=[]){
  const byId=new Map(rewards.map(r=>[r.id,r]));
  return table.entries.filter(e=>{const r=byId.get(e.rewardId);return r&&level>=r.dropLevelRange[0]&&level<=r.dropLevelRange[1]&&!(r.repeatPolicy==='once-per-run'&&claimed.includes(r.id));});
@@ -23,7 +24,7 @@ export function validate(root=path.dirname(fileURLToPath(import.meta.url))){
  const componentData=loadMapComponents(root);
  docs.set(index.components,componentData.registry);docs.set(index.objects,componentData.objects);
  for(const module of componentData.modules)docs.set(module.file,module.data);
- for(const p of [...Object.values(index.templates??{}),...Object.values(index.catalogs),...Object.values(index.art),...Object.values(index.mapArt).filter(Boolean),...Object.values(index.gameplay),index.runtimeExample,...map.tiles])docs.set(p,read(p));
+ for(const p of [...Object.values(index.generation),...Object.values(index.templates??{}),...Object.values(index.catalogs),...Object.values(index.art),...Object.values(index.mapArt).filter(Boolean),...Object.values(index.gameplay),index.runtimeExample,...map.tiles])docs.set(p,read(p));
  const schemaCheck=spawnSync('python',['-c',`import json,sys,jsonschema,pathlib
 root=pathlib.Path(sys.argv[1]); schema=json.loads((root/'schemas/module.schema.json').read_text()); validator=jsonschema.Draft202012Validator(schema)
 for name in json.loads(sys.argv[2]):
@@ -32,6 +33,9 @@ for name in json.loads(sys.argv[2]):
  if(schemaCheck.status!==0)errors.push('Schema validation requires Python jsonschema: '+(schemaCheck.stderr||schemaCheck.error));
  else if(schemaCheck.stdout.trim())errors.push(...schemaCheck.stdout.trim().split('\n'));
  if(errors.length)return {errors,documents:docs.size,tiles:map.tiles.length};
+ const generationData=loadGeneration(root);
+ errors.push(...validateGenerationDefinitions(generationData));
+ errors.push(...validateGeneratedLayout(read(index.generation.example),generationData));
  const tags=new Set(read(index.catalogs.tags).items.map(x=>x.id));
  const sets={};
  for(const [p,d] of docs){
@@ -52,6 +56,7 @@ for name in json.loads(sys.argv[2]):
  for(const x of read(index.gameplay.effects).items)if(x.revealRuleId)ref('reveal',x.revealRuleId,x.id);
  for(const x of read(index.gameplay.trainers).items)ref('rewards',x.costRewardId,x.id);
  for(const x of read(index.gameplay.discoveries).items)for(const e of x.entries)ref({trainer:'trainers',rest:'rest-spots',loot:'loot-tables'}[e.kind],e.refId,x.id);
+ for(const template of generationData.templates)ref('biomes',template.biomeId,template.id);
  const levelBands=read(index.gameplay['level-bands']).items;
  const rewards=read(index.gameplay.rewards).items;
  const encounters=read(index.gameplay['encounter-pools']).items;
@@ -85,10 +90,12 @@ for name in json.loads(sys.argv[2]):
  }
  for(const t of tiles)for(let local=0;local<6;local++){
   const edge=t.sides[directions[local]];if(!edge)continue;const world=(local+t.orientationSteps)%6;const n=byPos.get(neighbor(t.position.column,t.position.row,world).join(','));
+  for(const error of validateEdge(edge,generationData.profiles))errors.push(`${t.id}/${directions[local]}: ${error}`);
   check(['boundary','continues'].includes(edge.missingNeighbor),`${t.id}: missing edge policy`);
   if(edge.connector?.kind==='river')check(['in','out'].includes(edge.connector.flow),`${t.id}: river flow must be in or out`);
   if(!n){if(edge.connector)check(edge.missingNeighbor==='continues',`${t.id}: open connector needs continuation`);continue;}
   const other=n.sides[directions[((world+3-n.orientationSteps)%6+6)%6]];if(!other)continue;
+  const match=compareEdges(edge,other,generationData.profiles);if(!match.compatible)errors.push(`${t.id}/${directions[local]}: incompatible touching edge with ${n.id}: ${match.reasons.join(' ')}`);
   check((edge.connector?.kind??null)===(other.connector?.kind??null),`${t.id}/${directions[local]}: connector mismatch with ${n.id}`);
   if(edge.connector?.kind==='river')check(['in','out'].includes(edge.connector.flow)&&other.connector?.flow!==edge.connector.flow&&['in','out'].includes(other.connector?.flow),`${t.id}: river flow mismatch`);
  }

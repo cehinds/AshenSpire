@@ -310,6 +310,10 @@
     {
       "id": "weapons",
       "description": "weapons"
+    },
+    {
+      "id": "dirt",
+      "description": "dirt"
     }
   ]
 }

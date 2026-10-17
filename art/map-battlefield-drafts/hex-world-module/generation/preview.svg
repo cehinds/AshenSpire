@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="820" viewBox="0 0 1240 820"><defs><marker id="arrow" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="3" markerHeight="3" orient="auto"><path d="M0,0 L10,5 L0,10Z" fill="#65d0ed"/></marker></defs><style>text{font-family:Arial,sans-serif;fill:#e4ebe7}.title{font-size:27px;font-weight:bold}.heading{font-size:21px;font-weight:bold}.body{font-size:16px}.small{font-size:14px;fill:#afc4c6}.address{font-size:20px;font-weight:bold}</style><rect width="1240" height="820" fill="#142126"/>
+<text x="28" y="42" class="title" text-anchor="start">Procedural hex matching · every touching edge must agree</text>
+<text x="28" y="72" class="body" text-anchor="start">Seed: greenward-crossing-v1 · 9 hexes · fixed bridge at B2 · debug labels shown</text>
+<rect x="24" y="96" width="582" height="536" rx="12" fill="#203238"/>
+<rect x="626" y="96" width="590" height="536" rx="12" fill="#203238"/>
+<text x="44" y="132" class="heading" text-anchor="start">Generated road and river layout</text>
+<polygon points="131,169 190.75575286112627,203.5 190.75575286112627,272.5 131,307 71.24424713887375,272.5 71.24424713887373,203.5" fill="#355344" stroke="#86aa94" stroke-width="2"/>
+<line x1="131" y1="238" x2="160.87787643056313" y2="289.75" stroke="#e7bd75" stroke-width="6" />
+<text x="131" y="214" class="address" text-anchor="middle">A1</text>
+<text x="131" y="263" class="small" text-anchor="middle">road end</text>
+<polygon points="250.51150572225254,169 310.2672585833788,203.5 310.2672585833788,272.5 250.51150572225254,307 190.75575286112627,272.5 190.75575286112627,203.5" fill="#355344" stroke="#86aa94" stroke-width="2"/>
+<text x="250.51150572225254" y="214" class="address" text-anchor="middle">B1</text>
+<text x="250.51150572225254" y="263" class="small" text-anchor="middle">grass fill</text>
+<polygon points="370.0230114445051,169 429.77876430563134,203.5 429.77876430563134,272.5 370.0230114445051,307 310.2672585833788,272.5 310.2672585833788,203.5" fill="#2c5665" stroke="#86aa94" stroke-width="2"/>
+<line x1="370.0230114445051" y1="238" x2="340.14513501394197" y2="289.75" stroke="#65c9e4" stroke-width="7" marker-end="url(#arrow)"/>
+<text x="370.0230114445051" y="214" class="address" text-anchor="middle">C1</text>
+<text x="370.0230114445051" y="263" class="small" text-anchor="middle">river source</text>
+<polygon points="190.75575286112627,272.5 250.51150572225254,307 250.51150572225254,376 190.75575286112627,410.5 131,376 131,307" fill="#355344" stroke="#86aa94" stroke-width="2"/>
+<line x1="190.75575286112627" y1="341.5" x2="250.51150572225254" y2="341.5" stroke="#e7bd75" stroke-width="6" />
+<line x1="190.75575286112627" y1="341.5" x2="160.87787643056316" y2="393.25" stroke="#e7bd75" stroke-width="6" />
+<line x1="190.75575286112627" y1="341.5" x2="160.8778764305631" y2="289.75" stroke="#e7bd75" stroke-width="6" />
+<text x="190.75575286112627" y="317.5" class="address" text-anchor="middle">A2</text>
+<text x="190.75575286112627" y="366.5" class="small" text-anchor="middle">road junction</text>
+<polygon points="310.26725858337875,272.5 370.023011444505,307 370.023011444505,376 310.26725858337875,410.5 250.51150572225248,376 250.51150572225248,307" fill="#5e624c" stroke="#86aa94" stroke-width="2"/>
+<line x1="310.26725858337875" y1="341.5" x2="370.023011444505" y2="341.5" stroke="#e7bd75" stroke-width="6" />
+<line x1="310.26725858337875" y1="341.5" x2="280.38938215281564" y2="393.25" stroke="#65c9e4" stroke-width="7" marker-end="url(#arrow)"/>
+<line x1="310.26725858337875" y1="341.5" x2="250.51150572225248" y2="341.5" stroke="#e7bd75" stroke-width="6" />
+<line x1="340.1451350139419" y1="289.75" x2="310.26725858337875" y2="341.5" stroke="#65c9e4" stroke-width="7" marker-end="url(#arrow)"/>
+<text x="310.26725858337875" y="317.5" class="address" text-anchor="middle">B2</text>
+<text x="310.26725858337875" y="366.5" class="small" text-anchor="middle">bridge</text>
+<polygon points="429.7787643056313,272.5 489.53451716675755,307 489.53451716675755,376 429.7787643056313,410.5 370.023011444505,376 370.023011444505,307" fill="#355344" stroke="#86aa94" stroke-width="2"/>
+<line x1="429.7787643056313" y1="341.5" x2="370.023011444505" y2="341.5" stroke="#e7bd75" stroke-width="6" />
+<text x="429.7787643056313" y="317.5" class="address" text-anchor="middle">C2</text>
+<text x="429.7787643056313" y="366.5" class="small" text-anchor="middle">road end</text>
+<polygon points="131,376 190.75575286112627,410.5 190.75575286112627,479.5 131,514 71.24424713887375,479.5 71.24424713887373,410.5" fill="#355344" stroke="#86aa94" stroke-width="2"/>
+<line x1="131" y1="445" x2="160.87787643056313" y2="393.25" stroke="#e7bd75" stroke-width="6" />
+<text x="131" y="421" class="address" text-anchor="middle">A3</text>
+<text x="131" y="470" class="small" text-anchor="middle">road end</text>
+<polygon points="250.51150572225254,376 310.2672585833788,410.5 310.2672585833788,479.5 250.51150572225254,514 190.75575286112627,479.5 190.75575286112627,410.5" fill="#2c5665" stroke="#86aa94" stroke-width="2"/>
+<line x1="280.3893821528157" y1="393.25" x2="250.51150572225254" y2="445" stroke="#65c9e4" stroke-width="7" marker-end="url(#arrow)"/>
+<text x="250.51150572225254" y="421" class="address" text-anchor="middle">B3</text>
+<text x="250.51150572225254" y="470" class="small" text-anchor="middle">river sink</text>
+<polygon points="370.0230114445051,376 429.77876430563134,410.5 429.77876430563134,479.5 370.0230114445051,514 310.2672585833788,479.5 310.2672585833788,410.5" fill="#355344" stroke="#86aa94" stroke-width="2"/>
+<text x="370.0230114445051" y="421" class="address" text-anchor="middle">C3</text>
+<text x="370.0230114445051" y="470" class="small" text-anchor="middle">grass fill</text>
+<text x="44" y="565" class="body" text-anchor="start">Gold: dirt road       Blue arrows: river flow</text>
+<text x="44" y="595" class="small" text-anchor="start">Terrain and route properties match across each shared side.</text>
+<text x="648" y="132" class="heading" text-anchor="start">Allowed and rejected connections</text>
+<text x="650" y="178" class="body" text-anchor="start">dirt + road</text>
+<text x="871" y="178" class="body" text-anchor="start">↔</text>
+<text x="905" y="178" class="body" text-anchor="start">dirt + road</text>
+<text x="650" y="201" class="small" style="fill:#589a76">MATCH</text>
+<text x="650" y="241" class="body" text-anchor="start">dirt + road</text>
+<text x="871" y="241" class="body" text-anchor="start">↔</text>
+<text x="905" y="241" class="body" text-anchor="start">stone + road</text>
+<text x="650" y="264" class="small" style="fill:#c98377">REJECT</text>
+<text x="650" y="304" class="body" text-anchor="start">dirt + road</text>
+<text x="871" y="304" class="body" text-anchor="start">↔</text>
+<text x="905" y="304" class="body" text-anchor="start">dirt only</text>
+<text x="650" y="327" class="small" style="fill:#c98377">REJECT</text>
+<text x="650" y="367" class="body" text-anchor="start">water + river OUT</text>
+<text x="871" y="367" class="body" text-anchor="start">↔</text>
+<text x="905" y="367" class="body" text-anchor="start">water + river IN</text>
+<text x="650" y="390" class="small" style="fill:#589a76">MATCH</text>
+<text x="650" y="430" class="body" text-anchor="start">water + river IN</text>
+<text x="871" y="430" class="body" text-anchor="start">↔</text>
+<text x="905" y="430" class="body" text-anchor="start">water + river IN</text>
+<text x="650" y="453" class="small" style="fill:#c98377">REJECT</text>
+<text x="650" y="493" class="body" text-anchor="start">grass</text>
+<text x="871" y="493" class="body" text-anchor="start">↔</text>
+<text x="905" y="493" class="body" text-anchor="start">forest</text>
+<text x="650" y="516" class="small" style="fill:#d4ad65">TRANSITION TILE</text>
+<text x="648" y="581" class="small" text-anchor="start">A transition changes properties inside the tile.</text>
+<text x="648" y="605" class="small" text-anchor="start">The touching side signatures still match exactly.</text>
+<rect x="24" y="652" width="1192" height="144" rx="12" fill="#203238"/>
+<text x="44" y="688" class="heading" text-anchor="start">Generation contract</text>
+<text x="44" y="722" class="body" text-anchor="start">Filter compatible rotations → choose by seeded weights → check all neighbors → backtrack when needed.</text>
+<text x="44" y="754" class="body" text-anchor="start">Closed map boundaries · bounded search · no rule relaxation · same seed + same sources = same layout</text>
+<text x="44" y="779" class="small" text-anchor="start">Offline prototype data; game rendering, object placement and gameplay wiring are separate integration steps.</text>
+</svg>

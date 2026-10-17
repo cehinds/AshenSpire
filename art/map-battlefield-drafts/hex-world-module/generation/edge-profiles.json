@@ -1,0 +1,82 @@
+{
+  "$schema": "../schemas/module.schema.json",
+  "kind": "catalog",
+  "id": "edge-profiles",
+  "items": [
+    {
+      "id": "grass",
+      "tags": [
+        "grass"
+      ],
+      "connectorKind": null
+    },
+    {
+      "id": "forest",
+      "tags": [
+        "forest"
+      ],
+      "connectorKind": null
+    },
+    {
+      "id": "bank",
+      "tags": [
+        "bank"
+      ],
+      "connectorKind": null
+    },
+    {
+      "id": "dirt",
+      "tags": [
+        "dirt"
+      ],
+      "connectorKind": null
+    },
+    {
+      "id": "stone",
+      "tags": [
+        "stone"
+      ],
+      "connectorKind": null
+    },
+    {
+      "id": "dirt-road",
+      "tags": [
+        "dirt",
+        "road"
+      ],
+      "connectorKind": "road"
+    },
+    {
+      "id": "stone-road",
+      "tags": [
+        "stone",
+        "road"
+      ],
+      "connectorKind": "road"
+    },
+    {
+      "id": "river-water",
+      "tags": [
+        "water",
+        "river"
+      ],
+      "connectorKind": "river"
+    },
+    {
+      "id": "grass-bank",
+      "tags": [
+        "grass",
+        "bank"
+      ],
+      "connectorKind": null
+    },
+    {
+      "id": "forest-bank",
+      "tags": [
+        "forest",
+        "bank"
+      ],
+      "connectorKind": null
+    }
+  ]
+}

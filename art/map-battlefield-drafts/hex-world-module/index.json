@@ -77,5 +77,11 @@
     "tile": "templates/tile.template.json"
   },
   "components": "map-components.json",
-  "objects": "map-objects.json"
+  "objects": "map-objects.json",
+  "generation": {
+    "profiles": "generation/edge-profiles.json",
+    "templates": "generation/tile-templates.json",
+    "rules": "generation/rules.json",
+    "example": "generation/layout.example.json"
+  }
 }

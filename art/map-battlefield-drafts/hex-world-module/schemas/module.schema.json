@@ -16,7 +16,10 @@
         "runtime",
         "tile",
         "map-components",
-        "map-objects"
+        "map-objects",
+        "tile-templates",
+        "generation-rules",
+        "procedural-layout"
       ]
     }
   },
@@ -78,6 +81,34 @@
           "objects": {
             "type": "string",
             "minLength": 1
+          },
+          "generation": {
+            "type": "object",
+            "properties": {
+              "profiles": {
+                "type": "string",
+                "minLength": 1
+              },
+              "templates": {
+                "type": "string",
+                "minLength": 1
+              },
+              "rules": {
+                "type": "string",
+                "minLength": 1
+              },
+              "example": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "profiles",
+              "templates",
+              "rules",
+              "example"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -90,7 +121,8 @@
           "runtimeExample",
           "mapArt",
           "components",
-          "objects"
+          "objects",
+          "generation"
         ],
         "additionalProperties": true
       }
@@ -835,348 +867,7 @@
             "maximum": 5
           },
           "sides": {
-            "type": "object",
-            "properties": {
-              "E": {
-                "type": "object",
-                "properties": {
-                  "tags": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "uniqueItems": true
-                  },
-                  "connector": {
-                    "oneOf": [
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "kind": {
-                            "enum": [
-                              "road",
-                              "river"
-                            ]
-                          },
-                          "flow": {
-                            "enum": [
-                              null,
-                              "in",
-                              "out"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "kind",
-                          "flow"
-                        ],
-                        "additionalProperties": false
-                      }
-                    ]
-                  },
-                  "missingNeighbor": {
-                    "enum": [
-                      "boundary",
-                      "continues"
-                    ]
-                  }
-                },
-                "required": [
-                  "tags",
-                  "connector",
-                  "missingNeighbor"
-                ],
-                "additionalProperties": false
-              },
-              "SE": {
-                "type": "object",
-                "properties": {
-                  "tags": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "uniqueItems": true
-                  },
-                  "connector": {
-                    "oneOf": [
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "kind": {
-                            "enum": [
-                              "road",
-                              "river"
-                            ]
-                          },
-                          "flow": {
-                            "enum": [
-                              null,
-                              "in",
-                              "out"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "kind",
-                          "flow"
-                        ],
-                        "additionalProperties": false
-                      }
-                    ]
-                  },
-                  "missingNeighbor": {
-                    "enum": [
-                      "boundary",
-                      "continues"
-                    ]
-                  }
-                },
-                "required": [
-                  "tags",
-                  "connector",
-                  "missingNeighbor"
-                ],
-                "additionalProperties": false
-              },
-              "SW": {
-                "type": "object",
-                "properties": {
-                  "tags": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "uniqueItems": true
-                  },
-                  "connector": {
-                    "oneOf": [
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "kind": {
-                            "enum": [
-                              "road",
-                              "river"
-                            ]
-                          },
-                          "flow": {
-                            "enum": [
-                              null,
-                              "in",
-                              "out"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "kind",
-                          "flow"
-                        ],
-                        "additionalProperties": false
-                      }
-                    ]
-                  },
-                  "missingNeighbor": {
-                    "enum": [
-                      "boundary",
-                      "continues"
-                    ]
-                  }
-                },
-                "required": [
-                  "tags",
-                  "connector",
-                  "missingNeighbor"
-                ],
-                "additionalProperties": false
-              },
-              "W": {
-                "type": "object",
-                "properties": {
-                  "tags": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "uniqueItems": true
-                  },
-                  "connector": {
-                    "oneOf": [
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "kind": {
-                            "enum": [
-                              "road",
-                              "river"
-                            ]
-                          },
-                          "flow": {
-                            "enum": [
-                              null,
-                              "in",
-                              "out"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "kind",
-                          "flow"
-                        ],
-                        "additionalProperties": false
-                      }
-                    ]
-                  },
-                  "missingNeighbor": {
-                    "enum": [
-                      "boundary",
-                      "continues"
-                    ]
-                  }
-                },
-                "required": [
-                  "tags",
-                  "connector",
-                  "missingNeighbor"
-                ],
-                "additionalProperties": false
-              },
-              "NW": {
-                "type": "object",
-                "properties": {
-                  "tags": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "uniqueItems": true
-                  },
-                  "connector": {
-                    "oneOf": [
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "kind": {
-                            "enum": [
-                              "road",
-                              "river"
-                            ]
-                          },
-                          "flow": {
-                            "enum": [
-                              null,
-                              "in",
-                              "out"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "kind",
-                          "flow"
-                        ],
-                        "additionalProperties": false
-                      }
-                    ]
-                  },
-                  "missingNeighbor": {
-                    "enum": [
-                      "boundary",
-                      "continues"
-                    ]
-                  }
-                },
-                "required": [
-                  "tags",
-                  "connector",
-                  "missingNeighbor"
-                ],
-                "additionalProperties": false
-              },
-              "NE": {
-                "type": "object",
-                "properties": {
-                  "tags": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "uniqueItems": true
-                  },
-                  "connector": {
-                    "oneOf": [
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "kind": {
-                            "enum": [
-                              "road",
-                              "river"
-                            ]
-                          },
-                          "flow": {
-                            "enum": [
-                              null,
-                              "in",
-                              "out"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "kind",
-                          "flow"
-                        ],
-                        "additionalProperties": false
-                      }
-                    ]
-                  },
-                  "missingNeighbor": {
-                    "enum": [
-                      "boundary",
-                      "continues"
-                    ]
-                  }
-                },
-                "required": [
-                  "tags",
-                  "connector",
-                  "missingNeighbor"
-                ],
-                "additionalProperties": false
-              }
-            },
-            "required": [
-              "E",
-              "SE",
-              "SW",
-              "W",
-              "NW",
-              "NE"
-            ],
-            "additionalProperties": false
+            "$ref": "#/$defs/expandedSides"
           },
           "art": {
             "type": "object",
@@ -1853,6 +1544,469 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "catalog"
+          },
+          "id": {
+            "const": "edge-profiles"
+          }
+        },
+        "required": [
+          "kind",
+          "id"
+        ]
+      },
+      "then": {
+        "properties": {
+          "items": {
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true,
+                  "minItems": 1
+                },
+                "connectorKind": {
+                  "enum": [
+                    null,
+                    "road",
+                    "river"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "tags",
+                "connectorKind"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "tile-templates"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "properties": {
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "weight": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "allowedRotations": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5
+                  },
+                  "minItems": 1,
+                  "uniqueItems": true
+                },
+                "biomeId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true
+                },
+                "sides": {
+                  "type": "object",
+                  "properties": {
+                    "E": {
+                      "type": "object",
+                      "properties": {
+                        "edgeProfileId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "flow": {
+                          "enum": [
+                            null,
+                            "in",
+                            "out"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "edgeProfileId",
+                        "flow"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "SE": {
+                      "type": "object",
+                      "properties": {
+                        "edgeProfileId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "flow": {
+                          "enum": [
+                            null,
+                            "in",
+                            "out"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "edgeProfileId",
+                        "flow"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "SW": {
+                      "type": "object",
+                      "properties": {
+                        "edgeProfileId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "flow": {
+                          "enum": [
+                            null,
+                            "in",
+                            "out"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "edgeProfileId",
+                        "flow"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "W": {
+                      "type": "object",
+                      "properties": {
+                        "edgeProfileId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "flow": {
+                          "enum": [
+                            null,
+                            "in",
+                            "out"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "edgeProfileId",
+                        "flow"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "NW": {
+                      "type": "object",
+                      "properties": {
+                        "edgeProfileId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "flow": {
+                          "enum": [
+                            null,
+                            "in",
+                            "out"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "edgeProfileId",
+                        "flow"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "NE": {
+                      "type": "object",
+                      "properties": {
+                        "edgeProfileId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "flow": {
+                          "enum": [
+                            null,
+                            "in",
+                            "out"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "edgeProfileId",
+                        "flow"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "E",
+                    "SE",
+                    "SW",
+                    "W",
+                    "NW",
+                    "NE"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "weight",
+                "allowedRotations",
+                "biomeId",
+                "tags",
+                "sides"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "id",
+          "items"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "generation-rules"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "properties": {
+          "matching": {
+            "type": "object",
+            "properties": {
+              "mode": {
+                "const": "exact-profile"
+              },
+              "tagPolicy": {
+                "const": "exact-set"
+              },
+              "riverFlow": {
+                "const": "opposite"
+              }
+            },
+            "required": [
+              "mode",
+              "tagPolicy",
+              "riverFlow"
+            ],
+            "additionalProperties": false
+          },
+          "boundaries": {
+            "type": "object",
+            "properties": {
+              "connectorPolicy": {
+                "const": "closed"
+              }
+            },
+            "required": [
+              "connectorPolicy"
+            ],
+            "additionalProperties": false
+          },
+          "solver": {
+            "type": "object",
+            "properties": {
+              "maxAssignments": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "maxCells": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "maxAssignments",
+              "maxCells"
+            ],
+            "additionalProperties": false
+          },
+          "example": {
+            "$ref": "#/$defs/generationRequest"
+          }
+        },
+        "required": [
+          "matching",
+          "boundaries",
+          "solver",
+          "example"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "procedural-layout"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "properties": {
+          "generatorVersion": {
+            "const": 1
+          },
+          "sourceFingerprint": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "request": {
+            "$ref": "#/$defs/generationRequest"
+          },
+          "cells": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "position": {
+                  "type": "object",
+                  "properties": {
+                    "column": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "row": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "label": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "column",
+                    "row",
+                    "label"
+                  ],
+                  "additionalProperties": false
+                },
+                "templateId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "orientationSteps": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 5
+                },
+                "biomeId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true
+                },
+                "sides": {
+                  "$ref": "#/$defs/expandedSides"
+                }
+              },
+              "required": [
+                "id",
+                "position",
+                "templateId",
+                "orientationSteps",
+                "biomeId",
+                "tags",
+                "sides"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1
+          },
+          "diagnostics": {
+            "type": "object",
+            "properties": {
+              "assignments": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "backtracks": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "assignments",
+              "backtracks"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "generatorVersion",
+          "sourceFingerprint",
+          "request",
+          "cells",
+          "diagnostics"
+        ]
+      }
     }
   ],
   "$defs": {
@@ -2109,6 +2263,153 @@
         }
       },
       "additionalProperties": true
+    },
+    "edge": {
+      "type": "object",
+      "properties": {
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "connector": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "enum": [
+                    "road",
+                    "river"
+                  ]
+                },
+                "flow": {
+                  "enum": [
+                    null,
+                    "in",
+                    "out"
+                  ]
+                }
+              },
+              "required": [
+                "kind",
+                "flow"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "missingNeighbor": {
+          "enum": [
+            "boundary",
+            "continues"
+          ]
+        },
+        "edgeProfileId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "tags",
+        "connector",
+        "missingNeighbor",
+        "edgeProfileId"
+      ],
+      "additionalProperties": false
+    },
+    "expandedSides": {
+      "type": "object",
+      "properties": {
+        "E": {
+          "$ref": "#/$defs/edge"
+        },
+        "SE": {
+          "$ref": "#/$defs/edge"
+        },
+        "SW": {
+          "$ref": "#/$defs/edge"
+        },
+        "W": {
+          "$ref": "#/$defs/edge"
+        },
+        "NW": {
+          "$ref": "#/$defs/edge"
+        },
+        "NE": {
+          "$ref": "#/$defs/edge"
+        }
+      },
+      "required": [
+        "E",
+        "SE",
+        "SW",
+        "W",
+        "NW",
+        "NE"
+      ],
+      "additionalProperties": false
+    },
+    "generationRequest": {
+      "type": "object",
+      "properties": {
+        "width": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "seed": {
+          "type": "string"
+        },
+        "fixed": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "column": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "row": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "templateId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "orientationSteps": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 5
+              }
+            },
+            "required": [
+              "column",
+              "row",
+              "templateId",
+              "orientationSteps"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "width",
+        "height",
+        "seed",
+        "fixed"
+      ],
+      "additionalProperties": false
     }
   }
 }

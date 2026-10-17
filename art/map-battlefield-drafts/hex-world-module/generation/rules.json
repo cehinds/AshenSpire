@@ -1,0 +1,31 @@
+{
+  "$schema": "../schemas/module.schema.json",
+  "kind": "generation-rules",
+  "id": "hex-generation",
+  "formatVersion": 1,
+  "matching": {
+    "mode": "exact-profile",
+    "tagPolicy": "exact-set",
+    "riverFlow": "opposite"
+  },
+  "boundaries": {
+    "connectorPolicy": "closed"
+  },
+  "solver": {
+    "maxAssignments": 10000,
+    "maxCells": 256
+  },
+  "example": {
+    "width": 3,
+    "height": 3,
+    "seed": "greenward-crossing-v1",
+    "fixed": [
+      {
+        "column": 1,
+        "row": 1,
+        "templateId": "bridge",
+        "orientationSteps": 1
+      }
+    ]
+  }
+}

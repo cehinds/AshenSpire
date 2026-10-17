@@ -21,42 +21,48 @@
         "grass"
       ],
       "connector": null,
-      "missingNeighbor": "boundary"
+      "missingNeighbor": "boundary",
+      "edgeProfileId": "grass"
     },
     "SE": {
       "tags": [
         "grass"
       ],
       "connector": null,
-      "missingNeighbor": "boundary"
+      "missingNeighbor": "boundary",
+      "edgeProfileId": "grass"
     },
     "SW": {
       "tags": [
         "grass"
       ],
       "connector": null,
-      "missingNeighbor": "boundary"
+      "missingNeighbor": "boundary",
+      "edgeProfileId": "grass"
     },
     "W": {
       "tags": [
         "grass"
       ],
       "connector": null,
-      "missingNeighbor": "boundary"
+      "missingNeighbor": "boundary",
+      "edgeProfileId": "grass"
     },
     "NW": {
       "tags": [
         "grass"
       ],
       "connector": null,
-      "missingNeighbor": "boundary"
+      "missingNeighbor": "boundary",
+      "edgeProfileId": "grass"
     },
     "NE": {
       "tags": [
         "grass"
       ],
       "connector": null,
-      "missingNeighbor": "boundary"
+      "missingNeighbor": "boundary",
+      "edgeProfileId": "grass"
     }
   },
   "art": {
