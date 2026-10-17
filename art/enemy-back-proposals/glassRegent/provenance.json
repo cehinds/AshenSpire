@@ -1,6 +1,6 @@
 {
   "id": "glassRegent",
-  "status": "draft-proposals-not-approved",
+  "status": "draft-proposals",
   "count": 10,
   "layout": {
     "columns": 5,
@@ -22,5 +22,22 @@
       "role": "camera only"
     }
   ],
-  "visualQA": "Ten rear three-quarter full figures observed with crystal crown, silver/gold/teal identity and swords/shields. Strong saturated cyan/blue fringe also exists in source and remains in generation; requires art review. Draft pending normalized frame QA and art approval."
+  "visualQA": "Ten rear three-quarter full figures observed with crystal crown, silver/gold/teal identity and swords/shields. Strong saturated cyan/blue fringe also exists in source and remains in generation; requires art review. Draft pending normalized frame QA and art approval.",
+  "actorId": "glassRegent",
+  "master": "proposal-sheet.png",
+  "sourceReferences": [
+    {
+      "repository": "cehinds/AshenSpire-art",
+      "path": "hd/assets/enemy-poses/expansion/glassRegent/idle.webp",
+      "ref": "hd-assets-v23",
+      "blob": "ea65e4c6e7be07b93002a3d6dff3de5420598710"
+    },
+    {
+      "repository": "cehinds/AshenSpire",
+      "path": "assets-display/alternative/reaver-default.webp",
+      "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+      "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+      "role": "camera only"
+    }
+  ]
 }
