@@ -1,0 +1,47 @@
+{
+  "bossId": "ashheartDragon",
+  "status": "draft-proposals",
+  "prompt": "Generate precisely TEN rear-three-quarter Ashheart Dragon boss design proposals in exact 5 columns x 2 rows, generous empty transparent gutters and outside margins. First image is character identity; second image supplies ONLY rear-facing upper-right camera direction. Dragon must be rotated to face AWAY, back of horned dragon head visible, spine and shoulder blade scales facing viewer, wings attached to its back, heavy tail emerging toward viewer then curling sideways, heels rear claws. NO front chest molten rune, NO frontal face. Preserve SAME upright bipedal dragon, charcoal obsidian scales with orange molten fissures, massive dark red membranous wings, long curling tail, horned snout, clawed arms and legs. Ten slight alternative rear scale/spine/wing attachment designs with coherent anatomy palette silhouette and proportions. Every full body wing tail and horn completely contained separately in its cell. Painted dark fantasy production game sprite art matching source; exact ten rear views only. Mandatory EMPTY ALPHA TRANSPARENT background, no color fill, no gradient, no floor scenery text labels or poster composition. Do not copy player armor or human anatomy.",
+  "sources": [
+    {
+      "repository": "cehinds/AshenSpire-art",
+      "path": "hd/assets/enemy-poses/expansion/ashheartDragon/idle.webp",
+      "ref": "hd-assets-v23",
+      "blob": "7883ef7266de128bbf47d494b9f1fe45a8abfdc6"
+    },
+    {
+      "repository": "cehinds/AshenSpire",
+      "path": "assets-display/alternative/reaver-default.webp",
+      "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+      "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+      "purpose": "rear camera only"
+    }
+  ],
+  "layout": {
+    "columns": 5,
+    "rows": 2,
+    "count": 10
+  },
+  "visualQA": {
+    "rearView": true,
+    "count10": true,
+    "notes": "Ten rear dragon silhouettes source identity visually inspected. Mechanical alpha/gutter validation pending."
+  },
+  "actorId": "ashheartDragon",
+  "master": "proposal-sheet.png",
+  "sourceReferences": [
+    {
+      "repository": "cehinds/AshenSpire-art",
+      "path": "hd/assets/enemy-poses/expansion/ashheartDragon/idle.webp",
+      "ref": "hd-assets-v23",
+      "blob": "7883ef7266de128bbf47d494b9f1fe45a8abfdc6"
+    },
+    {
+      "repository": "cehinds/AshenSpire",
+      "path": "assets-display/alternative/reaver-default.webp",
+      "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+      "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+      "purpose": "rear camera only"
+    }
+  ]
+}

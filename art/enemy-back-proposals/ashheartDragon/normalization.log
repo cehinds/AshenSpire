@@ -1,0 +1,576 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "path": "art/enemy-back-proposals/ashheartDragon/proposal-sheet.png",
+    "sha256": "9dd62d26438f9d1849215fa6acc4686c3c25b87ecd0c94cc1dd6da3bb3b814b8",
+    "size": [
+      1983,
+      793
+    ]
+  },
+  "grid": {
+    "columns": 5,
+    "rows": 2,
+    "rectPolicy": "adaptive zero meaningful-alpha gutters; prefer full zero alpha"
+  },
+  "output": {
+    "size": [
+      512,
+      512
+    ],
+    "anchor": [
+      256,
+      464
+    ],
+    "sharedScale": 1.0
+  },
+  "alphaThreshold": 32,
+  "sourceBoundary": {
+    "alphaAbove0": 4,
+    "alphaAbove32": 0
+  },
+  "variants": [
+    {
+      "id": "v01",
+      "sourceRect": [
+        0,
+        0,
+        402,
+        400
+      ],
+      "sourceAlphaBounds": [
+        27,
+        14,
+        374,
+        387
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 0,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        82,
+        91,
+        429,
+        464
+      ],
+      "anchor": [
+        256,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "8dc93e228702a02785e46a54bbf519909157e1153e04b0ac11350a4a1994178c",
+      "translation": [
+        78,
+        89
+      ]
+    },
+    {
+      "id": "v02",
+      "sourceRect": [
+        402,
+        0,
+        797,
+        400
+      ],
+      "sourceAlphaBounds": [
+        31,
+        15,
+        374,
+        396
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 13,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        85,
+        83,
+        428,
+        464
+      ],
+      "anchor": [
+        256,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "201a44c21a58fb8a1dc3f3d309413e3e3122df19a51dd204079a1def91c25871",
+      "translation": [
+        72,
+        80
+      ]
+    },
+    {
+      "id": "v03",
+      "sourceRect": [
+        797,
+        0,
+        1192,
+        400
+      ],
+      "sourceAlphaBounds": [
+        31,
+        17,
+        362,
+        397
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 10,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        91,
+        84,
+        422,
+        464
+      ],
+      "anchor": [
+        256,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "911b7cfa426ccb7143e262a3f41eaebfc3b3504b85d185574cbcaffc4decb019",
+      "translation": [
+        78,
+        81
+      ]
+    },
+    {
+      "id": "v04",
+      "sourceRect": [
+        1192,
+        0,
+        1594,
+        400
+      ],
+      "sourceAlphaBounds": [
+        33,
+        21,
+        365,
+        397
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 27,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        90,
+        88,
+        422,
+        464
+      ],
+      "anchor": [
+        256,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "c6954bf0189b297997c8b32d5472f769f9e0a50f5f58d4b768667e31d40597f1",
+      "translation": [
+        88,
+        85
+      ]
+    },
+    {
+      "id": "v05",
+      "sourceRect": [
+        1594,
+        0,
+        1983,
+        400
+      ],
+      "sourceAlphaBounds": [
+        23,
+        18,
+        376,
+        396
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 0,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        80,
+        86,
+        433,
+        464
+      ],
+      "anchor": [
+        256,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "0426d3301a4dc65b81d9de851250899dd2315a930270f2ad340b164d1fb0a032",
+      "translation": [
+        74,
+        84
+      ]
+    },
+    {
+      "id": "v06",
+      "sourceRect": [
+        0,
+        400,
+        398,
+        793
+      ],
+      "sourceAlphaBounds": [
+        17,
+        3,
+        378,
+        379
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 2,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        75,
+        88,
+        436,
+        464
+      ],
+      "anchor": [
+        256,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "28a9e9b23ba52741925c061c302dc9514dee5bf945a02a492290386463880d4a",
+      "translation": [
+        70,
+        85
+      ]
+    },
+    {
+      "id": "v07",
+      "sourceRect": [
+        398,
+        400,
+        794,
+        793
+      ],
+      "sourceAlphaBounds": [
+        48,
+        4,
+        386,
+        379
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 20,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        87,
+        89,
+        425,
+        464
+      ],
+      "anchor": [
+        256,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "d7b83a267d78d21d468fb29431eb0af792fb4058a8d5ee9972f50b8562bca2e3",
+      "translation": [
+        51,
+        85
+      ]
+    },
+    {
+      "id": "v08",
+      "sourceRect": [
+        794,
+        400,
+        1183,
+        793
+      ],
+      "sourceAlphaBounds": [
+        34,
+        5,
+        376,
+        379
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 11,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        85,
+        90,
+        427,
+        464
+      ],
+      "anchor": [
+        256,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "7d0dd5fd3a065cd2f10ee7cae93b436fe45f0aa13b2b77a592786e4ead3c8826",
+      "translation": [
+        52,
+        85
+      ]
+    },
+    {
+      "id": "v09",
+      "sourceRect": [
+        1183,
+        400,
+        1586,
+        793
+      ],
+      "sourceAlphaBounds": [
+        51,
+        8,
+        386,
+        379
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 23,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        88,
+        93,
+        423,
+        464
+      ],
+      "anchor": [
+        256,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "5b9ba19d6578cc279d5a0b1256cd7824b80bd4ae1080ed15c215566b3f292b1e",
+      "translation": [
+        44,
+        85
+      ]
+    },
+    {
+      "id": "v10",
+      "sourceRect": [
+        1586,
+        400,
+        1983,
+        793
+      ],
+      "sourceAlphaBounds": [
+        40,
+        5,
+        380,
+        379
+      ],
+      "sourceBoundaryCounts": {
+        "alphaAbove0": 0,
+        "alphaAbove32": 0
+      },
+      "sourceBoundaryClipped": false,
+      "outputAlphaBounds": [
+        86,
+        90,
+        426,
+        464
+      ],
+      "anchor": [
+        256,
+        464
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "38f90411153800cdd2f1af67de7b8186f49a148980126c3616bb5aa679ee99ac",
+      "translation": [
+        47,
+        87
+      ]
+    }
+  ],
+  "qa": {
+    "errors": [],
+    "warnings": [
+      "v02: boundary antialias noise",
+      "v03: boundary antialias noise",
+      "v04: boundary antialias noise",
+      "v06: boundary antialias noise",
+      "v07: boundary antialias noise",
+      "v08: boundary antialias noise",
+      "v09: boundary antialias noise"
+    ]
+  },
+  "cropPlan": {
+    "status": "draft-pending-crop-review",
+    "method": "zero meaningful-alpha gutters; prefer full zero alpha",
+    "horizontal": {
+      "band": [
+        397,
+        403
+      ],
+      "width": 6,
+      "cut": 400,
+      "criterion": "alpha <= 32",
+      "alphaAbove0": 48,
+      "alphaAbove32": 0,
+      "bandAlphaAbove0": 304,
+      "bandAlphaAbove32": 0
+    },
+    "rows": [
+      {
+        "y": [
+          0,
+          400
+        ],
+        "gutters": [
+          {
+            "band": [
+              384,
+              420
+            ],
+            "width": 36,
+            "cut": 402,
+            "criterion": "alpha == 0",
+            "alphaAbove0": 0,
+            "alphaAbove32": 0,
+            "bandAlphaAbove0": 0,
+            "bandAlphaAbove32": 0
+          },
+          {
+            "band": [
+              780,
+              815
+            ],
+            "width": 35,
+            "cut": 797,
+            "criterion": "alpha == 0",
+            "alphaAbove0": 0,
+            "alphaAbove32": 0,
+            "bandAlphaAbove0": 0,
+            "bandAlphaAbove32": 0
+          },
+          {
+            "band": [
+              1162,
+              1223
+            ],
+            "width": 61,
+            "cut": 1192,
+            "criterion": "alpha == 0",
+            "alphaAbove0": 0,
+            "alphaAbove32": 0,
+            "bandAlphaAbove0": 0,
+            "bandAlphaAbove32": 0
+          },
+          {
+            "band": [
+              1578,
+              1611
+            ],
+            "width": 33,
+            "cut": 1594,
+            "criterion": "alpha == 0",
+            "alphaAbove0": 0,
+            "alphaAbove32": 0,
+            "bandAlphaAbove0": 0,
+            "bandAlphaAbove32": 0
+          }
+        ]
+      },
+      {
+        "y": [
+          400,
+          793
+        ],
+        "gutters": [
+          {
+            "band": [
+              386,
+              410
+            ],
+            "width": 24,
+            "cut": 398,
+            "criterion": "alpha == 0",
+            "alphaAbove0": 0,
+            "alphaAbove32": 0,
+            "bandAlphaAbove0": 0,
+            "bandAlphaAbove32": 0
+          },
+          {
+            "band": [
+              794,
+              795
+            ],
+            "width": 1,
+            "cut": 794,
+            "criterion": "alpha == 0",
+            "alphaAbove0": 0,
+            "alphaAbove32": 0,
+            "bandAlphaAbove0": 0,
+            "bandAlphaAbove32": 0
+          },
+          {
+            "band": [
+              1177,
+              1190
+            ],
+            "width": 13,
+            "cut": 1183,
+            "criterion": "alpha == 0",
+            "alphaAbove0": 0,
+            "alphaAbove32": 0,
+            "bandAlphaAbove0": 0,
+            "bandAlphaAbove32": 0
+          },
+          {
+            "band": [
+              1586,
+              1587
+            ],
+            "width": 1,
+            "cut": 1586,
+            "criterion": "alpha == 0",
+            "alphaAbove0": 0,
+            "alphaAbove32": 0,
+            "bandAlphaAbove0": 0,
+            "bandAlphaAbove32": 0
+          }
+        ]
+      }
+    ]
+  }
+}
+PASS: ten RGBA frames, shared scale, common floor and center, source unchanged
