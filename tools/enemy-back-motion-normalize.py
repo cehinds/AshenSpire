@@ -57,7 +57,7 @@ def load_master(root, kind, spec, anchors, absolute=False):
         raise ValueError(f"{kind}: no fully transparent background")
     edge = boundary(alpha)
     if edge["above32"]:
-        raise ValueError(f"{kind}: artwork clipped at source boundary")
+        raise ValueError(f"{kind}: artwork clipped at source boundary ({edge[\'above32\']} pixels above alpha32)")
     width, height = image.size
     ycuts, gutters = [0], []
     for row in range(1, rows):
@@ -122,14 +122,19 @@ def run(root):
         for kind in LAYOUTS:
             if kind in anchors and len(anchors[kind]) != math.prod(LAYOUTS[kind]):
                 raise ValueError(f"{kind}: anchor count mismatch")
-            source, items = load_master(root, kind, provenance["masters"][kind], anchors, normalization.get("anchorCoordinates") == "source")
-            report["masters"][kind] = source
-            factor = calibration.get(kind, 1.0)
-            if not isinstance(factor, (int,float)) or not math.isfinite(factor) or factor <= 0:
-                raise ValueError(f"{kind}: invalid measured masterScale")
-            for item in items:
-                item["calibration"] = factor
-            frames.extend(items)
+            try:
+                source, items = load_master(root, kind, provenance["masters"][kind], anchors, normalization.get("anchorCoordinates") == "source")
+                report["masters"][kind] = source
+                factor = calibration.get(kind, 1.0)
+                if not isinstance(factor, (int,float)) or not math.isfinite(factor) or factor <= 0:
+                    raise ValueError(f"{kind}: invalid measured masterScale")
+                for item in items:
+                    item["calibration"] = factor
+                frames.extend(items)
+            except (ValueError, KeyError, OSError, IndexError, TypeError) as error:
+                report["errors"].append(f"{kind}: {error}")
+        if report["errors"]:
+            raise ValueError("One or more source masters rejected; no frames exported")
         # One scale across every master in this actor, including transparent antialias extents.
         scale = 1.0
         for frame in frames:
