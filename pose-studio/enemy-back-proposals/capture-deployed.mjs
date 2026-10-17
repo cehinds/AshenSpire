@@ -38,7 +38,7 @@ try{
   await gallery.locator('#actor').selectOption(actor);await gallery.locator('#stance').selectOption('neutral');
   await gallery.locator('#grid img').evaluateAll(images=>Promise.all(images.map(img=>img.decode())));
   assert.equal(await gallery.locator('main').evaluate(main=>main.scrollWidth<=main.clientWidth),true);
-  await page.screenshot({path:out+'/'+name+'.png'});
+  await gallery.locator('#grid').evaluate(grid=>window.scrollTo(0,grid.offsetTop-12));await page.screenshot({path:out+'/'+name+'.png'});
   records.push({name,width,height,actor,sourceCommit:source,version,digest:stamp.digest,playableUrl:url,verifiedActors:13,verifiedNeutralDesigns:130});
   await page.close();
  }
