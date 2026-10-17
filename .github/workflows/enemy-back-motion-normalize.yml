@@ -34,6 +34,12 @@ jobs:
           from PIL import Image,ImageDraw
           spec=importlib.util.spec_from_file_location('normalizer','tools/enemy-back-motion-normalize.py')
           module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+          import numpy as np
+          fragment_labels=np.array([[1,0,3,3,0,2]])
+          nearest_owners=np.array([[1,1,1,2,2,2]])
+          fixed,audit=module.whole_fragment_owners(fragment_labels,nearest_owners,[1,2])
+          assert len(set(fixed[fragment_labels==3]))==1, 'detached meaningful fragment split between figures'
+          assert fixed[0,0]==1 and fixed[0,5]==2, 'primary components changed owners'
           with tempfile.TemporaryDirectory() as temporary:
               root=Path(temporary); masters={}
               for kind,(cols,rows) in module.LAYOUTS.items():

@@ -104,6 +104,26 @@ def load_master(root, kind, spec, anchors, absolute=False):
             "sourceBoundary": edge, "gutters": gutters}, frames
 
 
+
+def whole_fragment_owners(labels, owners, cores):
+    """Keep every detached meaningful component whole using nearest-contour votes."""
+    import numpy as np
+    assignments = []
+    result = owners.copy()
+    core_set = set(int(value) for value in cores)
+    for component in range(1, int(labels.max())+1):
+        if component in core_set:
+            continue
+        mask = labels == component
+        if not mask.any():
+            continue
+        votes = np.bincount(owners[mask])
+        votes[0] = 0
+        owner = int(votes.argmax())
+        result[mask] = owner
+        assignments.append({"component":component,"slot":owner-1,"pixels":int(mask.sum())})
+    return result, assignments
+
 def load_components(root, kind, spec, anchors, absolute=False):
     """Partition source pixels by disconnected figure cores; no pixels are invented."""
     import numpy as np
@@ -141,6 +161,7 @@ def load_components(root, kind, spec, anchors, absolute=False):
                             "centroidYX":centers[core_index].tolist()})
     nearest = ndimage.distance_transform_edt(core_owner==0, return_distances=False, return_indices=True)
     owners = core_owner[tuple(nearest)]
+    owners, fragments = whole_fragment_owners(labels, owners, cores)
     frames = []
     assigned = 0
     assigned_meaningful = 0
@@ -161,13 +182,17 @@ def load_components(root, kind, spec, anchors, absolute=False):
             if not absolute:
                 raise ValueError("component extraction requires source-space reviewed anchors")
             anchor = [anchor[0]-full_source[0],anchor[1]-full_source[1]]
+        if len(anchor) != 2 or not all(isinstance(v,(int,float)) and math.isfinite(v) for v in anchor):
+            raise ValueError("component frame anchor is not finite")
+        if not (0 <= anchor[0] <= cell.width and 0 <= anchor[1] <= cell.height):
+            raise ValueError("component frame anchor outside source crop")
         frames.append({"kind":kind,"label":label,"rect":full_source,"bounds":bounds,
                        "full":channel.getbbox(),"anchor":anchor,"reviewedAnchor":reviewed,"cell":cell})
     if assigned_meaningful != total or assigned != int((array[:,:,3]>0).sum()):
         raise ValueError("component partition lost or duplicated source pixels")
     source = {"path":str(path),"sha256":digest(path),"size":image.size,
               "sourceBoundary":boundary(alpha),"extraction":"connected-components",
-              "assignment":sorted(assignments,key=lambda entry:entry["slot"]),
+              "assignment":sorted(assignments,key=lambda entry:entry["slot"]),"detachedComponentAssignments":fragments,
               "partitionAlphaPixels":assigned,"sourceMeaningfulPixels":total,"assignedMeaningfulPixels":assigned_meaningful,
               "warning":"Disconnected details and faint pixels assigned to nearest figure core; visual assignment review required"}
     return source, frames

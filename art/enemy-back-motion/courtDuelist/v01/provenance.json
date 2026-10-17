@@ -88,7 +88,7 @@
   "normalization": {
     "anchorCoordinates": "source",
     "masterScale": {
-      "stances": 1,
+      "stances": 1.1,
       "motion": 1.25,
       "damage": 0.54
     },
@@ -136,13 +136,57 @@
           1315,
           770
         ]
+      ],
+      "stances": [
+        [
+          177,
+          423
+        ],
+        [
+          566,
+          427
+        ],
+        [
+          855,
+          420
+        ],
+        [
+          1283,
+          421
+        ],
+        [
+          1634,
+          427
+        ],
+        [
+          194,
+          822
+        ],
+        [
+          527,
+          821
+        ],
+        [
+          920,
+          831
+        ],
+        [
+          1276,
+          828
+        ],
+        [
+          1632,
+          829
+        ]
       ]
     },
     "review": {
       "reviewer": "elite_motion agent",
       "method": "manual source-image visual estimate",
       "status": "draft-estimates-pending-normalized-preview",
-      "notes": "Anchors identify visible foot or support-contact baseline, using midpoint where both feet visible. Rear feet can be occluded. Values are visual estimates, not pixel-exact detections. Tail/cape alpha bottom is not used as floor. MasterScale calibrates separately generated damage anatomy to stances and preserves action crouch/height; shared scale then applies. Root must inspect normalized frames before accepting."
-    }
+      "notes": "Anchors identify visible foot or support-contact baseline, using midpoint where both feet visible. Rear feet can be occluded. Values are visual estimates, not pixel-exact detections. Tail/cape alpha bottom is not used as floor. MasterScale calibrates separately generated damage anatomy to stances and preserves action crouch/height; shared scale then applies. Root must inspect normalized frames before accepting. Court repaired10stance feet measured from native512 views with anchor-delta conversion; midpoint visible feet, defend partly occluded estimate. Source neutralbody327px vsseed365px, stancecal1.1."
+    },
+    "seedBodyHeightPixels": 365,
+    "stanceBodyHeightPixels": 327
   }
 }
