@@ -7,14 +7,14 @@
     "digest": "4f155934c2"
   },
   "artifactIdentity": {
-    "runtimeSourceCommit": "1c3f9839d6fba3d178b84dab4d44defa88bf72c2",
-    "workflowRunId": 39075841889,
-    "workflowJobId": 117522696613,
-    "artifactId": 12116684498,
-    "version": "0.7.1.1556",
-    "sourceDigest": "f0a19c2c3b",
-    "artifactArchiveSha256": "44d197e214f533bec173c4885fb682aeee65544f7bc15fc4e0bc13b6be0da43d",
-    "artifactUrl": "https://github.com/cehinds/AshenSpire/actions/runs/39075841889/artifacts/12116684498",
+    "runtimeSourceCommit": "b9d76d31f725f03b20f9669321b5ce79f21ebba2",
+    "workflowRunId": 39078006648,
+    "workflowJobId": 117529062039,
+    "artifactId": 12117562244,
+    "version": "0.7.1.1558",
+    "sourceDigest": "fe5a70442a",
+    "artifactArchiveSha256": "d5fa1996ee457641803de665df495ee7fa46734c7ee41c75dcee3f9ffd93c916",
+    "artifactUrl": "https://github.com/cehinds/AshenSpire/actions/runs/39078006648/artifacts/12117562244",
     "status": "artifact verified; public route pending"
   },
   "publicRouteVerification": "pending",
@@ -69,5 +69,16 @@
       }
     }
   ],
-  "limits": "Posed solo combat fixture; screenshots show rendering, not latency, a completed playthrough, or hosted execution. No capture-only CSS applied."
+  "limits": "Posed solo combat fixture; screenshots show rendering, not latency, a completed playthrough, or hosted execution. No capture-only CSS applied.",
+  "historicalArtifactIdentity": {
+    "runtimeSourceCommit": "1c3f9839d6fba3d178b84dab4d44defa88bf72c2",
+    "workflowRunId": 39075841889,
+    "workflowJobId": 117522696613,
+    "artifactId": 12116684498,
+    "version": "0.7.1.1556",
+    "sourceDigest": "f0a19c2c3b",
+    "artifactArchiveSha256": "44d197e214f533bec173c4885fb682aeee65544f7bc15fc4e0bc13b6be0da43d",
+    "artifactUrl": "https://github.com/cehinds/AshenSpire/actions/runs/39075841889/artifacts/12116684498",
+    "status": "artifact verified; public route pending"
+  }
 }
