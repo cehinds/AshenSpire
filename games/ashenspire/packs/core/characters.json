@@ -69,8 +69,7 @@
     },
     "player": {
       "specialCardId": "core.reaverSpecial",
-      "description": "Strength-focused fighter with a greatsword and heavy attacks.",
-      "legacyMaxHp": 84
+      "description": "Strength-focused fighter with a greatsword and heavy attacks."
     }
   },
   {
@@ -143,8 +142,7 @@
     },
     "player": {
       "specialCardId": "core.starseerSpecial",
-      "description": "Intelligence-focused caster with a sceptre and Star Spark.",
-      "legacyMaxHp": 72
+      "description": "Intelligence-focused caster with a sceptre and Star Spark."
     }
   },
   {
@@ -221,8 +219,7 @@
     },
     "player": {
       "specialCardId": "core.rogueSpecial",
-      "description": "Dexterity-focused fighter with two daggers and Quick Guard.",
-      "legacyMaxHp": 74
+      "description": "Dexterity-focused fighter with two daggers and Quick Guard."
     }
   },
   {
@@ -295,8 +292,7 @@
     },
     "player": {
       "specialCardId": "core.heraldSpecial",
-      "description": "Wisdom-focused fighter with a sceptre and Lasting Resolve.",
-      "legacyMaxHp": 78
+      "description": "Wisdom-focused fighter with a sceptre and Lasting Resolve."
     }
   },
   {

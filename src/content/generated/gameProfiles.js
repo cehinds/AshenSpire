@@ -539,7 +539,12 @@ export const gameProfileCatalog = {
               5,
               40
             ],
-            "deckDefault": 11
+            "deckDefault": 11,
+            "pools": {
+              "hp": 10,
+              "sp": 0,
+              "mp": 0
+            }
           },
           "character.enemy": {
             "requires": [
@@ -600,7 +605,7 @@ export const gameProfileCatalog = {
           },
           "class.reaver": {
             "pools": {
-              "hp": 48,
+              "hp": 0,
               "sp": 3,
               "mp": 0
             },
@@ -608,7 +613,7 @@ export const gameProfileCatalog = {
           },
           "class.starseer": {
             "pools": {
-              "hp": 46,
+              "hp": 0,
               "sp": 3,
               "mp": 1
             },
@@ -616,7 +621,7 @@ export const gameProfileCatalog = {
           },
           "class.rogue": {
             "pools": {
-              "hp": 50,
+              "hp": 0,
               "sp": 3,
               "mp": 1
             },
@@ -624,7 +629,7 @@ export const gameProfileCatalog = {
           },
           "class.herald": {
             "pools": {
-              "hp": 51,
+              "hp": 0,
               "sp": 3,
               "mp": 1
             },
@@ -1083,7 +1088,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/characters/defaults.json",
           "id": "characters",
           "version": "1.0.0",
-          "hash": "sha256:cc22b869303d616a092c280c652e9bf3debe28b11c704d7b740f26c55e85de42"
+          "hash": "sha256:9c67cc227e1fa9f09c1034b5b1551978f60c5f36ca488089e80e08681580ca3a"
         },
         {
           "path": "engine/modules/characters/settings.schema.json",
@@ -5409,8 +5414,7 @@ export const gameProfileCatalog = {
             },
             "player": {
               "specialCardId": "core.reaverSpecial",
-              "description": "Strength-focused fighter with a greatsword and heavy attacks.",
-              "legacyMaxHp": 84
+              "description": "Strength-focused fighter with a greatsword and heavy attacks."
             }
           },
           {
@@ -5483,8 +5487,7 @@ export const gameProfileCatalog = {
             },
             "player": {
               "specialCardId": "core.starseerSpecial",
-              "description": "Intelligence-focused caster with a sceptre and Star Spark.",
-              "legacyMaxHp": 72
+              "description": "Intelligence-focused caster with a sceptre and Star Spark."
             }
           },
           {
@@ -5561,8 +5564,7 @@ export const gameProfileCatalog = {
             },
             "player": {
               "specialCardId": "core.rogueSpecial",
-              "description": "Dexterity-focused fighter with two daggers and Quick Guard.",
-              "legacyMaxHp": 74
+              "description": "Dexterity-focused fighter with two daggers and Quick Guard."
             }
           },
           {
@@ -5635,8 +5637,7 @@ export const gameProfileCatalog = {
             },
             "player": {
               "specialCardId": "core.heraldSpecial",
-              "description": "Wisdom-focused fighter with a sceptre and Lasting Resolve.",
-              "legacyMaxHp": 78
+              "description": "Wisdom-focused fighter with a sceptre and Lasting Resolve."
             }
           },
           {
@@ -13128,7 +13129,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/characters.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:02e9592efe8e4a44b32356e8a4017b64b10d18de0727f748e3d686c1f8a75343"
+          "hash": "sha256:1b1e961af0fe6059ccada8e285fa39ac626d96c0739e443271002bd9cd9e1c6e"
         },
         {
           "path": "games/ashenspire/packs/core/cardPools.json",

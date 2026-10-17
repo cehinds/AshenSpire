@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { loadGameProfileCatalog } from '../tools/game-config.mjs';
-import { characterSettings, resolveGameAuthor, enemyPools, resolveEnemyAttributes, enemyAttributeOutcomes } from '../engine/kernel/gameConfig.js';
+import { characterSettings, resolveGameAuthor, enemyPools, resolveEnemyAttributes, enemyAttributeOutcomes, enemyItemBonuses as enemyItemBonusesFn } from '../engine/kernel/gameConfig.js';
 
 const author = JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url)));
 const catalog = loadGameProfileCatalog();
@@ -190,8 +190,13 @@ test('players and enemies share one character shape; tags pick the block; one HP
   for (const c of chars) for (const key of shared) assert.ok(key in c, `${c.id}.${key}`);
   for (const p of players) assert.ok(p.player && !p.enemy, p.id);
   for (const f of foes) assert.ok(f.enemy && !f.player, f.id);
-  // Legacy class HP is kept by the class tag base, computed with the same algorithm as enemies.
-  assert.deepEqual(Object.fromEntries(profile.content.classes.map(c => [c.id, c.maxHp])), { reaver: 84, starseer: 72, rogue: 74, herald: 78 });
+  // Owner 2026-10-17: player HP follows the same formula as enemies (base 10 + attribute terms + gear), no calibration.
+  for (const cls of profile.content.classes) {
+    const p = chars.find(c => c.id === cls.id);
+    assert.equal(cls.maxHp, enemyPools({ ...p, resolvedAttributes: resolveEnemyAttributes(p, settings) }, settings, 1, enemyItemBonusesFn(p, profile.content, profile.modules.gear)).hp, cls.id);
+  }
+  assert.ok(Object.values(settings.tagRules).every(rule => !('player' in rule)));
+  for (const [tag, rule] of Object.entries(settings.tagRules)) if (tag.startsWith('class.')) assert.equal(rule.pools.hp, 0, tag);
 });
 
 test('default decks are pool keys resolved by class and weapon type, from the shared card pool', () => {

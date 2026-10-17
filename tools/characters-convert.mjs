@@ -2,8 +2,7 @@
 // Players and enemies in one shape (owner 2026-10-17): games/ashenspire/packs/core/characters.json.
 // Tags decide which block applies (character.player -> player, character.enemy -> enemy); stats use one
 // algorithm (characters module: tagRules + statRules + gear + relics). Default decks are mostly card-pool
-// keys resolved by class and weapon type (cardPools.json). Class base HP is calibrated so each class keeps
-// its legacy max HP with its starting gear.
+// keys resolved by class and weapon type (cardPools.json). Player HP follows the same formula as enemies.
 //   node tools/characters-convert.mjs        (first run reads classes.json + starterDeck.json + enemies.json)
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
@@ -56,7 +55,7 @@ function playersFromClasses() {
       defaultGear: [...(c.loadout.rightHand ? [{ key: 'mainHand', id: c.loadout.rightHand }] : []), ...(c.loadout.leftHand ? [{ key: 'offHand', id: c.loadout.leftHand }] : [])],
       defaultRelics: [],
       presentation: { art: c.id, size: 'medium' },
-      player: { specialCardId: c.specialCardId, description: c.description, legacyMaxHp: c.maxHp },
+      player: { specialCardId: c.specialCardId, description: c.description },
     };
   });
 }
@@ -75,13 +74,7 @@ export function writeCharacters({ enemies } = {}) {
   const gearSettings = mergeGameSettings(json('engine/modules/gear/defaults.json'), bundle.modules.gear?.settings || {});
   const settings = { ...json('engine/modules/enemies/defaults.json'), ...defaults };
   const content = { gear: json(`${PACK}/gear.json`), enemyRelics: json(`${PACK}/enemyRelics.json`) };
-  for (const p of players) {
-    const tag = `class.${p.id}`;
-    defaults.tagRules[tag].pools.hp = 0;
-    const attrs = resolveEnemyAttributes(p, settings);
-    const hp = enemyPools({ ...p, resolvedAttributes: attrs }, { ...settings, tagRules: defaults.tagRules }, enemyLevel(p, settings), enemyItemBonuses(p, content, gearSettings)).hp;
-    defaults.tagRules[tag].pools.hp = (p.player.legacyMaxHp ?? hp) - hp;
-  }
+  // Owner 2026-10-17: no calibration to legacy max HP; players follow the shared formula.
   writeFileSync(resolve(ROOT, CHAR_DEFAULTS), JSON.stringify(defaults, null, 2) + '\n');
   writeFileSync(path, JSON.stringify([...players, ...enemyRows], null, 2) + '\n');
   writeFileSync(resolve(ROOT, PACK, 'cardPools.json'), JSON.stringify(CARD_POOLS, null, 2) + '\n');
