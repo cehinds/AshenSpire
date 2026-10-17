@@ -12,6 +12,10 @@
     "rewards": "rewards.json",
     "provisionalPolicies": "provisionalPolicies.json",
     "resourceVariants": "resourceVariants.json",
-    "shops": "shops.json"
+    "shops": "shops.json",
+    "enemies": "enemies.json",
+    "enemyCards": "enemyCards.json",
+    "enemyGear": "enemyGear.json",
+    "enemyRelics": "enemyRelics.json"
   }
 }

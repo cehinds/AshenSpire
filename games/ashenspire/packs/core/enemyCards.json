@@ -1,0 +1,3004 @@
+[
+  {
+    "id": "wanderingSoldier.slash",
+    "name": "Slash",
+    "owner": "enemy",
+    "enemy": "wanderingSoldier",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 8
+      }
+    ],
+    "aiWeight": 45,
+    "maxConsecutive": 2,
+    "textTemplate": "Deal 8 damage.",
+    "legacyMove": "slash"
+  },
+  {
+    "id": "wanderingSoldier.guard",
+    "name": "Guard",
+    "owner": "enemy",
+    "enemy": "wanderingSoldier",
+    "type": "skill",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:defend",
+      "camp:physical",
+      "owner:enemy",
+      "trait:reaction"
+    ],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 6
+      }
+    ],
+    "aiWeight": 30,
+    "maxConsecutive": 1,
+    "textTemplate": "Gain 6 Block.",
+    "legacyMove": "guard"
+  },
+  {
+    "id": "wanderingSoldier.warcry",
+    "name": "Warcry",
+    "owner": "enemy",
+    "enemy": "wanderingSoldier",
+    "type": "skill",
+    "staminaCost": 0,
+    "manaCost": 1,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:casting",
+      "camp:spell",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "strength",
+        "stacks": 2
+      }
+    ],
+    "aiWeight": 25,
+    "maxConsecutive": 1,
+    "textTemplate": "Apply 2 Strength to self.",
+    "legacyMove": "warcry"
+  },
+  {
+    "id": "blightHound.bite",
+    "name": "Bite",
+    "owner": "enemy",
+    "enemy": "blightHound",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 6
+      }
+    ],
+    "aiWeight": 60,
+    "textTemplate": "Deal 6 damage.",
+    "legacyMove": "bite"
+  },
+  {
+    "id": "blightHound.lunge",
+    "name": "Lunge",
+    "owner": "enemy",
+    "enemy": "blightHound",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 3,
+        "hits": 2
+      }
+    ],
+    "aiWeight": 40,
+    "textTemplate": "Deal 3 damage 2 times.",
+    "legacyMove": "lunge"
+  },
+  {
+    "id": "huskBrute.club",
+    "name": "Club",
+    "owner": "enemy",
+    "enemy": "huskBrute",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 15
+      }
+    ],
+    "aiWeight": 50,
+    "textTemplate": "Deal 15 damage.",
+    "legacyMove": "club"
+  },
+  {
+    "id": "huskBrute.bellow",
+    "name": "Bellow",
+    "owner": "enemy",
+    "enemy": "huskBrute",
+    "type": "skill",
+    "staminaCost": 0,
+    "manaCost": 1,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:casting",
+      "camp:spell",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "applyStatus",
+        "target": "player",
+        "status": "frail",
+        "stacks": 1
+      },
+      {
+        "op": "addCard",
+        "target": "player",
+        "card": "slimed",
+        "pile": "discard"
+      }
+    ],
+    "aiWeight": 25,
+    "maxConsecutive": 1,
+    "textTemplate": "Apply 1 Frail to the player. Shuffle Slimed into the player's discard.",
+    "legacyMove": "bellow"
+  },
+  {
+    "id": "huskBrute.brace",
+    "name": "Brace",
+    "owner": "enemy",
+    "enemy": "huskBrute",
+    "type": "skill",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:defend",
+      "camp:physical",
+      "owner:enemy",
+      "trait:reaction"
+    ],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 8
+      }
+    ],
+    "aiWeight": 25,
+    "maxConsecutive": 1,
+    "textTemplate": "Gain 8 Block.",
+    "legacyMove": "brace"
+  },
+  {
+    "id": "graveWisp.curse",
+    "name": "Curse",
+    "owner": "enemy",
+    "enemy": "graveWisp",
+    "type": "skill",
+    "staminaCost": 0,
+    "manaCost": 1,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:casting",
+      "camp:spell",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "addCard",
+        "card": "dazed",
+        "pile": "draw",
+        "position": "random"
+      }
+    ],
+    "aiWeight": 50,
+    "maxConsecutive": 2,
+    "textTemplate": "Shuffle Dazed into the player's draw.",
+    "legacyMove": "curse"
+  },
+  {
+    "id": "graveWisp.drain",
+    "name": "Drain",
+    "owner": "enemy",
+    "enemy": "graveWisp",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costSource": "healRules",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy",
+      "heal",
+      "exhaust"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 8
+      },
+      {
+        "op": "heal",
+        "target": "self",
+        "rule": "healRules"
+      }
+    ],
+    "aiWeight": 50,
+    "textTemplate": "Deal 8 damage. Heal 10% max HP. Exhaust.",
+    "legacyMove": "drain"
+  },
+  {
+    "id": "wyrmAspirant.consecrate",
+    "name": "Consecrate",
+    "owner": "enemy",
+    "enemy": "wyrmAspirant",
+    "type": "skill",
+    "staminaCost": 0,
+    "manaCost": 1,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:casting",
+      "camp:spell",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "strength",
+        "stacks": 3
+      }
+    ],
+    "aiWeight": 10,
+    "maxConsecutive": 1,
+    "textTemplate": "Apply 3 Strength to self.",
+    "legacyMove": "consecrate"
+  },
+  {
+    "id": "wyrmAspirant.halberdSweep",
+    "name": "Halberd Sweep",
+    "owner": "enemy",
+    "enemy": "wyrmAspirant",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 17
+      }
+    ],
+    "aiWeight": 50,
+    "maxConsecutive": 2,
+    "textTemplate": "Deal 17 damage.",
+    "legacyMove": "halberdSweep"
+  },
+  {
+    "id": "wyrmAspirant.tailSlam",
+    "name": "Tail Slam",
+    "owner": "enemy",
+    "enemy": "wyrmAspirant",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 11
+      },
+      {
+        "op": "applyStatus",
+        "target": "player",
+        "status": "weak",
+        "stacks": 1
+      }
+    ],
+    "aiWeight": 30,
+    "textTemplate": "Deal 11 damage. Apply 1 Weak to the player.",
+    "legacyMove": "tailSlam"
+  },
+  {
+    "id": "wyrmAspirant.goldenGuard",
+    "name": "Golden Guard",
+    "owner": "enemy",
+    "enemy": "wyrmAspirant",
+    "type": "skill",
+    "staminaCost": 3,
+    "manaCost": 2,
+    "costSource": "healRules",
+    "tags": [
+      "maneuver:defend",
+      "camp:physical",
+      "owner:enemy",
+      "trait:reaction",
+      "heal"
+    ],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 12
+      },
+      {
+        "op": "heal",
+        "target": "self",
+        "rule": "healRules"
+      }
+    ],
+    "aiWeight": 20,
+    "maxConsecutive": 1,
+    "textTemplate": "Gain 12 Block. Heal 10% max HP.",
+    "legacyMove": "goldenGuard"
+  },
+  {
+    "id": "fellWarden.caneStrike",
+    "name": "Cane Strike",
+    "owner": "enemy",
+    "enemy": "fellWarden",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "authored",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 8
+      }
+    ],
+    "aiWeight": 40,
+    "maxConsecutive": 2,
+    "textTemplate": "Deal 8 damage.",
+    "legacyMove": "caneStrike"
+  },
+  {
+    "id": "fellWarden.hammerToss",
+    "name": "Hammer Toss",
+    "owner": "enemy",
+    "enemy": "fellWarden",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "authored",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 5,
+        "hits": 2
+      }
+    ],
+    "aiWeight": 30,
+    "maxConsecutive": 2,
+    "textTemplate": "Deal 5 damage 2 times.",
+    "legacyMove": "hammerToss"
+  },
+  {
+    "id": "fellWarden.heldBlade",
+    "name": "Held Blade",
+    "owner": "enemy",
+    "enemy": "fellWarden",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "authored",
+    "tags": [
+      "maneuver:smash",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 14
+      }
+    ],
+    "delay": {
+      "turns": 1,
+      "whileCharging": {
+        "block": 8
+      }
+    },
+    "aiWeight": 30,
+    "maxConsecutive": 1,
+    "textTemplate": "Deal 14 damage. Charges for 1 turn.",
+    "legacyMove": "heldBlade"
+  },
+  {
+    "id": "fellWarden.twinDaggers",
+    "name": "Twin Daggers",
+    "owner": "enemy",
+    "enemy": "fellWarden",
+    "type": "attack",
+    "staminaCost": 3,
+    "manaCost": 0,
+    "costSource": "authored",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 3,
+        "hits": 4
+      }
+    ],
+    "aiWeight": 35,
+    "textTemplate": "Deal 3 damage 4 times.",
+    "legacyMove": "twinDaggers"
+  },
+  {
+    "id": "lanternMoth.lanternDust",
+    "name": "Lantern Dust",
+    "owner": "enemy",
+    "enemy": "lanternMoth",
+    "type": "skill",
+    "staminaCost": 0,
+    "manaCost": 1,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:casting",
+      "camp:spell",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "applyStatus",
+        "target": "player",
+        "status": "weak",
+        "stacks": 1
+      }
+    ],
+    "aiWeight": 35,
+    "maxConsecutive": 1,
+    "textTemplate": "Apply 1 Weak to the player.",
+    "legacyMove": "lanternDust"
+  },
+  {
+    "id": "lanternMoth.wingSparks",
+    "name": "Wing Sparks",
+    "owner": "enemy",
+    "enemy": "lanternMoth",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "authored",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 3,
+        "hits": 3
+      }
+    ],
+    "aiWeight": 65,
+    "textTemplate": "Deal 3 damage 3 times.",
+    "legacyMove": "wingSparks"
+  },
+  {
+    "id": "briarHermit.rootShelter",
+    "name": "Root Shelter",
+    "owner": "enemy",
+    "enemy": "briarHermit",
+    "type": "skill",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:defend",
+      "camp:physical",
+      "owner:enemy",
+      "trait:reaction"
+    ],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 7
+      }
+    ],
+    "aiWeight": 30,
+    "maxConsecutive": 1,
+    "textTemplate": "Gain 7 Block.",
+    "legacyMove": "rootShelter"
+  },
+  {
+    "id": "briarHermit.briarCast",
+    "name": "Briar Cast",
+    "owner": "enemy",
+    "enemy": "briarHermit",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "authored",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 16
+      },
+      {
+        "op": "applyStatus",
+        "target": "player",
+        "status": "bleed",
+        "stacks": 1
+      }
+    ],
+    "aiWeight": 45,
+    "textTemplate": "Deal 16 damage. Apply 1 Bleed to the player.",
+    "legacyMove": "briarCast"
+  },
+  {
+    "id": "briarHermit.sapMend",
+    "name": "Sap Mend",
+    "owner": "enemy",
+    "enemy": "briarHermit",
+    "type": "skill",
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costSource": "healRules",
+    "tags": [
+      "maneuver:casting",
+      "camp:spell",
+      "owner:enemy",
+      "heal",
+      "exhaust"
+    ],
+    "effects": [
+      {
+        "op": "heal",
+        "target": "self",
+        "rule": "healRules"
+      }
+    ],
+    "aiWeight": 25,
+    "maxConsecutive": 1,
+    "textTemplate": "Heal 10% max HP. Exhaust.",
+    "legacyMove": "sapMend"
+  },
+  {
+    "id": "chainScavenger.hookCast",
+    "name": "Hook Cast",
+    "owner": "enemy",
+    "enemy": "chainScavenger",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 20
+      }
+    ],
+    "aiWeight": 60,
+    "textTemplate": "Deal 20 damage.",
+    "legacyMove": "hookCast"
+  },
+  {
+    "id": "chainScavenger.chainSnare",
+    "name": "Chain Snare",
+    "owner": "enemy",
+    "enemy": "chainScavenger",
+    "type": "skill",
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:counter",
+      "camp:physical",
+      "owner:enemy",
+      "trait:reaction"
+    ],
+    "effects": [
+      {
+        "op": "counter",
+        "target": "player",
+        "amount": 6
+      },
+      {
+        "op": "applyStatus",
+        "target": "player",
+        "status": "frail",
+        "stacks": 1
+      }
+    ],
+    "aiWeight": 20,
+    "maxConsecutive": 1,
+    "textTemplate": "Prepare Counter: return 6 damage. Apply 1 Frail to the player.",
+    "legacyMove": "chainSnare"
+  },
+  {
+    "id": "chainScavenger.draggingBlow",
+    "name": "Dragging Blow",
+    "owner": "enemy",
+    "enemy": "chainScavenger",
+    "type": "attack",
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:smash",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 41
+      }
+    ],
+    "delay": {
+      "turns": 1,
+      "whileCharging": {
+        "block": 3
+      }
+    },
+    "aiWeight": 20,
+    "maxConsecutive": 1,
+    "textTemplate": "Deal 41 damage. Charges for 1 turn.",
+    "legacyMove": "draggingBlow"
+  },
+  {
+    "id": "bellKeeper.bronzeToll",
+    "name": "Bronze Toll",
+    "owner": "enemy",
+    "enemy": "bellKeeper",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "authored",
+    "tags": [
+      "maneuver:smash",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 19
+      }
+    ],
+    "delay": {
+      "turns": 1,
+      "whileCharging": {
+        "block": 6
+      }
+    },
+    "aiWeight": 35,
+    "maxConsecutive": 1,
+    "textTemplate": "Deal 19 damage. Charges for 1 turn.",
+    "legacyMove": "bronzeToll"
+  },
+  {
+    "id": "bellKeeper.clapperSwing",
+    "name": "Clapper Swing",
+    "owner": "enemy",
+    "enemy": "bellKeeper",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "authored",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 9
+      }
+    ],
+    "aiWeight": 45,
+    "maxConsecutive": 2,
+    "textTemplate": "Deal 9 damage.",
+    "legacyMove": "clapperSwing"
+  },
+  {
+    "id": "bellKeeper.muffledPrayer",
+    "name": "Muffled Prayer",
+    "owner": "enemy",
+    "enemy": "bellKeeper",
+    "type": "skill",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "authored",
+    "tags": [
+      "maneuver:defend",
+      "camp:physical",
+      "owner:enemy",
+      "trait:reaction"
+    ],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 9
+      }
+    ],
+    "aiWeight": 20,
+    "maxConsecutive": 1,
+    "textTemplate": "Gain 9 Block.",
+    "legacyMove": "muffledPrayer"
+  },
+  {
+    "id": "bellKeeper.crackedPeal",
+    "name": "Cracked Peal",
+    "owner": "enemy",
+    "enemy": "bellKeeper",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "authored",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 6,
+        "hits": 3
+      }
+    ],
+    "aiWeight": 25,
+    "maxConsecutive": 1,
+    "textTemplate": "Deal 6 damage 3 times.",
+    "legacyMove": "crackedPeal"
+  },
+  {
+    "id": "thornMatriarch.rootCrown",
+    "name": "Root Crown",
+    "owner": "enemy",
+    "enemy": "thornMatriarch",
+    "type": "skill",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "authored",
+    "tags": [
+      "maneuver:defend",
+      "camp:physical",
+      "owner:enemy",
+      "trait:reaction"
+    ],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 8
+      }
+    ],
+    "aiWeight": 25,
+    "maxConsecutive": 1,
+    "textTemplate": "Gain 8 Block.",
+    "legacyMove": "rootCrown"
+  },
+  {
+    "id": "thornMatriarch.thornNeedles",
+    "name": "Thorn Needles",
+    "owner": "enemy",
+    "enemy": "thornMatriarch",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "authored",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 4,
+        "hits": 3
+      }
+    ],
+    "aiWeight": 45,
+    "maxConsecutive": 2,
+    "textTemplate": "Deal 4 damage 3 times.",
+    "legacyMove": "thornNeedles"
+  },
+  {
+    "id": "thornMatriarch.entwiningRoots",
+    "name": "Entwining Roots",
+    "owner": "enemy",
+    "enemy": "thornMatriarch",
+    "type": "attack",
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costSource": "authored",
+    "tags": [
+      "maneuver:smash",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 15
+      },
+      {
+        "op": "applyStatus",
+        "target": "player",
+        "status": "bleed",
+        "stacks": 2
+      }
+    ],
+    "delay": {
+      "turns": 1,
+      "whileCharging": {
+        "block": 4
+      }
+    },
+    "aiWeight": 30,
+    "maxConsecutive": 1,
+    "textTemplate": "Deal 15 damage. Apply 2 Bleed to the player. Charges for 1 turn.",
+    "legacyMove": "entwiningRoots"
+  },
+  {
+    "id": "gildedKnight.thrust",
+    "name": "Thrust",
+    "owner": "enemy",
+    "enemy": "gildedKnight",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 11
+      }
+    ],
+    "aiWeight": 50,
+    "maxConsecutive": 2,
+    "textTemplate": "Deal 11 damage.",
+    "legacyMove": "thrust"
+  },
+  {
+    "id": "gildedKnight.parry",
+    "name": "Parry",
+    "owner": "enemy",
+    "enemy": "gildedKnight",
+    "type": "skill",
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:counter",
+      "camp:physical",
+      "owner:enemy",
+      "trait:reaction"
+    ],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 9
+      },
+      {
+        "op": "counter",
+        "target": "player",
+        "amount": 6
+      }
+    ],
+    "aiWeight": 30,
+    "maxConsecutive": 1,
+    "textTemplate": "Gain 9 Block. Prepare Counter: return 6 damage.",
+    "legacyMove": "parry"
+  },
+  {
+    "id": "gildedKnight.rally",
+    "name": "Rally",
+    "owner": "enemy",
+    "enemy": "gildedKnight",
+    "type": "skill",
+    "staminaCost": 0,
+    "manaCost": 1,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:casting",
+      "camp:spell",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "strength",
+        "stacks": 2
+      }
+    ],
+    "aiWeight": 20,
+    "maxConsecutive": 1,
+    "textTemplate": "Apply 2 Strength to self.",
+    "legacyMove": "rally"
+  },
+  {
+    "id": "gildedKnight.gildedGuard",
+    "name": "Gilded Guard",
+    "owner": "enemy",
+    "enemy": "gildedKnight",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 3
+      },
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 6
+      }
+    ],
+    "aiWeight": 1,
+    "textTemplate": "Deal 3 damage. Gain 6 Block.",
+    "legacyMove": "gildedGuard"
+  },
+  {
+    "id": "courtSurgeon.scalpel",
+    "name": "Scalpel",
+    "owner": "enemy",
+    "enemy": "courtSurgeon",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 7
+      },
+      {
+        "op": "addCard",
+        "target": "player",
+        "card": "wound",
+        "pile": "discard"
+      }
+    ],
+    "aiWeight": 40,
+    "textTemplate": "Deal 7 damage. Shuffle Wound into the player's discard.",
+    "legacyMove": "scalpel"
+  },
+  {
+    "id": "courtSurgeon.sedate",
+    "name": "Sedate",
+    "owner": "enemy",
+    "enemy": "courtSurgeon",
+    "type": "skill",
+    "staminaCost": 0,
+    "manaCost": 1,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:casting",
+      "camp:spell",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "applyStatus",
+        "target": "player",
+        "status": "weak",
+        "stacks": 1
+      },
+      {
+        "op": "applyStatus",
+        "target": "player",
+        "status": "frail",
+        "stacks": 1
+      }
+    ],
+    "aiWeight": 30,
+    "maxConsecutive": 1,
+    "textTemplate": "Apply 1 Weak to the player. Apply 1 Frail to the player.",
+    "legacyMove": "sedate"
+  },
+  {
+    "id": "courtSurgeon.stitch",
+    "name": "Stitch",
+    "owner": "enemy",
+    "enemy": "courtSurgeon",
+    "type": "skill",
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costSource": "healRules",
+    "tags": [
+      "maneuver:casting",
+      "camp:spell",
+      "owner:enemy",
+      "heal",
+      "exhaust"
+    ],
+    "effects": [
+      {
+        "op": "heal",
+        "target": "self",
+        "rule": "healRules"
+      }
+    ],
+    "aiWeight": 30,
+    "maxConsecutive": 1,
+    "textTemplate": "Heal 10% max HP. Exhaust.",
+    "legacyMove": "stitch"
+  },
+  {
+    "id": "stitchedHound.maul",
+    "name": "Maul",
+    "owner": "enemy",
+    "enemy": "stitchedHound",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 4,
+        "hits": 2
+      }
+    ],
+    "aiWeight": 60,
+    "textTemplate": "Deal 4 damage 2 times.",
+    "legacyMove": "maul"
+  },
+  {
+    "id": "stitchedHound.rend",
+    "name": "Rend",
+    "owner": "enemy",
+    "enemy": "stitchedHound",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 6
+      },
+      {
+        "op": "applyStatus",
+        "target": "player",
+        "status": "bleed",
+        "stacks": 2
+      }
+    ],
+    "aiWeight": 40,
+    "textTemplate": "Deal 6 damage. Apply 2 Bleed to the player.",
+    "legacyMove": "rend"
+  },
+  {
+    "id": "courtMarionette.dart",
+    "name": "Dart",
+    "owner": "enemy",
+    "enemy": "courtMarionette",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 4,
+        "hits": 2
+      }
+    ],
+    "aiWeight": 50,
+    "textTemplate": "Deal 4 damage 2 times.",
+    "legacyMove": "dart"
+  },
+  {
+    "id": "courtMarionette.blowdart",
+    "name": "Blowdart",
+    "owner": "enemy",
+    "enemy": "courtMarionette",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 3
+      },
+      {
+        "op": "applyStatus",
+        "target": "player",
+        "status": "crimsonBlight",
+        "stacks": 2
+      }
+    ],
+    "aiWeight": 50,
+    "textTemplate": "Deal 3 damage. Apply 2 Crimson Blight to the player.",
+    "legacyMove": "blowdart"
+  },
+  {
+    "id": "livingArmor.slam",
+    "name": "Slam",
+    "owner": "enemy",
+    "enemy": "livingArmor",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 10
+      }
+    ],
+    "aiWeight": 30,
+    "textTemplate": "Deal 10 damage.",
+    "legacyMove": "slam"
+  },
+  {
+    "id": "livingArmor.fortify",
+    "name": "Fortify",
+    "owner": "enemy",
+    "enemy": "livingArmor",
+    "type": "skill",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:defend",
+      "camp:physical",
+      "owner:enemy",
+      "trait:reaction"
+    ],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 12
+      }
+    ],
+    "aiWeight": 25,
+    "maxConsecutive": 1,
+    "textTemplate": "Gain 12 Block.",
+    "legacyMove": "fortify"
+  },
+  {
+    "id": "livingArmor.crush",
+    "name": "Crush",
+    "owner": "enemy",
+    "enemy": "livingArmor",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 14
+      }
+    ],
+    "aiWeight": 20,
+    "maxConsecutive": 1,
+    "textTemplate": "Deal 14 damage.",
+    "legacyMove": "crush"
+  },
+  {
+    "id": "livingArmor.rimeCrush",
+    "name": "Rime Crush",
+    "owner": "enemy",
+    "enemy": "livingArmor",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 8
+      },
+      {
+        "op": "applyStatus",
+        "target": "player",
+        "status": "frost",
+        "stacks": 3
+      }
+    ],
+    "aiWeight": 25,
+    "maxConsecutive": 1,
+    "textTemplate": "Deal 8 damage. Apply 3 Frost to the player.",
+    "legacyMove": "rimeCrush"
+  },
+  {
+    "id": "courtDuelist.enGarde",
+    "name": "En Garde",
+    "owner": "enemy",
+    "enemy": "courtDuelist",
+    "type": "skill",
+    "staminaCost": 0,
+    "manaCost": 1,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:casting",
+      "camp:spell",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "strength",
+        "stacks": 3
+      }
+    ],
+    "aiWeight": 10,
+    "maxConsecutive": 1,
+    "textTemplate": "Apply 3 Strength to self.",
+    "legacyMove": "enGarde"
+  },
+  {
+    "id": "courtDuelist.flurry",
+    "name": "Flurry",
+    "owner": "enemy",
+    "enemy": "courtDuelist",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 5,
+        "hits": 3
+      }
+    ],
+    "aiWeight": 40,
+    "maxConsecutive": 2,
+    "textTemplate": "Deal 5 damage 3 times.",
+    "legacyMove": "flurry"
+  },
+  {
+    "id": "courtDuelist.lunge",
+    "name": "Lunge",
+    "owner": "enemy",
+    "enemy": "courtDuelist",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 14
+      }
+    ],
+    "aiWeight": 30,
+    "maxConsecutive": 1,
+    "textTemplate": "Deal 14 damage.",
+    "legacyMove": "lunge"
+  },
+  {
+    "id": "courtDuelist.riposte",
+    "name": "Riposte",
+    "owner": "enemy",
+    "enemy": "courtDuelist",
+    "type": "skill",
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:counter",
+      "camp:physical",
+      "owner:enemy",
+      "trait:reaction"
+    ],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 10
+      },
+      {
+        "op": "counter",
+        "target": "player",
+        "amount": 6
+      }
+    ],
+    "aiWeight": 20,
+    "maxConsecutive": 1,
+    "textTemplate": "Gain 10 Block. Prepare Counter: return 6 damage.",
+    "legacyMove": "riposte"
+  },
+  {
+    "id": "courtDuelist.bindingRiposte",
+    "name": "Binding Riposte",
+    "owner": "enemy",
+    "enemy": "courtDuelist",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 4
+      }
+    ],
+    "aiWeight": 1,
+    "textTemplate": "Deal 4 damage.",
+    "legacyMove": "bindingRiposte"
+  },
+  {
+    "id": "stitchedKing.scepterBlow",
+    "name": "Scepter Blow",
+    "owner": "enemy",
+    "enemy": "stitchedKing",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 11
+      }
+    ],
+    "aiWeight": 40,
+    "maxConsecutive": 2,
+    "textTemplate": "Deal 11 damage.",
+    "legacyMove": "scepterBlow"
+  },
+  {
+    "id": "stitchedKing.graspingHands",
+    "name": "Grasping Hands",
+    "owner": "enemy",
+    "enemy": "stitchedKing",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 5,
+        "hits": 3
+      }
+    ],
+    "aiWeight": 30,
+    "maxConsecutive": 2,
+    "textTemplate": "Deal 5 damage 3 times.",
+    "legacyMove": "graspingHands"
+  },
+  {
+    "id": "stitchedKing.courtlyDecree",
+    "name": "Courtly Decree",
+    "owner": "enemy",
+    "enemy": "stitchedKing",
+    "type": "skill",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:defend",
+      "camp:physical",
+      "owner:enemy",
+      "trait:reaction"
+    ],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 15
+      },
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "strength",
+        "stacks": 2
+      }
+    ],
+    "aiWeight": 30,
+    "maxConsecutive": 1,
+    "textTemplate": "Gain 15 Block. Apply 2 Strength to self.",
+    "legacyMove": "courtlyDecree"
+  },
+  {
+    "id": "stitchedKing.thousandHands",
+    "name": "Thousand Hands",
+    "owner": "enemy",
+    "enemy": "stitchedKing",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 3,
+        "hits": 6
+      }
+    ],
+    "aiWeight": 40,
+    "textTemplate": "Deal 3 damage 6 times.",
+    "legacyMove": "thousandHands"
+  },
+  {
+    "id": "mirrorScribe.silverScript",
+    "name": "Silver Script",
+    "owner": "enemy",
+    "enemy": "mirrorScribe",
+    "type": "skill",
+    "staminaCost": 0,
+    "manaCost": 1,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:casting",
+      "camp:spell",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "addCard",
+        "card": "dazed",
+        "pile": "discard"
+      }
+    ],
+    "aiWeight": 30,
+    "maxConsecutive": 1,
+    "textTemplate": "Shuffle Dazed into the player's discard.",
+    "legacyMove": "silverScript"
+  },
+  {
+    "id": "mirrorScribe.shardVolley",
+    "name": "Shard Volley",
+    "owner": "enemy",
+    "enemy": "mirrorScribe",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 3,
+        "hits": 3
+      }
+    ],
+    "aiWeight": 50,
+    "textTemplate": "Deal 3 damage 3 times.",
+    "legacyMove": "shardVolley"
+  },
+  {
+    "id": "mirrorScribe.polishedWard",
+    "name": "Polished Ward",
+    "owner": "enemy",
+    "enemy": "mirrorScribe",
+    "type": "skill",
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:counter",
+      "camp:physical",
+      "owner:enemy",
+      "trait:reaction"
+    ],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 6
+      },
+      {
+        "op": "counter",
+        "target": "player",
+        "amount": 6
+      }
+    ],
+    "aiWeight": 20,
+    "maxConsecutive": 1,
+    "textTemplate": "Gain 6 Block. Prepare Counter: return 6 damage.",
+    "legacyMove": "polishedWard"
+  },
+  {
+    "id": "stitchCrab.shellFold",
+    "name": "Shell Fold",
+    "owner": "enemy",
+    "enemy": "stitchCrab",
+    "type": "skill",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:defend",
+      "camp:physical",
+      "owner:enemy",
+      "trait:reaction"
+    ],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 11
+      }
+    ],
+    "aiWeight": 30,
+    "maxConsecutive": 1,
+    "textTemplate": "Gain 11 Block.",
+    "legacyMove": "shellFold"
+  },
+  {
+    "id": "stitchCrab.seamShears",
+    "name": "Seam Shears",
+    "owner": "enemy",
+    "enemy": "stitchCrab",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 4,
+        "hits": 2
+      },
+      {
+        "op": "applyStatus",
+        "target": "player",
+        "status": "bleed",
+        "stacks": 1
+      }
+    ],
+    "aiWeight": 45,
+    "textTemplate": "Deal 4 damage 2 times. Apply 1 Bleed to the player.",
+    "legacyMove": "seamShears"
+  },
+  {
+    "id": "stitchCrab.scuttleRush",
+    "name": "Scuttle Rush",
+    "owner": "enemy",
+    "enemy": "stitchCrab",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 13
+      }
+    ],
+    "aiWeight": 25,
+    "maxConsecutive": 1,
+    "textTemplate": "Deal 13 damage.",
+    "legacyMove": "scuttleRush"
+  },
+  {
+    "id": "glassRegent.prismGuard",
+    "name": "Prism Guard",
+    "owner": "enemy",
+    "enemy": "glassRegent",
+    "type": "skill",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:defend",
+      "camp:physical",
+      "owner:enemy",
+      "trait:reaction"
+    ],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 16
+      }
+    ],
+    "aiWeight": 25,
+    "maxConsecutive": 1,
+    "textTemplate": "Gain 16 Block.",
+    "legacyMove": "prismGuard"
+  },
+  {
+    "id": "glassRegent.crystalRapier",
+    "name": "Crystal Rapier",
+    "owner": "enemy",
+    "enemy": "glassRegent",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 15
+      }
+    ],
+    "aiWeight": 45,
+    "maxConsecutive": 2,
+    "textTemplate": "Deal 15 damage.",
+    "legacyMove": "crystalRapier"
+  },
+  {
+    "id": "glassRegent.splinterRain",
+    "name": "Splinter Rain",
+    "owner": "enemy",
+    "enemy": "glassRegent",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 6,
+        "hits": 3
+      }
+    ],
+    "aiWeight": 30,
+    "maxConsecutive": 1,
+    "textTemplate": "Deal 6 damage 3 times.",
+    "legacyMove": "splinterRain"
+  },
+  {
+    "id": "glassRegent.shatteredCourt",
+    "name": "Shattered Court",
+    "owner": "enemy",
+    "enemy": "glassRegent",
+    "type": "attack",
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:smash",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 7,
+        "hits": 5
+      }
+    ],
+    "delay": {
+      "turns": 1,
+      "whileCharging": {
+        "block": 0
+      }
+    },
+    "aiWeight": 35,
+    "maxConsecutive": 1,
+    "textTemplate": "Deal 7 damage 5 times. Charges for 1 turn.",
+    "legacyMove": "shatteredCourt"
+  },
+  {
+    "id": "marrowOrganist.bonePrelude",
+    "name": "Bone Prelude",
+    "owner": "enemy",
+    "enemy": "marrowOrganist",
+    "type": "skill",
+    "staminaCost": 0,
+    "manaCost": 1,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:casting",
+      "camp:spell",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "applyStatus",
+        "target": "player",
+        "status": "weak",
+        "stacks": 1
+      }
+    ],
+    "aiWeight": 20,
+    "maxConsecutive": 1,
+    "textTemplate": "Apply 1 Weak to the player.",
+    "legacyMove": "bonePrelude"
+  },
+  {
+    "id": "marrowOrganist.ivoryKeys",
+    "name": "Ivory Keys",
+    "owner": "enemy",
+    "enemy": "marrowOrganist",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 8,
+        "hits": 3
+      }
+    ],
+    "aiWeight": 40,
+    "maxConsecutive": 2,
+    "textTemplate": "Deal 8 damage 3 times.",
+    "legacyMove": "ivoryKeys"
+  },
+  {
+    "id": "marrowOrganist.funeralChord",
+    "name": "Funeral Chord",
+    "owner": "enemy",
+    "enemy": "marrowOrganist",
+    "type": "attack",
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:smash",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 28
+      }
+    ],
+    "delay": {
+      "turns": 1,
+      "whileCharging": {
+        "block": 5
+      }
+    },
+    "aiWeight": 25,
+    "maxConsecutive": 1,
+    "textTemplate": "Deal 28 damage. Charges for 1 turn.",
+    "legacyMove": "funeralChord"
+  },
+  {
+    "id": "marrowOrganist.quietRefrain",
+    "name": "Quiet Refrain",
+    "owner": "enemy",
+    "enemy": "marrowOrganist",
+    "type": "skill",
+    "staminaCost": 3,
+    "manaCost": 2,
+    "costSource": "healRules",
+    "tags": [
+      "maneuver:casting",
+      "camp:spell",
+      "owner:enemy",
+      "heal"
+    ],
+    "effects": [
+      {
+        "op": "heal",
+        "target": "self",
+        "rule": "healRules"
+      }
+    ],
+    "aiWeight": 15,
+    "maxConsecutive": 1,
+    "textTemplate": "Heal 10% max HP.",
+    "legacyMove": "quietRefrain"
+  },
+  {
+    "id": "ashRevenant.cinderSlash",
+    "name": "Cinder Slash",
+    "owner": "enemy",
+    "enemy": "ashRevenant",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 12
+      }
+    ],
+    "aiWeight": 55,
+    "maxConsecutive": 2,
+    "textTemplate": "Deal 12 damage.",
+    "legacyMove": "cinderSlash"
+  },
+  {
+    "id": "ashRevenant.reform",
+    "name": "Reform",
+    "owner": "enemy",
+    "enemy": "ashRevenant",
+    "type": "skill",
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costSource": "healRules",
+    "tags": [
+      "maneuver:casting",
+      "camp:spell",
+      "owner:enemy",
+      "heal",
+      "exhaust"
+    ],
+    "effects": [
+      {
+        "op": "heal",
+        "target": "self",
+        "rule": "healRules"
+      },
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 6
+      }
+    ],
+    "aiWeight": 45,
+    "maxConsecutive": 1,
+    "textTemplate": "Heal 10% max HP. Exhaust.",
+    "legacyMove": "reform"
+  },
+  {
+    "id": "emberStarvedPilgrim.desperateClaw",
+    "name": "Desperate Claw",
+    "owner": "enemy",
+    "enemy": "emberStarvedPilgrim",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 9
+      }
+    ],
+    "aiWeight": 60,
+    "textTemplate": "Deal 9 damage.",
+    "legacyMove": "desperateClaw"
+  },
+  {
+    "id": "emberStarvedPilgrim.wail",
+    "name": "Wail",
+    "owner": "enemy",
+    "enemy": "emberStarvedPilgrim",
+    "type": "skill",
+    "staminaCost": 0,
+    "manaCost": 1,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:casting",
+      "camp:spell",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "applyStatus",
+        "target": "player",
+        "status": "weak",
+        "stacks": 1
+      },
+      {
+        "op": "applyStatus",
+        "target": "player",
+        "status": "frail",
+        "stacks": 1
+      },
+      {
+        "op": "applyStatus",
+        "target": "player",
+        "status": "insanity",
+        "stacks": 3
+      }
+    ],
+    "aiWeight": 40,
+    "maxConsecutive": 1,
+    "textTemplate": "Apply 1 Weak to the player. Apply 1 Frail to the player. Apply 3 Insanity to the player.",
+    "legacyMove": "wail"
+  },
+  {
+    "id": "valkyrieShade.spiralLance",
+    "name": "Spiral Lance",
+    "owner": "enemy",
+    "enemy": "valkyrieShade",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 5,
+        "hits": 2
+      }
+    ],
+    "aiWeight": 50,
+    "textTemplate": "Deal 5 damage 2 times.",
+    "legacyMove": "spiralLance"
+  },
+  {
+    "id": "valkyrieShade.bloodFeather",
+    "name": "Blood Feather",
+    "owner": "enemy",
+    "enemy": "valkyrieShade",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 5
+      },
+      {
+        "op": "applyStatus",
+        "target": "player",
+        "status": "bleed",
+        "stacks": 3
+      }
+    ],
+    "aiWeight": 50,
+    "textTemplate": "Deal 5 damage. Apply 3 Bleed to the player.",
+    "legacyMove": "bloodFeather"
+  },
+  {
+    "id": "charredColossus.smash",
+    "name": "Smash",
+    "owner": "enemy",
+    "enemy": "charredColossus",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 16
+      }
+    ],
+    "aiWeight": 50,
+    "maxConsecutive": 2,
+    "textTemplate": "Deal 16 damage.",
+    "legacyMove": "smash"
+  },
+  {
+    "id": "charredColossus.ashCloud",
+    "name": "Ash Cloud",
+    "owner": "enemy",
+    "enemy": "charredColossus",
+    "type": "skill",
+    "staminaCost": 0,
+    "manaCost": 1,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:casting",
+      "camp:spell",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "applyStatus",
+        "target": "player",
+        "status": "weak",
+        "stacks": 2
+      }
+    ],
+    "aiWeight": 25,
+    "maxConsecutive": 1,
+    "textTemplate": "Apply 2 Weak to the player.",
+    "legacyMove": "ashCloud"
+  },
+  {
+    "id": "charredColossus.harden",
+    "name": "Harden",
+    "owner": "enemy",
+    "enemy": "charredColossus",
+    "type": "skill",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:defend",
+      "camp:physical",
+      "owner:enemy",
+      "trait:reaction"
+    ],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 14
+      }
+    ],
+    "aiWeight": 25,
+    "maxConsecutive": 1,
+    "textTemplate": "Gain 14 Block.",
+    "legacyMove": "harden"
+  },
+  {
+    "id": "wyrmLord.consecration",
+    "name": "Consecration",
+    "owner": "enemy",
+    "enemy": "wyrmLord",
+    "type": "skill",
+    "staminaCost": 0,
+    "manaCost": 1,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:casting",
+      "camp:spell",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "strength",
+        "stacks": 4
+      }
+    ],
+    "aiWeight": 10,
+    "maxConsecutive": 1,
+    "textTemplate": "Apply 4 Strength to self.",
+    "legacyMove": "consecration"
+  },
+  {
+    "id": "wyrmLord.halberdReign",
+    "name": "Halberd Reign",
+    "owner": "enemy",
+    "enemy": "wyrmLord",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 15
+      }
+    ],
+    "aiWeight": 45,
+    "maxConsecutive": 2,
+    "textTemplate": "Deal 15 damage.",
+    "legacyMove": "halberdReign"
+  },
+  {
+    "id": "wyrmLord.tailSweep",
+    "name": "Tail Sweep",
+    "owner": "enemy",
+    "enemy": "wyrmLord",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 8
+      },
+      {
+        "op": "applyStatus",
+        "target": "player",
+        "status": "weak",
+        "stacks": 1
+      }
+    ],
+    "aiWeight": 30,
+    "textTemplate": "Deal 8 damage. Apply 1 Weak to the player.",
+    "legacyMove": "tailSweep"
+  },
+  {
+    "id": "wyrmLord.goldenBulwark",
+    "name": "Golden Bulwark",
+    "owner": "enemy",
+    "enemy": "wyrmLord",
+    "type": "skill",
+    "staminaCost": 3,
+    "manaCost": 2,
+    "costSource": "healRules",
+    "tags": [
+      "maneuver:defend",
+      "camp:physical",
+      "owner:enemy",
+      "trait:reaction",
+      "heal"
+    ],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 16
+      },
+      {
+        "op": "heal",
+        "target": "self",
+        "rule": "healRules"
+      }
+    ],
+    "aiWeight": 25,
+    "maxConsecutive": 1,
+    "textTemplate": "Gain 16 Block. Heal 10% max HP.",
+    "legacyMove": "goldenBulwark"
+  },
+  {
+    "id": "blightedValkyrie.spiralThrust",
+    "name": "Spiral Thrust",
+    "owner": "enemy",
+    "enemy": "blightedValkyrie",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 12
+      },
+      {
+        "op": "applyStatus",
+        "target": "player",
+        "status": "bleed",
+        "stacks": 2
+      }
+    ],
+    "aiWeight": 35,
+    "maxConsecutive": 2,
+    "textTemplate": "Deal 12 damage. Apply 2 Bleed to the player.",
+    "legacyMove": "spiralThrust"
+  },
+  {
+    "id": "blightedValkyrie.whirlwind",
+    "name": "Whirlwind",
+    "owner": "enemy",
+    "enemy": "blightedValkyrie",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 4,
+        "hits": 5
+      },
+      {
+        "op": "applyStatus",
+        "target": "player",
+        "status": "bleed",
+        "stacks": 2
+      }
+    ],
+    "aiWeight": 30,
+    "maxConsecutive": 1,
+    "textTemplate": "Deal 4 damage 5 times. Apply 2 Bleed to the player.",
+    "legacyMove": "whirlwind"
+  },
+  {
+    "id": "blightedValkyrie.rotWings",
+    "name": "Rot Wings",
+    "owner": "enemy",
+    "enemy": "blightedValkyrie",
+    "type": "skill",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:defend",
+      "camp:physical",
+      "owner:enemy",
+      "trait:reaction"
+    ],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 10
+      },
+      {
+        "op": "applyStatus",
+        "target": "player",
+        "status": "crimsonBlight",
+        "stacks": 3
+      }
+    ],
+    "aiWeight": 20,
+    "maxConsecutive": 1,
+    "textTemplate": "Gain 10 Block. Apply 3 Crimson Blight to the player.",
+    "legacyMove": "rotWings"
+  },
+  {
+    "id": "blightedValkyrie.scarletDance",
+    "name": "Scarlet Dance",
+    "owner": "enemy",
+    "enemy": "blightedValkyrie",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 5,
+        "hits": 5
+      }
+    ],
+    "aiWeight": 35,
+    "textTemplate": "Deal 5 damage 5 times.",
+    "legacyMove": "scarletDance"
+  },
+  {
+    "id": "cinderMantis.scythePair",
+    "name": "Scythe Pair",
+    "owner": "enemy",
+    "enemy": "cinderMantis",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 5,
+        "hits": 2
+      }
+    ],
+    "aiWeight": 55,
+    "textTemplate": "Deal 5 damage 2 times.",
+    "legacyMove": "scythePair"
+  },
+  {
+    "id": "cinderMantis.emberPounce",
+    "name": "Ember Pounce",
+    "owner": "enemy",
+    "enemy": "cinderMantis",
+    "type": "attack",
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:smash",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 18
+      }
+    ],
+    "delay": {
+      "turns": 1,
+      "whileCharging": {
+        "block": 2
+      }
+    },
+    "aiWeight": 30,
+    "maxConsecutive": 1,
+    "textTemplate": "Deal 18 damage. Charges for 1 turn.",
+    "legacyMove": "emberPounce"
+  },
+  {
+    "id": "cinderMantis.foldedBlades",
+    "name": "Folded Blades",
+    "owner": "enemy",
+    "enemy": "cinderMantis",
+    "type": "skill",
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:counter",
+      "camp:physical",
+      "owner:enemy",
+      "trait:reaction"
+    ],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 8
+      },
+      {
+        "op": "counter",
+        "target": "player",
+        "amount": 6
+      }
+    ],
+    "aiWeight": 15,
+    "maxConsecutive": 1,
+    "textTemplate": "Gain 8 Block. Prepare Counter: return 6 damage.",
+    "legacyMove": "foldedBlades"
+  },
+  {
+    "id": "eclipseCantor.darkHymn",
+    "name": "Dark Hymn",
+    "owner": "enemy",
+    "enemy": "eclipseCantor",
+    "type": "skill",
+    "staminaCost": 0,
+    "manaCost": 1,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:casting",
+      "camp:spell",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "applyStatus",
+        "target": "player",
+        "status": "insanity",
+        "stacks": 3
+      }
+    ],
+    "aiWeight": 30,
+    "maxConsecutive": 1,
+    "textTemplate": "Apply 3 Insanity to the player.",
+    "legacyMove": "darkHymn"
+  },
+  {
+    "id": "eclipseCantor.lunarRay",
+    "name": "Lunar Ray",
+    "owner": "enemy",
+    "enemy": "eclipseCantor",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 11
+      }
+    ],
+    "aiWeight": 50,
+    "textTemplate": "Deal 11 damage.",
+    "legacyMove": "lunarRay"
+  },
+  {
+    "id": "eclipseCantor.fadingEcho",
+    "name": "Fading Echo",
+    "owner": "enemy",
+    "enemy": "eclipseCantor",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 6
+      },
+      {
+        "op": "addCard",
+        "card": "dazed",
+        "pile": "discard"
+      }
+    ],
+    "aiWeight": 20,
+    "maxConsecutive": 1,
+    "textTemplate": "Deal 6 damage. Shuffle Dazed into the player's discard.",
+    "legacyMove": "fadingEcho"
+  },
+  {
+    "id": "furnaceSaint.openFurnace",
+    "name": "Open Furnace",
+    "owner": "enemy",
+    "enemy": "furnaceSaint",
+    "type": "attack",
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:smash",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 32
+      }
+    ],
+    "delay": {
+      "turns": 1,
+      "whileCharging": {
+        "block": 10
+      }
+    },
+    "aiWeight": 30,
+    "maxConsecutive": 1,
+    "textTemplate": "Deal 32 damage. Charges for 1 turn.",
+    "legacyMove": "openFurnace"
+  },
+  {
+    "id": "furnaceSaint.censerSweep",
+    "name": "Censer Sweep",
+    "owner": "enemy",
+    "enemy": "furnaceSaint",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 22
+      }
+    ],
+    "aiWeight": 45,
+    "maxConsecutive": 2,
+    "textTemplate": "Deal 22 damage.",
+    "legacyMove": "censerSweep"
+  },
+  {
+    "id": "furnaceSaint.coolingAsh",
+    "name": "Cooling Ash",
+    "owner": "enemy",
+    "enemy": "furnaceSaint",
+    "type": "skill",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:defend",
+      "camp:physical",
+      "owner:enemy",
+      "trait:reaction"
+    ],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 14
+      }
+    ],
+    "aiWeight": 25,
+    "maxConsecutive": 1,
+    "textTemplate": "Gain 14 Block.",
+    "legacyMove": "coolingAsh"
+  },
+  {
+    "id": "hollowAstronomer.starChart",
+    "name": "Star Chart",
+    "owner": "enemy",
+    "enemy": "hollowAstronomer",
+    "type": "skill",
+    "staminaCost": 0,
+    "manaCost": 1,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:casting",
+      "camp:spell",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "addCard",
+        "card": "dazed",
+        "pile": "discard"
+      }
+    ],
+    "aiWeight": 20,
+    "maxConsecutive": 1,
+    "textTemplate": "Shuffle Dazed into the player's discard.",
+    "legacyMove": "starChart"
+  },
+  {
+    "id": "hollowAstronomer.orbitalShards",
+    "name": "Orbital Shards",
+    "owner": "enemy",
+    "enemy": "hollowAstronomer",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 8,
+        "hits": 4
+      }
+    ],
+    "aiWeight": 45,
+    "maxConsecutive": 2,
+    "textTemplate": "Deal 8 damage 4 times.",
+    "legacyMove": "orbitalShards"
+  },
+  {
+    "id": "hollowAstronomer.totalEclipse",
+    "name": "Total Eclipse",
+    "owner": "enemy",
+    "enemy": "hollowAstronomer",
+    "type": "attack",
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:smash",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 30
+      },
+      {
+        "op": "applyStatus",
+        "target": "player",
+        "status": "insanity",
+        "stacks": 3
+      }
+    ],
+    "delay": {
+      "turns": 1,
+      "whileCharging": {
+        "block": 6
+      }
+    },
+    "aiWeight": 35,
+    "maxConsecutive": 1,
+    "textTemplate": "Deal 30 damage. Apply 3 Insanity to the player. Charges for 1 turn.",
+    "legacyMove": "totalEclipse"
+  },
+  {
+    "id": "hollowAstronomer.fallingHeavens",
+    "name": "Falling Heavens",
+    "owner": "enemy",
+    "enemy": "hollowAstronomer",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 10,
+        "hits": 3
+      }
+    ],
+    "aiWeight": 30,
+    "maxConsecutive": 1,
+    "textTemplate": "Deal 10 damage 3 times.",
+    "legacyMove": "fallingHeavens"
+  },
+  {
+    "id": "ashheartDragon.obsidianClaws",
+    "name": "Obsidian Claws",
+    "owner": "enemy",
+    "enemy": "ashheartDragon",
+    "type": "attack",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:attack",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 12,
+        "hits": 2
+      }
+    ],
+    "aiWeight": 45,
+    "maxConsecutive": 2,
+    "textTemplate": "Deal 12 damage 2 times.",
+    "legacyMove": "obsidianClaws"
+  },
+  {
+    "id": "ashheartDragon.tailBastion",
+    "name": "Tail Bastion",
+    "owner": "enemy",
+    "enemy": "ashheartDragon",
+    "type": "skill",
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:defend",
+      "camp:physical",
+      "owner:enemy",
+      "trait:reaction"
+    ],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 12
+      }
+    ],
+    "aiWeight": 25,
+    "maxConsecutive": 1,
+    "textTemplate": "Gain 12 Block.",
+    "legacyMove": "tailBastion"
+  },
+  {
+    "id": "ashheartDragon.heartRumble",
+    "name": "Heart Rumble",
+    "owner": "enemy",
+    "enemy": "ashheartDragon",
+    "type": "skill",
+    "staminaCost": 0,
+    "manaCost": 1,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:casting",
+      "camp:spell",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "strength",
+        "stacks": 1
+      }
+    ],
+    "aiWeight": 15,
+    "maxConsecutive": 1,
+    "textTemplate": "Apply 1 Strength to self.",
+    "legacyMove": "heartRumble"
+  },
+  {
+    "id": "ashheartDragon.ashBreath",
+    "name": "Ash Breath",
+    "owner": "enemy",
+    "enemy": "ashheartDragon",
+    "type": "attack",
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costSource": "stance",
+    "tags": [
+      "maneuver:smash",
+      "camp:physical",
+      "owner:enemy"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "player",
+        "amount": 9,
+        "hits": 4
+      }
+    ],
+    "delay": {
+      "turns": 1,
+      "whileCharging": {
+        "block": 5
+      }
+    },
+    "aiWeight": 35,
+    "maxConsecutive": 1,
+    "textTemplate": "Deal 9 damage 4 times. Charges for 1 turn.",
+    "legacyMove": "ashBreath"
+  }
+]

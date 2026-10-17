@@ -35,14 +35,22 @@ enemy's real SP pool; rounding down.
 ## Module: `engine/modules/enemies/`
 
 ```
-module.json              id ashen.enemies@1, requires stats, cards, resources, intent
-settings.schema.json
-defaults.json            tier profiles, deck rules, heal-cost rule, AI weights
-state.schema.json        per-enemy draw/hand/discard/exhaust piles, sp, mp
-rules.json               turn order: refill → draw → plan → (enemy phase) play → discard
-cases.json               behaviour cases (draw/reshuffle, affordability, heal cost, stagger)
-guide.md
+module.json              id enemies@1.0.0, instances minion/elite/boss      [done]
+settings.schema.json                                                        [done]
+defaults.json            tiers, gains, deck, stanceCosts, healRules,       [done]
+                         stagger, ai
+guide.md                                                                    [done]
+state.schema.json        per-enemy piles, sp, mp                            [phase 2]
+rules.json / cases.json  turn order and behaviour cases                     [phase 3]
 ```
+
+Status 2026-10-17: module, settings, pack JSON (33 enemies, 105 cards, 6 gear,
+5 relics, via `tools/enemy-decks-convert.mjs`), build validator
+(`engine/kernel/gameConfig.js` `verifyEnemyContent`), `tests/enemies-module.test.mjs`.
+Runtime still plays legacy moves until phases 2–3.
+
+The tier model below was superseded by Core-scale pools: tier `pools` (HP/SP/MP base)
++ `attributeGains` (player levelGains), budgets minion 3–5 / elite 6–8 / boss 9–12.
 
 `defaults.json` (all overridable from `game.json` / bundle):
 

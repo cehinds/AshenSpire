@@ -76,6 +76,10 @@
       "version": "1.0.0",
       "settings": {}
     },
+    "enemies": {
+      "version": "1.0.0",
+      "settings": {}
+    },
     "formation": {
       "version": "1.0.0",
       "settings": {

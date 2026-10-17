@@ -155,6 +155,60 @@ function verifyContent(content) {
   for (const row of content.classes) if (!cards.has(row.specialCardId)) fail(`$/content/classes/${row.id}/specialCardId`, 'unresolved card reference');
   for (const row of content.starterDeck.shared) if (!cards.has(row.card) || !Number.isSafeInteger(row.copies) || row.copies < 1) fail('$/content/starterDeck/shared', 'invalid starter card reference/count');
 }
+// Enemies module (docs/plans/enemy-decks.md): enemies are characters with decks. Refuses unknown
+// card/gear/relic references, decks outside the configured bounds, attribute totals outside the
+// tier budget, and any deck card the enemy's own pools can never pay for.
+const ENEMY_ATTRIBUTES = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
+export function enemyPools(row, settings) {
+  const tier = settings.tiers[row.tier], gains = settings.attributeGains, round = settings.rounding === 'up' ? Math.ceil : settings.rounding === 'nearest' ? Math.round : Math.floor;
+  const pools = { hp: tier.pools.hp, sp: tier.pools.sp, mp: tier.pools.mp, hand: tier.hand, ar: 0, dr: 0 };
+  for (const id of ENEMY_ATTRIBUTES) for (const [stat, per] of Object.entries(gains[id] || {})) if (stat in pools) pools[stat] += (row.attributes[id] || 0) * per;
+  for (const key of Object.keys(pools)) pools[key] = round(pools[key]);
+  return pools;
+}
+function verifyEnemyContent(content, settings) {
+  if (!settings) return;
+  const base = '$/content/enemies';
+  if (!Array.isArray(content.enemies) || !Array.isArray(content.enemyCards)) fail(base, 'enemies module requires enemies and enemyCards pack content');
+  const cards = new Map(content.enemyCards.map(card => [card.id, card]));
+  if (cards.size !== content.enemyCards.length) fail('$/content/enemyCards', 'duplicate enemy card ID');
+  const playerCards = new Set((content.cards || []).map(card => card.id));
+  const gear = new Set((content.enemyGear || []).map(row => row.id)), relics = new Set((content.enemyRelics || []).map(row => row.id));
+  for (const [kind, rows] of [['enemyGear', content.enemyGear || []], ['enemyRelics', content.enemyRelics || []]])
+    for (const row of rows) if (!Array.isArray(row.modifiers) || row.modifiers.some(m => typeof m !== 'string' || !/^self\.\w+=[+-]\d+(\.\d+)?%?$/.test(m))) fail(`$/content/${kind}/${row.id}/modifiers`, 'expected self.<stat>=±N modifiers');
+  for (const card of content.enemyCards) {
+    for (const key of ['staminaCost', 'manaCost']) if (!Number.isSafeInteger(card[key]) || card[key] < 0) fail(`$/content/enemyCards/${card.id}/${key}`, 'expected nonnegative integer price');
+    if (!Array.isArray(card.tags) || !Array.isArray(card.effects)) fail(`$/content/enemyCards/${card.id}`, 'expected tags and effects arrays');
+    if (card.costSource === 'healRules') {
+      const shapes = settings.healRules.shapes.filter(s => s.tags.every(t => card.tags.includes(t)));
+      if (!shapes.length) fail(`$/content/enemyCards/${card.id}/tags`, 'healRules cost source but no heal shape matches its tags');
+      const shape = settings.healRules.match === 'first' ? shapes[0] : shapes.sort((a, b) => b.tags.length - a.tags.length)[0];
+      if (card.staminaCost !== shape.cost.sp || card.manaCost !== shape.cost.mp) fail(`$/content/enemyCards/${card.id}`, `cost must match heal shape '${shape.id}'`);
+    }
+  }
+  const ids = new Set();
+  for (const row of content.enemies) {
+    const at = `${base}/${row.id}`;
+    if (!row.id || ids.has(row.id)) fail(base, `duplicate or missing enemy ID '${row.id}'`);
+    ids.add(row.id);
+    const tier = settings.tiers[row.tier];
+    if (!tier || !settings.include.includes(row.tier)) fail(`${at}/tier`, 'unknown or excluded tier');
+    if (!record(row.attributes) || Object.keys(row.attributes).some(k => !ENEMY_ATTRIBUTES.includes(k)) || Object.values(row.attributes).some(n => !Number.isSafeInteger(n) || n < 0)) fail(`${at}/attributes`, 'expected nonnegative integer attributes');
+    const total = Object.values(row.attributes).reduce((a, b) => a + b, 0);
+    if (total < tier.attributeBudget[0] || total > tier.attributeBudget[1]) fail(`${at}/attributes`, `total ${total} outside ${row.tier} budget`);
+    if (!Array.isArray(row.deck)) fail(`${at}/deck`, 'expected deck array');
+    const [min, max] = [Math.max(settings.deck.min, tier.deckSize[0]), Math.min(settings.deck.max, tier.deckSize[1])];
+    if (row.deck.length < min || row.deck.length > max) fail(`${at}/deck`, `deck size ${row.deck.length} outside ${min}-${max}`);
+    const pools = enemyPools(row, settings);
+    for (const id of [...row.deck, ...(row.unlockCards || []), ...(row.firstCard ? [row.firstCard] : [])]) {
+      const card = cards.get(id);
+      if (!card && !playerCards.has(id)) fail(`${at}/deck`, `unresolved card reference '${id}'`);
+      if (card && (card.staminaCost > pools.sp || card.manaCost > pools.mp)) fail(`${at}/deck`, `'${id}' costs ${card.staminaCost} SP/${card.manaCost} MP; enemy has ${pools.sp} SP/${pools.mp} MP`);
+    }
+    for (const id of row.gear || []) if (!gear.has(id)) fail(`${at}/gear`, `unresolved gear '${id}'`);
+    for (const id of row.relics || []) if (!relics.has(id)) fail(`${at}/relics`, `unresolved relic '${id}'`);
+  }
+}
 function verifySettings(modules, instances = {}) {
   const defenses = modules.defenses;
   if (defenses && (defenses.include.length !== defenses.order.length || defenses.include.some(id => !defenses.order.includes(id)))) fail('$/modules/defenses/order', 'must contain selected defenses exactly once');
@@ -226,7 +280,7 @@ export function resolveGameAuthor(author, catalog) {
     for (const [field, setting] of Object.entries(binding.settings)) policy[field] = dataClone(modules[binding.module][setting]);
   }
   verifySettings(modules, instances);
-  verifyContent(content);
+  verifyContent(content); verifyEnemyContent(content, modules.enemies);
   if (content.classes) {
     content.classAttributes = Object.fromEntries(content.classes.map(row => [row.id, row.attributes]));
     content.startingHands = Object.fromEntries(content.classes.map(row => [row.id, content.stats.handBase + row.attributes.intelligence]));
@@ -251,6 +305,6 @@ export function validateResolvedGameProfile(snapshot, supportedRuntimeHash) {
     if (!value.schemas[id]) fail(`$/modules/${id}`, 'missing pinned settings schema');
     validateGameSchema(settings,value.schemas[id],`$/modules/${id}`);
   }
-  verifySettings(value.modules, value.instances); verifyContent(value.content);
+  verifySettings(value.modules, value.instances); verifyContent(value.content); verifyEnemyContent(value.content, value.modules.enemies);
   return freezeGameData({...value,hash});
 }

@@ -1,0 +1,385 @@
+{
+  "type": "object",
+  "properties": {
+    "mode": {
+      "enum": [
+        "legacy",
+        "configured"
+      ]
+    },
+    "include": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "fallback": {
+      "enum": [
+        "legacyMoves",
+        "none"
+      ]
+    },
+    "rounding": {
+      "enum": [
+        "down",
+        "nearest",
+        "up"
+      ]
+    },
+    "attributeGains": {
+      "type": "object",
+      "properties": {
+        "strength": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000
+          }
+        },
+        "dexterity": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000
+          }
+        },
+        "constitution": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000
+          }
+        },
+        "wisdom": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000
+          }
+        },
+        "intelligence": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000
+          }
+        }
+      },
+      "required": [
+        "strength",
+        "dexterity",
+        "constitution",
+        "wisdom",
+        "intelligence"
+      ],
+      "additionalProperties": false
+    },
+    "tiers": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "attributeBudget": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 200
+            }
+          },
+          "pools": {
+            "type": "object",
+            "properties": {
+              "hp": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 100000
+              },
+              "sp": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 99
+              },
+              "mp": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 99
+              }
+            },
+            "required": [
+              "hp",
+              "sp",
+              "mp"
+            ],
+            "additionalProperties": false
+          },
+          "hand": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 20
+          },
+          "deckSize": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 99
+            }
+          }
+        },
+        "required": [
+          "attributeBudget",
+          "pools",
+          "hand",
+          "deckSize"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "deck": {
+      "type": "object",
+      "properties": {
+        "min": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 99
+        },
+        "max": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 99
+        },
+        "reshuffle": {
+          "enum": [
+            "whenEmpty",
+            "endOfTurn",
+            "never"
+          ]
+        },
+        "drawTo": {
+          "enum": [
+            "hand"
+          ]
+        },
+        "discardUnplayed": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "min",
+        "max",
+        "reshuffle",
+        "drawTo",
+        "discardUnplayed"
+      ],
+      "additionalProperties": false
+    },
+    "stanceCosts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "sp": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 99
+          },
+          "mp": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 99
+          }
+        },
+        "required": [
+          "sp",
+          "mp"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "healRules": {
+      "type": "object",
+      "properties": {
+        "match": {
+          "enum": [
+            "mostSpecific",
+            "first"
+          ]
+        },
+        "authoredCostWins": {
+          "type": "boolean"
+        },
+        "shapes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "tags": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "cost": {
+                "type": "object",
+                "properties": {
+                  "sp": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 99
+                  },
+                  "mp": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 99
+                  }
+                },
+                "required": [
+                  "sp",
+                  "mp"
+                ],
+                "additionalProperties": false
+              },
+              "amount": {
+                "type": "object",
+                "properties": {
+                  "percentMaxHp": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  }
+                },
+                "required": [
+                  "percentMaxHp"
+                ],
+                "additionalProperties": false
+              },
+              "exhaust": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "tags",
+              "cost",
+              "amount",
+              "exhaust"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "match",
+        "authoredCostWins",
+        "shapes"
+      ],
+      "additionalProperties": false
+    },
+    "stagger": {
+      "type": "object",
+      "properties": {
+        "spLoss": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 99
+        },
+        "status": {
+          "type": "string",
+          "minLength": 1
+        },
+        "stacks": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 99
+        },
+        "damageTakenMultiplier": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10
+        }
+      },
+      "required": [
+        "spLoss",
+        "status",
+        "stacks",
+        "damageTakenMultiplier"
+      ],
+      "additionalProperties": false
+    },
+    "ai": {
+      "type": "object",
+      "properties": {
+        "weightField": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lowHpThreshold": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "lowHpDefendBias": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "lowHpHealBias": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "smashIntoBlockBias": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "respectMaxConsecutive": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "weightField",
+        "lowHpThreshold",
+        "lowHpDefendBias",
+        "lowHpHealBias",
+        "smashIntoBlockBias",
+        "respectMaxConsecutive"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "mode",
+    "include",
+    "fallback",
+    "rounding",
+    "attributeGains",
+    "tiers",
+    "deck",
+    "stanceCosts",
+    "healRules",
+    "stagger",
+    "ai"
+  ],
+  "additionalProperties": false
+}

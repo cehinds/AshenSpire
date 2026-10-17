@@ -1,0 +1,42 @@
+[
+  {
+    "id": "enemy.relic.abyssalCrown",
+    "name": "Abyssal Crown",
+    "modifiers": [
+      "self.maxHp=+100"
+    ],
+    "text": "+100 max HP."
+  },
+  {
+    "id": "enemy.relic.ashenCore",
+    "name": "Ashen Core",
+    "modifiers": [
+      "self.maxHp=+60"
+    ],
+    "text": "+60 max HP."
+  },
+  {
+    "id": "enemy.relic.titanHeart",
+    "name": "Titan Heart",
+    "modifiers": [
+      "self.maxHp=+30"
+    ],
+    "text": "+30 max HP."
+  },
+  {
+    "id": "enemy.relic.graveSeal",
+    "name": "Grave Seal",
+    "modifiers": [
+      "self.maxHp=+20"
+    ],
+    "text": "+20 max HP."
+  },
+  {
+    "id": "enemy.relic.emberBand",
+    "name": "Ember Band",
+    "modifiers": [
+      "self.maxHp=+10"
+    ],
+    "text": "+10 max HP."
+  }
+]

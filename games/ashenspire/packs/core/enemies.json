@@ -1,0 +1,1383 @@
+[
+  {
+    "id": "wanderingSoldier",
+    "name": "Wandering Soldier",
+    "tier": "minion",
+    "attributes": {
+      "strength": 1,
+      "dexterity": 1,
+      "constitution": 0,
+      "wisdom": 2,
+      "intelligence": 0
+    },
+    "deck": [
+      "wanderingSoldier.slash",
+      "wanderingSoldier.slash",
+      "wanderingSoldier.guard",
+      "wanderingSoldier.guard",
+      "wanderingSoldier.warcry",
+      "wanderingSoldier.warcry"
+    ],
+    "gear": [
+      "enemy.gear.heavyPlate"
+    ],
+    "relics": [],
+    "poiseMax": 10,
+    "levelProfile": {
+      "min": 1,
+      "max": 4
+    },
+    "size": "medium",
+    "art": "⚔",
+    "arcaneExposure": {
+      "mode": "configured",
+      "threshold": 8,
+      "buildupMultiplier": 1,
+      "resetMode": "zero",
+      "overflowPolicy": "discard",
+      "lockPolicy": "whileMagicVulnerable",
+      "onBreak": {
+        "status": "magicVulnerable",
+        "value": 25,
+        "duration": 2
+      }
+    }
+  },
+  {
+    "id": "blightHound",
+    "name": "Blight Hound",
+    "tier": "minion",
+    "attributes": {
+      "strength": 1,
+      "dexterity": 1,
+      "constitution": 0,
+      "wisdom": 1,
+      "intelligence": 1
+    },
+    "deck": [
+      "blightHound.bite",
+      "blightHound.bite",
+      "blightHound.bite",
+      "blightHound.lunge",
+      "blightHound.lunge",
+      "blightHound.lunge"
+    ],
+    "gear": [
+      "enemy.gear.luckyTooth"
+    ],
+    "relics": [],
+    "poiseMax": 6,
+    "levelProfile": {
+      "min": 1,
+      "max": 3
+    },
+    "size": "small",
+    "art": "🐕",
+    "artFaces": "left",
+    "tint": "var(--rot)",
+    "blighted": true
+  },
+  {
+    "id": "huskBrute",
+    "name": "Husk Brute",
+    "tier": "minion",
+    "attributes": {
+      "strength": 1,
+      "dexterity": 1,
+      "constitution": 0,
+      "wisdom": 2,
+      "intelligence": 0
+    },
+    "deck": [
+      "huskBrute.club",
+      "huskBrute.club",
+      "huskBrute.bellow",
+      "huskBrute.bellow",
+      "huskBrute.brace",
+      "huskBrute.brace"
+    ],
+    "gear": [
+      "enemy.gear.mail",
+      "enemy.gear.ironTalisman"
+    ],
+    "relics": [],
+    "poiseMax": 16,
+    "levelProfile": {
+      "min": 2,
+      "max": 5
+    },
+    "size": "medium",
+    "art": "🪨"
+  },
+  {
+    "id": "graveWisp",
+    "name": "Grave Wisp",
+    "tier": "minion",
+    "attributes": {
+      "strength": 1,
+      "dexterity": 0,
+      "constitution": 0,
+      "wisdom": 2,
+      "intelligence": 1
+    },
+    "deck": [
+      "graveWisp.curse",
+      "graveWisp.curse",
+      "graveWisp.curse",
+      "graveWisp.drain",
+      "graveWisp.drain",
+      "graveWisp.drain"
+    ],
+    "gear": [],
+    "relics": [],
+    "poiseMax": 4,
+    "levelProfile": {
+      "min": 1,
+      "max": 4
+    },
+    "size": "small",
+    "art": "👻",
+    "tint": "var(--grace)"
+  },
+  {
+    "id": "wyrmAspirant",
+    "name": "Wyrm Aspirant",
+    "tier": "elite",
+    "attributes": {
+      "strength": 1,
+      "dexterity": 1,
+      "constitution": 2,
+      "wisdom": 2,
+      "intelligence": 0
+    },
+    "deck": [
+      "wyrmAspirant.consecrate",
+      "wyrmAspirant.halberdSweep",
+      "wyrmAspirant.halberdSweep",
+      "wyrmAspirant.halberdSweep",
+      "wyrmAspirant.tailSlam",
+      "wyrmAspirant.tailSlam",
+      "wyrmAspirant.goldenGuard",
+      "wyrmAspirant.goldenGuard"
+    ],
+    "firstCard": "wyrmAspirant.consecrate",
+    "gear": [
+      "enemy.gear.mail",
+      "enemy.gear.luckyTooth"
+    ],
+    "relics": [],
+    "poiseMax": 24,
+    "levelProfile": {
+      "min": 4,
+      "max": 6
+    },
+    "size": "large",
+    "art": "🐲",
+    "tint": "var(--gold)"
+  },
+  {
+    "id": "fellWarden",
+    "name": "The Fell Warden",
+    "tier": "boss",
+    "attributes": {
+      "strength": 3,
+      "dexterity": 1,
+      "constitution": 4,
+      "wisdom": 1,
+      "intelligence": 1
+    },
+    "deck": [
+      "fellWarden.caneStrike",
+      "fellWarden.caneStrike",
+      "fellWarden.caneStrike",
+      "fellWarden.caneStrike",
+      "fellWarden.hammerToss",
+      "fellWarden.hammerToss",
+      "fellWarden.hammerToss",
+      "fellWarden.heldBlade",
+      "fellWarden.heldBlade",
+      "fellWarden.heldBlade"
+    ],
+    "unlockCards": [
+      "fellWarden.twinDaggers"
+    ],
+    "firstCard": "fellWarden.caneStrike",
+    "gear": [],
+    "relics": [],
+    "poiseMax": 30,
+    "levelProfile": {
+      "min": 5,
+      "max": 7
+    },
+    "size": "large",
+    "art": "👁",
+    "tint": "var(--blood)",
+    "phases": [
+      {
+        "on": "hpBelowPct",
+        "pct": 50,
+        "do": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 1
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 2
+          }
+        ],
+        "unlockCards": [
+          "fellWarden.twinDaggers"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "lanternMoth",
+    "name": "Lantern Moth",
+    "tier": "minion",
+    "attributes": {
+      "strength": 1,
+      "dexterity": 0,
+      "constitution": 0,
+      "wisdom": 2,
+      "intelligence": 1
+    },
+    "deck": [
+      "lanternMoth.lanternDust",
+      "lanternMoth.lanternDust",
+      "lanternMoth.wingSparks",
+      "lanternMoth.wingSparks",
+      "lanternMoth.wingSparks",
+      "lanternMoth.wingSparks"
+    ],
+    "gear": [
+      "enemy.gear.luckyTooth"
+    ],
+    "relics": [],
+    "poiseMax": 5,
+    "levelProfile": {
+      "min": 2,
+      "max": 5
+    },
+    "size": "small",
+    "art": "◆",
+    "artFaces": "left"
+  },
+  {
+    "id": "briarHermit",
+    "name": "Briar Hermit",
+    "tier": "minion",
+    "attributes": {
+      "strength": 1,
+      "dexterity": 1,
+      "constitution": 0,
+      "wisdom": 2,
+      "intelligence": 0
+    },
+    "deck": [
+      "briarHermit.rootShelter",
+      "briarHermit.rootShelter",
+      "briarHermit.briarCast",
+      "briarHermit.briarCast",
+      "briarHermit.sapMend",
+      "briarHermit.sapMend"
+    ],
+    "firstCard": "briarHermit.rootShelter",
+    "gear": [
+      "enemy.gear.plating"
+    ],
+    "relics": [
+      "enemy.relic.titanHeart"
+    ],
+    "poiseMax": 9,
+    "levelProfile": {
+      "min": 2,
+      "max": 5
+    },
+    "size": "medium",
+    "art": "◆",
+    "artFaces": "left"
+  },
+  {
+    "id": "chainScavenger",
+    "name": "Chain Scavenger",
+    "tier": "minion",
+    "attributes": {
+      "strength": 2,
+      "dexterity": 1,
+      "constitution": 0,
+      "wisdom": 1,
+      "intelligence": 0
+    },
+    "deck": [
+      "chainScavenger.hookCast",
+      "chainScavenger.hookCast",
+      "chainScavenger.hookCast",
+      "chainScavenger.chainSnare",
+      "chainScavenger.chainSnare",
+      "chainScavenger.draggingBlow"
+    ],
+    "gear": [
+      "enemy.gear.mail",
+      "enemy.gear.ironTalisman"
+    ],
+    "relics": [],
+    "poiseMax": 8,
+    "levelProfile": {
+      "min": 2,
+      "max": 5
+    },
+    "size": "medium",
+    "art": "◆",
+    "artFaces": "left"
+  },
+  {
+    "id": "bellKeeper",
+    "name": "The Bell Keeper",
+    "tier": "boss",
+    "attributes": {
+      "strength": 3,
+      "dexterity": 1,
+      "constitution": 4,
+      "wisdom": 1,
+      "intelligence": 1
+    },
+    "deck": [
+      "bellKeeper.bronzeToll",
+      "bellKeeper.bronzeToll",
+      "bellKeeper.bronzeToll",
+      "bellKeeper.bronzeToll",
+      "bellKeeper.clapperSwing",
+      "bellKeeper.clapperSwing",
+      "bellKeeper.clapperSwing",
+      "bellKeeper.clapperSwing",
+      "bellKeeper.muffledPrayer",
+      "bellKeeper.muffledPrayer"
+    ],
+    "unlockCards": [
+      "bellKeeper.crackedPeal"
+    ],
+    "firstCard": "bellKeeper.bronzeToll",
+    "gear": [],
+    "relics": [],
+    "poiseMax": 25,
+    "levelProfile": {
+      "min": 5,
+      "max": 7
+    },
+    "size": "large",
+    "art": "◆",
+    "artFaces": "left",
+    "phases": [
+      {
+        "on": "hpBelowPct",
+        "pct": 45,
+        "do": [],
+        "unlockCards": [
+          "bellKeeper.crackedPeal"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "thornMatriarch",
+    "name": "The Thorn Matriarch",
+    "tier": "boss",
+    "attributes": {
+      "strength": 2,
+      "dexterity": 1,
+      "constitution": 4,
+      "wisdom": 2,
+      "intelligence": 1
+    },
+    "deck": [
+      "thornMatriarch.rootCrown",
+      "thornMatriarch.rootCrown",
+      "thornMatriarch.rootCrown",
+      "thornMatriarch.thornNeedles",
+      "thornMatriarch.thornNeedles",
+      "thornMatriarch.thornNeedles",
+      "thornMatriarch.thornNeedles",
+      "thornMatriarch.entwiningRoots",
+      "thornMatriarch.entwiningRoots",
+      "thornMatriarch.entwiningRoots"
+    ],
+    "firstCard": "thornMatriarch.rootCrown",
+    "gear": [],
+    "relics": [],
+    "poiseMax": 22,
+    "levelProfile": {
+      "min": 5,
+      "max": 7
+    },
+    "size": "large",
+    "art": "◆",
+    "artFaces": "left",
+    "phases": [
+      {
+        "on": "hpBelowPct",
+        "pct": 40,
+        "do": [
+          {
+            "op": "heal",
+            "target": "self",
+            "rule": "healRules"
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "gildedKnight",
+    "name": "Gilded Knight",
+    "tier": "minion",
+    "attributes": {
+      "strength": 1,
+      "dexterity": 1,
+      "constitution": 0,
+      "wisdom": 2,
+      "intelligence": 0
+    },
+    "deck": [
+      "gildedKnight.thrust",
+      "gildedKnight.thrust",
+      "gildedKnight.parry",
+      "gildedKnight.parry",
+      "gildedKnight.rally",
+      "gildedKnight.gildedGuard"
+    ],
+    "gear": [],
+    "relics": [
+      "enemy.relic.titanHeart"
+    ],
+    "poiseMax": 18,
+    "levelProfile": {
+      "min": 6,
+      "max": 9
+    },
+    "size": "medium",
+    "art": "♞",
+    "tint": "var(--gold)"
+  },
+  {
+    "id": "courtSurgeon",
+    "name": "Court Surgeon",
+    "tier": "minion",
+    "attributes": {
+      "strength": 1,
+      "dexterity": 0,
+      "constitution": 0,
+      "wisdom": 2,
+      "intelligence": 1
+    },
+    "deck": [
+      "courtSurgeon.scalpel",
+      "courtSurgeon.scalpel",
+      "courtSurgeon.sedate",
+      "courtSurgeon.sedate",
+      "courtSurgeon.stitch",
+      "courtSurgeon.stitch"
+    ],
+    "gear": [
+      "enemy.gear.mail",
+      "enemy.gear.ironTalisman"
+    ],
+    "relics": [],
+    "poiseMax": 10,
+    "levelProfile": {
+      "min": 6,
+      "max": 9
+    },
+    "size": "medium",
+    "art": "⚕",
+    "tint": "var(--grace)"
+  },
+  {
+    "id": "stitchedHound",
+    "name": "Stitched Hound",
+    "tier": "minion",
+    "attributes": {
+      "strength": 2,
+      "dexterity": 1,
+      "constitution": 0,
+      "wisdom": 1,
+      "intelligence": 0
+    },
+    "deck": [
+      "stitchedHound.maul",
+      "stitchedHound.maul",
+      "stitchedHound.maul",
+      "stitchedHound.rend",
+      "stitchedHound.rend",
+      "stitchedHound.rend"
+    ],
+    "gear": [
+      "enemy.gear.mail"
+    ],
+    "relics": [],
+    "poiseMax": 8,
+    "levelProfile": {
+      "min": 6,
+      "max": 8
+    },
+    "size": "small",
+    "art": "🐩",
+    "artFaces": "left",
+    "tint": "var(--blood)"
+  },
+  {
+    "id": "courtMarionette",
+    "name": "Court Marionette",
+    "tier": "minion",
+    "attributes": {
+      "strength": 2,
+      "dexterity": 1,
+      "constitution": 0,
+      "wisdom": 1,
+      "intelligence": 0
+    },
+    "deck": [
+      "courtMarionette.dart",
+      "courtMarionette.dart",
+      "courtMarionette.dart",
+      "courtMarionette.blowdart",
+      "courtMarionette.blowdart",
+      "courtMarionette.blowdart"
+    ],
+    "gear": [
+      "enemy.gear.luckyTooth"
+    ],
+    "relics": [],
+    "poiseMax": 6,
+    "levelProfile": {
+      "min": 6,
+      "max": 9
+    },
+    "size": "small",
+    "art": "🪆",
+    "tint": "var(--rot)"
+  },
+  {
+    "id": "livingArmor",
+    "name": "Living Armor",
+    "tier": "minion",
+    "attributes": {
+      "strength": 2,
+      "dexterity": 1,
+      "constitution": 0,
+      "wisdom": 1,
+      "intelligence": 0
+    },
+    "deck": [
+      "livingArmor.slam",
+      "livingArmor.slam",
+      "livingArmor.fortify",
+      "livingArmor.fortify",
+      "livingArmor.crush",
+      "livingArmor.rimeCrush"
+    ],
+    "gear": [
+      "enemy.gear.hide"
+    ],
+    "relics": [
+      "enemy.relic.graveSeal"
+    ],
+    "poiseMax": 22,
+    "levelProfile": {
+      "min": 7,
+      "max": 10
+    },
+    "size": "medium",
+    "art": "🛡",
+    "tint": "var(--frost)"
+  },
+  {
+    "id": "courtDuelist",
+    "name": "Duelist of the Court",
+    "tier": "elite",
+    "attributes": {
+      "strength": 1,
+      "dexterity": 1,
+      "constitution": 2,
+      "wisdom": 2,
+      "intelligence": 0
+    },
+    "deck": [
+      "courtDuelist.enGarde",
+      "courtDuelist.flurry",
+      "courtDuelist.flurry",
+      "courtDuelist.lunge",
+      "courtDuelist.lunge",
+      "courtDuelist.riposte",
+      "courtDuelist.riposte",
+      "courtDuelist.bindingRiposte"
+    ],
+    "firstCard": "courtDuelist.enGarde",
+    "gear": [
+      "enemy.gear.heavyPlate",
+      "enemy.gear.luckyTooth"
+    ],
+    "relics": [],
+    "poiseMax": 26,
+    "levelProfile": {
+      "min": 10,
+      "max": 11
+    },
+    "size": "large",
+    "art": "🤺",
+    "tint": "var(--frost)"
+  },
+  {
+    "id": "stitchedKing",
+    "name": "The Stitched King",
+    "tier": "boss",
+    "attributes": {
+      "strength": 3,
+      "dexterity": 1,
+      "constitution": 4,
+      "wisdom": 1,
+      "intelligence": 1
+    },
+    "deck": [
+      "stitchedKing.scepterBlow",
+      "stitchedKing.scepterBlow",
+      "stitchedKing.scepterBlow",
+      "stitchedKing.scepterBlow",
+      "stitchedKing.graspingHands",
+      "stitchedKing.graspingHands",
+      "stitchedKing.graspingHands",
+      "stitchedKing.courtlyDecree",
+      "stitchedKing.courtlyDecree",
+      "stitchedKing.courtlyDecree"
+    ],
+    "unlockCards": [
+      "stitchedKing.thousandHands"
+    ],
+    "firstCard": "stitchedKing.courtlyDecree",
+    "gear": [
+      "enemy.gear.mail",
+      "enemy.gear.luckyTooth"
+    ],
+    "relics": [
+      "enemy.relic.ashenCore"
+    ],
+    "poiseMax": 34,
+    "levelProfile": {
+      "min": 11,
+      "max": 12
+    },
+    "size": "large",
+    "art": "👑",
+    "tint": "var(--gold)",
+    "phases": [
+      {
+        "on": "hpBelowPct",
+        "pct": 50,
+        "do": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 1
+          }
+        ],
+        "unlockCards": [
+          "stitchedKing.thousandHands"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "mirrorScribe",
+    "name": "Mirror Scribe",
+    "tier": "minion",
+    "attributes": {
+      "strength": 1,
+      "dexterity": 0,
+      "constitution": 0,
+      "wisdom": 2,
+      "intelligence": 1
+    },
+    "deck": [
+      "mirrorScribe.silverScript",
+      "mirrorScribe.silverScript",
+      "mirrorScribe.shardVolley",
+      "mirrorScribe.shardVolley",
+      "mirrorScribe.polishedWard",
+      "mirrorScribe.polishedWard"
+    ],
+    "gear": [
+      "enemy.gear.ironTalisman"
+    ],
+    "relics": [
+      "enemy.relic.emberBand"
+    ],
+    "poiseMax": 8,
+    "levelProfile": {
+      "min": 7,
+      "max": 10
+    },
+    "size": "medium",
+    "art": "◆",
+    "artFaces": "left"
+  },
+  {
+    "id": "stitchCrab",
+    "name": "Stitch Crab",
+    "tier": "minion",
+    "attributes": {
+      "strength": 2,
+      "dexterity": 1,
+      "constitution": 0,
+      "wisdom": 1,
+      "intelligence": 0
+    },
+    "deck": [
+      "stitchCrab.shellFold",
+      "stitchCrab.shellFold",
+      "stitchCrab.seamShears",
+      "stitchCrab.seamShears",
+      "stitchCrab.scuttleRush",
+      "stitchCrab.scuttleRush"
+    ],
+    "firstCard": "stitchCrab.shellFold",
+    "gear": [
+      "enemy.gear.heavyPlate"
+    ],
+    "relics": [],
+    "poiseMax": 17,
+    "levelProfile": {
+      "min": 7,
+      "max": 10
+    },
+    "size": "small",
+    "art": "◆",
+    "artFaces": "left"
+  },
+  {
+    "id": "glassRegent",
+    "name": "The Glass Regent",
+    "tier": "boss",
+    "attributes": {
+      "strength": 2,
+      "dexterity": 1,
+      "constitution": 4,
+      "wisdom": 2,
+      "intelligence": 1
+    },
+    "deck": [
+      "glassRegent.prismGuard",
+      "glassRegent.prismGuard",
+      "glassRegent.prismGuard",
+      "glassRegent.crystalRapier",
+      "glassRegent.crystalRapier",
+      "glassRegent.crystalRapier",
+      "glassRegent.crystalRapier",
+      "glassRegent.splinterRain",
+      "glassRegent.splinterRain",
+      "glassRegent.splinterRain"
+    ],
+    "unlockCards": [
+      "glassRegent.shatteredCourt"
+    ],
+    "firstCard": "glassRegent.prismGuard",
+    "gear": [],
+    "relics": [
+      "enemy.relic.ashenCore"
+    ],
+    "poiseMax": 26,
+    "levelProfile": {
+      "min": 11,
+      "max": 12
+    },
+    "size": "large",
+    "art": "◆",
+    "artFaces": "left",
+    "phases": [
+      {
+        "on": "hpBelowPct",
+        "pct": 50,
+        "do": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 4
+          }
+        ],
+        "unlockCards": [
+          "glassRegent.shatteredCourt"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "marrowOrganist",
+    "name": "The Marrow Organist",
+    "tier": "boss",
+    "attributes": {
+      "strength": 1,
+      "dexterity": 1,
+      "constitution": 4,
+      "wisdom": 3,
+      "intelligence": 1
+    },
+    "deck": [
+      "marrowOrganist.bonePrelude",
+      "marrowOrganist.bonePrelude",
+      "marrowOrganist.ivoryKeys",
+      "marrowOrganist.ivoryKeys",
+      "marrowOrganist.ivoryKeys",
+      "marrowOrganist.funeralChord",
+      "marrowOrganist.funeralChord",
+      "marrowOrganist.funeralChord",
+      "marrowOrganist.quietRefrain",
+      "marrowOrganist.quietRefrain"
+    ],
+    "firstCard": "marrowOrganist.bonePrelude",
+    "gear": [],
+    "relics": [
+      "enemy.relic.ashenCore",
+      "enemy.relic.emberBand"
+    ],
+    "poiseMax": 30,
+    "levelProfile": {
+      "min": 11,
+      "max": 12
+    },
+    "size": "large",
+    "art": "◆",
+    "artFaces": "left",
+    "phases": [
+      {
+        "on": "hpBelowPct",
+        "pct": 35,
+        "do": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 6
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ashRevenant",
+    "name": "Ash Revenant",
+    "tier": "minion",
+    "attributes": {
+      "strength": 1,
+      "dexterity": 1,
+      "constitution": 0,
+      "wisdom": 2,
+      "intelligence": 0
+    },
+    "deck": [
+      "ashRevenant.cinderSlash",
+      "ashRevenant.cinderSlash",
+      "ashRevenant.cinderSlash",
+      "ashRevenant.reform",
+      "ashRevenant.reform",
+      "ashRevenant.reform"
+    ],
+    "gear": [
+      "enemy.gear.heavyPlate",
+      "enemy.gear.luckyTooth"
+    ],
+    "relics": [],
+    "poiseMax": 10,
+    "levelProfile": {
+      "min": 13,
+      "max": 16
+    },
+    "size": "medium",
+    "art": "🌋",
+    "tint": "var(--ember)"
+  },
+  {
+    "id": "emberStarvedPilgrim",
+    "name": "Ember-Starved Pilgrim",
+    "tier": "minion",
+    "attributes": {
+      "strength": 1,
+      "dexterity": 1,
+      "constitution": 0,
+      "wisdom": 2,
+      "intelligence": 0
+    },
+    "deck": [
+      "emberStarvedPilgrim.desperateClaw",
+      "emberStarvedPilgrim.desperateClaw",
+      "emberStarvedPilgrim.desperateClaw",
+      "emberStarvedPilgrim.wail",
+      "emberStarvedPilgrim.wail",
+      "emberStarvedPilgrim.wail"
+    ],
+    "gear": [
+      "enemy.gear.ironTalisman"
+    ],
+    "relics": [
+      "enemy.relic.emberBand"
+    ],
+    "poiseMax": 8,
+    "levelProfile": {
+      "min": 13,
+      "max": 15
+    },
+    "size": "small",
+    "art": "🧎",
+    "tint": "var(--grace)"
+  },
+  {
+    "id": "valkyrieShade",
+    "name": "Valkyrie Shade",
+    "tier": "minion",
+    "attributes": {
+      "strength": 2,
+      "dexterity": 1,
+      "constitution": 0,
+      "wisdom": 1,
+      "intelligence": 0
+    },
+    "deck": [
+      "valkyrieShade.spiralLance",
+      "valkyrieShade.spiralLance",
+      "valkyrieShade.spiralLance",
+      "valkyrieShade.bloodFeather",
+      "valkyrieShade.bloodFeather",
+      "valkyrieShade.bloodFeather"
+    ],
+    "gear": [
+      "enemy.gear.plating"
+    ],
+    "relics": [
+      "enemy.relic.graveSeal"
+    ],
+    "poiseMax": 14,
+    "levelProfile": {
+      "min": 14,
+      "max": 17
+    },
+    "size": "medium",
+    "art": "🪶",
+    "tint": "var(--blood)"
+  },
+  {
+    "id": "charredColossus",
+    "name": "Charred Colossus",
+    "tier": "minion",
+    "attributes": {
+      "strength": 1,
+      "dexterity": 1,
+      "constitution": 0,
+      "wisdom": 2,
+      "intelligence": 0
+    },
+    "deck": [
+      "charredColossus.smash",
+      "charredColossus.smash",
+      "charredColossus.ashCloud",
+      "charredColossus.ashCloud",
+      "charredColossus.harden",
+      "charredColossus.harden"
+    ],
+    "gear": [
+      "enemy.gear.mail",
+      "enemy.gear.luckyTooth"
+    ],
+    "relics": [
+      "enemy.relic.titanHeart"
+    ],
+    "poiseMax": 30,
+    "levelProfile": {
+      "min": 15,
+      "max": 18
+    },
+    "size": "large",
+    "art": "🗿",
+    "tint": "var(--ember)",
+    "arcaneExposure": {
+      "mode": "immune"
+    }
+  },
+  {
+    "id": "wyrmLord",
+    "name": "Wyrm Lord",
+    "tier": "elite",
+    "attributes": {
+      "strength": 1,
+      "dexterity": 1,
+      "constitution": 2,
+      "wisdom": 2,
+      "intelligence": 0
+    },
+    "deck": [
+      "wyrmLord.consecration",
+      "wyrmLord.halberdReign",
+      "wyrmLord.halberdReign",
+      "wyrmLord.halberdReign",
+      "wyrmLord.tailSweep",
+      "wyrmLord.tailSweep",
+      "wyrmLord.goldenBulwark",
+      "wyrmLord.goldenBulwark"
+    ],
+    "firstCard": "wyrmLord.consecration",
+    "gear": [
+      "enemy.gear.ironTalisman"
+    ],
+    "relics": [
+      "enemy.relic.ashenCore"
+    ],
+    "poiseMax": 30,
+    "levelProfile": {
+      "min": 18,
+      "max": 19
+    },
+    "size": "large",
+    "art": "🐉",
+    "tint": "var(--gold)"
+  },
+  {
+    "id": "blightedValkyrie",
+    "name": "The Blighted Valkyrie",
+    "tier": "boss",
+    "attributes": {
+      "strength": 2,
+      "dexterity": 1,
+      "constitution": 4,
+      "wisdom": 2,
+      "intelligence": 1
+    },
+    "deck": [
+      "blightedValkyrie.spiralThrust",
+      "blightedValkyrie.spiralThrust",
+      "blightedValkyrie.spiralThrust",
+      "blightedValkyrie.spiralThrust",
+      "blightedValkyrie.whirlwind",
+      "blightedValkyrie.whirlwind",
+      "blightedValkyrie.whirlwind",
+      "blightedValkyrie.rotWings",
+      "blightedValkyrie.rotWings",
+      "blightedValkyrie.rotWings"
+    ],
+    "unlockCards": [
+      "blightedValkyrie.scarletDance"
+    ],
+    "firstCard": "blightedValkyrie.spiralThrust",
+    "gear": [],
+    "relics": [
+      "enemy.relic.abyssalCrown",
+      "enemy.relic.titanHeart"
+    ],
+    "poiseMax": 36,
+    "levelProfile": {
+      "min": 19,
+      "max": 20
+    },
+    "size": "large",
+    "art": "🦋",
+    "tint": "var(--rot)",
+    "blighted": true,
+    "phases": [
+      {
+        "on": "damageDealt",
+        "once": false,
+        "if": {
+          "p": "eventSourceIsOwner"
+        },
+        "do": [
+          {
+            "op": "heal",
+            "target": "self",
+            "rule": "healRules"
+          }
+        ]
+      },
+      {
+        "on": "hpBelowPct",
+        "pct": 50,
+        "do": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 3
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "crimsonBlight",
+            "stacks": 4
+          }
+        ],
+        "unlockCards": [
+          "blightedValkyrie.scarletDance"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "cinderMantis",
+    "name": "Cinder Mantis",
+    "tier": "minion",
+    "attributes": {
+      "strength": 2,
+      "dexterity": 1,
+      "constitution": 0,
+      "wisdom": 1,
+      "intelligence": 0
+    },
+    "deck": [
+      "cinderMantis.scythePair",
+      "cinderMantis.scythePair",
+      "cinderMantis.scythePair",
+      "cinderMantis.emberPounce",
+      "cinderMantis.emberPounce",
+      "cinderMantis.foldedBlades"
+    ],
+    "gear": [
+      "enemy.gear.hide"
+    ],
+    "relics": [
+      "enemy.relic.graveSeal"
+    ],
+    "poiseMax": 11,
+    "levelProfile": {
+      "min": 14,
+      "max": 17
+    },
+    "size": "medium",
+    "art": "◆",
+    "artFaces": "left"
+  },
+  {
+    "id": "eclipseCantor",
+    "name": "Eclipse Cantor",
+    "tier": "minion",
+    "attributes": {
+      "strength": 1,
+      "dexterity": 0,
+      "constitution": 0,
+      "wisdom": 2,
+      "intelligence": 1
+    },
+    "deck": [
+      "eclipseCantor.darkHymn",
+      "eclipseCantor.darkHymn",
+      "eclipseCantor.lunarRay",
+      "eclipseCantor.lunarRay",
+      "eclipseCantor.fadingEcho",
+      "eclipseCantor.fadingEcho"
+    ],
+    "gear": [
+      "enemy.gear.mail",
+      "enemy.gear.ironTalisman"
+    ],
+    "relics": [],
+    "poiseMax": 7,
+    "levelProfile": {
+      "min": 14,
+      "max": 17
+    },
+    "size": "medium",
+    "art": "◆",
+    "artFaces": "left"
+  },
+  {
+    "id": "furnaceSaint",
+    "name": "The Furnace Saint",
+    "tier": "boss",
+    "attributes": {
+      "strength": 3,
+      "dexterity": 1,
+      "constitution": 4,
+      "wisdom": 1,
+      "intelligence": 1
+    },
+    "deck": [
+      "furnaceSaint.openFurnace",
+      "furnaceSaint.openFurnace",
+      "furnaceSaint.openFurnace",
+      "furnaceSaint.censerSweep",
+      "furnaceSaint.censerSweep",
+      "furnaceSaint.censerSweep",
+      "furnaceSaint.censerSweep",
+      "furnaceSaint.coolingAsh",
+      "furnaceSaint.coolingAsh",
+      "furnaceSaint.coolingAsh"
+    ],
+    "firstCard": "furnaceSaint.openFurnace",
+    "gear": [
+      "enemy.gear.heavyPlate"
+    ],
+    "relics": [
+      "enemy.relic.abyssalCrown",
+      "enemy.relic.graveSeal"
+    ],
+    "poiseMax": 40,
+    "levelProfile": {
+      "min": 19,
+      "max": 20
+    },
+    "size": "large",
+    "art": "◆",
+    "artFaces": "left",
+    "phases": [
+      {
+        "on": "hpBelowPct",
+        "pct": 50,
+        "do": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 8
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "hollowAstronomer",
+    "name": "The Hollow Astronomer",
+    "tier": "boss",
+    "attributes": {
+      "strength": 2,
+      "dexterity": 1,
+      "constitution": 4,
+      "wisdom": 2,
+      "intelligence": 1
+    },
+    "deck": [
+      "hollowAstronomer.starChart",
+      "hollowAstronomer.starChart",
+      "hollowAstronomer.orbitalShards",
+      "hollowAstronomer.orbitalShards",
+      "hollowAstronomer.orbitalShards",
+      "hollowAstronomer.orbitalShards",
+      "hollowAstronomer.totalEclipse",
+      "hollowAstronomer.totalEclipse",
+      "hollowAstronomer.totalEclipse",
+      "hollowAstronomer.totalEclipse"
+    ],
+    "unlockCards": [
+      "hollowAstronomer.fallingHeavens"
+    ],
+    "firstCard": "hollowAstronomer.starChart",
+    "gear": [
+      "enemy.gear.ironTalisman"
+    ],
+    "relics": [
+      "enemy.relic.abyssalCrown"
+    ],
+    "poiseMax": 25,
+    "levelProfile": {
+      "min": 19,
+      "max": 20
+    },
+    "size": "large",
+    "art": "◆",
+    "artFaces": "left",
+    "phases": [
+      {
+        "on": "hpBelowPct",
+        "pct": 40,
+        "do": [],
+        "unlockCards": [
+          "hollowAstronomer.fallingHeavens"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ashheartDragon",
+    "name": "The Ashheart Dragon",
+    "tier": "boss",
+    "attributes": {
+      "strength": 2,
+      "dexterity": 1,
+      "constitution": 4,
+      "wisdom": 2,
+      "intelligence": 1
+    },
+    "deck": [
+      "ashheartDragon.obsidianClaws",
+      "ashheartDragon.obsidianClaws",
+      "ashheartDragon.obsidianClaws",
+      "ashheartDragon.obsidianClaws",
+      "ashheartDragon.obsidianClaws",
+      "ashheartDragon.tailBastion",
+      "ashheartDragon.tailBastion",
+      "ashheartDragon.tailBastion",
+      "ashheartDragon.heartRumble",
+      "ashheartDragon.heartRumble"
+    ],
+    "unlockCards": [
+      "ashheartDragon.ashBreath"
+    ],
+    "firstCard": "ashheartDragon.obsidianClaws",
+    "gear": [
+      "enemy.gear.heavyPlate",
+      "enemy.gear.ironTalisman"
+    ],
+    "relics": [
+      "enemy.relic.abyssalCrown"
+    ],
+    "poiseMax": 34,
+    "levelProfile": {
+      "min": 19,
+      "max": 20
+    },
+    "size": "large",
+    "art": "◆",
+    "artFaces": "left",
+    "phases": [
+      {
+        "on": "hpBelowPct",
+        "pct": 60,
+        "do": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 1
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 2
+          }
+        ],
+        "unlockCards": [
+          "ashheartDragon.ashBreath"
+        ]
+      }
+    ]
+  }
+]
