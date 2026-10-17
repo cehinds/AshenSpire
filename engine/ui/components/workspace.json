@@ -1,0 +1,39 @@
+{
+  "id": "workspace",
+  "description": "Framed workspace with a side rail, used by creation, armoury, shop and smith. Reads src/ui/models/WorkspaceModel.js and src/ui/components/w1Workspace.js.",
+  "layout": {
+    "ref": "content/config/ui/components/workspace.json"
+  },
+  "viewModel": {
+    "props": {
+      "rail": "array",
+      "active": "string"
+    },
+    "bindings": {
+      "rail": "$rail",
+      "active": "$active",
+      "frameWidth": "layout.sizing.frameWidth",
+      "frameHeight": "layout.sizing.frameHeight",
+      "railWidth": "layout.sizing.railWidth"
+    }
+  },
+  "states": [
+    "wide",
+    "compact"
+  ],
+  "events": {
+    "tap": "nav.selectCategory"
+  },
+  "children": [
+    {
+      "component": "categoryNav",
+      "slot": "rail"
+    }
+  ],
+  "assets": [],
+  "platforms": [
+    "mobile",
+    "tablet",
+    "desktop"
+  ]
+}

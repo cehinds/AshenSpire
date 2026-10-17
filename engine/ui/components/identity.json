@@ -1,0 +1,31 @@
+{
+  "id": "identity",
+  "description": "Character name, class and artwork block. Reads src/ui/models/IdentityModel.js and PlayerArtworkModel.js.",
+  "layout": {
+    "ref": "content/config/ui/components/identity.json"
+  },
+  "viewModel": {
+    "props": {
+      "character": "entityRef",
+      "host": "string"
+    },
+    "bindings": {
+      "name": "$character.name",
+      "class": "$character.classId",
+      "level": "$character.level",
+      "artwork": "$character.artwork",
+      "anchor": "layout.positioning.artworkAnchorByHost[$host]"
+    }
+  },
+  "states": [
+    "idle"
+  ],
+  "assets": [
+    "portrait"
+  ],
+  "platforms": [
+    "mobile",
+    "tablet",
+    "desktop"
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "id": "inspector",
+  "description": "Combatant inspector sheet. Reads src/ui/components/combatantInspector.js and src/ui/models/CombatantInspectorModel.js and CombatantInspectorSections.js. Enemy SP, MP and card costs are gated by the enemy-visibility module.",
+  "layout": {
+    "ref": "content/config/ui/components/inspector.json"
+  },
+  "viewModel": {
+    "props": {
+      "entity": "entityRef"
+    },
+    "bindings": {
+      "name": "$entity.name",
+      "hp": "$entity.pools.hp",
+      "poise": "$entity.pools.poise",
+      "defense": "$entity.defense",
+      "statuses": "$entity.statuses",
+      "intent": "intent.of($entity)",
+      "sp": "$entity.pools.sp",
+      "mp": "$entity.pools.mp",
+      "cardCosts": "$entity.deck.costs"
+    },
+    "visibility": {
+      "query": "enemy_visibility.visibleFields",
+      "appliesTo": "enemy",
+      "fields": {
+        "sp": "sp",
+        "mp": "mp",
+        "cardCosts": "cardCosts",
+        "deck": "deck",
+        "hand": "hand",
+        "gear": "gear",
+        "relics": "relics",
+        "attributes": "attributes"
+      }
+    }
+  },
+  "states": [
+    "closed",
+    "open"
+  ],
+  "events": {
+    "close": "inspect.close"
+  },
+  "children": [
+    {
+      "component": "meter",
+      "slot": "hp",
+      "props": {
+        "kind": "hp"
+      }
+    },
+    {
+      "component": "meter",
+      "slot": "sp",
+      "props": {
+        "kind": "sp"
+      }
+    },
+    {
+      "component": "meter",
+      "slot": "mp",
+      "props": {
+        "kind": "mp"
+      }
+    },
+    {
+      "component": "statusTray",
+      "slot": "statuses"
+    }
+  ],
+  "assets": [],
+  "platforms": [
+    "mobile",
+    "tablet",
+    "desktop"
+  ]
+}

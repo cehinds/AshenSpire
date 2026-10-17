@@ -1,0 +1,45 @@
+{
+  "id": "mapNode",
+  "description": "One node on the route map. Reads src/ui/components/mapboard.js, mapNodeInk.js and src/ui/models/MapSelectionModel.js.",
+  "layout": {
+    "ref": "content/config/ui/scenes/w4b-map.json",
+    "path": "behavior.repeatPickDelayMs"
+  },
+  "viewModel": {
+    "props": {
+      "node": "mapNodeRef"
+    },
+    "bindings": {
+      "kind": "$node.kind",
+      "icon": "$node.icon",
+      "reachable": "map.isReachable($node)",
+      "visited": "$node.visited",
+      "current": "map.isCurrent($node)"
+    }
+  },
+  "states": [
+    "locked",
+    "available",
+    "selected",
+    "visited",
+    "current"
+  ],
+  "events": {
+    "tap": "map.selectNode",
+    "confirm": "map.pickNode"
+  },
+  "assets": [
+    "node.combat",
+    "node.elite",
+    "node.rest",
+    "node.shop",
+    "node.treasure",
+    "node.boss",
+    "node.event"
+  ],
+  "platforms": [
+    "mobile",
+    "tablet",
+    "desktop"
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "id": "selection",
+  "description": "Glow and reveal delay for a selected card or target. Reads src/ui/models/SelectionEffectModel.js and src/ui/components/cardSelection.js.",
+  "layout": {
+    "ref": "content/config/ui/components/selection.json"
+  },
+  "viewModel": {
+    "props": {
+      "selected": "boolean"
+    },
+    "bindings": {
+      "selected": "$selected",
+      "glowRem": "layout.sizing.glowRem",
+      "revealDelayMs": "layout.motion.revealDelayMs"
+    }
+  },
+  "states": [
+    "none",
+    "selected"
+  ],
+  "assets": [],
+  "platforms": [
+    "mobile",
+    "tablet",
+    "desktop"
+  ]
+}
