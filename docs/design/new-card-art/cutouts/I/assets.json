@@ -74,7 +74,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Closed charcoal leather grimoire, simple bronze corner caps, diagonal right"
+    "proposalDescription": "Closed charcoal leather grimoire, simple bronze corner caps, diagonal right",
+    "displayCode": "I00",
+    "displayLabel": "I00 \u00b7 Spellbook variant 0 \u00b7 object"
   },
   "I.object.1": {
     "id": "I.object.1",
@@ -151,7 +153,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Open thick tome, blank warm ivory pages, three-quarter tilt left"
+    "proposalDescription": "Open thick tome, blank warm ivory pages, three-quarter tilt left",
+    "displayCode": "I10",
+    "displayLabel": "I10 \u00b7 Spellbook variant 1 \u00b7 object"
   },
   "I.object.2": {
     "id": "I.object.2",
@@ -228,7 +232,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Closed narrow iron-bound book with plain clasp, upright tilted"
+    "proposalDescription": "Closed narrow iron-bound book with plain clasp, upright tilted",
+    "displayCode": "I20",
+    "displayLabel": "I20 \u00b7 Spellbook variant 2 \u00b7 object"
   },
   "I.object.3": {
     "id": "I.object.3",
@@ -305,7 +311,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Open low spread spellbook with dark brown cover, shallow diagonal"
+    "proposalDescription": "Open low spread spellbook with dark brown cover, shallow diagonal",
+    "displayCode": "I30",
+    "displayLabel": "I30 \u00b7 Spellbook variant 3 \u00b7 object"
   },
   "I.object.4": {
     "id": "I.object.4",
@@ -382,7 +390,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Closed square dark green leather book, worn bronze spine, tilted left"
+    "proposalDescription": "Closed square dark green leather book, worn bronze spine, tilted left",
+    "displayCode": "I40",
+    "displayLabel": "I40 \u00b7 Spellbook variant 4 \u00b7 object"
   },
   "I.object.5": {
     "id": "I.object.5",
@@ -459,7 +469,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Half-open heavy black grimoire, thick parchment page block, diagonal right"
+    "proposalDescription": "Half-open heavy black grimoire, thick parchment page block, diagonal right",
+    "displayCode": "I50",
+    "displayLabel": "I50 \u00b7 Spellbook variant 5 \u00b7 object"
   },
   "I.object.6": {
     "id": "I.object.6",
@@ -536,7 +548,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Closed tall black book with one simple circular bronze medallion, diagonal"
+    "proposalDescription": "Closed tall black book with one simple circular bronze medallion, diagonal",
+    "displayCode": "I60",
+    "displayLabel": "I60 \u00b7 Spellbook variant 6 \u00b7 object"
   },
   "I.object.7": {
     "id": "I.object.7",
@@ -613,7 +627,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Open battered gray leather tome, blank slightly curled pages, tilted right"
+    "proposalDescription": "Open battered gray leather tome, blank slightly curled pages, tilted right",
+    "displayCode": "I70",
+    "displayLabel": "I70 \u00b7 Spellbook variant 7 \u00b7 object"
   },
   "I.object.8": {
     "id": "I.object.8",
@@ -690,7 +706,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Closed compact black pocket spellbook with plain leather strap, opposite diagonal"
+    "proposalDescription": "Closed compact black pocket spellbook with plain leather strap, opposite diagonal",
+    "displayCode": "I80",
+    "displayLabel": "I80 \u00b7 Spellbook variant 8 \u00b7 object"
   },
   "I.object.9": {
     "id": "I.object.9",
@@ -767,7 +785,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Heavy half-open dark blue tome with brass hinge, strong three-quarter angle"
+    "proposalDescription": "Heavy half-open dark blue tome with brass hinge, strong three-quarter angle",
+    "displayCode": "I90",
+    "displayLabel": "I90 \u00b7 Spellbook variant 9 \u00b7 object"
   },
   "I.effect.0": {
     "id": "I.effect.0",
@@ -843,7 +863,9 @@
         "height": 396
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
-    }
+    },
+    "displayCode": "I00",
+    "displayLabel": "I00 \u00b7 Violet orbital haze \u00b7 effect"
   },
   "I.effect.1": {
     "id": "I.effect.1",
@@ -919,7 +941,9 @@
         "height": 396
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
-    }
+    },
+    "displayCode": "I01",
+    "displayLabel": "I01 \u00b7 Teal rising wisps \u00b7 effect"
   },
   "I.effect.2": {
     "id": "I.effect.2",
@@ -995,7 +1019,9 @@
         "height": 396
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
-    }
+    },
+    "displayCode": "I02",
+    "displayLabel": "I02 \u00b7 Blue protective ring \u00b7 effect"
   },
   "I.effect.3": {
     "id": "I.effect.3",
@@ -1071,7 +1097,9 @@
         "height": 396
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
-    }
+    },
+    "displayCode": "I03",
+    "displayLabel": "I03 \u00b7 Purple crescent haze \u00b7 effect"
   },
   "I.effect.4": {
     "id": "I.effect.4",
@@ -1147,7 +1175,9 @@
         "height": 396
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
-    }
+    },
+    "displayCode": "I04",
+    "displayLabel": "I04 \u00b7 Violet ascending curl \u00b7 effect"
   },
   "I.effect.5": {
     "id": "I.effect.5",
@@ -1223,7 +1253,9 @@
         "height": 397
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
-    }
+    },
+    "displayCode": "I05",
+    "displayLabel": "I05 \u00b7 Gold rising rays \u00b7 effect"
   },
   "I.effect.6": {
     "id": "I.effect.6",
@@ -1299,7 +1331,9 @@
         "height": 397
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
-    }
+    },
+    "displayCode": "I06",
+    "displayLabel": "I06 \u00b7 Pale violet spiral \u00b7 effect"
   },
   "I.effect.7": {
     "id": "I.effect.7",
@@ -1375,7 +1409,9 @@
         "height": 397
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
-    }
+    },
+    "displayCode": "I07",
+    "displayLabel": "I07 \u00b7 Blue radial sparks \u00b7 effect"
   },
   "I.effect.8": {
     "id": "I.effect.8",
@@ -1451,7 +1487,9 @@
         "height": 397
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
-    }
+    },
+    "displayCode": "I08",
+    "displayLabel": "I08 \u00b7 Violet fragmented ring \u00b7 effect"
   },
   "I.effect.9": {
     "id": "I.effect.9",
@@ -1527,6 +1565,8 @@
         "height": 397
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
-    }
+    },
+    "displayCode": "I09",
+    "displayLabel": "I09 \u00b7 Blue violet motes \u00b7 effect"
   }
 }

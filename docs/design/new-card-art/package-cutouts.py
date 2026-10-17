@@ -16,6 +16,8 @@ if data['revision'] >= 5:
 if data['revision'] >= 6:
     files += ['layer-math.js', 'expansion-v6.html', 'expansion-v6.json', 'magic-preview.png', '80-new-objects.png']
     files += [str(path.relative_to(root)) for path in (root/'source-art-v6').glob('*.png')]
+if data['revision'] >= 7:
+    files += ['revision-v7.json']
 with zipfile.ZipFile(out, 'w', zipfile.ZIP_DEFLATED) as archive:
     for name in files:
         archive.write(root / name, name)

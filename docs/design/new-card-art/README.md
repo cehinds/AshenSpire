@@ -1,6 +1,10 @@
-## Current set: broken objects, Sweep scythes and magic scepters
+## Current revision: broad melee heads and visible item labels
 
-Revision 6 adds 80 objects and 20 separate magic overlays. [View broken variants and scepter magic](expansion-v6.html), [edit melee layers](cutouts.html?category=Y), [edit projectiles](cutouts.html?category=Z), or [download the current pack](card-art-cutouts-v6.zip). Ethereal weapons attach to the stone; ranged projectiles remain separate PNGs. All A–P IDs are preserved. Total: 362 PNGs and 2,520 compositions.
+Revision 7 follows the annotated proportions: large ethereal blades/heads wrap around the scepter stone. All components, assembled options and intact references show their code and name. [View the labelled gallery](expansion-v6.html), [edit melee layers](cutouts.html?category=Y), or [download revision 7](card-art-cutouts-v7.zip). Ten Y overlays are revised; the other 352 PNGs are unchanged.
+
+## Previous set: broken objects, Sweep scythes and magic scepters
+
+Revision 6 adds 80 objects and 20 separate magic overlays. [View broken variants and scepter magic](expansion-v6.html), [edit melee layers](cutouts.html?category=Y), [edit projectiles](cutouts.html?category=Z), or [download revision 6](card-art-cutouts-v6.zip). Ethereal weapons attach to the stone; ranged projectiles remain separate PNGs. All A–P IDs are preserved. Total: 362 PNGs and 2,520 compositions.
 
 ## Previous set: existing-art components
 

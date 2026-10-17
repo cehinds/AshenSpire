@@ -18,6 +18,8 @@
  function paintStage(node,composition){node.replaceChildren(...composition.layers.map(l=>imageLayer(l,composition)));}
  function syncEditor(){
   $('code').textContent=`${activeCode} · ${category.label}`;
+  $('composition-label').textContent=current.displayName||category.label;
+  $('layer-labels').innerHTML=current.layers.filter(l=>l.visible).map(l=>{const a=asset(l.assetId);return `<a href="${a.src}" target="_blank">${esc(a.displayLabel||a.name)}</a>`;}).join('');
   $('visibility').innerHTML=current.layers.map(l=>`<label><input type="checkbox" data-layer="${l.id}" ${l.visible?'checked':''}>${esc(l.id)}</label>`).join('');
   $('visibility').querySelectorAll('input').forEach(input=>input.addEventListener('change',()=>{current.layers.find(l=>l.id===input.dataset.layer).visible=input.checked;save();syncEditor();}));
   const r=resolved(current.layers.find(l=>l.id===$('layer').value));
@@ -30,7 +32,7 @@
   paintStage($('stage'),current);showJSON();renderKept();
  }
  function showJSON(){$('json').textContent=JSON.stringify(resolved(current.layers.find(l=>l.id===$('layer').value)),null,2);}
- function selectCode(code){activeCode=code;current=copy(edits[code]||data.compositions[code]);$('object').value=current.objectDigit;$('effect').value=current.effectDigit;syncEditor();}
+ function selectCode(code){activeCode=code;current=copy(edits[code]||data.compositions[code]);current.displayName=data.compositions[code].displayName;current.displayLabel=data.compositions[code].displayLabel;if(edits[code]&&edits[code].designRevision!==data.compositions[code].designRevision)$('status').textContent='Saved custom placement shown. Reset this composition to use the revised proportions.';$('object').value=current.objectDigit;$('effect').value=current.effectDigit;syncEditor();}
  function toggleKeep(key,row){if(kept[key])delete kept[key];else kept[key]=row;save();renderKept();$('status').textContent=`${Object.keys(kept).length} choices kept.`;}
  function renderKept(){
   $('kept').innerHTML=Object.keys(kept).length?Object.entries(kept).map(([key,row])=>`<li>${esc(row.label)} <button data-remove="${esc(key)}" aria-label="Remove ${esc(row.label)}">Remove</button></li>`).join(''):'<li>No choices kept yet.</li>';
@@ -53,11 +55,11 @@
   $('magic-note').textContent=category.magicMode==='melee'?'Y: the ethereal weapon grows from the stone. Rotate the scepter to move both layers; edit the foreground for relative rotation.':'Z: scepter plus separate projectile. The projectile has a small forward gap and remains its own PNG. Edit X/Y to detach it for free placement.';
   $('pair-note').hidden=!category.secondaryObjectIds;
   $('paired-objects').hidden=!category.secondaryObjectIds;
-  $('paired-objects').innerHTML=category.secondaryObjectIds?'<h2>Sword components alone</h2><div class="grid">'+category.secondaryObjectIds.map(id=>{const a=asset(id);return `<article class="tile"><a href="${a.src}" download><img class="cutout" src="${a.src}" alt="${esc(a.name)}"></a><h3>${a.category}${a.digit}0 · sword alone</h3><a href="${a.src}" download>PNG</a></article>`;}).join('')+'</div>':'';
+  $('paired-objects').innerHTML=category.secondaryObjectIds?'<h2>Sword components alone</h2><div class="grid">'+category.secondaryObjectIds.map(id=>{const a=asset(id);return `<article class="tile"><a href="${a.src}" download><img class="cutout" src="${a.src}" alt="${esc(a.name)}"></a><h3>${esc(a.displayLabel||a.name)}</h3><a href="${a.src}" download>PNG</a></article>`;}).join('')+'</div>':'';
   $('objects').innerHTML=category.objectIds.map(id=>candidateTile(asset(id),'object')).join('');
   $('effects').innerHTML=category.effectIds.map(id=>candidateTile(asset(id),'effect')).join('');
   document.querySelectorAll('[data-use]').forEach(b=>b.addEventListener('click',()=>{const [kind,digit]=b.dataset.use.split(':');selectCode(`${category.letter}${kind==='object'?digit:current.objectDigit}${kind==='effect'?digit:current.effectDigit}`);$('stage').scrollIntoView({behavior:'smooth',block:'center'});}));
-  $('examples').innerHTML=category.exampleCodes.map(code=>`<article class="tile"><div class="stage" data-code="${code}" aria-label="${code} assembled preview"></div><h3>${code}</h3><button data-compose="${code}">Edit ${code}</button></article>`).join('');
+  $('examples').innerHTML=category.exampleCodes.map(code=>`<article class="tile"><div class="stage" data-code="${code}" aria-label="${code} assembled preview"></div><h3>${code}</h3><p class="small">${esc(data.compositions[code].displayName||category.label)}</p><button data-compose="${code}">Edit ${code}</button></article>`).join('');
   $('examples').querySelectorAll('[data-code]').forEach(node=>paintStage(node,edits[node.dataset.code]||data.compositions[node.dataset.code]));
   $('examples').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{selectCode(b.dataset.compose);$('stage').scrollIntoView({behavior:'smooth',block:'center'});}));
  }
@@ -72,10 +74,10 @@
  $('attach-stone').addEventListener('change',()=>{const l=current.layers.find(l=>l.id===$('layer').value);if(l.attachment){if($('attach-stone').checked){l.attachment.enabled=true;if(l.attachment.relativeOverrides)l.overrides=copy(l.attachment.relativeOverrides);delete l.detachedAffine;}else detach(l);save();syncEditor();}});
  for(const field of fields)$(field).addEventListener('input',()=>{const input=$(field),n=Number(input.value);if(input.value===''||!Number.isFinite(n))return;const value=Math.min(Number(input.max),Math.max(Number(input.min),n));const l=current.layers.find(l=>l.id===$('layer').value);if((field==='x'||field==='y')&&l.attachment?.enabled){detach(l);$('attach-stone').checked=false;}if(['rotationDeg','scaleX','scaleY'].includes(field))delete l.detachedAffine;l.overrides[field]=value;save();paintStage($('stage'),current);showJSON();});
  $('blendMode').addEventListener('change',()=>{current.layers.find(l=>l.id===$('layer').value).overrides.blendMode=$('blendMode').value;save();paintStage($('stage'),current);showJSON();});
- $('reset').addEventListener('click',()=>{delete edits[activeCode];current=copy(data.compositions[activeCode]);save();syncEditor();});
+ $('reset').addEventListener('click',()=>{delete edits[activeCode];current=copy(data.compositions[activeCode]);save();syncEditor();$('status').textContent='Restored the current composition defaults.';});
  for(const kind of ['object','effect','composition'])$(`keep-${kind}`).addEventListener('click',()=>{
   const id=kind==='composition'?activeCode:current.layers.find(l=>l.id===(kind==='object'?'object':'foreground')).assetId;
-  toggleKeep(`${kind}:${id}`,{kind,id,label:kind==='composition'?`${activeCode} composition`:`${category.letter} ${kind} ${asset(id).digit} — ${asset(id).name}`});
+  toggleKeep(`${kind}:${id}`,{kind,id,label:kind==='composition'?`${activeCode} · ${current.displayName||category.label}`:asset(id).displayLabel||asset(id).name});
  });
  $('clear').addEventListener('click',()=>{kept={};save();renderKept();});
  $('export').addEventListener('click',()=>{

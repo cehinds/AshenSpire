@@ -89,7 +89,9 @@
           "recipe": "attack"
         }
       }
-    ]
+    ],
+    "displayCode": "Q00",
+    "displayLabel": "Q00 \u00b7 Broken swords 0 \u00b7 object"
   },
   "Q.object.1": {
     "id": "Q.object.1",
@@ -181,7 +183,9 @@
           "recipe": "attack"
         }
       }
-    ]
+    ],
+    "displayCode": "Q10",
+    "displayLabel": "Q10 \u00b7 Broken swords 1 \u00b7 object"
   },
   "Q.object.2": {
     "id": "Q.object.2",
@@ -273,7 +277,9 @@
           "recipe": "attack"
         }
       }
-    ]
+    ],
+    "displayCode": "Q20",
+    "displayLabel": "Q20 \u00b7 Broken swords 2 \u00b7 object"
   },
   "Q.object.3": {
     "id": "Q.object.3",
@@ -365,7 +371,9 @@
           "recipe": "attack"
         }
       }
-    ]
+    ],
+    "displayCode": "Q30",
+    "displayLabel": "Q30 \u00b7 Broken swords 3 \u00b7 object"
   },
   "Q.object.4": {
     "id": "Q.object.4",
@@ -457,7 +465,9 @@
           "recipe": "attack"
         }
       }
-    ]
+    ],
+    "displayCode": "Q40",
+    "displayLabel": "Q40 \u00b7 Broken swords 4 \u00b7 object"
   },
   "Q.object.5": {
     "id": "Q.object.5",
@@ -549,7 +559,9 @@
           "recipe": "attack"
         }
       }
-    ]
+    ],
+    "displayCode": "Q50",
+    "displayLabel": "Q50 \u00b7 Broken swords 5 \u00b7 object"
   },
   "Q.object.6": {
     "id": "Q.object.6",
@@ -641,7 +653,9 @@
           "recipe": "attack"
         }
       }
-    ]
+    ],
+    "displayCode": "Q60",
+    "displayLabel": "Q60 \u00b7 Broken swords 6 \u00b7 object"
   },
   "Q.object.7": {
     "id": "Q.object.7",
@@ -733,7 +747,9 @@
           "recipe": "attack"
         }
       }
-    ]
+    ],
+    "displayCode": "Q70",
+    "displayLabel": "Q70 \u00b7 Broken swords 7 \u00b7 object"
   },
   "Q.object.8": {
     "id": "Q.object.8",
@@ -825,7 +841,9 @@
           "recipe": "attack"
         }
       }
-    ]
+    ],
+    "displayCode": "Q80",
+    "displayLabel": "Q80 \u00b7 Broken swords 8 \u00b7 object"
   },
   "Q.object.9": {
     "id": "Q.object.9",
@@ -917,6 +935,8 @@
           "recipe": "attack"
         }
       }
-    ]
+    ],
+    "displayCode": "Q90",
+    "displayLabel": "Q90 \u00b7 Broken swords 9 \u00b7 object"
   }
 }

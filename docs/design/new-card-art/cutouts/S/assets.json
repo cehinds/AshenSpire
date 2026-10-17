@@ -89,7 +89,9 @@
           "recipe": "defend"
         }
       }
-    ]
+    ],
+    "displayCode": "S00",
+    "displayLabel": "S00 \u00b7 Broken shields 0 \u00b7 object"
   },
   "S.object.1": {
     "id": "S.object.1",
@@ -181,7 +183,9 @@
           "recipe": "defend"
         }
       }
-    ]
+    ],
+    "displayCode": "S10",
+    "displayLabel": "S10 \u00b7 Broken shields 1 \u00b7 object"
   },
   "S.object.2": {
     "id": "S.object.2",
@@ -273,7 +277,9 @@
           "recipe": "defend"
         }
       }
-    ]
+    ],
+    "displayCode": "S20",
+    "displayLabel": "S20 \u00b7 Broken shields 2 \u00b7 object"
   },
   "S.object.3": {
     "id": "S.object.3",
@@ -365,7 +371,9 @@
           "recipe": "defend"
         }
       }
-    ]
+    ],
+    "displayCode": "S30",
+    "displayLabel": "S30 \u00b7 Broken shields 3 \u00b7 object"
   },
   "S.object.4": {
     "id": "S.object.4",
@@ -457,7 +465,9 @@
           "recipe": "defend"
         }
       }
-    ]
+    ],
+    "displayCode": "S40",
+    "displayLabel": "S40 \u00b7 Broken shields 4 \u00b7 object"
   },
   "S.object.5": {
     "id": "S.object.5",
@@ -549,7 +559,9 @@
           "recipe": "defend"
         }
       }
-    ]
+    ],
+    "displayCode": "S50",
+    "displayLabel": "S50 \u00b7 Broken shields 5 \u00b7 object"
   },
   "S.object.6": {
     "id": "S.object.6",
@@ -641,7 +653,9 @@
           "recipe": "defend"
         }
       }
-    ]
+    ],
+    "displayCode": "S60",
+    "displayLabel": "S60 \u00b7 Broken shields 6 \u00b7 object"
   },
   "S.object.7": {
     "id": "S.object.7",
@@ -733,7 +747,9 @@
           "recipe": "defend"
         }
       }
-    ]
+    ],
+    "displayCode": "S70",
+    "displayLabel": "S70 \u00b7 Broken shields 7 \u00b7 object"
   },
   "S.object.8": {
     "id": "S.object.8",
@@ -825,7 +841,9 @@
           "recipe": "defend"
         }
       }
-    ]
+    ],
+    "displayCode": "S80",
+    "displayLabel": "S80 \u00b7 Broken shields 8 \u00b7 object"
   },
   "S.object.9": {
     "id": "S.object.9",
@@ -917,6 +935,8 @@
           "recipe": "defend"
         }
       }
-    ]
+    ],
+    "displayCode": "S90",
+    "displayLabel": "S90 \u00b7 Broken shields 9 \u00b7 object"
   }
 }

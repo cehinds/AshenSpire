@@ -87,7 +87,9 @@
           "recipe": "sweep"
         }
       }
-    ]
+    ],
+    "displayCode": "U00",
+    "displayLabel": "U00 \u00b7 Sweep scythes 0 \u00b7 object"
   },
   "U.object.1": {
     "id": "U.object.1",
@@ -177,7 +179,9 @@
           "recipe": "sweep"
         }
       }
-    ]
+    ],
+    "displayCode": "U10",
+    "displayLabel": "U10 \u00b7 Sweep scythes 1 \u00b7 object"
   },
   "U.object.2": {
     "id": "U.object.2",
@@ -267,7 +271,9 @@
           "recipe": "sweep"
         }
       }
-    ]
+    ],
+    "displayCode": "U20",
+    "displayLabel": "U20 \u00b7 Sweep scythes 2 \u00b7 object"
   },
   "U.object.3": {
     "id": "U.object.3",
@@ -357,7 +363,9 @@
           "recipe": "sweep"
         }
       }
-    ]
+    ],
+    "displayCode": "U30",
+    "displayLabel": "U30 \u00b7 Sweep scythes 3 \u00b7 object"
   },
   "U.object.4": {
     "id": "U.object.4",
@@ -447,7 +455,9 @@
           "recipe": "sweep"
         }
       }
-    ]
+    ],
+    "displayCode": "U40",
+    "displayLabel": "U40 \u00b7 Sweep scythes 4 \u00b7 object"
   },
   "U.object.5": {
     "id": "U.object.5",
@@ -537,7 +547,9 @@
           "recipe": "sweep"
         }
       }
-    ]
+    ],
+    "displayCode": "U50",
+    "displayLabel": "U50 \u00b7 Sweep scythes 5 \u00b7 object"
   },
   "U.object.6": {
     "id": "U.object.6",
@@ -627,7 +639,9 @@
           "recipe": "sweep"
         }
       }
-    ]
+    ],
+    "displayCode": "U60",
+    "displayLabel": "U60 \u00b7 Sweep scythes 6 \u00b7 object"
   },
   "U.object.7": {
     "id": "U.object.7",
@@ -717,7 +731,9 @@
           "recipe": "sweep"
         }
       }
-    ]
+    ],
+    "displayCode": "U70",
+    "displayLabel": "U70 \u00b7 Sweep scythes 7 \u00b7 object"
   },
   "U.object.8": {
     "id": "U.object.8",
@@ -807,7 +823,9 @@
           "recipe": "sweep"
         }
       }
-    ]
+    ],
+    "displayCode": "U80",
+    "displayLabel": "U80 \u00b7 Sweep scythes 8 \u00b7 object"
   },
   "U.object.9": {
     "id": "U.object.9",
@@ -897,6 +915,8 @@
           "recipe": "sweep"
         }
       }
-    ]
+    ],
+    "displayCode": "U90",
+    "displayLabel": "U90 \u00b7 Sweep scythes 9 \u00b7 object"
   }
 }

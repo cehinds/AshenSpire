@@ -74,7 +74,9 @@
         "height": 398
       },
       "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
-    }
+    },
+    "displayCode": "O00",
+    "displayLabel": "O00 \u00b7 Existing attack \u00b7 silver-blue \u00b7 object \u00b7 object"
   },
   "O.object.1": {
     "id": "O.object.1",
@@ -151,7 +153,9 @@
         "height": 407
       },
       "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
-    }
+    },
+    "displayCode": "O10",
+    "displayLabel": "O10 \u00b7 Existing smash \u00b7 silver-blue \u00b7 object \u00b7 object"
   },
   "O.object.2": {
     "id": "O.object.2",
@@ -228,7 +232,9 @@
         "height": 318
       },
       "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
-    }
+    },
+    "displayCode": "O20",
+    "displayLabel": "O20 \u00b7 Existing sweep \u00b7 silver-blue \u00b7 object \u00b7 object"
   },
   "O.object.3": {
     "id": "O.object.3",
@@ -305,7 +311,9 @@
         "height": 395
       },
       "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
-    }
+    },
+    "displayCode": "O30",
+    "displayLabel": "O30 \u00b7 Existing defend \u00b7 silver-blue \u00b7 object \u00b7 object"
   },
   "O.object.4": {
     "id": "O.object.4",
@@ -382,7 +390,9 @@
         "height": 324
       },
       "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
-    }
+    },
+    "displayCode": "O40",
+    "displayLabel": "O40 \u00b7 Existing counter \u00b7 silver-blue \u00b7 object \u00b7 object"
   },
   "O.object.5": {
     "id": "O.object.5",
@@ -459,7 +469,9 @@
         "height": 390
       },
       "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
-    }
+    },
+    "displayCode": "O50",
+    "displayLabel": "O50 \u00b7 Existing attack \u00b7 red-black \u00b7 object \u00b7 object"
   },
   "O.object.6": {
     "id": "O.object.6",
@@ -536,7 +548,9 @@
         "height": 399
       },
       "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
-    }
+    },
+    "displayCode": "O60",
+    "displayLabel": "O60 \u00b7 Existing smash \u00b7 red-black \u00b7 object \u00b7 object"
   },
   "O.object.7": {
     "id": "O.object.7",
@@ -613,7 +627,9 @@
         "height": 311
       },
       "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
-    }
+    },
+    "displayCode": "O70",
+    "displayLabel": "O70 \u00b7 Existing sweep \u00b7 red-black \u00b7 object \u00b7 object"
   },
   "O.object.8": {
     "id": "O.object.8",
@@ -690,7 +706,9 @@
         "height": 394
       },
       "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
-    }
+    },
+    "displayCode": "O80",
+    "displayLabel": "O80 \u00b7 Existing defend \u00b7 red-black \u00b7 object \u00b7 object"
   },
   "O.object.9": {
     "id": "O.object.9",
@@ -767,7 +785,9 @@
         "height": 323
       },
       "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
-    }
+    },
+    "displayCode": "O90",
+    "displayLabel": "O90 \u00b7 Existing counter \u00b7 red-black \u00b7 object \u00b7 object"
   },
   "O.effect.0": {
     "id": "O.effect.0",
@@ -844,7 +864,9 @@
         "height": 444
       },
       "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
-    }
+    },
+    "displayCode": "O00",
+    "displayLabel": "O00 \u00b7 Existing attack \u00b7 silver-blue \u00b7 effect \u00b7 effect"
   },
   "O.effect.1": {
     "id": "O.effect.1",
@@ -921,7 +943,9 @@
         "height": 444
       },
       "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
-    }
+    },
+    "displayCode": "O01",
+    "displayLabel": "O01 \u00b7 Existing smash \u00b7 silver-blue \u00b7 effect \u00b7 effect"
   },
   "O.effect.2": {
     "id": "O.effect.2",
@@ -998,7 +1022,9 @@
         "height": 444
       },
       "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
-    }
+    },
+    "displayCode": "O02",
+    "displayLabel": "O02 \u00b7 Existing sweep \u00b7 silver-blue \u00b7 effect \u00b7 effect"
   },
   "O.effect.3": {
     "id": "O.effect.3",
@@ -1075,7 +1101,9 @@
         "height": 444
       },
       "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
-    }
+    },
+    "displayCode": "O03",
+    "displayLabel": "O03 \u00b7 Existing defend \u00b7 silver-blue \u00b7 effect \u00b7 effect"
   },
   "O.effect.4": {
     "id": "O.effect.4",
@@ -1152,7 +1180,9 @@
         "height": 444
       },
       "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
-    }
+    },
+    "displayCode": "O04",
+    "displayLabel": "O04 \u00b7 Existing counter \u00b7 silver-blue \u00b7 effect \u00b7 effect"
   },
   "O.effect.5": {
     "id": "O.effect.5",
@@ -1229,7 +1259,9 @@
         "height": 443
       },
       "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
-    }
+    },
+    "displayCode": "O05",
+    "displayLabel": "O05 \u00b7 Existing attack \u00b7 red-black \u00b7 effect \u00b7 effect"
   },
   "O.effect.6": {
     "id": "O.effect.6",
@@ -1306,7 +1338,9 @@
         "height": 443
       },
       "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
-    }
+    },
+    "displayCode": "O06",
+    "displayLabel": "O06 \u00b7 Existing smash \u00b7 red-black \u00b7 effect \u00b7 effect"
   },
   "O.effect.7": {
     "id": "O.effect.7",
@@ -1383,7 +1417,9 @@
         "height": 443
       },
       "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
-    }
+    },
+    "displayCode": "O07",
+    "displayLabel": "O07 \u00b7 Existing sweep \u00b7 red-black \u00b7 effect \u00b7 effect"
   },
   "O.effect.8": {
     "id": "O.effect.8",
@@ -1460,7 +1496,9 @@
         "height": 443
       },
       "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
-    }
+    },
+    "displayCode": "O08",
+    "displayLabel": "O08 \u00b7 Existing defend \u00b7 red-black \u00b7 effect \u00b7 effect"
   },
   "O.effect.9": {
     "id": "O.effect.9",
@@ -1537,7 +1575,9 @@
         "height": 443
       },
       "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
-    }
+    },
+    "displayCode": "O09",
+    "displayLabel": "O09 \u00b7 Existing counter \u00b7 red-black \u00b7 effect \u00b7 effect"
   },
   "O.background.0": {
     "id": "O.background.0",
@@ -1614,7 +1654,9 @@
         "height": 444
       },
       "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
-    }
+    },
+    "displayCode": "O.background.0",
+    "displayLabel": "O.background.0 \u00b7 Existing attack \u00b7 silver-blue \u00b7 background \u00b7 background"
   },
   "O.background.1": {
     "id": "O.background.1",
@@ -1691,7 +1733,9 @@
         "height": 444
       },
       "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
-    }
+    },
+    "displayCode": "O.background.1",
+    "displayLabel": "O.background.1 \u00b7 Existing smash \u00b7 silver-blue \u00b7 background \u00b7 background"
   },
   "O.background.2": {
     "id": "O.background.2",
@@ -1768,7 +1812,9 @@
         "height": 444
       },
       "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
-    }
+    },
+    "displayCode": "O.background.2",
+    "displayLabel": "O.background.2 \u00b7 Existing sweep \u00b7 silver-blue \u00b7 background \u00b7 background"
   },
   "O.background.3": {
     "id": "O.background.3",
@@ -1845,7 +1891,9 @@
         "height": 444
       },
       "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
-    }
+    },
+    "displayCode": "O.background.3",
+    "displayLabel": "O.background.3 \u00b7 Existing defend \u00b7 silver-blue \u00b7 background \u00b7 background"
   },
   "O.background.4": {
     "id": "O.background.4",
@@ -1922,7 +1970,9 @@
         "height": 444
       },
       "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
-    }
+    },
+    "displayCode": "O.background.4",
+    "displayLabel": "O.background.4 \u00b7 Existing counter \u00b7 silver-blue \u00b7 background \u00b7 background"
   },
   "O.background.5": {
     "id": "O.background.5",
@@ -1999,7 +2049,9 @@
         "height": 443
       },
       "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
-    }
+    },
+    "displayCode": "O.background.5",
+    "displayLabel": "O.background.5 \u00b7 Existing attack \u00b7 red-black \u00b7 background \u00b7 background"
   },
   "O.background.6": {
     "id": "O.background.6",
@@ -2076,7 +2128,9 @@
         "height": 443
       },
       "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
-    }
+    },
+    "displayCode": "O.background.6",
+    "displayLabel": "O.background.6 \u00b7 Existing smash \u00b7 red-black \u00b7 background \u00b7 background"
   },
   "O.background.7": {
     "id": "O.background.7",
@@ -2153,7 +2207,9 @@
         "height": 443
       },
       "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
-    }
+    },
+    "displayCode": "O.background.7",
+    "displayLabel": "O.background.7 \u00b7 Existing sweep \u00b7 red-black \u00b7 background \u00b7 background"
   },
   "O.background.8": {
     "id": "O.background.8",
@@ -2230,7 +2286,9 @@
         "height": 443
       },
       "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
-    }
+    },
+    "displayCode": "O.background.8",
+    "displayLabel": "O.background.8 \u00b7 Existing defend \u00b7 red-black \u00b7 background \u00b7 background"
   },
   "O.background.9": {
     "id": "O.background.9",
@@ -2307,6 +2365,8 @@
         "height": 443
       },
       "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
-    }
+    },
+    "displayCode": "O.background.9",
+    "displayLabel": "O.background.9 \u00b7 Existing counter \u00b7 red-black \u00b7 background \u00b7 background"
   }
 }

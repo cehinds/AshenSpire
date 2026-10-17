@@ -118,7 +118,9 @@
           "recipe": "symbol.sun"
         }
       }
-    ]
+    ],
+    "displayCode": "Z00",
+    "displayLabel": "Z00 \u00b7 Divine projectile \u00b7 effect"
   },
   "Z.effect.1": {
     "id": "Z.effect.1",
@@ -232,7 +234,9 @@
           "recipe": "symbol.bow"
         }
       }
-    ]
+    ],
+    "displayCode": "Z01",
+    "displayLabel": "Z01 \u00b7 Necrotic projectile \u00b7 effect"
   },
   "Z.effect.2": {
     "id": "Z.effect.2",
@@ -353,7 +357,9 @@
           "recipe": "symbol.orb"
         }
       }
-    ]
+    ],
+    "displayCode": "Z02",
+    "displayLabel": "Z02 \u00b7 Force projectile \u00b7 effect"
   },
   "Z.effect.3": {
     "id": "Z.effect.3",
@@ -474,7 +480,9 @@
           "recipe": "symbol.stone"
         }
       }
-    ]
+    ],
+    "displayCode": "Z03",
+    "displayLabel": "Z03 \u00b7 Earth projectile \u00b7 effect"
   },
   "Z.effect.4": {
     "id": "Z.effect.4",
@@ -595,7 +603,9 @@
           "recipe": "symbol.crystal"
         }
       }
-    ]
+    ],
+    "displayCode": "Z04",
+    "displayLabel": "Z04 \u00b7 Frost projectile \u00b7 effect"
   },
   "Z.effect.5": {
     "id": "Z.effect.5",
@@ -716,7 +726,9 @@
           "recipe": "symbol.flame"
         }
       }
-    ]
+    ],
+    "displayCode": "Z05",
+    "displayLabel": "Z05 \u00b7 Fire projectile \u00b7 effect"
   },
   "Z.effect.6": {
     "id": "Z.effect.6",
@@ -837,7 +849,9 @@
           "recipe": "symbol.bolt"
         }
       }
-    ]
+    ],
+    "displayCode": "Z06",
+    "displayLabel": "Z06 \u00b7 Lightning projectile \u00b7 effect"
   },
   "Z.effect.7": {
     "id": "Z.effect.7",
@@ -958,7 +972,9 @@
           "recipe": "symbol.spiral"
         }
       }
-    ]
+    ],
+    "displayCode": "Z07",
+    "displayLabel": "Z07 \u00b7 Psychic projectile \u00b7 effect"
   },
   "Z.effect.8": {
     "id": "Z.effect.8",
@@ -1079,7 +1095,9 @@
           "recipe": "symbol.mirror"
         }
       }
-    ]
+    ],
+    "displayCode": "Z08",
+    "displayLabel": "Z08 \u00b7 Alteration projectile \u00b7 effect"
   },
   "Z.effect.9": {
     "id": "Z.effect.9",
@@ -1193,6 +1211,8 @@
           "recipe": "symbol.bow"
         }
       }
-    ]
+    ],
+    "displayCode": "Z09",
+    "displayLabel": "Z09 \u00b7 Wind projectile \u00b7 effect"
   }
 }

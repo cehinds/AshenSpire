@@ -74,7 +74,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Long black wooden shaft with inward curved crescent iron scythe blade, diagonal right"
+    "proposalDescription": "Long black wooden shaft with inward curved crescent iron scythe blade, diagonal right",
+    "displayCode": "L00",
+    "displayLabel": "L00 \u00b7 Scythe variant 0 \u00b7 object"
   },
   "L.object.1": {
     "id": "L.object.1",
@@ -151,7 +153,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Short battle scythe with broad hooked steel blade, diagonal left"
+    "proposalDescription": "Short battle scythe with broad hooked steel blade, diagonal left",
+    "displayCode": "L10",
+    "displayLabel": "L10 \u00b7 Scythe variant 1 \u00b7 object"
   },
   "L.object.2": {
     "id": "L.object.2",
@@ -228,7 +232,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Long slim shaft and thin hooked crescent blade, nearly upright"
+    "proposalDescription": "Long slim shaft and thin hooked crescent blade, nearly upright",
+    "displayCode": "L20",
+    "displayLabel": "L20 \u00b7 Scythe variant 2 \u00b7 object"
   },
   "L.object.3": {
     "id": "L.object.3",
@@ -305,7 +311,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Heavy half-moon scythe blade on black leather-wrapped shaft, diagonal"
+    "proposalDescription": "Heavy half-moon scythe blade on black leather-wrapped shaft, diagonal",
+    "displayCode": "L30",
+    "displayLabel": "L30 \u00b7 Scythe variant 3 \u00b7 object"
   },
   "L.object.4": {
     "id": "L.object.4",
@@ -382,7 +390,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Iron-collared wooden scythe, long narrow worn steel blade, tilt right"
+    "proposalDescription": "Iron-collared wooden scythe, long narrow worn steel blade, tilt right",
+    "displayCode": "L40",
+    "displayLabel": "L40 \u00b7 Scythe variant 4 \u00b7 object"
   },
   "L.object.5": {
     "id": "L.object.5",
@@ -459,7 +469,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Compact hooked scythe, thick straight dark shaft, tilt left"
+    "proposalDescription": "Compact hooked scythe, thick straight dark shaft, tilt left",
+    "displayCode": "L50",
+    "displayLabel": "L50 \u00b7 Scythe variant 5 \u00b7 object"
   },
   "L.object.6": {
     "id": "L.object.6",
@@ -536,7 +548,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Broad inward crescent steel scythe, plain brass joint, three-quarter view"
+    "proposalDescription": "Broad inward crescent steel scythe, plain brass joint, three-quarter view",
+    "displayCode": "L60",
+    "displayLabel": "L60 \u00b7 Scythe variant 6 \u00b7 object"
   },
   "L.object.7": {
     "id": "L.object.7",
@@ -613,7 +627,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Long agricultural scythe with simple blackened shaft and tapered blade, low diagonal"
+    "proposalDescription": "Long agricultural scythe with simple blackened shaft and tapered blade, low diagonal",
+    "displayCode": "L70",
+    "displayLabel": "L70 \u00b7 Scythe variant 7 \u00b7 object"
   },
   "L.object.8": {
     "id": "L.object.8",
@@ -690,7 +706,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Stout battle scythe with inward curved blade and short shaft, steep diagonal"
+    "proposalDescription": "Stout battle scythe with inward curved blade and short shaft, steep diagonal",
+    "displayCode": "L80",
+    "displayLabel": "L80 \u00b7 Scythe variant 8 \u00b7 object"
   },
   "L.object.9": {
     "id": "L.object.9",
@@ -767,6 +785,8 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Large plain crescent scythe on iron shaft, opposite diagonal"
+    "proposalDescription": "Large plain crescent scythe on iron shaft, opposite diagonal",
+    "displayCode": "L90",
+    "displayLabel": "L90 \u00b7 Scythe variant 9 \u00b7 object"
   }
 }

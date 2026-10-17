@@ -89,7 +89,9 @@
           "recipe": "sweep"
         }
       }
-    ]
+    ],
+    "displayCode": "W00",
+    "displayLabel": "W00 \u00b7 Broken scythes 0 \u00b7 object"
   },
   "W.object.1": {
     "id": "W.object.1",
@@ -181,7 +183,9 @@
           "recipe": "sweep"
         }
       }
-    ]
+    ],
+    "displayCode": "W10",
+    "displayLabel": "W10 \u00b7 Broken scythes 1 \u00b7 object"
   },
   "W.object.2": {
     "id": "W.object.2",
@@ -273,7 +277,9 @@
           "recipe": "sweep"
         }
       }
-    ]
+    ],
+    "displayCode": "W20",
+    "displayLabel": "W20 \u00b7 Broken scythes 2 \u00b7 object"
   },
   "W.object.3": {
     "id": "W.object.3",
@@ -365,7 +371,9 @@
           "recipe": "sweep"
         }
       }
-    ]
+    ],
+    "displayCode": "W30",
+    "displayLabel": "W30 \u00b7 Broken scythes 3 \u00b7 object"
   },
   "W.object.4": {
     "id": "W.object.4",
@@ -457,7 +465,9 @@
           "recipe": "sweep"
         }
       }
-    ]
+    ],
+    "displayCode": "W40",
+    "displayLabel": "W40 \u00b7 Broken scythes 4 \u00b7 object"
   },
   "W.object.5": {
     "id": "W.object.5",
@@ -549,7 +559,9 @@
           "recipe": "sweep"
         }
       }
-    ]
+    ],
+    "displayCode": "W50",
+    "displayLabel": "W50 \u00b7 Broken scythes 5 \u00b7 object"
   },
   "W.object.6": {
     "id": "W.object.6",
@@ -641,7 +653,9 @@
           "recipe": "sweep"
         }
       }
-    ]
+    ],
+    "displayCode": "W60",
+    "displayLabel": "W60 \u00b7 Broken scythes 6 \u00b7 object"
   },
   "W.object.7": {
     "id": "W.object.7",
@@ -733,7 +747,9 @@
           "recipe": "sweep"
         }
       }
-    ]
+    ],
+    "displayCode": "W70",
+    "displayLabel": "W70 \u00b7 Broken scythes 7 \u00b7 object"
   },
   "W.object.8": {
     "id": "W.object.8",
@@ -825,7 +841,9 @@
           "recipe": "sweep"
         }
       }
-    ]
+    ],
+    "displayCode": "W80",
+    "displayLabel": "W80 \u00b7 Broken scythes 8 \u00b7 object"
   },
   "W.object.9": {
     "id": "W.object.9",
@@ -917,6 +935,8 @@
           "recipe": "sweep"
         }
       }
-    ]
+    ],
+    "displayCode": "W90",
+    "displayLabel": "W90 \u00b7 Broken scythes 9 \u00b7 object"
   }
 }

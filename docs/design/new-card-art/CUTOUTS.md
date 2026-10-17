@@ -1,7 +1,7 @@
-# Actual PNG cutouts — selection set 06
+# Actual PNG cutouts — selection set 07
 
 Open [cutouts.html](cutouts.html) to select, layer, rotate, resize and keep multiple
-choices. The downloadable `card-art-cutouts-v6.zip` includes the standalone
+choices. The downloadable `card-art-cutouts-v7.zip` includes the standalone
 viewer, all PNGs and the JSON. Extract the ZIP and open `cutouts.html`
 in a browser. It uses plain local scripts and needs no build step. If browser
 policy blocks local files, run `python3 -m http.server 8765` in the extracted
@@ -186,3 +186,13 @@ In the composer, select the foreground layer to toggle **Attach magic to scepter
 `tagReferences` uses IDs from the pinned combat catalog. The ten projectile visual proposals are Divine, Necrotic, Force, Earth, Frost, Fire, Lightning, Psychic, Alteration and Wind. Necrotic and Wind have no exact matching element identity in that catalog, so their metadata uses existing spell/magic/ranged tags and explicitly marks the element as a proposal. No new gameplay tags are fabricated.
 
 Rebuild individual sheets with `python3 expand-v6.py --family Q` (through Z), then `python3 expand-v6.py` to assemble. Run `python3 validate-cutouts.py`, `node validate-layer-math.mjs`, and `node validate.mjs`. `package-cutouts.py` builds the full portable pack. Generation source files remain external provenance. The source reference sheets are included in the pack. All 262 revision-five assets and 1,520 compositions remain unchanged.
+
+## Annotated proportions and labels (revision 7)
+
+The ten Y melee overlays now use broad blades and heads that surround the stone. The sword is longer and wider, the hammer has a large block head, and the scythe has a dominant hooked crescent. The scepter remains its handle. Their anchors sit inside the broad mounting heels, and Y compositions use larger per-shape transforms. Ranged projectile geometry stays unchanged.
+
+Every component has `displayCode` and `displayLabel`; every composition has `displayName` and `displayLabel`. The gallery labels assembled art, backgrounds, base objects, magic overlays and intact references. Thumbnails and the full object overview also display code, name and role. Labels are outside the PNG pixels, preserving reusable transparent cutouts.
+
+Y00 in an **assembled** title selects scepter 0 plus effect 0. Y01 in an **effect** label identifies effect 1 with object 0 hidden; V10 identifies scepter object 1 with effect 0 hidden. The explicit role disambiguates component and composition labels. The underlying IDs (for example `Y.effect.1`) remain authoritative in JSON. Zero is always a real option.
+
+This revision replaces ten Y PNGs and keeps the other 352 PNGs unchanged. V names now identify their stones. Earlier full packs preserve the previous proposals. Saved custom placements remain available; reset a composition to adopt the revised default proportions. `revise-v7.py` rebuilds this revision from the source sheet recorded in `revision-v7.json`, after revision 6 has been assembled.

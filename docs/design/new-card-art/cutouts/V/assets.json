@@ -4,7 +4,7 @@
     "kind": "object",
     "category": "V",
     "digit": 0,
-    "name": "Magic scepters 0",
+    "name": "Amber scepter",
     "src": "cutouts/V/objects/0.png",
     "mimeType": "image/png",
     "width": 512,
@@ -103,14 +103,16 @@
           "recipe": "symbol.orb"
         }
       }
-    ]
+    ],
+    "displayCode": "V00",
+    "displayLabel": "V00 \u00b7 Amber scepter \u00b7 object"
   },
   "V.object.1": {
     "id": "V.object.1",
     "kind": "object",
     "category": "V",
     "digit": 1,
-    "name": "Magic scepters 1",
+    "name": "Ivory scepter",
     "src": "cutouts/V/objects/1.png",
     "mimeType": "image/png",
     "width": 512,
@@ -209,14 +211,16 @@
           "recipe": "symbol.orb"
         }
       }
-    ]
+    ],
+    "displayCode": "V10",
+    "displayLabel": "V10 \u00b7 Ivory scepter \u00b7 object"
   },
   "V.object.2": {
     "id": "V.object.2",
     "kind": "object",
     "category": "V",
     "digit": 2,
-    "name": "Magic scepters 2",
+    "name": "Ruby scepter",
     "src": "cutouts/V/objects/2.png",
     "mimeType": "image/png",
     "width": 512,
@@ -315,14 +319,16 @@
           "recipe": "symbol.orb"
         }
       }
-    ]
+    ],
+    "displayCode": "V20",
+    "displayLabel": "V20 \u00b7 Ruby scepter \u00b7 object"
   },
   "V.object.3": {
     "id": "V.object.3",
     "kind": "object",
     "category": "V",
     "digit": 3,
-    "name": "Magic scepters 3",
+    "name": "Amethyst scepter",
     "src": "cutouts/V/objects/3.png",
     "mimeType": "image/png",
     "width": 512,
@@ -421,14 +427,16 @@
           "recipe": "symbol.orb"
         }
       }
-    ]
+    ],
+    "displayCode": "V30",
+    "displayLabel": "V30 \u00b7 Amethyst scepter \u00b7 object"
   },
   "V.object.4": {
     "id": "V.object.4",
     "kind": "object",
     "category": "V",
     "digit": 4,
-    "name": "Magic scepters 4",
+    "name": "Teal crystal scepter",
     "src": "cutouts/V/objects/4.png",
     "mimeType": "image/png",
     "width": 512,
@@ -527,14 +535,16 @@
           "recipe": "symbol.orb"
         }
       }
-    ]
+    ],
+    "displayCode": "V40",
+    "displayLabel": "V40 \u00b7 Teal crystal scepter \u00b7 object"
   },
   "V.object.5": {
     "id": "V.object.5",
     "kind": "object",
     "category": "V",
     "digit": 5,
-    "name": "Magic scepters 5",
+    "name": "Smoky quartz scepter",
     "src": "cutouts/V/objects/5.png",
     "mimeType": "image/png",
     "width": 512,
@@ -633,14 +643,16 @@
           "recipe": "symbol.orb"
         }
       }
-    ]
+    ],
+    "displayCode": "V50",
+    "displayLabel": "V50 \u00b7 Smoky quartz scepter \u00b7 object"
   },
   "V.object.6": {
     "id": "V.object.6",
     "kind": "object",
     "category": "V",
     "digit": 6,
-    "name": "Magic scepters 6",
+    "name": "Moonstone scepter",
     "src": "cutouts/V/objects/6.png",
     "mimeType": "image/png",
     "width": 512,
@@ -739,14 +751,16 @@
           "recipe": "symbol.orb"
         }
       }
-    ]
+    ],
+    "displayCode": "V60",
+    "displayLabel": "V60 \u00b7 Moonstone scepter \u00b7 object"
   },
   "V.object.7": {
     "id": "V.object.7",
     "kind": "object",
     "category": "V",
     "digit": 7,
-    "name": "Magic scepters 7",
+    "name": "Black opal scepter",
     "src": "cutouts/V/objects/7.png",
     "mimeType": "image/png",
     "width": 512,
@@ -845,14 +859,16 @@
           "recipe": "symbol.orb"
         }
       }
-    ]
+    ],
+    "displayCode": "V70",
+    "displayLabel": "V70 \u00b7 Black opal scepter \u00b7 object"
   },
   "V.object.8": {
     "id": "V.object.8",
     "kind": "object",
     "category": "V",
     "digit": 8,
-    "name": "Magic scepters 8",
+    "name": "Sapphire scepter",
     "src": "cutouts/V/objects/8.png",
     "mimeType": "image/png",
     "width": 512,
@@ -951,14 +967,16 @@
           "recipe": "symbol.orb"
         }
       }
-    ]
+    ],
+    "displayCode": "V80",
+    "displayLabel": "V80 \u00b7 Sapphire scepter \u00b7 object"
   },
   "V.object.9": {
     "id": "V.object.9",
     "kind": "object",
     "category": "V",
     "digit": 9,
-    "name": "Magic scepters 9",
+    "name": "Emerald scepter",
     "src": "cutouts/V/objects/9.png",
     "mimeType": "image/png",
     "width": 512,
@@ -1057,6 +1075,8 @@
           "recipe": "symbol.orb"
         }
       }
-    ]
+    ],
+    "displayCode": "V90",
+    "displayLabel": "V90 \u00b7 Emerald scepter \u00b7 object"
   }
 }

@@ -81,7 +81,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Broad straight iron longsword, simple thick bronze crossguard, tip upper-right"
+    "proposalDescription": "Broad straight iron longsword, simple thick bronze crossguard, tip upper-right",
+    "displayCode": "J00",
+    "displayLabel": "J00 \u00b7 Sword variant 0 \u00b7 object"
   },
   "J.object.1": {
     "id": "J.object.1",
@@ -165,7 +167,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Short wide straight arming sword, square bronze guard, opposite diagonal"
+    "proposalDescription": "Short wide straight arming sword, square bronze guard, opposite diagonal",
+    "displayCode": "J10",
+    "displayLabel": "J10 \u00b7 Sword variant 1 \u00b7 object"
   },
   "J.object.2": {
     "id": "J.object.2",
@@ -249,7 +253,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Long slender straight blade, round iron pommel, steep right diagonal"
+    "proposalDescription": "Long slender straight blade, round iron pommel, steep right diagonal",
+    "displayCode": "J20",
+    "displayLabel": "J20 \u00b7 Sword variant 2 \u00b7 object"
   },
   "J.object.3": {
     "id": "J.object.3",
@@ -333,7 +339,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Heavy straight two-handed greatsword, blunt square shoulders, lower-left diagonal"
+    "proposalDescription": "Heavy straight two-handed greatsword, blunt square shoulders, lower-left diagonal",
+    "displayCode": "J30",
+    "displayLabel": "J30 \u00b7 Sword variant 3 \u00b7 object"
   },
   "J.object.4": {
     "id": "J.object.4",
@@ -417,7 +425,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Broad straight fuller blade, black leather grip, near upright"
+    "proposalDescription": "Broad straight fuller blade, black leather grip, near upright",
+    "displayCode": "J40",
+    "displayLabel": "J40 \u00b7 Sword variant 4 \u00b7 object"
   },
   "J.object.5": {
     "id": "J.object.5",
@@ -501,7 +511,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Straight single-edge backsword, plain knuckle bow, slant right"
+    "proposalDescription": "Straight single-edge backsword, plain knuckle bow, slant right",
+    "displayCode": "J50",
+    "displayLabel": "J50 \u00b7 Sword variant 5 \u00b7 object"
   },
   "J.object.6": {
     "id": "J.object.6",
@@ -585,7 +597,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Short straight leaf-point sword, worn black bronze hilt, slant left"
+    "proposalDescription": "Short straight leaf-point sword, worn black bronze hilt, slant left",
+    "displayCode": "J60",
+    "displayLabel": "J60 \u00b7 Sword variant 6 \u00b7 object"
   },
   "J.object.7": {
     "id": "J.object.7",
@@ -669,7 +683,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Wide straight battle sword, uneven chipped tip edges, low diagonal"
+    "proposalDescription": "Wide straight battle sword, uneven chipped tip edges, low diagonal",
+    "displayCode": "J70",
+    "displayLabel": "J70 \u00b7 Sword variant 7 \u00b7 object"
   },
   "J.object.8": {
     "id": "J.object.8",
@@ -753,7 +769,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Narrow straight estoc, simple compact guard, steep left diagonal"
+    "proposalDescription": "Narrow straight estoc, simple compact guard, steep left diagonal",
+    "displayCode": "J80",
+    "displayLabel": "J80 \u00b7 Sword variant 8 \u00b7 object"
   },
   "J.object.9": {
     "id": "J.object.9",
@@ -837,6 +855,8 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Massive straight hand-and-a-half sword, iron pommel and bronze crossguard, strong diagonal"
+    "proposalDescription": "Massive straight hand-and-a-half sword, iron pommel and bronze crossguard, strong diagonal",
+    "displayCode": "J90",
+    "displayLabel": "J90 \u00b7 Sword variant 9 \u00b7 object"
   }
 }

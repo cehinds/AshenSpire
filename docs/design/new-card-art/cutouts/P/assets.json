@@ -67,7 +67,9 @@
       "originalGameCommit": "72a4e640a4efd09c1242756895cf100c46d17074",
       "decodedPixelsPreserved": true,
       "sourceDecodedRgbaSha256": "477a81f5317534818b041cae6ef34000ae55c560e2cc54d6940516e73b67cb8d"
-    }
+    },
+    "displayCode": "P00",
+    "displayLabel": "P00 \u00b7 Existing inventory sword \u00b7 object"
   },
   "P.object.1": {
     "id": "P.object.1",
@@ -137,6 +139,8 @@
       "originalGameCommit": "72a4e640a4efd09c1242756895cf100c46d17074",
       "decodedPixelsPreserved": true,
       "sourceDecodedRgbaSha256": "45608cbb2f03ea027ea8906bbf24a81fdbf9964228e5f76d57a2cf18c25a60d5"
-    }
+    },
+    "displayCode": "P10",
+    "displayLabel": "P10 \u00b7 Existing inventory shield \u00b7 object"
   }
 }

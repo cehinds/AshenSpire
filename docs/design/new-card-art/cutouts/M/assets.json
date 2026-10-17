@@ -81,7 +81,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Dark steel kite shield, plain bronze boss and broad border, front tilted right"
+    "proposalDescription": "Dark steel kite shield, plain bronze boss and broad border, front tilted right",
+    "displayCode": "M00",
+    "displayLabel": "M00 \u00b7 Shield variant 0 \u00b7 object"
   },
   "M.object.1": {
     "id": "M.object.1",
@@ -165,7 +167,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Worn round shield with simple bronze central boss, three-quarter left"
+    "proposalDescription": "Worn round shield with simple bronze central boss, three-quarter left",
+    "displayCode": "M10",
+    "displayLabel": "M10 \u00b7 Shield variant 1 \u00b7 object"
   },
   "M.object.2": {
     "id": "M.object.2",
@@ -249,7 +253,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Tall narrow heater shield, dark face and bronze cross braces, slight tilt"
+    "proposalDescription": "Tall narrow heater shield, dark face and bronze cross braces, slight tilt",
+    "displayCode": "M20",
+    "displayLabel": "M20 \u00b7 Shield variant 2 \u00b7 object"
   },
   "M.object.3": {
     "id": "M.object.3",
@@ -333,7 +339,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Heavy broad kite shield with simple central vertical ridge, three-quarter right"
+    "proposalDescription": "Heavy broad kite shield with simple central vertical ridge, three-quarter right",
+    "displayCode": "M30",
+    "displayLabel": "M30 \u00b7 Shield variant 3 \u00b7 object"
   },
   "M.object.4": {
     "id": "M.object.4",
@@ -417,7 +425,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Small round buckler, battered dark iron and dull bronze rim, face angled"
+    "proposalDescription": "Small round buckler, battered dark iron and dull bronze rim, face angled",
+    "displayCode": "M40",
+    "displayLabel": "M40 \u00b7 Shield variant 4 \u00b7 object"
   },
   "M.object.5": {
     "id": "M.object.5",
@@ -501,7 +511,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Rectangular tower shield with clipped corners, plain black iron face, slight diagonal"
+    "proposalDescription": "Rectangular tower shield with clipped corners, plain black iron face, slight diagonal",
+    "displayCode": "M50",
+    "displayLabel": "M50 \u00b7 Shield variant 5 \u00b7 object"
   },
   "M.object.6": {
     "id": "M.object.6",
@@ -585,7 +597,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Oval dark steel shield with bronze boss, three-quarter right"
+    "proposalDescription": "Oval dark steel shield with bronze boss, three-quarter right",
+    "displayCode": "M60",
+    "displayLabel": "M60 \u00b7 Shield variant 6 \u00b7 object"
   },
   "M.object.7": {
     "id": "M.object.7",
@@ -669,7 +683,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Short triangular heater shield with thick bronze edges, front tilted"
+    "proposalDescription": "Short triangular heater shield with thick bronze edges, front tilted",
+    "displayCode": "M70",
+    "displayLabel": "M70 \u00b7 Shield variant 7 \u00b7 object"
   },
   "M.object.8": {
     "id": "M.object.8",
@@ -753,7 +769,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Long teardrop shield with central boss and plain metal braces, opposite tilt"
+    "proposalDescription": "Long teardrop shield with central boss and plain metal braces, opposite tilt",
+    "displayCode": "M80",
+    "displayLabel": "M80 \u00b7 Shield variant 8 \u00b7 object"
   },
   "M.object.9": {
     "id": "M.object.9",
@@ -837,6 +855,8 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Broad round-corner shield, dark iron plate and bronze rivets, three-quarter left"
+    "proposalDescription": "Broad round-corner shield, dark iron plate and bronze rivets, three-quarter left",
+    "displayCode": "M90",
+    "displayLabel": "M90 \u00b7 Shield variant 9 \u00b7 object"
   }
 }

@@ -80,7 +80,9 @@
     },
     "condition": "broken",
     "intactAssetId": "I.object.0",
-    "tagReferences": []
+    "tagReferences": [],
+    "displayCode": "T00",
+    "displayLabel": "T00 \u00b7 Ruined spellbooks 0 \u00b7 object"
   },
   "T.object.1": {
     "id": "T.object.1",
@@ -163,7 +165,9 @@
     },
     "condition": "broken",
     "intactAssetId": "I.object.1",
-    "tagReferences": []
+    "tagReferences": [],
+    "displayCode": "T10",
+    "displayLabel": "T10 \u00b7 Ruined spellbooks 1 \u00b7 object"
   },
   "T.object.2": {
     "id": "T.object.2",
@@ -246,7 +250,9 @@
     },
     "condition": "broken",
     "intactAssetId": "I.object.2",
-    "tagReferences": []
+    "tagReferences": [],
+    "displayCode": "T20",
+    "displayLabel": "T20 \u00b7 Ruined spellbooks 2 \u00b7 object"
   },
   "T.object.3": {
     "id": "T.object.3",
@@ -329,7 +335,9 @@
     },
     "condition": "broken",
     "intactAssetId": "I.object.3",
-    "tagReferences": []
+    "tagReferences": [],
+    "displayCode": "T30",
+    "displayLabel": "T30 \u00b7 Ruined spellbooks 3 \u00b7 object"
   },
   "T.object.4": {
     "id": "T.object.4",
@@ -412,7 +420,9 @@
     },
     "condition": "broken",
     "intactAssetId": "I.object.4",
-    "tagReferences": []
+    "tagReferences": [],
+    "displayCode": "T40",
+    "displayLabel": "T40 \u00b7 Ruined spellbooks 4 \u00b7 object"
   },
   "T.object.5": {
     "id": "T.object.5",
@@ -495,7 +505,9 @@
     },
     "condition": "broken",
     "intactAssetId": "I.object.5",
-    "tagReferences": []
+    "tagReferences": [],
+    "displayCode": "T50",
+    "displayLabel": "T50 \u00b7 Ruined spellbooks 5 \u00b7 object"
   },
   "T.object.6": {
     "id": "T.object.6",
@@ -578,7 +590,9 @@
     },
     "condition": "broken",
     "intactAssetId": "I.object.6",
-    "tagReferences": []
+    "tagReferences": [],
+    "displayCode": "T60",
+    "displayLabel": "T60 \u00b7 Ruined spellbooks 6 \u00b7 object"
   },
   "T.object.7": {
     "id": "T.object.7",
@@ -661,7 +675,9 @@
     },
     "condition": "broken",
     "intactAssetId": "I.object.7",
-    "tagReferences": []
+    "tagReferences": [],
+    "displayCode": "T70",
+    "displayLabel": "T70 \u00b7 Ruined spellbooks 7 \u00b7 object"
   },
   "T.object.8": {
     "id": "T.object.8",
@@ -744,7 +760,9 @@
     },
     "condition": "broken",
     "intactAssetId": "I.object.8",
-    "tagReferences": []
+    "tagReferences": [],
+    "displayCode": "T80",
+    "displayLabel": "T80 \u00b7 Ruined spellbooks 8 \u00b7 object"
   },
   "T.object.9": {
     "id": "T.object.9",
@@ -827,6 +845,8 @@
     },
     "condition": "broken",
     "intactAssetId": "I.object.9",
-    "tagReferences": []
+    "tagReferences": [],
+    "displayCode": "T90",
+    "displayLabel": "T90 \u00b7 Ruined spellbooks 9 \u00b7 object"
   }
 }

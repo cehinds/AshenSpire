@@ -74,7 +74,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Heavy square cuboid iron warhammer, short dark grip, head lower-left"
+    "proposalDescription": "Heavy square cuboid iron warhammer, short dark grip, head lower-left",
+    "displayCode": "K00",
+    "displayLabel": "K00 \u00b7 Hammer variant 0 \u00b7 object"
   },
   "K.object.1": {
     "id": "K.object.1",
@@ -151,7 +153,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Long steel block warhammer, bronze collar, head upper-right"
+    "proposalDescription": "Long steel block warhammer, bronze collar, head upper-right",
+    "displayCode": "K10",
+    "displayLabel": "K10 \u00b7 Hammer variant 1 \u00b7 object"
   },
   "K.object.2": {
     "id": "K.object.2",
@@ -228,7 +232,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Broad square-headed maul, thick wrapped handle, opposite diagonal"
+    "proposalDescription": "Broad square-headed maul, thick wrapped handle, opposite diagonal",
+    "displayCode": "K20",
+    "displayLabel": "K20 \u00b7 Hammer variant 2 \u00b7 object"
   },
   "K.object.3": {
     "id": "K.object.3",
@@ -305,7 +311,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Compact double-faced square iron hammer, short shaft, shallow angle"
+    "proposalDescription": "Compact double-faced square iron hammer, short shaft, shallow angle",
+    "displayCode": "K30",
+    "displayLabel": "K30 \u00b7 Hammer variant 3 \u00b7 object"
   },
   "K.object.4": {
     "id": "K.object.4",
@@ -382,7 +390,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Rectangular dark stone maul in simple iron bands, diagonal"
+    "proposalDescription": "Rectangular dark stone maul in simple iron bands, diagonal",
+    "displayCode": "K40",
+    "displayLabel": "K40 \u00b7 Hammer variant 4 \u00b7 object"
   },
   "K.object.5": {
     "id": "K.object.5",
@@ -459,7 +469,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Battered cuboid steel hammer with plain rectangular strike face, upright tilted"
+    "proposalDescription": "Battered cuboid steel hammer with plain rectangular strike face, upright tilted",
+    "displayCode": "K50",
+    "displayLabel": "K50 \u00b7 Hammer variant 5 \u00b7 object"
   },
   "K.object.6": {
     "id": "K.object.6",
@@ -536,7 +548,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Short thick black iron sledge, narrow bronze bands, slant left"
+    "proposalDescription": "Short thick black iron sledge, narrow bronze bands, slant left",
+    "displayCode": "K60",
+    "displayLabel": "K60 \u00b7 Hammer variant 6 \u00b7 object"
   },
   "K.object.7": {
     "id": "K.object.7",
@@ -613,7 +627,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Long-handled rectangular iron sledge, deep broad striking head, diagonal"
+    "proposalDescription": "Long-handled rectangular iron sledge, deep broad striking head, diagonal",
+    "displayCode": "K70",
+    "displayLabel": "K70 \u00b7 Hammer variant 7 \u00b7 object"
   },
   "K.object.8": {
     "id": "K.object.8",
@@ -690,7 +706,9 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Squat square steel hammer, scarred plain face, black handle, low diagonal"
+    "proposalDescription": "Squat square steel hammer, scarred plain face, black handle, low diagonal",
+    "displayCode": "K80",
+    "displayLabel": "K80 \u00b7 Hammer variant 8 \u00b7 object"
   },
   "K.object.9": {
     "id": "K.object.9",
@@ -767,6 +785,8 @@
       },
       "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
     },
-    "proposalDescription": "Tall rectangular slab-headed warhammer, iron shaft, strong opposite diagonal"
+    "proposalDescription": "Tall rectangular slab-headed warhammer, iron shaft, strong opposite diagonal",
+    "displayCode": "K90",
+    "displayLabel": "K90 \u00b7 Hammer variant 9 \u00b7 object"
   }
 }
