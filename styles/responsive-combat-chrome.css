@@ -116,3 +116,6 @@
   height: calc(12px / var(--ui-zoom,1)); max-height: calc(12px / var(--ui-zoom,1));
   display: flex; flex-direction: row; align-items: center; white-space: nowrap;
 }
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .hud-cinders-strip > .hud-center {
+  position: relative; top: calc(-5px / var(--ui-zoom,1));
+}
