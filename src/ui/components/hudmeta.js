@@ -152,7 +152,7 @@ export function sharedRunHudHtml(model) {
   // band draws one way. A HOST CONTEXT is not a grip: `layout` is chosen by the
   // screen (the map's W4b 10 vh header, styles/kit.css § MAP HEADER), never by
   // the player, and combat passes none.
-  return `<header class="topbar combat-hud shared-hud as-band stack${headerClass ? ` ${esc(headerClass)}` : ''}"${layout ? ` data-hud-layout="${esc(layout)}"` : ''} data-has-utility-potions="false" ${uiComponentAttrs(model.component, place)}>
+  return `<header class="topbar combat-hud shared-hud as-band stack${headerClass ? ` ${esc(headerClass)}` : ''}"${layout ? ` data-hud-layout="${esc(layout)}"` : ''} data-shared-chrome="true" data-has-utility-potions="false" ${uiComponentAttrs(model.component, place)}>
     <div class="hud-top as-cluster stack">
       ${part(model, UI.runHeaderStrip, runHeaderStripHtml)}
       ${part(model, UI.primaryHudRow, primaryHudRowHtml)}${orientationHtml ? `

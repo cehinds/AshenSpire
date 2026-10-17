@@ -40,3 +40,18 @@ test('all four class held stances share their own unchanged ready body height', 
     }
   }
 });
+
+test('registered enemy held bodies normalize to their idle while preserving floor480',()=>{
+  const paths=Object.keys(COMBAT_BODY_LANDMARKS).filter(path=>path.startsWith('assets/enemy-poses/expansion/'));
+  assert(paths.length>0);
+  for(const path of paths){
+    const body=COMBAT_BODY_LANDMARKS[path];
+    const idle=COMBAT_BODY_LANDMARKS[path.replace(/\/[^/]+\.webp$/,'/idle.webp')];
+    assert(idle,`${path} idle semantic reference`);
+    const reference=idle.feetY-idle.headY;
+    const draw=bodyPlacement({left:0,top:0,width:512,height:512,anchorX:256},body,reference,480);
+    assert.equal(draw.body.feetY,480);
+    assert.equal(draw.body.feetY-draw.body.headY,reference);
+    assert(body.headY>=0&&body.headY<body.feetY&&body.feetY<=body.height);
+  }
+});

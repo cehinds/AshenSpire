@@ -36,11 +36,3 @@
 :root[data-display-appearance='alternative'] .combat[data-desktop-header='true'] > .combat-hud.shared-hud .hud-actions > :is(button,.hud-cinders-strip) {
   pointer-events:auto;
 }
-:root[data-display-appearance='alternative'] .combat[data-desktop-header='true'] > .combat-hud.shared-hud .hud-actions > .hud-info-row.hud-cinders-strip {
-  position:static; inset:auto; grid-area:auto; transform:none; margin:0; padding:0;
-  max-width:none; width:max-content; flex:none; align-self:center;
-}
-
-:root[data-display-appearance='alternative'] .combat[data-desktop-header='true'] > .combat-hud.shared-hud .hud-vitals-panel {
-  max-width:var(--desktop-header-left-width);
-}
