@@ -1,0 +1,27 @@
+{
+  "id": "targeting_area",
+  "tag": "targeting:area",
+  "version": "1.0.0",
+  "family": "targeting",
+  "label": "Area",
+  "description": "An area action; most Counters do not cover it.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "targeting_area",
+    "color": "9FC3E8"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/model/proposalStatusRules.js",
+    "symbol": "proposalTargetRules"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "mechanic": "damage.physical",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

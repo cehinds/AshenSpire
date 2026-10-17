@@ -1,0 +1,8 @@
+{
+  "mechanic": "equipment.mainHand",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

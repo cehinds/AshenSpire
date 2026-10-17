@@ -1,0 +1,27 @@
+{
+  "id": "source_weapon",
+  "tag": "source:weapon",
+  "version": "1.0.0",
+  "family": "source",
+  "label": "Weapon",
+  "description": "Categorized Weapon identity; effects are authored separately.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "source_weapon",
+    "color": "9FC3E8"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/skillXp.js",
+    "symbol": "recordSkillXp"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "id": "classification.power",
+  "tag": "classification.power",
+  "version": "1.0.0",
+  "family": "classification",
+  "label": "Power",
+  "description": "Tag classification.power in the classification family.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "classification.power"
+  },
+  "portability": "data"
+}

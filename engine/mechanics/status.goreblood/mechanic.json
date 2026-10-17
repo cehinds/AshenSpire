@@ -1,0 +1,25 @@
+{
+  "id": "status.goreblood",
+  "tag": "status.goreblood",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Goreblood",
+  "description": "Poise thresholds no longer increase after filling.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.goreblood"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js"
+  }
+}

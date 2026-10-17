@@ -1,0 +1,27 @@
+{
+  "id": "trait_counterstrike",
+  "tag": "trait:counterstrike",
+  "version": "1.0.0",
+  "family": "trait",
+  "label": "Counterstrike",
+  "description": "+50% effectiveness; +75% when the player's stance has advantage over the target's.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "trait_counterstrike",
+    "color": "9FC3E8"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/model/combatTacticsRules.js",
+    "symbol": "traitValuesProblems"
+  }
+}

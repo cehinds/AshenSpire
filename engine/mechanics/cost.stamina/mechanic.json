@@ -1,0 +1,26 @@
+{
+  "id": "cost.stamina",
+  "tag": "cost.stamina",
+  "version": "1.0.0",
+  "family": "cost",
+  "label": "Stamina",
+  "description": "Tag cost.stamina in the cost family.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "cost.stamina"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/combat.js",
+    "symbol": "recoverAtTurnEnd"
+  }
+}

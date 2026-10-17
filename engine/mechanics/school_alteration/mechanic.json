@@ -1,0 +1,26 @@
+{
+  "id": "school_alteration",
+  "tag": "school:alteration",
+  "version": "1.0.0",
+  "family": "school",
+  "label": "Alteration",
+  "description": "Defensive and shaping magic: Ward, resource shaping and control. Answers ranged pressure.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "school_alteration",
+    "color": "9BC8BE"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/model/combatCardProfile.js"
+  }
+}

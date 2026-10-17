@@ -1,0 +1,23 @@
+{
+  "id": "fx_guile",
+  "tag": "fx:guile",
+  "version": "1.0.0",
+  "family": "fx",
+  "label": "Guile",
+  "description": "Guile visual identity; no combat modifier.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "fx_guile",
+    "color": "9FC3E8"
+  },
+  "portability": "data"
+}

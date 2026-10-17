@@ -1,0 +1,113 @@
+[
+  {
+    "name": "breakPoise drains the poise meter",
+    "given": {
+      "entities": {
+        "enemy": {
+          "poise": {
+            "value": 10,
+            "max": 10
+          },
+          "stamina": 5,
+          "maxStamina": 8
+        }
+      }
+    },
+    "when": {
+      "command": "mechanic.stagger.breakPoise",
+      "with": {
+        "target": "enemy",
+        "amount": 4
+      }
+    },
+    "then": {
+      "entities": {
+        "enemy": {
+          "poise": {
+            "value": 6
+          },
+          "stamina": 5
+        }
+      },
+      "events": []
+    }
+  },
+  {
+    "name": "a broken poise staggers: Vulnerable 1 and 1 SP lost",
+    "given": {
+      "entities": {
+        "enemy": {
+          "poise": {
+            "value": 0,
+            "max": 10
+          },
+          "stamina": 5,
+          "maxStamina": 8,
+          "statuses": {}
+        }
+      }
+    },
+    "when": {
+      "event": "runtime.poiseBroken",
+      "with": {
+        "target": "enemy"
+      }
+    },
+    "then": {
+      "entities": {
+        "enemy": {
+          "stamina": 4,
+          "statuses": {
+            "vulnerable": {
+              "stacks": 1
+            }
+          }
+        }
+      },
+      "events": [
+        "mechanic.stagger.staggered"
+      ]
+    }
+  },
+  {
+    "name": "a second break stacks Vulnerable",
+    "given": {
+      "entities": {
+        "enemy": {
+          "poise": {
+            "value": 0,
+            "max": 10
+          },
+          "stamina": 3,
+          "maxStamina": 8,
+          "statuses": {
+            "vulnerable": {
+              "stacks": 1
+            }
+          }
+        }
+      }
+    },
+    "when": {
+      "event": "runtime.poiseBroken",
+      "with": {
+        "target": "enemy"
+      }
+    },
+    "then": {
+      "entities": {
+        "enemy": {
+          "stamina": 2,
+          "statuses": {
+            "vulnerable": {
+              "stacks": 2
+            }
+          }
+        }
+      },
+      "events": [
+        "mechanic.stagger.staggered"
+      ]
+    }
+  }
+]

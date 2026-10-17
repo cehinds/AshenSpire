@@ -1,0 +1,25 @@
+{
+  "id": "status.lifeTithe",
+  "tag": "status.lifeTithe",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Life Tithe",
+  "description": "Whenever an enemy dies, heal 8 HP per stack.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.lifeTithe"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js"
+  }
+}

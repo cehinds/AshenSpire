@@ -1,0 +1,25 @@
+{
+  "id": "status.waxingMoon",
+  "tag": "status.waxingMoon",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Waxing Moon",
+  "description": "At the start of your turn, apply 2 Vulnerable to ALL enemies per stack.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.waxingMoon"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js"
+  }
+}

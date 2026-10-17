@@ -1,0 +1,27 @@
+{
+  "id": "school_lightning",
+  "tag": "school:lightning",
+  "version": "1.0.0",
+  "family": "school",
+  "label": "Lightning",
+  "description": "Lightning disruption: Sap weakens direct attacks and enables spell follow-ups.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "school_lightning",
+    "color": "E8D46A"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/actions.js",
+    "symbol": "applyExpandedDamage"
+  }
+}

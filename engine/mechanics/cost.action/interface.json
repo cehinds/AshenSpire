@@ -1,0 +1,8 @@
+{
+  "mechanic": "cost.action",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

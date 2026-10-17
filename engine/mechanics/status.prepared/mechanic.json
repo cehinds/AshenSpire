@@ -1,0 +1,26 @@
+{
+  "id": "status.prepared",
+  "tag": "status.prepared",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Prepared",
+  "description": "Your next setup payoff is empowered. Expires at turn end.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.prepared"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/concurrentStances.js",
+    "symbol": "defensiveCombatStance"
+  }
+}

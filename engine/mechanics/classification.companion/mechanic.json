@@ -1,0 +1,22 @@
+{
+  "id": "classification.companion",
+  "tag": "classification.companion",
+  "version": "1.0.0",
+  "family": "classification",
+  "label": "Companion",
+  "description": "What a companion is. Every object in the companion collection carries this, and nothing outside it may.",
+  "attaches": [
+    "entity"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "classification.companion"
+  },
+  "portability": "data"
+}

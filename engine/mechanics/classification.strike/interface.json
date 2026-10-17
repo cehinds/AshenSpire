@@ -1,0 +1,8 @@
+{
+  "mechanic": "classification.strike",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

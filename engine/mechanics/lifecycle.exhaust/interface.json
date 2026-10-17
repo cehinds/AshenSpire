@@ -1,0 +1,22 @@
+{
+  "mechanic": "lifecycle.exhaust",
+  "commands": {
+    "exhaust": {
+      "params": {
+        "card": "cardRef"
+      },
+      "description": "Move a card from the hand to the exhaust pile."
+    }
+  },
+  "events": {
+    "exhausted": {
+      "payload": {
+        "card": "cardRef"
+      },
+      "description": "Raised after a card is exhausted."
+    }
+  },
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

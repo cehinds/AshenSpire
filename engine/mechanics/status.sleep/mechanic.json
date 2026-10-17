@@ -1,0 +1,26 @@
+{
+  "id": "status.sleep",
+  "tag": "status.sleep",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Sleep",
+  "description": "Locks ordinary cards, Counter and card Evade. Rest restores up to 6 HP and 1 Ward per combat. +10% direct damage received per active stack. Break Sleep: 2 SP per stack.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.sleep"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/combatStatusControl.js",
+    "symbol": "restorePersistentWard"
+  }
+}

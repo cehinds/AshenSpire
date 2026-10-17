@@ -1,0 +1,26 @@
+{
+  "id": "school_earth",
+  "tag": "school:earth",
+  "version": "1.0.0",
+  "family": "school",
+  "label": "Earth",
+  "description": "Grounding and weight: Slowed and Entombed slow or stop enemy turns; Stoneskin keeps Block.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "school_earth",
+    "color": "8A7B5C"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/model/combatCardProfile.js"
+  }
+}

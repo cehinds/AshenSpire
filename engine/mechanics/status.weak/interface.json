@@ -1,0 +1,49 @@
+{
+  "mechanic": "status.weak",
+  "commands": {
+    "apply": {
+      "params": {
+        "target": "entityRef",
+        "stacks": "value"
+      },
+      "description": "Add stacks of Weak to the target."
+    },
+    "remove": {
+      "params": {
+        "target": "entityRef",
+        "amount": "value"
+      },
+      "description": "Remove stacks of Weak from the target."
+    }
+  },
+  "events": {
+    "applied": {
+      "payload": {
+        "target": "entityRef",
+        "stacks": "number"
+      }
+    },
+    "removed": {
+      "payload": {
+        "target": "entityRef",
+        "amount": "number"
+      }
+    }
+  },
+  "queries": {
+    "stacks": {
+      "params": {
+        "target": "entityRef"
+      },
+      "returns": "number",
+      "value": {
+        "f": "stacks",
+        "of": "target",
+        "status": "weak"
+      },
+      "description": "Current Weak stacks on the target."
+    }
+  },
+  "listens": [],
+  "requires": []
+}

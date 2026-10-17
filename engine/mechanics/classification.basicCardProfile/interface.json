@@ -1,0 +1,8 @@
+{
+  "mechanic": "classification.basicCardProfile",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}
