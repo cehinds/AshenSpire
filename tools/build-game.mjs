@@ -105,7 +105,16 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   const commandsOf = slug => Object.keys(mechanics[slug].interface.commands || {});
   const eventsOf = slug => Object.keys(mechanics[slug].interface.events || {});
   const catalogOps = loadOps();
+  const formulaOps = new Set(Object.keys(readJson('engine/runtime/formulas.json').ops || {}));
+  // Every authored { f } formula anywhere in a step or query names a catalog formula (formulas.json).
+  const formulaErrors = (v, where) => {
+    if (Array.isArray(v)) return v.flatMap(x => formulaErrors(x, where));
+    if (!v || typeof v !== 'object') return [];
+    const own = 'f' in v && !formulaOps.has(v.f) ? [`${where}: unknown formula '${v.f}'`] : [];
+    return [...own, ...Object.values(v).flatMap(x => formulaErrors(x, where))];
+  };
   for (const [slug, m] of Object.entries(mechanics)) {
+    for (const [q, def] of Object.entries(m.interface.queries || {})) for (const e of formulaErrors(def.value, `${slug} query ${q}`)) fail(e);
     // Handler entry points: command.<name> is a declared command; event.<slug>.<event> names a declared event (or runtime.*) the mechanic lists in listens.
     for (const handler of m.service.handlers || []) {
       const on = String(handler.on || '');
@@ -132,6 +141,7 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
         };
         // Step kinds, in the runtime's order (SPEC section 6): anything else is 'Unknown step' at run time.
         if (!['op', 'if', 'forEach', 'emit', 'call', 'set'].some(k => k in step)) fail(`${slug}: unknown step ${JSON.stringify(step)}`);
+        for (const e of formulaErrors(Object.fromEntries(Object.entries(step).filter(([k]) => !['do', 'then', 'else'].includes(k))), slug)) fail(e);
         if ('call' in step) check('call', step.call);
         if ('emit' in step) check('emit', step.emit);
         // Ops: every op is in the catalog; a portable mechanic uses only portable ops (SPEC section 8).

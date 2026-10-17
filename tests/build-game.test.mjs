@@ -74,6 +74,7 @@ test('the build fails on dangling references', () => {
   assert.throws(() => buildGame({ patch: ({ mechanics }) => { const m = Object.values(mechanics).find(x => (x.service.handlers || []).some(h => h.on?.startsWith('command.'))); const h = m.service.handlers.find(x => x.on.startsWith('command.')); h.on = 'command.typo'; } }), /handler 'command\.typo' is not a command in its interface/);
   assert.throws(() => buildGame({ patch: ({ mechanics }) => { const m = Object.values(mechanics).find(x => (x.service.handlers || []).length); m.service.handlers[0].do = [{ emt: 'x.y' }]; } }), /unknown step/);
   assert.throws(() => buildGame({ patch: ({ uiComponents }) => { uiComponents.hud.layout = { ref: 'engine/runtime/formulas.json' }; } }), /must live under content\/config\/ui\//);
+  assert.throws(() => buildGame({ patch: ({ mechanics }) => { const m = Object.values(mechanics).find(x => (x.service.handlers || []).length); m.service.handlers[0].do = [{ op: 'damage', amount: { f: 'typo' } }]; } }), /unknown formula 'typo'/);
   assert.throws(() => buildGame({ game: 'nonexistent-game' }));
 });
 

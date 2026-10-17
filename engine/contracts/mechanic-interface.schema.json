@@ -90,7 +90,8 @@
           }
         },
         "required": [
-          "returns"
+          "returns",
+          "value"
         ],
         "additionalProperties": false
       }
