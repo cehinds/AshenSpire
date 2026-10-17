@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "path": "art/enemy-back-proposals/blightedValkyrie/proposal-sheet.png",
+    "sha256": "f5e6e2b9b2dc1c9007a4b37d5ab61c7645a3b3fe82a5a1531d98599c967431c6",
+    "size": [
+      1983,
+      793
+    ]
+  },
+  "grid": {
+    "columns": 5,
+    "rows": 2,
+    "rectPolicy": "adaptive zero meaningful-alpha gutters; prefer full zero alpha"
+  },
+  "output": {
+    "size": [
+      512,
+      512
+    ],
+    "anchor": [
+      256,
+      464
+    ],
+    "sharedScale": null
+  },
+  "alphaThreshold": 32,
+  "sourceBoundary": {
+    "alphaAbove0": 34,
+    "alphaAbove32": 0
+  },
+  "variants": [],
+  "qa": {
+    "errors": [
+      "no zero meaningful-alpha horizontal gutter near midpoint"
+    ],
+    "warnings": []
+  },
+  "cropPlan": {
+    "status": "draft-pending-crop-review",
+    "method": "zero meaningful-alpha gutters; prefer full zero alpha",
+    "horizontal": null,
+    "rows": []
+  }
+}
