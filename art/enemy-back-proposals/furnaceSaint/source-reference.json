@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "actorId": "furnaceSaint",
+  "role": "original identity reference used for rear proposals",
+  "asset": "source-reference.webp",
+  "repository": "cehinds/AshenSpire-art",
+  "path": "hd/assets/enemy-poses/expansion/furnaceSaint/idle.webp",
+  "tag": "hd-assets-v23",
+  "blob": "a2a6200f6915d46995a6371d9a4caa2f72b57d15",
+  "copyPolicy": "Literal WebP bytes; no decoding, re-encoding, crop, resize, masking or creative edits",
+  "note": "Player camera reference intentionally excluded."
+}
