@@ -80,5 +80,103 @@
       "status": "draft-generated"
     }
   },
-  "otherClips": "unbuilt"
+  "otherClips": "unbuilt",
+  "normalization": {
+    "anchorCoordinates": "source",
+    "masterScale": {
+      "stances": 1,
+      "motion": 1,
+      "damage": 0.54
+    },
+    "footAnchors": {
+      "stances": [
+        [
+          235,
+          400
+        ],
+        [
+          670,
+          400
+        ],
+        [
+          1090,
+          400
+        ],
+        [
+          255,
+          790
+        ],
+        [
+          680,
+          790
+        ],
+        [
+          1060,
+          790
+        ],
+        [
+          265,
+          1170
+        ],
+        [
+          670,
+          1195
+        ],
+        [
+          1090,
+          1175
+        ]
+      ],
+      "motion": [
+        [
+          270,
+          440
+        ],
+        [
+          700,
+          440
+        ],
+        [
+          1130,
+          440
+        ],
+        [
+          1555,
+          435
+        ],
+        [
+          260,
+          830
+        ],
+        [
+          695,
+          820
+        ],
+        [
+          1180,
+          830
+        ],
+        [
+          1555,
+          830
+        ]
+      ],
+      "damage": [
+        [
+          515,
+          780
+        ],
+        [
+          1350,
+          780
+        ]
+      ]
+    },
+    "review": {
+      "reviewer": "elite_motion agent",
+      "method": "manual source-image visual estimate",
+      "status": "draft-estimates-pending-normalized-preview",
+      "notes": "Anchors identify visible foot or support-contact baseline, using midpoint where both feet visible. Rear feet can be occluded. Values are visual estimates, not pixel-exact detections. Tail/cape alpha bottom is not used as floor. MasterScale calibrates separately generated damage anatomy to stances and preserves action crouch/height; shared scale then applies. Root must inspect normalized frames before accepting."
+    }
+  }
 }
