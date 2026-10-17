@@ -389,13 +389,14 @@ function scopeRoot() {
   return topVeil() || document.getElementById('app') || document.body;
 }
 
-function focusables() {
+function focusables(key = null) {
   const root = scopeRoot();
   const inModal = root.classList && root.classList.contains('modal-veil');
   const controls = Array.from(root.querySelectorAll(FOCUS_SELECTOR));
   if (root.id === 'app') controls.push(...document.querySelectorAll('#tooltip[data-open="true"][role="dialog"] button:not([disabled])'));
   return controls.filter(
-    (el) => !el.closest?.('[inert]') && visible(el) && (inModal || el.matches('.flask-slot') || !(el.closest && el.closest(CHROME)))
+    (el) => (key === null || keyOf(el) === key) && !el.closest?.('[inert]') && visible(el)
+      && (inModal || el.matches('.flask-slot') || !(el.closest && el.closest(CHROME)))
   );
 }
 
@@ -421,7 +422,10 @@ function keyOf(el) {
 }
 function findByKey(k) {
   if (!k) return null;
-  return focusables().find((el) => keyOf(el) === k) || null;
+  // Restoring one logical target must not measure every unrelated control.
+  // Filter the cheap stable key before visibility can force pending layout;
+  // matching duplicates retain their order and all existing eligibility rules.
+  return focusables(k)[0] || null;
 }
 
 function setFocus(el, remember = true) {
