@@ -46,7 +46,8 @@ function sandbox({ pack = false } = {}) {
   // Branch-owned artwork is authored under the selected checkout, outside
   // the shared packs (artPath resolves non-pack paths against that root).
   // Portable variant builds read these bytes and validate their catalog hashes.
-  for (const d of ['src', 'styles', 'tools', 'content', 'assets-display', ...(pack ? ['asset-data'] : [])]) {
+  // Root engine modules are runtime dependencies of the game profile and UI.
+  for (const d of ['src', 'engine', 'styles', 'tools', 'content', 'assets-display', ...(pack ? ['asset-data'] : [])]) {
     if (existsSync(resolve(ROOT, d))) cpSync(resolve(ROOT, d), resolve(dir, d), { recursive: true });
   }
   copyPackTrees(dir, ['assets-mobile', 'assets/fonts', ...(pack ? ['music', 'map-detail'] : [])]);
@@ -127,7 +128,7 @@ function forceTreeEol(dir, eol) {
       else if (textExts.has(entry.name.slice(entry.name.lastIndexOf('.')).toLowerCase())) paths.push(child);
     }
   };
-  for (const rel of ['src', 'styles', 'assets', 'assets-mobile']) walk(rel);
+  for (const rel of ['src', 'engine', 'styles', 'assets', 'assets-mobile']) walk(rel);
   paths.push('index.html');
   forceEol(dir, paths, eol);
 }
