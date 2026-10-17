@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "status": "rejected",
+  "alphaThreshold": 32,
+  "output": {
+    "size": [
+      512,
+      512
+    ],
+    "anchor": [
+      256,
+      464
+    ]
+  },
+  "masters": {},
+  "frames": [],
+  "errors": [
+    "stances/sweep: empty or clipped cell"
+  ],
+  "warnings": []
+}
