@@ -140,7 +140,7 @@ def run(root):
         for frame in frames:
             left, top, right, bottom = frame["full"]
             ax, ay = frame["anchor"]
-            for distance, room in ((ax-left,224), (right-ax,224), (ay-top,432), (bottom-ay,16)):
+            for distance, room in ((ax-left,224), (right-ax,224), (ay-top,432), (bottom-ay,47)):
                 if distance > 0:
                     scale = min(scale, room/(distance*frame["calibration"]))
         report["output"]["sharedScale"] = scale
