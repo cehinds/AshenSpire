@@ -3,6 +3,7 @@
 // supported route, not a removed Quick Start menu control. --url checks a built
 // standalone. Every click/key travels through CDP and is counted.
 
+import { CORE_ENTRY_SEED, CORE_INPUT_ALLOWANCE, CORE_INPUT_BUDGET as BUDGET } from './core-entry-fixture.mjs';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -22,11 +23,6 @@ const BROWSERS = [
   '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
 ].filter(Boolean);
 
-// Authored Core route: startup (1), New/slot/review (3), class/next/begin
-// (3), select/enter/leave the initial shrine (3), select/enter first encounter
-// (2), select/target first card plus optional tutorial Skip (3). Total 15.
-const CORE_INPUT_ALLOWANCE = { startup: 1, saveSlot: 3, creation: 3, entryRest: 3, firstEncounter: 2, firstCombat: 3 };
-const BUDGET = Object.values(CORE_INPUT_ALLOWANCE).reduce((sum, value) => sum + value, 0);
 const args = process.argv.slice(2);
 const argOf = (flag) => { const i = args.indexOf(flag); return i >= 0 ? args[i + 1] : null; };
 const browserPath = argOf('--browser') || BROWSERS.find((p) => existsSync(p));
@@ -131,10 +127,10 @@ async function main() {
     spend(label);
     await clickAt(pt.x, pt.y);
   };
-  const pressKey = async (key, code, keyCode, label) => {
+  const pressKey = async (key, code, keyCode, label, modifiers = 0) => {
     spend(label);
     for (const type of ['keyDown', 'keyUp']) {
-      await cdp.send('Input.dispatchKeyEvent', { type, key, code, windowsVirtualKeyCode: keyCode, nativeVirtualKeyCode: keyCode }, S);
+      await cdp.send('Input.dispatchKeyEvent', { type, key, code, modifiers, windowsVirtualKeyCode: keyCode, nativeVirtualKeyCode: keyCode }, S);
     }
     await wait(150);
   };
@@ -176,10 +172,10 @@ async function main() {
     for (let step = 0; step < 24; step += 1) {
       if (await evalIn(`!!window.__combat && !!document.querySelector('.hand .card')`)) break;
       const next = await evalIn(`(() => {
-        const visible = n => n && !n.hidden && !n.disabled && n.getBoundingClientRect().width > 0 && n.getAttribute('aria-disabled') !== 'true';
+        const visible = n => { if (!n || n.hidden || n.disabled || n.getAttribute('aria-disabled') === 'true') return false; const r=n.getBoundingClientRect(); return r.width>0 && r.height>0 && n.contains(document.elementFromPoint(r.left+r.width/2,r.top+r.height/2)); };
         const pick = selector => [...document.querySelectorAll(selector)].find(visible);
-        const direct = pick('#shrine-leave, .prologue-screen .prologue-controls button, .confirmation-modal .confirmation-confirm, .map-tray [data-map-action="enter"], .map-enter');
-        const node = direct || pick('.map-node.monster.reachable:not(.current)') || pick('.map-node.reachable:not(.current)');
+        const direct = pick('#shrine-leave, #leave-shop, .prologue-screen .prologue-controls button, .confirmation-modal .confirmation-confirm, .map-tray [data-map-action="enter"], .map-enter');
+        const node = direct || pick('.map-node.monster.reachable:not(.current)') || [...document.querySelectorAll('.map-node.reachable:not(.current):not(.visited)')].filter(visible).sort((a,b)=>a.getBoundingClientRect().left-b.getBoundingClientRect().left)[0];
         const dialogue = node || [...document.querySelectorAll('.dialogue-screen button, .event-screen button, .class-mastery-node')].find(visible);
         if (!dialogue) return null;
         document.querySelectorAll('[data-input-probe-next]').forEach(n => delete n.dataset.inputProbeNext);
@@ -187,7 +183,10 @@ async function main() {
         return (dialogue.textContent || dialogue.getAttribute('aria-label') || dialogue.className).trim().slice(0,100);
       })()`);
       if (next) await click('[data-input-probe-next="true"]', next);
-      else await wait(500);
+      else {
+        if (step === 8) console.log('    route waiting:', await evalIn(`JSON.stringify({screens:[...document.querySelectorAll('main > *, #app > *')].map(n=>n.className),buttons:[...document.querySelectorAll('button')].filter(n=>n.getBoundingClientRect().width>0).map(n=>({text:n.textContent.slice(0,80),id:n.id,cls:n.className}))})`));
+        await wait(500);
+      }
     }
     // Any affordable card is a first card play. A shuffled opening hand can
     // hold no attack at all (Defend, Dodge Roll, Brace…), so the probe takes an
@@ -254,6 +253,10 @@ async function main() {
     await click('#cz-classes .cz-class', 'a class');
     await click('#cz-next', 'Next (creation)');
     if (await evalIn(onStage('review'))) {
+      await click('#seed-input', 'seed field');
+      await pressKey('a', 'KeyA', 65, 'select seed text', 2);
+      spend('type route seed', CORE_ENTRY_SEED.length);
+      await cdp.send('Input.insertText', { text: CORE_ENTRY_SEED }, S);
       await click('#cz-start', 'Begin Core');
       return;
     }
