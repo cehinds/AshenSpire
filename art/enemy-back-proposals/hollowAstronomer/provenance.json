@@ -12,5 +12,11 @@
       "blob": "21a726b235b161ed1d84e630e7ceaf82a89cc7b5"
     }
   ],
-  "note": "Fresh rear designs from original enemy reference with deliberately wide transparent gutters. Supersedes prior sheet with no safe horizontal cut. Crop approval pending."
+  "note": "Fresh rear designs from original enemy reference with deliberately wide transparent gutters. Supersedes prior sheet with no safe horizontal cut. Crop approval pending.",
+  "status": "draft-proposals",
+  "qa": {
+    "normalization": "passed safe-gutter/source hash checks",
+    "cropReview": "Independent elite_inventory inspected complete rear figures and equipment; no visible clipping",
+    "runtimePublication": "not published"
+  }
 }
