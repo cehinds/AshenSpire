@@ -1,7 +1,7 @@
 name: Enemy back module QA
 on:
   push:
-    branches: ['worker/EnemyBackSprites/module', 'worker/EnemyBackSprites/gallery-preview']
+    branches: ['worker/EnemyBackSprites/module', 'worker/EnemyBackSprites/gallery-preview', 'worker/EnemyBackSprites/gallery-content']
   pull_request:
     branches: ['feature/EnemyBackSprites']
     paths: ['pose-studio/enemy-back-proposals/**', '.github/workflows/enemy-back-module-qa.yml']
@@ -29,7 +29,7 @@ jobs:
             package.json
             art-manifest.json
             art-release.json
-            art/enemy-back-proposals/wyrmAspirant
+            art/enemy-back-proposals
           sparse-checkout-cone-mode: false
       - uses: actions/setup-node@v4
         with:
@@ -37,9 +37,17 @@ jobs:
       - name: Build actual static Workbench without external art
         run: node tools/workbench-static.mjs --out /tmp/enemy-back-static --base /qa/workbench/ --no-art
       - name: Verify normalized art hashes
-        run: node pose-studio/enemy-back-proposals/integrate-normalized.mjs wyrmAspirant
-      - name: Model contract
-        run: node --test pose-studio/enemy-back-proposals/model.test.mjs
+        run: |
+          node pose-studio/enemy-back-proposals/integrate-normalized.mjs wyrmAspirant
+          node pose-studio/enemy-back-proposals/integrate-normalized.mjs wyrmLord
+          node pose-studio/enemy-back-proposals/integrate-normalized.mjs courtDuelist
+          node pose-studio/enemy-back-proposals/integrate-normalized.mjs fellWarden
+          node pose-studio/enemy-back-proposals/integrate-normalized.mjs furnaceSaint
+          node pose-studio/enemy-back-proposals/integrate-normalized.mjs stitchedKing
+      - name: Model and Workbench registration contracts
+        run: |
+          node --test pose-studio/enemy-back-proposals/model.test.mjs
+          node --test --test-name-pattern='the registry is well formed|every HTML tool page' workbench/tests/registry.test.mjs
       - name: Install isolated browser tooling
         run: |
           npm install --prefix /tmp/enemy-back-qa playwright

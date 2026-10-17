@@ -244,7 +244,7 @@ async function main() {
     }
   }
   // Scoped authoring review: nested module and its feature-local draft sources.
-  for (const dir of ['pose-studio/enemy-back-proposals', 'art/enemy-back-proposals']) {
+  for (const dir of ['pose-studio/enemy-back-proposals', 'art/enemy-back-proposals', 'art/enemy-back-motion']) {
     const source = path.join(REPO, dir);
     if (existsSync(source)) await copyTree(source, path.join(game, dir), { textRe: GAME_TEXT, rewrite: gameRewrite });
     if (dir === 'pose-studio/enemy-back-proposals' && existsSync(path.join(game, dir, 'index.html'))) {

@@ -5,6 +5,7 @@ import {execFileSync} from 'node:child_process';
 import {resolve,extname} from 'node:path';
 import {pathToFileURL} from 'node:url';
 const {chromium}=await import(pathToFileURL(process.env.PLAYWRIGHT_MODULE).href);
+const canonical=JSON.parse(await readFile('pose-studio/enemy-back-proposals/manifest.json','utf8'));const resetActor=canonical.actors.find(a=>!a.proposals.length)||canonical.actors[1];
 const root=resolve('.'),output='/tmp/enemy-back-module-qa';
 await mkdir(output,{recursive:true});
 const types={'.html':'text/html','.mjs':'text/javascript','.js':'text/javascript','.css':'text/css','.json':'application/json'};
@@ -21,6 +22,11 @@ try{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(url);await page.locator('#grid .card').first().waitFor();
   assert.equal(await page.locator('#actor option').count(),13);
+  for(const candidate of canonical.actors.filter(a=>a.proposals.length)){
+   await page.selectOption('#actor',candidate.id);await page.selectOption('#stance','neutral');
+   await page.waitForFunction(()=>document.querySelectorAll('#grid img').length===10&&[...document.querySelectorAll('#grid img')].every(img=>img.complete&&img.naturalWidth===512));
+  }
+  await page.selectOption('#actor','wyrmAspirant');await page.selectOption('#stance','neutral');
   assert.equal(await page.locator('#stance option').count(),9);
   assert.equal(await page.locator('#grid .card').count(),10);
   assert.equal(await page.locator('#grid img').count(),10);
@@ -33,14 +39,14 @@ try{
   await page.locator('[data-pick="v03"]').check();
   assert.equal(await page.locator('#compare article').count(),2);
   assert.equal(await page.locator('[data-pick="v01"]').isChecked(),false);
-  await page.selectOption('#actor','courtDuelist');
+  await page.selectOption('#actor',resetActor.id);
   assert.equal(await page.locator('#compare article').count(),0);
-  assert.match(await page.locator('#notice').innerText(),/default stance: unselected/);
+  assert.ok((await page.locator('#notice').innerText()).includes('default stance: '+(resetActor.defaultStance||'unselected')));
   const downloadEvent=page.waitForEvent('download');await page.locator('#download').click();const download=await downloadEvent;
   assert.equal(download.suggestedFilename(),'enemy-back-proposals.json');
   const target=output+'/'+name+'-manifest.json';await download.saveAs(target);const exported=JSON.parse(await readFile(target,'utf8'));
   assert.equal(exported.actors.length,13);
-  assert.equal(await page.locator('#grid img').count(),0,'Missing rear art must not receive front fallback');
+  if(!resetActor.proposals.length)assert.equal(await page.locator('#grid img').count(),0,'Missing rear art must not receive front fallback');
   const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);
   assert.equal(overflow,false,'No horizontal viewport overflow');
   await page.selectOption('#actor','wyrmAspirant');await page.selectOption('#stance','neutral');
