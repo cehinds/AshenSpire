@@ -9,7 +9,7 @@ import os from 'node:os';
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { createWorkbench, projectStateDir } from '../server.mjs';
-import { allowedKind, lineDiff, createFileService } from '../core/files.mjs';
+import { allowedKind, readableKind, lineDiff, createFileService } from '../core/files.mjs';
 
 const sha = (text) => createHash('sha256').update(text).digest('hex');
 
@@ -362,4 +362,25 @@ test('restore puts a backed-up version back through the same save path, and is i
   assert.equal(listed.backups.length, 2);
   assert.equal((await post('/api/files/restore', { set: '2000-01-01T00-00-00-000Z-000000' })).status, 404);
   assert.equal((await post('/api/files/restore', { set: '../x' })).status, 400);
+});
+
+test('engine module manifests, schemas and guides are readable and listable but never savable', async (t) => {
+  const root = await project(t);
+  const dir = path.join(root, 'engine/modules/demo');
+  await fs.mkdir(dir, { recursive: true });
+  const text = { 'module.json': '{"id":"demo"}\n', 'settings.schema.json': '{"type":"object"}\n', 'guide.md': '# Demo\n', 'defaults.json': '{}\n' };
+  for (const [name, body] of Object.entries(text)) await fs.writeFile(path.join(dir, name), body);
+  assert.equal(readableKind('engine/modules/demo/module.json'), 'json');
+  assert.equal(readableKind('engine/modules/demo/guide.md'), 'text');
+  assert.equal(readableKind('engine/kernel/kernel.json'), null);
+  assert.equal(allowedKind('engine/modules/demo/module.json'), null, 'still not editable');
+  const files = createFileService({ root, stateDir: path.join(root, '.wb-state') });
+  for (const name of ['module.json', 'settings.schema.json', 'guide.md']) {
+    const rel = `engine/modules/demo/${name}`;
+    assert.equal((await files.read(rel)).text, text[name], rel);
+    await assert.rejects(files.save([{ path: rel, text: 'x', baseHash: null }]), (e) => e.status === 403, `${rel} save refused`);
+    await assert.rejects(files.diff(rel, 'x'), (e) => e.status === 403, `${rel} diff refused`);
+  }
+  const listed = await files.list('engine/modules', 'json');
+  assert.deepEqual(listed.files, ['engine/modules/demo/defaults.json', 'engine/modules/demo/module.json', 'engine/modules/demo/settings.schema.json']);
 });

@@ -45,6 +45,8 @@ const GAME_PROFILE_JSON = /^games\/ashenspire\/(?:game\.json|(?:presets|bundles|
 const GAME_LOCK = 'games/ashenspire/game.lock.json';
 // A module's authored defaults, read by the same compiler.
 const ENGINE_MODULE_DEFAULTS = /^engine\/modules\/[\w.-]+\/defaults\.json$/;
+// A module's manifest, settings schema and guide: readable and listable (the Configuration studio shows them), never savable.
+const ENGINE_MODULE_READONLY = /^engine\/modules\/[\w.-]+\/(?:module\.json|settings\.schema\.json|guide\.md)$/;
 // The profile entries (the game and its presets) are also checked with the game's profile resolver on save.
 const PROFILE_ENTRY = /^games\/ashenspire\/(?:game\.json|presets\/[\w.-]+\.json)$/;
 // One named file the game reads through tools/card-components.mjs (Layout Studio's Card layers mode).
@@ -70,6 +72,14 @@ export function allowedKind(rel) {
   // A tag-model CSV is readable; a save of one is checked against its rule in commitLocked.
   if (!(editable(rel) || JSON_TREE.test(rel) || (GAME_PROFILE_JSON.test(rel) && rel !== GAME_LOCK) || ENGINE_MODULE_DEFAULTS.test(rel) || JSON_FILES.has(rel) || (TEXT_TREE.test(rel) && TEXT_EXT.test(rel)) || tagModelTable(rel))) return null;
   return kindOf(rel);
+}
+
+/** Like allowedKind, plus the read-only engine module files (module.json, settings.schema.json, guide.md). Read and list use it; save, diff and restore do not. */
+export function readableKind(rel) {
+  const kind = allowedKind(rel);
+  if (kind) return kind;
+  if (typeof rel !== 'string' || refusedPath(rel)) return null;
+  return ENGINE_MODULE_READONLY.test(rel) ? kindOf(rel) : null;
 }
 
 // Line diff lives in ../lib/line-diff.mjs (browser-safe); re-exported for callers here.
@@ -122,7 +132,8 @@ export function createFileService({ root, stateDir, keepBackups = () => 50, onSa
   }
 
   async function read(rel) {
-    const kind = requireKind(rel);
+    const kind = readableKind(rel);
+    if (!kind) throw fail(403, `${String(rel)} is not a readable file in the Workbench`);
     const buf = await readOrNull(await absFor(rel));
     if (buf === null) throw fail(404, `Not found: ${rel}`, { code: 'ENOENT' });
     const tagModel = tagModelTable(rel);
@@ -144,7 +155,7 @@ export function createFileService({ root, stateDir, keepBackups = () => 50, onSa
         if (++seen > MAX_WALK) { truncated = true; return; }
         const child = relDir ? `${relDir}/${entry.name}` : entry.name;
         if (entry.isDirectory()) await visit(child, path.join(absDir, entry.name));
-        else if (allowedKind(child) && (!wanted || wanted.has(path.extname(child).toLowerCase()))) {
+        else if (readableKind(child) && (!wanted || wanted.has(path.extname(child).toLowerCase()))) {
           if (out.length >= MAX_LIST) { truncated = true; return; }
           out.push(child);
         }
