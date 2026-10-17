@@ -1,0 +1,37 @@
+name: Enemy rear modal bounds
+on:
+  push:
+    branches: ['worker/EnemyBackSprites/gallery-modal-fix']
+  pull_request:
+    branches: ['feature/EnemyBackSprites']
+    paths: ['pose-studio/enemy-back-proposals/embed-gallery.mjs', 'pose-studio/enemy-back-proposals/modal-qa.mjs', '.github/workflows/enemy-back-modal-qa.yml']
+permissions:
+  contents: read
+jobs:
+  modal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            pose-studio/enemy-back-proposals
+            art/enemy-back-proposals/wyrmAspirant/v02.png
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated browser tooling
+        run: |
+          npm install --prefix /tmp/enemy-rear-modal-tool playwright
+          /tmp/enemy-rear-modal-tool/node_modules/.bin/playwright install --with-deps chromium
+      - name: Verify root modal against actual game zoom and preset rules
+        env:
+          PLAYWRIGHT_MODULE: /tmp/enemy-rear-modal-tool/node_modules/playwright/index.mjs
+        run: node pose-studio/enemy-back-proposals/modal-qa.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: enemy-rear-modal-bounds
+          path: /tmp/enemy-rear-modal/
