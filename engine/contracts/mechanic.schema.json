@@ -116,6 +116,10 @@
     },
     "settings": {
       "type": "object"
+    },
+    "authored": {
+      "type": "boolean",
+      "description": "true when the folder is hand-authored; tools/mechanics-generate.mjs never rewrites it."
     }
   },
   "required": [
