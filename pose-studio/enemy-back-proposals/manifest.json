@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "scope": "ten-designs",
+  "rosterStatus": "Audited canonical encounter roster: 3 elites and 10 bosses. Rear artwork pending.",
+  "sourceCommit": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+  "actors": [
+    {
+      "id": "wyrmAspirant",
+      "name": "Wyrm Aspirant",
+      "role": "elite",
+      "defaultStance": null,
+      "reference": null,
+      "proposals": []
+    },
+    {
+      "id": "courtDuelist",
+      "name": "Duelist of the Court",
+      "role": "elite",
+      "defaultStance": null,
+      "reference": null,
+      "proposals": []
+    },
+    {
+      "id": "wyrmLord",
+      "name": "Wyrm Lord",
+      "role": "elite",
+      "defaultStance": null,
+      "reference": null,
+      "proposals": []
+    },
+    {
+      "id": "fellWarden",
+      "name": "The Fell Warden",
+      "role": "boss",
+      "defaultStance": null,
+      "reference": null,
+      "proposals": []
+    },
+    {
+      "id": "bellKeeper",
+      "name": "The Bell Keeper",
+      "role": "boss",
+      "defaultStance": null,
+      "reference": null,
+      "proposals": []
+    },
+    {
+      "id": "thornMatriarch",
+      "name": "The Thorn Matriarch",
+      "role": "boss",
+      "defaultStance": null,
+      "reference": null,
+      "proposals": []
+    },
+    {
+      "id": "stitchedKing",
+      "name": "The Stitched King",
+      "role": "boss",
+      "defaultStance": null,
+      "reference": null,
+      "proposals": []
+    },
+    {
+      "id": "glassRegent",
+      "name": "The Glass Regent",
+      "role": "boss",
+      "defaultStance": null,
+      "reference": null,
+      "proposals": []
+    },
+    {
+      "id": "marrowOrganist",
+      "name": "The Marrow Organist",
+      "role": "boss",
+      "defaultStance": null,
+      "reference": null,
+      "proposals": []
+    },
+    {
+      "id": "blightedValkyrie",
+      "name": "The Blighted Valkyrie",
+      "role": "boss",
+      "defaultStance": null,
+      "reference": null,
+      "proposals": []
+    },
+    {
+      "id": "furnaceSaint",
+      "name": "The Furnace Saint",
+      "role": "boss",
+      "defaultStance": null,
+      "reference": null,
+      "proposals": []
+    },
+    {
+      "id": "hollowAstronomer",
+      "name": "The Hollow Astronomer",
+      "role": "boss",
+      "defaultStance": null,
+      "reference": null,
+      "proposals": []
+    },
+    {
+      "id": "ashheartDragon",
+      "name": "The Ashheart Dragon",
+      "role": "boss",
+      "defaultStance": null,
+      "reference": null,
+      "proposals": []
+    }
+  ]
+}

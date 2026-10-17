@@ -1,0 +1,19 @@
+import {STANCES,proposalsOf,framesOf,coverage,validateManifest,frameAt,safeAsset} from './model.mjs';
+import {assetUrl} from '../../src/ui/assetmap.js';
+const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const resolve=id=>typeof globalThis.ASHEN_ASSET_URL==='function'?globalThis.ASHEN_ASSET_URL(id):new URL('../../'+assetUrl(id),location.href).href;
+let manifest,actor,picks=[],start=performance.now();
+function stage(p){const frames=framesOf(p,$('stance').value);return frames.length?'<div class="stage" data-version="'+p.id+'"><img alt="'+esc(actor.name+' rear view '+p.id)+'"><span class="floor" hidden></span></div>':'<div class="stage"><p class="missing">Rear artwork unavailable for this stance</p></div>';}
+function render(){
+ actor=manifest.actors.find(a=>a.id===$('actor').value);if(!actor){$('grid').textContent='No audited actors yet. Proposed rear artwork has not been published.';return;}
+ const c=coverage(actor);$('notice').textContent=manifest.scope+' · '+c.designs+'/10 designs · '+c.fullSets+'/10 full stance sets · default stance: '+(actor.defaultStance||'unselected')+' · Review proposals only; playable unlocks pending.';
+ $('reference').innerHTML=actor.reference?.asset&&safeAsset(actor.reference.asset)?'<h2>Existing identity reference</h2><img src="'+esc(resolve(actor.reference.asset))+'" alt="'+esc(actor.name+' existing source reference')+'"><p>This source is an identity reference, not proposed rear artwork.</p>':'';
+ $('grid').innerHTML=proposalsOf(actor).map(p=>'<article class="card"><h2>'+esc(p.id)+' · '+esc(p.status)+'</h2>'+stage(p)+'<p class="meta">'+esc(p.provenance?.prompt||'No generated source recorded')+'</p><label><input type="checkbox" data-pick="'+p.id+'" '+(picks.includes(p.id)?'checked':'')+'> Compare</label></article>').join('');
+ const selected=proposalsOf(actor).filter(p=>picks.includes(p.id));$('compare').innerHTML=selected.length?'<h2>Comparison</h2><div class="compare-row">'+selected.map(p=>'<article><h3>'+esc(p.id)+'</h3>'+stage(p)+'</article>').join('')+'</div>':'';
+}
+function tick(now){if(actor)document.querySelectorAll('[data-version]').forEach(el=>{const p=proposalsOf(actor).find(p=>p.id===el.dataset.version),f=frameAt(framesOf(p,$('stance').value),now-start);if(!f)return;const img=el.querySelector('img'),src=resolve(f.asset);if(img.src!==src){img.src=src;img.onerror=()=>{img.hidden=true;el.setAttribute('aria-label','Published rear artwork failed to load');};}const floor=el.querySelector('.floor');floor.hidden=!$('anchors').checked;floor.style.top=(100*f.anchors.feet[1])+'%';});requestAnimationFrame(tick);}
+$('stance').innerHTML=STANCES.map(s=>'<option>'+s+'</option>').join('');
+$('actor').onchange=()=>{picks=[];actor=manifest.actors.find(a=>a.id===$('actor').value);$('stance').value=actor?.defaultStance||'neutral';render();};$('stance').onchange=render;
+document.addEventListener('change',e=>{if(!e.target.dataset.pick)return;const id=e.target.dataset.pick;if(e.target.checked){if(picks.length===2)picks.shift();picks.push(id);}else picks=picks.filter(p=>p!==id);render();});
+$('download').onclick=()=>{const blob=new Blob([JSON.stringify(manifest,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='enemy-back-proposals.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+try{const r=await fetch('./manifest.json');if(!r.ok)throw Error('Manifest HTTP '+r.status);manifest=await r.json();const errors=validateManifest(manifest);if(errors.length)throw Error(errors.join('; '));$('actor').innerHTML=manifest.actors.map(a=>'<option value="'+esc(a.id)+'">'+esc(a.name||a.id)+'</option>').join('');$('notice').textContent=manifest.rosterStatus;render();requestAnimationFrame(tick);}catch(e){$('notice').textContent='Review unavailable: '+e.message;$('download').disabled=true;}

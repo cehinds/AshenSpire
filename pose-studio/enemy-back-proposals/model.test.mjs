@@ -1,0 +1,14 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {STANCES,proposalsOf,coverage,framesOf,frameAt,validateManifest,safeAsset} from './model.mjs';
+const frame={asset:'art/enemy-back-proposals/elite/v01.png',durationMs:100,canvas:[512,512],anchors:{feet:[.5,.90625]}};
+const proposal={id:'v01',status:'draft',perspective:'rear',provenance:{sourceSha256:'a'.repeat(64),prompt:'Original rear design',publicationStatus:'draft-unpublished',artRelease:null},stances:{neutral:{frames:[frame]}}};
+const actor={id:'elite',defaultStance:null,proposals:[proposal]};
+const manifest={schemaVersion:1,scope:'ten-designs',actors:[actor]};
+test('missing designs remain explicit and never count as available',()=>{assert.equal(proposalsOf(actor).length,10);assert.deepEqual(coverage(actor),{designs:1,fullSets:0,total:10});assert.equal(proposalsOf(actor)[9].status,'missing');});
+test('front imagery cannot enter rear frame resolution',()=>{assert.deepEqual(framesOf({...proposal,perspective:'front'},'neutral'),[]);assert.deepEqual(framesOf(proposal,'evade'),[]);});
+test('draft art needs provenance but no invented release',()=>{assert.deepEqual(validateManifest(manifest),[]);const bad=structuredClone(manifest);bad.actors[0].proposals[0].provenance.sourceSha256=null;assert.ok(validateManifest(bad).length);});
+test('released art requires a release pin and anchors must normalize',()=>{const bad=structuredClone(manifest);bad.actors[0].proposals[0].provenance.publicationStatus='released';assert.ok(validateManifest(bad).length);bad.actors[0].proposals[0].provenance.artRelease='hd-assets-v1';bad.actors[0].proposals[0].stances.neutral.frames[0].anchors.feet=[.5,2];assert.ok(validateManifest(bad).length);});
+test('frame playback respects durations and loops at boundary',()=>{const b={...frame,durationMs:200};assert.equal(frameAt([frame,b],99),frame);assert.equal(frameAt([frame,b],100),b);assert.equal(frameAt([frame,b],300),frame);assert.equal(frameAt([],100),null);});
+test('full sets require all nine stance cells and default selection stays per actor',()=>{const full=structuredClone(actor);for(const s of STANCES)full.proposals[0].stances[s]={frames:[frame]};assert.equal(coverage(full).fullSets,1);full.defaultStance='wrong';assert.ok(validateManifest({...manifest,actors:[full]}).length);});
+test('asset paths reject traversal and remote URLs',()=>{assert.equal(safeAsset('https://example.com/a.png'),null);assert.equal(safeAsset('assets/../x.png'),null);assert.equal(safeAsset(frame.asset),frame.asset);});
