@@ -1,0 +1,115 @@
+name: combat feedback diagnostic (observational)
+
+# Helper branch only. This workflow and driver never merge into production.
+on:
+  push:
+    branches: ['worker/CombatHudLayoutBatch/timing-diagnostic']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: combat-feedback-diagnostic-${{ github.sha }}
+  cancel-in-progress: false
+
+env:
+  SOURCE_SHA: 499ecee90255201d99be6b18d7e5cf620332f1fe
+  ART_PACKS: light,common
+  ASHEN_ART_SOURCE: cache
+
+jobs:
+  capture:
+    if: github.ref == 'refs/heads/worker/CombatHudLayoutBatch/timing-diagnostic'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out the literal reviewed production source
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
+          lfs: false
+      - name: Check out this immutable helper event commit separately
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.sha }}
+          path: .diagnostic-control
+          persist-credentials: false
+          lfs: false
+      - uses: ./.github/actions/setup-node
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
+      - uses: ./.github/actions/which-browser
+      - name: Prepare bounded artifact directory
+        run: mkdir -p "$RUNNER_TEMP/combat-feedback-diagnostic"
+      - name: Build the pinned source with canonical tools
+        id: build
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tools/launch.mjs --build-only 2>&1 | tee "$RUNNER_TEMP/combat-feedback-diagnostic/build.log"
+      - name: Unchanged quick-start input gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tools/verdict.mjs -- node tools/quick-start-inputs.mjs --only quick 2>&1 | tee "$RUNNER_TEMP/combat-feedback-diagnostic/quick-inputs.log"
+      - name: Unchanged native timing verdict (failure remains failure)
+        id: native
+        if: always() && steps.build.outcome == 'success'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tools/verdict.mjs -- node tools/click-impact-probe.mjs 2>&1 | tee "$RUNNER_TEMP/combat-feedback-diagnostic/native.log"
+      - name: Separate observational three-play CPU and timeline capture
+        if: always() && steps.build.outcome == 'success'
+        timeout-minutes: 5
+        shell: bash
+        env:
+          DIAGNOSTIC_SOURCE_ROOT: ${{ github.workspace }}
+          DIAGNOSTIC_SOURCE_SHA: ${{ env.SOURCE_SHA }}
+          DIAGNOSTIC_HELPER_SHA: ${{ github.sha }}
+          DIAGNOSTIC_NATIVE_OUTCOME: ${{ steps.native.outcome }}
+          DIAGNOSTIC_OUT: ${{ runner.temp }}/combat-feedback-diagnostic
+        run: |
+          set -euo pipefail
+          node .diagnostic-control/tools/click-impact-diagnostic.mjs --plays 3 2>&1 | tee "$RUNNER_TEMP/combat-feedback-diagnostic/diagnostic.log"
+      - name: Bound logs and verify the upload allowlist
+        id: bounds
+        if: always()
+        env:
+          DIAGNOSTIC_OUT: ${{ runner.temp }}/combat-feedback-diagnostic
+        run: |
+          node --input-type=module <<'NODE'
+          import { readdirSync, lstatSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+          import { join } from 'node:path';
+          const dir = process.env.DIAGNOSTIC_OUT;
+          mkdirSync(dir, { recursive: true });
+          const allowed = /^(manifest\.json|play-[1-3]-(cpu|trace|measurements)\.json|build\.log|quick-inputs\.log|native\.log|diagnostic\.log)$/;
+          let total = 0;
+          for (const name of readdirSync(dir)) {
+            const path = join(dir, name), stat = lstatSync(path);
+            if (!allowed.test(name) || !stat.isFile() || stat.isSymbolicLink()) throw new Error(`Unexpected upload entry: ${name}`);
+            if (name.endsWith('.log') && stat.size > 512 * 1024) writeFileSync(path, readFileSync(path).subarray(-512 * 1024));
+            total += lstatSync(path).size;
+          }
+          if (total > 50 * 1024 * 1024) throw new Error(`Upload exceeds 50 MiB: ${total}`);
+          console.log(`Allowlisted diagnostic artifacts: ${total} bytes; no browser profile directory.`);
+          NODE
+      - name: Upload only bounded diagnostic files, including failure evidence
+        if: always() && steps.bounds.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: combat-feedback-${{ env.SOURCE_SHA }}-${{ github.run_id }}
+          retention-days: 7
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/combat-feedback-diagnostic/manifest.json
+            ${{ runner.temp }}/combat-feedback-diagnostic/play-[1-3]-cpu.json
+            ${{ runner.temp }}/combat-feedback-diagnostic/play-[1-3]-trace.json
+            ${{ runner.temp }}/combat-feedback-diagnostic/play-[1-3]-measurements.json
+            ${{ runner.temp }}/combat-feedback-diagnostic/build.log
+            ${{ runner.temp }}/combat-feedback-diagnostic/quick-inputs.log
+            ${{ runner.temp }}/combat-feedback-diagnostic/native.log
+            ${{ runner.temp }}/combat-feedback-diagnostic/diagnostic.log
