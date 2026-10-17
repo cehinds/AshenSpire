@@ -2,7 +2,9 @@
   "status": "draft-generated-not-normalized",
   "seed": {
     "path": "art/enemy-back-proposals/wyrmLord/v01.png",
-    "ref": "e94df85539339c2860a884f7258d30f514a89e14"
+    "ref": "12744f2f1eca51993c1e42bb95e23ae8f6b0d2d3",
+    "repository": "cehinds/AshenSpire",
+    "sha256": "0cac89ff3a73b42c79dd8bbf8e5b993d5f117bf6f95cd1fbe0d020045d50caa8"
   },
   "generator": "image_gen.imagegen",
   "generationDate": "2026-10-17",
@@ -86,7 +88,7 @@
   "normalization": {
     "anchorCoordinates": "source",
     "masterScale": {
-      "stances": 1,
+      "stances": 1.22,
       "motion": 1.2,
       "damage": 0.54
     },
@@ -134,13 +136,56 @@
           1460,
           770
         ]
+      ],
+      "stances": [
+        [
+          284,
+          368
+        ],
+        [
+          712,
+          368
+        ],
+        [
+          1106,
+          359
+        ],
+        [
+          1506,
+          359
+        ],
+        [
+          1887,
+          362
+        ],
+        [
+          262,
+          710
+        ],
+        [
+          676,
+          699
+        ],
+        [
+          1100,
+          735
+        ],
+        [
+          1504,
+          730
+        ],
+        [
+          1856,
+          741
+        ]
       ]
     },
     "review": {
       "reviewer": "elite_motion agent",
       "method": "manual source-image visual estimate",
       "status": "draft-estimates-pending-normalized-preview",
-      "notes": "Anchors identify visible foot or support-contact baseline, using midpoint where both feet visible. Rear feet can be occluded. Values are visual estimates, not pixel-exact detections. Tail/cape alpha bottom is not used as floor. MasterScale calibrates separately generated damage anatomy to stances and preserves action crouch/height; shared scale then applies. Root must inspect normalized frames before accepting."
-    }
+      "notes": "Anchors identify visible foot or support-contact baseline, using midpoint where both feet visible. Rear feet can be occluded. Values are visual estimates, not pixel-exact detections. Tail/cape alpha bottom is not used as floor. MasterScale calibrates separately generated damage anatomy to stances and preserves action crouch/height; shared scale then applies. Root must inspect normalized frames before accepting. Lord repaired10stances measured from native512 support-foot positions using anchor-delta conversion; rear feet occluded, tail bottom excluded. Source stance anatomy~300px, calibrated1.17 toward authored350px. Recovery-body visual comparison by elite_motion: updated stance calibration1.22; excludes raised weapons, estimated remaining body-height drift under approximately6percent. Root final native-frame QA pending."
+    },
+    "stanceBodyHeightPixels": 300
   }
 }
