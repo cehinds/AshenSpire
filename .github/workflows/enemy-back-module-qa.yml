@@ -44,8 +44,10 @@ jobs:
           node pose-studio/enemy-back-proposals/integrate-normalized.mjs fellWarden
           node pose-studio/enemy-back-proposals/integrate-normalized.mjs furnaceSaint
           node pose-studio/enemy-back-proposals/integrate-normalized.mjs stitchedKing
-      - name: Model contract
-        run: node --test pose-studio/enemy-back-proposals/model.test.mjs
+      - name: Model and Workbench registration contracts
+        run: |
+          node --test pose-studio/enemy-back-proposals/model.test.mjs
+          node --test --test-name-pattern='the registry is well formed|every HTML tool page' workbench/tests/registry.test.mjs
       - name: Install isolated browser tooling
         run: |
           npm install --prefix /tmp/enemy-back-qa playwright
