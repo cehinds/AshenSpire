@@ -1,11 +1,13 @@
 // Pure proposal contract. No gameplay selection or image fallback.
 export const STANCES = ['neutral','smash','attack','sweep','counter','defend','evade','spell','preparing'];
+export const REACTIONS = ['hurt','defeated'];
 export const VERSION_IDS = Array.from({length:10},(_,i)=>'v'+String(i+1).padStart(2,'0'));
 export function safeAsset(value) {
  return typeof value==='string' && /^(?:assets(?:-alternative)?|art\/enemy-back-(?:proposals|motion))\/[a-zA-Z0-9_./-]+\.(?:png|webp)$/.test(value) && !value.split('/').includes('..') ? value : null;
 }
 export function proposalsOf(actor) { return VERSION_IDS.map(id=>actor.proposals?.find(p=>p.id===id)||{id,status:'missing',perspective:'rear',stances:{}}); }
 export function framesOf(proposal,stance) { return proposal?.perspective==='rear' ? (proposal.stances?.[stance]?.frames||[]).filter(f=>safeAsset(f.asset)) : []; }
+export function reactionFramesOf(proposal,reaction) { return proposal?.perspective==='rear' ? (proposal.reactions?.[reaction]?.frames||[]).filter(f=>safeAsset(f.asset)) : []; }
 export function animationFramesOf(proposal,stance) { return proposal?.perspective==='rear' ? (proposal.animations?.[stance]?.frames||[]).filter(f=>safeAsset(f.asset)) : []; }
 export function animationCoverage(actor) {
  const proposals=proposalsOf(actor);
@@ -40,8 +42,9 @@ export function validateManifest(m) {
    if(!['missing','draft','reviewed','selected'].includes(p.status))fail(at+': invalid proposal status');
    if(p.perspective!=='rear')fail(at+': proposals must depict the rear');
    let painted=false;
-   for(const [stance,sequence] of [...Object.entries(p.stances||{}),...Object.entries(p.animations||{})]){
-    if(!STANCES.includes(stance))fail(at+': unknown stance');
+   const sequences=[...Object.entries(p.stances||{}).map(([key,sequence])=>({key,sequence,allowed:STANCES})),...Object.entries(p.animations||{}).map(([key,sequence])=>({key,sequence,allowed:STANCES})),...Object.entries(p.reactions||{}).map(([key,sequence])=>({key,sequence,allowed:REACTIONS}))];
+   for(const {key:stance,sequence,allowed} of sequences){
+    if(!allowed.includes(stance))fail(at+': unknown stance');
     for(const f of sequence.frames||[]){
      painted=true;
      if(!safeAsset(f.asset))fail(at+': invalid asset path');

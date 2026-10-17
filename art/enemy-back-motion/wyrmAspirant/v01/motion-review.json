@@ -257,5 +257,6 @@
     "Preview approval only; no in-engine/runtime alignment approval.",
     "Native PNG fitting may change displayed size relative to proposal seed; authored-scale compensation is in normalized report.",
     "Court/Lord each include a neutral-alt spare; select only the nine named gameplay stances."
-  ]
+  ],
+  "actorId": "wyrmAspirant"
 }
