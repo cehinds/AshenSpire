@@ -8,7 +8,7 @@ import {mountRows} from './cardExtraction.js';
 import {cardMountRules,isExtraMountKey,mountKey} from './cardMounts.js';
 import { itemUpgradeTiers } from './itemUpgrades.js';
 import { rebuildClassRespecResources } from './classRespecResources.js';
-import { validateRunShape } from './state.js';
+import { createCardInstance, validateRunShape } from './state.js';
 
 // Stable preview sentinel; UI wording is independently authored in uiStrings.
 export const RESPEC_UNASSIGNED = 'Unassigned';
@@ -197,7 +197,14 @@ export function previewClassRespec(registries,run,draft,{selections = draft.sele
     if(slot.kind==='cards'){
       const previous=ownedCard(run,grant),instanceId=previous?.instanceId || `respec-card:${slot.receiptId}`;
       if(previous&&(previous.upgraded||previous.mods?.length||previous.smithingLevel) && choice.transfer!=='retain')problems.push('Review the card upgrade and component transfer before confirming.');
-      const inst={...(previous || {}),instanceId,cardId:choice.id,upgraded:previous?.upgraded || false,rewardReceiptId:slot.receiptId};
+      // A replacement is a new card identity. Only the reviewed upgrade and
+      // component transfer crosses identities; old carrier/profile stamps do not.
+      const sameIdentity=previous?.cardId===choice.id && (previous.abilityRank??null)===(choice.abilityRank??null);
+      const inst=sameIdentity ? {...previous}
+        : {...createCardInstance(choice.id,previous?.upgraded,()=>instanceId),
+          ...(previous?.mods ? {mods:copy(previous.mods)} : {}),
+          ...(previous?.smithingLevel ? {smithingLevel:previous.smithingLevel} : {})};
+      Object.assign(inst,{instanceId,cardId:choice.id,upgraded:previous?.upgraded || false,rewardReceiptId:slot.receiptId});
       if(Number.isInteger(choice.abilityRank)){inst.abilityRank=choice.abilityRank;delete inst.rank;}
       else delete inst.abilityRank;
       ((!eligible||(run.sideboard || []).some(card=>card.instanceId===instanceId))?candidate.sideboard:candidate.deck).push(inst);
