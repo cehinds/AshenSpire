@@ -1,0 +1,262 @@
+{
+  "schemaVersion": 1,
+  "status": "draft-approved-for-preview",
+  "runtimeVerified": false,
+  "reviewedCommit": "21ced03332abc66c9fca021c94d97e46ef1eec46",
+  "report": {
+    "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/normalized.json",
+    "gitBlobSha": "9b257dd0b54b08657e36408cd4f7bb2c94eeafd9"
+  },
+  "sourceMasters": {
+    "stances": {
+      "path": "art/enemy-back-motion/wyrmAspirant/v01/stances-master.png",
+      "sha256": "bec241de11ba8f71dc9f6a11dc9674ea106ab4995a88bd088e78e50c42586c7b"
+    },
+    "motion": {
+      "path": "art/enemy-back-motion/wyrmAspirant/v01/motion-master.png",
+      "sha256": "09ee230e688bb5595baa451e2685a87aa1f74af883dda845f08666a154e25f63"
+    },
+    "damage": {
+      "path": "art/enemy-back-motion/wyrmAspirant/v01/damage-master.png",
+      "sha256": "9defba9e7c61bd61188580be058eab457a2757b2759d4da0e11a57b4bf6be543"
+    }
+  },
+  "frames": [
+    {
+      "kind": "stances",
+      "label": "neutral",
+      "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/stances/neutral.png",
+      "sha256": "7bc319bf75838043ca474477918b4a18bf4936927c694501f0ca4c4382899a2e",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.7044025157232704
+    },
+    {
+      "kind": "stances",
+      "label": "smash",
+      "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/stances/smash.png",
+      "sha256": "01b267a0edc8cc6ae1750b48f77ff0a1090a315c49543b0a2fef551e54d6e861",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.7044025157232704
+    },
+    {
+      "kind": "stances",
+      "label": "attack",
+      "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/stances/attack.png",
+      "sha256": "500f8bcbb14e8e3905a489cd0259bdaf499e0e7a353844c82cfb8ed36630237f",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.7044025157232704
+    },
+    {
+      "kind": "stances",
+      "label": "sweep",
+      "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/stances/sweep.png",
+      "sha256": "6fe8aaadd560f78104ce4c8bda5d032688f5a59a519d6784a7c2ac389ca8831c",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.7044025157232704
+    },
+    {
+      "kind": "stances",
+      "label": "counter",
+      "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/stances/counter.png",
+      "sha256": "c7b0188e36eb995cb2b941b4cd72700073fc4393da8c8f0324f9f36cc86ca663",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.7044025157232704
+    },
+    {
+      "kind": "stances",
+      "label": "defend",
+      "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/stances/defend.png",
+      "sha256": "85f4c785971bffb2c09714d0cf2acc7cf9b09598d0669e6ef4c957c3a0cd7d07",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.7044025157232704
+    },
+    {
+      "kind": "stances",
+      "label": "evade",
+      "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/stances/evade.png",
+      "sha256": "d3d9c7ce7d461e5957f8598d538410959173916f78c6899cd144b9a7ddb6c86e",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.7044025157232704
+    },
+    {
+      "kind": "stances",
+      "label": "spell",
+      "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/stances/spell.png",
+      "sha256": "d0113b8b1625b18e1ad2edea5dc063772ba7c163745e89c067246b7ae6d947b0",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.7044025157232704
+    },
+    {
+      "kind": "stances",
+      "label": "preparing",
+      "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/stances/preparing.png",
+      "sha256": "68213d237e24e848b45eca21f3e799fdad23a9b3d30c24d6770c4bcdd8cb8fab",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.7044025157232704
+    },
+    {
+      "kind": "motion",
+      "label": "attack-01",
+      "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/motion/attack-01.png",
+      "sha256": "6954e34540f3d980e8fbda49d0d268abb4a239d890332478bda34eeaee323857",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.8452830188679245
+    },
+    {
+      "kind": "motion",
+      "label": "attack-02",
+      "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/motion/attack-02.png",
+      "sha256": "6340d090c955a3ab02074197e044b2d22755c5a4fe2cdfd37d3a13ff3e3d035b",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.8452830188679245
+    },
+    {
+      "kind": "motion",
+      "label": "attack-03",
+      "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/motion/attack-03.png",
+      "sha256": "1910b3f74df7e0b3f74421726cb13a0caa556093be1b3449ec84a77a6a1874a9",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.8452830188679245
+    },
+    {
+      "kind": "motion",
+      "label": "attack-04",
+      "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/motion/attack-04.png",
+      "sha256": "7977779113f26f9cfbceb3dffbc2bd0238efa57af8e01b436757d0c1bbe404d1",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.8452830188679245
+    },
+    {
+      "kind": "motion",
+      "label": "evade-01",
+      "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/motion/evade-01.png",
+      "sha256": "d8bb272db34f1c8c557fa8e8081fcdf8a3ffd92e3340cf06494515759352ad94",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.8452830188679245
+    },
+    {
+      "kind": "motion",
+      "label": "evade-02",
+      "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/motion/evade-02.png",
+      "sha256": "fb911a843e9726b18ce2e207522ff54f8edba9ebd98fae4ee92a598a2e852ce5",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.8452830188679245
+    },
+    {
+      "kind": "motion",
+      "label": "evade-03",
+      "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/motion/evade-03.png",
+      "sha256": "09c25c28ad6aa47bc216b427ce7e17219b7aa25e4f1c77a1ec8286ab0fd39597",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.8452830188679245
+    },
+    {
+      "kind": "motion",
+      "label": "evade-04",
+      "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/motion/evade-04.png",
+      "sha256": "d7128ebcdf9915959d70ec4fc6903e062afd4201b67d23165eb9d4071e6ffb27",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.8452830188679245
+    },
+    {
+      "kind": "damage",
+      "label": "hurt",
+      "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/damage/hurt.png",
+      "sha256": "b00d435b157cbfad0226008454f432f423fa71b3119b14d29f1a00578b4b4c40",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.38037735849056603
+    },
+    {
+      "kind": "damage",
+      "label": "defeated",
+      "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/damage/defeated.png",
+      "sha256": "50c65351dbb71d963d1eb5f41c2ae4e93a776d949d71cd3827333632848f7abb",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.38037735849056603
+    }
+  ],
+  "reviews": [
+    {
+      "reviewer": "boss_proposals_a",
+      "scope": "Final immutable contact sheet and numeric report: complete rear anatomy/equipment, articulated poses, no meaningful clipping, source hashes intact."
+    },
+    {
+      "reviewer": "root",
+      "scope": "Final immutable native/contact review approved for all three actors; draft preview only."
+    },
+    {
+      "reviewer": "elite_motion",
+      "scope": "Manual source-foot anchors and recovery anatomy comparison; Court 213/204/226px head-to-sole, Lord 204/215/206px; approx 6% residual drift acceptable for draft."
+    }
+  ],
+  "numeric": {
+    "frameCount": 19,
+    "meaningfulOutputPixelsOmitted": 0,
+    "maxOmittedFaintAlpha": 1,
+    "allAnchorsManuallyReviewed": true,
+    "componentConservation": null
+  },
+  "limitations": [
+    "Preview approval only; no in-engine/runtime alignment approval.",
+    "Native PNG fitting may change displayed size relative to proposal seed; authored-scale compensation is in normalized report.",
+    "Court/Lord each include a neutral-alt spare; select only the nine named gameplay stances."
+  ],
+  "actorId": "wyrmAspirant"
+}

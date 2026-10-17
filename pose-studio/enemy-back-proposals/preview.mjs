@@ -4,7 +4,7 @@ const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,
 const resolve=id=>{const value=typeof globalThis.ASHEN_ASSET_URL==='function'?globalThis.ASHEN_ASSET_URL(id):assetUrl(id);return /^(?:data:|blob:|https?:)/.test(value)?value:new URL('../../'+value,location.href).href;};
 const motion=document.createElement('label');motion.innerHTML='<input id="motion" type="checkbox"> Play available motion';$('anchors').closest('label').after(motion);$('motion').onchange=render;
 const damage=document.createElement('label');damage.innerHTML='Reaction <select id="reaction"><option value="">None</option>'+REACTIONS.map(r=>'<option>'+r+'</option>').join('')+'</select>';motion.after(damage);$('reaction').onchange=render;
-const reviewFrames=p=>$('reaction').value?reactionFramesOf(p,$('reaction').value):$('motion').checked&&animationFramesOf(p,$('stance').value).length?animationFramesOf(p,$('stance').value):framesOf(p,$('stance').value);
+const reviewFrames=p=>$('reaction').value?reactionFramesOf(p,$('reaction').value):$('motion').checked?animationFramesOf(p,$('stance').value):framesOf(p,$('stance').value);
 let manifest,actor,picks=[],start=performance.now();
 function stage(p){const frames=reviewFrames(p);return frames.length?'<div class="stage" data-version="'+p.id+'"><img alt="'+esc(actor.name+' rear view '+p.id)+'"><span class="floor" hidden></span></div>':'<div class="stage"><p class="missing">No rear artwork for this pose or clip</p></div>';}
 function render(){

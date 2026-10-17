@@ -1,0 +1,280 @@
+{
+  "schemaVersion": 1,
+  "status": "draft-approved-for-preview",
+  "runtimeVerified": false,
+  "reviewedCommit": "21ced03332abc66c9fca021c94d97e46ef1eec46",
+  "report": {
+    "path": "art/enemy-back-motion/courtDuelist/v01/normalized/normalized.json",
+    "gitBlobSha": "04b8c76b520d7e1b2cf762fd4f918e9ebd6f259f"
+  },
+  "sourceMasters": {
+    "stances": {
+      "path": "art/enemy-back-motion/courtDuelist/v01/stances-master.png",
+      "sha256": "fdeb05aac3ec20a43d6a772dc70a9729bb43450cec109860a8d4b6a90c05b213"
+    },
+    "motion": {
+      "path": "art/enemy-back-motion/courtDuelist/v01/motion-master.png",
+      "sha256": "77a9d6e8ce81c7a99be46036b3967645aa1738f2eb9ac1dbf1ff3ba5334e7319"
+    },
+    "damage": {
+      "path": "art/enemy-back-motion/courtDuelist/v01/damage-master.png",
+      "sha256": "c8951c707ced28897456adebb61e9703b1ef845e9dc1a7c2a99b7e34fbe76e90"
+    }
+  },
+  "frames": [
+    {
+      "kind": "stances",
+      "label": "neutral",
+      "path": "art/enemy-back-motion/courtDuelist/v01/normalized/stances/neutral.png",
+      "sha256": "e0db27b8a7c675ad111631ec0ebd0ef1bf5448e70eabb4a849a5d85cfba09354",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.7205594405594405
+    },
+    {
+      "kind": "stances",
+      "label": "smash",
+      "path": "art/enemy-back-motion/courtDuelist/v01/normalized/stances/smash.png",
+      "sha256": "41dd16b771fc093120e3073f4d03783387d519f7a0188f2dcc6eb52a2e9ff8a4",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.7205594405594405
+    },
+    {
+      "kind": "stances",
+      "label": "attack",
+      "path": "art/enemy-back-motion/courtDuelist/v01/normalized/stances/attack.png",
+      "sha256": "3787baf8c14ed247888b866ed4811d7dbd2a5379831dfdb9ddd7c9fdca52ecda",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.7205594405594405
+    },
+    {
+      "kind": "stances",
+      "label": "sweep",
+      "path": "art/enemy-back-motion/courtDuelist/v01/normalized/stances/sweep.png",
+      "sha256": "35f6499fa170ac8b5c2d50e794ad8c1c5ac3d20ac7874147d93564f335906111",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.7205594405594405
+    },
+    {
+      "kind": "stances",
+      "label": "counter",
+      "path": "art/enemy-back-motion/courtDuelist/v01/normalized/stances/counter.png",
+      "sha256": "019af529bc1529ba67b4de6bd83e8271277235f308229a8ad647f10ee8719a20",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.7205594405594405
+    },
+    {
+      "kind": "stances",
+      "label": "defend",
+      "path": "art/enemy-back-motion/courtDuelist/v01/normalized/stances/defend.png",
+      "sha256": "da41fab6ca0eadafe40d560d6b5a6f373490cc9ca74680f5345b17a636e4b07c",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.7205594405594405
+    },
+    {
+      "kind": "stances",
+      "label": "evade",
+      "path": "art/enemy-back-motion/courtDuelist/v01/normalized/stances/evade.png",
+      "sha256": "78c5296426482025f0322ab9043bb09a214759c9f0d816ef11a533e2ca60c3d3",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.7205594405594405
+    },
+    {
+      "kind": "stances",
+      "label": "spell",
+      "path": "art/enemy-back-motion/courtDuelist/v01/normalized/stances/spell.png",
+      "sha256": "b7f30b6c06cb32f506fc63bdf8294a18ecbef8808fbf651ec3d81f6e4e0ebec3",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.7205594405594405
+    },
+    {
+      "kind": "stances",
+      "label": "preparing",
+      "path": "art/enemy-back-motion/courtDuelist/v01/normalized/stances/preparing.png",
+      "sha256": "021e696d98980f0d977e7b2bffa22cf91f922bf1c59ca3cdcd0c808960af0311",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.7205594405594405
+    },
+    {
+      "kind": "stances",
+      "label": "neutral-alt",
+      "path": "art/enemy-back-motion/courtDuelist/v01/normalized/stances/neutral-alt.png",
+      "sha256": "2c69de1a8a7035473277d25462df8d36088edd830ee3ee42b2075bd11dd7b9c8",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.7205594405594405
+    },
+    {
+      "kind": "motion",
+      "label": "attack-01",
+      "path": "art/enemy-back-motion/courtDuelist/v01/normalized/motion/attack-01.png",
+      "sha256": "c4ce0d9fc90d9123eed6d686b63314b6c93d2ebaa4c970b7a7b8ab7ba4ab4f84",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.7832167832167833
+    },
+    {
+      "kind": "motion",
+      "label": "attack-02",
+      "path": "art/enemy-back-motion/courtDuelist/v01/normalized/motion/attack-02.png",
+      "sha256": "4e0bee4b2a21c526dea9b1100c544092a1731818197c8705ae706e7fec4f8448",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.7832167832167833
+    },
+    {
+      "kind": "motion",
+      "label": "attack-03",
+      "path": "art/enemy-back-motion/courtDuelist/v01/normalized/motion/attack-03.png",
+      "sha256": "e7b66b1e3e3123488ccc589b97547c70775161a8f933f5596ad09d235613212e",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.7832167832167833
+    },
+    {
+      "kind": "motion",
+      "label": "attack-04",
+      "path": "art/enemy-back-motion/courtDuelist/v01/normalized/motion/attack-04.png",
+      "sha256": "49bb4463ddcfe12ee9d8ea7a4bc380088969d3f7c14ac6db28c406dff685884b",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.7832167832167833
+    },
+    {
+      "kind": "motion",
+      "label": "evade-01",
+      "path": "art/enemy-back-motion/courtDuelist/v01/normalized/motion/evade-01.png",
+      "sha256": "b38f1a7d87be0bdbe8cb24997c554d1fce2a88ae25d0f0d1faa41bc359e9871d",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.7832167832167833
+    },
+    {
+      "kind": "motion",
+      "label": "evade-02",
+      "path": "art/enemy-back-motion/courtDuelist/v01/normalized/motion/evade-02.png",
+      "sha256": "973bec7870b43faa2fd13915dd76d9347ec67c9cd8ae15916c955bc88fb9f11f",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.7832167832167833
+    },
+    {
+      "kind": "motion",
+      "label": "evade-03",
+      "path": "art/enemy-back-motion/courtDuelist/v01/normalized/motion/evade-03.png",
+      "sha256": "a9fa11a08c566c902fdc1978bdc733b4705a2c5330e43c901f0246f131e9dee0",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.7832167832167833
+    },
+    {
+      "kind": "motion",
+      "label": "evade-04",
+      "path": "art/enemy-back-motion/courtDuelist/v01/normalized/motion/evade-04.png",
+      "sha256": "c9f8d22830ef79ccd5dc4f00452b106a6498189f2b6049c3d1df9005ed4941a4",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.7832167832167833
+    },
+    {
+      "kind": "damage",
+      "label": "hurt",
+      "path": "art/enemy-back-motion/courtDuelist/v01/normalized/damage/hurt.png",
+      "sha256": "635d7d983665b3a5aa063df7e2e057890b283034a11f732e9299c0f704e26a44",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.3383496503496504
+    },
+    {
+      "kind": "damage",
+      "label": "defeated",
+      "path": "art/enemy-back-motion/courtDuelist/v01/normalized/damage/defeated.png",
+      "sha256": "7a0664acf27d63014cc2c84c4b6a5c280e3cc4ed86b4d398a86135985b24b123",
+      "anchor": [
+        256,
+        464
+      ],
+      "calibratedScale": 0.3383496503496504
+    }
+  ],
+  "reviews": [
+    {
+      "reviewer": "boss_proposals_a",
+      "scope": "Final immutable contact sheet and numeric report: complete rear anatomy/equipment, articulated poses, no meaningful clipping, source hashes intact."
+    },
+    {
+      "reviewer": "root",
+      "scope": "Final immutable native/contact review approved for all three actors; draft preview only."
+    },
+    {
+      "reviewer": "elite_inventory",
+      "scope": "Final immutable Court/Lord contact review reported to root."
+    },
+    {
+      "reviewer": "elite_motion",
+      "scope": "Manual source-foot anchors and recovery anatomy comparison; Court 213/204/226px head-to-sole, Lord 204/215/206px; approx 6% residual drift acceptable for draft."
+    }
+  ],
+  "numeric": {
+    "frameCount": 20,
+    "meaningfulOutputPixelsOmitted": 0,
+    "maxOmittedFaintAlpha": 1,
+    "allAnchorsManuallyReviewed": true,
+    "componentConservation": {
+      "sourceMeaningfulPixels": 428850,
+      "assignedMeaningfulPixels": 428850
+    }
+  },
+  "limitations": [
+    "Preview approval only; no in-engine/runtime alignment approval.",
+    "Native PNG fitting may change displayed size relative to proposal seed; authored-scale compensation is in normalized report.",
+    "Court/Lord each include a neutral-alt spare; select only the nine named gameplay stances."
+  ],
+  "actorId": "courtDuelist"
+}

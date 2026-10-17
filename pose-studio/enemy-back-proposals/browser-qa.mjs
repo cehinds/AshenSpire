@@ -8,6 +8,7 @@ const {chromium}=await import(pathToFileURL(process.env.PLAYWRIGHT_MODULE).href)
 const snapshot=JSON.parse(await readFile('/tmp/enemy-back-static/static-api/snapshot.json','utf8'));
 const galleryEntry=snapshot.snap.library.body.entries.find(e=>e.id==='enemy-rear-proposals');assert.ok(galleryEntry);assert.notEqual(galleryEntry.external,true,'Mirrored gallery must remain a local Workbench route');
 const canonical=JSON.parse(await readFile('pose-studio/enemy-back-proposals/manifest.json','utf8'));const resetActor=canonical.actors.find(a=>!a.proposals.length)||canonical.actors[1];
+for(const id of ['wyrmAspirant','courtDuelist','wyrmLord']){const pilot=canonical.actors.find(a=>a.id===id)?.proposals.find(p=>p.id==='v01');assert.equal(pilot?.animations?.attack?.frames.length,4);assert.equal(pilot?.animations?.evade?.frames.length,4);assert.equal(Object.keys(pilot?.reactions||{}).length,2);}
 const root=resolve('.'),output='/tmp/enemy-back-module-qa';
 await mkdir(output,{recursive:true});
 const types={'.html':'text/html','.mjs':'text/javascript','.js':'text/javascript','.css':'text/css','.json':'application/json'};
@@ -32,14 +33,20 @@ try{
    console.log(name,'checking actor',candidate.id);await page.selectOption('#actor',candidate.id);await page.selectOption('#stance','neutral');
    await page.waitForFunction(()=>document.querySelectorAll('#grid img').length===10&&[...document.querySelectorAll('#grid img')].every(img=>img.complete&&img.naturalWidth===512),null,{timeout:30000});
    const pilot=candidate.proposals.find(p=>p.id==='v01');
-   if(pilot.animations?.attack?.frames?.length){
-    for(const held of Object.keys(pilot.stances)){await page.selectOption('#stance',held);await page.locator('#grid [data-version="v01"] img').evaluate(img=>img.decode());}
-    await page.selectOption('#stance','attack');await page.locator('#motion').check();
-    const observed=await page.evaluate(()=>new Promise(resolve=>{const seen=new Set(),timer=setInterval(()=>seen.add(document.querySelector('#grid [data-version="v01"] img')?.dataset.asset),40);setTimeout(()=>{clearInterval(timer);resolve([...seen].filter(Boolean));},1200);}));
-    assert.ok(observed.length>=2,'Actual attack clip must advance through distinct assets');
-    await page.locator('#motion').uncheck();
-    for(const reaction of ['hurt','defeated']){await page.selectOption('#reaction',reaction);await page.locator('#grid [data-version="v01"] img').evaluate(img=>img.decode());}
-    await page.selectOption('#reaction','');await page.selectOption('#stance','neutral');
+   if(name==='desktop'&&pilot.animations?.attack?.frames?.length){
+    for(const held of Object.keys(pilot.stances)){await page.selectOption('#stance',held);await page.waitForFunction(asset=>{const img=document.querySelector('#grid [data-version="v01"] img');return img?.dataset.asset===asset&&img.complete&&img.naturalWidth===512;},pilot.stances[held].frames[0].asset,{timeout:30000});}
+    for(const action of ['attack','evade']){
+     const expected=pilot.animations[action].frames;assert.deepEqual(expected.map(f=>f.durationMs),action==='attack'?[180,90,150,200]:[140,90,130,200]);
+     await page.selectOption('#stance',action);await page.locator('#motion').check();
+     await page.waitForFunction(action=>document.querySelector('#grid [data-version="v01"] img')?.dataset.asset?.includes('/motion/'+action+'-'),action,{timeout:30000});
+     const observed=await page.evaluate(()=>new Promise(resolve=>{const seen=new Set(),timer=setInterval(()=>(()=>{const img=document.querySelector('#grid [data-version="v01"] img');if(img?.complete&&img.naturalWidth===512)seen.add(img.dataset.asset);})(),10);setTimeout(()=>{clearInterval(timer);resolve([...seen].filter(Boolean));},1800);}));
+     assert.deepEqual(observed.sort(),expected.map(f=>f.asset).sort(),'All four actual '+action+' assets must play');
+     assert.equal(await page.locator('#grid [data-version="v02"]').count(),0,'Unbuilt version must not receive a neutral/front fallback');
+     assert.equal(await page.locator('#grid .missing').count(),9);
+     console.log('clip verified',candidate.id,action,observed.length);await page.locator('#motion').uncheck();
+    }
+    for(const reaction of ['hurt','defeated']){await page.selectOption('#reaction',reaction);await page.waitForFunction(asset=>{const img=document.querySelector('#grid [data-version="v01"] img');return img?.dataset.asset===asset&&img.complete&&img.naturalWidth===512;},pilot.reactions[reaction].frames[0].asset,{timeout:30000});}
+    await page.selectOption('#reaction','');await page.selectOption('#stance','smash');await page.locator('#motion').check();assert.equal(await page.locator('#grid img').count(),0,'Missing smash clip must not use a held pose');assert.equal(await page.locator('#grid .missing').count(),10);await page.locator('#motion').uncheck();await page.selectOption('#stance','neutral');
    }
   }
   await page.selectOption('#actor','wyrmAspirant');await page.selectOption('#stance','neutral');
@@ -99,6 +106,6 @@ try{
   assert.deepEqual(errors,[]);
   console.log('viewport passed',name);records.push({name,width,height,url,status:'passed'});await page.close();
  }
- await writeFile(output+'/capture-record.json',JSON.stringify({sourceCommit:process.env.GITHUB_SHA,date:new Date().toISOString(),note:'Real browser captures of production gallery with ten normalized Wyrm Aspirant neutral rear designs; other stance and actor coverage remains pending.',records},null,2));
+ await writeFile(output+'/capture-record.json',JSON.stringify({sourceCommit:process.env.GITHUB_SHA,date:new Date().toISOString(),note:'Real browser captures of production gallery with ten normalized Wyrm Aspirant neutral rear designs; 130 rear designs and three elite pilots; other motion sets remain explicitly unbuilt.',records},null,2));
  console.log(JSON.stringify(records));
 }finally{await browser.close();server.close();}

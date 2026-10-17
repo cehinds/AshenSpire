@@ -1,0 +1,192 @@
+{
+  "status": "draft-generated-not-normalized",
+  "seed": {
+    "path": "art/enemy-back-proposals/courtDuelist/v01.png",
+    "ref": "12744f2f1eca51993c1e42bb95e23ae8f6b0d2d3",
+    "repository": "cehinds/AshenSpire",
+    "sha256": "a9d30e6c5c92040a073e388b70ebf2665340afc93cbe3d59ca51a0384cbb6e8e"
+  },
+  "generator": "image_gen.imagegen",
+  "generationDate": "2026-10-17",
+  "prompts": {
+    "stances": "Create TEN transparent cutout sprites of this exact court duelist, five columns by two rows. SAME CHARACTER, rear three-quarter facing upper-right, red cape and plumed hat, right-hand rapier. SMALL complete bodies occupying60% of cells, HUGE empty transparent gutters. Distinct held poses in reading order: 1 neutral ready; 2 sword overhead smash; 3 fencing lunge attack; 4 wide sideways sweep; 5 poised diagonal riposte counter; 6 crouched blade guard defend; 7 low lateral evade step; 8 raised offhand spell; 9 drawn-back blade preparing; 10 relaxed neutral. Keep body anatomy outfit camera consistent. Never show front. All swords/capes inside cells. Transparent alpha PNG, nothing in spaces between figures, no colored background, no labels, no floor or shadow.",
+    "motion": "Create transparent PNG cutout sprites. Eight sprites FOURcolumns TWOrows. Use exact reference rear redcape featherhat rapier duelist. Each figure SMALL maximum55%slotwidth55%slotheight INCLUDING sword. HUGE EMPTY TRANSPARENT gutters and margins all sides. No colored background. Row1 four attack animation poses: raisedrapier anticipation, forwardlunge strike, low followthrough, readyrecovery. Row2 four evade poses: kneebend, low sidestep, crouch, ready. Same identity outfit proportions palette camera rear upperright, real articulated limbs. Transparent alpha between every sprite, no shadows scenery text.",
+    "damage": "Transparent game sprite sheet EXACTLY TWO cutout fullbody sprites, one row two equal square slots, same exact rear court duelist seed identity red ivory feather bronze brim hat ragged red cape burgundy goldfiligree coat bronze armor and rapier. Same scale rear threequarter upperright facing painterly style no face. Left HURT recoiling shoulders hunched left hand gripping ribs knees bending right sword dropping. Right DEFEATED kneeling collapsed slump on left forearm bowed head cape pooled sword low in right hand. Distinct articulated anatomy, entire body and blade within own slot with generous empty transparent gap. No background colors scenery labels ground or shadows."
+  },
+  "masters": {
+    "stances": {
+      "grid": [
+        5,
+        2
+      ],
+      "labels": [
+        "neutral",
+        "smash",
+        "attack",
+        "sweep",
+        "counter",
+        "defend",
+        "evade",
+        "spell",
+        "preparing",
+        "neutral-alt"
+      ]
+    },
+    "motion": {
+      "grid": [
+        4,
+        2
+      ],
+      "labels": [
+        "attack-01",
+        "attack-02",
+        "attack-03",
+        "attack-04",
+        "evade-01",
+        "evade-02",
+        "evade-03",
+        "evade-04"
+      ]
+    },
+    "damage": {
+      "grid": [
+        2,
+        1
+      ],
+      "labels": [
+        "hurt",
+        "defeated"
+      ]
+    }
+  },
+  "qa": {
+    "visual": "Root regenerated transparent 5x2 held stance master. Last cell is a spare neutral pose, excluded from nine-stance coverage. Requires new measured anchors and crop QA.",
+    "inEngine": false,
+    "motionRegeneration": "Regenerated from exact original rear seed with smaller figures, wider gutters. Evade02 is visibly airborne side-hop; shared row baseline estimated835 preserves its raised feet."
+  },
+  "clips": {
+    "attack": {
+      "durations": [
+        180,
+        90,
+        150,
+        200
+      ],
+      "status": "draft-generated"
+    },
+    "evade": {
+      "durations": [
+        140,
+        90,
+        130,
+        200
+      ],
+      "status": "draft-generated"
+    }
+  },
+  "otherClips": "unbuilt",
+  "normalization": {
+    "anchorCoordinates": "source",
+    "masterScale": {
+      "stances": 1.15,
+      "motion": 1.25,
+      "damage": 0.54
+    },
+    "footAnchors": {
+      "motion": [
+        [
+          225,
+          420
+        ],
+        [
+          645,
+          420
+        ],
+        [
+          1110,
+          425
+        ],
+        [
+          1555,
+          425
+        ],
+        [
+          240,
+          835
+        ],
+        [
+          710,
+          835
+        ],
+        [
+          1145,
+          835
+        ],
+        [
+          1575,
+          835
+        ]
+      ],
+      "damage": [
+        [
+          425,
+          775
+        ],
+        [
+          1315,
+          770
+        ]
+      ],
+      "stances": [
+        [
+          177,
+          423
+        ],
+        [
+          566,
+          427
+        ],
+        [
+          855,
+          420
+        ],
+        [
+          1283,
+          421
+        ],
+        [
+          1634,
+          427
+        ],
+        [
+          194,
+          822
+        ],
+        [
+          527,
+          821
+        ],
+        [
+          920,
+          831
+        ],
+        [
+          1276,
+          828
+        ],
+        [
+          1632,
+          829
+        ]
+      ]
+    },
+    "review": {
+      "reviewer": "elite_motion agent",
+      "method": "manual source-image visual estimate",
+      "status": "draft-estimates-pending-normalized-preview",
+      "notes": "Anchors identify visible foot or support-contact baseline, using midpoint where both feet visible. Rear feet can be occluded. Values are visual estimates, not pixel-exact detections. Tail/cape alpha bottom is not used as floor. MasterScale calibrates separately generated damage anatomy to stances and preserves action crouch/height; shared scale then applies. Root must inspect normalized frames before accepting. Court repaired10stance feet measured from native512 views with anchor-delta conversion; midpoint visible feet, defend partly occluded estimate. Source neutralbody327px vsseed365px, stancecal1.1. Recovery-body visual comparison by elite_motion: updated stance calibration1.15; excludes raised weapons, estimated remaining body-height drift under approximately6percent. Root final native-frame QA pending."
+    },
+    "seedBodyHeightPixels": 365,
+    "stanceBodyHeightPixels": 327
+  }
+}
