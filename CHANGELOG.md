@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-17
 
+- **Pose Studio loads its shared engine and the balance reference stays current** ([#2025](https://github.com/cehinds/AshenSpire/pull/2025), `0.7.1.1543`). Restore the studio's effect catalog after the engine-module split and refresh the historical reference report's measured damage and seeded encounter outcomes, without changing combat rules.
+
 - **Core previews keep their offline and map checks after promotion** ([#2024](https://github.com/cehinds/AshenSpire/pull/2024), `0.7.1.1543`). Preview checks follow the current startup and Settings navigation, measure map dragging at the displayed zoom, and retain permanent coverage of Core's interface text after merging.
 
 ## 2026-10-16
