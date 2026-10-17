@@ -1,0 +1,36 @@
+{
+  "$comment": "A heal card: tag `heal` (+ `exhaust` for the cheap shape). costSource healRules takes cost and amount from settings.healRules; the build checks they match.",
+  "id": "ashenSentry.mend",
+  "name": "Mend",
+  "class": "enemy",
+  "rarity": "enemy",
+  "cost": 1,
+  "staminaCost": 1,
+  "manaCost": 1,
+  "costRule": "fixed",
+  "costSource": "healRules",
+  "type": "power",
+  "icon": "✦",
+  "keywords": [
+    "exhaust"
+  ],
+  "effects": [
+    {
+      "op": "heal",
+      "target": "self",
+      "rule": "healRules"
+    }
+  ],
+  "tags": [
+    "camp:spell",
+    "maneuver:casting",
+    "classification.power",
+    "owner:enemy",
+    "heal",
+    "exhaust"
+  ],
+  "textTemplate": "Heal 10% max HP. Exhaust.",
+  "owner": "enemy",
+  "enemy": "ashenSentry",
+  "aiWeight": 20
+}

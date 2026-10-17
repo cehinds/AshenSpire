@@ -1,0 +1,67 @@
+{
+  "$comment": "settings.poolSizes. merged is used when pools = merged (default); ratings + bonus when pools = split. mergedShare splits fill weight by rarity.",
+  "merged": {
+    "common": {
+      "min": 4,
+      "max": 4
+    },
+    "uncommon": {
+      "min": 5,
+      "max": 5
+    },
+    "rare": {
+      "min": 6,
+      "max": 6
+    },
+    "epic": {
+      "min": 7,
+      "max": 7
+    }
+  },
+  "ratings": {
+    "common": {
+      "min": 3,
+      "max": 3
+    },
+    "uncommon": {
+      "min": 4,
+      "max": 4
+    },
+    "rare": {
+      "min": 5,
+      "max": 5
+    },
+    "epic": {
+      "min": 6,
+      "max": 6
+    }
+  },
+  "bonus": {
+    "common": {
+      "min": 2,
+      "max": 3
+    },
+    "uncommon": {
+      "min": 2,
+      "max": 4
+    },
+    "rare": {
+      "min": 2,
+      "max": 5
+    },
+    "epic": {
+      "min": 2,
+      "max": 6
+    }
+  },
+  "mergedShare": {
+    "default": {
+      "ratings": 0.5,
+      "bonus": 0.5
+    },
+    "common": {
+      "ratings": 1,
+      "bonus": 0
+    }
+  }
+}

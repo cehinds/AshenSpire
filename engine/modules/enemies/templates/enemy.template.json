@@ -1,0 +1,54 @@
+{
+  "$comment": "One row of packs/<pack>/enemies.json. Required: id, name, tier, attributes, deck. Stats derive from attributes + level + gear + relics (statRules).",
+  "id": "ashenSentry",
+  "name": "Ashen Sentry",
+  "tier": "minion",
+  "attributes": {
+    "strength": 1,
+    "dexterity": 1,
+    "constitution": 0,
+    "wisdom": 0,
+    "intelligence": 0
+  },
+  "deck": [
+    "ashenSentry.slash",
+    "ashenSentry.slash",
+    "ashenSentry.guard",
+    "ashenSentry.guard",
+    "ashenSentry.warcry",
+    "ashenSentry.warcry"
+  ],
+  "firstCard": "ashenSentry.warcry",
+  "unlockCards": [],
+  "gear": [
+    "straightSword"
+  ],
+  "relics": [
+    "enemy.relic.ashenBlightCore"
+  ],
+  "levelProfile": {
+    "min": 1,
+    "max": 4
+  },
+  "poiseMax": 10,
+  "phases": [
+    {
+      "on": "hpBelowPct",
+      "pct": 50,
+      "do": [
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "strength",
+          "stacks": 2
+        }
+      ],
+      "unlockCards": []
+    }
+  ],
+  "size": "medium",
+  "art": "⚔",
+  "artFaces": "left",
+  "tint": "var(--rot)",
+  "blighted": false
+}
