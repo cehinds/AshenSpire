@@ -304,7 +304,16 @@ test('a content/config change runs the config compiler before the reload; a fail
   await fs.writeFile(path.join(root, 'tools/hud-layout-css.mjs'), '');
   assert.deepEqual(buildsFor(['content/hud-layout/mobile.json'], root), ['tools/hud-layout-css.mjs --write']);
   assert.deepEqual(buildsFor(['content/source/a.csv', 'content/config/ui/tokens.json', 'content/hud-layout/mobile.json'], root),
-    ['tools/config-build.mjs', 'tools/hud-layout-css.mjs --write', 'tools/content-build.mjs'], 'config, then the HUD stylesheet, then the content compiler');
+    ['tools/config-build.mjs', 'tools/hud-layout-css.mjs --write', 'tools/content-build.mjs', 'tools/game-config.mjs build'], 'config, then the HUD stylesheet, then the content compiler, then the game profiles last');
+  // game-config hashes src/**, so it runs last after anything that writes src/ (and not after the HUD stylesheet, which writes styles/ and docs/)
+  assert.deepEqual(buildsFor(['content/source/a.csv'], root), ['tools/content-build.mjs', 'tools/game-config.mjs build']);
+  assert.deepEqual(buildsFor(['games/ashenspire/game.json', 'content/source/a.csv'], root), ['tools/content-build.mjs', 'tools/game-config.mjs build'], 'one game-config build, last');
+  assert.deepEqual(buildsFor(['src/main.js'], root), ['tools/game-config.mjs build']);
+  assert.deepEqual(buildsFor(['src/content/generated/gameProfiles.js'], root), [], 'a file game-config skips is no input');
+  assert.deepEqual(buildsFor(['src/content/changelog.generated.js'], root), []);
+  assert.deepEqual(buildsFor(['content/hud-layout/mobile.json'], root), ['tools/hud-layout-css.mjs --write'], 'the HUD stylesheet is outside src/: no game-config');
+  await fs.writeFile(path.join(root, 'tools/card-components.mjs'), '');
+  assert.deepEqual(buildsFor(['src/content/card-layout.json'], root), ['tools/card-components.mjs', 'tools/game-config.mjs build']);
   assert.deepEqual(buildsFor(['games/ashenspire/game.lock.json'], root), [], 'the lock is generated: saving it is no build input');
   assert.deepEqual(buildsFor(['engine/docs/notes.md'], root), [], 'only the engine trees the compiler reads are inputs');
   await fs.rm(path.join(root, 'tools/framework-data-build.mjs'));
@@ -312,7 +321,7 @@ test('a content/config change runs the config compiler before the reload; a fail
   nextEvent.onOpen = async () => { await new Promise((r) => setTimeout(r, 300)); await fs.writeFile(path.join(root, 'content/config/ui/tokens.json'), '{}\n'); };
   const event = await nextEvent(app, 'reload');
   assert.deepEqual(event.files, ['content/config/ui/tokens.json'], 'the generated output does not trigger a second batch');
-  assert.deepEqual(event.built, ['tools/config-build.mjs']);
+  assert.deepEqual(event.built, ['tools/config-build.mjs', 'tools/game-config.mjs build']);
   await fs.writeFile(path.join(root, 'tools/config-build.mjs'), "console.error('bad config'); process.exit(1);\n");
   nextEvent.onOpen = async () => { await new Promise((r) => setTimeout(r, 900)); await fs.writeFile(path.join(root, 'content/config/ui/tokens.json'), '{"x":1}\n'); };
   const failed = await nextEvent(app, 'reload-failed');
