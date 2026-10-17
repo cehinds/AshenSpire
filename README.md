@@ -1,17 +1,5 @@
 # AshenSpire
 
-<!-- feature-preview:start -->
-## Feature preview — Module Browser Compatibility
-
-[Play this feature build](https://cehinds.github.io/AshenSpire/branches/fix/ModuleBrowserCompatibility/latest/) · [Capture details](docs/preview/features/module-browser-compatibility/README.md).
-
-This consolidated follow-up includes module browser compatibility work and a co-op HUD top-band correction. These local screenshots show the co-op fixture only; the host snapshot and transport are canned, and placeholder seats have no player appearance. They do not show a live co-op connection or public-route gameplay.
-
-| Phone · 390 × 844 | Desktop · 1440 × 900 | Wide · 1280 × 720 | Tablet · 768 × 1024 |
-| --- | --- | --- | --- |
-| ![Co-op HUD at phone size](docs/preview/features/module-browser-compatibility/mobile.png) | ![Co-op HUD at desktop size](docs/preview/features/module-browser-compatibility/desktop.png) | ![Co-op HUD at wide size](docs/preview/features/module-browser-compatibility/wide.png) | ![Co-op HUD at tablet size](docs/preview/features/module-browser-compatibility/tablet.png) |
-<!-- feature-preview:end -->
-
 
 
 A browser roguelike: build a character, explore a seeded world, and fight with cards.
