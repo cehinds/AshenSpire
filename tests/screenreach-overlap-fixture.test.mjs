@@ -73,3 +73,47 @@ test('overlap fixture selects distinct paint-ordered enemies at tied and unequal
     }
   }
 });
+
+test('reachability census excludes native disabled controls while retaining active targets', () => {
+  const start = tool.indexOf('  const all = [...app.querySelectorAll(sel)].filter');
+  const end = tool.indexOf('  const frameOwnsHit', start);
+  const census = tool.slice(start, end);
+  const candidate = disabled => ({
+    matches: selector => selector === ':disabled' && disabled,
+    getBoundingClientRect: () => ({ width: 44, height: 44 }), closest: () => null,
+  });
+  const active = candidate(false), disabled = candidate(true);
+  const result = runInNewContext(census + '\nall', {
+    app: { querySelectorAll: () => [active, disabled] }, sel: 'button',
+    getComputedStyle: () => ({ visibility: 'visible' }),
+  });
+  assert.equal(result.length, 1);
+  assert.equal(result[0], active);
+});
+
+test('paint guard ignores transparent responsive owners but catches painted and legacy overlap', () => {
+  const start = tool.indexOf("    for (const frame of document.querySelectorAll('.enemy-row .combatant'))");
+  const end = tool.indexOf('    // Information is', start);
+  const guard = tool.slice(start, end);
+  const box = (top, bottom) => ({ width: 50, height: bottom - top, top, bottom });
+  const receipt = (top, bottom) => ({ getBoundingClientRect: () => box(top, bottom) });
+  for (const [responsive, parts, want] of [
+    [true, [receipt(120, 200)], []],
+    [true, [receipt(80, 200)], ['HUD']],
+    [true, [receipt(120, 200), receipt(330, 370)], ['hand']],
+    [false, [receipt(120, 200)], ['HUD']],
+  ]) {
+    const frame = {
+      dataset: { eid: 'e1' }, closest: () => ({ dataset: { targetHud: String(responsive) } }),
+      querySelector: () => null, querySelectorAll: () => parts,
+      getBoundingClientRect: () => box(50, 350),
+    };
+    const visual = [];
+    runInNewContext(guard, {
+      document: { querySelectorAll: () => [frame] }, hud: { bottom: 100 }, hand: { top: 350 },
+      getComputedStyle: () => ({ visibility: 'visible' }), visual,
+    });
+    assert.equal(visual.length, want.length);
+    for (const band of want) assert.match(visual[0], new RegExp('under the ' + band));
+  }
+});

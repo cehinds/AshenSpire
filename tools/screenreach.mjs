@@ -440,12 +440,17 @@ const SCREENS = [
   // control apiece (Rest holds, the Smith confirms, the brazier confirms), and
   // a confirm panel that pushes a CANCEL button off a 360 px screen is exactly
   // the class this sweep exists to catch.
-  { name: 'rest', q: '?shot=rest', ready: `!!document.querySelector('#rest-opt')` },
+  { name: 'rest', q: '?shot=rest', ready: `!!document.querySelector('#rest-opt, #strategize-opt')` },
   // THE SMITH is a modal over the Shrine, and until 2026-09-11 it had no state
   // of its own — the review that photographed every room got the title screen
   // for `?shot=smith`. Its controls (the candidates, Back, Upgrade) are as
   // reachable-or-not as any room's.
-  { name: 'smith', q: '?shot=smith', ready: `!!document.querySelector('.smith-candidate-region')`,
+  { name: 'smith', q: '?shot=smith', ready: `!!document.querySelector('.smith-candidate-region, #smith-opt')`,
+    setup: `(() => {
+      if (!document.querySelector('.smith-candidate-region')) document.querySelector('#smith-opt')?.click();
+      if (!document.querySelector('.smith-candidate-region')) throw new Error('screenreach: Smith option did not open its candidate dialog');
+      return true;
+    })()`,
     overlay: 'the Smith is a modal over the Shrine; the Shrine\'s band and cards under its veil are covered on purpose' },
   { name: 'shop', q: '?shot=shop', ready: `!!document.querySelector('#leave-shop')` },
 ];
@@ -496,7 +501,7 @@ const PROBE = `(() => {
   const covered = [], scrolledOut = [];
   const all = [...app.querySelectorAll(sel)].filter((e) => {
     const r = e.getBoundingClientRect();
-    return r.width > 2 && r.height > 2 && getComputedStyle(e).visibility !== 'hidden'
+    return !e.matches(':disabled') && r.width > 2 && r.height > 2 && getComputedStyle(e).visibility !== 'hidden'
       && !e.closest('details:not([open]), [inert]');
   });
   const frameOwnsHit = ${frameOwnsHit.toString()};
@@ -673,10 +678,22 @@ const PROBE = `(() => {
     const hud = document.querySelector('.combat-hud')?.getBoundingClientRect();
     const hand = document.querySelector('.hand-area')?.getBoundingClientRect();
     for (const frame of document.querySelectorAll('.enemy-row .combatant')) {
-      const r = frame.getBoundingClientRect();
       const label = frame.querySelector('.nm')?.textContent?.trim() || frame.dataset.eid || 'enemy';
-      if (hud && r.top < hud.bottom - 0.5) visual.push(label + ' frame paints under the HUD by ' + (hud.bottom - r.top).toFixed(1) + 'px');
-      if (hand && r.bottom > hand.top + 0.5) visual.push(label + ' frame paints under the hand by ' + (r.bottom - hand.top).toFixed(1) + 'px');
+      // Responsive HUD frames are transparent full-field geometry owners.
+      // Their artwork, health meters and detail panel are the painted receipt;
+      // overhead intent/inspection buttons keep their separate hit-test above.
+      // Legacy layouts retain their complete frame boundary check.
+      const responsive = frame.closest('.combat')?.dataset.targetHud === 'true';
+      const receipts = responsive
+        ? [...frame.querySelectorAll('.combatant-card > .sprite, .target-hud-overhead-meters .meters, .target-hud-panel')]
+        : [frame];
+      for (const receipt of receipts) {
+        const r = receipt.getBoundingClientRect();
+        if (r.width <= 2 || r.height <= 2 || getComputedStyle(receipt).visibility === 'hidden') continue;
+        const part = responsive ? ' painted receipt' : ' frame';
+        if (hud && r.top < hud.bottom - 0.5) visual.push(label + part + ' paints under the HUD by ' + (hud.bottom - r.top).toFixed(1) + 'px');
+        if (hand && r.bottom > hand.top + 0.5) visual.push(label + part + ' paints under the hand by ' + (r.bottom - hand.top).toFixed(1) + 'px');
+      }
     }
     // Information is the owner's one card-details control. Detect the removed
     // extra button through the rendered page, including a reintroduced box.
