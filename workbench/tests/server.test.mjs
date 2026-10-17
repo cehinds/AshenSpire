@@ -132,7 +132,7 @@ test('jobs: only allowlisted ids run, one at a time, and history is kept', async
   }
   const { defs } = await (await call('/api/jobs')).json();
   assert.deepEqual(defs.map((d) => d.id), Object.keys(JOBS));
-  assert.deepEqual(JOBS['content-build'].steps(root).map((st) => st.args[0]), ['tools/framework-data-build.mjs', 'tools/content-build.mjs']);
+  assert.deepEqual(JOBS['content-build'].steps(root).map((st) => st.args[0]), ['tools/framework-data-build.mjs', 'tools/content-build.mjs', 'tools/game-config.mjs']);
   assert.equal(defs.find((d) => d.id === 'engine-export').available, false, 'missing exporter is reported, not hidden');
   // The exporter is missing in this project: the run fails gracefully with a message.
   const started = await (await call('/api/jobs', { method: 'POST', body: JSON.stringify({ id: 'engine-export' }) })).json();
