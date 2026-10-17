@@ -10,7 +10,7 @@ import { formationTileGeometry, perspectiveCellOutlinePath } from '../models/For
 import { FORMATION_ROWS, formationDimensions, playerFormationCell } from '../../model/formationLayout.js';
 import { fitIconTray } from './iconTray.js';
 import { combatSpriteRatio, fitCombatSprites, NARROW_MIN_HEIGHT_FRACTION } from '../models/CombatSpriteScaleModel.js';
-import { combatSpriteGeometry, currentSpriteArtBounds } from './combatSpriteGeometry.js';
+import { combatSpriteGeometry, currentSpriteArtBounds, currentSpriteBodyBounds } from './combatSpriteGeometry.js';
 import { classicAppearance, displayAppearance } from '../displayAppearance.js';
 import { wireAlternativeBackdrop, fitAlternativeBackdrop } from '../alternativeArt.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
@@ -24,6 +24,7 @@ import { perspectiveCellContains } from '../models/AlternativeFormationModel.js'
 import { playerDetailsPlacement } from '../models/PlayerDetailsPlacementModel.js';
 import { hudGeometry, offsetPlacement, offsetTargetPlate, targetPlateBox } from '../models/HudLayoutOffsetModel.js';
 import { restingHandEnvelope, handGeometryKey } from '../models/HandLayout.js';
+import { targetBodyHudPlacement } from '../models/TargetHudModel.js';
 import { reducedMotionRequested } from '../motion.js';
 
 // Formation positions and adjustment deltas already use field-local physical
@@ -219,6 +220,19 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const rows = [...field.querySelectorAll('.combatant')].flatMap(frame => {
       const sprite = frame.querySelector('.sprite'), leading = frame.querySelector('.combatant-leading');
       if (!sprite || !leading) return [];
+      const rack = frame.querySelector(':scope > .target-hud-overhead-meters');
+      if (rack) {
+        const body = currentSpriteBodyBounds(sprite, schedule);
+        const intentHeight = rack.querySelector(':scope > :is(.intent,.player-action-intent)')?.getBoundingClientRect().height || 37;
+        const config = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
+        const placement = targetBodyHudPlacement({ body, frame: frame.getBoundingClientRect(),
+          groupHeight: config.miniHudGroupHeightPx, intentHeight, gap: config.miniHudSpriteGapPx, zoom });
+        frame.style.setProperty('--combat-mini-hud-top', `${placement.miniTop}px`);
+        frame.style.setProperty('--combat-selected-intent-top', `${placement.selectedTop}px`);
+        frame.style.setProperty('--combat-selected-intent-center', `${placement.center}px`);
+        frame.dataset.miniHudHeadY = String(body.headY ?? body.top);
+        return [];
+      }
       leading.style.left = '0px';
       leading.style.top = 'var(--overhead-top, 0px)';
       leading.style.translate = 'none';
@@ -1277,10 +1291,15 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   });
   window.addEventListener('resize', schedule);
   const poseObserver = new MutationObserver(() => {
-    if (!reducedMotionRequested() && !trackingRequest) trackingRequest = requestAnimationFrame(trackPlayerHud);
+    // A deliberate stance still settles its readout when idle motion is off.
+    if (reducedMotionRequested()) {
+      if (field.closest('.combat')?.dataset.targetHud === 'true') centerTargetOverheads();
+      return;
+    }
+    if (!trackingRequest) trackingRequest = requestAnimationFrame(trackPlayerHud);
   });
   poseObserver.observe(field, { subtree: true, attributes: true,
-    attributeFilter: ['src', 'data-pose', 'data-animating', 'class'] });
+    attributeFilter: ['src', 'data-pose', 'data-rest', 'data-stance', 'data-animating', 'class'] });
   // Both accessibility inputs can change while a fight is on screen. Settle
   // once after motion is disabled, and resume frame tracking only after it is
   // enabled again; otherwise the HUD can retain the last idle-frame offset.
