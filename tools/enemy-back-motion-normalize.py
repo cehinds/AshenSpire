@@ -103,6 +103,73 @@ def load_master(root, kind, spec, anchors, absolute=False):
     return {"path": str(path), "sha256": digest(path), "size": image.size,
             "sourceBoundary": edge, "gutters": gutters}, frames
 
+
+def load_components(root, kind, spec, anchors, absolute=False):
+    """Partition source pixels by disconnected figure cores; no pixels are invented."""
+    import numpy as np
+    from scipy import ndimage
+    from scipy.optimize import linear_sum_assignment
+    path = root/f"{kind}-master.png"
+    with Image.open(path) as opened:
+        if "A" not in opened.getbands():
+            raise ValueError("component source lacks true alpha")
+        image = opened.convert("RGBA")
+    alpha = image.getchannel("A")
+    if alpha.getextrema()[0] != 0 or boundary(alpha)["above32"]:
+        raise ValueError("component source opaque or clipped")
+    array = np.array(image)
+    meaningful = array[:,:,3] > THRESHOLD
+    labels, count = ndimage.label(meaningful, structure=np.ones((3,3)))
+    sizes = np.bincount(labels.ravel()); sizes[0] = 0
+    expected = len(spec["labels"])
+    cores = np.argsort(sizes)[-expected:]
+    total = int(meaningful.sum())
+    if len(cores) != expected or any(sizes[index] < total*.025 or sizes[index] > total*.22 for index in cores):
+        raise ValueError("cannot identify exact independent figure cores confidently")
+    cols, rows = spec["grid"]
+    centers = np.array(ndimage.center_of_mass(meaningful, labels, cores))
+    targets = np.array([((row+.5)*image.height/rows,(col+.5)*image.width/cols)
+                        for row in range(rows) for col in range(cols)])
+    cost = ((centers[:,None,:]-targets[None,:,:])**2).sum(axis=2)
+    core_indices, slot_indices = linear_sum_assignment(cost)
+    core_owner = np.zeros(labels.shape,dtype=np.int16)
+    assignments = []
+    for core_index, slot in zip(core_indices,slot_indices):
+        component = int(cores[core_index])
+        core_owner[labels==component] = int(slot)+1
+        assignments.append({"slot":int(slot),"component":component,"meaningfulCorePixels":int(sizes[component]),
+                            "centroidYX":centers[core_index].tolist()})
+    nearest = ndimage.distance_transform_edt(core_owner==0, return_distances=False, return_indices=True)
+    owners = core_owner[tuple(nearest)]
+    frames = []
+    assigned = 0
+    for index, label in enumerate(spec["labels"]):
+        selected = (owners==index+1) & (array[:,:,3]>0)
+        assigned += int(selected.sum())
+        pixels = array.copy()
+        pixels[~selected] = 0
+        isolated = Image.fromarray(pixels,"RGBA")
+        full_source = isolated.getchannel("A").getbbox()
+        cell = isolated.crop(full_source)
+        channel = cell.getchannel("A")
+        bounds = channel.point(lambda v:255 if v>THRESHOLD else 0).getbbox()
+        reviewed = kind in anchors
+        anchor = list(anchors[kind][index]) if reviewed else [(bounds[0]+bounds[2])/2,bounds[3]]
+        if reviewed:
+            if not absolute:
+                raise ValueError("component extraction requires source-space reviewed anchors")
+            anchor = [anchor[0]-full_source[0],anchor[1]-full_source[1]]
+        frames.append({"kind":kind,"label":label,"rect":full_source,"bounds":bounds,
+                       "full":channel.getbbox(),"anchor":anchor,"reviewedAnchor":reviewed,"cell":cell})
+    if assigned != int((array[:,:,3]>0).sum()):
+        raise ValueError("component partition lost or duplicated source pixels")
+    source = {"path":str(path),"sha256":digest(path),"size":image.size,
+              "sourceBoundary":boundary(alpha),"extraction":"connected-components",
+              "assignment":sorted(assignments,key=lambda entry:entry["slot"]),
+              "partitionAlphaPixels":assigned,
+              "warning":"Disconnected details and faint pixels assigned to nearest figure core; visual assignment review required"}
+    return source, frames
+
 def run(root):
     provenance = json.loads((root/"provenance.json").read_text())
     output = root/"normalized"
@@ -124,7 +191,12 @@ def run(root):
             if kind in anchors and len(anchors[kind]) != math.prod(provenance["masters"][kind]["grid"]):
                 raise ValueError(f"{kind}: anchor count mismatch")
             try:
-                source, items = load_master(root, kind, provenance["masters"][kind], anchors, normalization.get("anchorCoordinates") == "source")
+                try:
+                    source, items = load_master(root, kind, provenance["masters"][kind], anchors, normalization.get("anchorCoordinates") == "source")
+                except ValueError:
+                    if root.parent.name != "courtDuelist" or kind != "stances":
+                        raise
+                    source, items = load_components(root, kind, provenance["masters"][kind], anchors, normalization.get("anchorCoordinates") == "source")
                 report["masters"][kind] = source
                 factor = calibration.get(kind, 1.0)
                 if not isinstance(factor, (int,float)) or not math.isfinite(factor) or factor <= 0:
