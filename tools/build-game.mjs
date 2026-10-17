@@ -74,7 +74,8 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   // The resolved profile's hash/lock/provenance pin the JavaScript sources under src/ and the engine files;
   // they move on every code change, so they stay out of the artifact. Content and modules are the data.
   const profile = { id: resolved.id, formatVersion: resolved.formatVersion, author: resolved.author, modules: resolved.modules, instances: resolved.instances, portability: resolved.portability };
-  const content = resolved.content;
+  // The resolved profile is frozen; a test patch edits a copy.
+  const content = patch ? structuredClone(resolved.content) : resolved.content;
   const version = String(author.core || '').split('@')[1] || '0.0.0';
 
   // ----- mechanics -----
@@ -93,7 +94,19 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   const uiScreens = loadDir(`games/${game}/ui/screens`);
   const mapComponents = loadDir('engine/maps/components');
   const mapDocs = loadDir(`games/${game}/maps`);
-  patch?.({ mechanics, uiComponents, uiScreens, mapComponents, mapDocs });
+  patch?.({ content, mechanics, uiComponents, uiScreens, mapComponents, mapDocs });
+  // Every card effect op (cards, enemy cards, effect variants) is a catalog op: the engine throws
+  // 'Unknown opcode' on play otherwise (src/engine/actions.js).
+  {
+    const catalog = loadOps().ops;
+    const walk = (v, where) => {
+      if (Array.isArray(v)) return v.forEach((x, i) => walk(x, `${where}[${i}]`));
+      if (!v || typeof v !== 'object') return;
+      if ('op' in v && !catalog[v.op]) fail(`${where}: unknown effect op '${v.op}'`);
+      for (const [k, x] of Object.entries(v)) walk(x, `${where}.${k}`);
+    };
+    for (const key of ['cards', 'enemyCards', 'resourceVariants', 'effectVariants']) if (content[key]) walk(content[key], `content.${key}`);
+  }
   const slugs = new Set(Object.keys(mechanics));
   for (const row of index.mechanics) {
     if (!slugs.has(row.id)) fail(`engine/mechanics/index.json lists ${row.id}, which has no mechanic folder`);
