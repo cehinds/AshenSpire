@@ -136,10 +136,10 @@ def run(root):
                 report["errors"].append(f"{kind}: {error}")
         if report["errors"]:
             raise ValueError("One or more source masters rejected; no frames exported")
-        # One scale across every master in this actor, including transparent antialias extents.
+        # One scale across every master in this actor, using meaningful alpha; faint outer noise clipping is counted explicitly.
         scale = 1.0
         for frame in frames:
-            left, top, right, bottom = frame["full"]
+            left, top, right, bottom = frame["bounds"]
             ax, ay = frame["anchor"]
             for distance, room in ((ax-left,224), (right-ax,224), (ay-top,432), (bottom-ay,47)):
                 if distance > 0:
@@ -163,8 +163,19 @@ def run(root):
             crop = crop.resize((max(1,round(crop.width*frame_scale)), max(1,round(crop.height*frame_scale))), Image.Resampling.LANCZOS)
             x = round(256-(frame["anchor"][0]-full[0])*frame_scale)
             y = round(464-(frame["anchor"][1]-full[1])*frame_scale)
+            omitted_count, omitted_max, omitted_meaningful = 0, 0, 0
             if x < 0 or y < 0 or x+crop.width > 512 or y+crop.height > 512:
-                raise ValueError(f'{frame["kind"]}/{frame["label"]}: output clips alpha')
+                pixels = crop.getchannel("A").load()
+                for cy in range(crop.height):
+                    for cx in range(crop.width):
+                        if not (0 <= x+cx < 512 and 0 <= y+cy < 512):
+                            value = pixels[cx,cy]
+                            if value:
+                                omitted_count += 1
+                                omitted_max = max(omitted_max,value)
+                                omitted_meaningful += value > THRESHOLD
+            if omitted_meaningful:
+                raise ValueError(f'{frame["kind"]}/{frame["label"]}: meaningful output alpha clips')
             result = Image.new("RGBA", (512,512))
             result.alpha_composite(crop, (x,y))
             if boundary(result.getchannel("A"))["above32"]:
@@ -175,7 +186,9 @@ def run(root):
             result.save(destination)
             entry = {key: frame[key] for key in ("kind","label","rect","bounds","anchor","reviewedAnchor")}
             entry.update(path=str(destination), sha256=digest(destination), translation=[x,y],
-                         outputAnchor=[256,464], calibratedScale=frame_scale, outputAlphaBounds=result.getchannel("A").getbbox())
+                         outputAnchor=[256,464], calibratedScale=frame_scale,
+                         omittedFaintPixels=omitted_count, omittedMaxAlpha=omitted_max,
+                         omittedMeaningfulPixels=omitted_meaningful, outputAlphaBounds=result.getchannel("A").getbbox())
             report["frames"].append(entry)
             thumb = result.resize((256,256), Image.Resampling.LANCZOS)
             tx, ty = index%5*256, index//5*280
