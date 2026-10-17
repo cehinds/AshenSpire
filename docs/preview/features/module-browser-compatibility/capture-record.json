@@ -59,28 +59,27 @@
     }
   },
   "finalArtifactIdentity": {
-    "status": "verified; public-route verification pending",
-    "candidateRuntimeSourceCommit": "7ba01e82987f43afb4a77bff2fd3e03da26f2b41",
-    "artifactId": 12113886530,
-    "artifactUrl": "https://github.com/cehinds/AshenSpire/actions/runs/39067000100/artifacts/12113886530",
-    "artifactArchiveSha256": "4d254e002141550519860677a96f4fbb9c9c955d44fd40d5af407abd5b0305c2",
-    "workflowRunId": 39067000100,
-    "workflowJobId": 117496633455,
+    "status": "artifact verified; public-route verification pending",
+    "runtimeSourceCommit": "c9eecc45d8641ccfaa132777715b0ba4ef7c3aa1",
+    "artifactId": 12115253921,
+    "artifactUrl": "https://github.com/cehinds/AshenSpire/actions/runs/39071922844/artifacts/12115253921",
+    "artifactArchiveSha256": "3d6dd2ecdc8ff2f2b390e4286686f08b6138090f9973d7826fad3502ed7ab2a8",
+    "workflowRunId": 39071922844,
+    "workflowJobId": 117511131255,
     "version": "0.7.1.1554",
     "ordinal": 1554,
     "release": "0.7.1",
-    "sourceDigest": "18e60cd573",
-    "source": "matching standalone feature-preview artifact; identity taken from build log"
+    "sourceDigest": "cf58726889",
+    "source": "matching standalone feature-preview artifact; identity from successful build job"
   },
   "expectedFeatureUrl": "https://cehinds.github.io/AshenSpire/branches/fix/ModuleBrowserCompatibility/latest/",
   "publicRouteVerification": {
     "status": "pending",
     "url": "https://cehinds.github.io/AshenSpire/branches/fix/ModuleBrowserCompatibility/latest/",
-    "note": "Artifact is available, but public Pages route identity has not yet been verified read-only."
+    "note": "Artifact identity is verified, but the public Pages route has not yet been verified read-only."
   },
   "verificationScope": "Future public proof should establish publication and payload identity. The screenshots and 6/6 browser probe are local/source evidence; no live co-op connection is demonstrated.",
   "permanentCaptureReadme": "docs/preview/modules/animation/browser-followup/CAPTURE.md",
-  "candidateRuntimeSourceCommit": "7ba01e82987f43afb4a77bff2fd3e03da26f2b41",
   "releaseGalleryVerification": {
     "status": "verified",
     "verifiedAt": "2026-10-17T20:21:11Z",
@@ -92,5 +91,7 @@
     "sourceCommit": "d310c277fffaaec6ec7a58a87de846577f12312d",
     "sourceDigest": "a5b5079cb1",
     "result": "unchanged; successful read-only URL check"
-  }
+  },
+  "runtimeSourceCommit": "c9eecc45d8641ccfaa132777715b0ba4ef7c3aa1",
+  "captureRetentionAfterCompaction": "Retained local screenshots: the recorded combat.css SHA-256 is unchanged and gameplay values remained equal across 49 files after runtime compaction; updated provenance hashes were verified against file bytes."
 }
