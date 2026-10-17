@@ -68,12 +68,15 @@ test('the opt-outs keep their authored cost and their numbers: costRule fixed, c
   }
 });
 
-test('every 0-cost card is an explicit costRule opt-out in content, and no other card carries one', () => {
+test('every zero-cost card opts out explicitly and fixed cards author valid pool prices', () => {
   const all = registries.cards.all();
   const zeros = all.filter((c) => c.cost === 0 && c.type !== 'curse' && c.type !== 'status');
   const optedOut = all.filter((c) => c.costRule === 'fixed');
   for (const c of zeros) assert.equal(c.costRule, 'fixed', `${c.id} costs 0 and must opt out explicitly`);
-  for (const c of optedOut) assert.ok(c.cost === 0 || c.type === 'curse' || c.type === 'status', `${c.id} opts out without a fixed cost`);
+  for (const c of optedOut) {
+    assert.ok(c.cost === 'X' || Number.isInteger(c.cost) && c.cost >= 0, `${c.id}: fixed SP is a nonnegative integer or the explicit X contract`);
+    assert.ok(Number.isInteger(c.manaCost || 0) && (c.manaCost || 0) >= 0, `${c.id}: fixed MP is a nonnegative integer`);
+  }
 });
 
 test('the formula prices the face it is given: an upgrade is priced on its own effects, and Mana is derived', () => {
