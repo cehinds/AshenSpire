@@ -1,0 +1,55 @@
+{
+  "id": "meter",
+  "description": "One resource bar: health, poise, stamina or mana. Reads src/ui/components/resbars.js, src/ui/models/CombatantMeterModel.js, CombatHealthModel.js and src/model/resources.js. For an enemy owner, SP and MP appear only when the enemy-visibility query lists them.",
+  "layout": {
+    "ref": "content/config/ui/scenes/w4a-combat.json",
+    "path": "sizing.combatantMeters"
+  },
+  "viewModel": {
+    "props": {
+      "entity": "entityRef",
+      "kind": "string"
+    },
+    "bindings": {
+      "hp": "$entity.pools.hp",
+      "poise": "$entity.pools.poise",
+      "sp": "$entity.pools.sp",
+      "mp": "$entity.pools.mp",
+      "cur": "$value.cur",
+      "max": "$value.max",
+      "pct": "$value.pct",
+      "label": "$kind",
+      "selectedOnly": "combatantMeters.selectedOnly"
+    },
+    "visibility": {
+      "query": "enemy_visibility.visibleFields",
+      "appliesTo": "enemy",
+      "fields": {
+        "hp": "hp",
+        "poise": "poise",
+        "sp": "sp",
+        "mp": "mp"
+      }
+    }
+  },
+  "states": [
+    "full",
+    "partial",
+    "empty",
+    "hidden"
+  ],
+  "events": {
+    "tap": "inspect.open"
+  },
+  "assets": [
+    "icon.health",
+    "icon.poise",
+    "icon.stamina",
+    "icon.mana"
+  ],
+  "platforms": [
+    "mobile",
+    "tablet",
+    "desktop"
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "id": "mapView",
+  "description": "The route map with its header. Reads src/ui/screens/map.js, src/ui/components/mapboard.js, mapHeader.js, mapFog.js and src/ui/models/MapHeaderLayout.js, ActRouteModel.js.",
+  "layout": {
+    "ref": "content/config/ui/scenes/w4b-map.json",
+    "path": "sizing.header"
+  },
+  "viewModel": {
+    "props": {
+      "run": "runRef"
+    },
+    "bindings": {
+      "nodes": "$run.map.nodes",
+      "edges": "$run.map.edges",
+      "current": "$run.map.current",
+      "act": "$run.act",
+      "floor": "$run.floor"
+    }
+  },
+  "states": [
+    "idle",
+    "selecting",
+    "travelling"
+  ],
+  "events": {
+    "pan": "map.pan",
+    "open": "menu.open"
+  },
+  "children": [
+    {
+      "component": "mapNode",
+      "slot": "node",
+      "props": {
+        "node": "$nodes[i]"
+      }
+    },
+    {
+      "component": "hud",
+      "slot": "header"
+    }
+  ],
+  "assets": [
+    "map.background"
+  ],
+  "platforms": [
+    "mobile",
+    "tablet",
+    "desktop"
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "id": "playerPanel",
+  "description": "The player on the battlefield: health, poise, stamina, mana and statuses. Reads src/ui/components/combatantFrame.js, resbars.js and src/ui/models/VitalsPanelModel.js. Own resources are always visible.",
+  "layout": {
+    "ref": "content/config/ui/scenes/w4a-combat.json",
+    "path": "components.combatantStack"
+  },
+  "viewModel": {
+    "props": {
+      "entity": "entityRef"
+    },
+    "bindings": {
+      "name": "$entity.name",
+      "hp": "$entity.pools.hp",
+      "poise": "$entity.pools.poise",
+      "sp": "$entity.pools.sp",
+      "mp": "$entity.pools.mp",
+      "defense": "$entity.defense",
+      "statuses": "$entity.statuses",
+      "sprite": "$entity.sprite"
+    }
+  },
+  "states": [
+    "idle",
+    "acting",
+    "defending",
+    "defeated"
+  ],
+  "events": {
+    "tap": "inspect.open"
+  },
+  "children": [
+    {
+      "component": "meter",
+      "slot": "hp",
+      "props": {
+        "kind": "hp"
+      }
+    },
+    {
+      "component": "meter",
+      "slot": "poise",
+      "props": {
+        "kind": "poise"
+      }
+    },
+    {
+      "component": "meter",
+      "slot": "sp",
+      "props": {
+        "kind": "sp"
+      }
+    },
+    {
+      "component": "meter",
+      "slot": "mp",
+      "props": {
+        "kind": "mp"
+      }
+    },
+    {
+      "component": "statusTray",
+      "slot": "statuses"
+    }
+  ],
+  "assets": [
+    "player.sprite"
+  ],
+  "platforms": [
+    "mobile",
+    "tablet",
+    "desktop"
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "id": "endTurnButton",
+  "description": "End Turn button in the combat footer. Reads src/ui/screens/combat.js (endTurnHasPlayable, endTurnBeat) and src/ui/components/combatActionRow.js.",
+  "layout": {
+    "ref": "content/config/ui/components/buttons.json",
+    "path": "components.footer"
+  },
+  "viewModel": {
+    "props": {
+      "combat": "combatRef"
+    },
+    "bindings": {
+      "enabled": "combat.isPlayerTurn",
+      "hasPlayable": "combat.hasPlayableCard",
+      "label": "combat.endTurnLabel"
+    }
+  },
+  "states": [
+    "ready",
+    "confirming",
+    "disabled",
+    "resolving"
+  ],
+  "events": {
+    "tap": "combat.endTurn"
+  },
+  "assets": [],
+  "platforms": [
+    "mobile",
+    "tablet",
+    "desktop"
+  ]
+}

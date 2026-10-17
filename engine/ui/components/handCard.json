@@ -1,0 +1,54 @@
+{
+  "id": "handCard",
+  "description": "One card in the hand. Reads src/ui/components/hand.js, src/ui/models/CombatCardView.js, PlayedCombatCard.js and src/ui/cardDragEnd.js.",
+  "layout": {
+    "ref": "content/config/ui/components/card.json",
+    "path": "sizing.levels"
+  },
+  "viewModel": {
+    "props": {
+      "instance": "cardInstanceRef",
+      "index": "number"
+    },
+    "bindings": {
+      "cost": "$instance.cost",
+      "affordable": "combat.canAfford($instance)",
+      "reason": "combat.unplayableReason($instance)",
+      "keyHint": "$index",
+      "selected": "ui.selection.has($instance)"
+    }
+  },
+  "states": [
+    "idle",
+    "selected",
+    "armed",
+    "dragging",
+    "unaffordable",
+    "exhausted"
+  ],
+  "events": {
+    "tap": "combat.armCard",
+    "drop": "combat.playCard",
+    "hold": "inspect.open"
+  },
+  "children": [
+    {
+      "component": "card",
+      "slot": "face",
+      "props": {
+        "card": "$instance.card",
+        "level": "hand"
+      }
+    },
+    {
+      "component": "selection",
+      "slot": "glow"
+    }
+  ],
+  "assets": [],
+  "platforms": [
+    "mobile",
+    "tablet",
+    "desktop"
+  ]
+}
