@@ -31,8 +31,10 @@ def cut(alpha, axis, nominal, radius, span):
     for point in range(max(1, round(nominal-radius)), min(limit-1, round(nominal+radius))+1):
         rect = (span[0], point, span[1], point+1) if axis == "y" else (point, span[0], point+1, span[1])
         value = counts(alpha.crop(rect))
-        if value["above32"] == 0:
-            candidates.append((value["above0"] != 0, abs(point-nominal), point, value))
+        previous = (span[0], point-1, span[1], point) if axis == "y" else (point-1, span[0], point, span[1])
+        prior = counts(alpha.crop(previous))
+        if value["above32"] == 0 and prior["above32"] == 0:
+            candidates.append((value["above0"]+prior["above0"] != 0, abs(point-nominal), point, value))
     if not candidates:
         raise ValueError(f"no safe {axis} gutter near {nominal:.1f}")
     _, _, point, value = min(candidates)
