@@ -4,13 +4,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { loadGameProfileCatalog } from '../tools/game-config.mjs';
-import { resolveGameAuthor, enemyPools } from '../engine/kernel/gameConfig.js';
+import { resolveGameAuthor, enemyPools, resolveEnemyAttributes, enemyAttributeOutcomes } from '../engine/kernel/gameConfig.js';
 
 const author = JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url)));
 const catalog = loadGameProfileCatalog();
 const profile = resolveGameAuthor(author, catalog);
 const settings = profile.modules.enemies;
-const { enemies, enemyCards } = profile.content;
+const { enemyCards } = profile.content;
+// Resolved view: attributes filled from priority (no variance), deck from defaultDeck.
+const enemies = profile.content.enemies.map(e => ({ ...e, attributes: resolveEnemyAttributes(e, settings), deck: e.defaultDeck }));
 
 // Resolve again with one pack-content edit applied to a cloned catalog.
 function resolveWith(edit, authorEdit = a => a) {
@@ -90,15 +92,15 @@ test('heal cards take their cost from healRules; minion heals are the cheap exha
 });
 
 test('validator refuses an unknown card reference', () => {
-  assert.throws(resolveWith(p => { p.enemies[0].deck[0] = 'nope.card'; }), /unresolved card reference 'nope\.card'/);
+  assert.throws(resolveWith(p => { p.enemies[0].defaultDeck[0] = 'nope.card'; }), /unresolved card reference 'nope\.card'/);
 });
 
 test('validator refuses a deck outside the size bounds', () => {
-  assert.throws(resolveWith(p => { p.enemies[0].deck = p.enemies[0].deck.slice(0, 2); }), /deck size 2 outside/);
+  assert.throws(resolveWith(p => { p.enemies[0].defaultDeck = p.enemies[0].defaultDeck.slice(0, 2); }), /deck size 2 outside/);
 });
 
 test('validator refuses attributes outside the tier budget', () => {
-  assert.throws(resolveWith(p => { p.enemies[0].attributes.strength += 20; }), /outside minion budget/);
+  assert.throws(resolveWith(p => { p.enemies[0].attributes = { ...(p.enemies[0].attributes || {}), strength: 20 }; }), /outside minion budget/);
 });
 
 test('validator refuses a card the enemy can never afford (minion full heal)', () => {
@@ -107,7 +109,7 @@ test('validator refuses a card the enemy can never afford (minion full heal)', (
     const drain = p.enemyCards.find(c => c.id === 'graveWisp.drain');
     drain.tags = drain.tags.filter(t => t !== 'exhaust');
     drain.staminaCost = 3; drain.manaCost = 2;
-    assert.ok(wisp.deck.includes(drain.id));
+    assert.ok(wisp.defaultDeck.includes(drain.id));
   }), /costs 3 SP\/2 MP; enemy has 2 SP/);
 });
 
@@ -148,4 +150,31 @@ test('names use _ for spaces and - for hyphens; displayName restores spaces', as
   assert.equal(displayName('Ember-Starved_Pilgrim'), 'Ember-Starved Pilgrim');
   assert.ok(enemies.some(e => e.name === 'Ember-Starved_Pilgrim'));
   assert.throws(resolveWith(p => { p.enemies[0].name = 'Wandering Soldier'; }), /names use _ for spaces/);
+});
+
+test('attribute priority + rank weights fill unset points; variance moves only filled points', () => {
+  for (const e of profile.content.enemies) {
+    assert.ok(Array.isArray(e.attributePriority) && e.attributePriority.length === 5, e.id);
+    const base = resolveEnemyAttributes(e, settings);
+    for (const [id, n] of Object.entries(e.attributes || {})) assert.ok(base[id] >= n, `${e.id} keeps set ${id}`);
+    assert.ok(base.constitution <= Math.max(settings.attributeFill.caps.constitution, e.attributes?.constitution || 0), `${e.id} CON cap`);
+    for (const seed of [1, 2, 3, 99]) {
+      const varied = resolveEnemyAttributes(e, settings, seed);
+      assert.equal(Object.values(varied).reduce((a, b) => a + b, 0), Object.values(base).reduce((a, b) => a + b, 0), `${e.id} same total`);
+      for (const [id, n] of Object.entries(e.attributes || {})) assert.ok(varied[id] >= n, `${e.id} variance keeps set ${id}`);
+    }
+  }
+  const varies = profile.content.enemies.some(e => [1, 2, 3, 4, 5].some(seed => JSON.stringify(resolveEnemyAttributes(e, settings, seed)) !== JSON.stringify(resolveEnemyAttributes(e, settings))));
+  assert.ok(varies, 'seeded variance changes some spreads');
+});
+
+test('defaultDeck and keyed defaultGear / defaultRelics lists', () => {
+  for (const e of profile.content.enemies) {
+    assert.ok(Array.isArray(e.defaultDeck) && e.defaultDeck.length > 0);
+    for (const list of ['defaultGear', 'defaultRelics']) {
+      assert.ok(e[list].every(x => typeof x.key === 'string' && typeof x.id === 'string'), `${e.id}.${list}`);
+      assert.equal(new Set(e[list].map(x => x.key)).size, e[list].length, `${e.id}.${list} keys unique`);
+    }
+  }
+  assert.throws(resolveWith(p => { const e = p.enemies.find(x => x.tier === 'boss'); e.defaultGear = [{ key: 'mainHand', id: 'dagger' }, { key: 'mainHand', id: 'katana' }]; }), /duplicate key/);
 });

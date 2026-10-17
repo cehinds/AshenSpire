@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { loadGameProfileCatalog } from '../tools/game-config.mjs';
-import { resolveGameAuthor, resolveGearItem, mergeGameSettings } from '../engine/kernel/gameConfig.js';
+import { resolveGameAuthor, resolveGearItem, mergeGameSettings, enemyGearIds, enemyRelicIds } from '../engine/kernel/gameConfig.js';
 
 const author = JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url)));
 const catalog = loadGameProfileCatalog();
@@ -66,8 +66,8 @@ test('validator refuses set points that exceed the pool', () => {
 
 test('enemies wear player gear by id, so their gear can be looted', () => {
   const ids = new Set(gear.map(i => i.id));
-  for (const e of enemies) for (const id of e.gear) assert.ok(ids.has(id), `${e.id} -> ${id}`);
-  assert.ok(new Set(enemies.flatMap(e => e.gear)).size >= 8, 'gear varies');
+  for (const e of enemies) for (const id of enemyGearIds(e)) assert.ok(ids.has(id), `${e.id} -> ${id}`);
+  assert.ok(new Set(enemies.flatMap(enemyGearIds)).size >= 8, 'gear varies');
 });
 
 test('enemy cards are player-shaped with owner-relative targets', () => {
@@ -83,11 +83,11 @@ test('Ashen Blight Core: STR +2, CON +2, WIS -1, SP -2, with SP floored at 1', a
   const core = profile.content.enemyRelics.find(r => r.id === 'enemy.relic.ashenBlightCore');
   assert.deepEqual(core.modifiers, ['self.strength=+2', 'self.constitution=+2', 'self.wisdom=-1', 'self.sp=-2']);
   const e = profile.modules.enemies;
-  const carriers = enemies.filter(x => x.relics.includes(core.id));
+  const carriers = enemies.filter(x => enemyRelicIds(x).includes(core.id));
   const minions = enemies.filter(x => x.tier === 'minion'), elites = enemies.filter(x => x.tier === 'elite');
   assert.ok(carriers.filter(x => x.tier === 'minion').length > minions.length / 2, 'most minions');
   assert.ok(carriers.filter(x => x.tier === 'boss').length >= 2, 'a couple of bosses');
   for (const x of carriers) assert.ok(enemyPools(x, e, undefined, enemyItemBonuses(x, profile.content, gearSettings)).sp >= 1, x.id);
-  const bare = { ...minions[0], gear: [], relics: [core.id] };
+  const bare = { ...minions[0], defaultGear: [], defaultRelics: [{ key: 'relic1', id: core.id }], attributes: {}, attributePoints: 0 };
   assert.equal(enemyPools(bare, e, 1, enemyItemBonuses(bare, profile.content, gearSettings)).sp, 1, 'max(2 - 2, 1)');
 });

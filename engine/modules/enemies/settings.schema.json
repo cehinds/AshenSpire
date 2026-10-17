@@ -586,6 +586,93 @@
         "revealedBy"
       ],
       "additionalProperties": false
+    },
+    "attributeFill": {
+      "type": "object",
+      "properties": {
+        "defaultPriority": {
+          "type": "array",
+          "uniqueItems": true,
+          "minItems": 1,
+          "items": {
+            "enum": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ]
+          }
+        },
+        "priorityWeights": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 5,
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        "caps": {
+          "type": "object",
+          "properties": {
+            "strength": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 99
+            },
+            "dexterity": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 99
+            },
+            "constitution": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 99
+            },
+            "wisdom": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 99
+            },
+            "intelligence": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 99
+            }
+          },
+          "additionalProperties": false
+        },
+        "variance": {
+          "type": "object",
+          "properties": {
+            "points": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10
+            },
+            "among": {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 5
+            }
+          },
+          "required": [
+            "points",
+            "among"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "defaultPriority",
+        "priorityWeights",
+        "caps",
+        "variance"
+      ],
+      "additionalProperties": false
     }
   },
   "required": [
@@ -603,7 +690,8 @@
     "levelFrom",
     "equipment",
     "penaltyFloor",
-    "visibility"
+    "visibility",
+    "attributeFill"
   ],
   "additionalProperties": false
 }

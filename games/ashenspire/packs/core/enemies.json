@@ -3,14 +3,15 @@
     "id": "wanderingSoldier",
     "name": "Wandering_Soldier",
     "tier": "minion",
-    "attributes": {
-      "strength": 1,
-      "dexterity": 1,
-      "constitution": 0,
-      "wisdom": 0,
-      "intelligence": 0
-    },
-    "deck": [
+    "attributes": {},
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "defaultDeck": [
       "wanderingSoldier.slash",
       "wanderingSoldier.slash",
       "wanderingSoldier.guard",
@@ -18,11 +19,17 @@
       "wanderingSoldier.warcry",
       "wanderingSoldier.warcry"
     ],
-    "gear": [
-      "dagger"
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "dagger"
+      }
     ],
-    "relics": [
-      "enemy.relic.ashenBlightCore"
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore"
+      }
     ],
     "poiseMax": 10,
     "levelProfile": {
@@ -49,14 +56,15 @@
     "id": "blightHound",
     "name": "Blight_Hound",
     "tier": "minion",
-    "attributes": {
-      "strength": 1,
-      "dexterity": 1,
-      "constitution": 0,
-      "wisdom": 0,
-      "intelligence": 0
-    },
-    "deck": [
+    "attributes": {},
+    "attributePriority": [
+      "dexterity",
+      "strength",
+      "wisdom",
+      "intelligence",
+      "constitution"
+    ],
+    "defaultDeck": [
       "blightHound.bite",
       "blightHound.bite",
       "blightHound.bite",
@@ -64,11 +72,17 @@
       "blightHound.lunge",
       "blightHound.lunge"
     ],
-    "gear": [
-      "battleaxe"
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "battleaxe"
+      }
     ],
-    "relics": [
-      "enemy.relic.ashenBlightCore"
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore"
+      }
     ],
     "poiseMax": 6,
     "levelProfile": {
@@ -85,14 +99,15 @@
     "id": "huskBrute",
     "name": "Husk_Brute",
     "tier": "minion",
-    "attributes": {
-      "strength": 1,
-      "dexterity": 1,
-      "constitution": 0,
-      "wisdom": 0,
-      "intelligence": 0
-    },
-    "deck": [
+    "attributes": {},
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "defaultDeck": [
       "huskBrute.club",
       "huskBrute.club",
       "huskBrute.bellow",
@@ -100,11 +115,17 @@
       "huskBrute.brace",
       "huskBrute.brace"
     ],
-    "gear": [
-      "dagger"
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "dagger"
+      }
     ],
-    "relics": [
-      "enemy.relic.ashenBlightCore"
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore"
+      }
     ],
     "poiseMax": 16,
     "levelProfile": {
@@ -118,14 +139,15 @@
     "id": "graveWisp",
     "name": "Grave_Wisp",
     "tier": "minion",
-    "attributes": {
-      "strength": 0,
-      "dexterity": 0,
-      "constitution": 0,
-      "wisdom": 1,
-      "intelligence": 1
-    },
-    "deck": [
+    "attributes": {},
+    "attributePriority": [
+      "wisdom",
+      "intelligence",
+      "strength",
+      "dexterity",
+      "constitution"
+    ],
+    "defaultDeck": [
       "graveWisp.curse",
       "graveWisp.curse",
       "graveWisp.curse",
@@ -133,10 +155,13 @@
       "graveWisp.drain",
       "graveWisp.drain"
     ],
-    "gear": [
-      "ashStaff"
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "ashStaff"
+      }
     ],
-    "relics": [],
+    "defaultRelics": [],
     "poiseMax": 4,
     "levelProfile": {
       "min": 1,
@@ -151,13 +176,16 @@
     "name": "Wyrm_Aspirant",
     "tier": "elite",
     "attributes": {
-      "strength": 0,
-      "dexterity": 1,
-      "constitution": 1,
-      "wisdom": 2,
-      "intelligence": 0
+      "wisdom": 2
     },
-    "deck": [
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "defaultDeck": [
       "wyrmAspirant.consecrate",
       "wyrmAspirant.halberdSweep",
       "wyrmAspirant.halberdSweep",
@@ -168,11 +196,17 @@
       "wyrmAspirant.goldenGuard"
     ],
     "firstCard": "wyrmAspirant.consecrate",
-    "gear": [
-      "blightRod",
-      "armor.nightweave"
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "greatsword"
+      },
+      {
+        "key": "armor",
+        "id": "armor.nightweave"
+      }
     ],
-    "relics": [],
+    "defaultRelics": [],
     "poiseMax": 24,
     "levelProfile": {
       "min": 4,
@@ -186,14 +220,15 @@
     "id": "fellWarden",
     "name": "The_Fell_Warden",
     "tier": "boss",
-    "attributes": {
-      "strength": 4,
-      "dexterity": 1,
-      "constitution": 1,
-      "wisdom": 0,
-      "intelligence": 0
-    },
-    "deck": [
+    "attributes": {},
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "defaultDeck": [
       "fellWarden.caneStrike",
       "fellWarden.caneStrike",
       "fellWarden.caneStrike",
@@ -209,13 +244,25 @@
       "fellWarden.twinDaggers"
     ],
     "firstCard": "fellWarden.caneStrike",
-    "gear": [
-      "greatsword",
-      "parryDagger",
-      "armor.wayfarerPlate"
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "greatsword"
+      },
+      {
+        "key": "offHand",
+        "id": "parryDagger"
+      },
+      {
+        "key": "armor",
+        "id": "armor.gutterLeathers"
+      }
     ],
-    "relics": [
-      "enemy.relic.graveSeal"
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.graveSeal"
+      }
     ],
     "poiseMax": 30,
     "levelProfile": {
@@ -259,14 +306,15 @@
     "id": "lanternMoth",
     "name": "Lantern_Moth",
     "tier": "minion",
-    "attributes": {
-      "strength": 0,
-      "dexterity": 0,
-      "constitution": 0,
-      "wisdom": 1,
-      "intelligence": 1
-    },
-    "deck": [
+    "attributes": {},
+    "attributePriority": [
+      "wisdom",
+      "intelligence",
+      "strength",
+      "dexterity",
+      "constitution"
+    ],
+    "defaultDeck": [
       "lanternMoth.lanternDust",
       "lanternMoth.lanternDust",
       "lanternMoth.wingSparks",
@@ -274,10 +322,13 @@
       "lanternMoth.wingSparks",
       "lanternMoth.wingSparks"
     ],
-    "gear": [
-      "ashStaff"
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "ashStaff"
+      }
     ],
-    "relics": [],
+    "defaultRelics": [],
     "poiseMax": 5,
     "levelProfile": {
       "min": 2,
@@ -291,14 +342,15 @@
     "id": "briarHermit",
     "name": "Briar_Hermit",
     "tier": "minion",
-    "attributes": {
-      "strength": 1,
-      "dexterity": 0,
-      "constitution": 0,
-      "wisdom": 1,
-      "intelligence": 0
-    },
-    "deck": [
+    "attributes": {},
+    "attributePriority": [
+      "strength",
+      "wisdom",
+      "dexterity",
+      "constitution",
+      "intelligence"
+    ],
+    "defaultDeck": [
       "briarHermit.rootShelter",
       "briarHermit.rootShelter",
       "briarHermit.briarCast",
@@ -307,11 +359,17 @@
       "briarHermit.sapMend"
     ],
     "firstCard": "briarHermit.rootShelter",
-    "gear": [
-      "battleaxe"
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "battleaxe"
+      }
     ],
-    "relics": [
-      "enemy.relic.ashenBlightCore"
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore"
+      }
     ],
     "poiseMax": 9,
     "levelProfile": {
@@ -326,14 +384,15 @@
     "id": "chainScavenger",
     "name": "Chain_Scavenger",
     "tier": "minion",
-    "attributes": {
-      "strength": 1,
-      "dexterity": 1,
-      "constitution": 0,
-      "wisdom": 0,
-      "intelligence": 0
-    },
-    "deck": [
+    "attributes": {},
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "defaultDeck": [
       "chainScavenger.hookCast",
       "chainScavenger.hookCast",
       "chainScavenger.hookCast",
@@ -341,10 +400,13 @@
       "chainScavenger.chainSnare",
       "chainScavenger.draggingBlow"
     ],
-    "gear": [
-      "dagger"
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "dagger"
+      }
     ],
-    "relics": [],
+    "defaultRelics": [],
     "poiseMax": 8,
     "levelProfile": {
       "min": 2,
@@ -358,14 +420,15 @@
     "id": "bellKeeper",
     "name": "The_Bell_Keeper",
     "tier": "boss",
-    "attributes": {
-      "strength": 4,
-      "dexterity": 1,
-      "constitution": 0,
-      "wisdom": 1,
-      "intelligence": 0
-    },
-    "deck": [
+    "attributes": {},
+    "attributePriority": [
+      "strength",
+      "wisdom",
+      "dexterity",
+      "constitution",
+      "intelligence"
+    ],
+    "defaultDeck": [
       "bellKeeper.bronzeToll",
       "bellKeeper.bronzeToll",
       "bellKeeper.bronzeToll",
@@ -381,13 +444,25 @@
       "bellKeeper.crackedPeal"
     ],
     "firstCard": "bellKeeper.bronzeToll",
-    "gear": [
-      "halberd",
-      "parryDagger",
-      "armor.gutterLeathers"
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "cinderAxe"
+      },
+      {
+        "key": "offHand",
+        "id": "parryDagger"
+      },
+      {
+        "key": "armor",
+        "id": "armor.nightweave"
+      }
     ],
-    "relics": [
-      "enemy.relic.graveSeal"
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.graveSeal"
+      }
     ],
     "poiseMax": 25,
     "levelProfile": {
@@ -412,14 +487,15 @@
     "id": "thornMatriarch",
     "name": "The_Thorn_Matriarch",
     "tier": "boss",
-    "attributes": {
-      "strength": 2,
-      "dexterity": 1,
-      "constitution": 1,
-      "wisdom": 1,
-      "intelligence": 1
-    },
-    "deck": [
+    "attributes": {},
+    "attributePriority": [
+      "strength",
+      "wisdom",
+      "intelligence",
+      "dexterity",
+      "constitution"
+    ],
+    "defaultDeck": [
       "thornMatriarch.rootCrown",
       "thornMatriarch.rootCrown",
       "thornMatriarch.rootCrown",
@@ -432,13 +508,25 @@
       "thornMatriarch.entwiningRoots"
     ],
     "firstCard": "thornMatriarch.rootCrown",
-    "gear": [
-      "cinderAxe",
-      "towerShield",
-      "armor.nightweave"
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "cinderAxe"
+      },
+      {
+        "key": "offHand",
+        "id": "parryDagger"
+      },
+      {
+        "key": "armor",
+        "id": "armor.nightweave"
+      }
     ],
-    "relics": [
-      "enemy.relic.graveSeal"
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.graveSeal"
+      }
     ],
     "poiseMax": 22,
     "levelProfile": {
@@ -472,14 +560,15 @@
     "id": "gildedKnight",
     "name": "Gilded_Knight",
     "tier": "minion",
-    "attributes": {
-      "strength": 1,
-      "dexterity": 1,
-      "constitution": 0,
-      "wisdom": 0,
-      "intelligence": 0
-    },
-    "deck": [
+    "attributes": {},
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "defaultDeck": [
       "gildedKnight.thrust",
       "gildedKnight.thrust",
       "gildedKnight.parry",
@@ -487,10 +576,13 @@
       "gildedKnight.rally",
       "gildedKnight.gildedGuard"
     ],
-    "gear": [
-      "battleaxe"
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "battleaxe"
+      }
     ],
-    "relics": [],
+    "defaultRelics": [],
     "poiseMax": 18,
     "levelProfile": {
       "min": 6,
@@ -504,14 +596,15 @@
     "id": "courtSurgeon",
     "name": "Court_Surgeon",
     "tier": "minion",
-    "attributes": {
-      "strength": 0,
-      "dexterity": 0,
-      "constitution": 0,
-      "wisdom": 1,
-      "intelligence": 1
-    },
-    "deck": [
+    "attributes": {},
+    "attributePriority": [
+      "wisdom",
+      "intelligence",
+      "strength",
+      "dexterity",
+      "constitution"
+    ],
+    "defaultDeck": [
       "courtSurgeon.scalpel",
       "courtSurgeon.scalpel",
       "courtSurgeon.sedate",
@@ -519,10 +612,13 @@
       "courtSurgeon.stitch",
       "courtSurgeon.stitch"
     ],
-    "gear": [
-      "ashStaff"
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "ashStaff"
+      }
     ],
-    "relics": [],
+    "defaultRelics": [],
     "poiseMax": 10,
     "levelProfile": {
       "min": 6,
@@ -536,14 +632,15 @@
     "id": "stitchedHound",
     "name": "Stitched_Hound",
     "tier": "minion",
-    "attributes": {
-      "strength": 1,
-      "dexterity": 1,
-      "constitution": 0,
-      "wisdom": 0,
-      "intelligence": 0
-    },
-    "deck": [
+    "attributes": {},
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "defaultDeck": [
       "stitchedHound.maul",
       "stitchedHound.maul",
       "stitchedHound.maul",
@@ -551,11 +648,17 @@
       "stitchedHound.rend",
       "stitchedHound.rend"
     ],
-    "gear": [
-      "battleaxe"
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "battleaxe"
+      }
     ],
-    "relics": [
-      "enemy.relic.ashenBlightCore"
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore"
+      }
     ],
     "poiseMax": 8,
     "levelProfile": {
@@ -571,14 +674,15 @@
     "id": "courtMarionette",
     "name": "Court_Marionette",
     "tier": "minion",
-    "attributes": {
-      "strength": 1,
-      "dexterity": 1,
-      "constitution": 0,
-      "wisdom": 0,
-      "intelligence": 0
-    },
-    "deck": [
+    "attributes": {},
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "defaultDeck": [
       "courtMarionette.dart",
       "courtMarionette.dart",
       "courtMarionette.dart",
@@ -586,11 +690,17 @@
       "courtMarionette.blowdart",
       "courtMarionette.blowdart"
     ],
-    "gear": [
-      "dagger"
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "dagger"
+      }
     ],
-    "relics": [
-      "enemy.relic.ashenBlightCore"
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore"
+      }
     ],
     "poiseMax": 6,
     "levelProfile": {
@@ -605,14 +715,15 @@
     "id": "livingArmor",
     "name": "Living_Armor",
     "tier": "minion",
-    "attributes": {
-      "strength": 1,
-      "dexterity": 1,
-      "constitution": 0,
-      "wisdom": 0,
-      "intelligence": 0
-    },
-    "deck": [
+    "attributes": {},
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "defaultDeck": [
       "livingArmor.slam",
       "livingArmor.slam",
       "livingArmor.fortify",
@@ -620,11 +731,17 @@
       "livingArmor.crush",
       "livingArmor.rimeCrush"
     ],
-    "gear": [
-      "battleaxe"
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "battleaxe"
+      }
     ],
-    "relics": [
-      "enemy.relic.ashenBlightCore"
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore"
+      }
     ],
     "poiseMax": 22,
     "levelProfile": {
@@ -639,14 +756,15 @@
     "id": "courtDuelist",
     "name": "Duelist_of_the_Court",
     "tier": "elite",
-    "attributes": {
-      "strength": 2,
-      "dexterity": 1,
-      "constitution": 1,
-      "wisdom": 0,
-      "intelligence": 0
-    },
-    "deck": [
+    "attributes": {},
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "defaultDeck": [
       "courtDuelist.enGarde",
       "courtDuelist.flurry",
       "courtDuelist.flurry",
@@ -657,13 +775,17 @@
       "courtDuelist.bindingRiposte"
     ],
     "firstCard": "courtDuelist.enGarde",
-    "gear": [
-      "greatsword",
-      "armor.wayfarerPlate"
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "greatsword"
+      },
+      {
+        "key": "armor",
+        "id": "armor.wayfarerPlate"
+      }
     ],
-    "relics": [
-      "enemy.relic.ashenBlightCore"
-    ],
+    "defaultRelics": [],
     "poiseMax": 26,
     "levelProfile": {
       "min": 10,
@@ -677,14 +799,15 @@
     "id": "stitchedKing",
     "name": "The_Stitched_King",
     "tier": "boss",
-    "attributes": {
-      "strength": 4,
-      "dexterity": 1,
-      "constitution": 1,
-      "wisdom": 0,
-      "intelligence": 0
-    },
-    "deck": [
+    "attributes": {},
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "defaultDeck": [
       "stitchedKing.scepterBlow",
       "stitchedKing.scepterBlow",
       "stitchedKing.scepterBlow",
@@ -700,13 +823,25 @@
       "stitchedKing.thousandHands"
     ],
     "firstCard": "stitchedKing.courtlyDecree",
-    "gear": [
-      "greatsword",
-      "towerShield",
-      "armor.wayfarerPlate"
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "greatsword"
+      },
+      {
+        "key": "offHand",
+        "id": "towerShield"
+      },
+      {
+        "key": "armor",
+        "id": "armor.wayfarerPlate"
+      }
     ],
-    "relics": [
-      "enemy.relic.ashenCore"
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenCore"
+      }
     ],
     "poiseMax": 34,
     "levelProfile": {
@@ -744,14 +879,15 @@
     "id": "mirrorScribe",
     "name": "Mirror_Scribe",
     "tier": "minion",
-    "attributes": {
-      "strength": 0,
-      "dexterity": 0,
-      "constitution": 0,
-      "wisdom": 1,
-      "intelligence": 1
-    },
-    "deck": [
+    "attributes": {},
+    "attributePriority": [
+      "wisdom",
+      "intelligence",
+      "strength",
+      "dexterity",
+      "constitution"
+    ],
+    "defaultDeck": [
       "mirrorScribe.silverScript",
       "mirrorScribe.silverScript",
       "mirrorScribe.shardVolley",
@@ -759,10 +895,13 @@
       "mirrorScribe.polishedWard",
       "mirrorScribe.polishedWard"
     ],
-    "gear": [
-      "ashStaff"
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "ashStaff"
+      }
     ],
-    "relics": [],
+    "defaultRelics": [],
     "poiseMax": 8,
     "levelProfile": {
       "min": 7,
@@ -776,14 +915,15 @@
     "id": "stitchCrab",
     "name": "Stitch_Crab",
     "tier": "minion",
-    "attributes": {
-      "strength": 1,
-      "dexterity": 1,
-      "constitution": 0,
-      "wisdom": 0,
-      "intelligence": 0
-    },
-    "deck": [
+    "attributes": {},
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "defaultDeck": [
       "stitchCrab.shellFold",
       "stitchCrab.shellFold",
       "stitchCrab.seamShears",
@@ -792,11 +932,17 @@
       "stitchCrab.scuttleRush"
     ],
     "firstCard": "stitchCrab.shellFold",
-    "gear": [
-      "dagger"
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "dagger"
+      }
     ],
-    "relics": [
-      "enemy.relic.ashenBlightCore"
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore"
+      }
     ],
     "poiseMax": 17,
     "levelProfile": {
@@ -811,14 +957,15 @@
     "id": "glassRegent",
     "name": "The_Glass_Regent",
     "tier": "boss",
-    "attributes": {
-      "strength": 2,
-      "dexterity": 1,
-      "constitution": 1,
-      "wisdom": 1,
-      "intelligence": 1
-    },
-    "deck": [
+    "attributes": {},
+    "attributePriority": [
+      "strength",
+      "wisdom",
+      "intelligence",
+      "dexterity",
+      "constitution"
+    ],
+    "defaultDeck": [
       "glassRegent.prismGuard",
       "glassRegent.prismGuard",
       "glassRegent.prismGuard",
@@ -834,13 +981,25 @@
       "glassRegent.shatteredCourt"
     ],
     "firstCard": "glassRegent.prismGuard",
-    "gear": [
-      "greatsword",
-      "parryDagger",
-      "armor.wayfarerPlate"
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "greatsword"
+      },
+      {
+        "key": "offHand",
+        "id": "parryDagger"
+      },
+      {
+        "key": "armor",
+        "id": "armor.nightweave"
+      }
     ],
-    "relics": [
-      "enemy.relic.titanHeart"
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.titanHeart"
+      }
     ],
     "poiseMax": 26,
     "levelProfile": {
@@ -872,14 +1031,15 @@
     "id": "marrowOrganist",
     "name": "The_Marrow_Organist",
     "tier": "boss",
-    "attributes": {
-      "strength": 2,
-      "dexterity": 0,
-      "constitution": 0,
-      "wisdom": 2,
-      "intelligence": 2
-    },
-    "deck": [
+    "attributes": {},
+    "attributePriority": [
+      "strength",
+      "wisdom",
+      "intelligence",
+      "dexterity",
+      "constitution"
+    ],
+    "defaultDeck": [
       "marrowOrganist.bonePrelude",
       "marrowOrganist.bonePrelude",
       "marrowOrganist.ivoryKeys",
@@ -892,13 +1052,25 @@
       "marrowOrganist.quietRefrain"
     ],
     "firstCard": "marrowOrganist.bonePrelude",
-    "gear": [
-      "greatsword",
-      "towerShield",
-      "armor.nightweave"
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "greatsword"
+      },
+      {
+        "key": "offHand",
+        "id": "parryDagger"
+      },
+      {
+        "key": "armor",
+        "id": "armor.nightweave"
+      }
     ],
-    "relics": [
-      "enemy.relic.titanHeart"
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.titanHeart"
+      }
     ],
     "poiseMax": 30,
     "levelProfile": {
@@ -927,14 +1099,15 @@
     "id": "ashRevenant",
     "name": "Ash_Revenant",
     "tier": "minion",
-    "attributes": {
-      "strength": 1,
-      "dexterity": 1,
-      "constitution": 0,
-      "wisdom": 0,
-      "intelligence": 0
-    },
-    "deck": [
+    "attributes": {},
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "defaultDeck": [
       "ashRevenant.cinderSlash",
       "ashRevenant.cinderSlash",
       "ashRevenant.cinderSlash",
@@ -942,11 +1115,17 @@
       "ashRevenant.reform",
       "ashRevenant.reform"
     ],
-    "gear": [
-      "dagger"
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "dagger"
+      }
     ],
-    "relics": [
-      "enemy.relic.ashenBlightCore"
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore"
+      }
     ],
     "poiseMax": 10,
     "levelProfile": {
@@ -961,14 +1140,15 @@
     "id": "emberStarvedPilgrim",
     "name": "Ember-Starved_Pilgrim",
     "tier": "minion",
-    "attributes": {
-      "strength": 1,
-      "dexterity": 1,
-      "constitution": 0,
-      "wisdom": 0,
-      "intelligence": 0
-    },
-    "deck": [
+    "attributes": {},
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "defaultDeck": [
       "emberStarvedPilgrim.desperateClaw",
       "emberStarvedPilgrim.desperateClaw",
       "emberStarvedPilgrim.desperateClaw",
@@ -976,11 +1156,17 @@
       "emberStarvedPilgrim.wail",
       "emberStarvedPilgrim.wail"
     ],
-    "gear": [
-      "battleaxe"
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "battleaxe"
+      }
     ],
-    "relics": [
-      "enemy.relic.ashenBlightCore"
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore"
+      }
     ],
     "poiseMax": 8,
     "levelProfile": {
@@ -995,14 +1181,15 @@
     "id": "valkyrieShade",
     "name": "Valkyrie_Shade",
     "tier": "minion",
-    "attributes": {
-      "strength": 1,
-      "dexterity": 1,
-      "constitution": 0,
-      "wisdom": 0,
-      "intelligence": 0
-    },
-    "deck": [
+    "attributes": {},
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "defaultDeck": [
       "valkyrieShade.spiralLance",
       "valkyrieShade.spiralLance",
       "valkyrieShade.spiralLance",
@@ -1010,11 +1197,17 @@
       "valkyrieShade.bloodFeather",
       "valkyrieShade.bloodFeather"
     ],
-    "gear": [
-      "battleaxe"
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "battleaxe"
+      }
     ],
-    "relics": [
-      "enemy.relic.ashenBlightCore"
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore"
+      }
     ],
     "poiseMax": 14,
     "levelProfile": {
@@ -1029,14 +1222,15 @@
     "id": "charredColossus",
     "name": "Charred_Colossus",
     "tier": "minion",
-    "attributes": {
-      "strength": 1,
-      "dexterity": 1,
-      "constitution": 0,
-      "wisdom": 0,
-      "intelligence": 0
-    },
-    "deck": [
+    "attributes": {},
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "defaultDeck": [
       "charredColossus.smash",
       "charredColossus.smash",
       "charredColossus.ashCloud",
@@ -1044,11 +1238,17 @@
       "charredColossus.harden",
       "charredColossus.harden"
     ],
-    "gear": [
-      "battleaxe"
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "battleaxe"
+      }
     ],
-    "relics": [
-      "enemy.relic.ashenBlightCore"
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore"
+      }
     ],
     "poiseMax": 30,
     "levelProfile": {
@@ -1066,14 +1266,15 @@
     "id": "wyrmLord",
     "name": "Wyrm_Lord",
     "tier": "elite",
-    "attributes": {
-      "strength": 2,
-      "dexterity": 1,
-      "constitution": 1,
-      "wisdom": 0,
-      "intelligence": 0
-    },
-    "deck": [
+    "attributes": {},
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "defaultDeck": [
       "wyrmLord.consecration",
       "wyrmLord.halberdReign",
       "wyrmLord.halberdReign",
@@ -1084,12 +1285,21 @@
       "wyrmLord.goldenBulwark"
     ],
     "firstCard": "wyrmLord.consecration",
-    "gear": [
-      "cinderAxe",
-      "armor.wayfarerPlate"
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "cinderAxe"
+      },
+      {
+        "key": "armor",
+        "id": "armor.wayfarerPlate"
+      }
     ],
-    "relics": [
-      "enemy.relic.ashenBlightCore"
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore"
+      }
     ],
     "poiseMax": 30,
     "levelProfile": {
@@ -1104,14 +1314,15 @@
     "id": "blightedValkyrie",
     "name": "The_Blighted_Valkyrie",
     "tier": "boss",
-    "attributes": {
-      "strength": 2,
-      "dexterity": 1,
-      "constitution": 0,
-      "wisdom": 2,
-      "intelligence": 1
-    },
-    "deck": [
+    "attributes": {},
+    "attributePriority": [
+      "strength",
+      "wisdom",
+      "dexterity",
+      "intelligence",
+      "constitution"
+    ],
+    "defaultDeck": [
       "blightedValkyrie.spiralThrust",
       "blightedValkyrie.spiralThrust",
       "blightedValkyrie.spiralThrust",
@@ -1127,13 +1338,25 @@
       "blightedValkyrie.scarletDance"
     ],
     "firstCard": "blightedValkyrie.spiralThrust",
-    "gear": [
-      "halberd",
-      "parryDagger",
-      "armor.nightweave"
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "halberd"
+      },
+      {
+        "key": "offHand",
+        "id": "parryDagger"
+      },
+      {
+        "key": "armor",
+        "id": "armor.nightweave"
+      }
     ],
-    "relics": [
-      "enemy.relic.ashenBlightCore"
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore"
+      }
     ],
     "poiseMax": 36,
     "levelProfile": {
@@ -1186,14 +1409,15 @@
     "id": "cinderMantis",
     "name": "Cinder_Mantis",
     "tier": "minion",
-    "attributes": {
-      "strength": 1,
-      "dexterity": 1,
-      "constitution": 0,
-      "wisdom": 0,
-      "intelligence": 0
-    },
-    "deck": [
+    "attributes": {},
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "defaultDeck": [
       "cinderMantis.scythePair",
       "cinderMantis.scythePair",
       "cinderMantis.scythePair",
@@ -1201,10 +1425,13 @@
       "cinderMantis.emberPounce",
       "cinderMantis.foldedBlades"
     ],
-    "gear": [
-      "dagger"
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "dagger"
+      }
     ],
-    "relics": [],
+    "defaultRelics": [],
     "poiseMax": 11,
     "levelProfile": {
       "min": 14,
@@ -1218,14 +1445,15 @@
     "id": "eclipseCantor",
     "name": "Eclipse_Cantor",
     "tier": "minion",
-    "attributes": {
-      "strength": 0,
-      "dexterity": 0,
-      "constitution": 0,
-      "wisdom": 1,
-      "intelligence": 1
-    },
-    "deck": [
+    "attributes": {},
+    "attributePriority": [
+      "wisdom",
+      "intelligence",
+      "strength",
+      "dexterity",
+      "constitution"
+    ],
+    "defaultDeck": [
       "eclipseCantor.darkHymn",
       "eclipseCantor.darkHymn",
       "eclipseCantor.lunarRay",
@@ -1233,10 +1461,13 @@
       "eclipseCantor.fadingEcho",
       "eclipseCantor.fadingEcho"
     ],
-    "gear": [
-      "ashStaff"
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "ashStaff"
+      }
     ],
-    "relics": [],
+    "defaultRelics": [],
     "poiseMax": 7,
     "levelProfile": {
       "min": 14,
@@ -1250,14 +1481,15 @@
     "id": "furnaceSaint",
     "name": "The_Furnace_Saint",
     "tier": "boss",
-    "attributes": {
-      "strength": 4,
-      "dexterity": 1,
-      "constitution": 1,
-      "wisdom": 0,
-      "intelligence": 0
-    },
-    "deck": [
+    "attributes": {},
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "defaultDeck": [
       "furnaceSaint.openFurnace",
       "furnaceSaint.openFurnace",
       "furnaceSaint.openFurnace",
@@ -1270,13 +1502,25 @@
       "furnaceSaint.coolingAsh"
     ],
     "firstCard": "furnaceSaint.openFurnace",
-    "gear": [
-      "cinderAxe",
-      "towerShield",
-      "armor.wayfarerPlate"
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "cinderAxe"
+      },
+      {
+        "key": "offHand",
+        "id": "towerShield"
+      },
+      {
+        "key": "armor",
+        "id": "armor.wayfarerPlate"
+      }
     ],
-    "relics": [
-      "enemy.relic.titanHeart"
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.titanHeart"
+      }
     ],
     "poiseMax": 40,
     "levelProfile": {
@@ -1305,14 +1549,15 @@
     "id": "hollowAstronomer",
     "name": "The_Hollow_Astronomer",
     "tier": "boss",
-    "attributes": {
-      "strength": 2,
-      "dexterity": 1,
-      "constitution": 1,
-      "wisdom": 1,
-      "intelligence": 1
-    },
-    "deck": [
+    "attributes": {},
+    "attributePriority": [
+      "strength",
+      "wisdom",
+      "intelligence",
+      "dexterity",
+      "constitution"
+    ],
+    "defaultDeck": [
       "hollowAstronomer.starChart",
       "hollowAstronomer.starChart",
       "hollowAstronomer.orbitalShards",
@@ -1328,13 +1573,25 @@
       "hollowAstronomer.fallingHeavens"
     ],
     "firstCard": "hollowAstronomer.starChart",
-    "gear": [
-      "cinderAxe",
-      "parryDagger",
-      "armor.wayfarerPlate"
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "cinderAxe"
+      },
+      {
+        "key": "offHand",
+        "id": "parryDagger"
+      },
+      {
+        "key": "armor",
+        "id": "armor.nightweave"
+      }
     ],
-    "relics": [
-      "enemy.relic.titanHeart"
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.titanHeart"
+      }
     ],
     "poiseMax": 25,
     "levelProfile": {
@@ -1359,14 +1616,15 @@
     "id": "ashheartDragon",
     "name": "The_Ashheart_Dragon",
     "tier": "boss",
-    "attributes": {
-      "strength": 4,
-      "dexterity": 1,
-      "constitution": 0,
-      "wisdom": 1,
-      "intelligence": 0
-    },
-    "deck": [
+    "attributes": {},
+    "attributePriority": [
+      "strength",
+      "wisdom",
+      "dexterity",
+      "constitution",
+      "intelligence"
+    ],
+    "defaultDeck": [
       "ashheartDragon.obsidianClaws",
       "ashheartDragon.obsidianClaws",
       "ashheartDragon.obsidianClaws",
@@ -1382,13 +1640,25 @@
       "ashheartDragon.ashBreath"
     ],
     "firstCard": "ashheartDragon.obsidianClaws",
-    "gear": [
-      "halberd",
-      "parryDagger",
-      "armor.gutterLeathers"
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "halberd"
+      },
+      {
+        "key": "offHand",
+        "id": "parryDagger"
+      },
+      {
+        "key": "armor",
+        "id": "armor.nightweave"
+      }
     ],
-    "relics": [
-      "enemy.relic.ashenBlightCore"
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore"
+      }
     ],
     "poiseMax": 34,
     "levelProfile": {

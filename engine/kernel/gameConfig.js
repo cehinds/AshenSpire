@@ -246,6 +246,53 @@ const ENEMY_ATTRIBUTES = ['strength', 'dexterity', 'constitution', 'wisdom', 'in
 // attribute's contribution and the level term, each floored on its own (owner 2026-10-17:
 // HP, SP and MP from attributes and level via statRules).
 // Pass enemyItemBonuses() as `bonus` to include gear and relics.
+// Enemy attributes (owner 2026-10-17): points the row sets in `attributes` are kept; the rest of the
+// tier budget is split by `attributePriority` (rank weights from `priorityWeights`), respecting caps.
+// `variance` moves up to N points between the top `among` priorities, seeded, so copies differ.
+function enemyAttributeWeights(row, settings) {
+  const fill = settings.attributeFill, order = row.attributePriority || fill.defaultPriority, ranks = row.priorityWeights || fill.priorityWeights;
+  return Object.fromEntries(order.map((id, i) => [id, ranks[i] ?? 0]));
+}
+export function resolveEnemyAttributes(row, settings, seed = null) {
+  const fill = settings.attributeFill, tier = settings.tiers[row.tier];
+  const budget = Number.isSafeInteger(row.attributePoints) ? row.attributePoints : tier.attributeBudget[1];
+  const set = Object.fromEntries(ENEMY_ATTRIBUTES.map(id => [id, row.attributes?.[id] || 0]));
+  const out = { ...set }, caps = { ...fill.caps, ...(row.attributeCaps || {}) };
+  let weights = enemyAttributeWeights(row, settings), left = budget - Object.values(set).reduce((a, b) => a + b, 0);
+  for (let guard = 0; left > 0 && guard < 10; guard++) {
+    const open = Object.fromEntries(Object.entries(weights).filter(([id]) => caps[id] === undefined || out[id] < caps[id]));
+    if (!Object.keys(open).length) break;
+    const share = gearSplit(left, open);
+    for (const [id, n] of Object.entries(share)) { const room = caps[id] === undefined ? n : Math.min(n, caps[id] - out[id]); out[id] += room; left -= room; }
+    weights = open;
+  }
+  const v = { ...fill.variance, ...(row.variance || {}) };
+  if (seed !== null && v.points > 0) {
+    const order = (row.attributePriority || fill.defaultPriority).slice(0, v.among);
+    let h = [...String(seed) + row.id].reduce((acc, c) => (acc * 31 + c.charCodeAt(0)) >>> 0, 7);
+    for (let i = 0; i < v.points; i++) {
+      const from = order[h % order.length], to = order[(h >>> 3) % order.length];
+      h = (h * 1103515245 + 12345) >>> 0;
+      if (from !== to && out[from] > set[from] && (caps[to] === undefined || out[to] < caps[to])) { out[from]--; out[to]++; }
+    }
+  }
+  return out;
+}
+// Every attribute spread variance can produce (for validation): the base plus each single-point move.
+export function enemyAttributeOutcomes(row, settings) {
+  const fill = settings.attributeFill, v = { ...fill.variance, ...(row.variance || {}) }, base = resolveEnemyAttributes(row, settings);
+  const outcomes = [base];
+  if (!v.points) return outcomes;
+  const order = (row.attributePriority || fill.defaultPriority).slice(0, v.among), caps = { ...fill.caps, ...(row.attributeCaps || {}) };
+  let frontier = [base];
+  for (let step = 0; step < v.points; step++) {
+    const next = [];
+    for (const a of frontier) for (const from of order) for (const to of order)
+      if (from !== to && a[from] > (row.attributes?.[from] || 0) && (caps[to] === undefined || a[to] < caps[to])) next.push({ ...a, [from]: a[from] - 1, [to]: a[to] + 1 });
+    outcomes.push(...next); frontier = next;
+  }
+  return outcomes;
+}
 export function enemyLevel(row, settings) {
   const profile = row.levelProfile || {};
   return Math.max(1, settings.levelFrom === 'levelProfile.max' ? profile.max ?? 1 : profile.min ?? 1);
@@ -256,15 +303,20 @@ const ITEM_MODIFIER = /^self\.(strength|dexterity|constitution|wisdom|intelligen
 const ENEMY_POOL_MODS = ['sp', 'mp', 'hp'];
 // Gear is the player's gear (content.gear, resolved by the gear module) so it can be looted;
 // relics are enemy relics (content.enemyRelics) with attribute modifiers.
+// An enemy's default loadout (owner 2026-10-17): defaultDeck (card ids, copies allowed), defaultGear and
+// defaultRelics ({ key, id } entries; key unique per enemy, e.g. mainHand, so a module can swap one slot).
+export const enemyDeck = row => row.defaultDeck || [];
+export const enemyGearIds = row => (row.defaultGear || []).map(entry => entry.id);
+export const enemyRelicIds = row => (row.defaultRelics || []).map(entry => entry.id);
 export function enemyItemBonuses(row, content = {}, gearSettings = null) {
   const bonus = Object.fromEntries([...ENEMY_ATTRIBUTES, ...ENEMY_POOL_MODS].map(id => [id, 0]));
   const gear = new Map((content.gear || []).map(item => [item.id, item]));
-  for (const id of row.gear || []) {
+  for (const id of enemyGearIds(row)) {
     const item = gear.get(id);
     if (item && gearSettings) { const resolved = resolveGearItem(item, gearSettings); for (const a of ENEMY_ATTRIBUTES) bonus[a] += resolved.points[a]; }
   }
   const relics = new Map((content.enemyRelics || []).map(item => [item.id, item]));
-  for (const id of row.relics || []) for (const modifier of relics.get(id)?.modifiers || []) {
+  for (const id of enemyRelicIds(row)) for (const modifier of relics.get(id)?.modifiers || []) {
     const match = ITEM_MODIFIER.exec(modifier);
     if (match) bonus[match[1]] += Number(match[2]);
   }
@@ -273,7 +325,8 @@ export function enemyItemBonuses(row, content = {}, gearSettings = null) {
 export function enemyPools(row, settings, level = enemyLevel(row, settings), bonus = null) {
   const tier = settings.tiers[row.tier], round = settings.rounding === 'up' ? Math.ceil : settings.rounding === 'nearest' ? Math.round : Math.floor;
   const base = { hp: tier.pools.hp, sp: tier.pools.sp, mp: tier.pools.mp, hand: tier.hand, ar: 0, dr: 0 };
-  const attributes = Object.fromEntries(ENEMY_ATTRIBUTES.map(id => [id, Math.max(0, (row.attributes[id] || 0) + (bonus?.[id] || 0))]));
+  const own = row.resolvedAttributes || resolveEnemyAttributes(row, settings);
+  const attributes = Object.fromEntries(ENEMY_ATTRIBUTES.map(id => [id, Math.max(0, (own[id] || 0) + (bonus?.[id] || 0))]));
   const pools = {};
   for (const [stat, rule] of Object.entries(settings.statRules)) {
     let value = base[stat] ?? 0;
@@ -344,21 +397,29 @@ function verifyEnemyContent(content, settings, gearSettings = null) {
     ids.add(row.id);
     const tier = settings.tiers[row.tier];
     if (!tier || !settings.include.includes(row.tier)) fail(`${at}/tier`, 'unknown or excluded tier');
-    if (!record(row.attributes) || Object.keys(row.attributes).some(k => !ENEMY_ATTRIBUTES.includes(k)) || Object.values(row.attributes).some(n => !Number.isSafeInteger(n) || n < 0)) fail(`${at}/attributes`, 'expected nonnegative integer attributes');
-    const total = Object.values(row.attributes).reduce((a, b) => a + b, 0);
+    if (row.attributes !== undefined && (!record(row.attributes) || Object.keys(row.attributes).some(k => !ENEMY_ATTRIBUTES.includes(k)) || Object.values(row.attributes).some(n => !Number.isSafeInteger(n) || n < 0))) fail(`${at}/attributes`, 'expected nonnegative integer attributes');
+    for (const id of row.attributePriority || []) if (!ENEMY_ATTRIBUTES.includes(id)) fail(`${at}/attributePriority`, `unknown attribute '${id}'`);
+    const total = Object.values(resolveEnemyAttributes(row, settings)).reduce((a, b) => a + b, 0);
     if (total < tier.attributeBudget[0] || total > tier.attributeBudget[1]) fail(`${at}/attributes`, `total ${total} outside ${row.tier} budget`);
-    if (!Array.isArray(row.deck)) fail(`${at}/deck`, 'expected deck array');
-    const [min, max] = [Math.max(settings.deck.min, tier.deckSize[0]), Math.min(settings.deck.max, tier.deckSize[1])];
-    if (row.deck.length < min || row.deck.length > max) fail(`${at}/deck`, `deck size ${row.deck.length} outside ${min}-${max}`);
-    const pools = enemyPools(row, settings, enemyLevel(row, settings), enemyItemBonuses(row, content, gearSettings));
-    if (tier.spRange && (pools.sp < tier.spRange[0] || pools.sp > tier.spRange[1])) fail(`${at}/attributes`, `SP ${pools.sp} outside ${row.tier} range ${tier.spRange[0]}-${tier.spRange[1]}`);
-    for (const id of [...row.deck, ...(row.unlockCards || []), ...(row.firstCard ? [row.firstCard] : [])]) {
-      const card = cards.get(id);
-      if (!card && !playerCards.has(id)) fail(`${at}/deck`, `unresolved card reference '${id}'`);
-      if (card && (card.staminaCost > pools.sp || card.manaCost > pools.mp)) fail(`${at}/deck`, `'${id}' costs ${card.staminaCost} SP/${card.manaCost} MP; enemy has ${pools.sp} SP/${pools.mp} MP`);
+    if (!Array.isArray(row.defaultDeck)) fail(`${at}/defaultDeck`, 'expected defaultDeck array');
+    for (const list of ['defaultGear', 'defaultRelics']) {
+      const entries = row[list] || [];
+      if (!Array.isArray(entries) || entries.some(e => !record(e) || typeof e.key !== 'string' || typeof e.id !== 'string')) fail(`${at}/${list}`, 'expected [{ key, id }] entries');
+      if (new Set(entries.map(e => e.key)).size !== entries.length) fail(`${at}/${list}`, 'duplicate key');
     }
-    for (const id of row.gear || []) if (!gear.has(id)) fail(`${at}/gear`, `unresolved gear '${id}'`);
-    for (const id of row.relics || []) if (!relics.has(id)) fail(`${at}/relics`, `unresolved relic '${id}'`);
+    const [min, max] = [Math.max(settings.deck.min, tier.deckSize[0]), Math.min(settings.deck.max, tier.deckSize[1])];
+    if (row.defaultDeck.length < min || row.defaultDeck.length > max) fail(`${at}/defaultDeck`, `deck size ${row.defaultDeck.length} outside ${min}-${max}`);
+    // Check the worst case: every spread variance can produce must still pay for every card.
+    const bonus = enemyItemBonuses(row, content, gearSettings), outcomes = enemyAttributeOutcomes(row, settings).map(a => enemyPools({ ...row, resolvedAttributes: a }, settings, enemyLevel(row, settings), bonus));
+    const pools = { ...outcomes[0], sp: Math.min(...outcomes.map(o => o.sp)), mp: Math.min(...outcomes.map(o => o.mp)) };
+    if (tier.spRange && (pools.sp < tier.spRange[0] || pools.sp > tier.spRange[1])) fail(`${at}/attributes`, `SP ${pools.sp} outside ${row.tier} range ${tier.spRange[0]}-${tier.spRange[1]}`);
+    for (const id of [...row.defaultDeck, ...(row.unlockCards || []), ...(row.firstCard ? [row.firstCard] : [])]) {
+      const card = cards.get(id);
+      if (!card && !playerCards.has(id)) fail(`${at}/defaultDeck`, `unresolved card reference '${id}'`);
+      if (card && (card.staminaCost > pools.sp || card.manaCost > pools.mp)) fail(`${at}/defaultDeck`, `'${id}' costs ${card.staminaCost} SP/${card.manaCost} MP; enemy has ${pools.sp} SP/${pools.mp} MP`);
+    }
+    for (const id of enemyGearIds(row)) if (!gear.has(id)) fail(`${at}/defaultGear`, `unresolved gear '${id}'`);
+    for (const id of enemyRelicIds(row)) if (!relics.has(id)) fail(`${at}/defaultRelics`, `unresolved relic '${id}'`);
   }
 }
 function verifySettings(modules, instances = {}) {

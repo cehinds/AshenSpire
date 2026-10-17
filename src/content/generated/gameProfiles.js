@@ -1173,6 +1173,29 @@ export const gameProfileCatalog = {
               "bestiary"
             ]
           }
+        },
+        "attributeFill": {
+          "defaultPriority": [
+            "strength",
+            "dexterity",
+            "constitution",
+            "wisdom",
+            "intelligence"
+          ],
+          "priorityWeights": [
+            4,
+            3,
+            2,
+            1,
+            0
+          ],
+          "caps": {
+            "constitution": 1
+          },
+          "variance": {
+            "points": 1,
+            "among": 3
+          }
         }
       },
       "schema": {
@@ -1763,6 +1786,93 @@ export const gameProfileCatalog = {
               "revealedBy"
             ],
             "additionalProperties": false
+          },
+          "attributeFill": {
+            "type": "object",
+            "properties": {
+              "defaultPriority": {
+                "type": "array",
+                "uniqueItems": true,
+                "minItems": 1,
+                "items": {
+                  "enum": [
+                    "strength",
+                    "dexterity",
+                    "constitution",
+                    "wisdom",
+                    "intelligence"
+                  ]
+                }
+              },
+              "priorityWeights": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 5,
+                "items": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                }
+              },
+              "caps": {
+                "type": "object",
+                "properties": {
+                  "strength": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 99
+                  },
+                  "dexterity": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 99
+                  },
+                  "constitution": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 99
+                  },
+                  "wisdom": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 99
+                  },
+                  "intelligence": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 99
+                  }
+                },
+                "additionalProperties": false
+              },
+              "variance": {
+                "type": "object",
+                "properties": {
+                  "points": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 10
+                  },
+                  "among": {
+                    "type": "integer",
+                    "minimum": 2,
+                    "maximum": 5
+                  }
+                },
+                "required": [
+                  "points",
+                  "among"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "defaultPriority",
+              "priorityWeights",
+              "caps",
+              "variance"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -1780,7 +1890,8 @@ export const gameProfileCatalog = {
           "levelFrom",
           "equipment",
           "penaltyFloor",
-          "visibility"
+          "visibility",
+          "attributeFill"
         ],
         "additionalProperties": false
       },
@@ -1795,13 +1906,13 @@ export const gameProfileCatalog = {
           "path": "engine/modules/enemies/defaults.json",
           "id": "enemies",
           "version": "1.0.0",
-          "hash": "sha256:be6cad15dab2ed08203f0cdc8bfea5b759f701b8e7cfb9d8bcad345a0dc888b9"
+          "hash": "sha256:8c07ae34857f31b91d89c254b6336daa4b10c93bcb821bb3fefd6e85b9cceda6"
         },
         {
           "path": "engine/modules/enemies/settings.schema.json",
           "id": "enemies",
           "version": "1.0.0",
-          "hash": "sha256:d358cdbcb67030ac8a4443b4a03c59f249dfb6b90f1cdad8f3a498f31c097246"
+          "hash": "sha256:50995fe6128243c302ef0af14b99b980ba635513dba425476d1cd9c65d2deb0e"
         }
       ]
     },
@@ -5869,14 +5980,15 @@ export const gameProfileCatalog = {
             "id": "wanderingSoldier",
             "name": "Wandering_Soldier",
             "tier": "minion",
-            "attributes": {
-              "strength": 1,
-              "dexterity": 1,
-              "constitution": 0,
-              "wisdom": 0,
-              "intelligence": 0
-            },
-            "deck": [
+            "attributes": {},
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "defaultDeck": [
               "wanderingSoldier.slash",
               "wanderingSoldier.slash",
               "wanderingSoldier.guard",
@@ -5884,11 +5996,17 @@ export const gameProfileCatalog = {
               "wanderingSoldier.warcry",
               "wanderingSoldier.warcry"
             ],
-            "gear": [
-              "dagger"
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "dagger"
+              }
             ],
-            "relics": [
-              "enemy.relic.ashenBlightCore"
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.ashenBlightCore"
+              }
             ],
             "poiseMax": 10,
             "levelProfile": {
@@ -5915,14 +6033,15 @@ export const gameProfileCatalog = {
             "id": "blightHound",
             "name": "Blight_Hound",
             "tier": "minion",
-            "attributes": {
-              "strength": 1,
-              "dexterity": 1,
-              "constitution": 0,
-              "wisdom": 0,
-              "intelligence": 0
-            },
-            "deck": [
+            "attributes": {},
+            "attributePriority": [
+              "dexterity",
+              "strength",
+              "wisdom",
+              "intelligence",
+              "constitution"
+            ],
+            "defaultDeck": [
               "blightHound.bite",
               "blightHound.bite",
               "blightHound.bite",
@@ -5930,11 +6049,17 @@ export const gameProfileCatalog = {
               "blightHound.lunge",
               "blightHound.lunge"
             ],
-            "gear": [
-              "battleaxe"
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "battleaxe"
+              }
             ],
-            "relics": [
-              "enemy.relic.ashenBlightCore"
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.ashenBlightCore"
+              }
             ],
             "poiseMax": 6,
             "levelProfile": {
@@ -5951,14 +6076,15 @@ export const gameProfileCatalog = {
             "id": "huskBrute",
             "name": "Husk_Brute",
             "tier": "minion",
-            "attributes": {
-              "strength": 1,
-              "dexterity": 1,
-              "constitution": 0,
-              "wisdom": 0,
-              "intelligence": 0
-            },
-            "deck": [
+            "attributes": {},
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "defaultDeck": [
               "huskBrute.club",
               "huskBrute.club",
               "huskBrute.bellow",
@@ -5966,11 +6092,17 @@ export const gameProfileCatalog = {
               "huskBrute.brace",
               "huskBrute.brace"
             ],
-            "gear": [
-              "dagger"
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "dagger"
+              }
             ],
-            "relics": [
-              "enemy.relic.ashenBlightCore"
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.ashenBlightCore"
+              }
             ],
             "poiseMax": 16,
             "levelProfile": {
@@ -5984,14 +6116,15 @@ export const gameProfileCatalog = {
             "id": "graveWisp",
             "name": "Grave_Wisp",
             "tier": "minion",
-            "attributes": {
-              "strength": 0,
-              "dexterity": 0,
-              "constitution": 0,
-              "wisdom": 1,
-              "intelligence": 1
-            },
-            "deck": [
+            "attributes": {},
+            "attributePriority": [
+              "wisdom",
+              "intelligence",
+              "strength",
+              "dexterity",
+              "constitution"
+            ],
+            "defaultDeck": [
               "graveWisp.curse",
               "graveWisp.curse",
               "graveWisp.curse",
@@ -5999,10 +6132,13 @@ export const gameProfileCatalog = {
               "graveWisp.drain",
               "graveWisp.drain"
             ],
-            "gear": [
-              "ashStaff"
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "ashStaff"
+              }
             ],
-            "relics": [],
+            "defaultRelics": [],
             "poiseMax": 4,
             "levelProfile": {
               "min": 1,
@@ -6017,13 +6153,16 @@ export const gameProfileCatalog = {
             "name": "Wyrm_Aspirant",
             "tier": "elite",
             "attributes": {
-              "strength": 0,
-              "dexterity": 1,
-              "constitution": 1,
-              "wisdom": 2,
-              "intelligence": 0
+              "wisdom": 2
             },
-            "deck": [
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "defaultDeck": [
               "wyrmAspirant.consecrate",
               "wyrmAspirant.halberdSweep",
               "wyrmAspirant.halberdSweep",
@@ -6034,11 +6173,17 @@ export const gameProfileCatalog = {
               "wyrmAspirant.goldenGuard"
             ],
             "firstCard": "wyrmAspirant.consecrate",
-            "gear": [
-              "blightRod",
-              "armor.nightweave"
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "greatsword"
+              },
+              {
+                "key": "armor",
+                "id": "armor.nightweave"
+              }
             ],
-            "relics": [],
+            "defaultRelics": [],
             "poiseMax": 24,
             "levelProfile": {
               "min": 4,
@@ -6052,14 +6197,15 @@ export const gameProfileCatalog = {
             "id": "fellWarden",
             "name": "The_Fell_Warden",
             "tier": "boss",
-            "attributes": {
-              "strength": 4,
-              "dexterity": 1,
-              "constitution": 1,
-              "wisdom": 0,
-              "intelligence": 0
-            },
-            "deck": [
+            "attributes": {},
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "defaultDeck": [
               "fellWarden.caneStrike",
               "fellWarden.caneStrike",
               "fellWarden.caneStrike",
@@ -6075,13 +6221,25 @@ export const gameProfileCatalog = {
               "fellWarden.twinDaggers"
             ],
             "firstCard": "fellWarden.caneStrike",
-            "gear": [
-              "greatsword",
-              "parryDagger",
-              "armor.wayfarerPlate"
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "greatsword"
+              },
+              {
+                "key": "offHand",
+                "id": "parryDagger"
+              },
+              {
+                "key": "armor",
+                "id": "armor.gutterLeathers"
+              }
             ],
-            "relics": [
-              "enemy.relic.graveSeal"
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.graveSeal"
+              }
             ],
             "poiseMax": 30,
             "levelProfile": {
@@ -6125,14 +6283,15 @@ export const gameProfileCatalog = {
             "id": "lanternMoth",
             "name": "Lantern_Moth",
             "tier": "minion",
-            "attributes": {
-              "strength": 0,
-              "dexterity": 0,
-              "constitution": 0,
-              "wisdom": 1,
-              "intelligence": 1
-            },
-            "deck": [
+            "attributes": {},
+            "attributePriority": [
+              "wisdom",
+              "intelligence",
+              "strength",
+              "dexterity",
+              "constitution"
+            ],
+            "defaultDeck": [
               "lanternMoth.lanternDust",
               "lanternMoth.lanternDust",
               "lanternMoth.wingSparks",
@@ -6140,10 +6299,13 @@ export const gameProfileCatalog = {
               "lanternMoth.wingSparks",
               "lanternMoth.wingSparks"
             ],
-            "gear": [
-              "ashStaff"
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "ashStaff"
+              }
             ],
-            "relics": [],
+            "defaultRelics": [],
             "poiseMax": 5,
             "levelProfile": {
               "min": 2,
@@ -6157,14 +6319,15 @@ export const gameProfileCatalog = {
             "id": "briarHermit",
             "name": "Briar_Hermit",
             "tier": "minion",
-            "attributes": {
-              "strength": 1,
-              "dexterity": 0,
-              "constitution": 0,
-              "wisdom": 1,
-              "intelligence": 0
-            },
-            "deck": [
+            "attributes": {},
+            "attributePriority": [
+              "strength",
+              "wisdom",
+              "dexterity",
+              "constitution",
+              "intelligence"
+            ],
+            "defaultDeck": [
               "briarHermit.rootShelter",
               "briarHermit.rootShelter",
               "briarHermit.briarCast",
@@ -6173,11 +6336,17 @@ export const gameProfileCatalog = {
               "briarHermit.sapMend"
             ],
             "firstCard": "briarHermit.rootShelter",
-            "gear": [
-              "battleaxe"
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "battleaxe"
+              }
             ],
-            "relics": [
-              "enemy.relic.ashenBlightCore"
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.ashenBlightCore"
+              }
             ],
             "poiseMax": 9,
             "levelProfile": {
@@ -6192,14 +6361,15 @@ export const gameProfileCatalog = {
             "id": "chainScavenger",
             "name": "Chain_Scavenger",
             "tier": "minion",
-            "attributes": {
-              "strength": 1,
-              "dexterity": 1,
-              "constitution": 0,
-              "wisdom": 0,
-              "intelligence": 0
-            },
-            "deck": [
+            "attributes": {},
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "defaultDeck": [
               "chainScavenger.hookCast",
               "chainScavenger.hookCast",
               "chainScavenger.hookCast",
@@ -6207,10 +6377,13 @@ export const gameProfileCatalog = {
               "chainScavenger.chainSnare",
               "chainScavenger.draggingBlow"
             ],
-            "gear": [
-              "dagger"
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "dagger"
+              }
             ],
-            "relics": [],
+            "defaultRelics": [],
             "poiseMax": 8,
             "levelProfile": {
               "min": 2,
@@ -6224,14 +6397,15 @@ export const gameProfileCatalog = {
             "id": "bellKeeper",
             "name": "The_Bell_Keeper",
             "tier": "boss",
-            "attributes": {
-              "strength": 4,
-              "dexterity": 1,
-              "constitution": 0,
-              "wisdom": 1,
-              "intelligence": 0
-            },
-            "deck": [
+            "attributes": {},
+            "attributePriority": [
+              "strength",
+              "wisdom",
+              "dexterity",
+              "constitution",
+              "intelligence"
+            ],
+            "defaultDeck": [
               "bellKeeper.bronzeToll",
               "bellKeeper.bronzeToll",
               "bellKeeper.bronzeToll",
@@ -6247,13 +6421,25 @@ export const gameProfileCatalog = {
               "bellKeeper.crackedPeal"
             ],
             "firstCard": "bellKeeper.bronzeToll",
-            "gear": [
-              "halberd",
-              "parryDagger",
-              "armor.gutterLeathers"
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "cinderAxe"
+              },
+              {
+                "key": "offHand",
+                "id": "parryDagger"
+              },
+              {
+                "key": "armor",
+                "id": "armor.nightweave"
+              }
             ],
-            "relics": [
-              "enemy.relic.graveSeal"
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.graveSeal"
+              }
             ],
             "poiseMax": 25,
             "levelProfile": {
@@ -6278,14 +6464,15 @@ export const gameProfileCatalog = {
             "id": "thornMatriarch",
             "name": "The_Thorn_Matriarch",
             "tier": "boss",
-            "attributes": {
-              "strength": 2,
-              "dexterity": 1,
-              "constitution": 1,
-              "wisdom": 1,
-              "intelligence": 1
-            },
-            "deck": [
+            "attributes": {},
+            "attributePriority": [
+              "strength",
+              "wisdom",
+              "intelligence",
+              "dexterity",
+              "constitution"
+            ],
+            "defaultDeck": [
               "thornMatriarch.rootCrown",
               "thornMatriarch.rootCrown",
               "thornMatriarch.rootCrown",
@@ -6298,13 +6485,25 @@ export const gameProfileCatalog = {
               "thornMatriarch.entwiningRoots"
             ],
             "firstCard": "thornMatriarch.rootCrown",
-            "gear": [
-              "cinderAxe",
-              "towerShield",
-              "armor.nightweave"
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "cinderAxe"
+              },
+              {
+                "key": "offHand",
+                "id": "parryDagger"
+              },
+              {
+                "key": "armor",
+                "id": "armor.nightweave"
+              }
             ],
-            "relics": [
-              "enemy.relic.graveSeal"
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.graveSeal"
+              }
             ],
             "poiseMax": 22,
             "levelProfile": {
@@ -6338,14 +6537,15 @@ export const gameProfileCatalog = {
             "id": "gildedKnight",
             "name": "Gilded_Knight",
             "tier": "minion",
-            "attributes": {
-              "strength": 1,
-              "dexterity": 1,
-              "constitution": 0,
-              "wisdom": 0,
-              "intelligence": 0
-            },
-            "deck": [
+            "attributes": {},
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "defaultDeck": [
               "gildedKnight.thrust",
               "gildedKnight.thrust",
               "gildedKnight.parry",
@@ -6353,10 +6553,13 @@ export const gameProfileCatalog = {
               "gildedKnight.rally",
               "gildedKnight.gildedGuard"
             ],
-            "gear": [
-              "battleaxe"
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "battleaxe"
+              }
             ],
-            "relics": [],
+            "defaultRelics": [],
             "poiseMax": 18,
             "levelProfile": {
               "min": 6,
@@ -6370,14 +6573,15 @@ export const gameProfileCatalog = {
             "id": "courtSurgeon",
             "name": "Court_Surgeon",
             "tier": "minion",
-            "attributes": {
-              "strength": 0,
-              "dexterity": 0,
-              "constitution": 0,
-              "wisdom": 1,
-              "intelligence": 1
-            },
-            "deck": [
+            "attributes": {},
+            "attributePriority": [
+              "wisdom",
+              "intelligence",
+              "strength",
+              "dexterity",
+              "constitution"
+            ],
+            "defaultDeck": [
               "courtSurgeon.scalpel",
               "courtSurgeon.scalpel",
               "courtSurgeon.sedate",
@@ -6385,10 +6589,13 @@ export const gameProfileCatalog = {
               "courtSurgeon.stitch",
               "courtSurgeon.stitch"
             ],
-            "gear": [
-              "ashStaff"
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "ashStaff"
+              }
             ],
-            "relics": [],
+            "defaultRelics": [],
             "poiseMax": 10,
             "levelProfile": {
               "min": 6,
@@ -6402,14 +6609,15 @@ export const gameProfileCatalog = {
             "id": "stitchedHound",
             "name": "Stitched_Hound",
             "tier": "minion",
-            "attributes": {
-              "strength": 1,
-              "dexterity": 1,
-              "constitution": 0,
-              "wisdom": 0,
-              "intelligence": 0
-            },
-            "deck": [
+            "attributes": {},
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "defaultDeck": [
               "stitchedHound.maul",
               "stitchedHound.maul",
               "stitchedHound.maul",
@@ -6417,11 +6625,17 @@ export const gameProfileCatalog = {
               "stitchedHound.rend",
               "stitchedHound.rend"
             ],
-            "gear": [
-              "battleaxe"
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "battleaxe"
+              }
             ],
-            "relics": [
-              "enemy.relic.ashenBlightCore"
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.ashenBlightCore"
+              }
             ],
             "poiseMax": 8,
             "levelProfile": {
@@ -6437,14 +6651,15 @@ export const gameProfileCatalog = {
             "id": "courtMarionette",
             "name": "Court_Marionette",
             "tier": "minion",
-            "attributes": {
-              "strength": 1,
-              "dexterity": 1,
-              "constitution": 0,
-              "wisdom": 0,
-              "intelligence": 0
-            },
-            "deck": [
+            "attributes": {},
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "defaultDeck": [
               "courtMarionette.dart",
               "courtMarionette.dart",
               "courtMarionette.dart",
@@ -6452,11 +6667,17 @@ export const gameProfileCatalog = {
               "courtMarionette.blowdart",
               "courtMarionette.blowdart"
             ],
-            "gear": [
-              "dagger"
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "dagger"
+              }
             ],
-            "relics": [
-              "enemy.relic.ashenBlightCore"
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.ashenBlightCore"
+              }
             ],
             "poiseMax": 6,
             "levelProfile": {
@@ -6471,14 +6692,15 @@ export const gameProfileCatalog = {
             "id": "livingArmor",
             "name": "Living_Armor",
             "tier": "minion",
-            "attributes": {
-              "strength": 1,
-              "dexterity": 1,
-              "constitution": 0,
-              "wisdom": 0,
-              "intelligence": 0
-            },
-            "deck": [
+            "attributes": {},
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "defaultDeck": [
               "livingArmor.slam",
               "livingArmor.slam",
               "livingArmor.fortify",
@@ -6486,11 +6708,17 @@ export const gameProfileCatalog = {
               "livingArmor.crush",
               "livingArmor.rimeCrush"
             ],
-            "gear": [
-              "battleaxe"
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "battleaxe"
+              }
             ],
-            "relics": [
-              "enemy.relic.ashenBlightCore"
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.ashenBlightCore"
+              }
             ],
             "poiseMax": 22,
             "levelProfile": {
@@ -6505,14 +6733,15 @@ export const gameProfileCatalog = {
             "id": "courtDuelist",
             "name": "Duelist_of_the_Court",
             "tier": "elite",
-            "attributes": {
-              "strength": 2,
-              "dexterity": 1,
-              "constitution": 1,
-              "wisdom": 0,
-              "intelligence": 0
-            },
-            "deck": [
+            "attributes": {},
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "defaultDeck": [
               "courtDuelist.enGarde",
               "courtDuelist.flurry",
               "courtDuelist.flurry",
@@ -6523,13 +6752,17 @@ export const gameProfileCatalog = {
               "courtDuelist.bindingRiposte"
             ],
             "firstCard": "courtDuelist.enGarde",
-            "gear": [
-              "greatsword",
-              "armor.wayfarerPlate"
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "greatsword"
+              },
+              {
+                "key": "armor",
+                "id": "armor.wayfarerPlate"
+              }
             ],
-            "relics": [
-              "enemy.relic.ashenBlightCore"
-            ],
+            "defaultRelics": [],
             "poiseMax": 26,
             "levelProfile": {
               "min": 10,
@@ -6543,14 +6776,15 @@ export const gameProfileCatalog = {
             "id": "stitchedKing",
             "name": "The_Stitched_King",
             "tier": "boss",
-            "attributes": {
-              "strength": 4,
-              "dexterity": 1,
-              "constitution": 1,
-              "wisdom": 0,
-              "intelligence": 0
-            },
-            "deck": [
+            "attributes": {},
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "defaultDeck": [
               "stitchedKing.scepterBlow",
               "stitchedKing.scepterBlow",
               "stitchedKing.scepterBlow",
@@ -6566,13 +6800,25 @@ export const gameProfileCatalog = {
               "stitchedKing.thousandHands"
             ],
             "firstCard": "stitchedKing.courtlyDecree",
-            "gear": [
-              "greatsword",
-              "towerShield",
-              "armor.wayfarerPlate"
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "greatsword"
+              },
+              {
+                "key": "offHand",
+                "id": "towerShield"
+              },
+              {
+                "key": "armor",
+                "id": "armor.wayfarerPlate"
+              }
             ],
-            "relics": [
-              "enemy.relic.ashenCore"
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.ashenCore"
+              }
             ],
             "poiseMax": 34,
             "levelProfile": {
@@ -6610,14 +6856,15 @@ export const gameProfileCatalog = {
             "id": "mirrorScribe",
             "name": "Mirror_Scribe",
             "tier": "minion",
-            "attributes": {
-              "strength": 0,
-              "dexterity": 0,
-              "constitution": 0,
-              "wisdom": 1,
-              "intelligence": 1
-            },
-            "deck": [
+            "attributes": {},
+            "attributePriority": [
+              "wisdom",
+              "intelligence",
+              "strength",
+              "dexterity",
+              "constitution"
+            ],
+            "defaultDeck": [
               "mirrorScribe.silverScript",
               "mirrorScribe.silverScript",
               "mirrorScribe.shardVolley",
@@ -6625,10 +6872,13 @@ export const gameProfileCatalog = {
               "mirrorScribe.polishedWard",
               "mirrorScribe.polishedWard"
             ],
-            "gear": [
-              "ashStaff"
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "ashStaff"
+              }
             ],
-            "relics": [],
+            "defaultRelics": [],
             "poiseMax": 8,
             "levelProfile": {
               "min": 7,
@@ -6642,14 +6892,15 @@ export const gameProfileCatalog = {
             "id": "stitchCrab",
             "name": "Stitch_Crab",
             "tier": "minion",
-            "attributes": {
-              "strength": 1,
-              "dexterity": 1,
-              "constitution": 0,
-              "wisdom": 0,
-              "intelligence": 0
-            },
-            "deck": [
+            "attributes": {},
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "defaultDeck": [
               "stitchCrab.shellFold",
               "stitchCrab.shellFold",
               "stitchCrab.seamShears",
@@ -6658,11 +6909,17 @@ export const gameProfileCatalog = {
               "stitchCrab.scuttleRush"
             ],
             "firstCard": "stitchCrab.shellFold",
-            "gear": [
-              "dagger"
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "dagger"
+              }
             ],
-            "relics": [
-              "enemy.relic.ashenBlightCore"
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.ashenBlightCore"
+              }
             ],
             "poiseMax": 17,
             "levelProfile": {
@@ -6677,14 +6934,15 @@ export const gameProfileCatalog = {
             "id": "glassRegent",
             "name": "The_Glass_Regent",
             "tier": "boss",
-            "attributes": {
-              "strength": 2,
-              "dexterity": 1,
-              "constitution": 1,
-              "wisdom": 1,
-              "intelligence": 1
-            },
-            "deck": [
+            "attributes": {},
+            "attributePriority": [
+              "strength",
+              "wisdom",
+              "intelligence",
+              "dexterity",
+              "constitution"
+            ],
+            "defaultDeck": [
               "glassRegent.prismGuard",
               "glassRegent.prismGuard",
               "glassRegent.prismGuard",
@@ -6700,13 +6958,25 @@ export const gameProfileCatalog = {
               "glassRegent.shatteredCourt"
             ],
             "firstCard": "glassRegent.prismGuard",
-            "gear": [
-              "greatsword",
-              "parryDagger",
-              "armor.wayfarerPlate"
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "greatsword"
+              },
+              {
+                "key": "offHand",
+                "id": "parryDagger"
+              },
+              {
+                "key": "armor",
+                "id": "armor.nightweave"
+              }
             ],
-            "relics": [
-              "enemy.relic.titanHeart"
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.titanHeart"
+              }
             ],
             "poiseMax": 26,
             "levelProfile": {
@@ -6738,14 +7008,15 @@ export const gameProfileCatalog = {
             "id": "marrowOrganist",
             "name": "The_Marrow_Organist",
             "tier": "boss",
-            "attributes": {
-              "strength": 2,
-              "dexterity": 0,
-              "constitution": 0,
-              "wisdom": 2,
-              "intelligence": 2
-            },
-            "deck": [
+            "attributes": {},
+            "attributePriority": [
+              "strength",
+              "wisdom",
+              "intelligence",
+              "dexterity",
+              "constitution"
+            ],
+            "defaultDeck": [
               "marrowOrganist.bonePrelude",
               "marrowOrganist.bonePrelude",
               "marrowOrganist.ivoryKeys",
@@ -6758,13 +7029,25 @@ export const gameProfileCatalog = {
               "marrowOrganist.quietRefrain"
             ],
             "firstCard": "marrowOrganist.bonePrelude",
-            "gear": [
-              "greatsword",
-              "towerShield",
-              "armor.nightweave"
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "greatsword"
+              },
+              {
+                "key": "offHand",
+                "id": "parryDagger"
+              },
+              {
+                "key": "armor",
+                "id": "armor.nightweave"
+              }
             ],
-            "relics": [
-              "enemy.relic.titanHeart"
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.titanHeart"
+              }
             ],
             "poiseMax": 30,
             "levelProfile": {
@@ -6793,14 +7076,15 @@ export const gameProfileCatalog = {
             "id": "ashRevenant",
             "name": "Ash_Revenant",
             "tier": "minion",
-            "attributes": {
-              "strength": 1,
-              "dexterity": 1,
-              "constitution": 0,
-              "wisdom": 0,
-              "intelligence": 0
-            },
-            "deck": [
+            "attributes": {},
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "defaultDeck": [
               "ashRevenant.cinderSlash",
               "ashRevenant.cinderSlash",
               "ashRevenant.cinderSlash",
@@ -6808,11 +7092,17 @@ export const gameProfileCatalog = {
               "ashRevenant.reform",
               "ashRevenant.reform"
             ],
-            "gear": [
-              "dagger"
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "dagger"
+              }
             ],
-            "relics": [
-              "enemy.relic.ashenBlightCore"
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.ashenBlightCore"
+              }
             ],
             "poiseMax": 10,
             "levelProfile": {
@@ -6827,14 +7117,15 @@ export const gameProfileCatalog = {
             "id": "emberStarvedPilgrim",
             "name": "Ember-Starved_Pilgrim",
             "tier": "minion",
-            "attributes": {
-              "strength": 1,
-              "dexterity": 1,
-              "constitution": 0,
-              "wisdom": 0,
-              "intelligence": 0
-            },
-            "deck": [
+            "attributes": {},
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "defaultDeck": [
               "emberStarvedPilgrim.desperateClaw",
               "emberStarvedPilgrim.desperateClaw",
               "emberStarvedPilgrim.desperateClaw",
@@ -6842,11 +7133,17 @@ export const gameProfileCatalog = {
               "emberStarvedPilgrim.wail",
               "emberStarvedPilgrim.wail"
             ],
-            "gear": [
-              "battleaxe"
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "battleaxe"
+              }
             ],
-            "relics": [
-              "enemy.relic.ashenBlightCore"
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.ashenBlightCore"
+              }
             ],
             "poiseMax": 8,
             "levelProfile": {
@@ -6861,14 +7158,15 @@ export const gameProfileCatalog = {
             "id": "valkyrieShade",
             "name": "Valkyrie_Shade",
             "tier": "minion",
-            "attributes": {
-              "strength": 1,
-              "dexterity": 1,
-              "constitution": 0,
-              "wisdom": 0,
-              "intelligence": 0
-            },
-            "deck": [
+            "attributes": {},
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "defaultDeck": [
               "valkyrieShade.spiralLance",
               "valkyrieShade.spiralLance",
               "valkyrieShade.spiralLance",
@@ -6876,11 +7174,17 @@ export const gameProfileCatalog = {
               "valkyrieShade.bloodFeather",
               "valkyrieShade.bloodFeather"
             ],
-            "gear": [
-              "battleaxe"
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "battleaxe"
+              }
             ],
-            "relics": [
-              "enemy.relic.ashenBlightCore"
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.ashenBlightCore"
+              }
             ],
             "poiseMax": 14,
             "levelProfile": {
@@ -6895,14 +7199,15 @@ export const gameProfileCatalog = {
             "id": "charredColossus",
             "name": "Charred_Colossus",
             "tier": "minion",
-            "attributes": {
-              "strength": 1,
-              "dexterity": 1,
-              "constitution": 0,
-              "wisdom": 0,
-              "intelligence": 0
-            },
-            "deck": [
+            "attributes": {},
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "defaultDeck": [
               "charredColossus.smash",
               "charredColossus.smash",
               "charredColossus.ashCloud",
@@ -6910,11 +7215,17 @@ export const gameProfileCatalog = {
               "charredColossus.harden",
               "charredColossus.harden"
             ],
-            "gear": [
-              "battleaxe"
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "battleaxe"
+              }
             ],
-            "relics": [
-              "enemy.relic.ashenBlightCore"
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.ashenBlightCore"
+              }
             ],
             "poiseMax": 30,
             "levelProfile": {
@@ -6932,14 +7243,15 @@ export const gameProfileCatalog = {
             "id": "wyrmLord",
             "name": "Wyrm_Lord",
             "tier": "elite",
-            "attributes": {
-              "strength": 2,
-              "dexterity": 1,
-              "constitution": 1,
-              "wisdom": 0,
-              "intelligence": 0
-            },
-            "deck": [
+            "attributes": {},
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "defaultDeck": [
               "wyrmLord.consecration",
               "wyrmLord.halberdReign",
               "wyrmLord.halberdReign",
@@ -6950,12 +7262,21 @@ export const gameProfileCatalog = {
               "wyrmLord.goldenBulwark"
             ],
             "firstCard": "wyrmLord.consecration",
-            "gear": [
-              "cinderAxe",
-              "armor.wayfarerPlate"
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "cinderAxe"
+              },
+              {
+                "key": "armor",
+                "id": "armor.wayfarerPlate"
+              }
             ],
-            "relics": [
-              "enemy.relic.ashenBlightCore"
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.ashenBlightCore"
+              }
             ],
             "poiseMax": 30,
             "levelProfile": {
@@ -6970,14 +7291,15 @@ export const gameProfileCatalog = {
             "id": "blightedValkyrie",
             "name": "The_Blighted_Valkyrie",
             "tier": "boss",
-            "attributes": {
-              "strength": 2,
-              "dexterity": 1,
-              "constitution": 0,
-              "wisdom": 2,
-              "intelligence": 1
-            },
-            "deck": [
+            "attributes": {},
+            "attributePriority": [
+              "strength",
+              "wisdom",
+              "dexterity",
+              "intelligence",
+              "constitution"
+            ],
+            "defaultDeck": [
               "blightedValkyrie.spiralThrust",
               "blightedValkyrie.spiralThrust",
               "blightedValkyrie.spiralThrust",
@@ -6993,13 +7315,25 @@ export const gameProfileCatalog = {
               "blightedValkyrie.scarletDance"
             ],
             "firstCard": "blightedValkyrie.spiralThrust",
-            "gear": [
-              "halberd",
-              "parryDagger",
-              "armor.nightweave"
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "halberd"
+              },
+              {
+                "key": "offHand",
+                "id": "parryDagger"
+              },
+              {
+                "key": "armor",
+                "id": "armor.nightweave"
+              }
             ],
-            "relics": [
-              "enemy.relic.ashenBlightCore"
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.ashenBlightCore"
+              }
             ],
             "poiseMax": 36,
             "levelProfile": {
@@ -7052,14 +7386,15 @@ export const gameProfileCatalog = {
             "id": "cinderMantis",
             "name": "Cinder_Mantis",
             "tier": "minion",
-            "attributes": {
-              "strength": 1,
-              "dexterity": 1,
-              "constitution": 0,
-              "wisdom": 0,
-              "intelligence": 0
-            },
-            "deck": [
+            "attributes": {},
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "defaultDeck": [
               "cinderMantis.scythePair",
               "cinderMantis.scythePair",
               "cinderMantis.scythePair",
@@ -7067,10 +7402,13 @@ export const gameProfileCatalog = {
               "cinderMantis.emberPounce",
               "cinderMantis.foldedBlades"
             ],
-            "gear": [
-              "dagger"
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "dagger"
+              }
             ],
-            "relics": [],
+            "defaultRelics": [],
             "poiseMax": 11,
             "levelProfile": {
               "min": 14,
@@ -7084,14 +7422,15 @@ export const gameProfileCatalog = {
             "id": "eclipseCantor",
             "name": "Eclipse_Cantor",
             "tier": "minion",
-            "attributes": {
-              "strength": 0,
-              "dexterity": 0,
-              "constitution": 0,
-              "wisdom": 1,
-              "intelligence": 1
-            },
-            "deck": [
+            "attributes": {},
+            "attributePriority": [
+              "wisdom",
+              "intelligence",
+              "strength",
+              "dexterity",
+              "constitution"
+            ],
+            "defaultDeck": [
               "eclipseCantor.darkHymn",
               "eclipseCantor.darkHymn",
               "eclipseCantor.lunarRay",
@@ -7099,10 +7438,13 @@ export const gameProfileCatalog = {
               "eclipseCantor.fadingEcho",
               "eclipseCantor.fadingEcho"
             ],
-            "gear": [
-              "ashStaff"
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "ashStaff"
+              }
             ],
-            "relics": [],
+            "defaultRelics": [],
             "poiseMax": 7,
             "levelProfile": {
               "min": 14,
@@ -7116,14 +7458,15 @@ export const gameProfileCatalog = {
             "id": "furnaceSaint",
             "name": "The_Furnace_Saint",
             "tier": "boss",
-            "attributes": {
-              "strength": 4,
-              "dexterity": 1,
-              "constitution": 1,
-              "wisdom": 0,
-              "intelligence": 0
-            },
-            "deck": [
+            "attributes": {},
+            "attributePriority": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ],
+            "defaultDeck": [
               "furnaceSaint.openFurnace",
               "furnaceSaint.openFurnace",
               "furnaceSaint.openFurnace",
@@ -7136,13 +7479,25 @@ export const gameProfileCatalog = {
               "furnaceSaint.coolingAsh"
             ],
             "firstCard": "furnaceSaint.openFurnace",
-            "gear": [
-              "cinderAxe",
-              "towerShield",
-              "armor.wayfarerPlate"
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "cinderAxe"
+              },
+              {
+                "key": "offHand",
+                "id": "towerShield"
+              },
+              {
+                "key": "armor",
+                "id": "armor.wayfarerPlate"
+              }
             ],
-            "relics": [
-              "enemy.relic.titanHeart"
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.titanHeart"
+              }
             ],
             "poiseMax": 40,
             "levelProfile": {
@@ -7171,14 +7526,15 @@ export const gameProfileCatalog = {
             "id": "hollowAstronomer",
             "name": "The_Hollow_Astronomer",
             "tier": "boss",
-            "attributes": {
-              "strength": 2,
-              "dexterity": 1,
-              "constitution": 1,
-              "wisdom": 1,
-              "intelligence": 1
-            },
-            "deck": [
+            "attributes": {},
+            "attributePriority": [
+              "strength",
+              "wisdom",
+              "intelligence",
+              "dexterity",
+              "constitution"
+            ],
+            "defaultDeck": [
               "hollowAstronomer.starChart",
               "hollowAstronomer.starChart",
               "hollowAstronomer.orbitalShards",
@@ -7194,13 +7550,25 @@ export const gameProfileCatalog = {
               "hollowAstronomer.fallingHeavens"
             ],
             "firstCard": "hollowAstronomer.starChart",
-            "gear": [
-              "cinderAxe",
-              "parryDagger",
-              "armor.wayfarerPlate"
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "cinderAxe"
+              },
+              {
+                "key": "offHand",
+                "id": "parryDagger"
+              },
+              {
+                "key": "armor",
+                "id": "armor.nightweave"
+              }
             ],
-            "relics": [
-              "enemy.relic.titanHeart"
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.titanHeart"
+              }
             ],
             "poiseMax": 25,
             "levelProfile": {
@@ -7225,14 +7593,15 @@ export const gameProfileCatalog = {
             "id": "ashheartDragon",
             "name": "The_Ashheart_Dragon",
             "tier": "boss",
-            "attributes": {
-              "strength": 4,
-              "dexterity": 1,
-              "constitution": 0,
-              "wisdom": 1,
-              "intelligence": 0
-            },
-            "deck": [
+            "attributes": {},
+            "attributePriority": [
+              "strength",
+              "wisdom",
+              "dexterity",
+              "constitution",
+              "intelligence"
+            ],
+            "defaultDeck": [
               "ashheartDragon.obsidianClaws",
               "ashheartDragon.obsidianClaws",
               "ashheartDragon.obsidianClaws",
@@ -7248,13 +7617,25 @@ export const gameProfileCatalog = {
               "ashheartDragon.ashBreath"
             ],
             "firstCard": "ashheartDragon.obsidianClaws",
-            "gear": [
-              "halberd",
-              "parryDagger",
-              "armor.gutterLeathers"
+            "defaultGear": [
+              {
+                "key": "mainHand",
+                "id": "halberd"
+              },
+              {
+                "key": "offHand",
+                "id": "parryDagger"
+              },
+              {
+                "key": "armor",
+                "id": "armor.nightweave"
+              }
             ],
-            "relics": [
-              "enemy.relic.ashenBlightCore"
+            "defaultRelics": [
+              {
+                "key": "relic1",
+                "id": "enemy.relic.ashenBlightCore"
+              }
             ],
             "poiseMax": 34,
             "levelProfile": {
@@ -12182,7 +12563,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/enemies.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:2478f4ce04ae990f057def0b75515c40f1a81a599866daa9e22d58c97fa4a6cb"
+          "hash": "sha256:74cd08de79e9eb414f7c77473b276e7a8e9c6598a5983679019dd188ff1dfaec"
         },
         {
           "path": "games/ashenspire/packs/core/enemyCards.json",
@@ -23897,7 +24278,7 @@ export const gameProfileCatalog = {
       "path": "engine/kernel/gameConfig.js",
       "id": "ashen.runtime",
       "version": "1.0.0",
-      "hash": "sha256:6c7a94597e2846ddacc2f87e1b40245d06e49f62c92e87f6e24a3334fad65bc1"
+      "hash": "sha256:26062b3160f5094bf7d55aeb8be92f224eb51576ed6a48c47e3d4c7c7e57bf1e"
     },
     {
       "path": "engine/contracts/game-profile.json",
@@ -28930,7 +29311,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:3f9a67884765cb5f920ef530e66ccdcc2d826819e6f981359b771d44a5b5bf66"
     }
   ],
-  "runtimeHash": "sha256:23e9e84b36ea975fd999c8452ea9dddf44b6929c069b1fa11a44b3f0c3f7b4a8"
+  "runtimeHash": "sha256:70ffcbbcaef1b4b21c717ab33b8093767ab4a5c6de1af51cd7c67f42ea5019f9"
 };
 export const gameProfileAuthors = {
   "default": {

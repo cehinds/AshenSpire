@@ -219,5 +219,28 @@
         "bestiary"
       ]
     }
+  },
+  "attributeFill": {
+    "defaultPriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "priorityWeights": [
+      4,
+      3,
+      2,
+      1,
+      0
+    ],
+    "caps": {
+      "constitution": 1
+    },
+    "variance": {
+      "points": 1,
+      "among": 3
+    }
   }
 }

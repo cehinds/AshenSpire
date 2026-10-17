@@ -1,16 +1,30 @@
 {
-  "$comment": "One row of packs/<pack>/enemies.json. Required: id, name, tier, attributes, deck. Stats derive from attributes + level + gear + relics (statRules).",
+  "$comment": "One row of packs/<pack>/enemies.json. Required: id, name, tier, attributePriority (or attributes), defaultDeck. attributes = points you set (kept); the rest of the tier budget is filled by attributePriority x priorityWeights, capped, with seeded variance. defaultGear/defaultRelics entries carry a unique key per enemy so modules can swap one slot.",
   "id": "ashenSentry",
   "name": "Ashen_Sentry",
   "tier": "minion",
   "attributes": {
-    "strength": 1,
-    "dexterity": 1,
-    "constitution": 0,
-    "wisdom": 0,
-    "intelligence": 0
+    "wisdom": 1
   },
-  "deck": [
+  "attributePriority": [
+    "strength",
+    "dexterity",
+    "wisdom",
+    "intelligence",
+    "constitution"
+  ],
+  "priorityWeights": [
+    4,
+    3,
+    2,
+    1,
+    0
+  ],
+  "variance": {
+    "points": 1,
+    "among": 3
+  },
+  "defaultDeck": [
     "ashenSentry.slash",
     "ashenSentry.slash",
     "ashenSentry.guard",
@@ -20,11 +34,21 @@
   ],
   "firstCard": "ashenSentry.warcry",
   "unlockCards": [],
-  "gear": [
-    "straightSword"
+  "defaultGear": [
+    {
+      "key": "mainHand",
+      "id": "straightSword"
+    },
+    {
+      "key": "armor",
+      "id": "armor.gutterLeathers"
+    }
   ],
-  "relics": [
-    "enemy.relic.ashenBlightCore"
+  "defaultRelics": [
+    {
+      "key": "relic1",
+      "id": "enemy.relic.ashenBlightCore"
+    }
   ],
   "levelProfile": {
     "min": 1,

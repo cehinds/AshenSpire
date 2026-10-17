@@ -9,7 +9,7 @@
 import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { enemyPools, enemyItemBonuses, resolveGearItem, mergeGameSettings } from '../engine/kernel/gameConfig.js';
+import { enemyPools, enemyItemBonuses, resolveGearItem, mergeGameSettings, resolveEnemyAttributes, enemyAttributeOutcomes } from '../engine/kernel/gameConfig.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PACK = 'games/ashenspire/packs/core';
@@ -125,24 +125,26 @@ function split(total, weights) {
   return out;
 }
 
-// Points follow the legacy stat shape (sharpened). CON stays at most 1 (owner: enemies are hard
-// already). Floors: enough WIS/DEX that the enemy can pay its dearest card with its own stats.
+// Owner 2026-10-17: each enemy has an attribute priority (from its legacy stat shape) and the module's
+// rank weights; the kernel fills its points (resolveEnemyAttributes) with seeded variance at runtime.
+// Only the floors its own cards need are set explicitly (WIS for MP, DEX for SP), so variance never
+// takes them away.
 function attributesFor(enemy, plan, cards, tier) {
   const needMp = Math.max(0, ...cards.map(c => c.manaCost)), needSp = Math.max(0, ...cards.map(c => c.staminaCost));
-  const out = Object.fromEntries(ATTRS.map(id => [id, 0]));
-  const weights = ATTRS.map(id => (Number(enemy.attributes?.[id]) || 1) ** 2);
-  split(plan.budget, weights).forEach((n, i) => { out[ATTRS[i]] += n; });
-  const rank = ATTRS.filter(id => id !== 'constitution').sort((a, b) => weights[ATTRS.indexOf(b)] - weights[ATTRS.indexOf(a)]);
-  while (out.constitution > 1) { out.constitution--; out[rank[0]]++; }
-  const pools = () => enemyPools({ tier, attributes: out, levelProfile: enemy.levelProfile }, settings);
-  const donor = keep => rank.filter(id => id !== keep).find(id => out[id] > 0);
-  for (let g = 0; g < 20 && pools().mp < needMp; g++) { const d = donor('wisdom'); if (!d) break; out[d]--; out.wisdom++; }
-  for (let g = 0; g < 20 && pools().sp < needSp; g++) { const d = donor('dexterity'); if (!d) break; out[d]--; out.dexterity++; }
-  return out;
+  const attributePriority = [...ATTRS].sort((a, b) => (Number(enemy.attributes?.[b]) || 0) - (Number(enemy.attributes?.[a]) || 0) || ATTRS.indexOf(a) - ATTRS.indexOf(b));
+  const attributes = {};
+  const row = () => ({ tier, attributes, attributePriority, levelProfile: enemy.levelProfile, id: enemy.id });
+  const worst = key => Math.min(...enemyAttributeOutcomes(row(), settings).map(a => enemyPools({ ...row(), resolvedAttributes: a }, settings)[key]));
+  const room = () => plan.budget - Object.values(attributes).reduce((s, n) => s + n, 0);
+  for (let g = 0; g < 10 && worst('mp') < needMp && room() > 0; g++) attributes.wisdom = (attributes.wisdom || 0) + 1;
+  for (let g = 0; g < 10 && worst('sp') < needSp && room() > 0; g++) attributes.dexterity = (attributes.dexterity || 0) + 1;
+  return { attributes, attributePriority };
 }
 
 // Player gear that fits the enemy: best match between the item's attribute points and the enemy's shape.
 const RARITY = gearSettings.rarities;
+// Unique key names for an enemy's gear entries, by slot.
+const SLOT_KEY = { rightHand: 'mainHand', leftHand: 'offHand', armor: 'armor', head: 'head', hands: 'hands', feet: 'feet', talisman: 'talisman' };
 const resolved = new Map(gear.map(item => [item.id, resolveGearItem(item, gearSettings)]));
 // Deterministic variety: pick among the best few matches by a hash of the enemy id.
 const hash = s => [...s].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
@@ -190,7 +192,8 @@ for (const enemy of roster) {
   const size = Math.max(active.length, Math.min(t.deckSize[1], Math.max(t.deckSize[0], plan.deck)));
   const copies = split(size - active.length, active.map(x => x.m.weight ?? 1)).map(n => n + 1);
   const deck = active.flatMap((x, i) => Array(copies[i]).fill(x.card.id));
-  const attributes = attributesFor(enemy, plan, enemyCards, tier);
+  const { attributes, attributePriority } = attributesFor(enemy, plan, enemyCards, tier);
+  const resolvedBase = resolveEnemyAttributes({ id: enemy.id, tier, attributes, attributePriority }, settings);
   const ids = new Map(moves.map(([id], i) => [id, enemyCards[i].id]));
   const phases = enemy.phases ? structuredClone(enemy.phases).map(p => {
     if (p.unlockMoves) { p.unlockCards = p.unlockMoves.map(id => ids.get(id)); delete p.unlockMoves; }
@@ -198,10 +201,11 @@ for (const enemy of roster) {
     return p;
   }) : undefined;
   const row = {
-    id: enemy.id, name: nameOf(enemy.name), tier, attributes, deck,
+    id: enemy.id, name: nameOf(enemy.name), tier, attributes, attributePriority, defaultDeck: deck,
     ...(moves.some(([, m]) => m.locked) ? { unlockCards: moves.filter(([, m]) => m.locked).map(([id]) => ids.get(id)) } : {}),
     ...(enemy.firstMove ? { firstCard: ids.get(enemy.firstMove) } : {}),
-    gear: pickGear(attributes, plan, enemy.id), relics: pickRelics(attributes, plan, enemy.id, tier),
+    defaultGear: pickGear(resolvedBase, plan, enemy.id).map(id => ({ key: SLOT_KEY[gear.find(g => g.id === id).slot], id })),
+    defaultRelics: pickRelics(resolvedBase, plan, enemy.id, tier).map((id, i) => ({ key: `relic${i + 1}`, id })),
     poiseMax: enemy.poiseMax, levelProfile: enemy.levelProfile, size: enemy.size, art: enemy.id,
     ...(enemy.artFaces ? { artFaces: enemy.artFaces } : {}),
     ...(enemy.tint ? { tint: String(enemy.tint).replace(/^var\(--(.+)\)$/, '$1') } : {}),
@@ -210,15 +214,15 @@ for (const enemy of roster) {
     ...(phases ? { phases } : {}),
   };
   {
-    const owned = [...row.deck, ...(row.unlockCards || [])].map(id => enemyCards.find(c => c.id === id));
-    const affordable = r => { const p = enemyPools(r, settings, undefined, enemyItemBonuses(r, content, gearSettings)); return owned.every(c => c.staminaCost <= p.sp && c.manaCost <= p.mp); };
-    if (row.relics.includes('enemy.relic.ashenBlightCore') && !affordable(row)) row.relics = row.relics.filter(id => id !== 'enemy.relic.ashenBlightCore');
+    const owned = [...row.defaultDeck, ...(row.unlockCards || [])].map(id => enemyCards.find(c => c.id === id));
+    const affordable = r => { const b = enemyItemBonuses(r, content, gearSettings); return enemyAttributeOutcomes(r, settings).every(a => { const p = enemyPools({ ...r, resolvedAttributes: a }, settings, undefined, b); return owned.every(c => c.staminaCost <= p.sp && c.manaCost <= p.mp); }); };
+    if (row.defaultRelics.some(r => r.id === 'enemy.relic.ashenBlightCore') && !affordable(row)) row.defaultRelics = row.defaultRelics.filter(r => r.id !== 'enemy.relic.ashenBlightCore');
   }
   enemies.push(row);
   cards.push(...enemyCards);
   const p = enemyPools(row, settings, undefined, enemyItemBonuses(row, content, gearSettings));
   const legacy = Math.round(((enemy.hp?.[0] ?? 0) + (enemy.hp?.[1] ?? 0)) / 2);
-  report.push(`${tier.padEnd(6)} ${enemy.id.padEnd(22)} HP ${String(p.hp).padStart(3)} (legacy ${legacy}) SP ${p.sp} MP ${p.mp} gear ${row.gear.join(',')} ${row.relics.join(',')}`);
+  report.push(`${tier.padEnd(6)} ${enemy.id.padEnd(22)} HP ${String(p.hp).padStart(3)} (legacy ${legacy}) SP ${p.sp} MP ${p.mp} gear ${row.defaultGear.map(g => g.key + '=' + g.id).join(',')} ${row.defaultRelics.map(r => r.id).join(',')}`);
 }
 console.log(report.join('\n'));
 console.log(`\n${enemies.length} enemies, ${cards.length} cards, ${RELICS.length} relics`);
