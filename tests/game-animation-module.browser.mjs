@@ -10,14 +10,20 @@ const out = resolve(process.env.ANIMATION_MODULE_OUT || '/tmp/ashen-animation-mo
 mkdirSync(out, { recursive: true });
 const server = await serve({ root: process.cwd(), port: 0, open: false, quiet: true });
 const browser = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/chromium', args: ['--no-sandbox'] });
-const evidence = { head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), scenes: [], errors: [], artFailures: [] };
+const evidence = { head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), scenes: [], errors: [], artFailures: [], optionalAudioFallbacks: [] };
 let active;
 const author = (profile, enabled) => JSON.stringify({ formatVersion: 1, core: `ashen.${profile}@1.0.0`, modules: { animation: { enabled } } });
 async function open(profile, enabled, viewport, scene = 'combat', classic = false) {
   const page = active = await browser.newPage({ viewport, hasTouch: viewport.width < 600 });
   page.setDefaultTimeout(12000);
   page.on('pageerror', error => evidence.errors.push(error.message));
-  page.on('response', response => { if (response.status() >= 400 && /\/(assets|assets-mobile|assets-display)\//.test(response.url())) evidence.artFailures.push({ status: response.status(), url: response.url() }); });
+  page.on('response', response => {
+    if (response.status() < 400) return;
+    const failure = { status: response.status(), url: response.url() };
+    // audio.js deliberately probes optional samples and synthesizes absent ones.
+    if (/\/assets\/sfx\/.*\.ogg$/.test(response.url())) evidence.optionalAudioFallbacks.push(failure);
+    else if (/\/(assets|assets-mobile|assets-display)\/.*\.(?:webp|png|jpg|jpeg|svg)(?:\?|$)/i.test(response.url())) evidence.artFailures.push(failure);
+  });
   const query = new URLSearchParams({ shot: scene, shotSeed: '3', gameProfile: author(profile, enabled), shotSettings: JSON.stringify({ classicAppearance: classic }), shotHand: '5' });
   await page.goto(`${server.url}index.html?${query}`, { waitUntil: 'domcontentloaded' });
   await page.locator(scene === 'combat' ? '.combatant.player .sprite' : '#strategize-opt').waitFor();
@@ -72,6 +78,7 @@ async function play(page, enabled) {
   const paid = await page.evaluate(() => ({ energy: window.__combat.player.energy, stamina: window.__combat.player.stamina }));
   assert.ok(paid.energy < before.energy || paid.stamina < before.stamina, 'UI play pays normally');
   await page.locator('.end-turn').click();
+  await page.locator('.confirmation-confirm').click();
   await page.waitForFunction(turn => window.__combat.turn > turn && !document.querySelector('.end-turn')?.disabled, before.turn);
   const trace = await page.evaluate(() => { clearInterval(window.__motionWatch); return window.__motionTrace; });
   if (enabled) assert.ok(trace.actions.length || trace.choreography.length, 'enabled run shows actual action motion');
