@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-2025",
+    "date": "2026-10-17",
+    "group": "2026-10-17",
+    "summary": "Pose Studio loads its shared engine and the balance reference stays current",
+    "detail": "Restore the studio's effect catalog after the engine-module split and refresh the historical reference report's measured damage and seeded encounter outcomes, without changing combat rules.",
+    "build": "0.7.1.1545",
+    "pullRequest": 2025,
+    "url": "https://github.com/cehinds/AshenSpire/pull/2025"
+  },
+  {
     "id": "pr-2024",
     "date": "2026-10-17",
     "group": "2026-10-17",
