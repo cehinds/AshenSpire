@@ -234,7 +234,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         return [];
       }
       leading.style.left = '0px';
-      leading.style.top = 'var(--overhead-top, 0px)';
+      leading.style.top = 'var(--combat-elev, 0px)';
       leading.style.translate = 'none';
       delete frame.dataset.overheadObstructed;
       return [{ frame, sprite, leading }];
@@ -856,7 +856,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       if (leadingHost) leadingWrites.push({ actor, frame, leadingHost, id: slot.id, x, ground, visibleHeight });
       // The fitter reserves the complete card and action stack. Keep this gap
       // fixed in screen pixels, independent of art resolution or sprite size.
-      frame.style.setProperty('--overhead-top', `${-overheadGap / zoom}px`);
+      frame.style.setProperty('--combat-elev', `${-overheadGap / zoom}px`);
       frame.dataset.overheadClamped = 'false';
       frame.dataset.combatantScale = '1';
       frame.dataset.spriteRatio = String(ratio);

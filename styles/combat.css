@@ -1627,7 +1627,7 @@
 
 /* Overhead controls are screen-sized, independent of sprite zoom and animation. */
 :root .combat[data-layout='formation'] .combatant-leading {
-  top: var(--overhead-top, 0); bottom: auto;
+  top: var(--combat-elev, 0); bottom: auto;
   transform: translateY(-100%);
   display: flex; flex-direction: column; align-items: center;
   gap: calc(4px / var(--ui-zoom, 1)); z-index: 1100;
