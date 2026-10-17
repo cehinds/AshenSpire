@@ -26,7 +26,7 @@ jobs:
           node --input-type=module <<'NODE'
           import { checkFeaturePages } from './tools/check-feature-pages.mjs';
           const baseUrl = 'https://cehinds.github.io/AshenSpire/';
-          const target = { dir: 'feature/StanceAnimationModule', sha: 'a7e4d21abff5cdc817d79cbfc6f5f305570934fe' };
+          const target = { dir: 'fix/ModuleBrowserCompatibility', sha: 'c9eecc45d8641ccfaa132777715b0ba4ef7c3aa1' };
           const buildUrl = new URL(`branches/${target.dir}/latest/build.txt`, baseUrl);
           const nonce = `${Date.now()}-${target.sha.slice(0, 10)}`;
           const freshUrl = (input) => {
@@ -63,7 +63,7 @@ jobs:
           // Treat the hosted game strictly as text; never import, evaluate, or execute it.
           const payload = await response.text();
           const { source, ordinal, release } = identity(payload);
-          if (source !== '1779e6f1ff' || ordinal !== '1550' || release !== '0.7.1') {
+          if (source !== 'cf58726889' || ordinal !== '1554' || release !== '0.7.1') {
             throw new Error(`Unexpected public build identity: ${JSON.stringify({ source, ordinal, release })}`);
           }
           console.log(JSON.stringify({ checkedAt: new Date().toISOString(), checkerCommit: 'b1b4d91c2c7758137d315a941096eee18a6fbcef', baseUrl, ...target, buildUrl: freshUrl(buildUrl).href, freshness: 'same-origin query nonce', source, ordinal, release, payloadCharacters: payload.length }));
