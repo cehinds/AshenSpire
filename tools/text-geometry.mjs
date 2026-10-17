@@ -35,12 +35,12 @@ if (process.argv.includes('--selftest')) {
     timeoutMs: 240000,
     plants: [
       {
-        // W4's dialogue footer owns the visible Class-stage Next action's
-        // exact height and floor, overriding the base ModalFoot rule.
+        // The creation workspace's own control floor wins over ModalFoot
+        // and supplies the visible Class-stage Next action's minimum height.
         name: 'the primary action floor follows root Text size again',
         file: 'styles/kit.css',
-        find: '.dialogue-foot > .modal-foot-actions > button {\n  height: var(--dialogue-action-h, calc(44px / var(--ui-zoom, 1)));\n  min-height: var(--dialogue-action-h, calc(44px / var(--ui-zoom, 1)));\n}',
-        replace: '.dialogue-foot > .modal-foot-actions > button {\n  height: 4.4rem;\n  min-height: 4.4rem;\n}',
+        find: '--cc-control-floor:max(48px,calc(48px / var(--ui-zoom,1)));',
+        replace: '--cc-control-floor:4.8rem;',
         expectRed: /action floor changed with Text size/,
       },
       {
@@ -84,8 +84,8 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'the ergonomic floor falls below 44 px on glass',
         file: 'styles/kit.css',
-        find: '.dialogue-foot > .modal-foot-actions > button {\n  height: var(--dialogue-action-h, calc(44px / var(--ui-zoom, 1)));\n  min-height: var(--dialogue-action-h, calc(44px / var(--ui-zoom, 1)));\n}',
-        replace: '.dialogue-foot > .modal-foot-actions > button {\n  height: calc(36px / var(--ui-zoom, 1));\n  min-height: calc(36px / var(--ui-zoom, 1));\n}',
+        find: '--cc-control-floor:max(48px,calc(48px / var(--ui-zoom,1)));',
+        replace: '--cc-control-floor:calc(36px / var(--ui-zoom,1));',
         expectRed: /tap floor below 44px on glass/,
       },
     ],
@@ -337,7 +337,7 @@ async function main() {
     // content/source/uiStrings.csv (#1489 moved it out of settings.js); the
     // artifact carries the same sentence in its generated table.
     const settings = selectedArtifact ?? readFileSync(resolve(ROOT, 'content/source/uiStrings.csv'), 'utf8');
-    if (!kit.includes('.dialogue-foot > .modal-foot-actions > button {\n  height: var(--dialogue-action-h, calc(44px / var(--ui-zoom, 1)));\n  min-height: var(--dialogue-action-h, calc(44px / var(--ui-zoom, 1)));\n}')) failures.push(`${ownershipKind} ownership seam missing: dialogue action height and floor`);
+    if (!kit.includes('--cc-control-floor:max(48px,calc(48px / var(--ui-zoom,1)));')) failures.push(`${ownershipKind} ownership seam missing: creation control floor`);
     // Quick-nav rows and overview tabs now share the Kit atoms. The legacy
     // ui.css copies no longer own their floors.
     for (const seam of [
