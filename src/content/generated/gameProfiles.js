@@ -15445,7 +15445,7 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "path": "src/** (excluding generated gameProfiles/changelog)",
-      "hash": "sha256:2cd512cb3e2d25112c0d546a54a23658c8abf3d8bf83afcee0c113649acc9dcf"
+      "hash": "sha256:b172b9d73139c2d2d376eb134b03a2a713247fbefea4923bc26e36e64ffed107"
     }
   ],
   "runtimeSources": [
@@ -16107,7 +16107,7 @@ export const gameProfileCatalog = {
       "path": "src/content/generated/uiStrings.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:87b7cd99fa148389187d1acf62392e7bf48d99d9c0f74875a1c5f1157c0860ce"
+      "hash": "sha256:f01958d2d3a9b0d0468c7bfd03d8cdcd84df3cf2899c8c517081f3c3565bcf83"
     },
     {
       "path": "src/content/generated/unlocks.js",
@@ -18309,7 +18309,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/alternativeCardStage.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:d079d4d3eed11027013a97e8cfdd671a0896dbd47ef3a5b7ac5c04116b1d49fd"
+      "hash": "sha256:df2c7974565bfc2c7232391629efcd984da50dadb053fdb7285b71378b20872e"
     },
     {
       "path": "src/ui/alternativeStanceStage.js",
@@ -18645,7 +18645,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/components/combatTools.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:f365c682217b3a14df53aaab2e80e5cd040c815d49e8fe625d7a974b98f7a2b7"
+      "hash": "sha256:801fa48cd490d330e5fcade77fa7024eff5eb21dd83bf933afbc423485aa8045"
     },
     {
       "path": "src/ui/components/combatantFrame.js",
@@ -20454,7 +20454,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:23af16d4e9c9f6d88fe655d32ecf1a688b47df39f9e3a1d6d193ce63923593ab"
     }
   ],
-  "runtimeHash": "sha256:8e1ec0d00c20a58df2d7c66793f83ed292f43c33d273518efdfcdcbe141b7b54"
+  "runtimeHash": "sha256:f2f3ce10b0143aefc9bc77ea58fd88da673b814798570135e7df01be88dea5d8"
 };
 export const gameProfileAuthors = {
   "default": {
