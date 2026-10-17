@@ -14,7 +14,8 @@ const report = { head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'u
 try {
   for (const [name, width, height] of [['mobile',390,844],['desktop',1440,900],['wide',2560,1080],['tablet',820,1180],['small',320,740]]) {
     const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: 1 });
-    await page.goto('http://127.0.0.1:' + server.server.address().port + '/?shot=combat&shotClass=starseer&shotExpansion=ward', { timeout: 60000 });
+    // The fresh source profile unlocks Reaver, while Starseer is locked there.
+    await page.goto('http://127.0.0.1:' + server.server.address().port + '/?shot=combat&shotClass=reaver&shotExpansion=ward', { timeout: 60000 });
     await page.locator('.combatant.player .sprite').first().waitFor({ timeout: 60000 });
     await page.evaluate(() => {
       const p = window.__combat.player;
@@ -26,9 +27,10 @@ try {
       window.__renderCombatForShot();
     });
     await page.locator('.combatant.player .sprite').first().click();
-    await page.locator('.player.context-selected .combatant-mini-hud').waitFor();
+    await page.locator('.combatant.player.target-hud-selected').waitFor();
+    await page.locator('.target-hud-detail[data-role="player"] .target-hud-panel').waitFor();
     await page.evaluate(async () => { await document.fonts.ready; await Promise.all([...document.images].map(i => i.decode().catch(() => {}))); });
-    await page.locator('.player.context-selected .combatant-mini-hud').first().evaluate(async panel => {
+    await page.locator('.target-hud-detail[data-role="player"]').first().evaluate(async panel => {
       let previous = '', stable = 0;
       for (let frame = 0; frame < 180 && stable < 8; frame++) {
         await new Promise(requestAnimationFrame);
@@ -39,23 +41,26 @@ try {
       }
       if (stable < 8) throw new Error('selected player panel did not settle');
     });
-    const geometry = await page.locator('.player.context-selected .combatant-mini-hud').first().evaluate(panel => {
+    const geometry = await page.locator('.target-hud-detail[data-role="player"]').first().evaluate(panel => {
       const box = e => { const r=e.getBoundingClientRect(); return { left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height }; };
+      const detail = panel.querySelector('.target-hud-panel');
       const hp = panel.querySelector('.combat-health-meter .m-value');
       const text = [...panel.querySelectorAll('[data-meter-row="resource"] :is(.m-label,.m-value)')].filter(e => e.getBoundingClientRect().width);
-      return { panel:box(panel), hp:box(hp), hpText:hp.textContent, labels:[...panel.querySelectorAll('[data-meter-row="resource"] .m-label')].map(e=>e.textContent.trim().toLowerCase()), text:text.map(e=>({text:e.textContent,box:box(e)})), order:[...panel.querySelector('.combat-health-row').children].map(e=>e.dataset.defenseKind || e.dataset.res), barrier:panel.querySelector('[data-defense-kind="ward"]')?.dataset.barrier, viewport:{width:innerWidth,height:innerHeight} };
+      const hpRow = panel.querySelector('.combat-health-row');
+      return { panel:box(detail), hp:box(hp), hpText:hp.textContent, labels:[...panel.querySelectorAll('[data-meter-row="resource"] .m-label')].map(e=>e.textContent.trim().toLowerCase()), text:text.map(e=>({text:e.textContent,box:box(e)})), ward:hpRow?.querySelector('[data-defense-kind="ward"] .combat-health-badge-value')?.textContent, barrier:hpRow?.querySelector('[data-defense-kind="ward"]')?.dataset.barrier, order:[...hpRow.children].map(e=>e.dataset.defenseKind || e.dataset.res), viewport:{width:innerWidth,height:innerHeight} };
     });
     await page.screenshot({path:resolve(out,name+'.png')});
     await page.screenshot({path:resolve(out,name+'.jpg'),type:'jpeg',quality:85});
     report.views.push({name,width,height,geometry});
     try {
       assert.match(geometry.hpText, /\d/, name+': HP number is rendered');
-      assert.ok(geometry.labels.includes('poise') && geometry.labels.includes('ward'), name+': Poise and Ward labels are rendered');
-      assert.ok(geometry.text.length >= 4, name+': selected Poise/Ward text is visible');
+      assert.ok(geometry.labels.includes('poise'), name+': selected Poise label is rendered');
+      assert.ok(geometry.text.some(t => /\d/.test(t.text)), name+': selected Poise value is visible');
       for (const t of geometry.text) assert.ok(geometry.hp.bottom + 1 <= t.box.top || geometry.hp.right <= t.box.left || t.box.right <= geometry.hp.left, name+': HP value overlaps '+t.text);
       assert.ok(geometry.hp.left >= geometry.panel.left && geometry.hp.right <= geometry.panel.right, name+': HP value fits panel');
       assert.ok(geometry.panel.left >= 0 && geometry.panel.right <= width && geometry.panel.top >= 0 && geometry.panel.bottom <= height, name+': panel fits viewport');
-      assert.equal(geometry.barrier, '4', name+': Barrier stays on Ward badge');
+      assert.equal(geometry.ward, '12', name+': Ward remains visible on the HP row');
+      assert.equal(geometry.barrier, '4', name+': Barrier remains on the Ward badge');
       assert.deepEqual(geometry.order, ['evade','poise','ward','shield','hp'], name+': defense order');
     } catch(error) { report.failures.push(error.message); }
     await page.close();
