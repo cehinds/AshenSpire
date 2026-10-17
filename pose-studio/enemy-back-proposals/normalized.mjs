@@ -1,4 +1,4 @@
-import {VERSION_IDS,validateManifest,safeAsset} from './model.mjs';
+import {VERSION_IDS,validateManifest,safeAsset,coverage} from './model.mjs';
 /** Converts verified normalization metadata to drafts, never attack animations. */
 export function normalizedProposals(actorId,report,provenance,footReview=null) {
  if(!/^[a-zA-Z0-9_-]+$/.test(actorId)||(provenance.actorId||provenance.enemyId)!==actorId)throw Error('Canonical actor mismatch');
@@ -34,7 +34,8 @@ export function integrateNormalized(manifest,actorId,report,provenance,footRevie
  });
  actor.provisionalDefaultVersion??='v01';actor.defaultStance??='neutral';
  // A provisional design is review-only; no delivered full-set claim.
- next.scope='pending';next.targetScope=manifest.targetScope||'ten-designs';
+ next.targetScope=manifest.targetScope||'ten-designs';
+ next.scope=next.actors.every(a=>next.targetScope==='ten-full-sets'?coverage(a).fullSets===10:coverage(a).designs===10)?next.targetScope:'pending';
  const errors=validateManifest(next);if(errors.length)throw Error(errors.join('; '));
  return next;
 }

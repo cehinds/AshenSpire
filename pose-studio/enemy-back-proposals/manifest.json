@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "scope": "pending",
+  "scope": "ten-designs",
   "rosterStatus": "Audited canonical encounter roster: 3 elites and 10 bosses. Rear artwork pending.",
   "sourceCommit": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
   "actors": [
@@ -2278,19 +2278,1181 @@
       "id": "bellKeeper",
       "name": "The Bell Keeper",
       "role": "boss",
-      "defaultStance": null,
+      "defaultStance": "neutral",
       "reference": null,
-      "proposals": [],
-      "provisionalDefaultVersion": null
+      "proposals": [
+        {
+          "id": "v01",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "caf7a98887e43c2135b47f07b7a5a83ced2d42ce0fc786710d881b3c2c4a4361",
+            "prompt": "Make exactly TEN rear three-quarter design proposals of the SAME Bell Keeper boss in reference 1. Reference 2 supplies ONLY rear gameplay camera: back of head, back and shoulder dominant, turned away toward upper-right, never front. Preserve Bell Keeper's weathered bronze bell-shaped helmet, stocky heavy bronze plate armor, layered rounded pauldrons, tattered dusty red and pale cream cloth strips, enormous bronze bell mace carried low on its long handle. Same costume proportions, anatomy, silhouette family and bronze-muted red palette; do not transform him into reference2. Ten subtle variants of REAR bell helmet ridges, back armor straps and hanging cloth tears, same character identity. Paint matching dark fantasy production sprite finish of image1. All ten must show BACK, no face/front chest. Entire full body, boots, entire bell weapon and handle within each cell. One transparent PNG canvas exact regular 5 columns by 2 rows grid, one independent character per cell, generous transparent gutters and outer margins, equal scale and foot baselines, no overlaps or cropped elements, no scenery text labels numbers floor or poster. Ten design alternatives, not animation.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/bellKeeper/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "74397997f43c8fbafc8f33abe861ea161ce7bc74"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/bellKeeper/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/bellKeeper/v01.png",
+                  "sha256": "7216c2183ab6d89218d634ed2edb29e43e771e8bb2f49c78c65469b6bd307aa2",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v02",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "caf7a98887e43c2135b47f07b7a5a83ced2d42ce0fc786710d881b3c2c4a4361",
+            "prompt": "Make exactly TEN rear three-quarter design proposals of the SAME Bell Keeper boss in reference 1. Reference 2 supplies ONLY rear gameplay camera: back of head, back and shoulder dominant, turned away toward upper-right, never front. Preserve Bell Keeper's weathered bronze bell-shaped helmet, stocky heavy bronze plate armor, layered rounded pauldrons, tattered dusty red and pale cream cloth strips, enormous bronze bell mace carried low on its long handle. Same costume proportions, anatomy, silhouette family and bronze-muted red palette; do not transform him into reference2. Ten subtle variants of REAR bell helmet ridges, back armor straps and hanging cloth tears, same character identity. Paint matching dark fantasy production sprite finish of image1. All ten must show BACK, no face/front chest. Entire full body, boots, entire bell weapon and handle within each cell. One transparent PNG canvas exact regular 5 columns by 2 rows grid, one independent character per cell, generous transparent gutters and outer margins, equal scale and foot baselines, no overlaps or cropped elements, no scenery text labels numbers floor or poster. Ten design alternatives, not animation.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/bellKeeper/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "74397997f43c8fbafc8f33abe861ea161ce7bc74"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/bellKeeper/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/bellKeeper/v02.png",
+                  "sha256": "2246a3b005ea2f5d2c309904d410d689458f41f3747a4dff049c66545ae5e1b0",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v03",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "caf7a98887e43c2135b47f07b7a5a83ced2d42ce0fc786710d881b3c2c4a4361",
+            "prompt": "Make exactly TEN rear three-quarter design proposals of the SAME Bell Keeper boss in reference 1. Reference 2 supplies ONLY rear gameplay camera: back of head, back and shoulder dominant, turned away toward upper-right, never front. Preserve Bell Keeper's weathered bronze bell-shaped helmet, stocky heavy bronze plate armor, layered rounded pauldrons, tattered dusty red and pale cream cloth strips, enormous bronze bell mace carried low on its long handle. Same costume proportions, anatomy, silhouette family and bronze-muted red palette; do not transform him into reference2. Ten subtle variants of REAR bell helmet ridges, back armor straps and hanging cloth tears, same character identity. Paint matching dark fantasy production sprite finish of image1. All ten must show BACK, no face/front chest. Entire full body, boots, entire bell weapon and handle within each cell. One transparent PNG canvas exact regular 5 columns by 2 rows grid, one independent character per cell, generous transparent gutters and outer margins, equal scale and foot baselines, no overlaps or cropped elements, no scenery text labels numbers floor or poster. Ten design alternatives, not animation.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/bellKeeper/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "74397997f43c8fbafc8f33abe861ea161ce7bc74"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/bellKeeper/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/bellKeeper/v03.png",
+                  "sha256": "f19352392b34a6fb24ed9ad7af05f1b58a0c4988eb6479d4e481f78ae3e92420",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v04",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "caf7a98887e43c2135b47f07b7a5a83ced2d42ce0fc786710d881b3c2c4a4361",
+            "prompt": "Make exactly TEN rear three-quarter design proposals of the SAME Bell Keeper boss in reference 1. Reference 2 supplies ONLY rear gameplay camera: back of head, back and shoulder dominant, turned away toward upper-right, never front. Preserve Bell Keeper's weathered bronze bell-shaped helmet, stocky heavy bronze plate armor, layered rounded pauldrons, tattered dusty red and pale cream cloth strips, enormous bronze bell mace carried low on its long handle. Same costume proportions, anatomy, silhouette family and bronze-muted red palette; do not transform him into reference2. Ten subtle variants of REAR bell helmet ridges, back armor straps and hanging cloth tears, same character identity. Paint matching dark fantasy production sprite finish of image1. All ten must show BACK, no face/front chest. Entire full body, boots, entire bell weapon and handle within each cell. One transparent PNG canvas exact regular 5 columns by 2 rows grid, one independent character per cell, generous transparent gutters and outer margins, equal scale and foot baselines, no overlaps or cropped elements, no scenery text labels numbers floor or poster. Ten design alternatives, not animation.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/bellKeeper/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "74397997f43c8fbafc8f33abe861ea161ce7bc74"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/bellKeeper/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/bellKeeper/v04.png",
+                  "sha256": "27059b478986977e8a0f2480a98d0b17f9098ba3d9862750be6b2542be23090e",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v05",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "caf7a98887e43c2135b47f07b7a5a83ced2d42ce0fc786710d881b3c2c4a4361",
+            "prompt": "Make exactly TEN rear three-quarter design proposals of the SAME Bell Keeper boss in reference 1. Reference 2 supplies ONLY rear gameplay camera: back of head, back and shoulder dominant, turned away toward upper-right, never front. Preserve Bell Keeper's weathered bronze bell-shaped helmet, stocky heavy bronze plate armor, layered rounded pauldrons, tattered dusty red and pale cream cloth strips, enormous bronze bell mace carried low on its long handle. Same costume proportions, anatomy, silhouette family and bronze-muted red palette; do not transform him into reference2. Ten subtle variants of REAR bell helmet ridges, back armor straps and hanging cloth tears, same character identity. Paint matching dark fantasy production sprite finish of image1. All ten must show BACK, no face/front chest. Entire full body, boots, entire bell weapon and handle within each cell. One transparent PNG canvas exact regular 5 columns by 2 rows grid, one independent character per cell, generous transparent gutters and outer margins, equal scale and foot baselines, no overlaps or cropped elements, no scenery text labels numbers floor or poster. Ten design alternatives, not animation.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/bellKeeper/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "74397997f43c8fbafc8f33abe861ea161ce7bc74"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/bellKeeper/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/bellKeeper/v05.png",
+                  "sha256": "d88f72e52e23904ec1796f2a191741e27bf622e616e89f922e429d3e69f2d915",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v06",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "caf7a98887e43c2135b47f07b7a5a83ced2d42ce0fc786710d881b3c2c4a4361",
+            "prompt": "Make exactly TEN rear three-quarter design proposals of the SAME Bell Keeper boss in reference 1. Reference 2 supplies ONLY rear gameplay camera: back of head, back and shoulder dominant, turned away toward upper-right, never front. Preserve Bell Keeper's weathered bronze bell-shaped helmet, stocky heavy bronze plate armor, layered rounded pauldrons, tattered dusty red and pale cream cloth strips, enormous bronze bell mace carried low on its long handle. Same costume proportions, anatomy, silhouette family and bronze-muted red palette; do not transform him into reference2. Ten subtle variants of REAR bell helmet ridges, back armor straps and hanging cloth tears, same character identity. Paint matching dark fantasy production sprite finish of image1. All ten must show BACK, no face/front chest. Entire full body, boots, entire bell weapon and handle within each cell. One transparent PNG canvas exact regular 5 columns by 2 rows grid, one independent character per cell, generous transparent gutters and outer margins, equal scale and foot baselines, no overlaps or cropped elements, no scenery text labels numbers floor or poster. Ten design alternatives, not animation.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/bellKeeper/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "74397997f43c8fbafc8f33abe861ea161ce7bc74"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/bellKeeper/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/bellKeeper/v06.png",
+                  "sha256": "9a32269f76e10af7795cb1c087b890efa5124067e0466d780a0058bd1b58faa6",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v07",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "caf7a98887e43c2135b47f07b7a5a83ced2d42ce0fc786710d881b3c2c4a4361",
+            "prompt": "Make exactly TEN rear three-quarter design proposals of the SAME Bell Keeper boss in reference 1. Reference 2 supplies ONLY rear gameplay camera: back of head, back and shoulder dominant, turned away toward upper-right, never front. Preserve Bell Keeper's weathered bronze bell-shaped helmet, stocky heavy bronze plate armor, layered rounded pauldrons, tattered dusty red and pale cream cloth strips, enormous bronze bell mace carried low on its long handle. Same costume proportions, anatomy, silhouette family and bronze-muted red palette; do not transform him into reference2. Ten subtle variants of REAR bell helmet ridges, back armor straps and hanging cloth tears, same character identity. Paint matching dark fantasy production sprite finish of image1. All ten must show BACK, no face/front chest. Entire full body, boots, entire bell weapon and handle within each cell. One transparent PNG canvas exact regular 5 columns by 2 rows grid, one independent character per cell, generous transparent gutters and outer margins, equal scale and foot baselines, no overlaps or cropped elements, no scenery text labels numbers floor or poster. Ten design alternatives, not animation.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/bellKeeper/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "74397997f43c8fbafc8f33abe861ea161ce7bc74"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/bellKeeper/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/bellKeeper/v07.png",
+                  "sha256": "f7a6a74b407ddd371eb2086a46494421522d85fd126686f0efaf48ce6c756c3f",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v08",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "caf7a98887e43c2135b47f07b7a5a83ced2d42ce0fc786710d881b3c2c4a4361",
+            "prompt": "Make exactly TEN rear three-quarter design proposals of the SAME Bell Keeper boss in reference 1. Reference 2 supplies ONLY rear gameplay camera: back of head, back and shoulder dominant, turned away toward upper-right, never front. Preserve Bell Keeper's weathered bronze bell-shaped helmet, stocky heavy bronze plate armor, layered rounded pauldrons, tattered dusty red and pale cream cloth strips, enormous bronze bell mace carried low on its long handle. Same costume proportions, anatomy, silhouette family and bronze-muted red palette; do not transform him into reference2. Ten subtle variants of REAR bell helmet ridges, back armor straps and hanging cloth tears, same character identity. Paint matching dark fantasy production sprite finish of image1. All ten must show BACK, no face/front chest. Entire full body, boots, entire bell weapon and handle within each cell. One transparent PNG canvas exact regular 5 columns by 2 rows grid, one independent character per cell, generous transparent gutters and outer margins, equal scale and foot baselines, no overlaps or cropped elements, no scenery text labels numbers floor or poster. Ten design alternatives, not animation.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/bellKeeper/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "74397997f43c8fbafc8f33abe861ea161ce7bc74"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/bellKeeper/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/bellKeeper/v08.png",
+                  "sha256": "e6b80a139d41814d58d70be3cf5301b80072af5fc6e020ad48ca41de4f9bb2f3",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v09",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "caf7a98887e43c2135b47f07b7a5a83ced2d42ce0fc786710d881b3c2c4a4361",
+            "prompt": "Make exactly TEN rear three-quarter design proposals of the SAME Bell Keeper boss in reference 1. Reference 2 supplies ONLY rear gameplay camera: back of head, back and shoulder dominant, turned away toward upper-right, never front. Preserve Bell Keeper's weathered bronze bell-shaped helmet, stocky heavy bronze plate armor, layered rounded pauldrons, tattered dusty red and pale cream cloth strips, enormous bronze bell mace carried low on its long handle. Same costume proportions, anatomy, silhouette family and bronze-muted red palette; do not transform him into reference2. Ten subtle variants of REAR bell helmet ridges, back armor straps and hanging cloth tears, same character identity. Paint matching dark fantasy production sprite finish of image1. All ten must show BACK, no face/front chest. Entire full body, boots, entire bell weapon and handle within each cell. One transparent PNG canvas exact regular 5 columns by 2 rows grid, one independent character per cell, generous transparent gutters and outer margins, equal scale and foot baselines, no overlaps or cropped elements, no scenery text labels numbers floor or poster. Ten design alternatives, not animation.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/bellKeeper/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "74397997f43c8fbafc8f33abe861ea161ce7bc74"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/bellKeeper/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/bellKeeper/v09.png",
+                  "sha256": "e4699cf2b8a9c4d294dc98f8ed83476fefa72ddfcec4bf202bef0ef828440772",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v10",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "caf7a98887e43c2135b47f07b7a5a83ced2d42ce0fc786710d881b3c2c4a4361",
+            "prompt": "Make exactly TEN rear three-quarter design proposals of the SAME Bell Keeper boss in reference 1. Reference 2 supplies ONLY rear gameplay camera: back of head, back and shoulder dominant, turned away toward upper-right, never front. Preserve Bell Keeper's weathered bronze bell-shaped helmet, stocky heavy bronze plate armor, layered rounded pauldrons, tattered dusty red and pale cream cloth strips, enormous bronze bell mace carried low on its long handle. Same costume proportions, anatomy, silhouette family and bronze-muted red palette; do not transform him into reference2. Ten subtle variants of REAR bell helmet ridges, back armor straps and hanging cloth tears, same character identity. Paint matching dark fantasy production sprite finish of image1. All ten must show BACK, no face/front chest. Entire full body, boots, entire bell weapon and handle within each cell. One transparent PNG canvas exact regular 5 columns by 2 rows grid, one independent character per cell, generous transparent gutters and outer margins, equal scale and foot baselines, no overlaps or cropped elements, no scenery text labels numbers floor or poster. Ten design alternatives, not animation.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/bellKeeper/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "74397997f43c8fbafc8f33abe861ea161ce7bc74"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/bellKeeper/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/bellKeeper/v10.png",
+                  "sha256": "b5218956389379efd3777e4582df64e6f81f12af44baf9ff5b5bc6e6b2b4c628",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "provisionalDefaultVersion": "v01"
     },
     {
       "id": "thornMatriarch",
       "name": "The Thorn Matriarch",
       "role": "boss",
-      "defaultStance": null,
+      "defaultStance": "neutral",
       "reference": null,
-      "proposals": [],
-      "provisionalDefaultVersion": null
+      "proposals": [
+        {
+          "id": "v01",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "6ff0ecc1366b60664f56583c51bd81c3edbe1011edb5ebfdfce22cdbb5cff3a6",
+            "prompt": "Exactly TEN rear three-quarter sprite design alternatives for the SAME Thorn Matriarch boss in reference1. Reference2 is only camera reference: back dominant turned away facing upper-right; do not copy its knight identity. Preserve Thorn Matriarch's tall slender feminine humanoid anatomy, barklike deep brown thorn armor and branch crown, layered long crimson ragged dress/robes, twisting root hem, flowing red cloth, gnarled tall staff topped with glowing red gem, muted bone brown and blood red palette. Design plausible BACK views of this exact boss: back of branching thorn crown, backplate and rear robe/root construction visible, no face or front chest. Ten subtle distinct rear thorn and robe patterns, same identity costume proportions silhouette palette and full anatomy. Each complete character and ENTIRE staff and root hem within own cell, dark fantasy painterly game sprite finish matching image1. Single transparent PNG exact 5 columns by 2 rows, ten independent figures, consistent scale and foot baseline, large transparent gutters and outer margins preventing contact or cropping. No front poses, no scenery text labels or numbers, no ground. Draft design proposals not animation.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/thornMatriarch/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "5751198871bd198d237587f94d11f37760ddac44"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/thornMatriarch/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/thornMatriarch/v01.png",
+                  "sha256": "c30821829926e0479b21c5ad8726e38cf0fd1b9c80393e9442c8e163fb0f23ce",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v02",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "6ff0ecc1366b60664f56583c51bd81c3edbe1011edb5ebfdfce22cdbb5cff3a6",
+            "prompt": "Exactly TEN rear three-quarter sprite design alternatives for the SAME Thorn Matriarch boss in reference1. Reference2 is only camera reference: back dominant turned away facing upper-right; do not copy its knight identity. Preserve Thorn Matriarch's tall slender feminine humanoid anatomy, barklike deep brown thorn armor and branch crown, layered long crimson ragged dress/robes, twisting root hem, flowing red cloth, gnarled tall staff topped with glowing red gem, muted bone brown and blood red palette. Design plausible BACK views of this exact boss: back of branching thorn crown, backplate and rear robe/root construction visible, no face or front chest. Ten subtle distinct rear thorn and robe patterns, same identity costume proportions silhouette palette and full anatomy. Each complete character and ENTIRE staff and root hem within own cell, dark fantasy painterly game sprite finish matching image1. Single transparent PNG exact 5 columns by 2 rows, ten independent figures, consistent scale and foot baseline, large transparent gutters and outer margins preventing contact or cropping. No front poses, no scenery text labels or numbers, no ground. Draft design proposals not animation.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/thornMatriarch/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "5751198871bd198d237587f94d11f37760ddac44"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/thornMatriarch/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/thornMatriarch/v02.png",
+                  "sha256": "a30309cbb58f2498c1c6e7ca37f4de4927bea54a8b1c5a0385e22236f662e944",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v03",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "6ff0ecc1366b60664f56583c51bd81c3edbe1011edb5ebfdfce22cdbb5cff3a6",
+            "prompt": "Exactly TEN rear three-quarter sprite design alternatives for the SAME Thorn Matriarch boss in reference1. Reference2 is only camera reference: back dominant turned away facing upper-right; do not copy its knight identity. Preserve Thorn Matriarch's tall slender feminine humanoid anatomy, barklike deep brown thorn armor and branch crown, layered long crimson ragged dress/robes, twisting root hem, flowing red cloth, gnarled tall staff topped with glowing red gem, muted bone brown and blood red palette. Design plausible BACK views of this exact boss: back of branching thorn crown, backplate and rear robe/root construction visible, no face or front chest. Ten subtle distinct rear thorn and robe patterns, same identity costume proportions silhouette palette and full anatomy. Each complete character and ENTIRE staff and root hem within own cell, dark fantasy painterly game sprite finish matching image1. Single transparent PNG exact 5 columns by 2 rows, ten independent figures, consistent scale and foot baseline, large transparent gutters and outer margins preventing contact or cropping. No front poses, no scenery text labels or numbers, no ground. Draft design proposals not animation.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/thornMatriarch/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "5751198871bd198d237587f94d11f37760ddac44"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/thornMatriarch/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/thornMatriarch/v03.png",
+                  "sha256": "71d52d7efc061bd47e77a47e9b5ef02ebc01507c57c9c22b98e7dcb1e14bbd60",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v04",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "6ff0ecc1366b60664f56583c51bd81c3edbe1011edb5ebfdfce22cdbb5cff3a6",
+            "prompt": "Exactly TEN rear three-quarter sprite design alternatives for the SAME Thorn Matriarch boss in reference1. Reference2 is only camera reference: back dominant turned away facing upper-right; do not copy its knight identity. Preserve Thorn Matriarch's tall slender feminine humanoid anatomy, barklike deep brown thorn armor and branch crown, layered long crimson ragged dress/robes, twisting root hem, flowing red cloth, gnarled tall staff topped with glowing red gem, muted bone brown and blood red palette. Design plausible BACK views of this exact boss: back of branching thorn crown, backplate and rear robe/root construction visible, no face or front chest. Ten subtle distinct rear thorn and robe patterns, same identity costume proportions silhouette palette and full anatomy. Each complete character and ENTIRE staff and root hem within own cell, dark fantasy painterly game sprite finish matching image1. Single transparent PNG exact 5 columns by 2 rows, ten independent figures, consistent scale and foot baseline, large transparent gutters and outer margins preventing contact or cropping. No front poses, no scenery text labels or numbers, no ground. Draft design proposals not animation.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/thornMatriarch/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "5751198871bd198d237587f94d11f37760ddac44"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/thornMatriarch/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/thornMatriarch/v04.png",
+                  "sha256": "cb5673f59d14391abe73d4b9e0c37b56faeca5f490193c054618e769f16c68b6",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v05",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "6ff0ecc1366b60664f56583c51bd81c3edbe1011edb5ebfdfce22cdbb5cff3a6",
+            "prompt": "Exactly TEN rear three-quarter sprite design alternatives for the SAME Thorn Matriarch boss in reference1. Reference2 is only camera reference: back dominant turned away facing upper-right; do not copy its knight identity. Preserve Thorn Matriarch's tall slender feminine humanoid anatomy, barklike deep brown thorn armor and branch crown, layered long crimson ragged dress/robes, twisting root hem, flowing red cloth, gnarled tall staff topped with glowing red gem, muted bone brown and blood red palette. Design plausible BACK views of this exact boss: back of branching thorn crown, backplate and rear robe/root construction visible, no face or front chest. Ten subtle distinct rear thorn and robe patterns, same identity costume proportions silhouette palette and full anatomy. Each complete character and ENTIRE staff and root hem within own cell, dark fantasy painterly game sprite finish matching image1. Single transparent PNG exact 5 columns by 2 rows, ten independent figures, consistent scale and foot baseline, large transparent gutters and outer margins preventing contact or cropping. No front poses, no scenery text labels or numbers, no ground. Draft design proposals not animation.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/thornMatriarch/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "5751198871bd198d237587f94d11f37760ddac44"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/thornMatriarch/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/thornMatriarch/v05.png",
+                  "sha256": "3ab0b845d0e5cad1a122d69a4781289fef85b9cc93eacd322591982072648eee",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v06",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "6ff0ecc1366b60664f56583c51bd81c3edbe1011edb5ebfdfce22cdbb5cff3a6",
+            "prompt": "Exactly TEN rear three-quarter sprite design alternatives for the SAME Thorn Matriarch boss in reference1. Reference2 is only camera reference: back dominant turned away facing upper-right; do not copy its knight identity. Preserve Thorn Matriarch's tall slender feminine humanoid anatomy, barklike deep brown thorn armor and branch crown, layered long crimson ragged dress/robes, twisting root hem, flowing red cloth, gnarled tall staff topped with glowing red gem, muted bone brown and blood red palette. Design plausible BACK views of this exact boss: back of branching thorn crown, backplate and rear robe/root construction visible, no face or front chest. Ten subtle distinct rear thorn and robe patterns, same identity costume proportions silhouette palette and full anatomy. Each complete character and ENTIRE staff and root hem within own cell, dark fantasy painterly game sprite finish matching image1. Single transparent PNG exact 5 columns by 2 rows, ten independent figures, consistent scale and foot baseline, large transparent gutters and outer margins preventing contact or cropping. No front poses, no scenery text labels or numbers, no ground. Draft design proposals not animation.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/thornMatriarch/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "5751198871bd198d237587f94d11f37760ddac44"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/thornMatriarch/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/thornMatriarch/v06.png",
+                  "sha256": "674d8fab34be4d2b8d97ae36f51b8838eaf0e17aed30ff4e1ede96b26a58a3a1",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v07",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "6ff0ecc1366b60664f56583c51bd81c3edbe1011edb5ebfdfce22cdbb5cff3a6",
+            "prompt": "Exactly TEN rear three-quarter sprite design alternatives for the SAME Thorn Matriarch boss in reference1. Reference2 is only camera reference: back dominant turned away facing upper-right; do not copy its knight identity. Preserve Thorn Matriarch's tall slender feminine humanoid anatomy, barklike deep brown thorn armor and branch crown, layered long crimson ragged dress/robes, twisting root hem, flowing red cloth, gnarled tall staff topped with glowing red gem, muted bone brown and blood red palette. Design plausible BACK views of this exact boss: back of branching thorn crown, backplate and rear robe/root construction visible, no face or front chest. Ten subtle distinct rear thorn and robe patterns, same identity costume proportions silhouette palette and full anatomy. Each complete character and ENTIRE staff and root hem within own cell, dark fantasy painterly game sprite finish matching image1. Single transparent PNG exact 5 columns by 2 rows, ten independent figures, consistent scale and foot baseline, large transparent gutters and outer margins preventing contact or cropping. No front poses, no scenery text labels or numbers, no ground. Draft design proposals not animation.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/thornMatriarch/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "5751198871bd198d237587f94d11f37760ddac44"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/thornMatriarch/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/thornMatriarch/v07.png",
+                  "sha256": "02d233955af156236ef3112c87a3984b7e6c5bbc1f59f070bee1bee9844a48f2",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v08",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "6ff0ecc1366b60664f56583c51bd81c3edbe1011edb5ebfdfce22cdbb5cff3a6",
+            "prompt": "Exactly TEN rear three-quarter sprite design alternatives for the SAME Thorn Matriarch boss in reference1. Reference2 is only camera reference: back dominant turned away facing upper-right; do not copy its knight identity. Preserve Thorn Matriarch's tall slender feminine humanoid anatomy, barklike deep brown thorn armor and branch crown, layered long crimson ragged dress/robes, twisting root hem, flowing red cloth, gnarled tall staff topped with glowing red gem, muted bone brown and blood red palette. Design plausible BACK views of this exact boss: back of branching thorn crown, backplate and rear robe/root construction visible, no face or front chest. Ten subtle distinct rear thorn and robe patterns, same identity costume proportions silhouette palette and full anatomy. Each complete character and ENTIRE staff and root hem within own cell, dark fantasy painterly game sprite finish matching image1. Single transparent PNG exact 5 columns by 2 rows, ten independent figures, consistent scale and foot baseline, large transparent gutters and outer margins preventing contact or cropping. No front poses, no scenery text labels or numbers, no ground. Draft design proposals not animation.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/thornMatriarch/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "5751198871bd198d237587f94d11f37760ddac44"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/thornMatriarch/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/thornMatriarch/v08.png",
+                  "sha256": "97efd95912e71155ee6ebb6497035873249b0db877485d1129e8d88ca343f41c",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v09",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "6ff0ecc1366b60664f56583c51bd81c3edbe1011edb5ebfdfce22cdbb5cff3a6",
+            "prompt": "Exactly TEN rear three-quarter sprite design alternatives for the SAME Thorn Matriarch boss in reference1. Reference2 is only camera reference: back dominant turned away facing upper-right; do not copy its knight identity. Preserve Thorn Matriarch's tall slender feminine humanoid anatomy, barklike deep brown thorn armor and branch crown, layered long crimson ragged dress/robes, twisting root hem, flowing red cloth, gnarled tall staff topped with glowing red gem, muted bone brown and blood red palette. Design plausible BACK views of this exact boss: back of branching thorn crown, backplate and rear robe/root construction visible, no face or front chest. Ten subtle distinct rear thorn and robe patterns, same identity costume proportions silhouette palette and full anatomy. Each complete character and ENTIRE staff and root hem within own cell, dark fantasy painterly game sprite finish matching image1. Single transparent PNG exact 5 columns by 2 rows, ten independent figures, consistent scale and foot baseline, large transparent gutters and outer margins preventing contact or cropping. No front poses, no scenery text labels or numbers, no ground. Draft design proposals not animation.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/thornMatriarch/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "5751198871bd198d237587f94d11f37760ddac44"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/thornMatriarch/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/thornMatriarch/v09.png",
+                  "sha256": "733eb1b4aea0fdf323e6cf24dfe95bf03fce34eb3ec88c122b928c007ea86cc2",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v10",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "6ff0ecc1366b60664f56583c51bd81c3edbe1011edb5ebfdfce22cdbb5cff3a6",
+            "prompt": "Exactly TEN rear three-quarter sprite design alternatives for the SAME Thorn Matriarch boss in reference1. Reference2 is only camera reference: back dominant turned away facing upper-right; do not copy its knight identity. Preserve Thorn Matriarch's tall slender feminine humanoid anatomy, barklike deep brown thorn armor and branch crown, layered long crimson ragged dress/robes, twisting root hem, flowing red cloth, gnarled tall staff topped with glowing red gem, muted bone brown and blood red palette. Design plausible BACK views of this exact boss: back of branching thorn crown, backplate and rear robe/root construction visible, no face or front chest. Ten subtle distinct rear thorn and robe patterns, same identity costume proportions silhouette palette and full anatomy. Each complete character and ENTIRE staff and root hem within own cell, dark fantasy painterly game sprite finish matching image1. Single transparent PNG exact 5 columns by 2 rows, ten independent figures, consistent scale and foot baseline, large transparent gutters and outer margins preventing contact or cropping. No front poses, no scenery text labels or numbers, no ground. Draft design proposals not animation.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/thornMatriarch/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "5751198871bd198d237587f94d11f37760ddac44"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/thornMatriarch/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/thornMatriarch/v10.png",
+                  "sha256": "a8ab890f8d196a1e1b91b067e16df6d29003b9420f8d09cbed75194f5d43f116",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "provisionalDefaultVersion": "v01"
     },
     {
       "id": "stitchedKing",
@@ -4066,10 +5228,591 @@
       "id": "blightedValkyrie",
       "name": "The Blighted Valkyrie",
       "role": "boss",
-      "defaultStance": null,
+      "defaultStance": "neutral",
       "reference": null,
-      "proposals": [],
-      "provisionalDefaultVersion": null
+      "proposals": [
+        {
+          "id": "v01",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "13bf1bc5b4aaddd57e04f893505122fd50a47adc5629db4fd023c0dd57aca08e",
+            "prompt": "Create transparent background game sprites of this Blighted Valkyrie seen from BEHIND, facing upper-right. Exactly10 different rear designs in5columns2rows. Same ivory wings bronze armor burgundy cloth and spear. Show helmet back, back armor, wing roots, heels, no face. Every full body and spear fits inside its slot occupying only60%slot height, leaving huge empty transparent margins between figures and rows. Dark fantasy painted game sprite style. True transparent alpha background.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/blightedValkyrie/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "9bfb5609e3a1add763a29225e68a63f39be1a836"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "camera studied previously; not included in final generation"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/blightedValkyrie/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/blightedValkyrie/v01.png",
+                  "sha256": "f71d87f511e11922bf1c81f3cd099165782b37a79002a54d55f36026a9f3c10c",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v02",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "13bf1bc5b4aaddd57e04f893505122fd50a47adc5629db4fd023c0dd57aca08e",
+            "prompt": "Create transparent background game sprites of this Blighted Valkyrie seen from BEHIND, facing upper-right. Exactly10 different rear designs in5columns2rows. Same ivory wings bronze armor burgundy cloth and spear. Show helmet back, back armor, wing roots, heels, no face. Every full body and spear fits inside its slot occupying only60%slot height, leaving huge empty transparent margins between figures and rows. Dark fantasy painted game sprite style. True transparent alpha background.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/blightedValkyrie/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "9bfb5609e3a1add763a29225e68a63f39be1a836"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "camera studied previously; not included in final generation"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/blightedValkyrie/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/blightedValkyrie/v02.png",
+                  "sha256": "64ecb426233e3efe86f731c56ee117829bbc3d730ac7b58ea1feed770e2a3ed8",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v03",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "13bf1bc5b4aaddd57e04f893505122fd50a47adc5629db4fd023c0dd57aca08e",
+            "prompt": "Create transparent background game sprites of this Blighted Valkyrie seen from BEHIND, facing upper-right. Exactly10 different rear designs in5columns2rows. Same ivory wings bronze armor burgundy cloth and spear. Show helmet back, back armor, wing roots, heels, no face. Every full body and spear fits inside its slot occupying only60%slot height, leaving huge empty transparent margins between figures and rows. Dark fantasy painted game sprite style. True transparent alpha background.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/blightedValkyrie/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "9bfb5609e3a1add763a29225e68a63f39be1a836"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "camera studied previously; not included in final generation"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/blightedValkyrie/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/blightedValkyrie/v03.png",
+                  "sha256": "f3baf9c97501fff0d3ccaf0059b8c3eaa8bac74a6867f2cfcb2ebf7614557977",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v04",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "13bf1bc5b4aaddd57e04f893505122fd50a47adc5629db4fd023c0dd57aca08e",
+            "prompt": "Create transparent background game sprites of this Blighted Valkyrie seen from BEHIND, facing upper-right. Exactly10 different rear designs in5columns2rows. Same ivory wings bronze armor burgundy cloth and spear. Show helmet back, back armor, wing roots, heels, no face. Every full body and spear fits inside its slot occupying only60%slot height, leaving huge empty transparent margins between figures and rows. Dark fantasy painted game sprite style. True transparent alpha background.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/blightedValkyrie/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "9bfb5609e3a1add763a29225e68a63f39be1a836"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "camera studied previously; not included in final generation"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/blightedValkyrie/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/blightedValkyrie/v04.png",
+                  "sha256": "5c0b1c7d9f68db6138c327e8a3c1181f1afb302d42868f6b92cc7beb3ce1fbac",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v05",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "13bf1bc5b4aaddd57e04f893505122fd50a47adc5629db4fd023c0dd57aca08e",
+            "prompt": "Create transparent background game sprites of this Blighted Valkyrie seen from BEHIND, facing upper-right. Exactly10 different rear designs in5columns2rows. Same ivory wings bronze armor burgundy cloth and spear. Show helmet back, back armor, wing roots, heels, no face. Every full body and spear fits inside its slot occupying only60%slot height, leaving huge empty transparent margins between figures and rows. Dark fantasy painted game sprite style. True transparent alpha background.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/blightedValkyrie/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "9bfb5609e3a1add763a29225e68a63f39be1a836"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "camera studied previously; not included in final generation"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/blightedValkyrie/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/blightedValkyrie/v05.png",
+                  "sha256": "70a7bae6afce5cf7faa938957147d1d69ab6ceb19655b4c439ec01d37dfa4d4b",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v06",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "13bf1bc5b4aaddd57e04f893505122fd50a47adc5629db4fd023c0dd57aca08e",
+            "prompt": "Create transparent background game sprites of this Blighted Valkyrie seen from BEHIND, facing upper-right. Exactly10 different rear designs in5columns2rows. Same ivory wings bronze armor burgundy cloth and spear. Show helmet back, back armor, wing roots, heels, no face. Every full body and spear fits inside its slot occupying only60%slot height, leaving huge empty transparent margins between figures and rows. Dark fantasy painted game sprite style. True transparent alpha background.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/blightedValkyrie/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "9bfb5609e3a1add763a29225e68a63f39be1a836"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "camera studied previously; not included in final generation"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/blightedValkyrie/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/blightedValkyrie/v06.png",
+                  "sha256": "f20685d88a804698abd13e798ad7508544d535e27312b4e118eccc424e0b961d",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v07",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "13bf1bc5b4aaddd57e04f893505122fd50a47adc5629db4fd023c0dd57aca08e",
+            "prompt": "Create transparent background game sprites of this Blighted Valkyrie seen from BEHIND, facing upper-right. Exactly10 different rear designs in5columns2rows. Same ivory wings bronze armor burgundy cloth and spear. Show helmet back, back armor, wing roots, heels, no face. Every full body and spear fits inside its slot occupying only60%slot height, leaving huge empty transparent margins between figures and rows. Dark fantasy painted game sprite style. True transparent alpha background.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/blightedValkyrie/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "9bfb5609e3a1add763a29225e68a63f39be1a836"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "camera studied previously; not included in final generation"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/blightedValkyrie/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/blightedValkyrie/v07.png",
+                  "sha256": "e5ab8e4b1e53632df9f7763e2c03e15401e51d991e819d687b233df2541d2425",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v08",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "13bf1bc5b4aaddd57e04f893505122fd50a47adc5629db4fd023c0dd57aca08e",
+            "prompt": "Create transparent background game sprites of this Blighted Valkyrie seen from BEHIND, facing upper-right. Exactly10 different rear designs in5columns2rows. Same ivory wings bronze armor burgundy cloth and spear. Show helmet back, back armor, wing roots, heels, no face. Every full body and spear fits inside its slot occupying only60%slot height, leaving huge empty transparent margins between figures and rows. Dark fantasy painted game sprite style. True transparent alpha background.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/blightedValkyrie/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "9bfb5609e3a1add763a29225e68a63f39be1a836"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "camera studied previously; not included in final generation"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/blightedValkyrie/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/blightedValkyrie/v08.png",
+                  "sha256": "18599a411482c86d62f7f645a0353f1ee852a9b01973ad993bb083313009a518",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v09",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "13bf1bc5b4aaddd57e04f893505122fd50a47adc5629db4fd023c0dd57aca08e",
+            "prompt": "Create transparent background game sprites of this Blighted Valkyrie seen from BEHIND, facing upper-right. Exactly10 different rear designs in5columns2rows. Same ivory wings bronze armor burgundy cloth and spear. Show helmet back, back armor, wing roots, heels, no face. Every full body and spear fits inside its slot occupying only60%slot height, leaving huge empty transparent margins between figures and rows. Dark fantasy painted game sprite style. True transparent alpha background.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/blightedValkyrie/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "9bfb5609e3a1add763a29225e68a63f39be1a836"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "camera studied previously; not included in final generation"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/blightedValkyrie/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/blightedValkyrie/v09.png",
+                  "sha256": "f10a54a5de59d95d3c5fd1fea692621fca4a0404121ef7e54bac3f317d8224a3",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v10",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "13bf1bc5b4aaddd57e04f893505122fd50a47adc5629db4fd023c0dd57aca08e",
+            "prompt": "Create transparent background game sprites of this Blighted Valkyrie seen from BEHIND, facing upper-right. Exactly10 different rear designs in5columns2rows. Same ivory wings bronze armor burgundy cloth and spear. Show helmet back, back armor, wing roots, heels, no face. Every full body and spear fits inside its slot occupying only60%slot height, leaving huge empty transparent margins between figures and rows. Dark fantasy painted game sprite style. True transparent alpha background.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/blightedValkyrie/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "9bfb5609e3a1add763a29225e68a63f39be1a836"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "camera studied previously; not included in final generation"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/blightedValkyrie/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/blightedValkyrie/v10.png",
+                  "sha256": "3da91a65bbc831ae714ea31cfe70056a8d11ba8c0087567e5aa9f6867ad29572",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "provisionalDefaultVersion": "v01"
     },
     {
       "id": "furnaceSaint",
@@ -4665,19 +6408,1111 @@
       "id": "hollowAstronomer",
       "name": "The Hollow Astronomer",
       "role": "boss",
-      "defaultStance": null,
+      "defaultStance": "neutral",
       "reference": null,
-      "proposals": [],
-      "provisionalDefaultVersion": null
+      "proposals": [
+        {
+          "id": "v01",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "731782ff022fc48c4dd3a7c6ff7f259e533649ab073393e38330335165313fd6",
+            "prompt": "Transparent PNG sprite atlas, alpha background with nothing painted between characters. Use attached Hollow Astronomer character identity. Draw TEN rear-view versions, exactly 5 columns and 2 rows. EACH character is SMALL within its cell occupying only60% width and60% height. Huge completely empty transparent gutters between rows and columns. Entire staff tips and boots contained. Same dark navy hooded astronomer, tattered navy cape, brass-gold astrolabe rings mounted behind shoulders, long brass astronomical staff, ornate dark robes. Camera behind character facing upper-right, sees back of hood/cape and back-mounted astrolabe, NOT face/chest. Ten alternate back designs distinguish cloak panels, bronze ring arrangements and garment trim. Consistent anatomy and scale. Full body game sprites. No scene, no floor, no background color, no paper, no sheet texture, no gradient, no shadows, no lettering. True transparent cutouts. Preserve painted dark-fantasy style of reference. Leave generous outer transparent margin too.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/hollowAstronomer/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "21a726b235b161ed1d84e630e7ceaf82a89cc7b5"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/hollowAstronomer/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/hollowAstronomer/v01.png",
+                  "sha256": "07f4e135c09e32542c3f25f0d81db0e2a1f64f5b0913f6c5b64dc1c8d5609720",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v02",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "731782ff022fc48c4dd3a7c6ff7f259e533649ab073393e38330335165313fd6",
+            "prompt": "Transparent PNG sprite atlas, alpha background with nothing painted between characters. Use attached Hollow Astronomer character identity. Draw TEN rear-view versions, exactly 5 columns and 2 rows. EACH character is SMALL within its cell occupying only60% width and60% height. Huge completely empty transparent gutters between rows and columns. Entire staff tips and boots contained. Same dark navy hooded astronomer, tattered navy cape, brass-gold astrolabe rings mounted behind shoulders, long brass astronomical staff, ornate dark robes. Camera behind character facing upper-right, sees back of hood/cape and back-mounted astrolabe, NOT face/chest. Ten alternate back designs distinguish cloak panels, bronze ring arrangements and garment trim. Consistent anatomy and scale. Full body game sprites. No scene, no floor, no background color, no paper, no sheet texture, no gradient, no shadows, no lettering. True transparent cutouts. Preserve painted dark-fantasy style of reference. Leave generous outer transparent margin too.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/hollowAstronomer/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "21a726b235b161ed1d84e630e7ceaf82a89cc7b5"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/hollowAstronomer/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/hollowAstronomer/v02.png",
+                  "sha256": "18ca97555c6bfd431b2b749061e0dbcc3ed3345894cc9a91aeedc26f863918d6",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v03",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "731782ff022fc48c4dd3a7c6ff7f259e533649ab073393e38330335165313fd6",
+            "prompt": "Transparent PNG sprite atlas, alpha background with nothing painted between characters. Use attached Hollow Astronomer character identity. Draw TEN rear-view versions, exactly 5 columns and 2 rows. EACH character is SMALL within its cell occupying only60% width and60% height. Huge completely empty transparent gutters between rows and columns. Entire staff tips and boots contained. Same dark navy hooded astronomer, tattered navy cape, brass-gold astrolabe rings mounted behind shoulders, long brass astronomical staff, ornate dark robes. Camera behind character facing upper-right, sees back of hood/cape and back-mounted astrolabe, NOT face/chest. Ten alternate back designs distinguish cloak panels, bronze ring arrangements and garment trim. Consistent anatomy and scale. Full body game sprites. No scene, no floor, no background color, no paper, no sheet texture, no gradient, no shadows, no lettering. True transparent cutouts. Preserve painted dark-fantasy style of reference. Leave generous outer transparent margin too.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/hollowAstronomer/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "21a726b235b161ed1d84e630e7ceaf82a89cc7b5"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/hollowAstronomer/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/hollowAstronomer/v03.png",
+                  "sha256": "a9e68c23a96bed1da8ea03c28ccf792782e7c1340424b6c5f7938ce47f1cd77d",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v04",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "731782ff022fc48c4dd3a7c6ff7f259e533649ab073393e38330335165313fd6",
+            "prompt": "Transparent PNG sprite atlas, alpha background with nothing painted between characters. Use attached Hollow Astronomer character identity. Draw TEN rear-view versions, exactly 5 columns and 2 rows. EACH character is SMALL within its cell occupying only60% width and60% height. Huge completely empty transparent gutters between rows and columns. Entire staff tips and boots contained. Same dark navy hooded astronomer, tattered navy cape, brass-gold astrolabe rings mounted behind shoulders, long brass astronomical staff, ornate dark robes. Camera behind character facing upper-right, sees back of hood/cape and back-mounted astrolabe, NOT face/chest. Ten alternate back designs distinguish cloak panels, bronze ring arrangements and garment trim. Consistent anatomy and scale. Full body game sprites. No scene, no floor, no background color, no paper, no sheet texture, no gradient, no shadows, no lettering. True transparent cutouts. Preserve painted dark-fantasy style of reference. Leave generous outer transparent margin too.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/hollowAstronomer/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "21a726b235b161ed1d84e630e7ceaf82a89cc7b5"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/hollowAstronomer/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/hollowAstronomer/v04.png",
+                  "sha256": "b1022927ea46f5804dd5f1fb859814f3832e07fddfd32277ffacc1828a0a5cfd",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v05",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "731782ff022fc48c4dd3a7c6ff7f259e533649ab073393e38330335165313fd6",
+            "prompt": "Transparent PNG sprite atlas, alpha background with nothing painted between characters. Use attached Hollow Astronomer character identity. Draw TEN rear-view versions, exactly 5 columns and 2 rows. EACH character is SMALL within its cell occupying only60% width and60% height. Huge completely empty transparent gutters between rows and columns. Entire staff tips and boots contained. Same dark navy hooded astronomer, tattered navy cape, brass-gold astrolabe rings mounted behind shoulders, long brass astronomical staff, ornate dark robes. Camera behind character facing upper-right, sees back of hood/cape and back-mounted astrolabe, NOT face/chest. Ten alternate back designs distinguish cloak panels, bronze ring arrangements and garment trim. Consistent anatomy and scale. Full body game sprites. No scene, no floor, no background color, no paper, no sheet texture, no gradient, no shadows, no lettering. True transparent cutouts. Preserve painted dark-fantasy style of reference. Leave generous outer transparent margin too.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/hollowAstronomer/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "21a726b235b161ed1d84e630e7ceaf82a89cc7b5"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/hollowAstronomer/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/hollowAstronomer/v05.png",
+                  "sha256": "8386e65e2dd30e6bed40797160b58d6b96f5357c12ff659d8f412931d5038195",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v06",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "731782ff022fc48c4dd3a7c6ff7f259e533649ab073393e38330335165313fd6",
+            "prompt": "Transparent PNG sprite atlas, alpha background with nothing painted between characters. Use attached Hollow Astronomer character identity. Draw TEN rear-view versions, exactly 5 columns and 2 rows. EACH character is SMALL within its cell occupying only60% width and60% height. Huge completely empty transparent gutters between rows and columns. Entire staff tips and boots contained. Same dark navy hooded astronomer, tattered navy cape, brass-gold astrolabe rings mounted behind shoulders, long brass astronomical staff, ornate dark robes. Camera behind character facing upper-right, sees back of hood/cape and back-mounted astrolabe, NOT face/chest. Ten alternate back designs distinguish cloak panels, bronze ring arrangements and garment trim. Consistent anatomy and scale. Full body game sprites. No scene, no floor, no background color, no paper, no sheet texture, no gradient, no shadows, no lettering. True transparent cutouts. Preserve painted dark-fantasy style of reference. Leave generous outer transparent margin too.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/hollowAstronomer/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "21a726b235b161ed1d84e630e7ceaf82a89cc7b5"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/hollowAstronomer/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/hollowAstronomer/v06.png",
+                  "sha256": "bb1f4181ca3f0ae5315a23720a17f2ddddcb6c12596dd3568b5f8dfb2bf8f09b",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v07",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "731782ff022fc48c4dd3a7c6ff7f259e533649ab073393e38330335165313fd6",
+            "prompt": "Transparent PNG sprite atlas, alpha background with nothing painted between characters. Use attached Hollow Astronomer character identity. Draw TEN rear-view versions, exactly 5 columns and 2 rows. EACH character is SMALL within its cell occupying only60% width and60% height. Huge completely empty transparent gutters between rows and columns. Entire staff tips and boots contained. Same dark navy hooded astronomer, tattered navy cape, brass-gold astrolabe rings mounted behind shoulders, long brass astronomical staff, ornate dark robes. Camera behind character facing upper-right, sees back of hood/cape and back-mounted astrolabe, NOT face/chest. Ten alternate back designs distinguish cloak panels, bronze ring arrangements and garment trim. Consistent anatomy and scale. Full body game sprites. No scene, no floor, no background color, no paper, no sheet texture, no gradient, no shadows, no lettering. True transparent cutouts. Preserve painted dark-fantasy style of reference. Leave generous outer transparent margin too.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/hollowAstronomer/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "21a726b235b161ed1d84e630e7ceaf82a89cc7b5"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/hollowAstronomer/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/hollowAstronomer/v07.png",
+                  "sha256": "34c384d716619dbf221f96950ecd6b05eded01e9a0c94000d9cadb3989bb4fcd",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v08",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "731782ff022fc48c4dd3a7c6ff7f259e533649ab073393e38330335165313fd6",
+            "prompt": "Transparent PNG sprite atlas, alpha background with nothing painted between characters. Use attached Hollow Astronomer character identity. Draw TEN rear-view versions, exactly 5 columns and 2 rows. EACH character is SMALL within its cell occupying only60% width and60% height. Huge completely empty transparent gutters between rows and columns. Entire staff tips and boots contained. Same dark navy hooded astronomer, tattered navy cape, brass-gold astrolabe rings mounted behind shoulders, long brass astronomical staff, ornate dark robes. Camera behind character facing upper-right, sees back of hood/cape and back-mounted astrolabe, NOT face/chest. Ten alternate back designs distinguish cloak panels, bronze ring arrangements and garment trim. Consistent anatomy and scale. Full body game sprites. No scene, no floor, no background color, no paper, no sheet texture, no gradient, no shadows, no lettering. True transparent cutouts. Preserve painted dark-fantasy style of reference. Leave generous outer transparent margin too.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/hollowAstronomer/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "21a726b235b161ed1d84e630e7ceaf82a89cc7b5"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/hollowAstronomer/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/hollowAstronomer/v08.png",
+                  "sha256": "22c15688672ad204d0e43b78f9596cc8fb386a772a9ebd8c98f6d3f77649d4ff",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v09",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "731782ff022fc48c4dd3a7c6ff7f259e533649ab073393e38330335165313fd6",
+            "prompt": "Transparent PNG sprite atlas, alpha background with nothing painted between characters. Use attached Hollow Astronomer character identity. Draw TEN rear-view versions, exactly 5 columns and 2 rows. EACH character is SMALL within its cell occupying only60% width and60% height. Huge completely empty transparent gutters between rows and columns. Entire staff tips and boots contained. Same dark navy hooded astronomer, tattered navy cape, brass-gold astrolabe rings mounted behind shoulders, long brass astronomical staff, ornate dark robes. Camera behind character facing upper-right, sees back of hood/cape and back-mounted astrolabe, NOT face/chest. Ten alternate back designs distinguish cloak panels, bronze ring arrangements and garment trim. Consistent anatomy and scale. Full body game sprites. No scene, no floor, no background color, no paper, no sheet texture, no gradient, no shadows, no lettering. True transparent cutouts. Preserve painted dark-fantasy style of reference. Leave generous outer transparent margin too.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/hollowAstronomer/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "21a726b235b161ed1d84e630e7ceaf82a89cc7b5"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/hollowAstronomer/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/hollowAstronomer/v09.png",
+                  "sha256": "2ee0706bc4908d67ac4c527eccb28dc0228e0bd963f691312cc7ef3b297c5077",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v10",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "731782ff022fc48c4dd3a7c6ff7f259e533649ab073393e38330335165313fd6",
+            "prompt": "Transparent PNG sprite atlas, alpha background with nothing painted between characters. Use attached Hollow Astronomer character identity. Draw TEN rear-view versions, exactly 5 columns and 2 rows. EACH character is SMALL within its cell occupying only60% width and60% height. Huge completely empty transparent gutters between rows and columns. Entire staff tips and boots contained. Same dark navy hooded astronomer, tattered navy cape, brass-gold astrolabe rings mounted behind shoulders, long brass astronomical staff, ornate dark robes. Camera behind character facing upper-right, sees back of hood/cape and back-mounted astrolabe, NOT face/chest. Ten alternate back designs distinguish cloak panels, bronze ring arrangements and garment trim. Consistent anatomy and scale. Full body game sprites. No scene, no floor, no background color, no paper, no sheet texture, no gradient, no shadows, no lettering. True transparent cutouts. Preserve painted dark-fantasy style of reference. Leave generous outer transparent margin too.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/hollowAstronomer/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "21a726b235b161ed1d84e630e7ceaf82a89cc7b5"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/hollowAstronomer/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/hollowAstronomer/v10.png",
+                  "sha256": "c6556b29f765ed4d5e6dddec8e76e27c2328fd9230cea02fe277c0a444470cd5",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "provisionalDefaultVersion": "v01"
     },
     {
       "id": "ashheartDragon",
       "name": "The Ashheart Dragon",
       "role": "boss",
-      "defaultStance": null,
+      "defaultStance": "neutral",
       "reference": null,
-      "proposals": [],
-      "provisionalDefaultVersion": null
+      "proposals": [
+        {
+          "id": "v01",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "9dd62d26438f9d1849215fa6acc4686c3c25b87ecd0c94cc1dd6da3bb3b814b8",
+            "prompt": "Generate precisely TEN rear-three-quarter Ashheart Dragon boss design proposals in exact 5 columns x 2 rows, generous empty transparent gutters and outside margins. First image is character identity; second image supplies ONLY rear-facing upper-right camera direction. Dragon must be rotated to face AWAY, back of horned dragon head visible, spine and shoulder blade scales facing viewer, wings attached to its back, heavy tail emerging toward viewer then curling sideways, heels rear claws. NO front chest molten rune, NO frontal face. Preserve SAME upright bipedal dragon, charcoal obsidian scales with orange molten fissures, massive dark red membranous wings, long curling tail, horned snout, clawed arms and legs. Ten slight alternative rear scale/spine/wing attachment designs with coherent anatomy palette silhouette and proportions. Every full body wing tail and horn completely contained separately in its cell. Painted dark fantasy production game sprite art matching source; exact ten rear views only. Mandatory EMPTY ALPHA TRANSPARENT background, no color fill, no gradient, no floor scenery text labels or poster composition. Do not copy player armor or human anatomy.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/ashheartDragon/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "7883ef7266de128bbf47d494b9f1fe45a8abfdc6"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "rear camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/ashheartDragon/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/ashheartDragon/v01.png",
+                  "sha256": "8dc93e228702a02785e46a54bbf519909157e1153e04b0ac11350a4a1994178c",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.73046875,
+                      0.8828125
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "manual-visible-foot-draft",
+                    "footReviewStatus": "draft-manual-anchor-review"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v02",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "9dd62d26438f9d1849215fa6acc4686c3c25b87ecd0c94cc1dd6da3bb3b814b8",
+            "prompt": "Generate precisely TEN rear-three-quarter Ashheart Dragon boss design proposals in exact 5 columns x 2 rows, generous empty transparent gutters and outside margins. First image is character identity; second image supplies ONLY rear-facing upper-right camera direction. Dragon must be rotated to face AWAY, back of horned dragon head visible, spine and shoulder blade scales facing viewer, wings attached to its back, heavy tail emerging toward viewer then curling sideways, heels rear claws. NO front chest molten rune, NO frontal face. Preserve SAME upright bipedal dragon, charcoal obsidian scales with orange molten fissures, massive dark red membranous wings, long curling tail, horned snout, clawed arms and legs. Ten slight alternative rear scale/spine/wing attachment designs with coherent anatomy palette silhouette and proportions. Every full body wing tail and horn completely contained separately in its cell. Painted dark fantasy production game sprite art matching source; exact ten rear views only. Mandatory EMPTY ALPHA TRANSPARENT background, no color fill, no gradient, no floor scenery text labels or poster composition. Do not copy player armor or human anatomy.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/ashheartDragon/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "7883ef7266de128bbf47d494b9f1fe45a8abfdc6"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "rear camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/ashheartDragon/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/ashheartDragon/v02.png",
+                  "sha256": "201a44c21a58fb8a1dc3f3d309413e3e3122df19a51dd204079a1def91c25871",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.736328125,
+                      0.859375
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "manual-visible-foot-draft",
+                    "footReviewStatus": "draft-manual-anchor-review"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v03",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "9dd62d26438f9d1849215fa6acc4686c3c25b87ecd0c94cc1dd6da3bb3b814b8",
+            "prompt": "Generate precisely TEN rear-three-quarter Ashheart Dragon boss design proposals in exact 5 columns x 2 rows, generous empty transparent gutters and outside margins. First image is character identity; second image supplies ONLY rear-facing upper-right camera direction. Dragon must be rotated to face AWAY, back of horned dragon head visible, spine and shoulder blade scales facing viewer, wings attached to its back, heavy tail emerging toward viewer then curling sideways, heels rear claws. NO front chest molten rune, NO frontal face. Preserve SAME upright bipedal dragon, charcoal obsidian scales with orange molten fissures, massive dark red membranous wings, long curling tail, horned snout, clawed arms and legs. Ten slight alternative rear scale/spine/wing attachment designs with coherent anatomy palette silhouette and proportions. Every full body wing tail and horn completely contained separately in its cell. Painted dark fantasy production game sprite art matching source; exact ten rear views only. Mandatory EMPTY ALPHA TRANSPARENT background, no color fill, no gradient, no floor scenery text labels or poster composition. Do not copy player armor or human anatomy.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/ashheartDragon/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "7883ef7266de128bbf47d494b9f1fe45a8abfdc6"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "rear camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/ashheartDragon/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/ashheartDragon/v03.png",
+                  "sha256": "911b7cfa426ccb7143e262a3f41eaebfc3b3504b85d185574cbcaffc4decb019",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.71875,
+                      0.87109375
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "manual-visible-foot-draft",
+                    "footReviewStatus": "draft-manual-anchor-review"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v04",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "9dd62d26438f9d1849215fa6acc4686c3c25b87ecd0c94cc1dd6da3bb3b814b8",
+            "prompt": "Generate precisely TEN rear-three-quarter Ashheart Dragon boss design proposals in exact 5 columns x 2 rows, generous empty transparent gutters and outside margins. First image is character identity; second image supplies ONLY rear-facing upper-right camera direction. Dragon must be rotated to face AWAY, back of horned dragon head visible, spine and shoulder blade scales facing viewer, wings attached to its back, heavy tail emerging toward viewer then curling sideways, heels rear claws. NO front chest molten rune, NO frontal face. Preserve SAME upright bipedal dragon, charcoal obsidian scales with orange molten fissures, massive dark red membranous wings, long curling tail, horned snout, clawed arms and legs. Ten slight alternative rear scale/spine/wing attachment designs with coherent anatomy palette silhouette and proportions. Every full body wing tail and horn completely contained separately in its cell. Painted dark fantasy production game sprite art matching source; exact ten rear views only. Mandatory EMPTY ALPHA TRANSPARENT background, no color fill, no gradient, no floor scenery text labels or poster composition. Do not copy player armor or human anatomy.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/ashheartDragon/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "7883ef7266de128bbf47d494b9f1fe45a8abfdc6"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "rear camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/ashheartDragon/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/ashheartDragon/v04.png",
+                  "sha256": "c6954bf0189b297997c8b32d5472f769f9e0a50f5f58d4b768667e31d40597f1",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.712890625,
+                      0.87109375
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "manual-visible-foot-draft",
+                    "footReviewStatus": "draft-manual-anchor-review"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v05",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "9dd62d26438f9d1849215fa6acc4686c3c25b87ecd0c94cc1dd6da3bb3b814b8",
+            "prompt": "Generate precisely TEN rear-three-quarter Ashheart Dragon boss design proposals in exact 5 columns x 2 rows, generous empty transparent gutters and outside margins. First image is character identity; second image supplies ONLY rear-facing upper-right camera direction. Dragon must be rotated to face AWAY, back of horned dragon head visible, spine and shoulder blade scales facing viewer, wings attached to its back, heavy tail emerging toward viewer then curling sideways, heels rear claws. NO front chest molten rune, NO frontal face. Preserve SAME upright bipedal dragon, charcoal obsidian scales with orange molten fissures, massive dark red membranous wings, long curling tail, horned snout, clawed arms and legs. Ten slight alternative rear scale/spine/wing attachment designs with coherent anatomy palette silhouette and proportions. Every full body wing tail and horn completely contained separately in its cell. Painted dark fantasy production game sprite art matching source; exact ten rear views only. Mandatory EMPTY ALPHA TRANSPARENT background, no color fill, no gradient, no floor scenery text labels or poster composition. Do not copy player armor or human anatomy.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/ashheartDragon/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "7883ef7266de128bbf47d494b9f1fe45a8abfdc6"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "rear camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/ashheartDragon/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/ashheartDragon/v05.png",
+                  "sha256": "0426d3301a4dc65b81d9de851250899dd2315a930270f2ad340b164d1fb0a032",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.728515625,
+                      0.873046875
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "manual-visible-foot-draft",
+                    "footReviewStatus": "draft-manual-anchor-review"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v06",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "9dd62d26438f9d1849215fa6acc4686c3c25b87ecd0c94cc1dd6da3bb3b814b8",
+            "prompt": "Generate precisely TEN rear-three-quarter Ashheart Dragon boss design proposals in exact 5 columns x 2 rows, generous empty transparent gutters and outside margins. First image is character identity; second image supplies ONLY rear-facing upper-right camera direction. Dragon must be rotated to face AWAY, back of horned dragon head visible, spine and shoulder blade scales facing viewer, wings attached to its back, heavy tail emerging toward viewer then curling sideways, heels rear claws. NO front chest molten rune, NO frontal face. Preserve SAME upright bipedal dragon, charcoal obsidian scales with orange molten fissures, massive dark red membranous wings, long curling tail, horned snout, clawed arms and legs. Ten slight alternative rear scale/spine/wing attachment designs with coherent anatomy palette silhouette and proportions. Every full body wing tail and horn completely contained separately in its cell. Painted dark fantasy production game sprite art matching source; exact ten rear views only. Mandatory EMPTY ALPHA TRANSPARENT background, no color fill, no gradient, no floor scenery text labels or poster composition. Do not copy player armor or human anatomy.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/ashheartDragon/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "7883ef7266de128bbf47d494b9f1fe45a8abfdc6"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "rear camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/ashheartDragon/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/ashheartDragon/v06.png",
+                  "sha256": "28a9e9b23ba52741925c061c302dc9514dee5bf945a02a492290386463880d4a",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.73828125,
+                      0.865234375
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "manual-visible-foot-draft",
+                    "footReviewStatus": "draft-manual-anchor-review"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v07",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "9dd62d26438f9d1849215fa6acc4686c3c25b87ecd0c94cc1dd6da3bb3b814b8",
+            "prompt": "Generate precisely TEN rear-three-quarter Ashheart Dragon boss design proposals in exact 5 columns x 2 rows, generous empty transparent gutters and outside margins. First image is character identity; second image supplies ONLY rear-facing upper-right camera direction. Dragon must be rotated to face AWAY, back of horned dragon head visible, spine and shoulder blade scales facing viewer, wings attached to its back, heavy tail emerging toward viewer then curling sideways, heels rear claws. NO front chest molten rune, NO frontal face. Preserve SAME upright bipedal dragon, charcoal obsidian scales with orange molten fissures, massive dark red membranous wings, long curling tail, horned snout, clawed arms and legs. Ten slight alternative rear scale/spine/wing attachment designs with coherent anatomy palette silhouette and proportions. Every full body wing tail and horn completely contained separately in its cell. Painted dark fantasy production game sprite art matching source; exact ten rear views only. Mandatory EMPTY ALPHA TRANSPARENT background, no color fill, no gradient, no floor scenery text labels or poster composition. Do not copy player armor or human anatomy.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/ashheartDragon/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "7883ef7266de128bbf47d494b9f1fe45a8abfdc6"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "rear camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/ashheartDragon/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/ashheartDragon/v07.png",
+                  "sha256": "d7b83a267d78d21d468fb29431eb0af792fb4058a8d5ee9972f50b8562bca2e3",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.728515625,
+                      0.861328125
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "manual-visible-foot-draft",
+                    "footReviewStatus": "draft-manual-anchor-review"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v08",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "9dd62d26438f9d1849215fa6acc4686c3c25b87ecd0c94cc1dd6da3bb3b814b8",
+            "prompt": "Generate precisely TEN rear-three-quarter Ashheart Dragon boss design proposals in exact 5 columns x 2 rows, generous empty transparent gutters and outside margins. First image is character identity; second image supplies ONLY rear-facing upper-right camera direction. Dragon must be rotated to face AWAY, back of horned dragon head visible, spine and shoulder blade scales facing viewer, wings attached to its back, heavy tail emerging toward viewer then curling sideways, heels rear claws. NO front chest molten rune, NO frontal face. Preserve SAME upright bipedal dragon, charcoal obsidian scales with orange molten fissures, massive dark red membranous wings, long curling tail, horned snout, clawed arms and legs. Ten slight alternative rear scale/spine/wing attachment designs with coherent anatomy palette silhouette and proportions. Every full body wing tail and horn completely contained separately in its cell. Painted dark fantasy production game sprite art matching source; exact ten rear views only. Mandatory EMPTY ALPHA TRANSPARENT background, no color fill, no gradient, no floor scenery text labels or poster composition. Do not copy player armor or human anatomy.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/ashheartDragon/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "7883ef7266de128bbf47d494b9f1fe45a8abfdc6"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "rear camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/ashheartDragon/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/ashheartDragon/v08.png",
+                  "sha256": "7d0dd5fd3a065cd2f10ee7cae93b436fe45f0aa13b2b77a592786e4ead3c8826",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.734375,
+                      0.859375
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "manual-visible-foot-draft",
+                    "footReviewStatus": "draft-manual-anchor-review"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v09",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "9dd62d26438f9d1849215fa6acc4686c3c25b87ecd0c94cc1dd6da3bb3b814b8",
+            "prompt": "Generate precisely TEN rear-three-quarter Ashheart Dragon boss design proposals in exact 5 columns x 2 rows, generous empty transparent gutters and outside margins. First image is character identity; second image supplies ONLY rear-facing upper-right camera direction. Dragon must be rotated to face AWAY, back of horned dragon head visible, spine and shoulder blade scales facing viewer, wings attached to its back, heavy tail emerging toward viewer then curling sideways, heels rear claws. NO front chest molten rune, NO frontal face. Preserve SAME upright bipedal dragon, charcoal obsidian scales with orange molten fissures, massive dark red membranous wings, long curling tail, horned snout, clawed arms and legs. Ten slight alternative rear scale/spine/wing attachment designs with coherent anatomy palette silhouette and proportions. Every full body wing tail and horn completely contained separately in its cell. Painted dark fantasy production game sprite art matching source; exact ten rear views only. Mandatory EMPTY ALPHA TRANSPARENT background, no color fill, no gradient, no floor scenery text labels or poster composition. Do not copy player armor or human anatomy.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/ashheartDragon/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "7883ef7266de128bbf47d494b9f1fe45a8abfdc6"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "rear camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/ashheartDragon/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/ashheartDragon/v09.png",
+                  "sha256": "5b9ba19d6578cc279d5a0b1256cd7824b80bd4ae1080ed15c215566b3f292b1e",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.72265625,
+                      0.86328125
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "manual-visible-foot-draft",
+                    "footReviewStatus": "draft-manual-anchor-review"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v10",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "9dd62d26438f9d1849215fa6acc4686c3c25b87ecd0c94cc1dd6da3bb3b814b8",
+            "prompt": "Generate precisely TEN rear-three-quarter Ashheart Dragon boss design proposals in exact 5 columns x 2 rows, generous empty transparent gutters and outside margins. First image is character identity; second image supplies ONLY rear-facing upper-right camera direction. Dragon must be rotated to face AWAY, back of horned dragon head visible, spine and shoulder blade scales facing viewer, wings attached to its back, heavy tail emerging toward viewer then curling sideways, heels rear claws. NO front chest molten rune, NO frontal face. Preserve SAME upright bipedal dragon, charcoal obsidian scales with orange molten fissures, massive dark red membranous wings, long curling tail, horned snout, clawed arms and legs. Ten slight alternative rear scale/spine/wing attachment designs with coherent anatomy palette silhouette and proportions. Every full body wing tail and horn completely contained separately in its cell. Painted dark fantasy production game sprite art matching source; exact ten rear views only. Mandatory EMPTY ALPHA TRANSPARENT background, no color fill, no gradient, no floor scenery text labels or poster composition. Do not copy player armor or human anatomy.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/ashheartDragon/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "7883ef7266de128bbf47d494b9f1fe45a8abfdc6"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "rear camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/ashheartDragon/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/ashheartDragon/v10.png",
+                  "sha256": "38f90411153800cdd2f1af67de7b8186f49a148980126c3616bb5aa679ee99ac",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.724609375,
+                      0.859375
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "manual-visible-foot-draft",
+                    "footReviewStatus": "draft-manual-anchor-review"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "provisionalDefaultVersion": "v01"
     }
   ],
   "targetScope": "ten-designs"

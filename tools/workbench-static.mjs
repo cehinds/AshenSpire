@@ -200,7 +200,9 @@ async function main() {
   await fs.mkdir(out, { recursive: true });
 
   const previews = await rootPreviewPages();
-  const files = await buildSnapshot(out, { base, previews });
+  const mirroredPages = [...previews];
+  if (existsSync(path.join(REPO, 'pose-studio/enemy-back-proposals/index.html'))) mirroredPages.push('pose-studio/enemy-back-proposals/index.html');
+  const files = await buildSnapshot(out, { base, previews: mirroredPages });
 
   // The UI, with its absolute paths moved under the base.
   const uiRewrite = { re: UI_REWRITE, to: `$1${base}$2` };
