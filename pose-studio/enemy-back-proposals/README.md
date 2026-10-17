@@ -11,3 +11,7 @@ Feature-local draft art may live under `art/enemy-back-proposals/`; published as
 Enemy animation export uses Sprite Workshop rigs. Existing Pose Studio actor validation accepts player classes only, so this module does not fabricate compatible enemy pose projects or gameplay bindings. Preserve the source's geometry; do not mirror a front painting and call it rear art.
 
 Run `node --test pose-studio/enemy-back-proposals/model.test.mjs`. Parent integration must provide actual proposal art, actual browser captures and preview evidence; the initial empty manifest is an integration handoff and not completed art.
+
+Delivered `scope` stays `pending` until every audited actor satisfies the stated coverage; `targetScope` records the goal separately. A nullable `provisionalDefaultVersion` names an available draft design and never implies approved gameplay selection.
+
+After normalization outputs and their provenance have landed on the feature, run `node pose-studio/enemy-back-proposals/integrate-normalized.mjs <actorId>`. It verifies master/output SHA-256 bytes, refuses clipped/error outputs, converts floor anchors, and imports ten neutral draft designs. v01 is labelled provisional, crop review stays explicit, and no neutral design is copied into action slots. Prompt summaries are identified as summaries.

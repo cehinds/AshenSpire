@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "scope": "ten-designs",
+  "scope": "pending",
   "rosterStatus": "Audited canonical encounter roster: 3 elites and 10 bosses. Rear artwork pending.",
   "sourceCommit": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
   "actors": [
@@ -10,7 +10,8 @@
       "role": "elite",
       "defaultStance": null,
       "reference": null,
-      "proposals": []
+      "proposals": [],
+      "provisionalDefaultVersion": null
     },
     {
       "id": "courtDuelist",
@@ -18,7 +19,8 @@
       "role": "elite",
       "defaultStance": null,
       "reference": null,
-      "proposals": []
+      "proposals": [],
+      "provisionalDefaultVersion": null
     },
     {
       "id": "wyrmLord",
@@ -26,7 +28,8 @@
       "role": "elite",
       "defaultStance": null,
       "reference": null,
-      "proposals": []
+      "proposals": [],
+      "provisionalDefaultVersion": null
     },
     {
       "id": "fellWarden",
@@ -34,7 +37,8 @@
       "role": "boss",
       "defaultStance": null,
       "reference": null,
-      "proposals": []
+      "proposals": [],
+      "provisionalDefaultVersion": null
     },
     {
       "id": "bellKeeper",
@@ -42,7 +46,8 @@
       "role": "boss",
       "defaultStance": null,
       "reference": null,
-      "proposals": []
+      "proposals": [],
+      "provisionalDefaultVersion": null
     },
     {
       "id": "thornMatriarch",
@@ -50,7 +55,8 @@
       "role": "boss",
       "defaultStance": null,
       "reference": null,
-      "proposals": []
+      "proposals": [],
+      "provisionalDefaultVersion": null
     },
     {
       "id": "stitchedKing",
@@ -58,7 +64,8 @@
       "role": "boss",
       "defaultStance": null,
       "reference": null,
-      "proposals": []
+      "proposals": [],
+      "provisionalDefaultVersion": null
     },
     {
       "id": "glassRegent",
@@ -66,7 +73,8 @@
       "role": "boss",
       "defaultStance": null,
       "reference": null,
-      "proposals": []
+      "proposals": [],
+      "provisionalDefaultVersion": null
     },
     {
       "id": "marrowOrganist",
@@ -74,7 +82,8 @@
       "role": "boss",
       "defaultStance": null,
       "reference": null,
-      "proposals": []
+      "proposals": [],
+      "provisionalDefaultVersion": null
     },
     {
       "id": "blightedValkyrie",
@@ -82,7 +91,8 @@
       "role": "boss",
       "defaultStance": null,
       "reference": null,
-      "proposals": []
+      "proposals": [],
+      "provisionalDefaultVersion": null
     },
     {
       "id": "furnaceSaint",
@@ -90,7 +100,8 @@
       "role": "boss",
       "defaultStance": null,
       "reference": null,
-      "proposals": []
+      "proposals": [],
+      "provisionalDefaultVersion": null
     },
     {
       "id": "hollowAstronomer",
@@ -98,7 +109,8 @@
       "role": "boss",
       "defaultStance": null,
       "reference": null,
-      "proposals": []
+      "proposals": [],
+      "provisionalDefaultVersion": null
     },
     {
       "id": "ashheartDragon",
@@ -106,7 +118,9 @@
       "role": "boss",
       "defaultStance": null,
       "reference": null,
-      "proposals": []
+      "proposals": [],
+      "provisionalDefaultVersion": null
     }
-  ]
+  ],
+  "targetScope": "ten-designs"
 }

@@ -21,15 +21,18 @@ export function validateManifest(m) {
  const errors=[];const fail=s=>errors.push(s);
  if(m?.schemaVersion!==1)return ['Unsupported manifest schema'];
  if(!['pending','ten-designs','ten-full-sets'].includes(m.scope))fail('Unknown proposal scope');
+ if(m.targetScope!==undefined&&!['ten-designs','ten-full-sets'].includes(m.targetScope))fail('Unknown target scope');
  if(!Array.isArray(m.actors))return [...errors,'Actors must be an array'];
  const actors=new Set();
  for(const a of m.actors){
   if(!a.id||actors.has(a.id))fail('Actor IDs must be unique');actors.add(a.id);
   if(a.defaultStance!==null&&!STANCES.includes(a.defaultStance))fail(a.id+': invalid default stance');
+  if(!Array.isArray(a.proposals)){fail(a.id+': proposals must be an array');continue;}
   const ids=new Set();
   for(const p of a.proposals||[]){
    const at=a.id+'/'+p.id;
    if(!VERSION_IDS.includes(p.id)||ids.has(p.id))fail(at+': invalid or duplicate version');ids.add(p.id);
+   if(!['missing','draft','reviewed','selected'].includes(p.status))fail(at+': invalid proposal status');
    if(p.perspective!=='rear')fail(at+': proposals must depict the rear');
    let painted=false;
    for(const [stance,sequence] of Object.entries(p.stances||{})){
@@ -46,6 +49,11 @@ export function validateManifest(m) {
    if(painted && (!p.provenance?.sourceSha256?.match(/^[a-f0-9]{64}$/)||!p.provenance?.prompt||!['draft-unpublished','released'].includes(p.provenance?.publicationStatus)||(p.provenance?.publicationStatus==='released'&&!p.provenance?.artRelease)))fail(at+': artwork requires hash, prompt and explicit publication status');
    if(p.status==='missing'&&painted)fail(at+': missing proposal has artwork');
   }
+  const c=coverage(a);
+  if(m.scope==='ten-designs'&&c.designs!==10)fail(a.id+': ten-designs scope requires ten available designs');
+  if(m.scope==='ten-full-sets'&&c.fullSets!==10)fail(a.id+': ten-full-sets scope requires ten complete stance sets');
+  if(a.provisionalDefaultVersion!=null && !a.proposals.some(p=>p.id===a.provisionalDefaultVersion&&STANCES.some(s=>framesOf(p,s).length)))fail(a.id+': provisional default must name available rear artwork');
  }
+ if(m.scope!=='pending'&&!m.actors.length)fail('Delivered scope requires actors');
  return errors;
 }
