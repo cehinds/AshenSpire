@@ -1,0 +1,39 @@
+{
+  "id": "buttons",
+  "description": "Choice and footer buttons. Reads src/ui/models/ButtonSizeModel.js and src/ui/models/ControlAppearance.js; heights and widths come from the layout file.",
+  "layout": {
+    "ref": "content/config/ui/components/buttons.json"
+  },
+  "viewModel": {
+    "props": {
+      "label": "string",
+      "size": "string",
+      "kind": "string",
+      "disabled": "boolean"
+    },
+    "bindings": {
+      "label": "$label",
+      "size": "$size",
+      "disabled": "$disabled",
+      "heightRem": "layout.sizing.standardHeightRem",
+      "multiplier": "layout.sizing.heightMultipliers[$size]",
+      "widthRem": "layout.sizing.sizeWidths[$size]"
+    }
+  },
+  "states": [
+    "idle",
+    "hover",
+    "pressed",
+    "disabled",
+    "focused"
+  ],
+  "events": {
+    "tap": "ui.press"
+  },
+  "assets": [],
+  "platforms": [
+    "mobile",
+    "tablet",
+    "desktop"
+  ]
+}

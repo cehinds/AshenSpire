@@ -1,0 +1,31 @@
+{
+  "id": "inspect",
+  "description": "Inspect control (the small info button). Reads src/ui/models/InspectControlModel.js.",
+  "layout": {
+    "ref": "content/config/ui/components/inspect.json"
+  },
+  "viewModel": {
+    "props": {
+      "target": "string"
+    },
+    "bindings": {
+      "target": "$target",
+      "sizeRem": "layout.sizing.sizeRem"
+    }
+  },
+  "states": [
+    "idle",
+    "pressed"
+  ],
+  "events": {
+    "tap": "inspect.open"
+  },
+  "assets": [
+    "icon.inspect"
+  ],
+  "platforms": [
+    "mobile",
+    "tablet",
+    "desktop"
+  ]
+}
