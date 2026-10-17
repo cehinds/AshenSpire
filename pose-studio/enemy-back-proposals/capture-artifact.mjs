@@ -30,7 +30,7 @@ try{
   await page.goto(artifactPage,{waitUntil:'domcontentloaded',timeout:90000});
   const game=page;await game.locator('#enemy-rear-review-open').click({timeout:90000});
   const gallery=game.frameLocator('iframe[title="Enemy rear design review"]');
-  await gallery.locator('#grid .card').first().waitFor({timeout:90000});
+  await gallery.locator('#grid .card').first().waitFor({state:'attached',timeout:30000});console.log('HOST GEOMETRY',await page.evaluate(()=>[...document.querySelectorAll('dialog,iframe')].map(el=>({tag:el.tagName,open:el.open,title:el.title,rect:el.getBoundingClientRect().toJSON(),display:getComputedStyle(el).display,visibility:getComputedStyle(el).visibility,opacity:getComputedStyle(el).opacity,position:getComputedStyle(el).position}))));console.log('GALLERY GEOMETRY',await gallery.locator('#grid .card').first().evaluate(el=>({rect:el.getBoundingClientRect().toJSON(),display:getComputedStyle(el).display,visibility:getComputedStyle(el).visibility,opacity:getComputedStyle(el).opacity,ancestors:[...function*(el){for(;el;el=el.parentElement)yield el;}(el)].map(el=>({tag:el.tagName,id:el.id,rect:el.getBoundingClientRect().toJSON(),display:getComputedStyle(el).display}))})));await gallery.locator('#grid .card').first().waitFor({timeout:3000});
   const choices=await gallery.locator('#actor option').evaluateAll(opts=>opts.map(o=>o.value));assert.equal(choices.length,13);
   for(const candidate of choices){console.log('Checking deployed images',name,candidate);
    await gallery.locator('#actor').selectOption(candidate);await gallery.locator('#stance').selectOption('neutral');
