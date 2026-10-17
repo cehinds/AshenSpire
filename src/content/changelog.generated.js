@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-17",
     "summary": "Stale origin branches are listed for cleanup, with restore points",
     "detail": "Records which merged or week-old branches are removed and the commit each one pointed at, so any of them can be restored; the game is unchanged.",
-    "build": "0.7.1.1547",
+    "build": "0.7.1.1549",
     "pullRequest": 2029,
     "url": "https://github.com/cehinds/AshenSpire/pull/2029"
+  },
+  {
+    "id": "pr-2030",
+    "date": "2026-10-17",
+    "group": "2026-10-17",
+    "summary": "Core combat and route feedback is preserved for implementation",
+    "detail": "Record the corrected stance bonuses, reaction costs, HUD, poise, potion, and map requests with examples, assumptions, and QA criteria. Gameplay and release work remain pending.",
+    "build": "0.7.1.1549",
+    "pullRequest": 2030,
+    "url": "https://github.com/cehinds/AshenSpire/pull/2030"
   },
   {
     "id": "pr-2028",
