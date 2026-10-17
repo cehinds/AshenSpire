@@ -57,3 +57,6 @@
   background: linear-gradient(to bottom, transparent, #211d16 65%);
 }
 :root[data-display-appearance='alternative'] .combat[data-layout='formation'] .turn-ribbon { font-size: calc(12px / var(--ui-zoom,1)); }
+/* The header track spans the space remaining after its value and quick menu. */
+:root .combat[data-layout='formation'] > .combat-hud .resunit[data-res='hp'] .m-track { width: 100% !important; }
+:root .combat[data-layout='formation'] > .combat-hud .hud-cinders-strip :is(.ck,.cv,.hud-cinders) { color: white; }
