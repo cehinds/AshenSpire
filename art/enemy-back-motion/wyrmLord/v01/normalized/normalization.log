@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "status": "rejected",
+  "alphaThreshold": 32,
+  "output": {
+    "size": [
+      512,
+      512
+    ],
+    "anchor": [
+      256,
+      464
+    ]
+  },
+  "masters": {
+    "damage": {
+      "path": "art/enemy-back-motion/wyrmLord/v01/damage-master.png",
+      "sha256": "76b89ccbf5614e823e179214aad8de8c6bf8f4e21079ec0e8ad72dcc2fa5edea",
+      "size": [
+        1774,
+        887
+      ],
+      "sourceBoundary": {
+        "above0": 0,
+        "above32": 0
+      },
+      "gutters": [
+        {
+          "axis": "x",
+          "row": 0,
+          "cut": 885,
+          "above0": 0,
+          "above32": 0
+        }
+      ]
+    }
+  },
+  "frames": [],
+  "errors": [
+    "stances: no safe y gutter near 836.0",
+    "motion: no safe x gutter near 887.0",
+    "One or more source masters rejected; no frames exported"
+  ],
+  "warnings": [],
+  "manualReview": {
+    "reviewer": "elite_motion agent",
+    "method": "manual source-image visual estimate",
+    "status": "draft-estimates-pending-normalized-preview",
+    "notes": "Anchors identify visible foot or support-contact baseline, using midpoint where both feet visible. Rear feet can be occluded. Values are visual estimates, not pixel-exact detections. Tail/cape alpha bottom is not used as floor. MasterScale calibrates separately generated damage anatomy to stances and preserves action crouch/height; shared scale then applies. Root must inspect normalized frames before accepting."
+  }
+}
