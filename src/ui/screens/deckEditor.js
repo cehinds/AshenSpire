@@ -1,4 +1,5 @@
 import { matchViewMedia } from '../viewViewport.js';
+import { anchorLocalBox } from '../fx.js';
 import { progressionTip } from '../components/progressionCards.js';
 // src/ui/screens/deckEditor.js — the deck editor (SPEC §14.1 UX), mounted over
 // whatever opened it: the Armoury or an eligible Rest screen.
@@ -502,15 +503,17 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // box so it needs no reserved space in any layout. Rows without art keep the
   // stylesheet's position.
   let inspectObserver = null;
-  function placeInspect(node) {
-    const item = node?.closest?.('.deck-editor-item');
-    const main = item?.querySelector('.deck-editor-main');
-    const art = main?.querySelector('.deck-editor-art');
-    if (!art || !Number.isFinite(art.offsetWidth) || !art.offsetWidth) return;
+  function placeInspect(inspectButton) {
+    const item = inspectButton?.closest?.('.deck-editor-item');
+    const layoutDeckMain = item?.querySelector('.deck-editor-main');
+    const layoutDeckArt = layoutDeckMain?.querySelector('.deck-editor-art');
+    if (!layoutDeckArt || !Number.isFinite(layoutDeckArt.getBoundingClientRect().width) || !layoutDeckArt.getBoundingClientRect().width) return;
+    const artBox = anchorLocalBox(item, layoutDeckArt);
+    const buttonBox = anchorLocalBox(item, inspectButton);
     const inset = 3;
-    node.classList.add('on-art');
-    node.style.left = `${main.offsetLeft + art.offsetLeft + (art.offsetWidth - node.offsetWidth) / 2}px`;
-    node.style.top = `${main.offsetTop + art.offsetTop + art.offsetHeight - node.offsetHeight - inset}px`;
+    inspectButton.classList.add('on-art');
+    inspectButton.style.left = `${artBox.left + (artBox.width - buttonBox.width) / 2}px`;
+    inspectButton.style.top = `${artBox.top + artBox.height - buttonBox.height - inset}px`;
   }
   function trackInspect() {
     inspectObserver?.disconnect();

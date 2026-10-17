@@ -625,12 +625,18 @@ export const baseCardDefinitions = [
     "keywords": [],
     "effects": [
       {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "base.read-intent",
+        "stacks": 1
+      },
+      {
         "op": "revealIntent",
         "target": "enemy",
         "amount": 1
       }
     ],
-    "textTemplate": "Reveal the enemy’s intent for 1 turn.",
+    "textTemplate": "Reveal the selected enemy's intent for 1 turn. Reveal opponents' burden hands while active.",
     "icon": "✦",
     "flavor": "An approved base-card design. Rules and costs are authored in the base-cards JSON pack."
   },
@@ -1823,7 +1829,8 @@ export const baseCardDefinitions = [
     "burden": {
       "skipActions": 1,
       "staminaTax": 0,
-      "manaTax": 0
+      "manaTax": 0,
+      "status": "base.stagger"
     }
   },
   {
@@ -1882,7 +1889,8 @@ export const baseCardDefinitions = [
     "burden": {
       "skipActions": 1,
       "staminaTax": 0,
-      "manaTax": 0
+      "manaTax": 0,
+      "status": "base.paralysis"
     }
   },
   {
@@ -1913,7 +1921,8 @@ export const baseCardDefinitions = [
       ],
       "cardTypes": [
         "attack"
-      ]
+      ],
+      "status": "base.restrained-burden"
     }
   },
   {
@@ -1981,6 +1990,11 @@ export const baseCardTagging = [
   },
   {
     "family": "card",
+    "objectId": "base.persistent-protection",
+    "tagId": "school:alteration"
+  },
+  {
+    "family": "card",
     "objectId": "base.greased",
     "tagId": "classification.skill"
   },
@@ -2021,6 +2035,11 @@ export const baseCardTagging = [
   },
   {
     "family": "card",
+    "objectId": "base.divine-strike",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
     "objectId": "base.poison",
     "tagId": "classification.skill"
   },
@@ -2056,6 +2075,11 @@ export const baseCardTagging = [
   },
   {
     "family": "card",
+    "objectId": "base.blight",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "card",
     "objectId": "base.weak",
     "tagId": "classification.skill"
   },
@@ -2068,6 +2092,11 @@ export const baseCardTagging = [
     "family": "card",
     "objectId": "base.weak",
     "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "objectId": "base.weak",
+    "tagId": "school:illusion"
   },
   {
     "family": "card",
@@ -2086,6 +2115,11 @@ export const baseCardTagging = [
   },
   {
     "family": "card",
+    "objectId": "base.charm",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "card",
     "objectId": "base.bind",
     "tagId": "classification.skill"
   },
@@ -2098,6 +2132,11 @@ export const baseCardTagging = [
     "family": "card",
     "objectId": "base.bind",
     "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "objectId": "base.bind",
+    "tagId": "school:frost"
   },
   {
     "family": "card",
@@ -2116,6 +2155,11 @@ export const baseCardTagging = [
   },
   {
     "family": "card",
+    "objectId": "base.restrained",
+    "tagId": "school:frost"
+  },
+  {
+    "family": "card",
     "objectId": "base.foresight",
     "tagId": "classification.skill"
   },
@@ -2128,6 +2172,11 @@ export const baseCardTagging = [
     "family": "card",
     "objectId": "base.foresight",
     "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "objectId": "base.foresight",
+    "tagId": "school:illusion"
   },
   {
     "family": "card",
@@ -2161,6 +2210,11 @@ export const baseCardTagging = [
   },
   {
     "family": "card",
+    "objectId": "base.intangible",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "card",
     "objectId": "base.mirrors",
     "tagId": "classification.skill"
   },
@@ -2173,6 +2227,11 @@ export const baseCardTagging = [
     "family": "card",
     "objectId": "base.mirrors",
     "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "objectId": "base.mirrors",
+    "tagId": "school:illusion"
   },
   {
     "family": "card",
@@ -2213,6 +2272,11 @@ export const baseCardTagging = [
     "family": "card",
     "objectId": "base.fire-cleanse",
     "tagId": "school:fire"
+  },
+  {
+    "family": "card",
+    "objectId": "base.fire-cleanse",
+    "tagId": "source:spell"
   },
   {
     "family": "card",
@@ -2366,6 +2430,11 @@ export const baseCardTagging = [
   },
   {
     "family": "card",
+    "objectId": "base.reveal-opponent-hand",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "card",
     "objectId": "base.recall-choose",
     "tagId": "classification.skill"
   },
@@ -2426,6 +2495,11 @@ export const baseCardTagging = [
   },
   {
     "family": "card",
+    "objectId": "base.transform",
+    "tagId": "school:alteration"
+  },
+  {
+    "family": "card",
     "objectId": "base.status-card-stagger",
     "tagId": "classification.skill"
   },
@@ -2441,6 +2515,11 @@ export const baseCardTagging = [
   },
   {
     "family": "card",
+    "objectId": "base.status-card-stagger",
+    "tagId": "school:force"
+  },
+  {
+    "family": "card",
     "objectId": "base.status-card-paralyze",
     "tagId": "classification.skill"
   },
@@ -2453,6 +2532,11 @@ export const baseCardTagging = [
     "family": "card",
     "objectId": "base.status-card-paralyze",
     "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "objectId": "base.status-card-paralyze",
+    "tagId": "school:lightning"
   },
   {
     "family": "card",
@@ -2531,6 +2615,11 @@ export const baseCardTagging = [
   },
   {
     "family": "card",
+    "objectId": "base.scale-negative-status",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
     "objectId": "base.scale-damage-taken",
     "tagId": "classification.attack"
   },
@@ -2543,6 +2632,11 @@ export const baseCardTagging = [
     "family": "card",
     "objectId": "base.scale-damage-taken",
     "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "objectId": "base.scale-damage-taken",
+    "tagId": "source:weapon"
   },
   {
     "family": "card",
@@ -2576,6 +2670,11 @@ export const baseCardTagging = [
   },
   {
     "family": "card",
+    "objectId": "base.cost-per-use",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
     "objectId": "base.damage-per-use",
     "tagId": "classification.attack"
   },
@@ -2591,6 +2690,11 @@ export const baseCardTagging = [
   },
   {
     "family": "card",
+    "objectId": "base.damage-per-use",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
     "objectId": "base.pay-x-effect",
     "tagId": "classification.attack"
   },
@@ -2606,6 +2710,16 @@ export const baseCardTagging = [
   },
   {
     "family": "card",
+    "objectId": "base.pay-x-effect",
+    "tagId": "school:force"
+  },
+  {
+    "family": "card",
+    "objectId": "base.pay-x-effect",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
     "objectId": "base.pay-x-targets",
     "tagId": "classification.attack"
   },
@@ -2618,6 +2732,16 @@ export const baseCardTagging = [
     "family": "card",
     "objectId": "base.pay-x-targets",
     "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "objectId": "base.pay-x-targets",
+    "tagId": "school:force"
+  },
+  {
+    "family": "card",
+    "objectId": "base.pay-x-targets",
+    "tagId": "source:spell"
   },
   {
     "family": "card",
@@ -2636,6 +2760,11 @@ export const baseCardTagging = [
   },
   {
     "family": "card",
+    "objectId": "base.hide-cards",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "card",
     "objectId": "base.force-stance",
     "tagId": "classification.skill"
   },
@@ -2648,6 +2777,11 @@ export const baseCardTagging = [
     "family": "card",
     "objectId": "base.force-stance",
     "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "objectId": "base.force-stance",
+    "tagId": "school:force"
   },
   {
     "family": "card",
@@ -2681,6 +2815,11 @@ export const baseCardTagging = [
   },
   {
     "family": "card",
+    "objectId": "base.current-stance-variant",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
     "objectId": "base.paid-resource-variant",
     "tagId": "classification.attack"
   },
@@ -2696,6 +2835,16 @@ export const baseCardTagging = [
   },
   {
     "family": "card",
+    "objectId": "base.paid-resource-variant",
+    "tagId": "school:force"
+  },
+  {
+    "family": "card",
+    "objectId": "base.paid-resource-variant",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
     "objectId": "base.attack-then-defend",
     "tagId": "classification.attack"
   },
@@ -2708,6 +2857,11 @@ export const baseCardTagging = [
     "family": "card",
     "objectId": "base.attack-then-defend",
     "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "objectId": "base.attack-then-defend",
+    "tagId": "source:weapon"
   },
   {
     "family": "card",
@@ -2816,6 +2970,11 @@ export const baseCardTagging = [
   },
   {
     "family": "card",
+    "objectId": "base.reflect",
+    "tagId": "school:alteration"
+  },
+  {
+    "family": "card",
     "objectId": "base.guard-allies",
     "tagId": "classification.skill"
   },
@@ -2861,6 +3020,11 @@ export const baseCardTagging = [
   },
   {
     "family": "card",
+    "objectId": "base.one-use-scroll",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "card",
     "objectId": "base.gain-resource",
     "tagId": "classification.skill"
   },
@@ -2873,6 +3037,11 @@ export const baseCardTagging = [
     "family": "card",
     "objectId": "base.gain-resource",
     "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "objectId": "base.gain-resource",
+    "tagId": "school:alteration"
   },
   {
     "family": "card",
@@ -2903,6 +3072,11 @@ export const baseCardTagging = [
     "family": "card",
     "objectId": "base.break-ward",
     "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "objectId": "base.break-ward",
+    "tagId": "school:force"
   },
   {
     "family": "card",
@@ -2951,6 +3125,11 @@ export const baseCardTagging = [
   },
   {
     "family": "card",
+    "objectId": "base.conditional-damage-bonus",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
     "objectId": "base.perception-untargetable",
     "tagId": "classification.skill"
   },
@@ -2963,6 +3142,11 @@ export const baseCardTagging = [
     "family": "card",
     "objectId": "base.perception-untargetable",
     "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "objectId": "base.perception-untargetable",
+    "tagId": "school:illusion"
   },
   {
     "family": "card",
@@ -3016,6 +3200,11 @@ export const baseCardTagging = [
   },
   {
     "family": "card",
+    "objectId": "base.multi-hit",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
     "objectId": "base.paralysis-status-card",
     "tagId": "classification.statusCard"
   },
@@ -3041,6 +3230,11 @@ export const baseCardTagging = [
   },
   {
     "family": "card",
+    "objectId": "base.strike",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
     "objectId": "base.smash",
     "tagId": "camp:physical"
   },
@@ -3053,6 +3247,11 @@ export const baseCardTagging = [
     "family": "card",
     "objectId": "base.smash",
     "tagId": "maneuver:smash"
+  },
+  {
+    "family": "card",
+    "objectId": "base.smash",
+    "tagId": "source:weapon"
   }
 ];
 export const baseCardRewardIds = [
@@ -3370,7 +3569,7 @@ export const baseCardPresentation = {
       "Reveal ? enemy cards",
       "For ? turns"
     ],
-    "textTemplate": "Reveal the enemy’s intent for 1 turn."
+    "textTemplate": "Reveal the selected enemy's intent for 1 turn. Reveal opponents' burden hands while active."
   },
   "base.recall-choose": {
     "canonicalCardRef": "ironSkin",

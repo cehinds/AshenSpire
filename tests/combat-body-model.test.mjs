@@ -29,7 +29,7 @@ test('all four class held stances share their own unchanged ready body height', 
     const ready=COMBAT_BODY_LANDMARKS[family.frames.ready.path];
     assert(ready,`${classId} ready metadata`);
     const reference=(ready.feetY-ready.headY)*(family.frames.ready.size?.[1]||512)/ready.height;
-    for(const [stance,frame] of Object.entries(heldFrames)) {
+    for(const [stance,frame] of Object.entries({ ...heldFrames, guarded:family.frames['guard-brace'] })) {
       const body=COMBAT_BODY_LANDMARKS[frame.path];
       assert(body,`${classId} ${stance} semantic landmarks`);
       assert(body.headY>=0&&body.feetY<=body.height&&body.headY<body.feetY);
@@ -53,5 +53,14 @@ test('registered enemy held bodies normalize to their idle while preserving floo
     assert.equal(draw.body.feetY,480);
     assert.equal(draw.body.feetY-draw.body.headY,reference);
     assert(body.headY>=0&&body.headY<body.feetY&&body.feetY<=body.height);
+  }
+});
+
+import { enemyStanceSprites } from '../src/content/enemyStanceSprites.js';
+test('all enemy species have semantic metadata for idle and every held stance',()=>{
+  for(const [id,stances] of Object.entries(enemyStanceSprites))for(const pose of new Set(['idle',...Object.values(stances)])){
+    const path=`assets/enemy-poses/expansion/${id}/${pose}.webp`;
+    assert(COMBAT_BODY_LANDMARKS[path],`${path} missing semantic head/body anchor`);
+    assert.equal(COMBAT_BODY_LANDMARKS[path].confidence,'visual-reviewed');
   }
 });
