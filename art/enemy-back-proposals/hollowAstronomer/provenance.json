@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "actorId": "hollowAstronomer",
+  "master": "proposal-sheet.png",
+  "publicationStatus": "draft-unpublished",
+  "prompt": "Transparent PNG sprite atlas, alpha background with nothing painted between characters. Use attached Hollow Astronomer character identity. Draw TEN rear-view versions, exactly 5 columns and 2 rows. EACH character is SMALL within its cell occupying only60% width and60% height. Huge completely empty transparent gutters between rows and columns. Entire staff tips and boots contained. Same dark navy hooded astronomer, tattered navy cape, brass-gold astrolabe rings mounted behind shoulders, long brass astronomical staff, ornate dark robes. Camera behind character facing upper-right, sees back of hood/cape and back-mounted astrolabe, NOT face/chest. Ten alternate back designs distinguish cloak panels, bronze ring arrangements and garment trim. Consistent anatomy and scale. Full body game sprites. No scene, no floor, no background color, no paper, no sheet texture, no gradient, no shadows, no lettering. True transparent cutouts. Preserve painted dark-fantasy style of reference. Leave generous outer transparent margin too.",
+  "sourceReferences": [
+    {
+      "repository": "cehinds/AshenSpire-art",
+      "path": "hd/assets/enemy-poses/expansion/hollowAstronomer/idle.webp",
+      "ref": "hd-assets-v23",
+      "blob": "21a726b235b161ed1d84e630e7ceaf82a89cc7b5"
+    }
+  ],
+  "note": "Fresh rear designs from original enemy reference with deliberately wide transparent gutters. Supersedes prior sheet with no safe horizontal cut. Crop approval pending.",
+  "status": "draft-proposals",
+  "qa": {
+    "normalization": "passed safe-gutter/source hash checks",
+    "cropReview": "Independent elite_inventory inspected complete rear figures and equipment; no visible clipping",
+    "runtimePublication": "not published"
+  }
+}
