@@ -2,7 +2,7 @@
 // each draft with the same resolver used by the game-config build.
 const CORE_PATH = 'games/ashenspire/game.json';
 const CURRENT_PATH = 'games/ashenspire/presets/current.json';
-const DEFAULT_PROFILE = { formatVersion: 1, core: 'ashen.core@1.0.0', modules: {} };
+import { profileFiles } from './model.mjs';
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 export default {
@@ -29,6 +29,22 @@ export default {
     let loadedText = '';
     let validated = null;
     let busy = false;
+    let files = profileFiles([CORE_PATH, CURRENT_PATH]);
+
+    function fillPicker(selected) {
+      const groups = [...new Set(files.map((f) => f.group))];
+      pathSelect.innerHTML = groups.map((g) => `<optgroup label="${esc(g)}">${files.filter((f) => f.group === g).map((f) => `<option value="${esc(f.path)}">${esc(f.label)} — ${esc(f.path.replace('games/ashenspire/', ''))}</option>`).join('')}</optgroup>`).join('');
+      if (selected && files.some((f) => f.path === selected)) pathSelect.value = selected;
+    }
+    async function loadFileList() {
+      try {
+        const list = await ctx.api('files/list?dir=games/ashenspire&ext=json');
+        const found = profileFiles(list.files || []);
+        if (found.length) files = found;
+      } catch { /* the two built-in files stay on offer */ }
+      fillPicker(pathSelect.value || CORE_PATH);
+    }
+    const isResolved = (path) => files.find((f) => f.path === path)?.resolves !== false;
 
     function setStatus(message, kind = '') {
       status.textContent = message;
@@ -72,6 +88,13 @@ export default {
       report.hidden = true;
       try {
         const author = parseDraft();
+        if (!isResolved(pathSelect.value)) {
+          validated = { bundle: true };
+          report.innerHTML = '<strong>Valid JSON</strong><p>Bundles are checked for JSON syntax here; the profile resolver validates them when the game profile is built.</p>';
+          report.hidden = false;
+          setStatus('Valid JSON (bundle).', 'success');
+          return validated;
+        }
         const result = await ctx.api('game-profile/validate', { author });
         validated = result;
         report.innerHTML = reportHtml(result);
@@ -150,6 +173,7 @@ export default {
       } else if (button.dataset.preview) {
         const key = button.dataset.preview;
         if (key === 'draft') {
+          if (!isResolved(pathSelect.value)) { setStatus('A bundle is not a game profile; pick game.json or a preset to preview.', 'error'); return; }
           const ok = await validate();
           if (ok) preview(JSON.stringify(parseDraft()));
         } else preview(key);
@@ -165,7 +189,7 @@ export default {
     pathSelect.addEventListener('change', () => load(pathSelect.value));
     $('.gc input[type=file]').addEventListener('change', (event) => importFile(event.target.files?.[0]));
     textarea.addEventListener('input', () => { validated = null; report.hidden = true; setStatus('Unsaved edits; validate before saving or previewing.'); });
-    load();
+    loadFileList().then(() => load(pathSelect.value || CORE_PATH));
     return { onShow() {} };
   },
 };
