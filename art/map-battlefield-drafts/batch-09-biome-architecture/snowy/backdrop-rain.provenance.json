@@ -1,0 +1,32 @@
+{
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Hand-painted realistic medieval fantasy, tactile weathered matte materials, broad controlled brushwork, subtle natural material edges, muted earth colors, soft diffuse light from upper left, restrained highlights. No heavy cartoon outline, no shiny toy-like 3D render, no photographic sparkle, no text, lettering, numbers, logos, frames, people or characters. This is a reusable layered COMBAT SCENE component, viewed from a LOW ground-level near-frontal side camera with a gentle three-quarter angle, NOT elevated isometric map-icon camera. Keep center of the playable scene quiet. Do not paint rain streaks, snowflakes or global screen tint into base art; weather is a separate layer. Preserve ample usable material around the edges for multiple camera crops. Native output dimensions will be measured; do not fake resolution. Palette: weathered gray stone, dark timber, chalk snow, muted steel-blue shadows. Opaque wide overcast mountain valley backdrop in thaw drizzle conditions; snowy distant ridges under soft gray clouds, sparse fir forests, moist blue-gray atmospheric depth. Ground-level horizon, quiet spacious middle 60 percent. No foreground props, no rain streaks. Requested canvas dimensions 3072x1728 landscape.",
+  "generator": "OpenAI image_gen",
+  "sourceOutputPath": "/workspace/generated_images/exec-31ce29eb-0b1f-4ac1-8f7d-6823b1326771.png",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-backdrop",
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "sha256": "5d7e252b7fd07070e9d8cecd597e7d00655ca03cb8ad15df1e28114f1e3ba322",
+  "alphaBounds": [
+    0,
+    0,
+    1672,
+    941
+  ],
+  "sourceByteIdentical": true,
+  "status": "draft-unregistered",
+  "sourceSha256": "5d7e252b7fd07070e9d8cecd597e7d00655ca03cb8ad15df1e28114f1e3ba322",
+  "processing": "Byte-identical retained imagegen output; no image editing, trimming, resizing or upscaling.",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGB"
+  }
+}

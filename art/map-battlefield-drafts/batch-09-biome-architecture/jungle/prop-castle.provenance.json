@@ -1,0 +1,57 @@
+{
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Hand-painted realistic medieval fantasy, tactile weathered matte materials, broad controlled brushwork, subtle natural material edges, muted earth colors, soft diffuse light from upper left, restrained highlights. No heavy cartoon outline, no shiny toy-like 3D render, no photographic sparkle, no text, lettering, numbers, logos, frames, people or characters. This is a reusable layered COMBAT SCENE component, viewed from a LOW ground-level near-frontal side camera with a gentle three-quarter angle, NOT elevated isometric map-icon camera. Keep center of the playable scene quiet. Do not paint rain streaks, snowflakes or global screen tint into base art; weather is a separate layer. Preserve ample usable material around the edges for multiple camera crops. Native output dimensions will be measured; do not fake resolution.\n\nJUNGLE biome palette: cool gray mossy stone, dark wet timber, muted deep green, weathered tan thatch. Role: battlefield-prop. One invented medieval jungle fortress of cool gray mossy stone, weathered square towers, compact battlements, dark timber gate, restrained deep green overgrowth. Whole fort silhouette central 75% with alpha margins; no terrain base, no scenery. Requested canvas: 1536\u00d71536 square.",
+  "generator": "OpenAI image_gen",
+  "sourceOutputPath": "/workspace/generated_images/exec-66696c86-9b5c-4f64-8ecb-df3c18618ae6.png",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 1536,
+    "height": 1536
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-prop",
+  "actualDimensions": {
+    "width": 1254,
+    "height": 1254
+  },
+  "alphaBounds": [
+    0,
+    23,
+    1254,
+    1254
+  ],
+  "sha256": "1531a09cd6dce728b9fded13c8400126f258e62d9d275f4c6ef4010140072b28",
+  "solidAlphaBounds": [
+    18,
+    78,
+    1243,
+    1160
+  ],
+  "status": "draft-unregistered",
+  "sourceSha256": "1531a09cd6dce728b9fded13c8400126f258e62d9d275f4c6ef4010140072b28",
+  "processing": "Byte-identical retained imagegen output; no image editing, trimming, resizing or upscaling.",
+  "qa": {
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "visibleBoundsAt32": [
+      18,
+      79,
+      1243,
+      1160
+    ],
+    "alphaQA": {
+      "transparentFraction": 0.46167034230494314,
+      "borderPixelsAt32": 0,
+      "normalizedMarginsAt32": [
+        0.014354066985645933,
+        0.06299840510366826,
+        0.008771929824561403,
+        0.07496012759170653
+      ]
+    }
+  }
+}

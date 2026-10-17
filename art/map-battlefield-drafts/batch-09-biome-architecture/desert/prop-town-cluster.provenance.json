@@ -1,0 +1,46 @@
+{
+  "name": "prop-town-cluster",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Hand-painted realistic medieval fantasy, tactile weathered matte materials, broad controlled brushwork, subtle natural material edges, muted earth colors, soft diffuse light from upper left, restrained highlights. No heavy cartoon outline, no shiny toy-like 3D render, no photographic sparkle, no text, lettering, numbers, logos, frames, people or characters. This is a reusable layered COMBAT SCENE component, viewed from a LOW ground-level near-frontal side camera with a gentle three-quarter angle, NOT elevated isometric map-icon camera. Keep center of the playable scene quiet. Do not paint rain streaks, snowflakes or global screen tint into base art; weather is a separate layer. Preserve ample usable material around the edges for multiple camera crops. Native output dimensions will be measured; do not fake resolution.\nPROP: isolated transparent complete silhouette with generous clear alpha margins all around, central 75% only, no terrain platform, ground slab, sky or background. Request landscape 3072x1728. DESERT SUBJECT: 3 low sandstone oasis medieval houses clustered together, flat clay roofs, restrained aged timber and faded tan linen awning. Neutral diffuse daylight, muted ochre gray sandstone and pale tan. Eye-level facade view.",
+  "sourceOutputPath": "/workspace/generated_images/exec-1eb03618-168d-4d4c-a86a-de4bb5ce2a93.png",
+  "generator": "OpenAI image_gen",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-prop",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "sha256": "407d18fa8aaa5151ea1f49a57d1771339f10201c718b45aa561c86d2ca1ade53",
+  "sourceSha256": "407d18fa8aaa5151ea1f49a57d1771339f10201c718b45aa561c86d2ca1ade53",
+  "processing": "Byte-identical retained imagegen output; no image editing, trimming, resizing or upscaling.",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "visibleBoundsAt32": [
+      43,
+      94,
+      1624,
+      812
+    ],
+    "alphaQA": {
+      "transparentFraction": 0.5200628975588425,
+      "borderPixelsAt32": 0,
+      "normalizedMarginsAt32": [
+        0.025717703349282296,
+        0.09989373007438895,
+        0.028708133971291867,
+        0.13708820403825717
+      ]
+    }
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "name": "ground-street-rain",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Hand-painted realistic medieval fantasy, tactile weathered matte materials, broad controlled brushwork, subtle natural material edges, muted earth colors, soft diffuse light from upper left, restrained highlights. No heavy cartoon outline, no shiny toy-like 3D render, no photographic sparkle, no text, lettering, numbers, logos, frames, people or characters. This is a reusable layered COMBAT SCENE component, viewed from a LOW ground-level near-frontal side camera with a gentle three-quarter angle, NOT elevated isometric map-icon camera. Keep center of the playable scene quiet. Do not paint rain streaks, snowflakes or global screen tint into base art; weather is a separate layer. Preserve ample usable material around the edges for multiple camera crops. Native output dimensions will be measured; do not fake resolution.\nGROUND: Request landscape 3072x1728. Upper 55% of canvas completely transparent alpha zero. Ground occupies only bottom 45%, opaque to left/right/bottom edges. Shallow side-view plane, quiet middle 60%, edge texture. DESERT SUBJECT: damp muted ochre gray sandstone paving and wet packed tan sand in medieval oasis street; cool overcast light, occasional modest shallow puddles at sides, broad quiet center. No rain streaks, architecture, sky, props or scenery.",
+  "sourceOutputPath": "/workspace/generated_images/exec-6cb399c6-16e4-40d9-9f8a-d3af653eba93.png",
+  "generator": "OpenAI image_gen",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-ground",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "sha256": "17817331a55ff98e921a7db8329b385d5376901b140174dc0d69328193ea756a",
+  "sourceSha256": "17817331a55ff98e921a7db8329b385d5376901b140174dc0d69328193ea756a",
+  "processing": "Byte-identical retained imagegen output; no image editing, trimming, resizing or upscaling.",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "visibleBoundsAt32": [
+      0,
+      512,
+      1672,
+      941
+    ],
+    "alphaQA": {
+      "transparentFraction": 0.5357307201439983,
+      "borderPixelsAt32": 2514,
+      "normalizedMarginsAt32": [
+        0.0,
+        0.5441020191285866,
+        0.0,
+        0.0
+      ]
+    },
+    "medianCenterHorizonY": 531,
+    "bottomAlphaRange": [
+      237,
+      254
+    ]
+  }
+}

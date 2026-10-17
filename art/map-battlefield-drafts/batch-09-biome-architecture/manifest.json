@@ -1,0 +1,2325 @@
+{
+  "version": 1,
+  "status": "draft-not-runtime-bound",
+  "branch": "feature/ImproveMapBattleFieldArt",
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleSystem": {
+    "guide": "../style-system/style-guide.json",
+    "library": "../style-system/library.json"
+  },
+  "assets": [
+    {
+      "id": "desert/prop-city-skyline",
+      "file": "desert/prop-city-skyline.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "biome": [
+          "desert"
+        ],
+        "role": [
+          "prop"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "city"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "38f771b4ef8c79a56f36aa99411d51f223ec96220233005a6501e97eb807ab43",
+      "provenanceFile": "desert/prop-city-skyline.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        3,
+        108,
+        1672,
+        809
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.44266381585303227,
+        "borderPixelsAt32": 1,
+        "normalizedMarginsAt32": [
+          0.0017942583732057417,
+          0.11477151965993623,
+          0,
+          0.14027630180658873
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "desert/prop-town-cluster",
+      "file": "desert/prop-town-cluster.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "biome": [
+          "desert"
+        ],
+        "role": [
+          "prop"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "town"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "407d18fa8aaa5151ea1f49a57d1771339f10201c718b45aa561c86d2ca1ade53",
+      "provenanceFile": "desert/prop-town-cluster.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        43,
+        94,
+        1624,
+        812
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5200628975588425,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.025717703349282296,
+          0.09989373007438895,
+          0.028708133971291867,
+          0.13708820403825717
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "desert/prop-castle",
+      "file": "desert/prop-castle.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "biome": [
+          "desert"
+        ],
+        "role": [
+          "prop"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "castle"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "ebb3758637a5f103cf7fa1b0af511baa309c2ad889c7eb003842127e47c1836c",
+      "provenanceFile": "desert/prop-castle.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        17,
+        288,
+        1243,
+        947
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.6192986271681814,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.013556618819776715,
+          0.22966507177033493,
+          0.008771929824561403,
+          0.24481658692185007
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "desert/prop-dungeon-entrance",
+      "file": "desert/prop-dungeon-entrance.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "biome": [
+          "desert"
+        ],
+        "role": [
+          "prop"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "dungeon"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "a0ba70bf806098ac05471eae97849b48de91eae1b60060cecca1301b6631d1ca",
+      "provenanceFile": "desert/prop-dungeon-entrance.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        19,
+        140,
+        1234,
+        1113
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.36459088492581315,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.015151515151515152,
+          0.11164274322169059,
+          0.01594896331738437,
+          0.11244019138755981
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "desert/ground-street-day",
+      "file": "desert/ground-street-day.png",
+      "category": "ground",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground",
+      "tags": {
+        "biome": [
+          "desert"
+        ],
+        "role": [
+          "ground"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "street"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "2905533a66fec35498bd4dfbf1b7db53c880841038beeae8d9c6dce64b6dc2e9",
+      "provenanceFile": "desert/ground-street-day.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        554,
+        1672,
+        941
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.6442385429325415,
+        "borderPixelsAt32": 2423,
+        "normalizedMarginsAt32": [
+          0,
+          0.5887353878852285,
+          0,
+          0
+        ]
+      },
+      "medianCenterHorizonY": 631,
+      "bottomAlphaRange": [
+        238,
+        253
+      ],
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "desert/ground-street-rain",
+      "file": "desert/ground-street-rain.png",
+      "category": "ground",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground",
+      "tags": {
+        "biome": [
+          "desert"
+        ],
+        "role": [
+          "ground"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "weather": [
+          "rain"
+        ],
+        "setting": [
+          "street"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "17817331a55ff98e921a7db8329b385d5376901b140174dc0d69328193ea756a",
+      "provenanceFile": "desert/ground-street-rain.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        512,
+        1672,
+        941
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5357307201439983,
+        "borderPixelsAt32": 2514,
+        "normalizedMarginsAt32": [
+          0,
+          0.5441020191285866,
+          0,
+          0
+        ]
+      },
+      "medianCenterHorizonY": 531,
+      "bottomAlphaRange": [
+        237,
+        254
+      ],
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "desert/ground-dungeon",
+      "file": "desert/ground-dungeon.png",
+      "category": "ground",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground",
+      "tags": {
+        "biome": [
+          "desert"
+        ],
+        "role": [
+          "ground"
+        ],
+        "lighting": [
+          "interior"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "dungeon"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "2e9c1f85e0c1aec3613d86140a5ab15783231b85d8f5f05ebdaf3cd61296e2df",
+      "provenanceFile": "desert/ground-dungeon.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        562,
+        1672,
+        941
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5263164250593637,
+        "borderPixelsAt32": 2428,
+        "normalizedMarginsAt32": [
+          0,
+          0.5972369819341127,
+          0,
+          0
+        ]
+      },
+      "medianCenterHorizonY": 580,
+      "bottomAlphaRange": [
+        248,
+        254
+      ],
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "desert/backdrop-day",
+      "file": "desert/backdrop-day.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "biome": [
+          "desert"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "outdoors"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "723873874fd396bc655220b16b3e0ce6903abff4ca124a6e9a69d4ee4fef014d",
+      "provenanceFile": "desert/backdrop-day.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "desert/backdrop-rain",
+      "file": "desert/backdrop-rain.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "biome": [
+          "desert"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "weather": [
+          "rain"
+        ],
+        "setting": [
+          "outdoors"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "9f969ae1250f7fd85849682dbe9710917dc45ea2b88b2a705092fb94ecb9476e",
+      "provenanceFile": "desert/backdrop-rain.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "desert/backdrop-dungeon",
+      "file": "desert/backdrop-dungeon.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "biome": [
+          "desert"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "lighting": [
+          "interior"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "dungeon"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "657f175551e6ba07c02e3aa267fa916a0253a1db9ba1a07463ae46c60f39a1b3",
+      "provenanceFile": "desert/backdrop-dungeon.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "desert/backdrop-night",
+      "file": "desert/backdrop-night.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "biome": [
+          "desert"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "lighting": [
+          "night"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "outdoors"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "1d29c46bd981a8f6f4443b4fefd0c7e9ab40385b3c1cd1e67213940d032ff014",
+      "provenanceFile": "desert/backdrop-night.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "desert/ground-street-night",
+      "file": "desert/ground-street-night.png",
+      "category": "ground",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground",
+      "tags": {
+        "biome": [
+          "desert"
+        ],
+        "role": [
+          "ground"
+        ],
+        "lighting": [
+          "night"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "street"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "235e2b1d0f6bc1214e0c8fb67684746d1512912da659c50b5c1f7cb45f2ec605",
+      "provenanceFile": "desert/ground-street-night.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        495,
+        1672,
+        941
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5657176525024279,
+        "borderPixelsAt32": 2536,
+        "normalizedMarginsAt32": [
+          0,
+          0.5260361317747078,
+          0,
+          0
+        ]
+      },
+      "medianCenterHorizonY": 553,
+      "bottomAlphaRange": [
+        245,
+        254
+      ],
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "desert/prop-town-night",
+      "file": "desert/prop-town-night.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "biome": [
+          "desert"
+        ],
+        "role": [
+          "prop"
+        ],
+        "lighting": [
+          "night"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "town"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "c645da076332e3ab6ebc0ea476a558884c579edcf1eba653967aa26d6d37ee45",
+      "provenanceFile": "desert/prop-town-night.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        17,
+        140,
+        1654,
+        748
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5668566220400775,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.010167464114832535,
+          0.1487778958554729,
+          0.01076555023923445,
+          0.2051009564293305
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "jungle/prop-city-skyline",
+      "file": "jungle/prop-city-skyline.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "biome": [
+          "jungle"
+        ],
+        "role": [
+          "prop"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "city"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "8caa0374bd45364809ba8a9cf999980e2ed38e4a67f5039b0e517d3ca0ce3ef6",
+      "provenanceFile": "jungle/prop-city-skyline.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        73,
+        50,
+        1620,
+        852
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5030272945914201,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.04366028708133971,
+          0.053134962805526036,
+          0.03110047846889952,
+          0.09458023379383634
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "jungle/prop-town-cluster",
+      "file": "jungle/prop-town-cluster.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "biome": [
+          "jungle"
+        ],
+        "role": [
+          "prop"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "town"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "c62625c5459662131be52be1f0da9ec19909b41fc0d4891fd6f123cbe1e62bff",
+      "provenanceFile": "jungle/prop-town-cluster.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        31,
+        10,
+        1646,
+        897
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.4296940544773198,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.01854066985645933,
+          0.010626992561105207,
+          0.01555023923444976,
+          0.04675876726886291
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "jungle/prop-castle",
+      "file": "jungle/prop-castle.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "biome": [
+          "jungle"
+        ],
+        "role": [
+          "prop"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "castle"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "1531a09cd6dce728b9fded13c8400126f258e62d9d275f4c6ef4010140072b28",
+      "provenanceFile": "jungle/prop-castle.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        18,
+        79,
+        1243,
+        1160
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.46167034230494314,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.014354066985645933,
+          0.06299840510366826,
+          0.008771929824561403,
+          0.07496012759170653
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "jungle/prop-dungeon-entrance",
+      "file": "jungle/prop-dungeon-entrance.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "biome": [
+          "jungle"
+        ],
+        "role": [
+          "prop"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "dungeon"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "c5dab43f45e80540d5ce3995bb1323c25c038ba54b9e33b6915a6e4e202cac5f",
+      "provenanceFile": "jungle/prop-dungeon-entrance.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        99,
+        202,
+        1173,
+        1081
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5800939386308311,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.07894736842105263,
+          0.16108452950558214,
+          0.0645933014354067,
+          0.1379585326953748
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "jungle/ground-street-day",
+      "file": "jungle/ground-street-day.png",
+      "category": "ground",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground",
+      "tags": {
+        "biome": [
+          "jungle"
+        ],
+        "role": [
+          "ground"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "street"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "d33d85f2780681e37d6c2b35950a64f0c740fba67eada3620c9681eba07ee56c",
+      "provenanceFile": "jungle/ground-street-day.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        498,
+        1672,
+        941
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5650877870940514,
+        "borderPixelsAt32": 2543,
+        "normalizedMarginsAt32": [
+          0,
+          0.5292242295430393,
+          0,
+          0
+        ]
+      },
+      "medianCenterHorizonY": 551,
+      "bottomAlphaRange": [
+        246,
+        254
+      ],
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "jungle/ground-street-rain",
+      "file": "jungle/ground-street-rain.png",
+      "category": "ground",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground",
+      "tags": {
+        "biome": [
+          "jungle"
+        ],
+        "role": [
+          "ground"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "weather": [
+          "rain"
+        ],
+        "setting": [
+          "street"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "2e5d0c0ac33b8655a873b006024170d3ad645919a0341064989784a45da71345",
+      "provenanceFile": "jungle/ground-street-rain.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        554,
+        1672,
+        941
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.6198034514844739,
+        "borderPixelsAt32": 2435,
+        "normalizedMarginsAt32": [
+          0,
+          0.5887353878852285,
+          0,
+          0
+        ]
+      },
+      "medianCenterHorizonY": 603,
+      "bottomAlphaRange": [
+        245,
+        254
+      ],
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "jungle/ground-dungeon",
+      "file": "jungle/ground-dungeon.png",
+      "category": "ground",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground",
+      "tags": {
+        "biome": [
+          "jungle"
+        ],
+        "role": [
+          "ground"
+        ],
+        "lighting": [
+          "interior"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "dungeon"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "d2ea6376f31611227d67a72eff67fe0442678c4c791b85d3396f390820cc0fa3",
+      "provenanceFile": "jungle/ground-dungeon.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        500,
+        1672,
+        941
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5691294764299407,
+        "borderPixelsAt32": 2531,
+        "normalizedMarginsAt32": [
+          0,
+          0.5313496280552603,
+          0,
+          0
+        ]
+      },
+      "medianCenterHorizonY": 560,
+      "bottomAlphaRange": [
+        236,
+        253
+      ],
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "jungle/backdrop-day",
+      "file": "jungle/backdrop-day.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "biome": [
+          "jungle"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "outdoors"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "d24624b76b554431355699b989a14d25f4ba0f8dc5d59032f16229d630184833",
+      "provenanceFile": "jungle/backdrop-day.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "jungle/backdrop-rain",
+      "file": "jungle/backdrop-rain.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "biome": [
+          "jungle"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "weather": [
+          "rain"
+        ],
+        "setting": [
+          "outdoors"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "8fb7ec04efac1f353135865c012ef13ccb8214b1fb6aa61145347c265280dc1c",
+      "provenanceFile": "jungle/backdrop-rain.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "jungle/backdrop-dungeon",
+      "file": "jungle/backdrop-dungeon.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "biome": [
+          "jungle"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "lighting": [
+          "interior"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "dungeon"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "1b10e4700b941ba577f4457cea2cd96cbc7662df7394ca2548a9e360402d1d96",
+      "provenanceFile": "jungle/backdrop-dungeon.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "jungle/backdrop-night",
+      "file": "jungle/backdrop-night.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "biome": [
+          "jungle"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "lighting": [
+          "night"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "outdoors"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "c5f05c05407baa8f7a90cee1d24576164852f72bb9f09b9c9d08bbfacd9df1fc",
+      "provenanceFile": "jungle/backdrop-night.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "jungle/ground-street-night",
+      "file": "jungle/ground-street-night.png",
+      "category": "ground",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground",
+      "tags": {
+        "biome": [
+          "jungle"
+        ],
+        "role": [
+          "ground"
+        ],
+        "lighting": [
+          "night"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "street"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "a690df117e81db85544de7e8a0727f556d44b5578192bea5ad921fd0d0058bac",
+      "provenanceFile": "jungle/ground-street-night.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        486,
+        1672,
+        941
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.598229766765479,
+        "borderPixelsAt32": 2554,
+        "normalizedMarginsAt32": [
+          0,
+          0.5164718384697131,
+          0,
+          0
+        ]
+      },
+      "medianCenterHorizonY": 602,
+      "bottomAlphaRange": [
+        244,
+        254
+      ],
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "jungle/prop-town-night",
+      "file": "jungle/prop-town-night.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "biome": [
+          "jungle"
+        ],
+        "role": [
+          "prop"
+        ],
+        "lighting": [
+          "night"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "town"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "1cdb3ff99f3598d57b4403d78771113fec2e6970f9384a0aa2ac740d4505fad7",
+      "provenanceFile": "jungle/prop-town-night.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        20,
+        21,
+        1651,
+        890
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.4855016550651094,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.011961722488038277,
+          0.022316684378320937,
+          0.012559808612440191,
+          0.05419766206163656
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "snowy/prop-city-skyline",
+      "file": "snowy/prop-city-skyline.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "biome": [
+          "snowy"
+        ],
+        "role": [
+          "prop"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "city"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "5ffa2a9396b98c115aadcef35fba85c0d073b2054a9edb75eeca101cfac67909",
+      "provenanceFile": "snowy/prop-city-skyline.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        40,
+        25,
+        1633,
+        861
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5130809888696236,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.023923444976076555,
+          0.026567481402763018,
+          0.02332535885167464,
+          0.08501594048884166
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "snowy/prop-town-cluster",
+      "file": "snowy/prop-town-cluster.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "biome": [
+          "snowy"
+        ],
+        "role": [
+          "prop"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "town"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "4853a35e6bdb46f0748a92208f96b563e0ab8a28eb15ea2dbf1aa3ec50370c35",
+      "provenanceFile": "snowy/prop-town-cluster.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        169,
+        25,
+        1552,
+        909
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.41046568091565017,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.10107655502392345,
+          0.026567481402763018,
+          0.07177033492822966,
+          0.03400637619553666
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "snowy/prop-castle",
+      "file": "snowy/prop-castle.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "biome": [
+          "snowy"
+        ],
+        "role": [
+          "prop"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "castle"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "e31d90cbb97ea2eab542e28c5a153697003239adec6c061b945f87539d71370e",
+      "provenanceFile": "snowy/prop-castle.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        32,
+        89,
+        1228,
+        1103
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5374247384446327,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.025518341307814992,
+          0.07097288676236045,
+          0.02073365231259968,
+          0.12041467304625199
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "snowy/prop-dungeon-entrance",
+      "file": "snowy/prop-dungeon-entrance.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "biome": [
+          "snowy"
+        ],
+        "role": [
+          "prop"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "dungeon"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "6df581fcfd0c3ddf53c2e844cbee4a6d64e61cd0e9b703e743be0ce73c91e7ab",
+      "provenanceFile": "snowy/prop-dungeon-entrance.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        44,
+        53,
+        1214,
+        1186
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.34327663438718586,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.03508771929824561,
+          0.04226475279106858,
+          0.03189792663476874,
+          0.05422647527910686
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "snowy/ground-street-day",
+      "file": "snowy/ground-street-day.png",
+      "category": "ground",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground",
+      "tags": {
+        "biome": [
+          "snowy"
+        ],
+        "role": [
+          "ground"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "street"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "20a10db72fa0381c167c81e12b46f91d44082511c861bee0586c5397165bb401",
+      "provenanceFile": "snowy/ground-street-day.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        534,
+        1672,
+        941
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5660316318280969,
+        "borderPixelsAt32": 2472,
+        "normalizedMarginsAt32": [
+          0,
+          0.5674814027630181,
+          0,
+          0
+        ]
+      },
+      "medianCenterHorizonY": 542,
+      "bottomAlphaRange": [
+        246,
+        254
+      ],
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "snowy/ground-street-rain",
+      "file": "snowy/ground-street-rain.png",
+      "category": "ground",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground",
+      "tags": {
+        "biome": [
+          "snowy"
+        ],
+        "role": [
+          "ground"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "weather": [
+          "rain"
+        ],
+        "setting": [
+          "street"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "eb7508cbbf7a7cba51cc712229e84b40c1c6af84be75c3bee45545ec8b57e528",
+      "provenanceFile": "snowy/ground-street-rain.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        555,
+        1672,
+        941
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.6009386329314736,
+        "borderPixelsAt32": 2437,
+        "normalizedMarginsAt32": [
+          0,
+          0.589798087141339,
+          0,
+          0
+        ]
+      },
+      "medianCenterHorizonY": 569,
+      "bottomAlphaRange": [
+        245,
+        253
+      ],
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "snowy/ground-dungeon",
+      "file": "snowy/ground-dungeon.png",
+      "category": "ground",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground",
+      "tags": {
+        "biome": [
+          "snowy"
+        ],
+        "role": [
+          "ground"
+        ],
+        "lighting": [
+          "interior"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "dungeon"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "a91e5e6d50260487ef57b201678344ae48e19bc3e190ebbfbf47eba0ce0bcd11",
+      "provenanceFile": "snowy/ground-dungeon.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        532,
+        1672,
+        941
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5647795280394978,
+        "borderPixelsAt32": 2480,
+        "normalizedMarginsAt32": [
+          0,
+          0.565356004250797,
+          0,
+          0
+        ]
+      },
+      "medianCenterHorizonY": 535,
+      "bottomAlphaRange": [
+        240,
+        253
+      ],
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "snowy/backdrop-day",
+      "file": "snowy/backdrop-day.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "biome": [
+          "snowy"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "outdoors"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "264e1874de750eef58296a506e23038db4d1447ce4ef9b83c350b24b13c53a43",
+      "provenanceFile": "snowy/backdrop-day.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "snowy/backdrop-rain",
+      "file": "snowy/backdrop-rain.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "biome": [
+          "snowy"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "weather": [
+          "rain"
+        ],
+        "setting": [
+          "outdoors"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "5d7e252b7fd07070e9d8cecd597e7d00655ca03cb8ad15df1e28114f1e3ba322",
+      "provenanceFile": "snowy/backdrop-rain.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "snowy/backdrop-dungeon",
+      "file": "snowy/backdrop-dungeon.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "biome": [
+          "snowy"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "lighting": [
+          "interior"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "dungeon"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "dfa79586988629dde09be0e916bac44c7fbae72871ff76842fb564c9b62a6bdc",
+      "provenanceFile": "snowy/backdrop-dungeon.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "snowy/backdrop-night",
+      "file": "snowy/backdrop-night.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "biome": [
+          "snowy"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "lighting": [
+          "night"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "outdoors"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "19eab419e6deb6355e930d7943729bccb8f6099ce38c4bd2a9b0ade1924f4a1d",
+      "provenanceFile": "snowy/backdrop-night.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "snowy/ground-street-night",
+      "file": "snowy/ground-street-night.png",
+      "category": "ground",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground",
+      "tags": {
+        "biome": [
+          "snowy"
+        ],
+        "role": [
+          "ground"
+        ],
+        "lighting": [
+          "night"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "street"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "5146a8af47599a262f6f5eb1757b8c5b1bbca28ddafdcf11e8bb8643b4cbc3df",
+      "provenanceFile": "snowy/ground-street-night.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        533,
+        1672,
+        941
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5504235542968134,
+        "borderPixelsAt32": 2481,
+        "normalizedMarginsAt32": [
+          0,
+          0.5664187035069076,
+          0,
+          0
+        ]
+      },
+      "medianCenterHorizonY": 536,
+      "bottomAlphaRange": [
+        227,
+        253
+      ],
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "snowy/prop-town-night",
+      "file": "snowy/prop-town-night.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "biome": [
+          "snowy"
+        ],
+        "role": [
+          "prop"
+        ],
+        "lighting": [
+          "night"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "town"
+        ]
+      },
+      "width": 1672,
+      "height": 940,
+      "mode": "RGBA",
+      "sha256": "6b06a906363943e751adb12f1bb11b9d544e4f78016d2a0d99b255c20f698da8",
+      "provenanceFile": "snowy/prop-town-night.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        169,
+        29,
+        1569,
+        889
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.46173648579863585,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.10107655502392345,
+          0.030851063829787233,
+          0.06160287081339713,
+          0.05425531914893617
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "mountains/prop-mountain-dry-near",
+      "file": "mountains/prop-mountain-dry-near.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "biome": [
+          "dry"
+        ],
+        "role": [
+          "prop"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "mountain"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "427cc5219d3a561fb0e5c285c52f92f8b19e1e73e4fd5db59f76424745312a48",
+      "provenanceFile": "mountains/prop-mountain-dry-near.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        28,
+        161,
+        1644,
+        782
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.6294490997564436,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.01674641148325359,
+          0.17109458023379384,
+          0.01674641148325359,
+          0.1689691817215728
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "mountains/prop-mountain-dry-distant",
+      "file": "mountains/prop-mountain-dry-distant.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "biome": [
+          "dry"
+        ],
+        "role": [
+          "prop"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "mountain"
+        ],
+        "depth": [
+          "distant"
+        ]
+      },
+      "width": 1672,
+      "height": 940,
+      "mode": "RGBA",
+      "sha256": "bd022a092f54997237e6816c9dd9846b0d21cfeaba371d1ccfa9f17c92c49704",
+      "provenanceFile": "mountains/prop-mountain-dry-distant.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        58,
+        310,
+        1622,
+        649
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.8181939071566731,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.034688995215311005,
+          0.32978723404255317,
+          0.029904306220095694,
+          0.30957446808510636
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "mountains/prop-mountain-volcanic-near",
+      "file": "mountains/prop-mountain-volcanic-near.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "biome": [
+          "volcanic"
+        ],
+        "role": [
+          "prop"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "mountain"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "7e0f0a0bb64ef5fc6e6ce8c95436419880f290936cc76b8e1764075b54c2f301",
+      "provenanceFile": "mountains/prop-mountain-volcanic-near.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        16,
+        146,
+        1669,
+        799
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.6047337150237201,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.009569377990430622,
+          0.155154091392136,
+          0.0017942583732057417,
+          0.15090329436769395
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "mountains/prop-mountain-volcanic-distant",
+      "file": "mountains/prop-mountain-volcanic-distant.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "biome": [
+          "volcanic"
+        ],
+        "role": [
+          "prop"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "mountain"
+        ],
+        "depth": [
+          "distant"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "2ace8983355c213cfee2c147461cc97d4d95b1c3de59610e09aee4ff55e4a6a5",
+      "provenanceFile": "mountains/prop-mountain-volcanic-distant.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        42,
+        288,
+        1650,
+        692
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.7871182036823292,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.025119617224880382,
+          0.30605738575983,
+          0.013157894736842105,
+          0.26461211477151964
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "mountains/prop-mountain-snowy-near",
+      "file": "mountains/prop-mountain-snowy-near.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "biome": [
+          "snowy"
+        ],
+        "role": [
+          "prop"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "mountain"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "f942cdfa2a26dc6497d7fbc4e334903ef9c6b9c13994655ac640549d0afd7bba",
+      "provenanceFile": "mountains/prop-mountain-snowy-near.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        13,
+        166,
+        1660,
+        804
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.6258046514702368,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.00777511961722488,
+          0.17640807651434645,
+          0.007177033492822967,
+          0.14558979808714134
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "mountains/prop-mountain-snowy-distant",
+      "file": "mountains/prop-mountain-snowy-distant.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "biome": [
+          "snowy"
+        ],
+        "role": [
+          "prop"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "weather": [
+          "clear"
+        ],
+        "setting": [
+          "mountain"
+        ],
+        "depth": [
+          "distant"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "c336adc50617f880e1259c81b212bacc34840613d5f4a85e792a3278bbcf67a1",
+      "provenanceFile": "mountains/prop-mountain-snowy-distant.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        54,
+        248,
+        1630,
+        675
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.7619096044623199,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.03229665071770335,
+          0.2635494155154091,
+          0.025119617224880382,
+          0.2826780021253985
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    }
+  ]
+}

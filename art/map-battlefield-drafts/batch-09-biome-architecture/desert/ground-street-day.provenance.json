@@ -1,0 +1,51 @@
+{
+  "name": "ground-street-day",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Hand-painted realistic medieval fantasy, tactile weathered matte materials, broad controlled brushwork, subtle natural material edges, muted earth colors, soft diffuse light from upper left, restrained highlights. No heavy cartoon outline, no shiny toy-like 3D render, no photographic sparkle, no text, lettering, numbers, logos, frames, people or characters. This is a reusable layered COMBAT SCENE component, viewed from a LOW ground-level near-frontal side camera with a gentle three-quarter angle, NOT elevated isometric map-icon camera. Keep center of the playable scene quiet. Do not paint rain streaks, snowflakes or global screen tint into base art; weather is a separate layer. Preserve ample usable material around the edges for multiple camera crops. Native output dimensions will be measured; do not fake resolution.\nGROUND: Request landscape 3072x1728. Upper 55% of canvas must be completely transparent alpha zero. Ground occupies only bottom 45%, opaque extending to both sides and bottom edges; no islands. Shallow side-view plane; quiet middle 60%, more texture on edges. DESERT SUBJECT: pale tan sandy medieval oasis street with broad weathered sandstone paving under neutral diffuse daylight, low contrast center, small worn stone edges and sparse sand at extreme sides. No architecture, sky, props or horizon scenery.",
+  "sourceOutputPath": "/workspace/generated_images/exec-4ac9e646-cfa9-4ece-8eb6-58b4647f4ae9.png",
+  "generator": "OpenAI image_gen",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-ground",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "sha256": "2905533a66fec35498bd4dfbf1b7db53c880841038beeae8d9c6dce64b6dc2e9",
+  "sourceSha256": "2905533a66fec35498bd4dfbf1b7db53c880841038beeae8d9c6dce64b6dc2e9",
+  "processing": "Byte-identical retained imagegen output; no image editing, trimming, resizing or upscaling.",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "visibleBoundsAt32": [
+      0,
+      554,
+      1672,
+      941
+    ],
+    "alphaQA": {
+      "transparentFraction": 0.6442385429325415,
+      "borderPixelsAt32": 2423,
+      "normalizedMarginsAt32": [
+        0.0,
+        0.5887353878852285,
+        0.0,
+        0.0
+      ]
+    },
+    "medianCenterHorizonY": 631,
+    "bottomAlphaRange": [
+      238,
+      253
+    ]
+  }
+}

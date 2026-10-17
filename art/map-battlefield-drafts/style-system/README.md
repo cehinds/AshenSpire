@@ -1,6 +1,6 @@
 # One art direction for every component
 
-**99 approved active sources:** 25 map icons, 27 grounds, 21 battlefield props, 12 backdrops and 14 atmosphere components.
+**144 approved active sources:** 25 map icons, 39 grounds, 42 battlefield props, 24 backdrops and 14 atmosphere components.
 
 All use `ashen-spire-painted-v1`: tactile painted materials, muted biome palettes, restrained highlights and consistent scene lighting. Map miniatures retain their elevated camera; battlefield layers use a low side view. Smooth translucent filters and sparse particles remain simple so they support the paintings.
 
@@ -17,15 +17,16 @@ All use `ashen-spire-painted-v1`: tactile painted materials, muted biome palette
 | `audit-*.json` | Asset-by-asset visual review, tied to the reviewed source hash |
 | [replacements.json](replacements.json) | Four original outliers and their approved replacements |
 
-The library indexes **143 retained sources**: 119 source-art drafts plus 24 earlier technical icons. Of these, 99 are approved, 40 are inactive history, and four are superseded by corrected sources. Historical assets remain available for comparison; active catalogs and regional scene pools reject them.
+The library indexes **188 retained sources**: 164 source-art drafts plus 24 earlier technical icons. Of these, 144 are approved, 40 are inactive history, and four are superseded by corrected sources. Historical assets remain available for comparison; active catalogs and regional scene pools reject them.
 
 ## Visual checks
 
-- [Grounds · all 27](preview-grounds.png)
-- [Battlefield props · all 21](preview-props.png)
-- [Skies/backdrops · all 12](preview-backdrops.png)
+- [Grounds · all 39](preview-grounds.png)
+- [Battlefield props · all 42](preview-props.png)
+- [Skies/backdrops · all 24](preview-backdrops.png)
 - [Atmosphere · all 14](preview-atmosphere.png)
 - [Map icons · all 25](../hex-world-module/map-components-preview.png)
+- [New biome scenes and mountains](../batch-09-biome-architecture/README.md)
 - [Before/after corrections](../batch-08-style-alignment/preview-comparison.png)
 
 Three Sol 6.1 reviewers inspected the grounds, props and sky/weather families. The earlier map collection also received an independent visual review. Review decisions distinguish intentional biome/time-of-day variations from camera, material or palette outliers. Style metadata alone does not establish visual consistency.

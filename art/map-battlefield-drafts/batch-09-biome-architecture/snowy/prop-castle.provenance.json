@@ -1,0 +1,52 @@
+{
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Hand-painted realistic medieval fantasy, tactile weathered matte materials, broad controlled brushwork, subtle natural material edges, muted earth colors, soft diffuse light from upper left, restrained highlights. No heavy cartoon outline, no shiny toy-like 3D render, no photographic sparkle, no text, lettering, numbers, logos, frames, people or characters. This is a reusable layered COMBAT SCENE component, viewed from a LOW ground-level near-frontal side camera with a gentle three-quarter angle, NOT elevated isometric map-icon camera. Keep center of the playable scene quiet. Do not paint rain streaks, snowflakes or global screen tint into base art; weather is a separate layer. Preserve ample usable material around the edges for multiple camera crops. Native output dimensions will be measured; do not fake resolution. Palette: weathered gray stone, dark timber, chalk snow, muted steel-blue shadows. A sturdy stone mountain castle with snowy sloping slate roofs, a few towers and thick weathered gray walls. Snow rests on roofs; the castle is NOT standing on a terrain island. Complete isolated architecture; no rocks, ground slab or backdrop. Entire complete subject occupies central 75% with generous transparent margins on ALL sides. Requested canvas dimensions 1536x1536 square.",
+  "generator": "OpenAI image_gen",
+  "sourceOutputPath": "/workspace/generated_images/exec-69fd0968-e9a0-4086-819f-95ae2ce84926.png",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 1536,
+    "height": 1536
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-prop",
+  "actualDimensions": {
+    "width": 1254,
+    "height": 1254
+  },
+  "sha256": "e31d90cbb97ea2eab542e28c5a153697003239adec6c061b945f87539d71370e",
+  "alphaBounds": [
+    0,
+    26,
+    1236,
+    1230
+  ],
+  "sourceByteIdentical": true,
+  "status": "draft-unregistered",
+  "sourceSha256": "e31d90cbb97ea2eab542e28c5a153697003239adec6c061b945f87539d71370e",
+  "processing": "Byte-identical retained imagegen output; no image editing, trimming, resizing or upscaling.",
+  "qa": {
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "visibleBoundsAt32": [
+      32,
+      89,
+      1228,
+      1103
+    ],
+    "alphaQA": {
+      "transparentFraction": 0.5374247384446327,
+      "borderPixelsAt32": 0,
+      "normalizedMarginsAt32": [
+        0.025518341307814992,
+        0.07097288676236045,
+        0.02073365231259968,
+        0.12041467304625199
+      ]
+    }
+  }
+}

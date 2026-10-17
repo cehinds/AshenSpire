@@ -45,6 +45,12 @@
       "id": "batch-08-style-alignment",
       "manifest": "batch-08-style-alignment/manifest.json",
       "sourceCount": 4
+    },
+    {
+      "id": "batch-09-biome-architecture",
+      "manifest": "batch-09-biome-architecture/manifest.json",
+      "sourceCount": 45,
+      "authoringModules": "batch-09-biome-architecture/modules/index.json"
     }
   ],
   "editableRecipes": [
@@ -79,6 +85,11 @@
       "file": "batch-06-settlements/modules/index.json",
       "portableExport": "batch-06-settlements/location-pools.example.json",
       "document": "locationPools"
+    },
+    {
+      "id": "biome-architecture-scenes",
+      "file": "batch-09-biome-architecture/modules/index.json",
+      "portableExport": "batch-09-biome-architecture/composition.example.json"
     }
   ],
   "nextFamilies": [
@@ -108,6 +119,12 @@
       "file": "hex-world-module/generation/rules.json",
       "guide": "hex-world-module/GENERATION.md",
       "status": "offline-prototype"
+    },
+    {
+      "id": "biome-architecture",
+      "file": "batch-09-biome-architecture/modules/index.json",
+      "guide": "batch-09-biome-architecture/README.md",
+      "status": "draft-art-authoring"
     }
   ],
   "artDirection": {

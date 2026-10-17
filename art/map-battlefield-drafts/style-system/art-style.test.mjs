@@ -8,7 +8,7 @@ const absolute=i=>path.resolve(repo,i.asset);
 const active=role=>library.items.find(i=>i.profileId===role&&i.review.verdict==='approved');
 test('every retained source is reviewed or explicitly excluded, with hashes and valid replacements',()=>{
  assert.deepEqual(validateStyleLibrary(library),[]);
- assert.equal(library.items.filter(i=>i.review.verdict==='approved').length,99);
+ assert.equal(library.items.filter(i=>i.review.verdict==='approved').length,144);
  for(const role of ['map-icon','battlefield-ground','battlefield-prop','battlefield-backdrop','color-filter','weather-field','weather-particles','weather-lightning'])assert.ok(active(role),role);
 });
 test('unapproved historical assets cannot substitute for their corrected equivalents',()=>{

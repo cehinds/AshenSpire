@@ -1,0 +1,57 @@
+{
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Hand-painted realistic medieval fantasy, tactile weathered matte materials, broad controlled brushwork, subtle natural material edges, muted earth colors, soft diffuse light from upper left, restrained highlights. No heavy cartoon outline, no shiny toy-like 3D render, no photographic sparkle, no text, lettering, numbers, logos, frames, people or characters. This is a reusable layered COMBAT SCENE component, viewed from a LOW ground-level near-frontal side camera with a gentle three-quarter angle, NOT elevated isometric map-icon camera. Keep center of the playable scene quiet. Do not paint rain streaks, snowflakes or global screen tint into base art; weather is a separate layer. Preserve ample usable material around the edges for multiple camera crops. Native output dimensions will be measured; do not fake resolution.\n\nJUNGLE biome palette: cool gray mossy stone, dark wet timber, muted deep green, weathered tan thatch. Role: battlefield-prop. One isolated vine-worn ancient jungle underground temple gate, gray mossy stone worn pillars and lintel, dark descending opening. Complete gate silhouette central 75% with generous alpha margins, no terrain slab or background. CRITICAL FRAMING: reduce the complete gate to fit inside middle 65% of canvas width and middle 75% height. Leave truly blank transparent borders at least 15% on each side and 10% above and below. Every leaf fully inside those margins. A small complete isolated object within a roomy canvas. Requested canvas: 1536\u00d71536.",
+  "generator": "OpenAI image_gen",
+  "sourceOutputPath": "/workspace/generated_images/exec-81f6d4f6-7008-4c1c-ab87-d684039f037f.png",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 1536,
+    "height": 1536
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-prop",
+  "actualDimensions": {
+    "width": 1254,
+    "height": 1254
+  },
+  "alphaBounds": [
+    0,
+    0,
+    1238,
+    1254
+  ],
+  "solidAlphaBounds": [
+    99,
+    202,
+    1173,
+    1081
+  ],
+  "sha256": "c5dab43f45e80540d5ce3995bb1323c25c038ba54b9e33b6915a6e4e202cac5f",
+  "status": "draft-unregistered",
+  "sourceSha256": "c5dab43f45e80540d5ce3995bb1323c25c038ba54b9e33b6915a6e4e202cac5f",
+  "processing": "Byte-identical retained imagegen output; no image editing, trimming, resizing or upscaling.",
+  "qa": {
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "visibleBoundsAt32": [
+      99,
+      202,
+      1173,
+      1081
+    ],
+    "alphaQA": {
+      "transparentFraction": 0.5800939386308311,
+      "borderPixelsAt32": 0,
+      "normalizedMarginsAt32": [
+        0.07894736842105263,
+        0.16108452950558214,
+        0.0645933014354067,
+        0.1379585326953748
+      ]
+    }
+  }
+}

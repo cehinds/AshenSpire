@@ -1,0 +1,62 @@
+{
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Hand-painted realistic medieval fantasy, tactile weathered matte materials, broad controlled brushwork, subtle natural material edges, muted earth colors, soft diffuse light from upper left, restrained highlights. No heavy cartoon outline, no shiny toy-like 3D render, no photographic sparkle, no text, lettering, numbers, logos, frames, people or characters. This is a reusable layered COMBAT SCENE component, viewed from a LOW ground-level near-frontal side camera with a gentle three-quarter angle, NOT elevated isometric map-icon camera. Keep center of the playable scene quiet. Do not paint rain streaks, snowflakes or global screen tint into base art; weather is a separate layer. Preserve ample usable material around the edges for multiple camera crops. Native output dimensions will be measured; do not fake resolution.\n\nJUNGLE biome palette: cool gray mossy stone, dark wet timber, muted deep green, weathered tan thatch. Role: battlefield-ground. NIGHT lighting overrides daylight: horizontal jungle street combat ground painted in cool low-key moonlight, dark gray weathered pavers and root-marked packed earth. Upper 55% entirely transparent alpha 0. Lower 45% continuous opaque ground to left right bottom edges. Quiet middle 60%, restrained highlights, no buildings, no lamps, no particles. Requested canvas: 3072\u00d71728 landscape.",
+  "generator": "OpenAI image_gen",
+  "sourceOutputPath": "/workspace/generated_images/exec-f58f2843-74a1-46fb-ba6e-b0690374682d.png",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-ground",
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "alphaBounds": [
+    0,
+    23,
+    1672,
+    941
+  ],
+  "sha256": "a690df117e81db85544de7e8a0727f556d44b5578192bea5ad921fd0d0058bac",
+  "solidAlphaBounds": [
+    0,
+    486,
+    1672,
+    941
+  ],
+  "status": "draft-unregistered",
+  "sourceSha256": "a690df117e81db85544de7e8a0727f556d44b5578192bea5ad921fd0d0058bac",
+  "processing": "Byte-identical retained imagegen output; no image editing, trimming, resizing or upscaling.",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "visibleBoundsAt32": [
+      0,
+      486,
+      1672,
+      941
+    ],
+    "alphaQA": {
+      "transparentFraction": 0.598229766765479,
+      "borderPixelsAt32": 2554,
+      "normalizedMarginsAt32": [
+        0.0,
+        0.5164718384697131,
+        0.0,
+        0.0
+      ]
+    },
+    "medianCenterHorizonY": 602,
+    "bottomAlphaRange": [
+      244,
+      254
+    ]
+  }
+}

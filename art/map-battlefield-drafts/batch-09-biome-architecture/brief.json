@@ -1,0 +1,68 @@
+{
+  "formatVersion": 1,
+  "batchId": "batch-09-biome-architecture",
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleGuide": "../style-system/style-guide.json",
+  "count": 45,
+  "biomes": {
+    "desert": {
+      "palette": [
+        "muted ochre sandstone",
+        "pale sand",
+        "aged dark timber",
+        "faded tan linen"
+      ],
+      "architecture": "Sandstone fortified oasis architecture, shaded timber balconies and flat/low clay roofs; invented medieval fantasy."
+    },
+    "jungle": {
+      "palette": [
+        "gray mossy stone",
+        "dark wet timber",
+        "muted deep green",
+        "weathered tan thatch"
+      ],
+      "architecture": "Overgrown stone citadels, timber stilt settlements and vine-worn jungle temples."
+    },
+    "snowy": {
+      "palette": [
+        "weathered gray stone",
+        "dark timber",
+        "chalk snow",
+        "muted steel-blue shadows"
+      ],
+      "architecture": "Cold fortified mountain settlements, steep slate roofs with soft snow and thick stone walls."
+    }
+  },
+  "perBiome": [
+    "prop-city-skyline",
+    "prop-town-cluster",
+    "prop-castle",
+    "prop-dungeon-entrance",
+    "ground-street-day",
+    "ground-street-rain",
+    "ground-dungeon",
+    "backdrop-day",
+    "backdrop-rain",
+    "backdrop-dungeon",
+    "backdrop-night",
+    "ground-street-night",
+    "prop-town-night"
+  ],
+  "mountains": [
+    "prop-mountain-dry-near",
+    "prop-mountain-dry-distant",
+    "prop-mountain-volcanic-near",
+    "prop-mountain-volcanic-distant",
+    "prop-mountain-snowy-near",
+    "prop-mountain-snowy-distant"
+  ],
+  "layerRules": {
+    "props": "Transparent isolated silhouette. Complete subject within central75% with generous alpha margins. No terrain platform, skyline background or ground slab. Landscape3072x1728 requested for wide city/town/mountain props; square1536 requested for compact castle/entrance.",
+    "ground": "Transparent top~52\u201355%; opaque lower ground extends to left/right/bottom edges. Shallow side-view plane, quiet center, peripheral detail. Landscape3072x1728 requested.",
+    "backdrop": "Opaque landscape3072x1728 requested, wide ground-level panorama with atmospheric depth and quiet middle. No foreground props or characters.",
+    "rainVariant": "Material is damp, overcast cool light; rain particles remain separate. Snowy wet street can have slush but no glossy mirror ice.",
+    "distantMountains": "Separate original prop painting with simplified forms, faded desaturated colors, soft low-contrast edges and atmospheric depth. Transparent surroundings; no opaque rectangle or fog/cloud plate. No glow.",
+    "nightVariant": "Painted cool moonlit environment, matching low-key street materials and lit town windows/lamps. Base city/castle/dungeon props may be shown with explicitly recorded preview ambient grading; that is not a painted night relight."
+  },
+  "overscan": "Source canvases must include peripheral paint/alpha room. Existing landscape/portrait/ultrawide crop checks remain necessary; requested size is not a delivered-size claim."
+}

@@ -1,0 +1,64 @@
+{
+  "id": "prop-mountain-volcanic-near",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Hand-painted realistic medieval fantasy, tactile weathered matte materials, broad controlled brushwork, subtle natural material edges, muted earth colors, soft diffuse neutral daylight from upper left, restrained highlights. No heavy cartoon outline, no shiny toy-like 3D render, no photographic sparkle, no text, lettering, numbers, logos, frames, people or characters. Reusable layered COMBAT SCENE component viewed from a LOW ground-level near-frontal side camera with gentle three-quarter angle, NOT elevated isometric map-icon camera. Create an ORIGINAL painting for prop-mountain-volcanic-near. Volcanic mountain ridge of charcoal basalt, restrained tiny dull ember flecks in a few fissures, NO huge fire, NO smoke plume, NO glowing outline. Near background mountain layer with readable rough broad geology and moderate muted contrast.A whole irregular mountain ridge with three distinct peaks. Wide panoramic low ground-level mountain view. Complete silhouette wholly contained inside central 80% canvas width and 75% canvas height, generous TRANSPARENT alpha margins on all four sides. Irregular natural tapered rocky base, no straight rectangular bottom. Requested canvas 3072x1728 landscape. Isolated mountain ridge ONLY on truly transparent background. No sky, clouds, fog plate or opaque fog rectangle, trees, buildings, ground slab, terrain platform, hex tile, labels, people, cast shadow or hard shadows. The surrounding transparency must extend underneath entire base. Matte broad hand-painted fantasy brushwork.",
+  "sourceOutputPath": "/workspace/generated_images/exec-8d8e9851-6e10-467b-8541-99d03db727c6.png",
+  "generator": "OpenAI image_gen",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-prop",
+  "sha256": "7e0f0a0bb64ef5fc6e6ce8c95436419880f290936cc76b8e1764075b54c2f301",
+  "alphaBounds": [
+    0,
+    0,
+    1672,
+    941
+  ],
+  "alphaBoundsThreshold16": [
+    16,
+    146,
+    1669,
+    799
+  ],
+  "alphaBoundsThreshold128": [
+    17,
+    147,
+    1668,
+    799
+  ],
+  "status": "draft-unregistered",
+  "sourceSha256": "7e0f0a0bb64ef5fc6e6ce8c95436419880f290936cc76b8e1764075b54c2f301",
+  "processing": "Byte-identical retained imagegen output; no image editing, trimming, resizing or upscaling.",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "visibleBoundsAt32": [
+      16,
+      146,
+      1669,
+      799
+    ],
+    "alphaQA": {
+      "transparentFraction": 0.6047337150237201,
+      "borderPixelsAt32": 0,
+      "normalizedMarginsAt32": [
+        0.009569377990430622,
+        0.155154091392136,
+        0.0017942583732057417,
+        0.15090329436769395
+      ]
+    }
+  }
+}

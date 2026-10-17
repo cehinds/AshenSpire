@@ -1,0 +1,62 @@
+{
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Hand-painted realistic medieval fantasy, tactile weathered matte materials, broad controlled brushwork, subtle natural material edges, muted earth colors, soft diffuse light from upper left, restrained highlights. No heavy cartoon outline, no shiny toy-like 3D render, no photographic sparkle, no text, lettering, numbers, logos, frames, people or characters. This is a reusable layered COMBAT SCENE component, viewed from a LOW ground-level near-frontal side camera with a gentle three-quarter angle, NOT elevated isometric map-icon camera. Keep center of the playable scene quiet. Do not paint rain streaks, snowflakes or global screen tint into base art; weather is a separate layer. Preserve ample usable material around the edges for multiple camera crops. Native output dimensions will be measured; do not fake resolution.\n\nJUNGLE biome palette: cool gray mossy stone, dark wet timber, muted deep green, weathered tan thatch. Role: battlefield-ground. A horizontal ancient jungle temple floor combat strip of cool gray worn flagstones, subtle chips and moss at side edges. Interior diffuse cool light. Upper 55% entirely transparent alpha 0. Lower 45% solid opaque continuous stone extends to left right bottom edges. Shallow plane quiet middle 60%, no gate, walls, objects. Requested canvas: 3072\u00d71728 landscape.",
+  "generator": "OpenAI image_gen",
+  "sourceOutputPath": "/workspace/generated_images/exec-77cf47e9-653b-4eef-bed2-44b1213f17b8.png",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-ground",
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "alphaBounds": [
+    0,
+    7,
+    1672,
+    941
+  ],
+  "sha256": "d2ea6376f31611227d67a72eff67fe0442678c4c791b85d3396f390820cc0fa3",
+  "solidAlphaBounds": [
+    0,
+    499,
+    1672,
+    941
+  ],
+  "status": "draft-unregistered",
+  "sourceSha256": "d2ea6376f31611227d67a72eff67fe0442678c4c791b85d3396f390820cc0fa3",
+  "processing": "Byte-identical retained imagegen output; no image editing, trimming, resizing or upscaling.",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "visibleBoundsAt32": [
+      0,
+      500,
+      1672,
+      941
+    ],
+    "alphaQA": {
+      "transparentFraction": 0.5691294764299407,
+      "borderPixelsAt32": 2531,
+      "normalizedMarginsAt32": [
+        0.0,
+        0.5313496280552603,
+        0.0,
+        0.0
+      ]
+    },
+    "medianCenterHorizonY": 560,
+    "bottomAlphaRange": [
+      236,
+      253
+    ]
+  }
+}

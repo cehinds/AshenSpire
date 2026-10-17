@@ -1,0 +1,91 @@
+{
+  "formatVersion": 1,
+  "assetBase": "..",
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "palettes": [
+    {
+      "biome": "desert",
+      "colors": [
+        "muted ochre sandstone",
+        "pale sand",
+        "aged dark timber",
+        "faded tan linen"
+      ],
+      "architecture": "Sandstone fortified oasis architecture, shaded timber balconies and flat/low clay roofs; invented medieval fantasy."
+    },
+    {
+      "biome": "jungle",
+      "colors": [
+        "gray mossy stone",
+        "dark wet timber",
+        "muted deep green",
+        "weathered tan thatch"
+      ],
+      "architecture": "Overgrown stone citadels, timber stilt settlements and vine-worn jungle temples."
+    },
+    {
+      "biome": "snowy",
+      "colors": [
+        "weathered gray stone",
+        "dark timber",
+        "chalk snow",
+        "muted steel-blue shadows"
+      ],
+      "architecture": "Cold fortified mountain settlements, steep slate roofs with soft snow and thick stone walls."
+    }
+  ],
+  "conditions": "conditions.json",
+  "mountains": "mountains.json",
+  "biomes": [
+    {
+      "id": "desert",
+      "pools": "desert/pools.json",
+      "scenes": "desert/scenes.json"
+    },
+    {
+      "id": "jungle",
+      "pools": "jungle/pools.json",
+      "scenes": "jungle/scenes.json"
+    },
+    {
+      "id": "snowy",
+      "pools": "snowy/pools.json",
+      "scenes": "snowy/scenes.json"
+    }
+  ],
+  "runtimeBindings": [],
+  "canvas": {
+    "width": 1672,
+    "height": 941
+  },
+  "cameras": [
+    {
+      "id": "native",
+      "width": 1672,
+      "height": 941,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "landscape",
+      "width": 960,
+      "height": 540,
+      "x": 356,
+      "y": 200
+    },
+    {
+      "id": "portrait",
+      "width": 450,
+      "height": 800,
+      "x": 611,
+      "y": 70
+    },
+    {
+      "id": "ultrawide",
+      "width": 1280,
+      "height": 540,
+      "x": 196,
+      "y": 200
+    }
+  ]
+}

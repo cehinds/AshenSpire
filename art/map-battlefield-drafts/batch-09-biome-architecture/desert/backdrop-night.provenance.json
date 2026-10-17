@@ -1,0 +1,26 @@
+{
+  "name": "backdrop-night",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Hand-painted realistic medieval fantasy, tactile weathered matte materials, broad controlled brushwork, subtle natural material edges, muted earth colors, soft diffuse light from upper left, restrained highlights. No heavy cartoon outline, no shiny toy-like 3D render, no photographic sparkle, no text, lettering, numbers, logos, frames, people or characters. This is a reusable layered COMBAT SCENE component, viewed from a LOW ground-level near-frontal side camera with a gentle three-quarter angle, NOT elevated isometric map-icon camera. Keep center of the playable scene quiet. Do not paint rain streaks, snowflakes or global screen tint into base art; weather is a separate layer. Preserve ample usable material around the edges for multiple camera crops. Native output dimensions will be measured; do not fake resolution.\nBACKDROP: opaque full-bleed landscape 3072x1728, ground-level distant wide panorama, quiet open middle and ample peripheral paint. DESERT SUBJECT AT NIGHT: medieval sandstone oasis outskirts, cool moonlit pale tan plain, distant ochre gray mesas, sparse palms and tiny far walls only at sides, deep desaturated blue night sky with soft clouds and faint crescent moon. A few distant tiny amber windows. IMPORTANT night-specific lighting overrides daytime soft diffuse upper-left default: genuinely painted low-key moonlight, cool shadows and small local amber light, no daylight or sunset.",
+  "sourceOutputPath": "/workspace/generated_images/exec-a2e78e85-a37f-4429-a0e4-419881062e9d.png",
+  "generator": "OpenAI image_gen",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-backdrop",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "sha256": "1d29c46bd981a8f6f4443b4fefd0c7e9ab40385b3c1cd1e67213940d032ff014",
+  "sourceSha256": "1d29c46bd981a8f6f4443b4fefd0c7e9ab40385b3c1cd1e67213940d032ff014",
+  "processing": "Byte-identical retained imagegen output; no image editing, trimming, resizing or upscaling.",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGB"
+  }
+}

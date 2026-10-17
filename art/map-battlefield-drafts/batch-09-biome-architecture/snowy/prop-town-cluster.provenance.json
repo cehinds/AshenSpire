@@ -1,0 +1,52 @@
+{
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Hand-painted realistic medieval fantasy, tactile weathered matte materials, broad controlled brushwork, subtle natural material edges, muted earth colors, soft diffuse light from upper left, restrained highlights. No heavy cartoon outline, no shiny toy-like 3D render, no photographic sparkle, no text, lettering, numbers, logos, frames, people or characters. This is a reusable layered COMBAT SCENE component, viewed from a LOW ground-level near-frontal side camera with a gentle three-quarter angle, NOT elevated isometric map-icon camera. Keep center of the playable scene quiet. Do not paint rain streaks, snowflakes or global screen tint into base art; weather is a separate layer. Preserve ample usable material around the edges for multiple camera crops. Native output dimensions will be measured; do not fake resolution. Palette: weathered gray stone, dark timber, chalk snow, muted steel-blue shadows. A cluster of 2\u20133 steep roof snowy medieval mountain townhouses, dark timber frames and weathered gray stone lower walls. Complete isolated buildings; no terrain platform, ground slab or backdrop. Entire complete subject occupies central 75% with generous transparent margins on ALL sides. Requested canvas dimensions 3072x1728 landscape.",
+  "generator": "OpenAI image_gen",
+  "sourceOutputPath": "/workspace/generated_images/exec-0c0e655f-9f07-4045-8f29-6c4ab0b4c7db.png",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-prop",
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "sha256": "4853a35e6bdb46f0748a92208f96b563e0ab8a28eb15ea2dbf1aa3ec50370c35",
+  "alphaBounds": [
+    0,
+    17,
+    1560,
+    915
+  ],
+  "sourceByteIdentical": true,
+  "status": "draft-unregistered",
+  "sourceSha256": "4853a35e6bdb46f0748a92208f96b563e0ab8a28eb15ea2dbf1aa3ec50370c35",
+  "processing": "Byte-identical retained imagegen output; no image editing, trimming, resizing or upscaling.",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "visibleBoundsAt32": [
+      169,
+      25,
+      1552,
+      909
+    ],
+    "alphaQA": {
+      "transparentFraction": 0.41046568091565017,
+      "borderPixelsAt32": 0,
+      "normalizedMarginsAt32": [
+        0.10107655502392345,
+        0.026567481402763018,
+        0.07177033492822966,
+        0.03400637619553666
+      ]
+    }
+  }
+}

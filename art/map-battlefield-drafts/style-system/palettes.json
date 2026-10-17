@@ -35,5 +35,37 @@
   "timeOfDay": {
     "day": "Soft neutral daylight with restrained warmth.",
     "night": "Low-key cool values, preserved silhouettes and restrained warm local lights."
+  },
+  "authoringBiomes": {
+    "desert": {
+      "colors": [
+        "muted ochre sandstone",
+        "pale sand",
+        "aged dark timber",
+        "faded tan linen"
+      ],
+      "architecture": "Sandstone fortified oasis architecture, shaded timber balconies and flat/low clay roofs; invented medieval fantasy.",
+      "productionRegionBinding": null
+    },
+    "jungle": {
+      "colors": [
+        "gray mossy stone",
+        "dark wet timber",
+        "muted deep green",
+        "weathered tan thatch"
+      ],
+      "architecture": "Overgrown stone citadels, timber stilt settlements and vine-worn jungle temples.",
+      "productionRegionBinding": null
+    },
+    "snowy": {
+      "colors": [
+        "weathered gray stone",
+        "dark timber",
+        "chalk snow",
+        "muted steel-blue shadows"
+      ],
+      "architecture": "Cold fortified mountain settlements, steep slate roofs with soft snow and thick stone walls.",
+      "productionRegionBinding": null
+    }
   }
 }

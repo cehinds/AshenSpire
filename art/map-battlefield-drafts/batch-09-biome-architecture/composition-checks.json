@@ -1,0 +1,1753 @@
+{
+  "status": "passed",
+  "scope": "Measured alpha>=32 prop bounds inside four static camera crops; no actor or motion QA.",
+  "propFitPolicy": "Desired sizes are limited by available space around the requested anchor and measured ground horizon.",
+  "checks": [
+    {
+      "scene": "desert-town-day",
+      "camera": "landscape",
+      "asset": "desert/prop-town-cluster.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 610.0799442896937,
+        "top": 437.8,
+        "right": 1061.9200557103063,
+        "bottom": 643
+      }
+    },
+    {
+      "scene": "desert-town-rain",
+      "camera": "landscape",
+      "asset": "desert/prop-town-cluster.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 610.0799442896937,
+        "top": 337.8,
+        "right": 1061.9200557103063,
+        "bottom": 543
+      }
+    },
+    {
+      "scene": "desert-town-night",
+      "camera": "landscape",
+      "asset": "desert/prop-town-night.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 559.7562499999999,
+        "top": 359.8,
+        "right": 1112.2437499999999,
+        "bottom": 565
+      }
+    },
+    {
+      "scene": "jungle-town-day",
+      "camera": "landscape",
+      "asset": "jungle/prop-town-cluster.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 649.1916572717024,
+        "top": 357.80000000000007,
+        "right": 1022.8083427282977,
+        "bottom": 563
+      }
+    },
+    {
+      "scene": "jungle-town-rain",
+      "camera": "landscape",
+      "asset": "jungle/prop-town-cluster.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 649.1916572717024,
+        "top": 409.80000000000007,
+        "right": 1022.8083427282977,
+        "bottom": 615
+      }
+    },
+    {
+      "scene": "jungle-town-night",
+      "camera": "landscape",
+      "asset": "jungle/prop-town-night.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 643.4331415420023,
+        "top": 408.80000000000007,
+        "right": 1028.5668584579978,
+        "bottom": 614
+      }
+    },
+    {
+      "scene": "snowy-town-day",
+      "camera": "landscape",
+      "asset": "snowy/prop-town-cluster.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 675.4843891402716,
+        "top": 348.8,
+        "right": 996.5156108597284,
+        "bottom": 554
+      }
+    },
+    {
+      "scene": "snowy-town-rain",
+      "camera": "landscape",
+      "asset": "snowy/prop-town-cluster.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 675.4843891402716,
+        "top": 375.8,
+        "right": 996.5156108597284,
+        "bottom": 581
+      }
+    },
+    {
+      "scene": "snowy-town-night",
+      "camera": "landscape",
+      "asset": "snowy/prop-town-night.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 668.9767441860465,
+        "top": 342.8,
+        "right": 1003.0232558139535,
+        "bottom": 548
+      }
+    },
+    {
+      "scene": "desert-city-day",
+      "camera": "landscape",
+      "asset": "desert/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 559.5793152639087,
+        "top": 410.8,
+        "right": 1112.4206847360913,
+        "bottom": 643
+      }
+    },
+    {
+      "scene": "desert-castle-day",
+      "camera": "landscape",
+      "asset": "desert/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 605.6,
+        "top": 395.31060358890704,
+        "right": 1066.4,
+        "bottom": 643
+      }
+    },
+    {
+      "scene": "desert-dungeon-entrance-day",
+      "camera": "landscape",
+      "asset": "desert/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 626.9650565262075,
+        "top": 308.19999999999993,
+        "right": 1045.0349434737923,
+        "bottom": 643
+      }
+    },
+    {
+      "scene": "jungle-city-day",
+      "camera": "landscape",
+      "asset": "jungle/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 612.0514962593517,
+        "top": 330.8,
+        "right": 1059.9485037406484,
+        "bottom": 563
+      }
+    },
+    {
+      "scene": "jungle-castle-day",
+      "camera": "landscape",
+      "asset": "jungle/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 664.6586493987048,
+        "top": 260.5999999999999,
+        "right": 1007.3413506012951,
+        "bottom": 563
+      }
+    },
+    {
+      "scene": "jungle-dungeon-entrance-day",
+      "camera": "landscape",
+      "asset": "jungle/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 631.4634812286689,
+        "top": 228.19999999999993,
+        "right": 1040.536518771331,
+        "bottom": 563
+      }
+    },
+    {
+      "scene": "snowy-city-day",
+      "camera": "landscape",
+      "asset": "snowy/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 614.7711722488039,
+        "top": 321.79999999999995,
+        "right": 1057.2288277511961,
+        "bottom": 554
+      }
+    },
+    {
+      "scene": "snowy-castle-day",
+      "camera": "landscape",
+      "asset": "snowy/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 657.6615384615384,
+        "top": 251.59999999999994,
+        "right": 1014.3384615384616,
+        "bottom": 554
+      }
+    },
+    {
+      "scene": "snowy-dungeon-entrance-day",
+      "camera": "landscape",
+      "asset": "snowy/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 663.1332744924978,
+        "top": 219.2,
+        "right": 1008.8667255075022,
+        "bottom": 554
+      }
+    },
+    {
+      "scene": "jungle-town-night",
+      "camera": "portrait",
+      "asset": "jungle/prop-town-night.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 678.5,
+        "top": 446.1673819742489,
+        "right": 993.5,
+        "bottom": 614
+      }
+    },
+    {
+      "scene": "jungle-town-night",
+      "camera": "ultrawide",
+      "asset": "jungle/prop-town-night.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 643.4331415420023,
+        "top": 408.80000000000007,
+        "right": 1028.5668584579978,
+        "bottom": 614
+      }
+    },
+    {
+      "scene": "desert-city-rain",
+      "camera": "landscape",
+      "asset": "desert/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 559.5793152639087,
+        "top": 310.8,
+        "right": 1112.4206847360913,
+        "bottom": 543
+      }
+    },
+    {
+      "scene": "desert-city-night",
+      "camera": "landscape",
+      "asset": "desert/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 559.5793152639087,
+        "top": 332.8,
+        "right": 1112.4206847360913,
+        "bottom": 565
+      }
+    },
+    {
+      "scene": "desert-castle-rain",
+      "camera": "landscape",
+      "asset": "desert/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 605.6,
+        "top": 295.31060358890704,
+        "right": 1066.4,
+        "bottom": 543
+      }
+    },
+    {
+      "scene": "desert-castle-night",
+      "camera": "landscape",
+      "asset": "desert/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 605.6,
+        "top": 317.31060358890704,
+        "right": 1066.4,
+        "bottom": 565
+      }
+    },
+    {
+      "scene": "desert-dungeon-entrance-rain",
+      "camera": "landscape",
+      "asset": "desert/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 629.3376156217882,
+        "top": 212,
+        "right": 1042.6623843782118,
+        "bottom": 543
+      }
+    },
+    {
+      "scene": "desert-dungeon-entrance-night",
+      "camera": "landscape",
+      "asset": "desert/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 626.9650565262075,
+        "top": 230.19999999999993,
+        "right": 1045.0349434737923,
+        "bottom": 565
+      }
+    },
+    {
+      "scene": "jungle-city-rain",
+      "camera": "landscape",
+      "asset": "jungle/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 612.0514962593517,
+        "top": 382.8,
+        "right": 1059.9485037406484,
+        "bottom": 615
+      }
+    },
+    {
+      "scene": "jungle-city-night",
+      "camera": "landscape",
+      "asset": "jungle/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 612.0514962593517,
+        "top": 381.8,
+        "right": 1059.9485037406484,
+        "bottom": 614
+      }
+    },
+    {
+      "scene": "jungle-castle-rain",
+      "camera": "landscape",
+      "asset": "jungle/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 664.6586493987048,
+        "top": 312.5999999999999,
+        "right": 1007.3413506012951,
+        "bottom": 615
+      }
+    },
+    {
+      "scene": "jungle-castle-night",
+      "camera": "landscape",
+      "asset": "jungle/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 664.6586493987048,
+        "top": 311.5999999999999,
+        "right": 1007.3413506012951,
+        "bottom": 614
+      }
+    },
+    {
+      "scene": "jungle-dungeon-entrance-rain",
+      "camera": "landscape",
+      "asset": "jungle/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 631.4634812286689,
+        "top": 280.19999999999993,
+        "right": 1040.536518771331,
+        "bottom": 615
+      }
+    },
+    {
+      "scene": "jungle-dungeon-entrance-night",
+      "camera": "landscape",
+      "asset": "jungle/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 631.4634812286689,
+        "top": 279.19999999999993,
+        "right": 1040.536518771331,
+        "bottom": 614
+      }
+    },
+    {
+      "scene": "snowy-city-rain",
+      "camera": "landscape",
+      "asset": "snowy/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 614.7711722488039,
+        "top": 348.79999999999995,
+        "right": 1057.2288277511961,
+        "bottom": 581
+      }
+    },
+    {
+      "scene": "snowy-city-night",
+      "camera": "landscape",
+      "asset": "snowy/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 614.7711722488039,
+        "top": 315.79999999999995,
+        "right": 1057.2288277511961,
+        "bottom": 548
+      }
+    },
+    {
+      "scene": "snowy-castle-rain",
+      "camera": "landscape",
+      "asset": "snowy/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 657.6615384615384,
+        "top": 278.5999999999999,
+        "right": 1014.3384615384616,
+        "bottom": 581
+      }
+    },
+    {
+      "scene": "snowy-castle-night",
+      "camera": "landscape",
+      "asset": "snowy/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 657.6615384615384,
+        "top": 245.59999999999994,
+        "right": 1014.3384615384616,
+        "bottom": 548
+      }
+    },
+    {
+      "scene": "snowy-dungeon-entrance-rain",
+      "camera": "landscape",
+      "asset": "snowy/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 663.1332744924978,
+        "top": 246.2,
+        "right": 1008.8667255075022,
+        "bottom": 581
+      }
+    },
+    {
+      "scene": "snowy-dungeon-entrance-night",
+      "camera": "landscape",
+      "asset": "snowy/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 663.1332744924978,
+        "top": 213.2,
+        "right": 1008.8667255075022,
+        "bottom": 548
+      }
+    },
+    {
+      "scene": "desert-city-day",
+      "camera": "native",
+      "asset": "desert/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 354.311362339515,
+        "top": 238.37000000000006,
+        "right": 1317.688637660485,
+        "bottom": 643
+      }
+    },
+    {
+      "scene": "desert-city-day",
+      "camera": "portrait",
+      "asset": "desert/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 642.5,
+        "top": 480.4553624925105,
+        "right": 1029.5,
+        "bottom": 643
+      }
+    },
+    {
+      "scene": "desert-city-day",
+      "camera": "ultrawide",
+      "asset": "desert/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 559.5793152639087,
+        "top": 410.8,
+        "right": 1112.4206847360913,
+        "bottom": 643
+      }
+    },
+    {
+      "scene": "desert-city-rain",
+      "camera": "native",
+      "asset": "desert/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 354.311362339515,
+        "top": 138.37000000000006,
+        "right": 1317.688637660485,
+        "bottom": 543
+      }
+    },
+    {
+      "scene": "desert-city-rain",
+      "camera": "portrait",
+      "asset": "desert/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 642.5,
+        "top": 380.4553624925105,
+        "right": 1029.5,
+        "bottom": 543
+      }
+    },
+    {
+      "scene": "desert-city-rain",
+      "camera": "ultrawide",
+      "asset": "desert/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 559.5793152639087,
+        "top": 310.8,
+        "right": 1112.4206847360913,
+        "bottom": 543
+      }
+    },
+    {
+      "scene": "desert-city-night",
+      "camera": "native",
+      "asset": "desert/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 354.311362339515,
+        "top": 160.37000000000006,
+        "right": 1317.688637660485,
+        "bottom": 565
+      }
+    },
+    {
+      "scene": "desert-city-night",
+      "camera": "portrait",
+      "asset": "desert/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 642.5,
+        "top": 402.4553624925105,
+        "right": 1029.5,
+        "bottom": 565
+      }
+    },
+    {
+      "scene": "desert-city-night",
+      "camera": "ultrawide",
+      "asset": "desert/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 559.5793152639087,
+        "top": 332.8,
+        "right": 1112.4206847360913,
+        "bottom": 565
+      }
+    },
+    {
+      "scene": "desert-town-day",
+      "camera": "native",
+      "asset": "desert/prop-town-cluster.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 442.3133844011142,
+        "top": 285.42,
+        "right": 1229.6866155988857,
+        "bottom": 643
+      }
+    },
+    {
+      "scene": "desert-town-day",
+      "camera": "portrait",
+      "asset": "desert/prop-town-cluster.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 678.5000000000001,
+        "top": 499.94497153700195,
+        "right": 993.5,
+        "bottom": 643
+      }
+    },
+    {
+      "scene": "desert-town-day",
+      "camera": "ultrawide",
+      "asset": "desert/prop-town-cluster.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 610.0799442896937,
+        "top": 437.8,
+        "right": 1061.9200557103063,
+        "bottom": 643
+      }
+    },
+    {
+      "scene": "desert-town-rain",
+      "camera": "native",
+      "asset": "desert/prop-town-cluster.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 442.3133844011142,
+        "top": 185.42000000000002,
+        "right": 1229.6866155988857,
+        "bottom": 543
+      }
+    },
+    {
+      "scene": "desert-town-rain",
+      "camera": "portrait",
+      "asset": "desert/prop-town-cluster.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 678.5000000000001,
+        "top": 399.94497153700195,
+        "right": 993.5,
+        "bottom": 543
+      }
+    },
+    {
+      "scene": "desert-town-rain",
+      "camera": "ultrawide",
+      "asset": "desert/prop-town-cluster.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 610.0799442896937,
+        "top": 337.8,
+        "right": 1061.9200557103063,
+        "bottom": 543
+      }
+    },
+    {
+      "scene": "desert-town-night",
+      "camera": "native",
+      "asset": "desert/prop-town-night.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 354.6196875,
+        "top": 207.42,
+        "right": 1317.3803125,
+        "bottom": 565
+      }
+    },
+    {
+      "scene": "desert-town-night",
+      "camera": "portrait",
+      "asset": "desert/prop-town-night.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 678.5,
+        "top": 448.00549786194256,
+        "right": 993.5,
+        "bottom": 565
+      }
+    },
+    {
+      "scene": "desert-town-night",
+      "camera": "ultrawide",
+      "asset": "desert/prop-town-night.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 559.7562499999999,
+        "top": 359.8,
+        "right": 1112.2437499999999,
+        "bottom": 565
+      }
+    },
+    {
+      "scene": "desert-castle-day",
+      "camera": "native",
+      "asset": "desert/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 434.72,
+        "top": 211.60763458401306,
+        "right": 1237.28,
+        "bottom": 643
+      }
+    },
+    {
+      "scene": "desert-castle-day",
+      "camera": "portrait",
+      "asset": "desert/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 728,
+        "top": 526.8955954323002,
+        "right": 944,
+        "bottom": 643
+      }
+    },
+    {
+      "scene": "desert-castle-day",
+      "camera": "ultrawide",
+      "asset": "desert/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 554.7083459787557,
+        "top": 340.59999999999997,
+        "right": 1117.2916540212445,
+        "bottom": 643
+      }
+    },
+    {
+      "scene": "desert-castle-rain",
+      "camera": "native",
+      "asset": "desert/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 434.72,
+        "top": 111.60763458401306,
+        "right": 1237.28,
+        "bottom": 543
+      }
+    },
+    {
+      "scene": "desert-castle-rain",
+      "camera": "portrait",
+      "asset": "desert/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 728,
+        "top": 426.8955954323002,
+        "right": 944,
+        "bottom": 543
+      }
+    },
+    {
+      "scene": "desert-castle-rain",
+      "camera": "ultrawide",
+      "asset": "desert/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 554.7083459787557,
+        "top": 240.59999999999997,
+        "right": 1117.2916540212445,
+        "bottom": 543
+      }
+    },
+    {
+      "scene": "desert-castle-night",
+      "camera": "native",
+      "asset": "desert/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 434.72,
+        "top": 133.60763458401306,
+        "right": 1237.28,
+        "bottom": 565
+      }
+    },
+    {
+      "scene": "desert-castle-night",
+      "camera": "portrait",
+      "asset": "desert/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 728,
+        "top": 448.8955954323002,
+        "right": 944,
+        "bottom": 565
+      }
+    },
+    {
+      "scene": "desert-castle-night",
+      "camera": "ultrawide",
+      "asset": "desert/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 554.7083459787557,
+        "top": 262.59999999999997,
+        "right": 1117.2916540212445,
+        "bottom": 565
+      }
+    },
+    {
+      "scene": "desert-dungeon-entrance-day",
+      "camera": "native",
+      "asset": "desert/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 471.73725590955814,
+        "top": 59.58000000000014,
+        "right": 1200.2627440904419,
+        "bottom": 643
+      }
+    },
+    {
+      "scene": "desert-dungeon-entrance-day",
+      "camera": "portrait",
+      "asset": "desert/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 712.2499999999999,
+        "top": 444.7962962962963,
+        "right": 959.75,
+        "bottom": 643
+      }
+    },
+    {
+      "scene": "desert-dungeon-entrance-day",
+      "camera": "ultrawide",
+      "asset": "desert/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 626.9650565262075,
+        "top": 308.19999999999993,
+        "right": 1045.0349434737923,
+        "bottom": 643
+      }
+    },
+    {
+      "scene": "desert-dungeon-entrance-rain",
+      "camera": "native",
+      "asset": "desert/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 504.4660842754368,
+        "top": 11.999999999999986,
+        "right": 1167.533915724563,
+        "bottom": 543
+      }
+    },
+    {
+      "scene": "desert-dungeon-entrance-rain",
+      "camera": "portrait",
+      "asset": "desert/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 712.2499999999999,
+        "top": 344.7962962962963,
+        "right": 959.75,
+        "bottom": 543
+      }
+    },
+    {
+      "scene": "desert-dungeon-entrance-rain",
+      "camera": "ultrawide",
+      "asset": "desert/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 629.3376156217882,
+        "top": 212,
+        "right": 1042.6623843782118,
+        "bottom": 543
+      }
+    },
+    {
+      "scene": "desert-dungeon-entrance-night",
+      "camera": "native",
+      "asset": "desert/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 490.7302158273381,
+        "top": 11.999999999999986,
+        "right": 1181.2697841726617,
+        "bottom": 565
+      }
+    },
+    {
+      "scene": "desert-dungeon-entrance-night",
+      "camera": "portrait",
+      "asset": "desert/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 712.2499999999999,
+        "top": 366.7962962962963,
+        "right": 959.75,
+        "bottom": 565
+      }
+    },
+    {
+      "scene": "desert-dungeon-entrance-night",
+      "camera": "ultrawide",
+      "asset": "desert/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 626.9650565262075,
+        "top": 230.19999999999993,
+        "right": 1045.0349434737923,
+        "bottom": 565
+      }
+    },
+    {
+      "scene": "jungle-city-day",
+      "camera": "native",
+      "asset": "jungle/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 445.74899625935166,
+        "top": 158.36999999999998,
+        "right": 1226.2510037406485,
+        "bottom": 563
+      }
+    },
+    {
+      "scene": "jungle-city-day",
+      "camera": "portrait",
+      "asset": "jungle/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 642.5,
+        "top": 362.3703943115708,
+        "right": 1029.5,
+        "bottom": 563
+      }
+    },
+    {
+      "scene": "jungle-city-day",
+      "camera": "ultrawide",
+      "asset": "jungle/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 612.0514962593517,
+        "top": 330.8,
+        "right": 1059.9485037406484,
+        "bottom": 563
+      }
+    },
+    {
+      "scene": "jungle-city-rain",
+      "camera": "native",
+      "asset": "jungle/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 445.74899625935166,
+        "top": 210.36999999999998,
+        "right": 1226.2510037406485,
+        "bottom": 615
+      }
+    },
+    {
+      "scene": "jungle-city-rain",
+      "camera": "portrait",
+      "asset": "jungle/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 642.5,
+        "top": 414.3703943115708,
+        "right": 1029.5,
+        "bottom": 615
+      }
+    },
+    {
+      "scene": "jungle-city-rain",
+      "camera": "ultrawide",
+      "asset": "jungle/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 612.0514962593517,
+        "top": 382.8,
+        "right": 1059.9485037406484,
+        "bottom": 615
+      }
+    },
+    {
+      "scene": "jungle-city-night",
+      "camera": "native",
+      "asset": "jungle/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 445.74899625935166,
+        "top": 209.36999999999998,
+        "right": 1226.2510037406485,
+        "bottom": 614
+      }
+    },
+    {
+      "scene": "jungle-city-night",
+      "camera": "portrait",
+      "asset": "jungle/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 642.5,
+        "top": 413.3703943115708,
+        "right": 1029.5,
+        "bottom": 614
+      }
+    },
+    {
+      "scene": "jungle-city-night",
+      "camera": "ultrawide",
+      "asset": "jungle/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 612.0514962593517,
+        "top": 381.8,
+        "right": 1059.9485037406484,
+        "bottom": 614
+      }
+    },
+    {
+      "scene": "jungle-town-day",
+      "camera": "native",
+      "asset": "jungle/prop-town-cluster.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 510.46916572717026,
+        "top": 205.42,
+        "right": 1161.53083427283,
+        "bottom": 563
+      }
+    },
+    {
+      "scene": "jungle-town-day",
+      "camera": "portrait",
+      "asset": "jungle/prop-town-cluster.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 678.5,
+        "top": 389.9938080495356,
+        "right": 993.5,
+        "bottom": 563
+      }
+    },
+    {
+      "scene": "jungle-town-day",
+      "camera": "ultrawide",
+      "asset": "jungle/prop-town-cluster.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 649.1916572717024,
+        "top": 357.80000000000007,
+        "right": 1022.8083427282977,
+        "bottom": 563
+      }
+    },
+    {
+      "scene": "jungle-town-rain",
+      "camera": "native",
+      "asset": "jungle/prop-town-cluster.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 510.46916572717026,
+        "top": 257.41999999999996,
+        "right": 1161.53083427283,
+        "bottom": 615
+      }
+    },
+    {
+      "scene": "jungle-town-rain",
+      "camera": "portrait",
+      "asset": "jungle/prop-town-cluster.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 678.5,
+        "top": 441.9938080495356,
+        "right": 993.5,
+        "bottom": 615
+      }
+    },
+    {
+      "scene": "jungle-town-rain",
+      "camera": "ultrawide",
+      "asset": "jungle/prop-town-cluster.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 649.1916572717024,
+        "top": 409.80000000000007,
+        "right": 1022.8083427282977,
+        "bottom": 615
+      }
+    },
+    {
+      "scene": "jungle-town-night",
+      "camera": "native",
+      "asset": "jungle/prop-town-night.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 500.43441887226703,
+        "top": 256.4200000000001,
+        "right": 1171.565581127733,
+        "bottom": 614
+      }
+    },
+    {
+      "scene": "jungle-castle-day",
+      "camera": "native",
+      "asset": "jungle/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 537.4218316373729,
+        "top": 36.03999999999994,
+        "right": 1134.5781683626274,
+        "bottom": 563
+      }
+    },
+    {
+      "scene": "jungle-castle-day",
+      "camera": "portrait",
+      "asset": "jungle/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 728,
+        "top": 372.39102040816323,
+        "right": 944,
+        "bottom": 563
+      }
+    },
+    {
+      "scene": "jungle-castle-day",
+      "camera": "ultrawide",
+      "asset": "jungle/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 664.6586493987048,
+        "top": 260.5999999999999,
+        "right": 1007.3413506012951,
+        "bottom": 563
+      }
+    },
+    {
+      "scene": "jungle-castle-rain",
+      "camera": "native",
+      "asset": "jungle/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 537.4218316373729,
+        "top": 88.03999999999994,
+        "right": 1134.5781683626274,
+        "bottom": 615
+      }
+    },
+    {
+      "scene": "jungle-castle-rain",
+      "camera": "portrait",
+      "asset": "jungle/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 728,
+        "top": 424.39102040816323,
+        "right": 944,
+        "bottom": 615
+      }
+    },
+    {
+      "scene": "jungle-castle-rain",
+      "camera": "ultrawide",
+      "asset": "jungle/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 664.6586493987048,
+        "top": 312.5999999999999,
+        "right": 1007.3413506012951,
+        "bottom": 615
+      }
+    },
+    {
+      "scene": "jungle-castle-night",
+      "camera": "native",
+      "asset": "jungle/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 537.4218316373729,
+        "top": 87.03999999999994,
+        "right": 1134.5781683626274,
+        "bottom": 614
+      }
+    },
+    {
+      "scene": "jungle-castle-night",
+      "camera": "portrait",
+      "asset": "jungle/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 728,
+        "top": 423.39102040816323,
+        "right": 944,
+        "bottom": 614
+      }
+    },
+    {
+      "scene": "jungle-castle-night",
+      "camera": "ultrawide",
+      "asset": "jungle/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 664.6586493987048,
+        "top": 311.5999999999999,
+        "right": 1007.3413506012951,
+        "bottom": 614
+      }
+    },
+    {
+      "scene": "jungle-dungeon-entrance-day",
+      "camera": "native",
+      "asset": "jungle/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 499.382252559727,
+        "top": 11.999999999999986,
+        "right": 1172.617747440273,
+        "bottom": 563
+      }
+    },
+    {
+      "scene": "jungle-dungeon-entrance-day",
+      "camera": "portrait",
+      "asset": "jungle/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 712.2500000000001,
+        "top": 360.4371508379888,
+        "right": 959.75,
+        "bottom": 563
+      }
+    },
+    {
+      "scene": "jungle-dungeon-entrance-day",
+      "camera": "ultrawide",
+      "asset": "jungle/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 631.4634812286689,
+        "top": 228.19999999999993,
+        "right": 1040.536518771331,
+        "bottom": 563
+      }
+    },
+    {
+      "scene": "jungle-dungeon-entrance-rain",
+      "camera": "native",
+      "asset": "jungle/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 479.57617747440275,
+        "top": 31.579999999999984,
+        "right": 1192.4238225255972,
+        "bottom": 615
+      }
+    },
+    {
+      "scene": "jungle-dungeon-entrance-rain",
+      "camera": "portrait",
+      "asset": "jungle/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 712.2500000000001,
+        "top": 412.4371508379888,
+        "right": 959.75,
+        "bottom": 615
+      }
+    },
+    {
+      "scene": "jungle-dungeon-entrance-rain",
+      "camera": "ultrawide",
+      "asset": "jungle/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 631.4634812286689,
+        "top": 280.19999999999993,
+        "right": 1040.536518771331,
+        "bottom": 615
+      }
+    },
+    {
+      "scene": "jungle-dungeon-entrance-night",
+      "camera": "native",
+      "asset": "jungle/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 479.57617747440275,
+        "top": 30.579999999999984,
+        "right": 1192.4238225255972,
+        "bottom": 614
+      }
+    },
+    {
+      "scene": "jungle-dungeon-entrance-night",
+      "camera": "portrait",
+      "asset": "jungle/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 712.2500000000001,
+        "top": 411.4371508379888,
+        "right": 959.75,
+        "bottom": 614
+      }
+    },
+    {
+      "scene": "jungle-dungeon-entrance-night",
+      "camera": "ultrawide",
+      "asset": "jungle/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 631.4634812286689,
+        "top": 279.19999999999993,
+        "right": 1040.536518771331,
+        "bottom": 614
+      }
+    },
+    {
+      "scene": "snowy-city-day",
+      "camera": "native",
+      "asset": "snowy/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 450.488283492823,
+        "top": 149.37,
+        "right": 1221.511716507177,
+        "bottom": 554
+      }
+    },
+    {
+      "scene": "snowy-city-day",
+      "camera": "portrait",
+      "asset": "snowy/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 642.5,
+        "top": 350.9039548022599,
+        "right": 1029.5,
+        "bottom": 554
+      }
+    },
+    {
+      "scene": "snowy-city-day",
+      "camera": "ultrawide",
+      "asset": "snowy/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 614.7711722488039,
+        "top": 321.79999999999995,
+        "right": 1057.2288277511961,
+        "bottom": 554
+      }
+    },
+    {
+      "scene": "snowy-city-rain",
+      "camera": "native",
+      "asset": "snowy/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 450.488283492823,
+        "top": 176.37,
+        "right": 1221.511716507177,
+        "bottom": 581
+      }
+    },
+    {
+      "scene": "snowy-city-rain",
+      "camera": "portrait",
+      "asset": "snowy/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 642.5,
+        "top": 377.9039548022599,
+        "right": 1029.5,
+        "bottom": 581
+      }
+    },
+    {
+      "scene": "snowy-city-rain",
+      "camera": "ultrawide",
+      "asset": "snowy/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 614.7711722488039,
+        "top": 348.79999999999995,
+        "right": 1057.2288277511961,
+        "bottom": 581
+      }
+    },
+    {
+      "scene": "snowy-city-night",
+      "camera": "native",
+      "asset": "snowy/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 450.488283492823,
+        "top": 143.37,
+        "right": 1221.511716507177,
+        "bottom": 548
+      }
+    },
+    {
+      "scene": "snowy-city-night",
+      "camera": "portrait",
+      "asset": "snowy/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 642.5,
+        "top": 344.9039548022599,
+        "right": 1029.5,
+        "bottom": 548
+      }
+    },
+    {
+      "scene": "snowy-city-night",
+      "camera": "ultrawide",
+      "asset": "snowy/prop-city-skyline.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 614.7711722488039,
+        "top": 315.79999999999995,
+        "right": 1057.2288277511961,
+        "bottom": 548
+      }
+    },
+    {
+      "scene": "snowy-town-day",
+      "camera": "native",
+      "asset": "snowy/prop-town-cluster.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 556.286685520362,
+        "top": 196.42000000000002,
+        "right": 1115.713314479638,
+        "bottom": 554
+      }
+    },
+    {
+      "scene": "snowy-town-day",
+      "camera": "portrait",
+      "asset": "snowy/prop-town-cluster.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 678.5,
+        "top": 352.65509761388284,
+        "right": 993.5,
+        "bottom": 554
+      }
+    },
+    {
+      "scene": "snowy-town-day",
+      "camera": "ultrawide",
+      "asset": "snowy/prop-town-cluster.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 675.4843891402716,
+        "top": 348.8,
+        "right": 996.5156108597284,
+        "bottom": 554
+      }
+    },
+    {
+      "scene": "snowy-town-rain",
+      "camera": "native",
+      "asset": "snowy/prop-town-cluster.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 556.286685520362,
+        "top": 223.42000000000002,
+        "right": 1115.713314479638,
+        "bottom": 581
+      }
+    },
+    {
+      "scene": "snowy-town-rain",
+      "camera": "portrait",
+      "asset": "snowy/prop-town-cluster.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 678.5,
+        "top": 379.65509761388284,
+        "right": 993.5,
+        "bottom": 581
+      }
+    },
+    {
+      "scene": "snowy-town-rain",
+      "camera": "ultrawide",
+      "asset": "snowy/prop-town-cluster.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 675.4843891402716,
+        "top": 375.8,
+        "right": 996.5156108597284,
+        "bottom": 581
+      }
+    },
+    {
+      "scene": "snowy-town-night",
+      "camera": "native",
+      "asset": "snowy/prop-town-night.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 544.946511627907,
+        "top": 190.42000000000002,
+        "right": 1127.053488372093,
+        "bottom": 548
+      }
+    },
+    {
+      "scene": "snowy-town-night",
+      "camera": "portrait",
+      "asset": "snowy/prop-town-night.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 678.5,
+        "top": 354.5,
+        "right": 993.5,
+        "bottom": 548
+      }
+    },
+    {
+      "scene": "snowy-town-night",
+      "camera": "ultrawide",
+      "asset": "snowy/prop-town-night.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 668.9767441860465,
+        "top": 342.8,
+        "right": 1003.0232558139535,
+        "bottom": 548
+      }
+    },
+    {
+      "scene": "snowy-castle-day",
+      "camera": "native",
+      "asset": "snowy/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 525.2287179487179,
+        "top": 27.039999999999942,
+        "right": 1146.771282051282,
+        "bottom": 554
+      }
+    },
+    {
+      "scene": "snowy-castle-day",
+      "camera": "portrait",
+      "asset": "snowy/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 728,
+        "top": 370.8695652173913,
+        "right": 944,
+        "bottom": 554
+      }
+    },
+    {
+      "scene": "snowy-castle-day",
+      "camera": "ultrawide",
+      "asset": "snowy/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 657.6615384615384,
+        "top": 251.59999999999994,
+        "right": 1014.3384615384616,
+        "bottom": 554
+      }
+    },
+    {
+      "scene": "snowy-castle-rain",
+      "camera": "native",
+      "asset": "snowy/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 525.2287179487179,
+        "top": 54.03999999999994,
+        "right": 1146.771282051282,
+        "bottom": 581
+      }
+    },
+    {
+      "scene": "snowy-castle-rain",
+      "camera": "portrait",
+      "asset": "snowy/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 728,
+        "top": 397.8695652173913,
+        "right": 944,
+        "bottom": 581
+      }
+    },
+    {
+      "scene": "snowy-castle-rain",
+      "camera": "ultrawide",
+      "asset": "snowy/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 657.6615384615384,
+        "top": 278.5999999999999,
+        "right": 1014.3384615384616,
+        "bottom": 581
+      }
+    },
+    {
+      "scene": "snowy-castle-night",
+      "camera": "native",
+      "asset": "snowy/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 525.2287179487179,
+        "top": 21.039999999999942,
+        "right": 1146.771282051282,
+        "bottom": 548
+      }
+    },
+    {
+      "scene": "snowy-castle-night",
+      "camera": "portrait",
+      "asset": "snowy/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 728,
+        "top": 364.8695652173913,
+        "right": 944,
+        "bottom": 548
+      }
+    },
+    {
+      "scene": "snowy-castle-night",
+      "camera": "ultrawide",
+      "asset": "snowy/prop-castle.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 657.6615384615384,
+        "top": 245.59999999999994,
+        "right": 1014.3384615384616,
+        "bottom": 548
+      }
+    },
+    {
+      "scene": "snowy-dungeon-entrance-day",
+      "camera": "native",
+      "asset": "snowy/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 556.1500441306266,
+        "top": 12.000000000000028,
+        "right": 1115.8499558693734,
+        "bottom": 554
+      }
+    },
+    {
+      "scene": "snowy-dungeon-entrance-day",
+      "camera": "portrait",
+      "asset": "snowy/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 712.2499999999999,
+        "top": 314.32692307692304,
+        "right": 959.75,
+        "bottom": 554
+      }
+    },
+    {
+      "scene": "snowy-dungeon-entrance-day",
+      "camera": "ultrawide",
+      "asset": "snowy/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 663.1332744924978,
+        "top": 219.2,
+        "right": 1008.8667255075022,
+        "bottom": 554
+      }
+    },
+    {
+      "scene": "snowy-dungeon-entrance-rain",
+      "camera": "native",
+      "asset": "snowy/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 542.2091791703443,
+        "top": 11.999999999999975,
+        "right": 1129.7908208296558,
+        "bottom": 581
+      }
+    },
+    {
+      "scene": "snowy-dungeon-entrance-rain",
+      "camera": "portrait",
+      "asset": "snowy/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 712.2499999999999,
+        "top": 341.32692307692304,
+        "right": 959.75,
+        "bottom": 581
+      }
+    },
+    {
+      "scene": "snowy-dungeon-entrance-rain",
+      "camera": "ultrawide",
+      "asset": "snowy/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 663.1332744924978,
+        "top": 246.2,
+        "right": 1008.8667255075022,
+        "bottom": 581
+      }
+    },
+    {
+      "scene": "snowy-dungeon-entrance-night",
+      "camera": "native",
+      "asset": "snowy/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 559.2480141218006,
+        "top": 11.999999999999975,
+        "right": 1112.7519858781995,
+        "bottom": 548
+      }
+    },
+    {
+      "scene": "snowy-dungeon-entrance-night",
+      "camera": "portrait",
+      "asset": "snowy/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 712.2499999999999,
+        "top": 308.32692307692304,
+        "right": 959.75,
+        "bottom": 548
+      }
+    },
+    {
+      "scene": "snowy-dungeon-entrance-night",
+      "camera": "ultrawide",
+      "asset": "snowy/prop-dungeon-entrance.png",
+      "insideViewport": true,
+      "visibleBounds": {
+        "left": 663.1332744924978,
+        "top": 213.2,
+        "right": 1008.8667255075022,
+        "bottom": 548
+      }
+    }
+  ],
+  "cameras": [
+    {
+      "id": "native",
+      "insideSourceCanvas": true
+    },
+    {
+      "id": "landscape",
+      "insideSourceCanvas": true
+    },
+    {
+      "id": "portrait",
+      "insideSourceCanvas": true
+    },
+    {
+      "id": "ultrawide",
+      "insideSourceCanvas": true
+    }
+  ]
+}

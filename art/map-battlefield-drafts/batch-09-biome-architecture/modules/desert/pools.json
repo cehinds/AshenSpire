@@ -1,0 +1,314 @@
+[
+  {
+    "id": "desert-prop-city-skyline",
+    "role": "prop",
+    "items": [
+      {
+        "id": "desert-prop-city-skyline",
+        "asset": "desert/prop-city-skyline.png",
+        "tags": {
+          "biome": [
+            "desert"
+          ],
+          "location": [
+            "city"
+          ],
+          "weather": [
+            "clear"
+          ],
+          "lighting": [
+            "neutral"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "desert-prop-town-cluster",
+    "role": "prop",
+    "items": [
+      {
+        "id": "desert-prop-town-cluster",
+        "asset": "desert/prop-town-cluster.png",
+        "tags": {
+          "biome": [
+            "desert"
+          ],
+          "location": [
+            "town"
+          ],
+          "weather": [
+            "clear"
+          ],
+          "lighting": [
+            "neutral"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "desert-prop-castle",
+    "role": "prop",
+    "items": [
+      {
+        "id": "desert-prop-castle",
+        "asset": "desert/prop-castle.png",
+        "tags": {
+          "biome": [
+            "desert"
+          ],
+          "location": [
+            "castle"
+          ],
+          "weather": [
+            "clear"
+          ],
+          "lighting": [
+            "neutral"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "desert-prop-dungeon-entrance",
+    "role": "prop",
+    "items": [
+      {
+        "id": "desert-prop-dungeon-entrance",
+        "asset": "desert/prop-dungeon-entrance.png",
+        "tags": {
+          "biome": [
+            "desert"
+          ],
+          "location": [
+            "dungeon"
+          ],
+          "weather": [
+            "none"
+          ],
+          "lighting": [
+            "local-ambient"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "desert-ground-street-day",
+    "role": "ground",
+    "items": [
+      {
+        "id": "desert-ground-street-day",
+        "asset": "desert/ground-street-day.png",
+        "tags": {
+          "biome": [
+            "desert"
+          ],
+          "location": [
+            "outdoor"
+          ],
+          "weather": [
+            "clear"
+          ],
+          "lighting": [
+            "day"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "desert-ground-street-rain",
+    "role": "ground",
+    "items": [
+      {
+        "id": "desert-ground-street-rain",
+        "asset": "desert/ground-street-rain.png",
+        "tags": {
+          "biome": [
+            "desert"
+          ],
+          "location": [
+            "outdoor"
+          ],
+          "weather": [
+            "rain"
+          ],
+          "lighting": [
+            "rain"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "desert-ground-dungeon",
+    "role": "ground",
+    "items": [
+      {
+        "id": "desert-ground-dungeon",
+        "asset": "desert/ground-dungeon.png",
+        "tags": {
+          "biome": [
+            "desert"
+          ],
+          "location": [
+            "dungeon"
+          ],
+          "weather": [
+            "none"
+          ],
+          "lighting": [
+            "local-ambient"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "desert-backdrop-day",
+    "role": "backdrop",
+    "items": [
+      {
+        "id": "desert-backdrop-day",
+        "asset": "desert/backdrop-day.png",
+        "tags": {
+          "biome": [
+            "desert"
+          ],
+          "location": [
+            "outdoor"
+          ],
+          "weather": [
+            "clear"
+          ],
+          "lighting": [
+            "day"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "desert-backdrop-rain",
+    "role": "backdrop",
+    "items": [
+      {
+        "id": "desert-backdrop-rain",
+        "asset": "desert/backdrop-rain.png",
+        "tags": {
+          "biome": [
+            "desert"
+          ],
+          "location": [
+            "outdoor"
+          ],
+          "weather": [
+            "rain"
+          ],
+          "lighting": [
+            "rain"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "desert-backdrop-dungeon",
+    "role": "backdrop",
+    "items": [
+      {
+        "id": "desert-backdrop-dungeon",
+        "asset": "desert/backdrop-dungeon.png",
+        "tags": {
+          "biome": [
+            "desert"
+          ],
+          "location": [
+            "dungeon"
+          ],
+          "weather": [
+            "none"
+          ],
+          "lighting": [
+            "local-ambient"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "desert-backdrop-night",
+    "role": "backdrop",
+    "items": [
+      {
+        "id": "desert-backdrop-night",
+        "asset": "desert/backdrop-night.png",
+        "tags": {
+          "biome": [
+            "desert"
+          ],
+          "location": [
+            "outdoor"
+          ],
+          "weather": [
+            "clear"
+          ],
+          "lighting": [
+            "night"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "desert-ground-street-night",
+    "role": "ground",
+    "items": [
+      {
+        "id": "desert-ground-street-night",
+        "asset": "desert/ground-street-night.png",
+        "tags": {
+          "biome": [
+            "desert"
+          ],
+          "location": [
+            "outdoor"
+          ],
+          "weather": [
+            "clear"
+          ],
+          "lighting": [
+            "night"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "desert-prop-town-night",
+    "role": "prop",
+    "items": [
+      {
+        "id": "desert-prop-town-night",
+        "asset": "desert/prop-town-night.png",
+        "tags": {
+          "biome": [
+            "desert"
+          ],
+          "location": [
+            "town"
+          ],
+          "weather": [
+            "clear"
+          ],
+          "lighting": [
+            "night"
+          ]
+        }
+      }
+    ]
+  }
+]

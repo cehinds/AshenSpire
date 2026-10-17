@@ -1,0 +1,97 @@
+{
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "reviewScope": "Visual style, composition, subject completeness and measured raw-source metadata. Approved is visual acceptance; alpha normalization and crop calibration remain separate production tasks. No image pixels edited.",
+  "items": [
+    {
+      "id": "snowy/backdrop-day",
+      "verdict": "approved",
+      "reason": "Cold painted mountain valley with layered muted distance, ground-level horizon and quiet center; fully opaque.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "264e1874de750eef58296a506e23038db4d1447ce4ef9b83c350b24b13c53a43"
+    },
+    {
+      "id": "snowy/backdrop-dungeon",
+      "verdict": "approved",
+      "reason": "Frost vault interior with large peripheral arches and quiet open center; coherent cold stone and low camera; fully opaque.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "dfa79586988629dde09be0e916bac44c7fbae72871ff76842fb564c9b62a6bdc"
+    },
+    {
+      "id": "snowy/backdrop-night",
+      "verdict": "approved",
+      "reason": "Independently painted moonlit mountain valley and night sky, clear low-key night values and quiet center; fully opaque.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "19eab419e6deb6355e930d7943729bccb8f6099ce38c4bd2a9b0ade1924f4a1d"
+    },
+    {
+      "id": "snowy/backdrop-rain",
+      "verdict": "approved",
+      "reason": "Overcast mountain valley with softer damp gray atmosphere, no rain particles and quiet center; fully opaque.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "5d7e252b7fd07070e9d8cecd597e7d00655ca03cb8ad15df1e28114f1e3ba322"
+    },
+    {
+      "id": "snowy/ground-dungeon",
+      "verdict": "approved",
+      "reason": "Broad frost-stone tiles, shallow low perspective and quiet center; no baked walls. Raw generated alpha contains trace values \u22641/255 above 52% and lower edge 240\u2013253/255.",
+      "profileId": "battlefield-ground",
+      "sha256": "a91e5e6d50260487ef57b201678344ae48e19bc3e190ebbfbf47eba0ce0bcd11"
+    },
+    {
+      "id": "snowy/ground-street-day",
+      "verdict": "approved",
+      "reason": "Low packed-snow cobble plane with quiet center and edge-spanning lower material; visually clear upper field. Raw generated alpha contains trace values \u22641/255 above 52% and lower edge 246\u2013254/255; not strict normalized alpha.",
+      "profileId": "battlefield-ground",
+      "sha256": "20a10db72fa0381c167c81e12b46f91d44082511c861bee0586c5397165bb401"
+    },
+    {
+      "id": "snowy/ground-street-night",
+      "verdict": "approved",
+      "reason": "Independently moonlit snow and stone street plane with low camera, edge-spanning material and quiet center. Some restrained moon highlights; no mirror ice. Raw generated alpha trace \u22642/255 above 52% and lower edge 227\u2013253/255.",
+      "profileId": "battlefield-ground",
+      "sha256": "5146a8af47599a262f6f5eb1757b8c5b1bbca28ddafdcf11e8bb8643b4cbc3df"
+    },
+    {
+      "id": "snowy/ground-street-rain",
+      "verdict": "approved",
+      "reason": "Low wet-stone and slush plane, restrained wetness with no mirror ice or rain particles. Clear upper field; horizon slightly lower than requested. Raw generated alpha contains trace values \u22641/255 above 52% and lower edge 245\u2013253/255.",
+      "profileId": "battlefield-ground",
+      "sha256": "eb7508cbbf7a7cba51cc712229e84b40c1c6af84be75c3bee45545ec8b57e528"
+    },
+    {
+      "id": "snowy/prop-castle",
+      "verdict": "approved",
+      "reason": "Complete stone castle with snowy sloping roofs and no terrain island; low camera and coherent cold matte materials. Tighter margins than requested.",
+      "profileId": "battlefield-prop",
+      "sha256": "e31d90cbb97ea2eab542e28c5a153697003239adec6c061b945f87539d71370e"
+    },
+    {
+      "id": "snowy/prop-city-skyline",
+      "verdict": "approved",
+      "reason": "Complete low-view walled mountain city; cohesive weathered gray stone, snowy slate and dark timber. Generous-margin request not fully achieved; no substantial clipping.",
+      "profileId": "battlefield-prop",
+      "sha256": "5ffa2a9396b98c115aadcef35fba85c0d073b2054a9edb75eeca101cfac67909"
+    },
+    {
+      "id": "snowy/prop-dungeon-entrance",
+      "verdict": "approved",
+      "reason": "Complete frost vault masonry portal and iron doors; isolated, low camera, weathered stone and chalk snow. Tighter margins than requested.",
+      "profileId": "battlefield-prop",
+      "sha256": "6df581fcfd0c3ddf53c2e844cbee4a6d64e61cd0e9b703e743be0ce73c91e7ab"
+    },
+    {
+      "id": "snowy/prop-town-cluster",
+      "verdict": "approved",
+      "reason": "Three complete steep-roof snowy townhouses; low camera and matte cold materials match architecture family. Tighter margins than requested.",
+      "profileId": "battlefield-prop",
+      "sha256": "4853a35e6bdb46f0748a92208f96b563e0ab8a28eb15ea2dbf1aa3ec50370c35"
+    },
+    {
+      "id": "snowy/prop-town-night",
+      "verdict": "approved",
+      "reason": "Three complete snowy townhouses independently painted in moonlight with warm windows and modest lantern; isolated and coherent matte materials. Tighter margins than requested.",
+      "profileId": "battlefield-prop",
+      "sha256": "6b06a906363943e751adb12f1bb11b9d544e4f78016d2a0d99b255c20f698da8"
+    }
+  ]
+}

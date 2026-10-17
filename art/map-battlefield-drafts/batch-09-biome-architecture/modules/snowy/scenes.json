@@ -1,0 +1,420 @@
+[
+  {
+    "id": "snowy-city-day",
+    "biome": "snowy",
+    "location": "city",
+    "condition": "day",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "snowy/backdrop-day.png"
+      },
+      {
+        "role": "prop",
+        "asset": "snowy/prop-city-skyline.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.86,
+        "maxHeightFraction": 0.43,
+        "baseOcclusionPixels": 12
+      },
+      {
+        "role": "ground",
+        "asset": "snowy/ground-street-day.png"
+      }
+    ]
+  },
+  {
+    "id": "snowy-city-rain",
+    "biome": "snowy",
+    "location": "city",
+    "condition": "rain",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "snowy/backdrop-rain.png"
+      },
+      {
+        "role": "prop",
+        "asset": "snowy/prop-city-skyline.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.86,
+        "maxHeightFraction": 0.43,
+        "baseOcclusionPixels": 12,
+        "previewAmbientGrade": {
+          "brightness": 0.8,
+          "saturation": 0.85,
+          "reason": "Preview overcast ambient grading of neutral prop."
+        }
+      },
+      {
+        "role": "ground",
+        "asset": "snowy/ground-street-rain.png"
+      },
+      {
+        "role": "filter",
+        "asset": "../batch-04-atmosphere/filters/filter-rain.png",
+        "opacity": 0.65
+      },
+      {
+        "role": "particles",
+        "asset": "../batch-04-atmosphere/particles/rain.png",
+        "opacity": 0.3,
+        "optional": true
+      }
+    ]
+  },
+  {
+    "id": "snowy-city-night",
+    "biome": "snowy",
+    "location": "city",
+    "condition": "night",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "snowy/backdrop-night.png"
+      },
+      {
+        "role": "prop",
+        "asset": "snowy/prop-city-skyline.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.86,
+        "maxHeightFraction": 0.43,
+        "baseOcclusionPixels": 12,
+        "previewAmbientGrade": {
+          "brightness": 0.48,
+          "saturation": 0.65,
+          "reason": "Preview ambient grading of neutral unlit prop; not a painted night relight."
+        }
+      },
+      {
+        "role": "ground",
+        "asset": "snowy/ground-street-night.png"
+      },
+      {
+        "role": "filter",
+        "asset": "../batch-04-atmosphere/filters/filter-night.png",
+        "opacity": 0.5
+      }
+    ]
+  },
+  {
+    "id": "snowy-town-day",
+    "biome": "snowy",
+    "location": "town",
+    "condition": "day",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "snowy/backdrop-day.png"
+      },
+      {
+        "role": "prop",
+        "asset": "snowy/prop-town-cluster.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.7,
+        "maxHeightFraction": 0.38,
+        "baseOcclusionPixels": 12
+      },
+      {
+        "role": "ground",
+        "asset": "snowy/ground-street-day.png"
+      }
+    ]
+  },
+  {
+    "id": "snowy-town-rain",
+    "biome": "snowy",
+    "location": "town",
+    "condition": "rain",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "snowy/backdrop-rain.png"
+      },
+      {
+        "role": "prop",
+        "asset": "snowy/prop-town-cluster.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.7,
+        "maxHeightFraction": 0.38,
+        "baseOcclusionPixels": 12,
+        "previewAmbientGrade": {
+          "brightness": 0.8,
+          "saturation": 0.85,
+          "reason": "Preview overcast ambient grading of neutral prop."
+        }
+      },
+      {
+        "role": "ground",
+        "asset": "snowy/ground-street-rain.png"
+      },
+      {
+        "role": "filter",
+        "asset": "../batch-04-atmosphere/filters/filter-rain.png",
+        "opacity": 0.65
+      },
+      {
+        "role": "particles",
+        "asset": "../batch-04-atmosphere/particles/rain.png",
+        "opacity": 0.3,
+        "optional": true
+      }
+    ]
+  },
+  {
+    "id": "snowy-town-night",
+    "biome": "snowy",
+    "location": "town",
+    "condition": "night",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "snowy/backdrop-night.png"
+      },
+      {
+        "role": "prop",
+        "asset": "snowy/prop-town-night.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.7,
+        "maxHeightFraction": 0.38,
+        "baseOcclusionPixels": 12
+      },
+      {
+        "role": "ground",
+        "asset": "snowy/ground-street-night.png"
+      },
+      {
+        "role": "filter",
+        "asset": "../batch-04-atmosphere/filters/filter-night.png",
+        "opacity": 0.5
+      }
+    ]
+  },
+  {
+    "id": "snowy-castle-day",
+    "biome": "snowy",
+    "location": "castle",
+    "condition": "day",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "snowy/backdrop-day.png"
+      },
+      {
+        "role": "prop",
+        "asset": "snowy/prop-castle.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.48,
+        "maxHeightFraction": 0.56,
+        "baseOcclusionPixels": 12
+      },
+      {
+        "role": "ground",
+        "asset": "snowy/ground-street-day.png"
+      }
+    ]
+  },
+  {
+    "id": "snowy-castle-rain",
+    "biome": "snowy",
+    "location": "castle",
+    "condition": "rain",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "snowy/backdrop-rain.png"
+      },
+      {
+        "role": "prop",
+        "asset": "snowy/prop-castle.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.48,
+        "maxHeightFraction": 0.56,
+        "baseOcclusionPixels": 12,
+        "previewAmbientGrade": {
+          "brightness": 0.8,
+          "saturation": 0.85,
+          "reason": "Preview overcast ambient grading of neutral prop."
+        }
+      },
+      {
+        "role": "ground",
+        "asset": "snowy/ground-street-rain.png"
+      },
+      {
+        "role": "filter",
+        "asset": "../batch-04-atmosphere/filters/filter-rain.png",
+        "opacity": 0.65
+      },
+      {
+        "role": "particles",
+        "asset": "../batch-04-atmosphere/particles/rain.png",
+        "opacity": 0.3,
+        "optional": true
+      }
+    ]
+  },
+  {
+    "id": "snowy-castle-night",
+    "biome": "snowy",
+    "location": "castle",
+    "condition": "night",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "snowy/backdrop-night.png"
+      },
+      {
+        "role": "prop",
+        "asset": "snowy/prop-castle.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.48,
+        "maxHeightFraction": 0.56,
+        "baseOcclusionPixels": 12,
+        "previewAmbientGrade": {
+          "brightness": 0.48,
+          "saturation": 0.65,
+          "reason": "Preview ambient grading of neutral unlit prop; not a painted night relight."
+        }
+      },
+      {
+        "role": "ground",
+        "asset": "snowy/ground-street-night.png"
+      },
+      {
+        "role": "filter",
+        "asset": "../batch-04-atmosphere/filters/filter-night.png",
+        "opacity": 0.5
+      }
+    ]
+  },
+  {
+    "id": "snowy-dungeon-entrance-day",
+    "biome": "snowy",
+    "location": "dungeon-entrance",
+    "condition": "day",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "snowy/backdrop-day.png"
+      },
+      {
+        "role": "prop",
+        "asset": "snowy/prop-dungeon-entrance.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.55,
+        "maxHeightFraction": 0.62,
+        "baseOcclusionPixels": 12
+      },
+      {
+        "role": "ground",
+        "asset": "snowy/ground-street-day.png"
+      }
+    ]
+  },
+  {
+    "id": "snowy-dungeon-entrance-rain",
+    "biome": "snowy",
+    "location": "dungeon-entrance",
+    "condition": "rain",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "snowy/backdrop-rain.png"
+      },
+      {
+        "role": "prop",
+        "asset": "snowy/prop-dungeon-entrance.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.55,
+        "maxHeightFraction": 0.62,
+        "baseOcclusionPixels": 12,
+        "previewAmbientGrade": {
+          "brightness": 0.8,
+          "saturation": 0.85,
+          "reason": "Preview overcast ambient grading of neutral prop."
+        }
+      },
+      {
+        "role": "ground",
+        "asset": "snowy/ground-street-rain.png"
+      },
+      {
+        "role": "filter",
+        "asset": "../batch-04-atmosphere/filters/filter-rain.png",
+        "opacity": 0.65
+      },
+      {
+        "role": "particles",
+        "asset": "../batch-04-atmosphere/particles/rain.png",
+        "opacity": 0.3,
+        "optional": true
+      }
+    ]
+  },
+  {
+    "id": "snowy-dungeon-entrance-night",
+    "biome": "snowy",
+    "location": "dungeon-entrance",
+    "condition": "night",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "snowy/backdrop-night.png"
+      },
+      {
+        "role": "prop",
+        "asset": "snowy/prop-dungeon-entrance.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.55,
+        "maxHeightFraction": 0.62,
+        "baseOcclusionPixels": 12,
+        "previewAmbientGrade": {
+          "brightness": 0.48,
+          "saturation": 0.65,
+          "reason": "Preview ambient grading of neutral unlit prop; not a painted night relight."
+        }
+      },
+      {
+        "role": "ground",
+        "asset": "snowy/ground-street-night.png"
+      },
+      {
+        "role": "filter",
+        "asset": "../batch-04-atmosphere/filters/filter-night.png",
+        "opacity": 0.5
+      }
+    ]
+  },
+  {
+    "id": "snowy-dungeon-interior",
+    "biome": "snowy",
+    "location": "dungeon",
+    "condition": "local-ambient",
+    "interior": true,
+    "timeIndependent": true,
+    "precipitation": "none",
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "snowy/backdrop-dungeon.png"
+      },
+      {
+        "role": "ground",
+        "asset": "snowy/ground-dungeon.png"
+      }
+    ]
+  }
+]

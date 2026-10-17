@@ -1,0 +1,86 @@
+[
+  {
+    "id": "prop-mountain-dry-near",
+    "asset": "mountains/prop-mountain-dry-near.png",
+    "role": "prop",
+    "tags": {
+      "terrain": [
+        "dry"
+      ],
+      "depth": [
+        "near"
+      ]
+    },
+    "depth": "near"
+  },
+  {
+    "id": "prop-mountain-dry-distant",
+    "asset": "mountains/prop-mountain-dry-distant.png",
+    "role": "prop",
+    "tags": {
+      "terrain": [
+        "dry"
+      ],
+      "depth": [
+        "far"
+      ]
+    },
+    "depth": "far"
+  },
+  {
+    "id": "prop-mountain-volcanic-near",
+    "asset": "mountains/prop-mountain-volcanic-near.png",
+    "role": "prop",
+    "tags": {
+      "terrain": [
+        "volcanic"
+      ],
+      "depth": [
+        "near"
+      ]
+    },
+    "depth": "near"
+  },
+  {
+    "id": "prop-mountain-volcanic-distant",
+    "asset": "mountains/prop-mountain-volcanic-distant.png",
+    "role": "prop",
+    "tags": {
+      "terrain": [
+        "volcanic"
+      ],
+      "depth": [
+        "far"
+      ]
+    },
+    "depth": "far"
+  },
+  {
+    "id": "prop-mountain-snowy-near",
+    "asset": "mountains/prop-mountain-snowy-near.png",
+    "role": "prop",
+    "tags": {
+      "terrain": [
+        "snow"
+      ],
+      "depth": [
+        "near"
+      ]
+    },
+    "depth": "near"
+  },
+  {
+    "id": "prop-mountain-snowy-distant",
+    "asset": "mountains/prop-mountain-snowy-distant.png",
+    "role": "prop",
+    "tags": {
+      "terrain": [
+        "snow"
+      ],
+      "depth": [
+        "far"
+      ]
+    },
+    "depth": "far"
+  }
+]

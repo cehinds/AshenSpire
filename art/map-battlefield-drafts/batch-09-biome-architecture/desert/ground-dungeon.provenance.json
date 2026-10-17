@@ -1,0 +1,51 @@
+{
+  "name": "ground-dungeon",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Hand-painted realistic medieval fantasy, tactile weathered matte materials, broad controlled brushwork, subtle natural material edges, muted earth colors, soft diffuse light from upper left, restrained highlights. No heavy cartoon outline, no shiny toy-like 3D render, no photographic sparkle, no text, lettering, numbers, logos, frames, people or characters. This is a reusable layered COMBAT SCENE component, viewed from a LOW ground-level near-frontal side camera with a gentle three-quarter angle, NOT elevated isometric map-icon camera. Keep center of the playable scene quiet. Do not paint rain streaks, snowflakes or global screen tint into base art; weather is a separate layer. Preserve ample usable material around the edges for multiple camera crops. Native output dimensions will be measured; do not fake resolution.\nGROUND: Request landscape 3072x1728. Upper 55% completely transparent alpha zero. Ground only bottom 45%, opaque to left/right/bottom edges. Shallow side-view plane, broad quiet middle 60%, edge texture. DESERT SUBJECT: interior ancient sandstone tomb floor of broad worn gray ochre masonry slabs, dusty seams, subdued stone in dark interior, extremely subtle localized amber illumination near far edges, no painted lamps. No walls, sky, background or props.",
+  "sourceOutputPath": "/workspace/generated_images/exec-b718dc4d-517f-4e6c-870e-51c4d82d8d89.png",
+  "generator": "OpenAI image_gen",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-ground",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "sha256": "2e9c1f85e0c1aec3613d86140a5ab15783231b85d8f5f05ebdaf3cd61296e2df",
+  "sourceSha256": "2e9c1f85e0c1aec3613d86140a5ab15783231b85d8f5f05ebdaf3cd61296e2df",
+  "processing": "Byte-identical retained imagegen output; no image editing, trimming, resizing or upscaling.",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "visibleBoundsAt32": [
+      0,
+      562,
+      1672,
+      941
+    ],
+    "alphaQA": {
+      "transparentFraction": 0.5263164250593637,
+      "borderPixelsAt32": 2428,
+      "normalizedMarginsAt32": [
+        0.0,
+        0.5972369819341127,
+        0.0,
+        0.0
+      ]
+    },
+    "medianCenterHorizonY": 580,
+    "bottomAlphaRange": [
+      248,
+      254
+    ]
+  }
+}

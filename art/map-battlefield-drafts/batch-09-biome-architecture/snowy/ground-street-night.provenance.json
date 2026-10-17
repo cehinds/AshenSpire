@@ -1,0 +1,57 @@
+{
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Hand-painted realistic medieval fantasy, tactile weathered matte materials, broad controlled brushwork, subtle natural material edges, muted earth colors, soft diffuse light from upper left, restrained highlights. No heavy cartoon outline, no shiny toy-like 3D render, no photographic sparkle, no text, lettering, numbers, logos, frames, people or characters. This is a reusable layered COMBAT SCENE component, viewed from a LOW ground-level near-frontal side camera with a gentle three-quarter angle, NOT elevated isometric map-icon camera. Keep center of the playable scene quiet. Do not paint rain streaks, snowflakes or global screen tint into base art; weather is a separate layer. Preserve ample usable material around the edges for multiple camera crops. Native output dimensions will be measured; do not fake resolution. Palette: weathered gray stone, dark timber, chalk snow, muted steel-blue shadows. ONLY shallow low ground-level snowy cobblestone street plane painted specifically for NIGHT with cool muted steel-blue moonlight, low-key snow and dark stone. Night lighting OVERRIDES prefix daylight. Quiet middle 60 percent. Entire upper 55 percent pure transparent alpha zero. Opaque lower street extends fully left right bottom edges. Level horizontal far edge y55%. No buildings backdrop or particles. Requested canvas dimensions 3072x1728 landscape.",
+  "generator": "OpenAI image_gen",
+  "sourceOutputPath": "/workspace/generated_images/exec-64e6c819-db8b-43e0-a795-d48691f4d8be.png",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-ground",
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "sha256": "5146a8af47599a262f6f5eb1757b8c5b1bbca28ddafdcf11e8bb8643b4cbc3df",
+  "alphaBounds": [
+    0,
+    1,
+    1672,
+    941
+  ],
+  "sourceByteIdentical": true,
+  "status": "draft-unregistered",
+  "sourceSha256": "5146a8af47599a262f6f5eb1757b8c5b1bbca28ddafdcf11e8bb8643b4cbc3df",
+  "processing": "Byte-identical retained imagegen output; no image editing, trimming, resizing or upscaling.",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "visibleBoundsAt32": [
+      0,
+      533,
+      1672,
+      941
+    ],
+    "alphaQA": {
+      "transparentFraction": 0.5504235542968134,
+      "borderPixelsAt32": 2481,
+      "normalizedMarginsAt32": [
+        0.0,
+        0.5664187035069076,
+        0.0,
+        0.0
+      ]
+    },
+    "medianCenterHorizonY": 536,
+    "bottomAlphaRange": [
+      227,
+      253
+    ]
+  }
+}

@@ -28,4 +28,4 @@ for(const file of fs.readdirSync(path.join(moduleRoot,'art')).filter(f=>f.endsWi
  }
  write(absolute,data);
 }
-console.log('Applied reviewed style metadata to all eight batch manifests and six component catalogs.');
+console.log(`Applied reviewed style metadata to ${catalog.batches.length} batch manifests and six component catalogs.`);

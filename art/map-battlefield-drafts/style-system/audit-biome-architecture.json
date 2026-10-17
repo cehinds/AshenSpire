@@ -1,0 +1,320 @@
+{
+  "scope": "45 new original source paintings: generating agents inspect each result; full-family and composition review is recorded in batch-09 REVIEW.md.",
+  "items": [
+    {
+      "assetKey": "batch-09-biome-architecture/desert/prop-city-skyline",
+      "verdict": "approved",
+      "reason": "Approved painted rear oasis architecture with complete readable front-facing buildings and restrained tan timber/cloth palette. Side alpha margins are tighter than requested; preserve original without margin-only regeneration.",
+      "profileId": "battlefield-prop",
+      "sha256": "38f771b4ef8c79a56f36aa99411d51f223ec96220233005a6501e97eb807ab43"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/desert/prop-town-cluster",
+      "verdict": "approved",
+      "reason": "Approved compact three-house sandstone cluster with flat roofs, tactile weathered materials and neutral daylight. Alpha margins are narrower than requested but architecture is complete.",
+      "profileId": "battlefield-prop",
+      "sha256": "407d18fa8aaa5151ea1f49a57d1771339f10201c718b45aa561c86d2ca1ade53"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/desert/prop-castle",
+      "verdict": "approved",
+      "reason": "Approved complete fortified sandstone silhouette, low frontal camera, coherent matte masonry. Side margins are narrower than requested; no terrain platform.",
+      "profileId": "battlefield-prop",
+      "sha256": "ebb3758637a5f103cf7fa1b0af511baa309c2ad889c7eb003842127e47c1836c"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/desert/prop-dungeon-entrance",
+      "verdict": "approved",
+      "reason": "Approved ancient sandstone tomb gate with recessed dark entrance and modest rubble, no excessive ground. Complete silhouette with narrow side margins.",
+      "profileId": "battlefield-prop",
+      "sha256": "a0ba70bf806098ac05471eae97849b48de91eae1b60060cecca1301b6631d1ca"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/desert/ground-street-day",
+      "verdict": "approved",
+      "reason": "Approved quiet pale sandstone street center with stronger peripheral texture and broad transparent upper field. Alpha>=16 begins at y554/941; upper field has residual alpha<=1 and bottom edge minimum alpha238, retained original without editing.",
+      "profileId": "battlefield-ground",
+      "sha256": "2905533a66fec35498bd4dfbf1b7db53c880841038beeae8d9c6dce64b6dc2e9"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/desert/ground-street-rain",
+      "verdict": "approved",
+      "reason": "Approved damp muted paving with modest side puddles and no baked rain particles. Alpha>=16 begins at y512/941; upper52 percent residual alpha<=1, bottom edge minimum237, retained original.",
+      "profileId": "battlefield-ground",
+      "sha256": "17817331a55ff98e921a7db8329b385d5376901b140174dc0d69328193ea756a"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/desert/ground-dungeon",
+      "verdict": "approved",
+      "reason": "Approved broad worn interior masonry floor, quiet center and subtle amber edge illumination. Alpha>=16 begins y561/941; upper52 percent residual alpha<=2, bottom minimum248, retained original.",
+      "profileId": "battlefield-ground",
+      "sha256": "2e9c1f85e0c1aec3613d86140a5ab15783231b85d8f5f05ebdaf3cd61296e2df"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/desert/backdrop-day",
+      "verdict": "approved",
+      "reason": "Approved opaque neutral daytime oasis panorama, soft distant mesas, quiet open center and peripheral sandstone/palm detail; no sunset wash.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "723873874fd396bc655220b16b3e0ce6903abff4ca124a6e9a69d4ee4fef014d"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/desert/backdrop-rain",
+      "verdict": "approved",
+      "reason": "Approved opaque cool overcast oasis panorama with damp muted ground and restrained puddles; no rain particles.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "9f969ae1250f7fd85849682dbe9710917dc45ea2b88b2a705092fb94ecb9476e"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/desert/backdrop-dungeon",
+      "verdict": "approved",
+      "reason": "Approved opaque broad tomb interior masonry with subdued local amber side lamps and quiet central blind arch/floor.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "657f175551e6ba07c02e3aa267fa916a0253a1db9ba1a07463ae46c60f39a1b3"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/desert/backdrop-night",
+      "verdict": "approved",
+      "reason": "Approved genuinely painted cool moonlit oasis panorama, blue night sky and small distant amber lights, quiet open center.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "1d29c46bd981a8f6f4443b4fefd0c7e9ab40385b3c1cd1e67213940d032ff014"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/desert/ground-street-night",
+      "verdict": "approved",
+      "reason": "Approved genuinely painted cool moonlit paving with restrained local amber side light and quiet center. Alpha>=16 begins y495/941; upper52 percent residual alpha<=2, bottom minimum245, retained original.",
+      "profileId": "battlefield-ground",
+      "sha256": "235e2b1d0f6bc1214e0c8fb67684746d1512912da659c50b5c1f7cb45f2ec605"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/desert/prop-town-night",
+      "verdict": "approved",
+      "reason": "Approved three-house transparent sandstone cluster with genuinely painted cool moonlight and localized warm lamps/windows. Complete silhouette with narrow side margins.",
+      "profileId": "battlefield-prop",
+      "sha256": "c645da076332e3ab6ebc0ea476a558884c579edcf1eba653967aa26d6d37ee45"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/jungle/prop-city-skyline",
+      "verdict": "approved",
+      "reason": "Complete low-angle stone citadel and timber stilt cluster; muted tactile materials, no terrain base. Margins modest but silhouette complete. Native imagegen alpha includes faint low-alpha residue; source preserved unchanged.",
+      "profileId": "battlefield-prop",
+      "sha256": "8caa0374bd45364809ba8a9cf999980e2ed38e4a67f5039b0e517d3ca0ce3ef6"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/jungle/prop-town-cluster",
+      "verdict": "approved",
+      "reason": "Three complete stilt huts, matte timber and tan thatch, isolated silhouette without terrain. Tight but unclipped framing. Native imagegen alpha includes faint low-alpha residue; source preserved unchanged.",
+      "profileId": "battlefield-prop",
+      "sha256": "c62625c5459662131be52be1f0da9ec19909b41fc0d4891fd6f123cbe1e62bff"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/jungle/prop-castle",
+      "verdict": "approved",
+      "reason": "Complete overgrown gray stone fort, low near-frontal camera and coherent muted material palette. Native imagegen alpha includes faint low-alpha residue; source preserved unchanged.",
+      "profileId": "battlefield-prop",
+      "sha256": "1531a09cd6dce728b9fded13c8400126f258e62d9d275f4c6ef4010140072b28"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/jungle/prop-dungeon-entrance",
+      "verdict": "approved",
+      "reason": "Replacement improves complete vine-worn gate framing with clear alpha margins and descending dark opening. Native imagegen alpha includes faint low-alpha residue; source preserved unchanged.",
+      "profileId": "battlefield-prop",
+      "sha256": "c5dab43f45e80540d5ce3995bb1323c25c038ba54b9e33b6915a6e4e202cac5f"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/jungle/ground-street-day",
+      "verdict": "approved",
+      "reason": "Quiet central paver/earth plane, side roots, transparent upper field and continuous lower edge coverage. Native imagegen alpha includes faint low-alpha residue; source preserved unchanged.",
+      "profileId": "battlefield-ground",
+      "sha256": "d33d85f2780681e37d6c2b35950a64f0c740fba67eada3620c9681eba07ee56c"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/jungle/ground-street-rain",
+      "verdict": "approved",
+      "reason": "Replacement has modest puddles and damp pavers with low peripheral vegetation and ample upper transparency. Native imagegen alpha includes faint low-alpha residue; source preserved unchanged.",
+      "profileId": "battlefield-ground",
+      "sha256": "2e5d0c0ac33b8655a873b006024170d3ad645919a0341064989784a45da71345"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/jungle/ground-dungeon",
+      "verdict": "approved",
+      "reason": "Broad ancient gray flagstones with quiet middle and restrained moss at sides; transparent upper field. Native imagegen alpha includes faint low-alpha residue; source preserved unchanged.",
+      "profileId": "battlefield-ground",
+      "sha256": "d2ea6376f31611227d67a72eff67fe0442678c4c791b85d3396f390820cc0fa3"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/jungle/backdrop-day",
+      "verdict": "approved",
+      "reason": "Ground-level layered jungle canopy with muted atmospheric depth, open central combat space and no foreground prop. Native imagegen alpha includes faint low-alpha residue; source preserved unchanged.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "d24624b76b554431355699b989a14d25f4ba0f8dc5d59032f16229d630184833"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/jungle/backdrop-rain",
+      "verdict": "approved",
+      "reason": "Cool overcast jungle depth and damp open center; no baked rain particles. Native imagegen alpha includes faint low-alpha residue; source preserved unchanged.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "8fb7ec04efac1f353135865c012ef13ccb8214b1fb6aa61145347c265280dc1c"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/jungle/backdrop-dungeon",
+      "verdict": "approved",
+      "reason": "Old stone temple interior with side pillars and clear central combat floor; no foreground entrance prop. Native imagegen alpha includes faint low-alpha residue; source preserved unchanged.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "1b10e4700b941ba577f4457cea2cd96cbc7662df7394ca2548a9e360402d1d96"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/jungle/backdrop-night",
+      "verdict": "approved",
+      "reason": "Painted moonlit jungle with deliberate low-key lighting, quiet center and no particle field. Native imagegen alpha includes faint low-alpha residue; source preserved unchanged.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "c5f05c05407baa8f7a90cee1d24576164852f72bb9f09b9c9d08bbfacd9df1fc"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/jungle/ground-street-night",
+      "verdict": "approved",
+      "reason": "Painted cool moonlit paver/earth strip with quiet center, alpha upper field and full-width lower material. Native imagegen alpha includes faint low-alpha residue; source preserved unchanged.",
+      "profileId": "battlefield-ground",
+      "sha256": "a690df117e81db85544de7e8a0727f556d44b5578192bea5ad921fd0d0058bac"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/jungle/prop-town-night",
+      "verdict": "approved",
+      "reason": "Three complete stilt huts with cool painted moonlight and warm local windows; transparent isolated silhouette. Native imagegen alpha includes faint low-alpha residue; source preserved unchanged.",
+      "profileId": "battlefield-prop",
+      "sha256": "1cdb3ff99f3598d57b4403d78771113fec2e6970f9384a0aa2ac740d4505fad7"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/snowy/prop-city-skyline",
+      "verdict": "approved",
+      "reason": "Complete low-view walled mountain city; cohesive weathered gray stone, snowy slate and dark timber. Generous-margin request not fully achieved; no substantial clipping.",
+      "profileId": "battlefield-prop",
+      "sha256": "5ffa2a9396b98c115aadcef35fba85c0d073b2054a9edb75eeca101cfac67909"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/snowy/prop-town-cluster",
+      "verdict": "approved",
+      "reason": "Three complete steep-roof snowy townhouses; low camera and matte cold materials match architecture family. Tighter margins than requested.",
+      "profileId": "battlefield-prop",
+      "sha256": "4853a35e6bdb46f0748a92208f96b563e0ab8a28eb15ea2dbf1aa3ec50370c35"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/snowy/prop-castle",
+      "verdict": "approved",
+      "reason": "Complete stone castle with snowy sloping roofs and no terrain island; low camera and coherent cold matte materials. Tighter margins than requested.",
+      "profileId": "battlefield-prop",
+      "sha256": "e31d90cbb97ea2eab542e28c5a153697003239adec6c061b945f87539d71370e"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/snowy/prop-dungeon-entrance",
+      "verdict": "approved",
+      "reason": "Complete frost vault masonry portal and iron doors; isolated, low camera, weathered stone and chalk snow. Tighter margins than requested.",
+      "profileId": "battlefield-prop",
+      "sha256": "6df581fcfd0c3ddf53c2e844cbee4a6d64e61cd0e9b703e743be0ce73c91e7ab"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/snowy/ground-street-day",
+      "verdict": "approved",
+      "reason": "Low packed-snow cobble plane with quiet center and edge-spanning lower material; visually clear upper field. Raw generated alpha contains trace values \u22641/255 above 52% and lower edge 246\u2013254/255; not strict normalized alpha.",
+      "profileId": "battlefield-ground",
+      "sha256": "20a10db72fa0381c167c81e12b46f91d44082511c861bee0586c5397165bb401"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/snowy/ground-street-rain",
+      "verdict": "approved",
+      "reason": "Low wet-stone and slush plane, restrained wetness with no mirror ice or rain particles. Clear upper field; horizon slightly lower than requested. Raw generated alpha contains trace values \u22641/255 above 52% and lower edge 245\u2013253/255.",
+      "profileId": "battlefield-ground",
+      "sha256": "eb7508cbbf7a7cba51cc712229e84b40c1c6af84be75c3bee45545ec8b57e528"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/snowy/ground-dungeon",
+      "verdict": "approved",
+      "reason": "Broad frost-stone tiles, shallow low perspective and quiet center; no baked walls. Raw generated alpha contains trace values \u22641/255 above 52% and lower edge 240\u2013253/255.",
+      "profileId": "battlefield-ground",
+      "sha256": "a91e5e6d50260487ef57b201678344ae48e19bc3e190ebbfbf47eba0ce0bcd11"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/snowy/backdrop-day",
+      "verdict": "approved",
+      "reason": "Cold painted mountain valley with layered muted distance, ground-level horizon and quiet center; fully opaque.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "264e1874de750eef58296a506e23038db4d1447ce4ef9b83c350b24b13c53a43"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/snowy/backdrop-rain",
+      "verdict": "approved",
+      "reason": "Overcast mountain valley with softer damp gray atmosphere, no rain particles and quiet center; fully opaque.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "5d7e252b7fd07070e9d8cecd597e7d00655ca03cb8ad15df1e28114f1e3ba322"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/snowy/backdrop-dungeon",
+      "verdict": "approved",
+      "reason": "Frost vault interior with large peripheral arches and quiet open center; coherent cold stone and low camera; fully opaque.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "dfa79586988629dde09be0e916bac44c7fbae72871ff76842fb564c9b62a6bdc"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/snowy/backdrop-night",
+      "verdict": "approved",
+      "reason": "Independently painted moonlit mountain valley and night sky, clear low-key night values and quiet center; fully opaque.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "19eab419e6deb6355e930d7943729bccb8f6099ce38c4bd2a9b0ade1924f4a1d"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/snowy/ground-street-night",
+      "verdict": "approved",
+      "reason": "Independently moonlit snow and stone street plane with low camera, edge-spanning material and quiet center. Some restrained moon highlights; no mirror ice. Raw generated alpha trace \u22642/255 above 52% and lower edge 227\u2013253/255.",
+      "profileId": "battlefield-ground",
+      "sha256": "5146a8af47599a262f6f5eb1757b8c5b1bbca28ddafdcf11e8bb8643b4cbc3df"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/snowy/prop-town-night",
+      "verdict": "approved",
+      "reason": "Three complete snowy townhouses independently painted in moonlight with warm windows and modest lantern; isolated and coherent matte materials. Tighter margins than requested.",
+      "profileId": "battlefield-prop",
+      "sha256": "6b06a906363943e751adb12f1bb11b9d544e4f78016d2a0d99b255c20f698da8"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/mountains/prop-mountain-dry-near",
+      "verdict": "approved",
+      "reason": "Complete three-peak ridge with matte broad geology, irregular isolated base and restrained biome material palette. Transparent surroundings; no sky, buildings, ground slab, or clipped peak. Native source preserved; horizontal alpha overscan is narrower than requested.",
+      "profileId": "battlefield-prop",
+      "sha256": "427cc5219d3a561fb0e5c285c52f92f8b19e1e73e4fd5db59f76424745312a48"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/mountains/prop-mountain-dry-distant",
+      "verdict": "approved",
+      "reason": "Separate original pale desaturated low-contrast ridge; simplified soft painted forms give atmospheric recession without a fog plate. Transparent surroundings; no sky, buildings, ground slab, or clipped peak. Native source preserved; horizontal alpha overscan is narrower than requested.",
+      "profileId": "battlefield-prop",
+      "sha256": "bd022a092f54997237e6816c9dd9846b0d21cfeaba371d1ccfa9f17c92c49704"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/mountains/prop-mountain-volcanic-near",
+      "verdict": "approved",
+      "reason": "Complete three-peak ridge with matte broad geology, irregular isolated base and restrained biome material palette. Transparent surroundings; no sky, buildings, ground slab, or clipped peak. Native source preserved; horizontal alpha overscan is narrower than requested.",
+      "profileId": "battlefield-prop",
+      "sha256": "7e0f0a0bb64ef5fc6e6ce8c95436419880f290936cc76b8e1764075b54c2f301"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/mountains/prop-mountain-volcanic-distant",
+      "verdict": "approved",
+      "reason": "Separate original pale desaturated low-contrast ridge; simplified soft painted forms give atmospheric recession without a fog plate. Transparent surroundings; no sky, buildings, ground slab, or clipped peak. Native source preserved; horizontal alpha overscan is narrower than requested.",
+      "profileId": "battlefield-prop",
+      "sha256": "2ace8983355c213cfee2c147461cc97d4d95b1c3de59610e09aee4ff55e4a6a5"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/mountains/prop-mountain-snowy-near",
+      "verdict": "approved",
+      "reason": "Complete three-peak ridge with matte broad geology, irregular isolated base and restrained biome material palette. Transparent surroundings; no sky, buildings, ground slab, or clipped peak. Native source preserved; horizontal alpha overscan is narrower than requested.",
+      "profileId": "battlefield-prop",
+      "sha256": "f942cdfa2a26dc6497d7fbc4e334903ef9c6b9c13994655ac640549d0afd7bba"
+    },
+    {
+      "assetKey": "batch-09-biome-architecture/mountains/prop-mountain-snowy-distant",
+      "verdict": "approved",
+      "reason": "Separate original pale desaturated low-contrast ridge; simplified soft painted forms give atmospheric recession without a fog plate. Transparent surroundings; no sky, buildings, ground slab, or clipped peak. Native source preserved; horizontal alpha overscan is narrower than requested.",
+      "profileId": "battlefield-prop",
+      "sha256": "c336adc50617f880e1259c81b212bacc34840613d5f4a85e792a3278bbcf67a1"
+    }
+  ]
+}

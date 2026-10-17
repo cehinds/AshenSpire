@@ -1,0 +1,26 @@
+{
+  "name": "backdrop-day",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Hand-painted realistic medieval fantasy, tactile weathered matte materials, broad controlled brushwork, subtle natural material edges, muted earth colors, soft diffuse light from upper left, restrained highlights. No heavy cartoon outline, no shiny toy-like 3D render, no photographic sparkle, no text, lettering, numbers, logos, frames, people or characters. This is a reusable layered COMBAT SCENE component, viewed from a LOW ground-level near-frontal side camera with a gentle three-quarter angle, NOT elevated isometric map-icon camera. Keep center of the playable scene quiet. Do not paint rain streaks, snowflakes or global screen tint into base art; weather is a separate layer. Preserve ample usable material around the edges for multiple camera crops. Native output dimensions will be measured; do not fake resolution.\nBACKDROP: opaque full-bleed landscape 3072x1728, ground-level distant panoramic scene, ample edge paint. Quiet open middle, detail near sides, soft distant edges. DESERT SUBJECT: medieval sandstone oasis outskirts, pale tan desert plain with distant low ochre gray mesas, sparse distant palms and tiny far sandstone walls near outer edges; neutral pale blue-gray daylight sky with soft cloud, no golden sunset wash. No foreground buildings, props or characters.",
+  "sourceOutputPath": "/workspace/generated_images/exec-cfb2b85b-6d67-414f-a9db-144378d4f261.png",
+  "generator": "OpenAI image_gen",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-backdrop",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "sha256": "723873874fd396bc655220b16b3e0ce6903abff4ca124a6e9a69d4ee4fef014d",
+  "sourceSha256": "723873874fd396bc655220b16b3e0ce6903abff4ca124a6e9a69d4ee4fef014d",
+  "processing": "Byte-identical retained imagegen output; no image editing, trimming, resizing or upscaling.",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGB"
+  }
+}

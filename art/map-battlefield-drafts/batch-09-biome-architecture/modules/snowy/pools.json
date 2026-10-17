@@ -1,0 +1,314 @@
+[
+  {
+    "id": "snowy-prop-city-skyline",
+    "role": "prop",
+    "items": [
+      {
+        "id": "snowy-prop-city-skyline",
+        "asset": "snowy/prop-city-skyline.png",
+        "tags": {
+          "biome": [
+            "snowy"
+          ],
+          "location": [
+            "city"
+          ],
+          "weather": [
+            "clear"
+          ],
+          "lighting": [
+            "neutral"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "snowy-prop-town-cluster",
+    "role": "prop",
+    "items": [
+      {
+        "id": "snowy-prop-town-cluster",
+        "asset": "snowy/prop-town-cluster.png",
+        "tags": {
+          "biome": [
+            "snowy"
+          ],
+          "location": [
+            "town"
+          ],
+          "weather": [
+            "clear"
+          ],
+          "lighting": [
+            "neutral"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "snowy-prop-castle",
+    "role": "prop",
+    "items": [
+      {
+        "id": "snowy-prop-castle",
+        "asset": "snowy/prop-castle.png",
+        "tags": {
+          "biome": [
+            "snowy"
+          ],
+          "location": [
+            "castle"
+          ],
+          "weather": [
+            "clear"
+          ],
+          "lighting": [
+            "neutral"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "snowy-prop-dungeon-entrance",
+    "role": "prop",
+    "items": [
+      {
+        "id": "snowy-prop-dungeon-entrance",
+        "asset": "snowy/prop-dungeon-entrance.png",
+        "tags": {
+          "biome": [
+            "snowy"
+          ],
+          "location": [
+            "dungeon"
+          ],
+          "weather": [
+            "none"
+          ],
+          "lighting": [
+            "local-ambient"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "snowy-ground-street-day",
+    "role": "ground",
+    "items": [
+      {
+        "id": "snowy-ground-street-day",
+        "asset": "snowy/ground-street-day.png",
+        "tags": {
+          "biome": [
+            "snowy"
+          ],
+          "location": [
+            "outdoor"
+          ],
+          "weather": [
+            "clear"
+          ],
+          "lighting": [
+            "day"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "snowy-ground-street-rain",
+    "role": "ground",
+    "items": [
+      {
+        "id": "snowy-ground-street-rain",
+        "asset": "snowy/ground-street-rain.png",
+        "tags": {
+          "biome": [
+            "snowy"
+          ],
+          "location": [
+            "outdoor"
+          ],
+          "weather": [
+            "rain"
+          ],
+          "lighting": [
+            "rain"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "snowy-ground-dungeon",
+    "role": "ground",
+    "items": [
+      {
+        "id": "snowy-ground-dungeon",
+        "asset": "snowy/ground-dungeon.png",
+        "tags": {
+          "biome": [
+            "snowy"
+          ],
+          "location": [
+            "dungeon"
+          ],
+          "weather": [
+            "none"
+          ],
+          "lighting": [
+            "local-ambient"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "snowy-backdrop-day",
+    "role": "backdrop",
+    "items": [
+      {
+        "id": "snowy-backdrop-day",
+        "asset": "snowy/backdrop-day.png",
+        "tags": {
+          "biome": [
+            "snowy"
+          ],
+          "location": [
+            "outdoor"
+          ],
+          "weather": [
+            "clear"
+          ],
+          "lighting": [
+            "day"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "snowy-backdrop-rain",
+    "role": "backdrop",
+    "items": [
+      {
+        "id": "snowy-backdrop-rain",
+        "asset": "snowy/backdrop-rain.png",
+        "tags": {
+          "biome": [
+            "snowy"
+          ],
+          "location": [
+            "outdoor"
+          ],
+          "weather": [
+            "rain"
+          ],
+          "lighting": [
+            "rain"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "snowy-backdrop-dungeon",
+    "role": "backdrop",
+    "items": [
+      {
+        "id": "snowy-backdrop-dungeon",
+        "asset": "snowy/backdrop-dungeon.png",
+        "tags": {
+          "biome": [
+            "snowy"
+          ],
+          "location": [
+            "dungeon"
+          ],
+          "weather": [
+            "none"
+          ],
+          "lighting": [
+            "local-ambient"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "snowy-backdrop-night",
+    "role": "backdrop",
+    "items": [
+      {
+        "id": "snowy-backdrop-night",
+        "asset": "snowy/backdrop-night.png",
+        "tags": {
+          "biome": [
+            "snowy"
+          ],
+          "location": [
+            "outdoor"
+          ],
+          "weather": [
+            "clear"
+          ],
+          "lighting": [
+            "night"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "snowy-ground-street-night",
+    "role": "ground",
+    "items": [
+      {
+        "id": "snowy-ground-street-night",
+        "asset": "snowy/ground-street-night.png",
+        "tags": {
+          "biome": [
+            "snowy"
+          ],
+          "location": [
+            "outdoor"
+          ],
+          "weather": [
+            "clear"
+          ],
+          "lighting": [
+            "night"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "snowy-prop-town-night",
+    "role": "prop",
+    "items": [
+      {
+        "id": "snowy-prop-town-night",
+        "asset": "snowy/prop-town-night.png",
+        "tags": {
+          "biome": [
+            "snowy"
+          ],
+          "location": [
+            "town"
+          ],
+          "weather": [
+            "clear"
+          ],
+          "lighting": [
+            "night"
+          ]
+        }
+      }
+    ]
+  }
+]

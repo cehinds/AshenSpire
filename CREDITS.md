@@ -808,3 +808,17 @@ compose them for review. The adjacent `style-system/` JSON modules document a
 shared art direction, per-role profiles and hash-bound visual reviews for all
 retained component families. Earlier outliers remain indexed as history.
 These are unregistered feature drafts; no third-party artwork or license is claimed.
+
+### Mountain and biome architecture paintings — batch 09 (2026-10-17)
+
+Forty-five original OpenAI-generated source paintings in
+`art/map-battlefield-drafts/batch-09-biome-architecture/` add transparent near and
+faded distant mountain props, desert/jungle/snowy architecture, streets, dungeon
+entrances/floors/interiors, and painted daylight/rain/night environment variants.
+Exact prompts, original generated source paths, native dimensions and hashes are
+retained. PNGs remain byte-identical copies of tool outputs. Browser review sheets
+compose the original paintings with earlier first-party weather/filter layers.
+Editable JSON records responsive placement and any preview ambient grading;
+neutral city/castle/entrance props are not claimed as painted night relights.
+These remain unregistered feature-branch drafts; no third-party artwork or
+license is claimed.

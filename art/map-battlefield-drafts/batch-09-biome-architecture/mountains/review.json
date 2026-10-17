@@ -1,0 +1,46 @@
+{
+  "items": [
+    {
+      "id": "mountains/prop-mountain-dry-near",
+      "verdict": "approved",
+      "reason": "Complete three-peak ridge with matte broad geology, irregular isolated base and restrained biome material palette. Transparent surroundings; no sky, buildings, ground slab, or clipped peak. Native source preserved; horizontal alpha overscan is narrower than requested.",
+      "profileId": "battlefield-prop",
+      "sha256": "427cc5219d3a561fb0e5c285c52f92f8b19e1e73e4fd5db59f76424745312a48"
+    },
+    {
+      "id": "mountains/prop-mountain-dry-distant",
+      "verdict": "approved",
+      "reason": "Separate original pale desaturated low-contrast ridge; simplified soft painted forms give atmospheric recession without a fog plate. Transparent surroundings; no sky, buildings, ground slab, or clipped peak. Native source preserved; horizontal alpha overscan is narrower than requested.",
+      "profileId": "battlefield-prop",
+      "sha256": "bd022a092f54997237e6816c9dd9846b0d21cfeaba371d1ccfa9f17c92c49704"
+    },
+    {
+      "id": "mountains/prop-mountain-volcanic-near",
+      "verdict": "approved",
+      "reason": "Complete three-peak ridge with matte broad geology, irregular isolated base and restrained biome material palette. Transparent surroundings; no sky, buildings, ground slab, or clipped peak. Native source preserved; horizontal alpha overscan is narrower than requested.",
+      "profileId": "battlefield-prop",
+      "sha256": "7e0f0a0bb64ef5fc6e6ce8c95436419880f290936cc76b8e1764075b54c2f301"
+    },
+    {
+      "id": "mountains/prop-mountain-volcanic-distant",
+      "verdict": "approved",
+      "reason": "Separate original pale desaturated low-contrast ridge; simplified soft painted forms give atmospheric recession without a fog plate. Transparent surroundings; no sky, buildings, ground slab, or clipped peak. Native source preserved; horizontal alpha overscan is narrower than requested.",
+      "profileId": "battlefield-prop",
+      "sha256": "2ace8983355c213cfee2c147461cc97d4d95b1c3de59610e09aee4ff55e4a6a5"
+    },
+    {
+      "id": "mountains/prop-mountain-snowy-near",
+      "verdict": "approved",
+      "reason": "Complete three-peak ridge with matte broad geology, irregular isolated base and restrained biome material palette. Transparent surroundings; no sky, buildings, ground slab, or clipped peak. Native source preserved; horizontal alpha overscan is narrower than requested.",
+      "profileId": "battlefield-prop",
+      "sha256": "f942cdfa2a26dc6497d7fbc4e334903ef9c6b9c13994655ac640549d0afd7bba"
+    },
+    {
+      "id": "mountains/prop-mountain-snowy-distant",
+      "verdict": "approved",
+      "reason": "Separate original pale desaturated low-contrast ridge; simplified soft painted forms give atmospheric recession without a fog plate. Transparent surroundings; no sky, buildings, ground slab, or clipped peak. Native source preserved; horizontal alpha overscan is narrower than requested.",
+      "profileId": "battlefield-prop",
+      "sha256": "c336adc50617f880e1259c81b212bacc34840613d5f4a85e792a3278bbcf67a1"
+    }
+  ]
+}

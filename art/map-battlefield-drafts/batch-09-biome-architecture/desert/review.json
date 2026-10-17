@@ -1,0 +1,95 @@
+{
+  "items": [
+    {
+      "id": "desert/backdrop-day",
+      "verdict": "approved",
+      "reason": "Approved opaque neutral daytime oasis panorama, soft distant mesas, quiet open center and peripheral sandstone/palm detail; no sunset wash.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "723873874fd396bc655220b16b3e0ce6903abff4ca124a6e9a69d4ee4fef014d"
+    },
+    {
+      "id": "desert/backdrop-dungeon",
+      "verdict": "approved",
+      "reason": "Approved opaque broad tomb interior masonry with subdued local amber side lamps and quiet central blind arch/floor.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "657f175551e6ba07c02e3aa267fa916a0253a1db9ba1a07463ae46c60f39a1b3"
+    },
+    {
+      "id": "desert/backdrop-night",
+      "verdict": "approved",
+      "reason": "Approved genuinely painted cool moonlit oasis panorama, blue night sky and small distant amber lights, quiet open center.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "1d29c46bd981a8f6f4443b4fefd0c7e9ab40385b3c1cd1e67213940d032ff014"
+    },
+    {
+      "id": "desert/backdrop-rain",
+      "verdict": "approved",
+      "reason": "Approved opaque cool overcast oasis panorama with damp muted ground and restrained puddles; no rain particles.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "9f969ae1250f7fd85849682dbe9710917dc45ea2b88b2a705092fb94ecb9476e"
+    },
+    {
+      "id": "desert/ground-dungeon",
+      "verdict": "approved",
+      "reason": "Approved broad worn interior masonry floor, quiet center and subtle amber edge illumination. Alpha>=16 begins y561/941; upper52 percent residual alpha<=2, bottom minimum248, retained original.",
+      "profileId": "battlefield-ground",
+      "sha256": "2e9c1f85e0c1aec3613d86140a5ab15783231b85d8f5f05ebdaf3cd61296e2df"
+    },
+    {
+      "id": "desert/ground-street-day",
+      "verdict": "approved",
+      "reason": "Approved quiet pale sandstone street center with stronger peripheral texture and broad transparent upper field. Alpha>=16 begins at y554/941; upper field has residual alpha<=1 and bottom edge minimum alpha238, retained original without editing.",
+      "profileId": "battlefield-ground",
+      "sha256": "2905533a66fec35498bd4dfbf1b7db53c880841038beeae8d9c6dce64b6dc2e9"
+    },
+    {
+      "id": "desert/ground-street-night",
+      "verdict": "approved",
+      "reason": "Approved genuinely painted cool moonlit paving with restrained local amber side light and quiet center. Alpha>=16 begins y495/941; upper52 percent residual alpha<=2, bottom minimum245, retained original.",
+      "profileId": "battlefield-ground",
+      "sha256": "235e2b1d0f6bc1214e0c8fb67684746d1512912da659c50b5c1f7cb45f2ec605"
+    },
+    {
+      "id": "desert/ground-street-rain",
+      "verdict": "approved",
+      "reason": "Approved damp muted paving with modest side puddles and no baked rain particles. Alpha>=16 begins at y512/941; upper52 percent residual alpha<=1, bottom edge minimum237, retained original.",
+      "profileId": "battlefield-ground",
+      "sha256": "17817331a55ff98e921a7db8329b385d5376901b140174dc0d69328193ea756a"
+    },
+    {
+      "id": "desert/prop-castle",
+      "verdict": "approved",
+      "reason": "Approved complete fortified sandstone silhouette, low frontal camera, coherent matte masonry. Side margins are narrower than requested; no terrain platform.",
+      "profileId": "battlefield-prop",
+      "sha256": "ebb3758637a5f103cf7fa1b0af511baa309c2ad889c7eb003842127e47c1836c"
+    },
+    {
+      "id": "desert/prop-city-skyline",
+      "verdict": "approved",
+      "reason": "Approved painted rear oasis architecture with complete readable front-facing buildings and restrained tan timber/cloth palette. Side alpha margins are tighter than requested; preserve original without margin-only regeneration.",
+      "profileId": "battlefield-prop",
+      "sha256": "38f771b4ef8c79a56f36aa99411d51f223ec96220233005a6501e97eb807ab43"
+    },
+    {
+      "id": "desert/prop-dungeon-entrance",
+      "verdict": "approved",
+      "reason": "Approved ancient sandstone tomb gate with recessed dark entrance and modest rubble, no excessive ground. Complete silhouette with narrow side margins.",
+      "profileId": "battlefield-prop",
+      "sha256": "a0ba70bf806098ac05471eae97849b48de91eae1b60060cecca1301b6631d1ca"
+    },
+    {
+      "id": "desert/prop-town-cluster",
+      "verdict": "approved",
+      "reason": "Approved compact three-house sandstone cluster with flat roofs, tactile weathered materials and neutral daylight. Alpha margins are narrower than requested but architecture is complete.",
+      "profileId": "battlefield-prop",
+      "sha256": "407d18fa8aaa5151ea1f49a57d1771339f10201c718b45aa561c86d2ca1ade53"
+    },
+    {
+      "id": "desert/prop-town-night",
+      "verdict": "approved",
+      "reason": "Approved three-house transparent sandstone cluster with genuinely painted cool moonlight and localized warm lamps/windows. Complete silhouette with narrow side margins.",
+      "profileId": "battlefield-prop",
+      "sha256": "c645da076332e3ab6ebc0ea476a558884c579edcf1eba653967aa26d6d37ee45"
+    }
+  ]
+}

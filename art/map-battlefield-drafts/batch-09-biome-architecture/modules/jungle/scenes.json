@@ -1,0 +1,420 @@
+[
+  {
+    "id": "jungle-city-day",
+    "biome": "jungle",
+    "location": "city",
+    "condition": "day",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "jungle/backdrop-day.png"
+      },
+      {
+        "role": "prop",
+        "asset": "jungle/prop-city-skyline.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.86,
+        "maxHeightFraction": 0.43,
+        "baseOcclusionPixels": 12
+      },
+      {
+        "role": "ground",
+        "asset": "jungle/ground-street-day.png"
+      }
+    ]
+  },
+  {
+    "id": "jungle-city-rain",
+    "biome": "jungle",
+    "location": "city",
+    "condition": "rain",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "jungle/backdrop-rain.png"
+      },
+      {
+        "role": "prop",
+        "asset": "jungle/prop-city-skyline.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.86,
+        "maxHeightFraction": 0.43,
+        "baseOcclusionPixels": 12,
+        "previewAmbientGrade": {
+          "brightness": 0.8,
+          "saturation": 0.85,
+          "reason": "Preview overcast ambient grading of neutral prop."
+        }
+      },
+      {
+        "role": "ground",
+        "asset": "jungle/ground-street-rain.png"
+      },
+      {
+        "role": "filter",
+        "asset": "../batch-04-atmosphere/filters/filter-rain.png",
+        "opacity": 0.65
+      },
+      {
+        "role": "particles",
+        "asset": "../batch-04-atmosphere/particles/rain.png",
+        "opacity": 0.3,
+        "optional": true
+      }
+    ]
+  },
+  {
+    "id": "jungle-city-night",
+    "biome": "jungle",
+    "location": "city",
+    "condition": "night",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "jungle/backdrop-night.png"
+      },
+      {
+        "role": "prop",
+        "asset": "jungle/prop-city-skyline.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.86,
+        "maxHeightFraction": 0.43,
+        "baseOcclusionPixels": 12,
+        "previewAmbientGrade": {
+          "brightness": 0.48,
+          "saturation": 0.65,
+          "reason": "Preview ambient grading of neutral unlit prop; not a painted night relight."
+        }
+      },
+      {
+        "role": "ground",
+        "asset": "jungle/ground-street-night.png"
+      },
+      {
+        "role": "filter",
+        "asset": "../batch-04-atmosphere/filters/filter-night.png",
+        "opacity": 0.5
+      }
+    ]
+  },
+  {
+    "id": "jungle-town-day",
+    "biome": "jungle",
+    "location": "town",
+    "condition": "day",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "jungle/backdrop-day.png"
+      },
+      {
+        "role": "prop",
+        "asset": "jungle/prop-town-cluster.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.7,
+        "maxHeightFraction": 0.38,
+        "baseOcclusionPixels": 12
+      },
+      {
+        "role": "ground",
+        "asset": "jungle/ground-street-day.png"
+      }
+    ]
+  },
+  {
+    "id": "jungle-town-rain",
+    "biome": "jungle",
+    "location": "town",
+    "condition": "rain",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "jungle/backdrop-rain.png"
+      },
+      {
+        "role": "prop",
+        "asset": "jungle/prop-town-cluster.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.7,
+        "maxHeightFraction": 0.38,
+        "baseOcclusionPixels": 12,
+        "previewAmbientGrade": {
+          "brightness": 0.8,
+          "saturation": 0.85,
+          "reason": "Preview overcast ambient grading of neutral prop."
+        }
+      },
+      {
+        "role": "ground",
+        "asset": "jungle/ground-street-rain.png"
+      },
+      {
+        "role": "filter",
+        "asset": "../batch-04-atmosphere/filters/filter-rain.png",
+        "opacity": 0.65
+      },
+      {
+        "role": "particles",
+        "asset": "../batch-04-atmosphere/particles/rain.png",
+        "opacity": 0.3,
+        "optional": true
+      }
+    ]
+  },
+  {
+    "id": "jungle-town-night",
+    "biome": "jungle",
+    "location": "town",
+    "condition": "night",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "jungle/backdrop-night.png"
+      },
+      {
+        "role": "prop",
+        "asset": "jungle/prop-town-night.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.7,
+        "maxHeightFraction": 0.38,
+        "baseOcclusionPixels": 12
+      },
+      {
+        "role": "ground",
+        "asset": "jungle/ground-street-night.png"
+      },
+      {
+        "role": "filter",
+        "asset": "../batch-04-atmosphere/filters/filter-night.png",
+        "opacity": 0.5
+      }
+    ]
+  },
+  {
+    "id": "jungle-castle-day",
+    "biome": "jungle",
+    "location": "castle",
+    "condition": "day",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "jungle/backdrop-day.png"
+      },
+      {
+        "role": "prop",
+        "asset": "jungle/prop-castle.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.48,
+        "maxHeightFraction": 0.56,
+        "baseOcclusionPixels": 12
+      },
+      {
+        "role": "ground",
+        "asset": "jungle/ground-street-day.png"
+      }
+    ]
+  },
+  {
+    "id": "jungle-castle-rain",
+    "biome": "jungle",
+    "location": "castle",
+    "condition": "rain",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "jungle/backdrop-rain.png"
+      },
+      {
+        "role": "prop",
+        "asset": "jungle/prop-castle.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.48,
+        "maxHeightFraction": 0.56,
+        "baseOcclusionPixels": 12,
+        "previewAmbientGrade": {
+          "brightness": 0.8,
+          "saturation": 0.85,
+          "reason": "Preview overcast ambient grading of neutral prop."
+        }
+      },
+      {
+        "role": "ground",
+        "asset": "jungle/ground-street-rain.png"
+      },
+      {
+        "role": "filter",
+        "asset": "../batch-04-atmosphere/filters/filter-rain.png",
+        "opacity": 0.65
+      },
+      {
+        "role": "particles",
+        "asset": "../batch-04-atmosphere/particles/rain.png",
+        "opacity": 0.3,
+        "optional": true
+      }
+    ]
+  },
+  {
+    "id": "jungle-castle-night",
+    "biome": "jungle",
+    "location": "castle",
+    "condition": "night",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "jungle/backdrop-night.png"
+      },
+      {
+        "role": "prop",
+        "asset": "jungle/prop-castle.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.48,
+        "maxHeightFraction": 0.56,
+        "baseOcclusionPixels": 12,
+        "previewAmbientGrade": {
+          "brightness": 0.48,
+          "saturation": 0.65,
+          "reason": "Preview ambient grading of neutral unlit prop; not a painted night relight."
+        }
+      },
+      {
+        "role": "ground",
+        "asset": "jungle/ground-street-night.png"
+      },
+      {
+        "role": "filter",
+        "asset": "../batch-04-atmosphere/filters/filter-night.png",
+        "opacity": 0.5
+      }
+    ]
+  },
+  {
+    "id": "jungle-dungeon-entrance-day",
+    "biome": "jungle",
+    "location": "dungeon-entrance",
+    "condition": "day",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "jungle/backdrop-day.png"
+      },
+      {
+        "role": "prop",
+        "asset": "jungle/prop-dungeon-entrance.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.55,
+        "maxHeightFraction": 0.62,
+        "baseOcclusionPixels": 12
+      },
+      {
+        "role": "ground",
+        "asset": "jungle/ground-street-day.png"
+      }
+    ]
+  },
+  {
+    "id": "jungle-dungeon-entrance-rain",
+    "biome": "jungle",
+    "location": "dungeon-entrance",
+    "condition": "rain",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "jungle/backdrop-rain.png"
+      },
+      {
+        "role": "prop",
+        "asset": "jungle/prop-dungeon-entrance.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.55,
+        "maxHeightFraction": 0.62,
+        "baseOcclusionPixels": 12,
+        "previewAmbientGrade": {
+          "brightness": 0.8,
+          "saturation": 0.85,
+          "reason": "Preview overcast ambient grading of neutral prop."
+        }
+      },
+      {
+        "role": "ground",
+        "asset": "jungle/ground-street-rain.png"
+      },
+      {
+        "role": "filter",
+        "asset": "../batch-04-atmosphere/filters/filter-rain.png",
+        "opacity": 0.65
+      },
+      {
+        "role": "particles",
+        "asset": "../batch-04-atmosphere/particles/rain.png",
+        "opacity": 0.3,
+        "optional": true
+      }
+    ]
+  },
+  {
+    "id": "jungle-dungeon-entrance-night",
+    "biome": "jungle",
+    "location": "dungeon-entrance",
+    "condition": "night",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "jungle/backdrop-night.png"
+      },
+      {
+        "role": "prop",
+        "asset": "jungle/prop-dungeon-entrance.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.55,
+        "maxHeightFraction": 0.62,
+        "baseOcclusionPixels": 12,
+        "previewAmbientGrade": {
+          "brightness": 0.48,
+          "saturation": 0.65,
+          "reason": "Preview ambient grading of neutral unlit prop; not a painted night relight."
+        }
+      },
+      {
+        "role": "ground",
+        "asset": "jungle/ground-street-night.png"
+      },
+      {
+        "role": "filter",
+        "asset": "../batch-04-atmosphere/filters/filter-night.png",
+        "opacity": 0.5
+      }
+    ]
+  },
+  {
+    "id": "jungle-dungeon-interior",
+    "biome": "jungle",
+    "location": "dungeon",
+    "condition": "local-ambient",
+    "interior": true,
+    "timeIndependent": true,
+    "precipitation": "none",
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "jungle/backdrop-dungeon.png"
+      },
+      {
+        "role": "ground",
+        "asset": "jungle/ground-dungeon.png"
+      }
+    ]
+  }
+]

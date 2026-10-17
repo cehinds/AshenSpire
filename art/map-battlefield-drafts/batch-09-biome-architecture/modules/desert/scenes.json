@@ -1,0 +1,420 @@
+[
+  {
+    "id": "desert-city-day",
+    "biome": "desert",
+    "location": "city",
+    "condition": "day",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "desert/backdrop-day.png"
+      },
+      {
+        "role": "prop",
+        "asset": "desert/prop-city-skyline.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.86,
+        "maxHeightFraction": 0.43,
+        "baseOcclusionPixels": 12
+      },
+      {
+        "role": "ground",
+        "asset": "desert/ground-street-day.png"
+      }
+    ]
+  },
+  {
+    "id": "desert-city-rain",
+    "biome": "desert",
+    "location": "city",
+    "condition": "rain",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "desert/backdrop-rain.png"
+      },
+      {
+        "role": "prop",
+        "asset": "desert/prop-city-skyline.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.86,
+        "maxHeightFraction": 0.43,
+        "baseOcclusionPixels": 12,
+        "previewAmbientGrade": {
+          "brightness": 0.8,
+          "saturation": 0.85,
+          "reason": "Preview overcast ambient grading of neutral prop."
+        }
+      },
+      {
+        "role": "ground",
+        "asset": "desert/ground-street-rain.png"
+      },
+      {
+        "role": "filter",
+        "asset": "../batch-04-atmosphere/filters/filter-rain.png",
+        "opacity": 0.65
+      },
+      {
+        "role": "particles",
+        "asset": "../batch-04-atmosphere/particles/rain.png",
+        "opacity": 0.3,
+        "optional": true
+      }
+    ]
+  },
+  {
+    "id": "desert-city-night",
+    "biome": "desert",
+    "location": "city",
+    "condition": "night",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "desert/backdrop-night.png"
+      },
+      {
+        "role": "prop",
+        "asset": "desert/prop-city-skyline.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.86,
+        "maxHeightFraction": 0.43,
+        "baseOcclusionPixels": 12,
+        "previewAmbientGrade": {
+          "brightness": 0.48,
+          "saturation": 0.65,
+          "reason": "Preview ambient grading of neutral unlit prop; not a painted night relight."
+        }
+      },
+      {
+        "role": "ground",
+        "asset": "desert/ground-street-night.png"
+      },
+      {
+        "role": "filter",
+        "asset": "../batch-04-atmosphere/filters/filter-night.png",
+        "opacity": 0.5
+      }
+    ]
+  },
+  {
+    "id": "desert-town-day",
+    "biome": "desert",
+    "location": "town",
+    "condition": "day",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "desert/backdrop-day.png"
+      },
+      {
+        "role": "prop",
+        "asset": "desert/prop-town-cluster.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.7,
+        "maxHeightFraction": 0.38,
+        "baseOcclusionPixels": 12
+      },
+      {
+        "role": "ground",
+        "asset": "desert/ground-street-day.png"
+      }
+    ]
+  },
+  {
+    "id": "desert-town-rain",
+    "biome": "desert",
+    "location": "town",
+    "condition": "rain",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "desert/backdrop-rain.png"
+      },
+      {
+        "role": "prop",
+        "asset": "desert/prop-town-cluster.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.7,
+        "maxHeightFraction": 0.38,
+        "baseOcclusionPixels": 12,
+        "previewAmbientGrade": {
+          "brightness": 0.8,
+          "saturation": 0.85,
+          "reason": "Preview overcast ambient grading of neutral prop."
+        }
+      },
+      {
+        "role": "ground",
+        "asset": "desert/ground-street-rain.png"
+      },
+      {
+        "role": "filter",
+        "asset": "../batch-04-atmosphere/filters/filter-rain.png",
+        "opacity": 0.65
+      },
+      {
+        "role": "particles",
+        "asset": "../batch-04-atmosphere/particles/rain.png",
+        "opacity": 0.3,
+        "optional": true
+      }
+    ]
+  },
+  {
+    "id": "desert-town-night",
+    "biome": "desert",
+    "location": "town",
+    "condition": "night",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "desert/backdrop-night.png"
+      },
+      {
+        "role": "prop",
+        "asset": "desert/prop-town-night.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.7,
+        "maxHeightFraction": 0.38,
+        "baseOcclusionPixels": 12
+      },
+      {
+        "role": "ground",
+        "asset": "desert/ground-street-night.png"
+      },
+      {
+        "role": "filter",
+        "asset": "../batch-04-atmosphere/filters/filter-night.png",
+        "opacity": 0.5
+      }
+    ]
+  },
+  {
+    "id": "desert-castle-day",
+    "biome": "desert",
+    "location": "castle",
+    "condition": "day",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "desert/backdrop-day.png"
+      },
+      {
+        "role": "prop",
+        "asset": "desert/prop-castle.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.48,
+        "maxHeightFraction": 0.56,
+        "baseOcclusionPixels": 12
+      },
+      {
+        "role": "ground",
+        "asset": "desert/ground-street-day.png"
+      }
+    ]
+  },
+  {
+    "id": "desert-castle-rain",
+    "biome": "desert",
+    "location": "castle",
+    "condition": "rain",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "desert/backdrop-rain.png"
+      },
+      {
+        "role": "prop",
+        "asset": "desert/prop-castle.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.48,
+        "maxHeightFraction": 0.56,
+        "baseOcclusionPixels": 12,
+        "previewAmbientGrade": {
+          "brightness": 0.8,
+          "saturation": 0.85,
+          "reason": "Preview overcast ambient grading of neutral prop."
+        }
+      },
+      {
+        "role": "ground",
+        "asset": "desert/ground-street-rain.png"
+      },
+      {
+        "role": "filter",
+        "asset": "../batch-04-atmosphere/filters/filter-rain.png",
+        "opacity": 0.65
+      },
+      {
+        "role": "particles",
+        "asset": "../batch-04-atmosphere/particles/rain.png",
+        "opacity": 0.3,
+        "optional": true
+      }
+    ]
+  },
+  {
+    "id": "desert-castle-night",
+    "biome": "desert",
+    "location": "castle",
+    "condition": "night",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "desert/backdrop-night.png"
+      },
+      {
+        "role": "prop",
+        "asset": "desert/prop-castle.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.48,
+        "maxHeightFraction": 0.56,
+        "baseOcclusionPixels": 12,
+        "previewAmbientGrade": {
+          "brightness": 0.48,
+          "saturation": 0.65,
+          "reason": "Preview ambient grading of neutral unlit prop; not a painted night relight."
+        }
+      },
+      {
+        "role": "ground",
+        "asset": "desert/ground-street-night.png"
+      },
+      {
+        "role": "filter",
+        "asset": "../batch-04-atmosphere/filters/filter-night.png",
+        "opacity": 0.5
+      }
+    ]
+  },
+  {
+    "id": "desert-dungeon-entrance-day",
+    "biome": "desert",
+    "location": "dungeon-entrance",
+    "condition": "day",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "desert/backdrop-day.png"
+      },
+      {
+        "role": "prop",
+        "asset": "desert/prop-dungeon-entrance.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.55,
+        "maxHeightFraction": 0.62,
+        "baseOcclusionPixels": 12
+      },
+      {
+        "role": "ground",
+        "asset": "desert/ground-street-day.png"
+      }
+    ]
+  },
+  {
+    "id": "desert-dungeon-entrance-rain",
+    "biome": "desert",
+    "location": "dungeon-entrance",
+    "condition": "rain",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "desert/backdrop-rain.png"
+      },
+      {
+        "role": "prop",
+        "asset": "desert/prop-dungeon-entrance.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.55,
+        "maxHeightFraction": 0.62,
+        "baseOcclusionPixels": 12,
+        "previewAmbientGrade": {
+          "brightness": 0.8,
+          "saturation": 0.85,
+          "reason": "Preview overcast ambient grading of neutral prop."
+        }
+      },
+      {
+        "role": "ground",
+        "asset": "desert/ground-street-rain.png"
+      },
+      {
+        "role": "filter",
+        "asset": "../batch-04-atmosphere/filters/filter-rain.png",
+        "opacity": 0.65
+      },
+      {
+        "role": "particles",
+        "asset": "../batch-04-atmosphere/particles/rain.png",
+        "opacity": 0.3,
+        "optional": true
+      }
+    ]
+  },
+  {
+    "id": "desert-dungeon-entrance-night",
+    "biome": "desert",
+    "location": "dungeon-entrance",
+    "condition": "night",
+    "interior": false,
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "desert/backdrop-night.png"
+      },
+      {
+        "role": "prop",
+        "asset": "desert/prop-dungeon-entrance.png",
+        "anchorU": 0.5,
+        "visibleWidthFraction": 0.55,
+        "maxHeightFraction": 0.62,
+        "baseOcclusionPixels": 12,
+        "previewAmbientGrade": {
+          "brightness": 0.48,
+          "saturation": 0.65,
+          "reason": "Preview ambient grading of neutral unlit prop; not a painted night relight."
+        }
+      },
+      {
+        "role": "ground",
+        "asset": "desert/ground-street-night.png"
+      },
+      {
+        "role": "filter",
+        "asset": "../batch-04-atmosphere/filters/filter-night.png",
+        "opacity": 0.5
+      }
+    ]
+  },
+  {
+    "id": "desert-dungeon-interior",
+    "biome": "desert",
+    "location": "dungeon",
+    "condition": "local-ambient",
+    "interior": true,
+    "timeIndependent": true,
+    "precipitation": "none",
+    "layers": [
+      {
+        "role": "backdrop",
+        "asset": "desert/backdrop-dungeon.png"
+      },
+      {
+        "role": "ground",
+        "asset": "desert/ground-dungeon.png"
+      }
+    ]
+  }
+]

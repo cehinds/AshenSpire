@@ -1,0 +1,314 @@
+[
+  {
+    "id": "jungle-prop-city-skyline",
+    "role": "prop",
+    "items": [
+      {
+        "id": "jungle-prop-city-skyline",
+        "asset": "jungle/prop-city-skyline.png",
+        "tags": {
+          "biome": [
+            "jungle"
+          ],
+          "location": [
+            "city"
+          ],
+          "weather": [
+            "clear"
+          ],
+          "lighting": [
+            "neutral"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "jungle-prop-town-cluster",
+    "role": "prop",
+    "items": [
+      {
+        "id": "jungle-prop-town-cluster",
+        "asset": "jungle/prop-town-cluster.png",
+        "tags": {
+          "biome": [
+            "jungle"
+          ],
+          "location": [
+            "town"
+          ],
+          "weather": [
+            "clear"
+          ],
+          "lighting": [
+            "neutral"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "jungle-prop-castle",
+    "role": "prop",
+    "items": [
+      {
+        "id": "jungle-prop-castle",
+        "asset": "jungle/prop-castle.png",
+        "tags": {
+          "biome": [
+            "jungle"
+          ],
+          "location": [
+            "castle"
+          ],
+          "weather": [
+            "clear"
+          ],
+          "lighting": [
+            "neutral"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "jungle-prop-dungeon-entrance",
+    "role": "prop",
+    "items": [
+      {
+        "id": "jungle-prop-dungeon-entrance",
+        "asset": "jungle/prop-dungeon-entrance.png",
+        "tags": {
+          "biome": [
+            "jungle"
+          ],
+          "location": [
+            "dungeon"
+          ],
+          "weather": [
+            "none"
+          ],
+          "lighting": [
+            "local-ambient"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "jungle-ground-street-day",
+    "role": "ground",
+    "items": [
+      {
+        "id": "jungle-ground-street-day",
+        "asset": "jungle/ground-street-day.png",
+        "tags": {
+          "biome": [
+            "jungle"
+          ],
+          "location": [
+            "outdoor"
+          ],
+          "weather": [
+            "clear"
+          ],
+          "lighting": [
+            "day"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "jungle-ground-street-rain",
+    "role": "ground",
+    "items": [
+      {
+        "id": "jungle-ground-street-rain",
+        "asset": "jungle/ground-street-rain.png",
+        "tags": {
+          "biome": [
+            "jungle"
+          ],
+          "location": [
+            "outdoor"
+          ],
+          "weather": [
+            "rain"
+          ],
+          "lighting": [
+            "rain"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "jungle-ground-dungeon",
+    "role": "ground",
+    "items": [
+      {
+        "id": "jungle-ground-dungeon",
+        "asset": "jungle/ground-dungeon.png",
+        "tags": {
+          "biome": [
+            "jungle"
+          ],
+          "location": [
+            "dungeon"
+          ],
+          "weather": [
+            "none"
+          ],
+          "lighting": [
+            "local-ambient"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "jungle-backdrop-day",
+    "role": "backdrop",
+    "items": [
+      {
+        "id": "jungle-backdrop-day",
+        "asset": "jungle/backdrop-day.png",
+        "tags": {
+          "biome": [
+            "jungle"
+          ],
+          "location": [
+            "outdoor"
+          ],
+          "weather": [
+            "clear"
+          ],
+          "lighting": [
+            "day"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "jungle-backdrop-rain",
+    "role": "backdrop",
+    "items": [
+      {
+        "id": "jungle-backdrop-rain",
+        "asset": "jungle/backdrop-rain.png",
+        "tags": {
+          "biome": [
+            "jungle"
+          ],
+          "location": [
+            "outdoor"
+          ],
+          "weather": [
+            "rain"
+          ],
+          "lighting": [
+            "rain"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "jungle-backdrop-dungeon",
+    "role": "backdrop",
+    "items": [
+      {
+        "id": "jungle-backdrop-dungeon",
+        "asset": "jungle/backdrop-dungeon.png",
+        "tags": {
+          "biome": [
+            "jungle"
+          ],
+          "location": [
+            "dungeon"
+          ],
+          "weather": [
+            "none"
+          ],
+          "lighting": [
+            "local-ambient"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "jungle-backdrop-night",
+    "role": "backdrop",
+    "items": [
+      {
+        "id": "jungle-backdrop-night",
+        "asset": "jungle/backdrop-night.png",
+        "tags": {
+          "biome": [
+            "jungle"
+          ],
+          "location": [
+            "outdoor"
+          ],
+          "weather": [
+            "clear"
+          ],
+          "lighting": [
+            "night"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "jungle-ground-street-night",
+    "role": "ground",
+    "items": [
+      {
+        "id": "jungle-ground-street-night",
+        "asset": "jungle/ground-street-night.png",
+        "tags": {
+          "biome": [
+            "jungle"
+          ],
+          "location": [
+            "outdoor"
+          ],
+          "weather": [
+            "clear"
+          ],
+          "lighting": [
+            "night"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "jungle-prop-town-night",
+    "role": "prop",
+    "items": [
+      {
+        "id": "jungle-prop-town-night",
+        "asset": "jungle/prop-town-night.png",
+        "tags": {
+          "biome": [
+            "jungle"
+          ],
+          "location": [
+            "town"
+          ],
+          "weather": [
+            "clear"
+          ],
+          "lighting": [
+            "night"
+          ]
+        }
+      }
+    ]
+  }
+]

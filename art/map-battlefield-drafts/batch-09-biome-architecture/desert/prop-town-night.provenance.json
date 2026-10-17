@@ -1,0 +1,46 @@
+{
+  "name": "prop-town-night",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Hand-painted realistic medieval fantasy, tactile weathered matte materials, broad controlled brushwork, subtle natural material edges, muted earth colors, soft diffuse light from upper left, restrained highlights. No heavy cartoon outline, no shiny toy-like 3D render, no photographic sparkle, no text, lettering, numbers, logos, frames, people or characters. This is a reusable layered COMBAT SCENE component, viewed from a LOW ground-level near-frontal side camera with a gentle three-quarter angle, NOT elevated isometric map-icon camera. Keep center of the playable scene quiet. Do not paint rain streaks, snowflakes or global screen tint into base art; weather is a separate layer. Preserve ample usable material around the edges for multiple camera crops. Native output dimensions will be measured; do not fake resolution.\nPROP: isolated transparent complete silhouette with clear alpha margins on every side, architecture fully inside central 75%, no ground slab, terrain, sky or scenery. Request landscape 3072x1728. DESERT SUBJECT AT NIGHT: compact cluster of 3 low sandstone oasis medieval houses with flat clay roofs, aged timber and faded linen, genuinely painted deep cool moonlit blue-gray sandstone and shadow; a few warm amber windows and modest small doorway lamps with localized stone illumination. Night-specific low-key lighting overrides daytime diffuse default, no daylight, no orange global wash. Eye-level near-front side camera.",
+  "sourceOutputPath": "/workspace/generated_images/exec-5bf88048-bd08-402f-a50b-ec921391f7d3.png",
+  "generator": "OpenAI image_gen",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-prop",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "sha256": "c645da076332e3ab6ebc0ea476a558884c579edcf1eba653967aa26d6d37ee45",
+  "sourceSha256": "c645da076332e3ab6ebc0ea476a558884c579edcf1eba653967aa26d6d37ee45",
+  "processing": "Byte-identical retained imagegen output; no image editing, trimming, resizing or upscaling.",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "visibleBoundsAt32": [
+      17,
+      140,
+      1654,
+      748
+    ],
+    "alphaQA": {
+      "transparentFraction": 0.5668566220400775,
+      "borderPixelsAt32": 0,
+      "normalizedMarginsAt32": [
+        0.010167464114832535,
+        0.1487778958554729,
+        0.01076555023923445,
+        0.2051009564293305
+      ]
+    }
+  }
+}

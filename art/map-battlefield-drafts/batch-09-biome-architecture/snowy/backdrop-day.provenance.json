@@ -1,0 +1,32 @@
+{
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Hand-painted realistic medieval fantasy, tactile weathered matte materials, broad controlled brushwork, subtle natural material edges, muted earth colors, soft diffuse light from upper left, restrained highlights. No heavy cartoon outline, no shiny toy-like 3D render, no photographic sparkle, no text, lettering, numbers, logos, frames, people or characters. This is a reusable layered COMBAT SCENE component, viewed from a LOW ground-level near-frontal side camera with a gentle three-quarter angle, NOT elevated isometric map-icon camera. Keep center of the playable scene quiet. Do not paint rain streaks, snowflakes or global screen tint into base art; weather is a separate layer. Preserve ample usable material around the edges for multiple camera crops. Native output dimensions will be measured; do not fake resolution. Palette: weathered gray stone, dark timber, chalk snow, muted steel-blue shadows. Opaque wide mountain valley backdrop under pale cold daytime sky; snowy distant ridges, sparse fir forests and soft atmospheric depth. Ground-level horizon, low viewpoint, quiet spacious middle 60 percent, peripheral mountain details. No foreground buildings or objects. Requested canvas dimensions 3072x1728 landscape.",
+  "generator": "OpenAI image_gen",
+  "sourceOutputPath": "/workspace/generated_images/exec-265377dd-2697-45b2-90b2-c7c7afeee912.png",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-backdrop",
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "sha256": "264e1874de750eef58296a506e23038db4d1447ce4ef9b83c350b24b13c53a43",
+  "alphaBounds": [
+    0,
+    0,
+    1672,
+    941
+  ],
+  "sourceByteIdentical": true,
+  "status": "draft-unregistered",
+  "sourceSha256": "264e1874de750eef58296a506e23038db4d1447ce4ef9b83c350b24b13c53a43",
+  "processing": "Byte-identical retained imagegen output; no image editing, trimming, resizing or upscaling.",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGB"
+  }
+}

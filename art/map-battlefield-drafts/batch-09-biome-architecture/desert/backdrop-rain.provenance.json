@@ -1,0 +1,26 @@
+{
+  "name": "backdrop-rain",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Hand-painted realistic medieval fantasy, tactile weathered matte materials, broad controlled brushwork, subtle natural material edges, muted earth colors, soft diffuse light from upper left, restrained highlights. No heavy cartoon outline, no shiny toy-like 3D render, no photographic sparkle, no text, lettering, numbers, logos, frames, people or characters. This is a reusable layered COMBAT SCENE component, viewed from a LOW ground-level near-frontal side camera with a gentle three-quarter angle, NOT elevated isometric map-icon camera. Keep center of the playable scene quiet. Do not paint rain streaks, snowflakes or global screen tint into base art; weather is a separate layer. Preserve ample usable material around the edges for multiple camera crops. Native output dimensions will be measured; do not fake resolution.\nBACKDROP: opaque full-bleed landscape 3072x1728, ground-level distant panorama, ample edge paint, quiet open middle, detail near sides, soft distant edges. DESERT SUBJECT: medieval sandstone oasis outskirts under cool gray overcast sky, damp pale tan plain, distant muted ochre gray mesas and sparse distant palms and tiny far sandstone walls near outer edges. Material damp with occasional distant puddles, no rain streaks or particles, no foreground buildings or props.",
+  "sourceOutputPath": "/workspace/generated_images/exec-a999535d-1cf6-41fd-a644-73b4ded3ccc9.png",
+  "generator": "OpenAI image_gen",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-backdrop",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "sha256": "9f969ae1250f7fd85849682dbe9710917dc45ea2b88b2a705092fb94ecb9476e",
+  "sourceSha256": "9f969ae1250f7fd85849682dbe9710917dc45ea2b88b2a705092fb94ecb9476e",
+  "processing": "Byte-identical retained imagegen output; no image editing, trimming, resizing or upscaling.",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGB"
+  }
+}

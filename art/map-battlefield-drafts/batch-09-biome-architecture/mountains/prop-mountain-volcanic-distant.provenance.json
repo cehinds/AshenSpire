@@ -1,0 +1,64 @@
+{
+  "id": "prop-mountain-volcanic-distant",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Hand-painted realistic medieval fantasy, tactile weathered matte materials, broad controlled brushwork, subtle natural material edges, muted earth colors, soft diffuse neutral daylight from upper left, restrained highlights. No heavy cartoon outline, no shiny toy-like 3D render, no photographic sparkle, no text, lettering, numbers, logos, frames, people or characters. Reusable layered COMBAT SCENE component viewed from a LOW ground-level near-frontal side camera with gentle three-quarter angle, NOT elevated isometric map-icon camera. ORIGINAL brand new distant atmospheric volcanic mountain ridge painting for compositing. Three simple large peaks joined into a panoramic silhouette seen from low ground level. Strong atmospheric recession: all mountain paint restricted to a narrow LIGHT MIDTONE value range, extremely muted pale blue gray with faint cool lavender basalt undertones and NO visible lava. Soft broad painted shapes, minimal surface information, NO sharp fine crags, NO black crevices, NO strong highlights. This is the farthest distant mountain layer. Keep forms softly opaque, atmosphere communicated through color and simplified forms rather than global alpha. Whole ridge isolated on true transparency, no fog rectangle, no sky, no clouds, no horizon ground strip. Wide landscape requested 3072x1728, complete ridge contained within CENTRAL 75% width and 65% height, abundant empty alpha on ALL sides. Irregular softly tapering lower silhouette, no rectangular base. No trees, buildings, ground slab, terrain hex, text or people. Deliberately very low contrast painterly background scenery.",
+  "sourceOutputPath": "/workspace/generated_images/exec-36375847-01d2-45f3-9b85-d1de12d896ac.png",
+  "generator": "OpenAI image_gen",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-prop",
+  "sha256": "2ace8983355c213cfee2c147461cc97d4d95b1c3de59610e09aee4ff55e4a6a5",
+  "alphaBounds": [
+    0,
+    29,
+    1658,
+    941
+  ],
+  "alphaBoundsThreshold16": [
+    40,
+    288,
+    1653,
+    692
+  ],
+  "alphaBoundsThreshold128": [
+    49,
+    288,
+    1644,
+    690
+  ],
+  "status": "draft-unregistered",
+  "sourceSha256": "2ace8983355c213cfee2c147461cc97d4d95b1c3de59610e09aee4ff55e4a6a5",
+  "processing": "Byte-identical retained imagegen output; no image editing, trimming, resizing or upscaling.",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "visibleBoundsAt32": [
+      42,
+      288,
+      1650,
+      692
+    ],
+    "alphaQA": {
+      "transparentFraction": 0.7871182036823292,
+      "borderPixelsAt32": 0,
+      "normalizedMarginsAt32": [
+        0.025119617224880382,
+        0.30605738575983,
+        0.013157894736842105,
+        0.26461211477151964
+      ]
+    }
+  }
+}

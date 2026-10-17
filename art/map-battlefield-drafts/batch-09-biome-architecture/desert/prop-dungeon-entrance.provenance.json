@@ -1,0 +1,46 @@
+{
+  "name": "prop-dungeon-entrance",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Hand-painted realistic medieval fantasy, tactile weathered matte materials, broad controlled brushwork, subtle natural material edges, muted earth colors, soft diffuse light from upper left, restrained highlights. No heavy cartoon outline, no shiny toy-like 3D render, no photographic sparkle, no text, lettering, numbers, logos, frames, people or characters. This is a reusable layered COMBAT SCENE component, viewed from a LOW ground-level near-frontal side camera with a gentle three-quarter angle, NOT elevated isometric map-icon camera. Keep center of the playable scene quiet. Do not paint rain streaks, snowflakes or global screen tint into base art; weather is a separate layer. Preserve ample usable material around the edges for multiple camera crops. Native output dimensions will be measured; do not fake resolution.\nPROP: complete isolated transparent entrance silhouette within central 75%, generous clear alpha margins, no terrain slab, sky or background. Request square 1536x1536. DESERT SUBJECT: ancient buried sandstone tomb gate, broad worn stone lintel, thick rectangular masonry pillars, black recessed passage, restrained cracked stones around base, no excessive ground or sand pile. Muted ochre gray sandstone; neutral diffuse daylight. Low near frontal eye-level camera.",
+  "sourceOutputPath": "/workspace/generated_images/exec-7738c09d-74c6-4aed-afae-43591713a3ae.png",
+  "generator": "OpenAI image_gen",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 1536,
+    "height": 1536
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-prop",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1254,
+    "height": 1254
+  },
+  "sha256": "a0ba70bf806098ac05471eae97849b48de91eae1b60060cecca1301b6631d1ca",
+  "sourceSha256": "a0ba70bf806098ac05471eae97849b48de91eae1b60060cecca1301b6631d1ca",
+  "processing": "Byte-identical retained imagegen output; no image editing, trimming, resizing or upscaling.",
+  "qa": {
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "visibleBoundsAt32": [
+      19,
+      140,
+      1234,
+      1113
+    ],
+    "alphaQA": {
+      "transparentFraction": 0.36459088492581315,
+      "borderPixelsAt32": 0,
+      "normalizedMarginsAt32": [
+        0.015151515151515152,
+        0.11164274322169059,
+        0.01594896331738437,
+        0.11244019138755981
+      ]
+    }
+  }
+}

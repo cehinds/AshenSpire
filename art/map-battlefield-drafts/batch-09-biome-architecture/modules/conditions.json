@@ -1,0 +1,22 @@
+[
+  {
+    "id": "day",
+    "weather": "clear",
+    "lighting": "day"
+  },
+  {
+    "id": "rain",
+    "weather": "rain",
+    "lighting": "overcast",
+    "filter": "../batch-04-atmosphere/filters/filter-rain.png",
+    "filterOpacity": 0.65,
+    "particles": "../batch-04-atmosphere/particles/rain.png"
+  },
+  {
+    "id": "night",
+    "weather": "clear",
+    "lighting": "night",
+    "filter": "../batch-04-atmosphere/filters/filter-night.png",
+    "filterOpacity": 0.5
+  }
+]
