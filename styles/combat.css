@@ -1262,7 +1262,9 @@
 :root .combat[data-layout='formation'] .combatant:is(.enemy-target-hitbox,.player-target-hitbox)::after {
   content: ''; position: absolute;
   left: var(--enemy-hit-x); top: var(--enemy-hit-y);
-  width: var(--enemy-hit-width, calc(44px / var(--ui-zoom, 1))); height: var(--enemy-hit-height, calc(44px / var(--ui-zoom, 1)));
+  /* Both target surfaces wait for battlefield geometry; an unresolved center
+     must not produce a default square over the shared header. */
+  width: var(--enemy-hit-width, 0px); height: var(--enemy-hit-height, 0px);
   transform: translate(-50%, -50%); z-index: 900; pointer-events: auto;
 }
 :root .combat[data-layout='formation'] .combatant .sprite > :first-child { flex-shrink: 0; }
