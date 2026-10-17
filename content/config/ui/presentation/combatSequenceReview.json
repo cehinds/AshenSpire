@@ -1,0 +1,18 @@
+{
+  "behavior": {
+    "classes": ["reaver", "rogue", "starseer", "herald"],
+    "note": "Approved combat paintings use class default weapons. Equipment mechanics are unchanged. Co-op continuation remains paused.",
+    "actions": [
+      {"id": "attack", "label": "Attack", "origin": "offensive"},
+      {"id": "smash", "label": "Smash · SM03 for Reaver", "origin": "smash", "source": "pose-studio/stances/update-stances/selected-smash-sm03/production.json"},
+      {"id": "sweep", "label": "Sweep · SW09 for Reaver", "origin": "sweep", "source": "pose-studio/stances/update-stances/selected-sweep-sw09/production.json"},
+      {"id": "defend", "label": "Defend preparation", "origin": "defensive"},
+      {"id": "counter", "label": "Counter", "origin": "counter"},
+      {"id": "evade", "label": "Evade", "origin": "evade"},
+      {"id": "fully-defended", "label": "Guard / Parry / Resisted reaction", "origin": "defend", "reaction": true, "fallback": "Common guard / hurt effects; no registered painted impact reaction for this class."},
+      {"id": "guard-break", "label": "Guard break reaction", "origin": "defend", "reaction": true, "fallback": "Common guard-break effects; no registered painted guard-break reaction for this class."},
+      {"id": "counter-guard", "label": "Guard Counter · impact then attack", "origin": "counter", "fallback": "The class Counter clip is used in combat; no separate painted Guard Counter sequence is registered."},
+      {"id": "counter-evade", "label": "Evasion Counter · evade then attack", "origin": "counter", "fallback": "The class Counter clip is used in combat; no separate painted Evasion Counter sequence is registered."}
+    ]
+  }
+}
