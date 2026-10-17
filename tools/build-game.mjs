@@ -166,6 +166,20 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   const unboundTags = [...tagsOf(content)].filter(([tag]) => families.has(tag.split(/[:.]/)[0]) && !tags[tag])
     .map(([tag, where]) => ({ tag, carriedBy: [...where].sort() })).sort((a, b) => (a.tag < b.tag ? -1 : 1));
 
+  // Every layer document against its own contract (engine/contracts), so the documented build command
+  // refuses data a consumer cannot interpret even when the separate test suites are not run.
+  const contract = name => readJson(`engine/contracts/${name}.schema.json`);
+  const check = (value, schema, where) => { try { validateGameSchema(value, schema, where); } catch (error) { fail(error.message); } };
+  const C = { manifest: contract('mechanic'), iface: contract('mechanic-interface'), service: contract('mechanic-service'), cases: contract('mechanic-cases'),
+    component: contract('ui-component'), screen: contract('ui-screen'), mapComponent: contract('map-component'), map: contract('map') };
+  for (const [slug, m] of Object.entries(mechanics)) {
+    check(m.manifest, C.manifest, `$/mechanics/${slug}/manifest`); check(m.interface, C.iface, `$/mechanics/${slug}/interface`);
+    check(m.service, C.service, `$/mechanics/${slug}/service`); if (m.cases) check(m.cases, C.cases, `$/mechanics/${slug}/cases`);
+  }
+  for (const [id, c] of Object.entries(uiComponents)) check(c, C.component, `$/ui/components/${id}`);
+  for (const [id, sc] of Object.entries(uiScreens)) check(sc, C.screen, `$/ui/screens/${id}`);
+  for (const [id, c] of Object.entries(mapComponents)) check(c, C.mapComponent, `$/maps/components/${id}`);
+  for (const [id, m] of Object.entries(mapDocs)) check(m, C.map, `$/maps/maps/${id}`);
   if (errors.length) throw new Error(`build-game: ${errors.length} problem(s)\n  ${errors.join('\n  ')}`);
 
   const count = p => Object.values(mechanics).filter(m => m.manifest.portability === p).length;

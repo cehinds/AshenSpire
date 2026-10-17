@@ -477,3 +477,8 @@ test('cases reject unknown then keys', () => {
 test('cmp ordering needs numbers', () => {
   assert.throws(() => run([{ if: { cmp: ['<', 'a', 1] }, then: [] }], createState({ entities: { self: ent() } })), /needs two numbers/);
 });
+test('set replaces a scalar prefix with a record', () => {
+  const st = createState({ entities: { self: ent() }, mechanics: { t: { saved: 1 } } });
+  const out = run([{ set: 'saved.field', value: 2 }], st);
+  assert.deepEqual(out.state.mechanics.t.saved, { field: 2 });
+});

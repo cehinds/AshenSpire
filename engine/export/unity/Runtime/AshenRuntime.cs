@@ -529,11 +529,19 @@ namespace Ashen.Runtime
         static bool DeepEquals(object a, object b)
         {
             if (a == null || b == null) return a == null && b == null;
+            // Boxed int/long/float and JSON doubles compare as numbers, as in the JS runtime.
+            if (AsDouble(a) is double na && AsDouble(b) is double nb) return na == nb;
             if (a is List<object> la && b is List<object> lb) return la.Count == lb.Count && la.Zip(lb).All(p => DeepEquals(p.First, p.Second));
             if (a is Dictionary<string, object> da && b is Dictionary<string, object> db)
                 return da.Count == db.Count && da.All(kv => db.TryGetValue(kv.Key, out var o) && DeepEquals(kv.Value, o));
             return a.Equals(b);
         }
+
+        static double? AsDouble(object v) => v switch
+        {
+            double x => x, float x => x, int x => x, long x => x, short x => x, byte x => x, uint x => x, ulong x => x, decimal x => (double)x,
+            _ => null,
+        };
 
         // ----- 8. Ops -----
         static int Floor0(double v) => (int)Math.Max(0, Math.Floor(v));

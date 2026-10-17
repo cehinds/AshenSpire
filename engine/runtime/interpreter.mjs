@@ -313,7 +313,8 @@ export function createRuntime({ mechanics, ops = loadOps() } = {}) {
     if ('set' in step) {
       const path = String(step.set).split('.');
       let cur = (rt.state.mechanics[scope.slug] ||= {});
-      for (const key of path.slice(0, -1)) cur = (cur[key] ||= {});
+      // Replace any non-record prefix (SPEC §6), as the C# runtime does.
+      for (const key of path.slice(0, -1)) { if (!cur[key] || typeof cur[key] !== 'object' || Array.isArray(cur[key])) cur[key] = {}; cur = cur[key]; }
       // Clone so a later set never writes through into the caller's params or an emitted payload (SPEC §1).
       cur[path[path.length - 1]] = structuredClone(value(rt, scope, step.value));
       return undefined;
