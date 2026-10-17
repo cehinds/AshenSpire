@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-17
 
-- **Core previews keep their offline and map checks after promotion** ([#2024](https://github.com/cehinds/AshenSpire/pull/2024), `0.7.1.1541`). Preview checks follow the current startup and Settings navigation, measure map dragging at the displayed zoom, and retain permanent coverage of Core's interface text after merging.
+- **Core previews keep their offline and map checks after promotion** ([#2024](https://github.com/cehinds/AshenSpire/pull/2024), `0.7.1.1543`). Preview checks follow the current startup and Settings navigation, measure map dragging at the displayed zoom, and retain permanent coverage of Core's interface text after merging.
 
 ## 2026-10-16
 

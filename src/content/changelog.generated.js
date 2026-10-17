@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-2024",
+    "date": "2026-10-17",
+    "group": "2026-10-17",
+    "summary": "Core previews keep their offline and map checks after promotion",
+    "detail": "Preview checks follow the current startup and Settings navigation, measure map dragging at the displayed zoom, and retain permanent coverage of Core's interface text after merging.",
+    "build": "0.7.1.1543",
+    "pullRequest": 2024,
+    "url": "https://github.com/cehinds/AshenSpire/pull/2024"
+  },
+  {
     "id": "pr-2023",
     "date": "2026-10-16",
     "group": "2026-10-16",
