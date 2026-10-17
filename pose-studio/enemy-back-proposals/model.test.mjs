@@ -1,0 +1,24 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {STANCES,proposalsOf,coverage,framesOf,frameAt,validateManifest,safeAsset} from './model.mjs';
+const frame={asset:'art/enemy-back-proposals/elite/v01.png',durationMs:100,canvas:[512,512],anchors:{feet:[.5,.90625]}};
+const proposal={id:'v01',status:'draft',perspective:'rear',provenance:{sourceSha256:'a'.repeat(64),prompt:'Original rear design',publicationStatus:'draft-unpublished',artRelease:null},stances:{neutral:{frames:[frame]}}};
+const actor={id:'elite',defaultStance:null,proposals:[proposal]};
+const manifest={schemaVersion:1,scope:'pending',targetScope:'ten-designs',actors:[actor]};
+test('missing designs remain explicit and never count as available',()=>{assert.equal(proposalsOf(actor).length,10);assert.deepEqual(coverage(actor),{designs:1,fullSets:0,total:10});assert.equal(proposalsOf(actor)[9].status,'missing');});
+test('front imagery cannot enter rear frame resolution',()=>{assert.deepEqual(framesOf({...proposal,perspective:'front'},'neutral'),[]);assert.deepEqual(framesOf(proposal,'evade'),[]);});
+test('draft art needs provenance but no invented release',()=>{assert.deepEqual(validateManifest(manifest),[]);const bad=structuredClone(manifest);bad.actors[0].proposals[0].provenance.sourceSha256=null;assert.ok(validateManifest(bad).length);});
+test('released art requires a release pin and anchors must normalize',()=>{const bad=structuredClone(manifest);bad.actors[0].proposals[0].provenance.publicationStatus='released';assert.ok(validateManifest(bad).length);bad.actors[0].proposals[0].provenance.artRelease='hd-assets-v1';bad.actors[0].proposals[0].stances.neutral.frames[0].anchors.feet=[.5,2];assert.ok(validateManifest(bad).length);});
+test('frame playback respects durations and loops at boundary',()=>{const b={...frame,durationMs:200};assert.equal(frameAt([frame,b],99),frame);assert.equal(frameAt([frame,b],100),b);assert.equal(frameAt([frame,b],300),frame);assert.equal(frameAt([],100),null);});
+test('full sets require all nine stance cells and default selection stays per actor',()=>{const full=structuredClone(actor);for(const s of STANCES)full.proposals[0].stances[s]={frames:[frame]};assert.equal(coverage(full).fullSets,1);full.defaultStance='wrong';assert.ok(validateManifest({...manifest,actors:[full]}).length);});
+test('asset paths reject traversal and remote URLs',()=>{assert.equal(safeAsset('https://example.com/a.png'),null);assert.equal(safeAsset('assets/../x.png'),null);assert.equal(safeAsset(frame.asset),frame.asset);});
+test('declared delivered scope cannot overstate artwork coverage',()=>{assert.ok(validateManifest({...manifest,scope:'ten-designs'}).some(e=>e.includes('ten available')));assert.ok(validateManifest({...manifest,scope:'ten-full-sets'}).some(e=>e.includes('complete stance')));assert.deepEqual(validateManifest({...manifest,scope:'ten-designs',actors:[{...actor,proposals:Array.from({length:10},(_,i)=>({...proposal,id:'v'+String(i+1).padStart(2,'0')}))}]}),[]);});
+test('provisional default requires real rear artwork',()=>{assert.ok(validateManifest({...manifest,actors:[{...actor,provisionalDefaultVersion:'v02'}]}).length);assert.deepEqual(validateManifest({...manifest,actors:[{...actor,provisionalDefaultVersion:'v01'}]}),[]);});
+
+import {integrateNormalized} from './normalized.mjs';
+const report={source:{sha256:'b'.repeat(64)},qa:{errors:[]},cropPlan:{status:'draft-pending-crop-review'},variants:Array.from({length:10},(_,i)=>({id:'v'+String(i+1).padStart(2,'0'),sha256:'c'.repeat(64),size:[512,512],anchor:[256,464],sourceBoundaryClipped:false}))};
+test('normalizer integration preserves draft provenance and neutral-only coverage',()=>{const next=integrateNormalized(manifest,'elite',report,{actorId:'elite',promptSummary:'Rear camera draft'});assert.equal(next.scope,'pending');assert.equal(next.actors[0].provisionalDefaultVersion,'v01');assert.deepEqual(coverage(next.actors[0]),{designs:10,fullSets:0,total:10});assert.equal(next.actors[0].proposals[0].provenance.promptKind,'summary');assert.deepEqual(next.actors[0].proposals[0].stances.neutral.frames[0].anchors.feet,[.5,.90625]);});
+test('unsafe normalized output cannot become gallery drafts',()=>{const bad=structuredClone(report);bad.variants[0].sourceBoundaryClipped=true;assert.throws(()=>integrateNormalized(manifest,'elite',bad,{actorId:'elite',prompt:'Rear'}),/clipped/);assert.throws(()=>integrateNormalized(manifest,'unknown',report,{actorId:'unknown',prompt:'Rear'}),/audited/);});
+
+import {animationCoverage} from './model.mjs';
+test('held poses do not imply completed animation clips',()=>{assert.deepEqual(animationCoverage(actor),{clips:0,completeSets:0});const animated=structuredClone(actor);animated.proposals[0].animations={attack:{frames:[frame,{...frame,asset:'art/enemy-back-proposals/elite/attack02.png'}]}};assert.deepEqual(animationCoverage(animated),{clips:1,completeSets:0});});

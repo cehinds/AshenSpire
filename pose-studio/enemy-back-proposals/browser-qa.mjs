@@ -1,0 +1,52 @@
+import assert from 'node:assert/strict';
+import {mkdir,writeFile,readFile} from 'node:fs/promises';
+import {createServer} from 'node:http';
+import {resolve,extname} from 'node:path';
+import {pathToFileURL} from 'node:url';
+const {chromium}=await import(pathToFileURL(process.env.PLAYWRIGHT_MODULE).href);
+const root=resolve('.'),output='/tmp/enemy-back-module-qa';
+await mkdir(output,{recursive:true});
+const types={'.html':'text/html','.mjs':'text/javascript','.js':'text/javascript','.css':'text/css','.json':'application/json'};
+const server=createServer(async(req,res)=>{try{const name=decodeURIComponent(new URL(req.url,'http://localhost').pathname),file=resolve(root,'.'+name);if(!file.startsWith(root+'/'))throw Error('Invalid path');const data=await readFile(file);res.writeHead(200,{'Content-Type':types[extname(file)]||'application/octet-stream'});res.end(data);}catch{res.writeHead(404);res.end('Not found');}});
+await new Promise(r=>server.listen(0,'127.0.0.1',r));
+const url='http://127.0.0.1:'+server.address().port+'/pose-studio/enemy-back-proposals/index.html';
+const browser=await chromium.launch({headless:true}),records=[];
+try{
+ for(const [name,width,height] of [['mobile',390,844],['tablet',820,1180],['desktop',1440,900],['wide',1920,1080]]){
+  const page=await browser.newPage({viewport:{width,height},acceptDownloads:true});
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(url);await page.locator('#grid .card').first().waitFor();
+  assert.equal(await page.locator('#actor option').count(),13);
+  assert.equal(await page.locator('#stance option').count(),9);
+  assert.equal(await page.locator('#grid .card').count(),10);
+  assert.equal(await page.locator('#grid img').count(),10);
+  await page.waitForFunction(()=>[...document.querySelectorAll('#grid img')].every(img=>img.complete&&img.naturalWidth===512));
+  assert.match(await page.locator('#notice').innerText(),/provisional draft design: v01/);
+  await page.selectOption('#stance','evade');
+  assert.equal(await page.locator('#grid .missing').count(),10);
+  await page.locator('[data-pick="v01"]').check();await page.locator('[data-pick="v02"]').check();
+  assert.equal(await page.locator('#compare article').count(),2);
+  await page.locator('[data-pick="v03"]').check();
+  assert.equal(await page.locator('#compare article').count(),2);
+  assert.equal(await page.locator('[data-pick="v01"]').isChecked(),false);
+  await page.selectOption('#actor','courtDuelist');
+  assert.equal(await page.locator('#compare article').count(),0);
+  assert.match(await page.locator('#notice').innerText(),/default stance: unselected/);
+  const downloadEvent=page.waitForEvent('download');await page.locator('#download').click();const download=await downloadEvent;
+  assert.equal(download.suggestedFilename(),'enemy-back-proposals.json');
+  const target=output+'/'+name+'-manifest.json';await download.saveAs(target);const exported=JSON.parse(await readFile(target,'utf8'));
+  assert.equal(exported.actors.length,13);
+  assert.equal(await page.locator('#grid img').count(),0,'Missing rear art must not receive front fallback');
+  const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);
+  assert.equal(overflow,false,'No horizontal viewport overflow');
+  await page.selectOption('#actor','wyrmAspirant');await page.selectOption('#stance','neutral');
+  await page.locator('#anchors').check();
+  await page.locator('[data-pick="v01"]').check();await page.locator('[data-pick="v02"]').check();
+  await page.waitForFunction(()=>[...document.querySelectorAll('#grid img,#compare img')].every(img=>img.complete&&img.naturalWidth===512));
+  await page.screenshot({path:output+'/'+name+'.png',fullPage:true});
+  assert.deepEqual(errors,[]);
+  records.push({name,width,height,url,status:'passed'});await page.close();
+ }
+ await writeFile(output+'/capture-record.json',JSON.stringify({sourceCommit:process.env.GITHUB_SHA,date:new Date().toISOString(),note:'Real browser captures of production gallery with ten normalized Wyrm Aspirant neutral rear designs; other stance and actor coverage remains pending.',records},null,2));
+ console.log(JSON.stringify(records));
+}finally{await browser.close();server.close();}
