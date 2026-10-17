@@ -18,8 +18,9 @@
   "presentation": {
     "icon": "status.frail"
   },
-  "portability": "legacy",
+  "portability": "portable",
   "legacy": {
     "file": "src/content/statuses.js"
-  }
+  },
+  "authored": true
 }

@@ -1,4 +1,41 @@
 {
   "mechanic": "status.frail",
-  "handlers": []
+  "handlers": [
+    {
+      "on": "command.apply",
+      "do": [
+        {
+          "op": "applyStatus",
+          "target": "$target",
+          "status": "frail",
+          "stacks": "$stacks"
+        },
+        {
+          "emit": "status.frail.applied",
+          "with": {
+            "target": "$target",
+            "stacks": "$stacks"
+          }
+        }
+      ]
+    },
+    {
+      "on": "command.remove",
+      "do": [
+        {
+          "op": "removeStatus",
+          "target": "$target",
+          "status": "frail",
+          "amount": "$amount"
+        },
+        {
+          "emit": "status.frail.removed",
+          "with": {
+            "target": "$target",
+            "amount": "$amount"
+          }
+        }
+      ]
+    }
+  ]
 }

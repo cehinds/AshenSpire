@@ -1,8 +1,49 @@
 {
   "mechanic": "status.strength",
-  "commands": {},
-  "events": {},
-  "queries": {},
+  "commands": {
+    "apply": {
+      "params": {
+        "target": "entityRef",
+        "stacks": "value"
+      },
+      "description": "Add stacks of Strength to the target."
+    },
+    "remove": {
+      "params": {
+        "target": "entityRef",
+        "amount": "value"
+      },
+      "description": "Remove stacks of Strength from the target."
+    }
+  },
+  "events": {
+    "applied": {
+      "payload": {
+        "target": "entityRef",
+        "stacks": "number"
+      }
+    },
+    "removed": {
+      "payload": {
+        "target": "entityRef",
+        "amount": "number"
+      }
+    }
+  },
+  "queries": {
+    "stacks": {
+      "params": {
+        "target": "entityRef"
+      },
+      "returns": "number",
+      "value": {
+        "f": "stacks",
+        "of": "target",
+        "status": "strength"
+      },
+      "description": "Current Strength stacks on the target."
+    }
+  },
   "listens": [],
   "requires": []
 }

@@ -18,9 +18,10 @@
   "presentation": {
     "icon": "status.strength"
   },
-  "portability": "legacy",
+  "portability": "portable",
   "legacy": {
     "file": "src/model/ashenBlight.js",
     "symbol": "ashenBlightBonuses"
-  }
+  },
+  "authored": true
 }

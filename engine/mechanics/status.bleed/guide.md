@@ -1,5 +1,5 @@
 # Bleed (`status.bleed`)
-Build-up: points do not decay. At {proc.threshold}, burst for {proc.burstPercent}% of max HP (min {proc.burstMin}, max {proc.burstMax}), ignoring Block, plus {proc.poiseDamage} Poise damage - then the build-up resets to zero. Fleshy targets briefly resist further Bleed after a burst.
-- Carried by: statuses on any entity.
-- Lives in: `src/engine/combatCardTactics.js` (`enqueueCounterWard`).
-- Portability: legacy (service.json is empty until the behaviour moves to catalog ops).
+Build-up status: points do not decay and burst for percent max HP at the threshold, then reset.
+- Carried by: statuses on any entity; stacks add (decay: none). Numeric effect rows stay in `src/content/statuses.js`.
+- Lives in: `src/engine/combatCardTactics.js`; portable service is `service.json` (ops `applyStatus`, `removeStatus`).
+- Portability: portable for apply, remove and the `stacks` query (`{ f: 'stacks', of: 'target', status: 'bleed' }`).

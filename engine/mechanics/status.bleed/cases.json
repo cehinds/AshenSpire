@@ -1,1 +1,109 @@
-[]
+[
+  {
+    "name": "applies Bleed to a clean target",
+    "given": {
+      "entities": {
+        "enemy": {
+          "hp": 30,
+          "maxHp": 30,
+          "statuses": {}
+        }
+      }
+    },
+    "when": {
+      "command": "status.bleed.apply",
+      "with": {
+        "target": "enemy",
+        "stacks": 2
+      }
+    },
+    "then": {
+      "entities": {
+        "enemy": {
+          "statuses": {
+            "bleed": {
+              "stacks": 2
+            }
+          }
+        }
+      },
+      "events": [
+        "status.bleed.applied"
+      ]
+    }
+  },
+  {
+    "name": "stacks add onto existing Bleed",
+    "given": {
+      "entities": {
+        "enemy": {
+          "hp": 30,
+          "maxHp": 30,
+          "statuses": {
+            "bleed": {
+              "stacks": 2
+            }
+          }
+        }
+      }
+    },
+    "when": {
+      "command": "status.bleed.apply",
+      "with": {
+        "target": "enemy",
+        "stacks": 3
+      }
+    },
+    "then": {
+      "entities": {
+        "enemy": {
+          "statuses": {
+            "bleed": {
+              "stacks": 5
+            }
+          }
+        }
+      },
+      "events": [
+        "status.bleed.applied"
+      ]
+    }
+  },
+  {
+    "name": "removes part of the Bleed stacks",
+    "given": {
+      "entities": {
+        "enemy": {
+          "hp": 30,
+          "maxHp": 30,
+          "statuses": {
+            "bleed": {
+              "stacks": 4
+            }
+          }
+        }
+      }
+    },
+    "when": {
+      "command": "status.bleed.remove",
+      "with": {
+        "target": "enemy",
+        "amount": 1
+      }
+    },
+    "then": {
+      "entities": {
+        "enemy": {
+          "statuses": {
+            "bleed": {
+              "stacks": 3
+            }
+          }
+        }
+      },
+      "events": [
+        "status.bleed.removed"
+      ]
+    }
+  }
+]

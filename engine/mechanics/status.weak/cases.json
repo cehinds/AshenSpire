@@ -1,1 +1,109 @@
-[]
+[
+  {
+    "name": "applies Weak to a clean target",
+    "given": {
+      "entities": {
+        "enemy": {
+          "hp": 30,
+          "maxHp": 30,
+          "statuses": {}
+        }
+      }
+    },
+    "when": {
+      "command": "status.weak.apply",
+      "with": {
+        "target": "enemy",
+        "stacks": 2
+      }
+    },
+    "then": {
+      "entities": {
+        "enemy": {
+          "statuses": {
+            "weak": {
+              "stacks": 2
+            }
+          }
+        }
+      },
+      "events": [
+        "status.weak.applied"
+      ]
+    }
+  },
+  {
+    "name": "stacks add onto existing Weak",
+    "given": {
+      "entities": {
+        "enemy": {
+          "hp": 30,
+          "maxHp": 30,
+          "statuses": {
+            "weak": {
+              "stacks": 2
+            }
+          }
+        }
+      }
+    },
+    "when": {
+      "command": "status.weak.apply",
+      "with": {
+        "target": "enemy",
+        "stacks": 3
+      }
+    },
+    "then": {
+      "entities": {
+        "enemy": {
+          "statuses": {
+            "weak": {
+              "stacks": 5
+            }
+          }
+        }
+      },
+      "events": [
+        "status.weak.applied"
+      ]
+    }
+  },
+  {
+    "name": "removes part of the Weak stacks",
+    "given": {
+      "entities": {
+        "enemy": {
+          "hp": 30,
+          "maxHp": 30,
+          "statuses": {
+            "weak": {
+              "stacks": 4
+            }
+          }
+        }
+      }
+    },
+    "when": {
+      "command": "status.weak.remove",
+      "with": {
+        "target": "enemy",
+        "amount": 1
+      }
+    },
+    "then": {
+      "entities": {
+        "enemy": {
+          "statuses": {
+            "weak": {
+              "stacks": 3
+            }
+          }
+        }
+      },
+      "events": [
+        "status.weak.removed"
+      ]
+    }
+  }
+]

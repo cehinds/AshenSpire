@@ -1,1 +1,109 @@
-[]
+[
+  {
+    "name": "applies Vulnerable to a clean target",
+    "given": {
+      "entities": {
+        "enemy": {
+          "hp": 30,
+          "maxHp": 30,
+          "statuses": {}
+        }
+      }
+    },
+    "when": {
+      "command": "status.vulnerable.apply",
+      "with": {
+        "target": "enemy",
+        "stacks": 2
+      }
+    },
+    "then": {
+      "entities": {
+        "enemy": {
+          "statuses": {
+            "vulnerable": {
+              "stacks": 2
+            }
+          }
+        }
+      },
+      "events": [
+        "status.vulnerable.applied"
+      ]
+    }
+  },
+  {
+    "name": "stacks add onto existing Vulnerable",
+    "given": {
+      "entities": {
+        "enemy": {
+          "hp": 30,
+          "maxHp": 30,
+          "statuses": {
+            "vulnerable": {
+              "stacks": 2
+            }
+          }
+        }
+      }
+    },
+    "when": {
+      "command": "status.vulnerable.apply",
+      "with": {
+        "target": "enemy",
+        "stacks": 3
+      }
+    },
+    "then": {
+      "entities": {
+        "enemy": {
+          "statuses": {
+            "vulnerable": {
+              "stacks": 5
+            }
+          }
+        }
+      },
+      "events": [
+        "status.vulnerable.applied"
+      ]
+    }
+  },
+  {
+    "name": "removes part of the Vulnerable stacks",
+    "given": {
+      "entities": {
+        "enemy": {
+          "hp": 30,
+          "maxHp": 30,
+          "statuses": {
+            "vulnerable": {
+              "stacks": 4
+            }
+          }
+        }
+      }
+    },
+    "when": {
+      "command": "status.vulnerable.remove",
+      "with": {
+        "target": "enemy",
+        "amount": 1
+      }
+    },
+    "then": {
+      "entities": {
+        "enemy": {
+          "statuses": {
+            "vulnerable": {
+              "stacks": 3
+            }
+          }
+        }
+      },
+      "events": [
+        "status.vulnerable.removed"
+      ]
+    }
+  }
+]

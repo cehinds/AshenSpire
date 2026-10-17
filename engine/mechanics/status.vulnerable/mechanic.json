@@ -18,9 +18,10 @@
   "presentation": {
     "icon": "status.vulnerable"
   },
-  "portability": "legacy",
+  "portability": "portable",
   "legacy": {
     "file": "src/engine/combatCardTactics.js",
     "symbol": "enqueueCounterWard"
-  }
+  },
+  "authored": true
 }

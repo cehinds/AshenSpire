@@ -1039,7 +1039,7 @@
       "id": "status.bleed",
       "tag": "status.bleed",
       "family": "status",
-      "portability": "legacy",
+      "portability": "portable",
       "modules": [
         "gear",
         "statuses"
@@ -1225,7 +1225,7 @@
       "id": "status.frail",
       "tag": "status.frail",
       "family": "status",
-      "portability": "legacy",
+      "portability": "portable",
       "modules": [
         "statuses"
       ]
@@ -1571,7 +1571,7 @@
       "id": "status.strength",
       "tag": "status.strength",
       "family": "status",
-      "portability": "legacy",
+      "portability": "portable",
       "modules": [
         "characters",
         "gear",
@@ -1618,7 +1618,7 @@
       "id": "status.vulnerable",
       "tag": "status.vulnerable",
       "family": "status",
-      "portability": "legacy",
+      "portability": "portable",
       "modules": [
         "stagger",
         "statuses"
@@ -1637,7 +1637,7 @@
       "id": "status.weak",
       "tag": "status.weak",
       "family": "status",
-      "portability": "legacy",
+      "portability": "portable",
       "modules": [
         "statuses"
       ]
