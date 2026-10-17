@@ -125,7 +125,7 @@ export default {
       selected: null, // { kind: 'clip', id } | { kind: 'anchor', name }
       narrow: false, overlay: null, mode: 'stage',
     };
-    let rafId = 0, lastTick = 0, pendingLink = null, mounted = true;
+    let rafId = 0, lastTick = 0, pendingLink = null, mounted = true, rendererTimer = null;
 
     // ---------- the game server (the render page) ----------
     function setSetup(message) {
@@ -143,6 +143,7 @@ export default {
       const serverId = gameStartOf(tools);
       const plan = connectPlan({ base, currentOrigin: st.game.origin, ready: st.game.ready, force, serverId, currentServerId: st.game.serverId });
       if (plan === 'keep') return;
+      clearTimeout(rendererTimer);
       if (plan === 'setup') {
         st.game.ready = false; st.game.origin = null; st.game.serverId = null;
         frame.removeAttribute('src');
@@ -155,6 +156,9 @@ export default {
       st.game.ready = false;
       setSetup('Loading the game renderer…');
       frame.src = `${base}workbench/modules/motion/render.html?po=${encodeURIComponent(location.origin)}`;
+      rendererTimer = setTimeout(() => {
+        if (!st.game.ready) setSetup('The game renderer did not respond. Check its configuration and module imports, then reopen Motion Studio to retry.');
+      }, 15000);
     }
     function sendToStage(type, payload) {
       if (!st.game.ready || !frame.contentWindow || !st.game.origin) return;
@@ -178,6 +182,7 @@ export default {
       const d = ev.data;
       if (!d || d.source !== RENDER_SOURCE) return;
       if (d.type === 'ready') {
+        clearTimeout(rendererTimer);
         st.game.ready = true;
         setSetup('');
         sendLoad();
@@ -185,6 +190,7 @@ export default {
       } else if (d.type === 'index') {
         applyIndex(d);
       } else if (d.type === 'error') {
+        clearTimeout(rendererTimer);
         setSetup(`The game renderer could not draw this file: ${d.message}`);
       } else if (d.type === 'shown') {
         setSetup('');
@@ -412,7 +418,7 @@ export default {
           <dt>Duration</dt><dd>${fmtMs(p.duration)}</dd>
           <dt>Poses</dt><dd>${p.poses.map((x, i) => `<span class="mo-chip${i === poseIndexAt(p.poses.length, p.duration, st.time, p.weights) ? ' is-on' : ''}">${i + 1}. ${esc(x)}</span>`).join(' ')}</dd>
           <dt>Effects</dt><dd>${p.clips.length} · bindings ${p.bindings.length}</dd>
-          <dt>Source</dt><dd><code>${esc(st.file.combat?.source || st.file.path)}</code></dd>
+          <dt>${st.file.combat ? st.file.combat.source.startsWith('content/config/') ? 'Review definition' : 'Production record' : 'Source'}</dt><dd><code>${esc(st.file.combat?.source || st.file.path)}</code></dd>
         </dl>` : '<p class="mo-note">Choose an animation set, stance or outfit in the library. Stances and sets open here; an outfit alone shows its painted frames.</p>'}
         ${st.file?.combat ? `<p class="mo-note mo-generated">Read-only combat sequence · Normal game pace. Playback speed changes the review clock only.</p><p class="mo-note">${esc(st.file.combat.note)}</p>${st.file.combat.fallback ? `<p class="mo-problems">${esc(st.file.combat.fallback)}</p>` : ''}${st.file.combat.available ? `<p class="mo-note">Contact: ${fmtMs(st.file.combat.impactMs)}. Phase holds follow the game's authored weights.</p>` : ''}` : p && isGenerated(st.file.path) ? `<p class="mo-note mo-generated">${esc(GENERATED_NOTE)}</p>` : ''}
         ${problems.length ? `<div class="mo-problems"><p>This file does not match the game format:</p><ul>${problems.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div>` : ''}
@@ -831,6 +837,7 @@ export default {
       },
       unmount() {
         mounted = false;
+        clearTimeout(rendererTimer);
         offReload();
         window.removeEventListener('message', onMessage);
         resizer?.disconnect();

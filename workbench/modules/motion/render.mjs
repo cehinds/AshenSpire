@@ -51,6 +51,7 @@ function drawCombat(entry, state) {
   stage.replaceChildren();
   stage.dataset.bg = state.background;
   stage.dataset.facing = state.facing;
+  stage.dataset.combatId = entry.id;
   if (!entry.available || !combatStage) {
     note.textContent = entry.fallback || 'This class has no registered painted sequence.';
     note.hidden = false;
@@ -123,6 +124,7 @@ function draw(state) {
   const { project, outfit = null, time = 0, facing = 'right', background = 'checker', onion = {} } = state;
   const combat = combatEntries.get(project?.combatId);
   if (combat) { drawCombat(combat, state); return; }
+  delete stage.dataset.combatId;
   if (combatStage) { combatStage.dispose(); combatStage = null; combatStageId = null; delete stage.dataset.combatReady; }
   stage.dataset.bg = background;
   stage.dataset.facing = facing === 'left' ? 'left' : 'right';

@@ -6,6 +6,7 @@
 .mo-name { margin: 0; font-size: 16px; font-weight: 650; }
 .mo-file { color: var(--as-text-dim, #9aa59c); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mo-dirty { font-size: 11px; padding: 1px 7px; border-radius: 9px; background: rgba(230, 180, 60, 0.25); color: #f3d68a; }
+.mo-readonly { flex: 0 0 auto; font-size: 11px; padding: 2px 7px; border-radius: 9px; background: #263d32; color: #bedcc8; }
 .mo-head-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .mo-toggle { display: none; }
 .mo-body { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: 280px minmax(0, 1fr) 300px; }
