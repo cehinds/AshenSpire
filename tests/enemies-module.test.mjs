@@ -232,3 +232,9 @@ test('card rewards are mostly rank 1+: starter (rank 0) cards only through a sma
   const src = readFileSync(new URL('../src/model/gameProfileRewards.js', import.meta.url), 'utf8');
   assert.match(src, /lowerRankChance/);
 });
+
+test('a basic card the character already owns is not offered as a reward', () => {
+  assert.equal(profile.content.rewards.eligibility.combatCards.skipOwnedBasics, true);
+  const src = readFileSync(new URL('../src/model/gameProfileRewards.js', import.meta.url), 'utf8');
+  assert.match(src, /skipOwnedBasics && cardRank\(card, rules\) < \(cardRule\.minRank \?\? 0\) && ownedIds\.has\(card\.id\)/);
+});

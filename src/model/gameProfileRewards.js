@@ -26,8 +26,12 @@ function equipmentGroupMembers(registries, rules, category, family) {
 }
 function pools(registries, run) {
   const definitions = gameContent(run,'cards') || [];
-  const cards = definitions.filter(card => (card.class === 'colorless' || card.class === run.class) && !['special', 'status'].includes(card.rarity) && card.type !== 'status');
   const rules = gameContent(run,'rewards');
+  // Owner 2026-10-17: a basic (below minRank) card the character already owns is never offered again.
+  const cardRule = rules?.eligibility?.combatCards;
+  const ownedIds = new Set([...(run.deck || []), ...(run.sideboard || [])].map(card => card?.cardId ?? card?.id ?? card));
+  const cards = definitions.filter(card => (card.class === 'colorless' || card.class === run.class) && !['special', 'status'].includes(card.rarity) && card.type !== 'status'
+    && !(cardRule?.skipOwnedBasics && cardRank(card, rules) < (cardRule.minRank ?? 0) && ownedIds.has(card.id)));
   const equipment = !!gameModule(run,'equipment'), hasCards=!!gameModule(run,'cards');
   const weapons = equipment ? equipmentGroupMembers(registries,rules,'weapons','armament') : new Set();
   const armor = equipment ? equipmentGroupMembers(registries,rules,'armor','armour') : new Set();

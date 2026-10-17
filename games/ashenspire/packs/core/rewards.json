@@ -170,7 +170,8 @@
         "common": 1,
         "uncommon": 2,
         "rare": 3
-      }
+      },
+      "skipOwnedBasics": true
     }
   }
 }
