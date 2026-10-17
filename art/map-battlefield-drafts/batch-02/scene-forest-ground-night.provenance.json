@@ -1,0 +1,12 @@
+{
+  "status": "draft",
+  "generator": "OpenAI image_gen",
+  "prompt": "Edit the FIRST reference, the transparent forest ground layer, into a matching NIGHT ground for the SECOND reference's moonlit forest atmosphere. Deliver only the ground layer on TRUE transparent background, never include the sky/background reference. Preserve the ground footprint and horizon around y=0.56, keep the top half completely alpha transparent. Keep ground opaque down to every bottom edge, clear broad level central combat floor, no objects/trees/ruins/tents/people/text/UI. Darker muted slate-earth and blue-gray stones, desaturated moss at sides, softly lit silver-blue from upper left; ground needs enough readable value separation for actors but should fit the night sky, no golden sunshine. Clean natural alpha horizon with no yellow/red outline, halo or detached specks. Wide full canvas ideally1672x941, no cropping. Painterly dark fantasy. Preserve generous empty floor for camera positioning.",
+  "sourceOutputPath": "/workspace/generated_images/exec-7ff04e4b-2736-45ed-bc0e-5aceede0ea61.png",
+  "sourceReferences": [
+    "../batch-01/scene-forest-ground-day.png",
+    "scene-forest-sky-night.png"
+  ],
+  "outputPath": "scene-forest-ground-night.png",
+  "processing": "Unchanged generated output; preview placement transforms are separate from source pixels."
+}

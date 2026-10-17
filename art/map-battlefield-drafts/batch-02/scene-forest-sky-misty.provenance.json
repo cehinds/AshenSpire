@@ -1,0 +1,11 @@
+{
+  "status": "draft",
+  "generator": "OpenAI image_gen",
+  "prompt": "Edit this original forest background into a MISTY OVERCAST variant for a layered 2D dark-fantasy battlefield. Preserve overall layout, tree framing, camera angle, mountain horizon and broad empty central sightline as closely as possible. Full wide opaque background only; no ground platform, tents, ruins, characters, text, UI, icons or borders. Muted cold slate gray and desaturated moss green, soft cloudy daylight with no bright sun, dense rolling fog banks drifting through middle-distance valley, distant mountain mostly lost in mist but nearest forest framing stays readable. Moody and subdued, no warm yellow or saturated bright highlights. Painterly handcrafted brushwork; quiet low-detail center for future characters. Keep the entire existing canvas composition with no crop or frame, ideally exactly 1672 by 941 pixels. This is only background layer, not a finished combat scene. Mist is painted in the distant landscape, not a UI/weather overlay.",
+  "sourceOutputPath": "/workspace/generated_images/exec-45a08c39-6141-4960-a52d-a3585740b114.png",
+  "sourceReferences": [
+    "../batch-01/scene-forest-sky-day.png"
+  ],
+  "outputPath": "scene-forest-sky-misty.png",
+  "processing": "Unchanged copy of generated output; no production registration or binding."
+}

@@ -1,0 +1,19 @@
+{
+  "asset": "map-rest-camp.png",
+  "prompt": "Repaint the same compact hunter rest camp shown in the first reference from the same high three-quarter orthographic angle: a single small canvas tent and one low circular stone fire ring with a few embers. The second reference is the style guide; do not include a bridge. Create a cleaner, simpler, darker, subdued fantasy map prop that remains legible at small map-icon size. Muted charcoal brown tent, gray-olive limestone, desaturated moss green, restrained ochre highlights, very small dim amber embers. Soft upper-left light; no bright white or saturated orange. Paint a natural soft-edged silhouette with clean antialiasing. IMPORTANT: absolutely no red, magenta, yellow, or green outline around the subject; no colored halo, glow, contour stroke, chromatic fringe, or background color contamination at the alpha boundary. Fully transparent canvas outside the object, zero stray alpha pixels or peripheral dust, no haze or cast shadow outside its contact footprint. Centered on a square transparent canvas, generous clean transparent margin on every side; target 1024x1024, keep the complete prop inside. No terrain tile/base, no scenery, no trees, no people, no text, no labels, no UI, no border.",
+  "output_path": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-02/map-rest-camp.png",
+  "generated_original_path": "/workspace/generated_images/exec-e043453f-256d-4cb7-8149-6aa264e61237.png",
+  "superseded_generated_original_paths": [
+    "/workspace/generated_images/exec-50dc8738-6670-4460-a118-09a7cba53b8b.png"
+  ],
+  "style_reference_paths": [
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-01/map-rest-camp.png",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-01/map-bridge-stone.png"
+  ],
+  "generator": "image_gen.imagegen",
+  "status": "draft",
+  "dimensions_px": [1254, 1254],
+  "format": "PNG",
+  "color_mode": "RGBA",
+  "sha256": "fec53a48fa4f00614d49df91c804de94117747936e08a4ae88ca88782a5d3ae8"
+}

@@ -1,0 +1,12 @@
+{
+  "status": "draft",
+  "generator": "OpenAI image_gen",
+  "prompt": "Edit the FIRST reference's transparent rear-props layer for the SECOND reference's moonlit NIGHT forest. Output ONLY two isolated prop groups on true transparent background, no sky or ground. Keep tent left and ruined stone arch right, feet near y0.565; however move both groups inward enough that each object's silhouette has at least 8 percent full-canvas side margin. Left group roughly x0.08..0.28, right group x0.72..0.92. Preserve wide empty central lane x0.3..0.7. Tent canvas dark desaturated blue-olive, stone arch slate gray and moss, softly silver-blue moonlit from upper left. Two existing small lanterns glow restrained warm amber, tightly localized and no broad glow halo. Clean alpha silhouettes with absolutely no colored fringes or detached pixels; everything below y0.61 fully transparent and sky fully transparent. No trees, terrain, extra props, labels, text or UI. Broad wide canvas ideally exactly1672x941; do not crop around groups. Painterly dark fantasy. This is a full-width rear-props layer positioned behind a separate foreground ground.",
+  "sourceOutputPath": "/workspace/generated_images/exec-71bb0c16-69d1-4c0a-b302-a9aa70448ec5.png",
+  "sourceReferences": [
+    "../batch-01/scene-forest-props-day.png",
+    "scene-forest-sky-night.png"
+  ],
+  "outputPath": "scene-forest-props-night.png",
+  "processing": "Unchanged generated output; preview placement transforms are separate from source pixels."
+}

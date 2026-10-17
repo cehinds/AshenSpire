@@ -1,0 +1,89 @@
+{
+  "generator": "image_gen.imagegen",
+  "status": "draft",
+  "generatedDate": "2026-10-17",
+  "prompt": "Create an original hand-painted dark fantasy videogame world-map prop, one weathered roadside votive shrine, isolated on transparency. Camera: high three-quarter orthographic looking down 35 degrees, soft diffuse illumination from upper left. Compact squat gray limestone monolith, worn sloping cap, shallow recessed arched niche, one short wax candle with one tiny pale flame inside. A simple abstract geometric relief below the niche, no writing. Cool blue-gray stone, dark charcoal cracks, restrained sparse desaturated moss. Bold compact readable silhouette, aged stone planes painted with broad brushwork, low saturation, moderate surface detail. Ground contact is only the shrine's own narrow foot. No terrain patch, no separate display pedestal, no floating ground island, no landscape, no cast shadow background. The entire object fits inside central 60 percent of a square 1024 by 1024 canvas: empty transparent margin of at least 20 percent on every side. Clean natural gray anti-aliased silhouette edges on alpha. Do not use chroma key or colored matte. Absolutely no red/yellow edge fringe, no neon colors, no golden light wash. The stone is darker, cooler and less saturated than warm sandstone. One tiny warm candle point is the only warm color. Transparent background: alpha zero everywhere outside the object. No checkerboard, text, UI, border or watermark. Single standalone asset, no sheet. Target 1024 x 1024 if supported.",
+  "sourceOutputPath": "/workspace/generated_images/exec-6107e5ba-fa30-40a2-bbc2-9ec751beae98.png",
+  "outputPath": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-02/map-shrine.png",
+  "referencedImagePaths": [],
+  "contextStyleReferencesInspected": [
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-01/map-bridge-stone.png",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-01/map-ruins-arch.png"
+  ],
+  "styleReferenceNote": "Batch-01 bridge and ruins were visually inspected. Initial generation directly used both raster references, but was rejected for warm stone and colored fringe. Selected generation uses the inspected style described in its prompt, without raster references.",
+  "transparentBackgroundRequested": true,
+  "targetDimensions": {
+    "width": 1024,
+    "height": 1024
+  },
+  "processing": "Original selected generated PNG copied byte-for-byte; no resize, upscale, color correction, alpha cleanup or other image editing. Original and rejected generations remain preserved at sourceOutputPath values.",
+  "productionRegistered": false,
+  "productionAssetId": null,
+  "limitations": [
+    "Draft art only; not approved, registered or integrated into the game.",
+    "Native output dimensions differ from the requested 1024 square; original retained unchanged.",
+    "Alpha=1 near-transparent noise extends toward some canvas edges; visible subject has narrower margins than the requested 20 percent.",
+    "Stone shrine includes one candle and a subdued local warm glow. Requires map-scale readability and palette review alongside the asset family.",
+    "Registration anchor and production footprint have not been measured or approved."
+  ],
+  "attempts": [
+    {
+      "selected": false,
+      "prompt": "Create ONE isolated dark fantasy world-map shrine prop on a fully transparent canvas. Use the two supplied bridge and ruined arch images ONLY for painterly stonework, orthographic camera and material treatment; replace their subjects entirely with a small roadside votive shrine. High three-quarter orthographic map view looking down about 35 degrees, lit softly from upper left. Design a compact, weathered cool gray limestone devotional stone: a squat monolithic upright with a shallow recessed niche under a worn sloping cap, one short ivory candle set inside the niche, one tiny restrained pale flame. A few desaturated moss patches cling to crevices. Give the stone one enigmatic shallow carved geometric sigil, not readable writing. Restrained realistic hand-painted brush texture, cool ash gray limestone, desaturated olive moss, dark recessed shadows, readable bold compact silhouette at map scale. Avoid excessive microdetail, gold, orange illumination or a bright halo. The candle has only a tiny local warm point. The shrine is small and quiet, distinct from a broken arch, tower, chapel or portal. Include only the shrine's actual narrow stone foot, no terrain tile, dirt island, plinth for display, surrounding grass, landscape, cast-shadow backdrop or environment. All background pixels transparent, including open spaces. Generous transparent margins of at least 18 percent on all four sides; entire object clearly inside the canvas. Clean neutral alpha edge: NO red, magenta, yellow or chroma-key fringe, no outline or rim glow. No bridge, ruins gateway, text, labels, UI, border, watermarks or collage. Target 1024 x 1024 square if supported, preserve native output dimensions.",
+      "referencedImagePaths": [
+        "/workspace/AshenSpire/art/map-battlefield-drafts/batch-01/map-bridge-stone.png",
+        "/workspace/AshenSpire/art/map-battlefield-drafts/batch-01/map-ruins-arch.png"
+      ],
+      "sourceOutputPath": "/workspace/generated_images/exec-8d3e2164-f2ef-4182-b715-eacfc81b878c.png",
+      "reasonRejected": "Warm reference palette and colored alpha fringe, especially portal energy.",
+      "sha256": "3a336d38f7b8e2d5249482947795be58292c3f2a8c93b73470d248c687a008f1"
+    },
+    {
+      "selected": true,
+      "prompt": "Create an original hand-painted dark fantasy videogame world-map prop, one weathered roadside votive shrine, isolated on transparency. Camera: high three-quarter orthographic looking down 35 degrees, soft diffuse illumination from upper left. Compact squat gray limestone monolith, worn sloping cap, shallow recessed arched niche, one short wax candle with one tiny pale flame inside. A simple abstract geometric relief below the niche, no writing. Cool blue-gray stone, dark charcoal cracks, restrained sparse desaturated moss. Bold compact readable silhouette, aged stone planes painted with broad brushwork, low saturation, moderate surface detail. Ground contact is only the shrine's own narrow foot. No terrain patch, no separate display pedestal, no floating ground island, no landscape, no cast shadow background. The entire object fits inside central 60 percent of a square 1024 by 1024 canvas: empty transparent margin of at least 20 percent on every side. Clean natural gray anti-aliased silhouette edges on alpha. Do not use chroma key or colored matte. Absolutely no red/yellow edge fringe, no neon colors, no golden light wash. The stone is darker, cooler and less saturated than warm sandstone. One tiny warm candle point is the only warm color. Transparent background: alpha zero everywhere outside the object. No checkerboard, text, UI, border or watermark. Single standalone asset, no sheet. Target 1024 x 1024 if supported.",
+      "referencedImagePaths": [],
+      "sourceOutputPath": "/workspace/generated_images/exec-6107e5ba-fa30-40a2-bbc2-9ec751beae98.png",
+      "sha256": "3f69619bffb8152406e471eee8c01b075c21ae54832083f366f28094b8c47679"
+    }
+  ],
+  "width": 1254,
+  "height": 1254,
+  "mode": "RGBA",
+  "sha256": "3f69619bffb8152406e471eee8c01b075c21ae54832083f366f28094b8c47679",
+  "alphaBounds": [
+    0,
+    19,
+    1234,
+    1254
+  ],
+  "visibleBoundsAlphaAbove1": [
+    340,
+    131,
+    935,
+    1123
+  ],
+  "visibleBoundsAlphaAbove8": [
+    342,
+    134,
+    933,
+    1121
+  ],
+  "alphaStatistics": {
+    "transparentPixels": 1175835,
+    "alpha1Pixels": 5808,
+    "translucentPixels": 396419,
+    "opaquePixels": 262,
+    "fullyTransparentCenterPixel": false
+  },
+  "colorArtifactProbe": {
+    "scope": "All pixels with alpha > 1; heuristic, not an alpha cleanup or production approval",
+    "redPixels": 0,
+    "yellowPixels": 2,
+    "bluePixels": 0,
+    "magentaPixels": 0
+  },
+  "styleReferenceHashes": {
+    "art/map-battlefield-drafts/batch-01/map-bridge-stone.png": "fa75920b2d655aab1963b43eba54106f6f86def21c7f40cb6cb5b7822bf88415",
+    "art/map-battlefield-drafts/batch-01/map-ruins-arch.png": "238937194918eaa2b6dc308c2832fc6b7f2f7f51e0e25efecfd77242987702fb"
+  }
+}

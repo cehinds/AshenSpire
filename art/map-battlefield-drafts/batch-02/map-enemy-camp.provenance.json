@@ -1,0 +1,16 @@
+{
+  "asset": "map-enemy-camp.png",
+  "prompt": "Create one isolated map prop representing a hostile enemy encampment, in the exact painterly dark fantasy miniature map-art style and high three-quarter orthographic camera of the two references. Do not reproduce the bridge or peaceful rest camp. Show a clearly hostile, distinct silhouette: exactly two low dark ragged canvas tents, a short irregular line of sharpened wooden stakes, and one small dark crimson pennant on a crooked pole. No campfire. Use charcoal, smoke-brown, desaturated moss and olive with restrained weathered ochre/limestone details; the pennant is the only saturated accent and should be dark blood red, not bright. Soft upper-left light, subdued contrast, hand-painted textures simplified to remain legible at map-icon size. Arrange the two tents as a compact asymmetric cluster with stakes in front and pennant rising behind; all components belong to one coherent camp prop. Output a 1024 x 1024 square with full transparent background and generous clear margins; keep all silhouettes fully inside the canvas. Every pixel outside the clean silhouette must be fully transparent; no alpha dust, colored edge fringe, halo, shadow haze, matte or stray marks. No terrain base, no scenery, no trees, no people, no weapons except the defensive stakes, no gore, no text, no labels, no symbols, no UI, no border.",
+  "output_path": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-02/map-enemy-camp.png",
+  "generated_original_path": "/workspace/generated_images/exec-3ccce42c-4bea-4bfc-9eaa-cc25689ebbd4.png",
+  "style_reference_paths": [
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-01/map-bridge-stone.png",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-02/map-rest-camp.png"
+  ],
+  "generator": "image_gen.imagegen",
+  "status": "draft",
+  "dimensions_px": [1254, 1254],
+  "format": "PNG",
+  "color_mode": "RGBA",
+  "sha256": "242c88d5c497a4b179f362329f0c2c4e913abbdff9483bfe870bbb2c6d154d48"
+}

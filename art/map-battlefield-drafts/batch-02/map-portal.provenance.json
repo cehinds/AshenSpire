@@ -1,0 +1,89 @@
+{
+  "generator": "image_gen.imagegen",
+  "status": "draft",
+  "generatedDate": "2026-10-17",
+  "prompt": "Create an original hand-painted dark fantasy videogame world-map prop, ONE freestanding magical portal made of a structurally complete circular stone ring, isolated on transparency. Camera: high three-quarter orthographic looking down 35 degrees, soft upper-left diffuse light. Cool blue-gray weathered limestone ring carved with a few abstract geometric rune cuts, supported by two short integrated stone feet. Opaque carved stone with dark charcoal crevices, very sparse desaturated moss. Low-saturation painterly brushwork, broad bold silhouette, moderate texture. A thin subdued lavender-violet light traces only the inner rim. Inside the ring there is a barely visible translucent violet haze: mostly an empty transparent opening through which the background can show. No large ribbons of energy, no sharp colored wisps, no magenta, no blue speckles, no neon bloom. Clearly a complete circle, not an archway, horseshoe or ruined doorway. Ground contact consists of the actual support feet only. No terrain tile, separate display plinth, ground patch, environment or cast-shadow backdrop. The entire object fits inside central 60 percent of a square 1024 by 1024 canvas: at least 20 percent empty transparent margin on all four sides. Clean gray anti-aliased exterior edges, no colored matte or chroma key, absolutely no red/yellow fringe. Alpha zero outside object; real translucency in the aperture. Dark muted neutral gray stone, no warm gold stone or bright rim lighting. No text, readable letters, labels, UI, border, watermark, grid or checkerboard. Single standalone asset, no sheet. Target 1024 x 1024 if supported.",
+  "sourceOutputPath": "/workspace/generated_images/exec-2831d992-31bd-42c8-b626-048099fb590e.png",
+  "outputPath": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-02/map-portal.png",
+  "referencedImagePaths": [],
+  "contextStyleReferencesInspected": [
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-01/map-bridge-stone.png",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-01/map-ruins-arch.png"
+  ],
+  "styleReferenceNote": "Batch-01 bridge and ruins were visually inspected. Initial generation directly used both raster references, but was rejected for warm stone and colored fringe. Selected generation uses the inspected style described in its prompt, without raster references.",
+  "transparentBackgroundRequested": true,
+  "targetDimensions": {
+    "width": 1024,
+    "height": 1024
+  },
+  "processing": "Original selected generated PNG copied byte-for-byte; no resize, upscale, color correction, alpha cleanup or other image editing. Original and rejected generations remain preserved at sourceOutputPath values.",
+  "productionRegistered": false,
+  "productionAssetId": null,
+  "limitations": [
+    "Draft art only; not approved, registered or integrated into the game.",
+    "Native output dimensions differ from the requested 1024 square; original retained unchanged.",
+    "Alpha=1 near-transparent noise extends toward some canvas edges; visible subject has narrower margins than the requested 20 percent.",
+    "Portal has mostly transparent central aperture, but the energy remains broader than a narrow inner rim and contains a few saturated near-transparent colored pixels. Requires visual review on actual map backgrounds.",
+    "Registration anchor and production footprint have not been measured or approved."
+  ],
+  "attempts": [
+    {
+      "selected": false,
+      "prompt": "Create ONE isolated dark fantasy world-map magical portal prop on a fully transparent canvas. Use the two supplied bridge and ruined arch images ONLY for hand-painted stonework, orthographic camera and muted material language; replace their subjects entirely with a complete ancient circular rune ring. High three-quarter orthographic map view looking down about 35 degrees, softly lit from upper left, front face and inner thickness readable. A freestanding continuous round ring of heavy weathered COOL GRAY limestone segments sits vertically, braced by two compact integrated stone feet, with subtle desaturated olive moss only on a few outer crevices. Carved abstract rune notches are geometric symbols, not readable writing. Clearly circular, structurally complete, recognizable as a magical portal rather than a ruined doorway or horseshoe arch. Restrained violet inner energy: a narrow dim lavender-violet light traces the inner circumference and two or three delicate wisps cross a mostly transparent aperture. The central opening must remain genuinely translucent or transparent, not filled with black, white, opaque purple or a painted landscape. Dim energy, no explosive effects, neon halo or bright rim. Dark muted realistic painterly fantasy, broad readable silhouette at map scale, cool ash gray stone, restrained texture, no warm ochre/gold palette. Include only ring and its real support feet, no terrain tile, ground patch, display base, surrounding vegetation, scenery, cast-shadow backdrop or environment. All surrounding background fully transparent. Generous transparent margins of at least 18 percent on every side; entire object inside canvas. Clean neutral alpha edges: NO red, magenta or yellow chroma-key fringe, no outline. No bridge, broken ruins gateway, text, labels, UI, borders, watermark or collage. Target 1024 x 1024 square if supported, preserve native output dimensions.",
+      "referencedImagePaths": [
+        "/workspace/AshenSpire/art/map-battlefield-drafts/batch-01/map-bridge-stone.png",
+        "/workspace/AshenSpire/art/map-battlefield-drafts/batch-01/map-ruins-arch.png"
+      ],
+      "sourceOutputPath": "/workspace/generated_images/exec-d219ef96-8bb9-4857-8dfb-3dc17970b720.png",
+      "reasonRejected": "Warm reference palette and colored alpha fringe, especially portal energy.",
+      "sha256": "e805148bdc0c39f3cc2e8b458d639dfc94d665fa3d5b7c81d004845775676899"
+    },
+    {
+      "selected": true,
+      "prompt": "Create an original hand-painted dark fantasy videogame world-map prop, ONE freestanding magical portal made of a structurally complete circular stone ring, isolated on transparency. Camera: high three-quarter orthographic looking down 35 degrees, soft upper-left diffuse light. Cool blue-gray weathered limestone ring carved with a few abstract geometric rune cuts, supported by two short integrated stone feet. Opaque carved stone with dark charcoal crevices, very sparse desaturated moss. Low-saturation painterly brushwork, broad bold silhouette, moderate texture. A thin subdued lavender-violet light traces only the inner rim. Inside the ring there is a barely visible translucent violet haze: mostly an empty transparent opening through which the background can show. No large ribbons of energy, no sharp colored wisps, no magenta, no blue speckles, no neon bloom. Clearly a complete circle, not an archway, horseshoe or ruined doorway. Ground contact consists of the actual support feet only. No terrain tile, separate display plinth, ground patch, environment or cast-shadow backdrop. The entire object fits inside central 60 percent of a square 1024 by 1024 canvas: at least 20 percent empty transparent margin on all four sides. Clean gray anti-aliased exterior edges, no colored matte or chroma key, absolutely no red/yellow fringe. Alpha zero outside object; real translucency in the aperture. Dark muted neutral gray stone, no warm gold stone or bright rim lighting. No text, readable letters, labels, UI, border, watermark, grid or checkerboard. Single standalone asset, no sheet. Target 1024 x 1024 if supported.",
+      "referencedImagePaths": [],
+      "sourceOutputPath": "/workspace/generated_images/exec-2831d992-31bd-42c8-b626-048099fb590e.png",
+      "sha256": "e1ecc4cc0f1c6d3b88dbb18c775d8f597cf66136eed246810db59d234ed64ccf"
+    }
+  ],
+  "width": 1254,
+  "height": 1254,
+  "mode": "RGBA",
+  "sha256": "e1ecc4cc0f1c6d3b88dbb18c775d8f597cf66136eed246810db59d234ed64ccf",
+  "alphaBounds": [
+    0,
+    19,
+    1236,
+    1254
+  ],
+  "visibleBoundsAlphaAbove1": [
+    209,
+    148,
+    1069,
+    1115
+  ],
+  "visibleBoundsAlphaAbove8": [
+    211,
+    151,
+    1067,
+    1113
+  ],
+  "alphaStatistics": {
+    "transparentPixels": 1056130,
+    "alpha1Pixels": 41298,
+    "translucentPixels": 515887,
+    "opaquePixels": 499,
+    "fullyTransparentCenterPixel": true
+  },
+  "colorArtifactProbe": {
+    "scope": "All pixels with alpha > 1; heuristic, not an alpha cleanup or production approval",
+    "redPixels": 0,
+    "yellowPixels": 0,
+    "bluePixels": 5,
+    "magentaPixels": 3
+  },
+  "styleReferenceHashes": {
+    "art/map-battlefield-drafts/batch-01/map-bridge-stone.png": "fa75920b2d655aab1963b43eba54106f6f86def21c7f40cb6cb5b7822bf88415",
+    "art/map-battlefield-drafts/batch-01/map-ruins-arch.png": "238937194918eaa2b6dc308c2832fc6b7f2f7f51e0e25efecfd77242987702fb"
+  }
+}

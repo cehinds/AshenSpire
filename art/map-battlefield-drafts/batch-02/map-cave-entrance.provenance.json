@@ -1,0 +1,64 @@
+{
+  "generator": "image_gen.imagegen",
+  "status": "draft",
+  "prompt": "Paint ONE standalone NATURAL CAVE ENTRANCE landmark for a dark fantasy world map: a compact broad irregular rocky outcrop shaped around one large low dark cave mouth, heavy rugged charcoal limestone overhang, asymmetrical blunt natural boulders, small restrained dark olive moss patches. The opening is a broad dark painted interior void. NO built doorway, arch blocks, cut masonry, columns, pillars, stairs, steps, gate, timber, bridge, or ruin: this MUST read as natural geology and be unmistakably different from a constructed dungeon doorway. Use the two supplied images ONLY for painterly material and high three-quarter orthographic map-camera guidance; completely replace their subjects with a NATURAL ROCK CAVE, no collage. Make this NEW image noticeably DARKER and more muted than the reference artwork: cold gray and charcoal limestone, cool gray broad hand-painted light planes, restrained dark olive moss, desaturated neutral palette, soft upper-left daylight. Favor a few large simple rock shapes readable when reduced to 64px, minimal fine crack noise, clean bold silhouette. Isolated transparent PNG cutout, target 1024x1024, object occupies only the middle 65 percent of the canvas leaving generous fully transparent margins on all four sides. Entire rock outcrop fully inside canvas. No terrain tile, ground island, ground slab, surrounding landscape or cast shadow plane. No text, labels, icons, grid, UI, frame, vignette or background. Absolutely NO red or yellow outline, colored edge glow, halo, colored fringe or bright rim lighting; edge pixels must inherit dark neutral gray rock, with clean alpha and completely empty transparent margins. The cave opening is dark rock interior, not a hole through the alpha.",
+  "sourceOutputPath": "/workspace/generated_images/exec-8931d095-072b-424b-a6c4-83c44fc80dad.png",
+  "outputPath": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-02/map-cave-entrance.png",
+  "styleReferencePaths": [
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-01/map-bridge-stone.png",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-01/map-ruins-arch.png"
+  ],
+  "transparentBackgroundRequested": true,
+  "targetDimensions": {
+    "width": 1024,
+    "height": 1024
+  },
+  "processing": "Original generated PNG copied unchanged; no resizing, upscaling or alpha cleanup.",
+  "productionRegistered": false,
+  "width": 1254,
+  "height": 1254,
+  "mode": "RGBA",
+  "sha256": "e6a53e4f98505e4a02ebd37fc25f6cd9f1013bf96d7b08203ff926bdff4833e3",
+  "alphaExtrema": [
+    0,
+    255
+  ],
+  "alphaBoundsByThreshold": {
+    "0": [
+      0,
+      28,
+      1244,
+      1254
+    ],
+    "1": [
+      46,
+      234,
+      1209,
+      1092
+    ],
+    "8": [
+      48,
+      236,
+      1207,
+      1090
+    ],
+    "128": [
+      49,
+      237,
+      1206,
+      1089
+    ]
+  },
+  "maximumBorderAlpha": 1,
+  "alphaLimitations": "Visible artwork remains inside the canvas, but generated alpha=1 specks reach the left and bottom canvas border. Thin colored edge fringe remains. Original preserved unchanged; production cleanup/approval pending.",
+  "visualReview": {
+    "inspected": true,
+    "observations": [
+      "Natural broad irregular rock mouth is visibly distinct from the constructed dungeon doorway; interior is painted dark.",
+      "Cold charcoal limestone and subdued olive moss, consistent upper-left highlights.",
+      "Rock texture remains fairly detailed; visible silhouette occupies about 93 percent of canvas width, so horizontal margins are smaller than requested.",
+      "Very thin yellow/olive edge pixels remain; no broad glow, but fringe requirement is not fully met.",
+      "Visible subject remains inside canvas; alpha=1 specks reach left/bottom canvas borders."
+    ]
+  }
+}

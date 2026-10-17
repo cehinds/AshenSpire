@@ -1,0 +1,64 @@
+{
+  "generator": "image_gen.imagegen",
+  "status": "draft",
+  "prompt": "Paint ONE standalone dungeon entrance landmark for a dark fantasy world map: a squat constructed cold gray limestone doorway with a single heavy arch, broad simple squared side buttresses, a dark solid interior void, and a short clearly visible flight of FIVE wide stone steps descending away from the doorway toward the viewer. Stone stairs and doorway must be the recognizable dominant silhouette. Use the two supplied images ONLY for painterly material and high three-quarter orthographic map-camera guidance; completely replace their subjects with this dungeon entrance, no bridge, no broken-arch ruin, no collage. Make this NEW image noticeably DARKER and more muted than the reference artwork: cold charcoal-gray limestone, cool gray broad hand-painted light planes, restrained dark olive moss, desaturated neutral palette, soft upper-left daylight. Favor large simple shapes readable when reduced to 64px, minimal fine crack noise, clean bold silhouette. Isolated transparent PNG cutout, target 1024x1024, object occupies only the middle 65 percent of the canvas leaving generous fully transparent margins on all four sides. All stone steps and masonry fully inside canvas. No terrain tile, ground island, ground slab, surrounding landscape or cast shadow plane. No text, labels, icons, grid, UI, frame, vignette or background. Absolutely NO red or yellow outline, colored edge glow, halo, colored fringe or bright rim lighting; edge pixels must inherit dark neutral gray stone, with clean alpha and completely empty transparent margins. The opening is a dark painted interior, not a hole through the alpha.",
+  "sourceOutputPath": "/workspace/generated_images/exec-3c6b2db7-df98-41a9-b62a-f60e9144925a.png",
+  "outputPath": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-02/map-dungeon-entrance.png",
+  "styleReferencePaths": [
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-01/map-bridge-stone.png",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-01/map-ruins-arch.png"
+  ],
+  "transparentBackgroundRequested": true,
+  "targetDimensions": {
+    "width": 1024,
+    "height": 1024
+  },
+  "processing": "Original generated PNG copied unchanged; no resizing, upscaling or alpha cleanup.",
+  "productionRegistered": false,
+  "width": 1254,
+  "height": 1254,
+  "mode": "RGBA",
+  "sha256": "ebaf63dc1285bba7175dbf8d2de351c51c8c47b9b15efbd2dc46dcd682eb0589",
+  "alphaExtrema": [
+    0,
+    255
+  ],
+  "alphaBoundsByThreshold": {
+    "0": [
+      0,
+      19,
+      1240,
+      1254
+    ],
+    "1": [
+      239,
+      150,
+      1114,
+      1105
+    ],
+    "8": [
+      241,
+      152,
+      1112,
+      1103
+    ],
+    "128": [
+      242,
+      154,
+      1111,
+      1102
+    ]
+  },
+  "maximumBorderAlpha": 1,
+  "alphaLimitations": "Visible artwork remains inside the canvas, but generated alpha=1 specks reach the left and bottom canvas border. Thin colored edge fringe remains. Original preserved unchanged; production cleanup/approval pending.",
+  "visualReview": {
+    "inspected": true,
+    "observations": [
+      "Constructed arch doorway and broad stairs are distinct and readable; interior is painted dark.",
+      "Darker cold stone than batch-01; subdued moss and upper-left highlights.",
+      "Fine masonry texture remains more detailed than the simplified prompt.",
+      "Very thin yellow/olive and occasional reddish edge pixels remain; no broad glow, but fringe requirement is not fully met.",
+      "Visible subject has substantial transparent margins; alpha=1 specks reach left/bottom canvas borders."
+    ]
+  }
+}

@@ -715,3 +715,13 @@ Each source has its exact generation prompt and provenance; the readable manifes
 records dimensions, hashes and review limitations. The scene preview composites
 three unchanged source PNGs. These are unregistered drafts pending palette, alpha,
 canvas and production-intake review. No third-party artwork or license is claimed.
+
+### Map and battlefield draft paintings — batch 02 (2026-10-17)
+
+Ten additional original OpenAI-generated paintings are retained on
+`feature/ImproveMapBattleFieldArt` in `art/map-battlefield-drafts/batch-02/`:
+six map props, three night forest layers and one misty forest background.
+Source PNGs, exact prompts, reference provenance, hashes and review limitations
+are retained together. Browser-rendered previews use the editable composition
+recipe and preserve the original source pixels. These remain unregistered drafts;
+no third-party artwork or license is claimed.

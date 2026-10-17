@@ -1,0 +1,11 @@
+{
+  "status": "draft",
+  "generator": "OpenAI image_gen",
+  "prompt": "Edit this original forest background into a NIGHT variant for a layered 2D dark-fantasy battlefield. Preserve the overall layout, tree framing, camera angle, mountain horizon and broad empty central sightline as closely as possible. Full wide opaque background only; no ground platform, tents, ruins, characters, text, UI, icons or borders. Deep muted navy-charcoal, desaturated blue-green forest, cool silver moonlight from upper left and a small partly cloud-veiled moon near upper left open sky. Layered subdued clouds and distant low mist; clearly night, atmospheric and readable, not pitch black, no bright daytime yellow highlights. Painterly handcrafted brushwork, restrained value contrast behind the future characters. Keep the entire existing canvas composition with no crop or frame, ideally exactly 1672 by 941 pixels. This is only the background layer, not a finished combat scene.",
+  "sourceOutputPath": "/workspace/generated_images/exec-a0de5376-626b-4eb3-a4a9-6933481afc4d.png",
+  "sourceReferences": [
+    "../batch-01/scene-forest-sky-day.png"
+  ],
+  "outputPath": "scene-forest-sky-night.png",
+  "processing": "Unchanged copy of generated output; no production registration or binding."
+}
