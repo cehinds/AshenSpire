@@ -19,9 +19,11 @@
       "wanderingSoldier.warcry"
     ],
     "gear": [
-      "shortbow"
+      "dagger"
     ],
-    "relics": [],
+    "relics": [
+      "enemy.relic.ashenBlightCore"
+    ],
     "poiseMax": 10,
     "levelProfile": {
       "min": 1,
@@ -63,9 +65,11 @@
       "blightHound.lunge"
     ],
     "gear": [
-      "dagger"
+      "battleaxe"
     ],
-    "relics": [],
+    "relics": [
+      "enemy.relic.ashenBlightCore"
+    ],
     "poiseMax": 6,
     "levelProfile": {
       "min": 1,
@@ -97,9 +101,11 @@
       "huskBrute.brace"
     ],
     "gear": [
-      "straightSword"
+      "dagger"
     ],
-    "relics": [],
+    "relics": [
+      "enemy.relic.ashenBlightCore"
+    ],
     "poiseMax": 16,
     "levelProfile": {
       "min": 2,
@@ -204,9 +210,9 @@
     ],
     "firstCard": "fellWarden.caneStrike",
     "gear": [
-      "cinderAxe",
-      "towerShield",
-      "armor.gutterLeathers"
+      "greatsword",
+      "parryDagger",
+      "armor.wayfarerPlate"
     ],
     "relics": [
       "enemy.relic.graveSeal"
@@ -302,9 +308,11 @@
     ],
     "firstCard": "briarHermit.rootShelter",
     "gear": [
-      "ashStaff"
+      "battleaxe"
     ],
-    "relics": [],
+    "relics": [
+      "enemy.relic.ashenBlightCore"
+    ],
     "poiseMax": 9,
     "levelProfile": {
       "min": 2,
@@ -334,7 +342,7 @@
       "chainScavenger.draggingBlow"
     ],
     "gear": [
-      "shortbow"
+      "dagger"
     ],
     "relics": [],
     "poiseMax": 8,
@@ -374,8 +382,8 @@
     ],
     "firstCard": "bellKeeper.bronzeToll",
     "gear": [
-      "greatsword",
-      "spikedShield",
+      "halberd",
+      "parryDagger",
       "armor.gutterLeathers"
     ],
     "relics": [
@@ -425,9 +433,9 @@
     ],
     "firstCard": "thornMatriarch.rootCrown",
     "gear": [
-      "halberd",
+      "cinderAxe",
       "towerShield",
-      "armor.gutterLeathers"
+      "armor.nightweave"
     ],
     "relics": [
       "enemy.relic.graveSeal"
@@ -480,7 +488,7 @@
       "gildedKnight.gildedGuard"
     ],
     "gear": [
-      "dagger"
+      "battleaxe"
     ],
     "relics": [],
     "poiseMax": 18,
@@ -544,9 +552,11 @@
       "stitchedHound.rend"
     ],
     "gear": [
-      "dagger"
+      "battleaxe"
     ],
-    "relics": [],
+    "relics": [
+      "enemy.relic.ashenBlightCore"
+    ],
     "poiseMax": 8,
     "levelProfile": {
       "min": 6,
@@ -577,9 +587,11 @@
       "courtMarionette.blowdart"
     ],
     "gear": [
-      "straightSword"
+      "dagger"
     ],
-    "relics": [],
+    "relics": [
+      "enemy.relic.ashenBlightCore"
+    ],
     "poiseMax": 6,
     "levelProfile": {
       "min": 6,
@@ -611,7 +623,9 @@
     "gear": [
       "battleaxe"
     ],
-    "relics": [],
+    "relics": [
+      "enemy.relic.ashenBlightCore"
+    ],
     "poiseMax": 22,
     "levelProfile": {
       "min": 7,
@@ -644,10 +658,12 @@
     ],
     "firstCard": "courtDuelist.enGarde",
     "gear": [
-      "warhammer",
-      "armor.gutterLeathers"
+      "greatsword",
+      "armor.wayfarerPlate"
     ],
-    "relics": [],
+    "relics": [
+      "enemy.relic.ashenBlightCore"
+    ],
     "poiseMax": 26,
     "levelProfile": {
       "min": 10,
@@ -685,7 +701,7 @@
     ],
     "firstCard": "stitchedKing.courtlyDecree",
     "gear": [
-      "warhammer",
+      "greatsword",
       "towerShield",
       "armor.wayfarerPlate"
     ],
@@ -777,9 +793,11 @@
     ],
     "firstCard": "stitchCrab.shellFold",
     "gear": [
-      "shortbow"
+      "dagger"
     ],
-    "relics": [],
+    "relics": [
+      "enemy.relic.ashenBlightCore"
+    ],
     "poiseMax": 17,
     "levelProfile": {
       "min": 7,
@@ -819,7 +837,7 @@
     "gear": [
       "greatsword",
       "parryDagger",
-      "armor.riteVestments"
+      "armor.wayfarerPlate"
     ],
     "relics": [
       "enemy.relic.titanHeart"
@@ -875,8 +893,8 @@
     ],
     "firstCard": "marrowOrganist.bonePrelude",
     "gear": [
-      "emberlightSceptre",
-      "lantern",
+      "greatsword",
+      "towerShield",
       "armor.nightweave"
     ],
     "relics": [
@@ -925,9 +943,11 @@
       "ashRevenant.reform"
     ],
     "gear": [
-      "straightSword"
+      "dagger"
     ],
-    "relics": [],
+    "relics": [
+      "enemy.relic.ashenBlightCore"
+    ],
     "poiseMax": 10,
     "levelProfile": {
       "min": 13,
@@ -959,7 +979,9 @@
     "gear": [
       "battleaxe"
     ],
-    "relics": [],
+    "relics": [
+      "enemy.relic.ashenBlightCore"
+    ],
     "poiseMax": 8,
     "levelProfile": {
       "min": 13,
@@ -991,7 +1013,9 @@
     "gear": [
       "battleaxe"
     ],
-    "relics": [],
+    "relics": [
+      "enemy.relic.ashenBlightCore"
+    ],
     "poiseMax": 14,
     "levelProfile": {
       "min": 14,
@@ -1021,9 +1045,11 @@
       "charredColossus.harden"
     ],
     "gear": [
-      "dagger"
+      "battleaxe"
     ],
-    "relics": [],
+    "relics": [
+      "enemy.relic.ashenBlightCore"
+    ],
     "poiseMax": 30,
     "levelProfile": {
       "min": 15,
@@ -1059,10 +1085,12 @@
     ],
     "firstCard": "wyrmLord.consecration",
     "gear": [
-      "halberd",
+      "cinderAxe",
       "armor.wayfarerPlate"
     ],
-    "relics": [],
+    "relics": [
+      "enemy.relic.ashenBlightCore"
+    ],
     "poiseMax": 30,
     "levelProfile": {
       "min": 18,
@@ -1100,12 +1128,12 @@
     ],
     "firstCard": "blightedValkyrie.spiralThrust",
     "gear": [
-      "wyrmhornStaff",
-      "torch",
+      "halberd",
+      "parryDagger",
       "armor.nightweave"
     ],
     "relics": [
-      "enemy.relic.ashenCore"
+      "enemy.relic.ashenBlightCore"
     ],
     "poiseMax": 36,
     "levelProfile": {
@@ -1174,7 +1202,7 @@
       "cinderMantis.foldedBlades"
     ],
     "gear": [
-      "shortbow"
+      "dagger"
     ],
     "relics": [],
     "poiseMax": 11,
@@ -1243,7 +1271,7 @@
     ],
     "firstCard": "furnaceSaint.openFurnace",
     "gear": [
-      "greatsword",
+      "cinderAxe",
       "towerShield",
       "armor.wayfarerPlate"
     ],
@@ -1301,9 +1329,9 @@
     ],
     "firstCard": "hollowAstronomer.starChart",
     "gear": [
-      "greatsword",
+      "cinderAxe",
       "parryDagger",
-      "armor.riteVestments"
+      "armor.wayfarerPlate"
     ],
     "relics": [
       "enemy.relic.titanHeart"
@@ -1355,12 +1383,12 @@
     ],
     "firstCard": "ashheartDragon.obsidianClaws",
     "gear": [
-      "warhammer",
-      "spikedShield",
+      "halberd",
+      "parryDagger",
       "armor.gutterLeathers"
     ],
     "relics": [
-      "enemy.relic.ashenCore"
+      "enemy.relic.ashenBlightCore"
     ],
     "poiseMax": 34,
     "levelProfile": {

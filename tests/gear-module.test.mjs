@@ -14,9 +14,17 @@ const { gear, enemies, enemyCards } = profile.content;
 const RATINGS = ['ar', 'dr', 'poise'], ATTRS = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
 const total = (p, keys) => keys.reduce((s, k) => s + p[k], 0);
 
-test('Core merges the two pools; the module default is split', () => {
+test('one pool by default: common 4, +1 per tier; split stays available', () => {
   assert.equal(gearSettings.pools, 'merged');
-  assert.equal(catalog.modules.gear.defaults.pools, 'split');
+  assert.equal(catalog.modules.gear.defaults.pools, 'merged');
+  assert.deepEqual(['common', 'uncommon', 'rare', 'epic'].map(r => gearSettings.poolSizes.merged[r].max), [4, 5, 6, 7]);
+});
+
+test('most commons give only AR/DR/Poise; a few carry one set attribute', () => {
+  const commons = gear.filter(i => i.rarity === 'common').map(i => [i, resolveGearItem(i, gearSettings)]);
+  const withAttr = commons.filter(([, r]) => total(r.points, ATTRS) > 0);
+  assert.ok(withAttr.length < commons.length / 2, 'most commons are ratings only');
+  for (const [item, r] of withAttr) assert.equal(total(r.points, ATTRS), total(item.points || {}, ATTRS.filter(a => item.points?.[a])), item.id);
 });
 
 test('every item spends exactly its pool, minus tag costs, within 3 attributes', () => {
@@ -24,7 +32,7 @@ test('every item spends exactly its pool, minus tag costs, within 3 attributes',
     const s = { ...gearSettings, pools: mode }, r = resolveGearItem(item, s);
     const R = s.poolSizes.ratings[item.rarity].max, B = s.poolSizes.bonus[item.rarity].max;
     const spent = total(r.points, RATINGS) + total(r.points, ATTRS) + r.tagCost;
-    assert.equal(spent, R + B, `${mode} ${item.id}`);
+    assert.equal(spent, mode === 'merged' ? s.poolSizes.merged[item.rarity].max : R + B, `${mode} ${item.id}`);
     if (mode === 'split') assert.equal(total(r.points, RATINGS), R, `${item.id} ratings pool`);
     assert.ok(ATTRS.filter(a => r.points[a] > 0).length <= s.maxAttributes, item.id);
   }
@@ -45,8 +53,9 @@ test('points an item sets are kept; only the rest is filled', () => {
 
 test('pool size changes re-flow unset points automatically', () => {
   const item = gear.find(i => i.id === 'dagger');
-  const bigger = mergeGameSettings(gearSettings, { pools: 'split', poolSizes: { bonus: { common: { min: 2, max: 5 } } } });
-  assert.equal(total(resolveGearItem(item, bigger).points, ATTRS) + resolveGearItem(item, bigger).tagCost, 5);
+  const bigger = mergeGameSettings(gearSettings, { poolSizes: { merged: { common: { min: 6, max: 6 } } } });
+  const r = resolveGearItem(item, bigger);
+  assert.equal(total(r.points, RATINGS) + total(r.points, ATTRS) + r.tagCost, 6);
 });
 
 test('validator refuses set points that exceed the pool', () => {
@@ -67,4 +76,18 @@ test('enemy cards are player-shaped with owner-relative targets', () => {
     for (const card of enemyCards) assert.ok(key in card && key in player, `${card.id}.${key}`);
   for (const card of enemyCards) for (const e of card.effects) assert.notEqual(e.target, 'player', card.id);
   assert.equal(enemyCards.find(c => c.id === 'graveWisp.curse').effects[0].target, 'enemy');
+});
+
+test('Ashen Blight Core: STR +2, CON +2, WIS -1, SP -2, with SP floored at 1', async () => {
+  const { enemyPools, enemyItemBonuses } = await import('../engine/kernel/gameConfig.js');
+  const core = profile.content.enemyRelics.find(r => r.id === 'enemy.relic.ashenBlightCore');
+  assert.deepEqual(core.modifiers, ['self.strength=+2', 'self.constitution=+2', 'self.wisdom=-1', 'self.sp=-2']);
+  const e = profile.modules.enemies;
+  const carriers = enemies.filter(x => x.relics.includes(core.id));
+  const minions = enemies.filter(x => x.tier === 'minion'), elites = enemies.filter(x => x.tier === 'elite');
+  assert.ok(carriers.filter(x => x.tier === 'minion').length > minions.length / 2, 'most minions');
+  assert.ok(carriers.filter(x => x.tier === 'boss').length >= 2, 'a couple of bosses');
+  for (const x of carriers) assert.ok(enemyPools(x, e, undefined, enemyItemBonuses(x, profile.content, gearSettings)).sp >= 1, x.id);
+  const bare = { ...minions[0], gear: [], relics: [core.id] };
+  assert.equal(enemyPools(bare, e, 1, enemyItemBonuses(bare, profile.content, gearSettings)).sp, 1, 'max(2 - 2, 1)');
 });

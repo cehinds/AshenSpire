@@ -177,5 +177,10 @@
     "maxPoints": 5,
     "maxStats": 3,
     "source": "player"
+  },
+  "penaltyFloor": {
+    "sp": 1,
+    "mp": 0,
+    "hp": 1
   }
 }

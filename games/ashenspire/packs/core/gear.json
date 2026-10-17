@@ -56,7 +56,9 @@
     "tags": [
       "bow"
     ],
-    "points": {},
+    "points": {
+      "dexterity": 1
+    },
     "source": {
       "file": "content/source/weapons.csv",
       "id": "shortbow"
@@ -231,7 +233,9 @@
       "lantern",
       "regen"
     ],
-    "points": {},
+    "points": {
+      "wisdom": 1
+    },
     "source": {
       "file": "content/source/weapons.csv",
       "id": "lantern"
@@ -558,7 +562,6 @@
       "robes"
     ],
     "points": {
-      "intelligence": 1,
       "wisdom": 1
     },
     "classes": [
@@ -643,8 +646,7 @@
       "robes"
     ],
     "points": {
-      "dr": 1,
-      "constitution": 1
+      "dr": 1
     },
     "classes": [
       "herald",
@@ -728,9 +730,7 @@
       "leathers",
       "light"
     ],
-    "points": {
-      "strength": 1
-    },
+    "points": {},
     "classes": [
       "herald",
       "reaver",

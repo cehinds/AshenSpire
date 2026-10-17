@@ -10,8 +10,7 @@ real, lootable gear. Every item is a set of **points**; JSON decides what a poin
 | ratings | AR, DR, Poise | 3 | 4 | 5 | 6 |
 | bonus | STR, DEX, CON, WIS, INT, effect tags | 2–3 | 2–4 | 2–5 | 2–6 |
 
-`pools: "split"` (module default) keeps them apart. `pools: "merged"` (Core) makes one pool of
-both sizes, shared by `mergedShare`. At most `maxAttributes` (3) attributes per item.
+`pools: "merged"` (default, owner 2026-10-17) is one pool sized by `poolSizes.merged`: common 4, uncommon 5, rare 6, epic 7. `mergedShare` splits fill weight by rarity: commons fill AR/DR/Poise only (a few carry one set attribute); uncommon and up split evenly. `pools: "split"` keeps two pools. At most `maxAttributes` (3) attributes per item.
 `pointValues` converts points to stats (AR 1, DR 2, Poise 3, attributes 1 per point).
 
 ## Tags

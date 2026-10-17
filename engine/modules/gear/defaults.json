@@ -1,6 +1,6 @@
 {
   "mode": "configured",
-  "pools": "split",
+  "pools": "merged",
   "rarities": [
     "common",
     "uncommon",
@@ -43,11 +43,35 @@
         "min": 2,
         "max": 6
       }
+    },
+    "merged": {
+      "common": {
+        "min": 4,
+        "max": 4
+      },
+      "uncommon": {
+        "min": 5,
+        "max": 5
+      },
+      "rare": {
+        "min": 6,
+        "max": 6
+      },
+      "epic": {
+        "min": 7,
+        "max": 7
+      }
     }
   },
   "mergedShare": {
-    "ratings": 0.5,
-    "bonus": 0.5
+    "default": {
+      "ratings": 0.5,
+      "bonus": 0.5
+    },
+    "common": {
+      "ratings": 1,
+      "bonus": 0
+    }
   },
   "fillTo": "max",
   "maxAttributes": 3,

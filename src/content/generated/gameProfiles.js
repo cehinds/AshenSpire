@@ -1131,6 +1131,11 @@ export const gameProfileCatalog = {
           "maxPoints": 5,
           "maxStats": 3,
           "source": "player"
+        },
+        "penaltyFloor": {
+          "sp": 1,
+          "mp": 0,
+          "hp": 1
         }
       },
       "schema": {
@@ -1554,6 +1559,32 @@ export const gameProfileCatalog = {
               "source"
             ],
             "additionalProperties": false
+          },
+          "penaltyFloor": {
+            "type": "object",
+            "properties": {
+              "sp": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 99
+              },
+              "mp": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 99
+              },
+              "hp": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 99
+              }
+            },
+            "required": [
+              "sp",
+              "mp",
+              "hp"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -1569,7 +1600,8 @@ export const gameProfileCatalog = {
           "ai",
           "statRules",
           "levelFrom",
-          "equipment"
+          "equipment",
+          "penaltyFloor"
         ],
         "additionalProperties": false
       },
@@ -1584,13 +1616,13 @@ export const gameProfileCatalog = {
           "path": "engine/modules/enemies/defaults.json",
           "id": "enemies",
           "version": "1.0.0",
-          "hash": "sha256:f0e9b02566e4beb01924fc48e05679a24795f0ce92f5f14688296bb300570c44"
+          "hash": "sha256:d4d8b90f50d8f418b0a895e226139098e8beb4d9fa227bff75fa935b0c2ab07a"
         },
         {
           "path": "engine/modules/enemies/settings.schema.json",
           "id": "enemies",
           "version": "1.0.0",
-          "hash": "sha256:2b937bb778be6b9f0e5cfd1e557386b235ee5987a6297139c1af635dada9e539"
+          "hash": "sha256:5d8c4bc06570fac5c69ccbfc5e0639cceb23c45684c6680797fb356b730218fb"
         }
       ]
     },
@@ -1807,7 +1839,7 @@ export const gameProfileCatalog = {
       },
       "defaults": {
         "mode": "configured",
-        "pools": "split",
+        "pools": "merged",
         "rarities": [
           "common",
           "uncommon",
@@ -1850,11 +1882,35 @@ export const gameProfileCatalog = {
               "min": 2,
               "max": 6
             }
+          },
+          "merged": {
+            "common": {
+              "min": 4,
+              "max": 4
+            },
+            "uncommon": {
+              "min": 5,
+              "max": 5
+            },
+            "rare": {
+              "min": 6,
+              "max": 6
+            },
+            "epic": {
+              "min": 7,
+              "max": 7
+            }
           }
         },
         "mergedShare": {
-          "ratings": 0.5,
-          "bonus": 0.5
+          "default": {
+            "ratings": 0.5,
+            "bonus": 0.5
+          },
+          "common": {
+            "ratings": 1,
+            "bonus": 0
+          }
         },
         "fillTo": "max",
         "maxAttributes": 3,
@@ -2631,33 +2687,63 @@ export const gameProfileCatalog = {
                   ],
                   "additionalProperties": false
                 }
+              },
+              "merged": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "min": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 99
+                    },
+                    "max": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 99
+                    }
+                  },
+                  "required": [
+                    "min",
+                    "max"
+                  ],
+                  "additionalProperties": false
+                }
               }
             },
             "required": [
               "ratings",
-              "bonus"
+              "bonus",
+              "merged"
             ],
             "additionalProperties": false
           },
           "mergedShare": {
             "type": "object",
-            "properties": {
-              "ratings": {
-                "type": "number",
-                "minimum": 0,
-                "maximum": 1
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "ratings": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "bonus": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
               },
-              "bonus": {
-                "type": "number",
-                "minimum": 0,
-                "maximum": 1
-              }
+              "required": [
+                "ratings",
+                "bonus"
+              ],
+              "additionalProperties": false
             },
             "required": [
-              "ratings",
-              "bonus"
-            ],
-            "additionalProperties": false
+              "default"
+            ]
           },
           "fillTo": {
             "enum": [
@@ -3047,13 +3133,13 @@ export const gameProfileCatalog = {
           "path": "engine/modules/gear/defaults.json",
           "id": "gear",
           "version": "1.0.0",
-          "hash": "sha256:3b13f9de30eae4a953ab152a9c748b88d96b81aa3945b6ac710494cbe9857498"
+          "hash": "sha256:475f55fe842ba90f921228143cb065e233c53f7a07e9fb1781a396a3d6832263"
         },
         {
           "path": "engine/modules/gear/settings.schema.json",
           "id": "gear",
           "version": "1.0.0",
-          "hash": "sha256:11e7a135011185f14e52ce6ccc0da1e705ca2ef255b5feb36ca47355f5afb556"
+          "hash": "sha256:9d9b32dde89343b278b5823a682b85ccc27fd512c2e4ffe86d5df05abb0f7c3b"
         }
       ]
     },
@@ -5620,9 +5706,11 @@ export const gameProfileCatalog = {
               "wanderingSoldier.warcry"
             ],
             "gear": [
-              "shortbow"
+              "dagger"
             ],
-            "relics": [],
+            "relics": [
+              "enemy.relic.ashenBlightCore"
+            ],
             "poiseMax": 10,
             "levelProfile": {
               "min": 1,
@@ -5664,9 +5752,11 @@ export const gameProfileCatalog = {
               "blightHound.lunge"
             ],
             "gear": [
-              "dagger"
+              "battleaxe"
             ],
-            "relics": [],
+            "relics": [
+              "enemy.relic.ashenBlightCore"
+            ],
             "poiseMax": 6,
             "levelProfile": {
               "min": 1,
@@ -5698,9 +5788,11 @@ export const gameProfileCatalog = {
               "huskBrute.brace"
             ],
             "gear": [
-              "straightSword"
+              "dagger"
             ],
-            "relics": [],
+            "relics": [
+              "enemy.relic.ashenBlightCore"
+            ],
             "poiseMax": 16,
             "levelProfile": {
               "min": 2,
@@ -5805,9 +5897,9 @@ export const gameProfileCatalog = {
             ],
             "firstCard": "fellWarden.caneStrike",
             "gear": [
-              "cinderAxe",
-              "towerShield",
-              "armor.gutterLeathers"
+              "greatsword",
+              "parryDagger",
+              "armor.wayfarerPlate"
             ],
             "relics": [
               "enemy.relic.graveSeal"
@@ -5903,9 +5995,11 @@ export const gameProfileCatalog = {
             ],
             "firstCard": "briarHermit.rootShelter",
             "gear": [
-              "ashStaff"
+              "battleaxe"
             ],
-            "relics": [],
+            "relics": [
+              "enemy.relic.ashenBlightCore"
+            ],
             "poiseMax": 9,
             "levelProfile": {
               "min": 2,
@@ -5935,7 +6029,7 @@ export const gameProfileCatalog = {
               "chainScavenger.draggingBlow"
             ],
             "gear": [
-              "shortbow"
+              "dagger"
             ],
             "relics": [],
             "poiseMax": 8,
@@ -5975,8 +6069,8 @@ export const gameProfileCatalog = {
             ],
             "firstCard": "bellKeeper.bronzeToll",
             "gear": [
-              "greatsword",
-              "spikedShield",
+              "halberd",
+              "parryDagger",
               "armor.gutterLeathers"
             ],
             "relics": [
@@ -6026,9 +6120,9 @@ export const gameProfileCatalog = {
             ],
             "firstCard": "thornMatriarch.rootCrown",
             "gear": [
-              "halberd",
+              "cinderAxe",
               "towerShield",
-              "armor.gutterLeathers"
+              "armor.nightweave"
             ],
             "relics": [
               "enemy.relic.graveSeal"
@@ -6081,7 +6175,7 @@ export const gameProfileCatalog = {
               "gildedKnight.gildedGuard"
             ],
             "gear": [
-              "dagger"
+              "battleaxe"
             ],
             "relics": [],
             "poiseMax": 18,
@@ -6145,9 +6239,11 @@ export const gameProfileCatalog = {
               "stitchedHound.rend"
             ],
             "gear": [
-              "dagger"
+              "battleaxe"
             ],
-            "relics": [],
+            "relics": [
+              "enemy.relic.ashenBlightCore"
+            ],
             "poiseMax": 8,
             "levelProfile": {
               "min": 6,
@@ -6178,9 +6274,11 @@ export const gameProfileCatalog = {
               "courtMarionette.blowdart"
             ],
             "gear": [
-              "straightSword"
+              "dagger"
             ],
-            "relics": [],
+            "relics": [
+              "enemy.relic.ashenBlightCore"
+            ],
             "poiseMax": 6,
             "levelProfile": {
               "min": 6,
@@ -6212,7 +6310,9 @@ export const gameProfileCatalog = {
             "gear": [
               "battleaxe"
             ],
-            "relics": [],
+            "relics": [
+              "enemy.relic.ashenBlightCore"
+            ],
             "poiseMax": 22,
             "levelProfile": {
               "min": 7,
@@ -6245,10 +6345,12 @@ export const gameProfileCatalog = {
             ],
             "firstCard": "courtDuelist.enGarde",
             "gear": [
-              "warhammer",
-              "armor.gutterLeathers"
+              "greatsword",
+              "armor.wayfarerPlate"
             ],
-            "relics": [],
+            "relics": [
+              "enemy.relic.ashenBlightCore"
+            ],
             "poiseMax": 26,
             "levelProfile": {
               "min": 10,
@@ -6286,7 +6388,7 @@ export const gameProfileCatalog = {
             ],
             "firstCard": "stitchedKing.courtlyDecree",
             "gear": [
-              "warhammer",
+              "greatsword",
               "towerShield",
               "armor.wayfarerPlate"
             ],
@@ -6378,9 +6480,11 @@ export const gameProfileCatalog = {
             ],
             "firstCard": "stitchCrab.shellFold",
             "gear": [
-              "shortbow"
+              "dagger"
             ],
-            "relics": [],
+            "relics": [
+              "enemy.relic.ashenBlightCore"
+            ],
             "poiseMax": 17,
             "levelProfile": {
               "min": 7,
@@ -6420,7 +6524,7 @@ export const gameProfileCatalog = {
             "gear": [
               "greatsword",
               "parryDagger",
-              "armor.riteVestments"
+              "armor.wayfarerPlate"
             ],
             "relics": [
               "enemy.relic.titanHeart"
@@ -6476,8 +6580,8 @@ export const gameProfileCatalog = {
             ],
             "firstCard": "marrowOrganist.bonePrelude",
             "gear": [
-              "emberlightSceptre",
-              "lantern",
+              "greatsword",
+              "towerShield",
               "armor.nightweave"
             ],
             "relics": [
@@ -6526,9 +6630,11 @@ export const gameProfileCatalog = {
               "ashRevenant.reform"
             ],
             "gear": [
-              "straightSword"
+              "dagger"
             ],
-            "relics": [],
+            "relics": [
+              "enemy.relic.ashenBlightCore"
+            ],
             "poiseMax": 10,
             "levelProfile": {
               "min": 13,
@@ -6560,7 +6666,9 @@ export const gameProfileCatalog = {
             "gear": [
               "battleaxe"
             ],
-            "relics": [],
+            "relics": [
+              "enemy.relic.ashenBlightCore"
+            ],
             "poiseMax": 8,
             "levelProfile": {
               "min": 13,
@@ -6592,7 +6700,9 @@ export const gameProfileCatalog = {
             "gear": [
               "battleaxe"
             ],
-            "relics": [],
+            "relics": [
+              "enemy.relic.ashenBlightCore"
+            ],
             "poiseMax": 14,
             "levelProfile": {
               "min": 14,
@@ -6622,9 +6732,11 @@ export const gameProfileCatalog = {
               "charredColossus.harden"
             ],
             "gear": [
-              "dagger"
+              "battleaxe"
             ],
-            "relics": [],
+            "relics": [
+              "enemy.relic.ashenBlightCore"
+            ],
             "poiseMax": 30,
             "levelProfile": {
               "min": 15,
@@ -6660,10 +6772,12 @@ export const gameProfileCatalog = {
             ],
             "firstCard": "wyrmLord.consecration",
             "gear": [
-              "halberd",
+              "cinderAxe",
               "armor.wayfarerPlate"
             ],
-            "relics": [],
+            "relics": [
+              "enemy.relic.ashenBlightCore"
+            ],
             "poiseMax": 30,
             "levelProfile": {
               "min": 18,
@@ -6701,12 +6815,12 @@ export const gameProfileCatalog = {
             ],
             "firstCard": "blightedValkyrie.spiralThrust",
             "gear": [
-              "wyrmhornStaff",
-              "torch",
+              "halberd",
+              "parryDagger",
               "armor.nightweave"
             ],
             "relics": [
-              "enemy.relic.ashenCore"
+              "enemy.relic.ashenBlightCore"
             ],
             "poiseMax": 36,
             "levelProfile": {
@@ -6775,7 +6889,7 @@ export const gameProfileCatalog = {
               "cinderMantis.foldedBlades"
             ],
             "gear": [
-              "shortbow"
+              "dagger"
             ],
             "relics": [],
             "poiseMax": 11,
@@ -6844,7 +6958,7 @@ export const gameProfileCatalog = {
             ],
             "firstCard": "furnaceSaint.openFurnace",
             "gear": [
-              "greatsword",
+              "cinderAxe",
               "towerShield",
               "armor.wayfarerPlate"
             ],
@@ -6902,9 +7016,9 @@ export const gameProfileCatalog = {
             ],
             "firstCard": "hollowAstronomer.starChart",
             "gear": [
-              "greatsword",
+              "cinderAxe",
               "parryDagger",
-              "armor.riteVestments"
+              "armor.wayfarerPlate"
             ],
             "relics": [
               "enemy.relic.titanHeart"
@@ -6956,12 +7070,12 @@ export const gameProfileCatalog = {
             ],
             "firstCard": "ashheartDragon.obsidianClaws",
             "gear": [
-              "warhammer",
-              "spikedShield",
+              "halberd",
+              "parryDagger",
               "armor.gutterLeathers"
             ],
             "relics": [
-              "enemy.relic.ashenCore"
+              "enemy.relic.ashenBlightCore"
             ],
             "poiseMax": 34,
             "levelProfile": {
@@ -10889,6 +11003,17 @@ export const gameProfileCatalog = {
         ],
         "enemyRelics": [
           {
+            "id": "enemy.relic.ashenBlightCore",
+            "name": "Ashen Blight Core",
+            "modifiers": [
+              "self.strength=+2",
+              "self.constitution=+2",
+              "self.wisdom=-1",
+              "self.sp=-2"
+            ],
+            "text": "STR +2, CON +2, WIS -1, SP -2"
+          },
+          {
             "id": "enemy.relic.emberBand",
             "name": "Ember Band",
             "modifiers": [
@@ -10992,7 +11117,9 @@ export const gameProfileCatalog = {
             "tags": [
               "bow"
             ],
-            "points": {},
+            "points": {
+              "dexterity": 1
+            },
             "source": {
               "file": "content/source/weapons.csv",
               "id": "shortbow"
@@ -11167,7 +11294,9 @@ export const gameProfileCatalog = {
               "lantern",
               "regen"
             ],
-            "points": {},
+            "points": {
+              "wisdom": 1
+            },
             "source": {
               "file": "content/source/weapons.csv",
               "id": "lantern"
@@ -11494,7 +11623,6 @@ export const gameProfileCatalog = {
               "robes"
             ],
             "points": {
-              "intelligence": 1,
               "wisdom": 1
             },
             "classes": [
@@ -11579,8 +11707,7 @@ export const gameProfileCatalog = {
               "robes"
             ],
             "points": {
-              "dr": 1,
-              "constitution": 1
+              "dr": 1
             },
             "classes": [
               "herald",
@@ -11664,9 +11791,7 @@ export const gameProfileCatalog = {
               "leathers",
               "light"
             ],
-            "points": {
-              "strength": 1
-            },
+            "points": {},
             "classes": [
               "herald",
               "reaver",
@@ -11878,7 +12003,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/enemies.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:73aaed20243408eb72bd2e1b0cd6750b241ab480852b3e50f493f117a0292452"
+          "hash": "sha256:655da9138781614c06388836f9298f60e4286b6b048da86f8843c5299943d9f1"
         },
         {
           "path": "games/ashenspire/packs/core/enemyCards.json",
@@ -11890,13 +12015,13 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/enemyRelics.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:e9ac600e651340637852954f0cce8193a1abe4f4b4b59616102ac870f1797dc4"
+          "hash": "sha256:170c789958744e6841b8e539eb785663e0928e9a72413d19b4e4679058dc882f"
         },
         {
           "path": "games/ashenspire/packs/core/gear.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:892bb2982c4219699073865962e68b3720b3a7fee63f4497e615d40c9c8ff78d"
+          "hash": "sha256:ced465633b8c92afa88e4f49cd784a9fc5833d9260e45b90e7622078c608231b"
         }
       ]
     },
@@ -23593,7 +23718,7 @@ export const gameProfileCatalog = {
       "path": "engine/kernel/gameConfig.js",
       "id": "ashen.runtime",
       "version": "1.0.0",
-      "hash": "sha256:293c9246da98f53c7eaef1bbaafa90657f12fac6f2d002cb81587050b1a0f357"
+      "hash": "sha256:7a9849412e12d6f49f50aacf0c14c77da9a5792d3628f3da2ecc5001dd213236"
     },
     {
       "path": "engine/contracts/game-profile.json",
@@ -28626,7 +28751,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:3f9a67884765cb5f920ef530e66ccdcc2d826819e6f981359b771d44a5b5bf66"
     }
   ],
-  "runtimeHash": "sha256:c894483dbed9e7bdeeba45dcf4ec9cef9b7a258e30848c38a60f7355d9d9a983"
+  "runtimeHash": "sha256:0d7e81faf2b1ae6715c31d7bfd2dd71edd259698186017e06ef28179dcfa523a"
 };
 export const gameProfileAuthors = {
   "default": {

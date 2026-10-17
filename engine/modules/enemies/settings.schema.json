@@ -419,6 +419,32 @@
         "source"
       ],
       "additionalProperties": false
+    },
+    "penaltyFloor": {
+      "type": "object",
+      "properties": {
+        "sp": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 99
+        },
+        "mp": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 99
+        },
+        "hp": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 99
+        }
+      },
+      "required": [
+        "sp",
+        "mp",
+        "hp"
+      ],
+      "additionalProperties": false
     }
   },
   "required": [
@@ -434,7 +460,8 @@
     "ai",
     "statRules",
     "levelFrom",
-    "equipment"
+    "equipment",
+    "penaltyFloor"
   ],
   "additionalProperties": false
 }

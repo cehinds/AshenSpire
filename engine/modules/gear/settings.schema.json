@@ -70,33 +70,63 @@
             ],
             "additionalProperties": false
           }
+        },
+        "merged": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "min": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 99
+              },
+              "max": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 99
+              }
+            },
+            "required": [
+              "min",
+              "max"
+            ],
+            "additionalProperties": false
+          }
         }
       },
       "required": [
         "ratings",
-        "bonus"
+        "bonus",
+        "merged"
       ],
       "additionalProperties": false
     },
     "mergedShare": {
       "type": "object",
-      "properties": {
-        "ratings": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "ratings": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "bonus": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
         },
-        "bonus": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1
-        }
+        "required": [
+          "ratings",
+          "bonus"
+        ],
+        "additionalProperties": false
       },
       "required": [
-        "ratings",
-        "bonus"
-      ],
-      "additionalProperties": false
+        "default"
+      ]
     },
     "fillTo": {
       "enum": [

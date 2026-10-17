@@ -67,6 +67,8 @@ function fit(item) {
   return item;
 }
 
+// Owner 2026-10-17: most commons give only AR/DR/Poise; a few carry one attribute.
+const COMMON_ATTRIBUTE = { ashStaff: { intelligence: 1 }, shortbow: { dexterity: 1 }, lantern: { wisdom: 1 }, 'armor.wayfarerPlate': { constitution: 1 }, 'armor.nightweave': { wisdom: 1 } };
 const gear = [];
 for (const w of csv('content/source/weapons.csv')) {
   const { tags, points } = fromMods(w.mods);
@@ -85,7 +87,12 @@ for (const [name, { row, classes }] of armour) {
     tags: [ARMOR_TYPE(name), ...tags], points, classes: [...new Set(classes)].sort(), source: { file: 'content/source/outfits.csv', id: row.id } }));
 }
 
-for (const mode of ['split', 'merged']) {
+const ATTRIBUTES = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
+for (const item of gear) if (item.rarity === 'common') {
+  for (const a of ATTRIBUTES) delete item.points[a];
+  Object.assign(item.points, COMMON_ATTRIBUTE[item.id] || {});
+}
+for (const mode of ['merged']) {
   console.log(`\n== ${mode} ==`);
   for (const item of gear) {
     const r = resolveGearItem(item, { ...settings, pools: mode });

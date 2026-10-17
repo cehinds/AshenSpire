@@ -199,15 +199,19 @@ export function resolveGearItem(item, settings) {
   let fill;
   if (settings.pools === 'merged') {
     const norm = (w, share) => { const s = Object.values(w).reduce((a, b) => a + b, 0) || 1; return Object.fromEntries(Object.entries(w).map(([k, v]) => [k, v / s * share])); };
-    const remaining = target('ratings') + target('bonus') - sum(GEAR_KEYS) - tagCost;
-    fill = gearSplit(remaining, { ...norm(ratingsW, settings.mergedShare.ratings), ...norm(bonusW, settings.mergedShare.bonus) });
+    const merged = settings.poolSizes.merged?.[item.rarity];
+    const whole = merged ? (settings.fillTo === 'none' ? 0 : settings.fillTo === 'min' ? merged.min : merged.max) : target('ratings') + target('bonus');
+    const remaining = whole - sum(GEAR_KEYS) - tagCost;
+    // Share of the single pool by rarity (owner: most commons give AR/DR/Poise only).
+    const share = settings.mergedShare[item.rarity] || settings.mergedShare.default;
+    fill = gearSplit(remaining, { ...norm(ratingsW, share.ratings), ...norm(bonusW, share.bonus) });
   } else {
     fill = { ...gearSplit(target('ratings') - sum(GEAR_RATINGS), ratingsW), ...gearSplit(target('bonus') - sum(attrKeys) - tagCost, bonusW) };
   }
   const points = Object.fromEntries(GEAR_KEYS.map(k => [k, explicit[k] + (fill[k] || 0)]));
   const values = Object.fromEntries(GEAR_KEYS.map(k => [k, points[k] * settings.pointValues[k]]));
   const modifiers = (item.tags || []).map(t => settings.tags[t]).filter(r => r?.modifier).map(r => `${r.modifier}=${r.amount >= 0 ? '+' : ''}${r.amount}`);
-  return { id: item.id, points, values, tags: [...(item.tags || [])], modifiers, tagCost, pools: { ratings: size('ratings'), bonus: size('bonus'), mode: settings.pools } };
+  return { id: item.id, points, values, tags: [...(item.tags || [])], modifiers, tagCost, pools: { ratings: size('ratings'), bonus: size('bonus'), merged: settings.poolSizes.merged?.[item.rarity] || null, mode: settings.pools } };
 }
 function verifyGearContent(content, settings) {
   if (!settings || !content.gear) return;
@@ -224,7 +228,8 @@ function verifyGearContent(content, settings) {
     const r = settings.poolSizes.ratings[item.rarity], b = settings.poolSizes.bonus[item.rarity];
     const setR = GEAR_RATINGS.reduce((s, k) => s + (item.points?.[k] || 0), 0), setB = attrs.reduce((s, k) => s + item.points[k], 0);
     const cost = (item.tags || []).reduce((s, t) => s + (settings.tags[t]?.cost || 0), 0);
-    if (settings.pools === 'merged' ? setR + setB + cost > r.max + b.max : setR > r.max || setB + cost > b.max) fail(`${at}/points`, 'set points and tag costs exceed the pool');
+    const whole = settings.poolSizes.merged?.[item.rarity]?.max ?? r.max + b.max;
+    if (settings.pools === 'merged' ? setR + setB + cost > whole : setR > r.max || setB + cost > b.max) fail(`${at}/points`, 'set points and tag costs exceed the pool');
   }
 }
 // Enemies module (docs/plans/enemy-decks.md): enemies are characters with decks. Refuses unknown
@@ -241,11 +246,12 @@ export function enemyLevel(row, settings) {
 }
 // Gear and relics grant attribute points only (owner 2026-10-17): `self.<attribute>=+N`,
 // 0-5 points across at most 3 attributes per item. Returns the summed bonus for one enemy.
-const ITEM_MODIFIER = /^self\.(strength|dexterity|constitution|wisdom|intelligence)=\+(\d+)$/;
+const ITEM_MODIFIER = /^self\.(strength|dexterity|constitution|wisdom|intelligence|sp|mp|hp)=([+-]\d+)$/;
+const ENEMY_POOL_MODS = ['sp', 'mp', 'hp'];
 // Gear is the player's gear (content.gear, resolved by the gear module) so it can be looted;
 // relics are enemy relics (content.enemyRelics) with attribute modifiers.
 export function enemyItemBonuses(row, content = {}, gearSettings = null) {
-  const bonus = Object.fromEntries(ENEMY_ATTRIBUTES.map(id => [id, 0]));
+  const bonus = Object.fromEntries([...ENEMY_ATTRIBUTES, ...ENEMY_POOL_MODS].map(id => [id, 0]));
   const gear = new Map((content.gear || []).map(item => [item.id, item]));
   for (const id of row.gear || []) {
     const item = gear.get(id);
@@ -261,13 +267,15 @@ export function enemyItemBonuses(row, content = {}, gearSettings = null) {
 export function enemyPools(row, settings, level = enemyLevel(row, settings), bonus = null) {
   const tier = settings.tiers[row.tier], round = settings.rounding === 'up' ? Math.ceil : settings.rounding === 'nearest' ? Math.round : Math.floor;
   const base = { hp: tier.pools.hp, sp: tier.pools.sp, mp: tier.pools.mp, hand: tier.hand, ar: 0, dr: 0 };
-  const attributes = Object.fromEntries(ENEMY_ATTRIBUTES.map(id => [id, (row.attributes[id] || 0) + (bonus?.[id] || 0)]));
+  const attributes = Object.fromEntries(ENEMY_ATTRIBUTES.map(id => [id, Math.max(0, (row.attributes[id] || 0) + (bonus?.[id] || 0))]));
   const pools = {};
   for (const [stat, rule] of Object.entries(settings.statRules)) {
     let value = base[stat] ?? 0;
     for (const id of ENEMY_ATTRIBUTES) if (rule[id]) value += round((attributes[id] || 0) * rule[id]);
     if (rule.perLevel) value += round((level - 1) * rule.perLevel);
-    pools[stat] = value;
+    // Pool penalties floor at penaltyFloor (SP = max(SP - x, 1)); bonuses add freely.
+    const mod = ENEMY_POOL_MODS.includes(stat) ? bonus?.[stat] || 0 : 0, floor = settings.penaltyFloor?.[stat] ?? 0;
+    pools[stat] = mod < 0 ? Math.max(value + mod, Math.min(value, floor)) : value + mod;
   }
   return pools;
 }
@@ -283,8 +291,10 @@ function verifyEnemyContent(content, settings, gearSettings = null) {
   for (const [kind, rows] of [['enemyRelics', content.enemyRelics || []]])
     for (const row of rows) {
       const at = `$/content/${kind}/${row.id}/modifiers`, rules = settings.equipment;
-      if (!Array.isArray(row.modifiers) || row.modifiers.some(m => typeof m !== 'string' || !ITEM_MODIFIER.test(m))) fail(at, 'expected self.<attribute>=+N attribute modifiers');
-      const stats = row.modifiers.map(m => ITEM_MODIFIER.exec(m)[1]), points = row.modifiers.reduce((sum, m) => sum + Number(ITEM_MODIFIER.exec(m)[2]), 0);
+      if (!Array.isArray(row.modifiers) || row.modifiers.some(m => typeof m !== 'string' || !ITEM_MODIFIER.test(m))) fail(at, 'expected self.<attribute|sp|mp|hp>=±N modifiers');
+      const parsed = row.modifiers.map(m => ITEM_MODIFIER.exec(m)), attrs = parsed.filter(p => ENEMY_ATTRIBUTES.includes(p[1]));
+      // Bonuses are capped; penalties (negative values) are free and not counted.
+      const stats = attrs.map(p => p[1]), points = attrs.reduce((sum, p) => sum + Math.max(0, Number(p[2])), 0);
       if (new Set(stats).size !== stats.length) fail(at, 'duplicate attribute');
       if (stats.length > rules.maxStats) fail(at, `more than ${rules.maxStats} attributes`);
       if (points > rules.maxPoints) fail(at, `grants ${points} points; at most ${rules.maxPoints}`);

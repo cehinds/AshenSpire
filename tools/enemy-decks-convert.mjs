@@ -146,24 +146,31 @@ const resolved = new Map(gear.map(item => [item.id, resolveGearItem(item, gearSe
 const hash = s => [...s].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
 function pickGear(attributes, plan, enemyId) {
   const shape = ATTRS.map(a => attributes[a] + 0.5);
-  const score = item => { const p = resolved.get(item.id).points; return ATTRS.reduce((s, a, i) => s + p[a] * shape[i], 0); };
+  const identity = item => { const w = {}; for (const t of item.tags) { const r = gearSettings.tags[t]; for (const [k, v] of Object.entries(r?.weights?.bonus || {})) w[k] = (w[k] || 0) + v * r.priority / 100; } return w; };
+  const score = item => { const p = resolved.get(item.id).points, w = identity(item); return ATTRS.reduce((s, a, i) => s + (p[a] + (w[a] || 0)) * shape[i], 0); };
   return plan.gear.map((slot, i) => {
     const pool = gear.filter(item => item.slot === slot && RARITY.indexOf(item.rarity) <= RARITY.indexOf(plan.maxRarity) && !(item.classes && item.classes.length < 4))
       .sort((a, b) => score(b) - score(a) || a.id.localeCompare(b.id));
-    const top = pool.filter(item => score(item) >= score(pool[0]) * 0.6).slice(0, 4);
+    const top = pool.filter(item => score(item) >= score(pool[0]) * 0.85).slice(0, 4);
     return top[hash(enemyId + slot + i) % top.length]?.id;
   }).filter(Boolean);
 }
 // Enemy relics: attribute points only, 0-5 points across at most 3 attributes.
 const RELICS = [
+  { id: 'enemy.relic.ashenBlightCore', name: 'Ashen Blight Core', modifiers: ['self.strength=+2', 'self.constitution=+2', 'self.wisdom=-1', 'self.sp=-2'] },
   { id: 'enemy.relic.emberBand', name: 'Ember Band', modifiers: ['self.constitution=+1'] },
   { id: 'enemy.relic.graveSeal', name: 'Grave Seal', modifiers: ['self.strength=+2'] },
   { id: 'enemy.relic.titanHeart', name: 'Titan Heart', modifiers: ['self.constitution=+2', 'self.strength=+1'] },
   { id: 'enemy.relic.ashenCore', name: 'Ashen Core', modifiers: ['self.constitution=+2', 'self.strength=+2', 'self.wisdom=+1'] },
   { id: 'enemy.relic.abyssalCrown', name: 'Abyssal Crown', modifiers: ['self.constitution=+2', 'self.wisdom=+2', 'self.intelligence=+1'] },
 ];
-const relicText = r => r.modifiers.map(m => { const [k, v] = m.split('='); return `${words(k.split('.')[1]).slice(0, 3).toUpperCase()} ${v}`; }).join(', ');
-function pickRelics(attributes, plan, enemyId) {
+const relicText = r => r.modifiers.map(m => { const [k, v] = m.split('='); return `${k.split('.')[1].slice(0, 3).toUpperCase()} ${v}`; }).join(', ');
+// Owner 2026-10-17: most minions and elites, and a couple of blighted bosses, carry the Ashen Blight Core.
+const BLIGHT_BOSSES = new Set(['blightedValkyrie', 'ashheartDragon']);
+const BLIGHT_SKIP = new Set(['graveWisp', 'lanternMoth', 'mirrorScribe', 'eclipseCantor', 'courtSurgeon']);
+function pickRelics(attributes, plan, enemyId, tier) {
+  if (tier !== 'boss' && !BLIGHT_SKIP.has(enemyId)) return ['enemy.relic.ashenBlightCore'];
+  if (BLIGHT_BOSSES.has(enemyId)) return ['enemy.relic.ashenBlightCore'];
   if (!plan.relics) return [];
   const caster = attributes.wisdom + attributes.intelligence > attributes.strength + attributes.dexterity;
   const options = caster ? ['enemy.relic.abyssalCrown', 'enemy.relic.emberBand', 'enemy.relic.titanHeart'] : ['enemy.relic.ashenCore', 'enemy.relic.graveSeal', 'enemy.relic.titanHeart'];
@@ -192,7 +199,7 @@ for (const enemy of roster) {
     id: enemy.id, name: enemy.name, tier, attributes, deck,
     ...(moves.some(([, m]) => m.locked) ? { unlockCards: moves.filter(([, m]) => m.locked).map(([id]) => ids.get(id)) } : {}),
     ...(enemy.firstMove ? { firstCard: ids.get(enemy.firstMove) } : {}),
-    gear: pickGear(attributes, plan, enemy.id), relics: pickRelics(attributes, plan, enemy.id),
+    gear: pickGear(attributes, plan, enemy.id), relics: pickRelics(attributes, plan, enemy.id, tier),
     poiseMax: enemy.poiseMax, levelProfile: enemy.levelProfile, size: enemy.size, art: enemy.art,
     ...(enemy.artFaces ? { artFaces: enemy.artFaces } : {}),
     ...(enemy.tint ? { tint: enemy.tint } : {}),
@@ -200,6 +207,11 @@ for (const enemy of roster) {
     ...(enemy.arcaneExposure ? { arcaneExposure: structuredClone(enemy.arcaneExposure) } : {}),
     ...(phases ? { phases } : {}),
   };
+  {
+    const owned = [...row.deck, ...(row.unlockCards || [])].map(id => enemyCards.find(c => c.id === id));
+    const affordable = r => { const p = enemyPools(r, settings, undefined, enemyItemBonuses(r, content, gearSettings)); return owned.every(c => c.staminaCost <= p.sp && c.manaCost <= p.mp); };
+    if (row.relics.includes('enemy.relic.ashenBlightCore') && !affordable(row)) row.relics = row.relics.filter(id => id !== 'enemy.relic.ashenBlightCore');
+  }
   enemies.push(row);
   cards.push(...enemyCards);
   const p = enemyPools(row, settings, undefined, enemyItemBonuses(row, content, gearSettings));
