@@ -1,0 +1,105 @@
+name: Enemy back proposal normalization
+on:
+  push:
+    branches: ['worker/EnemyBackSprites/normalize-*']
+    paths:
+      - 'tools/enemy-back-normalize.py'
+      - '.github/workflows/enemy-back-normalize.yml'
+      - 'art/enemy-back-proposals/*/proposal-sheet.png'
+permissions:
+  contents: write
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      actors: ${{ steps.actors.outputs.actors }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: art/enemy-back-proposals
+      - id: actors
+        run: |
+          python - <<'PY'
+          import glob,json,os
+          from pathlib import Path
+          ids=sorted(Path(p).parent.name for p in glob.glob('art/enemy-back-proposals/*/proposal-sheet.png'))
+          with open(os.environ['GITHUB_OUTPUT'],'a') as f: f.write('actors='+json.dumps(ids)+'\n')
+          PY
+  normalize:
+    needs: discover
+    strategy:
+      fail-fast: false
+      matrix:
+        actor: ${{ fromJSON(needs.discover.outputs.actors) }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            tools/enemy-back-normalize.py
+            art/enemy-back-proposals
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install Pillow==11.1.0
+      - name: Normalize and verify
+        id: normalize
+        continue-on-error: true
+        env:
+          ACTOR_ID: ${{ matrix.actor }}
+        shell: bash
+        run: |
+          set -o pipefail
+          python tools/enemy-back-normalize.py "art/enemy-back-proposals/$ACTOR_ID" | tee normalization.log
+      - name: Gather bounded evidence
+        if: always()
+        env:
+          ACTOR_ID: ${{ matrix.actor }}
+        shell: bash
+        run: |
+          target="bundle/art/enemy-back-proposals/$ACTOR_ID"
+          mkdir -p "$target"
+          cp normalization.log "$target/normalization.log"
+          for p in "art/enemy-back-proposals/$ACTOR_ID/normalized.json" art/enemy-back-proposals/"$ACTOR_ID"/v??.png "art/enemy-back-proposals/$ACTOR_ID/contact-sheet.png"; do
+            if test -f "$p"; then cp "$p" "$target/"; fi
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: normalized-${{ matrix.actor }}
+          path: bundle/
+      - name: Enforce source and output gates
+        if: steps.normalize.outcome != 'success'
+        run: exit 1
+  preserve:
+    needs: [discover, normalize]
+    if: always() && needs.discover.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: normalized-*
+          merge-multiple: true
+          path: .
+      - name: Commit only proposal exports and reports
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          python - <<'PY'
+          import glob,subprocess
+          from pathlib import Path
+          paths=[]
+          for report in glob.glob('art/enemy-back-proposals/*/normalized.json'):
+              root=Path(report).parent
+              paths.extend(str(p) for p in root.iterdir() if p.name in ['normalized.json','contact-sheet.png','normalization.log'] or (p.name.startswith('v') and len(p.name)==7 and p.suffix=='.png' and p.stem[1:].isdigit()))
+          if paths: subprocess.run(['git','add','-f','--',*paths],check=True)
+          PY
+          if ! git diff --cached --quiet; then
+            git commit -m "Record mechanical enemy back normalization evidence"
+            git push origin "HEAD:$GITHUB_REF_NAME"
+          fi
