@@ -1,0 +1,9 @@
+{
+  "status": "draft",
+  "generator": "OpenAI image_gen",
+  "prompt": "Generate a wide landscape 16:9 painterly fantasy game SKY / DISTANT FOREST BACKDROP layer only, for a modular combat scene. Requested canvas 2048x1152, opaque edge-to-edge PNG. Original AshenSpire woodland clearing, muted blue-green and moss-olive distant forest, soft clear daytime light coming from upper left, hazy pale ivory-green sky opening at top center, tree silhouettes and foliage framing far left and right, distant hills barely visible. Low contrast center, restrained warm ochre touches, matte hand-painted texture, consistent soft realistic painted materials rather than cartoon outlines or pixel art. NO characters, NO text/UI, NO foreground props, NO tent, NO ruins, NO ground or road: the bottom area must continue atmospheric distant forest haze, to be covered by a separate ground layer. Distant tree bases disappear into mist at 55 percent canvas height. Keep the full middle 60 percent horizontally open and visually quiet for combatants. This is the bottom plane of a registered three-layer scene; horizon at normalized y0.50, intended player ground anchor near y0.76; do not paint an actual floor. Clear daylight not nighttime, not smokey. Provide one finished backdrop only, no sheet, diagrams or labels.",
+  "sourceOutputPath": "/workspace/generated_images/exec-ee244d0c-b047-4545-a957-2cccde26d9db.png",
+  "sourceReferences": [],
+  "outputPath": "scene-forest-sky-day.png",
+  "processing": "Byte-for-byte copy of generated output. No resizing, cleanup, registration transform, or production asset binding."
+}

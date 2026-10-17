@@ -1,0 +1,12 @@
+{
+  "status": "draft",
+  "generator": "OpenAI image_gen",
+  "prompt": "Create ONLY the REAR PROPS transparent layer for the referenced woodland combat composition. Use images as registration and style references, NOT as pixels to include. Preserve exact wide 1672x941 canvas and full canvas margins, no trimming. Everything except two isolated prop groups must be TRUE alpha transparency. Left group: a small weathered olive-tan hunter canvas tent with one amber lantern, placed at x0.08 to0.24, top near y0.37, feet at y0.565. Right group: a mossy broken limestone arch plus a small hanging amber lantern, at x0.78 to0.94, top near y0.25, feet at y0.565. Let a few fine roots cling to arch, but no vegetation carpet. All objects stand at the same rear floor contact line, slightly below the referenced ground's back edge so separate ground can hide their bottom seams. Keep middle x0.28 to0.74 FULLY TRANSPARENT and empty for fighters and UI. Bottom y0.62 to1.0 FULLY TRANSPARENT. No ground plane, grass island, sky, hills, distant trees, scenery, people, text, UI, checkerboard image, labels or frame. Painterly fantasy matte limestone, muted moss olive and warm gray, diffuse warm upper-left daylight matching reference sky/floor. Balanced readable silhouettes, refined hand-painted surfaces. This is ONE layer spanning the whole scene with left tent and right ruined arch, not a sprite sheet, and it will be drawn beneath transparent-above-floor ground and above the forest sky.",
+  "sourceOutputPath": "/workspace/generated_images/exec-668f1cf0-5bbf-4f0b-ad31-54c4e9f7cd8e.png",
+  "sourceReferences": [
+    "scene-forest-sky-day.png",
+    "scene-forest-ground-day.png"
+  ],
+  "outputPath": "scene-forest-props-day.png",
+  "processing": "Byte-for-byte copy of generated output. No resizing, cleanup, registration transform, or production asset binding."
+}

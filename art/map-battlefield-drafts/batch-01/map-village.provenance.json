@@ -1,0 +1,28 @@
+{
+  "generator": "image_gen.imagegen",
+  "status": "draft",
+  "prompt": "Create one standalone painted map prop: a tiny medieval village consisting of exactly THREE small adjoining-but-distinct cottages with three clearly countable main pitched roofs. Arrange them as a compact triangular cluster visible from above, each on the same implied ground plane, with readable doors, small chimneys and worn timber-and-limestone walls. Roofs are muted weathered ochre/brown shingles, with restrained moss olive touches. Use the provided bridge image ONLY as a style reference: REPLACE THE BRIDGE COMPLETELY with the three-cottage village; do not include a bridge or make a collage. Match its painterly dark fantasy treatment, high three-quarter orthographic world-map view, soft upper-left light, muted warm limestone and olive/ochre palette, detailed hand-painted materials and believable restrained depth. This is an isolated world-map landmark cutout, not an environment scene. Transparent background, clean alpha edges, no opaque background, no terrain island, no ground slab or decorative display base, no roads or landscape around the buildings, no water, no text, labels, grid, UI, frame or border. Keep every roof, chimney and wall completely inside the canvas with generous transparent margins on all four sides. Keep all three main roofs visually distinct and avoid extra roofed structures or towers. Target 1024 by 1024 if supported; preserve native output resolution.",
+  "sourceOutputPath": "/workspace/generated_images/exec-95ff6b6e-3858-4c4a-ad18-5b8dba5c0136.png",
+  "outputPath": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-01/map-village.png",
+  "styleReferencePath": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-01/map-bridge-stone.png",
+  "transparentBackgroundRequested": true,
+  "processing": "Original generated PNG copied unchanged; no resize or upscale.",
+  "productionRegistered": false,
+  "width": 1254,
+  "height": 1254,
+  "mode": "RGBA",
+  "alphaBounds": [
+    33,
+    25,
+    1238,
+    1254
+  ],
+  "visibleBoundsAlphaAbove1": [
+    99,
+    109,
+    1194,
+    1130
+  ],
+  "sha256": "9df18580b0b26bc89ef1b193297fc51040978c8d13ef850ee7c9500b25f7bbc9",
+  "draftNote": "Visible subject has transparent margins; generated alpha contains near-transparent alpha=1 specks extending to some canvas edges. Original preserved unchanged."
+}

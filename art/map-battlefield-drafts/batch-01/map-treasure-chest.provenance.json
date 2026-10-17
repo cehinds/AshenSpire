@@ -1,0 +1,9 @@
+{
+  "asset": "map-treasure-chest.png",
+  "prompt": "Create one isolated, finished game-art map prop: a closed treasure chest made of warm weathered wood, reinforced with dark iron bands and a simple iron clasp. Do not reproduce or include the bridge shown in the reference; replace its subject completely with this chest. Match the reference's painterly dark fantasy miniature terrain art: high three-quarter orthographic map view, hand-painted stone and wood textures, softly detailed surfaces, muted moss and olive undertones, warm ochre wood and limestone neutrals, subtle restrained amber highlights on the iron and wood. Soft directional light from upper left. Compact, readable single object; chest is fully closed, no contents spilling out. Centered silhouette, generous transparent margin on all sides, full object inside canvas. True transparent background with clean alpha edges. No ground tile or terrain base, no surrounding scenery, no vegetation, no characters, no map, no text, no labels, no symbols, no UI, no border, no cast shadow extending beyond the prop.",
+  "output_path": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-01/map-treasure-chest.png",
+  "generated_original_path": "/workspace/generated_images/exec-c0dca9d9-8e1a-4e5b-8161-3faec781a61c.png",
+  "style_reference_path": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-01/map-bridge-stone.png",
+  "generator": "image_gen.imagegen",
+  "status": "draft"
+}

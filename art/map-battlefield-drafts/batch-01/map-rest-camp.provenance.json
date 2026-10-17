@@ -1,0 +1,9 @@
+{
+  "asset": "map-rest-camp.png",
+  "prompt": "Create one isolated, finished game-art map prop: a compact hunter's rest camp, consisting of exactly one small canvas tent and one low circular stone fire ring beside it. Do not reproduce or include the bridge shown in the reference; replace its subject completely with this camp. Match the reference's painterly dark fantasy miniature terrain art: high three-quarter orthographic map view, hand-painted stone and fabric texture, softly detailed surfaces, muted moss and olive greens, weathered warm ochre and limestone neutrals, subtle restrained amber glow from a few embers. Soft directional light from upper left. Single cohesive prop grouping with the tent and fire ring fully visible and separated enough to read at map scale. Centered silhouette, generous transparent margin on all sides, full object inside canvas. True transparent background with clean alpha edges. No ground tile or terrain base, no surrounding scenery, no trees, no characters, no smoke cloud, no map, no text, no labels, no symbols, no UI, no border, no cast shadow extending beyond the prop.",
+  "output_path": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-01/map-rest-camp.png",
+  "generated_original_path": "/workspace/generated_images/exec-179ae5b5-9a7d-45c2-aef2-8ed1bc6586b1.png",
+  "style_reference_path": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-01/map-bridge-stone.png",
+  "generator": "image_gen.imagegen",
+  "status": "draft"
+}

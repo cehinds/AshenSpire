@@ -706,3 +706,12 @@ are staged for intake into cehinds/AshenSpire-art and preserved on branch
 ## Layered map design and prop wireframes
 
 The original technical illustrations, editable SVG wireframes, and 24 transparent prop-placeholder PNGs in [the map art handoff](docs/design/improve-map-battlefield-art/HANDOFF.md) were authored with Codex under human direction. They are documentation and integration prototypes, not registered production paintings. Their source is the adjacent generator scripts and prop definitions. No third-party artwork or licence is claimed.
+
+### Map and battlefield draft paintings (2026-10-17)
+
+Eight original OpenAI-generated paintings under user direction are retained on
+`feature/ImproveMapBattleFieldArt` in `art/map-battlefield-drafts/batch-01/`.
+Each source has its exact generation prompt and provenance; the readable manifest
+records dimensions, hashes and review limitations. The scene preview composites
+three unchanged source PNGs. These are unregistered drafts pending palette, alpha,
+canvas and production-intake review. No third-party artwork or license is claimed.

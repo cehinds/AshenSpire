@@ -1,0 +1,221 @@
+{
+  "version": 1,
+  "status": "draft-not-runtime-bound",
+  "authorship": "Original AI-generated artwork under user direction; no third-party license asserted.",
+  "assets": [
+    {
+      "id": "map-bridge-stone",
+      "file": "map-bridge-stone.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "fa75920b2d655aab1963b43eba54106f6f86def21c7f40cb6cb5b7822bf88415",
+      "provenanceFile": "map-bridge-stone.provenance.json",
+      "alpha": {
+        "range": [
+          0,
+          255
+        ],
+        "visibleBoundsAt16": [
+          83,
+          187,
+          1230,
+          1066
+        ],
+        "edgePixelCountAt1": 15,
+        "edgePixelCountAt16": 0
+      }
+    },
+    {
+      "id": "map-rest-camp",
+      "file": "map-rest-camp.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "7913d59ad919ae551e4f4be8dcba1f8a3645d86d475ee6d3bba9e3f58b36fc9f",
+      "provenanceFile": "map-rest-camp.provenance.json",
+      "alpha": {
+        "range": [
+          0,
+          255
+        ],
+        "visibleBoundsAt16": [
+          120,
+          200,
+          1173,
+          1058
+        ],
+        "edgePixelCountAt1": 89,
+        "edgePixelCountAt16": 0
+      }
+    },
+    {
+      "id": "map-ruins-arch",
+      "file": "map-ruins-arch.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "238937194918eaa2b6dc308c2832fc6b7f2f7f51e0e25efecfd77242987702fb",
+      "provenanceFile": "map-ruins-arch.provenance.json",
+      "alpha": {
+        "range": [
+          0,
+          255
+        ],
+        "visibleBoundsAt16": [
+          60,
+          124,
+          1232,
+          1141
+        ],
+        "edgePixelCountAt1": 48,
+        "edgePixelCountAt16": 0
+      }
+    },
+    {
+      "id": "map-treasure-chest",
+      "file": "map-treasure-chest.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "14bebad489da263961875221ff856b6a27a773506641a1cafd1968425012f775",
+      "provenanceFile": "map-treasure-chest.provenance.json",
+      "alpha": {
+        "range": [
+          0,
+          255
+        ],
+        "visibleBoundsAt16": [
+          193,
+          234,
+          1110,
+          1121
+        ],
+        "edgePixelCountAt1": 213,
+        "edgePixelCountAt16": 0
+      }
+    },
+    {
+      "id": "map-village",
+      "file": "map-village.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "9df18580b0b26bc89ef1b193297fc51040978c8d13ef850ee7c9500b25f7bbc9",
+      "provenanceFile": "map-village.provenance.json",
+      "alpha": {
+        "range": [
+          0,
+          255
+        ],
+        "visibleBoundsAt16": [
+          102,
+          111,
+          1192,
+          1127
+        ],
+        "edgePixelCountAt1": 28,
+        "edgePixelCountAt16": 0
+      }
+    },
+    {
+      "id": "scene-forest-ground-day",
+      "file": "scene-forest-ground-day.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "71601147dec61b16462739cae77a872088082e26e87ff9ffdca79a24919b527d",
+      "provenanceFile": "scene-forest-ground-day.provenance.json",
+      "alpha": {
+        "range": [
+          0,
+          255
+        ],
+        "visibleBoundsAt16": [
+          0,
+          483,
+          1672,
+          941
+        ],
+        "edgePixelCountAt1": 2647,
+        "edgePixelCountAt16": 2580
+      }
+    },
+    {
+      "id": "scene-forest-props-day",
+      "file": "scene-forest-props-day.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "width": 1672,
+      "height": 940,
+      "mode": "RGBA",
+      "sha256": "0a21b152da4b708908bdf999832242ab5045581425d8fdacc8c10c4dfeebecb5",
+      "provenanceFile": "scene-forest-props-day.provenance.json",
+      "alpha": {
+        "range": [
+          0,
+          255
+        ],
+        "visibleBoundsAt16": [
+          6,
+          144,
+          1672,
+          548
+        ],
+        "edgePixelCountAt1": 123,
+        "edgePixelCountAt16": 27
+      }
+    },
+    {
+      "id": "scene-forest-sky-day",
+      "file": "scene-forest-sky-day.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "54282c1d324a59a38e4a2aca57a80043e9985a1537f748d2c02a23b56006b3be",
+      "provenanceFile": "scene-forest-sky-day.provenance.json"
+    }
+  ],
+  "sceneComposition": {
+    "registrationFamily": null,
+    "width": 1672,
+    "height": 941,
+    "backToFront": [
+      "scene-forest-sky-day",
+      "scene-forest-props-day",
+      "scene-forest-ground-day"
+    ],
+    "exampleViewport": {
+      "width": 1280,
+      "height": 720,
+      "left": 196,
+      "top": 110
+    },
+    "preview": "scene-composition-preview.png",
+    "previewMethod": "Chromium screenshot; each unchanged PNG drawn at native size, top-left aligned. Rear props are one pixel shorter.",
+    "compatibility": "Rear props are 1672x940; sky and ground are 1672x941. Exact common-canvas registration required. All differ from the handoff 2048x1152 example contract.",
+    "cropWarning": "Side props approach source edges; example crop may trim tent and arch. Do not assume arbitrary camera travel is safe."
+  },
+  "reviewRequired": [
+    "Adjust bright pastoral palette toward the project dark muted style.",
+    "Clean low-alpha edge pixels and color fringes on map props and the ground horizon.",
+    "Register anchors and export 512px/256px map variants.",
+    "Validate silhouettes at map display size.",
+    "Align scene canvas dimensions, expand overscan and verify camera-safe crops.",
+    "Complete art repository intake and bind production IDs."
+  ]
+}

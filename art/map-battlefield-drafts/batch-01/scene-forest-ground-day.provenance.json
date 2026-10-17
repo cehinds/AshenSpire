@@ -1,0 +1,11 @@
+{
+  "status": "draft",
+  "generator": "OpenAI image_gen",
+  "prompt": "Using the reference ONLY for painterly style, lighting, palette and canvas registration, create a NEW separate transparent GROUND LAYER for the forest battle scene. Keep the reference's exact wide canvas/aspect (1672 by 941 pixels if possible); do not trim the canvas. REMOVE ALL sky, mountain, canopy and distant forest pixels: the upper 52 percent must be fully transparent alpha. Paint ONLY a low-perspective forest clearing ground plane covering the bottom 45 percent edge-to-edge, with a slightly curved irregular back edge near normalized y0.56. Earth and worn pale stone, restrained moss at far left and right, small leaf litter at edges. The entire central 65 percent horizontal region must be flat, uncluttered walkable ground, empty of trees, roots, boulders and props. The near ground continues beyond bottom canvas edge, NOT a floating isolated island; connect to full left/right canvas edges in lower part. Ground material values compatible with soft upper-left daylight, olive moss and warm gray stone, hand-painted matte fantasy style. NO people, NO tent, NO buildings, NO text or UI, NO cast shadow silhouettes, NO large rocks, NO sky or scenery, NO checkerboard painted into image. True transparent PNG above floor, opaque floor below. Intended actor contact near y0.76. This PNG is meant to be composited ON TOP of independent rear props and sky; it must contain only the floor.",
+  "sourceOutputPath": "/workspace/generated_images/exec-9c97e43d-fab7-4a15-a3e0-8b2c9e688156.png",
+  "sourceReferences": [
+    "scene-forest-sky-day.png"
+  ],
+  "outputPath": "scene-forest-ground-day.png",
+  "processing": "Byte-for-byte copy of generated output. No resizing, cleanup, registration transform, or production asset binding."
+}

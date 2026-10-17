@@ -1,0 +1,28 @@
+{
+  "generator": "image_gen.imagegen",
+  "status": "draft",
+  "prompt": "Create one standalone painted map prop: a mossy ruined stone arch, the weathered remnant of a medieval gateway, with one readable central arch opening, broken side-wall stubs, cracked masonry, a few attached ivy vines and moss patches. Use the provided bridge image ONLY as a style reference: REPLACE THE BRIDGE COMPLETELY with the ruined arch; do not include a bridge or make a collage. Match its painterly dark fantasy treatment, high three-quarter orthographic map view, softly lit from the upper left, muted warm limestone, moss olive and subdued ochre, detailed hand-painted stonework and believable restrained depth. This is an isolated world-map landmark cutout, not an environment scene. Transparent background, clean alpha edges, no opaque background, no terrain island, no ground slab or decorative display base, no surrounding landscape, no water, no text, labels, grid, UI, frame or border. Keep every stone and vine completely inside the canvas with generous transparent margins on all four sides. Compose the arch as a compact recognizable silhouette with its foot contacts on the same implied ground plane. Target 1024 by 1024 if supported; preserve native output resolution.",
+  "sourceOutputPath": "/workspace/generated_images/exec-9d9a3240-534f-4af6-8dfa-bb23b3e1c82c.png",
+  "outputPath": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-01/map-ruins-arch.png",
+  "styleReferencePath": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-01/map-bridge-stone.png",
+  "transparentBackgroundRequested": true,
+  "processing": "Original generated PNG copied unchanged; no resize or upscale.",
+  "productionRegistered": false,
+  "width": 1254,
+  "height": 1254,
+  "mode": "RGBA",
+  "alphaBounds": [
+    0,
+    14,
+    1250,
+    1254
+  ],
+  "visibleBoundsAlphaAbove1": [
+    58,
+    121,
+    1236,
+    1143
+  ],
+  "sha256": "238937194918eaa2b6dc308c2832fc6b7f2f7f51e0e25efecfd77242987702fb",
+  "draftNote": "Visible subject has transparent margins; generated alpha contains near-transparent alpha=1 specks extending to some canvas edges. Original preserved unchanged."
+}

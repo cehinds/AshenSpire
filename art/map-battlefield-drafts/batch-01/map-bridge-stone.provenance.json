@@ -1,0 +1,9 @@
+{
+  "status": "draft",
+  "generator": "OpenAI image_gen",
+  "sourceOutputPath": "/workspace/generated_images/exec-8e1c61fd-8146-4948-b5c6-44107739c7f4.png",
+  "outputPath": "map-bridge-stone.png",
+  "sourceReferences": [],
+  "processing": "Byte-for-byte copy; no cleanup, resizing, or production binding.",
+  "prompt": "Create ONE standalone production-style fantasy world-map PROP sprite: an old single-span stone bridge. Transparent PNG background with true alpha. No text, no border, no surrounding rectangular landscape, no sheet or multiple views. 1024x1024 square composition. A high three-quarter overhead map view, consistent orthographic-like perspective, front facing lower right. Bridge runs diagonally from lower left to upper right, both bank end landings visible and stone parapets. Weathered pale limestone and muted warm gray stones, restrained moss green at bases, subtle warm ochre accents, soft upper-left diffuse daylight. Painterly dark-fantasy storybook miniature for AshenSpire, original design, rich but readable at 128-256px, sharp silhouettes, no pixel art, no modern objects. Span arch and open underside clearly readable with genuine transparent holes; NO water painted under the arch, NO ground tile or grass island, only tiny contact shading directly on the stone. Entire bridge contained within central 78% canvas width and 65% canvas height, generous transparent margins, ground contact at about 80% height. Structure centered. Match a reusable modular map asset library with hand-painted materials and clean alpha edges."
+}
