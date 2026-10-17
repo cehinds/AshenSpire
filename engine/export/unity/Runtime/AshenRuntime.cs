@@ -414,6 +414,10 @@ namespace Ashen.Runtime
         {
             "hp" => (double)e.Hp, "maxHp" => (double)e.MaxHp, "block" => (double)e.Block, "poise" => (double)e.Poise,
             "sp" => (double)e.Sp, "mp" => (double)e.Mp,
+            // Caps are absent (unresolved) when null, as in the reference runtime.
+            "poiseMax" => e.PoiseMax is int pm ? (object)(double)pm : null,
+            "spMax" => e.SpMax is int sm ? (object)(double)sm : null,
+            "mpMax" => e.MpMax is int mm ? (object)(double)mm : null,
             "statuses" => e.Statuses.ToDictionary(kv => kv.Key, kv => (object)(double)kv.Value),
             "tags" => e.Tags.Cast<object>().ToList(),
             _ => null,
@@ -510,7 +514,8 @@ namespace Ashen.Runtime
                 var a = Value(call, scope, parts[1]); var b = Value(call, scope, parts[2]);
                 if (op == "==") return DeepEquals(a, b);
                 if (op == "!=") return !DeepEquals(a, b);
-                double x = Convert.ToDouble(a), y = Convert.ToDouble(b);
+                if (AsDouble(a) is not double x || AsDouble(b) is not double y || !double.IsFinite(x) || !double.IsFinite(y))
+                    throw new InvalidOperationException($"cmp {op} needs two numbers");
                 return op switch { "<" => x < y, "<=" => x <= y, ">=" => x >= y, _ => x > y };
             }
             if (c.TryGetProperty("hasTag", out var ht))
