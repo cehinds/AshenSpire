@@ -149,7 +149,10 @@ export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground
       if (paintStart) {
         group.style.transform = '';
         const maximumPaintTop = (floorShadowTop - top - floor.shadowClearancePx / zoom) / scale;
-        layer = mobileFloorLayer(layer, { paintStart, maximumPaintTop });
+        // Continue only the authored ground behind the hand to the footer;
+        // its painted horizon remains constrained by the back-row shadows.
+        const minimumBottom = (combat.clientHeight - top) / scale;
+        layer = mobileFloorLayer(layer, { paintStart, maximumPaintTop, minimumBottom });
         backdrop.dataset.mobileFloorPaintTop = String((top + (layer.y + layer.height * paintStart) * scale) * zoom);
         backdrop.dataset.mobileFloorShadowTop = String(floorShadowTop * zoom);
       }

@@ -126,7 +126,9 @@ export function fitAlternativeSprites({ width, height, actors, narrow }) {
     // Reserve the complete artwork envelope, including weapons and capes,
     // inside the common horizontal intersection of the cell's two edges.
     const boxWidth = a.slot.box ? a.slot.box.width - Math.abs(a.slot.box.skew || 0) * a.slot.box.height - 2 * Math.abs((a.slot.box.skew || 0) * (a.slot.box.top + a.slot.box.height / 2 - a.slot.ground)) : a.slot.artWidth;
-    const widthLimit = Math.min(width - 12, boxWidth ? Math.max(1, boxWidth - 2 * GRID.footprintInsetPx) : Infinity);
+    // The browser rounds scaled sprite boxes separately from their alpha bounds.
+    // Half a physical pixel reserves that rounding at each hard cell edge.
+    const widthLimit = Math.min(width - 12, boxWidth ? Math.max(1, boxWidth - 2 * (GRID.footprintInsetPx + .5)) : Infinity);
     // Enemy foot anchors can move inward inside their own cell after fitting.
     // Reserve screen edges at that available centre as well as the preferred
     // side-biased anchor, so a newly occupied right lane cannot shrink the
