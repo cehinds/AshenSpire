@@ -427,6 +427,20 @@ test('baseCards.* mirrors the compiled base-card pack', async () => {
   assert.equal(rows('resourceVariants').length, m.baseCardDefinitions.length);
 });
 
+test('the manifest carries the game.lock.json identity and the lock file itself', () => {
+  const text = readFileSync(join(root, 'games', 'ashenspire', 'game.lock.json'), 'utf8');
+  const lock = JSON.parse(text);
+  const gl = manifest.gameLock;
+  assert.ok(gl, 'no gameLock in the manifest');
+  assert.equal(gl.sha256, createHash('sha256').update(text).digest('hex'));
+  assert.equal(gl.formatVersion, lock.formatVersion);
+  assert.equal(readFileSync(join(first.out, gl.file), 'utf8'), text, 'the lock is copied verbatim');
+  assert.deepEqual(Object.keys(gl.profiles), Object.keys(lock.profiles).sort());
+  for (const [id, p] of Object.entries(gl.profiles)) assert.deepEqual(p, { hash: lock.profiles[id].hash, core: lock.profiles[id].core, runtimeABI: lock.profiles[id].runtimeABI, runtimeHash: lock.profiles[id].runtimeHash });
+  // Additive: the original manifest fields are all still there.
+  for (const key of ['format', 'version', 'release', 'buildOrdinal', 'gitSha', 'rowKey', 'tables', 'config', 'art']) assert.ok(key in manifest, key);
+});
+
 test('the new tables are additive: every legacy namespace is still exported and no config or art id changed', () => {
   const ids = manifest.tables.map((t) => t.id);
   for (const prefix of ['content.', 'source.', 'framework.']) assert.ok(ids.some((id) => id.startsWith(prefix)), `no ${prefix} tables`);

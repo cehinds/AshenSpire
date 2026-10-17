@@ -3,7 +3,9 @@
 //
 // Writes every content table the game reads (the composed content bundle, the
 // authored content/source files, the framework JSON, the compiled UI config)
-// plus the art manifests, in a shape Unity and Unreal Engine import without
+// plus the art manifests, the Core profile system (profile.profiles, module.modules,
+// module.settings.<id>, hudLayout.*, baseCards.*; the manifest's gameLock carries the
+// hashes of games/ashenspire/game.lock.json and the lock is copied to lock/), in a shape Unity and Unreal Engine import without
 // knowing anything about this repository: one JSON array of row objects per
 // table, every row keyed by a string `Name` (the Unreal DataTable row key),
 // a JSON Schema per table, and one manifest that lists them all with hashes.
@@ -536,6 +538,25 @@ export async function buildExport({ only = null } = {}) {
     release = bo.release ?? null;
   } catch { /* absent in a partial checkout */ }
 
+  // The game lock: its identity and hashes, so an engine can detect that its
+  // imported data no longer matches the game it was built from.
+  let gameLock = null;
+  try {
+    const text = readFileSync(join(ROOT, 'games', 'ashenspire', 'game.lock.json'), 'utf8');
+    const lock = JSON.parse(text);
+    files.set('lock/game.lock.json', text);
+    gameLock = {
+      source: 'games/ashenspire/game.lock.json',
+      file: 'lock/game.lock.json',
+      sha256: sha256(text),
+      formatVersion: lock.formatVersion,
+      profiles: Object.fromEntries(Object.keys(lock.profiles).sort().map((id) => {
+        const p = lock.profiles[id];
+        return [id, { hash: p.hash, core: p.core, runtimeABI: p.runtimeABI, runtimeHash: p.runtimeHash }];
+      })),
+    };
+  } catch { /* absent in a partial checkout */ }
+
   const manifest = {
     format: FORMAT,
     version,
@@ -546,6 +567,7 @@ export async function buildExport({ only = null } = {}) {
     tables: tables.sort((a, b) => (a.id < b.id ? -1 : 1)),
     config: configs.sort((a, b) => (a.id < b.id ? -1 : 1)),
     art,
+    ...(gameLock ? { gameLock } : {}),
     // A --only export lists some tables: importers must not prune the rest as stale.
     ...(only ? { partial: true } : {}),
   };
