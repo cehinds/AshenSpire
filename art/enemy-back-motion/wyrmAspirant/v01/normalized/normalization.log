@@ -80,11 +80,33 @@
           "above32": 0
         }
       ]
+    },
+    "damage": {
+      "path": "art/enemy-back-motion/wyrmAspirant/v01/damage-master.png",
+      "sha256": "9defba9e7c61bd61188580be058eab457a2757b2759d4da0e11a57b4bf6be543",
+      "size": [
+        1774,
+        887
+      ],
+      "sourceBoundary": {
+        "above0": 8,
+        "above32": 0
+      },
+      "gutters": [
+        {
+          "axis": "x",
+          "row": 0,
+          "cut": 887,
+          "above0": 0,
+          "above32": 0
+        }
+      ]
     }
   },
   "frames": [],
   "errors": [
-    "no safe x gutter near 887.0"
+    "motion: no safe x gutter near 887.0",
+    "One or more source masters rejected; no frames exported"
   ],
   "warnings": [],
   "manualReview": {
