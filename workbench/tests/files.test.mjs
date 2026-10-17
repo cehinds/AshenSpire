@@ -55,7 +55,14 @@ test('allowlist: editable sources only; traversal, generated files, .git and oth
   assert.equal(allowedKind('content/config/ui/tokens.json'), 'json');
   assert.equal(allowedKind('games/ashenspire/game.json'), 'json');
   assert.equal(allowedKind('games/ashenspire/presets/current.json'), 'json');
-  assert.equal(allowedKind('games/ashenspire/packs/core/pack.json'), null, 'module and pack implementation files are not editable in this Workbench');
+  assert.equal(allowedKind('games/ashenspire/presets/core.json'), 'json');
+  assert.equal(allowedKind('games/ashenspire/bundles/core/bundle.json'), 'json');
+  assert.equal(allowedKind('games/ashenspire/packs/core/pack.json'), 'json', 'pack JSON is an authored input to the game-profile compiler');
+  assert.equal(allowedKind('games/ashenspire/packs/core/notes.md'), null, 'only JSON under the profile trees is editable');
+  assert.equal(allowedKind('games/ashenspire/game.lock.json'), null, 'the lock is generated: never editable');
+  assert.equal(allowedKind('engine/modules/animation/defaults.json'), 'json');
+  assert.equal(allowedKind('engine/modules/animation/module.json'), null, 'a module manifest is not editable here');
+  assert.equal(allowedKind('engine/kernel/kernel.json'), null, 'the kernel is not editable here');
   assert.equal(allowedKind('styles/main.css'), 'css');
   assert.equal(allowedKind('src/engine/rules.js'), 'js');
 });
