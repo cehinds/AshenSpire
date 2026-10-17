@@ -104,6 +104,8 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     stage.play('smash');step(60);stage.setRestPose('defend');
     assert.equal(stage.pose,'guard-brace','a rest change cancels the prior action');
     step(300);assert.equal(stage.pose,'guard-brace');
+    const guardedBody = { ...stage.currentArt.body };
+    const guardedDraw = { left:stage.currentArt.left, width:stage.currentArt.width, height:stage.currentArt.height };
     stage.play('hit');step(50);
     assert.ok(paints.some(p=>p.fill==='#ff2424'&&p.mode==='source-in'),'red mask follows sprite alpha on strobe frame 2');
     step(200);assert.equal(raf.size,1,'the default reaction (280 ms minimum) is still running');
@@ -114,8 +116,9 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     assert.match(stage.currentArt.image.url,/greatsword-outfits\/reaver\/HURT\.webp$/,'the clip paints the registered hurt pose');
     assert.ok(paints.filter(p=>p.args?.[0]===stage.currentArt.image).at(-1).args[1]<hurtX-10,'the body is knocked left at the 30% peak');
     assert.ok(stage.currentArt.left<hurtX-10,'HUD ink source follows the knock-back');
-    step(220);assert.equal(paints.filter(p=>p.args?.[0]===stage.currentArt.image).at(-1).args[1],128,'the knock-back returns to rest');
-    assert.equal(stage.currentArt.left,128);
+    step(220);assert.equal(paints.filter(p=>p.args?.[0]===stage.currentArt.image).at(-1).args[1],guardedDraw.left,'the knock-back returns to the normalized guarded rest');
+    assert.deepEqual({left:stage.currentArt.left,width:stage.currentArt.width,height:stage.currentArt.height},guardedDraw);
+    assert.deepEqual(stage.currentArt.body,guardedBody,'the reaction restores the same semantic head and supporting feet');
     // Hit-stop: a held reaction freezes at impact with its tint showing.
     stage.play('hit',380);assert.equal(stage.hold(100),true,'a running reaction accepts a hold');
     paints.length=0;step(50);assert.equal(paints.filter(p=>p.args?.[0]===stage.currentArt.image).at(-1).args[1],hurtX,'a held hit freezes the knock-back at impact');
@@ -133,7 +136,7 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     };
     clipFrames('strobe');
     stage.play('hit');step(300);assert.doesNotMatch(stage.currentArt.image.url,/HURT/,'the clip returns to the rest pose');
-    assert.equal(stage.currentArt.left,128);
+    assert.equal(stage.currentArt.left,guardedDraw.left);
     document.body.classList.add('reduce-flashes');clipFrames('reduce-flashes',false);document.body.classList.remove('reduce-flashes');
     // Reduce flashes drops the red tint but keeps the knock-back (SPEC §7.4).
     document.body.classList.add('reduce-flashes');paints.length=0;
