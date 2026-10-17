@@ -22,16 +22,16 @@ const stamp=JSON.parse(await readFile(dir+'/buildordinal.json','utf8')),version=
 const {chromium}=await import(pathToFileURL(process.env.PLAYWRIGHT_MODULE).href);
 const sharp=createRequire(import.meta.url)(process.env.SHARP_MODULE);
 const out='docs/preview/features/enemy-back-sprites';await mkdir(out,{recursive:true});
-const server=createServer((req,res)=>{res.writeHead(200,{'Content-Type':'text/html'});res.end(download);});await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const artifactPage='http://127.0.0.1:'+server.address().port+'/AshenSpire.html';
-const browser=await chromium.launch({headless:true}),records=[];
-try{
+const server=createServer((req,res)=>{if(req.url==='/favicon.ico'){res.writeHead(204);res.end();return;}if(req.url!=='/'&&req.url!=='/AshenSpire.html'){res.writeHead(404);res.end('Not found');return;}res.writeHead(200,{'Content-Type':'text/html'});res.end(download);});await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const artifactPage='http://127.0.0.1:'+server.address().port+'/AshenSpire.html';
+const browser=await chromium.launch({headless:true}),records=[];let deadline;const overallDeadline=new Promise((_,reject)=>{deadline=setTimeout(()=>reject(Error('Overall eight-minute browser capture deadline exceeded')),480000);});
+try{await Promise.race([(async()=>{
  for(const [name,width,height,actor] of [['mobile',390,844,'wyrmAspirant'],['desktop',1440,900,'courtDuelist'],['wide',1920,1080,'wyrmLord'],['tablet',820,1180,'fellWarden']]){
   console.log('Capturing exact artifact viewport',name);const page=await browser.newPage({viewport:{width,height}});page.on('pageerror',error=>console.log('BROWSER PAGE ERROR',error.message));page.on('console',message=>{if(message.type()==='error')console.log('BROWSER CONSOLE ERROR',message.text());});page.on('requestfailed',request=>console.log('BROWSER REQUEST FAILED',request.url().slice(0,150),request.failure()?.errorText));page.setDefaultTimeout(30000);page.setDefaultNavigationTimeout(90000);
   await page.goto(artifactPage,{waitUntil:'domcontentloaded',timeout:90000});
   const game=page;await game.locator('#enemy-rear-review-open').click({timeout:90000});
   console.log('HOST FRAMES',await page.locator('iframe').evaluateAll(frames=>frames.map(frame=>({title:frame.title,attributes:[...frame.attributes].map(a=>[a.name,a.value.slice(0,100)]),rect:frame.getBoundingClientRect().toJSON()}))));const gallery=game.frameLocator('dialog iframe');
   await gallery.locator('#grid .card').first().waitFor({state:'attached',timeout:30000});console.log('HOST GEOMETRY',await page.evaluate(()=>[...document.querySelectorAll('dialog,iframe')].map(el=>({tag:el.tagName,open:el.open,title:el.title,rect:el.getBoundingClientRect().toJSON(),display:getComputedStyle(el).display,visibility:getComputedStyle(el).visibility,opacity:getComputedStyle(el).opacity,position:getComputedStyle(el).position}))));console.log('GALLERY GEOMETRY',await gallery.locator('#grid .card').first().evaluate(el=>({rect:el.getBoundingClientRect().toJSON(),display:getComputedStyle(el).display,visibility:getComputedStyle(el).visibility,opacity:getComputedStyle(el).opacity,ancestors:[...function*(el){for(;el;el=el.parentElement)yield el;}(el)].map(el=>({tag:el.tagName,id:el.id,rect:el.getBoundingClientRect().toJSON(),display:getComputedStyle(el).display}))})));await gallery.locator('#grid .card').first().waitFor({timeout:3000});
-  const choices=await gallery.locator('#actor option').evaluateAll(opts=>opts.map(o=>o.value));assert.equal(choices.length,13);
+  const allChoices=await gallery.locator('#actor option').evaluateAll(opts=>opts.map(o=>o.value));assert.equal(allChoices.length,13);const choices=name==='desktop'?allChoices:[actor];
   for(const candidate of choices){console.log('Checking deployed images',name,candidate);
    await gallery.locator('#actor').selectOption(candidate);await gallery.locator('#stance').selectOption('neutral');
    await gallery.locator('#grid img').first().waitFor();
@@ -42,15 +42,15 @@ try{
   await gallery.locator('#actor').selectOption(actor);await gallery.locator('#stance').selectOption('neutral');
   await gallery.locator('#grid img').evaluateAll(images=>Promise.race([Promise.all(images.map(img=>img.decode())),new Promise((_,reject)=>setTimeout(()=>reject(Error('Selected rear images failed to decode within 30 seconds')),30000))]));
   assert.equal(await gallery.locator('main').evaluate(main=>main.scrollWidth<=main.clientWidth),true);
-  await gallery.locator('#grid').evaluate(grid=>window.scrollTo(0,grid.offsetTop-12));await page.screenshot({path:out+'/'+name+'.png'});
-  records.push({name,width,height,actor,sourceCommit:source,version,digest:stamp.digest,playableUrl:url,verifiedActors:13,verifiedNeutralDesigns:130});
+  await gallery.locator('#grid').evaluate(grid=>window.scrollTo(0,grid.offsetTop-12));await page.screenshot({path:out+'/'+name+'.png',timeout:30000});console.log('VIEWPORT CHECKPOINT',name,out+'/'+name+'.png');
+  records.push({name,width,height,actor,sourceCommit:source,version,digest:stamp.digest,playableUrl:url,verifiedActors:choices.length,verifiedNeutralDesigns:choices.length*10});
   await page.close();
  }
-}catch(error){for(const page of browser.contexts().flatMap(context=>context.pages())){await page.screenshot({path:out+'/failure.png'}).catch(()=>{});console.log('FAILURE FRAMES',await Promise.all(page.frames().map(async frame=>({url:frame.url().slice(0,180),text:await frame.locator('body').innerText({timeout:3000}).then(text=>text.slice(0,1500)).catch(()=>null)}))));}throw error;}finally{await browser.close();await new Promise(resolve=>server.close(resolve));}
+})(),overallDeadline]);}catch(error){for(const page of browser.contexts().flatMap(context=>context.pages())){await page.screenshot({path:out+'/failure.png',timeout:10000}).catch(()=>{});console.log('FAILURE FRAMES',await Promise.all(page.frames().map(async frame=>({url:frame.url().slice(0,180),text:await frame.locator('body').innerText({timeout:3000}).then(text=>text.slice(0,1500)).catch(()=>null)}))));}throw error;}finally{clearTimeout(deadline);await Promise.race([browser.close(),new Promise(resolve=>setTimeout(resolve,10000))]);server.closeAllConnections();await Promise.race([new Promise(resolve=>server.close(resolve)),new Promise(resolve=>setTimeout(resolve,2000))]);}
 const tiles=await Promise.all(records.map(async(r,i)=>({input:await sharp(out+'/'+r.name+'.png').resize(512,384,{fit:'contain',background:'#111414'}).png().toBuffer(),left:(i%2)*512,top:Math.floor(i/2)*384})));
 await sharp({create:{width:1024,height:768,channels:4,background:'#111414'}}).composite(tiles).png().toFile(out+'/contact-sheet.png');
 const readme=await readFile('README.md','utf8'),releasePaths=[...readme.matchAll(/docs\/preview\/releases\/([^/]+)\/[^)\s]+/g)].map(m=>m[1]);
-const inventoryResponse=await fetch('https://cehinds.github.io/AshenSpire/builds.json',{cache:'no-store'});assert.ok(inventoryResponse.ok);
+const inventoryResponse=await fetch('https://cehinds.github.io/AshenSpire/builds.json',{cache:'no-store',signal:AbortSignal.timeout(60000)});assert.ok(inventoryResponse.ok);
 const inventory=await inventoryResponse.json(),release=inventory.branches.find(b=>b.branch==='release')?.builds?.[0];assert.ok(release);
 const releaseVersion=release.version&&release.version.endsWith('.'+release.ordinal)?release.version:release.version+'.'+release.ordinal;
 assert.ok(releasePaths.length&&releasePaths.every(v=>v===releaseVersion),'Existing release gallery changed; refresh it before README evidence');
