@@ -5,6 +5,8 @@ import {execFileSync} from 'node:child_process';
 import {resolve,extname} from 'node:path';
 import {pathToFileURL} from 'node:url';
 const {chromium}=await import(pathToFileURL(process.env.PLAYWRIGHT_MODULE).href);
+const snapshot=JSON.parse(await readFile('/tmp/enemy-back-static/static-api/snapshot.json','utf8'));
+const galleryEntry=snapshot.snap.library.body.entries.find(e=>e.id==='enemy-rear-proposals');assert.ok(galleryEntry);assert.notEqual(galleryEntry.external,true,'Mirrored gallery must remain a local Workbench route');
 const canonical=JSON.parse(await readFile('pose-studio/enemy-back-proposals/manifest.json','utf8'));const resetActor=canonical.actors.find(a=>!a.proposals.length)||canonical.actors[1];
 const root=resolve('.'),output='/tmp/enemy-back-module-qa';
 await mkdir(output,{recursive:true});
@@ -32,6 +34,9 @@ try{
   }
   await page.selectOption('#actor','wyrmAspirant');await page.selectOption('#stance','neutral');
   assert.equal(await page.locator('#stance option').count(),9);
+  await page.locator('#grid details').first().locator('summary').click();
+  assert.match(await page.locator('#grid details').first().innerText(),/Source SHA-256/);
+  await page.locator('#grid details').first().locator('summary').click();
   assert.equal(await page.locator('#grid .card').count(),10);
   assert.equal(await page.locator('#grid img').count(),10);
   await page.waitForFunction(()=>[...document.querySelectorAll('#grid img')].every(img=>img.complete&&img.naturalWidth===512));

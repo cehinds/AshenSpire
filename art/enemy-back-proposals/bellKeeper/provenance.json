@@ -1,0 +1,43 @@
+{
+  "id": "bellKeeper",
+  "status": "draft-proposals",
+  "count": 10,
+  "layout": {
+    "columns": 5,
+    "rows": 2
+  },
+  "prompt": "Make exactly TEN rear three-quarter design proposals of the SAME Bell Keeper boss in reference 1. Reference 2 supplies ONLY rear gameplay camera: back of head, back and shoulder dominant, turned away toward upper-right, never front. Preserve Bell Keeper's weathered bronze bell-shaped helmet, stocky heavy bronze plate armor, layered rounded pauldrons, tattered dusty red and pale cream cloth strips, enormous bronze bell mace carried low on its long handle. Same costume proportions, anatomy, silhouette family and bronze-muted red palette; do not transform him into reference2. Ten subtle variants of REAR bell helmet ridges, back armor straps and hanging cloth tears, same character identity. Paint matching dark fantasy production sprite finish of image1. All ten must show BACK, no face/front chest. Entire full body, boots, entire bell weapon and handle within each cell. One transparent PNG canvas exact regular 5 columns by 2 rows grid, one independent character per cell, generous transparent gutters and outer margins, equal scale and foot baselines, no overlaps or cropped elements, no scenery text labels numbers floor or poster. Ten design alternatives, not animation.",
+  "sources": [
+    {
+      "repository": "cehinds/AshenSpire-art",
+      "path": "hd/assets/enemy-poses/expansion/bellKeeper/idle.webp",
+      "ref": "hd-assets-v23",
+      "blob": "74397997f43c8fbafc8f33abe861ea161ce7bc74"
+    },
+    {
+      "repository": "cehinds/AshenSpire",
+      "path": "assets-display/alternative/reaver-default.webp",
+      "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+      "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+      "role": "camera only"
+    }
+  ],
+  "visualQA": "Ten rear three-quarter full figures observed with bell helmets and entire bell maces. Draft pending normalization and art approval.",
+  "actorId": "bellKeeper",
+  "master": "proposal-sheet.png",
+  "sourceReferences": [
+    {
+      "repository": "cehinds/AshenSpire-art",
+      "path": "hd/assets/enemy-poses/expansion/bellKeeper/idle.webp",
+      "ref": "hd-assets-v23",
+      "blob": "74397997f43c8fbafc8f33abe861ea161ce7bc74"
+    },
+    {
+      "repository": "cehinds/AshenSpire",
+      "path": "assets-display/alternative/reaver-default.webp",
+      "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+      "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+      "role": "camera only"
+    }
+  ]
+}

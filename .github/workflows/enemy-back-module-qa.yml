@@ -46,6 +46,11 @@ jobs:
           node pose-studio/enemy-back-proposals/integrate-normalized.mjs stitchedKing
           node pose-studio/enemy-back-proposals/integrate-normalized.mjs glassRegent
           node pose-studio/enemy-back-proposals/integrate-normalized.mjs marrowOrganist
+          node pose-studio/enemy-back-proposals/integrate-normalized.mjs bellKeeper
+          node pose-studio/enemy-back-proposals/integrate-normalized.mjs thornMatriarch
+          node pose-studio/enemy-back-proposals/integrate-normalized.mjs ashheartDragon
+          node pose-studio/enemy-back-proposals/integrate-normalized.mjs blightedValkyrie
+          node pose-studio/enemy-back-proposals/integrate-normalized.mjs hollowAstronomer
       - name: Model and Workbench registration contracts
         run: |
           node --test pose-studio/enemy-back-proposals/model.test.mjs

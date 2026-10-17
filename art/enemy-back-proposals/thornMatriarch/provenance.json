@@ -1,0 +1,44 @@
+{
+  "id": "thornMatriarch",
+  "status": "draft-proposals",
+  "count": 10,
+  "layout": {
+    "columns": 5,
+    "rows": 2
+  },
+  "prompt": "Exactly TEN rear three-quarter sprite design alternatives for the SAME Thorn Matriarch boss in reference1. Reference2 is only camera reference: back dominant turned away facing upper-right; do not copy its knight identity. Preserve Thorn Matriarch's tall slender feminine humanoid anatomy, barklike deep brown thorn armor and branch crown, layered long crimson ragged dress/robes, twisting root hem, flowing red cloth, gnarled tall staff topped with glowing red gem, muted bone brown and blood red palette. Design plausible BACK views of this exact boss: back of branching thorn crown, backplate and rear robe/root construction visible, no face or front chest. Ten subtle distinct rear thorn and robe patterns, same identity costume proportions silhouette palette and full anatomy. Each complete character and ENTIRE staff and root hem within own cell, dark fantasy painterly game sprite finish matching image1. Single transparent PNG exact 5 columns by 2 rows, ten independent figures, consistent scale and foot baseline, large transparent gutters and outer margins preventing contact or cropping. No front poses, no scenery text labels or numbers, no ground. Draft design proposals not animation.",
+  "sources": [
+    {
+      "repository": "cehinds/AshenSpire-art",
+      "path": "hd/assets/enemy-poses/expansion/thornMatriarch/idle.webp",
+      "ref": "hd-assets-v23",
+      "blob": "5751198871bd198d237587f94d11f37760ddac44"
+    },
+    {
+      "repository": "cehinds/AshenSpire",
+      "path": "assets-display/alternative/reaver-default.webp",
+      "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+      "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+      "role": "camera only"
+    }
+  ],
+  "visualQA": "Ten rear three-quarter full figures observed with thorn crown, roots and entire red-gem staff. Draft pending normalized frame QA and art approval.",
+  "actorId": "thornMatriarch",
+  "master": "proposal-sheet.png",
+  "sourceReferences": [
+    {
+      "repository": "cehinds/AshenSpire-art",
+      "path": "hd/assets/enemy-poses/expansion/thornMatriarch/idle.webp",
+      "ref": "hd-assets-v23",
+      "blob": "5751198871bd198d237587f94d11f37760ddac44"
+    },
+    {
+      "repository": "cehinds/AshenSpire",
+      "path": "assets-display/alternative/reaver-default.webp",
+      "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+      "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+      "role": "camera only"
+    }
+  ],
+  "anchorTerminology": "Legacy schema 'feet' denotes visible ground-contact registration for this root/tendril creature, not human anatomical feet."
+}

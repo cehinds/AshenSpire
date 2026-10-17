@@ -1,0 +1,57 @@
+{
+  "bossId": "blightedValkyrie",
+  "status": "draft-proposals",
+  "prompt": "Create transparent background game sprites of this Blighted Valkyrie seen from BEHIND, facing upper-right. Exactly10 different rear designs in5columns2rows. Same ivory wings bronze armor burgundy cloth and spear. Show helmet back, back armor, wing roots, heels, no face. Every full body and spear fits inside its slot occupying only60%slot height, leaving huge empty transparent margins between figures and rows. Dark fantasy painted game sprite style. True transparent alpha background.",
+  "sources": [
+    {
+      "repository": "cehinds/AshenSpire-art",
+      "path": "hd/assets/enemy-poses/expansion/blightedValkyrie/idle.webp",
+      "ref": "hd-assets-v23",
+      "blob": "9bfb5609e3a1add763a29225e68a63f39be1a836"
+    },
+    {
+      "repository": "cehinds/AshenSpire",
+      "path": "assets-display/alternative/reaver-default.webp",
+      "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+      "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+      "purpose": "camera studied previously; not included in final generation"
+    }
+  ],
+  "layout": {
+    "columns": 5,
+    "rows": 2,
+    "count": 10
+  },
+  "visualQA": {
+    "rearView": true,
+    "count10": true,
+    "notes": "Fresh enemy-only reference generation; apparent alpha and clear horizontal row gap, numeric validation pending."
+  },
+  "referenceCount": 1,
+  "supersedes": {
+    "commit": "aa82423a81e422a70af5b8498be5106fdfb46fb9",
+    "reason": "Original had no safe horizontal alpha gutter"
+  },
+  "actorId": "blightedValkyrie",
+  "master": "proposal-sheet.png",
+  "sourceReferences": [
+    {
+      "repository": "cehinds/AshenSpire-art",
+      "path": "hd/assets/enemy-poses/expansion/blightedValkyrie/idle.webp",
+      "ref": "hd-assets-v23",
+      "blob": "9bfb5609e3a1add763a29225e68a63f39be1a836"
+    },
+    {
+      "repository": "cehinds/AshenSpire",
+      "path": "assets-display/alternative/reaver-default.webp",
+      "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+      "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+      "purpose": "camera studied previously; not included in final generation"
+    }
+  ],
+  "qa": {
+    "normalization": "passed safe-gutter/source hash checks",
+    "cropReview": "Independent elite_inventory inspected complete rear figures and equipment; no visible clipping",
+    "runtimePublication": "not published"
+  }
+}
