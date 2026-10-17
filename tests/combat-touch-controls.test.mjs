@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { COMBAT_TOOLS_HEIGHT_PX } from '../src/ui/models/HandLayout.js';
+import { handLayout, responsiveHandLayout } from '../src/ui/models/HandLayout.js';
 
 const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const css = read('../styles/combat-layers.css');
@@ -29,17 +29,20 @@ test('expanded combat panels and selected details stay in the correct layer', ()
   assert.doesNotMatch(restHide, /data-meter-row='stance'|\.statuses/, 'the stance chip and statuses are not hidden at rest');
 });
 
-test('compact geometry reserves the measured controls and overhead gaps', () => {
+test('compact hand leaves the footer tool and Grid rows below its resting cards', () => {
   assert.match(battlefield, /setProperty\('--overhead-top', `\$\{-overheadGap \/ zoom\}px`\)/);
-  const reserve = COMBAT_TOOLS_HEIGHT_PX;
-  assert.match(hand, /const toolsHeight = toolsPhysical \/ zoom;/);
-  assert.match(hand, /!desktop \? COMBAT_TOOLS_HEIGHT_PX/, 'only the desktop form factor measures its tool row');
-  const dockOffset = Number(tools.match(/top: \(handBox\?\.top \|\| 0\) \+ (\d+)/)?.[1] ?? (tools.includes('top: handBox?.top || 0') || tools.includes('const dockTop = handBox?.top || 0;') ? 0 : NaN));
-  const toolHeight = Number(css.match(/\.combat-tools > button\s*\{[^}]*height:\s*calc\((\d+)px \/ var\(--ui-zoom,1\)\)/s)?.[1]);
-  assert([reserve, dockOffset, toolHeight].every(Number.isFinite), 'all toolbar dimensions must be accounted for');
-  assert.equal(toolHeight, 30, 'approved compact toolbar height');
-  assert.equal(reserve, 34, 'the compact fan reserves the toolbar and its clearance');
-  assert(reserve >= dockOffset + toolHeight + 4, 'card reservation must include toolbar offset, height and clearance');
+  assert.match(hand, /const toolsHeight = 0;/, 'the toolbar is outside the fan, so no row is reserved above it');
+  assert.match(tools, /const footerControls = combatEl.querySelector\('\.combat-action-row'\)/, 'tools dock against the footer rather than the hand top');
+  for (const zoom of [.74, 1, 1.2]) for (const count of [3, 5, 7]) {
+    const input = { width: 390 / zoom, height: 250 / zoom, count, zoom, compact: true, formFactor: 'mobile' };
+    const plan = responsiveHandLayout(input, handLayout(input));
+    const bottom = Math.max(...plan.cards.map(card => {
+      const radians = card.angle * Math.PI / 180;
+      return plan.top + card.y + plan.cardHeight / 2
+        + (Math.abs(Math.sin(radians)) * plan.cardWidth + Math.abs(Math.cos(radians)) * plan.cardHeight) / 2;
+    }));
+    assert.ok((input.height - bottom) * zoom >= 62, `${count} cards at zoom ${zoom} clear the 30px tools and 28px Grid rows plus their gap`);
+  }
 });
 
 test('unarmed intent taps preserve the selection-first tooltip path', () => {
