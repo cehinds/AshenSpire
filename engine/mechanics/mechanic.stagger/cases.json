@@ -4,12 +4,13 @@
     "given": {
       "entities": {
         "enemy": {
-          "poise": {
-            "value": 10,
-            "max": 10
-          },
-          "stamina": 5,
-          "maxStamina": 8
+          "hp": 30,
+          "maxHp": 30,
+          "poise": 10,
+          "poiseMax": 10,
+          "sp": 5,
+          "spMax": 8,
+          "statuses": {}
         }
       }
     },
@@ -23,13 +24,48 @@
     "then": {
       "entities": {
         "enemy": {
-          "poise": {
-            "value": 6
-          },
-          "stamina": 5
+          "poise": 6,
+          "sp": 5
         }
       },
       "events": []
+    }
+  },
+  {
+    "name": "emptying the meter staggers through the command",
+    "given": {
+      "entities": {
+        "enemy": {
+          "hp": 30,
+          "maxHp": 30,
+          "poise": 3,
+          "poiseMax": 10,
+          "sp": 5,
+          "spMax": 8,
+          "statuses": {}
+        }
+      }
+    },
+    "when": {
+      "command": "mechanic.stagger.breakPoise",
+      "with": {
+        "target": "enemy",
+        "amount": 5
+      }
+    },
+    "then": {
+      "entities": {
+        "enemy": {
+          "poise": 0,
+          "sp": 4,
+          "statuses": {
+            "vulnerable": 1
+          }
+        }
+      },
+      "events": [
+        "mechanic.stagger.staggered"
+      ]
     }
   },
   {
@@ -37,12 +73,12 @@
     "given": {
       "entities": {
         "enemy": {
-          "poise": {
-            "value": 0,
-            "max": 10
-          },
-          "stamina": 5,
-          "maxStamina": 8,
+          "hp": 30,
+          "maxHp": 30,
+          "poise": 0,
+          "poiseMax": 10,
+          "sp": 5,
+          "spMax": 8,
           "statuses": {}
         }
       }
@@ -56,11 +92,9 @@
     "then": {
       "entities": {
         "enemy": {
-          "stamina": 4,
+          "sp": 4,
           "statuses": {
-            "vulnerable": {
-              "stacks": 1
-            }
+            "vulnerable": 1
           }
         }
       },
@@ -74,16 +108,14 @@
     "given": {
       "entities": {
         "enemy": {
-          "poise": {
-            "value": 0,
-            "max": 10
-          },
-          "stamina": 3,
-          "maxStamina": 8,
+          "hp": 30,
+          "maxHp": 30,
+          "poise": 0,
+          "poiseMax": 10,
+          "sp": 3,
+          "spMax": 8,
           "statuses": {
-            "vulnerable": {
-              "stacks": 1
-            }
+            "vulnerable": 1
           }
         }
       }
@@ -97,11 +129,85 @@
     "then": {
       "entities": {
         "enemy": {
-          "stamina": 2,
+          "sp": 2,
           "statuses": {
-            "vulnerable": {
-              "stacks": 2
-            }
+            "vulnerable": 2
+          }
+        }
+      },
+      "events": [
+        "mechanic.stagger.staggered"
+      ]
+    }
+  },
+  {
+    "name": "the model state overrides the defaults",
+    "given": {
+      "entities": {
+        "enemy": {
+          "hp": 30,
+          "maxHp": 30,
+          "poise": 0,
+          "poiseMax": 10,
+          "sp": 5,
+          "spMax": 8,
+          "statuses": {}
+        }
+      },
+      "mechanics": {
+        "mechanic.stagger": {
+          "spLoss": 2,
+          "stacks": 3
+        }
+      }
+    },
+    "when": {
+      "event": "runtime.poiseBroken",
+      "with": {
+        "target": "enemy"
+      }
+    },
+    "then": {
+      "entities": {
+        "enemy": {
+          "sp": 3,
+          "statuses": {
+            "vulnerable": 3
+          }
+        }
+      },
+      "events": [
+        "mechanic.stagger.staggered"
+      ]
+    }
+  },
+  {
+    "name": "SP never drops below zero",
+    "given": {
+      "entities": {
+        "enemy": {
+          "hp": 30,
+          "maxHp": 30,
+          "poise": 0,
+          "poiseMax": 10,
+          "sp": 0,
+          "spMax": 8,
+          "statuses": {}
+        }
+      }
+    },
+    "when": {
+      "event": "runtime.poiseBroken",
+      "with": {
+        "target": "enemy"
+      }
+    },
+    "then": {
+      "entities": {
+        "enemy": {
+          "sp": 0,
+          "statuses": {
+            "vulnerable": 1
           }
         }
       },
