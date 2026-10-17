@@ -476,7 +476,7 @@ function verifyEnemyContent(content, settings, gearSettings = null) {
   if (!Array.isArray(content.enemies) || !Array.isArray(content.enemyCards)) fail(base, 'enemies module requires enemies and enemyCards pack content');
   const cards = new Map(content.enemyCards.map(card => [card.id, card]));
   if (cards.size !== content.enemyCards.length) fail('$/content/enemyCards', 'duplicate enemy card ID');
-  const playerCards = new Set((content.cards || []).map(card => card.id));
+  const playerCards = new Map((content.cards || []).map(card => [card.id, card]));
   // Enemy gear is player gear (lootable); relics are enemy relics with attribute modifiers.
   const gear = new Set((content.gear || []).map(row => row.id)), relics = new Set((content.enemyRelics || []).map(row => row.id));
   for (const [kind, rows] of settings.equipment ? [['enemyRelics', content.enemyRelics || []]] : [])
@@ -540,9 +540,9 @@ function verifyEnemyContent(content, settings, gearSettings = null) {
     const pools = { ...outcomes[0], sp: Math.min(...outcomes.map(o => o.sp)), mp: Math.min(...outcomes.map(o => o.mp)) };
     if (tier.spRange && (pools.sp < tier.spRange[0] || pools.sp > tier.spRange[1])) fail(`${at}/attributes`, `SP ${pools.sp} outside ${row.tier} range ${tier.spRange[0]}-${tier.spRange[1]}`);
     for (const id of [...row.defaultDeck, ...(row.unlockCards || []), ...(row.firstCard ? [row.firstCard] : [])]) {
-      const card = cards.get(id);
-      if (!card && !playerCards.has(id)) fail(`${at}/defaultDeck`, `unresolved card reference '${id}'`);
-      if (card && (card.staminaCost > pools.sp || card.manaCost > pools.mp)) fail(`${at}/defaultDeck`, `'${id}' costs ${card.staminaCost} SP/${card.manaCost} MP; enemy has ${pools.sp} SP/${pools.mp} MP`);
+      const card = cards.get(id) || playerCards.get(id);
+      if (!card) fail(`${at}/defaultDeck`, `unresolved card reference '${id}'`);
+      if (card && ((card.staminaCost || 0) > pools.sp || (card.manaCost || 0) > pools.mp)) fail(`${at}/defaultDeck`, `'${id}' costs ${card.staminaCost || 0} SP/${card.manaCost || 0} MP; enemy has ${pools.sp} SP/${pools.mp} MP`);
     }
     for (const id of enemyGearIds(row)) if (!gear.has(id)) fail(`${at}/defaultGear`, `unresolved gear '${id}'`);
     for (const id of enemyRelicIds(row)) if (!relics.has(id)) fail(`${at}/defaultRelics`, `unresolved relic '${id}'`);

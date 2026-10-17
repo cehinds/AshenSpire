@@ -116,6 +116,14 @@ test('validator refuses a card the enemy can never afford (minion full heal)', (
   }), /costs 3 SP\/2 MP; enemy has 2 SP/);
 });
 
+test('validator checks affordability of shared-pool cards in an enemy deck', () => {
+  assert.throws(resolveWith(p => {
+    const card = p.cards.find(c => c.staminaCost >= 5) || p.cards[0];
+    card.staminaCost = 9;
+    p.enemies[0].defaultDeck[0] = card.id;
+  }), /costs 9 SP\/\d+ MP; enemy has/);
+});
+
 test('validator refuses a heal card whose cost disagrees with its heal shape', () => {
   assert.throws(resolveWith(p => { p.enemyCards.find(c => c.id === 'graveWisp.drain').staminaCost = 0; }), /cost must match heal shape 'cheap'/);
 });

@@ -115,7 +115,7 @@ namespace Ashen.Runtime
 
         double Raw(object node, FormulaContext ctx)
         {
-            if (node is double d) return d;
+            if (AshenRuntime.AsDouble(node) is double d) return d;
             if (node is not Dictionary<string, object> f || !f.TryGetValue("f", out var op)) throw new InvalidOperationException("Formula node must be a number or { f }");
             double v = (string)op switch
             {
@@ -136,7 +136,7 @@ namespace Ashen.Runtime
             return v;
         }
 
-        static double Per(Dictionary<string, object> f, FormulaContext ctx) => f.TryGetValue("per", out var p) ? (double)p : 1;
+        static double Per(Dictionary<string, object> f, FormulaContext ctx) => f.TryGetValue("per", out var p) ? AshenRuntime.AsDouble(p) ?? throw new InvalidOperationException("per must be a number") : 1;
 
         static FormulaEntity Of(Dictionary<string, object> f, FormulaContext ctx)
         {
@@ -151,7 +151,7 @@ namespace Ashen.Runtime
                 ? ctx.AllEnemies.Sum(e => e.Statuses.GetValueOrDefault(status))
                 : Of(f, ctx).Statuses.GetValueOrDefault(status);
             // "per" floors the division at once.
-            return f.TryGetValue("per", out var per) ? Math.Floor(total / (double)per) : total;
+            return f.TryGetValue("per", out var per) ? Math.Floor(total / (AshenRuntime.AsDouble(per) ?? throw new InvalidOperationException("per must be a number"))) : total;
         }
     }
 
@@ -537,7 +537,7 @@ namespace Ashen.Runtime
             return a.Equals(b);
         }
 
-        static double? AsDouble(object v) => v switch
+        internal static double? AsDouble(object v) => v switch
         {
             double x => x, float x => x, int x => x, long x => x, short x => x, byte x => x, uint x => x, ulong x => x, decimal x => (double)x,
             _ => null,
