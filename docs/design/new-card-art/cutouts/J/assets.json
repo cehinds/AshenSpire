@@ -11,10 +11,17 @@
         "id": "maneuver:attack",
         "scope": "current",
         "relation": "exact"
+      },
+      {
+        "kind": "tag",
+        "id": "maneuver:counter",
+        "scope": "current",
+        "relation": "exact"
       }
     ],
     "suggestedCardTypes": [
-      "attack"
+      "attack",
+      "counter"
     ],
     "src": "cutouts/J/objects/0.png",
     "mimeType": "image/png",
@@ -88,10 +95,17 @@
         "id": "maneuver:attack",
         "scope": "current",
         "relation": "exact"
+      },
+      {
+        "kind": "tag",
+        "id": "maneuver:counter",
+        "scope": "current",
+        "relation": "exact"
       }
     ],
     "suggestedCardTypes": [
-      "attack"
+      "attack",
+      "counter"
     ],
     "src": "cutouts/J/objects/1.png",
     "mimeType": "image/png",
@@ -165,10 +179,17 @@
         "id": "maneuver:attack",
         "scope": "current",
         "relation": "exact"
+      },
+      {
+        "kind": "tag",
+        "id": "maneuver:counter",
+        "scope": "current",
+        "relation": "exact"
       }
     ],
     "suggestedCardTypes": [
-      "attack"
+      "attack",
+      "counter"
     ],
     "src": "cutouts/J/objects/2.png",
     "mimeType": "image/png",
@@ -242,10 +263,17 @@
         "id": "maneuver:attack",
         "scope": "current",
         "relation": "exact"
+      },
+      {
+        "kind": "tag",
+        "id": "maneuver:counter",
+        "scope": "current",
+        "relation": "exact"
       }
     ],
     "suggestedCardTypes": [
-      "attack"
+      "attack",
+      "counter"
     ],
     "src": "cutouts/J/objects/3.png",
     "mimeType": "image/png",
@@ -319,10 +347,17 @@
         "id": "maneuver:attack",
         "scope": "current",
         "relation": "exact"
+      },
+      {
+        "kind": "tag",
+        "id": "maneuver:counter",
+        "scope": "current",
+        "relation": "exact"
       }
     ],
     "suggestedCardTypes": [
-      "attack"
+      "attack",
+      "counter"
     ],
     "src": "cutouts/J/objects/4.png",
     "mimeType": "image/png",
@@ -396,10 +431,17 @@
         "id": "maneuver:attack",
         "scope": "current",
         "relation": "exact"
+      },
+      {
+        "kind": "tag",
+        "id": "maneuver:counter",
+        "scope": "current",
+        "relation": "exact"
       }
     ],
     "suggestedCardTypes": [
-      "attack"
+      "attack",
+      "counter"
     ],
     "src": "cutouts/J/objects/5.png",
     "mimeType": "image/png",
@@ -473,10 +515,17 @@
         "id": "maneuver:attack",
         "scope": "current",
         "relation": "exact"
+      },
+      {
+        "kind": "tag",
+        "id": "maneuver:counter",
+        "scope": "current",
+        "relation": "exact"
       }
     ],
     "suggestedCardTypes": [
-      "attack"
+      "attack",
+      "counter"
     ],
     "src": "cutouts/J/objects/6.png",
     "mimeType": "image/png",
@@ -550,10 +599,17 @@
         "id": "maneuver:attack",
         "scope": "current",
         "relation": "exact"
+      },
+      {
+        "kind": "tag",
+        "id": "maneuver:counter",
+        "scope": "current",
+        "relation": "exact"
       }
     ],
     "suggestedCardTypes": [
-      "attack"
+      "attack",
+      "counter"
     ],
     "src": "cutouts/J/objects/7.png",
     "mimeType": "image/png",
@@ -627,10 +683,17 @@
         "id": "maneuver:attack",
         "scope": "current",
         "relation": "exact"
+      },
+      {
+        "kind": "tag",
+        "id": "maneuver:counter",
+        "scope": "current",
+        "relation": "exact"
       }
     ],
     "suggestedCardTypes": [
-      "attack"
+      "attack",
+      "counter"
     ],
     "src": "cutouts/J/objects/8.png",
     "mimeType": "image/png",
@@ -704,10 +767,17 @@
         "id": "maneuver:attack",
         "scope": "current",
         "relation": "exact"
+      },
+      {
+        "kind": "tag",
+        "id": "maneuver:counter",
+        "scope": "current",
+        "relation": "exact"
       }
     ],
     "suggestedCardTypes": [
-      "attack"
+      "attack",
+      "counter"
     ],
     "src": "cutouts/J/objects/9.png",
     "mimeType": "image/png",

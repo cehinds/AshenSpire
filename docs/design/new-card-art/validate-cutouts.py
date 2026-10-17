@@ -7,9 +7,9 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parent
 data = json.loads((ROOT / 'cutout-manifest.json').read_text())
 assets = data['assets']
-assert len(assets) == 170
-assert len(data['categories']) == 8
-assert len(data['compositions']) == 800
+assert len(assets) == (230 if data['revision'] >= 4 else 170)
+assert len(data['categories']) == (14 if data['revision'] >= 4 else 8)
+assert len(data['compositions']) == (1400 if data['revision'] >= 4 else 800)
 assert len([a for a in assets.values() if a['kind'] == 'object' and a['category'] in 'ABCDEFG']) == 70
 assert len([a for a in assets.values() if a['kind'] == 'object' and a['category'] == 'H']) == 10
 for asset in assets.values():
@@ -43,7 +43,18 @@ for c in data['categories']:
             assert layers['object']['visible'] and layers['foreground']['visible']
             for layer in layers.values():
                 assert layer['assetId'] in assets
+if data['revision'] >= 4:
+    assert len([a for a in assets.values() if a['kind'] == 'object' and a['category'] in 'IJKLM']) == 50
+    assert next(t for t in data['cardTypes'] if t['id'] == 'spell')['objectFamilies'] == ['I']
+    for i in range(10):
+        for j in range(10):
+            comp = data['compositions'][f'N{i}{j}']
+            layers = {l['id']: l for l in comp['layers']}
+            assert layers['object']['assetId'] == f'M.object.{i}'
+            assert layers['secondaryObject']['assetId'] == f'J.object.{i}'
+            assert layers['secondaryObject']['visible']
+            assert layers['secondaryObject']['zIndex'] < layers['object']['zIndex']
 assert len(data['cardTypes']) == 10
 assert data['tagComposition']['maxTags'] == 4
 assert data['runtimeEnabled'] is False
-print('Validated 70 core objects + 10 cleansing fires + 80 effect exports + 10 backgrounds; 800 combinations, real option 0, alpha, hashes and references.')
+print(f"Validated revision {data['revision']}: {len(assets)} PNGs, {len(data['compositions'])} combinations, independent Counter layers, alpha, hashes and references.")

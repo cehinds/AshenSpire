@@ -1,7 +1,7 @@
-# Actual PNG cutouts — selection set 03
+# Actual PNG cutouts — selection set 04
 
 Open [cutouts.html](cutouts.html) to select, layer, rotate, resize and keep multiple
-choices. The downloadable `card-art-cutouts-v3.zip` includes the standalone
+choices. The downloadable `card-art-cutouts-v4.zip` includes the standalone
 viewer, all PNGs and the JSON. Extract the ZIP and open `cutouts.html`
 in a browser. It uses plain local scripts and needs no build step. If browser
 policy blocks local files, run `python3 -m http.server 8765` in the extracted
@@ -10,9 +10,9 @@ this environment used local HTTP because its policy blocks file URLs.
 
 ## Deliverables and codes
 
-- **70 core object PNGs:** ten variants each of swords, scimitars, scythes, hammers, shields, cards, and leaves.
-- An additional ten Cleansed fire objects, 80 effect PNG exports, and ten separate background PNGs.
-- Some compatible families reuse an effect source; effect exports are not claimed to be 80 unique effect designs.
+- **120 object PNGs:** the original 70, plus 50 new options—ten each of spellbooks, swords, hammers, scythes and shields.
+- An additional ten Cleansed fire objects, 90 effect PNG exports, and ten separate background PNGs.
+- Some compatible families reuse an effect source; effect exports are not claimed to be 90 unique effect designs.
 - All object/effect PNGs have a 512×512 transparent canvas and a clear outer margin.
 - Background PNGs are 512×640. The composed art crop is also 512×640.
 - `cutout-manifest.json` contains component references, dimensions, anchor,
@@ -29,8 +29,14 @@ this environment used local HTTP because its policy blocks file URLs.
 | F | Cards — ten alternatives |
 | G | Leaves — ten alternatives |
 | H | Additional Cleansed fire — ten alternatives |
+| I | Spellbooks — ten new open, closed and half-open alternatives |
+| J | Swords II — ten new alternatives |
+| K | Hammers II — ten new alternatives |
+| L | Scythes II — ten new alternatives |
+| M | Shields II — ten new alternatives |
+| N | Counter — ten starting shield-and-sword pairs using M and J |
 
-**0 is a real option, not absence.** Every selection code has one letter and two
+**0 is a real option, not absence.** New weapon groups reuse compatible earlier effect files; isolated effect tiles retain the original component letter. Every selection code has one letter and two
 digits. `A34` selects sword object 3 and effect 4. `A00` selects object 0 and
 effect 0. Each category contains all 100 combinations, 00–99. Ten initial examples
 pair matching digits: A00, A11, A22, …, A99.
@@ -122,16 +128,25 @@ the portable ZIP requires only the exported PNGs.
 
 ## Scope
 
-The latest quantity clarification supersedes the earlier category-based counts. This round provides ten variants of each of seven core object families, plus Cleansed fire. The ten requested card types reference these shared families in `cardTypes`; they do not each receive ten unrelated mixed props.
+The original seven families and Cleansed fire remain available with their existing IDs. Revision 4 adds 50 objects in I–M and Counter presets in N. The ten requested card types reference these shared families in `cardTypes`; they do not each receive ten unrelated mixed props.
 Ten-option studies of every element/status family are deferred. Existing combat
 identity mappings are referenced from the earlier catalog; no game IDs, mechanics
 or card details are changed. These are real reusable proposal assets, not assets
 already integrated into the game renderer or published to the art pack.
 
 
-For Counter, use two independent object layers referencing E (shield) and A (sword). The optional second-object control can overlay any shared object, with its own visibility, position, size and rotation. Select it in Edit layer to adjust it. Spell, Power and Consumable object choices remain proposals within these seven families; orb, bottle and other new families are not part of the 70-object count.
+For Counter, use two independent object layers referencing E (shield) and A (sword). The optional second-object control can overlay any shared object, with its own visibility, position, size and rotation. Select it in Edit layer to adjust it. Spells now use the I spellbook family. Orb and bottle families are still outside this expansion.
 
 
 ## Verification
 
-`python3 validate-cutouts.py` checks all 170 PNG files, real alpha, dimensions, hashes, 70 core-object counts and 800 combinations. Browser checks covered all families, image decoding, independent transforms, a second object, visibility, multiple kept choices, JSON download, persisted edits and 390px layouts. Existing combat identity validation also passes.
+`python3 validate-cutouts.py` checks all 230 PNG files, real alpha, dimensions, hashes, the original 70 plus 50 new objects and 1,400 combinations. Browser checks covered all families, image decoding, independent transforms, a second object, visibility, multiple kept choices, JSON download, persisted edits and 390px layouts. Existing combat identity validation also passes.
+
+
+## Counter pair codes
+
+`N34` means starting pair 3 with effect 4: `M.object.3` is the shield and `J.object.3` is the sword. The sword sits behind the shield. Both remain standalone PNG files with independent position, rotation, size, visibility and opacity. N never introduces a flattened shield-and-sword image. Replacing the optional sword is an override saved in exported JSON.
+
+## Rebuilding the expansion
+
+`export-cutouts.py` rebuilds the original revision 3 catalog. For revision 4, run `expand-cutouts.py --family I` (then J, K, L and M) using `generation-sources-v4.json`, and run `expand-cutouts.py` to assemble the expanded manifest. Source sheets remain provenance; object crops follow complete connected-object bounding boxes to avoid clipping objects that drift across nominal grid lines. `package-cutouts.py` builds the current portable ZIP.

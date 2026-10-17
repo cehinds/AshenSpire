@@ -11,8 +11,8 @@
 <div class="eyebrow">ASHEN SPIRE / FEATURE/NEWCARDART / ACTUAL PNG CUTOUTS</div>
 <h1>Pick the object. Pick the effect. Move each layer.</h1>
 <p><strong>A34</strong> means sword family A, object 3, effect 4. <strong>0 is a real option.</strong> Layer visibility controls what you see; hiding a layer never changes its digit. Every object and effect below links to its own transparent PNG. Preview labels are outside the images.</p>
-<div class="actions"><a class="download" href="objects-overview.html">All 70 objects</a><a class="download" href="card-art-cutouts-v3.zip" download>Download PNGs + JSON + viewer</a><a class="download" href="cutout-manifest.json" download>Full component JSON</a><button id="export">Export kept choices + edited JSON</button></div>
-<p>70 core objects: ten swords, ten scimitars, ten scythes, ten hammers, ten shields, ten cards, and ten leaves. Cleansing fire, effects and backgrounds are additional components.</p>
+<div class="actions"><a class="download" href="objects-overview.html">Object overview</a><a class="download" href="card-art-cutouts-v4.zip" download>Download PNGs + JSON + viewer</a><a class="download" href="cutout-manifest.json" download>Full component JSON</a><button id="export">Export kept choices + edited JSON</button></div>
+<p>New: 50 objects in I–M—spellbooks, swords, hammers, scythes, and shields. N contains Counter pairs built from separate M shield and J sword PNGs. Earlier A–H choices remain available.</p>
 <nav id="categories" aria-label="Object families"></nav>
 <p id="error" role="alert"></p>
 <div class="editor">
@@ -42,7 +42,8 @@
 </div>
 <h2 id="object-heading">Objects alone</h2>
 <p>Each option is one reusable PNG. The smaller views rotate that same file −25°, 0°, and +25°; they are orientation references, not new camera perspectives.</p>
-<div id="objects" class="grid"></div>
+<p id="pair-note" hidden>N codes select a starting shield-and-sword pair. The standalone files retain their M (shield) and J (sword) IDs; either piece can be repositioned, rotated, hidden, or replaced independently.</p>
+<div id="objects" class="grid"></div><section id="paired-objects" hidden></section>
 <h2>Effects alone</h2><p>No weapon or backdrop is baked into these overlays. The checkerboard is only the viewer background.</p><div id="effects" class="grid fx"></div>
 <h2>Ten starting combinations</h2><p>These are assembled from the actual PNGs. Mix any object digit with any effect digit above to explore all 00–99 combinations.</p><div id="examples" class="grid examples"></div>
 <h2>Separate background PNGs</h2><div id="backgrounds" class="grid bg-grid"></div>

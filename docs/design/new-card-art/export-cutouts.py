@@ -61,6 +61,18 @@ def export_sheet(key, kind, letter=None, names=None):
     source_hash = hashlib.sha256(source.read_bytes()).hexdigest()
     if kind != 'background':
         assert im.getchannel('A').getextrema()[0] == 0, f'{key}: source has no transparent pixels'
+    object_bounds = None
+    if kind == 'object' and letter in 'IJKLM':
+        # Generated objects may drift across nominal grid lines. Locate complete
+        # connected objects globally, then order their rectangular crops by row.
+        labels, count = ndimage.label(np.asarray(im.getchannel('A')) > 8)
+        sizes = np.bincount(labels.ravel()); sizes[0] = 0
+        largest = np.argsort(sizes)[-10:]
+        assert len(largest) == 10 and sizes[largest].min() > 500, f'{key}: expected ten complete objects'
+        slices = ndimage.find_objects(labels)
+        boxes = [(slices[i-1][1].start, slices[i-1][0].start, slices[i-1][1].stop, slices[i-1][0].stop) for i in largest]
+        boxes.sort(key=lambda b: (b[1]+b[3])/2)
+        object_bounds = sorted(boxes[:5], key=lambda b: (b[0]+b[2])/2) + sorted(boxes[5:], key=lambda b: (b[0]+b[2])/2)
     ids = []
     for index in range(10):
         col, row = index % 5, index // 5
@@ -69,7 +81,10 @@ def export_sheet(key, kind, letter=None, names=None):
         out = ROOT / 'cutouts' / ('backgrounds' if kind == 'background' else f'{letter}/{kind}s') / f'{index}.png'
         out.parent.mkdir(parents=True, exist_ok=True)
         crop_x, crop_y, crop_right, crop_bottom = x, y, right, bottom
-        if kind == 'object' and letter in 'ABCDEFG':
+        if object_bounds:
+            bx, by, br, bb = object_bounds[index]
+            crop_x, crop_y, crop_right, crop_bottom = max(0, bx-2), max(0, by-2), min(width, br+2), min(height, bb+2)
+        elif kind == 'object' and letter in 'ABCDEFG':
             # Locate the main connected object for a tighter rectangular crop.
             # This excludes neighboring atlas-cell fragments without repainting pixels.
             alpha_cell = np.asarray(im.getchannel('A').crop((x, y, right, bottom)))
@@ -113,36 +128,40 @@ def export_sheet(key, kind, letter=None, names=None):
         ids.append(asset_id)
     return ids
 
-export_sheet('backgrounds', 'background', names=background_names)
-for category in SPEC['categories']:
-    letter = category['letter']
-    objects = export_sheet(f'{letter}-objects', 'object', letter, [r['name'] for r in category['objects']])
-    effects = export_sheet(f'{letter}-effects', 'effect', letter, [r['name'] for r in category['effects']])
-    manifest['categories'].append({
-        'letter': letter, 'id': category['id'], 'label': category['label'],
-        'references': category['references'], 'objectIds': objects, 'effectIds': effects,
-        'backgroundId': f'background.{background_by_category[letter]}',
-        'exampleCodes': [f'{letter}{i}{i}' for i in range(10)],
-    })
-    for i in range(10):
-        category['objects'][i]['asset'] = manifest['assets'][objects[i]]['src']
-        category['effects'][i]['asset'] = manifest['assets'][effects[i]]['src']
-    for i in range(10):
-        for j in range(10):
-            code = f'{letter}{i}{j}'
-            manifest['compositions'][code] = {
-                'code': code, 'category': letter, 'objectDigit': i, 'effectDigit': j,
-                'layers': [
-                    {'id': 'background', 'assetId': f'background.{background_by_category[letter]}', 'zIndex': 0, 'visible': True, 'overrides': {}},
-                    {'id': 'backEffect', 'assetId': effects[j], 'zIndex': 10, 'visible': True, 'overrides': {'opacity': .5, 'width': 490, 'height': 490}},
-                    {'id': 'object', 'assetId': objects[i], 'zIndex': 20, 'visible': True, 'overrides': {}},
-                    {'id': 'secondaryObject', 'assetId': 'A.object.0', 'zIndex': 25, 'visible': False, 'overrides': {'x': 340, 'y': 330, 'width': 380, 'height': 380, 'rotationDeg': 20}},
-                    {'id': 'foreground', 'assetId': effects[j], 'zIndex': 30, 'visible': True, 'overrides': {'opacity': .65}},
-                ],
-            }
-    print(f'Exported {letter}: ten objects, ten effects; composed all 00–99 choices.', flush=True)
+def main():
+    export_sheet('backgrounds', 'background', names=background_names)
+    for category in SPEC['categories']:
+        letter = category['letter']
+        objects = export_sheet(f'{letter}-objects', 'object', letter, [r['name'] for r in category['objects']])
+        effects = export_sheet(f'{letter}-effects', 'effect', letter, [r['name'] for r in category['effects']])
+        manifest['categories'].append({
+            'letter': letter, 'id': category['id'], 'label': category['label'],
+            'references': category['references'], 'objectIds': objects, 'effectIds': effects,
+            'backgroundId': f'background.{background_by_category[letter]}',
+            'exampleCodes': [f'{letter}{i}{i}' for i in range(10)],
+        })
+        for i in range(10):
+            category['objects'][i]['asset'] = manifest['assets'][objects[i]]['src']
+            category['effects'][i]['asset'] = manifest['assets'][effects[i]]['src']
+        for i in range(10):
+            for j in range(10):
+                code = f'{letter}{i}{j}'
+                manifest['compositions'][code] = {
+                    'code': code, 'category': letter, 'objectDigit': i, 'effectDigit': j,
+                    'layers': [
+                        {'id': 'background', 'assetId': f'background.{background_by_category[letter]}', 'zIndex': 0, 'visible': True, 'overrides': {}},
+                        {'id': 'backEffect', 'assetId': effects[j], 'zIndex': 10, 'visible': True, 'overrides': {'opacity': .5, 'width': 490, 'height': 490}},
+                        {'id': 'object', 'assetId': objects[i], 'zIndex': 20, 'visible': True, 'overrides': {}},
+                        {'id': 'secondaryObject', 'assetId': 'A.object.0', 'zIndex': 25, 'visible': False, 'overrides': {'x': 340, 'y': 330, 'width': 380, 'height': 380, 'rotationDeg': 20}},
+                        {'id': 'foreground', 'assetId': effects[j], 'zIndex': 30, 'visible': True, 'overrides': {'opacity': .65}},
+                    ],
+                }
+        print(f'Exported {letter}: ten objects, ten effects; composed all 00–99 choices.', flush=True)
 
-(ROOT / 'cutout-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
-(ROOT / 'cutouts-data.js').write_text('window.CARD_CUTOUT_DATA = ' + json.dumps(manifest, separators=(',', ':')) + ';\n')
-(ROOT / 'art-selection-v3.json').write_text(json.dumps(SPEC, indent=2) + '\n')
-print(f"Exported {len(manifest['assets'])} standalone PNGs; {len(manifest['compositions'])} composition records.")
+    (ROOT / 'cutout-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
+    (ROOT / 'cutouts-data.js').write_text('window.CARD_CUTOUT_DATA = ' + json.dumps(manifest, separators=(',', ':')) + ';\n')
+    (ROOT / 'art-selection-v3.json').write_text(json.dumps(SPEC, indent=2) + '\n')
+    print(f"Exported {len(manifest['assets'])} standalone PNGs; {len(manifest['compositions'])} composition records.")
+
+if __name__ == '__main__':
+    main()

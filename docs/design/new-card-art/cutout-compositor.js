@@ -5,7 +5,8 @@
  if(!data){$('error').textContent='The component data file is missing. Keep cutouts-data.js beside this viewer.';return;}
  const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const copy=value=>JSON.parse(JSON.stringify(value));
- let category=data.categories[0], activeCode='A00', current, kept={}, edits={};
+ const categories=[...data.categories].sort((a,b)=>(b.revision||3)-(a.revision||3));
+ let category=categories.find(c=>c.letter===new URLSearchParams(location.search).get('category'))||categories[0], activeCode=category.letter+'00', current, kept={}, edits={};
  try{const saved=JSON.parse(localStorage.getItem('ashen-card-cutouts-families-v3')||'{}');kept=saved.kept||{};edits=saved.edits||{};}catch{}
  const fields=['rotationDeg','opacity','x','y','width','height','scaleX','scaleY'];
  const asset=id=>data.assets[id];
@@ -34,16 +35,20 @@
   for(const kind of ['object','effect','composition']){const id=kind==='composition'?activeCode:current.layers.find(l=>l.id===(kind==='object'?'object':'foreground')).assetId;$(`keep-${kind}`).setAttribute('aria-pressed',String(Boolean(kept[`${kind}:${id}`])));}
  }
  function candidateTile(a,kind){
-  const ref=kind==='object'?`${category.letter}${a.digit}0`:`${category.letter}0${a.digit}`;
+  const ref=kind==='object'?`${a.category}${a.digit}0`:`${a.category}0${a.digit}`;
   const orientations=kind==='object'?`<div class="orientations">${[-25,0,25].map(angle=>`<figure><img loading="lazy" src="${a.src}" alt="Same object rotated ${angle} degrees" style="transform:rotate(${angle}deg)"><figcaption>${angle}°</figcaption></figure>`).join('')}</div>`:'';
-  return `<article class="tile"><a href="${a.src}" target="_blank" rel="noopener"><img class="cutout" loading="lazy" src="${a.src}" alt="${esc(a.name)} — ${kind} ${a.digit} alone"></a><h3>${ref} · ${kind} view</h3><div class="small">${esc(a.name)} · other layer hidden</div>${orientations}<button data-use="${kind}:${a.digit}">Use ${kind} ${a.digit}</button><a href="${a.src}" download="${category.letter}-${kind}-${a.digit}.png">PNG</a></article>`;
+  return `<article class="tile"><a href="${a.src}" target="_blank" rel="noopener"><img class="cutout" loading="lazy" src="${a.src}" alt="${esc(a.name)} — ${kind} ${a.digit} alone"></a><h3>${ref} · ${kind} view</h3><div class="small">${esc(a.name)} · other layer hidden</div>${orientations}<button data-use="${kind}:${a.digit}">Use ${category.secondaryObjectIds&&kind==='object'?'pair':kind} ${a.digit}</button><a href="${a.src}" download="${a.category}-${kind}-${a.digit}.png">PNG</a></article>`;
  }
  function renderCategory(){
-  $('categories').innerHTML=data.categories.map(c=>`<button data-category="${c.letter}" aria-pressed="${c.letter===category.letter}">${c.letter} · ${esc(c.label)}</button>`).join('');
+  $('categories').innerHTML=categories.map(c=>`<button data-category="${c.letter}" aria-pressed="${c.letter===category.letter}">${c.letter} · ${esc(c.label)}</button>`).join('');
   $('categories').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{category=data.categories.find(c=>c.letter===b.dataset.category);renderCategory();}));
   $('object').innerHTML=category.objectIds.map(id=>{const a=asset(id);return `<option value="${a.digit}">${a.digit} — ${esc(a.name)}</option>`;}).join('');
   $('effect').innerHTML=category.effectIds.map(id=>{const a=asset(id);return `<option value="${a.digit}">${a.digit} — ${esc(a.name)}</option>`;}).join('');
   selectCode(`${category.letter}00`);
+  $('object-heading').textContent=category.secondaryObjectIds?'Shield components alone':'Objects alone';
+  $('pair-note').hidden=!category.secondaryObjectIds;
+  $('paired-objects').hidden=!category.secondaryObjectIds;
+  $('paired-objects').innerHTML=category.secondaryObjectIds?'<h2>Sword components alone</h2><div class="grid">'+category.secondaryObjectIds.map(id=>{const a=asset(id);return `<article class="tile"><a href="${a.src}" download><img class="cutout" src="${a.src}" alt="${esc(a.name)}"></a><h3>${a.category}${a.digit}0 · sword alone</h3><a href="${a.src}" download>PNG</a></article>`;}).join('')+'</div>':'';
   $('objects').innerHTML=category.objectIds.map(id=>candidateTile(asset(id),'object')).join('');
   $('effects').innerHTML=category.effectIds.map(id=>candidateTile(asset(id),'effect')).join('');
   document.querySelectorAll('[data-use]').forEach(b=>b.addEventListener('click',()=>{const [kind,digit]=b.dataset.use.split(':');selectCode(`${category.letter}${kind==='object'?digit:current.objectDigit}${kind==='effect'?digit:current.effectDigit}`);$('stage').scrollIntoView({behavior:'smooth',block:'center'});}));

@@ -1,3 +1,7 @@
+## Latest expansion: spellbooks and more weapons
+
+Revision 4 adds 50 transparent objects in I–M and ten editable Counter starting pairs in N. [Open the composer](cutouts.html) or [view the new objects](objects-overview.html?new). [Download the current pack](card-art-cutouts-v4.zip). Original A–H IDs are preserved.
+
 ## Latest: 70 standalone object cutouts
 
 Open [objects-overview.html](objects-overview.html) for ten variants each of seven core objects, or [cutouts.html](cutouts.html) for separate layers and transform controls. See [CUTOUTS.md](CUTOUTS.md) for codes, alpha exports and JSON. Earlier concept boards below are retained as reference, not the current candidate count.
