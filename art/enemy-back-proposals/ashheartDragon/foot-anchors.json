@@ -1,0 +1,138 @@
+{
+  "schemaVersion": 1,
+  "actorId": "ashheartDragon",
+  "status": "draft-manual-anchor-review",
+  "method": "Independent native512PNG visual measurement by boss_proposals_b; visible planted sole center, not invented occluded second-foot midpoint",
+  "sourceSha256": "9dd62d26438f9d1849215fa6acc4686c3c25b87ecd0c94cc1dd6da3bb3b814b8",
+  "canvas": [
+    512,
+    512
+  ],
+  "boundsAnchor": [
+    256,
+    464
+  ],
+  "tolerancePixels": 3,
+  "overrides": {
+    "v01": {
+      "imageSha256": "8dc93e228702a02785e46a54bbf519909157e1153e04b0ac11350a4a1994178c",
+      "feetPixels": [
+        374,
+        452
+      ],
+      "feet": [
+        0.73046875,
+        0.8828125
+      ],
+      "notes": "One planted foot visible; other foot occluded by tail/body. Manual visible sole-center estimate, approximately +/-3px. PNG unchanged; tails extend below contact baseline."
+    },
+    "v02": {
+      "imageSha256": "201a44c21a58fb8a1dc3f3d309413e3e3122df19a51dd204079a1def91c25871",
+      "feetPixels": [
+        377,
+        440
+      ],
+      "feet": [
+        0.736328125,
+        0.859375
+      ],
+      "notes": "One planted foot visible; other foot occluded by tail/body. Manual visible sole-center estimate, approximately +/-3px. PNG unchanged; tails extend below contact baseline."
+    },
+    "v03": {
+      "imageSha256": "911b7cfa426ccb7143e262a3f41eaebfc3b3504b85d185574cbcaffc4decb019",
+      "feetPixels": [
+        368,
+        446
+      ],
+      "feet": [
+        0.71875,
+        0.87109375
+      ],
+      "notes": "One planted foot visible; other foot occluded by tail/body. Manual visible sole-center estimate, approximately +/-3px. PNG unchanged; tails extend below contact baseline."
+    },
+    "v04": {
+      "imageSha256": "c6954bf0189b297997c8b32d5472f769f9e0a50f5f58d4b768667e31d40597f1",
+      "feetPixels": [
+        365,
+        446
+      ],
+      "feet": [
+        0.712890625,
+        0.87109375
+      ],
+      "notes": "One planted foot visible; other foot occluded by tail/body. Manual visible sole-center estimate, approximately +/-3px. PNG unchanged; tails extend below contact baseline."
+    },
+    "v05": {
+      "imageSha256": "0426d3301a4dc65b81d9de851250899dd2315a930270f2ad340b164d1fb0a032",
+      "feetPixels": [
+        373,
+        447
+      ],
+      "feet": [
+        0.728515625,
+        0.873046875
+      ],
+      "notes": "One planted foot visible; other foot occluded by tail/body. Manual visible sole-center estimate, approximately +/-3px. PNG unchanged; tails extend below contact baseline."
+    },
+    "v06": {
+      "imageSha256": "28a9e9b23ba52741925c061c302dc9514dee5bf945a02a492290386463880d4a",
+      "feetPixels": [
+        378,
+        443
+      ],
+      "feet": [
+        0.73828125,
+        0.865234375
+      ],
+      "notes": "One planted foot visible; other foot occluded by tail/body. Manual visible sole-center estimate, approximately +/-3px. PNG unchanged; tails extend below contact baseline."
+    },
+    "v07": {
+      "imageSha256": "d7b83a267d78d21d468fb29431eb0af792fb4058a8d5ee9972f50b8562bca2e3",
+      "feetPixels": [
+        373,
+        441
+      ],
+      "feet": [
+        0.728515625,
+        0.861328125
+      ],
+      "notes": "One planted foot visible; other foot occluded by tail/body. Manual visible sole-center estimate, approximately +/-3px. PNG unchanged; tails extend below contact baseline."
+    },
+    "v08": {
+      "imageSha256": "7d0dd5fd3a065cd2f10ee7cae93b436fe45f0aa13b2b77a592786e4ead3c8826",
+      "feetPixels": [
+        376,
+        440
+      ],
+      "feet": [
+        0.734375,
+        0.859375
+      ],
+      "notes": "One planted foot visible; other foot occluded by tail/body. Manual visible sole-center estimate, approximately +/-3px. PNG unchanged; tails extend below contact baseline."
+    },
+    "v09": {
+      "imageSha256": "5b9ba19d6578cc279d5a0b1256cd7824b80bd4ae1080ed15c215566b3f292b1e",
+      "feetPixels": [
+        370,
+        442
+      ],
+      "feet": [
+        0.72265625,
+        0.86328125
+      ],
+      "notes": "One planted foot visible; other foot occluded by tail/body. Manual visible sole-center estimate, approximately +/-3px. PNG unchanged; tails extend below contact baseline."
+    },
+    "v10": {
+      "imageSha256": "38f90411153800cdd2f1af67de7b8186f49a148980126c3616bb5aa679ee99ac",
+      "feetPixels": [
+        371,
+        440
+      ],
+      "feet": [
+        0.724609375,
+        0.859375
+      ],
+      "notes": "One planted foot visible; other foot occluded by tail/body. Manual visible sole-center estimate, approximately +/-3px. PNG unchanged; tails extend below contact baseline."
+    }
+  }
+}
