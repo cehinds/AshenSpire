@@ -468,7 +468,13 @@ namespace Ashen.Runtime
         double Number(Call call, Scope scope, JsonElement node, string what)
         {
             var v = Value(call, scope, node);
-            if (v is not double d || double.IsNaN(d)) throw new InvalidOperationException($"{what} must be a number");
+            // Callers may pass boxed int/long/float/decimal; normalise every numeric type to double.
+            double d = v switch
+            {
+                double x => x, float x => x, int x => x, long x => x, short x => x, byte x => x, uint x => x, ulong x => x, decimal x => (double)x,
+                _ => double.NaN,
+            };
+            if (double.IsNaN(d)) throw new InvalidOperationException($"{what} must be a number");
             return d;
         }
 

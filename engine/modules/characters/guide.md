@@ -81,3 +81,10 @@ Core. All are selected by the Core bundle; turn one off with `{ "modules": { "<i
 
 `characterSettings(modules)` is the one view the kernel, tools and tests read; a missing module
 leaves its field `null`.
+
+## Player hand size
+
+A player's starting hand stays owned by the cards module (`cards.handBase`, mirrored in
+`stats.handBase`) plus INT, the authority the run already reads. `tagRules.<tag>.hand` and
+`statRules.hand` size enemy hands only; giving players a second hand-size authority would let the
+two disagree.
