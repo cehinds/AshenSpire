@@ -167,5 +167,27 @@
       },
       "hand": 4
     }
+  },
+  "deckEditing": {
+    "default": "owned",
+    "unlimited": {
+      "pools": [
+        "strike",
+        "defend",
+        "counter",
+        "smash",
+        "sweep",
+        "evade"
+      ],
+      "tags": [
+        "basic"
+      ]
+    },
+    "owned": {
+      "tags": [
+        "classification.weaponArt",
+        "camp:spell"
+      ]
+    }
   }
 }

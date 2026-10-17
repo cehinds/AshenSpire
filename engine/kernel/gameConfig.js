@@ -390,6 +390,18 @@ export function resolveCharacterDeck(row, content = {}, gearSettings = null) {
   }
   return out;
 }
+// Deck editing copy limits (owner 2026-10-17): basic cards (whatever the basic pools resolve to for this
+// character, or a basic tag) have no limit; weapon arts, spells, specials and picked-up cards are limited
+// to the copies owned. "owned" rules win over "unlimited" when a card matches both.
+export function deckCopyLimit(cardId, row, content = {}, settings = {}, gearSettings = null, owned = {}) {
+  const rules = settings.deckEditing, card = (content.cards || []).find(c => c.id === cardId);
+  if (!rules || !card) return owned[cardId] || 0;
+  const tags = card.tags || [];
+  if ((rules.owned.tags || []).some(t => tags.includes(t))) return owned[cardId] || 0;
+  const basics = new Set((rules.unlimited.pools || []).flatMap(pool => resolveCharacterDeck({ ...row, defaultDeck: [{ pool, copies: 1 }] }, content, gearSettings)));
+  if (basics.has(cardId) || (rules.unlimited.tags || []).some(t => tags.includes(t))) return Infinity;
+  return rules.default === 'unlimited' ? Infinity : owned[cardId] || 0;
+}
 // Enemies and players share the characters module's rules; enemy-only rules stay in the enemies module.
 export function characterSettings(modules) {
   if (!modules.enemies) return null;

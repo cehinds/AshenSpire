@@ -630,6 +630,28 @@ export const gameProfileCatalog = {
             },
             "hand": 4
           }
+        },
+        "deckEditing": {
+          "default": "owned",
+          "unlimited": {
+            "pools": [
+              "strike",
+              "defend",
+              "counter",
+              "smash",
+              "sweep",
+              "evade"
+            ],
+            "tags": [
+              "basic"
+            ]
+          },
+          "owned": {
+            "tags": [
+              "classification.weaponArt",
+              "camp:spell"
+            ]
+          }
         }
       },
       "schema": {
@@ -910,6 +932,67 @@ export const gameProfileCatalog = {
               },
               "additionalProperties": false
             }
+          },
+          "deckEditing": {
+            "type": "object",
+            "properties": {
+              "default": {
+                "enum": [
+                  "owned",
+                  "unlimited"
+                ]
+              },
+              "unlimited": {
+                "type": "object",
+                "properties": {
+                  "pools": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "tags": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                },
+                "additionalProperties": false
+              },
+              "owned": {
+                "type": "object",
+                "properties": {
+                  "pools": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "tags": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "default",
+              "unlimited",
+              "owned"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -919,7 +1002,8 @@ export const gameProfileCatalog = {
           "statRules",
           "attributeFill",
           "penaltyFloor",
-          "tagRules"
+          "tagRules",
+          "deckEditing"
         ],
         "additionalProperties": false
       },
@@ -934,13 +1018,13 @@ export const gameProfileCatalog = {
           "path": "engine/modules/characters/defaults.json",
           "id": "characters",
           "version": "1.0.0",
-          "hash": "sha256:77436a483975c2fa26b0f24ead2983e640e76ef888448b84e2ce07a04fce15f5"
+          "hash": "sha256:e9b32eefaa81975d1b0c5598339053682b9cff7d10146220730d1b2080c524db"
         },
         {
           "path": "engine/modules/characters/settings.schema.json",
           "id": "characters",
           "version": "1.0.0",
-          "hash": "sha256:06b5c2b9f49e2a2c725afea0a26fe17b7de2934b20e8eb180f6892086f060ddb"
+          "hash": "sha256:9c3d0fbcfa807a98f46ce7b58f6f87f1dc75086f2b587b431192e3ef2f51a8c1"
         }
       ]
     },
@@ -24745,7 +24829,7 @@ export const gameProfileCatalog = {
       "path": "engine/kernel/gameConfig.js",
       "id": "ashen.runtime",
       "version": "1.0.0",
-      "hash": "sha256:0c3fa5b9b901f244c7c921acf35d7ce9f35390efacd63f90dada2f4fbfebc248"
+      "hash": "sha256:6e155df6001dd047c55c867903964e75982065dcf22119198121d03357734c1e"
     },
     {
       "path": "engine/contracts/game-profile.json",
@@ -29778,7 +29862,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:3f9a67884765cb5f920ef530e66ccdcc2d826819e6f981359b771d44a5b5bf66"
     }
   ],
-  "runtimeHash": "sha256:c730c8d634410ccb353651933a653aa8f335164026ce72c1f9c3c6fed638e676"
+  "runtimeHash": "sha256:0142f0dc2af002f876e9e9f1124e8fd5f856cf20a099f1e02302bfe03c423352"
 };
 export const gameProfileAuthors = {
   "default": {

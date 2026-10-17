@@ -207,3 +207,15 @@ test('default decks are pool keys resolved by class and weapon type, from the sh
   assert.equal(changed.find(c => c.id === 'reaver').defaultDeck.filter(id => id === 'core.smash').length, 4);
   assert.equal(changed.find(c => c.id === 'rogue').defaultDeck.filter(id => id === 'core.smash').length, 1);
 });
+
+test('deck editing: basic cards are unlimited; weapon arts, spells, specials and pickups are capped at owned copies', async () => {
+  const { deckCopyLimit, characterSettings: cs } = await import('../engine/kernel/gameConfig.js');
+  const s = cs(profile.modules), reaver = profile.content.characters.find(c => c.id === 'reaver');
+  const limit = (id, owned = {}) => deckCopyLimit(id, reaver, profile.content, s, profile.modules.gear, owned);
+  for (const id of ['core.strike', 'core.defend', 'core.counter', 'core.smash', 'core.sweep', 'core.evade']) assert.equal(limit(id), Infinity, id);
+  assert.equal(limit('core.reaverSpecial'), 0);
+  assert.equal(limit('core.reaverSpecial', { 'core.reaverSpecial': 1 }), 1);
+  const spell = profile.content.cards.find(c => (c.tags || []).includes('camp:spell'));
+  assert.equal(limit(spell.id, { [spell.id]: 2 }), 2);
+  assert.deepEqual(s.deckEditing.unlimited.pools, ['strike', 'defend', 'counter', 'smash', 'sweep', 'evade']);
+});

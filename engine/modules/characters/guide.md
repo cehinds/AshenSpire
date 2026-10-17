@@ -39,6 +39,14 @@ bosses 7 (`deckDefault`); `deckSize` allows more or less.
 Players and enemies draw from one card pool (`content.cards`): enemy cards are plain player cards
 (same fields, tags and validation). Who uses a card is decided only by the decks that reference it.
 
+## Deck editing
+
+`deckEditing` sets copy limits. Basic cards — whatever the `unlimited.pools` (strike, defend, counter,
+smash, sweep, evade) resolve to for the character's class and weapon, or cards tagged `basic` — have no
+limit, so ten Strikes and a weapon art is a legal deck. Weapon arts, spells (`owned.tags`), class
+specials and anything picked up count only the copies owned. `deckCopyLimit()` in the kernel is the one
+check the deck editor reads.
+
 ## Compatibility
 
 The build derives `content.classes` (with `maxHp`, `loadout`, `defaultDeck`) and `content.enemies`

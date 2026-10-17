@@ -276,6 +276,67 @@
         },
         "additionalProperties": false
       }
+    },
+    "deckEditing": {
+      "type": "object",
+      "properties": {
+        "default": {
+          "enum": [
+            "owned",
+            "unlimited"
+          ]
+        },
+        "unlimited": {
+          "type": "object",
+          "properties": {
+            "pools": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "tags": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "owned": {
+          "type": "object",
+          "properties": {
+            "pools": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "tags": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "default",
+        "unlimited",
+        "owned"
+      ],
+      "additionalProperties": false
     }
   },
   "required": [
@@ -285,7 +346,8 @@
     "statRules",
     "attributeFill",
     "penaltyFloor",
-    "tagRules"
+    "tagRules",
+    "deckEditing"
   ],
   "additionalProperties": false
 }
