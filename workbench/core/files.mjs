@@ -8,7 +8,7 @@
 //   * the previous bytes go to workbench/.state/backups/<set>/ first, then each
 //     file is written atomically (tmp + rename); any failure rolls every file
 //     of the set back;
-//   * a save that touches content/, src/ or styles/ holds the cross-process build
+//   * a save that touches content/, src/, styles/, games/ or an engine module's defaults holds the cross-process build
 //     lock (tools/lib/build-lock.mjs) from validation through the last rename, so
 //     no build reads a half-written or unvalidated tree.
 // Restore is a save of the backed-up bytes through the same path.
@@ -52,7 +52,7 @@ const JSON_FILES = new Set([LAYOUT_FILE]);
 const TEXT_TREE = /^(?:pose-studio\/stances|workbench\/workspace|ui-studio\/workspace)\/(?:[\w.-]+\/)*[\w.-]+$/;
 const TEXT_EXT = /\.(json|csv|js|mjs|css|html|md|txt|svg)$/i;
 // The trees a build reads: a save under any of them holds the build lock.
-const BUILD_INPUT = /^(?:(?:content|src|styles)\/|games\/ashenspire\/(?:game\.json|presets\/current\.json)$)/;
+const BUILD_INPUT = /^(?:(?:content|src|styles|games)\/|engine\/modules\/[\w.-]+\/defaults\.json$)/;
 
 const fail = (status, message, extra = {}) => Object.assign(Error(message), { status, ...extra });
 

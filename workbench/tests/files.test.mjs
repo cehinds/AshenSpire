@@ -205,6 +205,26 @@ test('a save under styles/ waits for a foreign build lock; on timeout it writes 
   assert.equal(JSON.parse(await fs.readFile(path.join(root, '.build-lock'), 'utf8')).token, 'theirs', 'their lock stands');
 });
 
+test('a save under games/ or an engine module default is a build input: it waits for a foreign build lock', async (t) => {
+  const root = await project(t);
+  const child = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60000)'], { stdio: 'ignore' });
+  t.after(() => child.kill());
+  await fs.writeFile(path.join(root, '.build-lock'), JSON.stringify({ pid: child.pid, holder: 'UI Studio config compile', startedAt: Date.now(), token: 'theirs' }));
+  const app = await createWorkbench({ root, port: 0, children: false, stateDir: path.join(root, '.wb-state'), debounceMs: 120, lockWaitMs: 300 });
+  t.after(() => app.close());
+  for (const file of ['games/ashenspire/presets/core.json', 'games/ashenspire/packs/core/pack.json', 'engine/modules/animation/defaults.json']) {
+    const res = await fetch(`${app.url}/api/files/save`, {
+      method: 'POST',
+      headers: { 'x-studio-token': app.token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ changes: [{ path: file, text: '{}\n', baseHash: null }] }),
+    });
+    assert.equal(res.status, 409, file);
+    assert.match((await res.json()).error, /UI Studio config compile is running/, file);
+    assert.equal(await fs.stat(path.join(root, file)).then(() => true, () => false), false, `${file}: nothing written`);
+  }
+  assert.equal(JSON.parse(await fs.readFile(path.join(root, '.build-lock'), 'utf8')).token, 'theirs', 'their lock stands');
+});
+
 test('a save waiting for a foreign build lock answers 503 once its signal aborts, and writes nothing', async (t) => {
   const root = await project(t);
   const child = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60000)'], { stdio: 'ignore' });
