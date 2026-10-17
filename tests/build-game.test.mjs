@@ -61,7 +61,9 @@ test('tags, layout refs and references resolve', () => {
   assert.ok(artifact.content.cards.length > 0 && artifact.content.characters.length > 0 && artifact.content.gear.length > 0);
 });
 
-test('the build fails on a dangling reference', () => {
+test('the build fails on dangling references', () => {
+  assert.throws(() => buildGame({ patch: ({ uiScreens }) => { uiScreens.combat.regions.push({ slot: 'x', component: 'noSuchComponent' }); } }), /unknown component 'noSuchComponent'/);
+  assert.throws(() => buildGame({ patch: ({ uiComponents }) => { uiComponents.hud.layout = { ref: 'content/config/ui/components/missing.json' }; } }), /layout ref .* does not exist/);
   assert.throws(() => buildGame({ game: 'nonexistent-game' }));
 });
 

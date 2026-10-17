@@ -77,6 +77,11 @@ Entity-ref positions (`target`, `forEach`, `of`) accept a literal ref, `"$var"` 
 | `{ "hasTag": [ref, tag] }` | the entity's `tags` contain tag |
 | `{ "hasStatus": [ref, id] }` | the entity has more than 0 stacks of the status |
 
+Precedence: where a value or a condition is expected, an object with an `f` key is a formula; otherwise an
+object whose single key is `all`, `any`, `not`, `cmp`, `hasTag` or `hasStatus` is a condition; any other
+object is a plain record whose fields are resolved as values. `cmp` with `<`, `<=`, `>=` or `>` requires
+both sides to be finite numbers and raises otherwise; `==` and `!=` accept any values.
+
 ## 6. Handlers and steps
 
 A handler is `{ on, when?, do }`. `on` is `command.<name>` or `event.<slug>.<event>`.
@@ -129,6 +134,9 @@ Rules that matter to a port:
 `ops.json` lists every op and its params. `reference: "portable"` ops are implemented below; any
 other op raises `legacy op <name> is not portable`. An op not in the catalog raises `Unknown op '<name>'`.
 A runtime must refuse to start if a portable op has no implementation.
+A step that omits a param `ops.json` marks `required` raises `op <name> needs '<param>'`. Params a portable
+op does not list in this section (e.g. `oncePerCombat`, `damageSchool`) are accepted and ignored by the
+portable runtime; the legacy engine reads them.
 
 Common rules:
 

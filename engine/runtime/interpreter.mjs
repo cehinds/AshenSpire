@@ -71,7 +71,9 @@ export function createState(partial = {}) {
   state.piles ||= {};
   for (const pile of PILES) state.piles[pile] ||= [];
   state.mechanics ||= {};
-  state.rng ||= { seed: 1 };
+  state.rng ||= {};
+  // SPEC §1: a missing seed reads as 1; seeds are unsigned 32-bit.
+  state.rng.seed = Number.isFinite(state.rng.seed) ? state.rng.seed >>> 0 : 1;
   return state;
 }
 
@@ -187,7 +189,10 @@ export function createRuntime({ mechanics, ops = loadOps() } = {}) {
 
   // ----- values and conditions -----
   function isCondition(node) {
-    return node && typeof node === 'object' && ['all', 'any', 'not', 'cmp', 'hasTag', 'hasStatus'].some(k => k in node);
+    // SPEC §5 precedence: formulas (f) first; a condition is an object whose single key is a condition key.
+    if (!node || typeof node !== 'object' || Array.isArray(node) || 'f' in node) return false;
+    const keys = Object.keys(node);
+    return keys.length === 1 && ['all', 'any', 'not', 'cmp', 'hasTag', 'hasStatus'].includes(keys[0]);
   }
 
   function value(rt, scope, node) {
@@ -234,6 +239,7 @@ export function createRuntime({ mechanics, ops = loadOps() } = {}) {
       if (!COMPARATORS.includes(op)) throw new Error(`Unknown comparator '${op}'`);
       const x = value(rt, scope, a);
       const y = value(rt, scope, b);
+      if (!['==', '!='].includes(op) && !(Number.isFinite(x) && Number.isFinite(y))) throw new Error(`cmp ${op} needs two numbers, got ${JSON.stringify(x)} and ${JSON.stringify(y)}`);
       switch (op) {
         case '<': return x < y;
         case '<=': return x <= y;
@@ -299,16 +305,17 @@ export function createRuntime({ mechanics, ops = loadOps() } = {}) {
       return undefined;
     }
     if ('emit' in step) {
-      return dispatchEvent(rt, step.emit, value(rt, scope, step.with || {}));
+      return dispatchEvent(rt, step.emit, structuredClone(value(rt, scope, step.with || {})));
     }
     if ('call' in step) {
-      return invokeCommand(rt, step.call, value(rt, scope, step.with || {}));
+      return invokeCommand(rt, step.call, structuredClone(value(rt, scope, step.with || {})));
     }
     if ('set' in step) {
       const path = String(step.set).split('.');
       let cur = (rt.state.mechanics[scope.slug] ||= {});
       for (const key of path.slice(0, -1)) cur = (cur[key] ||= {});
-      cur[path[path.length - 1]] = value(rt, scope, step.value);
+      // Clone so a later set never writes through into the caller's params or an emitted payload (SPEC §1).
+      cur[path[path.length - 1]] = structuredClone(value(rt, scope, step.value));
       return undefined;
     }
     throw new Error(`Unknown step ${JSON.stringify(step)}`);
@@ -318,6 +325,9 @@ export function createRuntime({ mechanics, ops = loadOps() } = {}) {
     const def = ops.ops[step.op];
     if (!def) throw new Error(`Unknown op '${step.op}'`);
     if (def.reference !== 'portable') throw new Error(`legacy op ${step.op} is not portable`);
+    for (const [name, param] of Object.entries(def.params || {})) {
+      if (param.required && step[name] === undefined) throw new Error(`op ${step.op} needs '${name}'`);
+    }
     const api = {
       value: (node, vars) => (vars ? value(rt, { slug: scope.slug, vars: { ...scope.vars, ...vars } }, node) : value(rt, scope, node)),
       number: (node, fallback, vars, what = step.op) => (node === undefined ? fallback
@@ -509,6 +519,8 @@ export function runCases(mechanic, runtime) {
       const state = createState(testCase.given || {});
       const when = testCase.when || {};
       const then = testCase.then || {};
+      const unknown = Object.keys(then).filter(k => !['entities', 'piles', 'mechanics', 'events', 'value', 'error'].includes(k));
+      if (unknown.length) throw new Error(`then has unknown key(s): ${unknown.join(', ')}`);
       let result = { state, events: [] };
       let value;
       const run = () => {

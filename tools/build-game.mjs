@@ -61,7 +61,8 @@ function tagsOf(content) {
   return carried;
 }
 
-export function buildGame({ game = 'ashenspire' } = {}) {
+// `patch` (tests only) edits the loaded layers before validation, so reference checks can be exercised.
+export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   const errors = [];
   const fail = msg => errors.push(msg);
 
@@ -121,6 +122,7 @@ export function buildGame({ game = 'ashenspire' } = {}) {
   // ----- ui -----
   const uiComponents = loadDir('engine/ui/components');
   const uiScreens = loadDir(`games/${game}/ui/screens`);
+  patch?.({ uiComponents, uiScreens });
   const layout = {};
   const addLayout = (ref, where) => {
     if (!ref) return;

@@ -450,3 +450,29 @@ test('restoreStamina with a negative amount removes sp, never below 0', () => {
   assert.equal(run([{ op: 'restoreStamina', target: 'self', amount: -1 }], state).state.entities.self.sp, 1);
   assert.equal(run([{ op: 'restoreStamina', target: 'self', amount: -5 }], state).state.entities.self.sp, 0);
 });
+
+// ----- review fixes (2026-10-17) -----
+test('set and emit clone values: a later set never writes into the caller params or an emitted payload', () => {
+  const params = { p: { k: 1 } };
+  const out = run([{ set: 'x', value: '$p' }, { emit: 't.e', with: { v: '$p' } }, { set: 'x.k', value: 10 }], createState({ entities: { self: ent() } }), params);
+  assert.equal(params.p.k, 1);
+  assert.equal(out.state.mechanics.t.x.k, 10);
+  assert.equal(out.events[0].payload.v.k, 1);
+});
+test('a missing rng seed reads as 1', () => {
+  assert.equal(createState({ rng: {} }).rng.seed, 1);
+  assert.equal(createState({}).rng.seed, 1);
+});
+test('a step without a required op param raises', () => {
+  assert.throws(() => run([{ op: 'heal', target: 'self' }], createState({ entities: { self: ent({ hp: 5 }) } })), /op heal needs 'amount'/);
+});
+test('cases reject unknown then keys', () => {
+  const m = mech('t', [{ on: 'command.go', do: [] }])[1];
+  m.cases = [{ name: 'typo', when: { command: 't.go' }, then: { entites: { self: { hp: 999 } } } }];
+  const [r] = runCases(m, rt(['t', m]));
+  assert.equal(r.ok, false);
+  assert.match(String(r.error), /unknown key/);
+});
+test('cmp ordering needs numbers', () => {
+  assert.throws(() => run([{ if: { cmp: ['<', 'a', 1] }, then: [] }], createState({ entities: { self: ent() } })), /needs two numbers/);
+});
