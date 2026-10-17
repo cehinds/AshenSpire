@@ -75,7 +75,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     });
   }
   const listen = (target, type, handler) => target.addEventListener(type, handler, { signal: gestures.signal });
-  listen(document, 'pointermove', event => { if (held && held.pointerId === event.pointerId && Math.hypot(event.clientX - held.x, event.clientY - held.y) > 8) cancelHold(); });
+  listen(document, 'pointermove', event => { if (held && held.pointerId === event.pointerId && Math.hypot(event.clientX - held.x, event.clientY - held.y) > 8) { cancelHold(); lastTap = null; } });
   listen(document, 'pointerup', event => {
     if (!held || held.pointerId !== event.pointerId) return;
     const current = held; cancelHold(); if (event.pointerType !== 'touch') return;
@@ -103,7 +103,12 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     for (const button of infoButtons.values()) button.remove();
     infoButtons.clear();
     panels.clear();
-    for (const frame of field.querySelectorAll('.combatant')) frame.classList.remove('target-hud-selected', 'target-hud-focused', 'target-hud-candidate');
+    for (const frame of field.querySelectorAll('.combatant')) {
+      frame.classList.remove('target-hud-selected', 'target-hud-focused', 'target-hud-candidate');
+      delete frame.dataset.matchupActive;
+      delete frame.dataset.matchup;
+      frame.style.removeProperty('--combat-matchup-color');
+    }
     cells.replaceChildren();
   }
   function frameFor(id) { return [...field.querySelectorAll('.combatant')].find(frame => frame.dataset.eid === id); }
@@ -119,9 +124,13 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     }
     for (const id of next) {
       const entry = entries.get(id), old = panels.get(id);
-      if (old && old.key === entry.key) continue;
+      if (old && old.key === entry.key) {
+        old.node.dataset.matchupActive = String(!!entry.matchupActive && eligible.includes(id));
+        continue;
+      }
       const shell = panelFor(entry);
       shell.dataset.matchup = entry.matchup || 'neutral';
+      shell.dataset.matchupActive = String(!!entry.matchupActive && eligible.includes(id));
       shell.style.setProperty('--combat-matchup-color', entry.auraColor || '#e4cd59');
       infoButtons.get(id)?.remove();
       const info = combatantInfo(entry.name, opener => inspect(id, opener));
@@ -144,6 +153,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       const id = frame.dataset.eid;
       const entry = entries.get(id);
       frame.dataset.matchup = entry?.matchup || 'neutral';
+      frame.dataset.matchupActive = String(!!entry?.matchupActive && eligible.includes(id));
       frame.style.setProperty('--combat-matchup-color', entry?.auraColor || '#e4cd59');
       frame.classList.toggle('target-hud-selected', next.has(id));
       frame.classList.toggle('target-hud-focused', id === focused || id === hover);

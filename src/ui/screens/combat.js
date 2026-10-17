@@ -1277,10 +1277,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const intent = role === 'enemy' ? configuredArt && !gameModule(run, 'intent')
         ? { hidden: true, label: t('gameProfile.combat.unreadIntent') }
         : disp?.ents[entity.id]?.intentPreview || projectCombatIntent(combat, entity.id) : null;
-      const matchup = role === 'enemy' && activeDef ? targetHudMatchup(action, intent, gameModule(run, 'stances')) : 'neutral';
+      const matchupActive = role === 'enemy' && !!activeDef;
+      const matchup = matchupActive ? targetHudMatchup(action, intent, gameModule(run, 'stances')) : 'neutral';
       const auraColor = role === 'player' ? '#87caff' : TARGET_HUD_AURA[matchup];
-      return { id: entity.id, role, matchup, auraColor, inspect: opener => openCombatantDoor(combatantSubject(role, entity), opener), name: role === 'enemy' ? registries.enemies.get(entity.enemyId).name : run.customization?.name || runClassIdentity(registries, run).name,
-        intent, action: role === 'player' ? action : null, key: JSON.stringify([dv(entity), intent, role === 'player' && action, matchup]),
+      return { id: entity.id, role, matchup, matchupActive, auraColor, inspect: opener => openCombatantDoor(combatantSubject(role, entity), opener), name: role === 'enemy' ? registries.enemies.get(entity.enemyId).name : run.customization?.name || runClassIdentity(registries, run).name,
+        intent, action: role === 'player' ? action : null, key: JSON.stringify([dv(entity), intent, role === 'player' && action, matchup, matchupActive]),
         createMeters: () => meterBars(entity), createStatuses: () => statusRow(entity, { inspection: true }) };
     });
     targetHud.update({ combatants, eligibleIds: eligibleIds || (selected || selfArm || selectedFlask != null ? pendingTargetPlan().legalIds : []), focusedId: selectedCombatantId });

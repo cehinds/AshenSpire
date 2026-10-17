@@ -125,6 +125,7 @@ export function intentParts(parts = [], { unknown = false } = {}) {
   const visible = parts.length ? parts : [{ icon: 'prepare', value: null }];
   for (const part of visible) {
     const group = document.createElement('span'); group.className = 'intent-action'; group.dataset.action = part.icon;
+    group.dataset.valueKind = part.valueKind || (['defend', 'counter', 'evade', 'buff', 'prepare'].includes(part.icon) ? 'count' : 'damage');
     if (part.value != null || unknown) {
       const value = document.createElement('strong'); value.className = 'intent-action-value';
       value.textContent = unknown ? '?' : String(part.value); group.append(value);

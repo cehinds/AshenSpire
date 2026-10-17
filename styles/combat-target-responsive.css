@@ -1,7 +1,7 @@
 /* Native responsive target HUD. Artwork/grid geometry remains battlefield-owned. */
 :root .combat[data-target-hud='true'] .target-hud-panel {
-  border-color: var(--combat-matchup-color,#e4cd59);
-  box-shadow: 0 0 5px color-mix(in srgb,var(--combat-matchup-color,#e4cd59) 60%,transparent),0 .2em .8em #0008;
+  border-color: var(--combat-matchup-color,#f07870);
+  box-shadow: 0 0 5px color-mix(in srgb,var(--combat-matchup-color,#f07870) 60%,transparent),0 .2em .8em #0008;
 }
 :root .combat[data-target-hud='true'] .target-hud-detail[data-role='player'] { --combat-matchup-color:#87caff; }
 :root .combat[data-target-hud='true'] .target-hud-inspect-info {
@@ -56,19 +56,20 @@
   position:relative!important; inset:auto!important; transform:none!important; margin-top:calc(2px / var(--ui-zoom,1));
   font-size:calc(9px / var(--ui-zoom,1)); height:calc(10px / var(--ui-zoom,1)); min-width:calc(13px / var(--ui-zoom,1));
 }
-:root .combat[data-target-hud='true'] .combatant.enemy .sprite {
-  filter:drop-shadow(.8px 0 0 var(--combat-matchup-color,#e4cd59)) drop-shadow(-.8px 0 0 var(--combat-matchup-color,#e4cd59)) drop-shadow(0 0 1.2px var(--combat-matchup-color,#e4cd59))!important;
+:root .combat[data-target-hud='true'] .combatant.enemy[data-matchup-active='true'] .sprite {
+  filter:drop-shadow(.8px 0 0 var(--combat-matchup-color,#f07870)) drop-shadow(-.8px 0 0 var(--combat-matchup-color,#f07870)) drop-shadow(0 0 1.2px var(--combat-matchup-color,#f07870))!important;
 }
-:root .combat[data-target-hud='true'] .combatant.enemy :is(.intent,.combat-health-meter .m-track) {
-  filter:drop-shadow(0 0 3px var(--combat-matchup-color,#e4cd59));
+:root .combat[data-target-hud='true'] .combatant.enemy[data-matchup-active='true'] :is(.intent,.combat-health-meter .m-track) {
+  filter:drop-shadow(0 0 3px var(--combat-matchup-color,#f07870));
 }
 :root .combat[data-target-hud='true'] .target-hud-detail .combat-health-meter .m-track {
-  box-shadow:0 0 0 1px var(--combat-matchup-color,#e4cd59),0 0 4px var(--combat-matchup-color,#e4cd59);
+  box-shadow:0 0 0 1px var(--combat-matchup-color,#f07870),0 0 4px var(--combat-matchup-color,#f07870);
 }
 :root .combat[data-target-hud='true'] .target-hud-overhead-meters > .meters { position:relative; z-index:700; }
 :root .combat[data-target-hud='true'] .target-hud-overhead-meters > :is(.intent,.player-action-intent) { position:relative!important; z-index:800; }
-:root .combat[data-target-hud='true'] .intent-action:is([data-action='attack'],[data-action='smash'],[data-action='cast']) .intent-action-value { color:#f07870; }
-:root .combat[data-target-hud='true'] [data-damage-tone='green'] .intent-action-value { color:#8ad498; }
+:root .combat[data-target-hud='true'] .intent-action[data-value-kind='count'] .intent-action-value { color:#eee2c8; }
+:root .combat[data-target-hud='true'] .intent-action[data-value-kind='damage'] .intent-action-value { color:#f07870; }
+:root .combat[data-target-hud='true'] [data-damage-tone='green'] .intent-action[data-value-kind='damage'] .intent-action-value { color:#8ad498; }
 :root .combat[data-target-hud='true'] [data-intent-visibility]:not([data-intent-visibility='known']) .intent-action-value { color:#e8d59b; }
 /* Native player intents have no stage-placed marker after moving into this host. */
 :root .combat[data-target-hud='true'] .target-hud-overhead-meters > :is(.intent,.player-action-intent) { visibility:visible!important; }
@@ -77,3 +78,9 @@
   inset:calc(9px / var(--ui-zoom,1)) 0 auto auto!important; width:auto!important; height:auto!important;
   justify-content:flex-end!important; align-items:flex-start!important;
 }
+
+/* Matchup feedback exists only while an eligible selected card owns it. */
+:root .combat[data-target-hud='true'] .target-hud-layer { z-index:700!important; }
+:root .combat[data-target-hud='true'] .combatant.enemy:not([data-matchup-active='true']) .sprite { filter:none!important; }
+:root .combat[data-target-hud='true'] .combatant.enemy:not([data-matchup-active='true']):is(.target-hud-selected,.target-hud-focused) .sprite { filter:drop-shadow(0 0 2px #f07870) drop-shadow(0 0 2px #f07870)!important; }
+:root .combat[data-target-hud='true'] .target-hud-detail[data-role='enemy'][data-matchup-active='false'] { --combat-matchup-color:#f07870!important; }
