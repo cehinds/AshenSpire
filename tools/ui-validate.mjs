@@ -2,7 +2,7 @@
 //   node tools/ui-validate.mjs           validate, then write the index
 //   node tools/ui-validate.mjs --check   validate and fail if the index is stale (writes nothing)
 // Contract: docs/ai/json-game-modules/MECHANICS-ARCHITECTURE.md (UI section).
-import { readFileSync, readdirSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, readdirSync, writeFileSync, existsSync, realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { validateGameSchema } from '../engine/kernel/gameConfig.js';
@@ -35,6 +35,8 @@ function resolvePath(doc, dotted) {
 function checkRef(ref, subPath, where, errors) {
   if (!ref.startsWith('content/config/ui/')) { errors.push(`${where}: ref "${ref}" must live under content/config/ui/`); return; }
   if (!existsSync(path.join(ROOT, ref))) { errors.push(`${where}: ref "${ref}" does not exist`); return; }
+  // Realpath containment: '..' segments or links must not escape the UI configuration tree.
+  if (!realpathSync(path.join(ROOT, ref)).startsWith(realpathSync(path.join(ROOT, 'content/config/ui')) + path.sep)) { errors.push(`${where}: ref "${ref}" must live under content/config/ui/`); return; }
   if (subPath !== undefined && !resolvePath(readJson(ref), subPath)) errors.push(`${where}: path "${subPath}" not found in ${ref}`);
 }
 

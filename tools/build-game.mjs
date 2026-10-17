@@ -123,6 +123,7 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   const catalogOps = loadOps();
   // Condition shapes (SPEC section 5): both runtimes read operands unconditionally.
   const CMP = ['<', '<=', '==', '!=', '>=', '>'];
+  const isValue = x => typeof x === 'number' || (typeof x === 'string' && x.startsWith('$')) || (x && typeof x === 'object' && !Array.isArray(x) && 'f' in x);
   const conditionErrors = (c, where) => {
     if (!c || typeof c !== 'object' || Array.isArray(c)) return [`${where}: condition must be an object`];
     const keys = Object.keys(c);
@@ -130,12 +131,16 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
     const [k] = keys, v = c[k];
     if (k === 'all' || k === 'any') return Array.isArray(v) ? v.flatMap((x, i) => conditionErrors(x, `${where}.${k}[${i}]`)) : [`${where}: ${k} needs an array`];
     if (k === 'not') return conditionErrors(v, `${where}.not`);
-    if (k === 'cmp') return Array.isArray(v) && v.length === 3 && CMP.includes(v[0]) ? [] : [`${where}: cmp needs [op, a, b] with op one of ${CMP.join(' ')}`];
-    if (k === 'hasTag' || k === 'hasStatus') return Array.isArray(v) && v.length === 2 ? [] : [`${where}: ${k} needs [ref, id]`];
+    if (k === 'cmp') {
+      if (!(Array.isArray(v) && v.length === 3 && CMP.includes(v[0]))) return [`${where}: cmp needs [op, a, b] with op one of ${CMP.join(' ')}`];
+      // Ordering needs numbers (SPEC section 5): a literal side must be a number; $vars and formulas resolve at run time.
+      const ordered = !['==', '!='].includes(v[0]);
+      return ordered ? v.slice(1).filter(x => !isValue(x)).map(x => `${where}: cmp ${v[0]} needs numbers, got ${JSON.stringify(x)}`) : [];
+    }
+    if (k === 'hasTag' || k === 'hasStatus') return Array.isArray(v) && v.length === 2 && v.every(x => typeof x === 'string') ? [] : [`${where}: ${k} needs [ref, id] as strings`];
     return [`${where}: unknown condition '${k}'`];
   };
   // Operand types from the catalog's field descriptions: arrays, entity refs/ids (strings), numbers (or $var / nested formula).
-  const isValue = x => typeof x === 'number' || (typeof x === 'string' && x.startsWith('$')) || (x && typeof x === 'object' && !Array.isArray(x) && 'f' in x);
   const operandOk = (desc, x) => /^array/.test(desc) ? Array.isArray(x)
     : /^(entity ref|status id|metric name)/.test(desc) ? typeof x === 'string'
     : /^number/.test(desc) ? (typeof x === 'number' || (typeof x === 'string' && x.startsWith('$')))  // the evaluator reads number fields directly; no nested formulas
@@ -150,6 +155,8 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
     if (!v || typeof v !== 'object') return [];
     const own = !('f' in v) ? [] : !formulaOps.has(v.f) ? [`${where}: unknown formula '${v.f}'`]
       : [...formulaRequired[v.f].filter(k => v[k] === undefined).map(k => `${where}: formula '${v.f}' needs '${k}'`),
+         ...(v.f === 'metric' && typeof v.metric === 'string' && !(formulaCatalog.metric.metrics || []).includes(v.metric) ? [`${where}: unknown metric '${v.metric}'`] : []),
+         ...['min', 'max'].filter(k => v[k] !== undefined && !isValue(v[k])).map(k => `${where}: formula '${v.f}' ${k} must be a number`),
          ...(v.f === 'stacks' && typeof v.per === 'number' && !(v.per > 0) ? [`${where}: formula 'stacks' per must be a positive number (it divides)`] : []),
          ...Object.entries(formulaCatalog[v.f].fields || {}).filter(([k]) => v[k] !== undefined && !operandOk(String(formulaCatalog[v.f].fields[k]), v[k])).map(([k]) => `${where}: formula '${v.f}' operand '${k}' has the wrong type (${formulaCatalog[v.f].fields[k]})`)];
     return [...own, ...Object.values(v).flatMap(x => formulaErrors(x, where))];
@@ -245,7 +252,11 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   const layout = {};
   const addLayout = (ref, where) => {
     if (!ref) return;
-    if (!ref.startsWith('content/config/ui/')) return fail(`${where}: layout ref '${ref}' must live under content/config/ui/`);
+    const uiRoot = path.join(ROOT, 'content/config/ui') + path.sep;
+    if (!ref.startsWith('content/config/ui/') || !existsSync(path.join(ROOT, ref)) || !realpathSync(path.join(ROOT, ref)).startsWith(realpathSync(uiRoot.slice(0, -1)) + path.sep)) {
+      if (!existsSync(path.join(ROOT, ref))) return fail(`${where}: layout ref '${ref}' does not exist`);
+      return fail(`${where}: layout ref '${ref}' must live under content/config/ui/`);
+    }
     if (!existsSync(path.join(ROOT, ref))) return fail(`${where}: layout ref '${ref}' does not exist`);
     layout[ref] ||= readJson(ref);
   };
