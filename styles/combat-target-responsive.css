@@ -30,7 +30,7 @@
 :root .combat[data-target-hud='true'] .intent > :not(.intent-compact) { display:none!important; }
 :root .combat[data-target-hud='true'] .intent .intent-compact { display:flex!important; justify-content:center; }
 :root .combat[data-target-hud='true'] .intent-actions { display:inline-flex; justify-content:center; align-items:flex-end; gap:calc(5px / var(--ui-zoom,1)); }
-:root .combat[data-target-hud='true'] .intent-action { display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:1px; }
+:root .combat[data-target-hud='true'] .intent-action { display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:calc(1px / var(--ui-zoom,1)); }
 :root .combat[data-target-hud='true'] .intent-action-value { display:block; font:700 calc(11px / var(--ui-zoom,1))/1 Georgia,serif; color:inherit; }
 :root .combat[data-target-hud='true'] .intent-action .intent-icon { width:calc(25px / var(--ui-zoom,1)); height:calc(25px / var(--ui-zoom,1)); }
 :root .combat[data-target-hud='true'] .target-hud-intent { justify-content:center; }
