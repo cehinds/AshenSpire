@@ -597,7 +597,7 @@
       "id": "fx_heal",
       "tag": "fx:heal",
       "family": "fx",
-      "portability": "data",
+      "portability": "portable",
       "modules": [
         "heal-rules"
       ]

@@ -1,4 +1,22 @@
 {
   "mechanic": "fx_heal",
-  "handlers": []
+  "handlers": [
+    {
+      "on": "command.heal",
+      "do": [
+        {
+          "op": "heal",
+          "target": "$target",
+          "amount": "$amount"
+        },
+        {
+          "emit": "fx_heal.healed",
+          "with": {
+            "target": "$target",
+            "amount": "$amount"
+          }
+        }
+      ]
+    }
+  ]
 }

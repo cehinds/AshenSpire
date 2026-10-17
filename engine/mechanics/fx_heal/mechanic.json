@@ -4,9 +4,10 @@
   "version": "1.0.0",
   "family": "fx",
   "label": "Heal",
-  "description": "Heal visual identity; no combat modifier.",
+  "description": "Restores HP.",
   "attaches": [
-    "card"
+    "card",
+    "character"
   ],
   "files": {
     "model": "model.schema.json",
@@ -19,5 +20,10 @@
     "icon": "fx_heal",
     "color": "9FC3E8"
   },
-  "portability": "data"
+  "portability": "portable",
+  "legacy": {
+    "file": "src/engine/actions.js",
+    "symbol": "runOpcode"
+  },
+  "authored": true
 }
