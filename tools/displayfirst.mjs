@@ -1145,7 +1145,7 @@ function selftestPlants() {
   const fsButton = [
     '<button type="button" class="as-toggle togg',
     'le ${on ? \'on\' : \'\'}" data-key="${r.key}"',
-    '${r.type === \'action\' ? ` data-action="1" aria-label="${esc(r.label)}"',
+    ' aria-label="${esc(r.label)}"${r.type === \'action\' ? ` data-action="1"',
     ' aria-describedby="set-${r.key}-status"` : \'\'}',
     ' role="switch" aria-checked="${on}"><span class="knob"></span></button>',
   ].join('');
@@ -1236,8 +1236,8 @@ function selftestPlants() {
       // different control the first visible row while the table stays intact.
       name: 'the renderer reverses what the table hands it (test 61 stays green)',
       file: 'src/ui/screens/settings.js',
-      find: '    const rowHtml = rows.map(row => settingsRowHtml(settings, row));',
-      replace: '    const rowHtml = [...rows].reverse().map(row => settingsRowHtml(settings, row));',
+      find: '    const rowHtml = Object.hasOwn(CUSTOM_GENERAL_GROUPS, selected) ? [] : rows.map(row => settingsRowHtml(settings, row));',
+      replace: '    const rowHtml = Object.hasOwn(CUSTOM_GENERAL_GROUPS, selected) ? [] : [...rows].reverse().map(row => settingsRowHtml(settings, row));',
       expectRed: /FINDING D1\/order .*want=fullscreen/,
     },
     {
