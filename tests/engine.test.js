@@ -3756,7 +3756,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     'each intrinsic receipt exposes five explicit non-negative integer facts');
     assert(LEGACY_REG.equipment.armaments.every((piece) => piece.weight === piece.poiseThreshold),
       'presentation weight is the already-authored Poise threshold and adds no balance behavior');
-    assert(LEGACY_REG.equipment.armaments.every((piece) => piece.weaponArtManaCost === (
+    // Intrinsic costs belong to the shipped kit, not the fixture that strips packages.
+    assert(REG.equipment.armaments.every((piece) => piece.weaponArtManaCost === (
       piece.weaponCardPackage.weaponArtDefaults.length || piece.itemTypeTags.includes('item:magic-focus') && piece.techniqueProfile === 'staffTechnique' ? 1 : 0
     )), 'armaments with authored weapon arts expose at least one Weapon Art Mana');
     assert(LEGACY_REG.equipment.armaments.every((piece) => piece.uniqueSkillStaminaCost === 0),
@@ -3776,10 +3777,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(validateContent(missingIntrinsicBundle).errors.some((error) => error.path.endsWith('.attackRating')),
       'boot validation fails closed when an intrinsic armament field is absent');
     const mismatchedIntrinsicRegistries = {
-      ...LEGACY_REG,
+      ...REG,
       equipment: {
-        ...LEGACY_REG.equipment,
-        armaments: LEGACY_REG.equipment.armaments.map((piece) => (
+        ...REG.equipment,
+        armaments: REG.equipment.armaments.map((piece) => (
           piece.id === 'straightSword' ? { ...piece, weaponArtManaCost: 0 } : piece
         )),
       },
@@ -9152,20 +9153,20 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(S.getStacks(c2.enemies[0], 'bleed'), REG.balance.powers.whetstonePouch.bleed, 'the prepared strike bleeds');
     eq(logOf(c2, 'relicTriggered').filter((e) => e.relicId === 'whetstonePouch').length, 1);
     // Waxen Seal: the first heal each combat heals more, once.
-    const c3 = makeCombat({ deck: ['warmLitany', 'warmLitany', 'warmLitany', 'warmLitany', 'warmLitany'], relicIds: ['waxenSeal'], hp: 40 });
+    const c3 = makeCombat({ deck: ['warmLitany', 'warmLitany', 'warmLitany', 'warmLitany', 'warmLitany'], relicIds: ['waxenSeal'], hp: 40, mana: 2, maxMana: 2 });
     c3.player.maxStamina = 3; c3.player.stamina = 3; c3.player.energyMax = 3; c3.player.energy = 3; // warmLitany: 1 SP + 1 MP (SPEC §4.3a)
     playFromHand(c3, 'warmLitany');
-    eq(c3.player.hp, 40 + 3 + REG.balance.powers.waxenSeal.heal, 'Litany heals, and the seal heals more');
+    eq(c3.player.hp, 40 + 5 + REG.balance.powers.waxenSeal.heal, 'Litany heals, and the seal heals more');
     playFromHand(c3, 'warmLitany');
-    eq(c3.player.hp, 40 + 3 + REG.balance.powers.waxenSeal.heal + 3, 'the second heal is its own');
+    eq(c3.player.hp, 40 + 5 + REG.balance.powers.waxenSeal.heal + 5, 'the second heal is its own');
     // A heal at full HP heals nothing and spends nothing (healPositive):
     // Golden Sprout's opening heal on a healthy Herald leaves the seal for the
     // first real heal.
-    const c3b = makeCombat({ deck: ['warmLitany', 'warmLitany', 'warmLitany', 'warmLitany', 'warmLitany'], relicIds: ['goldenSprout', 'waxenSeal'], hp: 78 });
+    const c3b = makeCombat({ deck: ['warmLitany', 'warmLitany', 'warmLitany', 'warmLitany', 'warmLitany'], relicIds: ['goldenSprout', 'waxenSeal'], hp: 78, mana: 1, maxMana: 1 });
     eq(logOf(c3b, 'relicTriggered').filter((e) => e.relicId === 'waxenSeal').length, 0, 'a zero heal does not spend the seal');
     c3b.player.maxStamina = 3; c3b.player.stamina = 3; c3b.player.energyMax = 3; c3b.player.energy = 3; c3b.player.hp = 40;
     playFromHand(c3b, 'warmLitany');
-    eq(c3b.player.hp, 40 + 3 + REG.balance.powers.waxenSeal.heal, 'the first real heal does');
+    eq(c3b.player.hp, 40 + 5 + REG.balance.powers.waxenSeal.heal, 'the first real heal does');
     // Co-op: a heal is the HEALED seat's — an ally healed by A fires the ally's
     // seal on the ally, and A's seal stays whole.
     const hA = createRunState({ seed: 0x5a5c, classId: 'herald', registries: REG });
@@ -9187,13 +9188,17 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // Lodestar Shard: extra Mana at combat start.
     const c4 = makeCombat({ deck: ['strike'], relicIds: ['lodestarShard'], mana: 1, maxMana: 1 + REG.balance.powers.lodestarShard.restoreMana });
     eq(c4.player.mana, 1 + REG.balance.powers.lodestarShard.restoreMana, 'the shard restores Mana as the fight opens');
-    // Attune breaks even and exhausts; upgraded it stays.
-    // It costs the 1 Mana it restores and its restore pays it (SPEC §4.3a, owner 2026-10-13), so it casts from 0 Mana
-    // and leaves Mana where it was.
+    // Attune pays 1 Mana up front and restores 2; its upgrade stays in the deck.
     const c5 = makeCombat({ deck: ['attune', { id: 'attune', up: true }, 'strike', 'strike', 'strike'], mana: 0, maxMana: 3 });
     c5.player.maxStamina = 5; c5.player.stamina = 5; c5.player.energyMax = 5; c5.player.energy = 5;
-    playFromHand(c5, 'attune'); eq(c5.player.mana, 0, 'Attune casts from 0 Mana and nets 0'); eq(c5.piles.exhaust.filter((c) => c.cardId === 'attune').length, 1, 'Attune exhausts');
-    playFromHand(c5, 'attune'); eq(c5.player.mana, 0, 'Attune+ nets 0 too'); eq(c5.piles.exhaust.filter((c) => c.cardId === 'attune').length, 1, 'Attune+ does not');
+    let attuneRefused = false;
+    try { playFromHand(c5, 'attune'); } catch (error) { attuneRefused = /Not enough mana/.test(error.message); }
+    assert(attuneRefused, 'Attune cannot fund its upfront cost with its later restore');
+    eq(c5.player.mana, 0, 'a refused Attune does not restore Mana');
+    eq(c5.piles.exhaust.length, 0, 'a refused Attune does not exhaust');
+    c5.player.mana = 1;
+    playFromHand(c5, 'attune'); eq(c5.player.mana, 2, 'Attune pays 1 and restores 2'); eq(c5.piles.exhaust.filter((c) => c.cardId === 'attune').length, 1, 'Attune exhausts');
+    playFromHand(c5, 'attune'); eq(c5.player.mana, 3, 'Attune+ gains the same net Mana'); eq(c5.piles.exhaust.filter((c) => c.cardId === 'attune').length, 1, 'Attune+ does not exhaust');
     // VALIDATION, by name.
     const said = (v) => v.errors.map((e) => `${e.path}: ${e.msg}`);
     const noGroup = validateContent({ ...testBundle(), tagging: testBundle().tagging.filter((r) => !(r.family === 'class' && r.objectId === 'reaver' && r.tagId === 'item:blade')) });
