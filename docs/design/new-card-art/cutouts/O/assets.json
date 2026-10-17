@@ -1,0 +1,2312 @@
+{
+  "O.object.0": {
+    "id": "O.object.0",
+    "kind": "object",
+    "category": "O",
+    "digit": 0,
+    "name": "Existing attack \u00b7 silver-blue \u00b7 object",
+    "src": "cutouts/O/objects/0.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 640,
+    "hasTransparency": true,
+    "alphaBounds": [
+      18,
+      16,
+      493,
+      624
+    ],
+    "sha256": "8d977a1275d13e273f69bf061fbe82cb9472e66866baf595e68ece6b2f388cf2",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 432,
+      "height": 540,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "84.375%",
+      "height": "84.375%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:attack",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "attack"
+    ],
+    "references": {
+      "method": "reconstructed-from-flattened-card",
+      "originalAssetId": "assets/cards/library/physical-attack-01-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-attack-01-1024.webp",
+      "sourceReference": "source-art-v5/physical-attack-01-1024.webp",
+      "sourceSha256": "502fc25bc48c9e0aa88f51c9df255c56cb9ec751ee66c14bb1ebc3dfae69ee0c",
+      "sourceTier": "light",
+      "originalArtRelease": "hd-assets-v23",
+      "originalGameCommit": "72a4e640a4efd09c1242756895cf100c46d17074",
+      "generationSourceFile": "exec-d319b8eb-b7fb-46e8-919b-8bf701e932d3.png",
+      "generationSourceSha256": "4dbd2cde4789d793d3b10e4958a68ff43f1348841d408ff9b69d8ab5d0dfb918",
+      "sourceCell": {
+        "x": 43,
+        "y": 34,
+        "width": 311,
+        "height": 398
+      },
+      "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
+    }
+  },
+  "O.object.1": {
+    "id": "O.object.1",
+    "kind": "object",
+    "category": "O",
+    "digit": 1,
+    "name": "Existing smash \u00b7 silver-blue \u00b7 object",
+    "src": "cutouts/O/objects/1.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 640,
+    "hasTransparency": true,
+    "alphaBounds": [
+      16,
+      26,
+      496,
+      614
+    ],
+    "sha256": "2d8a37b073fb963394f7b0f4fb3545da271e4c07d9ac46a1f505edc68b2437b2",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 432,
+      "height": 540,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "84.375%",
+      "height": "84.375%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:smash",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "smash"
+    ],
+    "references": {
+      "method": "reconstructed-from-flattened-card",
+      "originalAssetId": "assets/cards/library/physical-smash-01-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-smash-01-1024.webp",
+      "sourceReference": "source-art-v5/physical-smash-01-1024.webp",
+      "sourceSha256": "a7b168470ba736827ef9c20f9c58958ea6e5cf1078a635b567298dbc0ca12209",
+      "sourceTier": "light",
+      "originalArtRelease": "hd-assets-v23",
+      "originalGameCommit": "72a4e640a4efd09c1242756895cf100c46d17074",
+      "generationSourceFile": "exec-d319b8eb-b7fb-46e8-919b-8bf701e932d3.png",
+      "generationSourceSha256": "4dbd2cde4789d793d3b10e4958a68ff43f1348841d408ff9b69d8ab5d0dfb918",
+      "sourceCell": {
+        "x": 388,
+        "y": 30,
+        "width": 332,
+        "height": 407
+      },
+      "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
+    }
+  },
+  "O.object.2": {
+    "id": "O.object.2",
+    "kind": "object",
+    "category": "O",
+    "digit": 2,
+    "name": "Existing sweep \u00b7 silver-blue \u00b7 object",
+    "src": "cutouts/O/objects/2.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 640,
+    "hasTransparency": true,
+    "alphaBounds": [
+      16,
+      77,
+      496,
+      563
+    ],
+    "sha256": "e61dbb512822ac68312c6b879e7f97c58ae2fd34795ce5bfbf9999f776cd58bc",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 432,
+      "height": 540,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "84.375%",
+      "height": "84.375%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "reconstructed-from-flattened-card",
+      "originalAssetId": "assets/cards/library/physical-sweep-01-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-sweep-01-1024.webp",
+      "sourceReference": "source-art-v5/physical-sweep-01-1024.webp",
+      "sourceSha256": "e987392bbc2259129073ddf152751575602a070fd72662e070ce09d8cf1b6362",
+      "sourceTier": "light",
+      "originalArtRelease": "hd-assets-v23",
+      "originalGameCommit": "72a4e640a4efd09c1242756895cf100c46d17074",
+      "generationSourceFile": "exec-d319b8eb-b7fb-46e8-919b-8bf701e932d3.png",
+      "generationSourceSha256": "4dbd2cde4789d793d3b10e4958a68ff43f1348841d408ff9b69d8ab5d0dfb918",
+      "sourceCell": {
+        "x": 751,
+        "y": 109,
+        "width": 314,
+        "height": 318
+      },
+      "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
+    }
+  },
+  "O.object.3": {
+    "id": "O.object.3",
+    "kind": "object",
+    "category": "O",
+    "digit": 3,
+    "name": "Existing defend \u00b7 silver-blue \u00b7 object",
+    "src": "cutouts/O/objects/3.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 640,
+    "hasTransparency": true,
+    "alphaBounds": [
+      43,
+      16,
+      468,
+      624
+    ],
+    "sha256": "c36d842508bb08e589d11162129d5b75e72dc1004225356828aa2e7530003ca2",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 432,
+      "height": 540,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "84.375%",
+      "height": "84.375%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:defend",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "defend"
+    ],
+    "references": {
+      "method": "reconstructed-from-flattened-card",
+      "originalAssetId": "assets/cards/library/physical-defend-01-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-defend-01-1024.webp",
+      "sourceReference": "source-art-v5/physical-defend-01-1024.webp",
+      "sourceSha256": "bf39bc3d1867790a5eacc41209825d41b8dd0adde4fe39c994c09b7d9303c9ee",
+      "sourceTier": "light",
+      "originalArtRelease": "hd-assets-v23",
+      "originalGameCommit": "72a4e640a4efd09c1242756895cf100c46d17074",
+      "generationSourceFile": "exec-d319b8eb-b7fb-46e8-919b-8bf701e932d3.png",
+      "generationSourceSha256": "4dbd2cde4789d793d3b10e4958a68ff43f1348841d408ff9b69d8ab5d0dfb918",
+      "sourceCell": {
+        "x": 1110,
+        "y": 34,
+        "width": 276,
+        "height": 395
+      },
+      "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
+    }
+  },
+  "O.object.4": {
+    "id": "O.object.4",
+    "kind": "object",
+    "category": "O",
+    "digit": 4,
+    "name": "Existing counter \u00b7 silver-blue \u00b7 object",
+    "src": "cutouts/O/objects/4.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 640,
+    "hasTransparency": true,
+    "alphaBounds": [
+      44,
+      16,
+      468,
+      624
+    ],
+    "sha256": "ac0f587e547b21a575e832402d1c5042099b71b916f8ab17b9b5ba8738c80a18",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 432,
+      "height": 540,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "84.375%",
+      "height": "84.375%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:counter",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "counter"
+    ],
+    "references": {
+      "method": "reconstructed-from-flattened-card",
+      "originalAssetId": "assets/cards/library/physical-counter-01-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-counter-01-1024.webp",
+      "sourceReference": "source-art-v5/physical-counter-01-1024.webp",
+      "sourceSha256": "c489b31d90b7fbab57d9947b70a8406d01b4d6238f4b312a7bd8d6ed5d53f656",
+      "sourceTier": "light",
+      "originalArtRelease": "hd-assets-v23",
+      "originalGameCommit": "72a4e640a4efd09c1242756895cf100c46d17074",
+      "generationSourceFile": "exec-d319b8eb-b7fb-46e8-919b-8bf701e932d3.png",
+      "generationSourceSha256": "4dbd2cde4789d793d3b10e4958a68ff43f1348841d408ff9b69d8ab5d0dfb918",
+      "sourceCell": {
+        "x": 1483,
+        "y": 89,
+        "width": 226,
+        "height": 324
+      },
+      "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
+    }
+  },
+  "O.object.5": {
+    "id": "O.object.5",
+    "kind": "object",
+    "category": "O",
+    "digit": 5,
+    "name": "Existing attack \u00b7 red-black \u00b7 object",
+    "src": "cutouts/O/objects/5.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 640,
+    "hasTransparency": true,
+    "alphaBounds": [
+      16,
+      21,
+      496,
+      619
+    ],
+    "sha256": "bab7fb416a004f43a4402f3a77419fa0ddf1dee9ca83f2fa6efc8a59f6693a6d",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 432,
+      "height": 540,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "84.375%",
+      "height": "84.375%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:attack",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "attack"
+    ],
+    "references": {
+      "method": "reconstructed-from-flattened-card",
+      "originalAssetId": "assets/cards/library/physical-attack-03-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-attack-03-1024.webp",
+      "sourceReference": "source-art-v5/physical-attack-03-1024.webp",
+      "sourceSha256": "127feb8dce89d2c4105256b31664574aa42ea2c8f6e69e6be40894f4699feaaf",
+      "sourceTier": "light",
+      "originalArtRelease": "hd-assets-v23",
+      "originalGameCommit": "72a4e640a4efd09c1242756895cf100c46d17074",
+      "generationSourceFile": "exec-d319b8eb-b7fb-46e8-919b-8bf701e932d3.png",
+      "generationSourceSha256": "4dbd2cde4789d793d3b10e4958a68ff43f1348841d408ff9b69d8ab5d0dfb918",
+      "sourceCell": {
+        "x": 40,
+        "y": 472,
+        "width": 313,
+        "height": 390
+      },
+      "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
+    }
+  },
+  "O.object.6": {
+    "id": "O.object.6",
+    "kind": "object",
+    "category": "O",
+    "digit": 6,
+    "name": "Existing smash \u00b7 red-black \u00b7 object",
+    "src": "cutouts/O/objects/6.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 640,
+    "hasTransparency": true,
+    "alphaBounds": [
+      16,
+      28,
+      496,
+      612
+    ],
+    "sha256": "f903e2f1661fc853bf580b81b6cf98c34edc0237e1ec431f67e23e904d62f351",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 432,
+      "height": 540,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "84.375%",
+      "height": "84.375%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:smash",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "smash"
+    ],
+    "references": {
+      "method": "reconstructed-from-flattened-card",
+      "originalAssetId": "assets/cards/library/physical-smash-03-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-smash-03-1024.webp",
+      "sourceReference": "source-art-v5/physical-smash-03-1024.webp",
+      "sourceSha256": "43e289c61fbfc55be03311e38471a82ffc8e28823171b085d1acc325061879e5",
+      "sourceTier": "light",
+      "originalArtRelease": "hd-assets-v23",
+      "originalGameCommit": "72a4e640a4efd09c1242756895cf100c46d17074",
+      "generationSourceFile": "exec-d319b8eb-b7fb-46e8-919b-8bf701e932d3.png",
+      "generationSourceSha256": "4dbd2cde4789d793d3b10e4958a68ff43f1348841d408ff9b69d8ab5d0dfb918",
+      "sourceCell": {
+        "x": 389,
+        "y": 469,
+        "width": 328,
+        "height": 399
+      },
+      "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
+    }
+  },
+  "O.object.7": {
+    "id": "O.object.7",
+    "kind": "object",
+    "category": "O",
+    "digit": 7,
+    "name": "Existing sweep \u00b7 red-black \u00b7 object",
+    "src": "cutouts/O/objects/7.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 640,
+    "hasTransparency": true,
+    "alphaBounds": [
+      16,
+      82,
+      496,
+      557
+    ],
+    "sha256": "c8980ef31c9334fc380f00be6ed03edaa741d8c9d78cd7a3ac7e8b622b942079",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 432,
+      "height": 540,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "84.375%",
+      "height": "84.375%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "reconstructed-from-flattened-card",
+      "originalAssetId": "assets/cards/library/physical-sweep-03-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-sweep-03-1024.webp",
+      "sourceReference": "source-art-v5/physical-sweep-03-1024.webp",
+      "sourceSha256": "9455a2b0a4d7157521bd725b0325e66c3014240117b739dbaf3b563bec7b9402",
+      "sourceTier": "light",
+      "originalArtRelease": "hd-assets-v23",
+      "originalGameCommit": "72a4e640a4efd09c1242756895cf100c46d17074",
+      "generationSourceFile": "exec-d319b8eb-b7fb-46e8-919b-8bf701e932d3.png",
+      "generationSourceSha256": "4dbd2cde4789d793d3b10e4958a68ff43f1348841d408ff9b69d8ab5d0dfb918",
+      "sourceCell": {
+        "x": 758,
+        "y": 537,
+        "width": 314,
+        "height": 311
+      },
+      "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
+    }
+  },
+  "O.object.8": {
+    "id": "O.object.8",
+    "kind": "object",
+    "category": "O",
+    "digit": 8,
+    "name": "Existing defend \u00b7 red-black \u00b7 object",
+    "src": "cutouts/O/objects/8.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 640,
+    "hasTransparency": true,
+    "alphaBounds": [
+      44,
+      16,
+      467,
+      624
+    ],
+    "sha256": "80a5ff6e878cf17eb3680e6486d6919daaa006bc66d81c39beed33684a502bde",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 432,
+      "height": 540,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "84.375%",
+      "height": "84.375%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:defend",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "defend"
+    ],
+    "references": {
+      "method": "reconstructed-from-flattened-card",
+      "originalAssetId": "assets/cards/library/physical-defend-03-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-defend-03-1024.webp",
+      "sourceReference": "source-art-v5/physical-defend-03-1024.webp",
+      "sourceSha256": "39fc22bbff12b00ae85bde057c7a38f8f77a4444a10728998101b5190934c453",
+      "sourceTier": "light",
+      "originalArtRelease": "hd-assets-v23",
+      "originalGameCommit": "72a4e640a4efd09c1242756895cf100c46d17074",
+      "generationSourceFile": "exec-d319b8eb-b7fb-46e8-919b-8bf701e932d3.png",
+      "generationSourceSha256": "4dbd2cde4789d793d3b10e4958a68ff43f1348841d408ff9b69d8ab5d0dfb918",
+      "sourceCell": {
+        "x": 1111,
+        "y": 472,
+        "width": 274,
+        "height": 394
+      },
+      "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
+    }
+  },
+  "O.object.9": {
+    "id": "O.object.9",
+    "kind": "object",
+    "category": "O",
+    "digit": 9,
+    "name": "Existing counter \u00b7 red-black \u00b7 object",
+    "src": "cutouts/O/objects/9.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 640,
+    "hasTransparency": true,
+    "alphaBounds": [
+      42,
+      16,
+      469,
+      624
+    ],
+    "sha256": "00fd98681da9888a7318ec7828f35c997589fa1abed6c7828ad38c285969f9e5",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 432,
+      "height": 540,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "84.375%",
+      "height": "84.375%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:counter",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "counter"
+    ],
+    "references": {
+      "method": "reconstructed-from-flattened-card",
+      "originalAssetId": "assets/cards/library/physical-counter-03-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-counter-03-1024.webp",
+      "sourceReference": "source-art-v5/physical-counter-03-1024.webp",
+      "sourceSha256": "0fb2a10a4bba97e94dbae4cadfc711cc0bcfe7d7895c124e2c6a26ba7d5f991c",
+      "sourceTier": "light",
+      "originalArtRelease": "hd-assets-v23",
+      "originalGameCommit": "72a4e640a4efd09c1242756895cf100c46d17074",
+      "generationSourceFile": "exec-d319b8eb-b7fb-46e8-919b-8bf701e932d3.png",
+      "generationSourceSha256": "4dbd2cde4789d793d3b10e4958a68ff43f1348841d408ff9b69d8ab5d0dfb918",
+      "sourceCell": {
+        "x": 1483,
+        "y": 516,
+        "width": 227,
+        "height": 323
+      },
+      "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
+    }
+  },
+  "O.effect.0": {
+    "id": "O.effect.0",
+    "kind": "effect",
+    "category": "O",
+    "digit": 0,
+    "name": "Existing attack \u00b7 silver-blue \u00b7 effect",
+    "src": "cutouts/O/effects/0.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 640,
+    "hasTransparency": true,
+    "alphaBounds": [
+      16,
+      32,
+      496,
+      620
+    ],
+    "sha256": "ba8b55a316625a08503be1ff7c8741da0f31b5bdb35f2cff377a7c3736a19427",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 512,
+      "height": 640,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "100%",
+      "height": "100%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:attack",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "attack"
+    ],
+    "references": {
+      "method": "reconstructed-from-flattened-card",
+      "originalAssetId": "assets/cards/library/physical-attack-01-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-attack-01-1024.webp",
+      "sourceReference": "source-art-v5/physical-attack-01-1024.webp",
+      "sourceSha256": "502fc25bc48c9e0aa88f51c9df255c56cb9ec751ee66c14bb1ebc3dfae69ee0c",
+      "sourceTier": "light",
+      "originalArtRelease": "hd-assets-v23",
+      "originalGameCommit": "72a4e640a4efd09c1242756895cf100c46d17074",
+      "generationSourceFile": "exec-5b1037bc-169b-4c34-ac3c-e3c282ec1704.png",
+      "generationSourceSha256": "b623c830d62b2964fee8b5462290809bd889980b3cd4f878c93e8e638368b0cf",
+      "sourceCell": {
+        "x": 0,
+        "y": 0,
+        "width": 355,
+        "height": 444
+      },
+      "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
+    }
+  },
+  "O.effect.1": {
+    "id": "O.effect.1",
+    "kind": "effect",
+    "category": "O",
+    "digit": 1,
+    "name": "Existing smash \u00b7 silver-blue \u00b7 effect",
+    "src": "cutouts/O/effects/1.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 640,
+    "hasTransparency": true,
+    "alphaBounds": [
+      16,
+      20,
+      496,
+      620
+    ],
+    "sha256": "b7f7c797f9ad83a4c025cedd579975f3bf57cff8ad12ac798b869addf3e69716",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 512,
+      "height": 640,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "100%",
+      "height": "100%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:smash",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "smash"
+    ],
+    "references": {
+      "method": "reconstructed-from-flattened-card",
+      "originalAssetId": "assets/cards/library/physical-smash-01-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-smash-01-1024.webp",
+      "sourceReference": "source-art-v5/physical-smash-01-1024.webp",
+      "sourceSha256": "a7b168470ba736827ef9c20f9c58958ea6e5cf1078a635b567298dbc0ca12209",
+      "sourceTier": "light",
+      "originalArtRelease": "hd-assets-v23",
+      "originalGameCommit": "72a4e640a4efd09c1242756895cf100c46d17074",
+      "generationSourceFile": "exec-5b1037bc-169b-4c34-ac3c-e3c282ec1704.png",
+      "generationSourceSha256": "b623c830d62b2964fee8b5462290809bd889980b3cd4f878c93e8e638368b0cf",
+      "sourceCell": {
+        "x": 355,
+        "y": 0,
+        "width": 355,
+        "height": 444
+      },
+      "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
+    }
+  },
+  "O.effect.2": {
+    "id": "O.effect.2",
+    "kind": "effect",
+    "category": "O",
+    "digit": 2,
+    "name": "Existing sweep \u00b7 silver-blue \u00b7 effect",
+    "src": "cutouts/O/effects/2.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 640,
+    "hasTransparency": true,
+    "alphaBounds": [
+      17,
+      31,
+      496,
+      621
+    ],
+    "sha256": "355b1fd9e3186381e57dfa37253bef557b31b5cc2e04598c889ec1f7bea6d8d6",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 512,
+      "height": 640,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "100%",
+      "height": "100%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "reconstructed-from-flattened-card",
+      "originalAssetId": "assets/cards/library/physical-sweep-01-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-sweep-01-1024.webp",
+      "sourceReference": "source-art-v5/physical-sweep-01-1024.webp",
+      "sourceSha256": "e987392bbc2259129073ddf152751575602a070fd72662e070ce09d8cf1b6362",
+      "sourceTier": "light",
+      "originalArtRelease": "hd-assets-v23",
+      "originalGameCommit": "72a4e640a4efd09c1242756895cf100c46d17074",
+      "generationSourceFile": "exec-5b1037bc-169b-4c34-ac3c-e3c282ec1704.png",
+      "generationSourceSha256": "b623c830d62b2964fee8b5462290809bd889980b3cd4f878c93e8e638368b0cf",
+      "sourceCell": {
+        "x": 710,
+        "y": 0,
+        "width": 354,
+        "height": 444
+      },
+      "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
+    }
+  },
+  "O.effect.3": {
+    "id": "O.effect.3",
+    "kind": "effect",
+    "category": "O",
+    "digit": 3,
+    "name": "Existing defend \u00b7 silver-blue \u00b7 effect",
+    "src": "cutouts/O/effects/3.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 640,
+    "hasTransparency": true,
+    "alphaBounds": [
+      17,
+      32,
+      496,
+      620
+    ],
+    "sha256": "35cccb60c7351e0e3450ce38e2013ff95e037832b5cd0dbf965cbe3e9a2a52b7",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 512,
+      "height": 640,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "100%",
+      "height": "100%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:defend",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "defend"
+    ],
+    "references": {
+      "method": "reconstructed-from-flattened-card",
+      "originalAssetId": "assets/cards/library/physical-defend-01-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-defend-01-1024.webp",
+      "sourceReference": "source-art-v5/physical-defend-01-1024.webp",
+      "sourceSha256": "bf39bc3d1867790a5eacc41209825d41b8dd0adde4fe39c994c09b7d9303c9ee",
+      "sourceTier": "light",
+      "originalArtRelease": "hd-assets-v23",
+      "originalGameCommit": "72a4e640a4efd09c1242756895cf100c46d17074",
+      "generationSourceFile": "exec-5b1037bc-169b-4c34-ac3c-e3c282ec1704.png",
+      "generationSourceSha256": "b623c830d62b2964fee8b5462290809bd889980b3cd4f878c93e8e638368b0cf",
+      "sourceCell": {
+        "x": 1064,
+        "y": 0,
+        "width": 355,
+        "height": 444
+      },
+      "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
+    }
+  },
+  "O.effect.4": {
+    "id": "O.effect.4",
+    "kind": "effect",
+    "category": "O",
+    "digit": 4,
+    "name": "Existing counter \u00b7 silver-blue \u00b7 effect",
+    "src": "cutouts/O/effects/4.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 640,
+    "hasTransparency": true,
+    "alphaBounds": [
+      16,
+      30,
+      483,
+      620
+    ],
+    "sha256": "8b3a336dacf41afc565825b8ccff341be6ab401656800aafd3641d56db563873",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 512,
+      "height": 640,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "100%",
+      "height": "100%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:counter",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "counter"
+    ],
+    "references": {
+      "method": "reconstructed-from-flattened-card",
+      "originalAssetId": "assets/cards/library/physical-counter-01-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-counter-01-1024.webp",
+      "sourceReference": "source-art-v5/physical-counter-01-1024.webp",
+      "sourceSha256": "c489b31d90b7fbab57d9947b70a8406d01b4d6238f4b312a7bd8d6ed5d53f656",
+      "sourceTier": "light",
+      "originalArtRelease": "hd-assets-v23",
+      "originalGameCommit": "72a4e640a4efd09c1242756895cf100c46d17074",
+      "generationSourceFile": "exec-5b1037bc-169b-4c34-ac3c-e3c282ec1704.png",
+      "generationSourceSha256": "b623c830d62b2964fee8b5462290809bd889980b3cd4f878c93e8e638368b0cf",
+      "sourceCell": {
+        "x": 1419,
+        "y": 0,
+        "width": 355,
+        "height": 444
+      },
+      "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
+    }
+  },
+  "O.effect.5": {
+    "id": "O.effect.5",
+    "kind": "effect",
+    "category": "O",
+    "digit": 5,
+    "name": "Existing attack \u00b7 red-black \u00b7 effect",
+    "src": "cutouts/O/effects/5.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 640,
+    "hasTransparency": true,
+    "alphaBounds": [
+      16,
+      20,
+      496,
+      619
+    ],
+    "sha256": "ec02ca6c8fe765746dba60fae98931d33a995ca254eddab6ca3c78b007ca5633",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 512,
+      "height": 640,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "100%",
+      "height": "100%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:attack",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "attack"
+    ],
+    "references": {
+      "method": "reconstructed-from-flattened-card",
+      "originalAssetId": "assets/cards/library/physical-attack-03-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-attack-03-1024.webp",
+      "sourceReference": "source-art-v5/physical-attack-03-1024.webp",
+      "sourceSha256": "127feb8dce89d2c4105256b31664574aa42ea2c8f6e69e6be40894f4699feaaf",
+      "sourceTier": "light",
+      "originalArtRelease": "hd-assets-v23",
+      "originalGameCommit": "72a4e640a4efd09c1242756895cf100c46d17074",
+      "generationSourceFile": "exec-5b1037bc-169b-4c34-ac3c-e3c282ec1704.png",
+      "generationSourceSha256": "b623c830d62b2964fee8b5462290809bd889980b3cd4f878c93e8e638368b0cf",
+      "sourceCell": {
+        "x": 0,
+        "y": 444,
+        "width": 355,
+        "height": 443
+      },
+      "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
+    }
+  },
+  "O.effect.6": {
+    "id": "O.effect.6",
+    "kind": "effect",
+    "category": "O",
+    "digit": 6,
+    "name": "Existing smash \u00b7 red-black \u00b7 effect",
+    "src": "cutouts/O/effects/6.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 640,
+    "hasTransparency": true,
+    "alphaBounds": [
+      16,
+      20,
+      496,
+      619
+    ],
+    "sha256": "33f26a4ecee67a6f363b7e0cdbf04031fc96787992ccc0893cd6926b0161fcdf",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 512,
+      "height": 640,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "100%",
+      "height": "100%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:smash",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "smash"
+    ],
+    "references": {
+      "method": "reconstructed-from-flattened-card",
+      "originalAssetId": "assets/cards/library/physical-smash-03-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-smash-03-1024.webp",
+      "sourceReference": "source-art-v5/physical-smash-03-1024.webp",
+      "sourceSha256": "43e289c61fbfc55be03311e38471a82ffc8e28823171b085d1acc325061879e5",
+      "sourceTier": "light",
+      "originalArtRelease": "hd-assets-v23",
+      "originalGameCommit": "72a4e640a4efd09c1242756895cf100c46d17074",
+      "generationSourceFile": "exec-5b1037bc-169b-4c34-ac3c-e3c282ec1704.png",
+      "generationSourceSha256": "b623c830d62b2964fee8b5462290809bd889980b3cd4f878c93e8e638368b0cf",
+      "sourceCell": {
+        "x": 355,
+        "y": 444,
+        "width": 355,
+        "height": 443
+      },
+      "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
+    }
+  },
+  "O.effect.7": {
+    "id": "O.effect.7",
+    "kind": "effect",
+    "category": "O",
+    "digit": 7,
+    "name": "Existing sweep \u00b7 red-black \u00b7 effect",
+    "src": "cutouts/O/effects/7.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 640,
+    "hasTransparency": true,
+    "alphaBounds": [
+      16,
+      19,
+      496,
+      620
+    ],
+    "sha256": "7f0c8fd7029af6a9ab23a34ad61f31a923f434d00c61d7c69f76e9eca2d0130e",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 512,
+      "height": 640,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "100%",
+      "height": "100%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "reconstructed-from-flattened-card",
+      "originalAssetId": "assets/cards/library/physical-sweep-03-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-sweep-03-1024.webp",
+      "sourceReference": "source-art-v5/physical-sweep-03-1024.webp",
+      "sourceSha256": "9455a2b0a4d7157521bd725b0325e66c3014240117b739dbaf3b563bec7b9402",
+      "sourceTier": "light",
+      "originalArtRelease": "hd-assets-v23",
+      "originalGameCommit": "72a4e640a4efd09c1242756895cf100c46d17074",
+      "generationSourceFile": "exec-5b1037bc-169b-4c34-ac3c-e3c282ec1704.png",
+      "generationSourceSha256": "b623c830d62b2964fee8b5462290809bd889980b3cd4f878c93e8e638368b0cf",
+      "sourceCell": {
+        "x": 710,
+        "y": 444,
+        "width": 354,
+        "height": 443
+      },
+      "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
+    }
+  },
+  "O.effect.8": {
+    "id": "O.effect.8",
+    "kind": "effect",
+    "category": "O",
+    "digit": 8,
+    "name": "Existing defend \u00b7 red-black \u00b7 effect",
+    "src": "cutouts/O/effects/8.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 640,
+    "hasTransparency": true,
+    "alphaBounds": [
+      17,
+      20,
+      496,
+      619
+    ],
+    "sha256": "62bedbc1baa04249d498e1ce041bfffbaacf38c9687003a41ea059b1dc688bb9",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 512,
+      "height": 640,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "100%",
+      "height": "100%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:defend",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "defend"
+    ],
+    "references": {
+      "method": "reconstructed-from-flattened-card",
+      "originalAssetId": "assets/cards/library/physical-defend-03-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-defend-03-1024.webp",
+      "sourceReference": "source-art-v5/physical-defend-03-1024.webp",
+      "sourceSha256": "39fc22bbff12b00ae85bde057c7a38f8f77a4444a10728998101b5190934c453",
+      "sourceTier": "light",
+      "originalArtRelease": "hd-assets-v23",
+      "originalGameCommit": "72a4e640a4efd09c1242756895cf100c46d17074",
+      "generationSourceFile": "exec-5b1037bc-169b-4c34-ac3c-e3c282ec1704.png",
+      "generationSourceSha256": "b623c830d62b2964fee8b5462290809bd889980b3cd4f878c93e8e638368b0cf",
+      "sourceCell": {
+        "x": 1064,
+        "y": 444,
+        "width": 355,
+        "height": 443
+      },
+      "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
+    }
+  },
+  "O.effect.9": {
+    "id": "O.effect.9",
+    "kind": "effect",
+    "category": "O",
+    "digit": 9,
+    "name": "Existing counter \u00b7 red-black \u00b7 effect",
+    "src": "cutouts/O/effects/9.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 640,
+    "hasTransparency": true,
+    "alphaBounds": [
+      17,
+      20,
+      496,
+      619
+    ],
+    "sha256": "10273f43e51fb250728282c9feff31c98863ca2d9cda18dfcb07c92178ec4bb4",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 512,
+      "height": 640,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "100%",
+      "height": "100%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:counter",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "counter"
+    ],
+    "references": {
+      "method": "reconstructed-from-flattened-card",
+      "originalAssetId": "assets/cards/library/physical-counter-03-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-counter-03-1024.webp",
+      "sourceReference": "source-art-v5/physical-counter-03-1024.webp",
+      "sourceSha256": "0fb2a10a4bba97e94dbae4cadfc711cc0bcfe7d7895c124e2c6a26ba7d5f991c",
+      "sourceTier": "light",
+      "originalArtRelease": "hd-assets-v23",
+      "originalGameCommit": "72a4e640a4efd09c1242756895cf100c46d17074",
+      "generationSourceFile": "exec-5b1037bc-169b-4c34-ac3c-e3c282ec1704.png",
+      "generationSourceSha256": "b623c830d62b2964fee8b5462290809bd889980b3cd4f878c93e8e638368b0cf",
+      "sourceCell": {
+        "x": 1419,
+        "y": 444,
+        "width": 355,
+        "height": 443
+      },
+      "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
+    }
+  },
+  "O.background.0": {
+    "id": "O.background.0",
+    "kind": "background",
+    "category": "O",
+    "digit": 0,
+    "name": "Existing attack \u00b7 silver-blue \u00b7 background",
+    "src": "cutouts/O/backgrounds/0.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 640,
+    "hasTransparency": false,
+    "alphaBounds": [
+      0,
+      0,
+      512,
+      640
+    ],
+    "sha256": "068575e4e648427729bc3012e5914be5f702eb622b51c049dcaab53414d89c49",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 512,
+      "height": 640,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "100%",
+      "height": "100%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:attack",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "attack"
+    ],
+    "references": {
+      "method": "reconstructed-from-flattened-card",
+      "originalAssetId": "assets/cards/library/physical-attack-01-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-attack-01-1024.webp",
+      "sourceReference": "source-art-v5/physical-attack-01-1024.webp",
+      "sourceSha256": "502fc25bc48c9e0aa88f51c9df255c56cb9ec751ee66c14bb1ebc3dfae69ee0c",
+      "sourceTier": "light",
+      "originalArtRelease": "hd-assets-v23",
+      "originalGameCommit": "72a4e640a4efd09c1242756895cf100c46d17074",
+      "generationSourceFile": "exec-fe108a74-7885-4cad-879b-bb202df28a91.png",
+      "generationSourceSha256": "6b16e05e69f84ea42af6f97a18e1945b152f2496536d530463cfe6052baff5ea",
+      "sourceCell": {
+        "x": 0,
+        "y": 0,
+        "width": 355,
+        "height": 444
+      },
+      "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
+    }
+  },
+  "O.background.1": {
+    "id": "O.background.1",
+    "kind": "background",
+    "category": "O",
+    "digit": 1,
+    "name": "Existing smash \u00b7 silver-blue \u00b7 background",
+    "src": "cutouts/O/backgrounds/1.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 640,
+    "hasTransparency": false,
+    "alphaBounds": [
+      0,
+      0,
+      512,
+      640
+    ],
+    "sha256": "4d6350ad1e71226bb7c392435516d4da4f1039bc0c40ef161e16977bf0c45e50",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 512,
+      "height": 640,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "100%",
+      "height": "100%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:smash",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "smash"
+    ],
+    "references": {
+      "method": "reconstructed-from-flattened-card",
+      "originalAssetId": "assets/cards/library/physical-smash-01-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-smash-01-1024.webp",
+      "sourceReference": "source-art-v5/physical-smash-01-1024.webp",
+      "sourceSha256": "a7b168470ba736827ef9c20f9c58958ea6e5cf1078a635b567298dbc0ca12209",
+      "sourceTier": "light",
+      "originalArtRelease": "hd-assets-v23",
+      "originalGameCommit": "72a4e640a4efd09c1242756895cf100c46d17074",
+      "generationSourceFile": "exec-fe108a74-7885-4cad-879b-bb202df28a91.png",
+      "generationSourceSha256": "6b16e05e69f84ea42af6f97a18e1945b152f2496536d530463cfe6052baff5ea",
+      "sourceCell": {
+        "x": 355,
+        "y": 0,
+        "width": 355,
+        "height": 444
+      },
+      "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
+    }
+  },
+  "O.background.2": {
+    "id": "O.background.2",
+    "kind": "background",
+    "category": "O",
+    "digit": 2,
+    "name": "Existing sweep \u00b7 silver-blue \u00b7 background",
+    "src": "cutouts/O/backgrounds/2.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 640,
+    "hasTransparency": false,
+    "alphaBounds": [
+      0,
+      0,
+      512,
+      640
+    ],
+    "sha256": "286b632257d47e0aef22466bb7ce76d09e19f816c403482317a0b36e074c71ae",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 512,
+      "height": 640,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "100%",
+      "height": "100%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "reconstructed-from-flattened-card",
+      "originalAssetId": "assets/cards/library/physical-sweep-01-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-sweep-01-1024.webp",
+      "sourceReference": "source-art-v5/physical-sweep-01-1024.webp",
+      "sourceSha256": "e987392bbc2259129073ddf152751575602a070fd72662e070ce09d8cf1b6362",
+      "sourceTier": "light",
+      "originalArtRelease": "hd-assets-v23",
+      "originalGameCommit": "72a4e640a4efd09c1242756895cf100c46d17074",
+      "generationSourceFile": "exec-fe108a74-7885-4cad-879b-bb202df28a91.png",
+      "generationSourceSha256": "6b16e05e69f84ea42af6f97a18e1945b152f2496536d530463cfe6052baff5ea",
+      "sourceCell": {
+        "x": 710,
+        "y": 0,
+        "width": 354,
+        "height": 444
+      },
+      "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
+    }
+  },
+  "O.background.3": {
+    "id": "O.background.3",
+    "kind": "background",
+    "category": "O",
+    "digit": 3,
+    "name": "Existing defend \u00b7 silver-blue \u00b7 background",
+    "src": "cutouts/O/backgrounds/3.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 640,
+    "hasTransparency": false,
+    "alphaBounds": [
+      0,
+      0,
+      512,
+      640
+    ],
+    "sha256": "38008dd09471ecf21239bfba9ae9b3c11e527a6c72858a4383b7d1351a569f8a",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 512,
+      "height": 640,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "100%",
+      "height": "100%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:defend",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "defend"
+    ],
+    "references": {
+      "method": "reconstructed-from-flattened-card",
+      "originalAssetId": "assets/cards/library/physical-defend-01-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-defend-01-1024.webp",
+      "sourceReference": "source-art-v5/physical-defend-01-1024.webp",
+      "sourceSha256": "bf39bc3d1867790a5eacc41209825d41b8dd0adde4fe39c994c09b7d9303c9ee",
+      "sourceTier": "light",
+      "originalArtRelease": "hd-assets-v23",
+      "originalGameCommit": "72a4e640a4efd09c1242756895cf100c46d17074",
+      "generationSourceFile": "exec-fe108a74-7885-4cad-879b-bb202df28a91.png",
+      "generationSourceSha256": "6b16e05e69f84ea42af6f97a18e1945b152f2496536d530463cfe6052baff5ea",
+      "sourceCell": {
+        "x": 1064,
+        "y": 0,
+        "width": 355,
+        "height": 444
+      },
+      "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
+    }
+  },
+  "O.background.4": {
+    "id": "O.background.4",
+    "kind": "background",
+    "category": "O",
+    "digit": 4,
+    "name": "Existing counter \u00b7 silver-blue \u00b7 background",
+    "src": "cutouts/O/backgrounds/4.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 640,
+    "hasTransparency": false,
+    "alphaBounds": [
+      0,
+      0,
+      512,
+      640
+    ],
+    "sha256": "bdd63b5c062fc3ec21947365eebf5593edd559a8ad88e78d0bf2396fcd55b54d",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 512,
+      "height": 640,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "100%",
+      "height": "100%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:counter",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "counter"
+    ],
+    "references": {
+      "method": "reconstructed-from-flattened-card",
+      "originalAssetId": "assets/cards/library/physical-counter-01-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-counter-01-1024.webp",
+      "sourceReference": "source-art-v5/physical-counter-01-1024.webp",
+      "sourceSha256": "c489b31d90b7fbab57d9947b70a8406d01b4d6238f4b312a7bd8d6ed5d53f656",
+      "sourceTier": "light",
+      "originalArtRelease": "hd-assets-v23",
+      "originalGameCommit": "72a4e640a4efd09c1242756895cf100c46d17074",
+      "generationSourceFile": "exec-fe108a74-7885-4cad-879b-bb202df28a91.png",
+      "generationSourceSha256": "6b16e05e69f84ea42af6f97a18e1945b152f2496536d530463cfe6052baff5ea",
+      "sourceCell": {
+        "x": 1419,
+        "y": 0,
+        "width": 355,
+        "height": 444
+      },
+      "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
+    }
+  },
+  "O.background.5": {
+    "id": "O.background.5",
+    "kind": "background",
+    "category": "O",
+    "digit": 5,
+    "name": "Existing attack \u00b7 red-black \u00b7 background",
+    "src": "cutouts/O/backgrounds/5.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 640,
+    "hasTransparency": false,
+    "alphaBounds": [
+      0,
+      0,
+      512,
+      640
+    ],
+    "sha256": "499f867e391e384c95aff3c82a5705f3fe97ee171f7b438af529157858077950",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 512,
+      "height": 640,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "100%",
+      "height": "100%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:attack",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "attack"
+    ],
+    "references": {
+      "method": "reconstructed-from-flattened-card",
+      "originalAssetId": "assets/cards/library/physical-attack-03-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-attack-03-1024.webp",
+      "sourceReference": "source-art-v5/physical-attack-03-1024.webp",
+      "sourceSha256": "127feb8dce89d2c4105256b31664574aa42ea2c8f6e69e6be40894f4699feaaf",
+      "sourceTier": "light",
+      "originalArtRelease": "hd-assets-v23",
+      "originalGameCommit": "72a4e640a4efd09c1242756895cf100c46d17074",
+      "generationSourceFile": "exec-fe108a74-7885-4cad-879b-bb202df28a91.png",
+      "generationSourceSha256": "6b16e05e69f84ea42af6f97a18e1945b152f2496536d530463cfe6052baff5ea",
+      "sourceCell": {
+        "x": 0,
+        "y": 444,
+        "width": 355,
+        "height": 443
+      },
+      "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
+    }
+  },
+  "O.background.6": {
+    "id": "O.background.6",
+    "kind": "background",
+    "category": "O",
+    "digit": 6,
+    "name": "Existing smash \u00b7 red-black \u00b7 background",
+    "src": "cutouts/O/backgrounds/6.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 640,
+    "hasTransparency": false,
+    "alphaBounds": [
+      0,
+      0,
+      512,
+      640
+    ],
+    "sha256": "fffa667dd33bdc36c134478e95277b65137a405eb3dd7bb23e4e5139ba66b652",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 512,
+      "height": 640,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "100%",
+      "height": "100%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:smash",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "smash"
+    ],
+    "references": {
+      "method": "reconstructed-from-flattened-card",
+      "originalAssetId": "assets/cards/library/physical-smash-03-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-smash-03-1024.webp",
+      "sourceReference": "source-art-v5/physical-smash-03-1024.webp",
+      "sourceSha256": "43e289c61fbfc55be03311e38471a82ffc8e28823171b085d1acc325061879e5",
+      "sourceTier": "light",
+      "originalArtRelease": "hd-assets-v23",
+      "originalGameCommit": "72a4e640a4efd09c1242756895cf100c46d17074",
+      "generationSourceFile": "exec-fe108a74-7885-4cad-879b-bb202df28a91.png",
+      "generationSourceSha256": "6b16e05e69f84ea42af6f97a18e1945b152f2496536d530463cfe6052baff5ea",
+      "sourceCell": {
+        "x": 355,
+        "y": 444,
+        "width": 355,
+        "height": 443
+      },
+      "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
+    }
+  },
+  "O.background.7": {
+    "id": "O.background.7",
+    "kind": "background",
+    "category": "O",
+    "digit": 7,
+    "name": "Existing sweep \u00b7 red-black \u00b7 background",
+    "src": "cutouts/O/backgrounds/7.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 640,
+    "hasTransparency": false,
+    "alphaBounds": [
+      0,
+      0,
+      512,
+      640
+    ],
+    "sha256": "6b932cc0bf8fc696bd9eb55a0d704a343b982749717f23917054954b606d1ea2",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 512,
+      "height": 640,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "100%",
+      "height": "100%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "reconstructed-from-flattened-card",
+      "originalAssetId": "assets/cards/library/physical-sweep-03-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-sweep-03-1024.webp",
+      "sourceReference": "source-art-v5/physical-sweep-03-1024.webp",
+      "sourceSha256": "9455a2b0a4d7157521bd725b0325e66c3014240117b739dbaf3b563bec7b9402",
+      "sourceTier": "light",
+      "originalArtRelease": "hd-assets-v23",
+      "originalGameCommit": "72a4e640a4efd09c1242756895cf100c46d17074",
+      "generationSourceFile": "exec-fe108a74-7885-4cad-879b-bb202df28a91.png",
+      "generationSourceSha256": "6b16e05e69f84ea42af6f97a18e1945b152f2496536d530463cfe6052baff5ea",
+      "sourceCell": {
+        "x": 710,
+        "y": 444,
+        "width": 354,
+        "height": 443
+      },
+      "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
+    }
+  },
+  "O.background.8": {
+    "id": "O.background.8",
+    "kind": "background",
+    "category": "O",
+    "digit": 8,
+    "name": "Existing defend \u00b7 red-black \u00b7 background",
+    "src": "cutouts/O/backgrounds/8.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 640,
+    "hasTransparency": false,
+    "alphaBounds": [
+      0,
+      0,
+      512,
+      640
+    ],
+    "sha256": "186822ab987ed11aa259cbf6096f6e037623e5fe6db284252a9e6347e329fe21",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 512,
+      "height": 640,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "100%",
+      "height": "100%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:defend",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "defend"
+    ],
+    "references": {
+      "method": "reconstructed-from-flattened-card",
+      "originalAssetId": "assets/cards/library/physical-defend-03-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-defend-03-1024.webp",
+      "sourceReference": "source-art-v5/physical-defend-03-1024.webp",
+      "sourceSha256": "39fc22bbff12b00ae85bde057c7a38f8f77a4444a10728998101b5190934c453",
+      "sourceTier": "light",
+      "originalArtRelease": "hd-assets-v23",
+      "originalGameCommit": "72a4e640a4efd09c1242756895cf100c46d17074",
+      "generationSourceFile": "exec-fe108a74-7885-4cad-879b-bb202df28a91.png",
+      "generationSourceSha256": "6b16e05e69f84ea42af6f97a18e1945b152f2496536d530463cfe6052baff5ea",
+      "sourceCell": {
+        "x": 1064,
+        "y": 444,
+        "width": 355,
+        "height": 443
+      },
+      "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
+    }
+  },
+  "O.background.9": {
+    "id": "O.background.9",
+    "kind": "background",
+    "category": "O",
+    "digit": 9,
+    "name": "Existing counter \u00b7 red-black \u00b7 background",
+    "src": "cutouts/O/backgrounds/9.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 640,
+    "hasTransparency": false,
+    "alphaBounds": [
+      0,
+      0,
+      512,
+      640
+    ],
+    "sha256": "c24a9c40516db03aa83f6736a1efbd7a11004d1cb2116a2b7fbf244e7a26d090",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 512,
+      "height": 640,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "100%",
+      "height": "100%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:counter",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "counter"
+    ],
+    "references": {
+      "method": "reconstructed-from-flattened-card",
+      "originalAssetId": "assets/cards/library/physical-counter-03-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-counter-03-1024.webp",
+      "sourceReference": "source-art-v5/physical-counter-03-1024.webp",
+      "sourceSha256": "0fb2a10a4bba97e94dbae4cadfc711cc0bcfe7d7895c124e2c6a26ba7d5f991c",
+      "sourceTier": "light",
+      "originalArtRelease": "hd-assets-v23",
+      "originalGameCommit": "72a4e640a4efd09c1242756895cf100c46d17074",
+      "generationSourceFile": "exec-fe108a74-7885-4cad-879b-bb202df28a91.png",
+      "generationSourceSha256": "6b16e05e69f84ea42af6f97a18e1945b152f2496536d530463cfe6052baff5ea",
+      "sourceCell": {
+        "x": 1419,
+        "y": 444,
+        "width": 355,
+        "height": 443
+      },
+      "fidelity": "Image-edit reconstruction. Visible design is referenced; original independent layers and hidden pixels are not recoverable exactly."
+    }
+  }
+}
