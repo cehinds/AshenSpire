@@ -35,7 +35,7 @@ const REPO = path.resolve(HERE, '..');
 export const DEFAULT_PORT = 4300;
 const STATIC = /^(index\.html|app\.mjs|workbench\.css|shared\/[\w-]+\.css|ui\/(kit\/)?[\w-]+\.(mjs|css)|modules\/([\w-]+\/)?[\w-]+\.(mjs|css))$/;
 const PREVIEW_FILE = /^([\w.-]+-preview|tooltip-review[\w.-]*)\.html$/;
-const WATCH_DIRS = ['content', 'src', 'styles', 'games'];
+const WATCH_DIRS = ['content', 'src', 'styles', 'games', 'engine'];
 const EXPORT_DIR = 'build/engine-export';
 // A save carries up to 100 files of up to 4 MB each, as JSON.
 const FILES_BODY_LIMIT = 32 * 1024 * 1024;

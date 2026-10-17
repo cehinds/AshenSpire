@@ -30,3 +30,25 @@
   .gc-actions .btn, .gc-preview .btn { flex: 1 1 auto; }
   .gc textarea { min-height: 50vh; }
 }
+.gc-modules { border: 1px solid var(--as-line, #47413a); border-radius: 8px; background: var(--as-panel, #201d19); }
+.gc-modules[hidden] { display: none; }
+.gc-modules > summary { cursor: pointer; padding: 9px 12px; font-weight: 600; }
+.gc-mod-count, .gc-muted { color: var(--as-muted, #b7aea1); font-weight: 400; }
+.gc-muted { margin: 4px 0; font-size: 12px; }
+.gc-mod-body { max-height: 300px; overflow: auto; padding: 0 8px 8px; }
+.gc-mod { border-top: 1px solid var(--as-line, #47413a); }
+.gc-mod > summary { display: flex; align-items: center; gap: 10px; padding: 6px 4px; cursor: pointer; }
+.gc-mod-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--as-muted, #b7aea1); font-size: 12px; }
+.gc-mod-states { display: flex; gap: 6px; flex-wrap: wrap; font-size: 11px; }
+.gc-mod-state, .gc-mod-resolved { padding: 1px 7px; border-radius: 9px; border: 1px solid var(--as-line, #47413a); color: var(--as-muted, #b7aea1); }
+.gc-mod-state[data-state="off"], .gc-mod-resolved[data-resolved="disabled"] { color: #f09288; }
+.gc-mod-state[data-state="on"], .gc-mod-resolved[data-resolved="enabled"] { color: #99d19b; }
+.gc-mod-detail { padding: 4px 4px 10px 30px; }
+.gc-fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px 14px; }
+.gc-field { display: grid; gap: 3px; align-content: start; font-size: 12px; }
+.gc-field input, .gc-field select { color: inherit; background: #15130f; border: 1px solid var(--as-line, #47413a); border-radius: 5px; padding: 5px 7px; min-width: 0; }
+.gc-field input:disabled, .gc-field select:disabled { opacity: .5; }
+.gc-field-error { color: #f09288; font-size: 12px; }
+.gc-json { margin: 0; max-height: 80px; overflow: auto; padding: 5px 7px; background: #15130f; border: 1px dashed var(--as-line, #47413a); border-radius: 5px; white-space: pre-wrap; word-break: break-all; }
+.gc-guide { margin-top: 8px; }
+.gc-guide pre { max-height: 240px; overflow: auto; white-space: pre-wrap; padding: 8px; background: #15130f; border-radius: 5px; font-size: 12px; }

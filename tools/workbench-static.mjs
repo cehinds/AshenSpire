@@ -40,7 +40,7 @@ const GAME_REWRITE = /(["'`(])\/(workbench|styles|src|assets|pose-studio)\//g;
 const PREVIEW_PAGE = /^([\w.-]+-preview|tooltip-review[\w.-]*)\.html$/;
 const UI_TEXT = /\.(html|mjs|js|css)$/;
 const GAME_TEXT = /\.(html|mjs|js|css|json|svg)$/;
-const SNAPSHOT_DIRS = ['content', 'docs/tag-model', 'pose-studio/renewal', 'pose-studio/stances', 'workbench/workspace', 'ui-studio/workspace'];
+const SNAPSHOT_DIRS = ['content', 'docs/tag-model', 'pose-studio/renewal', 'pose-studio/stances', 'workbench/workspace', 'ui-studio/workspace', 'games/ashenspire', 'engine/modules'];
 const SNAPSHOT_FILES = ['src/content/card-layout.json', 'src/content/formationPositioningPresets.js', 'src/content/bookArtPresets.js'];
 const SNAPSHOT_APIS = ['tools', 'files/list', 'library', 'previews', 'assets/list', 'export/manifest', 'settings', 'jobs', 'review/state', 'files/backups', 'git'];
 
