@@ -15,9 +15,9 @@ it lands, combat still plays the legacy `moves` from `src/content/enemies/act1-3
 |---|---|
 | `include` | Tiers this profile fields (`minion`, `elite`, `boss`). |
 | `attributeGains` | Per-point gains; mirror the player's `stats.json` `levelGains` (CON → +10 HP, +0.5 SP; WIS → +1 MP; INT → +1 hand; STR → AR; DEX → DR). |
-| `tiers.<tier>.pools` | Base HP/SP/MP before attributes. Minion base 2 SP (CON 0 → 2); elite base 3 (CON 1 → 3); boss base 2 (CON 2 → 3). |
-| `tiers.<tier>.attributeBudget` | Allowed attribute total. Every enemy starts at 0 in all five and assigns 4 points (owner 2026-10-17); tier sets CON (minion 0, elite 1, boss 2). |
-| `tiers.<tier>.spRange` | Allowed derived SP; build fails outside it. Minion 1–2, elite 2–3, boss 2–3. |
+| `tiers.<tier>.pools` | Base HP/SP/MP before attributes. Every tier starts at 2 SP and 0 MP; CON and WIS raise them. |
+| `tiers.<tier>.attributeBudget` | Points to assign. All five attributes start at 0; each enemy assigns freely (owner 2026-10-17): minion 4, elite 5, boss 6–7. CON stays small; enemies are hard already. |
+| `tiers.<tier>.spRange` | Optional. Allowed derived SP; build fails outside it. Unset by default. |
 | `tiers.<tier>.hand` / `deckSize` | Base hand size and deck size range for the tier. |
 | `deck` | Global deck bounds and reshuffle/draw rules. |
 | `stanceCosts` | Default SP/MP per maneuver for cards with no authored cost. |

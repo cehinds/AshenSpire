@@ -152,8 +152,7 @@
           "attributeBudget",
           "pools",
           "hand",
-          "deckSize",
-          "spRange"
+          "deckSize"
         ],
         "additionalProperties": false
       }

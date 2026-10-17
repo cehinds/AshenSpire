@@ -40,36 +40,28 @@
       "deckSize": [
         4,
         8
-      ],
-      "spRange": [
-        1,
-        2
       ]
     },
     "elite": {
       "attributeBudget": [
-        4,
-        4
+        5,
+        5
       ],
       "pools": {
         "hp": 50,
-        "sp": 3,
+        "sp": 2,
         "mp": 0
       },
       "hand": 3,
       "deckSize": [
         6,
         10
-      ],
-      "spRange": [
-        2,
-        3
       ]
     },
     "boss": {
       "attributeBudget": [
-        4,
-        4
+        6,
+        7
       ],
       "pools": {
         "hp": 80,
@@ -80,10 +72,6 @@
       "deckSize": [
         8,
         14
-      ],
-      "spRange": [
-        2,
-        3
       ]
     }
   },

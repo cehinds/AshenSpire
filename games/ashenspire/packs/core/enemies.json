@@ -4,11 +4,11 @@
     "name": "Wandering Soldier",
     "tier": "minion",
     "attributes": {
-      "strength": 1,
+      "strength": 2,
       "dexterity": 1,
-      "constitution": 0,
-      "wisdom": 2,
-      "intelligence": 0
+      "intelligence": 0,
+      "wisdom": 1,
+      "constitution": 0
     },
     "deck": [
       "wanderingSoldier.slash",
@@ -49,10 +49,10 @@
     "tier": "minion",
     "attributes": {
       "strength": 1,
-      "dexterity": 1,
-      "constitution": 0,
+      "dexterity": 2,
+      "intelligence": 0,
       "wisdom": 1,
-      "intelligence": 1
+      "constitution": 0
     },
     "deck": [
       "blightHound.bite",
@@ -82,11 +82,11 @@
     "name": "Husk Brute",
     "tier": "minion",
     "attributes": {
-      "strength": 1,
+      "strength": 2,
       "dexterity": 1,
-      "constitution": 0,
-      "wisdom": 2,
-      "intelligence": 0
+      "intelligence": 0,
+      "wisdom": 1,
+      "constitution": 0
     },
     "deck": [
       "huskBrute.club",
@@ -116,9 +116,9 @@
     "attributes": {
       "strength": 1,
       "dexterity": 0,
-      "constitution": 0,
+      "intelligence": 1,
       "wisdom": 2,
-      "intelligence": 1
+      "constitution": 0
     },
     "deck": [
       "graveWisp.curse",
@@ -146,9 +146,9 @@
     "attributes": {
       "strength": 1,
       "dexterity": 0,
-      "constitution": 1,
+      "intelligence": 0,
       "wisdom": 2,
-      "intelligence": 0
+      "constitution": 2
     },
     "deck": [
       "wyrmAspirant.consecrate",
@@ -162,11 +162,10 @@
     ],
     "firstCard": "wyrmAspirant.consecrate",
     "gear": [
-      "enemy.gear.hide"
+      "enemy.gear.mail",
+      "enemy.gear.luckyTooth"
     ],
-    "relics": [
-      "enemy.relic.graveSeal"
-    ],
+    "relics": [],
     "poiseMax": 24,
     "levelProfile": {
       "min": 4,
@@ -181,11 +180,11 @@
     "name": "The Fell Warden",
     "tier": "boss",
     "attributes": {
-      "strength": 1,
+      "strength": 3,
       "dexterity": 1,
-      "constitution": 2,
+      "intelligence": 0,
       "wisdom": 0,
-      "intelligence": 0
+      "constitution": 2
     },
     "deck": [
       "fellWarden.caneStrike",
@@ -252,9 +251,9 @@
     "attributes": {
       "strength": 1,
       "dexterity": 0,
-      "constitution": 0,
+      "intelligence": 1,
       "wisdom": 2,
-      "intelligence": 1
+      "constitution": 0
     },
     "deck": [
       "lanternMoth.lanternDust",
@@ -284,9 +283,9 @@
     "attributes": {
       "strength": 1,
       "dexterity": 1,
-      "constitution": 0,
+      "intelligence": 0,
       "wisdom": 2,
-      "intelligence": 0
+      "constitution": 0
     },
     "deck": [
       "briarHermit.rootShelter",
@@ -319,9 +318,9 @@
     "attributes": {
       "strength": 2,
       "dexterity": 1,
-      "constitution": 0,
-      "wisdom": 1,
-      "intelligence": 0
+      "intelligence": 0,
+      "wisdom": 0,
+      "constitution": 1
     },
     "deck": [
       "chainScavenger.hookCast",
@@ -332,7 +331,6 @@
       "chainScavenger.draggingBlow"
     ],
     "gear": [
-      "enemy.gear.mail",
       "enemy.gear.ironTalisman"
     ],
     "relics": [],
@@ -350,11 +348,11 @@
     "name": "The Bell Keeper",
     "tier": "boss",
     "attributes": {
-      "strength": 1,
-      "dexterity": 0,
-      "constitution": 2,
+      "strength": 4,
+      "dexterity": 1,
+      "intelligence": 0,
       "wisdom": 1,
-      "intelligence": 0
+      "constitution": 1
     },
     "deck": [
       "bellKeeper.bronzeToll",
@@ -373,11 +371,10 @@
     ],
     "firstCard": "bellKeeper.bronzeToll",
     "gear": [
+      "enemy.gear.heavyPlate",
       "enemy.gear.ironTalisman"
     ],
-    "relics": [
-      "enemy.relic.emberBand"
-    ],
+    "relics": [],
     "poiseMax": 25,
     "levelProfile": {
       "min": 5,
@@ -402,11 +399,11 @@
     "name": "The Thorn Matriarch",
     "tier": "boss",
     "attributes": {
-      "strength": 1,
-      "dexterity": 0,
-      "constitution": 2,
+      "strength": 2,
+      "dexterity": 1,
+      "intelligence": 1,
       "wisdom": 1,
-      "intelligence": 0
+      "constitution": 1
     },
     "deck": [
       "thornMatriarch.rootCrown",
@@ -421,10 +418,10 @@
       "thornMatriarch.entwiningRoots"
     ],
     "firstCard": "thornMatriarch.rootCrown",
-    "gear": [],
-    "relics": [
-      "enemy.relic.emberBand"
+    "gear": [
+      "enemy.gear.heavyPlate"
     ],
+    "relics": [],
     "poiseMax": 22,
     "levelProfile": {
       "min": 5,
@@ -458,11 +455,11 @@
     "name": "Gilded Knight",
     "tier": "minion",
     "attributes": {
-      "strength": 1,
+      "strength": 2,
       "dexterity": 1,
-      "constitution": 0,
-      "wisdom": 2,
-      "intelligence": 0
+      "intelligence": 0,
+      "wisdom": 1,
+      "constitution": 0
     },
     "deck": [
       "gildedKnight.thrust",
@@ -492,9 +489,9 @@
     "attributes": {
       "strength": 1,
       "dexterity": 0,
-      "constitution": 0,
+      "intelligence": 1,
       "wisdom": 2,
-      "intelligence": 1
+      "constitution": 0
     },
     "deck": [
       "courtSurgeon.scalpel",
@@ -525,9 +522,9 @@
     "attributes": {
       "strength": 2,
       "dexterity": 1,
-      "constitution": 0,
-      "wisdom": 1,
-      "intelligence": 0
+      "intelligence": 0,
+      "wisdom": 0,
+      "constitution": 1
     },
     "deck": [
       "stitchedHound.maul",
@@ -538,7 +535,7 @@
       "stitchedHound.rend"
     ],
     "gear": [
-      "enemy.gear.mail"
+      "enemy.gear.luckyTooth"
     ],
     "relics": [],
     "poiseMax": 8,
@@ -556,11 +553,11 @@
     "name": "Court Marionette",
     "tier": "minion",
     "attributes": {
-      "strength": 2,
+      "strength": 3,
       "dexterity": 1,
-      "constitution": 0,
-      "wisdom": 1,
-      "intelligence": 0
+      "intelligence": 0,
+      "wisdom": 0,
+      "constitution": 0
     },
     "deck": [
       "courtMarionette.dart",
@@ -590,9 +587,9 @@
     "attributes": {
       "strength": 2,
       "dexterity": 1,
-      "constitution": 0,
-      "wisdom": 1,
-      "intelligence": 0
+      "intelligence": 0,
+      "wisdom": 0,
+      "constitution": 1
     },
     "deck": [
       "livingArmor.slam",
@@ -603,11 +600,10 @@
       "livingArmor.rimeCrush"
     ],
     "gear": [
-      "enemy.gear.hide"
+      "enemy.gear.mail",
+      "enemy.gear.luckyTooth"
     ],
-    "relics": [
-      "enemy.relic.graveSeal"
-    ],
+    "relics": [],
     "poiseMax": 22,
     "levelProfile": {
       "min": 7,
@@ -622,11 +618,11 @@
     "name": "Duelist of the Court",
     "tier": "elite",
     "attributes": {
-      "strength": 1,
+      "strength": 2,
       "dexterity": 1,
-      "constitution": 1,
+      "intelligence": 0,
       "wisdom": 1,
-      "intelligence": 0
+      "constitution": 1
     },
     "deck": [
       "courtDuelist.enGarde",
@@ -659,11 +655,11 @@
     "name": "The Stitched King",
     "tier": "boss",
     "attributes": {
-      "strength": 1,
+      "strength": 4,
       "dexterity": 1,
-      "constitution": 2,
+      "intelligence": 0,
       "wisdom": 0,
-      "intelligence": 0
+      "constitution": 1
     },
     "deck": [
       "stitchedKing.scepterBlow",
@@ -685,8 +681,7 @@
       "enemy.gear.ironTalisman"
     ],
     "relics": [
-      "enemy.relic.ashenCore",
-      "enemy.relic.titanHeart"
+      "enemy.relic.abyssalCrown"
     ],
     "poiseMax": 34,
     "levelProfile": {
@@ -727,9 +722,9 @@
     "attributes": {
       "strength": 1,
       "dexterity": 0,
-      "constitution": 0,
+      "intelligence": 1,
       "wisdom": 2,
-      "intelligence": 1
+      "constitution": 0
     },
     "deck": [
       "mirrorScribe.silverScript",
@@ -761,9 +756,9 @@
     "attributes": {
       "strength": 2,
       "dexterity": 1,
-      "constitution": 0,
-      "wisdom": 1,
-      "intelligence": 0
+      "intelligence": 0,
+      "wisdom": 0,
+      "constitution": 1
     },
     "deck": [
       "stitchCrab.shellFold",
@@ -774,10 +769,10 @@
       "stitchCrab.scuttleRush"
     ],
     "firstCard": "stitchCrab.shellFold",
-    "gear": [
-      "enemy.gear.heavyPlate"
+    "gear": [],
+    "relics": [
+      "enemy.relic.emberBand"
     ],
-    "relics": [],
     "poiseMax": 17,
     "levelProfile": {
       "min": 7,
@@ -792,11 +787,11 @@
     "name": "The Glass Regent",
     "tier": "boss",
     "attributes": {
-      "strength": 1,
-      "dexterity": 0,
-      "constitution": 2,
+      "strength": 2,
+      "dexterity": 1,
+      "intelligence": 1,
       "wisdom": 1,
-      "intelligence": 0
+      "constitution": 1
     },
     "deck": [
       "glassRegent.prismGuard",
@@ -814,11 +809,10 @@
       "glassRegent.shatteredCourt"
     ],
     "firstCard": "glassRegent.prismGuard",
-    "gear": [
-      "enemy.gear.heavyPlate"
-    ],
+    "gear": [],
     "relics": [
-      "enemy.relic.ashenCore"
+      "enemy.relic.ashenCore",
+      "enemy.relic.titanHeart"
     ],
     "poiseMax": 26,
     "levelProfile": {
@@ -851,11 +845,11 @@
     "name": "The Marrow Organist",
     "tier": "boss",
     "attributes": {
-      "strength": 0,
+      "strength": 1,
       "dexterity": 0,
-      "constitution": 2,
-      "wisdom": 2,
-      "intelligence": 0
+      "intelligence": 0,
+      "wisdom": 3,
+      "constitution": 2
     },
     "deck": [
       "marrowOrganist.bonePrelude",
@@ -903,11 +897,11 @@
     "name": "Ash Revenant",
     "tier": "minion",
     "attributes": {
-      "strength": 1,
+      "strength": 2,
       "dexterity": 1,
-      "constitution": 0,
-      "wisdom": 2,
-      "intelligence": 0
+      "intelligence": 0,
+      "wisdom": 1,
+      "constitution": 0
     },
     "deck": [
       "ashRevenant.cinderSlash",
@@ -936,11 +930,11 @@
     "name": "Ember-Starved Pilgrim",
     "tier": "minion",
     "attributes": {
-      "strength": 1,
+      "strength": 2,
       "dexterity": 1,
-      "constitution": 0,
-      "wisdom": 2,
-      "intelligence": 0
+      "intelligence": 0,
+      "wisdom": 1,
+      "constitution": 0
     },
     "deck": [
       "emberStarvedPilgrim.desperateClaw",
@@ -972,9 +966,9 @@
     "attributes": {
       "strength": 2,
       "dexterity": 1,
-      "constitution": 0,
-      "wisdom": 1,
-      "intelligence": 0
+      "intelligence": 0,
+      "wisdom": 0,
+      "constitution": 1
     },
     "deck": [
       "valkyrieShade.spiralLance",
@@ -985,11 +979,10 @@
       "valkyrieShade.bloodFeather"
     ],
     "gear": [
-      "enemy.gear.plating"
+      "enemy.gear.mail",
+      "enemy.gear.ironTalisman"
     ],
-    "relics": [
-      "enemy.relic.graveSeal"
-    ],
+    "relics": [],
     "poiseMax": 14,
     "levelProfile": {
       "min": 14,
@@ -1004,11 +997,11 @@
     "name": "Charred Colossus",
     "tier": "minion",
     "attributes": {
-      "strength": 1,
+      "strength": 2,
       "dexterity": 1,
-      "constitution": 0,
-      "wisdom": 2,
-      "intelligence": 0
+      "intelligence": 0,
+      "wisdom": 1,
+      "constitution": 0
     },
     "deck": [
       "charredColossus.smash",
@@ -1044,9 +1037,9 @@
     "attributes": {
       "strength": 1,
       "dexterity": 0,
-      "constitution": 1,
+      "intelligence": 0,
       "wisdom": 2,
-      "intelligence": 0
+      "constitution": 2
     },
     "deck": [
       "wyrmLord.consecration",
@@ -1060,8 +1053,7 @@
     ],
     "firstCard": "wyrmLord.consecration",
     "gear": [
-      "enemy.gear.mail",
-      "enemy.gear.luckyTooth"
+      "enemy.gear.ironTalisman"
     ],
     "relics": [
       "enemy.relic.ashenCore"
@@ -1080,11 +1072,11 @@
     "name": "The Blighted Valkyrie",
     "tier": "boss",
     "attributes": {
-      "strength": 1,
-      "dexterity": 0,
-      "constitution": 2,
-      "wisdom": 1,
-      "intelligence": 0
+      "strength": 2,
+      "dexterity": 1,
+      "intelligence": 1,
+      "wisdom": 2,
+      "constitution": 1
     },
     "deck": [
       "blightedValkyrie.spiralThrust",
@@ -1102,12 +1094,10 @@
       "blightedValkyrie.scarletDance"
     ],
     "firstCard": "blightedValkyrie.spiralThrust",
-    "gear": [
-      "enemy.gear.heavyPlate"
-    ],
+    "gear": [],
     "relics": [
       "enemy.relic.abyssalCrown",
-      "enemy.relic.titanHeart"
+      "enemy.relic.ashenCore"
     ],
     "poiseMax": 36,
     "levelProfile": {
@@ -1163,9 +1153,9 @@
     "attributes": {
       "strength": 2,
       "dexterity": 1,
-      "constitution": 0,
-      "wisdom": 1,
-      "intelligence": 0
+      "intelligence": 0,
+      "wisdom": 0,
+      "constitution": 1
     },
     "deck": [
       "cinderMantis.scythePair",
@@ -1176,11 +1166,10 @@
       "cinderMantis.foldedBlades"
     ],
     "gear": [
-      "enemy.gear.hide"
+      "enemy.gear.mail",
+      "enemy.gear.luckyTooth"
     ],
-    "relics": [
-      "enemy.relic.graveSeal"
-    ],
+    "relics": [],
     "poiseMax": 11,
     "levelProfile": {
       "min": 14,
@@ -1197,9 +1186,9 @@
     "attributes": {
       "strength": 1,
       "dexterity": 0,
-      "constitution": 0,
+      "intelligence": 1,
       "wisdom": 2,
-      "intelligence": 1
+      "constitution": 0
     },
     "deck": [
       "eclipseCantor.darkHymn",
@@ -1228,11 +1217,11 @@
     "name": "The Furnace Saint",
     "tier": "boss",
     "attributes": {
-      "strength": 1,
+      "strength": 4,
       "dexterity": 1,
-      "constitution": 2,
+      "intelligence": 0,
       "wisdom": 0,
-      "intelligence": 0
+      "constitution": 1
     },
     "deck": [
       "furnaceSaint.openFurnace",
@@ -1250,7 +1239,8 @@
     "gear": [],
     "relics": [
       "enemy.relic.abyssalCrown",
-      "enemy.relic.ashenCore"
+      "enemy.relic.ashenCore",
+      "enemy.relic.emberBand"
     ],
     "poiseMax": 40,
     "levelProfile": {
@@ -1280,11 +1270,11 @@
     "name": "The Hollow Astronomer",
     "tier": "boss",
     "attributes": {
-      "strength": 1,
-      "dexterity": 0,
-      "constitution": 2,
-      "wisdom": 1,
-      "intelligence": 0
+      "strength": 2,
+      "dexterity": 1,
+      "intelligence": 1,
+      "wisdom": 2,
+      "constitution": 0
     },
     "deck": [
       "hollowAstronomer.starChart",
@@ -1307,7 +1297,8 @@
       "enemy.gear.ironTalisman"
     ],
     "relics": [
-      "enemy.relic.abyssalCrown"
+      "enemy.relic.abyssalCrown",
+      "enemy.relic.graveSeal"
     ],
     "poiseMax": 25,
     "levelProfile": {
@@ -1333,11 +1324,11 @@
     "name": "The Ashheart Dragon",
     "tier": "boss",
     "attributes": {
-      "strength": 1,
-      "dexterity": 0,
-      "constitution": 2,
-      "wisdom": 1,
-      "intelligence": 0
+      "strength": 4,
+      "dexterity": 1,
+      "intelligence": 0,
+      "wisdom": 2,
+      "constitution": 0
     },
     "deck": [
       "ashheartDragon.obsidianClaws",
@@ -1356,12 +1347,11 @@
     ],
     "firstCard": "ashheartDragon.obsidianClaws",
     "gear": [
-      "enemy.gear.heavyPlate",
       "enemy.gear.ironTalisman"
     ],
     "relics": [
       "enemy.relic.abyssalCrown",
-      "enemy.relic.graveSeal"
+      "enemy.relic.ashenCore"
     ],
     "poiseMax": 34,
     "levelProfile": {

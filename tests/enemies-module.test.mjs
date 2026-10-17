@@ -29,18 +29,25 @@ test('core profile enables the enemies module with its JSON defaults', () => {
   assert.equal(settings.healRules.shapes.find(s => s.id === 'cheap').exhaust, true);
 });
 
-test('pools derive from attributes: minions CON 0 / 2 SP, elites CON 1 / 3 SP, bosses CON 2 / 2-3 SP', () => {
-  const byTier = tier => enemies.filter(e => e.tier === tier).map(e => enemyPools(e, settings));
-  const con = tier => new Set(enemies.filter(e => e.tier === tier).map(e => e.attributes.constitution));
-  assert.ok(enemies.some(e => e.tier === 'minion'));
-  for (const e of enemies) assert.equal(Object.values(e.attributes).reduce((a, b) => a + b, 0), 4, `${e.id} assigns 4 points`);
-  assert.deepEqual([...con('minion')], [0], 'minions carry no CON');
-  assert.deepEqual([...con('elite')], [1], 'elites CON 1');
-  assert.deepEqual([...con('boss')], [2], 'bosses CON 2');
-  assert.ok(byTier('minion').every(p => p.sp === 2), 'minion SP 2');
-  assert.ok(byTier('elite').every(p => p.sp === 3), 'elite SP 3');
-  assert.ok(byTier('boss').every(p => p.sp >= 2 && p.sp <= 3), 'boss SP 2-3');
-  assert.deepEqual(settings.tiers.boss.spRange, [2, 3]);
+test('attributes start at 0 and are assigned freely: minion 4, elite 5, boss 6-7 points', () => {
+  const total = e => Object.values(e.attributes).reduce((a, b) => a + b, 0);
+  for (const e of enemies) {
+    const [lo, hi] = { minion: [4, 4], elite: [5, 5], boss: [6, 7] }[e.tier];
+    assert.ok(total(e) >= lo && total(e) <= hi, `${e.id} (${e.tier}) assigns ${total(e)}`);
+    assert.deepEqual(settings.tiers[e.tier].attributeBudget, [lo, hi]);
+  }
+  // Free assignment: enemies differ, and no tier is pinned to one CON value.
+  assert.ok(new Set(enemies.map(e => JSON.stringify(e.attributes))).size >= 8, 'stat shapes vary');
+  assert.ok(new Set(enemies.filter(e => e.tier === 'minion').map(e => e.attributes.constitution)).size > 1);
+});
+
+test('CON stays small: at most 1 unless the enemy\'s own cards need more SP', () => {
+  for (const e of enemies) {
+    const pools = enemyPools(e, settings);
+    const needs = Math.max(...[...e.deck, ...(e.unlockCards || [])].map(id => enemyCards.find(c => c.id === id)?.staminaCost ?? 0));
+    if (e.attributes.constitution > 1) assert.ok(needs > settings.tiers[e.tier].pools.sp, `${e.id} CON ${e.attributes.constitution} unjustified`);
+    assert.ok(needs <= pools.sp, `${e.id} can pay its dearest card`);
+  }
 });
 
 test('enemy decks vary in size within the configured bounds and resolve every reference', () => {
@@ -63,10 +70,6 @@ test('heal cards take their cost from healRules; minion heals are the cheap exha
     }
     assert.ok(card.effects.some(e => e.op === 'heal' && e.rule === 'healRules'));
   }
-});
-
-test('validator refuses a boss whose SP leaves the 2-3 range', () => {
-  assert.throws(resolveWith(p => { const b = p.enemies.find(e => e.tier === 'boss'); b.attributes.constitution = 4; b.attributes.strength = Math.max(0, b.attributes.strength - 2); }), /SP 4 outside boss range 2-3/);
 });
 
 test('validator refuses an unknown card reference', () => {

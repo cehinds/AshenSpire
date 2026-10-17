@@ -35,11 +35,11 @@ function tierOf(id) {
   return tier;
 }
 
-// Owner 2026-10-17: every enemy starts at 0 in all five attributes and assigns 4 points; minion CON 0, elite 1, boss 2.
+// Attribute points (owner 2026-10-17): minion 4, elite 5, boss 6-7 (7 for bosses whose legacy stat block totals 25+).
 const PLAN = {
-  minion: { budget: 4, constitution: 0, deck: 6 },
-  elite: { budget: 4, constitution: 1, deck: 8 },
-  boss: { budget: 4, constitution: 2, deck: 10 },
+  minion: { budget: () => 4, deck: 6 },
+  elite: { budget: () => 5, deck: 8 },
+  boss: { budget: enemy => (Object.values(enemy.attributes || {}).reduce((a, b) => a + b, 0) >= 25 ? 7 : 6), deck: 10 },
 };
 const ATTRS = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
 
@@ -113,13 +113,27 @@ function split(total, weights) {
   return out;
 }
 
-function attributesFor(enemy, plan, cards) {
-  const needMp = Math.max(0, ...cards.map(c => c.manaCost));
-  const out = { strength: 0, dexterity: 0, constitution: plan.constitution, wisdom: needMp, intelligence: 0 };
-  const rest = Math.max(0, plan.budget - plan.constitution - needMp);
-  const ids = ['strength', 'dexterity', 'wisdom', 'intelligence'];
-  const weights = ids.map(id => Number(enemy.attributes?.[id]) || 1);
-  split(rest, weights).forEach((n, i) => { out[ids[i]] += n; });
+// Owner 2026-10-17: all five start at 0 and each enemy assigns its points freely, so each is
+// distinct. The legacy stat shape decides the spread; the only floors are what its own cards
+// need to be playable (WIS for MP costs, CON for SP costs above the tier base).
+function attributesFor(enemy, plan, cards, tier) {
+  const t = settings.tiers[tier], g = settings.attributeGains;
+  const needMp = Math.max(0, ...cards.map(c => c.manaCost)) - t.pools.mp;
+  const needSp = Math.max(0, ...cards.map(c => c.staminaCost)) - t.pools.sp;
+  const floor = { strength: 0, dexterity: 0, intelligence: 0,
+    wisdom: Math.max(0, Math.ceil(needMp / g.wisdom.mp)),
+    constitution: Math.max(0, Math.ceil(needSp / g.constitution.sp)) };
+  const out = { ...floor };
+  const rest = Math.max(0, plan.budget(enemy) - Object.values(floor).reduce((a, b) => a + b, 0));
+  // Sharpen the legacy shape (square it) so a brute leans STR and a wisp leans WIS.
+  const weights = ATTRS.map(id => (Number(enemy.attributes?.[id]) || 1) ** 2);
+  split(rest, weights).forEach((n, i) => { out[ATTRS[i]] += n; });
+  // CON adds HP; a fragile enemy must not outgrow its HP, so surplus CON moves to its next-best stat.
+  const targetHp = Math.round(((enemy.hp?.[0] ?? 0) + (enemy.hp?.[1] ?? 0)) / 2);
+  const next = ATTRS.filter(id => id !== 'constitution').sort((a, b) => weights[ATTRS.indexOf(b)] - weights[ATTRS.indexOf(a)])[0];
+  // Owner: enemies are hard already; CON stays small (at most 1 beyond what their cards need).
+  while (out.constitution > Math.max(floor.constitution, 1)) { out.constitution--; out[next]++; }
+  while (out.constitution > floor.constitution && t.pools.hp + out.constitution * g.constitution.hp > targetHp * 1.1) { out.constitution--; out[next]++; }
   return out;
 }
 
@@ -171,7 +185,7 @@ for (const enemy of roster) {
   const size = Math.max(active.length, Math.min(settings.tiers[tier].deckSize[1], Math.max(settings.tiers[tier].deckSize[0], plan.deck)));
   const copies = split(size - active.length, active.map(x => x.m.weight ?? 1)).map(n => n + 1);
   const deck = active.flatMap((x, i) => Array(copies[i]).fill(x.card.id));
-  const attributes = attributesFor(enemy, plan, enemyCards);
+  const attributes = attributesFor(enemy, plan, enemyCards, tier);
   const t = settings.tiers[tier], g = settings.attributeGains;
   const baseHp = t.pools.hp + attributes.constitution * g.constitution.hp;
   const targetHp = Math.round(((enemy.hp?.[0] ?? baseHp) + (enemy.hp?.[1] ?? baseHp)) / 2);
