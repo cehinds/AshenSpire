@@ -1,0 +1,51 @@
+name: Enemy rear artifact evidence
+on:
+  push:
+    branches: ['worker/EnemyBackSprites/artifact-evidence']
+permissions:
+  contents: write
+  actions: read
+jobs:
+  capture:
+    if: github.event.head_commit.message == '[capture enemy rear evidence]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            pose-studio/enemy-back-proposals
+            tools/feature-preview.mjs
+            tools/receipts.mjs
+            tools/buildversion.mjs
+            CHANGELOG.md
+            buildordinal.json
+            README.md
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated capture tooling
+        run: |
+          npm install --prefix /tmp/enemy-rear-capture playwright sharp
+          /tmp/enemy-rear-capture/node_modules/.bin/playwright install --with-deps chromium
+      - name: Verify exact artifact and capture real views
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PLAYWRIGHT_MODULE: /tmp/enemy-rear-capture/node_modules/playwright/index.mjs
+          SHARP_MODULE: /tmp/enemy-rear-capture/node_modules/sharp/lib/index.js
+        run: node pose-studio/enemy-back-proposals/capture-artifact.mjs
+      - name: Commit evidence on its worker only
+        run: |
+          test "$GITHUB_REF_NAME" = worker/EnemyBackSprites/artifact-evidence
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f -- README.md CHANGELOG.md docs/preview/features/enemy-back-sprites/
+          git commit -m "Record deployed enemy rear review evidence"
+          git push origin HEAD:worker/EnemyBackSprites/artifact-evidence
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: enemy-rear-artifact-evidence
+          path: docs/preview/features/enemy-back-sprites/
