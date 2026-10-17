@@ -13,7 +13,8 @@
 //   node tools/text-geometry.mjs --shots docs/preview/text-geometry-source
 //   node tools/text-geometry.mjs --selftest
 //
-// BOUNDARY: one Chromium engine, two phone-shaped viewports, the customization
+// BOUNDARY: Current profile artwork, one Chromium engine, two phone-shaped
+// viewports, the customization
 // state, and Text M/XL. It does not judge copy wrapping, legibility, touch input,
 // every control, or every sprite tier. Source ownership checks cover the other
 // migrated floors; actionreach owns the wider responsive grid.
@@ -34,12 +35,12 @@ if (process.argv.includes('--selftest')) {
     timeoutMs: 240000,
     plants: [
       {
-        // The creation foot is the kit's ModalFoot now (customize.js on the page
-        // door), so the floor under the visible Next action is the shell's one rule in kit.css.
+        // W4's dialogue footer owns the visible Class-stage Next action's
+        // exact height and floor, overriding the base ModalFoot rule.
         name: 'the primary action floor follows root Text size again',
         file: 'styles/kit.css',
-        find: '.modal-foot-actions button { min-height: var(--tap-floor); }',
-        replace: '.modal-foot-actions button { min-height: 4.4rem; }',
+        find: '.dialogue-foot > .modal-foot-actions > button {\n  height: var(--dialogue-action-h, calc(44px / var(--ui-zoom, 1)));\n  min-height: var(--dialogue-action-h, calc(44px / var(--ui-zoom, 1)));\n}',
+        replace: '.dialogue-foot > .modal-foot-actions > button {\n  height: 4.4rem;\n  min-height: 4.4rem;\n}',
         expectRed: /action floor changed with Text size/,
       },
       {
@@ -52,25 +53,20 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'the customization class sprite returns to rem geometry',
         file: 'src/ui/assets.js',
-        find: "el.style.cssText = 'width:150px;height:190px;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:center;position:relative;';",
-        replace: "el.style.cssText = 'width:15rem;height:19rem;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:center;position:relative;';",
+        find: "frame.style.cssText = 'width:100%;height:100%;position:relative;';",
+        replace: "frame.style.cssText = 'width:15rem;height:19rem;position:relative;';",
         expectRed: /class sprite geometry changed with Text size/,
       },
       // Customization and combat use separate sprite stages now; the class
       // plant above owns the customization figure, and combat bounds are also
       // measured independently at each Text size.
       {
-        // WHERE THE TOP-ROW BUTTON'S BOX LIVES NOW: it is the kit's IconButton
-        // (styles/kit.css § IconButton), sized from `--iconbtn-size`, and the
-        // quick-nav copy of that fact in ui.css — `width: auto; height: auto;
-        // min-width/min-height: var(--tap-floor); font-size: 1.8rem` — is gone
-        // with the kit sweep, because the atom already carries it and the copy
-        // won on specificity. The plant is the same act at the new home: take
-        // the box down to a size the glyph cannot fit.
+        // Shared HUD quick-access tiles override the base IconButton size;
+        // constrain that actual owner so Text XL's glyph cannot fit.
         name: 'the top-row IconButton becomes a hard ceiling around Text XL',
         file: 'styles/kit.css',
-        find: '  width: var(--iconbtn-size); height: var(--iconbtn-size); flex: 0 0 auto;\n  min-width: var(--iconbtn-size); min-height: var(--iconbtn-size);',
-        replace: '  width: 12px; height: 12px; flex: 0 0 auto;\n  min-width: 0; min-height: 0;',
+        find: '  width: var(--hud-quick-tile-size); height: var(--hud-quick-tile-size);\n  min-width: var(--hud-quick-tile-size); min-height: var(--hud-quick-tile-size);',
+        replace: '  width: 12px; height: 12px;\n  min-width: 0; min-height: 0;',
         expectRed: /quick-nav button clips its Text XL glyph/,
       },
       {
@@ -87,9 +83,9 @@ if (process.argv.includes('--selftest')) {
       },
       {
         name: 'the ergonomic floor falls below 44 px on glass',
-        file: 'styles/base.css',
-        find: '--tap-floor: calc(var(--tap-target) / var(--ui-zoom, 1));',
-        replace: '--tap-floor: calc(36px / var(--ui-zoom, 1));',
+        file: 'styles/kit.css',
+        find: '.dialogue-foot > .modal-foot-actions > button {\n  height: var(--dialogue-action-h, calc(44px / var(--ui-zoom, 1)));\n  min-height: var(--dialogue-action-h, calc(44px / var(--ui-zoom, 1)));\n}',
+        replace: '.dialogue-foot > .modal-foot-actions > button {\n  height: calc(36px / var(--ui-zoom, 1));\n  min-height: calc(36px / var(--ui-zoom, 1));\n}',
         expectRed: /tap floor below 44px on glass/,
       },
     ],
@@ -341,7 +337,7 @@ async function main() {
     // content/source/uiStrings.csv (#1489 moved it out of settings.js); the
     // artifact carries the same sentence in its generated table.
     const settings = selectedArtifact ?? readFileSync(resolve(ROOT, 'content/source/uiStrings.csv'), 'utf8');
-    if (!kit.includes('.modal-foot-actions button { min-height: var(--tap-floor); }')) failures.push(`${ownershipKind} ownership seam missing: .modal-foot-actions button { min-height: var(--tap-floor); }`);
+    if (!kit.includes('.dialogue-foot > .modal-foot-actions > button {\n  height: var(--dialogue-action-h, calc(44px / var(--ui-zoom, 1)));\n  min-height: var(--dialogue-action-h, calc(44px / var(--ui-zoom, 1)));\n}')) failures.push(`${ownershipKind} ownership seam missing: dialogue action height and floor`);
     // Quick-nav rows and overview tabs now share the Kit atoms. The legacy
     // ui.css copies no longer own their floors.
     for (const seam of [
@@ -351,12 +347,12 @@ async function main() {
       if (!kit.includes(seam)) failures.push(`${ownershipKind} ownership seam missing: ${seam}`);
     }
     for (const seam of [
-      '  width: var(--iconbtn-size); height: var(--iconbtn-size); flex: 0 0 auto;\n  min-width: var(--iconbtn-size); min-height: var(--iconbtn-size);',
+      '  width: var(--hud-quick-tile-size); height: var(--hud-quick-tile-size);\n  min-width: var(--hud-quick-tile-size); min-height: var(--hud-quick-tile-size);',
     ]) {
       if (!kit.includes(seam)) failures.push(`${ownershipKind} ownership seam missing (kit): ${seam}`);
     }
     if (!enemyStage.includes('root.style.cssText = `position:relative;width:${art.idleWidth * scale}px;height:190px;flex:none;overflow:visible`;')) failures.push(`${ownershipKind} ownership seam missing: enemy sprite fixed px geometry`);
-    if (!assets.includes("width:150px;height:190px;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:center;position:relative;")) failures.push(`${ownershipKind} ownership seam missing: class sprite fixed px geometry`);
+    if (!assets.includes("frame.style.cssText = 'width:100%;height:100%;position:relative;';")) failures.push(`${ownershipKind} ownership seam missing: painted class sprite fills its fixed well`);
     // #498: this pinned the pre-rework copy after the Text-size rework shipped
     // the browser-baseline wording in both settings.js and the built artifact,
     // so the check could only fail — masked in CI because the `tests` job died
