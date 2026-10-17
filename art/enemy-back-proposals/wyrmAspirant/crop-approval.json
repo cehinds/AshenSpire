@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "status": "approved-for-draft-proposals",
+  "reviewer": "root agent",
+  "reviewDate": "2026-10-17",
+  "sourceSha256": "a31aa75b87658cbf642f2665663dfd6d8544746cd238ee522dff2de8e7a1074e",
+  "normalizedCommit": "89089322d763c27917ee2ef5e3f071f39640ecbc",
+  "horizontalCut": 393,
+  "rowCuts": [
+    [
+      404,
+      807,
+      1214,
+      1615
+    ],
+    [
+      413,
+      824,
+      1213,
+      1609
+    ]
+  ],
+  "review": "Root visually inspected contact sheet: complete weapons and tails, preserved rear identity. Draft authoring proposals only; no runtime publication approval."
+}
