@@ -16,7 +16,7 @@ const server = spawn(process.execPath, ['workbench/server.mjs', '--port', port, 
 let serverLog = '';
 server.stdout.on('data', chunk => { serverLog += chunk; });
 server.stderr.on('data', chunk => { serverLog += chunk; });
-let browser;
+let browser, page, lastScrub = null;
 const errors = [], failedArtwork = [], checks = [];
 const timeout = (fn, ms = 45000) => new Promise((done, fail) => {
   const start = Date.now();
@@ -35,7 +35,7 @@ try {
   const executablePath = process.env.CHROME_PATH || '/usr/bin/chromium';
   browser = await chromium.launch({ ...(existsSync(executablePath) ? { executablePath } : {}), args: ['--no-sandbox', '--mute-audio'] });
   const context = await browser.newContext({ viewport: { width: 1600, height: 1000 }, deviceScaleFactor: 1, colorScheme: 'dark' });
-  const page = await context.newPage();
+  page = await context.newPage();
   page.on('pageerror', error => errors.push(error.message));
   page.on('response', response => {
     if (response.status() < 400) return;
@@ -67,7 +67,13 @@ try {
     return frame;
   };
   const scrub = async (time, expected) => {
-    await page.locator('.mo-scrub').evaluate((element, time) => { element.value = String(time); element.dispatchEvent(new Event('input', { bubbles: true })); }, time);
+    lastScrub = await page.locator('.mo-scrub').evaluate((element, time) => {
+      element.value = String(time);
+      const requested = element.value;
+      element.dispatchEvent(new Event('input', { bubbles: true }));
+      return { requested, afterInput: element.value, min: element.min, max: element.max, step: element.step };
+    }, time);
+    assert.equal(lastScrub.afterInput, lastScrub.requested, 'pausing transport must preserve the user scrub value');
     const frame = await renderer();
     if (expected) await frame.waitForFunction(pose => document.getElementById('stage').dataset.pose === pose, expected);
     await painted(frame);
@@ -135,6 +141,9 @@ try {
   await page.waitForFunction(path => document.querySelector('.mo-file')?.textContent === path, editable);
   assert.equal(await page.locator('[data-mode="edit"]').isDisabled(), false);
   assert.equal(await page.locator('.mo-readonly').isVisible(), false);
+  const editableDuration = await page.locator('.mo-scrub').getAttribute('max');
+  await page.locator('.mo-scrub').evaluate((element, value) => { element.value = value; element.dispatchEvent(new Event('input', { bubbles: true })); }, String(Math.floor(Number(editableDuration) / 2)));
+  assert.equal(await page.locator('.mo-scrub').inputValue(), String(Math.floor(Number(editableDuration) / 2)), 'ordinary pose-file scrubbing also retains its requested time');
   checks.push('Returning to editable pose files restores editing controls');
   const touchContext = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, deviceScaleFactor: 1 });
   const touch = await touchContext.newPage();
@@ -168,7 +177,13 @@ try {
   writeFileSync(resolve(out, 'CAPTURE-DETAILS.md'), `# Motion Studio combat sequence review\n\nSource commit: ${source}\nCaptured: ${new Date().toISOString()}\n\nNative Workbench module at ${base}/#mod=motion. SM03 impact at 117ms; current registered class-default art. These captures inspect source playback, not a paid combat dispatch.\n\n${captures.map(row => `- ${row.name}: ${row.width}×${row.height}`).join('\n')}\n`);
   console.log(JSON.stringify({ passed: checks.length, captures: captures.length + 2, out, source }));
 } catch (error) {
-  writeFileSync(resolve(out, 'failure.json'), JSON.stringify({ message: error.stack, errors, failedArtwork, serverLog }, null, 2));
+  let observed = null;
+  if (page && !page.isClosed()) {
+    observed = await page.evaluate(() => ({ file: document.querySelector('.mo-file')?.textContent, time: document.querySelector('.mo-time')?.textContent, play: document.querySelector('.mo-play')?.getAttribute('aria-pressed'), scrub: document.querySelector('.mo-scrub')?.value, setup: document.querySelector('.mo-setup')?.textContent })).catch(() => null);
+    observed = { ...observed, renderer: await Promise.all(page.frames().filter(frame => frame.url().includes('/modules/motion/render.html')).map(frame => frame.evaluate(() => ({ ...document.getElementById('stage')?.dataset })).catch(() => null))) };
+    await page.screenshot({ path: resolve(out, 'failure.png'), fullPage: true }).catch(() => {});
+  }
+  writeFileSync(resolve(out, 'failure.json'), JSON.stringify({ message: error.stack, lastScrub, observed, errors, failedArtwork, serverLog }, null, 2));
   throw error;
 } finally {
   await browser?.close();

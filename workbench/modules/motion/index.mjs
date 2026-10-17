@@ -763,7 +763,12 @@ export default {
     speedEl.addEventListener('change', () => { st.speed = Number(speedEl.value) || 1; renderTransport(); });
     loopEl.addEventListener('change', () => { st.loop = loopEl.checked; });
     playBtn.addEventListener('click', () => setPlaying(!st.playing));
-    scrub.addEventListener('input', () => { setPlaying(false); seek(Number(scrub.value)); });
+    scrub.addEventListener('input', () => {
+      // Pausing redraws the transport, so retain the user's value before that redraw.
+      const time = Number(scrub.value);
+      setPlaying(false);
+      seek(time);
+    });
     const poseCount = () => viewProject()?.poses.length || 0;
     $('.mo-pprev').addEventListener('click', () => { setPlaying(false); seek(stepPose(poseCount(), duration(), st.time, -1, viewProject()?.weights)); });
     $('.mo-pnext').addEventListener('click', () => { setPlaying(false); seek(stepPose(poseCount(), duration(), st.time, 1, viewProject()?.weights)); });
