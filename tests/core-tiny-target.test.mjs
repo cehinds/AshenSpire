@@ -9,7 +9,7 @@ function frame() {
 const art = (width, height) => ({ left: 100, right: 100 + width, top: 160, bottom: 160 + height });
 
 test('tiny Core actors have a physical44px target at their measured painted center at every zoom', () => {
-  for (const zoom of [.5, .83, 1, 1.5, 2]) for (const [width, height] of [[16,16], [16,80], [80,16]]) {
+  for (const zoom of [.5, .83, 1, 1.5, 2]) for (const [width, height] of [[16,16], [16,80], [80,16], [33.73,40.55], [43.99,80], [80,43.99]]) {
     const target = frame(), painted = art(width, height), before = structuredClone(painted);
     assert.equal(syncCoreTinyTarget(target, painted, { left:80, top:120 }, zoom), true);
     const n = key => parseFloat(target.values.get(key)) * zoom;
@@ -25,7 +25,7 @@ test('tiny Core actors have a physical44px target at their measured painted cent
 test('returning to normal art clears the tiny target instead of leaving a stale proxy', () => {
   const target = frame();
   assert.equal(syncCoreTinyTarget(target, art(16,16), {left:80,top:120}, .83), true);
-  assert.equal(syncCoreTinyTarget(target, art(24,24), {left:80,top:120}, .83), false);
+  assert.equal(syncCoreTinyTarget(target, art(44,44), {left:80,top:120}, .83), false);
   assert.equal(target.values.size, 0);
   assert.equal(target.dataset.coreTinyTarget, undefined);
   for (const [painted, zoom] of [[art(0,16),1], [art(16,0),1], [art(16,16),0], [{...art(16,16),top:NaN},1]]) {

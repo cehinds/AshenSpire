@@ -41,12 +41,13 @@ export function targetOverheadPlacement({ art, box, headerBottom, gap = 14, zoom
 }
 
 // Core uses the painted sprite as its usual target. Only genuinely tiny art
-// needs an independent physical44px door; remove it as soon as normal art returns.
+// needs an independent physical44px door. A narrow silhouette inside a
+// sub44px box cannot guarantee a usable24px patch; normal art clears the door.
 export function syncCoreTinyTarget(frame, art, frameBox, zoom = 1) {
   const keys = ['--enemy-hit-x', '--enemy-hit-y', '--enemy-hit-width', '--enemy-hit-height'];
   const width = art.right - art.left, height = art.bottom - art.top;
   const tiny = [art.left, art.right, art.top, art.bottom, frameBox.left, frameBox.top, zoom].every(Number.isFinite)
-    && zoom > 0 && width > 0 && height > 0 && (width < 24 || height < 24);
+    && zoom > 0 && width > 0 && height > 0 && (width < COMBAT_TARGET_HIT_PX || height < COMBAT_TARGET_HIT_PX);
   for (const key of keys) frame.style.removeProperty(key);
   if (!tiny) { delete frame.dataset.coreTinyTarget; return false; }
   frame.dataset.coreTinyTarget = 'true';
