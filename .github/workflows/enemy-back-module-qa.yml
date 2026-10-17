@@ -1,7 +1,7 @@
 name: Enemy back module QA
 on:
   push:
-    branches: ['worker/EnemyBackSprites/module', 'worker/EnemyBackSprites/gallery-preview', 'worker/EnemyBackSprites/gallery-content', 'worker/EnemyBackSprites/gallery-final']
+    branches: ['worker/EnemyBackSprites/module', 'worker/EnemyBackSprites/gallery-preview', 'worker/EnemyBackSprites/gallery-content', 'worker/EnemyBackSprites/gallery-final', 'worker/EnemyBackSprites/gallery-130']
   pull_request:
     branches: ['feature/EnemyBackSprites']
     paths: ['pose-studio/enemy-back-proposals/**', '.github/workflows/enemy-back-module-qa.yml']
