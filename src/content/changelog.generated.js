@@ -3,6 +3,46 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-2023",
+    "date": "2026-10-16",
+    "group": "2026-10-16",
+    "summary": "Core becomes the default, with consistent combat and shared HUD presentation",
+    "detail": "New runs use the configurable Core game; existing saves retain their original rules. Map, combat, rest, and other run screens share the same responsive header. Combat uses cell-aligned sprites and health bars, head-relative intent and mini HUDs, consistent body height across held stances, native inspection gestures, readable card fans, and explicit scene layering.",
+    "build": "0.7.1.1539",
+    "pullRequest": 2023,
+    "url": "https://github.com/cehinds/AshenSpire/pull/2023"
+  },
+  {
+    "id": "pr-2017",
+    "date": "2026-10-15",
+    "group": "2026-10-15",
+    "summary": "Card previews use the stance the card will enter",
+    "detail": "Rogue Piercing Flurry now previews both damage hits with its accepted Attack rating before play. Spell Counter previews include their Counterstrike protection boost. Previewing a card leaves the live fight and its resources unchanged. Combat audit tools distinguish configured new-run defaults from raw authored fixtures, and the real-browser full-run check avoids unnecessarily scrolling visible controls before clicking.",
+    "build": "0.7.1.1539",
+    "pullRequest": 2017,
+    "url": "https://github.com/cehinds/AshenSpire/pull/2017"
+  },
+  {
+    "id": "pr-1990",
+    "date": "2026-10-15",
+    "group": "2026-10-15",
+    "summary": "Quit is the final main menu entry, and blocked browser exits explain what happened",
+    "detail": "Quit saves the run before leaving. When the browser refuses to close the tab, a visible message lets you return to the game. Settings defers preparing its sample card until you open the preview, and card-value calculation indexes tags once per operation. The combat audit now inventories cards from the registries and checks paid effects and next-turn recovery through native and compiled engines.",
+    "build": "0.7.1.1537",
+    "pullRequest": 1990,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1990"
+  },
+  {
+    "id": "pr-2010",
+    "date": "2026-10-15",
+    "group": "2026-10-15",
+    "summary": "Selected combat details keep their numbers apart",
+    "detail": "The player's compact plate leaves room below the health bar for its HP value before the Poise and Ward labels, including narrow phones. Evade, Poise, Ward, Block and HP retain their order, and Barrier keeps its protection marker.",
+    "build": "0.7.1.1535",
+    "pullRequest": 2010,
+    "url": "https://github.com/cehinds/AshenSpire/pull/2010"
+  },
+  {
     "id": "pr-1996",
     "date": "2026-10-15",
     "group": "2026-10-15",
@@ -11,6 +51,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1533",
     "pullRequest": 1996,
     "url": "https://github.com/cehinds/AshenSpire/pull/1996"
+  },
+  {
+    "id": "pr-2004",
+    "date": "2026-10-15",
+    "group": "2026-10-15",
+    "summary": "Feature Play links are checked after publication",
+    "detail": "Development-process change only. After Pages deployment, publication checks the public feature index, its source commit, the sandbox wrapper and loader, and that the game payload is available as nonempty plain text. This route check does not execute the game.",
+    "build": "0.7.1.1531",
+    "pullRequest": 2004,
+    "url": "https://github.com/cehinds/AshenSpire/pull/2004"
   },
   {
     "id": "pr-1995",

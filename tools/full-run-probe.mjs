@@ -231,7 +231,7 @@ async function until(expression, what, ms = 20000) {
 const point = (selector) => ev(`(() => {
   const el = document.querySelector(${JSON.stringify(selector)});
   if (!el) return null;
-  el.scrollIntoView({ block: 'center', inline: 'center' });
+  el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
   const b = el.getBoundingClientRect();
   return { x: b.x + b.width / 2, y: b.y + b.height / 2, hold: Number(el.dataset.holdMs) || 0 };
 })()`);

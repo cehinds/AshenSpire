@@ -1,0 +1,1227 @@
+{
+  "note": "Curated field projection of the unmodified raw manifest, not a replacement for raw event evidence. Raw receipt and all screenshots remain in the linked immutable artifact. Data fixtures and display limitations are explicit.",
+  "captureRun": 38720640518,
+  "captureArtifact": 11964822196,
+  "captureCommit": "c66d97fb4335c958f4548cb90cd5ca594ce90ec6",
+  "captureZipSha256": "d0b7338ca26474d42b087727a752a933dadad5da52f5503ac12d07ef5912db3f",
+  "rawManifestSha256": "c8ff82cf6edf230c5044cc308240224c2d0646366ecdec71be21260d45e885fa",
+  "identity": {
+    "run": 38720084161,
+    "id": 11964178167,
+    "commit": "5be5ec5e219ea10bb99acd08d1c5bbb1c930f4e1",
+    "source": "5bec9d014c",
+    "ordinal": "1538",
+    "archiveSha256": "6b332f6a479f1170b9ccbb1437fd4e7428c3f5796a40efb9f64b8c3a3d7bceea",
+    "archiveBytes": 50376524,
+    "htmlBytes": 79979392,
+    "archiveVerified": {
+      "run": 38720084161,
+      "id": 11964178167,
+      "commit": "5be5ec5e219ea10bb99acd08d1c5bbb1c930f4e1",
+      "source": "5bec9d014c",
+      "ordinal": "1538",
+      "archiveSha256": "6b332f6a479f1170b9ccbb1437fd4e7428c3f5796a40efb9f64b8c3a3d7bceea",
+      "archiveBytes": 50376524,
+      "htmlBytes": 79979392,
+      "artifactName": "feature-preview-5be5ec5e219ea10bb99acd08d1c5bbb1c930f4e1",
+      "observedAt": "2026-10-15T10:29:46.262Z"
+    },
+    "observedSha256": "c42a61470fb7ecd292d36deb6756135e6c06b5d181916aeb5204d22997333dfc",
+    "bytes": 79979392,
+    "observedSource": "5bec9d014c",
+    "observedOrdinal": "1538",
+    "edition": "light",
+    "runPath": "standalone file"
+  },
+  "started": "2026-10-15T10:29:49.027Z",
+  "finished": "2026-10-15T10:30:38.619Z",
+  "browser": "155.0.8059.39",
+  "viewport": {
+    "width": 1440,
+    "height": 1000,
+    "deviceScaleFactor": 1
+  },
+  "passed": true,
+  "cases": [
+    {
+      "case": "neutral",
+      "fixture": "Existing compiled screenshot route, Rogue seed B (11), native dagger Strike (rating 2). Mirrors reviewed combat-preview-stance-parity guard test: hand only native Strike, other piles empty; neutral or data-only prior Defend; enemy HP36/Block8/Poise10, Barrier/Ward0, enemy Defend. Accuracy is primed using saved counters of the original seeded RNG, with no replaced functions. Host deck mirrors the fixture instance for normal UI callbacks. Selected hand face intentionally states un-aimed offensive6\u00d72, not mitigated damage. Real card select, pointer hover and enemy-figure click; no dispatch/preview helper or forced DOM events called. Not earned campaign progress.",
+      "url": "http://127.0.0.1:43945/AshenSpire.html?shot=combat&shotClass=rogue&shotSeed=B",
+      "loadedBodySha256": "c42a61470fb7ecd292d36deb6756135e6c06b5d181916aeb5204d22997333dfc",
+      "loadedBodyBytes": 79979392,
+      "selectedText": "Piercing Flurry\nInflict 6 Piercing damage \u00d72\nEntry: +1 Precision\n1\nATTACK\nMelee\n1",
+      "displayContract": "The hand uses an un-aimed offensive face (base3 + accepted source Attack3),6\u00d72 before target defenses. Actual guarded outcome is validated separately by paid events:1HP per hit,2 total; this DOM is not a mitigated-total display.",
+      "previewPreserved": true,
+      "before": {
+        "instance": {
+          "breakMeterVersion": 2,
+          "instanceId": "stance-parity",
+          "cardId": "strike",
+          "upgraded": false,
+          "mods": [
+            "damage=3",
+            "hits=2"
+          ],
+          "damageSchool": "physical",
+          "physicalDamageType": "piercing",
+          "exposureBuildupPerHit": 0,
+          "equipmentRole": "granted",
+          "profileId": "daggerPierceAttack",
+          "profileReceipt": {
+            "role": "attack",
+            "profileId": "daggerPierceAttack",
+            "pieceId": "dagger",
+            "base": 3,
+            "rarity": "common",
+            "rarityBonus": 0,
+            "rating": {
+              "id": "ar",
+              "attributeBase": 0,
+              "attributeValue": 1,
+              "equipmentBase": 1,
+              "value": 2,
+              "sourceLabel": "weapon"
+            },
+            "effectBase": 3,
+            "raw": 5,
+            "cap": null,
+            "value": 5
+          },
+          "ratingId": "ar",
+          "ratingValue": 2,
+          "kitRole": "attack",
+          "grantedBy": "dagger",
+          "grantSource": "from:weapon",
+          "sourceArmamentId": "dagger",
+          "smithingLevel": 0
+        },
+        "player": {
+          "classId": "rogue",
+          "hp": 53,
+          "maxHp": 53,
+          "stamina": 3,
+          "maxStamina": 3,
+          "mana": 1,
+          "maxMana": 1,
+          "block": 0,
+          "barrier": 0,
+          "ratings": {
+            "ar": 3,
+            "dr": 10,
+            "pr": 1,
+            "poise": 6,
+            "ward": 2
+          },
+          "persistentWard": {
+            "max": 2,
+            "value": 2
+          }
+        },
+        "enemies": [
+          {
+            "id": "e1",
+            "enemyId": "wanderingSoldier",
+            "hp": 36,
+            "maxHp": 36,
+            "block": 8,
+            "barrier": 0,
+            "ratings": {
+              "ar": 0,
+              "dr": 0,
+              "pr": 0,
+              "poise": 10,
+              "ward": 0
+            },
+            "persistentPoise": {
+              "max": 10,
+              "value": 10
+            },
+            "persistentWard": {
+              "max": 0,
+              "value": 0
+            },
+            "combatStance": {
+              "maneuver": "defend",
+              "camp": "physical",
+              "range": "melee"
+            }
+          }
+        ],
+        "rngSeed": 11,
+        "rngCounters": {
+          "map": 104,
+          "shuffle": 10,
+          "cardRewards": 0,
+          "relicRewards": 0,
+          "flaskRewards": 0,
+          "armaments": 0,
+          "enemyAI": 3,
+          "enemyHP": 1,
+          "events": 13,
+          "shop": 0,
+          "misc": 0,
+          "smith": 0,
+          "combatProcs": 0,
+          "seats": 2,
+          "rewardRolls": 0,
+          "shopOffers": 0,
+          "sigils": 0,
+          "enemyIntentVisibility": 1,
+          "combatAvoidance": 13,
+          "statusRecovery": 0,
+          "statusPressure": 0,
+          "ashenBlight": 0,
+          "enemyIntentClue": 1,
+          "enemyReaction": 0
+        }
+      },
+      "control": {
+        "x": 755.240625,
+        "y": 217.353125,
+        "hit": "DIV",
+        "classes": "enemy-pose-stage enemy-expansion-stage"
+      },
+      "after": {
+        "player": {
+          "classId": "rogue",
+          "hp": 53,
+          "maxHp": 53,
+          "stamina": 2,
+          "maxStamina": 3,
+          "mana": 1,
+          "maxMana": 1,
+          "block": 0,
+          "barrier": 0,
+          "ratings": {
+            "ar": 3,
+            "dr": 10,
+            "pr": 1,
+            "poise": 6,
+            "ward": 2
+          },
+          "persistentWard": {
+            "max": 2,
+            "value": 2
+          },
+          "combatStance": {
+            "maneuver": "attack",
+            "camp": "physical",
+            "range": "melee"
+          }
+        },
+        "enemies": [
+          {
+            "id": "e1",
+            "enemyId": "wanderingSoldier",
+            "hp": 34,
+            "maxHp": 36,
+            "block": 0,
+            "barrier": 0,
+            "ratings": {
+              "ar": 0,
+              "dr": 0,
+              "pr": 0,
+              "poise": 10,
+              "ward": 0
+            },
+            "persistentPoise": {
+              "max": 10,
+              "value": 8
+            },
+            "persistentWard": {
+              "max": 0,
+              "value": 0
+            },
+            "combatStance": {
+              "maneuver": "defend",
+              "camp": "physical",
+              "range": "melee"
+            }
+          }
+        ],
+        "queue": 0,
+        "pending": false,
+        "runtimePreserved": true,
+        "rngPreserved": true
+      },
+      "eventReceiptProjection": [
+        {
+          "type": "cardPreparing",
+          "cardId": "strike",
+          "cardInstanceId": "stance-parity",
+          "sourceId": "player",
+          "targetId": "e1"
+        },
+        {
+          "type": "energySpent",
+          "amount": 1
+        },
+        {
+          "type": "staminaSpent",
+          "amount": 1
+        },
+        {
+          "type": "combatStanceChanged",
+          "sourceId": "player"
+        },
+        {
+          "type": "cardPlayed",
+          "cardId": "strike",
+          "cardInstanceId": "stance-parity",
+          "sourceId": "player",
+          "targetId": "e1",
+          "energySpent": 1,
+          "staminaSpent": 1,
+          "manaSpent": 0
+        },
+        {
+          "type": "statusApplied",
+          "cardId": "strike",
+          "cardInstanceId": "stance-parity",
+          "sourceId": "player",
+          "targetId": "player",
+          "total": 1,
+          "triggeredBy": {
+            "kind": "stance",
+            "id": "attack",
+            "ownerId": "player"
+          },
+          "status": "precision",
+          "stacks": 1
+        },
+        {
+          "type": "attackHit",
+          "sourceId": "player",
+          "targetId": "e1"
+        },
+        {
+          "type": "damageDealt",
+          "cardId": "strike",
+          "cardInstanceId": "stance-parity",
+          "sourceId": "player",
+          "targetId": "e1",
+          "amount": 5,
+          "incoming": 6,
+          "base": 6,
+          "blocked": 4,
+          "poiseAbsorbed": 1,
+          "poiseRemaining": 9,
+          "blockRemaining": 4,
+          "barrierRemaining": 0
+        },
+        {
+          "type": "relicTriggered",
+          "cardId": "strike",
+          "cardInstanceId": "stance-parity",
+          "sourceId": "player"
+        },
+        {
+          "type": "relicTriggered",
+          "cardId": "strike",
+          "cardInstanceId": "stance-parity",
+          "sourceId": "player"
+        },
+        {
+          "type": "hpLost",
+          "cardId": "strike",
+          "cardInstanceId": "stance-parity",
+          "sourceId": "player",
+          "targetId": "e1",
+          "amount": 1
+        },
+        {
+          "type": "ratingImpact",
+          "cardId": "strike",
+          "cardInstanceId": "stance-parity",
+          "sourceId": "player",
+          "targetId": "e1",
+          "amount": 1,
+          "max": 10,
+          "value": 1
+        },
+        {
+          "type": "damageDealt",
+          "cardId": "strike",
+          "cardInstanceId": "stance-parity",
+          "sourceId": "player",
+          "targetId": "e1",
+          "amount": 5,
+          "incoming": 6,
+          "base": 6,
+          "blocked": 4,
+          "poiseAbsorbed": 1,
+          "poiseRemaining": 8,
+          "blockRemaining": 0,
+          "barrierRemaining": 0
+        },
+        {
+          "type": "blockBroken",
+          "cardId": "strike",
+          "cardInstanceId": "stance-parity",
+          "sourceId": "player",
+          "targetId": "e1"
+        },
+        {
+          "type": "hpLost",
+          "cardId": "strike",
+          "cardInstanceId": "stance-parity",
+          "sourceId": "player",
+          "targetId": "e1",
+          "amount": 1
+        },
+        {
+          "type": "ratingImpact",
+          "cardId": "strike",
+          "cardInstanceId": "stance-parity",
+          "sourceId": "player",
+          "targetId": "e1",
+          "amount": 1,
+          "max": 10,
+          "value": 2
+        },
+        {
+          "type": "statusApplied",
+          "sourceId": "player",
+          "targetId": "e1",
+          "total": 2,
+          "triggeredBy": {
+            "kind": "relic",
+            "id": "cutpursesCoin",
+            "ownerId": "player"
+          },
+          "status": "venom",
+          "stacks": 2
+        },
+        {
+          "type": "procResisted",
+          "targetId": "e1",
+          "blocked": 1,
+          "triggeredBy": {
+            "kind": "relic",
+            "id": "whetstonePouch",
+            "ownerId": "player"
+          },
+          "status": "bleed"
+        },
+        {
+          "type": "statusApplied",
+          "sourceId": "player",
+          "targetId": "e1",
+          "total": 1,
+          "triggeredBy": {
+            "kind": "relic",
+            "id": "whetstonePouch",
+            "ownerId": "player"
+          },
+          "status": "bleed",
+          "stacks": 1
+        },
+        {
+          "type": "cardResolved",
+          "cardId": "strike",
+          "cardInstanceId": "stance-parity",
+          "sourceId": "player",
+          "targetId": "e1"
+        }
+      ],
+      "screenshots": {
+        "selected.png": "497f7757017994a27b61d2467a76e8ce617c713ea7dca23e2a99d1f57f05de5f",
+        "paid.png": "608f89eed3203b91960953c1f6a289c4e1142e8bd560376a192d6c53fa674708"
+      },
+      "passed": true
+    },
+    {
+      "case": "defend",
+      "fixture": "Existing compiled screenshot route, Rogue seed B (11), native dagger Strike (rating 2). Mirrors reviewed combat-preview-stance-parity guard test: hand only native Strike, other piles empty; neutral or data-only prior Defend; enemy HP36/Block8/Poise10, Barrier/Ward0, enemy Defend. Accuracy is primed using saved counters of the original seeded RNG, with no replaced functions. Host deck mirrors the fixture instance for normal UI callbacks. Selected hand face intentionally states un-aimed offensive6\u00d72, not mitigated damage. Real card select, pointer hover and enemy-figure click; no dispatch/preview helper or forced DOM events called. Not earned campaign progress.",
+      "url": "http://127.0.0.1:43945/AshenSpire.html?shot=combat&shotClass=rogue&shotSeed=B",
+      "loadedBodySha256": "c42a61470fb7ecd292d36deb6756135e6c06b5d181916aeb5204d22997333dfc",
+      "loadedBodyBytes": 79979392,
+      "selectedText": "Piercing Flurry\nInflict 6 Piercing damage \u00d72\nEntry: +1 Precision\n1\nATTACK\nMelee\n1",
+      "displayContract": "The hand uses an un-aimed offensive face (base3 + accepted source Attack3),6\u00d72 before target defenses. Actual guarded outcome is validated separately by paid events:1HP per hit,2 total; this DOM is not a mitigated-total display.",
+      "previewPreserved": true,
+      "before": {
+        "instance": {
+          "breakMeterVersion": 2,
+          "instanceId": "stance-parity",
+          "cardId": "strike",
+          "upgraded": false,
+          "mods": [
+            "damage=3",
+            "hits=2"
+          ],
+          "damageSchool": "physical",
+          "physicalDamageType": "piercing",
+          "exposureBuildupPerHit": 0,
+          "equipmentRole": "granted",
+          "profileId": "daggerPierceAttack",
+          "profileReceipt": {
+            "role": "attack",
+            "profileId": "daggerPierceAttack",
+            "pieceId": "dagger",
+            "base": 3,
+            "rarity": "common",
+            "rarityBonus": 0,
+            "rating": {
+              "id": "ar",
+              "attributeBase": 0,
+              "attributeValue": 1,
+              "equipmentBase": 1,
+              "value": 2,
+              "sourceLabel": "weapon"
+            },
+            "effectBase": 3,
+            "raw": 5,
+            "cap": null,
+            "value": 5
+          },
+          "ratingId": "ar",
+          "ratingValue": 2,
+          "kitRole": "attack",
+          "grantedBy": "dagger",
+          "grantSource": "from:weapon",
+          "sourceArmamentId": "dagger",
+          "smithingLevel": 0
+        },
+        "player": {
+          "classId": "rogue",
+          "hp": 53,
+          "maxHp": 53,
+          "stamina": 3,
+          "maxStamina": 3,
+          "mana": 1,
+          "maxMana": 1,
+          "block": 0,
+          "barrier": 0,
+          "ratings": {
+            "ar": 3,
+            "dr": 10,
+            "pr": 1,
+            "poise": 6,
+            "ward": 2
+          },
+          "persistentWard": {
+            "max": 2,
+            "value": 2
+          },
+          "combatStance": {
+            "maneuver": "defend",
+            "camp": "physical",
+            "range": "melee"
+          }
+        },
+        "enemies": [
+          {
+            "id": "e1",
+            "enemyId": "wanderingSoldier",
+            "hp": 36,
+            "maxHp": 36,
+            "block": 8,
+            "barrier": 0,
+            "ratings": {
+              "ar": 0,
+              "dr": 0,
+              "pr": 0,
+              "poise": 10,
+              "ward": 0
+            },
+            "persistentPoise": {
+              "max": 10,
+              "value": 10
+            },
+            "persistentWard": {
+              "max": 0,
+              "value": 0
+            },
+            "combatStance": {
+              "maneuver": "defend",
+              "camp": "physical",
+              "range": "melee"
+            }
+          }
+        ],
+        "rngSeed": 11,
+        "rngCounters": {
+          "map": 104,
+          "shuffle": 10,
+          "cardRewards": 0,
+          "relicRewards": 0,
+          "flaskRewards": 0,
+          "armaments": 0,
+          "enemyAI": 3,
+          "enemyHP": 1,
+          "events": 13,
+          "shop": 0,
+          "misc": 0,
+          "smith": 0,
+          "combatProcs": 0,
+          "seats": 2,
+          "rewardRolls": 0,
+          "shopOffers": 0,
+          "sigils": 0,
+          "enemyIntentVisibility": 1,
+          "combatAvoidance": 13,
+          "statusRecovery": 0,
+          "statusPressure": 0,
+          "ashenBlight": 0,
+          "enemyIntentClue": 1,
+          "enemyReaction": 0
+        }
+      },
+      "control": {
+        "x": 755.240625,
+        "y": 217.353125,
+        "hit": "DIV",
+        "classes": "enemy-pose-stage enemy-expansion-stage"
+      },
+      "after": {
+        "player": {
+          "classId": "rogue",
+          "hp": 53,
+          "maxHp": 53,
+          "stamina": 2,
+          "maxStamina": 3,
+          "mana": 1,
+          "maxMana": 1,
+          "block": 0,
+          "barrier": 0,
+          "ratings": {
+            "ar": 3,
+            "dr": 10,
+            "pr": 1,
+            "poise": 6,
+            "ward": 2
+          },
+          "persistentWard": {
+            "max": 2,
+            "value": 2
+          },
+          "combatStance": {
+            "maneuver": "attack",
+            "camp": "physical",
+            "range": "melee"
+          }
+        },
+        "enemies": [
+          {
+            "id": "e1",
+            "enemyId": "wanderingSoldier",
+            "hp": 34,
+            "maxHp": 36,
+            "block": 0,
+            "barrier": 0,
+            "ratings": {
+              "ar": 0,
+              "dr": 0,
+              "pr": 0,
+              "poise": 10,
+              "ward": 0
+            },
+            "persistentPoise": {
+              "max": 10,
+              "value": 8
+            },
+            "persistentWard": {
+              "max": 0,
+              "value": 0
+            },
+            "combatStance": {
+              "maneuver": "defend",
+              "camp": "physical",
+              "range": "melee"
+            }
+          }
+        ],
+        "queue": 0,
+        "pending": false,
+        "runtimePreserved": true,
+        "rngPreserved": true
+      },
+      "eventReceiptProjection": [
+        {
+          "type": "cardPreparing",
+          "cardId": "strike",
+          "cardInstanceId": "stance-parity",
+          "sourceId": "player",
+          "targetId": "e1"
+        },
+        {
+          "type": "energySpent",
+          "amount": 1
+        },
+        {
+          "type": "staminaSpent",
+          "amount": 1
+        },
+        {
+          "type": "combatStanceChanged",
+          "sourceId": "player"
+        },
+        {
+          "type": "cardPlayed",
+          "cardId": "strike",
+          "cardInstanceId": "stance-parity",
+          "sourceId": "player",
+          "targetId": "e1",
+          "energySpent": 1,
+          "staminaSpent": 1,
+          "manaSpent": 0
+        },
+        {
+          "type": "statusApplied",
+          "cardId": "strike",
+          "cardInstanceId": "stance-parity",
+          "sourceId": "player",
+          "targetId": "player",
+          "total": 1,
+          "triggeredBy": {
+            "kind": "stance",
+            "id": "attack",
+            "ownerId": "player"
+          },
+          "status": "precision",
+          "stacks": 1
+        },
+        {
+          "type": "attackHit",
+          "sourceId": "player",
+          "targetId": "e1"
+        },
+        {
+          "type": "damageDealt",
+          "cardId": "strike",
+          "cardInstanceId": "stance-parity",
+          "sourceId": "player",
+          "targetId": "e1",
+          "amount": 5,
+          "incoming": 6,
+          "base": 6,
+          "blocked": 4,
+          "poiseAbsorbed": 1,
+          "poiseRemaining": 9,
+          "blockRemaining": 4,
+          "barrierRemaining": 0
+        },
+        {
+          "type": "relicTriggered",
+          "cardId": "strike",
+          "cardInstanceId": "stance-parity",
+          "sourceId": "player"
+        },
+        {
+          "type": "relicTriggered",
+          "cardId": "strike",
+          "cardInstanceId": "stance-parity",
+          "sourceId": "player"
+        },
+        {
+          "type": "hpLost",
+          "cardId": "strike",
+          "cardInstanceId": "stance-parity",
+          "sourceId": "player",
+          "targetId": "e1",
+          "amount": 1
+        },
+        {
+          "type": "ratingImpact",
+          "cardId": "strike",
+          "cardInstanceId": "stance-parity",
+          "sourceId": "player",
+          "targetId": "e1",
+          "amount": 1,
+          "max": 10,
+          "value": 1
+        },
+        {
+          "type": "damageDealt",
+          "cardId": "strike",
+          "cardInstanceId": "stance-parity",
+          "sourceId": "player",
+          "targetId": "e1",
+          "amount": 5,
+          "incoming": 6,
+          "base": 6,
+          "blocked": 4,
+          "poiseAbsorbed": 1,
+          "poiseRemaining": 8,
+          "blockRemaining": 0,
+          "barrierRemaining": 0
+        },
+        {
+          "type": "blockBroken",
+          "cardId": "strike",
+          "cardInstanceId": "stance-parity",
+          "sourceId": "player",
+          "targetId": "e1"
+        },
+        {
+          "type": "hpLost",
+          "cardId": "strike",
+          "cardInstanceId": "stance-parity",
+          "sourceId": "player",
+          "targetId": "e1",
+          "amount": 1
+        },
+        {
+          "type": "ratingImpact",
+          "cardId": "strike",
+          "cardInstanceId": "stance-parity",
+          "sourceId": "player",
+          "targetId": "e1",
+          "amount": 1,
+          "max": 10,
+          "value": 2
+        },
+        {
+          "type": "statusApplied",
+          "sourceId": "player",
+          "targetId": "e1",
+          "total": 2,
+          "triggeredBy": {
+            "kind": "relic",
+            "id": "cutpursesCoin",
+            "ownerId": "player"
+          },
+          "status": "venom",
+          "stacks": 2
+        },
+        {
+          "type": "procResisted",
+          "targetId": "e1",
+          "blocked": 1,
+          "triggeredBy": {
+            "kind": "relic",
+            "id": "whetstonePouch",
+            "ownerId": "player"
+          },
+          "status": "bleed"
+        },
+        {
+          "type": "statusApplied",
+          "sourceId": "player",
+          "targetId": "e1",
+          "total": 1,
+          "triggeredBy": {
+            "kind": "relic",
+            "id": "whetstonePouch",
+            "ownerId": "player"
+          },
+          "status": "bleed",
+          "stacks": 1
+        },
+        {
+          "type": "cardResolved",
+          "cardId": "strike",
+          "cardInstanceId": "stance-parity",
+          "sourceId": "player",
+          "targetId": "e1"
+        }
+      ],
+      "screenshots": {
+        "selected.png": "370de2257a24fffd89c7d235b44f5d746c5517fe3f58663ad546f18ea48c0517",
+        "paid.png": "cb3efe916fa41bf9f1447c02a17e31434ddf1c5b6aa3644afe39d0fb82a847f4"
+      },
+      "passed": true
+    },
+    {
+      "case": "counter",
+      "fixture": "Registered colorless frostCounter appended to hand and host deck; no profile/mods, unchanged canonical resource pools, neutral prior stance. Default v2/reaction2 and seed B/11. Counter support only: no incoming action, no retaliation.",
+      "url": "http://127.0.0.1:43945/AshenSpire.html?shot=combat&shotClass=starseer&shotSeed=B",
+      "loadedBodySha256": "c42a61470fb7ecd292d36deb6756135e6c06b5d181916aeb5204d22997333dfc",
+      "loadedBodyBytes": 79979392,
+      "selectedText": "Frost Counter\nReturn 1 Poise, 2 Ward\nGain 6 Block, 8 Ward\nEntry: +1 Precision, +2 Block, +1 Barrier\n1\nCOUNTER\n1\nReach\n5\nUpcast",
+      "displayContract": "Projected authored support6 Block +8 Ward. Full Ward means the8 Ward support overflows to Barrier. Separate stance entry grants2 Block +1 Barrier and raises full Ward3\u21926. Preparation only, no incoming action or retaliation.",
+      "previewPreserved": true,
+      "before": {
+        "instance": {
+          "cardId": "frostCounter",
+          "instanceId": "capture-starseer-counter",
+          "upgraded": false
+        },
+        "player": {
+          "classId": "starseer",
+          "hp": 66,
+          "maxHp": 66,
+          "stamina": 3,
+          "maxStamina": 3,
+          "mana": 3,
+          "maxMana": 3,
+          "block": 0,
+          "barrier": 0,
+          "ratings": {
+            "ar": 1,
+            "dr": 2,
+            "pr": 4,
+            "poise": 5,
+            "ward": 3
+          },
+          "persistentWard": {
+            "max": 3,
+            "value": 3
+          }
+        },
+        "enemies": [
+          {
+            "id": "e1",
+            "enemyId": "wanderingSoldier",
+            "hp": 36,
+            "maxHp": 36,
+            "block": 8,
+            "barrier": 5,
+            "ratings": {
+              "ar": 0,
+              "dr": 0,
+              "pr": 0,
+              "poise": 10,
+              "ward": 10
+            },
+            "persistentPoise": {
+              "max": 10,
+              "value": 10
+            },
+            "persistentWard": {
+              "max": 10,
+              "value": 10
+            },
+            "combatStance": {
+              "maneuver": "defend",
+              "camp": "physical",
+              "range": "melee"
+            }
+          }
+        ],
+        "rngSeed": 11,
+        "rngCounters": {
+          "map": 104,
+          "shuffle": 10,
+          "cardRewards": 0,
+          "relicRewards": 0,
+          "flaskRewards": 0,
+          "armaments": 0,
+          "enemyAI": 3,
+          "enemyHP": 1,
+          "events": 13,
+          "shop": 0,
+          "misc": 0,
+          "smith": 0,
+          "combatProcs": 0,
+          "seats": 2,
+          "rewardRolls": 0,
+          "shopOffers": 0,
+          "sigils": 0,
+          "enemyIntentVisibility": 1,
+          "combatAvoidance": 0,
+          "statusRecovery": 0,
+          "statusPressure": 0,
+          "ashenBlight": 0,
+          "enemyIntentClue": 1,
+          "enemyReaction": 0
+        }
+      },
+      "control": {
+        "bbox": {
+          "x": 357.578125,
+          "y": 278.53125,
+          "width": 24,
+          "height": 24
+        },
+        "hit": "svg",
+        "reachable": true
+      },
+      "after": {
+        "player": {
+          "classId": "starseer",
+          "hp": 66,
+          "maxHp": 66,
+          "stamina": 2,
+          "maxStamina": 3,
+          "mana": 3,
+          "maxMana": 3,
+          "block": 8,
+          "barrier": 9,
+          "ratings": {
+            "ar": 1,
+            "dr": 2,
+            "pr": 4,
+            "poise": 5,
+            "ward": 3
+          },
+          "persistentWard": {
+            "max": 6,
+            "value": 6
+          },
+          "combatStance": {
+            "maneuver": "counter",
+            "camp": "spell",
+            "range": "reach",
+            "school": "frost"
+          }
+        },
+        "enemies": [
+          {
+            "id": "e1",
+            "enemyId": "wanderingSoldier",
+            "hp": 36,
+            "maxHp": 36,
+            "block": 8,
+            "barrier": 5,
+            "ratings": {
+              "ar": 0,
+              "dr": 0,
+              "pr": 0,
+              "poise": 10,
+              "ward": 10
+            },
+            "persistentPoise": {
+              "max": 10,
+              "value": 10
+            },
+            "persistentWard": {
+              "max": 10,
+              "value": 10
+            },
+            "combatStance": {
+              "maneuver": "defend",
+              "camp": "physical",
+              "range": "melee"
+            }
+          }
+        ],
+        "queue": 0,
+        "pending": false,
+        "runtimePreserved": true,
+        "rngPreserved": true
+      },
+      "eventReceiptProjection": [
+        {
+          "type": "cardPreparing",
+          "cardId": "frostCounter",
+          "cardInstanceId": "capture-starseer-counter",
+          "sourceId": "player",
+          "targetId": null
+        },
+        {
+          "type": "energySpent",
+          "amount": 1
+        },
+        {
+          "type": "staminaSpent",
+          "amount": 1
+        },
+        {
+          "type": "persistentWardChanged",
+          "targetId": "player",
+          "source": "rating",
+          "max": 6,
+          "value": 6
+        },
+        {
+          "type": "combatStanceChanged",
+          "sourceId": "player"
+        },
+        {
+          "type": "combatCounterArmed",
+          "cardId": "frostCounter",
+          "cardInstanceId": "capture-starseer-counter",
+          "sourceId": "player"
+        },
+        {
+          "type": "combatCounterstrikeApplied",
+          "cardId": "frostCounter",
+          "pct": 0.5
+        },
+        {
+          "type": "cardPlayed",
+          "cardId": "frostCounter",
+          "cardInstanceId": "capture-starseer-counter",
+          "sourceId": "player",
+          "targetId": null,
+          "energySpent": 1,
+          "staminaSpent": 1,
+          "manaSpent": 0
+        },
+        {
+          "type": "blockGained",
+          "cardId": "frostCounter",
+          "cardInstanceId": "capture-starseer-counter",
+          "sourceId": "player",
+          "targetId": "player",
+          "amount": 2,
+          "triggeredBy": {
+            "kind": "stance",
+            "id": "counter",
+            "ownerId": "player"
+          }
+        },
+        {
+          "type": "barrierGained",
+          "cardId": "frostCounter",
+          "cardInstanceId": "capture-starseer-counter",
+          "sourceId": "player",
+          "targetId": "player",
+          "amount": 1,
+          "total": 1,
+          "triggeredBy": {
+            "kind": "stance",
+            "id": "counter",
+            "ownerId": "player"
+          }
+        },
+        {
+          "type": "statusApplied",
+          "cardId": "frostCounter",
+          "cardInstanceId": "capture-starseer-counter",
+          "sourceId": "player",
+          "targetId": "player",
+          "total": 1,
+          "triggeredBy": {
+            "kind": "stance",
+            "id": "counter",
+            "ownerId": "player"
+          },
+          "status": "precision",
+          "stacks": 1
+        },
+        {
+          "type": "blockGained",
+          "cardId": "frostCounter",
+          "cardInstanceId": "capture-starseer-counter",
+          "sourceId": "player",
+          "targetId": "player",
+          "amount": 6
+        },
+        {
+          "type": "persistentWardChanged",
+          "cardId": "frostCounter",
+          "cardInstanceId": "capture-starseer-counter",
+          "sourceId": "player",
+          "targetId": "player",
+          "source": "card",
+          "credited": 8,
+          "max": 6,
+          "value": 6
+        },
+        {
+          "type": "barrierGained",
+          "cardId": "frostCounter",
+          "cardInstanceId": "capture-starseer-counter",
+          "sourceId": "player",
+          "targetId": "player",
+          "amount": 8,
+          "total": 9
+        },
+        {
+          "type": "cardResolved",
+          "cardId": "frostCounter",
+          "cardInstanceId": "capture-starseer-counter",
+          "sourceId": "player",
+          "targetId": null
+        }
+      ],
+      "screenshots": {
+        "selected.png": "4243ec068d080ab03f51362fff510105f47e1cc00dd8f39bc959c5609336d300",
+        "paid.png": "e5177695b5762f43d85d373b3588117ab852bc477f7d2bf5553e2784c6167f2f"
+      },
+      "passed": true
+    }
+  ],
+  "diagnostics": {
+    "pageExceptions": [],
+    "networkFailures": [
+      {
+        "stance": "neutral",
+        "url": "http://127.0.0.1:43945/music/manifest.json",
+        "status": 404
+      },
+      {
+        "stance": "neutral",
+        "url": "http://127.0.0.1:43945/assets/sfx/holdTick.ogg",
+        "status": 404
+      },
+      {
+        "stance": "neutral",
+        "url": "http://127.0.0.1:43945/assets/sfx/cardPlay.ogg",
+        "status": 404
+      },
+      {
+        "stance": "neutral",
+        "url": "http://127.0.0.1:43945/assets/sfx/relic.ogg",
+        "status": 404
+      },
+      {
+        "stance": "neutral",
+        "url": "http://127.0.0.1:43945/assets/sfx/block.ogg",
+        "status": 404
+      },
+      {
+        "stance": "neutral",
+        "url": "http://127.0.0.1:43945/assets/sfx/hit_light.ogg",
+        "status": 404
+      },
+      {
+        "stance": "neutral",
+        "url": "http://127.0.0.1:43945/assets/sfx/hit_heavy.ogg",
+        "status": 404
+      },
+      {
+        "stance": "defend",
+        "url": "http://127.0.0.1:43945/music/manifest.json",
+        "status": 404
+      },
+      {
+        "stance": "defend",
+        "url": "http://127.0.0.1:43945/assets/sfx/holdTick.ogg",
+        "status": 404
+      },
+      {
+        "stance": "defend",
+        "url": "http://127.0.0.1:43945/assets/sfx/cardPlay.ogg",
+        "status": 404
+      },
+      {
+        "stance": "defend",
+        "url": "http://127.0.0.1:43945/assets/sfx/relic.ogg",
+        "status": 404
+      },
+      {
+        "stance": "defend",
+        "url": "http://127.0.0.1:43945/assets/sfx/block.ogg",
+        "status": 404
+      },
+      {
+        "stance": "defend",
+        "url": "http://127.0.0.1:43945/assets/sfx/hit_light.ogg",
+        "status": 404
+      },
+      {
+        "stance": "defend",
+        "url": "http://127.0.0.1:43945/assets/sfx/hit_heavy.ogg",
+        "status": 404
+      },
+      {
+        "stance": "counter",
+        "url": "http://127.0.0.1:43945/music/manifest.json",
+        "status": 404
+      },
+      {
+        "stance": "counter",
+        "url": "http://127.0.0.1:43945/assets/sfx/holdTick.ogg",
+        "status": 404
+      },
+      {
+        "stance": "counter",
+        "url": "http://127.0.0.1:43945/assets/sfx/cardPlay.ogg",
+        "status": 404
+      },
+      {
+        "stance": "counter",
+        "url": "http://127.0.0.1:43945/assets/sfx/block.ogg",
+        "status": 404
+      }
+    ],
+    "consoleMessageCounts": {
+      "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio": 68,
+      "Blocked call to navigator.vibrate because user hasn't tapped on the frame or any embedded frame yet: https://www.chromestatus.com/feature/5644273861001216.": 3,
+      "Failed to load resource: the server responded with a status of 404 (Not Found)": 18
+    }
+  }
+}

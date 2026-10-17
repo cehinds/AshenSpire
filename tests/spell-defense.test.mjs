@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { spellDefenseSplit } from '../src/model/spellDefense.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { createCombat, previewCard } from '../src/engine/combat.js';
+import { createCombat, previewCard, dispatch } from '../src/engine/combat.js';
+import { serializeCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { createRng } from '../src/engine/rng.js';
 import { gainBarrier, gainBlock, computeBlockGain, computeMeterGuardGain, computeSpellDefenseGain } from '../src/engine/actions.js';
 import { resolveCombatRatings } from '../src/model/combatRatings.js';
@@ -90,10 +91,10 @@ test('expanded block opcode faces and allied gains use defense shares; legacy fa
   assert.match(cardPlainText(registries, { cardId: 'crystalBarrier' }, { definition: legacy }), /Ally gains 5 Block/);
 });
 
-function ratedFixture(dr, pr, cardId = 'frostCounter') {
+function ratedFixture(dr, pr, cardId = 'frostCounter', reactionRulesVersion = 2) {
   const combat = createCombat({ registries, rng: createRng(5),
     ratingsRules: resolveCombatRatings({}, contentBundle),
-    combatExpansionVersion: 2, enemyIds: ['wanderingSoldier'],
+    combatExpansionVersion: 2, reactionRulesVersion, enemyIds: ['wanderingSoldier'],
     player: { classId: 'starseer', maxHp: 100, hp: 100,
       maxMana: 20, mana: 20, maxStamina: 20, stamina: 20,
       energyMax: 20, drawPerTurn: 1,
@@ -107,9 +108,9 @@ function ratedFixture(dr, pr, cardId = 'frostCounter') {
 }
 
 test('live DR scales Block and PR scales Ward independently, including preview parts and tokens', () => {
-  for (const [cardId, school, baseBlock, baseWard] of [
-    ['fireCounter', 'fire', 2, 3], ['frostCounter', 'frost', 3, 2],
-    ['forceCounter', 'force', 4, 1], ['alterationCounter', 'alteration', 4, 1],
+  for (const [cardId, school, baseBlock, baseWard, counterBlock, counterWard] of [
+    ['fireCounter', 'fire', 2, 3, 2, 5], ['frostCounter', 'frost', 3, 2, 4, 3],
+    ['forceCounter', 'force', 4, 1, 5, 2], ['alterationCounter', 'alteration', 4, 1, 5, 2],
   ]) for (const [dr, pr] of [[3, 0], [0, 3], [3, 3]]) {
     for (const gain of [gainBarrier, gainBlock]) {
       const combat = ratedFixture(dr, pr, cardId), player = combat.player;
@@ -117,6 +118,17 @@ test('live DR scales Block and PR scales Ward independently, including preview p
       const total = 5 + dr + pr, expected = { block: baseBlock + dr, ward: baseWard + pr };
       assert.equal(computeBlockGain(combat, player, 5, card), total);
       assert.deepEqual(computeSpellDefenseGain(combat, player, 5, card), expected);
+      assert.equal(gain(combat, player, 5, card), total);
+      assert.deepEqual({ block: player.block, ward: player.persistentWard.value + player.barrier }, expected);
+    }
+    for (const version of [1, 2]) {
+      const combat = ratedFixture(dr, pr, cardId, version), player = combat.player;
+      const before = JSON.stringify({ model: serializeCombatSnapshot(combat), rng: combat.rng.getCounters(), events: combat.eventLog });
+      // Accepted spell Counter adds 1 Power. Version 2 additionally scales the
+      // card's base 5 to 7 through its Counterstrike trait, before DR/PR joins.
+      const expected = { block: (version === 2 ? counterBlock : baseBlock) + dr,
+        ward: (version === 2 ? counterWard : baseWard) + pr + 1 };
+      const total = (version === 2 ? 7 : 5) + dr + pr + 1;
       const preview = previewCard(combat, 'rated-defense');
       const protection = preview.values.find(value => value.op === 'gainBarrier');
       assert.equal(protection.value, total);
@@ -134,8 +146,16 @@ test('live DR scales Block and PR scales Ward independently, including preview p
       if (summary !== null) assert.ok(summary.includes(`${expected.block} Block and ${expected.ward} Ward`));
       else assert.ok(cardPlainText(registries, { cardId }, { preview, rules: { combatExpansionVersion: 2 } })
         .includes(`${expected.block} Block, ${expected.ward} Ward`));
-      assert.equal(gain(combat, player, 5, card), total);
-      assert.deepEqual({ block: player.block, ward: player.persistentWard.value + player.barrier }, expected);
+      assert.equal(JSON.stringify({ model: serializeCombatSnapshot(combat), rng: combat.rng.getCounters(), events: combat.eventLog }), before,
+        'preview changes no stance, pools, preparation, queue or RNG');
+      const out = dispatch(combat, { type: 'playCard', cardInstanceId: 'rated-defense', targetId: player.id });
+      const own = out.events.filter(event => event.cardInstanceId === 'rated-defense' && !event.triggeredBy);
+      assert.deepEqual({ block: own.filter(event => event.type === 'blockGained').reduce((sum, event) => sum + event.amount, 0),
+        ward: own.filter(event => event.type === 'persistentWardChanged' && event.source === 'card').reduce((sum, event) => sum + event.restored, 0) },
+      expected, 'paid authored support equals the preview, apart from separate stance entry grants');
+      assert.equal(out.events.filter(event => event.type === 'combatCounterArmed').length, 1);
+      assert.equal(out.events.filter(event => event.type === 'combatStanceChanged').length, 1);
+      assert.equal(out.events.filter(event => event.type === 'combatCounterstrikeApplied').length, version === 2 ? 1 : 0);
     }
   }
 });

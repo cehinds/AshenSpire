@@ -500,6 +500,20 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "combat.grid.label",
+    "extends": "",
+    "short": "Grid",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.grid.aria",
+    "extends": "",
+    "short": "Show battlefield grid",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "combat.status.applied.crimsonBlight",
     "extends": "",
     "short": "BLIGHTED",
