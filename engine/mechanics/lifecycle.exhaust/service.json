@@ -6,12 +6,12 @@
       "do": [
         {
           "op": "exhaust",
-          "card": "$card"
+          "amount": "$amount"
         },
         {
           "emit": "lifecycle.exhaust.exhausted",
           "with": {
-            "card": "$card"
+            "amount": "$amount"
           }
         }
       ]
