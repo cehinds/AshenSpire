@@ -175,6 +175,30 @@ const PLAYER_BODY_LANDMARKS = {
     "feetY": 232,
     "width": 256,
     "height": 256
+  },
+  "assets-display/alternative/card-reaver-guard-brace.webp": {
+    "headY": 103,
+    "feetY": 232,
+    "width": 256,
+    "height": 256
+  },
+  "assets-display/alternative/card-rogue-guard-brace.webp": {
+    "headY": 70,
+    "feetY": 232,
+    "width": 256,
+    "height": 256
+  },
+  "assets-display/alternative/card-starseer-guard-brace.webp": {
+    "headY": 73.5,
+    "feetY": 232,
+    "width": 256,
+    "height": 256
+  },
+  "assets-display/alternative/card-herald-guard-brace.webp": {
+    "headY": 84.5,
+    "feetY": 232,
+    "width": 256,
+    "height": 256
   }
 };
 

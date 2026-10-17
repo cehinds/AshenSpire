@@ -66,8 +66,8 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange, onGr
   const root = markUiComponent(el('aside', { class: 'combat-tools', 'data-combat-read-only': '' }), UI.combatTools);
   const logButton = button({ label: t('combat.log.title'), attrs: { 'data-combat-tool': 'log', 'aria-expanded': 'false', 'aria-controls': 'combat-log' } });
   const gridLabel = el('label', { class: 'combat-grid-toggle' });
-  const gridCheckbox = el('input', { type: 'checkbox', 'data-combat-tool': 'grid', 'aria-label': 'Show battlefield grid' });
-  gridLabel.append(gridCheckbox, el('span', { text: 'Grid' }));
+  const gridCheckbox = el('input', { type: 'checkbox', 'data-combat-tool': 'grid', 'aria-label': t('combat.grid.aria') });
+  gridLabel.append(gridCheckbox, el('span', { text: t('combat.grid.label') }));
   const gridRoot = document.documentElement;
   const syncGrid = () => { gridCheckbox.checked = gridRoot?.dataset?.formationGrid !== 'false'; };
   syncGrid();

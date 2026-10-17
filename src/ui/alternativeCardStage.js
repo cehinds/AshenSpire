@@ -14,7 +14,7 @@ import { builtInFor } from './highResArt.js';
 import { classicAppearance } from './displayAppearance.js';
 import { markArtPlaceholder, ART_PLACEHOLDER_ATTR } from './artFallback.js';
 
-import { alternativeCardAnimationFamily, cardSequenceTiming, CARD_ANIMATION_ALIASES as aliases } from '../model/cardAnimationFamily.js';
+import { alternativeCardAnimationFamily, cardSequenceTiming, CARD_ANIMATION_ALIASES } from '../model/cardAnimationFamily.js';
 const cached = new Map();
 function load(url) {
   if (!cached.has(url)) {
@@ -250,7 +250,7 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
       settle();
     },
     actionTiming(action,speed=ANIM_SPEEDS.normal){
-      const sequence=family.sequences[aliases[action]||action];if(!sequence)return null;
+      const sequence=family.sequences[CARD_ANIMATION_ALIASES[action]||action];if(!sequence)return null;
       return cardSequenceTiming(sequence, speed);
     },
     play(action,ms,aura=[]){
@@ -258,7 +258,7 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
       if(action==='hit'||action==='hurt')return hit(ms);
       ms??=260;
       if(action==='defeated'){rest='defeated';bodyReaction=null;flashAt=null;settle();return true;}
-      const key=aliases[action]||action;
+      const key=CARD_ANIMATION_ALIASES[action]||action;
       let sequence=family.sequences[key];
       if(!sequence)return false;
       if(pilotFrames&&key==='counterPrepare'&&stance==='evade')sequence={...sequence,poses:['pilot-evade']};

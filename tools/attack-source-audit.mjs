@@ -21,8 +21,12 @@ for (const [family, entries] of [['card', registries.cards.all()], ['armament', 
     const identity = attackDescriptor(entry);
     if ((direct || counterReply) && !identity.source) errors.push(`${subject}: missing source assignment`);
     if ((family === 'armament' || (family === 'enemyMove' && (direct || counterReply))) && !identity.damageType) errors.push(`${subject}: missing base damage type`);
-    if (family !== 'armament' && !profile.camp) errors.push(`${subject}: missing combat camp`);
-    if (profile.camp === 'spell' && !profile.school) errors.push(`${subject}: missing spell school`);
+    // Status/burden cards are definitions inserted into enemy piles, not
+    // combat actions. They have no camp or school by design; the burden route
+    // owns their behavioral identity while the addBurden speaker owns reach.
+    const combatCarrier = family === 'armament' || direct || counterReply;
+    if (family !== 'armament' && combatCarrier && !profile.camp) errors.push(`${subject}: missing combat camp`);
+    if (combatCarrier && profile.camp === 'spell' && !profile.school) errors.push(`${subject}: missing spell school`);
     if (counterReply && !profile.counterMode) errors.push(`${subject}: missing Counter reach`);
     const tags = (domain) => (entry.tags || []).filter((id) => registries.tags.find((tag) => tag.id === id)?.domain === domain).join('|');
     rows.push([family, scope, entry.id, entry.type || entry.role || entry.kind || entry.intent, direct, counterReply,

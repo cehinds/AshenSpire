@@ -29,7 +29,7 @@ test('all four class held stances share their own unchanged ready body height', 
     const ready=COMBAT_BODY_LANDMARKS[family.frames.ready.path];
     assert(ready,`${classId} ready metadata`);
     const reference=(ready.feetY-ready.headY)*(family.frames.ready.size?.[1]||512)/ready.height;
-    for(const [stance,frame] of Object.entries(heldFrames)) {
+    for(const [stance,frame] of Object.entries({ ...heldFrames, guarded:family.frames['guard-brace'] })) {
       const body=COMBAT_BODY_LANDMARKS[frame.path];
       assert(body,`${classId} ${stance} semantic landmarks`);
       assert(body.headY>=0&&body.feetY<=body.height&&body.headY<body.feetY);
