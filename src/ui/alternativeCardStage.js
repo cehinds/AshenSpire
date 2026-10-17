@@ -1,3 +1,5 @@
+import { COMBAT_BODY_LANDMARKS } from '../content/combatBodyLandmarks.js';
+import { bodyPlacement } from './models/CombatBodyModel.js';
 import { selectedWeaponSequence, selectedWeaponSequenceTiming } from '../model/selectedWeaponSequences.js';
 import { sampleSequence, hitFlashOpacity, hitRecoilX, HURT_CLIP_MIN_MS } from '../model/alternativeCardAnimation.js';
 import { alternativeArtUrl } from './alternativeArt.js';
@@ -41,6 +43,9 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
   el.dataset.poseCoverage = 'card-actions';
   el.dataset.idleHeightRatio = '1';
   const height = 464-family.frames.ready.bounds[1], scale = 190/height;
+  const readyBody = COMBAT_BODY_LANDMARKS[family.frames.ready.path];
+  const readyDrawHeight = family.frames.ready.size?.[1] || 512;
+  const bodyHeight = readyBody ? (readyBody.feetY - readyBody.headY) * readyDrawHeight / readyBody.height : height;
   el.dataset.maximumHeightRatio = String((464-Math.min(...Object.values(frames).map(frame=>(frame.stageBounds || frame.bounds)[1])))/height);
   const width = Math.max(256-family.frames.ready.bounds[0], family.frames.ready.bounds[2]-256)*2*scale;
   el.dataset.idleWidthRatio = String(width/190);
@@ -135,8 +140,19 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
     const bodyX=x+(reacting?hitRecoilX(flashElapsed/flashMs):0);
     const offset=!clipping&&frame?.drawOffset ? frame.drawOffset : [128,0];
     const dimensions=!clipping&&frame?.drawOffset ? frame.size : [512,512];
-    const left=leftPadding+offset[0]+bodyX+place.dx, top=16+topPadding+offset[1]+place.dy, width=dimensions[0]*place.scale,height=dimensions[1]*place.scale;
-    currentArt={canvas,image:source,left,top,width,height};
+    const authored = { left:leftPadding+offset[0]+bodyX+place.dx, top:16+topPadding+offset[1]+place.dy,
+      width:dimensions[0]*place.scale, height:dimensions[1]*place.scale, anchorX:leftPadding+384+bodyX };
+    const landmarks = !clipping && COMBAT_BODY_LANDMARKS[frame?.path];
+    // Held stance bodies match the ready body's head-to-sole distance. Action
+    // frames retain their authored progression, including jumps and crouches.
+    const normalized = landmarks && !playing && !bodyReaction
+      ? bodyPlacement(authored, landmarks, bodyHeight, 480+topPadding) : authored;
+    const {left,top,width,height} = normalized;
+    const body = normalized.body || (landmarks ? {
+      headY: top + landmarks.headY * height / landmarks.height,
+      feetY: top + landmarks.feetY * height / landmarks.height, source:'authored',
+    } : null);
+    currentArt={canvas,image:source,left,top,width,height,body};
     ctx.save();
     auraRenderer.draw(ctx,source,filterFor(pose,playing?.sequence.action || playing?.action),left,top,width,height,{materialize,reuse:!!classSmash&&playing?.action==='smash'&&!clipping&&!reacting});ctx.restore();
     // Trails share body registration, but never enter its aura or hit mask.
