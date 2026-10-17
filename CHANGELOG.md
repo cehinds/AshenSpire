@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-17
 
+- **Combat feedback keeps its timing while HUD placement takes less work** ([#2080](https://github.com/cehinds/AshenSpire/pull/2080), `0.7.1.1555`). Measure every fighter before writing the overhead HUD positions, and read each displayed body once. The HUD still follows the same heads and poses at every frame; fewer repeated layout passes leave more time for contact and damage feedback without changing animation holds, combat outcomes or timing limits.
+
 - **Co-op controls stay inside the combat HUD, and browser checks follow each game profile** ([#2076](https://github.com/cehinds/AshenSpire/pull/2076), `0.7.1.1555`). Keep co-op bars, stances and formation controls clear at phone, tablet and desktop sizes. Map-camera, tutorial and full-run checks follow Core's shorter creation flow; legacy flask and checkpoint checks select Current, and hand-side checks measure the page's actual zoom. Source-link and bundle checks include the shared engine, and startup cleanup checks use the browser's event clock. Leaner generated JavaScript preserves the same game data while keeping the standalone pack within its existing size budget. Version checks recognize only catalog schema values, browser mutation checks retain their coverage with compact generated data, and text-geometry checks follow the Current profile and its actual title, class controls and card artwork.
 - **Stale origin branches are listed for cleanup, with restore points** ([#2029](https://github.com/cehinds/AshenSpire/pull/2029), `0.7.1.1553`). Records which merged or week-old branches are removed and the commit each one pointed at, so any of them can be restored; the game is unchanged.
 
