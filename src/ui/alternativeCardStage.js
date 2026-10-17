@@ -145,7 +145,11 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
     const landmarks = !clipping && COMBAT_BODY_LANDMARKS[frame?.path];
     // Held stance bodies match the ready body's head-to-sole distance. Action
     // frames retain their authored progression, including jumps and crouches.
-    const normalized = landmarks && !playing && !bodyReaction
+    // The opening/closing bookend can be the exact held bitmap. Keep its
+    // body registration while the action clock starts; only different action
+    // images retain their authored transient crouch, jump and travel.
+    const heldRegistration = !playing || frame?.path === frames[restPose()]?.path;
+    const normalized = landmarks && heldRegistration && !bodyReaction
       ? bodyPlacement(authored, landmarks, bodyHeight, 480+topPadding) : authored;
     const {left,top,width,height} = normalized;
     const body = normalized.body || (landmarks ? {
