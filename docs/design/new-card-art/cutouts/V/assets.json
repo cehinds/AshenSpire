@@ -1,0 +1,882 @@
+{
+  "V.object.0": {
+    "id": "V.object.0",
+    "kind": "object",
+    "category": "V",
+    "digit": 0,
+    "name": "Magic scepters 0",
+    "src": "cutouts/V/objects/0.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      47,
+      32,
+      465,
+      480
+    ],
+    "sha256": "366193081c9652316f189b8f60216911639dae58aa1c95b232ce34d2cb297bc6",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/V-reference.png",
+      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
+      "sourceFile": "exec-777c8d8d-0f87-4599-a3b3-e802d5084bae.png",
+      "sourceSha256": "fad633f1be7dc2b6d0e5670e931c57fcc7371801d78b8b0a28a13b3890f3a01f",
+      "sourceCell": {
+        "x": 0,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 88,
+        "y": 50,
+        "width": 278,
+        "height": 298
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "repositorySources": [
+        "docs/design/rear-weapon-views-2026-10-06/assets/weapon-emberlightSceptre.png",
+        "docs/design/rear-weapon-views-2026-10-06/assets/weapon-boneSceptre.png"
+      ]
+    },
+    "anchors": {
+      "stoneHead": {
+        "x": 0.77,
+        "y": 0.24
+      }
+    }
+  },
+  "V.object.1": {
+    "id": "V.object.1",
+    "kind": "object",
+    "category": "V",
+    "digit": 1,
+    "name": "Magic scepters 1",
+    "src": "cutouts/V/objects/1.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      46,
+      32,
+      466,
+      480
+    ],
+    "sha256": "35133d6f813f0ef347b11f632a264064fb1221f5a6201e1153b70aae4bb0568d",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/V-reference.png",
+      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
+      "sourceFile": "exec-777c8d8d-0f87-4599-a3b3-e802d5084bae.png",
+      "sourceSha256": "fad633f1be7dc2b6d0e5670e931c57fcc7371801d78b8b0a28a13b3890f3a01f",
+      "sourceCell": {
+        "x": 397,
+        "y": 0,
+        "width": 396,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 473,
+        "y": 48,
+        "width": 280,
+        "height": 299
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "repositorySources": [
+        "docs/design/rear-weapon-views-2026-10-06/assets/weapon-emberlightSceptre.png",
+        "docs/design/rear-weapon-views-2026-10-06/assets/weapon-boneSceptre.png"
+      ]
+    },
+    "anchors": {
+      "stoneHead": {
+        "x": 0.77,
+        "y": 0.24
+      }
+    }
+  },
+  "V.object.2": {
+    "id": "V.object.2",
+    "kind": "object",
+    "category": "V",
+    "digit": 2,
+    "name": "Magic scepters 2",
+    "src": "cutouts/V/objects/2.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      45,
+      32,
+      466,
+      480
+    ],
+    "sha256": "6eb041f23b26898b3863a0a23d0814dec24bf386f21cdf01d6af829cab1eaf82",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/V-reference.png",
+      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
+      "sourceFile": "exec-777c8d8d-0f87-4599-a3b3-e802d5084bae.png",
+      "sourceSha256": "fad633f1be7dc2b6d0e5670e931c57fcc7371801d78b8b0a28a13b3890f3a01f",
+      "sourceCell": {
+        "x": 793,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 862,
+        "y": 52,
+        "width": 277,
+        "height": 295
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "repositorySources": [
+        "docs/design/rear-weapon-views-2026-10-06/assets/weapon-emberlightSceptre.png",
+        "docs/design/rear-weapon-views-2026-10-06/assets/weapon-boneSceptre.png"
+      ]
+    },
+    "anchors": {
+      "stoneHead": {
+        "x": 0.77,
+        "y": 0.24
+      }
+    }
+  },
+  "V.object.3": {
+    "id": "V.object.3",
+    "kind": "object",
+    "category": "V",
+    "digit": 3,
+    "name": "Magic scepters 3",
+    "src": "cutouts/V/objects/3.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      43,
+      32,
+      469,
+      480
+    ],
+    "sha256": "6302ecf3d2992d44f92705338cf6b98feb21d30007dd9030d74e45291f9ef4c8",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/V-reference.png",
+      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
+      "sourceFile": "exec-777c8d8d-0f87-4599-a3b3-e802d5084bae.png",
+      "sourceSha256": "fad633f1be7dc2b6d0e5670e931c57fcc7371801d78b8b0a28a13b3890f3a01f",
+      "sourceCell": {
+        "x": 1190,
+        "y": 0,
+        "width": 396,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 1256,
+        "y": 55,
+        "width": 277,
+        "height": 291
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "repositorySources": [
+        "docs/design/rear-weapon-views-2026-10-06/assets/weapon-emberlightSceptre.png",
+        "docs/design/rear-weapon-views-2026-10-06/assets/weapon-boneSceptre.png"
+      ]
+    },
+    "anchors": {
+      "stoneHead": {
+        "x": 0.77,
+        "y": 0.24
+      }
+    }
+  },
+  "V.object.4": {
+    "id": "V.object.4",
+    "kind": "object",
+    "category": "V",
+    "digit": 4,
+    "name": "Magic scepters 4",
+    "src": "cutouts/V/objects/4.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      43,
+      32,
+      469,
+      480
+    ],
+    "sha256": "1df7ba7b776145e5cc1d4d189ed04a02bf67ed6b52e62dc026cef98f1e18000f",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/V-reference.png",
+      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
+      "sourceFile": "exec-777c8d8d-0f87-4599-a3b3-e802d5084bae.png",
+      "sourceSha256": "fad633f1be7dc2b6d0e5670e931c57fcc7371801d78b8b0a28a13b3890f3a01f",
+      "sourceCell": {
+        "x": 1586,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 1640,
+        "y": 50,
+        "width": 284,
+        "height": 299
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "repositorySources": [
+        "docs/design/rear-weapon-views-2026-10-06/assets/weapon-emberlightSceptre.png",
+        "docs/design/rear-weapon-views-2026-10-06/assets/weapon-boneSceptre.png"
+      ]
+    },
+    "anchors": {
+      "stoneHead": {
+        "x": 0.77,
+        "y": 0.24
+      }
+    }
+  },
+  "V.object.5": {
+    "id": "V.object.5",
+    "kind": "object",
+    "category": "V",
+    "digit": 5,
+    "name": "Magic scepters 5",
+    "src": "cutouts/V/objects/5.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      46,
+      32,
+      465,
+      480
+    ],
+    "sha256": "aeb438b2654b4beeec1f055e4aa759c4217b8b5f456420044bd75ecae4985db8",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/V-reference.png",
+      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
+      "sourceFile": "exec-777c8d8d-0f87-4599-a3b3-e802d5084bae.png",
+      "sourceSha256": "fad633f1be7dc2b6d0e5670e931c57fcc7371801d78b8b0a28a13b3890f3a01f",
+      "sourceCell": {
+        "x": 0,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 83,
+        "y": 429,
+        "width": 290,
+        "height": 310
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "repositorySources": [
+        "docs/design/rear-weapon-views-2026-10-06/assets/weapon-emberlightSceptre.png",
+        "docs/design/rear-weapon-views-2026-10-06/assets/weapon-boneSceptre.png"
+      ]
+    },
+    "anchors": {
+      "stoneHead": {
+        "x": 0.77,
+        "y": 0.24
+      }
+    }
+  },
+  "V.object.6": {
+    "id": "V.object.6",
+    "kind": "object",
+    "category": "V",
+    "digit": 6,
+    "name": "Magic scepters 6",
+    "src": "cutouts/V/objects/6.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      47,
+      32,
+      464,
+      480
+    ],
+    "sha256": "67e96da5ad0b0d6f2da702d41d074ee1ea37c20403b6760246011780a3f83426",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/V-reference.png",
+      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
+      "sourceFile": "exec-777c8d8d-0f87-4599-a3b3-e802d5084bae.png",
+      "sourceSha256": "fad633f1be7dc2b6d0e5670e931c57fcc7371801d78b8b0a28a13b3890f3a01f",
+      "sourceCell": {
+        "x": 397,
+        "y": 396,
+        "width": 396,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 474,
+        "y": 426,
+        "width": 284,
+        "height": 305
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "repositorySources": [
+        "docs/design/rear-weapon-views-2026-10-06/assets/weapon-emberlightSceptre.png",
+        "docs/design/rear-weapon-views-2026-10-06/assets/weapon-boneSceptre.png"
+      ]
+    },
+    "anchors": {
+      "stoneHead": {
+        "x": 0.77,
+        "y": 0.24
+      }
+    }
+  },
+  "V.object.7": {
+    "id": "V.object.7",
+    "kind": "object",
+    "category": "V",
+    "digit": 7,
+    "name": "Magic scepters 7",
+    "src": "cutouts/V/objects/7.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      48,
+      32,
+      463,
+      480
+    ],
+    "sha256": "1fab07463f69ea89373d06f2a58a93f470ce66607ceae5a3fe3809e3d16f4b6b",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/V-reference.png",
+      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
+      "sourceFile": "exec-777c8d8d-0f87-4599-a3b3-e802d5084bae.png",
+      "sourceSha256": "fad633f1be7dc2b6d0e5670e931c57fcc7371801d78b8b0a28a13b3890f3a01f",
+      "sourceCell": {
+        "x": 793,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 857,
+        "y": 431,
+        "width": 286,
+        "height": 309
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "repositorySources": [
+        "docs/design/rear-weapon-views-2026-10-06/assets/weapon-emberlightSceptre.png",
+        "docs/design/rear-weapon-views-2026-10-06/assets/weapon-boneSceptre.png"
+      ]
+    },
+    "anchors": {
+      "stoneHead": {
+        "x": 0.77,
+        "y": 0.24
+      }
+    }
+  },
+  "V.object.8": {
+    "id": "V.object.8",
+    "kind": "object",
+    "category": "V",
+    "digit": 8,
+    "name": "Magic scepters 8",
+    "src": "cutouts/V/objects/8.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      51,
+      32,
+      461,
+      480
+    ],
+    "sha256": "1242e7127d0620d1581d9ebd2da6d39024d9481dedfc16f86bead0dc8113a0f3",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/V-reference.png",
+      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
+      "sourceFile": "exec-777c8d8d-0f87-4599-a3b3-e802d5084bae.png",
+      "sourceSha256": "fad633f1be7dc2b6d0e5670e931c57fcc7371801d78b8b0a28a13b3890f3a01f",
+      "sourceCell": {
+        "x": 1190,
+        "y": 396,
+        "width": 396,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 1250,
+        "y": 428,
+        "width": 284,
+        "height": 310
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "repositorySources": [
+        "docs/design/rear-weapon-views-2026-10-06/assets/weapon-emberlightSceptre.png",
+        "docs/design/rear-weapon-views-2026-10-06/assets/weapon-boneSceptre.png"
+      ]
+    },
+    "anchors": {
+      "stoneHead": {
+        "x": 0.77,
+        "y": 0.24
+      }
+    }
+  },
+  "V.object.9": {
+    "id": "V.object.9",
+    "kind": "object",
+    "category": "V",
+    "digit": 9,
+    "name": "Magic scepters 9",
+    "src": "cutouts/V/objects/9.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      47,
+      32,
+      464,
+      480
+    ],
+    "sha256": "05f406de2198abbfb42fd2f9e9f4aca72a32c82264f33d254203e1db16e8a268",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/V-reference.png",
+      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
+      "sourceFile": "exec-777c8d8d-0f87-4599-a3b3-e802d5084bae.png",
+      "sourceSha256": "fad633f1be7dc2b6d0e5670e931c57fcc7371801d78b8b0a28a13b3890f3a01f",
+      "sourceCell": {
+        "x": 1586,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 1648,
+        "y": 435,
+        "width": 280,
+        "height": 301
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "repositorySources": [
+        "docs/design/rear-weapon-views-2026-10-06/assets/weapon-emberlightSceptre.png",
+        "docs/design/rear-weapon-views-2026-10-06/assets/weapon-boneSceptre.png"
+      ]
+    },
+    "anchors": {
+      "stoneHead": {
+        "x": 0.77,
+        "y": 0.24
+      }
+    }
+  }
+}
