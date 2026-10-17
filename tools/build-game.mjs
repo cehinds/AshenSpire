@@ -121,7 +121,6 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   // Condition shapes (SPEC section 5): both runtimes read operands unconditionally.
   const CMP = ['<', '<=', '==', '!=', '>=', '>'];
   const conditionErrors = (c, where) => {
-    if (typeof c === 'boolean') return [];
     if (!c || typeof c !== 'object' || Array.isArray(c)) return [`${where}: condition must be an object`];
     const keys = Object.keys(c);
     if (keys.length !== 1) return [`${where}: condition needs exactly one of all, any, not, cmp, hasTag, hasStatus`];
@@ -132,6 +131,12 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
     if (k === 'hasTag' || k === 'hasStatus') return Array.isArray(v) && v.length === 2 ? [] : [`${where}: ${k} needs [ref, id]`];
     return [`${where}: unknown condition '${k}'`];
   };
+  // Operand types from the catalog's field descriptions: arrays, entity refs/ids (strings), numbers (or $var / nested formula).
+  const isValue = x => typeof x === 'number' || (typeof x === 'string' && x.startsWith('$')) || (x && typeof x === 'object' && !Array.isArray(x) && 'f' in x);
+  const operandOk = (desc, x) => /^array/.test(desc) ? Array.isArray(x)
+    : /^(entity ref|status id|metric name)/.test(desc) ? typeof x === 'string'
+    : /^number/.test(desc) ? isValue(x)
+    : true;
   const formulaCatalog = readJson('engine/runtime/formulas.json').ops || {};
   const formulaOps = new Set(Object.keys(formulaCatalog));
   // formulas.json marks each operand "…, required"; a recognized operator missing one fails at run time.
@@ -141,7 +146,8 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
     if (Array.isArray(v)) return v.flatMap(x => formulaErrors(x, where));
     if (!v || typeof v !== 'object') return [];
     const own = !('f' in v) ? [] : !formulaOps.has(v.f) ? [`${where}: unknown formula '${v.f}'`]
-      : formulaRequired[v.f].filter(k => v[k] === undefined).map(k => `${where}: formula '${v.f}' needs '${k}'`);
+      : [...formulaRequired[v.f].filter(k => v[k] === undefined).map(k => `${where}: formula '${v.f}' needs '${k}'`),
+         ...Object.entries(formulaCatalog[v.f].fields || {}).filter(([k]) => v[k] !== undefined && !operandOk(String(formulaCatalog[v.f].fields[k]), v[k])).map(([k]) => `${where}: formula '${v.f}' operand '${k}' has the wrong type (${formulaCatalog[v.f].fields[k]})`)];
     return [...own, ...Object.values(v).flatMap(x => formulaErrors(x, where))];
   };
   for (const [slug, m] of Object.entries(mechanics)) {
@@ -168,7 +174,8 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
       for (const step of walkSteps(handler.do)) {
         const check = (kind, full) => {
           if (typeof full !== 'string') return fail(`${slug}: ${kind} target must be a string, got ${JSON.stringify(full)}`);
-          if (kind === 'emit' && full.startsWith('runtime.')) return;
+          // runtime.* events are raised by ops only (SPEC section 6); a mechanic never emits them.
+          if (kind === 'emit' && full.startsWith('runtime.')) return fail(`${slug}: emit '${full}' — runtime events are raised by ops, not emitted by mechanics`);
           const hit = splitName(full, slugs);
           if (!hit) return fail(`${slug}: ${kind} target '${full}' names no mechanic`);
           const known = kind === 'call' ? commandsOf(hit.slug) : eventsOf(hit.slug);

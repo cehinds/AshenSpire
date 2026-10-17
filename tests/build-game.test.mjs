@@ -82,6 +82,9 @@ test('the build fails on dangling references', () => {
   assert.throws(() => buildGame({ patch: ({ content }) => { const c = content.cards.find(x => (x.effects || []).some(e => e.op)); c.effects.find(e => e.op).op = 'definitelyUnknown'; } }), /unknown effect op 'definitelyUnknown'/);
   assert.throws(() => buildGame({ patch: ({ mechanics }) => { const m = Object.values(mechanics).find(x => (x.service.handlers || []).length); m.service.handlers[0].when = { cmp: ['==', 1] }; } }), /cmp needs \[op, a, b\]/);
   assert.throws(() => buildGame({ patch: ({ mechanics }) => { const m = Object.values(mechanics).find(x => x.manifest.portability === 'portable'); m.interface.commands = { ...(m.interface.commands || {}), noop: { params: {} } }; } }), /interface command 'noop' has no command\.noop handler/);
+  assert.throws(() => buildGame({ patch: ({ mechanics }) => { const m = Object.values(mechanics).find(x => (x.service.handlers || []).length); m.service.handlers[0].do = [{ op: 'heal', amount: { f: 'add', args: 5 } }]; } }), /operand 'args' has the wrong type/);
+  assert.throws(() => buildGame({ patch: ({ mechanics }) => { const m = Object.values(mechanics).find(x => (x.service.handlers || []).length); m.service.handlers[0].when = { all: [true] }; } }), /condition must be an object/);
+  assert.throws(() => buildGame({ patch: ({ mechanics }) => { const m = Object.values(mechanics).find(x => (x.service.handlers || []).length); m.service.handlers[0].do = [{ emit: 'runtime.poiseBorken' }]; } }), /runtime events are raised by ops/);
   assert.throws(() => buildGame({ game: 'nonexistent-game' }));
 });
 
