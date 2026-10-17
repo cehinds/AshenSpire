@@ -6,7 +6,17 @@
     "version": "0.7.1.1556",
     "digest": "4f155934c2"
   },
-  "artifactIdentity": "pending fresh CI artifact; local build identity is not public artifact identity",
+  "artifactIdentity": {
+    "runtimeSourceCommit": "1c3f9839d6fba3d178b84dab4d44defa88bf72c2",
+    "workflowRunId": 39075841889,
+    "workflowJobId": 117522696613,
+    "artifactId": 12116684498,
+    "version": "0.7.1.1556",
+    "sourceDigest": "f0a19c2c3b",
+    "artifactArchiveSha256": "44d197e214f533bec173c4885fb682aeee65544f7bc15fc4e0bc13b6be0da43d",
+    "artifactUrl": "https://github.com/cehinds/AshenSpire/actions/runs/39075841889/artifacts/12116684498",
+    "status": "artifact verified; public route pending"
+  },
   "publicRouteVerification": "pending",
   "expectedUrl": "https://cehinds.github.io/AshenSpire/branches/fix/CombatHudLayoutBatch/latest/",
   "screenshots": [
