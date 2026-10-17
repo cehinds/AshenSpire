@@ -258,7 +258,7 @@ def run(root):
             folder.mkdir(exist_ok=True)
             destination = folder/(frame["label"]+".png")
             result.save(destination)
-            entry = {key: frame[key] for key in ("kind","label","rect","bounds","anchor","reviewedAnchor")}
+            entry = {key: frame[key] for key in ("kind","label","rect","bounds","full","anchor","reviewedAnchor")}
             entry.update(path=str(destination), sha256=digest(destination), translation=[x,y],
                          outputAnchor=[256,464], calibratedScale=frame_scale,
                          omittedFaintPixels=omitted_count, omittedMaxAlpha=omitted_max,
