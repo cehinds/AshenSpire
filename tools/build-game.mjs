@@ -118,6 +118,20 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   const commandsOf = slug => Object.keys(mechanics[slug].interface.commands || {});
   const eventsOf = slug => Object.keys(mechanics[slug].interface.events || {});
   const catalogOps = loadOps();
+  // Condition shapes (SPEC section 5): both runtimes read operands unconditionally.
+  const CMP = ['<', '<=', '==', '!=', '>=', '>'];
+  const conditionErrors = (c, where) => {
+    if (typeof c === 'boolean') return [];
+    if (!c || typeof c !== 'object' || Array.isArray(c)) return [`${where}: condition must be an object`];
+    const keys = Object.keys(c);
+    if (keys.length !== 1) return [`${where}: condition needs exactly one of all, any, not, cmp, hasTag, hasStatus`];
+    const [k] = keys, v = c[k];
+    if (k === 'all' || k === 'any') return Array.isArray(v) ? v.flatMap((x, i) => conditionErrors(x, `${where}.${k}[${i}]`)) : [`${where}: ${k} needs an array`];
+    if (k === 'not') return conditionErrors(v, `${where}.not`);
+    if (k === 'cmp') return Array.isArray(v) && v.length === 3 && CMP.includes(v[0]) ? [] : [`${where}: cmp needs [op, a, b] with op one of ${CMP.join(' ')}`];
+    if (k === 'hasTag' || k === 'hasStatus') return Array.isArray(v) && v.length === 2 ? [] : [`${where}: ${k} needs [ref, id]`];
+    return [`${where}: unknown condition '${k}'`];
+  };
   const formulaCatalog = readJson('engine/runtime/formulas.json').ops || {};
   const formulaOps = new Set(Object.keys(formulaCatalog));
   // formulas.json marks each operand "…, required"; a recognized operator missing one fails at run time.
@@ -133,6 +147,9 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   for (const [slug, m] of Object.entries(mechanics)) {
     for (const [q, def] of Object.entries(m.interface.queries || {})) for (const e of formulaErrors(def.value, `${slug} query ${q}`)) fail(e);
     for (const handler of m.service.handlers || []) if (handler.when !== undefined) for (const e of formulaErrors(handler.when, `${slug} handler ${handler.on} when`)) fail(e);
+    for (const handler of m.service.handlers || []) if (handler.when !== undefined) for (const e of conditionErrors(handler.when, `${slug} handler ${handler.on} when`)) fail(e);
+    // A portable mechanic implements every command it advertises (a host calls them directly).
+    if (m.manifest.portability === 'portable') for (const c of commandsOf(slug)) if (!(m.service.handlers || []).some(h => h.on === `command.${c}`)) fail(`${slug}: interface command '${c}' has no command.${c} handler`);
     // Handler entry points: command.<name> is a declared command; event.<slug>.<event> names a declared event (or runtime.*) the mechanic lists in listens.
     for (const handler of m.service.handlers || []) {
       const on = String(handler.on || '');
@@ -164,7 +181,7 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
         // Control steps carry their operands (SPEC section 6); both runtimes read them unconditionally.
         else if (!('op' in step)) {
           const bad = msg => fail(`${slug}: ${msg} in ${JSON.stringify(step).slice(0, 120)}`);
-          if ('if' in step) { for (const k of ['then', 'else']) if (step[k] !== undefined && !Array.isArray(step[k])) bad(`if.${k} must be an array`); }
+          if ('if' in step) { for (const e of conditionErrors(step.if, `${slug} if`)) fail(e); for (const k of ['then', 'else']) if (step[k] !== undefined && !Array.isArray(step[k])) bad(`if.${k} must be an array`); }
           else if ('forEach' in step) { if (typeof step.as !== 'string' || !step.as) bad('forEach needs a string as'); if (!Array.isArray(step.do)) bad('forEach needs a do array'); }
           else if ('set' in step) { if (typeof step.set !== 'string' || !step.set) bad('set needs a path string'); if (!('value' in step)) bad('set needs a value'); }
           for (const k of ['emit', 'call']) if (k in step && step.with !== undefined && (typeof step.with !== 'object' || step.with === null || Array.isArray(step.with))) bad(`${k}.with must be a record`);

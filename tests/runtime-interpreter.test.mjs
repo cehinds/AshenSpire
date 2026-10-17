@@ -507,3 +507,11 @@ test('forEach over an array variable expands allEnemies and refs member by membe
   const out = run([{ forEach: '$targets', as: 'who', do: [{ emit: 't.hit', with: { who: '$who' } }] }], state, { targets: ['allEnemies', 'p'] });
   assert.deepEqual(out.events.filter(e => e.name === 't.hit').map(e => e.payload.who), ['a', 'b', 'p']);
 });
+
+test('emit snapshots the host payload', () => {
+  const r = rt(mech('t', [{ on: 'event.t.ping', do: [] }]));
+  const payload = { nested: { n: 1 } };
+  const out = r.emit({ entities: { self: ent() } }, 't.ping', payload);
+  payload.nested.n = 2;
+  assert.equal(out.events[0].payload.nested.n, 1);
+});

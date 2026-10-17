@@ -357,12 +357,12 @@ export function createRuntime({ mechanics, ops = loadOps() } = {}) {
   return {
     command(state, full, params = {}) {
       const rt = start(state);
-      invokeCommand(rt, full, params);
+      invokeCommand(rt, full, structuredClone(params)); // host values are snapshotted at the boundary
       return { state: rt.state, events: rt.events };
     },
     emit(state, full, payload = {}) {
       const rt = start(state);
-      dispatchEvent(rt, full, { ...payload });
+      dispatchEvent(rt, full, structuredClone(payload));
       return { state: rt.state, events: rt.events };
     },
     query(state, full, params = {}) {
