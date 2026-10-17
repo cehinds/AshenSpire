@@ -746,7 +746,7 @@
       "id": "lifecycle.exhaust",
       "tag": "lifecycle.exhaust",
       "family": "lifecycle",
-      "portability": "legacy",
+      "portability": "portable",
       "modules": [
         "heal-rules"
       ]

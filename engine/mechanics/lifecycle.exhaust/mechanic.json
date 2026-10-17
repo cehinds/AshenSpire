@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "family": "lifecycle",
   "label": "Exhaust",
-  "description": "Tag lifecycle.exhaust in the lifecycle family.",
+  "description": "The card leaves play for the rest of the combat after it is used.",
   "attaches": [
     "card"
   ],
@@ -18,9 +18,10 @@
   "presentation": {
     "icon": "lifecycle.exhaust"
   },
-  "portability": "legacy",
+  "portability": "portable",
   "legacy": {
     "file": "src/engine/actions.js",
-    "symbol": "silencedForceContacts"
-  }
+    "symbol": "runOpcode"
+  },
+  "authored": true
 }

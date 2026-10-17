@@ -1,4 +1,20 @@
 {
   "mechanic": "lifecycle.exhaust",
-  "handlers": []
+  "handlers": [
+    {
+      "on": "command.exhaust",
+      "do": [
+        {
+          "op": "exhaust",
+          "card": "$card"
+        },
+        {
+          "emit": "lifecycle.exhaust.exhausted",
+          "with": {
+            "card": "$card"
+          }
+        }
+      ]
+    }
+  ]
 }

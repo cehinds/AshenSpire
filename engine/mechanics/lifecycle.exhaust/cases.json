@@ -1,1 +1,119 @@
-[]
+[
+  {
+    "name": "moves the card from hand to exhaust",
+    "given": {
+      "entities": {
+        "self": {
+          "piles": {
+            "hand": [
+              "strike",
+              "defend"
+            ],
+            "exhaust": []
+          }
+        }
+      }
+    },
+    "when": {
+      "command": "lifecycle.exhaust.exhaust",
+      "with": {
+        "card": "strike"
+      }
+    },
+    "then": {
+      "entities": {
+        "self": {
+          "piles": {
+            "hand": [
+              "defend"
+            ],
+            "exhaust": [
+              "strike"
+            ]
+          }
+        }
+      },
+      "events": [
+        "lifecycle.exhaust.exhausted"
+      ]
+    }
+  },
+  {
+    "name": "exhausting the last card empties the hand",
+    "given": {
+      "entities": {
+        "self": {
+          "piles": {
+            "hand": [
+              "strike"
+            ],
+            "exhaust": []
+          }
+        }
+      }
+    },
+    "when": {
+      "command": "lifecycle.exhaust.exhaust",
+      "with": {
+        "card": "strike"
+      }
+    },
+    "then": {
+      "entities": {
+        "self": {
+          "piles": {
+            "hand": [],
+            "exhaust": [
+              "strike"
+            ]
+          }
+        }
+      },
+      "events": [
+        "lifecycle.exhaust.exhausted"
+      ]
+    }
+  },
+  {
+    "name": "appends to a non-empty exhaust pile",
+    "given": {
+      "entities": {
+        "self": {
+          "piles": {
+            "hand": [
+              "strike",
+              "defend"
+            ],
+            "exhaust": [
+              "bash"
+            ]
+          }
+        }
+      }
+    },
+    "when": {
+      "command": "lifecycle.exhaust.exhaust",
+      "with": {
+        "card": "defend"
+      }
+    },
+    "then": {
+      "entities": {
+        "self": {
+          "piles": {
+            "hand": [
+              "strike"
+            ],
+            "exhaust": [
+              "bash",
+              "defend"
+            ]
+          }
+        }
+      },
+      "events": [
+        "lifecycle.exhaust.exhausted"
+      ]
+    }
+  }
+]
