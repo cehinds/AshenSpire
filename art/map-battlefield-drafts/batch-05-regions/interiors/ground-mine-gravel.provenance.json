@@ -1,0 +1,15 @@
+{
+  "status": "draft",
+  "generator": "OpenAI image_gen",
+  "prompt": "One separate transparent GROUND layer for a dark fantasy underground mine battle scene. Broad panoramic canvas requested3072x1728. Top52percent truly alpha transparent, opaque floor starts around y.52 and fills every lower edge continuously. Flat compact dark gravel, worn basalt pebbles and dusty earth with faint iron-ore rusty tones, restrained damp cool highlights, quiet central fighting lane. Standing-character perspective, low receding ground plane, NOT overhead mapview. Generous extra quiet ground at all sides/bottom for camera crops. No rails, carts, props, cavewalls, stalagmites, sky, scenery, people, labels, UI or tile base. Muted charcoal gray and desaturated brown painterly fantasy. Soft neutral diffuse upper-left illumination, low contrast floor. Clean alpha top edge; no colored fringe.",
+  "sourceOutputPath": "/workspace/generated_images/exec-a7e0ad72-5783-4824-996d-c87f4329288b.png",
+  "referencesPassed": [],
+  "styleReferencesInspected": [
+    "assets-mobile/environments/cinder-reach-combat.webp"
+  ],
+  "requestedDimensions": [
+    3072,
+    1728
+  ],
+  "processing": "Unchanged generated output; actual dimensions and alpha in batch manifest."
+}

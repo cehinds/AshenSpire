@@ -1,0 +1,1010 @@
+{
+  "version": 1,
+  "status": "draft-not-runtime-bound",
+  "assets": [
+    {
+      "id": "ashen-crown/backdrop-ashen-highlands",
+      "file": "ashen-crown/backdrop-ashen-highlands.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "backdrop",
+      "tags": {
+        "regions": [
+          "ashen-crown"
+        ],
+        "materials": [
+          "ashen",
+          "highlands"
+        ],
+        "layerRole": "backdrop"
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "cb7472e0405f21ad25be41d27e20963deff6a63886e5c6570a3d6d9f2d3687b0",
+      "provenanceFile": "ashen-crown/backdrop-ashen-highlands.provenance.json"
+    },
+    {
+      "id": "ashen-crown/ground-dry-meadow",
+      "file": "ashen-crown/ground-dry-meadow.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "ground",
+      "tags": {
+        "regions": [
+          "ashen-crown"
+        ],
+        "materials": [
+          "dry",
+          "meadow"
+        ],
+        "layerRole": "ground"
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "4d2d6b044f2d2c903c1df3decb279b66db5092efe6e3aee02cd46ca8c93618aa",
+      "provenanceFile": "ashen-crown/ground-dry-meadow.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        488,
+        1672,
+        941
+      ],
+      "medianCenterHorizonY": 528,
+      "bottomAlphaRange": [
+        246,
+        254
+      ]
+    },
+    {
+      "id": "ashen-crown/ground-worn-courtyard",
+      "file": "ashen-crown/ground-worn-courtyard.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "ground",
+      "tags": {
+        "regions": [
+          "ashen-crown"
+        ],
+        "materials": [
+          "worn",
+          "courtyard"
+        ],
+        "layerRole": "ground"
+      },
+      "width": 1672,
+      "height": 940,
+      "mode": "RGBA",
+      "sha256": "efdcc77fce75eb660921103b832379b6f0592ddc4cfb0c40f631f6c8f2e7c6e5",
+      "provenanceFile": "ashen-crown/ground-worn-courtyard.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        491,
+        1672,
+        940
+      ],
+      "medianCenterHorizonY": 512,
+      "bottomAlphaRange": [
+        237,
+        254
+      ]
+    },
+    {
+      "id": "ashen-crown/prop-broken-column",
+      "file": "ashen-crown/prop-broken-column.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "prop",
+      "tags": {
+        "regions": [
+          "ashen-crown"
+        ],
+        "materials": [
+          "broken",
+          "column"
+        ],
+        "layerRole": "prop"
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "b1de3d0c6cc79c694a9331a05bbc6e34ceea6199eb6437528aaed572076f01fe",
+      "provenanceFile": "ashen-crown/prop-broken-column.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        341,
+        119,
+        944,
+        1150
+      ]
+    },
+    {
+      "id": "ashen-crown/prop-market-stall",
+      "file": "ashen-crown/prop-market-stall.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "prop",
+      "tags": {
+        "regions": [
+          "ashen-crown"
+        ],
+        "materials": [
+          "market",
+          "stall"
+        ],
+        "layerRole": "prop"
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "a365d4d2aac30e29507557fce836827af289531b33f02af821236ed63daea680",
+      "provenanceFile": "ashen-crown/prop-market-stall.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        54,
+        28,
+        1209,
+        1211
+      ]
+    },
+    {
+      "id": "cinder-reach/backdrop-volcanic-shore",
+      "file": "cinder-reach/backdrop-volcanic-shore.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "backdrop",
+      "tags": {
+        "regions": [
+          "cinder-reach"
+        ],
+        "materials": [
+          "volcanic",
+          "shore"
+        ],
+        "layerRole": "backdrop"
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "65a3a48cb7a931a5840e5ef73d34ad532f9724178faa221327231b1913aac959",
+      "provenanceFile": "cinder-reach/backdrop-volcanic-shore.provenance.json"
+    },
+    {
+      "id": "cinder-reach/backdrop-volcanic",
+      "file": "cinder-reach/backdrop-volcanic.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "backdrop",
+      "tags": {
+        "regions": [
+          "cinder-reach"
+        ],
+        "materials": [
+          "volcanic"
+        ],
+        "layerRole": "backdrop"
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "6001d6e74db27b52e38af65fd591a0d3a6b85acf66537a0f8a67dc6495d04b7e",
+      "provenanceFile": "cinder-reach/backdrop-volcanic.provenance.json"
+    },
+    {
+      "id": "cinder-reach/ground-ash-flagstones",
+      "file": "cinder-reach/ground-ash-flagstones.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "ground",
+      "tags": {
+        "regions": [
+          "cinder-reach"
+        ],
+        "materials": [
+          "ash",
+          "flagstones"
+        ],
+        "layerRole": "ground"
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "ecc0212163c99e1e6b7d8667085e0db5bd3fce9e2b64f90058d374a9dc9ab4e8",
+      "provenanceFile": "cinder-reach/ground-ash-flagstones.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        482,
+        1672,
+        941
+      ],
+      "medianCenterHorizonY": 486,
+      "bottomAlphaRange": [
+        245,
+        254
+      ]
+    },
+    {
+      "id": "cinder-reach/ground-basalt-road",
+      "file": "cinder-reach/ground-basalt-road.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "ground",
+      "tags": {
+        "regions": [
+          "cinder-reach"
+        ],
+        "materials": [
+          "basalt",
+          "road"
+        ],
+        "layerRole": "ground"
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "fd9a469415a55080e4b9ea62d6ba165d68de1a5766b5622abf1048c6aaa31365",
+      "provenanceFile": "cinder-reach/ground-basalt-road.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        454,
+        1672,
+        941
+      ],
+      "medianCenterHorizonY": 457,
+      "bottomAlphaRange": [
+        249,
+        254
+      ]
+    },
+    {
+      "id": "cinder-reach/prop-basalt-spires",
+      "file": "cinder-reach/prop-basalt-spires.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "prop",
+      "tags": {
+        "regions": [
+          "cinder-reach"
+        ],
+        "materials": [
+          "basalt",
+          "spires"
+        ],
+        "layerRole": "prop"
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "8aa61b5969c9be608114721f187a3056a8ca18c439c699f3c7ccf13eef585975",
+      "provenanceFile": "cinder-reach/prop-basalt-spires.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        269,
+        224,
+        985,
+        1037
+      ]
+    },
+    {
+      "id": "cinder-reach/prop-broken-forge",
+      "file": "cinder-reach/prop-broken-forge.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "prop",
+      "tags": {
+        "regions": [
+          "cinder-reach"
+        ],
+        "materials": [
+          "broken",
+          "forge"
+        ],
+        "layerRole": "prop"
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "19e322c0f20afabaa04d3f460454a1fd4f8f9a58d8f13e4415a1512643d1cdff",
+      "provenanceFile": "cinder-reach/prop-broken-forge.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        129,
+        54,
+        1144,
+        1150
+      ]
+    },
+    {
+      "id": "drowned-coast/backdrop-tidal-coast",
+      "file": "drowned-coast/backdrop-tidal-coast.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "backdrop",
+      "tags": {
+        "regions": [
+          "drowned-coast"
+        ],
+        "materials": [
+          "tidal",
+          "coast"
+        ],
+        "layerRole": "backdrop"
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "121cd2e179386f6529351a6b06b5b89df23bcb9981330ca72590b1c1acd0dc23",
+      "provenanceFile": "drowned-coast/backdrop-tidal-coast.provenance.json"
+    },
+    {
+      "id": "drowned-coast/ground-tidal-stone",
+      "file": "drowned-coast/ground-tidal-stone.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "ground",
+      "tags": {
+        "regions": [
+          "drowned-coast"
+        ],
+        "materials": [
+          "tidal",
+          "stone"
+        ],
+        "layerRole": "ground"
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "7c20ebe21b58a00bee4e9c4efdc1f593eb5b4970e37bdd1c8c3a09d4c37f97fb",
+      "provenanceFile": "drowned-coast/ground-tidal-stone.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        510,
+        1672,
+        941
+      ],
+      "medianCenterHorizonY": 524,
+      "bottomAlphaRange": [
+        247,
+        254
+      ]
+    },
+    {
+      "id": "drowned-coast/ground-wet-sand",
+      "file": "drowned-coast/ground-wet-sand.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "ground",
+      "tags": {
+        "regions": [
+          "drowned-coast"
+        ],
+        "materials": [
+          "wet",
+          "sand"
+        ],
+        "layerRole": "ground"
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "12b7ea4939adb691f379ed7c1530e620eb8c0af7caca6c6c614abefa5b02e9d5",
+      "provenanceFile": "drowned-coast/ground-wet-sand.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        483,
+        1672,
+        941
+      ],
+      "medianCenterHorizonY": 502,
+      "bottomAlphaRange": [
+        242,
+        253
+      ]
+    },
+    {
+      "id": "drowned-coast/prop-broken-jetty",
+      "file": "drowned-coast/prop-broken-jetty.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "prop",
+      "tags": {
+        "regions": [
+          "drowned-coast"
+        ],
+        "materials": [
+          "broken",
+          "jetty"
+        ],
+        "layerRole": "prop"
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "e09d90eadeb3588056a8243e9631936575b9a563ddeac13aafbb0c01861c096f",
+      "provenanceFile": "drowned-coast/prop-broken-jetty.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        115,
+        296,
+        1155,
+        988
+      ]
+    },
+    {
+      "id": "drowned-coast/prop-shipwreck-ribs",
+      "file": "drowned-coast/prop-shipwreck-ribs.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "prop",
+      "tags": {
+        "regions": [
+          "drowned-coast"
+        ],
+        "materials": [
+          "shipwreck",
+          "ribs"
+        ],
+        "layerRole": "prop"
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "56e445f50e6bffc0934a566ea867c51dcd8633f6d9f13aeb8e2ffa58b4a96829",
+      "provenanceFile": "drowned-coast/prop-shipwreck-ribs.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        56,
+        136,
+        1205,
+        1088
+      ]
+    },
+    {
+      "id": "hollow-weald/backdrop-deep-weald",
+      "file": "hollow-weald/backdrop-deep-weald.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "backdrop",
+      "tags": {
+        "regions": [
+          "hollow-weald"
+        ],
+        "materials": [
+          "deep",
+          "weald"
+        ],
+        "layerRole": "backdrop"
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "46175c1a0e73d5b51bfcf2be085ca419608dd4a608e575e2bcd04de5c3f603ab",
+      "provenanceFile": "hollow-weald/generation-record.json"
+    },
+    {
+      "id": "hollow-weald/ground-bog-path",
+      "file": "hollow-weald/ground-bog-path.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "ground",
+      "tags": {
+        "regions": [
+          "hollow-weald"
+        ],
+        "materials": [
+          "bog",
+          "path"
+        ],
+        "layerRole": "ground"
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "e9d81023c7cfc395ec6695343094637ea6e0d1f366ef8352cbd9e45469f9e2b7",
+      "provenanceFile": "hollow-weald/generation-record.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        497,
+        1672,
+        941
+      ],
+      "medianCenterHorizonY": 513,
+      "bottomAlphaRange": [
+        238,
+        253
+      ]
+    },
+    {
+      "id": "hollow-weald/ground-moss-clearing",
+      "file": "hollow-weald/ground-moss-clearing.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "ground",
+      "tags": {
+        "regions": [
+          "hollow-weald"
+        ],
+        "materials": [
+          "moss",
+          "clearing"
+        ],
+        "layerRole": "ground"
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "cb41a93c89de368a45b2f7131ba2db0202f3b3673e6e1f0af2b38762451ab198",
+      "provenanceFile": "hollow-weald/generation-record.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        472,
+        1672,
+        941
+      ],
+      "medianCenterHorizonY": 523,
+      "bottomAlphaRange": [
+        240,
+        254
+      ]
+    },
+    {
+      "id": "hollow-weald/prop-gnarled-root",
+      "file": "hollow-weald/prop-gnarled-root.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "prop",
+      "tags": {
+        "regions": [
+          "hollow-weald"
+        ],
+        "materials": [
+          "gnarled",
+          "root"
+        ],
+        "layerRole": "prop"
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "f94a9c3e3575da3acce6967634ed9def936b2172bb96f56a537dc743d6ffe65e",
+      "provenanceFile": "hollow-weald/generation-record.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        30,
+        325,
+        1227,
+        1009
+      ]
+    },
+    {
+      "id": "hollow-weald/prop-woodland-shrine",
+      "file": "hollow-weald/prop-woodland-shrine.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "prop",
+      "tags": {
+        "regions": [
+          "hollow-weald"
+        ],
+        "materials": [
+          "woodland",
+          "shrine"
+        ],
+        "layerRole": "prop"
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "6604699dd360e9b8760528118b26c50b919ff301c11636bce0d0841847d3a42b",
+      "provenanceFile": "hollow-weald/generation-record.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        154,
+        42,
+        1105,
+        1211
+      ]
+    },
+    {
+      "id": "interiors/backdrop-mine-depths",
+      "file": "interiors/backdrop-mine-depths.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "backdrop",
+      "tags": {
+        "regions": [],
+        "materials": [
+          "mine",
+          "depths"
+        ],
+        "layerRole": "backdrop"
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "6d58c3b2258a86f828c09ecf4b180c2e45ad96d09468601bd1a6f4ab7f33d55f",
+      "provenanceFile": "interiors/backdrop-mine-depths.provenance.json"
+    },
+    {
+      "id": "interiors/backdrop-vaulted-depths",
+      "file": "interiors/backdrop-vaulted-depths.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "backdrop",
+      "tags": {
+        "regions": [],
+        "materials": [
+          "vaulted",
+          "depths"
+        ],
+        "layerRole": "backdrop"
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "e835528c04de2da58a74929206a49c9e0d975fb8b18dbbe3bda725ec9bedcce2",
+      "provenanceFile": "interiors/backdrop-vaulted-depths.provenance.json"
+    },
+    {
+      "id": "interiors/ground-dungeon-flagstones",
+      "file": "interiors/ground-dungeon-flagstones.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "ground",
+      "tags": {
+        "regions": [],
+        "materials": [
+          "dungeon",
+          "flagstones"
+        ],
+        "layerRole": "ground"
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "fe831787ad758b732b113ea357bf6492f3df33460188a6ceee2f32d8834005b6",
+      "provenanceFile": "interiors/ground-dungeon-flagstones.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        465,
+        1672,
+        941
+      ],
+      "medianCenterHorizonY": 466,
+      "bottomAlphaRange": [
+        242,
+        254
+      ]
+    },
+    {
+      "id": "interiors/ground-mine-gravel",
+      "file": "interiors/ground-mine-gravel.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "ground",
+      "tags": {
+        "regions": [],
+        "materials": [
+          "mine",
+          "gravel"
+        ],
+        "layerRole": "ground"
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "621ad452409730bdf74ad3c95ebbe23bf60ada8b0ad62c32959dc0cb2631742a",
+      "provenanceFile": "interiors/ground-mine-gravel.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        479,
+        1672,
+        941
+      ],
+      "medianCenterHorizonY": 507,
+      "bottomAlphaRange": [
+        248,
+        254
+      ]
+    },
+    {
+      "id": "interiors/prop-iron-gate",
+      "file": "interiors/prop-iron-gate.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "prop",
+      "tags": {
+        "regions": [],
+        "materials": [
+          "iron",
+          "gate"
+        ],
+        "layerRole": "prop"
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "e38a5c6fc3fd705750729f3477f697fc9e61076813e3f3bf4ec51e858887135c",
+      "provenanceFile": "interiors/prop-iron-gate.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        104,
+        76,
+        1177,
+        1159
+      ]
+    },
+    {
+      "id": "interiors/prop-mine-cart",
+      "file": "interiors/prop-mine-cart.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "prop",
+      "tags": {
+        "regions": [],
+        "materials": [
+          "mine",
+          "cart"
+        ],
+        "layerRole": "prop"
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "cf9c2ac4e8e585d19585e77dd6f73ebe6c55b9ed8fbaacd836069fa1278a5c93",
+      "provenanceFile": "interiors/prop-mine-cart.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        70,
+        195,
+        1201,
+        1117
+      ]
+    },
+    {
+      "id": "pale-marches/backdrop-snow-valley",
+      "file": "pale-marches/backdrop-snow-valley.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "backdrop",
+      "tags": {
+        "regions": [
+          "pale-marches"
+        ],
+        "materials": [
+          "snow",
+          "valley"
+        ],
+        "layerRole": "backdrop"
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "2b7617b186b8b33a4f9bd6e9abd5f440be4170078c03d839f7c66731796cc8d5",
+      "provenanceFile": "pale-marches/backdrop-snow-valley.provenance.json"
+    },
+    {
+      "id": "pale-marches/ground-frozen-shore",
+      "file": "pale-marches/ground-frozen-shore.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "ground",
+      "tags": {
+        "regions": [
+          "pale-marches"
+        ],
+        "materials": [
+          "frozen",
+          "shore"
+        ],
+        "layerRole": "ground"
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "767ae3d5d97288bbe79c938e243f9e1b395b3db6d057966ebaea1faa0faf7138",
+      "provenanceFile": "pale-marches/ground-frozen-shore.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        496,
+        1672,
+        941
+      ],
+      "medianCenterHorizonY": 542,
+      "bottomAlphaRange": [
+        246,
+        254
+      ]
+    },
+    {
+      "id": "pale-marches/ground-snow-road",
+      "file": "pale-marches/ground-snow-road.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "ground",
+      "tags": {
+        "regions": [
+          "pale-marches"
+        ],
+        "materials": [
+          "snow",
+          "road"
+        ],
+        "layerRole": "ground"
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "7657efdb5f9e94b07873b92ad678106160f9da87f0a76926a7ba7e82818eeb18",
+      "provenanceFile": "pale-marches/ground-snow-road.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        482,
+        1672,
+        941
+      ],
+      "medianCenterHorizonY": 527,
+      "bottomAlphaRange": [
+        237,
+        253
+      ]
+    },
+    {
+      "id": "pale-marches/prop-frozen-wall",
+      "file": "pale-marches/prop-frozen-wall.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "prop",
+      "tags": {
+        "regions": [
+          "pale-marches"
+        ],
+        "materials": [
+          "frozen",
+          "wall"
+        ],
+        "layerRole": "prop"
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "d39928e755aec3010bfc0508a73e66d84d43d0302264fe9104647cc2b405f551",
+      "provenanceFile": "pale-marches/prop-frozen-wall.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        31,
+        336,
+        1228,
+        942
+      ]
+    },
+    {
+      "id": "pale-marches/prop-snowy-waystone",
+      "file": "pale-marches/prop-snowy-waystone.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "prop",
+      "tags": {
+        "regions": [
+          "pale-marches"
+        ],
+        "materials": [
+          "snowy",
+          "waystone"
+        ],
+        "layerRole": "prop"
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "cdd4e0fe9c96554504bd0e4a303e9843a7bf6ba9c7139227cf62f249456867f3",
+      "provenanceFile": "pale-marches/prop-snowy-waystone.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        364,
+        73,
+        904,
+        1206
+      ]
+    }
+  ],
+  "coverage": "location-coverage.example.json",
+  "recipe": "composition.example.json",
+  "requestedWideSourceDimensions": [
+    3072,
+    1728
+  ],
+  "actualWideSourceNote": "Generated wide sources are1672x941 except Ashen courtyard1672x940. No painted sources enlarged to claim requested dimensions.",
+  "reviewRequired": [
+    "Alpha edge cleanup and opaque floor export review.",
+    "Production-size masters and additional vertical paint for portrait camera travel.",
+    "Regional interior/settlement material refinement.",
+    "Actor feet, shadows and camera movement tests."
+  ]
+}

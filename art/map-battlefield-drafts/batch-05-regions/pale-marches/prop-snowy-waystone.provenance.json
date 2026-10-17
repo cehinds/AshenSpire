@@ -1,0 +1,44 @@
+{
+  "asset": "prop-snowy-waystone.png",
+  "prompt": "Paint a single upright ancient stone waymarker as an isolated combat-scene prop, high three-quarter eye-level battle view like the snowy terrain in the reference. Make it unmistakably constructed: a tall squared-off tapered limestone pillar made from a few broad cut blocks, a flat beveled top, and one simple shallow horizontal notch cut into the front face as a wayfinding mark (no glyph or writing). A thick clean cap of snow sits on top and lightly catches on ledges; thin frost in the stone seams. Bold simple vertical silhouette, readable at a distance. Cool white-gray stone, charcoal-blue shadows, muted cyan ice highlights, soft upper-left cold light, painterly dark fantasy game art. One object only, self-contained with a flat stone base edge but no ground island or attached plinth. Fully transparent square canvas, generous margins, complete silhouette not cropped. No natural boulder or mountain shape; no pointy peak, no tree, wall, sky, snowbank, other props, people, text, symbols, runes, logo, or UI. No colored fringe, alpha dust, halo or oversized cast shadow. Target a 1024x1024 transparent PNG.",
+  "output_path": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/pale-marches/prop-snowy-waystone.png",
+  "generated_original_path": "/workspace/generated_images/exec-6eb515ce-5d2c-4f84-9eee-e05ea62f820c.png",
+  "style_reference_paths": [
+    "/workspace/AshenSpire/assets-mobile/environments/pale-marches-combat.webp"
+  ],
+  "generator": "image_gen.imagegen",
+  "status": "draft",
+  "dimensions_px": [
+    1254,
+    1254
+  ],
+  "format": "PNG",
+  "color_mode": "RGBA",
+  "sha256": "cdd4e0fe9c96554504bd0e4a303e9843a7bf6ba9c7139227cf62f249456867f3",
+  "superseded_generated_original_paths": [
+    "/workspace/generated_images/exec-8159d1fc-c565-428d-baa4-a17beedd66d2.png"
+  ],
+  "alpha_findings": {
+    "alphaByteRange": [
+      0,
+      255
+    ],
+    "transparentPixels": 1094163,
+    "partialAlphaPixels": 477972,
+    "opaquePixels": 381,
+    "outerBorderNonzeroAlphaPixels": 159,
+    "bboxAtAlpha16": [
+      364,
+      73,
+      905,
+      1206
+    ]
+  },
+  "original_copy_sha256_matches": true,
+  "requested_dimensions_px": [
+    1024,
+    1024
+  ],
+  "canvas_limitation": "Image generator returned 1254x1254 px; requested 1024x1024 px. Original retained unchanged; no resize.",
+  "visual_qa_limitations": "Readable constructed marker; subtle colored edge fringe remains. Generated resolution is 1254 square rather than requested 1024."
+}

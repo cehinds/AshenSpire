@@ -1,0 +1,65 @@
+{
+  "status": "draft-unregistered",
+  "generator": "OpenAI image_gen",
+  "region": "ashen-crown",
+  "role": "backdrop",
+  "prompt": "Create one OPAQUE expansive Ashen Crown highlands backdrop PNG for layered combat/rest scenery, requested3072x1728 landscape. Painterly dark fantasy, quiet restrained detail. Existing first reference region map establishes geography: dry ochre grassy rolling highlands, gray craggy mountains, old stone keeps and fields; second combat reference establishes aged castle architecture only, IGNORE its bright orange sunset. Eye-level panoramic view across a spacious highland valley, a distant weathered stone castle on a low ridge in the LEFT third, layered far mountain ridges, muted ochre fields, scattered sparse distant dark trees, cool soft pale-gray clouded daylight sky. Matched neutral diffuse upper-left light, subdued warm-gray old stone and faded straw grass, no lava, smoke, fire, orange glow, golden sunset, giant sun or fantasy neon. Quiet middle area and broad lateral scenery extension for camera movement. Depth starts in middle distance: NO foreground floor, playable platform, courtyard, large foreground props or framing objects. The bottom continues distant hills/fields and can sit behind a separate transparent-upper-half combat floor; keep castle small and above expected foreground occlusion at y0.52. Full opaque frame edge to edge, no transparency, no people, no labels, no grid, no border. Single backdrop image only, not collage.",
+  "requestedCanvas": {
+    "width": 3072,
+    "height": 1728
+  },
+  "sourceOutputPath": "/workspace/generated_images/exec-2c2be4b1-1399-42b1-a820-5e483fee862b.png",
+  "sourceReferences": [
+    "/workspace/AshenSpire/assets-mobile/environments/ashen-crown-map.webp",
+    "/workspace/AshenSpire/assets-mobile/environments/ashen-crown-combat.webp"
+  ],
+  "outputPath": "backdrop-ashen-highlands.png",
+  "processing": "Byte-identical copy of original image_gen PNG output.",
+  "sha256": "cb7472e0405f21ad25be41d27e20963deff6a63886e5c6570a3d6d9f2d3687b0",
+  "sourceSha256": "cb7472e0405f21ad25be41d27e20963deff6a63886e5c6570a3d6d9f2d3687b0",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGB",
+    "alphaMin": 255,
+    "alphaMax": 255,
+    "transparentFraction": 0.0,
+    "opaqueFraction": 1.0,
+    "upper45PercentTransparentFraction": 0.0,
+    "visibleBoundsAlpha16": {
+      "left": 0,
+      "top": 0,
+      "right": 1671,
+      "bottom": 940
+    },
+    "bottomEdgeOpaqueFraction": 1.0,
+    "leftLower35PercentOpaqueFraction": 1.0,
+    "rightLower35PercentOpaqueFraction": 1.0,
+    "saturatedRedEdgeResidue": {
+      "pixelCount": 0,
+      "maxAlpha": 0
+    },
+    "upper45PercentMaxAlpha": 255,
+    "bottomEdgeAlphaPercentiles": {
+      "0": 255.0,
+      "10": 255.0,
+      "50": 255.0,
+      "90": 255.0,
+      "100": 255.0
+    },
+    "visibleAlphaPercentiles": {
+      "0": 255.0,
+      "10": 255.0,
+      "50": 255.0,
+      "90": 255.0,
+      "100": 255.0
+    },
+    "leftLower35PercentMinAlpha": 255,
+    "rightLower35PercentMinAlpha": 255
+  },
+  "qaNotes": [
+    "Original image-generator output copied unchanged; no upscaling, trimming, recoloring, alpha cleanup, or compositing.",
+    "Actual output resolution differs from requested authoring resolution.",
+    "Opaque full-frame highlands backdrop with left-side stone castle; lower fields are scenery, not a separate combat platform."
+  ]
+}

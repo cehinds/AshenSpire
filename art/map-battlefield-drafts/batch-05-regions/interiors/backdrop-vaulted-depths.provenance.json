@@ -1,0 +1,12 @@
+{
+  "status": "draft",
+  "generator": "OpenAI image_gen",
+  "prompt": "One wide opaque BACKDROP only for a layered dark fantasy dungeon scene, requested3072x1728. Expansive ancient vaulted crypt fading into deep space, subdued charcoal gray limestone arches repeated far in background, soft cool shafts of dusty light from upper-left broken clerestory, distant small amber sconces very restrained. Broad quiet unobstructed central area, subtle receding architectural forms, enough lateral continuation at edges for camera crops. All architecture in background, NO foreground ground platform, characters, gates, props, lettering or UI. Bottom half may continue into indistinct dark depths because a separate floor layer will cover it. Standing-character eye-level perspective, painterly dark fantasy, muted tones, not black void, no strong neon, no close pillars cutting the center. This is one background layer, not a complete battle composition.",
+  "sourceOutputPath": "/workspace/generated_images/exec-01569296-60e2-4e52-8c10-a716654475e5.png",
+  "referencesPassed": [],
+  "requestedDimensions": [
+    3072,
+    1728
+  ],
+  "processing": "Unchanged generated output; actual dimensions and color mode in batch manifest."
+}

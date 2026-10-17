@@ -1,0 +1,94 @@
+{
+  "generator": "image_gen.imagegen",
+  "status": "draft",
+  "region": "cinder-reach",
+  "role": "ground",
+  "prompt": "Correct ONLY the VERTICAL FLOOR REGISTRATION of the supplied basalt-road ground layer. Preserve this same dark charcoal basalt road material, restrained painterly texture, quiet broad empty battlefield floor, upper-left diffuse light, and wide panoramic composition. The supplied floor begins too high around46percent down. In the corrected image, the ENTIRE TOP52PERCENT MUST BE COMPLETELY EMPTY ALPHA TRANSPARENCY: floor's nearly straight distant edge must be at normalized y0.52 just BELOW midpoint, and no visible floor above normalized y0.51. Ground occupies lower48percent only and remains fully painted opaque through every BOTTOM pixel and both lower side edges, no islands/platforms/cutouts or foreground borders. Keep scene camera level at human eye/chest height, not a map. No scenery or props, sky, clouds, distant mountains, lava pools, people, buildings, vegetation, text/UI. Remove any red/yellow colored fringe from the floor horizon. Target3072x1728 if supported, preserve wide16:9 aspect and use true transparency above floor. Do not add new focal details or crop-edge landmarks. This is a registered ground asset correction, not a complete scene.",
+  "referencedImagePaths": [
+    "/workspace/generated_images/exec-47f55c24-57c2-4e5d-935d-05177ba992b2.png"
+  ],
+  "inspectedStyleReferencePaths": [
+    "/workspace/AshenSpire/assets-mobile/environments/cinder-reach-map.webp",
+    "/workspace/AshenSpire/assets-mobile/environments/cinder-reach-combat.webp",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-03/scene-road-ground-misty.png"
+  ],
+  "referenceStrategy": "Live map/combat palette and scenery inspected; generated from written palette/composition descriptions rather than reproducing map camera or combat atlas layout.",
+  "sourceOutputPath": "/workspace/generated_images/exec-2229e966-0280-486b-9127-652a9566595a.png",
+  "outputPath": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/cinder-reach/ground-basalt-road.png",
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "transparentBackgroundRequested": true,
+  "processing": "Original generated PNG copied unchanged; no resizing, upscaling, alpha cleanup or compositing.",
+  "productionRegistered": false,
+  "sourceHistory": [
+    {
+      "sourceOutputPath": "/workspace/generated_images/exec-47f55c24-57c2-4e5d-935d-05177ba992b2.png",
+      "prompt": "Paint ONE wide dark-fantasy combat-scene GROUND LAYER for Cinder Reach, an ash-choked volcanic province of black basalt roads, scorched iron-gray masonry and distant ember-orange lava. This image is ONLY the level battle floor, without any backdrop or props. Match restrained painted dark fantasy: charcoal basalt, warm gray ash, soot-brown grit, old worn stone, very subdued rusty umber seams; diffuse overcast light from UPPER LEFT. Eye/chest-level combat camera looking horizontally toward a low distant floor edge, NOT an elevated world map, not isometric, not a terrain tile. WIDE LANDSCAPE target3072x1728, panoramic composition designed for large center crops. TRUE ALPHA BACKGROUND across the ENTIRE UPPER HALF. The ground's straight low irregular distant silhouette must be centered at normalized y0.52, not0.56; all pixels above y0.50 must be alpha0. The lower half is a broad empty basalt road: mostly flat charcoal-black worn paving slabs interspersed with ash-packed cracks and fine grit. Road spreads wide enough that there are no obvious road side borders. Quiet restrained surface detail and broad empty central actor standing space; subtle perspective scale but no dramatic vanishing-point stripe. Floor MUST continue fully to LEFT, RIGHT and BOTTOM image boundaries with opaque painted surface, no transparent fringe along those lower edges, no vignette, no detached island or slab. Extend quiet visually interchangeable floor well beyond the center crop; NO distinct landmark or focal object near crop edges. No standing rocks, buildings, columns, props, people, vegetation, lava pools, sky, clouds, mountain silhouette, fire, floating embers, text, labels, grid, UI or frame. No stage platform, cliffs or floor cutaway. No colored alpha outline or glow along the horizon. Render one uninterrupted transparent-above-floor PNG ground plane only."
+    }
+  ],
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "mode": "RGBA",
+  "sha256": "fd9a469415a55080e4b9ea62d6ba165d68de1a5766b5622abf1048c6aaa31365",
+  "alphaExtrema": [
+    0,
+    255
+  ],
+  "alphaBoundsByThreshold": {
+    "0": [
+      0,
+      150,
+      1672,
+      941
+    ],
+    "1": [
+      0,
+      452,
+      1672,
+      941
+    ],
+    "8": [
+      0,
+      454,
+      1672,
+      941
+    ],
+    "128": [
+      0,
+      455,
+      1672,
+      941
+    ]
+  },
+  "topHalfAlphaAbove8Fraction": 0.03073271912857579,
+  "topHalfFullyTransparentFraction": 0.9645182225389393,
+  "bottomAlphaExtrema": [
+    249,
+    254
+  ],
+  "lowerLeftAlphaExtrema": [
+    249,
+    254
+  ],
+  "lowerRightAlphaExtrema": [
+    250,
+    253
+  ],
+  "medianFloorAlphaOnsetNormalizedAbove128": 0.4857,
+  "visualReview": {
+    "inspected": true,
+    "observations": [
+      "Broad quiet basalt floor without scenery/props; lower surface reaches left/right/bottom edges.",
+      "Correction improved original too-high horizon, but median meaningful floor onset remains0.4857 rather than requested0.52. About3.1percent of top-half pixels have alpha above8.",
+      "Floor lower edges have alpha249–254 rather than fully opaque255; thin red/yellow horizon edge specks remain.",
+      "Actual1672x941 is smaller than requested3072x1728; no upscale performed."
+    ],
+    "productionApproved": false
+  },
+  "requestedHorizonNormalizedY": 0.52,
+  "alphaFindings": "Transparent-above-floor RGBA with measured horizon and alpha metrics. Ground is mostly opaque but lower edges contain slight translucency; exact requested horizon differs as documented."
+}

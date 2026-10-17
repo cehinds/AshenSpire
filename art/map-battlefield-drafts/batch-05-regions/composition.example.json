@@ -1,0 +1,345 @@
+{
+  "version": 1,
+  "status": "preview-only",
+  "canvas": {
+    "width": 1672,
+    "height": 941
+  },
+  "cameras": {
+    "landscape": {
+      "left": 356,
+      "top": 200,
+      "width": 960,
+      "height": 540
+    },
+    "portrait": {
+      "left": 611,
+      "top": 70,
+      "width": 450,
+      "height": 800
+    },
+    "ultrawide": {
+      "left": 196,
+      "top": 200,
+      "width": 1280,
+      "height": 540
+    }
+  },
+  "propPlacementRule": "Position visible silhouettes relative to each camera using anchorU and measured alpha >= 32 bounds. Scale by desired width, limited by height; place feet below the measured ground contact line by each prop\u2019s baseOcclusionPixels. These are responsive composition examples, not runtime logic.",
+  "presets": [
+    {
+      "id": "ashen-crown/ground-dry-meadow",
+      "label": "Ashen Crown / dry meadow",
+      "regionId": "ashen-crown",
+      "ground": "ashen-crown/ground-dry-meadow.png",
+      "backdrop": "ashen-crown/backdrop-ashen-highlands.png",
+      "groundContactY": 528,
+      "props": [
+        {
+          "file": "ashen-crown/prop-market-stall.png",
+          "anchorU": 0.18,
+          "visibleWidthFraction": 0.24,
+          "maximumHeightFraction": 0.46,
+          "baseOcclusionPixels": 16
+        },
+        {
+          "file": "ashen-crown/prop-broken-column.png",
+          "anchorU": 0.82,
+          "visibleWidthFraction": 0.24,
+          "maximumHeightFraction": 0.46,
+          "baseOcclusionPixels": 16
+        }
+      ],
+      "overview": true
+    },
+    {
+      "id": "ashen-crown/ground-worn-courtyard",
+      "label": "Ashen Crown / worn courtyard",
+      "regionId": "ashen-crown",
+      "ground": "ashen-crown/ground-worn-courtyard.png",
+      "backdrop": "ashen-crown/backdrop-ashen-highlands.png",
+      "groundContactY": 512,
+      "props": [
+        {
+          "file": "ashen-crown/prop-market-stall.png",
+          "anchorU": 0.18,
+          "visibleWidthFraction": 0.24,
+          "maximumHeightFraction": 0.46,
+          "baseOcclusionPixels": 16
+        },
+        {
+          "file": "ashen-crown/prop-broken-column.png",
+          "anchorU": 0.82,
+          "visibleWidthFraction": 0.24,
+          "maximumHeightFraction": 0.46,
+          "baseOcclusionPixels": 16
+        }
+      ],
+      "overview": false
+    },
+    {
+      "id": "hollow-weald/ground-moss-clearing",
+      "label": "Hollow Weald / moss clearing",
+      "regionId": "hollow-weald",
+      "ground": "hollow-weald/ground-moss-clearing.png",
+      "backdrop": "hollow-weald/backdrop-deep-weald.png",
+      "groundContactY": 523,
+      "props": [
+        {
+          "file": "hollow-weald/prop-gnarled-root.png",
+          "anchorU": 0.18,
+          "visibleWidthFraction": 0.24,
+          "maximumHeightFraction": 0.46,
+          "baseOcclusionPixels": 36
+        },
+        {
+          "file": "hollow-weald/prop-woodland-shrine.png",
+          "anchorU": 0.82,
+          "visibleWidthFraction": 0.24,
+          "maximumHeightFraction": 0.46,
+          "baseOcclusionPixels": 16
+        }
+      ],
+      "overview": true
+    },
+    {
+      "id": "hollow-weald/ground-bog-path",
+      "label": "Hollow Weald / bog path",
+      "regionId": "hollow-weald",
+      "ground": "hollow-weald/ground-bog-path.png",
+      "backdrop": "hollow-weald/backdrop-deep-weald.png",
+      "groundContactY": 513,
+      "props": [
+        {
+          "file": "hollow-weald/prop-gnarled-root.png",
+          "anchorU": 0.18,
+          "visibleWidthFraction": 0.24,
+          "maximumHeightFraction": 0.46,
+          "baseOcclusionPixels": 36
+        },
+        {
+          "file": "hollow-weald/prop-woodland-shrine.png",
+          "anchorU": 0.82,
+          "visibleWidthFraction": 0.24,
+          "maximumHeightFraction": 0.46,
+          "baseOcclusionPixels": 16
+        }
+      ],
+      "overview": false
+    },
+    {
+      "id": "pale-marches/ground-snow-road",
+      "label": "Pale Marches / snow road",
+      "regionId": "pale-marches",
+      "ground": "pale-marches/ground-snow-road.png",
+      "backdrop": "pale-marches/backdrop-snow-valley.png",
+      "groundContactY": 527,
+      "props": [
+        {
+          "file": "pale-marches/prop-snowy-waystone.png",
+          "anchorU": 0.18,
+          "visibleWidthFraction": 0.24,
+          "maximumHeightFraction": 0.46,
+          "baseOcclusionPixels": 16
+        },
+        {
+          "file": "pale-marches/prop-frozen-wall.png",
+          "anchorU": 0.82,
+          "visibleWidthFraction": 0.24,
+          "maximumHeightFraction": 0.46,
+          "baseOcclusionPixels": 16
+        }
+      ],
+      "overview": true,
+      "backdropScale": 1.6
+    },
+    {
+      "id": "pale-marches/ground-frozen-shore",
+      "label": "Pale Marches / frozen shore",
+      "regionId": "pale-marches",
+      "ground": "pale-marches/ground-frozen-shore.png",
+      "backdrop": "pale-marches/backdrop-snow-valley.png",
+      "groundContactY": 542,
+      "props": [
+        {
+          "file": "pale-marches/prop-snowy-waystone.png",
+          "anchorU": 0.18,
+          "visibleWidthFraction": 0.24,
+          "maximumHeightFraction": 0.46,
+          "baseOcclusionPixels": 16
+        },
+        {
+          "file": "pale-marches/prop-frozen-wall.png",
+          "anchorU": 0.82,
+          "visibleWidthFraction": 0.24,
+          "maximumHeightFraction": 0.46,
+          "baseOcclusionPixels": 16
+        }
+      ],
+      "overview": false,
+      "backdropScale": 1.6
+    },
+    {
+      "id": "cinder-reach/ground-basalt-road",
+      "label": "Cinder Reach / basalt road",
+      "regionId": "cinder-reach",
+      "ground": "cinder-reach/ground-basalt-road.png",
+      "backdrop": "cinder-reach/backdrop-volcanic.png",
+      "groundContactY": 457,
+      "props": [
+        {
+          "file": "cinder-reach/prop-broken-forge.png",
+          "anchorU": 0.18,
+          "visibleWidthFraction": 0.24,
+          "maximumHeightFraction": 0.46,
+          "baseOcclusionPixels": 4
+        },
+        {
+          "file": "cinder-reach/prop-basalt-spires.png",
+          "anchorU": 0.82,
+          "visibleWidthFraction": 0.24,
+          "maximumHeightFraction": 0.46,
+          "baseOcclusionPixels": 16
+        }
+      ],
+      "overview": true
+    },
+    {
+      "id": "cinder-reach/ground-ash-flagstones",
+      "label": "Cinder Reach / ash flagstones",
+      "regionId": "cinder-reach",
+      "ground": "cinder-reach/ground-ash-flagstones.png",
+      "backdrop": "cinder-reach/backdrop-volcanic.png",
+      "groundContactY": 486,
+      "props": [
+        {
+          "file": "cinder-reach/prop-broken-forge.png",
+          "anchorU": 0.18,
+          "visibleWidthFraction": 0.24,
+          "maximumHeightFraction": 0.46,
+          "baseOcclusionPixels": 4
+        },
+        {
+          "file": "cinder-reach/prop-basalt-spires.png",
+          "anchorU": 0.82,
+          "visibleWidthFraction": 0.24,
+          "maximumHeightFraction": 0.46,
+          "baseOcclusionPixels": 16
+        }
+      ],
+      "overview": false
+    },
+    {
+      "id": "drowned-coast/ground-wet-sand",
+      "label": "Drowned Coast / wet sand",
+      "regionId": "drowned-coast",
+      "ground": "drowned-coast/ground-wet-sand.png",
+      "backdrop": "drowned-coast/backdrop-tidal-coast.png",
+      "groundContactY": 502,
+      "props": [
+        {
+          "file": "drowned-coast/prop-broken-jetty.png",
+          "anchorU": 0.18,
+          "visibleWidthFraction": 0.24,
+          "maximumHeightFraction": 0.46,
+          "baseOcclusionPixels": 16
+        },
+        {
+          "file": "drowned-coast/prop-shipwreck-ribs.png",
+          "anchorU": 0.82,
+          "visibleWidthFraction": 0.24,
+          "maximumHeightFraction": 0.46,
+          "baseOcclusionPixels": 16
+        }
+      ],
+      "overview": true
+    },
+    {
+      "id": "drowned-coast/ground-tidal-stone",
+      "label": "Drowned Coast / tidal stone",
+      "regionId": "drowned-coast",
+      "ground": "drowned-coast/ground-tidal-stone.png",
+      "backdrop": "drowned-coast/backdrop-tidal-coast.png",
+      "groundContactY": 524,
+      "props": [
+        {
+          "file": "drowned-coast/prop-broken-jetty.png",
+          "anchorU": 0.18,
+          "visibleWidthFraction": 0.24,
+          "maximumHeightFraction": 0.46,
+          "baseOcclusionPixels": 16
+        },
+        {
+          "file": "drowned-coast/prop-shipwreck-ribs.png",
+          "anchorU": 0.82,
+          "visibleWidthFraction": 0.24,
+          "maximumHeightFraction": 0.46,
+          "baseOcclusionPixels": 16
+        }
+      ],
+      "overview": false
+    },
+    {
+      "id": "interiors/ground-dungeon-flagstones",
+      "label": "Dungeon / dungeon flagstones",
+      "regionId": "interiors",
+      "ground": "interiors/ground-dungeon-flagstones.png",
+      "backdrop": "interiors/backdrop-vaulted-depths.png",
+      "groundContactY": 466,
+      "props": [
+        {
+          "file": "interiors/prop-iron-gate.png",
+          "anchorU": 0.18,
+          "visibleWidthFraction": 0.24,
+          "maximumHeightFraction": 0.46,
+          "baseOcclusionPixels": 16
+        }
+      ],
+      "overview": true
+    },
+    {
+      "id": "interiors/ground-mine-gravel",
+      "label": "Mine / mine gravel",
+      "regionId": "interiors",
+      "ground": "interiors/ground-mine-gravel.png",
+      "backdrop": "interiors/backdrop-mine-depths.png",
+      "groundContactY": 507,
+      "props": [
+        {
+          "file": "interiors/prop-mine-cart.png",
+          "anchorU": 0.18,
+          "visibleWidthFraction": 0.24,
+          "maximumHeightFraction": 0.46,
+          "baseOcclusionPixels": 40
+        }
+      ],
+      "overview": true
+    },
+    {
+      "id": "cinder-reach/ground-basalt-road-shore",
+      "label": "Volcanic shore / basalt road",
+      "regionId": "cinder-reach",
+      "ground": "cinder-reach/ground-basalt-road.png",
+      "backdrop": "cinder-reach/backdrop-volcanic-shore.png",
+      "groundContactY": 457,
+      "props": [
+        {
+          "file": "cinder-reach/prop-basalt-spires.png",
+          "anchorU": 0.18,
+          "visibleWidthFraction": 0.24,
+          "maximumHeightFraction": 0.46,
+          "baseOcclusionPixels": 16
+        }
+      ],
+      "overview": false,
+      "backdropScale": 1.45
+    }
+  ],
+  "notes": [
+    "Backdrop and ground retain1672x941 stage; one940px courtyard source displays1px taller for this draft preview.",
+    "Landscape crop leaves356px side margins and200px top/bottom paint; portrait has only70px vertical margin and needs more painted height for larger travel.",
+    "Prop positions are independently recomputed for each camera; changing aspect ratio does not merely crop fixed landmarks.",
+    "Props remain behind ground; visible base masking does not replace actor/shadow validation."
+  ],
+  "backdropPlacementRule": "backdropScale defaults to 1. Scale uniformly around bottom center, keeping the full canvas covered. Snow uses 1.6 and volcanic shore 1.45 to bring mountains or water above the ground horizon; this is preview framing, not added source resolution."
+}

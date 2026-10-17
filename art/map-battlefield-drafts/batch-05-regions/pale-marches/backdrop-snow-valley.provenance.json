@@ -1,0 +1,32 @@
+{
+  "asset": "backdrop-snow-valley.png",
+  "prompt": "Paint an opaque full-bleed wide 16:9 backdrop plane for a snowy dark-fantasy battlefield: an expansive distant frozen mountain valley beneath a cloudy cold sky. Use the reference only for cool white-gray and cyan-blue palette and painted fantasy environment mood. Target 3072 x 1728. The upper two thirds are layered storm-cloud sky and far snowy peaks; the center stays quiet, open, and atmospheric. The bottom third is distant compressed valley haze and overlapping far ridgelines, with no close surface. Critical: do not show a flat frozen lake, no foreground ice sheet, no horizontal floor or ground plane, no platform or foreground terrain. Only distant mountain slopes and hazy valley silhouettes fade into mist at the lower edge. Soft cold overcast daylight, cool white, charcoal gray, slate blue and subtle cyan, restrained values. No close trees, cliffs, rocks, architecture, characters, props, text, labels, UI or border. This is only an opaque distant sky-and-mountain backdrop, not a stage or ground.",
+  "output_path": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/pale-marches/backdrop-snow-valley.png",
+  "generated_original_path": "/workspace/generated_images/exec-aca0a1ce-e913-4e97-9ba8-bfaed3b868e8.png",
+  "style_reference_paths": [
+    "/workspace/AshenSpire/assets-mobile/environments/pale-marches-combat.webp"
+  ],
+  "generator": "image_gen.imagegen",
+  "status": "draft",
+  "dimensions_px": [
+    1672,
+    941
+  ],
+  "format": "PNG",
+  "color_mode": "RGB",
+  "sha256": "2b7617b186b8b33a4f9bd6e9abd5f440be4170078c03d839f7c66731796cc8d5",
+  "superseded_generated_original_paths": [
+    "/workspace/generated_images/exec-82b141b3-a014-4f03-94ec-881ba73cdd1f.png"
+  ],
+  "alpha_findings": {
+    "alphaChannel": false,
+    "background": "opaque RGB"
+  },
+  "original_copy_sha256_matches": true,
+  "requested_dimensions_px": [
+    3072,
+    1728
+  ],
+  "canvas_limitation": "Image generator returned 1672x941 px; requested 3072x1728 px. Original retained unchanged; no resize.",
+  "visual_qa_limitations": "Opaque distant valley has an open center and no foreground floor; details are more photographic than painterly in places."
+}

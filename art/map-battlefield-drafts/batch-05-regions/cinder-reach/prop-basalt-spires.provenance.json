@@ -1,0 +1,71 @@
+{
+  "generator": "image_gen.imagegen",
+  "status": "draft",
+  "region": "cinder-reach",
+  "role": "prop",
+  "prompt": "Create ONE small isolated BASALT SPIRE CLUSTER prop for a painted dark-fantasy combat scene in Cinder Reach, an ash-choked volcanic province. A compact group of THREE to FIVE natural irregular charcoal-black basalt columns, tallest column only modestly higher than its neighbors, jagged broken angular tops, broad stable rock foot contacts, very restrained warm ash-gray dust and soot-brown seams. One small rock cluster only, not a mountain, cliff wall, monument or terrain island. Quiet painterly dark fantasy environmental art, broad stone planes with restrained texture, dark warm-gray/black stone, overcast diffuse UPPER-LEFT daylight, no active lava or bright molten glow. LEVEL human eye/chest-height battle camera, nearly front-facing with slight three-quarter angle revealing column depth; NOT elevated world-map view, aerial or isometric view. Square1024x1024 TRUE TRANSPARENT PNG, generous transparent margins on EVERY side and below the object. Keep entire cluster comfortably inside middle65percent of canvas, no cropped stone. Only the stone cluster has visible pixels: no ground patch, slab, island, plinth, scenery, background, sky, floor, detached rocks, shadows cast outside object, people, plants, text, UI or border. Clean neutral alpha edges, no red/yellow outline or glow. Keep silhouette broad, modest and readable as a relocatable background rock prop, not an epic landmark near a crop edge.",
+  "referencedImagePaths": [],
+  "inspectedStyleReferencePaths": [
+    "/workspace/AshenSpire/assets-mobile/environments/cinder-reach-map.webp",
+    "/workspace/AshenSpire/assets-mobile/environments/cinder-reach-combat.webp",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-03/scene-road-ground-misty.png"
+  ],
+  "referenceStrategy": "Live map/combat palette and scenery inspected; generated from written palette/composition descriptions rather than reproducing map camera or combat atlas layout.",
+  "sourceOutputPath": "/workspace/generated_images/exec-9f1d6471-372d-4b86-87af-04d1626d455a.png",
+  "outputPath": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/cinder-reach/prop-basalt-spires.png",
+  "requestedDimensions": {
+    "width": 1024,
+    "height": 1024
+  },
+  "transparentBackgroundRequested": true,
+  "processing": "Original generated PNG copied unchanged; no resizing, upscaling, alpha cleanup or compositing.",
+  "productionRegistered": false,
+  "actualDimensions": {
+    "width": 1254,
+    "height": 1254
+  },
+  "mode": "RGBA",
+  "sha256": "8aa61b5969c9be608114721f187a3056a8ca18c439c699f3c7ccf13eef585975",
+  "alphaExtrema": [
+    0,
+    255
+  ],
+  "alphaBoundsByThreshold": {
+    "0": [
+      0,
+      34,
+      1216,
+      1222
+    ],
+    "1": [
+      266,
+      221,
+      988,
+      1039
+    ],
+    "8": [
+      268,
+      223,
+      986,
+      1037
+    ],
+    "128": [
+      269,
+      224,
+      985,
+      1037
+    ]
+  },
+  "maximumBorderAlpha": 1,
+  "visualReview": {
+    "inspected": true,
+    "observations": [
+      "One independent natural basalt column cluster without floor island or scenery, warm-dark stone with upper-left light.",
+      "Cluster is more vertically dramatic and has more column planes than the requested small modest cluster; scale should remain controlled in composition.",
+      "Transparent visible margins are present, but alpha1 dust reaches canvas border and occasional colored edge specks remain."
+    ],
+    "productionApproved": false
+  },
+  "requestedHorizonNormalizedY": null,
+  "alphaFindings": "Isolated RGBA prop with true transparent background; near-transparent border dust and thin colored edge pixels remain."
+}

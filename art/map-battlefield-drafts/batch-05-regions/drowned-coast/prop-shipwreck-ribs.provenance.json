@@ -1,0 +1,80 @@
+{
+  "formatVersion": 1,
+  "status": "draft",
+  "generator": "image_gen.imagegen",
+  "regionId": "drowned-coast",
+  "id": "prop-shipwreck-ribs",
+  "prompt": "Paint ONE isolated SHIPWRECK RIB FRAGMENT as a separate transparent battle-scene prop for the Drowned Coast. Match the Drowned Coast region in the supplied map and combat references: dark muted painterly fantasy, teal-gray tidal water reflected in cool gray surfaces, desaturated weathered stone, restrained gray-green algae, no golden sunlight. Soft diffuse cool overcast daylight from upper left, gentle atmospheric contrast. Use those region references ONLY for palette and mood, never copy the map view, split-panel arrangement or buildings into a ground asset. One single image, never a montage or sheet. Eye-level battle camera with slight downward view about15degrees, not high isometric map view. A compact single attached section of an ancient small wooden shipwreck: four curved thick oak rib timbers emerge from one short fractured keel, with a few attached splintered outer hull planks along one side. Low broad broken boat-bone silhouette, clearly vessel ribs not a fence, animal skeleton or full ship. Cool desaturated gray weathered wood and dark water-worn joints, a trace of muted gray-green algae near the keel, no bright orange rust. No mast, sail, complete ship, detached debris or extra fragments. Only one attached wreck fragment floats on true transparent alpha background. No water, waves, reflection, sand mound, shore, ground island, display plinth, ropes, people, sky or scenery. Square canvas, all wood inside central65percent with generous transparent margins on all sides and open alpha gaps between ribs. Clean alpha edges, no colored fringe, glow, labels, text, UI, border or watermark. Single object, no collage. Target1024square, preserve native output dimensions.",
+  "sourceOutputPath": "/workspace/generated_images/exec-5bada4a4-f773-4cef-99ea-a7ad2ebd8f34.png",
+  "outputPath": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/drowned-coast/prop-shipwreck-ribs.png",
+  "referencedImagePaths": [
+    "/workspace/AshenSpire/assets-mobile/environments/drowned-coast-map.webp",
+    "/workspace/AshenSpire/assets-mobile/environments/drowned-coast-combat.webp"
+  ],
+  "contextReferencesInspected": [
+    "/workspace/AshenSpire/assets-mobile/environments/drowned-coast-map.webp",
+    "/workspace/AshenSpire/assets-mobile/environments/drowned-coast-combat.webp",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-03/scene-forest-ground-misty.png"
+  ],
+  "transparentBackgroundRequested": true,
+  "targetDimensions": {
+    "width": 1024,
+    "height": 1024
+  },
+  "processing": "Generated original copied byte-for-byte. No image edits, resize, upscale, alpha cleanup, color correction or compositing; generated source remains preserved.",
+  "productionRegistered": false,
+  "productionAssetId": null,
+  "limitations": [
+    "Draft art; not registered or integrated into runtime.",
+    "Requested target dimensions were not enforced by the generator. Native dimensions are preserved; no enlargement or resampling performed.",
+    "Generous requested central-65-percent margins were not fully achieved; actual visible bounds are measured below.",
+    "Ground anchor, support plane and projected scale remain to be registered in composition.",
+    "Faint alpha noise or colored edge pixels are preserved as generated."
+  ],
+  "width": 1254,
+  "height": 1254,
+  "mode": "RGBA",
+  "sha256": "56e445f50e6bffc0934a566ea867c51dcd8633f6d9f13aeb8e2ffa58b4a96829",
+  "alphaBounds": [
+    0,
+    0,
+    1234,
+    1254
+  ],
+  "visibleBoundsAlphaAbove8": [
+    56,
+    136,
+    1205,
+    1088
+  ],
+  "referenceHashes": {
+    "assets-mobile/environments/drowned-coast-map.webp": "7014764294d4a8e542b695b2984aa821e5e28b8515a8448e2e37bb1d99971d6e",
+    "assets-mobile/environments/drowned-coast-combat.webp": "18897020039f8d66e0f1fe54b7730a20bd3c920bfd5640ed3f6f85563f17f83f"
+  },
+  "alphaStatistics": {
+    "min": 0,
+    "max": 255,
+    "transparentPixels": 1021704,
+    "alpha1Pixels": 21000,
+    "opaquePixels": 704,
+    "visiblePixelsAlphaAbove8": 517235
+  },
+  "colorArtifactProbe": {
+    "scope": "All pixels with alpha > 8; heuristic only, no image processing",
+    "redPixels": 0,
+    "yellowPixels": 0,
+    "bluePixels": 0,
+    "magentaPixels": 0
+  },
+  "visibleMarginsAlphaAbove8": {
+    "left": 56,
+    "top": 136,
+    "right": 49,
+    "bottom": 166
+  },
+  "validation": {
+    "sourceCopyByteIdentical": true,
+    "recordedHashVerified": true,
+    "dimensionsMeasured": true
+  }
+}

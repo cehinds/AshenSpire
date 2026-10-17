@@ -1,0 +1,45 @@
+{
+  "asset": "ground-frozen-shore.png",
+  "prompt": "Create a wide isolated battlefield ground layer for a frozen lakeshore encounter in the Pale Marches. Use the first reference only for snowy white-gray, cool cyan ice palette and painted material style; use the second only for the broad level battlefield-ground silhouette. Target a wide 16:9 transparent canvas, 3072 x 1728. A low soft horizon of snowbank and shoreline starts near y=52%; everything above that horizon is transparent. Below it, create a broad, level playable surface of packed snow, icy gravel and frost-coated stones, filling the entire lower half and reaching every left, right and bottom edge. Suggest a frozen shore with an irregular thin margin of ice and snow near the back and side edges, but keep the entire actor play floor solid, walkable snow and icy gravel. Do not put a lake or continuous water plane across the combat floor. Center area and standing lanes should remain broad, quiet, and free of rocks or clutter. Cool whites, gray, blue-gray and subtle cyan ice glints, soft upper-left light. Ground only: no sky, no mountain backdrop, no cliffs, no trees, no props, no people, no labels, no text. Transparent alpha above the horizon; no opaque background fill.",
+  "output_path": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/pale-marches/ground-frozen-shore.png",
+  "generated_original_path": "/workspace/generated_images/exec-37aa1f3d-60d0-444c-a796-f1c047266cf5.png",
+  "style_reference_paths": [
+    "/workspace/AshenSpire/assets-mobile/environments/pale-marches-combat.webp",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-03/scene-forest-ground-misty.png"
+  ],
+  "generator": "image_gen.imagegen",
+  "status": "draft",
+  "dimensions_px": [
+    1672,
+    941
+  ],
+  "format": "PNG",
+  "color_mode": "RGBA",
+  "sha256": "767ae3d5d97288bbe79c938e243f9e1b395b3db6d057966ebaea1faa0faf7138",
+  "alpha_findings": {
+    "alphaByteRange": [
+      0,
+      255
+    ],
+    "transparentPixels": 880410,
+    "partialAlphaPixels": 692817,
+    "opaquePixels": 125,
+    "outerBorderNonzeroAlphaPixels": 2572,
+    "bboxAtAlpha16": [
+      0,
+      496,
+      1672,
+      941
+    ],
+    "top45PercentMaxAlpha": 1,
+    "bottomLeftAlpha": 246,
+    "bottomRightAlpha": 248
+  },
+  "original_copy_sha256_matches": true,
+  "requested_dimensions_px": [
+    3072,
+    1728
+  ],
+  "canvas_limitation": "Image generator returned 1672x941 px; requested 3072x1728 px. Original retained unchanged; no resize.",
+  "visual_qa_limitations": "High-frequency bright snow/ice texture; scattered low-alpha colored edge pixels and slight fringe are visible around the horizon. Frozen-shore reads mainly as icy gravel/snow without a clear shoreline cue."
+}

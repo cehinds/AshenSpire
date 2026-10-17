@@ -1,0 +1,73 @@
+{
+  "formatVersion": 1,
+  "status": "draft",
+  "generator": "image_gen.imagegen",
+  "regionId": "drowned-coast",
+  "id": "backdrop-tidal-coast",
+  "prompt": "Paint ONE WIDE SINGLE-FRAME opaque Drowned Coast battle backdrop, not a map, split-screen, contact sheet or montage. Match the Drowned Coast region in the supplied map and combat references: dark muted painterly fantasy, teal-gray tidal water reflected in cool gray surfaces, desaturated weathered stone, restrained gray-green algae, no golden sunlight. Soft diffuse cool overcast daylight from upper left, gentle atmospheric contrast. Use those region references ONLY for palette and mood, never copy the map view, split-panel arrangement or buildings into a ground asset. One single image, never a montage or sheet. Low eye-level battle camera, flat horizon at about y0.52. Calm expansive misty teal-gray tidal coast and distant offshore ruins: a few slender broken ancient limestone towers and arches on far left and far right islands, small and softened by cool overcast mist. Huge quiet open center for actors, pale low-contrast gray cloud cover above, distant flat ocean and subtle tidal reflections below. Quiet broad sky and water at all outer edges for portrait, widescreen and ultrawide cropping. No foreground sand/stone floor, ground platform, stage, shoreline shelf, large foreground object, boat, shipwreck, jetty, people, lightning, dramatic sunbeams or bright lights. The water in this distant background may fill the bottom; the separate combat floor will cover it in composition. Consistent soft diffuse upper-left cool daylight, subdued wet limestone, restrained gray-green algae, cinematic hand-painted texture with no hard black outlines. Opaque full-canvas background, no transparency. No text, labels, UI, border or watermark. Target3072x1728wide16:9, preserve native generated dimensions if unavailable.",
+  "sourceOutputPath": "/workspace/generated_images/exec-6605586d-5d97-44b9-99f1-0a028b097937.png",
+  "outputPath": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/drowned-coast/backdrop-tidal-coast.png",
+  "referencedImagePaths": [
+    "/workspace/AshenSpire/assets-mobile/environments/drowned-coast-map.webp",
+    "/workspace/AshenSpire/assets-mobile/environments/drowned-coast-combat.webp"
+  ],
+  "contextReferencesInspected": [
+    "/workspace/AshenSpire/assets-mobile/environments/drowned-coast-map.webp",
+    "/workspace/AshenSpire/assets-mobile/environments/drowned-coast-combat.webp",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-03/scene-forest-ground-misty.png"
+  ],
+  "transparentBackgroundRequested": false,
+  "targetDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "processing": "Generated original copied byte-for-byte. No image edits, resize, upscale, alpha cleanup, color correction or compositing; generated source remains preserved.",
+  "productionRegistered": false,
+  "productionAssetId": null,
+  "limitations": [
+    "Draft art; not registered or integrated into runtime.",
+    "Requested target dimensions were not enforced by the generator. Native dimensions are preserved; no enlargement or resampling performed.",
+    "Observed distant sea horizon is around y=0.36 rather than requested0.52; foreground floor alignment must be reviewed in composition.",
+    "Water has textured small ripples; center is visually quieter than the peripheral ruins."
+  ],
+  "width": 1672,
+  "height": 941,
+  "mode": "RGB",
+  "sha256": "121cd2e179386f6529351a6b06b5b89df23bcb9981330ca72590b1c1acd0dc23",
+  "alphaBounds": [
+    0,
+    0,
+    1672,
+    941
+  ],
+  "visibleBoundsAlphaAbove8": [
+    0,
+    0,
+    1672,
+    941
+  ],
+  "referenceHashes": {
+    "assets-mobile/environments/drowned-coast-map.webp": "7014764294d4a8e542b695b2984aa821e5e28b8515a8448e2e37bb1d99971d6e",
+    "assets-mobile/environments/drowned-coast-combat.webp": "18897020039f8d66e0f1fe54b7730a20bd3c920bfd5640ed3f6f85563f17f83f"
+  },
+  "alphaStatistics": {
+    "min": 255,
+    "max": 255,
+    "transparentPixels": 0,
+    "alpha1Pixels": 0,
+    "opaquePixels": 1573352,
+    "visiblePixelsAlphaAbove8": 1573352
+  },
+  "colorArtifactProbe": {
+    "scope": "All pixels with alpha > 8; heuristic only, no image processing",
+    "redPixels": 0,
+    "yellowPixels": 0,
+    "bluePixels": 0,
+    "magentaPixels": 0
+  },
+  "validation": {
+    "sourceCopyByteIdentical": true,
+    "recordedHashVerified": true,
+    "dimensionsMeasured": true
+  }
+}

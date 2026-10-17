@@ -1,0 +1,41 @@
+{
+  "generator": "image_gen.imagegen",
+  "status": "draft",
+  "region": "cinder-reach",
+  "role": "backdrop",
+  "prompt": "Paint ONE expansive opaque volcanic BACKDROP for a dark-fantasy combat scene in Cinder Reach, matching a scorched region with black basalt mountain ranges, immense ancient craters, ashen ridges, charcoal volcanic ruins in the distant geography and restrained ember-orange lava far away. Wide panoramic target3072x1728, a SINGLE uninterrupted scene not a montage or atlas. LEVEL human-eye battlefield camera, not an elevated map. Broad hazy ash sky under heavy warm slate overcast clouds; soft diffuse light from UPPER LEFT, muted charcoal, soot-brown, ash-gray and very restrained burnt orange palette. Distant craters and jagged ashen mountain ridges span the background below a large calm open sky. A few tiny distant lava seams or dim crater embers establish volcanic identity, but no firework glow or river of brilliant lava dominates. Center remains OPEN AND QUIET for actor readability. Quiet extended lateral composition for large center crops and camera overscan; do NOT put a major named mountain, building, bright lava source or landmark near left/right crop edges. The whole picture is a distant backdrop: no foreground battle floor, stage, ledge, platform, paving, props, forge, isolated rocks, people, vegetation or large near-camera object. Avoid steep foreground framing cliffs. Let distant hazy volcanic foothills and diffuse ash haze extend naturally through the entire bottom, with no transparent background. Painterly dark fantasy environment, broad restrained atmospheric brushwork with plausible volcanic forms. OPAQUE full-frame PNG, no alpha cutout, no text, labels, UI or borders.",
+  "referencedImagePaths": [],
+  "inspectedStyleReferencePaths": [
+    "/workspace/AshenSpire/assets-mobile/environments/cinder-reach-map.webp",
+    "/workspace/AshenSpire/assets-mobile/environments/cinder-reach-combat.webp",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-03/scene-road-ground-misty.png"
+  ],
+  "referenceStrategy": "Live map/combat palette and scenery inspected; generated from written palette/composition descriptions rather than reproducing map camera or combat atlas layout.",
+  "sourceOutputPath": "/workspace/generated_images/exec-70c528c8-6e2d-4e02-9c36-4db74cf09e43.png",
+  "outputPath": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/cinder-reach/backdrop-volcanic.png",
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "transparentBackgroundRequested": false,
+  "processing": "Original generated PNG copied unchanged; no resizing, upscaling, alpha cleanup or compositing.",
+  "productionRegistered": false,
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "mode": "RGB",
+  "sha256": "6001d6e74db27b52e38af65fd591a0d3a6b85acf66537a0f8a67dc6495d04b7e",
+  "alphaFindings": "No alpha channel; opaque RGB image.",
+  "visualReview": {
+    "inspected": true,
+    "observations": [
+      "Opaque expansive craters and ash mountains with restrained distant lava, broad central basin and no separate foreground stage/props.",
+      "Plausible Cinder Reach volcanic identity, but upper-left sky opening is warmer/brighter than strict quiet overcast.",
+      "Right-edge mountain range is more prominent than requested quiet crop margins; center cropping/overscan must be visually checked.",
+      "Distant landscape uses broad vista depth; exact camera/ground registration is not established."
+    ],
+    "productionApproved": false
+  },
+  "requestedHorizonNormalizedY": null
+}

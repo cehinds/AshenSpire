@@ -1,0 +1,69 @@
+{
+  "status": "draft-unregistered",
+  "generator": "OpenAI image_gen",
+  "region": "ashen-crown",
+  "role": "ground",
+  "prompt": "Create a new standalone Ashen Crown DRY MEADOW GROUND layer, painterly dark fantasy environment asset. Requested canvas 3072x1728 landscape, true RGBA transparency. References: first existing region map for dry ochre highlands and old warm-gray stone vocabulary; second combat reference for painterly stone texture only, DO NOT use sunset lighting; third ground reference ONLY for the alpha silhouette and floor composition. Upper approximately 50 percent must be genuinely transparent, no background, sky, scenery or haze. A nearly level distant floor boundary at normalized y=0.52, lower half continuous usable combat floor extending fully through left, right and bottom edges, never a floating terrain island. Broad very quiet central standing area of compact dry earth with sparse faded ochre short grass; slightly richer grass and small embedded weathered stones toward extreme side margins, nothing tall. Oversized lateral extension for camera movement. Soft neutral diffuse upper-left daylight, muted earthy ochre and warm gray, no bright golden light. Eye-level battle camera looking gently down across a level floor, NOT overhead map view. No buildings, rocks as separate objects, props, paths, people, weapons, letters, labels, borders or baked checkerboard. Preserve natural organic alpha edge and complete bottom/side bleed. One isolated ground layer only.",
+  "requestedCanvas": {
+    "width": 3072,
+    "height": 1728
+  },
+  "sourceOutputPath": "/workspace/generated_images/exec-d731cd30-4e46-4811-b13c-c83a12cf1303.png",
+  "sourceReferences": [
+    "/workspace/AshenSpire/assets-mobile/environments/ashen-crown-map.webp",
+    "/workspace/AshenSpire/assets-mobile/environments/ashen-crown-combat.webp",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-03/scene-forest-ground-misty.png"
+  ],
+  "outputPath": "ground-dry-meadow.png",
+  "processing": "Byte-identical copy of original image_gen PNG output.",
+  "sha256": "4d2d6b044f2d2c903c1df3decb279b66db5092efe6e3aee02cd46ca8c93618aa",
+  "sourceSha256": "4d2d6b044f2d2c903c1df3decb279b66db5092efe6e3aee02cd46ca8c93618aa",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGBA",
+    "alphaMin": 0,
+    "alphaMax": 255,
+    "transparentFraction": 0.520818,
+    "opaqueFraction": 4e-06,
+    "upper45PercentTransparentFraction": 0.956241,
+    "visibleBoundsAlpha16": {
+      "left": 0,
+      "top": 487,
+      "right": 1671,
+      "bottom": 940
+    },
+    "bottomEdgeOpaqueFraction": 0.0,
+    "leftLower35PercentOpaqueFraction": 0.0,
+    "rightLower35PercentOpaqueFraction": 0.0,
+    "saturatedRedEdgeResidue": {
+      "pixelCount": 9,
+      "maxAlpha": 2
+    },
+    "upper45PercentMaxAlpha": 1,
+    "bottomEdgeAlphaPercentiles": {
+      "0": 246.0,
+      "10": 252.0,
+      "50": 252.0,
+      "90": 253.0,
+      "100": 254.0
+    },
+    "visibleAlphaPercentiles": {
+      "0": 16.0,
+      "10": 251.0,
+      "50": 252.0,
+      "90": 252.0,
+      "100": 255.0
+    },
+    "leftLower35PercentMinAlpha": 246,
+    "rightLower35PercentMinAlpha": 249
+  },
+  "qaNotes": [
+    "Original image-generator output copied unchanged; no upscaling, trimming, recoloring, alpha cleanup, or compositing.",
+    "Actual output resolution differs from requested authoring resolution.",
+    "Upper area is true alpha; lower floor reaches side/bottom edges. Horizon is approximately 0.52\u20130.56 of actual canvas height.",
+    "Two grounds differ by one canvas pixel in height; register with explicit placement metadata before final production export.",
+    "Generator alpha is near-opaque (typically251\u2013253), not fully255 across material interiors; final production requires review for slight backdrop bleed. No normalization applied.",
+    "Upper45% alpha max is1/255: there are near-invisible residue pixels rather than strictly zero alpha everywhere."
+  ]
+}

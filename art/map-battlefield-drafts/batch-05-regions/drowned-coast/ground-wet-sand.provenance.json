@@ -1,0 +1,85 @@
+{
+  "formatVersion": 1,
+  "status": "draft",
+  "generator": "image_gen.imagegen",
+  "regionId": "drowned-coast",
+  "id": "ground-wet-sand",
+  "prompt": "Paint a standalone Drowned Coast WET SAND combat ground layer. Match the Drowned Coast region in the supplied map and combat references: dark muted painterly fantasy, teal-gray tidal water reflected in cool gray surfaces, desaturated weathered stone, restrained gray-green algae, no golden sunlight. Soft diffuse cool overcast daylight from upper left, gentle atmospheric contrast. Use those region references ONLY for palette and mood, never copy the map view, split-panel arrangement or buildings into a ground asset. One single image, never a montage or sheet. This is a SEPARATE transparent combat GROUND layer, a horizontal cross-stage battlefield seen from a low slightly elevated eye-level battle camera, not a top-down map. Use the supplied clearing image ONLY to understand the layer layout and continuous floor geometry; replace its forest ground completely. Composition exactly: the upper 50 percent of canvas is truly alpha-transparent empty space with no sky, scenery, objects, fog or backdrop. The far edge of the floor is approximately a quiet horizontal organic line at y=0.52 canvas height. Broad level walkable combat floor covers the lower half continuously and extends completely beyond left, right and bottom canvas edges, with no side or bottom alpha margins. The floor's upper silhouette is subtle, low and nearly level, not a high mound. Leave lots of quiet floor at left, center, right and foreground so wide and portrait crops remain usable. No isolated terrain island, no platform sidewall, no cliff or big foreground boulder. No people, props, trees, buildings, shells, ship pieces, reeds, text, UI, border or watermarks. Clean alpha above floor, no warm chroma fringe, no opaque background. Target3072x1728, a wide16:9 canvas; retain native generated dimensions if that size is unavailable. Surface material: broad firm gray-beige wet tidal sand, muted cool slate-blue dampness, very fine shallow ripple texture, a few irregular darker wet streaks and restrained diffuse specular sheen. This is solid walkable sandy shore, NOT a whole water plane or lake. At most tiny shallow reflective depressions, no waves, surf, ocean line or broad pools. Quiet darker variation at outer floor edges, center remains clear and level.",
+  "sourceOutputPath": "/workspace/generated_images/exec-0ea57796-b8d0-442e-8d52-aaf3430d49eb.png",
+  "outputPath": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/drowned-coast/ground-wet-sand.png",
+  "referencedImagePaths": [
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-03/scene-forest-ground-misty.png",
+    "/workspace/AshenSpire/assets-mobile/environments/drowned-coast-map.webp",
+    "/workspace/AshenSpire/assets-mobile/environments/drowned-coast-combat.webp"
+  ],
+  "contextReferencesInspected": [
+    "/workspace/AshenSpire/assets-mobile/environments/drowned-coast-map.webp",
+    "/workspace/AshenSpire/assets-mobile/environments/drowned-coast-combat.webp",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-03/scene-forest-ground-misty.png"
+  ],
+  "transparentBackgroundRequested": true,
+  "targetDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "processing": "Generated original copied byte-for-byte. No image edits, resize, upscale, alpha cleanup, color correction or compositing; generated source remains preserved.",
+  "productionRegistered": false,
+  "productionAssetId": null,
+  "limitations": [
+    "Draft art; not registered or integrated into runtime.",
+    "Requested target dimensions were not enforced by the generator. Native dimensions are preserved; no enlargement or resampling performed.",
+    "Wet reflectivity and algae must be reviewed in composition so the solid combat floor remains distinct from backdrop ocean.",
+    "Requested floor horizon was normalized y=0.52; observed silhouette varies slightly around the midline.",
+    "Thin alpha noise or colored antialiasing at the floor silhouette is preserved as generated."
+  ],
+  "width": 1672,
+  "height": 941,
+  "mode": "RGBA",
+  "sha256": "12b7ea4939adb691f379ed7c1530e620eb8c0af7caca6c6c614abefa5b02e9d5",
+  "alphaBounds": [
+    0,
+    21,
+    1672,
+    941
+  ],
+  "visibleBoundsAlphaAbove8": [
+    0,
+    483,
+    1672,
+    941
+  ],
+  "referenceHashes": {
+    "art/map-battlefield-drafts/batch-03/scene-forest-ground-misty.png": "e8b8a37fa31a98fdf24d1616a6cce311383da68abb9d92267d86f9cf3fc7e3b7",
+    "assets-mobile/environments/drowned-coast-map.webp": "7014764294d4a8e542b695b2984aa821e5e28b8515a8448e2e37bb1d99971d6e",
+    "assets-mobile/environments/drowned-coast-combat.webp": "18897020039f8d66e0f1fe54b7730a20bd3c920bfd5640ed3f6f85563f17f83f"
+  },
+  "alphaStatistics": {
+    "min": 0,
+    "max": 255,
+    "transparentPixels": 824809,
+    "alpha1Pixels": 8127,
+    "opaquePixels": 6,
+    "visiblePixelsAlphaAbove8": 738653
+  },
+  "colorArtifactProbe": {
+    "scope": "All pixels with alpha > 8; heuristic only, no image processing",
+    "redPixels": 0,
+    "yellowPixels": 0,
+    "bluePixels": 0,
+    "magentaPixels": 0
+  },
+  "groundLayerQA": {
+    "upper45PercentVisiblePixelsAlphaAbove8": 0,
+    "bottomEdgeCoverageAlphaAbove240": 1.0,
+    "lowerSideEdgesCoverageAlphaAbove240": 1.0,
+    "centerColumnFirstVisibleY": 502,
+    "centerColumnFirstVisibleNormalizedY": 0.5334750265674814,
+    "requestedHorizonNormalizedY": 0.52,
+    "note": "No cutoff or alpha cleanup has been applied; geometry must be validated against the actual actor floor in composition."
+  },
+  "validation": {
+    "sourceCopyByteIdentical": true,
+    "recordedHashVerified": true,
+    "dimensionsMeasured": true
+  }
+}

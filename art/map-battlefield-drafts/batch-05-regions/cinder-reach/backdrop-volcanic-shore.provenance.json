@@ -1,0 +1,41 @@
+{
+  "generator": "image_gen.imagegen",
+  "status": "draft",
+  "region": "cinder-reach",
+  "role": "backdrop",
+  "prompt": "Paint ONE expansive opaque COASTAL VOLCANIC BACKDROP for a dark fantasy combat scene in Cinder Reach. Broad BLACK BASALT COAST meeting MUTED TEAL WATER, distant ashen volcanic ridges with only faint orange-glowing fissures, soot-brown and charcoal coastal geology, desaturated gray-teal sea with subtle small waves, ash-hazy warm slate overcast sky. This should plausibly connect an old scorched volcanic province to its sheltered cold bay. Panoramic WIDE LANDSCAPE target3072x1728, a SINGLE uninterrupted distant environment scene, not a map or atlas. Camera at human eye/chest height looking LEVEL across the coast, not from aerial elevated map viewpoint. Keep the central area calm and OPEN, water/haze and low distant coast, without a dominant central volcano. Volcanic mountains lie far in the background behind the water/coast, a few restrained ember-orange seams only. Soft diffuse daylight from UPPER LEFT; subdued warm-dark rock and gray ash against the muted cool teal water, painterly dark fantasy brushwork. Compose quiet extended lateral margins for large center crops and overscan; no bright lava source, unique landmark or major peak near left/right crop edges. No foreground battle floor, stage, platform, paving, promontory under the viewer, foreground prop or rock cluster, boats, docks, buildings, people, plants, trees, text, UI or borders. The bottom should remain distant subdued water and/or hazy far shoreline, not a walkable foreground island. Full frame is OPAQUE, natural environment painting only. No transparency, no floating cutout objects, no intense lava river dominating the water.",
+  "referencedImagePaths": [],
+  "inspectedStyleReferencePaths": [
+    "/workspace/AshenSpire/assets-mobile/environments/cinder-reach-map.webp",
+    "/workspace/AshenSpire/assets-mobile/environments/cinder-reach-combat.webp",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-03/scene-road-ground-misty.png"
+  ],
+  "referenceStrategy": "Live map/combat palette and scenery inspected; generated from written palette/composition descriptions rather than reproducing map camera or combat atlas layout.",
+  "sourceOutputPath": "/workspace/generated_images/exec-572c8354-7313-42f0-a561-5562099f2ffc.png",
+  "outputPath": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/cinder-reach/backdrop-volcanic-shore.png",
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "transparentBackgroundRequested": false,
+  "processing": "Original generated PNG copied unchanged; no resizing, upscaling, alpha cleanup or compositing.",
+  "productionRegistered": false,
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "mode": "RGB",
+  "sha256": "65a3a48cb7a931a5840e5ef73d34ad532f9724178faa221327231b1913aac959",
+  "alphaFindings": "No alpha channel; opaque RGB image.",
+  "visualReview": {
+    "inspected": true,
+    "observations": [
+      "Opaque broad muted teal water against black basalt coast and far glowing volcanic ridges, no foreground floor/props.",
+      "Open calm central water provides coastal context and plausible Cinder Reach shore coverage.",
+      "Upper-left sky/water highlights are warmer/brighter than strict overcast; shore ridges approach crop edges.",
+      "Exact scene camera/ground registration and overscan crop envelope are not established."
+    ],
+    "productionApproved": false
+  },
+  "requestedHorizonNormalizedY": null
+}

@@ -1,0 +1,72 @@
+{
+  "generator": "image_gen.imagegen",
+  "status": "draft",
+  "region": "cinder-reach",
+  "role": "prop",
+  "prompt": "Paint ONE isolated ruined STONE FORGE prop for a dark fantasy combat scene in Cinder Reach, a scorched volcanic province of charcoal-black basalt, warm ash-gray masonry and old soot-stained ironwork. A single squat old blacksmith forge object: one broad heavy low stone hearth with a dark empty firebox opening, a short broken tapering chimney above it, a few stones still attached to the damaged hearth body, one rusty grate or ironwork detail attached. It is ONE independent readable prop, not a full building, workshop, collection of tools or scene. No active fire or strong orange glow, only dark charcoal interior and faint old rust stains. Painterly dark fantasy environmental artwork, restrained warm-dark volcanic stone, subdued umber ash, overcast soft UPPER-LEFT daylight. LEVEL COMBAT CAMERA at human eye/chest height, nearly front-facing with slight three-quarter turn showing one side. NOT elevated map view or isometric view. Square target1024x1024 TRUE TRANSPARENT PNG. Center this compact forge in middle65percent of canvas, leaving generous empty transparent margins on all four sides and below foot contacts. All chimney stones fully inside canvas. Natural clean alpha edges with no red/yellow outlines, selection fringe or glow. Only the forge object is painted: no floor patch, ground island, plinth, platform, cast shadow outside the prop, landscape, sky, clouds, trees, people, separate anvil, loose tools, forge building walls, text, UI or border. Match the plausible ash-covered scorched-ruin look of an old volcanic battlefield, keep shape readable at a small size.",
+  "referencedImagePaths": [],
+  "inspectedStyleReferencePaths": [
+    "/workspace/AshenSpire/assets-mobile/environments/cinder-reach-map.webp",
+    "/workspace/AshenSpire/assets-mobile/environments/cinder-reach-combat.webp",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-03/scene-road-ground-misty.png"
+  ],
+  "referenceStrategy": "Live map/combat palette and scenery inspected; generated from written palette/composition descriptions rather than reproducing map camera or combat atlas layout.",
+  "sourceOutputPath": "/workspace/generated_images/exec-4524c4c4-fabe-4402-97d0-ef2fee3e9d8a.png",
+  "outputPath": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/cinder-reach/prop-broken-forge.png",
+  "requestedDimensions": {
+    "width": 1024,
+    "height": 1024
+  },
+  "transparentBackgroundRequested": true,
+  "processing": "Original generated PNG copied unchanged; no resizing, upscaling, alpha cleanup or compositing.",
+  "productionRegistered": false,
+  "actualDimensions": {
+    "width": 1254,
+    "height": 1254
+  },
+  "mode": "RGBA",
+  "sha256": "19e322c0f20afabaa04d3f460454a1fd4f8f9a58d8f13e4415a1512643d1cdff",
+  "alphaExtrema": [
+    0,
+    255
+  ],
+  "alphaBoundsByThreshold": {
+    "0": [
+      0,
+      30,
+      1232,
+      1254
+    ],
+    "1": [
+      127,
+      51,
+      1147,
+      1154
+    ],
+    "8": [
+      129,
+      53,
+      1144,
+      1152
+    ],
+    "128": [
+      130,
+      54,
+      1144,
+      1149
+    ]
+  },
+  "maximumBorderAlpha": 1,
+  "visualReview": {
+    "inspected": true,
+    "observations": [
+      "One independent ruined forge/hearth with attached chimney and rusty grate, dark interior and no active fire/floor island.",
+      "Near-level slight-three-quarter camera and warm-dark stone match Cinder Reach.",
+      "Silhouette is taller than the requested squat forge and object fills most canvas height; margins are narrower than requested.",
+      "Thin colored alpha edge specks and alpha1 border dust remain."
+    ],
+    "productionApproved": false
+  },
+  "requestedHorizonNormalizedY": null,
+  "alphaFindings": "Isolated RGBA prop with true transparent background; near-transparent border dust and thin colored edge pixels remain."
+}

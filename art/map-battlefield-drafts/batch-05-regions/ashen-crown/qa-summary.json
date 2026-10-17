@@ -1,0 +1,212 @@
+[
+  {
+    "file": "backdrop-ashen-highlands.png",
+    "sha256": "cb7472e0405f21ad25be41d27e20963deff6a63886e5c6570a3d6d9f2d3687b0",
+    "width": 1672,
+    "height": 941,
+    "mode": "RGB",
+    "alphaMin": 255,
+    "alphaMax": 255,
+    "transparentFraction": 0.0,
+    "opaqueFraction": 1.0,
+    "upper45PercentTransparentFraction": 0.0,
+    "visibleBoundsAlpha16": {
+      "left": 0,
+      "top": 0,
+      "right": 1671,
+      "bottom": 940
+    },
+    "bottomEdgeOpaqueFraction": 1.0,
+    "leftLower35PercentOpaqueFraction": 1.0,
+    "rightLower35PercentOpaqueFraction": 1.0,
+    "saturatedRedEdgeResidue": {
+      "pixelCount": 0,
+      "maxAlpha": 0
+    },
+    "upper45PercentMaxAlpha": 255,
+    "bottomEdgeAlphaPercentiles": {
+      "0": 255.0,
+      "10": 255.0,
+      "50": 255.0,
+      "90": 255.0,
+      "100": 255.0
+    },
+    "visibleAlphaPercentiles": {
+      "0": 255.0,
+      "10": 255.0,
+      "50": 255.0,
+      "90": 255.0,
+      "100": 255.0
+    },
+    "leftLower35PercentMinAlpha": 255,
+    "rightLower35PercentMinAlpha": 255
+  },
+  {
+    "file": "ground-dry-meadow.png",
+    "sha256": "4d2d6b044f2d2c903c1df3decb279b66db5092efe6e3aee02cd46ca8c93618aa",
+    "width": 1672,
+    "height": 941,
+    "mode": "RGBA",
+    "alphaMin": 0,
+    "alphaMax": 255,
+    "transparentFraction": 0.520818,
+    "opaqueFraction": 4e-06,
+    "upper45PercentTransparentFraction": 0.956241,
+    "visibleBoundsAlpha16": {
+      "left": 0,
+      "top": 487,
+      "right": 1671,
+      "bottom": 940
+    },
+    "bottomEdgeOpaqueFraction": 0.0,
+    "leftLower35PercentOpaqueFraction": 0.0,
+    "rightLower35PercentOpaqueFraction": 0.0,
+    "saturatedRedEdgeResidue": {
+      "pixelCount": 9,
+      "maxAlpha": 2
+    },
+    "upper45PercentMaxAlpha": 1,
+    "bottomEdgeAlphaPercentiles": {
+      "0": 246.0,
+      "10": 252.0,
+      "50": 252.0,
+      "90": 253.0,
+      "100": 254.0
+    },
+    "visibleAlphaPercentiles": {
+      "0": 16.0,
+      "10": 251.0,
+      "50": 252.0,
+      "90": 252.0,
+      "100": 255.0
+    },
+    "leftLower35PercentMinAlpha": 246,
+    "rightLower35PercentMinAlpha": 249
+  },
+  {
+    "file": "ground-worn-courtyard.png",
+    "sha256": "efdcc77fce75eb660921103b832379b6f0592ddc4cfb0c40f631f6c8f2e7c6e5",
+    "width": 1672,
+    "height": 940,
+    "mode": "RGBA",
+    "alphaMin": 0,
+    "alphaMax": 255,
+    "transparentFraction": 0.518235,
+    "opaqueFraction": 3e-06,
+    "upper45PercentTransparentFraction": 0.970815,
+    "visibleBoundsAlpha16": {
+      "left": 0,
+      "top": 488,
+      "right": 1671,
+      "bottom": 939
+    },
+    "bottomEdgeOpaqueFraction": 0.0,
+    "leftLower35PercentOpaqueFraction": 0.0,
+    "rightLower35PercentOpaqueFraction": 0.0,
+    "saturatedRedEdgeResidue": {
+      "pixelCount": 34,
+      "maxAlpha": 1
+    },
+    "upper45PercentMaxAlpha": 1,
+    "bottomEdgeAlphaPercentiles": {
+      "0": 237.0,
+      "10": 249.0,
+      "50": 251.0,
+      "90": 252.0,
+      "100": 254.0
+    },
+    "visibleAlphaPercentiles": {
+      "0": 16.0,
+      "10": 251.0,
+      "50": 252.0,
+      "90": 252.0,
+      "100": 255.0
+    },
+    "leftLower35PercentMinAlpha": 245,
+    "rightLower35PercentMinAlpha": 237
+  },
+  {
+    "file": "prop-broken-column.png",
+    "sha256": "b1de3d0c6cc79c694a9331a05bbc6e34ceea6199eb6437528aaed572076f01fe",
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "alphaMin": 0,
+    "alphaMax": 255,
+    "transparentFraction": 0.713901,
+    "opaqueFraction": 0.000258,
+    "upper45PercentTransparentFraction": 0.768788,
+    "visibleBoundsAlpha16": {
+      "left": 341,
+      "top": 118,
+      "right": 943,
+      "bottom": 1149
+    },
+    "bottomEdgeOpaqueFraction": 0.0,
+    "leftLower35PercentOpaqueFraction": 0.0,
+    "rightLower35PercentOpaqueFraction": 0.0,
+    "saturatedRedEdgeResidue": {
+      "pixelCount": 1274,
+      "maxAlpha": 2
+    },
+    "upper45PercentMaxAlpha": 255,
+    "bottomEdgeAlphaPercentiles": {
+      "0": 0.0,
+      "10": 0.0,
+      "50": 0.0,
+      "90": 0.0,
+      "100": 0.0
+    },
+    "visibleAlphaPercentiles": {
+      "0": 16.0,
+      "10": 252.0,
+      "50": 253.0,
+      "90": 253.0,
+      "100": 255.0
+    },
+    "leftLower35PercentMinAlpha": 0,
+    "rightLower35PercentMinAlpha": 0
+  },
+  {
+    "file": "prop-market-stall.png",
+    "sha256": "a365d4d2aac30e29507557fce836827af289531b33f02af821236ed63daea680",
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "alphaMin": 0,
+    "alphaMax": 255,
+    "transparentFraction": 0.569357,
+    "opaqueFraction": 0.001061,
+    "upper45PercentTransparentFraction": 0.486545,
+    "visibleBoundsAlpha16": {
+      "left": 54,
+      "top": 28,
+      "right": 1209,
+      "bottom": 1210
+    },
+    "bottomEdgeOpaqueFraction": 0.0,
+    "leftLower35PercentOpaqueFraction": 0.0,
+    "rightLower35PercentOpaqueFraction": 0.0,
+    "saturatedRedEdgeResidue": {
+      "pixelCount": 1496,
+      "maxAlpha": 4
+    },
+    "upper45PercentMaxAlpha": 255,
+    "bottomEdgeAlphaPercentiles": {
+      "0": 0.0,
+      "10": 0.0,
+      "50": 0.0,
+      "90": 1.0,
+      "100": 1.0
+    },
+    "visibleAlphaPercentiles": {
+      "0": 16.0,
+      "10": 251.0,
+      "50": 253.0,
+      "90": 253.0,
+      "100": 255.0
+    },
+    "leftLower35PercentMinAlpha": 0,
+    "rightLower35PercentMinAlpha": 0
+  }
+]

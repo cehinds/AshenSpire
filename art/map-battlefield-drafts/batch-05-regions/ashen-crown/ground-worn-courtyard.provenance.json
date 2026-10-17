@@ -1,0 +1,69 @@
+{
+  "status": "draft-unregistered",
+  "generator": "OpenAI image_gen",
+  "region": "ashen-crown",
+  "role": "ground",
+  "prompt": "Create a separate Ashen Crown WORN COURTYARD GROUND PNG layer. Requested 3072x1728 landscape. First reference region map gives muted dry highlands palette; second region combat gives old stone texture vocabulary only, NOT its sunset lighting; third alpha ground reference provides composition and transparency only. True RGBA alpha in upper approximately 50 percent, with a low nearly level floor horizon around y=0.52. Lower half is one continuous broad empty level courtyard of worn warm-gray flagstones, subtle dirt seams and tiny desaturated straw grass at outermost margins. Large calm central actor standing area, low contrast detail; stone floor fills bottom and side edges with generous scene extension, never a floating platform. Eye-level combat camera gently looking down across floor, not overhead map view. Soft neutral diffuse daylight from upper left; subdued weathered stone and ochre, no orange sunset or golden glare. NO sky, backdrop, castle, wall, columns, separate props, rubble piles, vegetation objects, people, labels, borders or checkerboard. Natural clean alpha silhouette; ground is opaque below it all the way to bottom. Only isolated ground on genuine transparency.",
+  "requestedCanvas": {
+    "width": 3072,
+    "height": 1728
+  },
+  "sourceOutputPath": "/workspace/generated_images/exec-dde30ff6-6409-4a84-8a97-0b54464631c9.png",
+  "sourceReferences": [
+    "/workspace/AshenSpire/assets-mobile/environments/ashen-crown-map.webp",
+    "/workspace/AshenSpire/assets-mobile/environments/ashen-crown-combat.webp",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-03/scene-forest-ground-misty.png"
+  ],
+  "outputPath": "ground-worn-courtyard.png",
+  "processing": "Byte-identical copy of original image_gen PNG output.",
+  "sha256": "efdcc77fce75eb660921103b832379b6f0592ddc4cfb0c40f631f6c8f2e7c6e5",
+  "sourceSha256": "efdcc77fce75eb660921103b832379b6f0592ddc4cfb0c40f631f6c8f2e7c6e5",
+  "qa": {
+    "width": 1672,
+    "height": 940,
+    "mode": "RGBA",
+    "alphaMin": 0,
+    "alphaMax": 255,
+    "transparentFraction": 0.518235,
+    "opaqueFraction": 3e-06,
+    "upper45PercentTransparentFraction": 0.970815,
+    "visibleBoundsAlpha16": {
+      "left": 0,
+      "top": 488,
+      "right": 1671,
+      "bottom": 939
+    },
+    "bottomEdgeOpaqueFraction": 0.0,
+    "leftLower35PercentOpaqueFraction": 0.0,
+    "rightLower35PercentOpaqueFraction": 0.0,
+    "saturatedRedEdgeResidue": {
+      "pixelCount": 34,
+      "maxAlpha": 1
+    },
+    "upper45PercentMaxAlpha": 1,
+    "bottomEdgeAlphaPercentiles": {
+      "0": 237.0,
+      "10": 249.0,
+      "50": 251.0,
+      "90": 252.0,
+      "100": 254.0
+    },
+    "visibleAlphaPercentiles": {
+      "0": 16.0,
+      "10": 251.0,
+      "50": 252.0,
+      "90": 252.0,
+      "100": 255.0
+    },
+    "leftLower35PercentMinAlpha": 245,
+    "rightLower35PercentMinAlpha": 237
+  },
+  "qaNotes": [
+    "Original image-generator output copied unchanged; no upscaling, trimming, recoloring, alpha cleanup, or compositing.",
+    "Actual output resolution differs from requested authoring resolution.",
+    "Upper area is true alpha; lower floor reaches side/bottom edges. Horizon is approximately 0.52\u20130.56 of actual canvas height.",
+    "Two grounds differ by one canvas pixel in height; register with explicit placement metadata before final production export.",
+    "Generator alpha is near-opaque (typically251\u2013253), not fully255 across material interiors; final production requires review for slight backdrop bleed. No normalization applied.",
+    "Upper45% alpha max is1/255: there are near-invisible residue pixels rather than strictly zero alpha everywhere."
+  ]
+}

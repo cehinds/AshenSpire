@@ -1,0 +1,68 @@
+{
+  "status": "draft-unregistered",
+  "generator": "OpenAI image_gen",
+  "region": "ashen-crown",
+  "role": "prop",
+  "prompt": "Create ONE standalone transparent PNG combat-scene prop for Ashen Crown: a single weathered empty timber market stall, four old wooden posts, small faded neutral taupe linen canopy, empty counter and simple legs. No goods, crates, barrels, baskets, people, signs or extra objects. Requested canvas 1536x1536, genuine RGBA alpha background. Object fully contained with generous transparent margins all sides, ground contact around lower 85 percent. Eye-level nearly frontal combat camera with a gentle three-quarter angle, NOT top-down or isometric map icon. Painterly realistic dark fantasy old highland town, subdued brown-gray timber and weathered fabric. Soft neutral diffuse upper-left light, no golden sunlight, no sunset glow. Existing reference 1 is region palette/material vocabulary; reference 2 is painterly style only, exclude its warm sunset lighting and architecture. No ground slab, scenery, backdrop, cast shadow extending beyond object, checkerboard, labels or frame. Single isolated empty stall with precise natural alpha edges, reusable over different combat ground layers.",
+  "requestedCanvas": {
+    "width": 1536,
+    "height": 1536
+  },
+  "sourceOutputPath": "/workspace/generated_images/exec-3297cdda-ac3d-4dbb-afb4-2befc0ebe231.png",
+  "sourceReferences": [
+    "/workspace/AshenSpire/assets-mobile/environments/ashen-crown-map.webp",
+    "/workspace/AshenSpire/assets-mobile/environments/ashen-crown-combat.webp"
+  ],
+  "outputPath": "prop-market-stall.png",
+  "processing": "Byte-identical copy of original image_gen PNG output.",
+  "sha256": "a365d4d2aac30e29507557fce836827af289531b33f02af821236ed63daea680",
+  "sourceSha256": "a365d4d2aac30e29507557fce836827af289531b33f02af821236ed63daea680",
+  "qa": {
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "alphaMin": 0,
+    "alphaMax": 255,
+    "transparentFraction": 0.569357,
+    "opaqueFraction": 0.001061,
+    "upper45PercentTransparentFraction": 0.486545,
+    "visibleBoundsAlpha16": {
+      "left": 54,
+      "top": 28,
+      "right": 1209,
+      "bottom": 1210
+    },
+    "bottomEdgeOpaqueFraction": 0.0,
+    "leftLower35PercentOpaqueFraction": 0.0,
+    "rightLower35PercentOpaqueFraction": 0.0,
+    "saturatedRedEdgeResidue": {
+      "pixelCount": 1496,
+      "maxAlpha": 4
+    },
+    "upper45PercentMaxAlpha": 255,
+    "bottomEdgeAlphaPercentiles": {
+      "0": 0.0,
+      "10": 0.0,
+      "50": 0.0,
+      "90": 1.0,
+      "100": 1.0
+    },
+    "visibleAlphaPercentiles": {
+      "0": 16.0,
+      "10": 251.0,
+      "50": 253.0,
+      "90": 253.0,
+      "100": 255.0
+    },
+    "leftLower35PercentMinAlpha": 0,
+    "rightLower35PercentMinAlpha": 0
+  },
+  "qaNotes": [
+    "Original image-generator output copied unchanged; no upscaling, trimming, recoloring, alpha cleanup, or compositing.",
+    "Actual output resolution differs from requested authoring resolution.",
+    "Single isolated eye-level prop, no ground platform.",
+    "Near-transparent saturated RGB edge residues have alpha at most 4/255; check on final scene backgrounds before production.",
+    "Generated silhouette margins are narrower than requested; use measured alpha bounds rather than assuming 15 percent.",
+    "Generator alpha is near-opaque (typically251\u2013253), not fully255 across material interiors; final production requires review for slight backdrop bleed. No normalization applied."
+  ]
+}

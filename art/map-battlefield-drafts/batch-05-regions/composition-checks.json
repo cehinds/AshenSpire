@@ -1,0 +1,848 @@
+{
+  "status": "passed",
+  "scope": "Measured alpha>=32 prop bounds and camera-rectangle coverage; not actor or animation QA.",
+  "cameraCoverage": [
+    {
+      "id": "landscape",
+      "insidePaintedCanvas": true
+    },
+    {
+      "id": "portrait",
+      "insidePaintedCanvas": true
+    },
+    {
+      "id": "ultrawide",
+      "insidePaintedCanvas": true
+    }
+  ],
+  "checks": [
+    {
+      "preset": "ashen-crown/ground-dry-meadow",
+      "camera": "landscape",
+      "file": "ashen-crown/prop-market-stall.png",
+      "visibleBounds": {
+        "left": 413.59999999999997,
+        "top": 308.0145454545455,
+        "right": 643.9999999999999,
+        "bottom": 544
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "ashen-crown/ground-dry-meadow",
+      "camera": "landscape",
+      "file": "ashen-crown/prop-broken-column.png",
+      "visibleBounds": {
+        "left": 1070.5592628516001,
+        "top": 295.6,
+        "right": 1215.8407371483995,
+        "bottom": 544
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "hollow-weald/ground-moss-clearing",
+      "camera": "landscape",
+      "file": "hollow-weald/prop-gnarled-root.png",
+      "visibleBounds": {
+        "left": 413.59999999999997,
+        "top": 427.34285714285716,
+        "right": 644,
+        "bottom": 559
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "hollow-weald/ground-moss-clearing",
+      "camera": "landscape",
+      "file": "hollow-weald/prop-woodland-shrine.png",
+      "visibleBounds": {
+        "left": 1042.1613344739092,
+        "top": 290.6,
+        "right": 1244.2386655260905,
+        "bottom": 539
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "pale-marches/ground-snow-road",
+      "camera": "landscape",
+      "file": "pale-marches/prop-snowy-waystone.png",
+      "visibleBounds": {
+        "left": 469.6049426301853,
+        "top": 294.59999999999997,
+        "right": 587.9950573698146,
+        "bottom": 543
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "pale-marches/ground-snow-road",
+      "camera": "landscape",
+      "file": "pale-marches/prop-frozen-wall.png",
+      "visibleBounds": {
+        "left": 1027.9999999999998,
+        "top": 426.3563909774436,
+        "right": 1258.3999999999999,
+        "bottom": 543
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "cinder-reach/ground-basalt-road",
+      "camera": "landscape",
+      "file": "cinder-reach/prop-broken-forge.png",
+      "visibleBounds": {
+        "left": 413.77901459854013,
+        "top": 212.6,
+        "right": 643.8209854014599,
+        "bottom": 461
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "cinder-reach/ground-basalt-road",
+      "camera": "landscape",
+      "file": "cinder-reach/prop-basalt-spires.png",
+      "visibleBounds": {
+        "left": 1033.8184501845017,
+        "top": 224.60000000000002,
+        "right": 1252.581549815498,
+        "bottom": 473
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "drowned-coast/ground-wet-sand",
+      "camera": "landscape",
+      "file": "drowned-coast/prop-broken-jetty.png",
+      "visibleBounds": {
+        "left": 413.59999999999997,
+        "top": 364.6953846153846,
+        "right": 644,
+        "bottom": 518
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "drowned-coast/ground-wet-sand",
+      "camera": "landscape",
+      "file": "drowned-coast/prop-shipwreck-ribs.png",
+      "visibleBounds": {
+        "left": 1027.9999999999998,
+        "top": 327.1028720626632,
+        "right": 1258.3999999999999,
+        "bottom": 518
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "interiors/ground-dungeon-flagstones",
+      "camera": "landscape",
+      "file": "interiors/prop-iron-gate.png",
+      "visibleBounds": {
+        "left": 413.59999999999997,
+        "top": 249.4527493010252,
+        "right": 644,
+        "bottom": 482
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "interiors/ground-mine-gravel",
+      "camera": "landscape",
+      "file": "interiors/prop-mine-cart.png",
+      "visibleBounds": {
+        "left": 413.59999999999997,
+        "top": 359.17612732095495,
+        "right": 643.9999999999999,
+        "bottom": 547
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "ashen-crown/ground-worn-courtyard",
+      "camera": "landscape",
+      "file": "ashen-crown/prop-market-stall.png",
+      "visibleBounds": {
+        "left": 413.59999999999997,
+        "top": 292.0145454545455,
+        "right": 643.9999999999999,
+        "bottom": 528
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "ashen-crown/ground-worn-courtyard",
+      "camera": "landscape",
+      "file": "ashen-crown/prop-broken-column.png",
+      "visibleBounds": {
+        "left": 1070.5592628516001,
+        "top": 279.6,
+        "right": 1215.8407371483995,
+        "bottom": 528
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "hollow-weald/ground-bog-path",
+      "camera": "landscape",
+      "file": "hollow-weald/prop-gnarled-root.png",
+      "visibleBounds": {
+        "left": 413.59999999999997,
+        "top": 417.34285714285716,
+        "right": 644,
+        "bottom": 549
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "hollow-weald/ground-bog-path",
+      "camera": "landscape",
+      "file": "hollow-weald/prop-woodland-shrine.png",
+      "visibleBounds": {
+        "left": 1042.1613344739092,
+        "top": 280.6,
+        "right": 1244.2386655260905,
+        "bottom": 529
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "pale-marches/ground-frozen-shore",
+      "camera": "landscape",
+      "file": "pale-marches/prop-snowy-waystone.png",
+      "visibleBounds": {
+        "left": 469.6049426301853,
+        "top": 309.59999999999997,
+        "right": 587.9950573698146,
+        "bottom": 558
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "pale-marches/ground-frozen-shore",
+      "camera": "landscape",
+      "file": "pale-marches/prop-frozen-wall.png",
+      "visibleBounds": {
+        "left": 1027.9999999999998,
+        "top": 441.3563909774436,
+        "right": 1258.3999999999999,
+        "bottom": 558
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "cinder-reach/ground-ash-flagstones",
+      "camera": "landscape",
+      "file": "cinder-reach/prop-broken-forge.png",
+      "visibleBounds": {
+        "left": 413.77901459854013,
+        "top": 241.6,
+        "right": 643.8209854014599,
+        "bottom": 490
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "cinder-reach/ground-ash-flagstones",
+      "camera": "landscape",
+      "file": "cinder-reach/prop-basalt-spires.png",
+      "visibleBounds": {
+        "left": 1033.8184501845017,
+        "top": 253.60000000000002,
+        "right": 1252.581549815498,
+        "bottom": 502
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "drowned-coast/ground-tidal-stone",
+      "camera": "landscape",
+      "file": "drowned-coast/prop-broken-jetty.png",
+      "visibleBounds": {
+        "left": 413.59999999999997,
+        "top": 386.6953846153846,
+        "right": 644,
+        "bottom": 540
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "drowned-coast/ground-tidal-stone",
+      "camera": "landscape",
+      "file": "drowned-coast/prop-shipwreck-ribs.png",
+      "visibleBounds": {
+        "left": 1027.9999999999998,
+        "top": 349.1028720626632,
+        "right": 1258.3999999999999,
+        "bottom": 540
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "cinder-reach/ground-basalt-road-shore",
+      "camera": "landscape",
+      "file": "cinder-reach/prop-basalt-spires.png",
+      "visibleBounds": {
+        "left": 419.41845018450175,
+        "top": 224.60000000000002,
+        "right": 638.1815498154981,
+        "bottom": 473
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "hollow-weald/ground-moss-clearing",
+      "camera": "portrait",
+      "file": "hollow-weald/prop-gnarled-root.png",
+      "visibleBounds": {
+        "left": 638,
+        "top": 497.2857142857143,
+        "right": 746,
+        "bottom": 559
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "hollow-weald/ground-moss-clearing",
+      "camera": "portrait",
+      "file": "hollow-weald/prop-woodland-shrine.png",
+      "visibleBounds": {
+        "left": 926,
+        "top": 406.24290220820194,
+        "right": 1034,
+        "bottom": 539
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "hollow-weald/ground-moss-clearing",
+      "camera": "ultrawide",
+      "file": "hollow-weald/prop-gnarled-root.png",
+      "visibleBounds": {
+        "left": 272.8,
+        "top": 383.4571428571429,
+        "right": 580,
+        "bottom": 559
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "hollow-weald/ground-moss-clearing",
+      "camera": "ultrawide",
+      "file": "hollow-weald/prop-woodland-shrine.png",
+      "visibleBounds": {
+        "left": 1144.5613344739093,
+        "top": 290.6,
+        "right": 1346.6386655260908,
+        "bottom": 539
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "ashen-crown/ground-dry-meadow",
+      "camera": "portrait",
+      "file": "ashen-crown/prop-market-stall.png",
+      "visibleBounds": {
+        "left": 638,
+        "top": 433.3818181818182,
+        "right": 746,
+        "bottom": 544
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "ashen-crown/ground-dry-meadow",
+      "camera": "portrait",
+      "file": "ashen-crown/prop-broken-column.png",
+      "visibleBounds": {
+        "left": 926,
+        "top": 359.34328358208955,
+        "right": 1034,
+        "bottom": 544
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "ashen-crown/ground-dry-meadow",
+      "camera": "ultrawide",
+      "file": "ashen-crown/prop-market-stall.png",
+      "visibleBounds": {
+        "left": 305.13964497041417,
+        "top": 295.6,
+        "right": 547.6603550295858,
+        "bottom": 544
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "ashen-crown/ground-dry-meadow",
+      "camera": "ultrawide",
+      "file": "ashen-crown/prop-broken-column.png",
+      "visibleBounds": {
+        "left": 1172.9592628516004,
+        "top": 295.6,
+        "right": 1318.2407371483996,
+        "bottom": 544
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "ashen-crown/ground-worn-courtyard",
+      "camera": "portrait",
+      "file": "ashen-crown/prop-market-stall.png",
+      "visibleBounds": {
+        "left": 638,
+        "top": 417.3818181818182,
+        "right": 746,
+        "bottom": 528
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "ashen-crown/ground-worn-courtyard",
+      "camera": "portrait",
+      "file": "ashen-crown/prop-broken-column.png",
+      "visibleBounds": {
+        "left": 926,
+        "top": 343.34328358208955,
+        "right": 1034,
+        "bottom": 528
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "ashen-crown/ground-worn-courtyard",
+      "camera": "ultrawide",
+      "file": "ashen-crown/prop-market-stall.png",
+      "visibleBounds": {
+        "left": 305.13964497041417,
+        "top": 279.6,
+        "right": 547.6603550295858,
+        "bottom": 528
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "ashen-crown/ground-worn-courtyard",
+      "camera": "ultrawide",
+      "file": "ashen-crown/prop-broken-column.png",
+      "visibleBounds": {
+        "left": 1172.9592628516004,
+        "top": 279.6,
+        "right": 1318.2407371483996,
+        "bottom": 528
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "hollow-weald/ground-bog-path",
+      "camera": "portrait",
+      "file": "hollow-weald/prop-gnarled-root.png",
+      "visibleBounds": {
+        "left": 638,
+        "top": 487.2857142857143,
+        "right": 746,
+        "bottom": 549
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "hollow-weald/ground-bog-path",
+      "camera": "portrait",
+      "file": "hollow-weald/prop-woodland-shrine.png",
+      "visibleBounds": {
+        "left": 926,
+        "top": 396.24290220820194,
+        "right": 1034,
+        "bottom": 529
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "hollow-weald/ground-bog-path",
+      "camera": "ultrawide",
+      "file": "hollow-weald/prop-gnarled-root.png",
+      "visibleBounds": {
+        "left": 272.8,
+        "top": 373.4571428571429,
+        "right": 580,
+        "bottom": 549
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "hollow-weald/ground-bog-path",
+      "camera": "ultrawide",
+      "file": "hollow-weald/prop-woodland-shrine.png",
+      "visibleBounds": {
+        "left": 1144.5613344739093,
+        "top": 280.6,
+        "right": 1346.6386655260908,
+        "bottom": 529
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "pale-marches/ground-snow-road",
+      "camera": "portrait",
+      "file": "pale-marches/prop-snowy-waystone.png",
+      "visibleBounds": {
+        "left": 638,
+        "top": 316.4,
+        "right": 746,
+        "bottom": 543
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "pale-marches/ground-snow-road",
+      "camera": "portrait",
+      "file": "pale-marches/prop-frozen-wall.png",
+      "visibleBounds": {
+        "left": 926,
+        "top": 488.3233082706767,
+        "right": 1034,
+        "bottom": 543
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "pale-marches/ground-snow-road",
+      "camera": "ultrawide",
+      "file": "pale-marches/prop-snowy-waystone.png",
+      "visibleBounds": {
+        "left": 367.2049426301853,
+        "top": 294.59999999999997,
+        "right": 485.59505736981464,
+        "bottom": 543
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "pale-marches/ground-snow-road",
+      "camera": "ultrawide",
+      "file": "pale-marches/prop-frozen-wall.png",
+      "visibleBounds": {
+        "left": 1091.9999999999998,
+        "top": 387.4751879699248,
+        "right": 1399.1999999999998,
+        "bottom": 543
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "pale-marches/ground-frozen-shore",
+      "camera": "portrait",
+      "file": "pale-marches/prop-snowy-waystone.png",
+      "visibleBounds": {
+        "left": 638,
+        "top": 331.4,
+        "right": 746,
+        "bottom": 558
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "pale-marches/ground-frozen-shore",
+      "camera": "portrait",
+      "file": "pale-marches/prop-frozen-wall.png",
+      "visibleBounds": {
+        "left": 926,
+        "top": 503.3233082706767,
+        "right": 1034,
+        "bottom": 558
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "pale-marches/ground-frozen-shore",
+      "camera": "ultrawide",
+      "file": "pale-marches/prop-snowy-waystone.png",
+      "visibleBounds": {
+        "left": 367.2049426301853,
+        "top": 309.59999999999997,
+        "right": 485.59505736981464,
+        "bottom": 558
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "pale-marches/ground-frozen-shore",
+      "camera": "ultrawide",
+      "file": "pale-marches/prop-frozen-wall.png",
+      "visibleBounds": {
+        "left": 1091.9999999999998,
+        "top": 402.4751879699248,
+        "right": 1399.1999999999998,
+        "bottom": 558
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "cinder-reach/ground-basalt-road",
+      "camera": "portrait",
+      "file": "cinder-reach/prop-broken-forge.png",
+      "visibleBounds": {
+        "left": 638,
+        "top": 344.3812807881773,
+        "right": 746,
+        "bottom": 461
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "cinder-reach/ground-basalt-road",
+      "camera": "portrait",
+      "file": "cinder-reach/prop-basalt-spires.png",
+      "visibleBounds": {
+        "left": 926,
+        "top": 350.36871508379886,
+        "right": 1034,
+        "bottom": 473
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "cinder-reach/ground-basalt-road",
+      "camera": "ultrawide",
+      "file": "cinder-reach/prop-broken-forge.png",
+      "visibleBounds": {
+        "left": 311.37901459854015,
+        "top": 212.6,
+        "right": 541.4209854014598,
+        "bottom": 461
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "cinder-reach/ground-basalt-road",
+      "camera": "ultrawide",
+      "file": "cinder-reach/prop-basalt-spires.png",
+      "visibleBounds": {
+        "left": 1136.2184501845018,
+        "top": 224.60000000000002,
+        "right": 1354.981549815498,
+        "bottom": 473
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "cinder-reach/ground-ash-flagstones",
+      "camera": "portrait",
+      "file": "cinder-reach/prop-broken-forge.png",
+      "visibleBounds": {
+        "left": 638,
+        "top": 373.3812807881773,
+        "right": 746,
+        "bottom": 490
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "cinder-reach/ground-ash-flagstones",
+      "camera": "portrait",
+      "file": "cinder-reach/prop-basalt-spires.png",
+      "visibleBounds": {
+        "left": 926,
+        "top": 379.36871508379886,
+        "right": 1034,
+        "bottom": 502
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "cinder-reach/ground-ash-flagstones",
+      "camera": "ultrawide",
+      "file": "cinder-reach/prop-broken-forge.png",
+      "visibleBounds": {
+        "left": 311.37901459854015,
+        "top": 241.6,
+        "right": 541.4209854014598,
+        "bottom": 490
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "cinder-reach/ground-ash-flagstones",
+      "camera": "ultrawide",
+      "file": "cinder-reach/prop-basalt-spires.png",
+      "visibleBounds": {
+        "left": 1136.2184501845018,
+        "top": 253.60000000000002,
+        "right": 1354.981549815498,
+        "bottom": 502
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "drowned-coast/ground-wet-sand",
+      "camera": "portrait",
+      "file": "drowned-coast/prop-broken-jetty.png",
+      "visibleBounds": {
+        "left": 638,
+        "top": 446.1384615384615,
+        "right": 746,
+        "bottom": 518
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "drowned-coast/ground-wet-sand",
+      "camera": "portrait",
+      "file": "drowned-coast/prop-shipwreck-ribs.png",
+      "visibleBounds": {
+        "left": 926,
+        "top": 428.5169712793734,
+        "right": 1034,
+        "bottom": 518
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "drowned-coast/ground-wet-sand",
+      "camera": "ultrawide",
+      "file": "drowned-coast/prop-broken-jetty.png",
+      "visibleBounds": {
+        "left": 272.8,
+        "top": 313.5938461538462,
+        "right": 580,
+        "bottom": 518
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "drowned-coast/ground-wet-sand",
+      "camera": "ultrawide",
+      "file": "drowned-coast/prop-shipwreck-ribs.png",
+      "visibleBounds": {
+        "left": 1095.6989495798316,
+        "top": 269.59999999999997,
+        "right": 1395.5010504201678,
+        "bottom": 518
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "drowned-coast/ground-tidal-stone",
+      "camera": "portrait",
+      "file": "drowned-coast/prop-broken-jetty.png",
+      "visibleBounds": {
+        "left": 638,
+        "top": 468.1384615384615,
+        "right": 746,
+        "bottom": 540
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "drowned-coast/ground-tidal-stone",
+      "camera": "portrait",
+      "file": "drowned-coast/prop-shipwreck-ribs.png",
+      "visibleBounds": {
+        "left": 926,
+        "top": 450.5169712793734,
+        "right": 1034,
+        "bottom": 540
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "drowned-coast/ground-tidal-stone",
+      "camera": "ultrawide",
+      "file": "drowned-coast/prop-broken-jetty.png",
+      "visibleBounds": {
+        "left": 272.8,
+        "top": 335.5938461538462,
+        "right": 580,
+        "bottom": 540
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "drowned-coast/ground-tidal-stone",
+      "camera": "ultrawide",
+      "file": "drowned-coast/prop-shipwreck-ribs.png",
+      "visibleBounds": {
+        "left": 1095.6989495798316,
+        "top": 291.59999999999997,
+        "right": 1395.5010504201678,
+        "bottom": 540
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "interiors/ground-dungeon-flagstones",
+      "camera": "portrait",
+      "file": "interiors/prop-iron-gate.png",
+      "visibleBounds": {
+        "left": 638,
+        "top": 372.99347623485556,
+        "right": 746,
+        "bottom": 482
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "interiors/ground-dungeon-flagstones",
+      "camera": "ultrawide",
+      "file": "interiors/prop-iron-gate.png",
+      "visibleBounds": {
+        "left": 303.3468144044321,
+        "top": 233.6,
+        "right": 549.4531855955679,
+        "bottom": 482
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "interiors/ground-mine-gravel",
+      "camera": "portrait",
+      "file": "interiors/prop-mine-cart.png",
+      "visibleBounds": {
+        "left": 638,
+        "top": 458.9575596816976,
+        "right": 746,
+        "bottom": 547
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "interiors/ground-mine-gravel",
+      "camera": "ultrawide",
+      "file": "interiors/prop-mine-cart.png",
+      "visibleBounds": {
+        "left": 274.0462039045553,
+        "top": 298.59999999999997,
+        "right": 578.7537960954446,
+        "bottom": 547
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "cinder-reach/ground-basalt-road-shore",
+      "camera": "portrait",
+      "file": "cinder-reach/prop-basalt-spires.png",
+      "visibleBounds": {
+        "left": 638,
+        "top": 350.36871508379886,
+        "right": 746,
+        "bottom": 473
+      },
+      "insideViewport": true
+    },
+    {
+      "preset": "cinder-reach/ground-basalt-road-shore",
+      "camera": "ultrawide",
+      "file": "cinder-reach/prop-basalt-spires.png",
+      "visibleBounds": {
+        "left": 317.01845018450183,
+        "top": 224.60000000000002,
+        "right": 535.7815498154981,
+        "bottom": 473
+      },
+      "insideViewport": true
+    }
+  ]
+}

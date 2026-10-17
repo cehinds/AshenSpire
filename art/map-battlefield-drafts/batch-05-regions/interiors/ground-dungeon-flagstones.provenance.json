@@ -1,0 +1,16 @@
+{
+  "status": "draft",
+  "generator": "OpenAI image_gen",
+  "prompt": "One separate transparent GROUND layer for a dark fantasy dungeon battle scene. Broad panoramic canvas requested3072x1728. Upper52percent genuinely alpha transparent, opaque floor starts near y0.52 and continuously fills all lower canvas to every bottom and side edge, no isolated terrain island. Level wide worn charcoal-gray limestone flagstones with restrained cool diffuse highlights, subtle cracks, a little dust in seams, clear quiet central combat area. Perspective at standing character eye level, floor recedes toward a flat far edge; NOT top-down. Lots of quiet extra floor at left/right/bottom for screen crops and camera adjustments. No walls, columns, gates, stairs, torches, props, puddles, sky, scenery, people, writing or UI. Hand-painted dark fantasy matching ruined Gothic stone environments, muted realistic textures without noisy tiny detail. Soft neutral illumination from upper left so regional tint layers can be applied. Smooth natural top alpha edge, no luminous color fringe.",
+  "sourceOutputPath": "/workspace/generated_images/exec-bcb0fdbf-760b-4a28-b975-a29aae457753.png",
+  "referencesPassed": [],
+  "styleReferencesInspected": [
+    "assets-mobile/environments/ashen-crown-combat.webp",
+    "art/map-battlefield-drafts/batch-03/scene-forest-ground-misty.png"
+  ],
+  "requestedDimensions": [
+    3072,
+    1728
+  ],
+  "processing": "Unchanged generated output; actual dimensions and alpha in batch manifest."
+}

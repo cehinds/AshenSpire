@@ -1,0 +1,80 @@
+{
+  "formatVersion": 1,
+  "status": "draft",
+  "generator": "image_gen.imagegen",
+  "regionId": "drowned-coast",
+  "id": "prop-broken-jetty",
+  "prompt": "Paint ONE isolated short BROKEN WOODEN JETTY fragment as a separate transparent battle-scene prop for the Drowned Coast. Match the Drowned Coast region in the supplied map and combat references: dark muted painterly fantasy, teal-gray tidal water reflected in cool gray surfaces, desaturated weathered stone, restrained gray-green algae, no golden sunlight. Soft diffuse cool overcast daylight from upper left, gentle atmospheric contrast. Use those region references ONLY for palette and mood, never copy the map view, split-panel arrangement or buildings into a ground asset. One single image, never a montage or sheet. Eye-level battle camera with only slight downward view of about15degrees, not high isometric map camera. A compact group of exactly four short weathered timber supports carrying a few uneven broken gray wooden planks, a short partial coastal pier with an identifiable snapped end. Low broad silhouette, no long causeway. Cool ash-gray water-worn wood, a trace of desaturated gray-green algae on the support feet, restrained texture and small rusty iron fasteners. Include only attached structural wood and fasteners. No water, waves, reflection, cast-shadow backdrop, shoreline, rocks, sand, terrain island, display base, ropes extending off canvas, people, sky or environment. Square transparent canvas, entire prop fits inside central65percent with generous clear margins on every side and transparent gaps between supports. Clean alpha edges, no colored fringe, glow, text, UI, frame or watermark. One single object, no collage. Target1024square, preserve native output dimensions.",
+  "sourceOutputPath": "/workspace/generated_images/exec-fbc3912b-2f5f-48ca-8c5b-8f321d07633c.png",
+  "outputPath": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/drowned-coast/prop-broken-jetty.png",
+  "referencedImagePaths": [
+    "/workspace/AshenSpire/assets-mobile/environments/drowned-coast-map.webp",
+    "/workspace/AshenSpire/assets-mobile/environments/drowned-coast-combat.webp"
+  ],
+  "contextReferencesInspected": [
+    "/workspace/AshenSpire/assets-mobile/environments/drowned-coast-map.webp",
+    "/workspace/AshenSpire/assets-mobile/environments/drowned-coast-combat.webp",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-03/scene-forest-ground-misty.png"
+  ],
+  "transparentBackgroundRequested": true,
+  "targetDimensions": {
+    "width": 1024,
+    "height": 1024
+  },
+  "processing": "Generated original copied byte-for-byte. No image edits, resize, upscale, alpha cleanup, color correction or compositing; generated source remains preserved.",
+  "productionRegistered": false,
+  "productionAssetId": null,
+  "limitations": [
+    "Draft art; not registered or integrated into runtime.",
+    "Requested target dimensions were not enforced by the generator. Native dimensions are preserved; no enlargement or resampling performed.",
+    "Generous requested central-65-percent margins were not fully achieved; actual visible bounds are measured below.",
+    "Ground anchor, support plane and projected scale remain to be registered in composition.",
+    "Faint alpha noise or colored edge pixels are preserved as generated."
+  ],
+  "width": 1254,
+  "height": 1254,
+  "mode": "RGBA",
+  "sha256": "e09d90eadeb3588056a8243e9631936575b9a563ddeac13aafbb0c01861c096f",
+  "alphaBounds": [
+    0,
+    26,
+    1232,
+    1254
+  ],
+  "visibleBoundsAlphaAbove8": [
+    114,
+    295,
+    1155,
+    988
+  ],
+  "referenceHashes": {
+    "assets-mobile/environments/drowned-coast-map.webp": "7014764294d4a8e542b695b2984aa821e5e28b8515a8448e2e37bb1d99971d6e",
+    "assets-mobile/environments/drowned-coast-combat.webp": "18897020039f8d66e0f1fe54b7730a20bd3c920bfd5640ed3f6f85563f17f83f"
+  },
+  "alphaStatistics": {
+    "min": 0,
+    "max": 255,
+    "transparentPixels": 1200180,
+    "alpha1Pixels": 10623,
+    "opaquePixels": 1131,
+    "visiblePixelsAlphaAbove8": 353934
+  },
+  "colorArtifactProbe": {
+    "scope": "All pixels with alpha > 8; heuristic only, no image processing",
+    "redPixels": 0,
+    "yellowPixels": 0,
+    "bluePixels": 0,
+    "magentaPixels": 0
+  },
+  "visibleMarginsAlphaAbove8": {
+    "left": 114,
+    "top": 295,
+    "right": 99,
+    "bottom": 266
+  },
+  "validation": {
+    "sourceCopyByteIdentical": true,
+    "recordedHashVerified": true,
+    "dimensionsMeasured": true
+  }
+}

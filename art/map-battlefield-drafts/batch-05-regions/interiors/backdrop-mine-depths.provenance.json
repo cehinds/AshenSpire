@@ -1,0 +1,12 @@
+{
+  "status": "draft",
+  "generator": "OpenAI image_gen",
+  "prompt": "One wide opaque BACKDROP only for a layered dark fantasy underground mine scene, requested3072x1728. Expansive basalt mine galleries and distant weathered timber supports receding into hazy depth, gray-brown rock walls with restrained rust mineral traces. Subdued cool ambient light from upper left and tiny distant amber worklights. Broad quiet central opening, generous continuation around edges, farthest tunnels readable but not visually busy. No near carts, rails, platforms, props, people, labels or UI. Bottom half continues into dim indistinct rock so a separate ground layer can cover it. Standing-character eye-level panoramic perspective, muted painterly original dark fantasy, no glowing crystalfield or lava lake. One background image, not full battlefield.",
+  "sourceOutputPath": "/workspace/generated_images/exec-9aff985f-7a8e-4574-8eb7-2cf3b6cacbd0.png",
+  "referencesPassed": [],
+  "requestedDimensions": [
+    3072,
+    1728
+  ],
+  "processing": "Unchanged generated output; actual dimensions and color mode in batch manifest."
+}

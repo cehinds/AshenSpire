@@ -1,0 +1,12 @@
+{
+  "status": "draft",
+  "generator": "OpenAI image_gen",
+  "prompt": "One isolated dark fantasy dungeon rear-scene PROP on TRUE transparent background: a narrow freestanding weathered wrought-iron barred gate held by two simple low broken stone posts. Full object visible, generous transparent margins at least15percent all sides; no attached ground slab or walls, scenery, people, text/UI. Gate partly open, simple strong silhouette, muted charcoal metal and cool worn limestone, faint rust, no spikes out of frame. Standing-character eye-level slightthreequarter perspective for sideview battle scene, NOT birdseye map icon. Soft neutral upper-left light, original painterly dark fantasy. Requested1536square, singleobject notspritesheet. Clean alpha edges, no glow or colored fringe. Black spaces between bars must be transparent.",
+  "sourceOutputPath": "/workspace/generated_images/exec-838938d8-6548-41b3-a101-4086cf9d3933.png",
+  "referencesPassed": [],
+  "requestedDimensions": [
+    1536,
+    1536
+  ],
+  "processing": "Unchanged generated output; native dimensions and alpha measured in batch manifest."
+}

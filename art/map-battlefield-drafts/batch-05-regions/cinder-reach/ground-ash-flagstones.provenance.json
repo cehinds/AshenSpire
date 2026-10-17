@@ -1,0 +1,86 @@
+{
+  "generator": "image_gen.imagegen",
+  "status": "draft",
+  "region": "cinder-reach",
+  "role": "ground",
+  "prompt": "Create ONE independent dark-fantasy combat floor PNG for Cinder Reach: ASH-DUSTED OLD FLAGSTONES, a broad desolate floor of worn dark warm-gray square and irregular stone paving, charcoal basalt mixed with soot and pale gray ash packed softly into shallow seams. Distinct from an ordinary clean road: broad quiet ash patches soften the flagstones, occasional subtle iron-umber staining, no bright lava or molten cracks. Painterly premium fantasy background style, restrained warm-dark stone palette, diffuse OVERCAST UPPER-LEFT light. Camera at standing human chest height, looking LEVEL across floor toward distant horizon; not world-map/isometric/top-down view. Target3072x1728 wide panoramic canvas. The TOP52 PERCENT of this canvas is EMPTY TRUE ALPHA TRANSPARENCY. The visible floor begins ONLY along a nearly straight irregular boundary at normalized y0.52, just BELOW THE VERTICAL MIDPOINT, leaving a little MORE THAN HALF canvas transparent above. No content or noise above normalized y0.50. Ground occupies the LOWER48 PERCENT, runs FULLY OPAQUE to the entire BOTTOM edge and both side edges below its horizon, and is never an isolated island or platform. Make a wide uninterrupted floor with flat empty actor standing area, quiet extended lateral crop margins and quiet foreground continuation for panorama/overscan; no large unique feature near any crop edge. Preserve low horizontal stage camera and subtle natural perspective scaling, no dramatic road ribbon or focal vanishing point. There are NO walls, standing rocks, buildings, props, people, vegetation, steps, ledges, terrain cliffs, sky, clouds, mountains, fire, fog layer, embers, text, labels, UI, frame or vignette. The environment ABOVE the flat floor silhouette is transparent, not black or gray. Clean neutral alpha boundary without colored glow/fringe. One floor only, not a collage or scene atlas.",
+  "referencedImagePaths": [],
+  "inspectedStyleReferencePaths": [
+    "/workspace/AshenSpire/assets-mobile/environments/cinder-reach-map.webp",
+    "/workspace/AshenSpire/assets-mobile/environments/cinder-reach-combat.webp",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-03/scene-road-ground-misty.png"
+  ],
+  "referenceStrategy": "Live map/combat palette and scenery inspected; generated from written palette/composition descriptions rather than reproducing map camera or combat atlas layout.",
+  "sourceOutputPath": "/workspace/generated_images/exec-9bfccabd-6f00-49a7-b7f4-540ec4c57138.png",
+  "outputPath": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/cinder-reach/ground-ash-flagstones.png",
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "transparentBackgroundRequested": true,
+  "processing": "Original generated PNG copied unchanged; no resizing, upscaling, alpha cleanup or compositing.",
+  "productionRegistered": false,
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "mode": "RGBA",
+  "sha256": "ecc0212163c99e1e6b7d8667085e0db5bd3fce9e2b64f90058d374a9dc9ab4e8",
+  "alphaExtrema": [
+    0,
+    255
+  ],
+  "alphaBoundsByThreshold": {
+    "0": [
+      0,
+      18,
+      1672,
+      941
+    ],
+    "1": [
+      0,
+      479,
+      1672,
+      941
+    ],
+    "8": [
+      0,
+      482,
+      1672,
+      941
+    ],
+    "128": [
+      0,
+      483,
+      1672,
+      941
+    ]
+  },
+  "topHalfAlphaAbove8Fraction": 0.0,
+  "topHalfFullyTransparentFraction": 0.9989603481624758,
+  "bottomAlphaExtrema": [
+    245,
+    254
+  ],
+  "lowerLeftAlphaExtrema": [
+    248,
+    254
+  ],
+  "lowerRightAlphaExtrema": [
+    245,
+    254
+  ],
+  "medianFloorAlphaOnsetNormalizedAbove128": 0.5165,
+  "visualReview": {
+    "inspected": true,
+    "observations": [
+      "Broad quiet ash-covered warm-dark flagstones, no scenery/props, extended lateral floor and bottom bleed.",
+      "Median meaningful floor onset0.5165 closely approximates requested0.52. Top half contains no alpha above8 but may contain near-transparent specks.",
+      "Bottom edge alpha245–254 rather than fully opaque255; colored horizon specks persist.",
+      "Actual1672x941 is smaller than requested3072x1728; no upscale performed."
+    ],
+    "productionApproved": false
+  },
+  "requestedHorizonNormalizedY": 0.52,
+  "alphaFindings": "Transparent-above-floor RGBA with measured horizon and alpha metrics. Ground is mostly opaque but lower edges contain slight translucency; exact requested horizon differs as documented."
+}

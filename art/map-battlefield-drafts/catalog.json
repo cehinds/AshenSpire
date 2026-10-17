@@ -23,6 +23,11 @@
       "id": "batch-04-atmosphere",
       "manifest": "batch-04-atmosphere/manifest.json",
       "sourceCount": 15
+    },
+    {
+      "id": "batch-05-regions",
+      "manifest": "batch-05-regions/manifest.json",
+      "sourceCount": 32
     }
   ],
   "editableRecipes": [
@@ -37,13 +42,22 @@
     {
       "id": "atmosphere-presets",
       "file": "batch-04-atmosphere/atmosphere.example.json"
+    },
+    {
+      "id": "regional-compositions",
+      "file": "batch-05-regions/composition.example.json"
+    },
+    {
+      "id": "live-location-candidates",
+      "file": "batch-05-regions/location-coverage.example.json"
     }
   ],
   "nextFamilies": [
-    "swamp",
-    "snow",
-    "volcanic"
+    "regional-interior-variants",
+    "settlement-architecture",
+    "expanded-panoramic-masters",
+    "alpha-and-contact-cleanup"
   ],
   "productionBindings": null,
-  "overscanPolicy": "Atmosphere fields2x longestviewport edge; earlier paintings still need expanded edges."
+  "overscanPolicy": "Atmosphere fields use twice the longest viewport edge. Regional landscape crops have measured edge room; portrait vertical camera travel and older paintings still need expanded source edges."
 }

@@ -1,0 +1,50 @@
+{
+  "status": "generated-native-output",
+  "assets": [
+    {
+      "file": "ground-moss-clearing.png",
+      "transparent_background": true,
+      "refs": [
+        "/workspace/AshenSpire/assets-mobile/environments/hollow-weald-map.webp",
+        "/workspace/AshenSpire/assets-mobile/environments/hollow-weald-combat.webp",
+        "/workspace/AshenSpire/art/map-battlefield-drafts/batch-03/scene-forest-ground-misty.png"
+      ],
+      "prompt": "AshenSpire Hollow Weald biome asset for a dark fantasy layered 2D battlefield, painterly realistic game environment art, moss muted greens, wet desaturated teal undertones, weathered bark and earth, dense ancient woodland identity. Consistent subdued diffuse light from upper left, no harsh sunlight or artificial glow, restrained contrast so actors remain readable. Match color identity of supplied tiny biome references but never reproduce their contact-sheet/multi-scene arrangement. Single standalone image, no panels, no writing, no labels, no UI, no people or creatures. Generate a WIDE landscape 3072x1728 PNG GROUND LAYER only. Follow the third reference for layer layout and alpha silhouette, NOT its paving material. Battle camera at low eye level looking across a broad quiet moss clearing: a relatively level walkable floor of compact damp earth, short muted green moss, sparse fine leaf litter. The floor starts at a nearly level low silhouette at exactly 52% of canvas height, spans full image width, and fills the entire lower 48% to all bottom/side edges with opaque terrain. Entire upper 52% is truly transparent alpha, not black, not painted checkerboard. Keep low silhouette variation, especially at the far sides. Small texture scales toward the horizon; no attached islands or oval base; ground continues seamlessly off left, right and bottom. Broad quiet flat encounter space centered in lower half, generous low-detail side bleed for horizontal camera shifts. NO sky, mountains, trees, trees trunks, buildings, props, standing ferns, tall roots, rocks or objects. No horizon background painting. Ground plane only."
+    },
+    {
+      "file": "ground-bog-path.png",
+      "transparent_background": true,
+      "refs": [
+        "/workspace/AshenSpire/assets-mobile/environments/hollow-weald-map.webp",
+        "/workspace/AshenSpire/assets-mobile/environments/hollow-weald-combat.webp",
+        "/workspace/AshenSpire/art/map-battlefield-drafts/batch-03/scene-forest-ground-misty.png"
+      ],
+      "prompt": "AshenSpire Hollow Weald biome asset for a dark fantasy layered 2D battlefield, painterly realistic game environment art, moss muted greens, wet desaturated teal undertones, weathered bark and earth, dense ancient woodland identity. Consistent subdued diffuse light from upper left, no harsh sunlight or artificial glow, restrained contrast so actors remain readable. Match color identity of supplied tiny biome references but never reproduce their contact-sheet/multi-scene arrangement. Single standalone image, no panels, no writing, no labels, no UI, no people or creatures. Generate a WIDE landscape 3072x1728 PNG GROUND LAYER only. Follow the third reference for layer layout and alpha silhouette, NOT its paving material. A firm walkable bog path spread broadly across the encounter foreground: stable compact damp mud, shallow embedded fine roots, muted moss along flat margins and restrained teal wetness in occasional tiny shallow puddles. Not deep water, not swamp pool, not a narrow walkway, no dangerous holes. Low eye-level battle camera. Ground begins at a nearly flat silhouette at exactly y=52% of total image height and fills ALL lower 48% opaque down to and beyond left/right/bottom image boundaries. Upper 52% must be truly transparent alpha; no black or fake checkerboard. The path subtly recedes toward the middle rear while keeping the whole lower half quiet, level, usable floor. Lots of low-detail panoramic side room; no prominent feature near any edge. NO trees, tree trunks, shrubs, reeds, buildings, props, sky, backdrop, characters, large rocks, standalone roots or terrain island base. This is only a full-width floor plane."
+    },
+    {
+      "file": "prop-gnarled-root.png",
+      "transparent_background": true,
+      "refs": [
+        "/workspace/AshenSpire/assets-mobile/environments/hollow-weald-combat.webp"
+      ],
+      "prompt": "AshenSpire Hollow Weald biome asset for a dark fantasy layered 2D battlefield, painterly realistic game environment art, moss muted greens, wet desaturated teal undertones, weathered bark and earth, dense ancient woodland identity. Consistent subdued diffuse light from upper left, no harsh sunlight or artificial glow, restrained contrast so actors remain readable. Match color identity of supplied tiny biome references but never reproduce their contact-sheet/multi-scene arrangement. Single standalone image, no panels, no writing, no labels, no UI, no people or creatures. Generate a SQUARE 1536x1536 PNG isolated scenery prop on true transparent alpha: one exposed old gnarled root fragment, weathered dark timber, low broad winding silhouette, with a small attached fern cluster growing directly from a crevice. A single compact botanical object, no full tree or trunk canopy, not multiple separate objects. Eye-level battle-stage perspective, subtly see its upper surfaces, NOT an isometric map icon and not bird's-eye. Object occupies approximately 65% canvas width and 48% height, centered with generous transparent margins on all sides and a clear bottom contact line. Muted moss-green fronds and subdued brown-gray wood with teal shadow. No attached earth, dirt mound, rock pile, oval base, terrain patch, floor, grass carpet, ground shadow plane or scenery behind it. No glow, text, panel or border. Keep its root/fern silhouette readable when reduced."
+    },
+    {
+      "file": "prop-woodland-shrine.png",
+      "transparent_background": true,
+      "refs": [
+        "/workspace/AshenSpire/assets-mobile/environments/hollow-weald-combat.webp"
+      ],
+      "prompt": "AshenSpire Hollow Weald biome asset for a dark fantasy layered 2D battlefield, painterly realistic game environment art, moss muted greens, wet desaturated teal undertones, weathered bark and earth, dense ancient woodland identity. Consistent subdued diffuse light from upper left, no harsh sunlight or artificial glow, restrained contrast so actors remain readable. Match color identity of supplied tiny biome references but never reproduce their contact-sheet/multi-scene arrangement. Single standalone image, no panels, no writing, no labels, no UI, no people or creatures. Generate a SQUARE 1536x1536 PNG single isolated small weathered timber wayside shrine on true transparent alpha. Hollow Weald woodland craft: two rough dark wooden uprights supporting a modest pitched plank roof and a small weathered carved wooden niche, restrained moss on roof edges, one tiny unlit wooden offering bowl inside. No words, runes, lettering, glowing magic, candle flames or hanging signs. Eye-level frontal three-quarter battle-camera perspective, not map isometric and not bird's-eye. Compact unmistakable shrine silhouette, occupying about 50% canvas width and 68% height with generous transparent safety margin on every side. Timber feet end cleanly at one contact line. NO attached base or platform, earth mound, soil, paving, terrain patch, trees, floor or cast shadow plane. Entire surrounding background true transparent alpha, not black or checkerboard."
+    },
+    {
+      "file": "backdrop-deep-weald.png",
+      "transparent_background": false,
+      "refs": [
+        "/workspace/AshenSpire/assets-mobile/environments/hollow-weald-map.webp",
+        "/workspace/AshenSpire/assets-mobile/environments/hollow-weald-combat.webp"
+      ],
+      "prompt": "AshenSpire Hollow Weald biome asset for a dark fantasy layered 2D battlefield, painterly realistic game environment art, moss muted greens, wet desaturated teal undertones, weathered bark and earth, dense ancient woodland identity. Consistent subdued diffuse light from upper left, no harsh sunlight or artificial glow, restrained contrast so actors remain readable. Match color identity of supplied tiny biome references but never reproduce their contact-sheet/multi-scene arrangement. Single standalone image, no panels, no writing, no labels, no UI, no people or creatures. Generate a single OPAQUE wide landscape 3072x1728 painted forest BACKDROP plane. Deep ancient woodland wetlands: layered distant trunks, muted moss-green canopy, subtle teal pools barely glimpsed between remote roots, cool forest mist separates successive depths. Quiet spacious central opening between distant woodland masses, subdued soft light entering upper left. View from a low eye-level battle camera across far woodland. This is the far scenery/sky slot ONLY: no foreground floor or walkable clearing, no close roots, foreground rocks, props, ruins, structures or people. Lower part contains distant trees and wetland atmosphere that can sit behind a separately composited floor at y52%; it must not paint a nearby ground plane. Generous panoramic quiet edge room for side pans, no singular focal landmark or important tree at an edge. No bright shafts, sun disk, moon, stars, magical lights or strong central glow. Unified subdued detailed painterly realism, visible shapes in cool shadows; not pitch black. Full image entirely opaque, no transparent areas."
+    }
+  ]
+}

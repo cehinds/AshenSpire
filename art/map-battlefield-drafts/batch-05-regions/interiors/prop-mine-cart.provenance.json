@@ -1,0 +1,12 @@
+{
+  "status": "draft",
+  "generator": "OpenAI image_gen",
+  "prompt": "One isolated dark fantasy mine rear-scene PROP on TRUE transparent background: small battered wooden ore cart with iron straps and four iron wheels, containing a shallow mound of charcoal basalt ore. Full object visible with15percent transparent margins all sides; no rails, terrainbase, background, people, writing, labels or UI. Standing-character eye-level slightthreequarter perspective for battle scene, NOT elevated mapicon. Muted brown-gray weathered timber, dull iron, restrained rusty accents, cool darkore; soft neutral upper-left light. Painterly original fantasy, broad readable forms without overwhelming texture. Requested1536square. True clean alpha around wheels/frame; no castshadow island or colored fringe.",
+  "sourceOutputPath": "/workspace/generated_images/exec-b2c8be60-0485-48e0-a572-f0fec02a8bb9.png",
+  "referencesPassed": [],
+  "requestedDimensions": [
+    1536,
+    1536
+  ],
+  "processing": "Unchanged generated output; native dimensions and alpha measured in batch manifest."
+}

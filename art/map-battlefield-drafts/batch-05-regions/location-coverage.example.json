@@ -1,0 +1,855 @@
+{
+  "schemaVersion": 1,
+  "status": "draft-candidate",
+  "productionBinding": null,
+  "pathBase": "directory containing this file",
+  "sources": [
+    "../../../content/source/locationPresentation.json",
+    "../../../content/source/worldAtlas.json"
+  ],
+  "sourcePathNote": "All sources and asset paths resolve relative to the directory containing this file; sourceFiles also lists repository-relative source names.",
+  "sourceFiles": [
+    "content/source/locationPresentation.json",
+    "content/source/worldAtlas.json"
+  ],
+  "scope": {
+    "regionCount": 5,
+    "profileCount": 21,
+    "nodeProfileCount": 200,
+    "note": "Coverage means editable candidate mapping, not approved or bespoke art for every location. Ashen Crown forest is a live profile with zero node assignments."
+  },
+  "proposedTagAliases": {
+    "status": "draft-candidate",
+    "createsLiveIds": false,
+    "note": "Optional authoring aliases only. Region context and explicit live node/profile binding take precedence; names do not reclassify existing nodes automatically.",
+    "groups": [
+      {
+        "aliases": [
+          "town",
+          "village",
+          "city"
+        ],
+        "proposedFamily": "settlement",
+        "existingSettingId": "city"
+      },
+      {
+        "aliases": [
+          "castle",
+          "ruins",
+          "dungeon",
+          "legacy dungeon",
+          "snowcastle",
+          "snow castle",
+          "monastery",
+          "abbey",
+          "foundry"
+        ],
+        "proposedFamily": "ruined-interior",
+        "existingSettingId": "dungeon"
+      },
+      {
+        "aliases": [
+          "trail",
+          "path",
+          "causeway",
+          "road"
+        ],
+        "proposedFamily": "road",
+        "existingSettingId": "road"
+      },
+      {
+        "aliases": [
+          "woods",
+          "weald",
+          "forest"
+        ],
+        "proposedFamily": "forest",
+        "existingSettingId": "forest"
+      },
+      {
+        "aliases": [
+          "beach",
+          "coast",
+          "shore",
+          "frozen shore"
+        ],
+        "proposedFamily": "shore",
+        "existingSettingId": "shore"
+      },
+      {
+        "aliases": [
+          "mine",
+          "quarry"
+        ],
+        "proposedFamily": "mine",
+        "existingSettingId": "mine"
+      }
+    ]
+  },
+  "regions": [
+    {
+      "regionId": "ashen-crown",
+      "displayName": "The Ashen Crown",
+      "status": "draft-candidate",
+      "nodeCount": 41,
+      "profileIds": [
+        "ashen-crown/city",
+        "ashen-crown/dungeon",
+        "ashen-crown/forest",
+        "ashen-crown/road"
+      ],
+      "visualBasis": "Dry meadow, worn masonry and ruined highland settlements.",
+      "productionBinding": null
+    },
+    {
+      "regionId": "hollow-weald",
+      "displayName": "The Hollow Weald",
+      "status": "draft-candidate",
+      "nodeCount": 40,
+      "profileIds": [
+        "hollow-weald/city",
+        "hollow-weald/dungeon",
+        "hollow-weald/forest",
+        "hollow-weald/road"
+      ],
+      "visualBasis": "Moss, bog paths, roots and wooded settlements.",
+      "productionBinding": null
+    },
+    {
+      "regionId": "pale-marches",
+      "displayName": "The Pale Marches",
+      "status": "draft-candidate",
+      "nodeCount": 40,
+      "profileIds": [
+        "pale-marches/city",
+        "pale-marches/dungeon",
+        "pale-marches/road",
+        "pale-marches/shore"
+      ],
+      "visualBasis": "Snow valley roads, frozen shore and cold masonry.",
+      "productionBinding": null
+    },
+    {
+      "regionId": "cinder-reach",
+      "displayName": "The Cinder Reach",
+      "status": "draft-candidate",
+      "nodeCount": 40,
+      "profileIds": [
+        "cinder-reach/city",
+        "cinder-reach/dungeon",
+        "cinder-reach/mine",
+        "cinder-reach/road",
+        "cinder-reach/shore"
+      ],
+      "visualBasis": "Basalt, ash and ruined industrial masonry; separate volcanic coastal backdrop candidate for shore.",
+      "productionBinding": null
+    },
+    {
+      "regionId": "drowned-coast",
+      "displayName": "The Drowned Coast",
+      "status": "draft-candidate",
+      "nodeCount": 39,
+      "profileIds": [
+        "drowned-coast/city",
+        "drowned-coast/dungeon",
+        "drowned-coast/road",
+        "drowned-coast/shore"
+      ],
+      "visualBasis": "Wet sand, tidal stone, broken waterfronts and wrecks.",
+      "productionBinding": null
+    }
+  ],
+  "profiles": [
+    {
+      "profileId": "ashen-crown/city",
+      "regionId": "ashen-crown",
+      "settingId": "city",
+      "status": "draft-candidate",
+      "nodeCount": 9,
+      "nodeIds": [
+        "crownfall",
+        "ashen-crown:02:0",
+        "ashen-crown:02:2",
+        "ashen-crown:03:0",
+        "ashen-crown:03:2",
+        "ashen-crown:05:0",
+        "ashen-crown:05:2",
+        "bellhaven",
+        "ashen-crown:06:2"
+      ],
+      "liveSceneIds": [
+        "ashen-crown-2",
+        "ashen-crown-3"
+      ],
+      "productionBinding": null,
+      "candidates": {
+        "ground": "ashen-crown/ground-worn-courtyard.png",
+        "backdrop": "ashen-crown/backdrop-ashen-highlands.png",
+        "props": [
+          "ashen-crown/prop-market-stall.png"
+        ]
+      },
+      "sharedInterior": false,
+      "refinements": []
+    },
+    {
+      "profileId": "ashen-crown/dungeon",
+      "regionId": "ashen-crown",
+      "settingId": "dungeon",
+      "status": "draft-candidate",
+      "nodeCount": 8,
+      "nodeIds": [
+        "ashen-crown:10:0",
+        "ashen-crown:10:2",
+        "ashen-crown:11:0",
+        "ashen-crown:11:2",
+        "ashen-crown:12:0",
+        "ashen-crown:12:2",
+        "black-spire",
+        "ashen-crown:13:2"
+      ],
+      "liveSceneIds": [
+        "ashen-crown-4"
+      ],
+      "productionBinding": null,
+      "candidates": {
+        "ground": "interiors/ground-dungeon-flagstones.png",
+        "backdrop": "interiors/backdrop-vaulted-depths.png",
+        "props": [
+          "interiors/prop-iron-gate.png"
+        ]
+      },
+      "sharedInterior": true,
+      "refinements": [
+        "Shared dungeon candidate: adapt materials, moisture, vegetation, snow or soot to ashen-crown; not bespoke regional interior art."
+      ]
+    },
+    {
+      "profileId": "ashen-crown/forest",
+      "regionId": "ashen-crown",
+      "settingId": "forest",
+      "status": "draft-candidate",
+      "nodeCount": 0,
+      "nodeIds": [],
+      "liveSceneIds": [
+        "ashen-crown-3"
+      ],
+      "productionBinding": null,
+      "candidates": {
+        "ground": "ashen-crown/ground-worn-courtyard.png",
+        "backdrop": "ashen-crown/backdrop-ashen-highlands.png",
+        "props": [
+          "ashen-crown/prop-broken-column.png"
+        ]
+      },
+      "sharedInterior": false,
+      "refinements": [
+        "Regional outdoor palette candidate; add forest-specific vegetation density and edge framing."
+      ]
+    },
+    {
+      "profileId": "ashen-crown/road",
+      "regionId": "ashen-crown",
+      "settingId": "road",
+      "status": "draft-candidate",
+      "nodeCount": 24,
+      "nodeIds": [
+        "ashen-crown:01:0",
+        "ashen-crown:01:1",
+        "ashen-crown:01:2",
+        "ashen-crown:02:1",
+        "ashen-crown:03:1",
+        "ashen-crown:04:0",
+        "ashen-crown:04:1",
+        "ashen-crown:04:2",
+        "ashen-crown:05:1",
+        "ashen-crown:06:1",
+        "ashen-crown:07:0",
+        "ashen-crown:07:1",
+        "ashen-crown:07:2",
+        "ashen-crown:08:0",
+        "ashen-crown:08:1",
+        "ashen-crown:08:2",
+        "ashen-crown:09:0",
+        "ashen-crown:09:1",
+        "ashen-crown:09:2",
+        "ashen-crown:10:1",
+        "ashen-crown:11:1",
+        "ashen-crown:12:1",
+        "ashen-crown:13:1",
+        "junction:ashen-crown:hollow-weald"
+      ],
+      "liveSceneIds": [
+        "ashen-crown-1"
+      ],
+      "productionBinding": null,
+      "candidates": {
+        "ground": "ashen-crown/ground-dry-meadow.png",
+        "backdrop": "ashen-crown/backdrop-ashen-highlands.png",
+        "props": [
+          "ashen-crown/prop-broken-column.png"
+        ]
+      },
+      "sharedInterior": false,
+      "refinements": []
+    },
+    {
+      "profileId": "hollow-weald/city",
+      "regionId": "hollow-weald",
+      "settingId": "city",
+      "status": "draft-candidate",
+      "nodeCount": 4,
+      "nodeIds": [
+        "hollow-weald:04:0",
+        "hollow-weald:04:2",
+        "lantern-haven",
+        "junction:hollow-weald:pale-marches"
+      ],
+      "liveSceneIds": [
+        "hollow-weald-2"
+      ],
+      "productionBinding": null,
+      "candidates": {
+        "ground": "hollow-weald/ground-moss-clearing.png",
+        "backdrop": "hollow-weald/backdrop-deep-weald.png",
+        "props": [
+          "hollow-weald/prop-woodland-shrine.png"
+        ]
+      },
+      "sharedInterior": false,
+      "refinements": [
+        "Ground is a regional material candidate; refine into a settlement courtyard or street surface."
+      ]
+    },
+    {
+      "profileId": "hollow-weald/dungeon",
+      "regionId": "hollow-weald",
+      "settingId": "dungeon",
+      "status": "draft-candidate",
+      "nodeCount": 1,
+      "nodeIds": [
+        "elder-root"
+      ],
+      "liveSceneIds": [
+        "hollow-weald-3"
+      ],
+      "productionBinding": null,
+      "candidates": {
+        "ground": "interiors/ground-dungeon-flagstones.png",
+        "backdrop": "interiors/backdrop-vaulted-depths.png",
+        "props": [
+          "interiors/prop-iron-gate.png"
+        ]
+      },
+      "sharedInterior": true,
+      "refinements": [
+        "Shared dungeon candidate: adapt materials, moisture, vegetation, snow or soot to hollow-weald; not bespoke regional interior art."
+      ]
+    },
+    {
+      "profileId": "hollow-weald/forest",
+      "regionId": "hollow-weald",
+      "settingId": "forest",
+      "status": "draft-candidate",
+      "nodeCount": 11,
+      "nodeIds": [
+        "hollow-weald:03:0",
+        "hollow-weald:03:2",
+        "hollow-weald:08:0",
+        "hollow-weald:08:2",
+        "hollow-weald:09:0",
+        "hollow-weald:09:2",
+        "hollow-weald:10:0",
+        "hollow-weald:10:2",
+        "hollow-weald:12:0",
+        "hollow-weald:12:2",
+        "hollow-weald:13:2"
+      ],
+      "liveSceneIds": [
+        "hollow-weald-1",
+        "hollow-weald-3",
+        "hollow-weald-4"
+      ],
+      "productionBinding": null,
+      "candidates": {
+        "ground": "hollow-weald/ground-moss-clearing.png",
+        "backdrop": "hollow-weald/backdrop-deep-weald.png",
+        "props": [
+          "hollow-weald/prop-gnarled-root.png"
+        ]
+      },
+      "sharedInterior": false,
+      "refinements": [
+        "Regional outdoor palette candidate; add forest-specific vegetation density and edge framing."
+      ]
+    },
+    {
+      "profileId": "hollow-weald/road",
+      "regionId": "hollow-weald",
+      "settingId": "road",
+      "status": "draft-candidate",
+      "nodeCount": 24,
+      "nodeIds": [
+        "hollow-weald:01:0",
+        "hollow-weald:01:1",
+        "hollow-weald:01:2",
+        "hollow-weald:02:0",
+        "hollow-weald:02:1",
+        "hollow-weald:02:2",
+        "hollow-weald:03:1",
+        "hollow-weald:04:1",
+        "hollow-weald:05:0",
+        "hollow-weald:05:1",
+        "hollow-weald:05:2",
+        "hollow-weald:06:1",
+        "hollow-weald:06:2",
+        "hollow-weald:07:0",
+        "hollow-weald:07:1",
+        "hollow-weald:07:2",
+        "hollow-weald:08:1",
+        "hollow-weald:09:1",
+        "hollow-weald:10:1",
+        "hollow-weald:11:0",
+        "hollow-weald:11:1",
+        "hollow-weald:11:2",
+        "hollow-weald:12:1",
+        "hollow-weald:13:1"
+      ],
+      "liveSceneIds": [
+        "hollow-weald-1"
+      ],
+      "productionBinding": null,
+      "candidates": {
+        "ground": "hollow-weald/ground-bog-path.png",
+        "backdrop": "hollow-weald/backdrop-deep-weald.png",
+        "props": [
+          "hollow-weald/prop-gnarled-root.png"
+        ]
+      },
+      "sharedInterior": false,
+      "refinements": []
+    },
+    {
+      "profileId": "pale-marches/city",
+      "regionId": "pale-marches",
+      "settingId": "city",
+      "status": "draft-candidate",
+      "nodeCount": 10,
+      "nodeIds": [
+        "frostgate",
+        "pale-marches:09:0",
+        "pale-marches:09:2",
+        "pale-marches:10:0",
+        "pale-marches:10:2",
+        "pale-marches:11:0",
+        "pale-marches:11:2",
+        "pale-marches:12:0",
+        "pale-marches:12:2",
+        "pale-marches:13:2"
+      ],
+      "liveSceneIds": [
+        "pale-marches-3"
+      ],
+      "productionBinding": null,
+      "candidates": {
+        "ground": "pale-marches/ground-frozen-shore.png",
+        "backdrop": "pale-marches/backdrop-snow-valley.png",
+        "props": [
+          "pale-marches/prop-frozen-wall.png"
+        ]
+      },
+      "sharedInterior": false,
+      "refinements": [
+        "Ground is a regional material candidate; refine into a settlement courtyard or street surface."
+      ]
+    },
+    {
+      "profileId": "pale-marches/dungeon",
+      "regionId": "pale-marches",
+      "settingId": "dungeon",
+      "status": "draft-candidate",
+      "nodeCount": 1,
+      "nodeIds": [
+        "silent-monastery"
+      ],
+      "liveSceneIds": [
+        "pale-marches-3"
+      ],
+      "productionBinding": null,
+      "candidates": {
+        "ground": "interiors/ground-dungeon-flagstones.png",
+        "backdrop": "interiors/backdrop-vaulted-depths.png",
+        "props": [
+          "interiors/prop-iron-gate.png"
+        ]
+      },
+      "sharedInterior": true,
+      "refinements": [
+        "Shared dungeon candidate: adapt materials, moisture, vegetation, snow or soot to pale-marches; not bespoke regional interior art."
+      ]
+    },
+    {
+      "profileId": "pale-marches/road",
+      "regionId": "pale-marches",
+      "settingId": "road",
+      "status": "draft-candidate",
+      "nodeCount": 25,
+      "nodeIds": [
+        "pale-marches:01:0",
+        "pale-marches:01:1",
+        "pale-marches:01:2",
+        "pale-marches:02:0",
+        "pale-marches:02:1",
+        "pale-marches:02:2",
+        "pale-marches:03:1",
+        "pale-marches:04:0",
+        "pale-marches:04:1",
+        "pale-marches:04:2",
+        "pale-marches:05:0",
+        "pale-marches:05:1",
+        "pale-marches:05:2",
+        "pale-marches:06:1",
+        "pale-marches:06:2",
+        "pale-marches:07:0",
+        "pale-marches:07:1",
+        "pale-marches:07:2",
+        "pale-marches:08:1",
+        "pale-marches:09:1",
+        "pale-marches:10:1",
+        "pale-marches:11:1",
+        "pale-marches:12:1",
+        "pale-marches:13:1",
+        "junction:pale-marches:cinder-reach"
+      ],
+      "liveSceneIds": [
+        "pale-marches-1",
+        "pale-marches-2"
+      ],
+      "productionBinding": null,
+      "candidates": {
+        "ground": "pale-marches/ground-snow-road.png",
+        "backdrop": "pale-marches/backdrop-snow-valley.png",
+        "props": [
+          "pale-marches/prop-snowy-waystone.png"
+        ]
+      },
+      "sharedInterior": false,
+      "refinements": []
+    },
+    {
+      "profileId": "pale-marches/shore",
+      "regionId": "pale-marches",
+      "settingId": "shore",
+      "status": "draft-candidate",
+      "nodeCount": 4,
+      "nodeIds": [
+        "pale-marches:03:0",
+        "pale-marches:03:2",
+        "pale-marches:08:0",
+        "pale-marches:08:2"
+      ],
+      "liveSceneIds": [
+        "pale-marches-4"
+      ],
+      "productionBinding": null,
+      "candidates": {
+        "ground": "pale-marches/ground-frozen-shore.png",
+        "backdrop": "pale-marches/backdrop-snow-valley.png",
+        "props": [
+          "pale-marches/prop-snowy-waystone.png"
+        ]
+      },
+      "sharedInterior": false,
+      "refinements": []
+    },
+    {
+      "profileId": "cinder-reach/city",
+      "regionId": "cinder-reach",
+      "settingId": "city",
+      "status": "draft-candidate",
+      "nodeCount": 10,
+      "nodeIds": [
+        "emberhold",
+        "cinder-reach:06:2",
+        "cinder-reach:09:0",
+        "cinder-reach:09:2",
+        "cinder-reach:11:0",
+        "cinder-reach:11:2",
+        "cinder-reach:12:0",
+        "cinder-reach:12:2",
+        "cinder-reach:13:2",
+        "junction:cinder-reach:drowned-coast"
+      ],
+      "liveSceneIds": [
+        "cinder-reach-2"
+      ],
+      "productionBinding": null,
+      "candidates": {
+        "ground": "cinder-reach/ground-ash-flagstones.png",
+        "backdrop": "cinder-reach/backdrop-volcanic.png",
+        "props": [
+          "cinder-reach/prop-broken-forge.png"
+        ]
+      },
+      "sharedInterior": false,
+      "refinements": []
+    },
+    {
+      "profileId": "cinder-reach/dungeon",
+      "regionId": "cinder-reach",
+      "settingId": "dungeon",
+      "status": "draft-candidate",
+      "nodeCount": 1,
+      "nodeIds": [
+        "dead-foundry"
+      ],
+      "liveSceneIds": [
+        "cinder-reach-2"
+      ],
+      "productionBinding": null,
+      "candidates": {
+        "ground": "interiors/ground-dungeon-flagstones.png",
+        "backdrop": "interiors/backdrop-vaulted-depths.png",
+        "props": [
+          "interiors/prop-iron-gate.png"
+        ]
+      },
+      "sharedInterior": true,
+      "refinements": [
+        "Shared dungeon candidate: adapt materials, moisture, vegetation, snow or soot to cinder-reach; not bespoke regional interior art."
+      ]
+    },
+    {
+      "profileId": "cinder-reach/mine",
+      "regionId": "cinder-reach",
+      "settingId": "mine",
+      "status": "draft-candidate",
+      "nodeCount": 4,
+      "nodeIds": [
+        "cinder-reach:02:0",
+        "cinder-reach:02:2",
+        "cinder-reach:08:0",
+        "cinder-reach:08:2"
+      ],
+      "liveSceneIds": [
+        "cinder-reach-4"
+      ],
+      "productionBinding": null,
+      "candidates": {
+        "ground": "interiors/ground-mine-gravel.png",
+        "backdrop": "interiors/backdrop-mine-depths.png",
+        "props": [
+          "interiors/prop-mine-cart.png"
+        ]
+      },
+      "sharedInterior": true,
+      "refinements": [
+        "Shared mine candidate: adapt materials, moisture, vegetation, snow or soot to cinder-reach; not bespoke regional interior art."
+      ]
+    },
+    {
+      "profileId": "cinder-reach/road",
+      "regionId": "cinder-reach",
+      "settingId": "road",
+      "status": "draft-candidate",
+      "nodeCount": 23,
+      "nodeIds": [
+        "cinder-reach:01:0",
+        "cinder-reach:01:1",
+        "cinder-reach:01:2",
+        "cinder-reach:02:1",
+        "cinder-reach:03:0",
+        "cinder-reach:03:1",
+        "cinder-reach:03:2",
+        "cinder-reach:04:1",
+        "cinder-reach:05:0",
+        "cinder-reach:05:1",
+        "cinder-reach:05:2",
+        "cinder-reach:06:1",
+        "cinder-reach:07:0",
+        "cinder-reach:07:1",
+        "cinder-reach:07:2",
+        "cinder-reach:08:1",
+        "cinder-reach:09:1",
+        "cinder-reach:10:0",
+        "cinder-reach:10:1",
+        "cinder-reach:10:2",
+        "cinder-reach:11:1",
+        "cinder-reach:12:1",
+        "cinder-reach:13:1"
+      ],
+      "liveSceneIds": [
+        "cinder-reach-1"
+      ],
+      "productionBinding": null,
+      "candidates": {
+        "ground": "cinder-reach/ground-basalt-road.png",
+        "backdrop": "cinder-reach/backdrop-volcanic.png",
+        "props": [
+          "cinder-reach/prop-basalt-spires.png"
+        ]
+      },
+      "sharedInterior": false,
+      "refinements": []
+    },
+    {
+      "profileId": "cinder-reach/shore",
+      "regionId": "cinder-reach",
+      "settingId": "shore",
+      "status": "draft-candidate",
+      "nodeCount": 2,
+      "nodeIds": [
+        "cinder-reach:04:0",
+        "cinder-reach:04:2"
+      ],
+      "liveSceneIds": [
+        "cinder-reach-3"
+      ],
+      "productionBinding": null,
+      "candidates": {
+        "ground": "cinder-reach/ground-ash-flagstones.png",
+        "backdrop": "cinder-reach/backdrop-volcanic-shore.png",
+        "props": [
+          "cinder-reach/prop-basalt-spires.png"
+        ]
+      },
+      "sharedInterior": false,
+      "refinements": [
+        "Review volcanic coastal backdrop against the map shoreline, including sea/tidal horizon and wet basalt.",
+        "Basalt road ground and spires are material candidates; refine into wet coastal basalt ground and shoreline props."
+      ]
+    },
+    {
+      "profileId": "drowned-coast/city",
+      "regionId": "drowned-coast",
+      "settingId": "city",
+      "status": "draft-candidate",
+      "nodeCount": 16,
+      "nodeIds": [
+        "drowned-coast:02:0",
+        "drowned-coast:02:2",
+        "drowned-coast:04:0",
+        "drowned-coast:04:2",
+        "drowned-coast:05:0",
+        "drowned-coast:05:2",
+        "saltwatch",
+        "drowned-coast:07:0",
+        "drowned-coast:07:2",
+        "drowned-coast:10:0",
+        "drowned-coast:10:2",
+        "drowned-coast:11:0",
+        "drowned-coast:11:2",
+        "drowned-coast:12:0",
+        "drowned-coast:12:2",
+        "drowned-coast:13:2"
+      ],
+      "liveSceneIds": [
+        "drowned-coast-1",
+        "drowned-coast-3"
+      ],
+      "productionBinding": null,
+      "candidates": {
+        "ground": "drowned-coast/ground-tidal-stone.png",
+        "backdrop": "drowned-coast/backdrop-tidal-coast.png",
+        "props": [
+          "drowned-coast/prop-broken-jetty.png"
+        ]
+      },
+      "sharedInterior": false,
+      "refinements": [
+        "Ground is a regional material candidate; refine into a settlement courtyard or street surface."
+      ]
+    },
+    {
+      "profileId": "drowned-coast/dungeon",
+      "regionId": "drowned-coast",
+      "settingId": "dungeon",
+      "status": "draft-candidate",
+      "nodeCount": 1,
+      "nodeIds": [
+        "tidebound-abbey"
+      ],
+      "liveSceneIds": [
+        "drowned-coast-1"
+      ],
+      "productionBinding": null,
+      "candidates": {
+        "ground": "interiors/ground-dungeon-flagstones.png",
+        "backdrop": "interiors/backdrop-vaulted-depths.png",
+        "props": [
+          "interiors/prop-iron-gate.png"
+        ]
+      },
+      "sharedInterior": true,
+      "refinements": [
+        "Shared dungeon candidate: adapt materials, moisture, vegetation, snow or soot to drowned-coast; not bespoke regional interior art."
+      ]
+    },
+    {
+      "profileId": "drowned-coast/road",
+      "regionId": "drowned-coast",
+      "settingId": "road",
+      "status": "draft-candidate",
+      "nodeCount": 18,
+      "nodeIds": [
+        "drowned-coast:01:0",
+        "drowned-coast:01:1",
+        "drowned-coast:01:2",
+        "drowned-coast:02:1",
+        "drowned-coast:03:1",
+        "drowned-coast:04:1",
+        "drowned-coast:05:1",
+        "drowned-coast:06:1",
+        "drowned-coast:06:2",
+        "drowned-coast:07:1",
+        "drowned-coast:08:0",
+        "drowned-coast:08:1",
+        "drowned-coast:08:2",
+        "drowned-coast:09:1",
+        "drowned-coast:10:1",
+        "drowned-coast:11:1",
+        "drowned-coast:12:1",
+        "drowned-coast:13:1"
+      ],
+      "liveSceneIds": [
+        "drowned-coast-2"
+      ],
+      "productionBinding": null,
+      "candidates": {
+        "ground": "drowned-coast/ground-wet-sand.png",
+        "backdrop": "drowned-coast/backdrop-tidal-coast.png",
+        "props": [
+          "drowned-coast/prop-shipwreck-ribs.png"
+        ]
+      },
+      "sharedInterior": false,
+      "refinements": []
+    },
+    {
+      "profileId": "drowned-coast/shore",
+      "regionId": "drowned-coast",
+      "settingId": "shore",
+      "status": "draft-candidate",
+      "nodeCount": 4,
+      "nodeIds": [
+        "drowned-coast:03:0",
+        "drowned-coast:03:2",
+        "drowned-coast:09:0",
+        "drowned-coast:09:2"
+      ],
+      "liveSceneIds": [
+        "drowned-coast-4"
+      ],
+      "productionBinding": null,
+      "candidates": {
+        "ground": "drowned-coast/ground-tidal-stone.png",
+        "backdrop": "drowned-coast/backdrop-tidal-coast.png",
+        "props": [
+          "drowned-coast/prop-shipwreck-ribs.png"
+        ]
+      },
+      "sharedInterior": false,
+      "refinements": []
+    }
+  ]
+}

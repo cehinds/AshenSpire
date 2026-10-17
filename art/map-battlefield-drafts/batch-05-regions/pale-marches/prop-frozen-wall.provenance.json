@@ -1,0 +1,41 @@
+{
+  "asset": "prop-frozen-wall.png",
+  "prompt": "Create one isolated combat prop for a snowy dark-fantasy battlefield: a short broken section of old stone wall, seen at low eye-level three-quarter battle camera like the environment in the reference. The wall is only a small standalone segment, low enough to read as cover, with a clear jagged break at both ends; several broad weathered limestone blocks are dusted with snow and coated in thin blue-white ice. Cool white-gray stone, muted slate-blue shadows, subtle cyan ice glints, soft upper-left cold light, painterly game environment art. Compact horizontal silhouette, no long continuous barrier, no corner or attached structure. True transparent square PNG with generous margin, full object visible and not cropped. No ground plane, terrain island, snowbank, sky, cliffs, mountains, trees, characters, weapons, text, runes, symbols or UI. No colored fringe, edge halo, alpha dust or oversized cast shadow. Target 1024 x 1024.",
+  "output_path": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/pale-marches/prop-frozen-wall.png",
+  "generated_original_path": "/workspace/generated_images/exec-d612531d-5d02-42ac-ad92-b456f1bda426.png",
+  "style_reference_paths": [
+    "/workspace/AshenSpire/assets-mobile/environments/pale-marches-combat.webp"
+  ],
+  "generator": "image_gen.imagegen",
+  "status": "draft",
+  "dimensions_px": [
+    1254,
+    1254
+  ],
+  "format": "PNG",
+  "color_mode": "RGBA",
+  "sha256": "d39928e755aec3010bfc0508a73e66d84d43d0302264fe9104647cc2b405f551",
+  "alpha_findings": {
+    "alphaByteRange": [
+      0,
+      255
+    ],
+    "transparentPixels": 1124863,
+    "partialAlphaPixels": 447290,
+    "opaquePixels": 363,
+    "outerBorderNonzeroAlphaPixels": 29,
+    "bboxAtAlpha16": [
+      31,
+      336,
+      1228,
+      942
+    ]
+  },
+  "original_copy_sha256_matches": true,
+  "requested_dimensions_px": [
+    1024,
+    1024
+  ],
+  "canvas_limitation": "Image generator returned 1254x1254 px; requested 1024x1024 px. Original retained unchanged; no resize.",
+  "visual_qa_limitations": "Compact broken wall silhouette; a few nonzero alpha pixels touch the canvas border, so inspect edge crop before production use."
+}

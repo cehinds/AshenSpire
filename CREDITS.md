@@ -745,3 +745,14 @@ one alternate fog texture are original OpenAI-generated paintings with exact
 prompts and provenance. Composition stills and a motion video preserve source
 assets and demonstrate editable placement/timing. These remain unregistered art
 feature drafts; no third-party artwork or license is claimed.
+
+### Regional map and battlefield paintings — batch 05 (2026-10-17)
+
+Thirty-two original OpenAI-generated drafts in
+`art/map-battlefield-drafts/batch-05-regions/` provide twelve grounds, twelve
+independent props and eight backdrops. Existing first-party regional map/combat
+art informed their palettes and materials; exact prompts and reference paths
+are retained with source hashes and measured dimensions. Browser previews
+compose unchanged sources using editable placement and crop recipes. Candidate
+location mappings preserve the existing presentation profile assignments. These
+remain unregistered feature-branch art; no third-party artwork or license is claimed.

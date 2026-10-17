@@ -1,0 +1,527 @@
+{
+  "status": "native-generation-drafts",
+  "biome": "hollow-weald",
+  "requestedGroundAndBackdropDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "requestedPropDimensions": {
+    "width": 1536,
+    "height": 1536
+  },
+  "records": [
+    {
+      "file": "ground-moss-clearing.png",
+      "transparent_background": true,
+      "refs": [
+        "/workspace/AshenSpire/assets-mobile/environments/hollow-weald-map.webp",
+        "/workspace/AshenSpire/assets-mobile/environments/hollow-weald-combat.webp",
+        "/workspace/AshenSpire/art/map-battlefield-drafts/batch-03/scene-forest-ground-misty.png"
+      ],
+      "prompt": "AshenSpire Hollow Weald biome asset for a dark fantasy layered 2D battlefield, painterly realistic game environment art, moss muted greens, wet desaturated teal undertones, weathered bark and earth, dense ancient woodland identity. Consistent subdued diffuse light from upper left, no harsh sunlight or artificial glow, restrained contrast so actors remain readable. Match color identity of supplied tiny biome references but never reproduce their contact-sheet/multi-scene arrangement. Single standalone image, no panels, no writing, no labels, no UI, no people or creatures. Generate a WIDE landscape 3072x1728 PNG GROUND LAYER only. Follow the third reference for layer layout and alpha silhouette, NOT its paving material. Battle camera at low eye level looking across a broad quiet moss clearing: a relatively level walkable floor of compact damp earth, short muted green moss, sparse fine leaf litter. The floor starts at a nearly level low silhouette at exactly 52% of canvas height, spans full image width, and fills the entire lower 48% to all bottom/side edges with opaque terrain. Entire upper 52% is truly transparent alpha, not black, not painted checkerboard. Keep low silhouette variation, especially at the far sides. Small texture scales toward the horizon; no attached islands or oval base; ground continues seamlessly off left, right and bottom. Broad quiet flat encounter space centered in lower half, generous low-detail side bleed for horizontal camera shifts. NO sky, mountains, trees, trees trunks, buildings, props, standing ferns, tall roots, rocks or objects. No horizon background painting. Ground plane only.",
+      "originalPath": "/workspace/generated_images/exec-7ff525ca-b0c6-4033-aaf5-5dec017f553c.png",
+      "actualDimensions": {
+        "width": 1672,
+        "height": 941
+      },
+      "sourceMode": "RGBA",
+      "originalSha256": "cb41a93c89de368a45b2f7131ba2db0202f3b3673e6e1f0af2b38762451ab198",
+      "copySha256": "cb41a93c89de368a45b2f7131ba2db0202f3b3673e6e1f0af2b38762451ab198",
+      "nativePngUnchanged": true,
+      "alphaQA": {
+        "range": [
+          0,
+          255
+        ],
+        "nonzeroBBox": [
+          0,
+          32,
+          1672,
+          941
+        ],
+        "transparentFraction": 0.5372097280201761,
+        "partiallyTransparentFraction": 0.4627807381946316,
+        "opaqueFraction": 9.533785192379074e-06,
+        "upper52PercentNonzeroFraction": 0.01805755325290359,
+        "upper45PercentNonzeroFraction": 0.014716029273700046,
+        "bottomEdgeOpaqueFraction": 0.0,
+        "sideEdgesLowerHalfOpaqueFraction": 0.0,
+        "horizonRows": {
+          "423": 0.039473684210526314,
+          "470": 0.034688995215311005,
+          "489": 0.10885167464114832,
+          "518": 0.5789473684210527,
+          "565": 1.0
+        },
+        "bboxAlphaGreaterThan16": [
+          0,
+          472,
+          1672,
+          941
+        ],
+        "bboxAlphaGreaterThan128": [
+          0,
+          473,
+          1672,
+          941
+        ],
+        "dominantAlphaValues": [
+          {
+            "alpha": 0,
+            "count": 845220
+          },
+          {
+            "alpha": 252,
+            "count": 471266
+          },
+          {
+            "alpha": 251,
+            "count": 113048
+          },
+          {
+            "alpha": 253,
+            "count": 101203
+          },
+          {
+            "alpha": 1,
+            "count": 18728
+          },
+          {
+            "alpha": 250,
+            "count": 8033
+          }
+        ],
+        "bottomEdgeAlphaPercentiles": {
+          "min": 240,
+          "p10": 248,
+          "median": 250,
+          "p90": 251,
+          "max": 254
+        },
+        "upper52PercentAlphaGreaterThan16Fraction": 0.001165595248578781
+      },
+      "referenceFiles": [
+        {
+          "path": "/workspace/AshenSpire/assets-mobile/environments/hollow-weald-map.webp",
+          "sha256": "4657a59ad3ab092b98987b6bda295d5b3c1f754bc6909644930b50f58405e486",
+          "dimensions": [
+            171,
+            256
+          ]
+        },
+        {
+          "path": "/workspace/AshenSpire/assets-mobile/environments/hollow-weald-combat.webp",
+          "sha256": "65537ce907334f938aefe20da08a3b58b2d87d2610c4417eb725471e28c7f440",
+          "dimensions": [
+            256,
+            171
+          ]
+        },
+        {
+          "path": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-03/scene-forest-ground-misty.png",
+          "sha256": "e8b8a37fa31a98fdf24d1616a6cce311383da68abb9d92267d86f9cf3fc7e3b7",
+          "dimensions": [
+            1672,
+            941
+          ]
+        }
+      ],
+      "visualReviewNotes": [
+        "Full-width quiet moss floor with no trees or attached objects.",
+        "Significant floor starts at y=472/941 (0.502) at side rises; center horizon is lower. Requested y=.52 is approximate, not exact.",
+        "Very faint alpha 1-16 speckles exist above the floor. Most visible pixels have alpha251-253 rather than255; native file is unchanged."
+      ]
+    },
+    {
+      "file": "ground-bog-path.png",
+      "transparent_background": true,
+      "refs": [
+        "/workspace/AshenSpire/assets-mobile/environments/hollow-weald-map.webp",
+        "/workspace/AshenSpire/assets-mobile/environments/hollow-weald-combat.webp",
+        "/workspace/AshenSpire/art/map-battlefield-drafts/batch-03/scene-forest-ground-misty.png"
+      ],
+      "prompt": "AshenSpire Hollow Weald biome asset for a dark fantasy layered 2D battlefield, painterly realistic game environment art, moss muted greens, wet desaturated teal undertones, weathered bark and earth, dense ancient woodland identity. Consistent subdued diffuse light from upper left, no harsh sunlight or artificial glow, restrained contrast so actors remain readable. Match color identity of supplied tiny biome references but never reproduce their contact-sheet/multi-scene arrangement. Single standalone image, no panels, no writing, no labels, no UI, no people or creatures. Generate a WIDE landscape 3072x1728 PNG GROUND LAYER only. Follow the third reference for layer layout and alpha silhouette, NOT its paving material. A firm walkable bog path spread broadly across the encounter foreground: stable compact damp mud, shallow embedded fine roots, muted moss along flat margins and restrained teal wetness in occasional tiny shallow puddles. Not deep water, not swamp pool, not a narrow walkway, no dangerous holes. Low eye-level battle camera. Ground begins at a nearly flat silhouette at exactly y=52% of total image height and fills ALL lower 48% opaque down to and beyond left/right/bottom image boundaries. Upper 52% must be truly transparent alpha; no black or fake checkerboard. The path subtly recedes toward the middle rear while keeping the whole lower half quiet, level, usable floor. Lots of low-detail panoramic side room; no prominent feature near any edge. NO trees, tree trunks, shrubs, reeds, buildings, props, sky, backdrop, characters, large rocks, standalone roots or terrain island base. This is only a full-width floor plane.",
+      "originalPath": "/workspace/generated_images/exec-e64dbf83-764b-4b37-910a-740bbc0081fd.png",
+      "actualDimensions": {
+        "width": 1672,
+        "height": 941
+      },
+      "sourceMode": "RGBA",
+      "originalSha256": "e9d81023c7cfc395ec6695343094637ea6e0d1f366ef8352cbd9e45469f9e2b7",
+      "copySha256": "e9d81023c7cfc395ec6695343094637ea6e0d1f366ef8352cbd9e45469f9e2b7",
+      "nativePngUnchanged": true,
+      "alphaQA": {
+        "range": [
+          0,
+          255
+        ],
+        "nonzeroBBox": [
+          0,
+          23,
+          1672,
+          941
+        ],
+        "transparentFraction": 0.5340953581906656,
+        "partiallyTransparentFraction": 0.4658944724384626,
+        "opaqueFraction": 1.0169370871871012e-05,
+        "upper52PercentNonzeroFraction": 0.0054206905998962825,
+        "upper45PercentNonzeroFraction": 0.005360152476613843,
+        "bottomEdgeOpaqueFraction": 0.0,
+        "sideEdgesLowerHalfOpaqueFraction": 0.0,
+        "horizonRows": {
+          "423": 0.019736842105263157,
+          "470": 0.0,
+          "489": 0.06638755980861244,
+          "518": 0.9820574162679426,
+          "565": 1.0
+        },
+        "bboxAlphaGreaterThan16": [
+          0,
+          496,
+          1672,
+          941
+        ],
+        "bboxAlphaGreaterThan128": [
+          0,
+          497,
+          1672,
+          941
+        ],
+        "dominantAlphaValues": [
+          {
+            "alpha": 0,
+            "count": 840320
+          },
+          {
+            "alpha": 252,
+            "count": 479884
+          },
+          {
+            "alpha": 251,
+            "count": 122011
+          },
+          {
+            "alpha": 253,
+            "count": 97272
+          },
+          {
+            "alpha": 1,
+            "count": 10224
+          },
+          {
+            "alpha": 250,
+            "count": 8831
+          }
+        ],
+        "bottomEdgeAlphaPercentiles": {
+          "min": 238,
+          "p10": 244,
+          "median": 248,
+          "p90": 251,
+          "max": 253
+        },
+        "upper52PercentAlphaGreaterThan16Fraction": 0.0
+      },
+      "referenceFiles": [
+        {
+          "path": "/workspace/AshenSpire/assets-mobile/environments/hollow-weald-map.webp",
+          "sha256": "4657a59ad3ab092b98987b6bda295d5b3c1f754bc6909644930b50f58405e486",
+          "dimensions": [
+            171,
+            256
+          ]
+        },
+        {
+          "path": "/workspace/AshenSpire/assets-mobile/environments/hollow-weald-combat.webp",
+          "sha256": "65537ce907334f938aefe20da08a3b58b2d87d2610c4417eb725471e28c7f440",
+          "dimensions": [
+            256,
+            171
+          ]
+        },
+        {
+          "path": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-03/scene-forest-ground-misty.png",
+          "sha256": "e8b8a37fa31a98fdf24d1616a6cce311383da68abb9d92267d86f9cf3fc7e3b7",
+          "dimensions": [
+            1672,
+            941
+          ]
+        }
+      ],
+      "visualReviewNotes": [
+        "Firm broad mud-and-fine-root floor, restrained teal puddles; no deep water or attached props.",
+        "Significant floor starts at y=496/941 (0.527); y=.52 request approximately met.",
+        "Very faint alpha 1-16 speckles exist above the floor. Most visible pixels have alpha251-253 rather than255; native file is unchanged."
+      ]
+    },
+    {
+      "file": "prop-gnarled-root.png",
+      "transparent_background": true,
+      "refs": [
+        "/workspace/AshenSpire/assets-mobile/environments/hollow-weald-combat.webp"
+      ],
+      "prompt": "AshenSpire Hollow Weald biome asset for a dark fantasy layered 2D battlefield, painterly realistic game environment art, moss muted greens, wet desaturated teal undertones, weathered bark and earth, dense ancient woodland identity. Consistent subdued diffuse light from upper left, no harsh sunlight or artificial glow, restrained contrast so actors remain readable. Match color identity of supplied tiny biome references but never reproduce their contact-sheet/multi-scene arrangement. Single standalone image, no panels, no writing, no labels, no UI, no people or creatures. Generate a SQUARE 1536x1536 PNG isolated scenery prop on true transparent alpha: one exposed old gnarled root fragment, weathered dark timber, low broad winding silhouette, with a small attached fern cluster growing directly from a crevice. A single compact botanical object, no full tree or trunk canopy, not multiple separate objects. Eye-level battle-stage perspective, subtly see its upper surfaces, NOT an isometric map icon and not bird's-eye. Object occupies approximately 65% canvas width and 48% height, centered with generous transparent margins on all sides and a clear bottom contact line. Muted moss-green fronds and subdued brown-gray wood with teal shadow. No attached earth, dirt mound, rock pile, oval base, terrain patch, floor, grass carpet, ground shadow plane or scenery behind it. No glow, text, panel or border. Keep its root/fern silhouette readable when reduced.",
+      "originalPath": "/workspace/generated_images/exec-1219786c-37c6-4223-b41c-b0759eb2c1bc.png",
+      "actualDimensions": {
+        "width": 1254,
+        "height": 1254
+      },
+      "sourceMode": "RGBA",
+      "originalSha256": "f94a9c3e3575da3acce6967634ed9def936b2172bb96f56a537dc743d6ffe65e",
+      "copySha256": "f94a9c3e3575da3acce6967634ed9def936b2172bb96f56a537dc743d6ffe65e",
+      "nativePngUnchanged": true,
+      "alphaQA": {
+        "range": [
+          0,
+          255
+        ],
+        "nonzeroBBox": [
+          0,
+          17,
+          1240,
+          1254
+        ],
+        "transparentFraction": 0.7337019146387064,
+        "partiallyTransparentFraction": 0.2657034968165666,
+        "opaqueFraction": 0.0005945885447270489,
+        "bboxAlphaGreaterThan16": [
+          30,
+          324,
+          1227,
+          1009
+        ],
+        "bboxAlphaGreaterThan128": [
+          31,
+          326,
+          1227,
+          1008
+        ],
+        "dominantAlphaValues": [
+          {
+            "alpha": 0,
+            "count": 1153758
+          },
+          {
+            "alpha": 252,
+            "count": 199691
+          },
+          {
+            "alpha": 253,
+            "count": 73863
+          },
+          {
+            "alpha": 251,
+            "count": 31367
+          },
+          {
+            "alpha": 1,
+            "count": 23966
+          },
+          {
+            "alpha": 250,
+            "count": 9400
+          }
+        ]
+      },
+      "referenceFiles": [
+        {
+          "path": "/workspace/AshenSpire/assets-mobile/environments/hollow-weald-combat.webp",
+          "sha256": "65537ce907334f938aefe20da08a3b58b2d87d2610c4417eb725471e28c7f440",
+          "dimensions": [
+            256,
+            171
+          ]
+        }
+      ],
+      "visualReviewNotes": [
+        "One gnarled root with attached fern cluster, no attached terrain island or floor.",
+        "Main silhouette spans x30..1227 on1254px canvas; horizontal source margins are narrower than requested. Reduce display scale within stage to preserve scene pan room.",
+        "Faint low-alpha speckles expand the strict nonzero bounding box beyond the meaningful silhouette."
+      ]
+    },
+    {
+      "file": "prop-woodland-shrine.png",
+      "transparent_background": true,
+      "refs": [
+        "/workspace/AshenSpire/assets-mobile/environments/hollow-weald-combat.webp"
+      ],
+      "prompt": "AshenSpire Hollow Weald biome asset for a dark fantasy layered 2D battlefield, painterly realistic game environment art, moss muted greens, wet desaturated teal undertones, weathered bark and earth, dense ancient woodland identity. Consistent subdued diffuse light from upper left, no harsh sunlight or artificial glow, restrained contrast so actors remain readable. Match color identity of supplied tiny biome references but never reproduce their contact-sheet/multi-scene arrangement. Single standalone image, no panels, no writing, no labels, no UI, no people or creatures. Generate a SQUARE 1536x1536 PNG single isolated small weathered timber wayside shrine on true transparent alpha. Hollow Weald woodland craft: two rough dark wooden uprights supporting a modest pitched plank roof and a small weathered carved wooden niche, restrained moss on roof edges, one tiny unlit wooden offering bowl inside. No words, runes, lettering, glowing magic, candle flames or hanging signs. Eye-level frontal three-quarter battle-camera perspective, not map isometric and not bird's-eye. Compact unmistakable shrine silhouette, occupying about 50% canvas width and 68% height with generous transparent safety margin on every side. Timber feet end cleanly at one contact line. NO attached base or platform, earth mound, soil, paving, terrain patch, trees, floor or cast shadow plane. Entire surrounding background true transparent alpha, not black or checkerboard.",
+      "originalPath": "/workspace/generated_images/exec-39b47632-a175-4ec6-8db9-07bcb3a5031a.png",
+      "actualDimensions": {
+        "width": 1254,
+        "height": 1254
+      },
+      "sourceMode": "RGBA",
+      "originalSha256": "6604699dd360e9b8760528118b26c50b919ff301c11636bce0d0841847d3a42b",
+      "copySha256": "6604699dd360e9b8760528118b26c50b919ff301c11636bce0d0841847d3a42b",
+      "nativePngUnchanged": true,
+      "alphaQA": {
+        "range": [
+          0,
+          255
+        ],
+        "nonzeroBBox": [
+          0,
+          27,
+          1246,
+          1254
+        ],
+        "transparentFraction": 0.6538413599607253,
+        "partiallyTransparentFraction": 0.345688056592111,
+        "opaqueFraction": 0.00047058344716365366,
+        "bboxAlphaGreaterThan16": [
+          154,
+          42,
+          1106,
+          1211
+        ],
+        "bboxAlphaGreaterThan128": [
+          155,
+          43,
+          1105,
+          1211
+        ],
+        "dominantAlphaValues": [
+          {
+            "alpha": 0,
+            "count": 1028176
+          },
+          {
+            "alpha": 252,
+            "count": 268349
+          },
+          {
+            "alpha": 253,
+            "count": 211201
+          },
+          {
+            "alpha": 251,
+            "count": 18518
+          },
+          {
+            "alpha": 1,
+            "count": 13030
+          },
+          {
+            "alpha": 250,
+            "count": 4856
+          }
+        ]
+      },
+      "referenceFiles": [
+        {
+          "path": "/workspace/AshenSpire/assets-mobile/environments/hollow-weald-combat.webp",
+          "sha256": "65537ce907334f938aefe20da08a3b58b2d87d2610c4417eb725471e28c7f440",
+          "dimensions": [
+            256,
+            171
+          ]
+        }
+      ],
+      "visualReviewNotes": [
+        "Wooden wayside shrine, roof moss and unlit bowl; clean separate feet and no terrain base.",
+        "Main silhouette spans y42..1211 on1254px canvas; vertical source margins are narrower than requested. Reduce display scale within stage.",
+        "Faint low-alpha speckles expand the strict nonzero bounding box beyond the meaningful silhouette."
+      ]
+    },
+    {
+      "file": "backdrop-deep-weald.png",
+      "transparent_background": false,
+      "refs": [
+        "/workspace/AshenSpire/assets-mobile/environments/hollow-weald-map.webp",
+        "/workspace/AshenSpire/assets-mobile/environments/hollow-weald-combat.webp"
+      ],
+      "prompt": "AshenSpire Hollow Weald biome asset for a dark fantasy layered 2D battlefield, painterly realistic game environment art, moss muted greens, wet desaturated teal undertones, weathered bark and earth, dense ancient woodland identity. Consistent subdued diffuse light from upper left, no harsh sunlight or artificial glow, restrained contrast so actors remain readable. Match color identity of supplied tiny biome references but never reproduce their contact-sheet/multi-scene arrangement. Single standalone image, no panels, no writing, no labels, no UI, no people or creatures. Generate a single OPAQUE wide landscape 3072x1728 painted forest BACKDROP plane. Deep ancient woodland wetlands: layered distant trunks, muted moss-green canopy, subtle teal pools barely glimpsed between remote roots, cool forest mist separates successive depths. Quiet spacious central opening between distant woodland masses, subdued soft light entering upper left. View from a low eye-level battle camera across far woodland. This is the far scenery/sky slot ONLY: no foreground floor or walkable clearing, no close roots, foreground rocks, props, ruins, structures or people. Lower part contains distant trees and wetland atmosphere that can sit behind a separately composited floor at y52%; it must not paint a nearby ground plane. Generous panoramic quiet edge room for side pans, no singular focal landmark or important tree at an edge. No bright shafts, sun disk, moon, stars, magical lights or strong central glow. Unified subdued detailed painterly realism, visible shapes in cool shadows; not pitch black. Full image entirely opaque, no transparent areas.",
+      "originalPath": "/workspace/generated_images/exec-1f40ecfc-eb5e-426d-93a0-d575ac443492.png",
+      "actualDimensions": {
+        "width": 1672,
+        "height": 941
+      },
+      "sourceMode": "RGB",
+      "originalSha256": "46175c1a0e73d5b51bfcf2be085ca419608dd4a608e575e2bcd04de5c3f603ab",
+      "copySha256": "46175c1a0e73d5b51bfcf2be085ca419608dd4a608e575e2bcd04de5c3f603ab",
+      "nativePngUnchanged": true,
+      "alphaQA": {
+        "range": [
+          255,
+          255
+        ],
+        "nonzeroBBox": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "transparentFraction": 0.0,
+        "partiallyTransparentFraction": 0.0,
+        "opaqueFraction": 1.0,
+        "bboxAlphaGreaterThan16": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "bboxAlphaGreaterThan128": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "dominantAlphaValues": [
+          {
+            "alpha": 255,
+            "count": 1573352
+          },
+          {
+            "alpha": 0,
+            "count": 0
+          },
+          {
+            "alpha": 1,
+            "count": 0
+          },
+          {
+            "alpha": 2,
+            "count": 0
+          },
+          {
+            "alpha": 3,
+            "count": 0
+          },
+          {
+            "alpha": 4,
+            "count": 0
+          }
+        ]
+      },
+      "referenceFiles": [
+        {
+          "path": "/workspace/AshenSpire/assets-mobile/environments/hollow-weald-map.webp",
+          "sha256": "4657a59ad3ab092b98987b6bda295d5b3c1f754bc6909644930b50f58405e486",
+          "dimensions": [
+            171,
+            256
+          ]
+        },
+        {
+          "path": "/workspace/AshenSpire/assets-mobile/environments/hollow-weald-combat.webp",
+          "sha256": "65537ce907334f938aefe20da08a3b58b2d87d2610c4417eb725471e28c7f440",
+          "dimensions": [
+            256,
+            171
+          ]
+        }
+      ],
+      "visualReviewNotes": [
+        "Opaque layered misty woodland wetland with soft upper-left illumination and quiet middle opening.",
+        "Some warm upper-left sky brightness remains; lower forest/water detail is background scenery, intended to be covered by floor."
+      ]
+    }
+  ],
+  "notes": [
+    "All five assets are native image_gen outputs copied byte-for-byte. Originals preserved at originalPath.",
+    "Requested3072x1728 wide canvases returned1672x941; requested1536square props returned1254x1254. No upscaling or pixel correction performed.",
+    "True transparency exists in four cutout assets; exact opaque floor and exact horizon registration are not fully achieved. See alphaQA and visualReviewNotes.",
+    "No runtime bindings, shared manifests, commits or pushes were made."
+  ]
+}

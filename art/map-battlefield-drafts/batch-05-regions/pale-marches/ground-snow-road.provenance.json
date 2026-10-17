@@ -1,0 +1,47 @@
+{
+  "asset": "ground-snow-road.png",
+  "prompt": "Create a wide transparent combat ground layer using only the reference's ground silhouette and horizon shape; completely replace its forest colors and road texture. This is a snowy battlefield on a traveled mountain road, target wide 16:9 canvas 3072x1728. At y\u224852% a low uneven snowbank forms the distant horizon; everything above is transparent. Below, a broad level walkable floor reaches the left, right, and bottom edges. Make the road itself unmistakable: a wide, compacted blue-gray snow lane begins at the horizon and widens gently toward the foreground, with two very shallow parallel sled or cart ruts and smoother packed snow in the center. Keep its edges defined by low soft mounds of fresh white snow and sparse frost-coated gravel. The road occupies most of the playable center, with enough quiet packed snow at the sides for combat actors. No glossy ice sheet and no frozen lake; this is matte compressed snow and gravel. Cool snow white, slate gray, muted blue and subtle cyan glints, soft upper-left winter light, painterly dark-fantasy style. Ground only: no sky, mountains, distant backdrop, trees, rocks above ankle height, props, people, footprints, text or UI. Transparent alpha above the horizon and no opaque background.",
+  "output_path": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/pale-marches/ground-snow-road.png",
+  "generated_original_path": "/workspace/generated_images/exec-a68bebde-834c-4b9a-8c04-813334db812d.png",
+  "style_reference_paths": [
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-03/scene-forest-ground-misty.png"
+  ],
+  "generator": "image_gen.imagegen",
+  "status": "draft",
+  "dimensions_px": [
+    1672,
+    941
+  ],
+  "format": "PNG",
+  "color_mode": "RGBA",
+  "sha256": "7657efdb5f9e94b07873b92ad678106160f9da87f0a76926a7ba7e82818eeb18",
+  "alpha_findings": {
+    "alphaByteRange": [
+      0,
+      255
+    ],
+    "transparentPixels": 857263,
+    "partialAlphaPixels": 715958,
+    "opaquePixels": 131,
+    "outerBorderNonzeroAlphaPixels": 2614,
+    "bboxAtAlpha16": [
+      0,
+      482,
+      1672,
+      941
+    ],
+    "top45PercentMaxAlpha": 1,
+    "bottomLeftAlpha": 241,
+    "bottomRightAlpha": 237
+  },
+  "original_copy_sha256_matches": true,
+  "requested_dimensions_px": [
+    3072,
+    1728
+  ],
+  "canvas_limitation": "Image generator returned 1672x941 px; requested 3072x1728 px. Original retained unchanged; no resize.",
+  "superseded_generated_original_paths": [
+    "/workspace/generated_images/exec-34768f0b-89db-4bf1-bd0f-5b2c00aac1d4.png"
+  ],
+  "visual_qa_limitations": "Road lane is clearer after regeneration; bright blue-white texture is more detailed than the quiet target and scattered low-alpha cyan fringe/dust remains near the horizon."
+}
