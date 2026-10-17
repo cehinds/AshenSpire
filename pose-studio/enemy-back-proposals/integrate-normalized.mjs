@@ -9,9 +9,10 @@ const [manifest,report,provenance]=await Promise.all([json(manifestPath),json(di
 const hash=async path=>createHash('sha256').update(await readFile(path)).digest('hex');
 provenance.master??='proposal-sheet.png';
 let footReview=null;try{footReview=await json(dir+'/foot-anchors.json');}catch(error){if(error.code!=='ENOENT')throw error;}
+let cropApproval=null;try{cropApproval=await json(dir+'/crop-approval.json');}catch(error){if(error.code!=='ENOENT')throw error;}
 if(!/^[a-zA-Z0-9_.-]+$/.test(provenance.master||''))throw Error('Invalid source master path');
 if(await hash(dir+'/'+provenance.master)!==report.source.sha256)throw Error('Source hash mismatch');
 for(const v of report.variants||[]){if(!/^v(?:0[1-9]|10)$/.test(v.id)||await hash(dir+'/'+v.id+'.png')!==v.sha256)throw Error('Output hash mismatch: '+v.id);}
-const next=integrateNormalized(manifest,actorId,report,provenance,footReview);
+const next=integrateNormalized(manifest,actorId,report,provenance,footReview,cropApproval);
 await writeFile(manifestPath,JSON.stringify(next,null,2)+'\n');
 console.log(actorId+': ten verified neutral draft designs; nine-slot animation coverage remains pending.');
