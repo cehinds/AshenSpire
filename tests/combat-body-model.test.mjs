@@ -55,3 +55,12 @@ test('registered enemy held bodies normalize to their idle while preserving floo
     assert(body.headY>=0&&body.headY<body.feetY&&body.feetY<=body.height);
   }
 });
+
+import { enemyStanceSprites } from '../src/content/enemyStanceSprites.js';
+test('all enemy species have semantic metadata for idle and every held stance',()=>{
+  for(const [id,stances] of Object.entries(enemyStanceSprites))for(const pose of new Set(['idle',...Object.values(stances)])){
+    const path=`assets/enemy-poses/expansion/${id}/${pose}.webp`;
+    assert(COMBAT_BODY_LANDMARKS[path],`${path} missing semantic head/body anchor`);
+    assert.equal(COMBAT_BODY_LANDMARKS[path].confidence,'visual-reviewed');
+  }
+});
