@@ -37,6 +37,7 @@ jobs:
           SHARP_MODULE: /tmp/enemy-rear-capture/node_modules/sharp
         run: node pose-studio/enemy-back-proposals/capture-artifact.mjs
       - name: Commit evidence on its worker only
+        if: always()
         run: |
           test "$GITHUB_REF_NAME" = worker/EnemyBackSprites/artifact-evidence
           git config user.name "github-actions[bot]"
