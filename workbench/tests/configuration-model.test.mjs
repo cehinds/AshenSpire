@@ -13,6 +13,8 @@ test('profileFiles offers game.json, presets and bundles, and nothing else', () 
     'games/ashenspire/presets/core.json',
     'games/ashenspire/bundles/current/bundle.json',
     'games/ashenspire/bundles/current/other.json',
+    'games/ashenspire/presets/foo.json',
+    'games/ashenspire/bundles/foo/bundle.json',
   ]);
   assert.deepEqual(out.map((f) => f.path), [
     'games/ashenspire/game.json',
