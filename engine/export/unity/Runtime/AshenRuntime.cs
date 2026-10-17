@@ -337,10 +337,16 @@ namespace Ashen.Runtime
                 if (item.ValueKind != JsonValueKind.String) { yield return Value(call, scope, item); continue; }
                 var s = item.GetString();
                 var v = s.StartsWith("$") ? Lookup(call, scope, s) : s;
-                if (AsList(v) is List<object> list) { foreach (var x in list) yield return x; }
-                else if (v is string name && (name == "allEnemies" || call.State.Entities.ContainsKey(name))) { foreach (var k in EntityKeys(call, scope, name)) yield return k; }
-                else yield return v;
+                foreach (var x in Expand(call, scope, v)) yield return x;
             }
+        }
+
+        // Arrays expand member by member: refs and allEnemies become entity keys, other values stay.
+        IEnumerable<object> Expand(Call call, Scope scope, object v)
+        {
+            if (AsList(v) is List<object> list) { foreach (var m in list) foreach (var x in Expand(call, scope, m)) yield return x; }
+            else if (v is string name && (name == "allEnemies" || call.State.Entities.ContainsKey(name))) { foreach (var k in EntityKeys(call, scope, name)) yield return k; }
+            else yield return v;
         }
 
         // ----- 4. Values -----

@@ -38,6 +38,27 @@ function checkRef(ref, subPath, where, errors) {
   if (subPath !== undefined && !resolvePath(readJson(ref), subPath)) errors.push(`${where}: path "${subPath}" not found in ${ref}`);
 }
 
+/** Enemy-visibility rule: SP, MP and card costs are bound only through the visibility query.
+ *  Shared with tools/build-game.mjs so a built artifact cannot expose hidden enemy fields. */
+export function visibilityErrors(doc, rel) {
+  const errors = [];
+  const bindings = doc.viewModel?.bindings || {};
+  const needed = new Set();
+  for (const [k, v] of Object.entries(bindings)) {
+    const text = typeof v === 'string' ? v : JSON.stringify(v);
+    if (GATED_FIELDS.includes(k)) needed.add(k);
+    if (/pools\.sp\b/.test(text)) needed.add('sp');
+    if (/pools\.mp\b/.test(text)) needed.add('mp');
+    if (/deck\.costs\b/.test(text)) needed.add('cardCosts');
+  }
+  if (needed.size && doc.viewModel?.visibility?.appliesTo !== 'player') {
+    const vis = doc.viewModel?.visibility;
+    if (!vis || vis.query !== VISIBILITY_QUERY) errors.push(`${rel}: binds ${[...needed].join(', ')} without the ${VISIBILITY_QUERY} visibility query`);
+    else for (const field of needed) if (!(vis.fields && field in vis.fields)) errors.push(`${rel}: binding needs visibility field "${field}"`);
+  }
+  return errors;
+}
+
 export function validateUi({ games = ['ashenspire'] } = {}) {
   const errors = [], warnings = [];
   const componentSchema = readJson('engine/contracts/ui-component.schema.json');
@@ -63,21 +84,7 @@ export function validateUi({ games = ['ashenspire'] } = {}) {
       used.add(child.component);
       if (!components[child.component]) errors.push(`${rel}: child component "${child.component}" does not exist`);
     }
-    // Enemy-visibility rule: SP, MP and card costs are bound only through the visibility query.
-    const bindings = doc.viewModel.bindings || {};
-    const needed = new Set();
-    for (const [k, v] of Object.entries(bindings)) {
-      const text = typeof v === 'string' ? v : JSON.stringify(v);
-      if (GATED_FIELDS.includes(k)) needed.add(k);
-      if (/pools\.sp\b/.test(text)) needed.add('sp');
-      if (/pools\.mp\b/.test(text)) needed.add('mp');
-      if (/deck\.costs\b/.test(text)) needed.add('cardCosts');
-    }
-    if (needed.size && doc.viewModel.visibility?.appliesTo !== 'player') {
-      const vis = doc.viewModel.visibility;
-      if (!vis || vis.query !== VISIBILITY_QUERY) errors.push(`${rel}: binds ${[...needed].join(', ')} without the ${VISIBILITY_QUERY} visibility query`);
-      else for (const field of needed) if (!(vis.fields && field in vis.fields)) errors.push(`${rel}: binding needs visibility field "${field}"`);
-    }
+    errors.push(...visibilityErrors(doc, rel));
   }
   for (const { doc, rel } of Object.values(screens)) {
     if (doc.layout) checkRef(doc.layout.ref, undefined, `${rel} layout`, errors);

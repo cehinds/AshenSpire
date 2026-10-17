@@ -16,6 +16,7 @@ import { canonicalGameJSON, resolveGameAuthor, validateGameSchema } from '../eng
 import { loadGameProfileCatalog } from './game-config.mjs';
 import { loadMechanics, loadOps } from '../engine/runtime/interpreter.mjs';
 import { buildAssetCatalog } from './asset-catalog.mjs';
+import { visibilityErrors } from './ui-validate.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const FORMAT = 'ashen.build@1';
@@ -132,6 +133,7 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   for (const [id, c] of Object.entries(uiComponents)) {
     addLayout(c.layout?.ref, `component ${id}`);
     for (const child of c.children || []) if (!uiComponents[child.component]) fail(`component ${id}: child '${child.component}' does not exist`);
+    for (const e of visibilityErrors(c, `component ${id}`)) fail(e);
   }
   for (const [id, s] of Object.entries(uiScreens)) {
     addLayout(s.layout?.ref, `screen ${id}`);

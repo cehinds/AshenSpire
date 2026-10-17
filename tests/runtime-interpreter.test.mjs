@@ -501,3 +501,9 @@ test('a mechanic.json naming a missing file is refused at load', async () => {
   const { loadMechanic } = await import('../engine/runtime/interpreter.mjs');
   assert.throws(() => loadMechanic(dir), /names service file 'nope\.json'/);
 });
+
+test('forEach over an array variable expands allEnemies and refs member by member', () => {
+  const state = { entities: { a: ent({ tags: ['enemy'] }), b: ent({ tags: ['enemy'] }), p: ent() } };
+  const out = run([{ forEach: '$targets', as: 'who', do: [{ emit: 't.hit', with: { who: '$who' } }] }], state, { targets: ['allEnemies', 'p'] });
+  assert.deepEqual(out.events.filter(e => e.name === 't.hit').map(e => e.payload.who), ['a', 'b', 'p']);
+});

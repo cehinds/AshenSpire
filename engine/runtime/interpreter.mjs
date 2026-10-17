@@ -298,7 +298,9 @@ export function createRuntime({ mechanics, ops = loadOps() } = {}) {
       const items = raw.flatMap(item => {
         if (typeof item === 'string') {
           const v = item.startsWith('$') ? lookup(rt, scope, item) : item;
-          return Array.isArray(v) ? v : (typeof v === 'string' && (v === 'allEnemies' || rt.state.entities[v]) ? entityKeys(rt, scope, v) : [v]);
+          // Arrays expand member by member: refs and allEnemies become entity keys, other values stay.
+          const expand = x => Array.isArray(x) ? x.flatMap(expand) : (typeof x === 'string' && (x === 'allEnemies' || rt.state.entities[x]) ? entityKeys(rt, scope, x) : [x]);
+          return expand(v);
         }
         return [value(rt, scope, item)];
       });
