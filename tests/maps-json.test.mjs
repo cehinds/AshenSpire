@@ -7,7 +7,8 @@ import { cpSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } f
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { validateMaps, loadMapFiles, strings, assetIds, resolveAtlasPath } from '../tools/maps-validate.mjs';
+import { buildAssetCatalog, readMissing } from '../tools/asset-catalog.mjs';
+import { validateMaps,loadMapFiles, strings, assetIds, resolveAtlasPath } from '../tools/maps-validate.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const files = loadMapFiles();
@@ -79,7 +80,12 @@ test('a weight naming a missing component, or a broken atlas path, fails the che
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('the tool names every asset id the layer references', () => {
+test('every asset id the layer references is in the catalog or listed as missing with a reason', () => {
   const ids = assetIds(files);
   assert.ok(ids.includes('bg.bg_act1') && ids.includes('node-boss'));
+  const catalog = buildAssetCatalog().assets, missing = readMissing();
+  for (const id of ids) {
+    assert.ok(catalog[id] || missing[id]?.reason, `${id} is neither in the asset catalog nor in assets/missing.json`);
+    if (!missing[id]) assert.ok(Object.keys(catalog[id].files).length, `${id} has no file`);
+  }
 });
