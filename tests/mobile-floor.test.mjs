@@ -29,3 +29,13 @@ test('every reviewed ground layer has an authored full-width painted boundary an
     assert(floor.paintStarts[id]>0 && floor.paintStarts[id]<1,id);
   }
 });
+
+
+test('ground extends beneath the hand without lowering its painted horizon', () => {
+  const layer = { x: 0, y: 0, width: 390, height: 520 };
+  const result = mobileFloorLayer(layer, { paintStart: .5, maximumPaintTop: 210, minimumBottom: 844 });
+  assert(Math.abs(result.y + result.height * .5 - 210) < 1e-6);
+  assert(Math.abs(result.y + result.height - 844) < 1e-6);
+  assert(Math.abs(result.width / result.height - layer.width / layer.height) < 1e-6, 'ground keeps its authored aspect ratio');
+  assert.deepEqual(mobileFloorLayer(result, { paintStart: .5, maximumPaintTop: 210, minimumBottom: 844 }), result, 'fitting is stable');
+});

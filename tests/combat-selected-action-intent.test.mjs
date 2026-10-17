@@ -12,7 +12,7 @@ test('the actual selected action resolves effective equipment tags and the chose
   const inst={instanceId:'shield-instance',cardId:'shieldBash'},ranks=[0,2];
   const calls=[],actions=[],events=[];
   const leading={querySelector:()=>({remove:()=>calls.push('remove')}),append:action=>actions.push(action)};
-  const player={querySelector:()=>leading};
+  const player={querySelector:selector=>selector==='.combatant-leading'?leading:{remove:()=>calls.push('remove')}};
   const context={combat:{},upcastRanksByCard:new Map([[inst.instanceId,ranks]]),combatProfileFor,kindForCard,
     resolveCombatCard:(combat,instance,options)=>{
       assert.equal(combat,context.combat);assert.equal(instance,inst);assert.equal(options.upcastRanks,ranks);
@@ -33,7 +33,7 @@ test('both real selection/render callers pass the instance and clear removes the
   assert.match(source,/syncPlayerActionIntent\(player, inst, heldKinds\.get\(\)\);/);
   assert.match(source,/syncPlayerActionIntent\(box, activeCard, heldKinds\.get\(\)\);/);
   const calls=[];
-  const player={querySelector:()=>({querySelector:()=>({remove:()=>calls.push('removed')}),append:()=>assert.fail('no selected action')})};
+  const player={querySelector:selector=>selector==='.combatant-leading'?{append:()=>assert.fail('no selected action')}:{remove:()=>calls.push('removed')}};
   const shown=[];
   const context={upcastRanksByCard:new Map(),resolveCombatCard:()=>assert.fail('no carrier to resolve'),
     combatProfileFor,kindForCard,RESTING_PLAYER_ACTION:{maneuver:'ready'},
