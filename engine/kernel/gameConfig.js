@@ -446,6 +446,8 @@ function deriveCharacterContent(content, modules) {
     delete content.enemyCards; delete content.enemies; delete content.enemyRelics;
     if (!modules.characters && Array.isArray(content.characters)) content.characters = content.characters.filter(c => !c.tags?.includes('character.enemy'));
   }
+  // Enemy rows, stats and decks come from the characters module (characters.json); enemies cannot run without it.
+  if (modules.enemies && !modules.characters) fail('$/modules/enemies', 'requires the characters module; enable characters or disable enemies');
   if (!modules.characters || !Array.isArray(content.characters)) return;
   const settings = characterSettings(modules);
   // enemy-relics off: enemies carry no relics.

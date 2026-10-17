@@ -118,6 +118,7 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
           const entry = catalogOps.ops[step.op];
           if (!entry) fail(`${slug}: op '${step.op}' is not in engine/runtime/ops.json`);
           else if (m.manifest.portability === 'portable' && entry.reference !== 'portable') fail(`${slug}: portable mechanic uses legacy op '${step.op}'`);
+          else for (const [name, param] of Object.entries(entry.params || {})) if (param.required && step[name] === undefined) fail(`${slug}: op ${step.op} needs '${name}'`);
         }
       }
     }
@@ -176,6 +177,7 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
         else if (!(m.nodes || []).includes(k)) fail(`map ${id}: ${label} names '${k}', which the map does not list in nodes`);
       }
     }
+    for (const [from, to] of Object.entries(m.generator?.proposed?.names || {})) if (!nodeComponents.has(to)) fail(`map ${id}: proposed.names ${from} -> '${to}' is not a node component`);
   }
 
   // ----- assets -----

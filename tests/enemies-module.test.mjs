@@ -159,6 +159,10 @@ test('enemies.include fields only the selected tiers', () => {
   assert.ok(only.content.enemies.every(e => e.tier === 'minion'));
 });
 
+test('enemies on with characters off is refused with a clear dependency error', () => {
+  assert.throws(resolveWith(() => {}, a => ({ ...a, modules: { ...a.modules, characters: false } })), /enemies.*requires the characters module/);
+});
+
 test('enemy SP/MP and other internals stay hidden unless a revealing tag is held', async () => {
   const { enemyVisibleFields } = await import('../engine/kernel/gameConfig.js');
   const bare = enemyVisibleFields(settings, []);

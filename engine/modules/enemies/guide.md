@@ -61,6 +61,10 @@ pools can ever hold; a `healRules` card whose cost disagrees with its matched sh
 `src/content/enemies/act1-3.js` (HP matched to the old ranges with gear and relics).
 After conversion the JSON is the source of truth; hand edits are expected.
 
+## Requires
+
+The characters module: enemy rows, attributes, pools and decks come from `characters.json`. `"characters": false` with enemies on is refused at profile resolution.
+
 ## Disabled
 
 `"enemies": false` in `game.json` turns the module off; the pack data is ignored and enemies
