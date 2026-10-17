@@ -596,35 +596,43 @@ async function runProbe(root, { screenshots = WRITE_SHOTS, refitOnly = false } =
       await waitFor('the Class stage (flush case)', `!!document.querySelector('#cz-classes .cz-class')`);
       await press('#cz-classes .cz-class');
       await press('#cz-next');
-      await waitFor('the Attributes stage (flush case)', `${onStage('attributes')} && !!document.querySelector('#cz-statedit .cc-mode-select')`);
-      await openFace('primary');
-      // Standard's mode id is `lean` (the option the player reads as
-      // "Standard"); a value the select does not offer leaves it unanswered.
-      const mode = await evaluate(`(() => { const select = document.querySelector('#cz-statedit .cc-mode-select'); select.value = 'lean'; select.dispatchEvent(new Event('change', { bubbles: true })); return select.value; })()`);
-      if (mode !== 'lean') throw new Error(`the stat mode select offers no Standard (lean); value=${JSON.stringify(mode)}`);
-      await press('#cz-next');
-      await waitFor('the Keepsake stage (flush case)', onStage('keepsake'));
-      await press('#cz-keepsakes [data-keepsake-id]');
-      await press('#cz-next');
-      await waitFor('the Equipment stage (flush case)', onStage('equipment'));
-      await openFace('armour');
-      await press('#cz-armours .equip-chip .equipment-poker-card');
-      // The armour's own Choose button is spent only when the stage shows it
-      // (a card click may already have chosen the armour).
-      if (await evaluate(`(() => { const b = document.querySelector('#cz-armours .equip-chip .equipment-choose'); if (!b) return false; const r = b.getBoundingClientRect(); return r.width > 0 && r.height > 0 && !b.disabled; })()`)) {
-        await press('#cz-armours .equip-chip .equipment-choose');
-      }
-      // Begin is the Review stage's footer. On Starting equip, Next is each
-      // open section's own Continue (armour, then the hands, then the relic),
-      // so it takes one press per section to walk there.
-      for (let step = 0; step < 8; step += 1) {
-        if (await evaluate(`document.querySelector('#cz-tab-review')?.getAttribute('aria-selected') === 'true'`)) break;
-        if (await evaluate(`document.querySelector('[data-equipment-section="startingAbilities"]')?.closest('details')?.open === true`)) {
-          while (await evaluate(`!!document.querySelector('.cc-ability-choose:not([aria-pressed="true"]):not([disabled])') && document.querySelector('#cz-next')?.getAttribute('aria-disabled') === 'true'`)) {
-            await press('.cc-ability-choose:not([aria-pressed="true"]):not([disabled])');
-          }
-        }
+      // Core's fixed creation goes directly from Class to Review; Current
+      // retains the full creation flow. Follow the mounted UI's real stage.
+      const nextStage = await waitFor('Attributes or Review after Class (flush case)', `(() => {
+        const stage = document.querySelector('.cz-railed')?.dataset.creationStage;
+        return ['attributes', 'review'].includes(stage) ? stage : null;
+      })()`);
+      if (nextStage === 'attributes') {
+        await waitFor('the Attributes stage (flush case)', `${onStage('attributes')} && !!document.querySelector('#cz-statedit .cc-mode-select')`);
+        await openFace('primary');
+        // Standard's mode id is `lean` (the option the player reads as
+        // "Standard"); a value the select does not offer leaves it unanswered.
+        const mode = await evaluate(`(() => { const select = document.querySelector('#cz-statedit .cc-mode-select'); select.value = 'lean'; select.dispatchEvent(new Event('change', { bubbles: true })); return select.value; })()`);
+        if (mode !== 'lean') throw new Error(`the stat mode select offers no Standard (lean); value=${JSON.stringify(mode)}`);
         await press('#cz-next');
+        await waitFor('the Keepsake stage (flush case)', onStage('keepsake'));
+        await press('#cz-keepsakes [data-keepsake-id]');
+        await press('#cz-next');
+        await waitFor('the Equipment stage (flush case)', onStage('equipment'));
+        await openFace('armour');
+        await press('#cz-armours .equip-chip .equipment-poker-card');
+        // The armour's own Choose button is spent only when the stage shows it
+        // (a card click may already have chosen the armour).
+        if (await evaluate(`(() => { const b = document.querySelector('#cz-armours .equip-chip .equipment-choose'); if (!b) return false; const r = b.getBoundingClientRect(); return r.width > 0 && r.height > 0 && !b.disabled; })()`)) {
+          await press('#cz-armours .equip-chip .equipment-choose');
+        }
+        // Begin is the Review stage's footer. On Starting equip, Next is each
+        // open section's own Continue (armour, then the hands, then the relic),
+        // so it takes one press per section to walk there.
+        for (let step = 0; step < 8; step += 1) {
+          if (await evaluate(`document.querySelector('#cz-tab-review')?.getAttribute('aria-selected') === 'true'`)) break;
+          if (await evaluate(`document.querySelector('[data-equipment-section="startingAbilities"]')?.closest('details')?.open === true`)) {
+            while (await evaluate(`!!document.querySelector('.cc-ability-choose:not([aria-pressed="true"]):not([disabled])') && document.querySelector('#cz-next')?.getAttribute('aria-disabled') === 'true'`)) {
+              await press('.cc-ability-choose:not([aria-pressed="true"]):not([disabled])');
+            }
+          }
+          await press('#cz-next');
+        }
       }
       await waitFor('the Review stage (flush case)', `document.querySelector('#cz-tab-review')?.getAttribute('aria-selected') === 'true'`)
         .catch(async (error) => {

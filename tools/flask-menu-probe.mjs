@@ -401,7 +401,9 @@ async function openPage(cdp, base, query, { fetchOverride = null, ready: readySe
     if (r.exceptionDetails) throw new Error(`page threw: ${r.exceptionDetails.exception?.description || r.exceptionDetails.text}`);
     return r.result?.value;
   };
-  await cdp.send('Page.navigate', { url: `${base}index.html?${query}` }, sessionId);
+  // These fixtures exercise legacy charge flasks and their Settings control.
+  // Configured profiles own their recovery rules and hide that legacy row.
+  await cdp.send('Page.navigate', { url: `${base}index.html?gameProfile=current&${query}` }, sessionId);
   const ready = readySelector || (query.includes('shot=combat') ? '.combat-potions' : '.run-potions-btn');
   let mounted = false;
   for (let t = 0; t < 90 && !mounted; t++) { await wait(400); mounted = await ev(`!!document.querySelector('${ready}')`).catch(() => false); }
