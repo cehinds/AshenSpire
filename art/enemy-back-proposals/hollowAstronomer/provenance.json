@@ -1,30 +1,16 @@
 {
-  "bossId": "hollowAstronomer",
-  "status": "draft-proposal-not-art-approved",
-  "prompt": "EXACTLY TEN BACK VIEW Hollow Astronomer boss design proposals, precisely 5 columns and 2 rows on empty transparent alpha canvas with generous gaps and outer margins. Rotate first reference character to face AWAY upper-right, rear three-quarter direction matching second player reference only. All sprites show back of hood, uninterrupted broad rear navy violet cloak, rear gold astronomical instrument halo and heels; NO visible face or glowing eyes, NO robe chest/front panels. Preserve first boss identity: gold brass astrolabe ring mounted at back shoulder, crescent/orb astrolabe staff, dark blue tattered star scholar cloak, plated boots and elaborate gold trim. Same anatomy, silhouette family, palette, proportions, complete full body and full staff/halo contained per slot. Ten subtle alternate rear embroidery and instrument rig arrangements, all clearly seen from behind. Production painted dark fantasy sprite assets matching first source style. No colored background, no gradients, floor, scenery, labels or lettering. Second image is camera reference only, do not copy human red player clothing.",
-  "sources": [
+  "schemaVersion": 1,
+  "actorId": "hollowAstronomer",
+  "master": "proposal-sheet.png",
+  "publicationStatus": "draft-unpublished",
+  "prompt": "Transparent PNG sprite atlas, alpha background with nothing painted between characters. Use attached Hollow Astronomer character identity. Draw TEN rear-view versions, exactly 5 columns and 2 rows. EACH character is SMALL within its cell occupying only60% width and60% height. Huge completely empty transparent gutters between rows and columns. Entire staff tips and boots contained. Same dark navy hooded astronomer, tattered navy cape, brass-gold astrolabe rings mounted behind shoulders, long brass astronomical staff, ornate dark robes. Camera behind character facing upper-right, sees back of hood/cape and back-mounted astrolabe, NOT face/chest. Ten alternate back designs distinguish cloak panels, bronze ring arrangements and garment trim. Consistent anatomy and scale. Full body game sprites. No scene, no floor, no background color, no paper, no sheet texture, no gradient, no shadows, no lettering. True transparent cutouts. Preserve painted dark-fantasy style of reference. Leave generous outer transparent margin too.",
+  "sourceReferences": [
     {
       "repository": "cehinds/AshenSpire-art",
       "path": "hd/assets/enemy-poses/expansion/hollowAstronomer/idle.webp",
       "ref": "hd-assets-v23",
       "blob": "21a726b235b161ed1d84e630e7ceaf82a89cc7b5"
-    },
-    {
-      "repository": "cehinds/AshenSpire",
-      "path": "assets-display/alternative/reaver-default.webp",
-      "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
-      "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
-      "purpose": "rear camera only"
     }
   ],
-  "layout": {
-    "columns": 5,
-    "rows": 2,
-    "count": 10
-  },
-  "visualQA": {
-    "rearView": true,
-    "count10": true,
-    "notes": "Ten rear silhouettes and source identity visually checked. Mechanical alpha/gutter validation pending."
-  }
+  "note": "Fresh rear designs from original enemy reference with deliberately wide transparent gutters. Supersedes prior sheet with no safe horizontal cut. Crop approval pending."
 }
