@@ -54,7 +54,7 @@ test('a spell move costs 1 more SP per Silenced stack in expanded combat; a phys
 });
 
 test('normal combat: a Silenced enemy plans its spell moves at the surcharged price, so its pool holds fewer', () => {
-  for (const [stacks, length] of [[0, 2], [1, 1], [2, 1]]) {
+  for (const [stacks, length] of [[0, 3], [1, 1], [2, 1]]) {
     const c = fight();
     assert.equal(c.combatExpansionVersion, 2, 'fixture: a new run is expanded');
     assert.equal('combatRounds' in c, false, 'fixture: rounds mode is off');
@@ -64,8 +64,8 @@ test('normal combat: a Silenced enemy plans its spell moves at the surcharged pr
     const head = Rounds.takePlannedMove(c, enemy, wispDef, { pick: () => 'drain' });
     assert.equal(head, 'drain');
     const plan = [{ moveId: head }, ...enemy.plannedMoves];
-    assert.equal(plan.length, length, `${stacks} stacks: a pool of 4 holds ${length} drain(s) at ${2 + stacks} SP`);
-    for (const entry of enemy.plannedMoves) assert.equal(entry.sp, 2 + stacks);
+    assert.equal(plan.length, length, `${stacks} stacks: pool 4 pays the first casting stance entry, then discounted repeated casts`);
+    for (const entry of enemy.plannedMoves) assert.equal(entry.sp, 1 + stacks, 'later spell moves receive the same-stance discount before Silence');
   }
 });
 
@@ -85,7 +85,7 @@ test('normal combat: the live weighted pick reads the surcharged price for what 
 });
 
 test('rounds mode: a Silenced enemy queues its spell moves at the surcharged price', () => {
-  for (const [stacks, length] of [[0, 2], [1, 1], [2, 1]]) {
+  for (const [stacks, length] of [[0, 3], [1, 1], [2, 1]]) {
     const c = fight({ rounds: true });
     assert.ok(c.combatRounds, 'fixture: rounds mode is on');
     const enemy = c.enemies[0];
@@ -93,7 +93,7 @@ test('rounds mode: a Silenced enemy queues its spell moves at the surcharged pri
     const queues = Rounds.buildEnemyQueues(c, { pick: () => 'drain', held: () => false });
     const queue = queues[enemy.id];
     assert.equal(queue.length, length, `${stacks} stacks`);
-    for (const entry of queue) assert.equal(entry.sp, 2 + stacks, `${stacks} stacks: each queued drain costs ${2 + stacks} SP`);
+    for (const [index, entry] of queue.entries()) assert.equal(entry.sp, (index ? 1 : 2) + stacks, 'the first move enters casting; later moves receive its same-stance discount');
   }
 });
 
