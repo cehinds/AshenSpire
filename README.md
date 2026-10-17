@@ -5,16 +5,14 @@
 
 [Open the public feature preview](https://cehinds.github.io/AshenSpire/branches/feature/EnemyBackSprites/latest/) — final source publication is pending; screenshots below verify the exact downloadable artifact.
 
-Open **Rear designs** to compare 130 neutral rear-view design drafts. v01 remains provisional; stance and motion coverage is labelled separately. Artifact build 0.7.1.1549 (d1b78c9f38), source a017ef6b78f7. The final public payload has not been verified yet.
+Open **Rear designs** to compare 130 neutral rear-view design drafts. v01 remains provisional; stance and motion coverage is labelled separately. Artifact build 0.7.1.1549 (d1b78c9f38), source 3013b3d778de. The final public payload has not been verified yet.
 
-[Download this review build](https://github.com/cehinds/AshenSpire/actions/runs/39059189345/artifacts/12110487296) · [Capture record](docs/preview/features/enemy-back-sprites/capture-record.json)
+[Download this review build](https://github.com/cehinds/AshenSpire/actions/runs/39062852872/artifacts/12111784011) · [Capture record](docs/preview/features/enemy-back-sprites/capture-record.json)
 
 | Mobile | Desktop | Wide | Tablet |
 | --- | --- | --- | --- |
 | ![Mobile: Wyrm Aspirant rear proposals](docs/preview/features/enemy-back-sprites/mobile.png) | ![Desktop: Court Duelist rear proposals](docs/preview/features/enemy-back-sprites/desktop.png) | ![Wide: Wyrm Lord rear proposals](docs/preview/features/enemy-back-sprites/wide.png) | ![Tablet: Fell Warden rear proposals](docs/preview/features/enemy-back-sprites/tablet.png) |
 <!-- feature-preview:end -->
-
-
 
 
 A browser roguelike: build a character, explore a seeded world, and fight with cards.
