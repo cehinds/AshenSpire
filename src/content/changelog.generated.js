@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-2030",
+    "date": "2026-10-17",
+    "group": "2026-10-17",
+    "summary": "Core combat and route feedback is preserved for implementation",
+    "detail": "Record the corrected stance bonuses, reaction costs, HUD, poise, potion, and map requests with examples, assumptions, and QA criteria. Gameplay and release work remain pending.",
+    "build": "0.7.1.1547",
+    "pullRequest": 2030,
+    "url": "https://github.com/cehinds/AshenSpire/pull/2030"
+  },
+  {
     "id": "pr-2028",
     "date": "2026-10-17",
     "group": "2026-10-17",
