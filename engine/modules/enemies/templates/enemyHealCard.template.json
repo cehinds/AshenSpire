@@ -1,14 +1,13 @@
 {
-  "$comment": "A heal card: tag `heal` (+ `exhaust` for the cheap shape). costSource healRules takes cost and amount from settings.healRules; the build checks they match.",
+  "$comment": "A heal card: fx:heal (+ lifecycle.exhaust for the cheap shape). Cost must match the matching healRules shape; amount = that % of the owner's max HP.",
   "id": "ashenSentry.mend",
   "name": "Mend",
-  "class": "enemy",
-  "rarity": "enemy",
+  "class": "colorless",
+  "rarity": "special",
   "cost": 1,
   "staminaCost": 1,
   "manaCost": 1,
   "costRule": "fixed",
-  "costSource": "healRules",
   "type": "power",
   "icon": "casting",
   "keywords": [
@@ -18,19 +17,16 @@
     {
       "op": "heal",
       "target": "self",
-      "rule": "healRules"
+      "amount": 4
     }
   ],
   "tags": [
     "camp:spell",
     "maneuver:casting",
     "classification.power",
-    "owner:enemy",
-    "heal",
-    "exhaust"
+    "classification.enemyMove",
+    "fx:heal",
+    "lifecycle.exhaust"
   ],
-  "textTemplate": "Heal 10% max HP. Exhaust.",
-  "owner": "enemy",
-  "enemy": "ashenSentry",
-  "aiWeight": 20
+  "textTemplate": "Heal {heal} HP. Exhaust."
 }

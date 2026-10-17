@@ -1,14 +1,13 @@
 {
-  "$comment": "One row of enemyCards.json. Same fields as a player card (packs/core/cards.json); targets are relative to the owner: enemy = opponent, self = owner. Planner hints (aiWeight, maxConsecutive) are optional.",
+  "$comment": "One row of enemyCards.json: a plain player card (same fields and rules) in the shared card pool. classification.enemyMove marks enemy-deck cards; planner hints (aiWeight, maxConsecutive, delay) live on the enemy in enemy.cardHints.",
   "id": "ashenSentry.slash",
   "name": "Slash",
-  "class": "enemy",
-  "rarity": "enemy",
+  "class": "colorless",
+  "rarity": "special",
   "cost": 1,
   "staminaCost": 1,
   "manaCost": 0,
   "costRule": "fixed",
-  "costSource": "stance",
   "type": "attack",
   "icon": "attack",
   "keywords": [],
@@ -23,19 +22,9 @@
     "camp:physical",
     "maneuver:attack",
     "classification.attack",
-    "owner:enemy"
+    "classification.enemyMove"
   ],
   "textTemplate": "Deal {damage} damage.",
   "damageSchool": "physical",
-  "exposureBuildupPerHit": 0,
-  "delay": {
-    "turns": 1,
-    "whileCharging": {
-      "block": 4
-    }
-  },
-  "owner": "enemy",
-  "enemy": "ashenSentry",
-  "aiWeight": 45,
-  "maxConsecutive": 2
+  "exposureBuildupPerHit": 0
 }

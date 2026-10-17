@@ -6,91 +6,6 @@
     "boss"
   ],
   "fallback": "legacyMoves",
-  "rounding": "down",
-  "levelFrom": "levelProfile.min",
-  "statRules": {
-    "hp": {
-      "strength": 5,
-      "dexterity": 3,
-      "constitution": 10,
-      "wisdom": 2,
-      "intelligence": 1,
-      "perLevel": 5
-    },
-    "sp": {
-      "dexterity": 0.25,
-      "constitution": 0.25,
-      "wisdom": 0.2,
-      "intelligence": 0.2,
-      "perLevel": 0.1
-    },
-    "mp": {
-      "strength": 0.125,
-      "constitution": 0.25,
-      "wisdom": 0.5,
-      "intelligence": 0.125,
-      "perLevel": 0.2
-    },
-    "ar": {
-      "strength": 1
-    },
-    "dr": {
-      "dexterity": 1
-    },
-    "hand": {
-      "intelligence": 1
-    }
-  },
-  "tiers": {
-    "minion": {
-      "attributeBudget": [
-        2,
-        2
-      ],
-      "pools": {
-        "hp": 10,
-        "sp": 2,
-        "mp": 1
-      },
-      "hand": 2,
-      "deckSize": [
-        4,
-        8
-      ]
-    },
-    "elite": {
-      "attributeBudget": [
-        4,
-        4
-      ],
-      "pools": {
-        "hp": 10,
-        "sp": 3,
-        "mp": 1
-      },
-      "hand": 3,
-      "deckSize": [
-        6,
-        10
-      ]
-    },
-    "boss": {
-      "attributeBudget": [
-        6,
-        6
-      ],
-      "pools": {
-        "hp": 10,
-        "sp": 3,
-        "mp": 1
-      },
-      "hand": 4,
-      "deckSize": [
-        8,
-        14
-      ]
-    }
-  },
   "deck": {
     "min": 3,
     "max": 15,
@@ -120,7 +35,7 @@
       "mp": 0
     },
     "casting": {
-      "sp": 0,
+      "sp": 1,
       "mp": 1
     }
   },
@@ -131,7 +46,7 @@
       {
         "id": "full",
         "tags": [
-          "heal"
+          "fx:heal"
         ],
         "cost": {
           "sp": 3,
@@ -145,8 +60,8 @@
       {
         "id": "cheap",
         "tags": [
-          "heal",
-          "exhaust"
+          "fx:heal",
+          "lifecycle.exhaust"
         ],
         "cost": {
           "sp": 1,
@@ -177,11 +92,6 @@
     "maxPoints": 5,
     "maxStats": 3,
     "source": "player"
-  },
-  "penaltyFloor": {
-    "sp": 1,
-    "mp": 0,
-    "hp": 1
   },
   "visibility": {
     "shown": [
@@ -218,29 +128,6 @@
       "attributes": [
         "bestiary"
       ]
-    }
-  },
-  "attributeFill": {
-    "defaultPriority": [
-      "strength",
-      "dexterity",
-      "constitution",
-      "wisdom",
-      "intelligence"
-    ],
-    "priorityWeights": [
-      4,
-      3,
-      2,
-      1,
-      0
-    ],
-    "caps": {
-      "constitution": 1
-    },
-    "variance": {
-      "points": 1,
-      "among": 3
     }
   }
 }

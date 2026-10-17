@@ -2,13 +2,12 @@
   {
     "id": "wanderingSoldier.slash",
     "name": "Slash",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -22,28 +21,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "wanderingSoldier",
-    "aiWeight": 45,
-    "maxConsecutive": 2,
-    "legacyMove": "slash"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "wanderingSoldier.guard",
     "name": "Guard",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "skill",
     "icon": "defend",
     "keywords": [],
@@ -58,26 +50,19 @@
       "camp:physical",
       "maneuver:defend",
       "classification.skill",
-      "owner:enemy",
       "trait:reaction"
     ],
-    "textTemplate": "Gain {block} Block.",
-    "owner": "enemy",
-    "enemy": "wanderingSoldier",
-    "aiWeight": 30,
-    "maxConsecutive": 1,
-    "legacyMove": "guard"
+    "textTemplate": "Gain {block} Block."
   },
   {
     "id": "wanderingSoldier.warcry",
     "name": "Warcry",
-    "class": "enemy",
-    "rarity": "enemy",
-    "cost": 0,
-    "staminaCost": 0,
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 1,
+    "staminaCost": 1,
     "manaCost": 1,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "power",
     "icon": "casting",
     "keywords": [],
@@ -92,26 +77,19 @@
     "tags": [
       "camp:spell",
       "maneuver:casting",
-      "classification.power",
-      "owner:enemy"
+      "classification.power"
     ],
-    "textTemplate": "Apply 2 Strength to yourself.",
-    "owner": "enemy",
-    "enemy": "wanderingSoldier",
-    "aiWeight": 25,
-    "maxConsecutive": 1,
-    "legacyMove": "warcry"
+    "textTemplate": "Apply {strength} Strength to yourself."
   },
   {
     "id": "blightHound.bite",
     "name": "Bite",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -125,27 +103,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "blightHound",
-    "aiWeight": 60,
-    "legacyMove": "bite"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "blightHound.lunge",
     "name": "Lunge",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -160,27 +132,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage 2 times.",
+    "textTemplate": "Deal {damage} damage {hits} times.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "blightHound",
-    "aiWeight": 40,
-    "legacyMove": "lunge"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "huskBrute.club",
     "name": "Club",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -194,27 +160,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "huskBrute",
-    "aiWeight": 50,
-    "legacyMove": "club"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "huskBrute.bellow",
     "name": "Bellow",
-    "class": "enemy",
-    "rarity": "enemy",
-    "cost": 0,
-    "staminaCost": 0,
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 1,
+    "staminaCost": 1,
     "manaCost": 1,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "power",
     "icon": "casting",
     "keywords": [],
@@ -235,26 +195,19 @@
     "tags": [
       "camp:spell",
       "maneuver:casting",
-      "classification.power",
-      "owner:enemy"
+      "classification.power"
     ],
-    "textTemplate": "Apply 1 Frail to the enemy. Shuffle Slimed into the enemy's discard.",
-    "owner": "enemy",
-    "enemy": "huskBrute",
-    "aiWeight": 25,
-    "maxConsecutive": 1,
-    "legacyMove": "bellow"
+    "textTemplate": "Apply {frail} Frail to the enemy. Shuffle Slimed into the enemy's discard."
   },
   {
     "id": "huskBrute.brace",
     "name": "Brace",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "skill",
     "icon": "defend",
     "keywords": [],
@@ -269,26 +222,19 @@
       "camp:physical",
       "maneuver:defend",
       "classification.skill",
-      "owner:enemy",
       "trait:reaction"
     ],
-    "textTemplate": "Gain {block} Block.",
-    "owner": "enemy",
-    "enemy": "huskBrute",
-    "aiWeight": 25,
-    "maxConsecutive": 1,
-    "legacyMove": "brace"
+    "textTemplate": "Gain {block} Block."
   },
   {
     "id": "graveWisp.curse",
     "name": "Curse",
-    "class": "enemy",
-    "rarity": "enemy",
-    "cost": 0,
-    "staminaCost": 0,
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 1,
+    "staminaCost": 1,
     "manaCost": 1,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "power",
     "icon": "casting",
     "keywords": [],
@@ -304,26 +250,19 @@
     "tags": [
       "camp:spell",
       "maneuver:casting",
-      "classification.power",
-      "owner:enemy"
+      "classification.power"
     ],
-    "textTemplate": "Shuffle Dazed into the enemy's draw.",
-    "owner": "enemy",
-    "enemy": "graveWisp",
-    "aiWeight": 50,
-    "maxConsecutive": 2,
-    "legacyMove": "curse"
+    "textTemplate": "Shuffle Dazed into the enemy's draw."
   },
   {
     "id": "graveWisp.drain",
     "name": "Drain",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 1,
     "costRule": "fixed",
-    "costSource": "healRules",
     "type": "attack",
     "icon": "attack",
     "keywords": [
@@ -338,35 +277,29 @@
       {
         "op": "heal",
         "target": "self",
-        "rule": "healRules"
+        "amount": 1
       }
     ],
     "tags": [
       "camp:physical",
       "maneuver:attack",
       "classification.attack",
-      "owner:enemy",
-      "heal",
-      "exhaust"
+      "fx:heal",
+      "lifecycle.exhaust"
     ],
-    "textTemplate": "Deal {damage} damage. Heal 10% max HP.",
+    "textTemplate": "Deal {damage} damage. Heal {heal} HP.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "graveWisp",
-    "aiWeight": 50,
-    "legacyMove": "drain"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "wyrmAspirant.consecrate",
     "name": "Consecrate",
-    "class": "enemy",
-    "rarity": "enemy",
-    "cost": 0,
-    "staminaCost": 0,
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 1,
+    "staminaCost": 1,
     "manaCost": 1,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "power",
     "icon": "casting",
     "keywords": [],
@@ -381,26 +314,19 @@
     "tags": [
       "camp:spell",
       "maneuver:casting",
-      "classification.power",
-      "owner:enemy"
+      "classification.power"
     ],
-    "textTemplate": "Apply 3 Strength to yourself.",
-    "owner": "enemy",
-    "enemy": "wyrmAspirant",
-    "aiWeight": 10,
-    "maxConsecutive": 1,
-    "legacyMove": "consecrate"
+    "textTemplate": "Apply {strength} Strength to yourself."
   },
   {
     "id": "wyrmAspirant.halberdSweep",
     "name": "Halberd_Sweep",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -414,28 +340,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "wyrmAspirant",
-    "aiWeight": 50,
-    "maxConsecutive": 2,
-    "legacyMove": "halberdSweep"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "wyrmAspirant.tailSlam",
     "name": "Tail_Slam",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -455,27 +374,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage. Apply 1 Weak to the enemy.",
+    "textTemplate": "Deal {damage} damage. Apply {weak} Weak to the enemy.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "wyrmAspirant",
-    "aiWeight": 30,
-    "legacyMove": "tailSlam"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "wyrmAspirant.goldenGuard",
     "name": "Golden_Guard",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 3,
     "staminaCost": 3,
     "manaCost": 2,
     "costRule": "fixed",
-    "costSource": "healRules",
     "type": "skill",
     "icon": "defend",
     "keywords": [],
@@ -488,34 +401,27 @@
       {
         "op": "heal",
         "target": "self",
-        "rule": "healRules"
+        "amount": 4
       }
     ],
     "tags": [
       "camp:physical",
       "maneuver:defend",
       "classification.skill",
-      "owner:enemy",
       "trait:reaction",
-      "heal"
+      "fx:heal"
     ],
-    "textTemplate": "Gain {block} Block. Heal 10% max HP.",
-    "owner": "enemy",
-    "enemy": "wyrmAspirant",
-    "aiWeight": 20,
-    "maxConsecutive": 1,
-    "legacyMove": "goldenGuard"
+    "textTemplate": "Gain {block} Block. Heal {heal} HP."
   },
   {
     "id": "fellWarden.caneStrike",
     "name": "Cane_Strike",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "authored",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -529,28 +435,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "fellWarden",
-    "aiWeight": 40,
-    "maxConsecutive": 2,
-    "legacyMove": "caneStrike"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "fellWarden.hammerToss",
     "name": "Hammer_Toss",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "authored",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -565,28 +464,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage 2 times.",
+    "textTemplate": "Deal {damage} damage {hits} times.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "fellWarden",
-    "aiWeight": 30,
-    "maxConsecutive": 2,
-    "legacyMove": "hammerToss"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "fellWarden.heldBlade",
     "name": "Held_Blade",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "authored",
     "type": "attack",
     "icon": "smash",
     "keywords": [],
@@ -600,34 +492,21 @@
     "tags": [
       "camp:physical",
       "maneuver:smash",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage. Charges for 1 turn.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "delay": {
-      "turns": 1,
-      "whileCharging": {
-        "block": 8
-      }
-    },
-    "owner": "enemy",
-    "enemy": "fellWarden",
-    "aiWeight": 30,
-    "maxConsecutive": 1,
-    "legacyMove": "heldBlade"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "fellWarden.twinDaggers",
     "name": "Twin_Daggers",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 3,
     "staminaCost": 3,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "authored",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -642,27 +521,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage 4 times.",
+    "textTemplate": "Deal {damage} damage {hits} times.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "fellWarden",
-    "aiWeight": 35,
-    "legacyMove": "twinDaggers"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "lanternMoth.lanternDust",
     "name": "Lantern_Dust",
-    "class": "enemy",
-    "rarity": "enemy",
-    "cost": 0,
-    "staminaCost": 0,
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 1,
+    "staminaCost": 1,
     "manaCost": 1,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "power",
     "icon": "casting",
     "keywords": [],
@@ -677,26 +550,19 @@
     "tags": [
       "camp:spell",
       "maneuver:casting",
-      "classification.power",
-      "owner:enemy"
+      "classification.power"
     ],
-    "textTemplate": "Apply 1 Weak to the enemy.",
-    "owner": "enemy",
-    "enemy": "lanternMoth",
-    "aiWeight": 35,
-    "maxConsecutive": 1,
-    "legacyMove": "lanternDust"
+    "textTemplate": "Apply {weak} Weak to the enemy."
   },
   {
     "id": "lanternMoth.wingSparks",
     "name": "Wing_Sparks",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "authored",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -711,27 +577,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage 3 times.",
+    "textTemplate": "Deal {damage} damage {hits} times.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "lanternMoth",
-    "aiWeight": 65,
-    "legacyMove": "wingSparks"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "briarHermit.rootShelter",
     "name": "Root_Shelter",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "skill",
     "icon": "defend",
     "keywords": [],
@@ -746,26 +606,19 @@
       "camp:physical",
       "maneuver:defend",
       "classification.skill",
-      "owner:enemy",
       "trait:reaction"
     ],
-    "textTemplate": "Gain {block} Block.",
-    "owner": "enemy",
-    "enemy": "briarHermit",
-    "aiWeight": 30,
-    "maxConsecutive": 1,
-    "legacyMove": "rootShelter"
+    "textTemplate": "Gain {block} Block."
   },
   {
     "id": "briarHermit.briarCast",
     "name": "Briar_Cast",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "authored",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -785,27 +638,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage. Apply 1 Bleed to the enemy.",
+    "textTemplate": "Deal {damage} damage. Apply {bleed} Bleed to the enemy.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "briarHermit",
-    "aiWeight": 45,
-    "legacyMove": "briarCast"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "briarHermit.sapMend",
     "name": "Sap_Mend",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 1,
     "costRule": "fixed",
-    "costSource": "healRules",
     "type": "power",
     "icon": "casting",
     "keywords": [
@@ -815,34 +662,27 @@
       {
         "op": "heal",
         "target": "self",
-        "rule": "healRules"
+        "amount": 5
       }
     ],
     "tags": [
       "camp:spell",
       "maneuver:casting",
       "classification.power",
-      "owner:enemy",
-      "heal",
-      "exhaust"
+      "fx:heal",
+      "lifecycle.exhaust"
     ],
-    "textTemplate": "Heal 10% max HP.",
-    "owner": "enemy",
-    "enemy": "briarHermit",
-    "aiWeight": 25,
-    "maxConsecutive": 1,
-    "legacyMove": "sapMend"
+    "textTemplate": "Heal {heal} HP."
   },
   {
     "id": "chainScavenger.hookCast",
     "name": "Hook_Cast",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -856,27 +696,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "chainScavenger",
-    "aiWeight": 60,
-    "legacyMove": "hookCast"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "chainScavenger.chainSnare",
     "name": "Chain_Snare",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 2,
     "staminaCost": 2,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "counter",
     "keywords": [],
@@ -897,28 +731,21 @@
       "camp:physical",
       "maneuver:counter",
       "classification.attack",
-      "owner:enemy",
       "trait:reaction"
     ],
-    "textTemplate": "Prepare Counter: return {damage} damage. Apply 1 Frail to the enemy.",
+    "textTemplate": "Prepare Counter: return {damage} damage. Apply {frail} Frail to the enemy.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "chainScavenger",
-    "aiWeight": 20,
-    "maxConsecutive": 1,
-    "legacyMove": "chainSnare"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "chainScavenger.draggingBlow",
     "name": "Dragging_Blow",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 2,
     "staminaCost": 2,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "smash",
     "keywords": [],
@@ -932,34 +759,21 @@
     "tags": [
       "camp:physical",
       "maneuver:smash",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage. Charges for 1 turn.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "delay": {
-      "turns": 1,
-      "whileCharging": {
-        "block": 3
-      }
-    },
-    "owner": "enemy",
-    "enemy": "chainScavenger",
-    "aiWeight": 20,
-    "maxConsecutive": 1,
-    "legacyMove": "draggingBlow"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "bellKeeper.bronzeToll",
     "name": "Bronze_Toll",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "authored",
     "type": "attack",
     "icon": "smash",
     "keywords": [],
@@ -973,34 +787,21 @@
     "tags": [
       "camp:physical",
       "maneuver:smash",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage. Charges for 1 turn.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "delay": {
-      "turns": 1,
-      "whileCharging": {
-        "block": 6
-      }
-    },
-    "owner": "enemy",
-    "enemy": "bellKeeper",
-    "aiWeight": 35,
-    "maxConsecutive": 1,
-    "legacyMove": "bronzeToll"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "bellKeeper.clapperSwing",
     "name": "Clapper_Swing",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "authored",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -1014,28 +815,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "bellKeeper",
-    "aiWeight": 45,
-    "maxConsecutive": 2,
-    "legacyMove": "clapperSwing"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "bellKeeper.muffledPrayer",
     "name": "Muffled_Prayer",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "authored",
     "type": "skill",
     "icon": "defend",
     "keywords": [],
@@ -1050,26 +844,19 @@
       "camp:physical",
       "maneuver:defend",
       "classification.skill",
-      "owner:enemy",
       "trait:reaction"
     ],
-    "textTemplate": "Gain {block} Block.",
-    "owner": "enemy",
-    "enemy": "bellKeeper",
-    "aiWeight": 20,
-    "maxConsecutive": 1,
-    "legacyMove": "muffledPrayer"
+    "textTemplate": "Gain {block} Block."
   },
   {
     "id": "bellKeeper.crackedPeal",
     "name": "Cracked_Peal",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "authored",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -1084,28 +871,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage 3 times.",
+    "textTemplate": "Deal {damage} damage {hits} times.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "bellKeeper",
-    "aiWeight": 25,
-    "maxConsecutive": 1,
-    "legacyMove": "crackedPeal"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "thornMatriarch.rootCrown",
     "name": "Root_Crown",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "authored",
     "type": "skill",
     "icon": "defend",
     "keywords": [],
@@ -1120,26 +900,19 @@
       "camp:physical",
       "maneuver:defend",
       "classification.skill",
-      "owner:enemy",
       "trait:reaction"
     ],
-    "textTemplate": "Gain {block} Block.",
-    "owner": "enemy",
-    "enemy": "thornMatriarch",
-    "aiWeight": 25,
-    "maxConsecutive": 1,
-    "legacyMove": "rootCrown"
+    "textTemplate": "Gain {block} Block."
   },
   {
     "id": "thornMatriarch.thornNeedles",
     "name": "Thorn_Needles",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "authored",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -1154,28 +927,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage 3 times.",
+    "textTemplate": "Deal {damage} damage {hits} times.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "thornMatriarch",
-    "aiWeight": 45,
-    "maxConsecutive": 2,
-    "legacyMove": "thornNeedles"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "thornMatriarch.entwiningRoots",
     "name": "Entwining_Roots",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 2,
     "staminaCost": 2,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "authored",
     "type": "attack",
     "icon": "smash",
     "keywords": [],
@@ -1195,34 +961,21 @@
     "tags": [
       "camp:physical",
       "maneuver:smash",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage. Apply 2 Bleed to the enemy. Charges for 1 turn.",
+    "textTemplate": "Deal {damage} damage. Apply {bleed} Bleed to the enemy. Charges for 1 turn.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "delay": {
-      "turns": 1,
-      "whileCharging": {
-        "block": 4
-      }
-    },
-    "owner": "enemy",
-    "enemy": "thornMatriarch",
-    "aiWeight": 30,
-    "maxConsecutive": 1,
-    "legacyMove": "entwiningRoots"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "gildedKnight.thrust",
     "name": "Thrust",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -1236,28 +989,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "gildedKnight",
-    "aiWeight": 50,
-    "maxConsecutive": 2,
-    "legacyMove": "thrust"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "gildedKnight.parry",
     "name": "Parry",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 2,
     "staminaCost": 2,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "counter",
     "keywords": [],
@@ -1277,28 +1023,21 @@
       "camp:physical",
       "maneuver:counter",
       "classification.attack",
-      "owner:enemy",
       "trait:reaction"
     ],
     "textTemplate": "Gain {block} Block. Prepare Counter: return {damage} damage.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "gildedKnight",
-    "aiWeight": 30,
-    "maxConsecutive": 1,
-    "legacyMove": "parry"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "gildedKnight.rally",
     "name": "Rally",
-    "class": "enemy",
-    "rarity": "enemy",
-    "cost": 0,
-    "staminaCost": 0,
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 1,
+    "staminaCost": 1,
     "manaCost": 1,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "power",
     "icon": "casting",
     "keywords": [],
@@ -1313,26 +1052,19 @@
     "tags": [
       "camp:spell",
       "maneuver:casting",
-      "classification.power",
-      "owner:enemy"
+      "classification.power"
     ],
-    "textTemplate": "Apply 2 Strength to yourself.",
-    "owner": "enemy",
-    "enemy": "gildedKnight",
-    "aiWeight": 20,
-    "maxConsecutive": 1,
-    "legacyMove": "rally"
+    "textTemplate": "Apply {strength} Strength to yourself."
   },
   {
     "id": "gildedKnight.gildedGuard",
     "name": "Gilded_Guard",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -1351,27 +1083,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
     "textTemplate": "Gain {block} Block. Deal {damage} damage.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "gildedKnight",
-    "aiWeight": 1,
-    "legacyMove": "gildedGuard"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "courtSurgeon.scalpel",
     "name": "Scalpel",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -1391,27 +1117,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage. Shuffle Wound into the enemy's discard.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "courtSurgeon",
-    "aiWeight": 40,
-    "legacyMove": "scalpel"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "courtSurgeon.sedate",
     "name": "Sedate",
-    "class": "enemy",
-    "rarity": "enemy",
-    "cost": 0,
-    "staminaCost": 0,
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 1,
+    "staminaCost": 1,
     "manaCost": 1,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "power",
     "icon": "casting",
     "keywords": [],
@@ -1432,26 +1152,19 @@
     "tags": [
       "camp:spell",
       "maneuver:casting",
-      "classification.power",
-      "owner:enemy"
+      "classification.power"
     ],
-    "textTemplate": "Apply 1 Weak to the enemy. Apply 1 Frail to the enemy.",
-    "owner": "enemy",
-    "enemy": "courtSurgeon",
-    "aiWeight": 30,
-    "maxConsecutive": 1,
-    "legacyMove": "sedate"
+    "textTemplate": "Apply {weak} Weak to the enemy. Apply {frail} Frail to the enemy."
   },
   {
     "id": "courtSurgeon.stitch",
     "name": "Stitch",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 1,
     "costRule": "fixed",
-    "costSource": "healRules",
     "type": "power",
     "icon": "casting",
     "keywords": [
@@ -1461,34 +1174,27 @@
       {
         "op": "heal",
         "target": "self",
-        "rule": "healRules"
+        "amount": 3
       }
     ],
     "tags": [
       "camp:spell",
       "maneuver:casting",
       "classification.power",
-      "owner:enemy",
-      "heal",
-      "exhaust"
+      "fx:heal",
+      "lifecycle.exhaust"
     ],
-    "textTemplate": "Heal 10% max HP.",
-    "owner": "enemy",
-    "enemy": "courtSurgeon",
-    "aiWeight": 30,
-    "maxConsecutive": 1,
-    "legacyMove": "stitch"
+    "textTemplate": "Heal {heal} HP."
   },
   {
     "id": "stitchedHound.maul",
     "name": "Maul",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -1503,27 +1209,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage 2 times.",
+    "textTemplate": "Deal {damage} damage {hits} times.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "stitchedHound",
-    "aiWeight": 60,
-    "legacyMove": "maul"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "stitchedHound.rend",
     "name": "Rend",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -1543,27 +1243,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage. Apply 2 Bleed to the enemy.",
+    "textTemplate": "Deal {damage} damage. Apply {bleed} Bleed to the enemy.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "stitchedHound",
-    "aiWeight": 40,
-    "legacyMove": "rend"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "courtMarionette.dart",
     "name": "Dart",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -1578,27 +1272,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage 2 times.",
+    "textTemplate": "Deal {damage} damage {hits} times.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "courtMarionette",
-    "aiWeight": 50,
-    "legacyMove": "dart"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "courtMarionette.blowdart",
     "name": "Blowdart",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -1618,27 +1306,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage. Apply 2 Crimson Blight to the enemy.",
+    "textTemplate": "Deal {damage} damage. Apply {crimsonBlight} Crimson Blight to the enemy.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "courtMarionette",
-    "aiWeight": 50,
-    "legacyMove": "blowdart"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "livingArmor.slam",
     "name": "Slam",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -1652,27 +1334,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "livingArmor",
-    "aiWeight": 30,
-    "legacyMove": "slam"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "livingArmor.fortify",
     "name": "Fortify",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "skill",
     "icon": "defend",
     "keywords": [],
@@ -1687,26 +1363,19 @@
       "camp:physical",
       "maneuver:defend",
       "classification.skill",
-      "owner:enemy",
       "trait:reaction"
     ],
-    "textTemplate": "Gain {block} Block.",
-    "owner": "enemy",
-    "enemy": "livingArmor",
-    "aiWeight": 25,
-    "maxConsecutive": 1,
-    "legacyMove": "fortify"
+    "textTemplate": "Gain {block} Block."
   },
   {
     "id": "livingArmor.crush",
     "name": "Crush",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -1720,28 +1389,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "livingArmor",
-    "aiWeight": 20,
-    "maxConsecutive": 1,
-    "legacyMove": "crush"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "livingArmor.rimeCrush",
     "name": "Rime_Crush",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -1761,28 +1423,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage. Apply 3 Frost to the enemy.",
+    "textTemplate": "Deal {damage} damage. Apply {frost} Frost to the enemy.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "livingArmor",
-    "aiWeight": 25,
-    "maxConsecutive": 1,
-    "legacyMove": "rimeCrush"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "courtDuelist.enGarde",
     "name": "En_Garde",
-    "class": "enemy",
-    "rarity": "enemy",
-    "cost": 0,
-    "staminaCost": 0,
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 1,
+    "staminaCost": 1,
     "manaCost": 1,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "power",
     "icon": "casting",
     "keywords": [],
@@ -1797,26 +1452,19 @@
     "tags": [
       "camp:spell",
       "maneuver:casting",
-      "classification.power",
-      "owner:enemy"
+      "classification.power"
     ],
-    "textTemplate": "Apply 3 Strength to yourself.",
-    "owner": "enemy",
-    "enemy": "courtDuelist",
-    "aiWeight": 10,
-    "maxConsecutive": 1,
-    "legacyMove": "enGarde"
+    "textTemplate": "Apply {strength} Strength to yourself."
   },
   {
     "id": "courtDuelist.flurry",
     "name": "Flurry",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -1831,28 +1479,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage 3 times.",
+    "textTemplate": "Deal {damage} damage {hits} times.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "courtDuelist",
-    "aiWeight": 40,
-    "maxConsecutive": 2,
-    "legacyMove": "flurry"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "courtDuelist.lunge",
     "name": "Lunge",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -1866,28 +1507,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "courtDuelist",
-    "aiWeight": 30,
-    "maxConsecutive": 1,
-    "legacyMove": "lunge"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "courtDuelist.riposte",
     "name": "Riposte",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 2,
     "staminaCost": 2,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "counter",
     "keywords": [],
@@ -1907,28 +1541,21 @@
       "camp:physical",
       "maneuver:counter",
       "classification.attack",
-      "owner:enemy",
       "trait:reaction"
     ],
     "textTemplate": "Gain {block} Block. Prepare Counter: return {damage} damage.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "courtDuelist",
-    "aiWeight": 20,
-    "maxConsecutive": 1,
-    "legacyMove": "riposte"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "courtDuelist.bindingRiposte",
     "name": "Binding_Riposte",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -1942,27 +1569,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "courtDuelist",
-    "aiWeight": 1,
-    "legacyMove": "bindingRiposte"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "stitchedKing.scepterBlow",
     "name": "Scepter_Blow",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -1976,28 +1597,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "stitchedKing",
-    "aiWeight": 40,
-    "maxConsecutive": 2,
-    "legacyMove": "scepterBlow"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "stitchedKing.graspingHands",
     "name": "Grasping_Hands",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -2012,28 +1626,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage 3 times.",
+    "textTemplate": "Deal {damage} damage {hits} times.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "stitchedKing",
-    "aiWeight": 30,
-    "maxConsecutive": 2,
-    "legacyMove": "graspingHands"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "stitchedKing.courtlyDecree",
     "name": "Courtly_Decree",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "skill",
     "icon": "defend",
     "keywords": [],
@@ -2054,26 +1661,19 @@
       "camp:physical",
       "maneuver:defend",
       "classification.skill",
-      "owner:enemy",
       "trait:reaction"
     ],
-    "textTemplate": "Gain {block} Block. Apply 2 Strength to yourself.",
-    "owner": "enemy",
-    "enemy": "stitchedKing",
-    "aiWeight": 30,
-    "maxConsecutive": 1,
-    "legacyMove": "courtlyDecree"
+    "textTemplate": "Gain {block} Block. Apply {strength} Strength to yourself."
   },
   {
     "id": "stitchedKing.thousandHands",
     "name": "Thousand_Hands",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -2088,27 +1688,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage 6 times.",
+    "textTemplate": "Deal {damage} damage {hits} times.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "stitchedKing",
-    "aiWeight": 40,
-    "legacyMove": "thousandHands"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "mirrorScribe.silverScript",
     "name": "Silver_Script",
-    "class": "enemy",
-    "rarity": "enemy",
-    "cost": 0,
-    "staminaCost": 0,
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 1,
+    "staminaCost": 1,
     "manaCost": 1,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "power",
     "icon": "casting",
     "keywords": [],
@@ -2123,26 +1717,19 @@
     "tags": [
       "camp:spell",
       "maneuver:casting",
-      "classification.power",
-      "owner:enemy"
+      "classification.power"
     ],
-    "textTemplate": "Shuffle Dazed into the enemy's discard.",
-    "owner": "enemy",
-    "enemy": "mirrorScribe",
-    "aiWeight": 30,
-    "maxConsecutive": 1,
-    "legacyMove": "silverScript"
+    "textTemplate": "Shuffle Dazed into the enemy's discard."
   },
   {
     "id": "mirrorScribe.shardVolley",
     "name": "Shard_Volley",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -2157,27 +1744,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage 3 times.",
+    "textTemplate": "Deal {damage} damage {hits} times.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "mirrorScribe",
-    "aiWeight": 50,
-    "legacyMove": "shardVolley"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "mirrorScribe.polishedWard",
     "name": "Polished_Ward",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 2,
     "staminaCost": 2,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "counter",
     "keywords": [],
@@ -2197,28 +1778,21 @@
       "camp:physical",
       "maneuver:counter",
       "classification.attack",
-      "owner:enemy",
       "trait:reaction"
     ],
     "textTemplate": "Gain {block} Block. Prepare Counter: return {damage} damage.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "mirrorScribe",
-    "aiWeight": 20,
-    "maxConsecutive": 1,
-    "legacyMove": "polishedWard"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "stitchCrab.shellFold",
     "name": "Shell_Fold",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "skill",
     "icon": "defend",
     "keywords": [],
@@ -2233,26 +1807,19 @@
       "camp:physical",
       "maneuver:defend",
       "classification.skill",
-      "owner:enemy",
       "trait:reaction"
     ],
-    "textTemplate": "Gain {block} Block.",
-    "owner": "enemy",
-    "enemy": "stitchCrab",
-    "aiWeight": 30,
-    "maxConsecutive": 1,
-    "legacyMove": "shellFold"
+    "textTemplate": "Gain {block} Block."
   },
   {
     "id": "stitchCrab.seamShears",
     "name": "Seam_Shears",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -2273,27 +1840,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage 2 times. Apply 1 Bleed to the enemy.",
+    "textTemplate": "Deal {damage} damage {hits} times. Apply {bleed} Bleed to the enemy.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "stitchCrab",
-    "aiWeight": 45,
-    "legacyMove": "seamShears"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "stitchCrab.scuttleRush",
     "name": "Scuttle_Rush",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -2307,28 +1868,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "stitchCrab",
-    "aiWeight": 25,
-    "maxConsecutive": 1,
-    "legacyMove": "scuttleRush"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "glassRegent.prismGuard",
     "name": "Prism_Guard",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "skill",
     "icon": "defend",
     "keywords": [],
@@ -2343,26 +1897,19 @@
       "camp:physical",
       "maneuver:defend",
       "classification.skill",
-      "owner:enemy",
       "trait:reaction"
     ],
-    "textTemplate": "Gain {block} Block.",
-    "owner": "enemy",
-    "enemy": "glassRegent",
-    "aiWeight": 25,
-    "maxConsecutive": 1,
-    "legacyMove": "prismGuard"
+    "textTemplate": "Gain {block} Block."
   },
   {
     "id": "glassRegent.crystalRapier",
     "name": "Crystal_Rapier",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -2376,28 +1923,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "glassRegent",
-    "aiWeight": 45,
-    "maxConsecutive": 2,
-    "legacyMove": "crystalRapier"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "glassRegent.splinterRain",
     "name": "Splinter_Rain",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -2412,28 +1952,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage 3 times.",
+    "textTemplate": "Deal {damage} damage {hits} times.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "glassRegent",
-    "aiWeight": 30,
-    "maxConsecutive": 1,
-    "legacyMove": "splinterRain"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "glassRegent.shatteredCourt",
     "name": "Shattered_Court",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 2,
     "staminaCost": 2,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "smash",
     "keywords": [],
@@ -2448,34 +1981,21 @@
     "tags": [
       "camp:physical",
       "maneuver:smash",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage 5 times. Charges for 1 turn.",
+    "textTemplate": "Deal {damage} damage {hits} times. Charges for 1 turn.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "delay": {
-      "turns": 1,
-      "whileCharging": {
-        "block": 0
-      }
-    },
-    "owner": "enemy",
-    "enemy": "glassRegent",
-    "aiWeight": 35,
-    "maxConsecutive": 1,
-    "legacyMove": "shatteredCourt"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "marrowOrganist.bonePrelude",
     "name": "Bone_Prelude",
-    "class": "enemy",
-    "rarity": "enemy",
-    "cost": 0,
-    "staminaCost": 0,
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 1,
+    "staminaCost": 1,
     "manaCost": 1,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "power",
     "icon": "casting",
     "keywords": [],
@@ -2490,26 +2010,19 @@
     "tags": [
       "camp:spell",
       "maneuver:casting",
-      "classification.power",
-      "owner:enemy"
+      "classification.power"
     ],
-    "textTemplate": "Apply 1 Weak to the enemy.",
-    "owner": "enemy",
-    "enemy": "marrowOrganist",
-    "aiWeight": 20,
-    "maxConsecutive": 1,
-    "legacyMove": "bonePrelude"
+    "textTemplate": "Apply {weak} Weak to the enemy."
   },
   {
     "id": "marrowOrganist.ivoryKeys",
     "name": "Ivory_Keys",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -2524,28 +2037,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage 3 times.",
+    "textTemplate": "Deal {damage} damage {hits} times.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "marrowOrganist",
-    "aiWeight": 40,
-    "maxConsecutive": 2,
-    "legacyMove": "ivoryKeys"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "marrowOrganist.funeralChord",
     "name": "Funeral_Chord",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 2,
     "staminaCost": 2,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "smash",
     "keywords": [],
@@ -2559,34 +2065,21 @@
     "tags": [
       "camp:physical",
       "maneuver:smash",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage. Charges for 1 turn.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "delay": {
-      "turns": 1,
-      "whileCharging": {
-        "block": 5
-      }
-    },
-    "owner": "enemy",
-    "enemy": "marrowOrganist",
-    "aiWeight": 25,
-    "maxConsecutive": 1,
-    "legacyMove": "funeralChord"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "marrowOrganist.quietRefrain",
     "name": "Quiet_Refrain",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 3,
     "staminaCost": 3,
     "manaCost": 2,
     "costRule": "fixed",
-    "costSource": "healRules",
     "type": "power",
     "icon": "casting",
     "keywords": [],
@@ -2594,33 +2087,26 @@
       {
         "op": "heal",
         "target": "self",
-        "rule": "healRules"
+        "amount": 12
       }
     ],
     "tags": [
       "camp:spell",
       "maneuver:casting",
       "classification.power",
-      "owner:enemy",
-      "heal"
+      "fx:heal"
     ],
-    "textTemplate": "Heal 10% max HP.",
-    "owner": "enemy",
-    "enemy": "marrowOrganist",
-    "aiWeight": 15,
-    "maxConsecutive": 1,
-    "legacyMove": "quietRefrain"
+    "textTemplate": "Heal {heal} HP."
   },
   {
     "id": "ashRevenant.cinderSlash",
     "name": "Cinder_Slash",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -2634,28 +2120,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "ashRevenant",
-    "aiWeight": 55,
-    "maxConsecutive": 2,
-    "legacyMove": "cinderSlash"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "ashRevenant.reform",
     "name": "Reform",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 1,
     "costRule": "fixed",
-    "costSource": "healRules",
     "type": "power",
     "icon": "casting",
     "keywords": [
@@ -2665,7 +2144,7 @@
       {
         "op": "heal",
         "target": "self",
-        "rule": "healRules"
+        "amount": 10
       },
       {
         "op": "block",
@@ -2677,27 +2156,20 @@
       "camp:spell",
       "maneuver:casting",
       "classification.power",
-      "owner:enemy",
-      "heal",
-      "exhaust"
+      "fx:heal",
+      "lifecycle.exhaust"
     ],
-    "textTemplate": "Heal 10% max HP.",
-    "owner": "enemy",
-    "enemy": "ashRevenant",
-    "aiWeight": 45,
-    "maxConsecutive": 1,
-    "legacyMove": "reform"
+    "textTemplate": "Heal {heal} HP. Gain {block} Block."
   },
   {
     "id": "emberStarvedPilgrim.desperateClaw",
     "name": "Desperate_Claw",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -2711,27 +2183,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "emberStarvedPilgrim",
-    "aiWeight": 60,
-    "legacyMove": "desperateClaw"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "emberStarvedPilgrim.wail",
     "name": "Wail",
-    "class": "enemy",
-    "rarity": "enemy",
-    "cost": 0,
-    "staminaCost": 0,
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 1,
+    "staminaCost": 1,
     "manaCost": 1,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "power",
     "icon": "casting",
     "keywords": [],
@@ -2758,26 +2224,19 @@
     "tags": [
       "camp:spell",
       "maneuver:casting",
-      "classification.power",
-      "owner:enemy"
+      "classification.power"
     ],
-    "textTemplate": "Apply 1 Weak to the enemy. Apply 1 Frail to the enemy. Apply 3 Insanity to the enemy.",
-    "owner": "enemy",
-    "enemy": "emberStarvedPilgrim",
-    "aiWeight": 40,
-    "maxConsecutive": 1,
-    "legacyMove": "wail"
+    "textTemplate": "Apply {weak} Weak to the enemy. Apply {frail} Frail to the enemy. Apply {insanity} Insanity to the enemy."
   },
   {
     "id": "valkyrieShade.spiralLance",
     "name": "Spiral_Lance",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -2792,27 +2251,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage 2 times.",
+    "textTemplate": "Deal {damage} damage {hits} times.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "valkyrieShade",
-    "aiWeight": 50,
-    "legacyMove": "spiralLance"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "valkyrieShade.bloodFeather",
     "name": "Blood_Feather",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -2832,27 +2285,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage. Apply 3 Bleed to the enemy.",
+    "textTemplate": "Deal {damage} damage. Apply {bleed} Bleed to the enemy.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "valkyrieShade",
-    "aiWeight": 50,
-    "legacyMove": "bloodFeather"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "charredColossus.smash",
     "name": "Smash",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -2866,28 +2313,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "charredColossus",
-    "aiWeight": 50,
-    "maxConsecutive": 2,
-    "legacyMove": "smash"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "charredColossus.ashCloud",
     "name": "Ash_Cloud",
-    "class": "enemy",
-    "rarity": "enemy",
-    "cost": 0,
-    "staminaCost": 0,
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 1,
+    "staminaCost": 1,
     "manaCost": 1,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "power",
     "icon": "casting",
     "keywords": [],
@@ -2902,26 +2342,19 @@
     "tags": [
       "camp:spell",
       "maneuver:casting",
-      "classification.power",
-      "owner:enemy"
+      "classification.power"
     ],
-    "textTemplate": "Apply 2 Weak to the enemy.",
-    "owner": "enemy",
-    "enemy": "charredColossus",
-    "aiWeight": 25,
-    "maxConsecutive": 1,
-    "legacyMove": "ashCloud"
+    "textTemplate": "Apply {weak} Weak to the enemy."
   },
   {
     "id": "charredColossus.harden",
     "name": "Harden",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "skill",
     "icon": "defend",
     "keywords": [],
@@ -2936,26 +2369,19 @@
       "camp:physical",
       "maneuver:defend",
       "classification.skill",
-      "owner:enemy",
       "trait:reaction"
     ],
-    "textTemplate": "Gain {block} Block.",
-    "owner": "enemy",
-    "enemy": "charredColossus",
-    "aiWeight": 25,
-    "maxConsecutive": 1,
-    "legacyMove": "harden"
+    "textTemplate": "Gain {block} Block."
   },
   {
     "id": "wyrmLord.consecration",
     "name": "Consecration",
-    "class": "enemy",
-    "rarity": "enemy",
-    "cost": 0,
-    "staminaCost": 0,
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 1,
+    "staminaCost": 1,
     "manaCost": 1,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "power",
     "icon": "casting",
     "keywords": [],
@@ -2970,26 +2396,19 @@
     "tags": [
       "camp:spell",
       "maneuver:casting",
-      "classification.power",
-      "owner:enemy"
+      "classification.power"
     ],
-    "textTemplate": "Apply 4 Strength to yourself.",
-    "owner": "enemy",
-    "enemy": "wyrmLord",
-    "aiWeight": 10,
-    "maxConsecutive": 1,
-    "legacyMove": "consecration"
+    "textTemplate": "Apply {strength} Strength to yourself."
   },
   {
     "id": "wyrmLord.halberdReign",
     "name": "Halberd_Reign",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -3003,28 +2422,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "wyrmLord",
-    "aiWeight": 45,
-    "maxConsecutive": 2,
-    "legacyMove": "halberdReign"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "wyrmLord.tailSweep",
     "name": "Tail_Sweep",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -3044,27 +2456,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage. Apply 1 Weak to the enemy.",
+    "textTemplate": "Deal {damage} damage. Apply {weak} Weak to the enemy.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "wyrmLord",
-    "aiWeight": 30,
-    "legacyMove": "tailSweep"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "wyrmLord.goldenBulwark",
     "name": "Golden_Bulwark",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 3,
     "staminaCost": 3,
     "manaCost": 2,
     "costRule": "fixed",
-    "costSource": "healRules",
     "type": "skill",
     "icon": "defend",
     "keywords": [],
@@ -3077,34 +2483,27 @@
       {
         "op": "heal",
         "target": "self",
-        "rule": "healRules"
+        "amount": 17
       }
     ],
     "tags": [
       "camp:physical",
       "maneuver:defend",
       "classification.skill",
-      "owner:enemy",
       "trait:reaction",
-      "heal"
+      "fx:heal"
     ],
-    "textTemplate": "Gain {block} Block. Heal 10% max HP.",
-    "owner": "enemy",
-    "enemy": "wyrmLord",
-    "aiWeight": 25,
-    "maxConsecutive": 1,
-    "legacyMove": "goldenBulwark"
+    "textTemplate": "Gain {block} Block. Heal {heal} HP."
   },
   {
     "id": "blightedValkyrie.spiralThrust",
     "name": "Spiral_Thrust",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -3124,28 +2523,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage. Apply 2 Bleed to the enemy.",
+    "textTemplate": "Deal {damage} damage. Apply {bleed} Bleed to the enemy.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "blightedValkyrie",
-    "aiWeight": 35,
-    "maxConsecutive": 2,
-    "legacyMove": "spiralThrust"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "blightedValkyrie.whirlwind",
     "name": "Whirlwind",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -3166,28 +2558,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage 5 times. Apply 2 Bleed to the enemy.",
+    "textTemplate": "Deal {damage} damage {hits} times. Apply {bleed} Bleed to the enemy.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "blightedValkyrie",
-    "aiWeight": 30,
-    "maxConsecutive": 1,
-    "legacyMove": "whirlwind"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "blightedValkyrie.rotWings",
     "name": "Rot_Wings",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "skill",
     "icon": "defend",
     "keywords": [],
@@ -3208,26 +2593,19 @@
       "camp:physical",
       "maneuver:defend",
       "classification.skill",
-      "owner:enemy",
       "trait:reaction"
     ],
-    "textTemplate": "Gain {block} Block. Apply 3 Crimson Blight to the enemy.",
-    "owner": "enemy",
-    "enemy": "blightedValkyrie",
-    "aiWeight": 20,
-    "maxConsecutive": 1,
-    "legacyMove": "rotWings"
+    "textTemplate": "Gain {block} Block. Apply {crimsonBlight} Crimson Blight to the enemy."
   },
   {
     "id": "blightedValkyrie.scarletDance",
     "name": "Scarlet_Dance",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -3242,27 +2620,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage 5 times.",
+    "textTemplate": "Deal {damage} damage {hits} times.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "blightedValkyrie",
-    "aiWeight": 35,
-    "legacyMove": "scarletDance"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "cinderMantis.scythePair",
     "name": "Scythe_Pair",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -3277,27 +2649,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage 2 times.",
+    "textTemplate": "Deal {damage} damage {hits} times.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "cinderMantis",
-    "aiWeight": 55,
-    "legacyMove": "scythePair"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "cinderMantis.emberPounce",
     "name": "Ember_Pounce",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 2,
     "staminaCost": 2,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "smash",
     "keywords": [],
@@ -3311,34 +2677,21 @@
     "tags": [
       "camp:physical",
       "maneuver:smash",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage. Charges for 1 turn.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "delay": {
-      "turns": 1,
-      "whileCharging": {
-        "block": 2
-      }
-    },
-    "owner": "enemy",
-    "enemy": "cinderMantis",
-    "aiWeight": 30,
-    "maxConsecutive": 1,
-    "legacyMove": "emberPounce"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "cinderMantis.foldedBlades",
     "name": "Folded_Blades",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 2,
     "staminaCost": 2,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "counter",
     "keywords": [],
@@ -3358,28 +2711,21 @@
       "camp:physical",
       "maneuver:counter",
       "classification.attack",
-      "owner:enemy",
       "trait:reaction"
     ],
     "textTemplate": "Gain {block} Block. Prepare Counter: return {damage} damage.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "cinderMantis",
-    "aiWeight": 15,
-    "maxConsecutive": 1,
-    "legacyMove": "foldedBlades"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "eclipseCantor.darkHymn",
     "name": "Dark_Hymn",
-    "class": "enemy",
-    "rarity": "enemy",
-    "cost": 0,
-    "staminaCost": 0,
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 1,
+    "staminaCost": 1,
     "manaCost": 1,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "power",
     "icon": "casting",
     "keywords": [],
@@ -3394,26 +2740,19 @@
     "tags": [
       "camp:spell",
       "maneuver:casting",
-      "classification.power",
-      "owner:enemy"
+      "classification.power"
     ],
-    "textTemplate": "Apply 3 Insanity to the enemy.",
-    "owner": "enemy",
-    "enemy": "eclipseCantor",
-    "aiWeight": 30,
-    "maxConsecutive": 1,
-    "legacyMove": "darkHymn"
+    "textTemplate": "Apply {insanity} Insanity to the enemy."
   },
   {
     "id": "eclipseCantor.lunarRay",
     "name": "Lunar_Ray",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -3427,27 +2766,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "eclipseCantor",
-    "aiWeight": 50,
-    "legacyMove": "lunarRay"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "eclipseCantor.fadingEcho",
     "name": "Fading_Echo",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -3467,28 +2800,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage. Shuffle Dazed into the enemy's discard.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "eclipseCantor",
-    "aiWeight": 20,
-    "maxConsecutive": 1,
-    "legacyMove": "fadingEcho"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "furnaceSaint.openFurnace",
     "name": "Open_Furnace",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 2,
     "staminaCost": 2,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "smash",
     "keywords": [],
@@ -3502,34 +2828,21 @@
     "tags": [
       "camp:physical",
       "maneuver:smash",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage. Charges for 1 turn.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "delay": {
-      "turns": 1,
-      "whileCharging": {
-        "block": 10
-      }
-    },
-    "owner": "enemy",
-    "enemy": "furnaceSaint",
-    "aiWeight": 30,
-    "maxConsecutive": 1,
-    "legacyMove": "openFurnace"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "furnaceSaint.censerSweep",
     "name": "Censer_Sweep",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -3543,28 +2856,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "furnaceSaint",
-    "aiWeight": 45,
-    "maxConsecutive": 2,
-    "legacyMove": "censerSweep"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "furnaceSaint.coolingAsh",
     "name": "Cooling_Ash",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "skill",
     "icon": "defend",
     "keywords": [],
@@ -3579,26 +2885,19 @@
       "camp:physical",
       "maneuver:defend",
       "classification.skill",
-      "owner:enemy",
       "trait:reaction"
     ],
-    "textTemplate": "Gain {block} Block.",
-    "owner": "enemy",
-    "enemy": "furnaceSaint",
-    "aiWeight": 25,
-    "maxConsecutive": 1,
-    "legacyMove": "coolingAsh"
+    "textTemplate": "Gain {block} Block."
   },
   {
     "id": "hollowAstronomer.starChart",
     "name": "Star_Chart",
-    "class": "enemy",
-    "rarity": "enemy",
-    "cost": 0,
-    "staminaCost": 0,
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 1,
+    "staminaCost": 1,
     "manaCost": 1,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "power",
     "icon": "casting",
     "keywords": [],
@@ -3613,26 +2912,19 @@
     "tags": [
       "camp:spell",
       "maneuver:casting",
-      "classification.power",
-      "owner:enemy"
+      "classification.power"
     ],
-    "textTemplate": "Shuffle Dazed into the enemy's discard.",
-    "owner": "enemy",
-    "enemy": "hollowAstronomer",
-    "aiWeight": 20,
-    "maxConsecutive": 1,
-    "legacyMove": "starChart"
+    "textTemplate": "Shuffle Dazed into the enemy's discard."
   },
   {
     "id": "hollowAstronomer.orbitalShards",
     "name": "Orbital_Shards",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -3647,28 +2939,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage 4 times.",
+    "textTemplate": "Deal {damage} damage {hits} times.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "hollowAstronomer",
-    "aiWeight": 45,
-    "maxConsecutive": 2,
-    "legacyMove": "orbitalShards"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "hollowAstronomer.totalEclipse",
     "name": "Total_Eclipse",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 2,
     "staminaCost": 2,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "smash",
     "keywords": [],
@@ -3688,34 +2973,21 @@
     "tags": [
       "camp:physical",
       "maneuver:smash",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage. Apply 3 Insanity to the enemy. Charges for 1 turn.",
+    "textTemplate": "Deal {damage} damage. Apply {insanity} Insanity to the enemy. Charges for 1 turn.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "delay": {
-      "turns": 1,
-      "whileCharging": {
-        "block": 6
-      }
-    },
-    "owner": "enemy",
-    "enemy": "hollowAstronomer",
-    "aiWeight": 35,
-    "maxConsecutive": 1,
-    "legacyMove": "totalEclipse"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "hollowAstronomer.fallingHeavens",
     "name": "Falling_Heavens",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -3730,28 +3002,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage 3 times.",
+    "textTemplate": "Deal {damage} damage {hits} times.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "hollowAstronomer",
-    "aiWeight": 30,
-    "maxConsecutive": 1,
-    "legacyMove": "fallingHeavens"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "ashheartDragon.obsidianClaws",
     "name": "Obsidian_Claws",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
@@ -3766,28 +3031,21 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage 2 times.",
+    "textTemplate": "Deal {damage} damage {hits} times.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "owner": "enemy",
-    "enemy": "ashheartDragon",
-    "aiWeight": 45,
-    "maxConsecutive": 2,
-    "legacyMove": "obsidianClaws"
+    "exposureBuildupPerHit": 0
   },
   {
     "id": "ashheartDragon.tailBastion",
     "name": "Tail_Bastion",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "skill",
     "icon": "defend",
     "keywords": [],
@@ -3802,26 +3060,19 @@
       "camp:physical",
       "maneuver:defend",
       "classification.skill",
-      "owner:enemy",
       "trait:reaction"
     ],
-    "textTemplate": "Gain {block} Block.",
-    "owner": "enemy",
-    "enemy": "ashheartDragon",
-    "aiWeight": 25,
-    "maxConsecutive": 1,
-    "legacyMove": "tailBastion"
+    "textTemplate": "Gain {block} Block."
   },
   {
     "id": "ashheartDragon.heartRumble",
     "name": "Heart_Rumble",
-    "class": "enemy",
-    "rarity": "enemy",
-    "cost": 0,
-    "staminaCost": 0,
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 1,
+    "staminaCost": 1,
     "manaCost": 1,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "power",
     "icon": "casting",
     "keywords": [],
@@ -3836,26 +3087,19 @@
     "tags": [
       "camp:spell",
       "maneuver:casting",
-      "classification.power",
-      "owner:enemy"
+      "classification.power"
     ],
-    "textTemplate": "Apply 1 Strength to yourself.",
-    "owner": "enemy",
-    "enemy": "ashheartDragon",
-    "aiWeight": 15,
-    "maxConsecutive": 1,
-    "legacyMove": "heartRumble"
+    "textTemplate": "Apply {strength} Strength to yourself."
   },
   {
     "id": "ashheartDragon.ashBreath",
     "name": "Ash_Breath",
-    "class": "enemy",
-    "rarity": "enemy",
+    "class": "colorless",
+    "rarity": "special",
     "cost": 2,
     "staminaCost": 2,
     "manaCost": 0,
     "costRule": "fixed",
-    "costSource": "stance",
     "type": "attack",
     "icon": "smash",
     "keywords": [],
@@ -3870,22 +3114,10 @@
     "tags": [
       "camp:physical",
       "maneuver:smash",
-      "classification.attack",
-      "owner:enemy"
+      "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage 4 times. Charges for 1 turn.",
+    "textTemplate": "Deal {damage} damage {hits} times. Charges for 1 turn.",
     "damageSchool": "physical",
-    "exposureBuildupPerHit": 0,
-    "delay": {
-      "turns": 1,
-      "whileCharging": {
-        "block": 5
-      }
-    },
-    "owner": "enemy",
-    "enemy": "ashheartDragon",
-    "aiWeight": 35,
-    "maxConsecutive": 1,
-    "legacyMove": "ashBreath"
+    "exposureBuildupPerHit": 0
   }
 ]

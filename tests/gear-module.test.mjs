@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { loadGameProfileCatalog } from '../tools/game-config.mjs';
-import { resolveGameAuthor, resolveGearItem, mergeGameSettings, enemyGearIds, enemyRelicIds } from '../engine/kernel/gameConfig.js';
+import { characterSettings, resolveGameAuthor, resolveGearItem, mergeGameSettings, enemyGearIds, enemyRelicIds } from '../engine/kernel/gameConfig.js';
 
 const author = JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url)));
 const catalog = loadGameProfileCatalog();
@@ -82,7 +82,7 @@ test('Ashen Blight Core: STR +2, CON +2, WIS -1, SP -2, with SP floored at 1', a
   const { enemyPools, enemyItemBonuses } = await import('../engine/kernel/gameConfig.js');
   const core = profile.content.enemyRelics.find(r => r.id === 'enemy.relic.ashenBlightCore');
   assert.deepEqual(core.modifiers, ['self.strength=+2', 'self.constitution=+2', 'self.wisdom=-1', 'self.sp=-2']);
-  const e = profile.modules.enemies;
+  const e = characterSettings(profile.modules);
   const carriers = enemies.filter(x => enemyRelicIds(x).includes(core.id));
   const minions = enemies.filter(x => x.tier === 'minion'), elites = enemies.filter(x => x.tier === 'elite');
   assert.ok(carriers.filter(x => x.tier === 'minion').length > minions.length / 2, 'most minions');

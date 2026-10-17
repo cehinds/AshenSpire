@@ -74,5 +74,20 @@
   "art": "ashenSentry",
   "artFaces": "left",
   "tint": "rot",
-  "blighted": false
+  "blighted": false,
+  "cardHints": {
+    "ashenSentry.slash": {
+      "aiWeight": 45,
+      "maxConsecutive": 2
+    },
+    "ashenSentry.heldBlade": {
+      "aiWeight": 30,
+      "delay": {
+        "turns": 1,
+        "whileCharging": {
+          "block": 4
+        }
+      }
+    }
+  }
 }

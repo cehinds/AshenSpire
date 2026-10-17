@@ -82,6 +82,10 @@
       "version": "1.0.0",
       "settings": {}
     },
+    "characters": {
+      "version": "1.0.0",
+      "settings": {}
+    },
     "enemies": {
       "version": "1.0.0",
       "settings": {}

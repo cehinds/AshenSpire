@@ -254,7 +254,7 @@ function enemyAttributeWeights(row, settings) {
   return Object.fromEntries(order.map((id, i) => [id, ranks[i] ?? 0]));
 }
 export function resolveEnemyAttributes(row, settings, seed = null) {
-  const fill = settings.attributeFill, tier = settings.tiers[row.tier];
+  const fill = settings.attributeFill, tier = characterRule(row, settings);
   const budget = Number.isSafeInteger(row.attributePoints) ? row.attributePoints : tier.attributeBudget[1];
   const set = Object.fromEntries(ENEMY_ATTRIBUTES.map(id => [id, row.attributes?.[id] || 0]));
   const out = { ...set }, caps = { ...fill.caps, ...(row.attributeCaps || {}) };
@@ -267,7 +267,7 @@ export function resolveEnemyAttributes(row, settings, seed = null) {
     weights = open;
   }
   const v = { ...fill.variance, ...(row.variance || {}) };
-  if (seed !== null && v.points > 0) {
+  if (seed !== null && v.points > 0 && tier.variance) {
     const order = (row.attributePriority || fill.defaultPriority).slice(0, v.among);
     let h = [...String(seed) + row.id].reduce((acc, c) => (acc * 31 + c.charCodeAt(0)) >>> 0, 7);
     for (let i = 0; i < v.points; i++) {
@@ -282,7 +282,7 @@ export function resolveEnemyAttributes(row, settings, seed = null) {
 export function enemyAttributeOutcomes(row, settings) {
   const fill = settings.attributeFill, v = { ...fill.variance, ...(row.variance || {}) }, base = resolveEnemyAttributes(row, settings);
   const outcomes = [base];
-  if (!v.points) return outcomes;
+  if (!v.points || !characterRule(row, settings).variance) return outcomes;
   const order = (row.attributePriority || fill.defaultPriority).slice(0, v.among), caps = { ...fill.caps, ...(row.attributeCaps || {}) };
   let frontier = [base];
   for (let step = 0; step < v.points; step++) {
@@ -293,7 +293,26 @@ export function enemyAttributeOutcomes(row, settings) {
   }
   return outcomes;
 }
+// A character's base rule (owner 2026-10-17: one algorithm for players and enemies). Every tag it
+// carries that has a tagRules entry adds its pools and hand; budget/deck/SP ranges come from the last
+// tag that sets them. Rows without tags fall back to the legacy `tier` field.
+export function characterTags(row) {
+  return row.tags || [`character.${row.player ? 'player' : 'enemy'}`, ...(row.tier ? [`tier.${row.tier}`] : [])];
+}
+export function characterRule(row, settings) {
+  const rule = { pools: { hp: 0, sp: 0, mp: 0 }, hand: 0, attributeBudget: [0, 0], deckSize: [0, 99] };
+  for (const tag of characterTags(row)) {
+    const r = settings.tagRules?.[tag];
+    if (!r) continue;
+    for (const k of ['hp', 'sp', 'mp']) rule.pools[k] += r.pools?.[k] || 0;
+    rule.hand += r.hand || 0;
+    for (const k of ['attributeBudget', 'deckSize', 'spRange', 'deckDefault']) if (r[k]) rule[k] = r[k];
+    if (r.variance) rule.variance = true;
+  }
+  return rule;
+}
 export function enemyLevel(row, settings) {
+  if (Number.isSafeInteger(row.level)) return Math.max(1, row.level);
   const profile = row.levelProfile || {};
   return Math.max(1, settings.levelFrom === 'levelProfile.max' ? profile.max ?? 1 : profile.min ?? 1);
 }
@@ -323,7 +342,7 @@ export function enemyItemBonuses(row, content = {}, gearSettings = null) {
   return bonus;
 }
 export function enemyPools(row, settings, level = enemyLevel(row, settings), bonus = null) {
-  const tier = settings.tiers[row.tier], round = settings.rounding === 'up' ? Math.ceil : settings.rounding === 'nearest' ? Math.round : Math.floor;
+  const tier = characterRule(row, settings), round = settings.rounding === 'up' ? Math.ceil : settings.rounding === 'nearest' ? Math.round : Math.floor;
   const base = { hp: tier.pools.hp, sp: tier.pools.sp, mp: tier.pools.mp, hand: tier.hand, ar: 0, dr: 0 };
   const own = row.resolvedAttributes || resolveEnemyAttributes(row, settings);
   const attributes = Object.fromEntries(ENEMY_ATTRIBUTES.map(id => [id, Math.max(0, (own[id] || 0) + (bonus?.[id] || 0))]));
@@ -344,6 +363,71 @@ export function enemyVisibleFields(settings, viewerTags = []) {
   const shown = new Set(settings.visibility.shown);
   for (const [field, tags] of Object.entries(settings.visibility.revealedBy)) if (tags.some(tag => viewerTags.includes(tag))) shown.add(field);
   return shown;
+}
+// Default decks (owner 2026-10-17): entries are mostly pool keys, { pool: "strike", copies: 3 }, resolved
+// through content.cardPools by the character's class tag and the gear-type tag of the item in the pool's
+// slot: byClass[class][type] -> byClass[class].default -> byTag[type] -> byTag.default. Plain card ids and
+// { card, copies } entries are used as written. Players and enemies draw from the same card pool.
+export function resolveCharacterDeck(row, content = {}, gearSettings = null) {
+  const pools = content.cardPools || {}, gear = new Map((content.gear || []).map(item => [item.id, item]));
+  const bySlot = Object.fromEntries((row.defaultGear || []).map(entry => [entry.key, gear.get(entry.id)]));
+  const typeTag = item => (item?.tags || []).find(tag => gearSettings?.tags?.[tag]?.group === 'type') || null;
+  const classTag = characterTags(row).find(tag => tag.startsWith('class.')) || null;
+  const out = [];
+  for (const entry of row.defaultDeck || []) {
+    if (typeof entry === 'string') { out.push(entry); continue; }
+    const copies = Number.isSafeInteger(entry.copies) ? entry.copies : 1;
+    let id = entry.card;
+    if (entry.pool) {
+      const pool = pools[entry.pool];
+      if (!pool) fail(`$/content/characters/${row.id}/defaultDeck`, `unknown card pool '${entry.pool}'`);
+      const type = typeTag(bySlot[pool.slot]) || typeTag(bySlot[pool.fallbackSlot]);
+      const byClass = classTag ? pool.byClass?.[classTag] : null;
+      id = (type && byClass?.[type]) || byClass?.default || (type && pool.byTag?.[type]) || pool.byTag?.default;
+      if (!id) fail(`$/content/characters/${row.id}/defaultDeck`, `pool '${entry.pool}' has no card for this character`);
+    }
+    for (let i = 0; i < copies; i++) out.push(id);
+  }
+  return out;
+}
+// Enemies and players share the characters module's rules; enemy-only rules stay in the enemies module.
+export function characterSettings(modules) {
+  if (!modules.enemies) return null;
+  return { ...modules.enemies, ...(modules.characters || {}) };
+}
+// characters.json (owner 2026-10-17): players and enemies in one shape; tags decide which block applies.
+// Derives the legacy views the game still reads (content.classes, content.enemies) and merges enemy cards
+// into the one shared card pool. HP etc. use the same algorithm for both (characterRule + statRules).
+function deriveCharacterContent(content, modules) {
+  if (!modules.characters || !Array.isArray(content.characters)) return;
+  const settings = { ...(modules.enemies || {}), ...modules.characters };
+  if (Array.isArray(content.enemyCards) && !content.enemyCardsMerged) {
+    const existing = new Set((content.cards || []).map(card => card.id));
+    const added = content.enemyCards.filter(card => !existing.has(card.id));
+    content.cards = [...(content.cards || []), ...added];
+    // Same rule as player cards: a disabled pool's cost drops to 0 in that profile's variant.
+    content.resourceVariants = { ...(content.resourceVariants || {}) };
+    for (const card of added) if (!content.resourceVariants[card.id]) content.resourceVariants[card.id] = Object.fromEntries([['none', [false, false]], ['sp', [true, false]], ['mp', [false, true]], ['sp,mp', [true, true]]]
+      .map(([key, [sp, mp]]) => [key, { cost: sp ? card.staminaCost : 0, staminaCost: sp ? card.staminaCost : 0, manaCost: mp ? card.manaCost : 0 }]));
+    content.enemyCardsMerged = true;
+  }
+  const players = content.characters.filter(c => c.tags?.includes('character.player'));
+  const enemies = content.characters.filter(c => c.tags?.includes('character.enemy'));
+  const flat = c => ({ ...c, ...(c.presentation || {}), ...(c.enemy || {}), ...(c.player || {}) });
+  content.enemies = enemies.map(c => { const row = flat(c); row.defaultDeck = resolveCharacterDeck(c, content, modules.gear); row.tier = (c.tags.find(t => t.startsWith('tier.')) || 'tier.minion').slice(5); delete row.presentation; delete row.enemy; return row; });
+  content.classes = players.map(c => {
+    const row = flat(c), gear = Object.fromEntries((c.defaultGear || []).map(g => [g.key, g.id]));
+    const attributes = resolveEnemyAttributes(c, settings);
+    const pools = enemyPools({ ...c, resolvedAttributes: attributes }, settings, enemyLevel(c, settings), enemyItemBonuses(c, content, modules.gear));
+    const deck = resolveCharacterDeck(c, content, modules.gear), cards = new Set((content.cards || []).map(card => card.id));
+    for (const id of deck) if (!cards.has(id)) fail(`$/content/characters/${c.id}/defaultDeck`, `unresolved card '${id}'`);
+    return { id: c.id, name: row.displayName || displayName(c.name), attributes, defaultDeck: deck, loadout: { rightHand: gear.mainHand ?? null, leftHand: gear.offHand ?? null }, specialCardId: row.specialCardId, maxHp: pools.hp, ...(row.description ? { description: row.description } : {}) };
+  });
+  if (Array.isArray(content.enemyCards) && !content.enemyCardsMerged) {
+    const existing = new Set((content.cards || []).map(card => card.id));
+    content.cards = [...(content.cards || []), ...content.enemyCards.filter(card => !existing.has(card.id))];
+    content.enemyCardsMerged = true;
+  }
 }
 function verifyEnemyContent(content, settings, gearSettings = null) {
   if (!settings) return;
@@ -383,7 +467,8 @@ function verifyEnemyContent(content, settings, gearSettings = null) {
       if (effect.target !== undefined && !TARGETS.has(effect.target)) fail(`${at}/effects/${i}/target`, `unknown owner-relative target '${effect.target}'`);
       if ((effect.amount !== undefined || ['damage', 'block'].includes(effect.op)) && !adapterAmount(effect.amount)) fail(`${at}/effects/${i}/amount`, 'expected nonnegative finite adapter amount');
     }
-    if (card.costSource === 'healRules') {
+    const hint = (content.enemies || []).map(e => e.cardHints?.[card.id]).find(Boolean);
+    if (card.tags.includes('fx:heal') && (hint?.costSource ?? 'healRules') === 'healRules') {
       const shapes = settings.healRules.shapes.filter(s => s.tags.every(t => card.tags.includes(t)));
       if (!shapes.length) fail(`$/content/enemyCards/${card.id}/tags`, 'healRules cost source but no heal shape matches its tags');
       const shape = settings.healRules.match === 'first' ? shapes[0] : shapes.sort((a, b) => b.tags.length - a.tags.length)[0];
@@ -395,8 +480,8 @@ function verifyEnemyContent(content, settings, gearSettings = null) {
     const at = `${base}/${row.id}`;
     if (!row.id || ids.has(row.id)) fail(base, `duplicate or missing enemy ID '${row.id}'`);
     ids.add(row.id);
-    const tier = settings.tiers[row.tier];
-    if (!tier || !settings.include.includes(row.tier)) fail(`${at}/tier`, 'unknown or excluded tier');
+    const tier = characterRule(row, settings);
+    if (!settings.include.includes(row.tier)) fail(`${at}/tier`, 'unknown or excluded tier');
     if (row.attributes !== undefined && (!record(row.attributes) || Object.keys(row.attributes).some(k => !ENEMY_ATTRIBUTES.includes(k)) || Object.values(row.attributes).some(n => !Number.isSafeInteger(n) || n < 0))) fail(`${at}/attributes`, 'expected nonnegative integer attributes');
     for (const id of row.attributePriority || []) if (!ENEMY_ATTRIBUTES.includes(id)) fail(`${at}/attributePriority`, `unknown attribute '${id}'`);
     const total = Object.values(resolveEnemyAttributes(row, settings)).reduce((a, b) => a + b, 0);
@@ -476,6 +561,7 @@ export function resolveGameAuthor(author, catalog) {
     for (const [key,value] of Object.entries(pack.content)) { if (key in content) fail(`$/content/${key}`, 'duplicate pack content key'); content[key] = dataClone(value); }
   }
   appendBaseCardContent(content, modules, bundle.manifest.foundationMode);
+  deriveCharacterContent(content, modules);
   for (const binding of bundle.manifest.policyBindings || []) {
     if (!modules[binding.module]) continue;
     const policy = content[binding.content];
@@ -493,7 +579,7 @@ export function resolveGameAuthor(author, catalog) {
     for (const [field, setting] of Object.entries(binding.settings)) policy[field] = dataClone(modules[binding.module][setting]);
   }
   verifySettings(modules, instances);
-  verifyContent(content); verifyGearContent(content, modules.gear); verifyEnemyContent(content, modules.enemies, modules.gear);
+  verifyContent(content); verifyGearContent(content, modules.gear); verifyEnemyContent(content, characterSettings(modules), modules.gear);
   if (content.classes) {
     content.classAttributes = Object.fromEntries(content.classes.map(row => [row.id, row.attributes]));
     content.startingHands = Object.fromEntries(content.classes.map(row => [row.id, content.stats.handBase + row.attributes.intelligence]));
@@ -518,6 +604,6 @@ export function validateResolvedGameProfile(snapshot, supportedRuntimeHash) {
     if (!value.schemas[id]) fail(`$/modules/${id}`, 'missing pinned settings schema');
     validateGameSchema(settings,value.schemas[id],`$/modules/${id}`);
   }
-  verifySettings(value.modules, value.instances); verifyContent(value.content); verifyGearContent(value.content, value.modules.gear); verifyEnemyContent(value.content, value.modules.enemies, value.modules.gear);
+  verifySettings(value.modules, value.instances); verifyContent(value.content); verifyGearContent(value.content, value.modules.gear); verifyEnemyContent(value.content, characterSettings(value.modules), value.modules.gear);
   return freezeGameData({...value,hash});
 }

@@ -2,7 +2,8 @@
   "id": "ashen.core-content",
   "version": "1.0.0",
   "content": {
-    "classes": "classes.json",
+    "characters": "characters.json",
+    "cardPools": "cardPools.json",
     "cards": "cards.json",
     "starterDeck": "starterDeck.json",
     "stats": "stats.json",
@@ -13,7 +14,6 @@
     "provisionalPolicies": "provisionalPolicies.json",
     "resourceVariants": "resourceVariants.json",
     "shops": "shops.json",
-    "enemies": "enemies.json",
     "enemyCards": "enemyCards.json",
     "enemyRelics": "enemyRelics.json",
     "gear": "gear.json"

@@ -4,12 +4,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { loadGameProfileCatalog } from '../tools/game-config.mjs';
-import { resolveGameAuthor, enemyPools, resolveEnemyAttributes, enemyAttributeOutcomes } from '../engine/kernel/gameConfig.js';
+import { characterSettings, resolveGameAuthor, enemyPools, resolveEnemyAttributes, enemyAttributeOutcomes } from '../engine/kernel/gameConfig.js';
 
 const author = JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url)));
 const catalog = loadGameProfileCatalog();
 const profile = resolveGameAuthor(author, catalog);
-const settings = profile.modules.enemies;
+const settings = characterSettings(profile.modules);
 const { enemyCards } = profile.content;
 // Resolved view: attributes filled from priority (no variance), deck from defaultDeck.
 const enemies = profile.content.enemies.map(e => ({ ...e, attributes: resolveEnemyAttributes(e, settings), deck: e.defaultDeck }));
@@ -18,7 +18,10 @@ const enemies = profile.content.enemies.map(e => ({ ...e, attributes: resolveEne
 function resolveWith(edit, authorEdit = a => a) {
   const copy = structuredClone(catalog);
   const pack = copy.packs['ashen.core-content@1.0.0'].content;
-  edit(pack);
+  // Enemy rows are characters tagged character.enemy; expose them as pack.enemies for edits.
+  const view = { ...pack, enemies: pack.characters.filter(c => c.tags.includes('character.enemy')) };
+  edit(view);
+  for (const key of Object.keys(view)) if (key !== 'enemies') pack[key] = view[key];
   return () => resolveGameAuthor(authorEdit(structuredClone(author)), copy);
 }
 
@@ -36,7 +39,7 @@ test('attributes start at 0 and are assigned freely: minion 2, elite 4, boss 6 p
   for (const e of enemies) {
     const [lo, hi] = { minion: [2, 2], elite: [4, 4], boss: [6, 6] }[e.tier];
     assert.ok(total(e) >= lo && total(e) <= hi, `${e.id} (${e.tier}) assigns ${total(e)}`);
-    assert.deepEqual(settings.tiers[e.tier].attributeBudget, [lo, hi]);
+    assert.deepEqual(settings.tagRules['tier.' + e.tier].attributeBudget, [lo, hi]);
   }
   // Free assignment: stat shapes differ between enemies.
   assert.ok(new Set(enemies.map(e => JSON.stringify(e.attributes))).size >= 8, 'stat shapes vary');
@@ -55,7 +58,7 @@ test('CON stays small (at most 1) and every enemy can pay its dearest card', () 
 
 test('HP is 10 + CON 10 / STR 5 / DEX 3 / WIS 2 / INT 1 per point + 5 per level, plus the level term; SP/MP/AR/DR/hand follow the existing stat rows', () => {
   assert.deepEqual(settings.statRules.hp, { strength: 5, dexterity: 3, constitution: 10, wisdom: 2, intelligence: 1, perLevel: 5 });
-  for (const tier of ['minion', 'elite', 'boss']) assert.equal(settings.tiers[tier].pools.hp, 10);
+  for (const tier of ['minion', 'elite', 'boss']) assert.equal(settings.tagRules['tier.' + tier].pools.hp, 10);
   for (const e of enemies) {
     const level = Math.max(1, e.levelProfile?.min ?? 1);
     const p = enemyPools(e, settings);
@@ -77,17 +80,17 @@ test('enemy decks vary in size within the configured bounds and resolve every re
 });
 
 test('heal cards take their cost from healRules; minion heals are the cheap exhaust shape', () => {
-  const heals = enemyCards.filter(c => c.tags.includes('heal'));
+  const heals = enemyCards.filter(c => c.tags.includes('fx:heal'));
   assert.ok(heals.length > 0);
   for (const card of heals) {
-    const owner = enemies.find(e => e.id === card.enemy);
+    const owner = enemies.find(e => e.defaultDeck.includes(card.id) || (e.unlockCards || []).includes(card.id));
     if (owner.tier === 'minion') {
-      assert.ok(card.tags.includes('exhaust'), `${card.id} exhausts`);
+      assert.ok(card.tags.includes('lifecycle.exhaust') && card.keywords.includes('exhaust'), `${card.id} exhausts`);
       assert.deepEqual([card.staminaCost, card.manaCost], [1, 1]);
     } else {
       assert.deepEqual([card.staminaCost, card.manaCost], [3, 2]);
     }
-    assert.ok(card.effects.some(e => e.op === 'heal' && e.rule === 'healRules'));
+    assert.ok(card.effects.some(e => e.op === 'heal' && e.amount >= 1));
   }
 });
 
@@ -107,7 +110,7 @@ test('validator refuses a card the enemy can never afford (minion full heal)', (
   assert.throws(resolveWith(p => {
     const wisp = p.enemies.find(e => e.id === 'graveWisp');
     const drain = p.enemyCards.find(c => c.id === 'graveWisp.drain');
-    drain.tags = drain.tags.filter(t => t !== 'exhaust');
+    drain.tags = drain.tags.filter(t => t !== 'lifecycle.exhaust');
     drain.staminaCost = 3; drain.manaCost = 2;
     assert.ok(wisp.defaultDeck.includes(drain.id));
   }), /costs 3 SP\/2 MP; enemy has 2 SP/);
@@ -176,5 +179,31 @@ test('defaultDeck and keyed defaultGear / defaultRelics lists', () => {
       assert.equal(new Set(e[list].map(x => x.key)).size, e[list].length, `${e.id}.${list} keys unique`);
     }
   }
-  assert.throws(resolveWith(p => { const e = p.enemies.find(x => x.tier === 'boss'); e.defaultGear = [{ key: 'mainHand', id: 'dagger' }, { key: 'mainHand', id: 'katana' }]; }), /duplicate key/);
+  assert.throws(resolveWith(p => { const e = p.enemies.find(x => x.tags.includes('tier.boss')); e.defaultGear = [{ key: 'mainHand', id: 'dagger' }, { key: 'mainHand', id: 'katana' }]; }), /duplicate key/);
+});
+
+test('players and enemies share one character shape; tags pick the block; one HP algorithm', () => {
+  const chars = profile.content.characters;
+  const players = chars.filter(c => c.tags.includes('character.player')), foes = chars.filter(c => c.tags.includes('character.enemy'));
+  assert.equal(players.length, 4); assert.equal(foes.length, 33);
+  const shared = ['id', 'name', 'tags', 'attributePriority', 'defaultDeck', 'defaultGear', 'defaultRelics', 'presentation'];
+  for (const c of chars) for (const key of shared) assert.ok(key in c, `${c.id}.${key}`);
+  for (const p of players) assert.ok(p.player && !p.enemy, p.id);
+  for (const f of foes) assert.ok(f.enemy && !f.player, f.id);
+  // Legacy class HP is kept by the class tag base, computed with the same algorithm as enemies.
+  assert.deepEqual(Object.fromEntries(profile.content.classes.map(c => [c.id, c.maxHp])), { reaver: 84, starseer: 72, rogue: 74, herald: 78 });
+});
+
+test('default decks are pool keys resolved by class and weapon type, from the shared card pool', () => {
+  const reaver = profile.content.characters.find(c => c.id === 'reaver');
+  assert.ok(reaver.defaultDeck.some(e => e.pool === 'strike'));
+  const pool = new Set(profile.content.cards.map(c => c.id));
+  for (const c of profile.content.classes) for (const id of c.defaultDeck) assert.ok(pool.has(id), `${c.id} -> ${id}`);
+  for (const e of profile.content.enemies) for (const id of e.defaultDeck) assert.ok(pool.has(id), `${e.id} -> ${id}`);
+  // A weapon-type override changes what the strike pool deals the Reaver (greatsword) but not the Rogue (dagger).
+  const copy = structuredClone(catalog);
+  copy.packs['ashen.core-content@1.0.0'].content.cardPools.strike.byTag.greatsword = 'core.smash';
+  const changed = resolveGameAuthor(structuredClone(author), copy).content.classes;
+  assert.equal(changed.find(c => c.id === 'reaver').defaultDeck.filter(id => id === 'core.smash').length, 4);
+  assert.equal(changed.find(c => c.id === 'rogue').defaultDeck.filter(id => id === 'core.smash').length, 1);
 });

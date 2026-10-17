@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Re-runnable conversion: legacy weighted `moves` enemies (src/content/enemies/act1-3.js) -> enemies-module
-// pack JSON (games/ashenspire/packs/core/enemies.json, enemyCards.json, enemyRelics.json). Owner 2026-10-17,
+// pack JSON (games/ashenspire/packs/core/characters.json enemy rows, enemyCards.json, enemyRelics.json). Owner 2026-10-17,
 // docs/plans/enemy-decks.md. Enemies follow the player's rules: player-shaped cards with owner-relative
 // targets (`enemy` = the opponent, `self` = the owner), the player's gear (gear.json, lootable), attribute
 // relics, and stats from attributes + level. The JSON is the source of truth after conversion.
@@ -9,13 +9,14 @@
 import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { enemyPools, enemyItemBonuses, resolveGearItem, mergeGameSettings, resolveEnemyAttributes, enemyAttributeOutcomes } from '../engine/kernel/gameConfig.js';
+import { enemyPools, enemyItemBonuses, resolveGearItem, mergeGameSettings, resolveEnemyAttributes, enemyAttributeOutcomes, characterRule } from '../engine/kernel/gameConfig.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PACK = 'games/ashenspire/packs/core';
 const DRY = process.argv.includes('--dry');
 const json = path => JSON.parse(readFileSync(resolve(ROOT, path), 'utf8'));
-const settings = json('engine/modules/enemies/defaults.json');
+// One algorithm for players and enemies: characters module rules + enemy-only rules.
+const settings = { ...json('engine/modules/enemies/defaults.json'), ...json('engine/modules/characters/defaults.json') };
 const bundle = json('games/ashenspire/bundles/core/bundle.json');
 const gearSettings = mergeGameSettings(json('engine/modules/gear/defaults.json'), bundle.modules.gear?.settings || {});
 const gear = json(`${PACK}/gear.json`);
@@ -43,9 +44,9 @@ function tierOf(id) {
 
 // Attribute points (owner 2026-10-17): minion 2, elite 4, boss 6. Gear per tier and the rarest it may be.
 const PLAN = {
-  minion: { budget: 2, deck: 6, gear: ['rightHand'], maxRarity: 'common', relics: 0 },
-  elite: { budget: 4, deck: 8, gear: ['rightHand', 'armor'], maxRarity: 'uncommon', relics: 0 },
-  boss: { budget: 6, deck: 10, gear: ['rightHand', 'leftHand', 'armor'], maxRarity: 'rare', relics: 1 },
+  minion: { budget: 2, gear: ['rightHand'], maxRarity: 'common', relics: 0 },
+  elite: { budget: 4, gear: ['rightHand', 'armor'], maxRarity: 'uncommon', relics: 0 },
+  boss: { budget: 6, gear: ['rightHand', 'leftHand', 'armor'], maxRarity: 'rare', relics: 1 },
 };
 const ATTRS = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
 const words = s => String(s).replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/^./, c => c.toUpperCase());
@@ -71,48 +72,43 @@ function cardFor(enemy, tier, moveId, move) {
   const maneuver = maneuverOf(move);
   const heal = (move.effects || []).some(isSelfHeal);
   const type = Number.isFinite(move.damage) || maneuver === 'counter' ? 'attack' : maneuver === 'casting' ? 'power' : 'skill';
-  const tags = [`camp:${maneuver === 'casting' ? 'spell' : 'physical'}`, `maneuver:${maneuver}`, `classification.${type}`, 'owner:enemy'];
+  const tags = [`camp:${maneuver === 'casting' ? 'spell' : 'physical'}`, `maneuver:${maneuver}`, `classification.${type}`];
   if (['defend', 'counter'].includes(maneuver)) tags.push('trait:reaction');
-  if (heal) { tags.push('heal'); if (tier === 'minion') tags.push('exhaust'); }
+  if (heal) { tags.push('fx:heal'); if (tier === 'minion') tags.push('lifecycle.exhaust'); }
   const effects = [];
   if (Number.isFinite(move.block)) effects.push({ op: 'block', target: 'self', amount: move.block });
   if (Number.isFinite(move.damage)) effects.push({ op: 'damage', target: 'enemy', amount: move.damage, ...(move.hits > 1 ? { hits: move.hits } : {}) });
   if (Number.isFinite(move.counterDamage)) effects.push({ op: 'damage', target: 'enemy', amount: move.counterDamage });
-  for (const e of move.effects || []) effects.push(isSelfHeal(e) ? { op: 'heal', target: 'self', rule: 'healRules' } : { ...structuredClone(e), target: relative(e.target ?? (e.op === 'addCard' ? 'player' : 'self')) });
+  for (const e of move.effects || []) effects.push(isSelfHeal(e) ? { op: 'heal', target: 'self', amount: 0 } : { ...structuredClone(e), target: relative(e.target ?? (e.op === 'addCard' ? 'player' : 'self')) });
   let cost = settings.stanceCosts[maneuver], costSource = 'stance';
   if (heal) { cost = healShape(tags).cost; costSource = 'healRules'; }
   else if (Number.isFinite(move.sp)) { cost = { sp: move.sp, mp: 0 }; costSource = 'authored'; }
   const text = [];
   if (Number.isFinite(move.block)) text.push('Gain {block} Block.');
-  if (Number.isFinite(move.damage)) text.push(move.hits > 1 ? `Deal {damage} damage ${move.hits} times.` : 'Deal {damage} damage.');
+  if (Number.isFinite(move.damage)) text.push(move.hits > 1 ? 'Deal {damage} damage {hits} times.' : 'Deal {damage} damage.');
   if (Number.isFinite(move.counterDamage)) text.push('Prepare Counter: return {damage} damage.');
-  if (heal) text.push(`Heal ${healShape(tags).amount.percentMaxHp}% max HP.`);
-  for (const e of move.effects || []) if (e.op === 'applyStatus') text.push(`Apply ${e.stacks ?? e.value ?? ''} ${words(e.status)} to ${e.target === 'self' ? 'yourself' : 'the enemy'}.`);
+  if (heal) text.push('Heal {heal} HP.');
+  for (const e of move.effects || []) if (e.op === 'applyStatus') text.push(`Apply {${e.status}} ${words(e.status)} to ${e.target === 'self' ? 'yourself' : 'the enemy'}.`);
   for (const e of move.effects || []) if (e.op === 'addCard') text.push(`Shuffle ${words(e.card)} into the enemy's ${e.pile}.`);
+  if (effects.some(e => e.op === 'block') && !text.some(t => t.includes('{block}'))) text.push('Gain {block} Block.');
   if (move.delay) text.push(`Charges for ${move.delay.turns} turn${move.delay.turns === 1 ? '' : 's'}.`);
   return {
     id: `${enemy.id}.${moveId}`,
     name: nameOf(words(moveId)),
-    class: 'enemy',
-    rarity: 'enemy',
+    class: 'colorless',
+    rarity: 'special',
     cost: cost.sp,
     staminaCost: cost.sp,
     manaCost: cost.mp,
     costRule: 'fixed',
-    costSource,
     type,
     icon: maneuver,
-    keywords: tags.includes('exhaust') ? ['exhaust'] : [],
+    keywords: tags.includes('lifecycle.exhaust') ? ['exhaust'] : [],
     effects,
     tags,
     textTemplate: text.join(' '),
     ...(type === 'attack' ? { damageSchool: maneuver === 'casting' ? 'magic' : 'physical', exposureBuildupPerHit: 0 } : {}),
-    ...(move.delay ? { delay: structuredClone(move.delay) } : {}),
-    owner: 'enemy',
-    enemy: enemy.id,
-    aiWeight: move.weight ?? 1,
-    ...(move.maxConsecutive ? { maxConsecutive: move.maxConsecutive } : {}),
-    legacyMove: moveId,
+    costSource,
   };
 }
 
@@ -188,8 +184,9 @@ for (const enemy of roster) {
   const moves = Object.entries(enemy.moves || {});
   const enemyCards = moves.map(([moveId, move]) => cardFor(enemy, tier, moveId, move));
   const active = moves.map(([id, m], i) => ({ id, m, card: enemyCards[i] })).filter(x => !x.m.locked);
-  const t = settings.tiers[tier];
-  const size = Math.max(active.length, Math.min(t.deckSize[1], Math.max(t.deckSize[0], plan.deck)));
+  const t = characterRule({ tier }, settings);
+  // Default deck sizes (owner 2026-10-17): minion 3, elite 5, boss 7; an enemy with more distinct cards keeps one of each.
+  const size = Math.max(active.length, Math.min(t.deckSize[1], Math.max(t.deckSize[0], t.deckDefault)));
   const copies = split(size - active.length, active.map(x => x.m.weight ?? 1)).map(n => n + 1);
   const deck = active.flatMap((x, i) => Array(copies[i]).fill(x.card.id));
   const { attributes, attributePriority } = attributesFor(enemy, plan, enemyCards, tier);
@@ -212,6 +209,10 @@ for (const enemy of roster) {
     ...(enemy.blighted ? { blighted: true } : {}),
     ...(enemy.arcaneExposure ? { arcaneExposure: structuredClone(enemy.arcaneExposure) } : {}),
     ...(phases ? { phases } : {}),
+    // Enemy-only planner hints, keyed by card id; the cards themselves stay plain player cards.
+    cardHints: Object.fromEntries(moves.map(([moveId, move], i) => [enemyCards[i].id, {
+      aiWeight: move.weight ?? 1, ...(move.maxConsecutive ? { maxConsecutive: move.maxConsecutive } : {}),
+      ...(move.delay ? { delay: structuredClone(move.delay) } : {}), costSource: enemyCards[i].costSource, legacyMove: moveId }])),
   };
   {
     const owned = [...row.defaultDeck, ...(row.unlockCards || [])].map(id => enemyCards.find(c => c.id === id));
@@ -219,6 +220,10 @@ for (const enemy of roster) {
     if (row.defaultRelics.some(r => r.id === 'enemy.relic.ashenBlightCore') && !affordable(row)) row.defaultRelics = row.defaultRelics.filter(r => r.id !== 'enemy.relic.ashenBlightCore');
   }
   enemies.push(row);
+  {
+    const maxHp = enemyPools(row, settings, undefined, enemyItemBonuses(row, content, gearSettings)).hp;
+    for (const card of enemyCards) for (const e of card.effects) if (e.op === 'heal' && card.tags.includes('fx:heal')) e.amount = Math.max(1, Math.floor(maxHp * healShape(card.tags).amount.percentMaxHp / 100));
+  }
   cards.push(...enemyCards);
   const p = enemyPools(row, settings, undefined, enemyItemBonuses(row, content, gearSettings));
   const legacy = Math.round(((enemy.hp?.[0] ?? 0) + (enemy.hp?.[1] ?? 0)) / 2);
@@ -228,8 +233,10 @@ console.log(report.join('\n'));
 console.log(`\n${enemies.length} enemies, ${cards.length} cards, ${RELICS.length} relics`);
 if (!DRY) {
   const write = (name, value) => writeFileSync(resolve(ROOT, PACK, name), JSON.stringify(value, null, 2) + '\n');
-  write('enemies.json', enemies);
-  write('enemyCards.json', cards);
+  // Enemies live in characters.json with the players (tools/characters-convert.mjs).
+  const { writeCharacters } = await import('./characters-convert.mjs');
+  console.log(writeCharacters({ enemies }));
+  write('enemyCards.json', cards.map(({ costSource, ...card }) => card));
   write('enemyRelics.json', RELICS.map(r => ({ ...r, text: relicText(r) })));
-  console.log(`wrote ${PACK}/enemies.json, enemyCards.json, enemyRelics.json`);
+  console.log(`wrote ${PACK}/characters.json (enemies), enemyCards.json, enemyRelics.json`);
 }
