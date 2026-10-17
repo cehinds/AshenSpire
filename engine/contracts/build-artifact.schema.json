@@ -1,0 +1,91 @@
+{
+  "$id": "ashen.build@1",
+  "title": "Compiled build artifact",
+  "type": "object",
+  "properties": {
+    "format": {
+      "const": "ashen.build@1"
+    },
+    "game": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$"
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "hash": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "profile": {
+      "type": "object"
+    },
+    "tags": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[a-z0-9][A-Za-z0-9_.-]*$"
+      }
+    },
+    "runtime": {
+      "type": "object"
+    },
+    "mechanics": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "manifest": {
+            "type": "object"
+          },
+          "model": {
+            "type": "object"
+          },
+          "interface": {
+            "type": "object"
+          },
+          "service": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "manifest",
+          "interface",
+          "service"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "content": {
+      "type": "object"
+    },
+    "ui": {
+      "type": "object"
+    },
+    "maps": {
+      "type": "object"
+    },
+    "assets": {
+      "type": "object"
+    },
+    "report": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "format",
+    "game",
+    "version",
+    "hash",
+    "profile",
+    "tags",
+    "mechanics",
+    "content",
+    "ui",
+    "maps",
+    "assets",
+    "report"
+  ],
+  "additionalProperties": false
+}

@@ -52,6 +52,14 @@ export function mergeGameSettings(base, override) {
   return out;
 }
 export function validateGameSchema(value, schema, path = '$') {
+  // anyOf / const / pattern: used by the mechanics, UI, map and build contracts (engine/contracts).
+  if (Array.isArray(schema.anyOf)) {
+    const errors = [];
+    for (const option of schema.anyOf) { try { validateGameSchema(value, option, path); return; } catch (error) { errors.push(error.message); } }
+    fail(path, `matched no anyOf option (${errors.length})`);
+  }
+  if ('const' in schema && canonicalGameJSON(value) !== canonicalGameJSON(schema.const)) fail(path, `expected ${JSON.stringify(schema.const)}`);
+  if (typeof schema.pattern === 'string' && typeof value === 'string' && !new RegExp(schema.pattern).test(value)) fail(path, `does not match ${schema.pattern}`);
   if (schema.enum && !schema.enum.includes(value)) fail(path, `expected one of ${schema.enum.join(', ')}`);
   const type = schema.type;
   if (type === 'object') {

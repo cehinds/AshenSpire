@@ -1,0 +1,29 @@
+{
+  "$id": "ashen.mechanic-cases@1",
+  "title": "Mechanic behaviour cases",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string",
+        "minLength": 1
+      },
+      "given": {
+        "type": "object"
+      },
+      "when": {
+        "type": "object"
+      },
+      "then": {
+        "type": "object"
+      }
+    },
+    "required": [
+      "name",
+      "when",
+      "then"
+    ],
+    "additionalProperties": false
+  }
+}

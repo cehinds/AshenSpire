@@ -1,0 +1,53 @@
+{
+  "$id": "ashen.mechanic-service@1",
+  "title": "Mechanic service",
+  "type": "object",
+  "properties": {
+    "mechanic": {
+      "type": "string",
+      "pattern": "^[a-z0-9][A-Za-z0-9_.-]*$"
+    },
+    "handlers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "on": {
+            "type": "string",
+            "pattern": "^(command|event)\\.[A-Za-z0-9_.:-]+$"
+          },
+          "when": {
+            "type": "object"
+          },
+          "do": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "description": "An effect object ({ op, ... }) or a control step (if, forEach, emit, call, set)."
+            }
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "on",
+          "do"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "modifiers": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "Passive modifiers (equipment vocabulary, e.g. strike.poise=+3) the mechanic contributes while bound."
+    }
+  },
+  "required": [
+    "mechanic",
+    "handlers"
+  ],
+  "additionalProperties": false
+}
