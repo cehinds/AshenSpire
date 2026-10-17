@@ -10,7 +10,7 @@
   "costRule": "fixed",
   "costSource": "healRules",
   "type": "power",
-  "icon": "✦",
+  "icon": "casting",
   "keywords": [
     "exhaust"
   ],

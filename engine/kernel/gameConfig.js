@@ -309,10 +309,15 @@ function verifyEnemyContent(content, settings, gearSettings = null) {
   // Enemy cards are player cards (same fields, same price and amount rules); targets are relative to
   // the card's owner (`enemy` = the opponent), so a future module can hand an enemy's deck to any controller.
   const TARGETS = new Set(['enemy', 'self', 'allEnemies', 'randomEnemy', 'ally', 'allAllies']);
+  // Owner 2026-10-17: values are letters, words or numbers, never glyphs.
+  const WORD = /^[A-Za-z0-9][A-Za-z0-9 _.-]*$/;
+  const words = (at, row, keys) => { for (const key of keys) if (row[key] !== undefined && !WORD.test(String(row[key]))) fail(`${at}/${key}`, 'expected letters, words or numbers, not symbols'); };
+  for (const row of content.enemies) words(`$/content/enemies/${row.id}`, row, ['art', 'tint', 'size', 'artFaces']);
   for (const card of content.enemyCards) {
     const at = `$/content/enemyCards/${card.id}`;
     for (const key of ['cost', 'staminaCost', 'manaCost']) if (!(key === 'cost' && card[key] === 'X') && (!Number.isSafeInteger(card[key]) || card[key] < 0)) fail(`${at}/${key}`, 'expected nonnegative integer price');
     for (const key of ['name', 'class', 'rarity', 'costRule', 'type', 'textTemplate']) if (typeof card[key] !== 'string') fail(`${at}/${key}`, 'expected player-card string field');
+    words(at, card, ['icon', 'type', 'class', 'rarity']);
     if (!Array.isArray(card.tags) || !Array.isArray(card.effects) || !Array.isArray(card.keywords)) fail(at, 'expected tags, keywords and effects arrays');
     for (const [i, effect] of card.effects.entries()) {
       if (effect.target !== undefined && !TARGETS.has(effect.target)) fail(`${at}/effects/${i}/target`, `unknown owner-relative target '${effect.target}'`);

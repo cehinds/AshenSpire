@@ -47,8 +47,8 @@
     }
   ],
   "size": "medium",
-  "art": "⚔",
+  "art": "ashenSentry",
   "artFaces": "left",
-  "tint": "var(--rot)",
+  "tint": "rot",
   "blighted": false
 }

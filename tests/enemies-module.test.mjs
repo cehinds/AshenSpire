@@ -131,3 +131,10 @@ test('enemy SP/MP and other internals stay hidden unless a revealing tag is held
   assert.ok(insight.has('sp') && insight.has('mp') && insight.has('cardCosts'));
   assert.ok(enemyVisibleFields(settings, ['bestiary']).has('gear'));
 });
+
+test('display values are letters, words or numbers, never glyphs', () => {
+  const WORD = /^[A-Za-z0-9][A-Za-z0-9 _.-]*$/;
+  for (const card of enemyCards) assert.match(card.icon, WORD, card.id);
+  for (const e of enemies) for (const key of ['art', 'tint', 'size']) if (e[key] !== undefined) assert.match(String(e[key]), WORD, `${e.id}.${key}`);
+  assert.throws(resolveWith(p => { p.enemyCards[0].icon = '\u2694'; }), /letters, words or numbers/);
+});

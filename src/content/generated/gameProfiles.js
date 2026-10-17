@@ -5896,7 +5896,7 @@ export const gameProfileCatalog = {
               "max": 4
             },
             "size": "medium",
-            "art": "⚔",
+            "art": "wanderingSoldier",
             "arcaneExposure": {
               "mode": "configured",
               "threshold": 8,
@@ -5942,9 +5942,9 @@ export const gameProfileCatalog = {
               "max": 3
             },
             "size": "small",
-            "art": "🐕",
+            "art": "blightHound",
             "artFaces": "left",
-            "tint": "var(--rot)",
+            "tint": "rot",
             "blighted": true
           },
           {
@@ -5978,7 +5978,7 @@ export const gameProfileCatalog = {
               "max": 5
             },
             "size": "medium",
-            "art": "🪨"
+            "art": "huskBrute"
           },
           {
             "id": "graveWisp",
@@ -6009,8 +6009,8 @@ export const gameProfileCatalog = {
               "max": 4
             },
             "size": "small",
-            "art": "👻",
-            "tint": "var(--grace)"
+            "art": "graveWisp",
+            "tint": "grace"
           },
           {
             "id": "wyrmAspirant",
@@ -6045,8 +6045,8 @@ export const gameProfileCatalog = {
               "max": 6
             },
             "size": "large",
-            "art": "🐲",
-            "tint": "var(--gold)"
+            "art": "wyrmAspirant",
+            "tint": "gold"
           },
           {
             "id": "fellWarden",
@@ -6089,8 +6089,8 @@ export const gameProfileCatalog = {
               "max": 7
             },
             "size": "large",
-            "art": "👁",
-            "tint": "var(--blood)",
+            "art": "fellWarden",
+            "tint": "blood",
             "phases": [
               {
                 "on": "hpBelowPct",
@@ -6150,7 +6150,7 @@ export const gameProfileCatalog = {
               "max": 5
             },
             "size": "small",
-            "art": "◆",
+            "art": "lanternMoth",
             "artFaces": "left"
           },
           {
@@ -6185,7 +6185,7 @@ export const gameProfileCatalog = {
               "max": 5
             },
             "size": "medium",
-            "art": "◆",
+            "art": "briarHermit",
             "artFaces": "left"
           },
           {
@@ -6217,7 +6217,7 @@ export const gameProfileCatalog = {
               "max": 5
             },
             "size": "medium",
-            "art": "◆",
+            "art": "chainScavenger",
             "artFaces": "left"
           },
           {
@@ -6261,7 +6261,7 @@ export const gameProfileCatalog = {
               "max": 7
             },
             "size": "large",
-            "art": "◆",
+            "art": "bellKeeper",
             "artFaces": "left",
             "phases": [
               {
@@ -6312,7 +6312,7 @@ export const gameProfileCatalog = {
               "max": 7
             },
             "size": "large",
-            "art": "◆",
+            "art": "thornMatriarch",
             "artFaces": "left",
             "phases": [
               {
@@ -6363,8 +6363,8 @@ export const gameProfileCatalog = {
               "max": 9
             },
             "size": "medium",
-            "art": "♞",
-            "tint": "var(--gold)"
+            "art": "gildedKnight",
+            "tint": "gold"
           },
           {
             "id": "courtSurgeon",
@@ -6395,8 +6395,8 @@ export const gameProfileCatalog = {
               "max": 9
             },
             "size": "medium",
-            "art": "⚕",
-            "tint": "var(--grace)"
+            "art": "courtSurgeon",
+            "tint": "grace"
           },
           {
             "id": "stitchedHound",
@@ -6429,9 +6429,9 @@ export const gameProfileCatalog = {
               "max": 8
             },
             "size": "small",
-            "art": "🐩",
+            "art": "stitchedHound",
             "artFaces": "left",
-            "tint": "var(--blood)"
+            "tint": "blood"
           },
           {
             "id": "courtMarionette",
@@ -6464,8 +6464,8 @@ export const gameProfileCatalog = {
               "max": 9
             },
             "size": "small",
-            "art": "🪆",
-            "tint": "var(--rot)"
+            "art": "courtMarionette",
+            "tint": "rot"
           },
           {
             "id": "livingArmor",
@@ -6498,8 +6498,8 @@ export const gameProfileCatalog = {
               "max": 10
             },
             "size": "medium",
-            "art": "🛡",
-            "tint": "var(--frost)"
+            "art": "livingArmor",
+            "tint": "frost"
           },
           {
             "id": "courtDuelist",
@@ -6536,8 +6536,8 @@ export const gameProfileCatalog = {
               "max": 11
             },
             "size": "large",
-            "art": "🤺",
-            "tint": "var(--frost)"
+            "art": "courtDuelist",
+            "tint": "frost"
           },
           {
             "id": "stitchedKing",
@@ -6580,8 +6580,8 @@ export const gameProfileCatalog = {
               "max": 12
             },
             "size": "large",
-            "art": "👑",
-            "tint": "var(--gold)",
+            "art": "stitchedKing",
+            "tint": "gold",
             "phases": [
               {
                 "on": "hpBelowPct",
@@ -6635,7 +6635,7 @@ export const gameProfileCatalog = {
               "max": 10
             },
             "size": "medium",
-            "art": "◆",
+            "art": "mirrorScribe",
             "artFaces": "left"
           },
           {
@@ -6670,7 +6670,7 @@ export const gameProfileCatalog = {
               "max": 10
             },
             "size": "small",
-            "art": "◆",
+            "art": "stitchCrab",
             "artFaces": "left"
           },
           {
@@ -6714,7 +6714,7 @@ export const gameProfileCatalog = {
               "max": 12
             },
             "size": "large",
-            "art": "◆",
+            "art": "glassRegent",
             "artFaces": "left",
             "phases": [
               {
@@ -6772,7 +6772,7 @@ export const gameProfileCatalog = {
               "max": 12
             },
             "size": "large",
-            "art": "◆",
+            "art": "marrowOrganist",
             "artFaces": "left",
             "phases": [
               {
@@ -6820,8 +6820,8 @@ export const gameProfileCatalog = {
               "max": 16
             },
             "size": "medium",
-            "art": "🌋",
-            "tint": "var(--ember)"
+            "art": "ashRevenant",
+            "tint": "ember"
           },
           {
             "id": "emberStarvedPilgrim",
@@ -6854,8 +6854,8 @@ export const gameProfileCatalog = {
               "max": 15
             },
             "size": "small",
-            "art": "🧎",
-            "tint": "var(--grace)"
+            "art": "emberStarvedPilgrim",
+            "tint": "grace"
           },
           {
             "id": "valkyrieShade",
@@ -6888,8 +6888,8 @@ export const gameProfileCatalog = {
               "max": 17
             },
             "size": "medium",
-            "art": "🪶",
-            "tint": "var(--blood)"
+            "art": "valkyrieShade",
+            "tint": "blood"
           },
           {
             "id": "charredColossus",
@@ -6922,8 +6922,8 @@ export const gameProfileCatalog = {
               "max": 18
             },
             "size": "large",
-            "art": "🗿",
-            "tint": "var(--ember)",
+            "art": "charredColossus",
+            "tint": "ember",
             "arcaneExposure": {
               "mode": "immune"
             }
@@ -6963,8 +6963,8 @@ export const gameProfileCatalog = {
               "max": 19
             },
             "size": "large",
-            "art": "🐉",
-            "tint": "var(--gold)"
+            "art": "wyrmLord",
+            "tint": "gold"
           },
           {
             "id": "blightedValkyrie",
@@ -7007,8 +7007,8 @@ export const gameProfileCatalog = {
               "max": 20
             },
             "size": "large",
-            "art": "🦋",
-            "tint": "var(--rot)",
+            "art": "blightedValkyrie",
+            "tint": "rot",
             "blighted": true,
             "phases": [
               {
@@ -7077,7 +7077,7 @@ export const gameProfileCatalog = {
               "max": 17
             },
             "size": "medium",
-            "art": "◆",
+            "art": "cinderMantis",
             "artFaces": "left"
           },
           {
@@ -7109,7 +7109,7 @@ export const gameProfileCatalog = {
               "max": 17
             },
             "size": "medium",
-            "art": "◆",
+            "art": "eclipseCantor",
             "artFaces": "left"
           },
           {
@@ -7150,7 +7150,7 @@ export const gameProfileCatalog = {
               "max": 20
             },
             "size": "large",
-            "art": "◆",
+            "art": "furnaceSaint",
             "artFaces": "left",
             "phases": [
               {
@@ -7208,7 +7208,7 @@ export const gameProfileCatalog = {
               "max": 20
             },
             "size": "large",
-            "art": "◆",
+            "art": "hollowAstronomer",
             "artFaces": "left",
             "phases": [
               {
@@ -7262,7 +7262,7 @@ export const gameProfileCatalog = {
               "max": 20
             },
             "size": "large",
-            "art": "◆",
+            "art": "ashheartDragon",
             "artFaces": "left",
             "phases": [
               {
@@ -7301,7 +7301,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -7336,7 +7336,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "skill",
-            "icon": "⛨",
+            "icon": "defend",
             "keywords": [],
             "effects": [
               {
@@ -7370,7 +7370,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "power",
-            "icon": "✦",
+            "icon": "casting",
             "keywords": [],
             "effects": [
               {
@@ -7404,7 +7404,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -7438,7 +7438,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -7473,7 +7473,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -7507,7 +7507,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "power",
-            "icon": "✦",
+            "icon": "casting",
             "keywords": [],
             "effects": [
               {
@@ -7547,7 +7547,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "skill",
-            "icon": "⛨",
+            "icon": "defend",
             "keywords": [],
             "effects": [
               {
@@ -7581,7 +7581,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "power",
-            "icon": "✦",
+            "icon": "casting",
             "keywords": [],
             "effects": [
               {
@@ -7616,7 +7616,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "healRules",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [
               "exhaust"
             ],
@@ -7659,7 +7659,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "power",
-            "icon": "✦",
+            "icon": "casting",
             "keywords": [],
             "effects": [
               {
@@ -7693,7 +7693,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -7728,7 +7728,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -7768,7 +7768,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "healRules",
             "type": "skill",
-            "icon": "⛨",
+            "icon": "defend",
             "keywords": [],
             "effects": [
               {
@@ -7808,7 +7808,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "authored",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -7843,7 +7843,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "authored",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -7879,7 +7879,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "authored",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "smash",
             "keywords": [],
             "effects": [
               {
@@ -7920,7 +7920,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "authored",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -7955,7 +7955,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "power",
-            "icon": "✦",
+            "icon": "casting",
             "keywords": [],
             "effects": [
               {
@@ -7989,7 +7989,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "authored",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -8024,7 +8024,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "skill",
-            "icon": "⛨",
+            "icon": "defend",
             "keywords": [],
             "effects": [
               {
@@ -8058,7 +8058,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "authored",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -8098,7 +8098,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "healRules",
             "type": "power",
-            "icon": "✦",
+            "icon": "casting",
             "keywords": [
               "exhaust"
             ],
@@ -8135,7 +8135,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -8169,7 +8169,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "counter",
             "keywords": [],
             "effects": [
               {
@@ -8211,7 +8211,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "smash",
             "keywords": [],
             "effects": [
               {
@@ -8252,7 +8252,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "authored",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "smash",
             "keywords": [],
             "effects": [
               {
@@ -8293,7 +8293,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "authored",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -8328,7 +8328,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "authored",
             "type": "skill",
-            "icon": "⛨",
+            "icon": "defend",
             "keywords": [],
             "effects": [
               {
@@ -8362,7 +8362,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "authored",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -8398,7 +8398,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "authored",
             "type": "skill",
-            "icon": "⛨",
+            "icon": "defend",
             "keywords": [],
             "effects": [
               {
@@ -8432,7 +8432,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "authored",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -8468,7 +8468,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "authored",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "smash",
             "keywords": [],
             "effects": [
               {
@@ -8515,7 +8515,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -8550,7 +8550,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "counter",
             "keywords": [],
             "effects": [
               {
@@ -8591,7 +8591,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "power",
-            "icon": "✦",
+            "icon": "casting",
             "keywords": [],
             "effects": [
               {
@@ -8625,7 +8625,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -8664,7 +8664,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -8704,7 +8704,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "power",
-            "icon": "✦",
+            "icon": "casting",
             "keywords": [],
             "effects": [
               {
@@ -8744,7 +8744,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "healRules",
             "type": "power",
-            "icon": "✦",
+            "icon": "casting",
             "keywords": [
               "exhaust"
             ],
@@ -8781,7 +8781,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -8816,7 +8816,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -8856,7 +8856,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -8891,7 +8891,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -8931,7 +8931,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -8965,7 +8965,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "skill",
-            "icon": "⛨",
+            "icon": "defend",
             "keywords": [],
             "effects": [
               {
@@ -8999,7 +8999,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -9034,7 +9034,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -9075,7 +9075,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "power",
-            "icon": "✦",
+            "icon": "casting",
             "keywords": [],
             "effects": [
               {
@@ -9109,7 +9109,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -9145,7 +9145,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -9180,7 +9180,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "counter",
             "keywords": [],
             "effects": [
               {
@@ -9221,7 +9221,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -9255,7 +9255,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -9290,7 +9290,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -9326,7 +9326,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "skill",
-            "icon": "⛨",
+            "icon": "defend",
             "keywords": [],
             "effects": [
               {
@@ -9366,7 +9366,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -9401,7 +9401,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "power",
-            "icon": "✦",
+            "icon": "casting",
             "keywords": [],
             "effects": [
               {
@@ -9435,7 +9435,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -9470,7 +9470,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "counter",
             "keywords": [],
             "effects": [
               {
@@ -9511,7 +9511,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "skill",
-            "icon": "⛨",
+            "icon": "defend",
             "keywords": [],
             "effects": [
               {
@@ -9545,7 +9545,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -9586,7 +9586,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -9621,7 +9621,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "skill",
-            "icon": "⛨",
+            "icon": "defend",
             "keywords": [],
             "effects": [
               {
@@ -9655,7 +9655,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -9690,7 +9690,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -9726,7 +9726,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "smash",
             "keywords": [],
             "effects": [
               {
@@ -9768,7 +9768,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "power",
-            "icon": "✦",
+            "icon": "casting",
             "keywords": [],
             "effects": [
               {
@@ -9802,7 +9802,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -9838,7 +9838,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "smash",
             "keywords": [],
             "effects": [
               {
@@ -9879,7 +9879,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "healRules",
             "type": "power",
-            "icon": "✦",
+            "icon": "casting",
             "keywords": [],
             "effects": [
               {
@@ -9913,7 +9913,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -9948,7 +9948,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "healRules",
             "type": "power",
-            "icon": "✦",
+            "icon": "casting",
             "keywords": [
               "exhaust"
             ],
@@ -9990,7 +9990,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -10024,7 +10024,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "power",
-            "icon": "✦",
+            "icon": "casting",
             "keywords": [],
             "effects": [
               {
@@ -10070,7 +10070,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -10105,7 +10105,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -10145,7 +10145,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -10180,7 +10180,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "power",
-            "icon": "✦",
+            "icon": "casting",
             "keywords": [],
             "effects": [
               {
@@ -10214,7 +10214,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "skill",
-            "icon": "⛨",
+            "icon": "defend",
             "keywords": [],
             "effects": [
               {
@@ -10248,7 +10248,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "power",
-            "icon": "✦",
+            "icon": "casting",
             "keywords": [],
             "effects": [
               {
@@ -10282,7 +10282,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -10317,7 +10317,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -10357,7 +10357,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "healRules",
             "type": "skill",
-            "icon": "⛨",
+            "icon": "defend",
             "keywords": [],
             "effects": [
               {
@@ -10397,7 +10397,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -10438,7 +10438,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -10480,7 +10480,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "skill",
-            "icon": "⛨",
+            "icon": "defend",
             "keywords": [],
             "effects": [
               {
@@ -10520,7 +10520,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -10555,7 +10555,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -10590,7 +10590,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "smash",
             "keywords": [],
             "effects": [
               {
@@ -10631,7 +10631,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "counter",
             "keywords": [],
             "effects": [
               {
@@ -10672,7 +10672,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "power",
-            "icon": "✦",
+            "icon": "casting",
             "keywords": [],
             "effects": [
               {
@@ -10706,7 +10706,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -10740,7 +10740,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -10781,7 +10781,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "smash",
             "keywords": [],
             "effects": [
               {
@@ -10822,7 +10822,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -10857,7 +10857,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "skill",
-            "icon": "⛨",
+            "icon": "defend",
             "keywords": [],
             "effects": [
               {
@@ -10891,7 +10891,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "power",
-            "icon": "✦",
+            "icon": "casting",
             "keywords": [],
             "effects": [
               {
@@ -10925,7 +10925,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -10961,7 +10961,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "smash",
             "keywords": [],
             "effects": [
               {
@@ -11008,7 +11008,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -11044,7 +11044,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "attack",
             "keywords": [],
             "effects": [
               {
@@ -11080,7 +11080,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "skill",
-            "icon": "⛨",
+            "icon": "defend",
             "keywords": [],
             "effects": [
               {
@@ -11114,7 +11114,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "power",
-            "icon": "✦",
+            "icon": "casting",
             "keywords": [],
             "effects": [
               {
@@ -11148,7 +11148,7 @@ export const gameProfileCatalog = {
             "costRule": "fixed",
             "costSource": "stance",
             "type": "attack",
-            "icon": "⚔",
+            "icon": "smash",
             "keywords": [],
             "effects": [
               {
@@ -12182,13 +12182,13 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/enemies.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:655da9138781614c06388836f9298f60e4286b6b048da86f8843c5299943d9f1"
+          "hash": "sha256:e8d1a8130a2d4287e58743c6601cf5ecfe748554bed415942309a96f582085e7"
         },
         {
           "path": "games/ashenspire/packs/core/enemyCards.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:4910c0a76ac9b1a9ae47796684a9fef25da46b3505c668513c6566fc2aa7252b"
+          "hash": "sha256:406e79baecc91752ba00a3bc2cc8137055ae4ca4372af0accb2bbe6b8a3bb71c"
         },
         {
           "path": "games/ashenspire/packs/core/enemyRelics.json",
@@ -23897,7 +23897,7 @@ export const gameProfileCatalog = {
       "path": "engine/kernel/gameConfig.js",
       "id": "ashen.runtime",
       "version": "1.0.0",
-      "hash": "sha256:4664d688084b67c2d48e75b2db021b382c27fbbcb7086055ccfc5c73efe492b8"
+      "hash": "sha256:35a63c15d17aff90f8e40d04ef96634e633ad9bdea041ede134e8e3db8fbbed2"
     },
     {
       "path": "engine/contracts/game-profile.json",
@@ -28930,7 +28930,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:3f9a67884765cb5f920ef530e66ccdcc2d826819e6f981359b771d44a5b5bf66"
     }
   ],
-  "runtimeHash": "sha256:ebfa8a4e6d131ed4d198190fd0e7819f3cb939ac293ca96cfdb4f1b9f3c37147"
+  "runtimeHash": "sha256:2319cf1ef795c65dcb60b3369d939b60a730149e13821a10c3fc9e4f47991b4f"
 };
 export const gameProfileAuthors = {
   "default": {

@@ -10,7 +10,7 @@
   "costRule": "fixed",
   "costSource": "stance",
   "type": "attack",
-  "icon": "⚔",
+  "icon": "attack",
   "keywords": [],
   "effects": [
     {
