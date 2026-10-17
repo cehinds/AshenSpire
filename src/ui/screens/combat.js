@@ -6,6 +6,7 @@ import { projectEnemyBurdenHand } from '../models/EnemyBurdenModel.js';
 import { hasCardChoice, zoneCandidates } from '../../engine/cardZones.js';
 import { foundationStandin } from '../components/foundationStandin.js';
 import { gameModule } from '../../model/gameProfile.js';
+import { figureAnimationsEnabled } from '../../model/gameAnimationPolicy.js';
 import { combatWeaponProfilesFor } from '../../model/combatWeaponPresentation.js';
 import { attackHitPreview, effectiveEvasion } from '../../engine/stanceHit.js';
 import { enemyActionPose } from '../../model/enemyActionPose.js';
@@ -325,7 +326,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
   const fxCtx = {
     layer: $('.fx-layer'),
+    figureAnimations: figureAnimationsEnabled(run),
     reactionForReceipt: event => {
+      if (fxCtx.figureAnimations === false) return null;
       const kind = selectedWeaponReactionFor(event, selectedProfile());
       if (playbackCounterOrigins.has(event) && ['fully-defended','evade'].includes(kind)) return null;
       const stage = kind && stageFor(fxCtx.anchorFor(event.targetId));
@@ -425,7 +428,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         customization: run.customization,
         spritesEnabled: spritesAreEnabled(),
       });
-      return eligible && !stage?.animationSetId && !actorEl.querySelector('.painted-outfit') ? playReaverAttack(actorEl, reaverAttackTiming(speed)) : playFamilyAnimation(actorEl, stage, plan, speed);
+      if (eligible && !stage?.animationSetId && !actorEl.querySelector('.painted-outfit')) {
+        const timing = reaverAttackTiming(speed);
+        return fxCtx.figureAnimations === false ? { ...timing, cancel() {} } : playReaverAttack(actorEl, timing);
+      }
+      return playFamilyAnimation(actorEl, stage, plan, speed);
     },
   };
 
@@ -452,7 +459,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     };
     const original = Object.keys(overrides).map((name) => [name, actorEl.style.getPropertyValue(name), actorEl.style.getPropertyPriority(name)]);
     let contactCue=null;
-    if (totalMs) {
+    if (totalMs && fxCtx.figureAnimations !== false) {
       actorEl.classList.remove(actionClass);
       void actorEl.offsetWidth;
       for (const [name, value] of Object.entries(overrides)) actorEl.style.setProperty(name, value);
@@ -462,7 +469,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (enemyAttack) actorEl.classList.add('enemy-attack-pose');
       if (plan.pose) {stage?.play(plan.pose, totalMs, plan.aura);contactCue=stage?.contactCue?.();}
     }
-    return { totalMs, contact:contactCue?.contact, remainingMs:contactCue?.remainingMs, impactMs: authoredTiming?.impactMs ?? Math.round(totalMs * COMBAT_TIMING.windupFraction), hold: (ms) => { stage?.hold?.(ms); }, cancel: () => {
+    return { totalMs, contact:contactCue?.contact, remainingMs:contactCue?.remainingMs, impactMs: authoredTiming?.impactMs ?? Math.round(totalMs * COMBAT_TIMING.windupFraction), hold: (ms) => { if (fxCtx.figureAnimations !== false) stage?.hold?.(ms); }, cancel: () => {
+      if (fxCtx.figureAnimations === false) { cancelEffect(); return; }
       actorEl.classList.remove(actionClass);
       if (enemyAttack) actorEl.classList.remove('enemy-attack-pose');
       for (const [name, value, priority] of original) {
