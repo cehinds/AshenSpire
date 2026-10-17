@@ -417,6 +417,9 @@ export function resolveCombatRatings(rawSettings, bundle) {
     if (row.type === 'choice' && !row.choices.includes(value)) continue;
     if (typeof value === 'number' && (!Number.isFinite(value) || value < row.min || value > row.max || (row.integer && !Number.isInteger(value)))) continue;
     const path = row.key.slice(prefix.length).split('.');
+    // Status IDs may be namespaced (base.bleed). The final segment is the
+    // rating field; everything between it and statuses is one registry key.
+    if (path[0] === 'statuses' && path.length > 3) path.splice(1, path.length - 2, path.slice(1, -1).join('.'));
     // A RATING WITH A COLUMN IS NOT WRITTEN TWICE. `applyItemRatingConfig` puts
     // it on the piece itself, and `ratingReceipt` reads the piece — keeping a
     // copy here would be a second home for one number, and the two would part

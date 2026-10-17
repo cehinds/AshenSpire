@@ -294,7 +294,13 @@ function scriptedLog(seed, classId = 'reaver', enemyIds = [ENEMY]) {
 }
 
 test('with the preview off, a scripted fight event log is byte-identical to the recorded golden', () => {
-  const all = [1, 2, 3].map((s) => scriptedLog(s)).join('\n');
+  const logs = [1, 2, 3].map((s) => scriptedLog(s));
+  const all = logs.join('\n');
+  assert.deepEqual(logs.map(log => JSON.parse(log).at(-1)), [
+    ['state', null, 45, [['e1', 31, true]], 5],
+    ['state', null, 49, [['e1', 6, true]], 5],
+    ['state', null, 24, [['e1', 27, true]], 5],
+  ], 'accepted metadata and Mana-floor changes preserve the three ordinary fight outcomes');
   assert.equal([1, 2, 3].map((s) => scriptedLog(s)).join('\n'), all,
     'fresh fights reproduce the complete seeded event log byte for byte');
   // Re-recorded for the retuned Wandering Soldier (2 SP, HP 31-36, Slash 8; owner 2026-10-13: harder tier-1 normals).
@@ -311,8 +317,11 @@ test('with the preview off, a scripted fight event log is byte-identical to the 
   // The independent fresh-fight repeat assertion above passed before accepting this new receipt.
   // Re-recorded from 4f690ecc CI after explicit Evade-attempt receipts were added.
   // The fresh three-seed replay assertion above passed before the generated hash was recorded.
+  // Compared independently with origin/dev 37c414acd: play/contact order and
+  // all fight outcomes are unchanged. Differences are the accepted Gorefire
+  // Weapon Art MP floor (payment and snapshots) and card-use/type bookkeeping.
   assert.deepEqual({ sha256: createHash('sha256').update(all).digest('hex'), length: all.length },
-    { sha256: 'b2084a441168bc6b11cbb73a7e6d203fc290501e18a4e77b40673b534f5aa67c', length: 400878 });
+    { sha256: '8847368e18755b429ef5271ff470fad268989d650e73201bc8f15493a8b2f575', length: 414406 });
 });
 
 // Review finding 1: a queued card that an earlier queued card removed from hand never resolves.

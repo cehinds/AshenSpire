@@ -52,12 +52,8 @@ test('without a preview no number is marked up or down', () => {
   for (const line of lines('bashingBlow')) assert.doesNotMatch(line.html, /val (up|down)/);
 });
 
-test('a Defend card labels its per-play restore separately from its Entry clause', () => {
-  const all = text('crystalBarrier');
-  const summary = all.find(line => line.startsWith('Restore ') && line.includes('. Entry: '));
-  assert.ok(summary, JSON.stringify(all));
-  assert.match(summary, /^Restore \d+ Poise\/Ward\. Entry: /);
-  assert.doesNotMatch(summary, /Entry: .*Restore/);
+test('a Defend card labels per-play gains separately from its Entry clause', () => {
+  assert.deepEqual(text('crystalBarrier'), ['Gain 2 Block, 1 Ward', 'Entry: +1 Precision, Retain']);
 });
 
 test('a conditional Evade is shown with version-two entry bonuses without duplication', () => {
