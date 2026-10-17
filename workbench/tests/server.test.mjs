@@ -295,6 +295,13 @@ test('a content/config change runs the config compiler before the reload; a fail
   await fs.writeFile(path.join(root, 'tools/game-config.mjs'), '');
   assert.deepEqual(buildsFor(['games/ashenspire/game.json'], root), ['tools/game-config.mjs build']);
   assert.deepEqual(buildsFor(['games/ashenspire/presets/current.json'], root), ['tools/game-config.mjs build']);
+  assert.deepEqual(buildsFor(['games/ashenspire/presets/core.json'], root), ['tools/game-config.mjs build']);
+  assert.deepEqual(buildsFor(['games/ashenspire/bundles/core/bundle.json'], root), ['tools/game-config.mjs build']);
+  assert.deepEqual(buildsFor(['games/ashenspire/packs/core/pack.json'], root), ['tools/game-config.mjs build']);
+  assert.deepEqual(buildsFor(['engine/modules/animation/defaults.json'], root), ['tools/game-config.mjs build']);
+  assert.deepEqual(buildsFor(['engine/kernel/kernel.json'], root), ['tools/game-config.mjs build']);
+  assert.deepEqual(buildsFor(['games/ashenspire/game.lock.json'], root), [], 'the lock is generated: saving it is no build input');
+  assert.deepEqual(buildsFor(['engine/docs/notes.md'], root), [], 'only the engine trees the compiler reads are inputs');
   await fs.rm(path.join(root, 'tools/framework-data-build.mjs'));
   const { app } = await boot(t, root);
   nextEvent.onOpen = async () => { await new Promise((r) => setTimeout(r, 300)); await fs.writeFile(path.join(root, 'content/config/ui/tokens.json'), '{}\n'); };
