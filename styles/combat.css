@@ -1485,6 +1485,16 @@
 }
 :root .combat[data-layout='formation'] .hand::-webkit-scrollbar { display:none; }
 
+/* Co-op uses its own HUD markup, without the shared-hud grid. Keep Leave
+   beside the resources so the fixed formation band also contains the label. */
+:root .combat.coop[data-layout='formation'] .topbar .hud-top {
+ display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center;
+ column-gap:calc(8px / var(--ui-zoom,1)); width:100%;
+}
+:root .combat.coop[data-layout='formation'] .topbar .resbars-host { grid-column:1; min-width:0; }
+:root .combat.coop[data-layout='formation'] .topbar .fight-label { grid-column:1; }
+:root .combat.coop[data-layout='formation'] .topbar .coop-leave { grid-column:2; grid-row:1 / span 2; }
+
 /* Short landscape keeps meters inline in the left resource column.
    Relics remain below them; the compact band preserves battlefield space. */
 @container game-viewport (max-height:500px) {
@@ -1496,9 +1506,9 @@
  /* INTENDED, measured in Chromium (#1368; D29 in docs/FINISH.md). The co-op
     board's `.hud-top` (src/ui/screens/coop.js) is not the shared run HUD: it
     has no `.shared-hud` ancestor, so kit.css's `.shared-hud > .hud-top` grid
-    never applies and this row overrides nothing shared; without it the box is
-    block flow. In short landscape block flow drops Leave to a second line and
-    the band takes that height from the battlefield. This row keeps the bars
+    never applies. The co-op grid above serves taller screens; short landscape
+    needs its resources and Leave inline to preserve battlefield space.
+    This row keeps the bars
     (flex:1) and Leave on one row, fight label hidden: the compact band above.
     tools/coop-hud-top.mjs holds it (overlap, clipping, lost parts, horizontal
     overflow at 390x844, 844x390, 1280x800; one row at 844x390). */
