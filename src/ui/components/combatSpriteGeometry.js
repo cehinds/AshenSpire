@@ -163,7 +163,9 @@ export function currentSpriteArtBounds(sprite, refresh = () => {}) {
 // Semantic body geometry follows the displayed frame and its physical motion.
 // Callers can distinguish assets awaiting landmarks from authored head/feet.
 export function currentSpriteBodyBounds(sprite, refresh = () => {}) {
-  const current = stageFor(sprite)?.currentArt;
+  const stage = stageFor(sprite);
+  if (stage?.currentBody) return stage.currentBody;
+  const current = stage?.currentArt;
   if (current?.body) return projectBodyBounds(current.body, current.canvas.getBoundingClientRect(), current.canvas.width, current.canvas.height);
   const bounds = currentSpriteArtBounds(sprite, refresh);
   return { ...bounds, headY: bounds.top, feetY: bounds.bottom,
