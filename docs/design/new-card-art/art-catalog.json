@@ -1,0 +1,2532 @@
+{
+  "formatVersion": 1,
+  "id": "ashen.card-art.layered.v1",
+  "status": "design-draft",
+  "runtimeEnabled": false,
+  "scope": "Art crop only. No frame, title, cost, rank, rules text, targeting UI or gameplay changes.",
+  "sources": {
+    "baseCommit": "37c414acd8cbe954a298ea51dc1d29ab6903942a",
+    "referenceBranch": "Feature/json-game-modules",
+    "referenceCommit": "63ee50d0ff5f241d1259207f230ccbfcab315939",
+    "tagVocabulary": "content/source/nodes.csv",
+    "tagAssociations": "content/source/tagging.csv",
+    "statuses": "src/content/statuses.js",
+    "effectOperations": "src/engine/actions.js",
+    "referenceStatuses": "games/ashenspire/packs/base-cards/statuses.json",
+    "referenceCards": [
+      "games/ashenspire/packs/core/cards.json",
+      "games/ashenspire/packs/base-cards/cards.json"
+    ],
+    "actionSigils": "src/content/card-layout.json#/symbols/actions"
+  },
+  "composition": {
+    "layerOrder": [
+      "background",
+      "backEffect",
+      "object",
+      "foreground"
+    ],
+    "coordinateSpace": [
+      0,
+      0,
+      100,
+      100
+    ],
+    "style": "Clean dark object silhouettes; nearly black edges; restrained fog outlines emanating from the object. See art-proposals-v2.json for locked master objects and view rules.",
+    "maxVisibleTags": 4,
+    "typicalVisibleTags": 2,
+    "maxCentralObjects": 2,
+    "maxSecondaryCues": 3,
+    "safeArea": [
+      12,
+      10,
+      76,
+      80
+    ],
+    "objectArea": [
+      24,
+      16,
+      52,
+      68
+    ],
+    "secondarySlots": [
+      {
+        "id": "primary-effect",
+        "layer": "foreground",
+        "anchor": [
+          78,
+          26
+        ],
+        "scale": 0.2,
+        "opacity": 0.8
+      },
+      {
+        "id": "additional-back",
+        "layer": "backEffect",
+        "anchor": [
+          23,
+          68
+        ],
+        "scale": 0.18,
+        "opacity": 0.3
+      },
+      {
+        "id": "additional-front",
+        "layer": "foreground",
+        "anchor": [
+          77,
+          74
+        ],
+        "scale": 0.16,
+        "opacity": 0.55
+      }
+    ],
+    "palettePolicy": "Main action supplies dark ground and subdued center tint; an explicit element may tint emitted contour fog. Additional conditions use shapes and keep lower brightness. Avoid four competing saturated colors.",
+    "overflow": "Keep all gameplay tags unchanged; show the three selected secondary cues and list omitted candidates in preview diagnostics.",
+    "selection": "Primary maneuver wins over generic skill type. A pure skill uses its first authored effect/status object. It still counts as action + effect (two identities). Explicit art selection can order eligible secondary cues; otherwise use authored effect order, then tag order. Deduplicate identical cue recipes, skip a cue already shown as the main object. Conflicting primary maneuvers are an authoring error.",
+    "assetContract": {
+      "format": "transparent PNG/WebP for all layers except opaque background",
+      "asset": null,
+      "note": "All components are design specifications, not shipped game assets. Assign approved asset IDs through the existing art-pack workflow later."
+    },
+    "masterReusePolicy": "Reuse one master per object family, including repeated instances in a composition. A sword, scimitar and scythe are different families; every appearance of each family uses its same master."
+  },
+  "collections": {
+    "backgrounds": {
+      "attack": {
+        "edge": "#060e20",
+        "center": "#6b5129",
+        "accent": "#ddba70",
+        "gradient": "radial",
+        "asset": null
+      },
+      "smash": {
+        "edge": "#211706",
+        "center": "#675023",
+        "accent": "#d44c46",
+        "gradient": "radial",
+        "asset": null
+      },
+      "counter": {
+        "edge": "#11151b",
+        "center": "#4b5058",
+        "accent": "#ce454c",
+        "gradient": "radial",
+        "asset": null
+      },
+      "sweep": {
+        "edge": "#070708",
+        "center": "#4b121b",
+        "accent": "#dd4650",
+        "gradient": "radial",
+        "asset": null
+      },
+      "defend": {
+        "edge": "#07090c",
+        "center": "#434b56",
+        "accent": "#c6d0df",
+        "gradient": "radial",
+        "asset": null
+      },
+      "evade": {
+        "edge": "#060709",
+        "center": "#292d34",
+        "accent": "#f2f1e9",
+        "gradient": "radial",
+        "asset": null
+      },
+      "skill": {
+        "edge": "#06150f",
+        "center": "#204c36",
+        "accent": "#a5d5aa",
+        "gradient": "radial",
+        "asset": null
+      },
+      "neutral": {
+        "edge": "#0b1017",
+        "center": "#313a49",
+        "accent": "#b9c3d2",
+        "gradient": "radial",
+        "asset": null
+      },
+      "cleansed": {
+        "edge": "#030508",
+        "center": "#292719",
+        "accent": "#e5d6a1",
+        "gradient": "radial",
+        "asset": null
+      }
+    },
+    "backEffects": {
+      "attack": {
+        "description": "Existing attack action sigil, black and low opacity behind the central object.",
+        "opacity": 0.24,
+        "asset": null,
+        "sourceActionSymbol": "attack"
+      },
+      "impact": {
+        "description": "Existing smash action sigil, black and low opacity behind the central object.",
+        "opacity": 0.24,
+        "asset": null,
+        "sourceActionSymbol": "smash"
+      },
+      "return": {
+        "description": "Existing counter action sigil, black and low opacity behind the central object.",
+        "opacity": 0.24,
+        "asset": null,
+        "sourceActionSymbol": "counter"
+      },
+      "crescent": {
+        "description": "Existing sweep action sigil, black and low opacity behind the central object.",
+        "opacity": 0.24,
+        "asset": null,
+        "sourceActionSymbol": "sweep"
+      },
+      "guard": {
+        "description": "Existing defend action sigil, black and low opacity behind the central object.",
+        "opacity": 0.24,
+        "asset": null,
+        "sourceActionSymbol": "defend"
+      },
+      "motion": {
+        "description": "Broken offset ring.",
+        "opacity": 0.24,
+        "asset": null
+      },
+      "skill": {
+        "description": "Existing skill action sigil, black and low opacity behind the central object.",
+        "opacity": 0.24,
+        "asset": null,
+        "sourceActionSymbol": "skill"
+      }
+    },
+    "objects": {
+      "sword": {
+        "wireframeShape": "sword",
+        "description": "One straight sword, tilted upward.",
+        "objectCount": 1,
+        "asset": null,
+        "masterRefs": [
+          "master.sword"
+        ]
+      },
+      "hammer": {
+        "wireframeShape": "hammer",
+        "description": "One broad hammer; square head and simple handle.",
+        "objectCount": 1,
+        "asset": null,
+        "masterRefs": [
+          "master.hammer"
+        ]
+      },
+      "shield-sword": {
+        "wireframeShape": "shieldSword",
+        "description": "Shield in front of one narrow sword; two objects.",
+        "objectCount": 2,
+        "asset": null,
+        "masterRefs": [
+          "master.shield",
+          "master.sword"
+        ]
+      },
+      "scimitar": {
+        "wireframeShape": "scimitar",
+        "description": "One curved scimitar; open crescent silhouette.",
+        "objectCount": 1,
+        "asset": null,
+        "masterRefs": [
+          "master.scimitar"
+        ]
+      },
+      "shield": {
+        "wireframeShape": "shield",
+        "description": "One plain kite shield.",
+        "objectCount": 1,
+        "asset": null,
+        "masterRefs": [
+          "master.shield"
+        ]
+      },
+      "feather": {
+        "wireframeShape": "feather",
+        "description": "One feather leaning forward.",
+        "objectCount": 1,
+        "asset": null
+      },
+      "cards": {
+        "wireframeShape": "cards",
+        "description": "Two overlapping blank cards, no readable face details.",
+        "objectCount": 2,
+        "asset": null,
+        "masterRefs": [
+          "master.card",
+          "master.card"
+        ]
+      },
+      "spiral": {
+        "wireframeShape": "spiral",
+        "description": "One open spiral; daze/disorientation family.",
+        "objectCount": 1,
+        "asset": null
+      },
+      "bow": {
+        "wireframeShape": "bow",
+        "description": "One bow and one arrow; two objects.",
+        "objectCount": 2,
+        "asset": null
+      },
+      "orb": {
+        "wireframeShape": "orb",
+        "description": "One orb within an incomplete halo.",
+        "objectCount": 1,
+        "asset": null,
+        "masterRefs": [
+          "master.orb"
+        ]
+      },
+      "flame": {
+        "wireframeShape": "flame",
+        "description": "One simple flame.",
+        "objectCount": 1,
+        "asset": null,
+        "masterRefs": [
+          "master.flame"
+        ]
+      },
+      "crystal": {
+        "wireframeShape": "crystal",
+        "description": "One pointed crystal.",
+        "objectCount": 1,
+        "asset": null
+      },
+      "bolt": {
+        "wireframeShape": "bolt",
+        "description": "One angular lightning bolt.",
+        "objectCount": 1,
+        "asset": null
+      },
+      "stone": {
+        "wireframeShape": "stone",
+        "description": "One angular stone.",
+        "objectCount": 1,
+        "asset": null
+      },
+      "eye": {
+        "wireframeShape": "eye",
+        "description": "One eye with a single circular pupil.",
+        "objectCount": 1,
+        "asset": null
+      },
+      "sun": {
+        "wireframeShape": "sun",
+        "description": "One sun disc with short rays.",
+        "objectCount": 1,
+        "asset": null
+      },
+      "leaf": {
+        "wireframeShape": "leaf",
+        "description": "One leaf with a single central vein.",
+        "objectCount": 1,
+        "asset": null,
+        "masterRefs": [
+          "master.leaf"
+        ]
+      },
+      "drop": {
+        "wireframeShape": "drop",
+        "description": "One suspended drop.",
+        "objectCount": 1,
+        "asset": null
+      },
+      "vial": {
+        "wireframeShape": "vial",
+        "description": "One vial, half full.",
+        "objectCount": 1,
+        "asset": null,
+        "masterRefs": [
+          "master.vial"
+        ]
+      },
+      "chain": {
+        "wireframeShape": "chain",
+        "description": "Two joined chain links.",
+        "objectCount": 2,
+        "asset": null,
+        "masterRefs": [
+          "master.chain"
+        ]
+      },
+      "broken-sword": {
+        "wireframeShape": "brokenSword",
+        "description": "One sword interrupted by a clear fracture.",
+        "objectCount": 1,
+        "asset": null,
+        "masterRefs": [
+          "master.sword"
+        ],
+        "variationPolicy": "Same sword plus a non-destructive fracture overlay; no replacement weapon design."
+      },
+      "cracked-shield": {
+        "wireframeShape": "crackedShield",
+        "description": "One shield with a single crack.",
+        "objectCount": 1,
+        "asset": null,
+        "masterRefs": [
+          "master.shield"
+        ],
+        "variationPolicy": "Same shield plus crack overlay; preserve silhouette, border and boss."
+      },
+      "star": {
+        "wireframeShape": "star",
+        "description": "One four-point star.",
+        "objectCount": 1,
+        "asset": null
+      },
+      "moon": {
+        "wireframeShape": "moon",
+        "description": "One crescent moon.",
+        "objectCount": 1,
+        "asset": null
+      },
+      "banner": {
+        "wireframeShape": "banner",
+        "description": "One pennant on a short pole.",
+        "objectCount": 1,
+        "asset": null
+      },
+      "heart": {
+        "wireframeShape": "heart",
+        "description": "One simple heart.",
+        "objectCount": 1,
+        "asset": null
+      },
+      "hourglass": {
+        "wireframeShape": "hourglass",
+        "description": "One hourglass.",
+        "objectCount": 1,
+        "asset": null
+      },
+      "mask": {
+        "wireframeShape": "mask",
+        "description": "One simple mask.",
+        "objectCount": 1,
+        "asset": null
+      },
+      "fist": {
+        "wireframeShape": "fist",
+        "description": "One closed gauntlet silhouette.",
+        "objectCount": 1,
+        "asset": null
+      },
+      "mirror": {
+        "wireframeShape": "mirror",
+        "description": "One oval mirror with short handle.",
+        "objectCount": 1,
+        "asset": null
+      },
+      "bell": {
+        "wireframeShape": "bell",
+        "description": "One hanging bell.",
+        "objectCount": 1,
+        "asset": null
+      },
+      "candle": {
+        "wireframeShape": "candle",
+        "description": "One candle and its small flame.",
+        "objectCount": 1,
+        "asset": null
+      },
+      "crossed-swords": {
+        "wireframeShape": "crossedSwords",
+        "description": "Two crossed swords.",
+        "objectCount": 2,
+        "asset": null,
+        "masterRefs": [
+          "master.sword",
+          "master.sword"
+        ]
+      },
+      "double-shield": {
+        "wireframeShape": "doubleShield",
+        "description": "Two offset shields.",
+        "objectCount": 2,
+        "asset": null,
+        "masterRefs": [
+          "master.shield",
+          "master.shield"
+        ]
+      },
+      "hand": {
+        "wireframeShape": "hand",
+        "description": "One open hand.",
+        "objectCount": 1,
+        "asset": null
+      },
+      "tomb": {
+        "wireframeShape": "tomb",
+        "description": "One upright stone slab.",
+        "objectCount": 1,
+        "asset": null
+      },
+      "fang": {
+        "wireframeShape": "fang",
+        "description": "One curved fang.",
+        "objectCount": 1,
+        "asset": null
+      },
+      "ring": {
+        "wireframeShape": "ring",
+        "description": "One broken ring.",
+        "objectCount": 1,
+        "asset": null
+      },
+      "smoke": {
+        "wireframeShape": "smoke",
+        "description": "One curling ribbon of smoke.",
+        "objectCount": 1,
+        "asset": null
+      }
+    },
+    "foregroundEffects": {
+      "tip": {
+        "description": "One small glint at object tip.",
+        "opacity": 0.65,
+        "asset": null
+      },
+      "impact": {
+        "description": "Two short impact ticks.",
+        "opacity": 0.65,
+        "asset": null
+      },
+      "return": {
+        "description": "Short returning arc.",
+        "opacity": 0.65,
+        "asset": null
+      },
+      "sweep": {
+        "description": "One narrow crescent trail.",
+        "opacity": 0.65,
+        "asset": null
+      },
+      "rim": {
+        "description": "Short rim highlight.",
+        "opacity": 0.65,
+        "asset": null
+      },
+      "trail": {
+        "description": "Two tapered motion lines.",
+        "opacity": 0.65,
+        "asset": null
+      },
+      "lift": {
+        "description": "Small upward streak.",
+        "opacity": 0.65,
+        "asset": null
+      },
+      "orbit": {
+        "description": "Two short orbit fragments.",
+        "opacity": 0.65,
+        "asset": null
+      },
+      "none": {
+        "description": "No accent.",
+        "opacity": 0.65,
+        "asset": null
+      }
+    }
+  },
+  "recipes": {
+    "attack": {
+      "background": "attack",
+      "backEffect": "attack",
+      "object": "sword",
+      "foreground": "tip"
+    },
+    "smash": {
+      "background": "smash",
+      "backEffect": "impact",
+      "object": "hammer",
+      "foreground": "impact"
+    },
+    "counter": {
+      "background": "counter",
+      "backEffect": "return",
+      "object": "shield-sword",
+      "foreground": "return"
+    },
+    "sweep": {
+      "background": "sweep",
+      "backEffect": "crescent",
+      "object": "scimitar",
+      "foreground": "sweep"
+    },
+    "defend": {
+      "background": "defend",
+      "backEffect": "guard",
+      "object": "shield",
+      "foreground": "rim"
+    },
+    "evade": {
+      "background": "evade",
+      "backEffect": "motion",
+      "object": "feather",
+      "foreground": "trail"
+    },
+    "skill": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "orb",
+      "foreground": "orbit"
+    },
+    "ranged": {
+      "background": "attack",
+      "backEffect": "attack",
+      "object": "bow",
+      "foreground": "trail"
+    },
+    "casting": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "orb",
+      "foreground": "orbit"
+    },
+    "draw": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "cards",
+      "foreground": "lift"
+    },
+    "dazed": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "spiral",
+      "foreground": "orbit"
+    },
+    "symbol.sword": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "sword",
+      "foreground": "orbit"
+    },
+    "symbol.hammer": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "hammer",
+      "foreground": "orbit"
+    },
+    "symbol.shield-sword": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "shield-sword",
+      "foreground": "orbit"
+    },
+    "symbol.scimitar": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "scimitar",
+      "foreground": "orbit"
+    },
+    "symbol.shield": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "shield",
+      "foreground": "orbit"
+    },
+    "symbol.feather": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "feather",
+      "foreground": "orbit"
+    },
+    "symbol.cards": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "cards",
+      "foreground": "orbit"
+    },
+    "symbol.spiral": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "spiral",
+      "foreground": "orbit"
+    },
+    "symbol.bow": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "bow",
+      "foreground": "orbit"
+    },
+    "symbol.orb": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "orb",
+      "foreground": "orbit"
+    },
+    "symbol.flame": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "flame",
+      "foreground": "orbit"
+    },
+    "symbol.crystal": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "crystal",
+      "foreground": "orbit"
+    },
+    "symbol.bolt": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "bolt",
+      "foreground": "orbit"
+    },
+    "symbol.stone": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "stone",
+      "foreground": "orbit"
+    },
+    "symbol.eye": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "eye",
+      "foreground": "orbit"
+    },
+    "symbol.sun": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "sun",
+      "foreground": "orbit"
+    },
+    "symbol.leaf": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "leaf",
+      "foreground": "orbit"
+    },
+    "symbol.drop": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "drop",
+      "foreground": "orbit"
+    },
+    "symbol.vial": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "vial",
+      "foreground": "orbit"
+    },
+    "symbol.chain": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "chain",
+      "foreground": "orbit"
+    },
+    "symbol.broken-sword": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "broken-sword",
+      "foreground": "orbit"
+    },
+    "symbol.cracked-shield": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "cracked-shield",
+      "foreground": "orbit"
+    },
+    "symbol.star": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "star",
+      "foreground": "orbit"
+    },
+    "symbol.moon": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "moon",
+      "foreground": "orbit"
+    },
+    "symbol.banner": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "banner",
+      "foreground": "orbit"
+    },
+    "symbol.heart": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "heart",
+      "foreground": "orbit"
+    },
+    "symbol.hourglass": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "hourglass",
+      "foreground": "orbit"
+    },
+    "symbol.mask": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "mask",
+      "foreground": "orbit"
+    },
+    "symbol.fist": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "fist",
+      "foreground": "orbit"
+    },
+    "symbol.mirror": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "mirror",
+      "foreground": "orbit"
+    },
+    "symbol.bell": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "bell",
+      "foreground": "orbit"
+    },
+    "symbol.candle": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "candle",
+      "foreground": "orbit"
+    },
+    "symbol.crossed-swords": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "crossed-swords",
+      "foreground": "orbit"
+    },
+    "symbol.double-shield": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "double-shield",
+      "foreground": "orbit"
+    },
+    "symbol.hand": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "hand",
+      "foreground": "orbit"
+    },
+    "symbol.tomb": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "tomb",
+      "foreground": "orbit"
+    },
+    "symbol.fang": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "fang",
+      "foreground": "orbit"
+    },
+    "symbol.ring": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "ring",
+      "foreground": "orbit"
+    },
+    "symbol.smoke": {
+      "background": "skill",
+      "backEffect": "skill",
+      "object": "smoke",
+      "foreground": "orbit"
+    },
+    "cleansed": {
+      "background": "cleansed",
+      "backEffect": "skill",
+      "object": "flame",
+      "foreground": "lift"
+    }
+  },
+  "bindings": {
+    "tags": {
+      "blade": {
+        "domain": "card",
+        "role": "secondary",
+        "recipe": "symbol.sword"
+      },
+      "bow": {
+        "domain": "card",
+        "role": "secondary",
+        "recipe": "symbol.bow"
+      },
+      "guard": {
+        "domain": "card",
+        "role": "secondary",
+        "recipe": "symbol.shield"
+      },
+      "blood": {
+        "domain": "card",
+        "role": "secondary",
+        "recipe": "symbol.drop"
+      },
+      "gorefire": {
+        "domain": "card",
+        "role": "secondary",
+        "recipe": "symbol.flame"
+      },
+      "starstone": {
+        "domain": "card",
+        "role": "secondary",
+        "recipe": "symbol.star"
+      },
+      "ritual": {
+        "domain": "card",
+        "role": "secondary",
+        "recipe": "symbol.candle"
+      },
+      "blight": {
+        "domain": "card",
+        "role": "secondary",
+        "recipe": "symbol.fang"
+      },
+      "oath": {
+        "domain": "card",
+        "role": "secondary",
+        "recipe": "symbol.sun"
+      },
+      "flourish": {
+        "domain": "card",
+        "role": "secondary",
+        "recipe": "symbol.feather"
+      },
+      "ash": {
+        "domain": "card",
+        "role": "secondary",
+        "recipe": "symbol.smoke"
+      },
+      "heavy": {
+        "domain": "card",
+        "role": "secondary",
+        "recipe": "symbol.hammer"
+      },
+      "basic": {
+        "domain": "card",
+        "role": "metadata",
+        "reason": "Retain identity; no additional art mark by default."
+      },
+      "pierce": {
+        "domain": "card",
+        "role": "secondary",
+        "recipe": "symbol.sword"
+      },
+      "ranged": {
+        "domain": "card",
+        "role": "secondary",
+        "recipe": "symbol.bow"
+      },
+      "precision": {
+        "domain": "card",
+        "role": "secondary",
+        "recipe": "symbol.eye"
+      },
+      "guile": {
+        "domain": "card",
+        "role": "secondary",
+        "recipe": "symbol.mask"
+      },
+      "venom": {
+        "domain": "card",
+        "role": "secondary",
+        "recipe": "symbol.vial"
+      },
+      "extractable": {
+        "domain": "card",
+        "role": "metadata",
+        "reason": "Retain identity; no additional art mark by default."
+      },
+      "fx:blade": {
+        "domain": "presentation",
+        "role": "secondary",
+        "recipe": "symbol.sword"
+      },
+      "fx:guard": {
+        "domain": "presentation",
+        "role": "secondary",
+        "recipe": "symbol.shield"
+      },
+      "fx:blood": {
+        "domain": "presentation",
+        "role": "secondary",
+        "recipe": "symbol.drop"
+      },
+      "fx:gorefire": {
+        "domain": "presentation",
+        "role": "secondary",
+        "recipe": "symbol.flame"
+      },
+      "fx:starstone": {
+        "domain": "presentation",
+        "role": "secondary",
+        "recipe": "symbol.star"
+      },
+      "fx:ritual": {
+        "domain": "presentation",
+        "role": "secondary",
+        "recipe": "symbol.candle"
+      },
+      "fx:blight": {
+        "domain": "presentation",
+        "role": "secondary",
+        "recipe": "symbol.fang"
+      },
+      "fx:oath": {
+        "domain": "presentation",
+        "role": "secondary",
+        "recipe": "symbol.sun"
+      },
+      "fx:flourish": {
+        "domain": "presentation",
+        "role": "secondary",
+        "recipe": "symbol.feather"
+      },
+      "fx:ash": {
+        "domain": "presentation",
+        "role": "secondary",
+        "recipe": "symbol.smoke"
+      },
+      "fx:heavy": {
+        "domain": "presentation",
+        "role": "secondary",
+        "recipe": "symbol.hammer"
+      },
+      "fx:pierce": {
+        "domain": "presentation",
+        "role": "secondary",
+        "recipe": "symbol.sword"
+      },
+      "fx:ranged": {
+        "domain": "presentation",
+        "role": "secondary",
+        "recipe": "symbol.bow"
+      },
+      "fx:precision": {
+        "domain": "presentation",
+        "role": "secondary",
+        "recipe": "symbol.eye"
+      },
+      "fx:guile": {
+        "domain": "presentation",
+        "role": "secondary",
+        "recipe": "symbol.mask"
+      },
+      "fx:venom": {
+        "domain": "presentation",
+        "role": "secondary",
+        "recipe": "symbol.vial"
+      },
+      "fx:shield": {
+        "domain": "presentation",
+        "role": "secondary",
+        "recipe": "symbol.shield"
+      },
+      "fx:barrier": {
+        "domain": "presentation",
+        "role": "secondary",
+        "recipe": "symbol.ring"
+      },
+      "fx:ward": {
+        "domain": "presentation",
+        "role": "secondary",
+        "recipe": "symbol.ring"
+      },
+      "fx:magic": {
+        "domain": "presentation",
+        "role": "secondary",
+        "recipe": "symbol.orb"
+      },
+      "fx:arcane": {
+        "domain": "presentation",
+        "role": "secondary",
+        "recipe": "symbol.orb"
+      },
+      "fx:dodge": {
+        "domain": "presentation",
+        "role": "secondary",
+        "recipe": "symbol.feather"
+      },
+      "fx:riposte": {
+        "domain": "presentation",
+        "role": "secondary",
+        "recipe": "symbol.shield-sword"
+      },
+      "fx:heal": {
+        "domain": "presentation",
+        "role": "secondary",
+        "recipe": "symbol.leaf"
+      },
+      "fx:cleanse": {
+        "domain": "presentation",
+        "role": "secondary",
+        "recipe": "cleansed"
+      },
+      "fx:bind": {
+        "domain": "presentation",
+        "role": "secondary",
+        "recipe": "symbol.chain"
+      },
+      "fx:frost": {
+        "domain": "presentation",
+        "role": "secondary",
+        "recipe": "symbol.crystal"
+      },
+      "fx:bulwark": {
+        "domain": "presentation",
+        "role": "secondary",
+        "recipe": "symbol.shield"
+      },
+      "fx:utility": {
+        "domain": "presentation",
+        "role": "secondary",
+        "recipe": "symbol.cards"
+      },
+      "source:weapon": {
+        "domain": "attackSource",
+        "role": "metadata",
+        "reason": "Retain identity; no additional art mark by default."
+      },
+      "source:spell": {
+        "domain": "attackSource",
+        "role": "secondary",
+        "recipe": "symbol.orb"
+      },
+      "source:unarmed": {
+        "domain": "attackSource",
+        "role": "secondary",
+        "recipe": "symbol.fist"
+      },
+      "delivery:melee": {
+        "domain": "delivery",
+        "role": "metadata",
+        "reason": "Retain identity; no additional art mark by default."
+      },
+      "delivery:projectile": {
+        "domain": "delivery",
+        "role": "secondary",
+        "recipe": "symbol.bow"
+      },
+      "delivery:area": {
+        "domain": "delivery",
+        "role": "secondary",
+        "recipe": "symbol.scimitar"
+      },
+      "damage:slashing": {
+        "domain": "damageType",
+        "role": "secondary",
+        "recipe": "symbol.sword"
+      },
+      "damage:piercing": {
+        "domain": "damageType",
+        "role": "secondary",
+        "recipe": "symbol.sword"
+      },
+      "damage:blunt": {
+        "domain": "damageType",
+        "role": "secondary",
+        "recipe": "symbol.hammer"
+      },
+      "damage:fire": {
+        "domain": "damageType",
+        "role": "secondary",
+        "recipe": "symbol.flame"
+      },
+      "damage:frost": {
+        "domain": "damageType",
+        "role": "secondary",
+        "recipe": "symbol.crystal"
+      },
+      "damage:lightning": {
+        "domain": "damageType",
+        "role": "secondary",
+        "recipe": "symbol.bolt"
+      },
+      "damage:arcane": {
+        "domain": "damageType",
+        "role": "secondary",
+        "recipe": "symbol.orb"
+      },
+      "damage:sacred": {
+        "domain": "damageType",
+        "role": "secondary",
+        "recipe": "symbol.sun"
+      },
+      "damage:decay": {
+        "domain": "damageType",
+        "role": "secondary",
+        "recipe": "symbol.fang"
+      },
+      "damage:poison": {
+        "domain": "damageType",
+        "role": "secondary",
+        "recipe": "symbol.vial"
+      },
+      "damage:psychic": {
+        "domain": "damageType",
+        "role": "secondary",
+        "recipe": "symbol.spiral"
+      },
+      "damage:earth": {
+        "domain": "damageType",
+        "role": "secondary",
+        "recipe": "symbol.stone"
+      },
+      "technique:heavy": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.hammer"
+      },
+      "technique:precision": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.eye"
+      },
+      "technique:cleave": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.scimitar"
+      },
+      "technique:counter": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.shield-sword"
+      },
+      "technique:flourish": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.feather"
+      },
+      "theme:blood": {
+        "domain": "theme",
+        "role": "secondary",
+        "recipe": "symbol.drop"
+      },
+      "theme:blight": {
+        "domain": "theme",
+        "role": "secondary",
+        "recipe": "symbol.fang"
+      },
+      "theme:astral": {
+        "domain": "theme",
+        "role": "secondary",
+        "recipe": "symbol.star"
+      },
+      "theme:oath": {
+        "domain": "theme",
+        "role": "secondary",
+        "recipe": "symbol.sun"
+      },
+      "theme:stance": {
+        "domain": "theme",
+        "role": "metadata",
+        "reason": "Retain identity; no additional art mark by default."
+      },
+      "classification.attack": {
+        "domain": "classification",
+        "role": "fallback-primary",
+        "recipe": "attack"
+      },
+      "classification.strike": {
+        "domain": "classification",
+        "role": "fallback-primary",
+        "recipe": "attack"
+      },
+      "classification.guard": {
+        "domain": "classification",
+        "role": "fallback-primary",
+        "recipe": "defend"
+      },
+      "classification.weaponArt": {
+        "domain": "classification",
+        "role": "fallback-primary",
+        "recipe": "skill"
+      },
+      "classification.skill": {
+        "domain": "classification",
+        "role": "fallback-primary",
+        "recipe": "skill"
+      },
+      "classification.power": {
+        "domain": "classification",
+        "role": "fallback-primary",
+        "recipe": "skill"
+      },
+      "classification.curse": {
+        "domain": "classification",
+        "role": "fallback-primary",
+        "recipe": "skill"
+      },
+      "classification.statusCard": {
+        "domain": "classification",
+        "role": "fallback-primary",
+        "recipe": "skill"
+      },
+      "damage.physical": {
+        "domain": "damage",
+        "role": "secondary",
+        "recipe": "symbol.sword"
+      },
+      "damage.magic": {
+        "domain": "damage",
+        "role": "secondary",
+        "recipe": "symbol.orb"
+      },
+      "damage.arcane": {
+        "domain": "damage",
+        "role": "secondary",
+        "recipe": "symbol.orb"
+      },
+      "damage.blade": {
+        "domain": "damage",
+        "role": "secondary",
+        "recipe": "symbol.sword"
+      },
+      "damage.blunt": {
+        "domain": "damage",
+        "role": "secondary",
+        "recipe": "symbol.hammer"
+      },
+      "damage.piercing": {
+        "domain": "damage",
+        "role": "secondary",
+        "recipe": "symbol.sword"
+      },
+      "utility.evasion": {
+        "domain": "utility",
+        "role": "metadata",
+        "reason": "Retain identity; no additional art mark by default."
+      },
+      "utility.conduit": {
+        "domain": "utility",
+        "role": "metadata",
+        "reason": "Retain identity; no additional art mark by default."
+      },
+      "utility.manaCharge": {
+        "domain": "utility",
+        "role": "metadata",
+        "reason": "Retain identity; no additional art mark by default."
+      },
+      "targeting.self": {
+        "domain": "targeting",
+        "role": "metadata",
+        "reason": "Retain identity; no additional art mark by default."
+      },
+      "targeting.enemy": {
+        "domain": "targeting",
+        "role": "metadata",
+        "reason": "Retain identity; no additional art mark by default."
+      },
+      "targeting.allEnemies": {
+        "domain": "targeting",
+        "role": "secondary",
+        "recipe": "symbol.scimitar"
+      },
+      "targeting.randomEnemy": {
+        "domain": "targeting",
+        "role": "metadata",
+        "reason": "Retain identity; no additional art mark by default."
+      },
+      "targeting.ally": {
+        "domain": "targeting",
+        "role": "metadata",
+        "reason": "Retain identity; no additional art mark by default."
+      },
+      "ability:searing-edge": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.sword"
+      },
+      "ability:guarded-strike": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.sword"
+      },
+      "ability:bloodstep": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.drop"
+      },
+      "ability:hammerfall": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.hammer"
+      },
+      "ability:forgewake": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.flame"
+      },
+      "ability:crimson-reprisal": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.drop"
+      },
+      "ability:last-stand": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.shield"
+      },
+      "ability:war-tempo": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.hourglass"
+      },
+      "ability:wide-cleave": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.scimitar"
+      },
+      "ability:ember-crown": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.flame"
+      },
+      "ability:dreadweight": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.hammer"
+      },
+      "ability:oathscar": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.drop"
+      },
+      "ability:wound-harvest": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.drop"
+      },
+      "ability:cinder-orbit": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.flame"
+      },
+      "ability:lunar-guard": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.shield"
+      },
+      "ability:comet-mark": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.star"
+      },
+      "ability:rime-mirror": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.mirror"
+      },
+      "ability:constellation": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.star"
+      },
+      "ability:mana-weave": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.orb"
+      },
+      "ability:gravity-snare": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.chain"
+      },
+      "ability:nightglass": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.mask"
+      },
+      "ability:eclipse-window": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.moon"
+      },
+      "ability:warded-casting": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.shield"
+      },
+      "ability:celestial-echo": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.star"
+      },
+      "ability:cold-memory": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.crystal"
+      },
+      "ability:astral-convergence": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.star"
+      },
+      "ability:ash-opener": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.smoke"
+      },
+      "ability:discard-weave": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.cards"
+      },
+      "ability:crooked-guard": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.shield"
+      },
+      "ability:exposed-flank": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.cracked-shield"
+      },
+      "ability:sleight-hand": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.cards"
+      },
+      "ability:tether-cut": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.sword"
+      },
+      "ability:smoke-edge": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.sword"
+      },
+      "ability:carrion-finish": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.fang"
+      },
+      "ability:paired-strikes": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.crossed-swords"
+      },
+      "ability:trapdoor": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.tomb"
+      },
+      "ability:clean-escape": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.feather"
+      },
+      "ability:razor-debt": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.sword"
+      },
+      "ability:mercy-ash": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.smoke"
+      },
+      "ability:blood-censer": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.drop"
+      },
+      "ability:blight-seed": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.fang"
+      },
+      "ability:funeral-guard": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.shield"
+      },
+      "ability:ember-tithe": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.drop"
+      },
+      "ability:bone-chorus": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.bell"
+      },
+      "ability:requiem-brand": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.bell"
+      },
+      "ability:pilgrim-shelter": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.shield"
+      },
+      "ability:scarred-rite": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.drop"
+      },
+      "ability:dawn-rite": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.sun"
+      },
+      "ability:burden-bearer": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.shield"
+      },
+      "ability:sepulchral-pact": {
+        "domain": "technique",
+        "role": "secondary",
+        "recipe": "symbol.tomb"
+      },
+      "camp:physical": {
+        "domain": "camp",
+        "role": "metadata",
+        "reason": "Retain identity; no additional art mark by default."
+      },
+      "camp:spell": {
+        "domain": "camp",
+        "role": "secondary",
+        "recipe": "symbol.orb"
+      },
+      "maneuver:attack": {
+        "domain": "maneuver",
+        "role": "primary",
+        "recipe": "attack"
+      },
+      "maneuver:defend": {
+        "domain": "maneuver",
+        "role": "primary",
+        "recipe": "defend"
+      },
+      "maneuver:counter": {
+        "domain": "maneuver",
+        "role": "primary",
+        "recipe": "counter"
+      },
+      "maneuver:sweep": {
+        "domain": "maneuver",
+        "role": "primary",
+        "recipe": "sweep"
+      },
+      "maneuver:ranged": {
+        "domain": "maneuver",
+        "role": "primary",
+        "recipe": "ranged"
+      },
+      "maneuver:smash": {
+        "domain": "maneuver",
+        "role": "primary",
+        "recipe": "smash"
+      },
+      "school:frost": {
+        "domain": "school",
+        "role": "secondary",
+        "recipe": "symbol.crystal"
+      },
+      "school:fire": {
+        "domain": "school",
+        "role": "secondary",
+        "recipe": "symbol.flame"
+      },
+      "school:lightning": {
+        "domain": "school",
+        "role": "secondary",
+        "recipe": "symbol.bolt"
+      },
+      "school:force": {
+        "domain": "school",
+        "role": "secondary",
+        "recipe": "symbol.orb"
+      },
+      "school:alteration": {
+        "domain": "school",
+        "role": "secondary",
+        "recipe": "symbol.mirror"
+      },
+      "school:illusion": {
+        "domain": "school",
+        "role": "secondary",
+        "recipe": "symbol.spiral"
+      },
+      "school:divine": {
+        "domain": "school",
+        "role": "secondary",
+        "recipe": "symbol.sun"
+      },
+      "school:decay": {
+        "domain": "school",
+        "role": "secondary",
+        "recipe": "symbol.fang"
+      },
+      "school:earth": {
+        "domain": "school",
+        "role": "secondary",
+        "recipe": "symbol.stone"
+      },
+      "counter:melee": {
+        "domain": "counterMode",
+        "role": "secondary",
+        "recipe": "symbol.shield-sword"
+      },
+      "counter:ranged": {
+        "domain": "counterMode",
+        "role": "secondary",
+        "recipe": "symbol.shield-sword"
+      },
+      "counter:spell": {
+        "domain": "counterMode",
+        "role": "secondary",
+        "recipe": "symbol.shield-sword"
+      },
+      "maneuver:casting": {
+        "domain": "maneuver",
+        "role": "primary",
+        "recipe": "casting"
+      },
+      "range:melee": {
+        "domain": "range",
+        "role": "metadata",
+        "reason": "Retain identity; no additional art mark by default."
+      },
+      "range:reach": {
+        "domain": "range",
+        "role": "metadata",
+        "reason": "Retain identity; no additional art mark by default."
+      },
+      "range:ranged": {
+        "domain": "range",
+        "role": "secondary",
+        "recipe": "symbol.bow"
+      },
+      "targeting:single": {
+        "domain": "targeting",
+        "role": "metadata",
+        "reason": "Retain identity; no additional art mark by default."
+      },
+      "targeting:area": {
+        "domain": "targeting",
+        "role": "secondary",
+        "recipe": "symbol.scimitar"
+      },
+      "trait:adequateReach": {
+        "domain": "trait",
+        "role": "metadata",
+        "reason": "Retain identity; no additional art mark by default."
+      },
+      "trait:closing": {
+        "domain": "trait",
+        "role": "secondary",
+        "recipe": "symbol.sword"
+      },
+      "trait:conductive": {
+        "domain": "trait",
+        "role": "secondary",
+        "recipe": "symbol.bolt"
+      },
+      "trait:counterstrike": {
+        "domain": "trait",
+        "role": "secondary",
+        "recipe": "symbol.shield-sword"
+      },
+      "trait:flux": {
+        "domain": "trait",
+        "role": "secondary",
+        "recipe": "symbol.ring"
+      },
+      "trait:grounded": {
+        "domain": "trait",
+        "role": "secondary",
+        "recipe": "symbol.stone"
+      },
+      "trait:impact": {
+        "domain": "trait",
+        "role": "secondary",
+        "recipe": "symbol.hammer"
+      },
+      "trait:insulated": {
+        "domain": "trait",
+        "role": "secondary",
+        "recipe": "symbol.shield"
+      },
+      "trait:mental": {
+        "domain": "trait",
+        "role": "secondary",
+        "recipe": "symbol.spiral"
+      },
+      "trait:projectile": {
+        "domain": "trait",
+        "role": "secondary",
+        "recipe": "symbol.bow"
+      },
+      "trait:reaction": {
+        "domain": "trait",
+        "role": "secondary",
+        "recipe": "symbol.shield-sword"
+      },
+      "trait:reveal": {
+        "domain": "trait",
+        "role": "secondary",
+        "recipe": "symbol.eye"
+      },
+      "trait:shattering": {
+        "domain": "trait",
+        "role": "secondary",
+        "recipe": "symbol.hammer"
+      },
+      "trait:unavoidable": {
+        "domain": "trait",
+        "role": "metadata",
+        "reason": "Retain identity; no additional art mark by default."
+      },
+      "trait:unreflectable": {
+        "domain": "trait",
+        "role": "metadata",
+        "reason": "Retain identity; no additional art mark by default."
+      },
+      "target": {
+        "domain": "card",
+        "role": "metadata",
+        "reason": "Retain identity; no additional art mark by default."
+      },
+      "damage.fire": {
+        "domain": "damage",
+        "profile": "reference",
+        "role": "secondary",
+        "recipe": "symbol.flame"
+      },
+      "damage.holy": {
+        "domain": "damage",
+        "profile": "reference",
+        "role": "secondary",
+        "recipe": "symbol.sun"
+      },
+      "targeting.allAllies": {
+        "domain": "targeting",
+        "profile": "reference",
+        "role": "metadata",
+        "reason": "No extra art mark by default."
+      }
+    },
+    "statuses": {
+      "precision": {
+        "profile": "current",
+        "recipe": "symbol.eye"
+      },
+      "evade": {
+        "profile": "current",
+        "recipe": "symbol.feather"
+      },
+      "strength": {
+        "profile": "current",
+        "recipe": "symbol.fist"
+      },
+      "dexterity": {
+        "profile": "current",
+        "recipe": "symbol.feather"
+      },
+      "weak": {
+        "profile": "current",
+        "recipe": "symbol.broken-sword"
+      },
+      "vulnerable": {
+        "profile": "current",
+        "recipe": "symbol.cracked-shield"
+      },
+      "frail": {
+        "profile": "current",
+        "recipe": "symbol.cracked-shield"
+      },
+      "bleed": {
+        "profile": "current",
+        "recipe": "symbol.drop"
+      },
+      "frost": {
+        "profile": "current",
+        "recipe": "symbol.crystal"
+      },
+      "insanity": {
+        "profile": "current",
+        "recipe": "symbol.spiral"
+      },
+      "bleedResist": {
+        "profile": "current",
+        "recipe": "symbol.drop"
+      },
+      "frostResist": {
+        "profile": "current",
+        "recipe": "symbol.crystal"
+      },
+      "insanityResist": {
+        "profile": "current",
+        "recipe": "symbol.spiral"
+      },
+      "frostExposed": {
+        "profile": "current",
+        "recipe": "symbol.crystal"
+      },
+      "insanityExposed": {
+        "profile": "current",
+        "recipe": "symbol.spiral"
+      },
+      "crimsonBlight": {
+        "profile": "current",
+        "recipe": "symbol.fang"
+      },
+      "necroticBlight": {
+        "profile": "current",
+        "recipe": "symbol.fang"
+      },
+      "burn": {
+        "profile": "current",
+        "recipe": "symbol.flame"
+      },
+      "regen": {
+        "profile": "current",
+        "recipe": "symbol.leaf"
+      },
+      "madness": {
+        "profile": "current",
+        "recipe": "symbol.spiral"
+      },
+      "staggered": {
+        "profile": "current",
+        "recipe": "symbol.hammer"
+      },
+      "rallyingStandard": {
+        "profile": "current",
+        "recipe": "symbol.banner"
+      },
+      "rallyingStandardUp": {
+        "profile": "current",
+        "recipe": "symbol.banner"
+      },
+      "unbreakable": {
+        "profile": "current",
+        "recipe": "symbol.shield"
+      },
+      "unbreakableUp": {
+        "profile": "current",
+        "recipe": "symbol.shield"
+      },
+      "goreblood": {
+        "profile": "current",
+        "recipe": "symbol.drop"
+      },
+      "sanguinePact": {
+        "profile": "current",
+        "recipe": "symbol.drop"
+      },
+      "starstoneCharge": {
+        "profile": "current",
+        "recipe": "symbol.orb"
+      },
+      "stargazer": {
+        "profile": "current",
+        "recipe": "symbol.eye"
+      },
+      "astralArmor": {
+        "profile": "current",
+        "recipe": "symbol.ring"
+      },
+      "constellation": {
+        "profile": "current",
+        "recipe": "symbol.star"
+      },
+      "azureCoil": {
+        "profile": "current",
+        "recipe": "symbol.ring"
+      },
+      "waxingMoon": {
+        "profile": "current",
+        "recipe": "symbol.moon"
+      },
+      "moonlitShield": {
+        "profile": "current",
+        "recipe": "symbol.ring"
+      },
+      "astromancer": {
+        "profile": "current",
+        "recipe": "symbol.star"
+      },
+      "thornHalo": {
+        "profile": "current",
+        "recipe": "symbol.ring"
+      },
+      "communion": {
+        "profile": "current",
+        "recipe": "symbol.heart"
+      },
+      "lifeTithe": {
+        "profile": "current",
+        "recipe": "symbol.drop"
+      },
+      "stigmata": {
+        "profile": "current",
+        "recipe": "symbol.drop"
+      },
+      "zealotry": {
+        "profile": "current",
+        "recipe": "symbol.sun"
+      },
+      "emberTide": {
+        "profile": "current",
+        "recipe": "symbol.flame"
+      },
+      "harbingerOfBlight": {
+        "profile": "current",
+        "recipe": "symbol.fang"
+      },
+      "bloodUnction": {
+        "profile": "current",
+        "recipe": "symbol.drop"
+      },
+      "ironVow": {
+        "profile": "current",
+        "recipe": "symbol.shield"
+      },
+      "bulwarkEcho": {
+        "profile": "current",
+        "recipe": "symbol.shield"
+      },
+      "prepared": {
+        "profile": "current",
+        "recipe": "symbol.shield"
+      },
+      "venom": {
+        "profile": "current",
+        "recipe": "symbol.vial"
+      },
+      "afterimage": {
+        "profile": "current",
+        "recipe": "symbol.feather"
+      },
+      "deadlyTempo": {
+        "profile": "current",
+        "recipe": "symbol.hourglass"
+      },
+      "opportunist": {
+        "profile": "current",
+        "recipe": "symbol.eye"
+      },
+      "envenom": {
+        "profile": "current",
+        "recipe": "symbol.vial"
+      },
+      "glassCannon": {
+        "profile": "current",
+        "recipe": "symbol.cracked-shield"
+      },
+      "magicVulnerable": {
+        "profile": "current",
+        "recipe": "symbol.cracked-shield"
+      },
+      "stanceShifted": {
+        "profile": "current",
+        "recipe": "symbol.ring"
+      },
+      "silenced": {
+        "profile": "current",
+        "recipe": "symbol.chain"
+      },
+      "stoneskin": {
+        "profile": "current",
+        "recipe": "symbol.stone"
+      },
+      "bleeding": {
+        "profile": "current",
+        "recipe": "symbol.drop"
+      },
+      "frozen": {
+        "profile": "current",
+        "recipe": "symbol.crystal"
+      },
+      "chilled": {
+        "profile": "current",
+        "recipe": "symbol.crystal"
+      },
+      "sleep": {
+        "profile": "current",
+        "recipe": "symbol.moon"
+      },
+      "paralysis": {
+        "profile": "current",
+        "recipe": "symbol.bolt"
+      },
+      "dazed": {
+        "profile": "current",
+        "recipe": "dazed"
+      },
+      "offBalance": {
+        "profile": "current",
+        "recipe": "symbol.hammer"
+      },
+      "prone": {
+        "profile": "current",
+        "recipe": "symbol.hammer"
+      },
+      "grounded": {
+        "profile": "current",
+        "recipe": "symbol.stone"
+      },
+      "invulnerability": {
+        "profile": "current",
+        "recipe": "symbol.ring"
+      },
+      "decoy": {
+        "profile": "current",
+        "recipe": "symbol.mask"
+      },
+      "concealed": {
+        "profile": "current",
+        "recipe": "symbol.smoke"
+      },
+      "confused": {
+        "profile": "current",
+        "recipe": "symbol.spiral"
+      },
+      "slowed": {
+        "profile": "current",
+        "recipe": "symbol.hourglass"
+      },
+      "entombed": {
+        "profile": "current",
+        "recipe": "symbol.tomb"
+      },
+      "base.persistent-block": {
+        "profile": "reference-base-cards",
+        "recipe": "symbol.shield"
+      },
+      "base.persistent-barrier": {
+        "profile": "reference-base-cards",
+        "recipe": "symbol.ring"
+      },
+      "base.greased": {
+        "profile": "reference-base-cards",
+        "recipe": "symbol.drop"
+      },
+      "base.poison": {
+        "profile": "reference-base-cards",
+        "recipe": "symbol.vial"
+      },
+      "base.blight": {
+        "profile": "reference-base-cards",
+        "recipe": "symbol.fang"
+      },
+      "base.weak": {
+        "profile": "reference-base-cards",
+        "recipe": "symbol.broken-sword"
+      },
+      "base.charm": {
+        "profile": "reference-base-cards",
+        "recipe": "symbol.heart"
+      },
+      "base.bind": {
+        "profile": "reference-base-cards",
+        "recipe": "symbol.chain"
+      },
+      "base.restrained": {
+        "profile": "reference-base-cards",
+        "recipe": "symbol.chain"
+      },
+      "base.foresight": {
+        "profile": "reference-base-cards",
+        "recipe": "symbol.eye"
+      },
+      "base.evade": {
+        "profile": "reference-base-cards",
+        "recipe": "symbol.feather"
+      },
+      "base.intangible": {
+        "profile": "reference-base-cards",
+        "recipe": "symbol.smoke"
+      },
+      "base.mirrors": {
+        "profile": "reference-base-cards",
+        "recipe": "symbol.mirror"
+      },
+      "base.elemental-weapon": {
+        "profile": "reference-base-cards",
+        "recipe": "symbol.sword"
+      },
+      "base.necrotic-healing": {
+        "profile": "reference-base-cards",
+        "recipe": "symbol.leaf"
+      },
+      "base.divine-harm": {
+        "profile": "reference-base-cards",
+        "recipe": "symbol.sun"
+      },
+      "base.extra-weapon": {
+        "profile": "reference-base-cards",
+        "recipe": "symbol.crossed-swords"
+      },
+      "base.extra-shield": {
+        "profile": "reference-base-cards",
+        "recipe": "symbol.double-shield"
+      },
+      "base.auto-counter": {
+        "profile": "reference-base-cards",
+        "recipe": "symbol.shield-sword"
+      },
+      "base.auto-sweep": {
+        "profile": "reference-base-cards",
+        "recipe": "symbol.scimitar"
+      },
+      "base.reflect": {
+        "profile": "reference-base-cards",
+        "recipe": "symbol.mirror"
+      },
+      "base.guard-allies": {
+        "profile": "reference-base-cards",
+        "recipe": "symbol.double-shield"
+      },
+      "base.veil": {
+        "profile": "reference-base-cards",
+        "recipe": "symbol.mask"
+      },
+      "base.retain-block": {
+        "profile": "reference-base-cards",
+        "recipe": "symbol.shield"
+      },
+      "base.read-intent": {
+        "profile": "reference-base-cards",
+        "recipe": "symbol.eye"
+      },
+      "base.stagger": {
+        "profile": "reference-base-cards",
+        "recipe": "symbol.hammer"
+      },
+      "base.paralysis": {
+        "profile": "reference-base-cards",
+        "recipe": "symbol.bolt"
+      },
+      "base.restrained-burden": {
+        "profile": "reference-base-cards",
+        "recipe": "symbol.chain"
+      },
+      "base.many-forms": {
+        "profile": "reference-base-cards",
+        "recipe": "symbol.mask"
+      },
+      "base.conceal": {
+        "profile": "reference-base-cards",
+        "recipe": "symbol.smoke"
+      }
+    },
+    "operations": {
+      "draw": {
+        "role": "secondary",
+        "recipe": "draw"
+      },
+      "discard": {
+        "role": "secondary",
+        "recipe": "symbol.cards"
+      },
+      "exhaust": {
+        "role": "secondary",
+        "recipe": "symbol.cards"
+      },
+      "addCard": {
+        "role": "secondary",
+        "recipe": "symbol.cards"
+      },
+      "retain": {
+        "role": "secondary",
+        "recipe": "symbol.cards"
+      },
+      "shuffleDiscardIntoDraw": {
+        "role": "secondary",
+        "recipe": "symbol.cards"
+      },
+      "heal": {
+        "role": "secondary",
+        "recipe": "symbol.leaf"
+      },
+      "removeStatus": {
+        "role": "secondary",
+        "recipe": "cleansed",
+        "selectionCondition": "Only when removing a harmful status; removing a beneficial status does not imply Cleanse."
+      },
+      "gainEnergy": {
+        "role": "secondary",
+        "recipe": "symbol.bolt"
+      },
+      "restoreStamina": {
+        "role": "secondary",
+        "recipe": "symbol.fist"
+      },
+      "restoreMana": {
+        "role": "secondary",
+        "recipe": "symbol.orb"
+      },
+      "gainPoise": {
+        "role": "secondary",
+        "recipe": "symbol.stone"
+      },
+      "restorePoise": {
+        "role": "secondary",
+        "recipe": "symbol.stone"
+      },
+      "gainWard": {
+        "role": "secondary",
+        "recipe": "symbol.ring"
+      },
+      "gainBarrier": {
+        "role": "secondary",
+        "recipe": "symbol.ring"
+      },
+      "block": {
+        "role": "secondary",
+        "recipe": "symbol.shield"
+      },
+      "loseHp": {
+        "role": "secondary",
+        "recipe": "symbol.drop"
+      },
+      "poiseDamage": {
+        "role": "secondary",
+        "recipe": "symbol.hammer"
+      },
+      "stagger": {
+        "role": "secondary",
+        "recipe": "symbol.hammer"
+      },
+      "grantCardCharge": {
+        "role": "secondary",
+        "recipe": "symbol.star"
+      },
+      "grantRollMode": {
+        "role": "secondary",
+        "recipe": "symbol.eye"
+      },
+      "enterStance": {
+        "role": "secondary",
+        "recipe": "symbol.ring"
+      },
+      "arcaneBuildup": {
+        "role": "secondary",
+        "recipe": "symbol.orb"
+      },
+      "dodgeRoll": {
+        "role": "primary",
+        "recipe": "evade"
+      },
+      "applyStatus": {
+        "role": "status-lookup",
+        "field": "status",
+        "table": "statuses"
+      },
+      "buildup": {
+        "role": "status-lookup",
+        "field": "status",
+        "table": "statuses"
+      }
+    },
+    "payloads": {
+      "evade": {
+        "match": "true or object",
+        "role": "primary",
+        "recipe": "evade"
+      }
+    }
+  },
+  "examples": [
+    {
+      "label": "Basic attack",
+      "primaryRecipe": "attack",
+      "secondaryRecipes": [],
+      "identityCount": 1,
+      "input": {
+        "tags": [
+          "maneuver:attack"
+        ],
+        "operations": [],
+        "statuses": []
+      }
+    },
+    {
+      "label": "Smash",
+      "primaryRecipe": "smash",
+      "secondaryRecipes": [],
+      "identityCount": 1,
+      "input": {
+        "tags": [
+          "maneuver:smash"
+        ],
+        "operations": [],
+        "statuses": []
+      }
+    },
+    {
+      "label": "Counter",
+      "primaryRecipe": "counter",
+      "secondaryRecipes": [],
+      "identityCount": 1,
+      "input": {
+        "tags": [
+          "maneuver:counter"
+        ],
+        "operations": [],
+        "statuses": []
+      }
+    },
+    {
+      "label": "Sweep",
+      "primaryRecipe": "sweep",
+      "secondaryRecipes": [],
+      "identityCount": 1,
+      "input": {
+        "tags": [
+          "maneuver:sweep"
+        ],
+        "operations": [],
+        "statuses": []
+      }
+    },
+    {
+      "label": "Defend",
+      "primaryRecipe": "defend",
+      "secondaryRecipes": [],
+      "identityCount": 1,
+      "input": {
+        "tags": [
+          "maneuver:defend"
+        ],
+        "operations": [],
+        "statuses": []
+      }
+    },
+    {
+      "label": "Evade",
+      "primaryRecipe": "evade",
+      "secondaryRecipes": [],
+      "identityCount": 1,
+      "input": {
+        "tags": [],
+        "operations": [
+          "dodgeRoll"
+        ],
+        "statuses": []
+      }
+    },
+    {
+      "label": "Draw skill",
+      "primaryRecipe": "draw",
+      "secondaryRecipes": [],
+      "identityCount": 2,
+      "input": {
+        "tags": [
+          "classification.skill"
+        ],
+        "operations": [
+          "draw"
+        ],
+        "statuses": []
+      }
+    },
+    {
+      "label": "Dazed skill",
+      "primaryRecipe": "dazed",
+      "secondaryRecipes": [],
+      "identityCount": 2,
+      "input": {
+        "tags": [
+          "classification.skill"
+        ],
+        "operations": [
+          "applyStatus"
+        ],
+        "statuses": [
+          "dazed"
+        ]
+      }
+    },
+    {
+      "label": "Attack + dazed",
+      "primaryRecipe": "attack",
+      "secondaryRecipes": [
+        "dazed"
+      ],
+      "identityCount": 2,
+      "input": {
+        "tags": [
+          "maneuver:attack"
+        ],
+        "operations": [
+          "applyStatus"
+        ],
+        "statuses": [
+          "dazed"
+        ]
+      }
+    },
+    {
+      "label": "Four identities",
+      "primaryRecipe": "attack",
+      "secondaryRecipes": [
+        "dazed",
+        "symbol.flame",
+        "symbol.cards"
+      ],
+      "identityCount": 4,
+      "input": {
+        "tags": [
+          "maneuver:attack",
+          "damage:fire"
+        ],
+        "operations": [
+          "applyStatus",
+          "draw"
+        ],
+        "statuses": [
+          "dazed"
+        ]
+      }
+    }
+  ],
+  "coverage": {
+    "tagDomains": [
+      "card",
+      "presentation",
+      "attackSource",
+      "delivery",
+      "damageType",
+      "technique",
+      "theme",
+      "camp",
+      "maneuver",
+      "school",
+      "counterMode",
+      "range",
+      "targeting",
+      "trait",
+      "damage",
+      "utility"
+    ],
+    "classificationIds": [
+      "classification.attack",
+      "classification.strike",
+      "classification.guard",
+      "classification.weaponArt",
+      "classification.skill",
+      "classification.power",
+      "classification.curse",
+      "classification.statusCard"
+    ],
+    "statusRegistries": [
+      "current",
+      "reference-base-cards"
+    ],
+    "excluded": "Equipment, creature identity, run/property grants, costs, scaling, lifecycle and internal metadata are outside this art vocabulary. Broad card metadata is explicitly nonvisual. Active profile membership must filter reference-only statuses.",
+    "proposalNote": "Every selected combat tag has a binding; shared symbols are intentional. Ability symbols are provisional art choices. No balance, damage, status or gameplay aliases are added."
+  },
+  "proposalRevision": 2,
+  "proposalLibrary": "art-proposals-v2.json"
+}
