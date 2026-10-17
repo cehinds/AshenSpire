@@ -8,7 +8,7 @@
   "generationDate": "2026-10-17",
   "prompts": {
     "stances": "Edit provided exact Court Duelist rear seed into ONE production transparent sprite sheet EXACTLY NINE frames strict THREE COLUMNS by THREE ROWS equal square slots. Same character, same rear three-quarter facing upper right away camera, same elegant dark bronze armor, gold filigree burgundy coat and long ragged red cape, broad brim bronze hat with large red-and-ivory feather, slender rapier held in right hand, tall boots, same proportions and painterly detailed game sprite style. All full body and rapier tips inside each slot, wide transparent gaps, equal scale and foot baseline. No labels borders scenery shadows. Nine distinct held poses reading row-major: neutral matching seed; smash rapier held overhead in forceful downward windup; attack deep forward fencing lunge right arm fully extended; sweep right sword arm sweeping broadly sideways; counter retreating torso blade cocked high diagonally; defend crouched rapier diagonal guard and left forearm raised; evade low lateral step and lean left cape trailing; spell left hand raised with small contained gold magical spark and rapier lowered; preparing torso coiled with rapier drawn beside hip. Maintain visible armored back, no front face. Actual limb and body articulation not repeats or whole-sprite transforms.",
-    "motion": "Transparent sprite sheet, EXACTLY 8 separate cutout sprites on alpha transparency, 4 columns by 2 rows, no colored background at all. Use exact provided rear court duelist identity: red feather bronze broad hat, torn red cape, gold burgundy coat, bronze armor, slim rapier. Rear three-quarter facing upper right always. Top 4 sprites animate attack in order: sword raised anticipating, forward fencing lunge, low followthrough, ready recovery. Bottom4 animate evade: knee bend, deep side lean left, low crouch, ready. Every character complete in own slot and rapier inside slot, wide transparent gaps, equal scale, body articulation distinct, no labels scenery shadows.",
+    "motion": "Create transparent PNG cutout sprites. Eight sprites FOURcolumns TWOrows. Use exact reference rear redcape featherhat rapier duelist. Each figure SMALL maximum55%slotwidth55%slotheight INCLUDING sword. HUGE EMPTY TRANSPARENT gutters and margins all sides. No colored background. Row1 four attack animation poses: raisedrapier anticipation, forwardlunge strike, low followthrough, readyrecovery. Row2 four evade poses: kneebend, low sidestep, crouch, ready. Same identity outfit proportions palette camera rear upperright, real articulated limbs. Transparent alpha between every sprite, no shadows scenery text.",
     "damage": "Transparent game sprite sheet EXACTLY TWO cutout fullbody sprites, one row two equal square slots, same exact rear court duelist seed identity red ivory feather bronze brim hat ragged red cape burgundy goldfiligree coat bronze armor and rapier. Same scale rear threequarter upperright facing painterly style no face. Left HURT recoiling shoulders hunched left hand gripping ribs knees bending right sword dropping. Right DEFEATED kneeling collapsed slump on left forearm bowed head cape pooled sword low in right hand. Distinct articulated anatomy, entire body and blade within own slot with generous empty transparent gap. No background colors scenery labels ground or shadows."
   },
   "masters": {
@@ -58,7 +58,8 @@
   },
   "qa": {
     "visual": "Consistent rear costume and articulated poses; rejected two opaque motion attempts, replaced with transparent generation.",
-    "inEngine": false
+    "inEngine": false,
+    "motionRegeneration": "Regenerated from exact original rear seed with smaller figures, wider gutters. Evade02 is visibly airborne side-hop; shared row baseline estimated835 preserves its raised feet."
   },
   "clips": {
     "attack": {
@@ -85,7 +86,7 @@
     "anchorCoordinates": "source",
     "masterScale": {
       "stances": 1,
-      "motion": 1,
+      "motion": 1.25,
       "damage": 0.54
     },
     "footAnchors": {
@@ -129,35 +130,35 @@
       ],
       "motion": [
         [
+          225,
+          420
+        ],
+        [
+          645,
+          420
+        ],
+        [
+          1110,
+          425
+        ],
+        [
+          1555,
+          425
+        ],
+        [
           240,
-          445
-        ],
-        [
-          655,
-          445
-        ],
-        [
-          1120,
-          445
-        ],
-        [
-          1585,
-          445
-        ],
-        [
-          203,
           835
         ],
         [
-          765,
-          830
+          710,
+          835
         ],
         [
           1145,
           835
         ],
         [
-          1585,
+          1575,
           835
         ]
       ],
