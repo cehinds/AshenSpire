@@ -3,8 +3,8 @@ import { setCombatantTargetHud } from './combatantFrame.js';
 import { targetHudConfig, targetHudEnabled, placeTargetHudPanels, createTargetHudDwell } from '../models/TargetHudModel.js';
 import { classicAppearance } from '../displayAppearance.js';
 import { combatIntentPresentation } from '../models/CombatIntentModel.js';
-import { intentIcon } from './intentIcon.js';
-import { attachTooltip, esc } from './tooltip.js';
+import { attachTooltip, esc, hideTooltip } from './tooltip.js';
+import { combatantInfo, intentParts } from './combatantOverhead.js';
 import { reducedMotionRequested } from '../motion.js';
 
 const rect = node => { const r = node.getBoundingClientRect(); return { left: r.left, top: r.top, width: r.width, height: r.height }; };
@@ -22,9 +22,7 @@ function intentRow(entry) {
   const action = entry.action?.maneuver || 'ready';
   const playerIcon = ({ attack: 'attack', smash: 'smash', sweep: 'sweep', counter: 'counter', defend: 'defend', evade: 'evade' })[action] || 'prepare';
   const title = badge?.title || (['casting', 'prepared'].includes(action) ? t('combat.targetHud.prepare') : action === 'ready' ? t('combat.targetHud.ready') : action === 'defend' ? t('combat.targetHud.defend') : action[0].toUpperCase() + action.slice(1));
-  row.append(intentIcon(badge?.parts[0]?.icon || (badge ? 'prepare' : playerIcon)), node('span', 'target-hud-intent-name', title));
-  const damage = badge?.parts.filter(part => part.value != null).map(part => part.value).join(' · ');
-  if (damage || badge?.visibility !== 'known' && badge) row.append(node('strong', 'target-hud-damage', damage || '?'));
+  row.append(intentParts(badge?.parts.length ? badge.parts : [{ icon: badge ? 'prepare' : playerIcon, value: null }], { unknown: !!badge && badge.visibility !== 'known' }), node('span', 'target-hud-intent-name', title));
   row.dataset.intentVisibility = badge?.visibility || 'known';
   if (badge?.projectedDamage?.tone) row.dataset.damageTone = badge.projectedDamage.tone;
   row.tabIndex = 0;
@@ -57,7 +55,36 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
   cells.classList.add('target-hud-cells'); cells.setAttribute('aria-hidden', 'true');
   field.append(cells, layer);
   let entries = new Map(), eligible = [], focused = null, hover = null, focusWithin = null, shown = [], enabled = false, disposed = false, raf = null;
-  const panels = new Map();
+  const panels = new Map(), infoButtons = new Map();
+  const gestures = new AbortController();
+  let holdTimer = null, held = null, lastTap = null, suppressClickUntil = 0;
+  const cancelHold = () => { clearTimeout(holdTimer); held = null; };
+  const inspect = (id, opener) => { cancelHold(); hideTooltip(); entries.get(id)?.inspect?.(opener); };
+  function wireInspect(shell, id) {
+    shell.addEventListener('click', event => { if (performance.now() < suppressClickUntil) { event.preventDefault(); event.stopImmediatePropagation(); } }, true);
+    shell.addEventListener('dblclick', event => { if (performance.now() < suppressClickUntil) return; event.preventDefault(); event.stopPropagation(); inspect(id, shell); });
+    shell.addEventListener('pointerdown', event => {
+      cancelHold(); if (!event.isPrimary || event.button !== 0) return;
+      held = { id, opener: shell, pointerId: event.pointerId, x: event.clientX, y: event.clientY };
+      holdTimer = setTimeout(() => { if (!shell.isConnected) return; suppressClickUntil = performance.now() + 700; lastTap = null; inspect(id, shell); }, 500);
+    });
+    shell.addEventListener('click', event => {
+      event.stopPropagation(); if (performance.now() < suppressClickUntil) { event.preventDefault(); return; }
+      // Reuse each resource/status component's authored shared tooltip content.
+      event.target.closest('[data-tip-attached]')?.dispatchEvent(new Event('gpfocus'));
+    });
+  }
+  const listen = (target, type, handler) => target.addEventListener(type, handler, { signal: gestures.signal });
+  listen(document, 'pointermove', event => { if (held && held.pointerId === event.pointerId && Math.hypot(event.clientX - held.x, event.clientY - held.y) > 8) cancelHold(); });
+  listen(document, 'pointerup', event => {
+    if (!held || held.pointerId !== event.pointerId) return;
+    const current = held; cancelHold(); if (event.pointerType !== 'touch') return;
+    const time = performance.now();
+    if (lastTap?.id === current.id && time - lastTap.time < 350 && Math.hypot(event.clientX - lastTap.x, event.clientY - lastTap.y) < 24) { lastTap = null; suppressClickUntil = time + 700; inspect(current.id, current.opener); }
+    else lastTap = { id: current.id, time, x: event.clientX, y: event.clientY };
+  });
+  listen(document, 'pointercancel', () => { cancelHold(); lastTap = null; });
+  listen(window, 'blur', () => { cancelHold(); lastTap = null; });
   const dwell = createTargetHudDwell({ delay: config.motion.dwellMs, onChange: ids => { shown = ids; paint(); } });
   const desired = () => [...new Set([...eligible, focused, hover, focusWithin].filter(id => entries.has(id)))];
   const refreshDesired = () => dwell.request(enabled ? desired() : []);
@@ -68,11 +95,13 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     if (combat.dataset.targetHud !== String(next)) combat.dataset.targetHud = String(next);
     layer.hidden = cells.hidden = !next;
     for (const frame of field.querySelectorAll('.combatant')) setCombatantTargetHud(frame, next);
-    if (!next) { hover = null; shown = []; dwell.reset(); clearPanels(); }
+    if (!next) { cancelHold(); lastTap = null; hover = null; shown = []; dwell.reset(); clearPanels(); }
     refreshDesired();
   }
   function clearPanels() {
     for (const panel of panels.values()) panel.node.remove();
+    for (const button of infoButtons.values()) button.remove();
+    infoButtons.clear();
     panels.clear();
     for (const frame of field.querySelectorAll('.combatant')) frame.classList.remove('target-hud-selected', 'target-hud-focused', 'target-hud-candidate');
     cells.replaceChildren();
@@ -82,7 +111,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     if (disposed || !enabled) return;
     const next = new Set(shown.filter(id => entries.has(id)));
     for (const [id, panel] of panels) if (!next.has(id)) {
-      panels.delete(id); panel.node.classList.add('leaving');
+      panels.delete(id); infoButtons.get(id)?.remove(); infoButtons.delete(id); panel.node.classList.add('leaving');
       const remove = () => panel.node.remove();
       if (reducedMotionRequested()) remove(); else panel.node.addEventListener('transitionend', remove, { once: true });
       // A disconnected mount or a suppressed CSS transition still owns removal.
@@ -92,16 +121,30 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       const entry = entries.get(id), old = panels.get(id);
       if (old && old.key === entry.key) continue;
       const shell = panelFor(entry);
+      shell.dataset.matchup = entry.matchup || 'neutral';
+      shell.style.setProperty('--combat-matchup-color', entry.auraColor || '#e4cd59');
+      infoButtons.get(id)?.remove();
+      const info = combatantInfo(entry.name, opener => inspect(id, opener));
+      info.classList.add('target-hud-inspect-info'); info.dataset.eid = id;
+      combat.append(info); infoButtons.set(id, info);
+      info.addEventListener('pointerenter', () => { hover = id; refreshDesired(); });
+      info.addEventListener('pointerleave', () => { hover = null; refreshDesired(); });
+      info.addEventListener('focusin', () => { focusWithin = id; refreshDesired(); });
+      info.addEventListener('focusout', () => { focusWithin = null; refreshDesired(); });
+      wireInspect(shell, id);
       if (old) old.node.replaceWith(shell); else layer.append(shell);
       panels.set(id, { node: shell, key: entry.key });
       shell.addEventListener('pointerenter', () => { hover = id; refreshDesired(); });
       shell.addEventListener('pointerleave', event => pointer(event));
       shell.addEventListener('focusin', () => { focusWithin = id; refreshDesired(); });
       shell.addEventListener('focusout', event => { if (!shell.contains(event.relatedTarget)) { focusWithin = null; refreshDesired(); } });
-      shell.addEventListener('click', event => event.stopPropagation());
+
     }
     for (const frame of field.querySelectorAll('.combatant')) {
       const id = frame.dataset.eid;
+      const entry = entries.get(id);
+      frame.dataset.matchup = entry?.matchup || 'neutral';
+      frame.style.setProperty('--combat-matchup-color', entry?.auraColor || '#e4cd59');
       frame.classList.toggle('target-hud-selected', next.has(id));
       frame.classList.toggle('target-hud-focused', id === focused || id === hover);
       frame.classList.toggle('target-hud-candidate', eligible.includes(id));
@@ -119,6 +162,12 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     const bounds = { ...fieldBox, height: Math.max(0, bottom - fieldBox.top) };
     const frames = [...field.querySelectorAll('.combatant:not(.dead)')];
     const sprites = frames.map(frame => ({ id: frame.dataset.eid, ...rect(frame.querySelector('.sprite')) }));
+    for (const frame of frames) {
+      const spriteBox = rect(frame.querySelector('.sprite')), frameBox = rect(frame);
+      const intentHeight = frame.querySelector(':scope > .target-hud-overhead-meters > :is(.intent,.player-action-intent)')?.getBoundingClientRect().height || 37;
+      frame.style.setProperty('--combat-selected-intent-top', `${(spriteBox.top - frameBox.top - intentHeight - 5) / zoom}px`);
+      frame.style.setProperty('--combat-selected-intent-center', `${(spriteBox.left + spriteBox.width / 2 - frameBox.left) / zoom}px`);
+    }
     const obstacles = [...sprites, ...frames.map(frame => frame.querySelector('.combatant-leading')).filter(Boolean).map(rect),
       ...combat.querySelectorAll(':scope > .topbar, .combat-hud, .combat-tools, .combat-action-row, .turn-ribbon, .hand .card')].map(value => value?.nodeType ? rect(value) : value);
     for (const frame of frames) {
@@ -149,13 +198,22 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       panel.node.style.width = `${width / zoom}px`;
       panel.node.style.setProperty('--target-hud-font', `${config.sizing.fontPx / zoom}px`);
       panel.node.style.setProperty('--target-hud-status-size', `${config.sizing.statusIconPx / zoom}px`);
-      return [{ id, role: entry.role, lane, anchor, width, height: panel.node.getBoundingClientRect().height || config.sizing.panelHeightPx + config.sizing.statusHeightPx }];
+      return [{ id, role: entry.role, lane, anchor, width: width + 25, height: panel.node.getBoundingClientRect().height || config.sizing.panelHeightPx + config.sizing.statusHeightPx }];
     });
     const placed = placeTargetHudPanels({ bounds, panels: requests, obstacles, config });
     for (const box of placed) {
       const panel = panels.get(box.id)?.node; if (!panel) continue;
-      panel.style.left = `${(box.left - fieldBox.left) / zoom}px`; panel.style.top = `${(box.top - fieldBox.top) / zoom}px`;
+      panel.style.left = `${(box.left + 25 - fieldBox.left) / zoom}px`; panel.style.top = `${(box.top - fieldBox.top) / zoom}px`;
       panel.dataset.side = box.side; panel.classList.add('visible');
+      // The separate root control escapes the detail's layer while sharing its measured position.
+      const info = infoButtons.get(box.id);
+      if (info) {
+        const panelBox = panel.querySelector('.target-hud-panel').getBoundingClientRect();
+        const combatZoom = rootBox.width / combat.clientWidth || 1;
+        info.style.left = `${(panelBox.left - rootBox.left - 25) / combatZoom}px`;
+        info.style.top = `${(panelBox.top + panelBox.height / 2 - rootBox.top - 10) / combatZoom}px`;
+        info.style.width = info.style.height = `${20 / combatZoom}px`;
+      }
     }
     cells.setAttribute('viewBox', `0 0 ${fieldBox.width} ${fieldBox.height}`);
     cells.replaceChildren();
@@ -182,7 +240,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
   }
   function pointer(event) {
     if (!enabled || event.pointerType === 'touch') return;
-    const direct = event.target.closest?.('.target-hud-detail, .combatant');
+    const direct = event.target.closest?.('.target-hud-inspect-info, .target-hud-detail, .combatant');
     const id = direct?.dataset.eid;
     if (id && entries.has(id) && !direct.classList.contains('dead') && !direct.inert) {
       if (hover !== id) { hover = id; refreshDesired(); paint(); } return;
@@ -200,8 +258,8 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     if (frame && entries.has(frame.dataset.eid)) { focusWithin = frame.dataset.eid; refreshDesired(); }
   }
   function focusOut(event) { if (!field.contains(event.relatedTarget)) { focusWithin = null; refreshDesired(); } }
-  field.addEventListener('pointermove', pointer);
-  field.addEventListener('pointerleave', pointer);
+  combat.addEventListener('pointermove', pointer);
+  combat.addEventListener('pointerleave', pointer);
   field.addEventListener('focusin', focus);
   field.addEventListener('focusout', focusOut);
   field.addEventListener('formationlayoutchange', scheduleGeometry);
@@ -221,9 +279,9 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       gate(); refreshDesired(); paint();
     },
     release() {
-      if (disposed) return; disposed = true; dwell.dispose(); if (raf !== null) cancelAnimationFrame(raf);
+      if (disposed) return; disposed = true; cancelHold(); gestures.abort(); dwell.dispose(); if (raf !== null) cancelAnimationFrame(raf);
       for (const node of layer.querySelectorAll('.target-hud-detail')) clearTimeout(node.ashenRemove);
-      field.removeEventListener('pointermove', pointer); field.removeEventListener('pointerleave', pointer);
+      combat.removeEventListener('pointermove', pointer); combat.removeEventListener('pointerleave', pointer);
       field.removeEventListener('focusin', focus); field.removeEventListener('focusout', focusOut);
       field.removeEventListener('battlefieldgeometrychange', scheduleGeometry);
       field.removeEventListener('formationlayoutchange', scheduleGeometry); window.removeEventListener('resize', resized);

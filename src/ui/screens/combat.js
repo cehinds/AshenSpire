@@ -1,3 +1,4 @@
+import { targetHudMatchup, TARGET_HUD_AURA } from '../models/TargetHudModel.js';
 import { mountCombatTargetHud } from '../components/combatTargetHud.js';
 import { projectCombatIntent } from '../models/CombatIntentProjectionModel.js';
 import { formationOccupancy } from '../../model/formationOccupancy.js';
@@ -792,7 +793,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function syncPlayerActionIntent(player, inst, held = null) {
     const leading = player?.querySelector('.combatant-leading');
     if (!leading) return;
-    leading.querySelector('.player-action-intent')?.remove();
+    player.querySelector('.player-action-intent')?.remove();
     const def = inst ? resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(inst.instanceId) }) : null;
     const armed = def ? kindForCard(def) : null;
     const action = playerActionIntent(armed ?? held ?? RESTING_PLAYER_ACTION, () => {
@@ -1276,8 +1277,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const intent = role === 'enemy' ? configuredArt && !gameModule(run, 'intent')
         ? { hidden: true, label: t('gameProfile.combat.unreadIntent') }
         : disp?.ents[entity.id]?.intentPreview || projectCombatIntent(combat, entity.id) : null;
-      return { id: entity.id, role, name: role === 'enemy' ? registries.enemies.get(entity.enemyId).name : run.customization?.name || runClassIdentity(registries, run).name,
-        intent, action: role === 'player' ? action : null, key: JSON.stringify([dv(entity), intent, role === 'player' && action]),
+      const matchup = role === 'enemy' && activeDef ? targetHudMatchup(action, intent, gameModule(run, 'stances')) : 'neutral';
+      const auraColor = role === 'player' ? '#87caff' : TARGET_HUD_AURA[matchup];
+      return { id: entity.id, role, matchup, auraColor, inspect: opener => openCombatantDoor(combatantSubject(role, entity), opener), name: role === 'enemy' ? registries.enemies.get(entity.enemyId).name : run.customization?.name || runClassIdentity(registries, run).name,
+        intent, action: role === 'player' ? action : null, key: JSON.stringify([dv(entity), intent, role === 'player' && action, matchup]),
         createMeters: () => meterBars(entity), createStatuses: () => statusRow(entity, { inspection: true }) };
     });
     targetHud.update({ combatants, eligibleIds: eligibleIds || (selected || selfArm || selectedFlask != null ? pendingTargetPlan().legalIds : []), focusedId: selectedCombatantId });
