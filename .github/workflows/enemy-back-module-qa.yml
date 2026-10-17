@@ -17,12 +17,24 @@ jobs:
           filter: blob:none
           sparse-checkout: |
             pose-studio/enemy-back-proposals
-            src/ui/assetmap.js
+            src
+            tools
+            workbench
+            content
+            engine
+            styles
+            ui-studio
+            index.html
+            package.json
+            art-manifest.json
+            art-release.json
             art/enemy-back-proposals/wyrmAspirant
           sparse-checkout-cone-mode: false
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Build actual static Workbench without external art
+        run: node tools/workbench-static.mjs --out /tmp/enemy-back-static --base /qa/workbench/ --no-art
       - name: Verify normalized art hashes
         run: node pose-studio/enemy-back-proposals/integrate-normalized.mjs wyrmAspirant
       - name: Model contract

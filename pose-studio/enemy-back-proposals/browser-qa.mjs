@@ -8,7 +8,7 @@ const {chromium}=await import(pathToFileURL(process.env.PLAYWRIGHT_MODULE).href)
 const root=resolve('.'),output='/tmp/enemy-back-module-qa';
 await mkdir(output,{recursive:true});
 const types={'.html':'text/html','.mjs':'text/javascript','.js':'text/javascript','.css':'text/css','.json':'application/json'};
-const server=createServer(async(req,res)=>{try{const name=decodeURIComponent(new URL(req.url,'http://localhost').pathname),file=resolve(root,'.'+name);if(!file.startsWith(root+'/'))throw Error('Invalid path');const data=await readFile(file);res.writeHead(200,{'Content-Type':types[extname(file)]||'application/octet-stream'});res.end(data);}catch{res.writeHead(404);res.end('Not found');}});
+const server=createServer(async(req,res)=>{try{const name=decodeURIComponent(new URL(req.url,'http://localhost').pathname),base=name.startsWith('/qa/workbench/')?'/tmp/enemy-back-static':root,relative=name.startsWith('/qa/workbench/')?name.slice('/qa/workbench'.length):name,file=resolve(base,'.'+relative);if(!file.startsWith(base+'/'))throw Error('Invalid path');const data=await readFile(file);res.writeHead(200,{'Content-Type':types[extname(file)]||'application/octet-stream'});res.end(data);}catch{res.writeHead(404);res.end('Not found');}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const url='http://127.0.0.1:'+server.address().port+'/pose-studio/enemy-back-proposals/index.html';
 const embedTarget='pose-studio/enemy-back-proposals/embedded-check.html';
@@ -48,6 +48,9 @@ try{
   await page.locator('[data-pick="v01"]').check();await page.locator('[data-pick="v02"]').check();
   await page.waitForFunction(()=>[...document.querySelectorAll('#grid img,#compare img')].every(img=>img.complete&&img.naturalWidth===512));
   await page.screenshot({path:output+'/'+name+'.png',fullPage:true});
+  await page.goto('http://127.0.0.1:'+server.address().port+'/qa/workbench/game/pose-studio/enemy-back-proposals/index.html');
+  await page.waitForFunction(()=>document.querySelectorAll('#grid img').length===10&&[...document.querySelectorAll('#grid img')].every(img=>img.complete&&img.naturalWidth===512));
+  assert.equal(await page.getByText('Asset Gallery',{exact:true}).getAttribute('href'),'/qa/workbench/index.html#mod=assets');
   await page.goto('http://127.0.0.1:'+server.address().port+'/'+embedTarget);
   await page.locator('#enemy-rear-review-open').click();
   const embedded=page.frameLocator('iframe');

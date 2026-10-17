@@ -11,7 +11,7 @@ for(const actor of manifest.actors)for(const p of actor.proposals)for(const sequ
 }
 for(const actor of manifest.actors)if(actor.reference?.asset){const asset=actor.reference.asset;if(!safeAsset(asset))throw Error('Unsafe reference asset');assets[asset]='data:image/'+(asset.endsWith('.png')?'png':'webp')+';base64,'+(await readFile(asset)).toString('base64');}
 const json=value=>JSON.stringify(value).replace(/</g,'\\u003c');
-let html=await readFile(dir+'/index.html','utf8');
+let html=(await readFile(dir+'/index.html','utf8')).replace('<a href="../../workbench/index.html#mod=assets">Asset Gallery</a>','<span>Standalone review</span>');
 const model=(await readFile(dir+'/model.mjs','utf8')).replace(/^export /gm,'');
 let preview=(await readFile(dir+'/preview.mjs','utf8')).replace(/^import[^\n]+\n/gm,'').replace("await fetch('./manifest.json')",'await Promise.resolve(new Response(JSON.stringify(__manifest)))');
 const code='const __manifest='+json(manifest)+';const __assets='+json(assets)+';const assetUrl=id=>__assets[id]||id;\n'+model+'\n'+preview;
