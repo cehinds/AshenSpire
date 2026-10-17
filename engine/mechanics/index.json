@@ -860,6 +860,15 @@
       ]
     },
     {
+      "id": "mechanic.stagger",
+      "tag": "mechanic.stagger",
+      "family": "mechanic",
+      "portability": "portable",
+      "modules": [
+        "stagger"
+      ]
+    },
+    {
       "id": "range_melee",
       "tag": "range:melee",
       "family": "range",
