@@ -1,0 +1,26 @@
+{
+  "id": "internal.unplayable",
+  "tag": "internal.unplayable",
+  "version": "1.0.0",
+  "family": "internal",
+  "label": "Unplayable",
+  "description": "Tag internal.unplayable in the internal family.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "internal.unplayable"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/cardBehavior.js",
+    "symbol": "projectCardBehavior"
+  }
+}

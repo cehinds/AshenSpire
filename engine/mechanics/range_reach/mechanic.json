@@ -1,0 +1,27 @@
+{
+  "id": "range_reach",
+  "tag": "range:reach",
+  "version": "1.0.0",
+  "family": "range",
+  "label": "Reach",
+  "description": "At reach: past arm's length but not yet ranged.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "range_reach",
+    "color": "9FC3E8"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/cardZones.js",
+    "symbol": "validateZoneEffect"
+  }
+}

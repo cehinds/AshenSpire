@@ -1,0 +1,8 @@
+{
+  "mechanic": "delivery_melee",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

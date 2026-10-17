@@ -1,0 +1,26 @@
+{
+  "id": "status.evade",
+  "tag": "status.evade",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Evade",
+  "description": "Each stack adds 3 Evasion. Lose 1 stack at the start of each round.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.evade"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/actions.js",
+    "symbol": "runOpcode"
+  }
+}

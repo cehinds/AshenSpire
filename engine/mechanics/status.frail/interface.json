@@ -1,0 +1,8 @@
+{
+  "mechanic": "status.frail",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

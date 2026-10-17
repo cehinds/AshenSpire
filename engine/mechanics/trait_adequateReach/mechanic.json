@@ -1,0 +1,27 @@
+{
+  "id": "trait_adequateReach",
+  "tag": "trait:adequateReach",
+  "version": "1.0.0",
+  "family": "trait",
+  "label": "Adequatereach",
+  "description": "Adequatereach combat interaction.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "trait_adequateReach",
+    "color": "9FC3E8"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/combatAvoidance.js",
+    "symbol": "distancePreview"
+  }
+}

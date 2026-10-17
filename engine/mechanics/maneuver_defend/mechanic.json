@@ -1,0 +1,27 @@
+{
+  "id": "maneuver_defend",
+  "tag": "maneuver:defend",
+  "version": "1.0.0",
+  "family": "maneuver",
+  "label": "Defend",
+  "description": "Prepare defense. Physical cards protect Guard; defensive spell cards protect Ward. Smash breaks physical Guard.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "maneuver_defend",
+    "color": "9FC3E8"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/model/actionCosts.js",
+    "symbol": "actionStance"
+  }
+}

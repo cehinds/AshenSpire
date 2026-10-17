@@ -1,0 +1,8 @@
+{
+  "mechanic": "lifecycle.exhaust",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

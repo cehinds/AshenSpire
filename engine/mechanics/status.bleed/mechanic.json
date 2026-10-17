@@ -1,0 +1,26 @@
+{
+  "id": "status.bleed",
+  "tag": "status.bleed",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Bleed",
+  "description": "Build-up: points do not decay. At {proc.threshold}, burst for {proc.burstPercent}% of max HP (min {proc.burstMin}, max {proc.burstMax}), ignoring Block, plus {proc.poiseDamage} Poise damage - then the build-up resets to zero. Fleshy targets briefly resist further Bleed after a burst.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.bleed"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/combatCardTactics.js",
+    "symbol": "enqueueCounterWard"
+  }
+}

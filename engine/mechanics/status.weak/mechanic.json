@@ -1,0 +1,26 @@
+{
+  "id": "status.weak",
+  "tag": "status.weak",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Weak",
+  "description": "Deals 25% less attack damage. 1 stack expires each turn.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.weak"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/combatCardTactics.js",
+    "symbol": "enqueueCounterWard"
+  }
+}

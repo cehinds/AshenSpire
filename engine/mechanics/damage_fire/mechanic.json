@@ -1,0 +1,27 @@
+{
+  "id": "damage_fire",
+  "tag": "damage:fire",
+  "version": "1.0.0",
+  "family": "damage",
+  "label": "Fire",
+  "description": "Applies 1 Burn on a Health hit unless the card already prints a Burn effect.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "damage_fire",
+    "color": "9FC3E8"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/ashenBlight.js",
+    "symbol": "ashenBlightSpellBuildup"
+  }
+}

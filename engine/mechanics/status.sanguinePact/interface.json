@@ -1,0 +1,8 @@
+{
+  "mechanic": "status.sanguinePact",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

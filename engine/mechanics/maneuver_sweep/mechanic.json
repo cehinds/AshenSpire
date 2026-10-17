@@ -1,0 +1,27 @@
+{
+  "id": "maneuver_sweep",
+  "tag": "maneuver:sweep",
+  "version": "1.0.0",
+  "family": "maneuver",
+  "label": "Sweep",
+  "description": "Windmill strike. Bypasses melee Counter; physical Guard and ranged attacks answer it.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "maneuver_sweep",
+    "color": "93C9BC"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/combatReactions.js",
+    "symbol": "eligible"
+  }
+}

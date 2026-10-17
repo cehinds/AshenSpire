@@ -1,0 +1,27 @@
+{
+  "id": "item_armor",
+  "tag": "item:armor",
+  "version": "1.0.0",
+  "family": "item",
+  "label": "Armor",
+  "description": "What this piece IS: the Armoury and the smith name it Armor.",
+  "attaches": [
+    "gear"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "item_armor",
+    "color": "B8B0A0"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/skillXp.js",
+    "symbol": "groupOfPiece"
+  }
+}

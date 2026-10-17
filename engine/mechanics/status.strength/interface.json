@@ -1,0 +1,8 @@
+{
+  "mechanic": "status.strength",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

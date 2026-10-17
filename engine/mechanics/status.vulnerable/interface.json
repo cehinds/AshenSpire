@@ -1,0 +1,8 @@
+{
+  "mechanic": "status.vulnerable",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

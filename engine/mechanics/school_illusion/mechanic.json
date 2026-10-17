@@ -1,0 +1,26 @@
+{
+  "id": "school_illusion",
+  "tag": "school:illusion",
+  "version": "1.0.0",
+  "family": "school",
+  "label": "Illusion",
+  "description": "Tempo and hand control: Weak, confusion, draw and energy tools.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "school_illusion",
+    "color": "C59BD7"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/model/combatCardProfile.js"
+  }
+}

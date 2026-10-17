@@ -1,0 +1,27 @@
+{
+  "id": "damage_blunt",
+  "tag": "damage:blunt",
+  "version": "1.0.0",
+  "family": "damage",
+  "label": "Blunt",
+  "description": "Adds 2 Poise damage once per action against each target.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "damage_blunt",
+    "color": "9FC3E8"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/actions.js",
+    "symbol": "prepareExpandedDefense"
+  }
+}

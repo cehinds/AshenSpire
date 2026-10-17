@@ -1,0 +1,8 @@
+{
+  "mechanic": "utility.manaCharge",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

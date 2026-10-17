@@ -1,0 +1,8 @@
+{
+  "mechanic": "lifecycle.recall.afterCardPlay",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

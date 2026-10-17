@@ -1,0 +1,8 @@
+{
+  "mechanic": "status.weak",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

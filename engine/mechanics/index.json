@@ -1,0 +1,1907 @@
+{
+  "format": "ashen.mechanics-index@1",
+  "mechanics": [
+    {
+      "id": "camp_physical",
+      "tag": "camp:physical",
+      "family": "camp",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "camp_spell",
+      "tag": "camp:spell",
+      "family": "camp",
+      "portability": "legacy",
+      "modules": [
+        "deck-training"
+      ]
+    },
+    {
+      "id": "classification.armament",
+      "tag": "classification.armament",
+      "family": "classification",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "classification.armour",
+      "tag": "classification.armour",
+      "family": "classification",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "classification.attack",
+      "tag": "classification.attack",
+      "family": "classification",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "classification.basicCardProfile",
+      "tag": "classification.basicCardProfile",
+      "family": "classification",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "classification.class",
+      "tag": "classification.class",
+      "family": "classification",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "classification.companion",
+      "tag": "classification.companion",
+      "family": "classification",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "classification.curse",
+      "tag": "classification.curse",
+      "family": "classification",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "classification.encounter",
+      "tag": "classification.encounter",
+      "family": "classification",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "classification.enemy",
+      "tag": "classification.enemy",
+      "family": "classification",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "classification.enemyMove",
+      "tag": "classification.enemyMove",
+      "family": "classification",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "classification.event",
+      "tag": "classification.event",
+      "family": "classification",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "classification.feat",
+      "tag": "classification.feat",
+      "family": "classification",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "classification.flask",
+      "tag": "classification.flask",
+      "family": "classification",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "classification.guard",
+      "tag": "classification.guard",
+      "family": "classification",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "classification.keepsake",
+      "tag": "classification.keepsake",
+      "family": "classification",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "classification.power",
+      "tag": "classification.power",
+      "family": "classification",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "classification.relic",
+      "tag": "classification.relic",
+      "family": "classification",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "classification.sigil",
+      "tag": "classification.sigil",
+      "family": "classification",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "classification.skill",
+      "tag": "classification.skill",
+      "family": "classification",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "classification.slot",
+      "tag": "classification.slot",
+      "family": "classification",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "classification.startingKit",
+      "tag": "classification.startingKit",
+      "family": "classification",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "classification.statusCard",
+      "tag": "classification.statusCard",
+      "family": "classification",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "classification.strike",
+      "tag": "classification.strike",
+      "family": "classification",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "classification.unlock",
+      "tag": "classification.unlock",
+      "family": "classification",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "classification.weaponArt",
+      "tag": "classification.weaponArt",
+      "family": "classification",
+      "portability": "data",
+      "modules": [
+        "deck-training"
+      ]
+    },
+    {
+      "id": "cost.action",
+      "tag": "cost.action",
+      "family": "cost",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "cost.alternative",
+      "tag": "cost.alternative",
+      "family": "cost",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "cost.mana",
+      "tag": "cost.mana",
+      "family": "cost",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "cost.stamina",
+      "tag": "cost.stamina",
+      "family": "cost",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "counter_melee",
+      "tag": "counter:melee",
+      "family": "counter",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "counter_ranged",
+      "tag": "counter:ranged",
+      "family": "counter",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "counter_spell",
+      "tag": "counter:spell",
+      "family": "counter",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "damage.arcane",
+      "tag": "damage.arcane",
+      "family": "damage",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "damage.blade",
+      "tag": "damage.blade",
+      "family": "damage",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "damage.blunt",
+      "tag": "damage.blunt",
+      "family": "damage",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "damage.fire",
+      "tag": "damage.fire",
+      "family": "damage",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "damage.holy",
+      "tag": "damage.holy",
+      "family": "damage",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "damage.magic",
+      "tag": "damage.magic",
+      "family": "damage",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "damage.physical",
+      "tag": "damage.physical",
+      "family": "damage",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "damage.piercing",
+      "tag": "damage.piercing",
+      "family": "damage",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "damage_arcane",
+      "tag": "damage:arcane",
+      "family": "damage",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "damage_blunt",
+      "tag": "damage:blunt",
+      "family": "damage",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "damage_decay",
+      "tag": "damage:decay",
+      "family": "damage",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "damage_earth",
+      "tag": "damage:earth",
+      "family": "damage",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "damage_fire",
+      "tag": "damage:fire",
+      "family": "damage",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "damage_frost",
+      "tag": "damage:frost",
+      "family": "damage",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "damage_lightning",
+      "tag": "damage:lightning",
+      "family": "damage",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "damage_piercing",
+      "tag": "damage:piercing",
+      "family": "damage",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "damage_poison",
+      "tag": "damage:poison",
+      "family": "damage",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "damage_psychic",
+      "tag": "damage:psychic",
+      "family": "damage",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "damage_sacred",
+      "tag": "damage:sacred",
+      "family": "damage",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "damage_slashing",
+      "tag": "damage:slashing",
+      "family": "damage",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "delivery_area",
+      "tag": "delivery:area",
+      "family": "delivery",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "delivery_melee",
+      "tag": "delivery:melee",
+      "family": "delivery",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "delivery_projectile",
+      "tag": "delivery:projectile",
+      "family": "delivery",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "equipment.bound",
+      "tag": "equipment.bound",
+      "family": "equipment",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "equipment.dualWield",
+      "tag": "equipment.dualWield",
+      "family": "equipment",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "equipment.mainHand",
+      "tag": "equipment.mainHand",
+      "family": "equipment",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "equipment.offHand",
+      "tag": "equipment.offHand",
+      "family": "equipment",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "equipment.parryTool",
+      "tag": "equipment.parryTool",
+      "family": "equipment",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "equipment.shield",
+      "tag": "equipment.shield",
+      "family": "equipment",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "equipment.twoHanded",
+      "tag": "equipment.twoHanded",
+      "family": "equipment",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "from_armor",
+      "tag": "from:armor",
+      "family": "from",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "from_class",
+      "tag": "from:class",
+      "family": "from",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "from_global",
+      "tag": "from:global",
+      "family": "from",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "from_relic",
+      "tag": "from:relic",
+      "family": "from",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "from_weapon",
+      "tag": "from:weapon",
+      "family": "from",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "fx_arcane",
+      "tag": "fx:arcane",
+      "family": "fx",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "fx_ash",
+      "tag": "fx:ash",
+      "family": "fx",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "fx_barrier",
+      "tag": "fx:barrier",
+      "family": "fx",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "fx_bind",
+      "tag": "fx:bind",
+      "family": "fx",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "fx_blade",
+      "tag": "fx:blade",
+      "family": "fx",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "fx_blight",
+      "tag": "fx:blight",
+      "family": "fx",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "fx_blood",
+      "tag": "fx:blood",
+      "family": "fx",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "fx_bulwark",
+      "tag": "fx:bulwark",
+      "family": "fx",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "fx_cleanse",
+      "tag": "fx:cleanse",
+      "family": "fx",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "fx_dodge",
+      "tag": "fx:dodge",
+      "family": "fx",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "fx_flourish",
+      "tag": "fx:flourish",
+      "family": "fx",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "fx_frost",
+      "tag": "fx:frost",
+      "family": "fx",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "fx_gorefire",
+      "tag": "fx:gorefire",
+      "family": "fx",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "fx_guard",
+      "tag": "fx:guard",
+      "family": "fx",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "fx_guile",
+      "tag": "fx:guile",
+      "family": "fx",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "fx_heal",
+      "tag": "fx:heal",
+      "family": "fx",
+      "portability": "data",
+      "modules": [
+        "heal-rules"
+      ]
+    },
+    {
+      "id": "fx_heavy",
+      "tag": "fx:heavy",
+      "family": "fx",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "fx_magic",
+      "tag": "fx:magic",
+      "family": "fx",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "fx_oath",
+      "tag": "fx:oath",
+      "family": "fx",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "fx_pierce",
+      "tag": "fx:pierce",
+      "family": "fx",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "fx_precision",
+      "tag": "fx:precision",
+      "family": "fx",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "fx_ranged",
+      "tag": "fx:ranged",
+      "family": "fx",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "fx_riposte",
+      "tag": "fx:riposte",
+      "family": "fx",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "fx_ritual",
+      "tag": "fx:ritual",
+      "family": "fx",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "fx_shield",
+      "tag": "fx:shield",
+      "family": "fx",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "fx_starstone",
+      "tag": "fx:starstone",
+      "family": "fx",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "fx_utility",
+      "tag": "fx:utility",
+      "family": "fx",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "fx_venom",
+      "tag": "fx:venom",
+      "family": "fx",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "fx_ward",
+      "tag": "fx:ward",
+      "family": "fx",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "internal.unplayable",
+      "tag": "internal.unplayable",
+      "family": "internal",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "internal.upgraded",
+      "tag": "internal.upgraded",
+      "family": "internal",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "item_armor",
+      "tag": "item:armor",
+      "family": "item",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "item_blade",
+      "tag": "item:blade",
+      "family": "item",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "item_magic-focus",
+      "tag": "item:magic-focus",
+      "family": "item",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "item_shield",
+      "tag": "item:shield",
+      "family": "item",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "lifecycle.ethereal",
+      "tag": "lifecycle.ethereal",
+      "family": "lifecycle",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "lifecycle.exhaust",
+      "tag": "lifecycle.exhaust",
+      "family": "lifecycle",
+      "portability": "legacy",
+      "modules": [
+        "heal-rules"
+      ]
+    },
+    {
+      "id": "lifecycle.innate",
+      "tag": "lifecycle.innate",
+      "family": "lifecycle",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "lifecycle.recall",
+      "tag": "lifecycle.recall",
+      "family": "lifecycle",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "lifecycle.recall.afterCardPlay",
+      "tag": "lifecycle.recall.afterCardPlay",
+      "family": "lifecycle",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "lifecycle.recall.afterTurnDraw",
+      "tag": "lifecycle.recall.afterTurnDraw",
+      "family": "lifecycle",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "lifecycle.recall.afterUse",
+      "tag": "lifecycle.recall.afterUse",
+      "family": "lifecycle",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "lifecycle.retain",
+      "tag": "lifecycle.retain",
+      "family": "lifecycle",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "lifecycle.seal",
+      "tag": "lifecycle.seal",
+      "family": "lifecycle",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "maneuver_attack",
+      "tag": "maneuver:attack",
+      "family": "maneuver",
+      "portability": "legacy",
+      "modules": [
+        "deck-training"
+      ]
+    },
+    {
+      "id": "maneuver_casting",
+      "tag": "maneuver:casting",
+      "family": "maneuver",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "maneuver_counter",
+      "tag": "maneuver:counter",
+      "family": "maneuver",
+      "portability": "legacy",
+      "modules": [
+        "deck-training"
+      ]
+    },
+    {
+      "id": "maneuver_defend",
+      "tag": "maneuver:defend",
+      "family": "maneuver",
+      "portability": "legacy",
+      "modules": [
+        "deck-training"
+      ]
+    },
+    {
+      "id": "maneuver_ranged",
+      "tag": "maneuver:ranged",
+      "family": "maneuver",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "maneuver_smash",
+      "tag": "maneuver:smash",
+      "family": "maneuver",
+      "portability": "legacy",
+      "modules": [
+        "deck-training"
+      ]
+    },
+    {
+      "id": "maneuver_sweep",
+      "tag": "maneuver:sweep",
+      "family": "maneuver",
+      "portability": "legacy",
+      "modules": [
+        "deck-training"
+      ]
+    },
+    {
+      "id": "range_melee",
+      "tag": "range:melee",
+      "family": "range",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "range_ranged",
+      "tag": "range:ranged",
+      "family": "range",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "range_reach",
+      "tag": "range:reach",
+      "family": "range",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "scaling.constitution",
+      "tag": "scaling.constitution",
+      "family": "scaling",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "scaling.dexterity",
+      "tag": "scaling.dexterity",
+      "family": "scaling",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "scaling.intelligence",
+      "tag": "scaling.intelligence",
+      "family": "scaling",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "scaling.strength",
+      "tag": "scaling.strength",
+      "family": "scaling",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "scaling.wisdom",
+      "tag": "scaling.wisdom",
+      "family": "scaling",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "school_alteration",
+      "tag": "school:alteration",
+      "family": "school",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "school_decay",
+      "tag": "school:decay",
+      "family": "school",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "school_divine",
+      "tag": "school:divine",
+      "family": "school",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "school_earth",
+      "tag": "school:earth",
+      "family": "school",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "school_fire",
+      "tag": "school:fire",
+      "family": "school",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "school_force",
+      "tag": "school:force",
+      "family": "school",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "school_frost",
+      "tag": "school:frost",
+      "family": "school",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "school_illusion",
+      "tag": "school:illusion",
+      "family": "school",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "school_lightning",
+      "tag": "school:lightning",
+      "family": "school",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "source_spell",
+      "tag": "source:spell",
+      "family": "source",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "source_unarmed",
+      "tag": "source:unarmed",
+      "family": "source",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "source_weapon",
+      "tag": "source:weapon",
+      "family": "source",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "status.afterimage",
+      "tag": "status.afterimage",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.astralArmor",
+      "tag": "status.astralArmor",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.astromancer",
+      "tag": "status.astromancer",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.azureCoil",
+      "tag": "status.azureCoil",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.bleed",
+      "tag": "status.bleed",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "gear",
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.bleedResist",
+      "tag": "status.bleedResist",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.bleeding",
+      "tag": "status.bleeding",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.bloodUnction",
+      "tag": "status.bloodUnction",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.bulwarkEcho",
+      "tag": "status.bulwarkEcho",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.burn",
+      "tag": "status.burn",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "gear",
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.chilled",
+      "tag": "status.chilled",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.communion",
+      "tag": "status.communion",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.concealed",
+      "tag": "status.concealed",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.confused",
+      "tag": "status.confused",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.constellation",
+      "tag": "status.constellation",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.crimsonBlight",
+      "tag": "status.crimsonBlight",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.dazed",
+      "tag": "status.dazed",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.deadlyTempo",
+      "tag": "status.deadlyTempo",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.decoy",
+      "tag": "status.decoy",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.dexterity",
+      "tag": "status.dexterity",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "characters",
+        "gear",
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.emberTide",
+      "tag": "status.emberTide",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.entombed",
+      "tag": "status.entombed",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.envenom",
+      "tag": "status.envenom",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.evade",
+      "tag": "status.evade",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "deck-training",
+        "stances",
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.frail",
+      "tag": "status.frail",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.frost",
+      "tag": "status.frost",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "gear",
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.frostExposed",
+      "tag": "status.frostExposed",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.frostResist",
+      "tag": "status.frostResist",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.frozen",
+      "tag": "status.frozen",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.glassCannon",
+      "tag": "status.glassCannon",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.goreblood",
+      "tag": "status.goreblood",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.grounded",
+      "tag": "status.grounded",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.harbingerOfBlight",
+      "tag": "status.harbingerOfBlight",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.insanity",
+      "tag": "status.insanity",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "gear",
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.insanityExposed",
+      "tag": "status.insanityExposed",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.insanityResist",
+      "tag": "status.insanityResist",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.invulnerability",
+      "tag": "status.invulnerability",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.ironVow",
+      "tag": "status.ironVow",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.lifeTithe",
+      "tag": "status.lifeTithe",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.madness",
+      "tag": "status.madness",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.magicVulnerable",
+      "tag": "status.magicVulnerable",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.moonlitShield",
+      "tag": "status.moonlitShield",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.necroticBlight",
+      "tag": "status.necroticBlight",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.offBalance",
+      "tag": "status.offBalance",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.opportunist",
+      "tag": "status.opportunist",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.paralysis",
+      "tag": "status.paralysis",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.precision",
+      "tag": "status.precision",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.prepared",
+      "tag": "status.prepared",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "stances",
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.prone",
+      "tag": "status.prone",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.rallyingStandard",
+      "tag": "status.rallyingStandard",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.rallyingStandardUp",
+      "tag": "status.rallyingStandardUp",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.regen",
+      "tag": "status.regen",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "gear",
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.sanguinePact",
+      "tag": "status.sanguinePact",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.silenced",
+      "tag": "status.silenced",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.sleep",
+      "tag": "status.sleep",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.slowed",
+      "tag": "status.slowed",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.staggered",
+      "tag": "status.staggered",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.stanceShifted",
+      "tag": "status.stanceShifted",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.stargazer",
+      "tag": "status.stargazer",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.starstoneCharge",
+      "tag": "status.starstoneCharge",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.stigmata",
+      "tag": "status.stigmata",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.stoneskin",
+      "tag": "status.stoneskin",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.strength",
+      "tag": "status.strength",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "characters",
+        "gear",
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.thornHalo",
+      "tag": "status.thornHalo",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.unbreakable",
+      "tag": "status.unbreakable",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.unbreakableUp",
+      "tag": "status.unbreakableUp",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.venom",
+      "tag": "status.venom",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.vulnerable",
+      "tag": "status.vulnerable",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "stagger",
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.waxingMoon",
+      "tag": "status.waxingMoon",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.weak",
+      "tag": "status.weak",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.zealotry",
+      "tag": "status.zealotry",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "targeting.allAllies",
+      "tag": "targeting.allAllies",
+      "family": "targeting",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "targeting.allEnemies",
+      "tag": "targeting.allEnemies",
+      "family": "targeting",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "targeting.ally",
+      "tag": "targeting.ally",
+      "family": "targeting",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "targeting.enemy",
+      "tag": "targeting.enemy",
+      "family": "targeting",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "targeting.randomEnemy",
+      "tag": "targeting.randomEnemy",
+      "family": "targeting",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "targeting.self",
+      "tag": "targeting.self",
+      "family": "targeting",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "targeting_area",
+      "tag": "targeting:area",
+      "family": "targeting",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "targeting_single",
+      "tag": "targeting:single",
+      "family": "targeting",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "technique_cleave",
+      "tag": "technique:cleave",
+      "family": "technique",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "technique_counter",
+      "tag": "technique:counter",
+      "family": "technique",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "technique_flourish",
+      "tag": "technique:flourish",
+      "family": "technique",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "technique_heavy",
+      "tag": "technique:heavy",
+      "family": "technique",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "technique_precision",
+      "tag": "technique:precision",
+      "family": "technique",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "theme_astral",
+      "tag": "theme:astral",
+      "family": "theme",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "theme_blight",
+      "tag": "theme:blight",
+      "family": "theme",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "theme_blood",
+      "tag": "theme:blood",
+      "family": "theme",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "theme_oath",
+      "tag": "theme:oath",
+      "family": "theme",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "theme_stance",
+      "tag": "theme:stance",
+      "family": "theme",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "trait_adequateReach",
+      "tag": "trait:adequateReach",
+      "family": "trait",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "trait_closing",
+      "tag": "trait:closing",
+      "family": "trait",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "trait_conductive",
+      "tag": "trait:conductive",
+      "family": "trait",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "trait_counterstrike",
+      "tag": "trait:counterstrike",
+      "family": "trait",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "trait_flux",
+      "tag": "trait:flux",
+      "family": "trait",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "trait_grounded",
+      "tag": "trait:grounded",
+      "family": "trait",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "trait_impact",
+      "tag": "trait:impact",
+      "family": "trait",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "trait_insulated",
+      "tag": "trait:insulated",
+      "family": "trait",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "trait_mental",
+      "tag": "trait:mental",
+      "family": "trait",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "trait_projectile",
+      "tag": "trait:projectile",
+      "family": "trait",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "trait_reaction",
+      "tag": "trait:reaction",
+      "family": "trait",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "trait_reveal",
+      "tag": "trait:reveal",
+      "family": "trait",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "trait_shattering",
+      "tag": "trait:shattering",
+      "family": "trait",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "trait_unavoidable",
+      "tag": "trait:unavoidable",
+      "family": "trait",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "trait_unreflectable",
+      "tag": "trait:unreflectable",
+      "family": "trait",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "utility.conduit",
+      "tag": "utility.conduit",
+      "family": "utility",
+      "portability": "data",
+      "modules": []
+    },
+    {
+      "id": "utility.evasion",
+      "tag": "utility.evasion",
+      "family": "utility",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "utility.manaCharge",
+      "tag": "utility.manaCharge",
+      "family": "utility",
+      "portability": "data",
+      "modules": []
+    }
+  ]
+}

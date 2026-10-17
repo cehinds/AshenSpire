@@ -1,0 +1,27 @@
+{
+  "id": "maneuver_casting",
+  "tag": "maneuver:casting",
+  "version": "1.0.0",
+  "family": "maneuver",
+  "label": "Spell",
+  "description": "A spell stance. Counter coverage depends on school and delivery.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "maneuver_casting",
+    "color": "9FC3E8"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/model/actionCosts.js",
+    "symbol": "actionStance"
+  }
+}

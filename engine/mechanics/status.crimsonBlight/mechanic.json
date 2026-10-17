@@ -1,0 +1,26 @@
+{
+  "id": "status.crimsonBlight",
+  "tag": "status.crimsonBlight",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Crimson Blight",
+  "description": "At the start of its turn, loses HP equal to Blight stacks (ignores Block). Stacks do not tick down; the Blight expires entirely after 3 turns. Re-applying adds stacks and refreshes the duration.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.crimsonBlight"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/combatCardTactics.js",
+    "symbol": "enqueueCounterWard"
+  }
+}

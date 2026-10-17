@@ -1,0 +1,26 @@
+{
+  "id": "status.confused",
+  "tag": "status.confused",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Confused",
+  "description": "Deals 10% less damage. At the start of its turn, 50% chance to take 3 Poise damage per stack. 1 stack expires each turn.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.confused"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/model/combatExpansionRules.js",
+    "symbol": "createCombatExpansionRuleSnapshot"
+  }
+}

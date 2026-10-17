@@ -1,0 +1,26 @@
+{
+  "id": "scaling.intelligence",
+  "tag": "scaling.intelligence",
+  "version": "1.0.0",
+  "family": "scaling",
+  "label": "Intelligence",
+  "description": "Tag scaling.intelligence in the scaling family.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "scaling.intelligence"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/gameProfileCombat.js",
+    "symbol": "profileHandSize"
+  }
+}

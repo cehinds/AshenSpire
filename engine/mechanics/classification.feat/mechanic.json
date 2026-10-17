@@ -1,0 +1,22 @@
+{
+  "id": "classification.feat",
+  "tag": "classification.feat",
+  "version": "1.0.0",
+  "family": "classification",
+  "label": "Feat",
+  "description": "A selected class progression feat.",
+  "attaches": [
+    "character"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "classification.feat"
+  },
+  "portability": "data"
+}
