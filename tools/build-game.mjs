@@ -123,15 +123,24 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   // ----- ui -----
   const uiComponents = loadDir('engine/ui/components');
   const uiScreens = loadDir(`games/${game}/ui/screens`);
-  patch?.({ uiComponents, uiScreens });
+  const mapComponents = loadDir('engine/maps/components');
+  const mapDocs = loadDir(`games/${game}/maps`);
+  patch?.({ uiComponents, uiScreens, mapComponents, mapDocs });
   const layout = {};
   const addLayout = (ref, where) => {
     if (!ref) return;
     if (!existsSync(path.join(ROOT, ref))) return fail(`${where}: layout ref '${ref}' does not exist`);
     layout[ref] ||= readJson(ref);
   };
+  // Same rule as tools/ui-validate.mjs checkRef: a named layout.path must resolve inside its file.
+  const layoutPath = (ref, dotted, where) => {
+    if (!ref || dotted === undefined || !layout[ref]) return;
+    let at = layout[ref];
+    for (const part of dotted.split('.')) { if (at === null || typeof at !== 'object' || !(part in at)) return fail(`${where}: layout path '${dotted}' not found in ${ref}`); at = at[part]; }
+  };
   for (const [id, c] of Object.entries(uiComponents)) {
     addLayout(c.layout?.ref, `component ${id}`);
+    layoutPath(c.layout?.ref, c.layout?.path, `component ${id}`);
     for (const child of c.children || []) if (!uiComponents[child.component]) fail(`component ${id}: child '${child.component}' does not exist`);
     for (const e of visibilityErrors(c, `component ${id}`)) fail(e);
   }
@@ -143,10 +152,18 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   const ui = { components: uiComponents, screens: uiScreens, layout: sortKeys(layout) };
 
   // ----- maps -----
-  const mapComponents = loadDir('engine/maps/components');
-  const mapDocs = loadDir(`games/${game}/maps`);
   const maps = { components: mapComponents, maps: mapDocs };
-  for (const [id, m] of Object.entries(mapDocs)) for (const n of m.nodes || []) if (!mapComponents[n]) fail(`map ${id}: node '${n}' has no map component`);
+  // Same rules as tools/maps-validate.mjs: every node has a component, every weighted type is a listed node component.
+  const nodeComponents = new Set(Object.values(mapComponents).filter(c => c.kind === 'node').map(c => c.id));
+  for (const [id, m] of Object.entries(mapDocs)) {
+    for (const n of m.nodes || []) if (!mapComponents[n]) fail(`map ${id}: node '${n}' has no map component`);
+    for (const [label, w] of Object.entries({ weights: m.generator?.weights, 'proposed.weights': m.generator?.proposed?.weights })) {
+      for (const k of Object.keys(w || {})) {
+        if (!nodeComponents.has(k)) fail(`map ${id}: ${label} names '${k}', which is not a node component`);
+        else if (!(m.nodes || []).includes(k)) fail(`map ${id}: ${label} names '${k}', which the map does not list in nodes`);
+      }
+    }
+  }
 
   // ----- assets -----
   const assets = { catalog: buildAssetCatalog() };

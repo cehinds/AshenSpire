@@ -391,7 +391,7 @@ namespace Ashen.Runtime
             foreach (var p in props.EnumerateObject())
             {
                 if (p.Value.TryGetProperty("default", out var dflt)) out_[p.Name] = FromJson(dflt);
-                else if (p.Value.TryGetProperty("properties", out _)) out_[p.Name] = SchemaDefaults(p.Value);
+                else if (p.Value.TryGetProperty("properties", out _) && SchemaDefaults(p.Value) is { Count: > 0 } nested) out_[p.Name] = nested; // empty branches are omitted, as in the reference
             }
             return out_;
         }

@@ -64,6 +64,8 @@ test('tags, layout refs and references resolve', () => {
 test('the build fails on dangling references', () => {
   assert.throws(() => buildGame({ patch: ({ uiScreens }) => { uiScreens.combat.regions.push({ slot: 'x', component: 'noSuchComponent' }); } }), /unknown component 'noSuchComponent'/);
   assert.throws(() => buildGame({ patch: ({ uiComponents }) => { uiComponents.hud.layout = { ref: 'content/config/ui/components/missing.json' }; } }), /layout ref .* does not exist/);
+  assert.throws(() => buildGame({ patch: ({ mapDocs }) => { const m = Object.values(mapDocs)[0]; m.generator.weights = { ...m.generator.weights, 'node.nope': 5 }; } }), /weights names 'node\.nope', which is not a node component/);
+  assert.throws(() => buildGame({ patch: ({ uiComponents }) => { const c = Object.values(uiComponents).find(x => x.layout?.ref); c.layout = { ...c.layout, path: 'no.such.path' }; } }), /layout path 'no\.such\.path' not found/);
   assert.throws(() => buildGame({ patch: ({ uiComponents }) => { delete uiComponents.hud.viewModel; } }), /ui\/components\/hud.*viewModel/);
   assert.throws(() => buildGame({ patch: ({ uiComponents }) => { const vm = uiComponents.enemyPanel.viewModel; vm.bindings = { ...vm.bindings, spShown: '$entity.pools.sp' }; delete vm.visibility; } }), /enemyPanel: binds sp without the enemy_visibility\.visibleFields visibility query/);
   assert.throws(() => buildGame({ game: 'nonexistent-game' }));
