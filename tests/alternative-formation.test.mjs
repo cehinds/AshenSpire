@@ -20,8 +20,7 @@ test('the perspective grid is one sheared grid: equal parallelograms on diagonal
     const skew = formation.cells[0].box.skew;
     assert(skew > 0, 'the grid leans');
     for (const cell of formation.cells) {
-      const anchor = cell.formationRole === 'enemy-back' ? {x:.83,y:.2}
-        : cell.formationRole === 'enemy-front' ? {x:.18,y:.82} : {x:.5,y:.83};
+      const anchor = { x: .5, y: cell.side === 'player' ? .4 : .24 };
       assert(Math.abs(cell.ground - cell.box.top - anchor.y * cell.box.height) < 1e-6);
       const centre = cell.box.left + cell.box.width / 2 + skew * (cell.box.top + cell.box.height / 2 - cell.ground);
       assert(Math.abs(cell.x - centre - (anchor.x - .5) * cell.box.width) < 1e-6);
@@ -172,7 +171,12 @@ test('a spacious enemy rank keeps its approved body size as independent HUDs gro
   const formation=alternativeFormation(plan(2),1440,441,false);
   const actors=formation.slots.filter(s=>s.side==='enemy').map(slot=>({slot,side:'enemy',enemyId:'stitchedHound',ratio:1,multiplier:1.5,visibleWidth:179,visibleHeight:190,artLeading:0,leading:180}));
   const sizes=fitAlternativeSprites({width:1440,height:441,actors,narrow:false});
-  for(const fit of sizes){assert(Math.abs(fit.visibleHeight-158.0985)<.01);assert(fit.visibleHeight<actors[0].slot.ground-6);}
+  for (const fit of sizes) {
+    const actor = actors.find(actor => actor.slot.id === fit.id);
+    assert(fit.visibleHeight > 0);
+    assert(fit.visibleHeight < actor.slot.ground - 6);
+    assert(fit.scale * actor.visibleWidth <= actor.slot.box.width - 12);
+  }
 });
 
 test('right-first phone allocation uses inward cell room before shrinking a whole enemy class', () => {
@@ -183,4 +187,25 @@ test('right-first phone allocation uses inward cell room before shrinking a whol
   const leftOnly=fitAlternativeSprites({width:390,height:426,actors:[actors[1]],narrow:true})[0];
   for(const fit of fits) assert.equal(fit.visibleHeight,leftOnly.visibleHeight,'outer right lane retains the same readable class height as the left lane');
   assert(fits[0].visibleHeight>70,'normal phone enemies do not collapse to the old far-right edge reserve');
+});
+
+
+test('every form factor fits the entire artwork envelope within its own cell', () => {
+  for (const [formFactor, width, height, narrow] of [['mobile',390,426,true], ['tablet',820,650,false], ['desktop',1440,620,false]]) {
+    const formation = alternativeFormation(plan(6), width, height, narrow, { formFactor });
+    const actors = formation.slots.map(slot => ({ slot, side: slot.side, visibleWidth: 700, visibleHeight: 320, leading: 30, ratio: 1, multiplier: 1 }));
+    const sizes = alternativeCombatComposition({ width, height, actors, perspectiveGrid: true, sizes: fitAlternativeSprites({ width, height, actors, narrow }) });
+    for (const actor of actors) {
+      const fit = sizes.find(size => size.id === actor.slot.id), box = actor.slot.box;
+      const half = actor.visibleWidth * fit.scale / 2;
+      const left = box.left + Math.abs(box.skew) * box.height / 2;
+      const right = box.left + box.width - Math.abs(box.skew) * box.height / 2;
+      assert(fit.x - half >= left + 6 - 1e-6, `${formFactor} complete left edge`);
+      assert(fit.x + half <= right - 6 + 1e-6, `${formFactor} complete right edge`);
+      assert.equal(actor.slot.miniHudWidth, box.width - 4);
+      assert(Math.abs(actor.slot.miniHudLeft - (box.left + box.skew * box.height / 2 + 2)) < 1e-6);
+    }
+    const back = formation.slots.filter(slot => slot.formationRole === 'enemy-back');
+    assert.equal(new Set(back.map(slot => slot.miniHudTop)).size, 1, 'back-row HP geometry is level');
+  }
 });

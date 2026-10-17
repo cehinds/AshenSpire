@@ -143,7 +143,7 @@ export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground
   backdrop.dataset.device = key;
   [...svg.querySelectorAll(':scope > .alternative-scene-layer')].forEach((group, index) => {
     let layer = combatSceneLayers(device)[index];
-    if (document.documentElement.dataset.formFactor === 'mobile' && coverFloor && Number.isFinite(floorShadowTop)) {
+    if (coverFloor && Number.isFinite(floorShadowTop)) {
       const floor = framing.mobileFloor;
       const paintStart = floor.paintStarts[layer.id];
       if (paintStart) {
@@ -179,10 +179,9 @@ export function wireAlternativeBackdrop(combat) {
     const y = off ? 0 : (event.clientY - bounds.top) / bounds.height * 2 - 1;
     for (const layer of layers) {
       const id = layer.firstElementChild?.dataset.layer;
-      const groundedMobile = document.documentElement.dataset.formFactor === 'mobile'
-        && combat.querySelector('.alternative-backdrop')?.dataset.mobileFloorPaintTop !== undefined
+      const groundedFloor = combat.querySelector('.alternative-backdrop')?.dataset.mobileFloorPaintTop !== undefined
         && alternativeArtCatalog.sceneLayers[id]?.kind === 'ground';
-      const depth = groundedMobile ? 0 : Number(layer.dataset.depth);
+      const depth = groundedFloor ? 0 : Number(layer.dataset.depth);
       layer.style.transform = `translate(${x * depth * 9}px,${y * depth * 3}px)`;
     }
   };
