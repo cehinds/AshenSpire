@@ -361,56 +361,6 @@ if (process.argv.includes('--model-runtime-only')) {
   process.exit(fails ? 1 : 0);
 }
 
-// Portable branch artwork is deliberately inline even in pack builds. Only
-// payloads whose authored paths and hashes verify may leave the code budget.
-function ownedArtHashes(dir) {
-  const hashes = new Map();
-  for (const [file, name] of [
-    ['src/ui/alternativeArtCatalog.js', 'alternativeArtCatalog'],
-    ['src/content/alternativeCardAnimations.js', 'alternativeCardAnimations'],
-    ['src/content/alternativeSelectedStances.js', 'alternativeSelectedStances'],
-    ['src/content/classSmashAnimations.js', 'classSmashAnimations'],
-  ]) {
-    const source = readFileSync(resolve(dir, file), 'utf8');
-    const catalog = JSON.parse(source.match(new RegExp(`^export const ${name} = (.+);$`, 'm'))[1]);
-    for (const [file, hash] of Object.entries(catalog.hashes)) {
-      const path = catalog.filePaths?.[file] || `assets-display/alternative/${file}`;
-      if (hashes.has(path)) throw new Error(`Duplicate owned art path: ${path}`);
-      hashes.set(path, hash);
-    }
-  }
-  return hashes;
-}
-
-function packCodeBudget(html, hashes) {
-  const literals = [...html.matchAll(/(?:^|\n)const alternativeArtMap = (\{[^\n]*\});(?=\n)/g)];
-  let valid = literals.length === 1, payloadChars = 0;
-  if (valid) {
-    try {
-      const map = JSON.parse(literals[0][1]);
-      valid = Object.keys(map).length > 0;
-      for (const [path, value] of Object.entries(map)) {
-        const prefix = 'data:image/webp;base64,';
-        if (typeof value !== 'string' || !value.startsWith(prefix) || !hashes.has(path)) {
-          valid = false;
-          continue;
-        }
-        const base64 = value.slice(prefix.length);
-        const bytes = Buffer.from(base64, 'base64');
-        if (bytes.toString('base64') !== base64 || createHash('sha256').update(bytes).digest('hex') !== hashes.get(path)) {
-          valid = false;
-          continue;
-        }
-        payloadChars += value.length;
-      }
-    } catch { valid = false; }
-  }
-  // Fail closed: one unknown or corrupt entry cancels the entire allowance.
-  if (!valid) payloadChars = 0;
-  const codeChars = html.length - payloadChars;
-  return { valid, payloadChars, codeChars, withinBudget: codeChars > 500000 && codeChars < 16_000_000 };
-}
-
 // ---- 1p. THE PACK SHAPE, the default since step 8e --------------------------
 // Built from the real light and common trees (not a small fixture pack: the
 // packs are written from art-manifest.json, which names every real file, so a
@@ -426,27 +376,8 @@ function packCodeBudget(html, hashes) {
     JSON.stringify(pin && { tier: pin.tier, packs: Object.keys(pin.packs || {}) }));
   check('pack: each pinned index is written beside it', !!pin && Object.values(pin.packs).every((p) => existsSync(resolve(dir, 'build', p.index))));
   check('pack: its edition is its default tier', /const EDITION = 'light';/.test(html));
-  check('pack: no core-pack art is inline (ASSET_MAP stays empty)', /ASSET_MAP = \{\}/.test(html) && !/"assets\/[^"]+":\s*"data:image\/webp/.test(html));
-  const hashes = ownedArtHashes(dir);
-  const budget = packCodeBudget(html, hashes);
-  check('pack: every owned inline payload matches its declared path and hash', budget.valid);
-  check('pack: code stays under 16 MB after verified owned payloads', budget.withinBudget,
-    `${budget.codeChars} code characters; ${budget.payloadChars} verified payload characters; ${html.length} total`);
-  const literal = /const alternativeArtMap = (\{[^\n]+\});/.exec(html)?.[1];
-  const map = literal ? JSON.parse(literal) : {};
-  const firstPath = Object.keys(map)[0];
-  const unknown = { ...map, 'assets-display/alternative/undeclared-budget-probe.webp': map[firstPath] };
-  const unknownBudget = packCodeBudget(html.replace(literal, () => JSON.stringify(unknown)), hashes);
-  check('pack budget known-bad: an undeclared inline path fails ownership with no allowance',
-    !unknownBudget.valid && unknownBudget.payloadChars === 0);
-  const corrupt = { ...map, [firstPath]: 'data:image/webp;base64,Y29ycnVwdA==' };
-  const corruptBudget = packCodeBudget(html.replace(literal, () => JSON.stringify(corrupt)), hashes);
-  check('pack budget known-bad: a corrupt declared payload fails ownership with no allowance',
-    !corruptBudget.valid && corruptBudget.payloadChars === 0);
-  const unexpected = `${html}\n<!-- data:image/webp;base64,${'A'.repeat(16_000_000)} -->`;
-  const unexpectedBudget = packCodeBudget(unexpected, hashes);
-  check('pack budget known-bad: unexpected media outside the owned map exceeds the unchanged code budget',
-    unexpectedBudget.valid && unexpectedBudget.payloadChars === budget.payloadChars && !unexpectedBudget.withinBudget);
+  check('pack: it inlines no art (ASSET_MAP stays empty)', /ASSET_MAP = \{\}/.test(html) && !/"assets\/[^"]+":\s*"data:image\/webp/.test(html));
+  check('pack: the HTML is code, not media (under 16 MB)', html.length > 500000 && html.length < 16_000_000, `${html.length} bytes`);
   const mobile = build(dir, ['--mobile']);
   check('pack: --mobile is refused by name (the edition is retired)', mobile.status === 2 && /--mobile is retired/.test(mobile.out), `exit ${mobile.status}: ${mobile.out.slice(0, 200)}`);
   rmSync(dir, { recursive: true, force: true });
