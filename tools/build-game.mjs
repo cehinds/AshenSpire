@@ -155,8 +155,8 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
     if (!v || typeof v !== 'object') return [];
     const own = !('f' in v) ? [] : !formulaOps.has(v.f) ? [`${where}: unknown formula '${v.f}'`]
       : [...formulaRequired[v.f].filter(k => v[k] === undefined).map(k => `${where}: formula '${v.f}' needs '${k}'`),
-         ...(v.f === 'metric' && typeof v.metric === 'string' && !(formulaCatalog.metric.metrics || []).includes(v.metric) ? [`${where}: unknown metric '${v.metric}'`] : []),
-         ...['min', 'max'].filter(k => v[k] !== undefined && !isValue(v[k])).map(k => `${where}: formula '${v.f}' ${k} must be a number`),
+         ...(v.f === 'metric' && typeof v.metric === 'string' && !isVar(v.metric) && !(formulaCatalog.metric.metrics || []).includes(v.metric) ? [`${where}: unknown metric '${v.metric}'`] : []),
+         ...['min', 'max'].filter(k => v[k] !== undefined && !(Number.isFinite(v[k]) || isVar(v[k]))).map(k => `${where}: formula '${v.f}' ${k} must be a number or variable, not a nested formula`),
          ...(v.f === 'stacks' && typeof v.per === 'number' && !(v.per > 0) ? [`${where}: formula 'stacks' per must be a positive number (it divides)`] : []),
          ...Object.entries(formulaCatalog[v.f].fields || {}).filter(([k]) => v[k] !== undefined && !operandOk(String(formulaCatalog[v.f].fields[k]), v[k])).map(([k]) => `${where}: formula '${v.f}' operand '${k}' has the wrong type (${formulaCatalog[v.f].fields[k]})`)];
     return [...own, ...Object.values(v).flatMap(x => formulaErrors(x, where))];

@@ -209,3 +209,32 @@ test('atlas embedding refuses references outside authored content sources', () =
     assert.throws(() => buildGame({ patch: ({ mapComponents }) => { Object.values(mapComponents)[0].placement = { atlas: ref }; } }), /atlas ref .* must live under content\/source\//);
   }
 });
+
+test('UI layout embedding rejects traversal for components, screen layouts and scenes', () => {
+  const ref = 'content/config/ui/../../../engine/runtime/formulas.json';
+  for (const kind of ['component', 'layout', 'scene']) assert.throws(() => buildGame({ patch: ({ uiComponents, uiScreens }) => {
+    if (kind === 'component') uiComponents.hud.layout = { ref };
+    else uiScreens.combat[kind] = { ref };
+  } }), /layout ref .* must live under content\/config\/ui\//, kind);
+});
+
+test('metric names are validated before export while dynamic names remain supported', () => {
+  assert.throws(() => queryFormula({ f: 'metric', metric: 'typo' }), /unknown metric 'typo'/);
+  for (const metric of readJson('engine/runtime/formulas.json').ops.metric.metrics) assert.doesNotThrow(() => queryFormula({ f: 'metric', metric }));
+  assert.doesNotThrow(() => queryFormula({ f: 'metric', metric: '$metric' }));
+});
+
+test('generic formula clamps accept numeric literals and variables but not nested formulas', () => {
+  for (const clamp of ['min', 'max']) for (const value of ['bad', null, { f: 'add', args: [1] }]) {
+    assert.throws(() => queryFormula({ f: 'add', args: [1], [clamp]: value }), /(min|max) must be a number/);
+  }
+  assert.doesNotThrow(() => queryFormula({ f: 'add', args: [1], min: 0, max: '$ceiling' }));
+});
+
+test('conditions check operand types without restricting deep equality or numeric variables', () => {
+  const withCondition = when => buildGame({ patch: ({ mechanics }) => { mechanics.fx_heal.service.handlers[0].when = when; } });
+  for (const when of [{ cmp: ['<', 'x', 1] }, { cmp: ['>', 1, {}] }, { hasTag: [7, 'enemy'] }, { hasTag: ['self', 7] }, { hasStatus: ['self', 7] }]) {
+    assert.throws(() => withCondition(when), /needs numbers|needs \[ref, id\] as strings/);
+  }
+  for (const when of [{ cmp: ['<', '$threshold', { f: 'add', args: [1, 2] }] }, { cmp: ['==', { x: [1, true] }, { x: [1, true] }] }, { hasTag: ['$target', '$tag'] }, { hasStatus: ['self', '$status'] }]) assert.doesNotThrow(() => withCondition(when));
+});
