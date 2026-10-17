@@ -110,22 +110,6 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
       default: return true;
     }
   };
-  // Every card effect op (cards, enemy cards, effect variants) is a catalog op: the engine throws
-  // 'Unknown opcode' on play otherwise (src/engine/actions.js).
-  {
-    const catalog = loadOps().ops;
-    const walk = (v, where) => {
-      if (Array.isArray(v)) return v.forEach((x, i) => walk(x, `${where}[${i}]`));
-      if (!v || typeof v !== 'object') return;
-      if ('op' in v && !catalog[v.op]) fail(`${where}: unknown effect op '${v.op}'`);
-      else if ('op' in v) for (const [name, param] of Object.entries(catalog[v.op].params || {})) {
-        if (param.required && v[name] === undefined) fail(`${where}: op ${v.op} needs '${name}'`);
-        else if (v[name] !== undefined && !paramOk(param.type, v[name])) fail(`${where}: op ${v.op} param '${name}' is not a ${param.type}`);
-      }
-      for (const [k, x] of Object.entries(v)) walk(x, `${where}.${k}`);
-    };
-    for (const key of ['cards', 'enemyCards', 'resourceVariants', 'effectVariants']) if (content[key]) walk(content[key], `content.${key}`);
-  }
   const slugs = new Set(Object.keys(mechanics));
   for (const row of index.mechanics) {
     if (!slugs.has(row.id)) fail(`engine/mechanics/index.json lists ${row.id}, which has no mechanic folder`);
@@ -170,6 +154,22 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
          ...Object.entries(formulaCatalog[v.f].fields || {}).filter(([k]) => v[k] !== undefined && !operandOk(String(formulaCatalog[v.f].fields[k]), v[k])).map(([k]) => `${where}: formula '${v.f}' operand '${k}' has the wrong type (${formulaCatalog[v.f].fields[k]})`)];
     return [...own, ...Object.values(v).flatMap(x => formulaErrors(x, where))];
   };
+  // Every card effect op (cards, enemy cards, effect variants) is a catalog op: the engine throws
+  // 'Unknown opcode' on play otherwise (src/engine/actions.js).
+  {
+    const catalog = loadOps().ops;
+    const walk = (v, where) => {
+      if (Array.isArray(v)) return v.forEach((x, i) => walk(x, `${where}[${i}]`));
+      if (!v || typeof v !== 'object') return;
+      if ('op' in v && !catalog[v.op]) fail(`${where}: unknown effect op '${v.op}'`);
+      else if ('op' in v) for (const [name, param] of Object.entries(catalog[v.op].params || {})) {
+        if (param.required && v[name] === undefined) fail(`${where}: op ${v.op} needs '${name}'`);
+        else if (v[name] !== undefined && !paramOk(param.type, v[name])) fail(`${where}: op ${v.op} param '${name}' is not a ${param.type}`);
+      }
+      for (const [k, x] of Object.entries(v)) walk(x, `${where}.${k}`);
+    };
+    for (const key of ['cards', 'enemyCards', 'resourceVariants', 'effectVariants']) if (content[key]) { walk(content[key], `content.${key}`); for (const e of formulaErrors(content[key], `content.${key}`)) fail(e); }
+  }
   for (const [slug, m] of Object.entries(mechanics)) {
     for (const [q, def] of Object.entries(m.interface.queries || {})) for (const e of formulaErrors(def.value, `${slug} query ${q}`)) fail(e);
     for (const handler of m.service.handlers || []) if (handler.when !== undefined) for (const e of formulaErrors(handler.when, `${slug} handler ${handler.on} when`)) fail(e);

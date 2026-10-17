@@ -370,7 +370,7 @@ export function createRuntime({ mechanics, ops = loadOps() } = {}) {
       const { slug, name } = splitName(full, 'query');
       const def = mechanics.get(slug).interface.queries?.[name];
       if (!def) throw new Error(`Unknown query '${full}'`);
-      return value(rt, { slug, vars: { ...params } }, def.value);
+      return value(rt, { slug, vars: structuredClone(params) }, def.value);
     },
   };
 }
