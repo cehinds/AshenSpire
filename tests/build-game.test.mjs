@@ -77,6 +77,8 @@ test('the build fails on dangling references', () => {
   assert.throws(() => buildGame({ patch: ({ mechanics }) => { const m = Object.values(mechanics).find(x => (x.service.handlers || []).length); m.service.handlers[0].do = [{ op: 'damage', amount: { f: 'typo' } }]; } }), /unknown formula 'typo'/);
   assert.throws(() => buildGame({ patch: ({ mechanics }) => { const m = Object.values(mechanics).find(x => (x.service.handlers || []).length); m.service.handlers[0].do = [{ call: 42 }]; } }), /call target must be a string/);
   assert.throws(() => buildGame({ patch: ({ mechanics }) => { const m = Object.values(mechanics).find(x => (x.service.handlers || []).length); m.service.handlers[0].when = { cmp: ['==', { f: 'typo' }, 1] }; } }), /when: unknown formula 'typo'/);
+  assert.throws(() => buildGame({ patch: ({ mechanics }) => { const m = Object.values(mechanics).find(x => (x.service.handlers || []).length); m.service.handlers[0].do = [{ forEach: 'allEnemies' }]; } }), /forEach needs a string as/);
+  assert.throws(() => buildGame({ patch: ({ mechanics }) => { const m = Object.values(mechanics).find(x => (x.service.handlers || []).length); m.service.handlers[0].do = [{ op: 'damage', amount: { f: 'add' } }]; } }), /formula 'add' needs 'args'/);
   assert.throws(() => buildGame({ game: 'nonexistent-game' }));
 });
 

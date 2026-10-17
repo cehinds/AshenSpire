@@ -56,12 +56,12 @@ export function idOf(path) {
   return (ext ? bare.slice(0, -ext.length) : bare).split('/').join('.');
 }
 
-export function readMissing(root = ROOT) {
-  const file = join(root, MISSING_FILE);
+export function readMissing(root = ROOT, game = GAME) {
+  const file = join(root, `games/${game}/assets/missing.json`);
   return existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')).missing || {} : {};
 }
 
-export function buildAssetCatalog({ root = ROOT } = {}) {
+export function buildAssetCatalog({ root = ROOT, game = GAME } = {}) {
   const manifest = JSON.parse(readFileSync(join(root, 'art-manifest.json'), 'utf8'));
   const assets = {};
   for (const path of Object.keys(manifest.assets).sort()) {
@@ -71,12 +71,12 @@ export function buildAssetCatalog({ root = ROOT } = {}) {
     for (const tier of ['light', 'high', 'common']) if (manifest.assets[path][tier]) files[tier] = manifest.assets[path][tier].path;
     assets[id] = { kind: kindOf(path), files };
   }
-  for (const id of Object.keys(readMissing(root)).sort()) {
+  for (const id of Object.keys(readMissing(root, game)).sort()) {
     if (assets[id]) throw new Error(`asset-catalog: ${id} is listed as missing but the manifest has it`);
     assets[id] = { kind: 'image', files: {}, placeholder: true };
   }
   for (const entry of Object.values(assets)) if (!Object.keys(entry.files).length) entry.placeholder = true;
-  return { format: 'ashen.assets@1', source: SOURCES, tiers: TIERS, assets };
+  return { format: 'ashen.assets@1', source: ['art-manifest.json', `games/${game}/assets/missing.json`], tiers: TIERS, assets };
 }
 
 export const digestOf = catalog => createHash('sha256').update(canonicalGameJSON(catalog)).digest('hex');

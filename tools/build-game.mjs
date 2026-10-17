@@ -105,12 +105,16 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   const commandsOf = slug => Object.keys(mechanics[slug].interface.commands || {});
   const eventsOf = slug => Object.keys(mechanics[slug].interface.events || {});
   const catalogOps = loadOps();
-  const formulaOps = new Set(Object.keys(readJson('engine/runtime/formulas.json').ops || {}));
+  const formulaCatalog = readJson('engine/runtime/formulas.json').ops || {};
+  const formulaOps = new Set(Object.keys(formulaCatalog));
+  // formulas.json marks each operand "…, required"; a recognized operator missing one fails at run time.
+  const formulaRequired = Object.fromEntries(Object.entries(formulaCatalog).map(([op, d]) => [op, Object.entries(d.fields || {}).filter(([, t]) => /\brequired\b/.test(String(t))).map(([k]) => k)]));
   // Every authored { f } formula anywhere in a step or query names a catalog formula (formulas.json).
   const formulaErrors = (v, where) => {
     if (Array.isArray(v)) return v.flatMap(x => formulaErrors(x, where));
     if (!v || typeof v !== 'object') return [];
-    const own = 'f' in v && !formulaOps.has(v.f) ? [`${where}: unknown formula '${v.f}'`] : [];
+    const own = !('f' in v) ? [] : !formulaOps.has(v.f) ? [`${where}: unknown formula '${v.f}'`]
+      : formulaRequired[v.f].filter(k => v[k] === undefined).map(k => `${where}: formula '${v.f}' needs '${k}'`);
     return [...own, ...Object.values(v).flatMap(x => formulaErrors(x, where))];
   };
   for (const [slug, m] of Object.entries(mechanics)) {
@@ -144,6 +148,14 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
         };
         // Step kinds, in the runtime's order (SPEC section 6): anything else is 'Unknown step' at run time.
         if (!['op', 'if', 'forEach', 'emit', 'call', 'set'].some(k => k in step)) fail(`${slug}: unknown step ${JSON.stringify(step)}`);
+        // Control steps carry their operands (SPEC section 6); both runtimes read them unconditionally.
+        else if (!('op' in step)) {
+          const bad = msg => fail(`${slug}: ${msg} in ${JSON.stringify(step).slice(0, 120)}`);
+          if ('if' in step) { for (const k of ['then', 'else']) if (step[k] !== undefined && !Array.isArray(step[k])) bad(`if.${k} must be an array`); }
+          else if ('forEach' in step) { if (typeof step.as !== 'string' || !step.as) bad('forEach needs a string as'); if (!Array.isArray(step.do)) bad('forEach needs a do array'); }
+          else if ('set' in step) { if (typeof step.set !== 'string' || !step.set) bad('set needs a path string'); if (!('value' in step)) bad('set needs a value'); }
+          for (const k of ['emit', 'call']) if (k in step && step.with !== undefined && (typeof step.with !== 'object' || step.with === null || Array.isArray(step.with))) bad(`${k}.with must be a record`);
+        }
         for (const e of formulaErrors(Object.fromEntries(Object.entries(step).filter(([k]) => !['do', 'then', 'else'].includes(k))), slug)) fail(e);
         if ('call' in step) check('call', step.call);
         if ('emit' in step) check('emit', step.emit);
@@ -214,7 +226,7 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   }
 
   // ----- assets -----
-  const assets = { catalog: buildAssetCatalog() };
+  const assets = { catalog: buildAssetCatalog({ game }) };
   const known = new Set(Object.keys(assets.catalog.assets));
   const referenced = (where, ids) => { for (const id of ids) if (id && !known.has(id)) fail(`${where}: asset '${id}' is not in the asset catalog or missing.json`); };
   // UI components and screens name logical asset slots (card.frame, scene.rest, icon.gold) that no catalog id
