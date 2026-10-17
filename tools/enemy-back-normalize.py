@@ -15,7 +15,7 @@ def run(root):
     source=root/"proposal-sheet.png"
     im=Image.open(source).convert("RGBA")
     w,h=im.size
-    report={"schemaVersion":1,"source":{"path":source.as_posix(),"sha256":sha(source),"size":[w,h]},"grid":{"columns":5,"rows":2,"rectPolicy":"adaptive zero meaningful-alpha gutters; prefer full zero alpha"},"output":{"size":[512,512],"anchor":[256,464],"sharedScale":None},"alphaThreshold":32,"sourceBoundary":boundary(im.getchannel("A")),"variants":[],"qa":{"errors":[],"warnings":[]}}
+    report={"schemaVersion":1,"source":{"path":source.as_posix(),"sha256":sha(source),"size":[w,h]},"grid":{"columns":5,"rows":2,"rectPolicy":"adaptive zero meaningful-alpha gutters; prefer full zero alpha"},"output":{"size":[512,512],"boundsAnchor":[256,464],"sharedScale":None},"alphaThreshold":32,"sourceBoundary":boundary(im.getchannel("A")),"variants":[],"qa":{"errors":[],"warnings":[]}}
     # Find zero meaningful-alpha gutters; prefer full zero alpha nearest each nominal division. Never mask pixels.
     alpha=im.getchannel("A")
     def gap(axis, start, end, nominal):
@@ -90,7 +90,7 @@ def run(root):
             box=out.getchannel("A").point(lambda v:255 if v>32 else 0).getbbox()
             if x<0 or y<0 or x+crop.width>512 or y+crop.height>512: report["qa"]["errors"].append(entry["id"]+": full alpha exceeds output")
             p=root/(entry["id"]+".png"); out.save(p)
-            entry.update(outputAlphaBounds=box,anchor=[256,464],size=[512,512],sha256=sha(p),translation=[x,y])
+            entry.update(outputAlphaBounds=box,boundsAnchor=[256,464],size=[512,512],sha256=sha(p),translation=[x,y])
             thumb=out.resize((256,256),Image.Resampling.LANCZOS)
             tx,ty=(i%5)*256,(i//5)*280
             sheet.paste(thumb,(tx,ty),thumb); draw.text((tx+8,ty+260),entry["id"],fill="white")
