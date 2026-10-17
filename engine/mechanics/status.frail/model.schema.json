@@ -1,13 +1,6 @@
 {
   "type": "object",
-  "properties": {
-    "stacks": {
-      "type": "integer",
-      "minimum": 0,
-      "default": 0,
-      "description": "Current stacks (a meter status reports its build-up points)."
-    }
-  },
+  "properties": {},
   "required": [],
   "additionalProperties": false,
   "x-attach": "entity"

@@ -3,17 +3,17 @@
   "commands": {
     "exhaust": {
       "params": {
-        "card": "cardRef"
+        "amount": "value"
       },
-      "description": "Move a card from the hand to the exhaust pile."
+      "description": "Move the first amount cards of the hand to the exhaust pile."
     }
   },
   "events": {
     "exhausted": {
       "payload": {
-        "card": "cardRef"
+        "amount": "number"
       },
-      "description": "Raised after a card is exhausted."
+      "description": "Raised after cards are exhausted."
     }
   },
   "queries": {},

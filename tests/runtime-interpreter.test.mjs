@@ -396,3 +396,57 @@ test('formulas.json lists the evaluator op set', async () => {
   assert.deepEqual(Object.keys(doc.ops).sort(), [...FORMULA_OPS].sort());
   assert.deepEqual(doc.of.values, [...FORMULA_OF]);
 });
+
+// ----- $model -----
+function modelMech(slug, model, handlers) {
+  const [, m] = mech(slug, handlers);
+  return [slug, { ...m, model }];
+}
+const heavy = { type: 'object', properties: { power: { type: 'integer', default: 4 }, nest: { type: 'object', properties: { x: { type: 'integer', default: 7 } } } } };
+
+test('$model reads the schema default when the mechanic state is empty', () => {
+  const r = rt(modelMech('m', heavy, [{ on: 'command.go', do: [{ op: 'damage', target: 'enemy', amount: '$model.power' }] }]));
+  assert.equal(r.command({ entities: { enemy: ent() } }, 'm.go').state.entities.enemy.hp, 6);
+});
+
+test('$model is overridden by state.mechanics[slug], recursively over nested defaults', () => {
+  const r = rt(modelMech('m', heavy, [{ on: 'command.go', do: [
+    { op: 'damage', target: 'enemy', amount: '$model.power' },
+    { op: 'block', target: 'enemy', amount: '$model.nest.x' },
+  ] }]));
+  const out = r.command({ entities: { enemy: ent() }, mechanics: { m: { power: 1 } } }, 'm.go');
+  assert.equal(out.state.entities.enemy.hp, 9);
+  assert.equal(out.state.entities.enemy.block, 7);
+  assert.equal(r.command({ entities: { enemy: ent() }, mechanics: { m: { nest: { x: 2 } } } }, 'm.go').state.entities.enemy.block, 2);
+});
+
+test('$model works inside formula args and an unknown key is unresolved', () => {
+  const r = rt(modelMech('m', heavy, [
+    { on: 'command.go', do: [{ op: 'block', target: 'enemy', amount: { f: 'mul', args: [2, '$model.power'] } }] },
+    { on: 'command.bad', do: [{ op: 'block', target: 'enemy', amount: '$model.nope' }] },
+  ]));
+  assert.equal(r.command({ entities: { enemy: ent() } }, 'm.go').state.entities.enemy.block, 8);
+  assert.throws(() => r.command({ entities: { enemy: ent() } }, 'm.bad'), /Unresolved \$model\.nope/);
+});
+
+// ----- runtime events and case triggers -----
+test('a handler on event.runtime.poiseBroken runs when poiseDamage empties the meter', () => {
+  const r = rt(mech('t', [
+    { on: 'command.go', do: [{ op: 'poiseDamage', target: 'enemy', amount: 5 }] },
+    { on: 'event.runtime.poiseBroken', do: [{ op: 'applyStatus', target: '$target', status: 'vulnerable' }] },
+  ]));
+  const out = r.command({ entities: { enemy: ent({ poise: 3 }) } }, 't.go');
+  assert.deepEqual(out.state.entities.enemy.statuses, { vulnerable: 1 });
+});
+
+test('a case with when { event, with } emits the event and checks the result', () => {
+  const m = { ...mech('t', [{ on: 'event.t.ping', do: [{ op: 'block', target: '$who', amount: 2 }] }])[1],
+    cases: [{ name: 'ping', given: { entities: { a: { hp: 1 } } }, when: { event: 't.ping', with: { who: 'a' } }, then: { entities: { a: { block: 2 } }, events: ['t.ping'] } }] };
+  assert.deepEqual(runCases(m, rt(['t', m])).map(c => c.ok), [true]);
+});
+
+test('restoreStamina with a negative amount removes sp, never below 0', () => {
+  const state = { entities: { self: ent({ sp: 2 }) } };
+  assert.equal(run([{ op: 'restoreStamina', target: 'self', amount: -1 }], state).state.entities.self.sp, 1);
+  assert.equal(run([{ op: 'restoreStamina', target: 'self', amount: -5 }], state).state.entities.self.sp, 0);
+});

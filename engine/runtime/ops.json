@@ -567,7 +567,7 @@
           "required": false
         }
       },
-      "description": "Restores stamina (sp), up to spMax when present.",
+      "description": "Restores stamina (sp), up to spMax when present. A negative amount removes sp, not below 0.",
       "reference": "portable",
       "legacy": {
         "file": "src/engine/actions.js",

@@ -84,6 +84,29 @@ function nextRandom(state) {
   return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
 }
 
+// Defaults declared by a model.schema.json: properties.<key>.default, recursing into object properties.
+function schemaDefaults(schema) {
+  const out = {};
+  for (const [key, prop] of Object.entries(schema?.properties || {})) {
+    if (prop && 'default' in prop) out[key] = structuredClone(prop.default);
+    else if (prop && prop.properties) {
+      const nested = schemaDefaults(prop);
+      if (Object.keys(nested).length) out[key] = nested;
+    }
+  }
+  return out;
+}
+
+const isPlain = v => v !== null && typeof v === 'object' && !Array.isArray(v);
+
+// Deep merge: members of `over` win; plain objects merge key by key, anything else replaces.
+function mergeDeep(base, over) {
+  if (!isPlain(base) || !isPlain(over)) return over === undefined ? base : over;
+  const out = { ...base };
+  for (const [k, v] of Object.entries(over)) out[k] = k in base ? mergeDeep(base[k], v) : v;
+  return out;
+}
+
 // ---------------------------------------------------------------------------
 // Runtime
 // ---------------------------------------------------------------------------
@@ -109,6 +132,14 @@ export function createRuntime({ mechanics, ops = loadOps() } = {}) {
     const path = ref.slice(1).split('.');
     if (path[0] === 'state') {
       let cur = rt.state.mechanics[scope.slug];
+      for (const key of path.slice(1)) cur = cur == null ? undefined : cur[key];
+      if (cur === undefined) throw new Error(`Unresolved ${ref}`);
+      return cur;
+    }
+    if (path[0] === 'model') {
+      // The mechanic's own state over the defaults of its model.schema.json.
+      const defaults = schemaDefaults(mechanics.get(scope.slug)?.model);
+      let cur = mergeDeep(defaults, rt.state.mechanics[scope.slug] || {});
       for (const key of path.slice(1)) cur = cur == null ? undefined : cur[key];
       if (cur === undefined) throw new Error(`Unresolved ${ref}`);
       return cur;
@@ -419,7 +450,7 @@ const OPS = {
   },
   restoreStamina(state, step, api) {
     perTarget(state, step, api, (e, key, vars) => {
-      e.sp += floorNonNegative(api.number(step.amount, 1, vars, 'amount'));
+      e.sp = Math.max(0, e.sp + Math.floor(api.number(step.amount, 1, vars, 'amount')));
       if (e.spMax !== undefined) e.sp = Math.min(e.spMax, e.sp);
     });
   },
