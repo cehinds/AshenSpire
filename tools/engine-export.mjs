@@ -22,7 +22,8 @@
 // The export reads the generated modules (src/content/generated, src/framework/
 // data, src/config/generated) next to the authored files they are compiled
 // from. So that it never mixes the two at different edits, it first runs the
-// builders that own those modules (each rewrites only what changed); with
+// builders that own those modules (tools/base-cards.mjs, framework-data-build,
+// config-build, content-build, game-config; each rewrites only what changed); with
 // --no-build it runs their --check instead and stops when one is stale.
 //
 // The output is deterministic: no timestamps, keys sorted, arrays in authored
@@ -235,8 +236,15 @@ function walkJson(dir) {
 // Generated modules: current before they are read.
 // ---------------------------------------------------------------------------
 
-/** The builders whose output collect() imports. content-build last: it refuses a framework or config JSON whose generated mirror is not current yet. */
-export const BUILDERS = ['tools/framework-data-build.mjs', 'tools/config-build.mjs', 'tools/content-build.mjs'];
+/** The builders whose output collect() imports. content-build runs after framework-data and config (it refuses a mirror that is not current); game-config last (its lock hashes src/**). An entry is a script path, or {script, build, check} argument lists for a CLI that takes subcommands. */
+export const BUILDERS = [
+  'tools/base-cards.mjs',
+  'tools/framework-data-build.mjs',
+  'tools/config-build.mjs',
+  'tools/content-build.mjs',
+  // game-config locks a hash of src/**, so it runs after every other builder has written; it takes a subcommand, not --check.
+  { script: 'tools/game-config.mjs', build: ['build'], check: ['check'] },
+];
 
 // The runner for the builders this CLI starts: main stops it on a signal, so a builder never outlives the lock.
 const STEPS = createStepRunner();
@@ -250,9 +258,11 @@ const STEPS = createStepRunner();
  */
 export async function staleGenerated({ root = ROOT, build = true, builders = BUILDERS, steps = STEPS } = {}) {
   const failed = [];
-  for (const script of builders) {
+  for (const entry of builders) {
+    const script = typeof entry === 'string' ? entry : entry.script;
     if (!existsSync(join(root, script))) continue;
-    const r = await steps.run(join(root, script), build ? [] : ['--check'], { capture: true, cwd: root, env: { ...process.env, FORCE_COLOR: '0' } });
+    const args = typeof entry === 'string' ? (build ? [] : ['--check']) : (build ? entry.build : entry.check) || [];
+    const r = await steps.run(join(root, script), args, { capture: true, cwd: root, env: { ...process.env, FORCE_COLOR: '0' } });
     if (r.code !== 0) failed.push({ script, status: r.code, output: `${r.output}${r.error ? r.error.message : ''}`.trim() });
   }
   return failed;

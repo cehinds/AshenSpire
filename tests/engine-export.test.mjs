@@ -183,7 +183,9 @@ test('an export entry that would leave the export folder fails before anything i
 
 test('staleGenerated runs the builders (or their --check) and names the stale ones; --no-build passes when current', async () => {
   const { staleGenerated, BUILDERS } = await import('../tools/engine-export.mjs');
-  assert.deepEqual(BUILDERS, ['tools/framework-data-build.mjs', 'tools/config-build.mjs', 'tools/content-build.mjs']);
+  assert.deepEqual(BUILDERS.map((b) => (typeof b === 'string' ? b : b.script)), ['tools/base-cards.mjs', 'tools/framework-data-build.mjs', 'tools/config-build.mjs', 'tools/content-build.mjs', 'tools/game-config.mjs']);
+  const gameConfig = BUILDERS.find((b) => typeof b !== 'string');
+  assert.deepEqual([gameConfig.build, gameConfig.check], [['build'], ['check']], 'game-config takes subcommands, not --check');
   const fixture = join(scratch, 'stale-fixture');
   mkdirSync(join(fixture, 'tools'), { recursive: true });
   // current.mjs is always current; stale.mjs fails its --check but builds fine.
@@ -194,6 +196,11 @@ test('staleGenerated runs the builders (or their --check) and names the stale on
   assert.deepEqual(checked.map((f) => f.script), ['tools/stale.mjs']);
   assert.match(checked[0].output, /STALE: out of date/);
   assert.deepEqual(await staleGenerated({ root: fixture, build: true, builders }), [], 'build mode does not pass --check');
+  // A subcommand builder gets its own argument lists, never --check.
+  writeFileSync(join(fixture, 'tools', 'sub.mjs'), "if (process.argv[2] === 'check') { console.error('STALE: sub'); process.exit(1); } if (process.argv[2] !== 'build') process.exit(3);\n");
+  const sub = [{ script: 'tools/sub.mjs', build: ['build'], check: ['check'] }];
+  assert.deepEqual(await staleGenerated({ root: fixture, build: true, builders: sub }), []);
+  assert.deepEqual((await staleGenerated({ root: fixture, build: false, builders: sub })).map((f) => f.script), ['tools/sub.mjs']);
 
   const r = run('--no-build', '--only', 'content.cards', '--out', join(scratch, 'no-build'));
   assert.equal(r.status, 0, `the checkout's generated modules are current:\n${r.stdout}${r.stderr}`);
