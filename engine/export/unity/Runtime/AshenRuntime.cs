@@ -333,7 +333,7 @@ namespace Ashen.Runtime
                 if (item.ValueKind != JsonValueKind.String) { yield return Value(call, scope, item); continue; }
                 var s = item.GetString();
                 var v = s.StartsWith("$") ? Lookup(call, scope, s) : s;
-                if (v is List<object> list) { foreach (var x in list) yield return x; }
+                if (AsList(v) is List<object> list) { foreach (var x in list) yield return x; }
                 else if (v is string name && (name == "allEnemies" || call.State.Entities.ContainsKey(name))) { foreach (var k in EntityKeys(call, scope, name)) yield return k; }
                 else yield return v;
             }
@@ -488,7 +488,7 @@ namespace Ashen.Runtime
         List<string> EntityKeys(Call call, Scope scope, object reference)
         {
             if (reference is string s && s.StartsWith("$")) reference = Lookup(call, scope, s);
-            if (reference is List<object> list) return list.SelectMany(i => EntityKeys(call, scope, i)).ToList();
+            if (AsList(reference) is List<object> list) return list.SelectMany(i => EntityKeys(call, scope, i)).ToList();
             if (reference is string name && name == "allEnemies" && !call.State.Entities.ContainsKey("allEnemies"))
                 return call.State.Entities.Where(kv => kv.Value.Tags.Contains("enemy")).Select(kv => kv.Key).ToList();
             return new List<string> { EntityKey(call, scope, reference) };
@@ -532,11 +532,20 @@ namespace Ashen.Runtime
             if (a == null || b == null) return a == null && b == null;
             // Boxed int/long/float and JSON doubles compare as numbers, as in the JS runtime.
             if (AsDouble(a) is double na && AsDouble(b) is double nb) return na == nb;
-            if (a is List<object> la && b is List<object> lb) return la.Count == lb.Count && la.Zip(lb).All(p => DeepEquals(p.First, p.Second));
+            if (AsList(a) is List<object> la && AsList(b) is List<object> lb) return la.Count == lb.Count && la.Zip(lb).All(p => DeepEquals(p.First, p.Second));
             if (a is Dictionary<string, object> da && b is Dictionary<string, object> db)
                 return da.Count == db.Count && da.All(kv => db.TryGetValue(kv.Key, out var o) && DeepEquals(kv.Value, o));
             return a.Equals(b);
         }
+
+        /// <summary>Host arrays and typed lists (string[], List&lt;string&gt;) read as a JSON array; strings and records do not.</summary>
+        internal static List<object> AsList(object v) => v switch
+        {
+            List<object> l => l,
+            string or System.Collections.IDictionary => null,
+            System.Collections.IEnumerable e => e.Cast<object>().ToList(),
+            _ => null,
+        };
 
         internal static double? AsDouble(object v) => v switch
         {
