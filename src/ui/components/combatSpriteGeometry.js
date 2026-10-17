@@ -164,7 +164,8 @@ export function currentSpriteArtBounds(sprite, refresh = () => {}) {
 // Callers can distinguish assets awaiting landmarks from authored head/feet.
 export function currentSpriteBodyBounds(sprite, refresh = () => {}) {
   const stage = stageFor(sprite);
-  if (stage?.currentBody) return stage.currentBody;
+  const body = stage?.currentBody;
+  if (body) return body;
   const current = stage?.currentArt;
   if (current?.body) return projectBodyBounds(current.body, current.canvas.getBoundingClientRect(), current.canvas.width, current.canvas.height);
   const bounds = currentSpriteArtBounds(sprite, refresh);

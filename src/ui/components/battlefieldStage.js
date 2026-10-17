@@ -233,36 +233,44 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   // The detailed-target presentation owns its side panels. Only the compact
   // overhead follows the visible figure; selecting it never moves that figure.
   function centerTargetOverheads() {
-    const zoom = uiZoom();
     const rows = [...field.querySelectorAll('.combatant')].flatMap(frame => {
       const sprite = frame.querySelector('.sprite'), leading = frame.querySelector('.combatant-leading');
-      if (!sprite || !leading) return [];
-      const rack = frame.querySelector(':scope > .target-hud-overhead-meters');
-      if (rack) {
-        const body = currentSpriteBodyBounds(sprite, schedule);
-        const intentHeight = rack.querySelector(':scope > :is(.intent,.player-action-intent)')?.getBoundingClientRect().height || 37;
-        const config = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
-        const placement = targetBodyHudPlacement({ body, frame: frame.getBoundingClientRect(),
-          groupHeight: config.miniHudGroupHeightPx, intentHeight, gap: config.miniHudSpriteGapPx, zoom });
-        frame.style.setProperty('--combat-mini-hud-top', `${placement.miniTop}px`);
-        frame.style.setProperty('--combat-selected-intent-top', `${placement.selectedTop}px`);
-        frame.style.setProperty('--combat-selected-intent-center', `${placement.center}px`);
-        frame.dataset.miniHudHeadY = String(body.headY ?? body.top);
-        return [];
-      }
+      return sprite && leading ? [{ frame, sprite, leading,
+        rack: frame.querySelector(':scope > .target-hud-overhead-meters') }] : [];
+    });
+    // Clear the legacy leading offsets together before measuring. Target HUD
+    // coordinates are written only after every fighter has been measured:
+    // writing one fighter's inherited variables between reads forced a fresh
+    // style/layout pass for each following fighter on every animation frame.
+    for (const { frame, leading, rack } of rows) {
+      if (rack) continue;
       leading.style.left = '0px';
       leading.style.top = 'var(--combat-elev, 0px)';
       leading.style.translate = 'none';
       delete frame.dataset.overheadObstructed;
-      return [{ frame, sprite, leading }];
-    });
+    }
+    const zoom = uiZoom();
     const headerBottom = field.closest('.combat')?.querySelector(':scope > .topbar')?.getBoundingClientRect().bottom;
-    const placements = rows.map(({ frame, sprite, leading }) => {
+    const config = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
+    const gap = field.closest('.combat')?.dataset?.compactCombat === 'true' ? 4 : 14;
+    const placements = rows.map(({ frame, sprite, leading, rack }) => {
+      if (rack) {
+        const body = currentSpriteBodyBounds(sprite, schedule);
+        const intentHeight = rack.querySelector(':scope > :is(.intent,.player-action-intent)')?.getBoundingClientRect().height || 37;
+        return { frame, body, placement: targetBodyHudPlacement({ body, frame: frame.getBoundingClientRect(),
+          groupHeight: config.miniHudGroupHeightPx, intentHeight, gap: config.miniHudSpriteGapPx, zoom }) };
+      }
       const art = currentSpriteArtBounds(sprite, schedule), box = leading.getBoundingClientRect();
-      const gap = field.closest('.combat')?.dataset.compactCombat === 'true' ? 4 : 14;
-      return { frame, leading, ...targetOverheadPlacement({ art, box, headerBottom, gap, zoom }) };
+      return { leading, ...targetOverheadPlacement({ art, box, headerBottom, gap, zoom }) };
     });
-    for (const { leading, dx, dy } of placements) leading.style.translate = `${dx}px ${dy}px`;
+    for (const { frame, body, placement, leading, dx, dy } of placements) {
+      if (placement) {
+        frame.style.setProperty('--combat-mini-hud-top', `${placement.miniTop}px`);
+        frame.style.setProperty('--combat-selected-intent-top', `${placement.selectedTop}px`);
+        frame.style.setProperty('--combat-selected-intent-center', `${placement.center}px`);
+        frame.dataset.miniHudHeadY = String(body.headY ?? body.top);
+      } else leading.style.translate = `${dx}px ${dy}px`;
+    }
   }
 
   function placePlayerHud(reserveFirst = false, targetCores = [], tick = false) {
