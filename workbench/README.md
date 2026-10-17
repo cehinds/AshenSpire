@@ -95,8 +95,10 @@ then explain how to start each tool.
   `docs/ENGINE-EXPORT.md`. On a checkout without `tools/engine-export.mjs`
   every *Run export* button is disabled and says why.
 - **Build & Checks** — allowlisted jobs only: `content-build`, `config-build`,
-  `build-only` (`tools/launch.mjs --build-only`), `engine-export` and
-  `tool-tests` (`node --test` over editor/, ui-studio/ and workbench/ tests).
+  `build-only` (`tools/launch.mjs --build-only`), `engine-export`, `tool-tests`
+  (`node --test` over editor/, ui-studio/ and workbench/ tests), and the game
+  profile jobs `game-config` (Game profiles), `game-config-check` (Check game
+  profiles) and `hud-layout` (HUD layout).
   One run per job at a time, live log, cancel, re-run, and the last 30 runs
   (kept in `workbench/.state/jobs.json`).
 - **Toasts and notifications** — info and success toasts fade; errors stay
@@ -104,6 +106,17 @@ then explain how to start each tool.
 - **Remembers** the open section, preview width, device, collapsed state,
   auto-reload and Library toggles (browser storage; the Workbench works
   without it).
+
+The **Game Configuration** module edits the authored game profiles: `games/ashenspire/game.json`
+(the product core), every `presets/*.json` and every `bundles/*/bundle.json` (bundles get JSON
+checks only). Its **Modules** panel lists all engine modules under `engine/modules/`, switches
+each one on or off in the draft, and edits its settings from the module's `settings.schema.json`,
+with `defaults.json` as placeholders. Drafts are validated with the same resolver the game-config
+build uses, and either built-in profile can be previewed. The **Data Studio** also browses the
+profile packs (`games/ashenspire/packs/`) and the HUD layout (`content/hud-layout/`); tables it
+cannot edit open read-only. The **Game profiles** and **Check game
+profiles** jobs rebuild and check the generated profiles and `game.lock.json` from
+that JSON, and **HUD layout** does the same for `content/hud-layout/`.
 
 ## Shortcuts
 

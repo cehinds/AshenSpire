@@ -57,6 +57,37 @@ build/engine-export/
 | `source.*` | the authored files in `content/source/` (CSV parsed with the dialect of `tools/content-build.mjs`) |
 | `framework.*` | `content/framework/*.json` |
 | `ui.*` | the compiled UI config `uiConfig` (`src/config/generated/ui.js`, built from `content/config/ui/`) |
+| `profile.*` | the Core game profiles (`games/ashenspire/`), resolved as `tools/game-config.mjs export` resolves them |
+| `module.*` | the engine modules (`engine/modules/<id>/`): the module list and each module's settings per profile |
+| `hudLayout.*` | the HUD layout tokens (`content/hud-layout/<form factor>.json`) |
+| `baseCards.*` | the base-card pack (`games/ashenspire/packs/base-cards/`) and its compiled module |
+
+### Core profile tables
+
+Every row is keyed by `Name`, as in every table. These tables are written with
+the rest of the export and can be selected with `--only profile`, `module`,
+`hudLayout` or `baseCards`.
+
+- `profile.profiles`: one row per game profile (`Name` is the profile `id`). Fields
+  include `core`, `hash`, `isGameDefault`, `enabledModules`, `disabledModules`,
+  `portable`, `requiredCapabilities`, `runtimeABI`, `runtimeHash`, `artifactCount`
+  and `contentKinds`.
+- `module.modules`: one row per engine module (`Name` is the module `id`). Fields
+  include `version`, `description` (the first line of its `guide.md`), `runtimeABI`,
+  `implementation`, `configuredAdapter`, `defaults`, `enabledIn` (the profiles that
+  enable it) and `settingsTable`.
+- `module.settings.<id>`: one per module that a profile enables with settings.
+  `Name` is the profile `id`. Its schema is the module's `settings.schema.json`.
+- `hudLayout.layouts`: one row per form factor (`Name` is the `formFactor`), with
+  the layout's own fields.
+- `hudLayout.tokens`: one row per form factor and token (`Name` is
+  `<formFactor>:<token>`), with `formFactor`, `token` and `value`.
+- `baseCards.definitions`, `baseCards.presentation`, `baseCards.statuses` and
+  `baseCards.statusRules`: the compiled base-card data, keyed by the source keys.
+- `baseCards.tagging`: one row per card and tag (`Name` is `<objectId>:<tagId>`).
+- `baseCards.rewardIds`: one row per reward id (`Name` is the id, `order` its position).
+- `baseCards.groups` and `baseCards.resourceVariants`: the pack's `groups.json` and
+  `resourceVariants.json`, read as they are written.
 
 ### Tables
 
@@ -99,9 +130,17 @@ not as a closed set.
                "schema": "schemas/content.cards.schema.json", "rows": 292,
                "sha256": "…", "omittedFunctions": [] }],
   "config": [{ "id": "content.balance", "file": "config/content.balance.json", "sha256": "…", "omittedFunctions": [] }],
-  "art":    [{ "source": "art-manifest.json", "file": "art/art-manifest.json", "sha256": "…" }]
+  "art":    [{ "source": "art-manifest.json", "file": "art/art-manifest.json", "sha256": "…" }],
+  "gameLock": { "source": "games/ashenspire/game.lock.json", "file": "lock/game.lock.json", "sha256": "…",
+                "formatVersion": 1, "profiles": { "core": { "hash": "…", "core": "…", "runtimeABI": "…", "runtimeHash": "…" } } }
 }
 ```
+
+`gameLock` is present when `games/ashenspire/game.lock.json` exists. It carries the
+lock's identity: `sha256` and `formatVersion` of the file, and for each profile its
+`hash`, `core`, `runtimeABI` and `runtimeHash`. The file itself is copied to
+`lock/game.lock.json`, so an engine can compare the imported data with the
+profile it was built from. Without the lock, `gameLock` is left out.
 
 `version` is the release in `src/content/index.js`. `release` and
 `buildOrdinal` come from `buildordinal.json`. The output has no timestamps, so
