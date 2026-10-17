@@ -68,8 +68,8 @@ try {
   for (const [width, height] of [[390, 844], [1024, 768]]) {
     const page = await browser.newPage({ viewport: { width, height } });
     await page.goto(`${base}${entry}?shot=combat&gameProfile=core`, { waitUntil: 'networkidle' });
-    assert.equal(await page.locator('.combat').getAttribute('data-target-hud'), 'false');
-    assert.equal(await page.locator('.target-hud-layer').isVisible(), false); await page.close();
+    assert.equal(await page.locator('.combat').getAttribute('data-target-hud'), 'true');
+    assert.equal(await page.locator('.target-hud-layer').isVisible(), true); await page.close();
   }
   assert.deepEqual(errors, []);
 } finally { writeFileSync(resolve(out, 'checks.json'), JSON.stringify({ results, errors }, null, 2)); await browser.close(); await server?.close(); }

@@ -20,6 +20,7 @@ export function updateCombatantFrame(frame, { classNames = [], leading = [], blo
   for (const value of ownedClasses.get(frame) || []) if (!classNames.includes(value)) frame.classList.remove(value);
   for (const value of classNames.filter(Boolean)) frame.classList.add(value);
   ownedClasses.set(frame, classNames.filter(Boolean));
+  frame.querySelector(':scope > .target-hud-overhead-meters')?.remove();
   const leadingHost = frame.querySelector('.combatant-leading');
   leadingHost.replaceChildren(...leading.filter(Boolean));
   const card = frame.querySelector('.combatant-card');
@@ -138,17 +139,21 @@ export function combatantFrame({
 // second health display or changing the sprite's frame geometry.
 export function setCombatantTargetHud(frame, enabled) {
   const leading = frame.querySelector('.combatant-leading');
-  const rack = leading?.querySelector(':scope > .target-hud-overhead-meters');
+  const rack = frame.querySelector(':scope > .target-hud-overhead-meters');
   if (!leading) return;
   if (enabled) {
-    if (rack) return;
+    if (rack) {
+      for (const intent of leading.querySelectorAll(':scope > .intent, :scope > .player-action-intent')) rack.prepend(intent);
+      return;
+    }
     const meters = frame.querySelector('.combatant-card .meters, .combatant-mini-hud .meters');
     if (!meters) return;
     for (const slot of [meters, ...frame.querySelectorAll('.nm')]) { slot.style.removeProperty('transform'); slot.style.removeProperty('translate'); slot.style.removeProperty('position'); slot.style.removeProperty('left'); slot.style.removeProperty('top'); }
     const host = document.createElement('div'); host.className = 'target-hud-overhead-meters';
-    host.append(meters); leading.append(host);
+    host.append(...leading.querySelectorAll(':scope > .intent, :scope > .player-action-intent'), meters); frame.append(host);
   } else if (rack) {
     const parent = frame.classList.contains('player') ? leading.querySelector('.combatant-mini-hud') : frame.querySelector('.combatant-card');
+    for (const intent of rack.querySelectorAll(':scope > .intent, :scope > .player-action-intent')) leading.append(intent);
     if (parent) parent.append(...rack.childNodes);
     rack.remove();
   }

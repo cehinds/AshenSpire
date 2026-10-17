@@ -324,6 +324,25 @@ export function placeAnchored(el, anchor, {
   return { left: at.left, top: at.top, width: b.width, height: b.height };
 }
 
+const combatReadoutLayers = new WeakMap();
+
+// Text feedback shares the combat root's ruler and escapes the sprite-FX
+// stacking context. Callers retain their original FX layer for sprite effects.
+export function combatReadoutLayer(layer, create = true) {
+  const combat = layer?.closest?.('.combat');
+  if (!combat) return layer;
+  let host = combatReadoutLayers.get(combat);
+  if (host?.parentNode === combat) return host;
+  if (!create) return null;
+  host = document.createElement('div');
+  host.className = 'combat-floater-layer';
+  host.setAttribute('aria-hidden', 'true');
+  Object.assign(host.style, { position: 'absolute', inset: '0', pointerEvents: 'none', overflow: 'visible', zIndex: '800' });
+  combat.appendChild(host);
+  combatReadoutLayers.set(combat, host);
+  return host;
+}
+
 /**
  * Spawn a floating number over an anchor element.
  *
@@ -333,6 +352,7 @@ export function placeAnchored(el, anchor, {
  */
 export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
   if (!layer || !anchor) return;
+  layer = combatReadoutLayer(layer);
   const x = Number.isFinite(placement.x) ? placement.x : 0;
   const y = Number.isFinite(placement.y) ? placement.y : 0;
   const jitter = placement.jitter !== false;
@@ -540,6 +560,7 @@ export function callout(layer, anchor, forId, kind) {
     ? (Object.prototype.hasOwnProperty.call(STATUS_WORDS, statusId) ? { string: `combat.status.applied.${statusId}`, tone: 'status', colour: STATUS_WORDS[statusId].colour } : null)
     : CALLOUT_KINDS[kind];
   if (!layer || !anchor || !def || forId == null) return null;
+  layer = combatReadoutLayer(layer);
   const now = Date.now();
   const q = queueFor(layer, forId);
   // Words that have finished leave the queue.
@@ -564,6 +585,9 @@ export function callout(layer, anchor, forId, kind) {
 
 /** A click-skip ends every callout in the layer. */
 export function clearCallouts(layer) {
+  layer = combatReadoutLayer(layer, false);
+  const queues = layer && calloutQueues.get(layer);
+  for (const queue of queues?.values() || []) for (const item of queue.items) clearTimeout(item.timer);
   for (const node of [...(layer?.children || [])]) if (node.dataset?.calloutFor !== undefined) node.remove();
   // The waiting queue goes with the visible words.
   if (layer) calloutQueues.delete(layer);

@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { targetHudConfig, targetHudEnabled, targetHudSide, placeTargetHudPanels, targetHudOverlaps, createTargetHudDwell } from '../src/ui/models/TargetHudModel.js';
+import { readFileSync } from 'node:fs';
+import { targetHudMatchup, targetHudPanelSizing, TARGET_HUD_AURA, targetHudConfig, targetHudEnabled, targetHudSide, placeTargetHudPanels, targetHudOverlaps, createTargetHudDwell } from '../src/ui/models/TargetHudModel.js';
 
-test('target details are limited to alternative desktop and widescreen formation', () => {
-  for (const formFactor of ['desktop', 'widescreen']) assert.equal(targetHudEnabled({ formFactor, classic: false }), true);
-  for (const formFactor of ['mobile', 'tablet']) assert.equal(targetHudEnabled({ formFactor, classic: false }), false);
+test('target details support every alternative formation form factor', () => {
+  const config = JSON.parse(readFileSync(new URL('../content/config/ui/components/combatTargetHud.json', import.meta.url)));
+  for (const formFactor of ['mobile', 'tablet', 'desktop', 'widescreen']) assert.equal(targetHudEnabled({ formFactor, classic: false }, config), true);
   assert.equal(targetHudEnabled({ formFactor: 'desktop', classic: true }), false);
   assert.equal(targetHudEnabled({ formFactor: 'desktop', classic: false, layout: 'cards' }), false);
   assert.deepEqual([0, 1, 2].map(lane => targetHudSide('enemy', lane)), ['left', 'below', 'right']);
@@ -44,4 +45,42 @@ test('six crowded enemy panels remain visible, distinct and above the hand at de
     }
   }
   assert.equal(targetHudConfig().motion.dwellMs, 500);
+});
+
+test('selected-card matchup follows authored stances and never reads hidden amounts or profiles', () => {
+  const rules = { matchups: { attack: ['smash', 'prepared'], counter: ['attack'] } };
+  const action = { maneuver: 'attack' };
+  assert.equal(targetHudMatchup(action, { profile: { maneuver: 'smash' } }, rules), 'advantage');
+  assert.equal(targetHudMatchup(action, { profile: { maneuver: 'counter' } }, rules), 'disadvantage');
+  assert.equal(targetHudMatchup(action, { profile: { maneuver: 'defend' } }, rules), 'neutral');
+  assert.equal(targetHudMatchup(action, { profile: { maneuver: 'casting' } }, rules), 'advantage');
+  assert.equal(targetHudMatchup(action, { hidden: true, get profile() { throw new Error('private intent accessed'); } }, rules), 'neutral');
+  assert.equal(targetHudMatchup(action, { revealed: false, get profile() { throw new Error('private intent accessed'); } }, rules), 'neutral');
+  assert.equal(targetHudMatchup(action, { stance: 'smashing' }, rules), 'advantage');
+  assert.equal(targetHudMatchup(action, { profile: { maneuver: 'smash' } }, null), 'neutral');
+  assert.equal(targetHudMatchup(null, { profile: { maneuver: 'smash' } }, rules), 'neutral');
+  assert.deepEqual(Object.keys(TARGET_HUD_AURA), ['advantage','neutral','disadvantage']);
+});
+
+test('three mobile detail groups fit at 390x844 without covering sprites or the hand', () => {
+  const config = JSON.parse(readFileSync(new URL('../content/config/ui/components/combatTargetHud.json', import.meta.url)));
+  const sizing = targetHudPanelSizing({ viewportWidth: 390, count: 3 }, config);
+  assert.equal(sizing.width, 145); assert.equal(sizing.font, 11);
+  assert.equal(targetHudPanelSizing({ viewportWidth: 390, count: 1 }, config).width, 198);
+  const sprites = [{ left: 22, top: 349, width: 90, height: 95 },
+    ...[66, 180, 294].map(left => ({ left, top: 148, width: 66, height: 81 }))];
+  const panels = sprites.slice(1).map((anchor, index) => ({ id: `e${index}`, role: 'enemy', lane: index, anchor, width: sizing.width + 25, height: 98 }));
+  const result = placeTargetHudPanels({ bounds: { left: 0, top: 100, width: 390, height: 460 }, panels, obstacles: sprites, config });
+  assert.equal(result.length, 3);
+  for (const panel of result) {
+    assert.ok(panel.left >= 0 && panel.left + panel.width <= 390);
+    assert.ok(panel.top >= 100 && panel.top + panel.height <= 560, 'detail stays above hand at 600px');
+    for (const sprite of sprites) assert.equal(targetHudOverlaps(panel, sprite), false, `${panel.id} covers sprite`);
+    for (const other of result) if (other !== panel) assert.equal(targetHudOverlaps(panel, other), false, `${panel.id}/${other.id}`);
+  }
+});
+
+test('empty legacy leading hosts do not block otherwise clear panel space', () => {
+  assert.equal(targetHudOverlaps({ left: 12, top: 267, width: 170, height: 80 }, { left: 2, top: 325, width: 130, height: 0 }), false);
+  assert.equal(targetHudOverlaps({ left: 12, top: 267, width: 170, height: 80 }, { left: 20, top: 290, width: 0, height: 100 }), false);
 });
