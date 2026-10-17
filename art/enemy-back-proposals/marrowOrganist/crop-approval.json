@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "status": "approved-for-draft-proposals",
+  "reviewer": "root agent and boss_proposals_b",
+  "reviewDate": "2026-10-17",
+  "sourceSha256": "9983c8fbf5bac34353616da6342ce48ba67cace47e5b7ec658897d368047dc96",
+  "horizontalCut": 394,
+  "rowCuts": [
+    [
+      390,
+      794,
+      1199,
+      1586
+    ],
+    [
+      395,
+      790,
+      1193,
+      1588
+    ]
+  ],
+  "review": "Ten complete rear figures inspected. No meaningful-alpha clipping; draft authoring only."
+}
