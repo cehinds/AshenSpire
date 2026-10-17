@@ -5,6 +5,8 @@ import { runInNewContext } from 'node:vm';
 import { playTimeline, setAnimSpeed, setBeatOrder, ANIM_SPEEDS } from '../src/ui/fx.js';
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
+import { createPaintedStage } from '../src/ui/paintedOutfits.js';
+import { figureAnimationsEnabled } from '../src/model/gameAnimationPolicy.js';
 import { reaverAttackTiming } from '../src/ui/reaverAttack.js';
 import { selectedWeaponSequence, selectedWeaponSequenceTiming } from '../src/model/selectedWeaponSequences.js';
 
@@ -130,6 +132,56 @@ test('the specialized Reaver renderer honors module off while returning its orig
         result.cancel();
         assert.equal(calls.length, enabled ? 1 : 0, 'off never enters the renderer that adds Reaver sequence DOM/classes');
       }
+    }
+  });
+});
+
+
+test('saved animation policy settles reused player readiness without authored enter or leave playback', t => {
+  t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
+  // Execute the actual solo-screen call against the shipped painted renderer.
+  const restCall = screen.split('\n').find(line => line.includes('stageFor(box)?.setRestPose?.'));
+  assert.ok(restCall);
+  withKitDom(dom => {
+    const proto = Object.getPrototypeOf(dom.document.body);
+    const originalAnimate = proto.animate, originalAnimations = proto.getAnimations;
+    const fades = [];
+    proto.animate = function () { fades.push(this); return { cancel() {} }; };
+    proto.getAnimations = () => [];
+    try {
+      const frames = Object.fromEntries(['idle', 'enter1', 'enter2', 'leave1', 'leave2', 'prepared'].map(name => [name, { file: `assets/${name}.webp`, box: { x0: 200, y0: 100, x1: 400, y1: 600 } }]));
+      const animation = { setId: 'readiness-test', frames, references: { idle: 'idle', stanceActivate: 'enter', stanceDeactivate: 'leave' }, clips: {
+        idle: { frames: ['idle'], frameMs: 50 }, enter: { frames: ['enter1', 'enter2'], frameMs: 50 }, leave: { frames: ['leave1', 'leave2'], frameMs: 50 },
+      } };
+      for (const run of [{}, { gameProfile: { modules: { animation: { enabled: false } } } }]) {
+        const enabled = figureAnimationsEnabled(run);
+        const stage = createPaintedStage('reaver', 'default', { animation });
+        assert.ok(stage);
+        const context = { stageFor: () => stage, box: stage.el, resolveCombatPose: (_player, rest) => rest, dv: p => p, p: {}, readinessOrder: [], figureAnimationsEnabled, run, existing: null, playerRest: 'prepared' };
+        fades.length = 0;
+        runInNewContext(restCall, context);
+        assert.equal(stage.pose, 'prepared', 'initial mount always settles immediately');
+        assert.equal(fades.length, 0);
+        context.existing = stage.el;
+        for (const [rest, first, second] of [['idle', 'leave1', 'leave2'], ['prepared', 'enter1', 'enter2']]) {
+          context.playerRest = rest;
+          fades.length = 0;
+          runInNewContext(restCall, context);
+          assert.equal(stage.rest, rest);
+          assert.equal(stage.pose, enabled ? first : rest);
+          assert.equal(stage.presentation.transition !== null, enabled);
+          assert.equal(fades.length > 0, enabled, 'only enabled transitions fade the aura');
+          t.mock.timers.tick(50);
+          assert.equal(stage.pose, enabled ? second : rest);
+          t.mock.timers.tick(50);
+          assert.equal(stage.pose, rest);
+          assert.equal(stage.presentation.transition, null);
+        }
+        stage.dispose();
+      }
+    } finally {
+      if (originalAnimate) proto.animate = originalAnimate; else delete proto.animate;
+      if (originalAnimations) proto.getAnimations = originalAnimations; else delete proto.getAnimations;
     }
   });
 });

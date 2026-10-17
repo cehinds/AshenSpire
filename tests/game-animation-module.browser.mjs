@@ -11,7 +11,7 @@ mkdirSync(out, { recursive: true });
 const server = await serve({ root: process.cwd(), port: 0, open: false, quiet: true });
 const browser = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/chromium', args: ['--no-sandbox'] });
 const selectedCase = process.env.ANIMATION_MODULE_CASE || 'full';
-assert.ok(['full', 'current'].includes(selectedCase), 'ANIMATION_MODULE_CASE must be full or current');
+assert.ok(['full', 'current', 'reading'].includes(selectedCase), 'ANIMATION_MODULE_CASE must be full, current or reading');
 const evidence = { selectedCase, head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), scenes: [], errors: [], artFailures: [], optionalAudioFallbacks: [] };
 let active;
 const author = (profile, enabled) => JSON.stringify({ formatVersion: 1, core: `ashen.${profile}@1.0.0`, modules: { animation: { enabled } } });
@@ -32,7 +32,7 @@ async function open(profile, enabled, viewport, scene = 'combat', classic = fals
   return page;
 }
 async function painted(page, selector) {
-  await page.waitForFunction(selector => {
+  await page.waitForFunction(async selector => {
     const node = document.querySelector(selector);
     if (!node || node.querySelector('[data-art-placeholder]') || node.querySelector('[data-art-error]')) return false;
     const canvases = [...node.querySelectorAll('canvas')];
@@ -40,20 +40,57 @@ async function painted(page, selector) {
       const data = canvas.getContext('2d')?.getImageData(0, 0, canvas.width, canvas.height).data;
       return data?.some((value, i) => i % 4 === 3 && value > 0);
     });
-    const images = [...node.querySelectorAll('img')];
-    return images.length > 0 && images.every(image => image.complete && image.naturalWidth > 0);
+    const visible = element => {
+      if (!element.getClientRects().length) return false;
+      for (let current = element; current; current = current.parentElement) {
+        const style = getComputedStyle(current);
+        if (current.hidden || style.display === 'none' || ['hidden', 'collapse'].includes(style.visibility) || Number(style.opacity) === 0) return false;
+      }
+      return true;
+    };
+    // Painted stages retain hidden defeated art and an initially empty,
+    // display:none crossfade buffer. Verify the image actually being drawn.
+    const images = [...node.querySelectorAll('img')].filter(visible);
+    if (!images.length || images.some(image => !image.complete || image.naturalWidth <= 0)) return false;
+    try { await Promise.all(images.map(image => image.decode())); return true; } catch { return false; }
   }, selector);
 }
 async function geometry(page) {
+  await page.waitForFunction(() => document.fonts.status === 'loaded');
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    const { stageFor } = await import('/src/ui/services/PoseAnimator.js');
+    await Promise.all([...document.querySelectorAll('.combatant .sprite')].map(node => stageFor(node)?.ready));
+    delete window.__spriteGeometryReadiness;
+  });
+  // Entry transitions and font-driven reflow can move the whole battlefield.
+  // Require unchanged real target rectangles for eight consecutive frames,
+  // with no finite animation still moving a target or one of its ancestors.
+  await page.waitForFunction(() => {
+    const nodes = [...document.querySelectorAll('.combatant .sprite')];
+    if (!nodes.length) return false;
+    const ancestors = new Set();
+    for (const node of nodes) for (let parent = node; parent; parent = parent.parentElement) ancestors.add(parent);
+    const entering = [...ancestors].some(node => node.getAnimations().some(animation =>
+      ['running', 'pending'].includes(animation.playState) && Number.isFinite(animation.effect?.getComputedTiming().endTime)));
+    const value = JSON.stringify(nodes.map(node => ({ id: node.closest('[data-eid]').dataset.eid, box: node.getBoundingClientRect().toJSON() })));
+    const previous = window.__spriteGeometryReadiness;
+    const frames = !entering && previous?.value === value ? previous.frames + 1 : 0;
+    window.__spriteGeometryReadiness = { value, frames, entering };
+    return frames >= 8;
+  }, null, { polling: 'raf' });
   return page.locator('.combatant .sprite').evaluateAll(nodes => nodes.map(node => ({ id: node.closest('[data-eid]').dataset.eid, box: node.getBoundingClientRect().toJSON() })));
 }
 async function watch(page) {
   await page.evaluate(async () => {
     const { stageFor } = await import('/src/ui/services/PoseAnimator.js');
-    window.__motionTrace = { actions: [], choreography: [] };
+    window.__motionTrace = { actions: [], choreography: [], bodyTransitions: [] };
     window.__motionWatch = setInterval(() => {
       for (const node of document.querySelectorAll('.combatant .sprite')) {
-        const action = stageFor(node)?.presentation?.action;
+        const presentation = stageFor(node)?.presentation;
+        const action = presentation?.action;
+        const transition = presentation?.transition || node.querySelector('[data-pose-transition]:not([data-pose-transition=""])')?.dataset.poseTransition;
+        if (transition) window.__motionTrace.bodyTransitions.push(transition);
         if (action) window.__motionTrace.actions.push(action);
         if (node.matches('.act-attack,.act-move,.enemy-attack-pose')) window.__motionTrace.choreography.push(node.className);
       }
@@ -69,11 +106,28 @@ async function play(page, enabled) {
   const card = await strike.boundingBox();
   assert.ok(card);
   await page.mouse.click(card.x + card.width / 2, card.y + card.height / 2);
-  const target = page.locator(`.combatant.enemy[data-eid="${before.targetId}"] .sprite`);
-  const bounds = await target.boundingBox();
-  assert.ok(bounds?.width > 0);
-  const point = { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 };
-  assert.equal(await page.evaluate(({ x, y }) => !!document.elementFromPoint(x, y)?.closest('.combatant.enemy'), point), true, 'real target art remains hittable');
+  // Classic's sprite rectangle includes empty formation space and its
+  // independent target buttons can sit outside the combatant. Probe a bounded
+  // set of real pointer locations, requiring the intended enemy's exact ID.
+  const point = await page.evaluate(targetId => {
+    const sprite = document.querySelector(`.combatant.enemy[data-eid="${CSS.escape(targetId)}"] .sprite`);
+    const picker = document.querySelector(`.enemy-target-button[data-eid="${CSS.escape(targetId)}"]:not(:disabled)`);
+    for (const node of [sprite, picker]) {
+      if (!node || !node.getClientRects().length) continue;
+      const box = node.getBoundingClientRect();
+      if (box.width <= 0 || box.height <= 0) continue;
+      for (const [fx, fy] of [[.5, .5], [.5, .25], [.5, .75], [.25, .5], [.75, .5], [.25, .25], [.75, .25], [.25, .75], [.75, .75]]) {
+        const x = box.x + box.width * fx, y = box.y + box.height * fy;
+        const hit = document.elementFromPoint(x, y);
+        const proxy = hit?.closest('.enemy-target-button');
+        const enemy = hit?.closest('.combatant.enemy');
+        if ((proxy && !proxy.disabled && proxy.dataset.eid === targetId)
+          || (enemy?.dataset.eid === targetId && !hit.closest('button'))) return { x, y };
+      }
+    }
+    return null;
+  }, before.targetId);
+  assert.ok(point, 'the intended enemy has a real hittable figure or target button');
   if (page.viewportSize().width < 600) await page.touchscreen.tap(point.x, point.y);
   else await page.mouse.click(point.x, point.y);
   await page.waitForFunction(({ eventIndex, instanceId }) => window.__combat.eventLog.slice(eventIndex).some(event => event.type === 'cardResolved' && event.cardInstanceId === instanceId), { eventIndex: before.eventIndex, instanceId });
@@ -94,19 +148,37 @@ async function play(page, enabled) {
   assert.ok(paid.energy < before.energy || paid.stamina < before.stamina, 'UI play pays normally');
   await page.locator('.end-turn').click();
   await page.locator('.confirmation-confirm').click();
-  await page.waitForFunction(turn => window.__combat.turn > turn && !document.querySelector('.end-turn')?.disabled, before.turn);
+  const reactionAnswers = [];
+  const deadline = Date.now() + 30000;
+  while (true) {
+    assert.ok(Date.now() < deadline, 'enemy turn finishes within the bounded reaction-response window');
+    await page.waitForFunction(turn => (window.__combat.turn > turn && !document.querySelector('.end-turn')?.disabled)
+      || (window.__combat.pendingReaction && document.querySelector('.reaction-choice .modal-foot button[data-control-role="exit"]')), before.turn, { timeout: Math.max(1, deadline - Date.now()) });
+    const pending = await page.evaluate(() => window.__combat.pendingReaction && { offerId: window.__combat.pendingReaction.id, sourceId: window.__combat.pendingReaction.sourceId, ownerId: window.__combat.pendingReaction.ownerId });
+    if (!pending) break;
+    assert.ok(reactionAnswers.length < 8, 'fixture opens at most eight real reaction offers');
+    assert.ok(!reactionAnswers.some(answer => answer.offerId === pending.offerId), 'each reaction offer is answered once');
+    // This fixture deliberately takes no optional reaction. Use the modal's
+    // actual Back/Resolve footer control; never dispatch or alter model state.
+    const decline = page.locator('.reaction-choice .modal-foot button[data-control-role="exit"]');
+    assert.match((await decline.innerText()).trim(), /^(Back|Resolve)$/);
+    await decline.click();
+    await page.waitForFunction(offerId => window.__combat.eventLog.some(event => event.type === 'combatReactionChosen' && event.offerId === offerId && event.cardInstanceId === null), pending.offerId);
+    reactionAnswers.push({ ...pending, response: 'pass' });
+  }
+  if (before.legacy) assert.ok(reactionAnswers.length > 0, 'Current fixture exercises the real optional reaction prompt');
   const trace = await page.evaluate(() => { clearInterval(window.__motionWatch); return window.__motionTrace; });
   if (enabled) assert.ok(trace.actions.length || trace.choreography.length, 'enabled run shows actual action motion');
-  else assert.deepEqual(trace, { actions: [], choreography: [] }, 'disabled run never starts authored action/choreography');
+  else assert.deepEqual(trace, { actions: [], choreography: [], bodyTransitions: [] }, 'disabled run never starts authored action, choreography or body transitions');
   const outcome = await page.evaluate(eventIndex => {
     const combat = window.__combat;
     const resources = entity => Object.fromEntries(['id', 'hp', 'mana', 'stamina', 'energy', 'block', 'barrier', 'alive', 'formationCell', 'statuses', 'persistentWard', 'persistentPoise'].filter(key => entity[key] !== undefined).map(key => [key, entity[key]]));
     return { player: resources(combat.player), enemies: combat.enemies.map(resources), turn: combat.turn, phase: combat.phase, result: combat.result, rng: combat.rng.getCounters(), receipts: combat.eventLog.slice(eventIndex).map(event => Object.fromEntries(Object.entries(event).filter(([, value]) => value === null || ['string', 'number', 'boolean'].includes(typeof value)))) };
   }, before.eventIndex);
-  return { before, paid, action, trace, outcome };
+  return { before, paid, action, reactionAnswers, trace, outcome };
 }
 try {
-  for (const viewport of (selectedCase === 'current' ? [] : [{ width: 1440, height: 900 }, { width: 1280, height: 720 }, { width: 390, height: 844 }, { width: 768, height: 1024 }])) {
+  for (const viewport of (selectedCase !== 'full' ? [] : [{ width: 1440, height: 900 }, { width: 1280, height: 720 }, { width: 390, height: 844 }, { width: 768, height: 1024 }])) {
     let baseline, baselineOutcome;
     for (const enabled of [true, false]) {
       const page = await open('core', enabled, viewport);
@@ -123,7 +195,7 @@ try {
   }
   // Current's legacy foundation consumes the same author override; Classic
   // retains its own stage geometry instead of selecting a still-only factory.
-  for (const classic of [false, true]) {
+  for (const classic of (selectedCase === 'reading' ? [] : [false, true])) {
     let baseline, baselineOutcome;
     for (const enabled of [true, false]) {
       const page = await open('current', enabled, { width: 1440, height: 900 }, 'combat', classic);

@@ -1831,7 +1831,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const activeDef = activeCard ? resolveCombatCard(combat, activeCard, { upcastRanks: upcastRanksByCard.get(activeCard.instanceId) }) : null;
     syncPlayerActionIntent(box, activeCard, heldKinds.get());
     stageFor(box)?.setStance?.(playerStance(activeDef));
-    stageFor(box)?.setRestPose?.(resolveCombatPose(dv(p), playerRest, readinessOrder), { immediate: !existing });
+    stageFor(box)?.setRestPose?.(resolveCombatPose(dv(p), playerRest, readinessOrder), { immediate: !existing || !figureAnimationsEnabled(run) });
     playerRenderKey = renderKey;
   }
 
