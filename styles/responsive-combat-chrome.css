@@ -60,3 +60,17 @@
 /* The header track spans the space remaining after its value and quick menu. */
 :root .combat[data-layout='formation'] > .combat-hud .resunit[data-res='hp'] .m-track { width: 100% !important; }
 :root .combat[data-layout='formation'] > .combat-hud .hud-cinders-strip :is(.ck,.cv,.hud-cinders) { color: white; }
+/* Match the shared shell's specificity, including its desktop override. */
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'][data-desktop-header='true'] > .combat-hud.shared-hud .hud-vitals-panel { max-width: none; }
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resunit[data-res='hp'] {
+  flex-direction: row; align-items: center; max-width: none; width: 100%;
+}
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resunit[data-res='hp'] .m-well { flex: 1 1 0; width: auto; }
+:root[data-display-appearance='alternative'] .combat[data-desktop-header='true'] > .combat-hud.shared-hud > .turn-ribbon {
+  top: calc(5px / var(--ui-zoom,1)); left: 50%; translate: none; transform: translateX(-50%);
+  max-width: 70%; font-size: calc(11px / var(--ui-zoom,1));
+}
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud > .hud-top { padding-top: calc(22px / var(--ui-zoom,1)); }
+:root .combat[data-layout='formation'] .formation-grid { z-index: 100; }
+:root[data-form-factor='mobile'] .combat[data-layout='formation'] > .hand-area::before { height: calc(var(--w4-band-footer) * 1.15); }
+:root[data-form-factor='tablet'] .combat[data-layout='formation'] > .hand-area::before { height: calc(var(--w4-band-footer) * 1.2); }

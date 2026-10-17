@@ -123,8 +123,8 @@ export function handLayout({ width, height, count, rem = 16, zoom = 1, compact =
 
 // Each form factor authors its own fan; all distances scale with the card.
 export const RESPONSIVE_HAND = Object.freeze({
-  mobile: { spread: .58, angle: 4, arc: .045, dock: .96 },
-  tablet: { spread: .64, angle: 4, arc: .045, dock: .96 },
+  mobile: { spread: .55, angle: 4, arc: .045, dock: .96, widthFraction: .277, minPx: 88, maxPx: 120 },
+  tablet: { spread: .64, angle: 4, arc: .045, dock: .96, widthFraction: .168, minPx: 120, maxPx: 150 },
   desktop: { spread: .68, angle: 4, arc: .045, dock: .96 },
   widescreen: { spread: .68, angle: 4, arc: .045, dock: .96 },
 });
@@ -132,7 +132,11 @@ export const RESPONSIVE_HAND = Object.freeze({
 export function responsiveHandLayout(input, sizePlan = handLayout(input)) {
   const style = RESPONSIVE_HAND[input.formFactor] || RESPONSIVE_HAND.mobile;
   const { width, height, count, zoom = 1 } = input;
-  const { cardWidth, cardHeight } = sizePlan;
+  const profileWidth = style.widthFraction
+    ? Math.max(style.minPx / zoom, Math.min(style.maxPx / zoom, width * style.widthFraction))
+    : sizePlan.cardWidth;
+  const cardWidth = Math.min(profileWidth, (height - sizePlan.controlsReserve - 40 / zoom) * wireframeUi.card.ratio);
+  const cardHeight = cardWidth / wireframeUi.card.ratio;
   const angle = style.angle * Math.PI / 180;
   const edge = (Math.cos(angle) * cardWidth + Math.sin(angle) * cardHeight - cardWidth) / 2;
   const side = Math.max(2 / zoom, edge + 2 / zoom);
@@ -147,12 +151,12 @@ export function responsiveHandLayout(input, sizePlan = handLayout(input)) {
     return { x: start + index * step, y: t * t * arc, angle: t * style.angle };
   });
   const extra = (Math.sin(angle) * cardWidth + Math.cos(angle) * cardHeight - cardHeight) / 2;
-  const top = Math.max(0, (height - cardHeight - arc - extra - sizePlan.controlsReserve - 2 / zoom) * style.dock);
+  const top = Math.max(0, (height - cardHeight - arc - extra - sizePlan.controlsReserve - 36 / zoom) * style.dock);
   const restTop = cards.length ? Math.min(...cards.map(card => {
     const radians = card.angle * Math.PI / 180;
     return top + card.y + cardHeight / 2 - (Math.abs(Math.sin(radians)) * cardWidth + Math.cos(radians) * cardHeight) / 2;
   })) : 0;
-  return { ...sizePlan, cards, step, span, start, top, capacity: Math.max(1, count),
+  return { ...sizePlan, cardWidth, cardHeight, cards, step, span, start, top, capacity: Math.max(1, count),
     restLeft: start - edge, restTop, clearanceTop: Math.min(restTop, top - sizePlan.lift) };
 }
 

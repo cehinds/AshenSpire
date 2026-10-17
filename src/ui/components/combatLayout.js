@@ -44,8 +44,7 @@ export function wireDesktopCombatHeader(combatEl) {
       const header = combatEl.querySelector(':scope > .combat-hud.shared-hud');
       if (!header) { restore(); return; }
       move(combatEl.querySelector('.turn-ribbon'), header);
-      const actions = header.querySelector('.hud-actions');
-      move(header.querySelector('.hud-cinders-strip'), actions, actions?.firstElementChild || null);
+      move(header.querySelector('.hud-cinders-strip'), header.querySelector('.hud-top'));
       combatEl.dataset.desktopHeader = 'true';
     },
     release: restore,
@@ -77,7 +76,7 @@ export function wireCombatLayout(combatEl) {
     combatEl.dataset.formFactor = formFactor || '';
     const split = desktopFooterEnabled({ formFactor, appearance: document.documentElement.dataset.displayAppearance, layout: combatEl.dataset.layout });
     combatEl.dataset.desktopFooter = String(split);
-    desktopHeader.apply(split && combatEl.dataset.targetHud === 'true');
+    desktopHeader.apply(document.documentElement.dataset.displayAppearance === 'alternative');
     if (combatEl.dataset.desktopHeader === 'true') {
       const ribbonWidth = combatEl.querySelector('.combat-hud > .turn-ribbon')?.getBoundingClientRect().width / zoom || 0;
       combatEl.style.setProperty('--desktop-header-left-width', Math.max(0, width / 2 - ribbonWidth / 2 - 32 / zoom) + 'px');
@@ -94,7 +93,11 @@ export function wireCombatLayout(combatEl) {
     }
     const compact = width * zoom <= uiConfig.scenes.w4a.sizing.compactCombat.maxWidthPx;
     combatEl.dataset.compactCombat = String(compact);
-    const bands = allocateCombatBands({ width, height: combatEl.clientHeight, zoom, rem, compact, footerArtPx: footerArtHeight(width, zoom, formFactor) * zoom });
+    const allocatedBands = allocateCombatBands({ width, height: combatEl.clientHeight, zoom, rem, compact, footerArtPx: footerArtHeight(width, zoom, formFactor) * zoom });
+    // Mobile gives the original controls a shallow dock; the freed height
+    // returns to the battlefield rather than an opaque hand backing.
+    const footer = formFactor === 'mobile' ? Math.max(56 / zoom, Math.min(72 / zoom, combatEl.clientHeight * .075)) : allocatedBands.footer;
+    const bands = { ...allocatedBands, footer, battlefield: allocatedBands.battlefield + allocatedBands.footer - footer };
     // The W4 parent's bands (kit.css, shared with the quest dialogue): the
     // battlefield is the scene band, the grid's flexible row; the hand is the
     // context band.
@@ -131,14 +134,14 @@ export function wireCombatLayout(combatEl) {
     // Measure the band's host, not the row: the row's own width is what this
     // plan sets, and a pre-plan cap on it would otherwise feed back.
     const host = row.parentElement || combatEl;
-    const footer = bands.rails || packCombatFooter({ width: host.clientWidth - inlinePadding(host), height: bands.footer, zoom, rem });
-    row.style.setProperty('--footer-gap', footer.gap + 'px');
-    row.style.setProperty('--footer-circle', footer.diameter + 'px');
-    row.style.setProperty('--footer-pile-width', footer.pileWidth + 'px');
-    row.style.setProperty('--footer-spent-width', footer.spentWidth + 'px');
-    row.style.setProperty('--footer-pile-height', footer.pileHeight + 'px');
-    row.style.setProperty('--footer-end-width', footer.endWidth + 'px');
-    row.dataset.footerGeometry = footer.supported ? 'supported' : 'unsupported';
+    const packedFooter = bands.rails || packCombatFooter({ width: host.clientWidth - inlinePadding(host), height: bands.footer, zoom, rem });
+    row.style.setProperty('--footer-gap', packedFooter.gap + 'px');
+    row.style.setProperty('--footer-circle', packedFooter.diameter + 'px');
+    row.style.setProperty('--footer-pile-width', packedFooter.pileWidth + 'px');
+    row.style.setProperty('--footer-spent-width', packedFooter.spentWidth + 'px');
+    row.style.setProperty('--footer-pile-height', packedFooter.pileHeight + 'px');
+    row.style.setProperty('--footer-end-width', packedFooter.endWidth + 'px');
+    row.dataset.footerGeometry = packedFooter.supported ? 'supported' : 'unsupported';
     row.dataset.footerCompact = String(bands.arrangement === 'rails' || width * zoom < footerSizing.compactBelowPx);
     fitFooterCompactLabels(row);
   }
