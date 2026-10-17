@@ -69,8 +69,10 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
     const rule=gameContent(run,'rewards')?.eligibility?.combatCards;
     if(kind==='combatCards'&&rule){
       const low=new Set(available.combatCardsLow||[]),high=ids.filter(id=>!low.has(id)),lowIds=ids.filter(id=>low.has(id));
-      const allowLow=lowIds.length&&(!high.length||rng.pick('cardRewards',Array.from({length:100},(_,i)=>i))<Math.round((rule.lowerRankChance??0)*100));
-      ids=allowLow?lowIds:high.length?high:ids;
+      // The chance is honored even when no rank 1+ card is left: a failed (or zero) roll drops the category.
+      const allowLow=lowIds.length>0&&rng.pick('cardRewards',Array.from({length:100},(_,i)=>i))<Math.round((rule.lowerRankChance??0)*100);
+      if(!allowLow&&!high.length){available[kind]=[];continue;}
+      ids=allowLow?lowIds:high;
     }
     const id=rng.pick('cardRewards',ids);available[kind]=available[kind].filter(value=>value!==id);
     options.push({kind,id});

@@ -179,3 +179,9 @@ test('the artifact file is build output and git-ignored', () => {
   assert.ok(readFileSync(join(ROOT, '.gitignore'), 'utf8').split('\n').includes('/dist/build/'));
   assert.ok(existsSync(join(ROOT, 'games/ashenspire/build.summary.json')));
 });
+
+test('the artifact carries every atlas document its maps and map components reference', () => {
+  const refs = [...Object.values(artifact.maps.maps).map(m => m.atlas?.ref), ...Object.values(artifact.maps.components).map(c => c.placement?.atlas)].filter(Boolean);
+  assert.ok(refs.length > 0);
+  for (const ref of refs) assert.ok(artifact.maps.atlas[ref] && typeof artifact.maps.atlas[ref] === 'object', ref);
+});

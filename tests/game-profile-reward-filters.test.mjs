@@ -64,3 +64,14 @@ test('cards-off equipment rewards remain available without checking inactive cor
   const offer=gameProfileRewardOffers(reg,run,createRng(3),{offerId:'cards-off'});
   assert.ok(offer.options.some(row=>row.kind==='weapons'));assert.equal(offer.options.some(row=>['combatCards','weaponArts'].includes(row.kind)),false);
 });
+test('a zero lowerRankChance is honored even when no rank 1+ card is eligible', () => {
+  // Every card is below minRank 99, and the chance to admit one is 0: combat cards must not be offered at all.
+  const run = fresh();
+  const p = structuredClone(run.gameProfile);
+  p.content.rewards.eligibility.combatCards = { ...p.content.rewards.eligibility.combatCards, minRank: 99, lowerRankChance: 0 };
+  run.gameProfile = p;
+  for (let seed = 1; seed <= 5; seed++) {
+    const offer = gameProfileRewardOffers(registries, run, createRng(seed), { offerId: `zero-${seed}` });
+    assert.equal(offer.options.some(row => row.kind === 'combatCards'), false);
+  }
+});
