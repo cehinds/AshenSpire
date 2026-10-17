@@ -1,0 +1,64 @@
+/* The shared renderer owns this geometry on every run screen. Physical sizes
+   use the same FormFactor and UI zoom ruler as combat. */
+:root header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] {
+  --shared-hud-top: 22px;
+  --shared-hud-quick-rise: 0px;
+  position: relative; height: auto; min-height: 0; box-sizing: border-box;
+  padding: calc(9px / var(--ui-zoom,1)) calc(16px / var(--ui-zoom,1));
+  background: none; border: 0; overflow: visible; isolation: isolate;
+}
+:root[data-form-factor='tablet'] header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] { --shared-hud-quick-rise: -10px; }
+:root header.topbar.combat-hud.shared-hud[data-shared-chrome='true']::before {
+  content: ''; position: absolute; inset: 0 0 -22px; z-index: -1; pointer-events: none;
+  background-color: #201b15;
+  mask-image: linear-gradient(#000 65%,transparent); -webkit-mask-image: linear-gradient(#000 65%,transparent);
+}
+:root header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] > .hud-top {
+  display: grid; width: 100%; height: auto; min-width: 0;
+  grid-template-columns: minmax(0,1fr) auto;
+  grid-template-areas: 'meters actions' 'meters purse' 'route route';
+  gap: calc(2px / var(--ui-zoom,1)) calc(8px / var(--ui-zoom,1));
+  padding-top: calc(var(--shared-hud-top) / var(--ui-zoom,1));
+}
+:root header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .hud-resource-row { display: contents; }
+:root header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .hud-vitals-panel {
+  grid-area: meters; align-self: start; max-width: none; min-width: 0; width: 100%; padding: 0; border: 0; background: none;
+}
+:root header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .resbars-host { zoom: 1; }
+:root header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] :is(.resbars,.resline) { display: flex; width: 100%; min-width: 0; }
+:root header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .resbars { flex-direction: column; }
+:root header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .resunit[data-res='hp'] {
+  display: flex; flex-direction: row; align-items: center; width: 100%; max-width: none; gap: calc(6px / var(--ui-zoom,1));
+}
+:root header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .resunit[data-res='hp'] .m-plate {
+  display: flex; position: static; flex: 0 0 auto; width: auto; align-items: center; gap: calc(6px / var(--ui-zoom,1));
+}
+:root header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .resunit[data-res='hp'] .m-label { font-size: 0; }
+:root header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .resunit[data-res='hp'] .engraved-icon { width: calc(18px / var(--ui-zoom,1)); height: calc(18px / var(--ui-zoom,1)); }
+:root header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .resunit[data-res='hp'] .m-value { font-size: calc(14px / var(--ui-zoom,1)); line-height: 1; }
+:root header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .resunit[data-res='hp'] .m-well { flex: 1 1 0; min-width: 0; width: auto; }
+:root header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .resunit[data-res='hp'] .m-track { width: 100% !important; height: calc(3px / var(--ui-zoom,1)); border-radius: 0; }
+:root header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .hud-bottom {
+  grid-area: meters; align-self: start; position: static; margin: calc(24px / var(--ui-zoom,1)) 0 0;
+  width: 100%; min-width: 0; padding: 0; pointer-events: none;
+}
+:root header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .hud-bottom > * { pointer-events: auto; }
+:root header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .hud-control-grid {
+  grid-area: actions; align-self: start; translate: 0 calc(var(--shared-hud-quick-rise) / var(--ui-zoom,1));
+}
+:root header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .hud-actions > button { border: 1px solid #000; }
+:root header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .hud-info-row.hud-cinders-strip {
+  grid-area: purse; position: static; transform: none; translate: 0 calc(var(--shared-hud-quick-rise) / var(--ui-zoom,1));
+  display: flex; align-self: start; justify-content: center; max-width: none; width: auto; min-height: 0;
+  padding: 0; margin: calc(-5px / var(--ui-zoom,1)) 0 0;
+}
+:root header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .hud-cinders-strip :is(.hud-center,.hud-cinders) {
+  display: flex; flex-direction: row; align-items: center; padding-block: 0; min-height: 0;
+  height: calc(12px / var(--ui-zoom,1)); max-height: calc(12px / var(--ui-zoom,1)); white-space: nowrap;
+}
+:root header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .hud-cinders-strip > .hud-center { position: relative; top: calc(-5px / var(--ui-zoom,1)); }
+:root header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .hud-cinders-strip :is(.ck,.cv,.hud-cinders) {
+  color: white; font-size: calc(12px / var(--ui-zoom,1)); line-height: calc(12px / var(--ui-zoom,1));
+  text-shadow: -1px -1px #000,1px -1px #000,-1px 1px #000,1px 1px #000;
+}
+:root header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .act-route-strip { grid-area: route; }
