@@ -90,6 +90,8 @@ test('the build fails on dangling references', () => {
   assert.throws(() => buildGame({ patch: ({ mechanics }) => { const m = Object.values(mechanics).find(x => (x.service.handlers || []).length); m.service.handlers[0].do = [{ op: 'heal', amount: { f: 'stacks', of: 'self', status: 'bleed', per: 0 } }]; } }), /per must be a positive number/);
   assert.throws(() => buildGame({ patch: ({ mechanics }) => { const m = Object.values(mechanics).find(x => (x.service.handlers || []).length); m.service.handlers.push({ on: 'event.runtime.poiseBorken', do: [] }); } }), /runtime event the runtime never raises/);
   assert.throws(() => buildGame({ patch: ({ content }) => { const c = content.cards.find(x => (x.effects || []).some(e => e.op === 'damage')); c.effects.find(e => e.op === 'damage').amount = { f: 'definitelyUnknown' }; } }), /unknown formula 'definitelyUnknown'/);
+  assert.throws(() => buildGame({ patch: ({ content }) => { const e = content.enemies.find(x => (x.phases || []).some(ph => (ph.do || []).length)); e.phases.find(ph => (ph.do || []).length).do[0].op = 'definitelyUnknown'; } }), /phases\[\d+\]\.do\[0\]: unknown effect op 'definitelyUnknown'/);
+  assert.throws(() => buildGame({ patch: ({ mechanics }) => { const m = Object.values(mechanics).find(x => (x.service.handlers || []).length); m.service.handlers[0].do = [{ op: 'heal', amount: { f: 'percentMaxHp', of: 'self', pct: { f: 'add', args: [50] } } }]; } }), /operand 'pct' has the wrong type/);
   assert.throws(() => buildGame({ game: 'nonexistent-game' }));
 });
 

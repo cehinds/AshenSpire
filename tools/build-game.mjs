@@ -138,7 +138,7 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   const isValue = x => typeof x === 'number' || (typeof x === 'string' && x.startsWith('$')) || (x && typeof x === 'object' && !Array.isArray(x) && 'f' in x);
   const operandOk = (desc, x) => /^array/.test(desc) ? Array.isArray(x)
     : /^(entity ref|status id|metric name)/.test(desc) ? typeof x === 'string'
-    : /^number/.test(desc) ? isValue(x)
+    : /^number/.test(desc) ? (typeof x === 'number' || (typeof x === 'string' && x.startsWith('$')))  // the evaluator reads number fields directly; no nested formulas
     : true;
   const formulaCatalog = readJson('engine/runtime/formulas.json').ops || {};
   const formulaOps = new Set(Object.keys(formulaCatalog));
@@ -150,7 +150,7 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
     if (!v || typeof v !== 'object') return [];
     const own = !('f' in v) ? [] : !formulaOps.has(v.f) ? [`${where}: unknown formula '${v.f}'`]
       : [...formulaRequired[v.f].filter(k => v[k] === undefined).map(k => `${where}: formula '${v.f}' needs '${k}'`),
-         ...(typeof v.per === 'number' && !(v.per > 0) ? [`${where}: formula '${v.f}' per must be a positive number`] : []),
+         ...(v.f === 'stacks' && typeof v.per === 'number' && !(v.per > 0) ? [`${where}: formula 'stacks' per must be a positive number (it divides)`] : []),
          ...Object.entries(formulaCatalog[v.f].fields || {}).filter(([k]) => v[k] !== undefined && !operandOk(String(formulaCatalog[v.f].fields[k]), v[k])).map(([k]) => `${where}: formula '${v.f}' operand '${k}' has the wrong type (${formulaCatalog[v.f].fields[k]})`)];
     return [...own, ...Object.values(v).flatMap(x => formulaErrors(x, where))];
   };
@@ -163,12 +163,12 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
       if (!v || typeof v !== 'object') return;
       if ('op' in v && !catalog[v.op]) fail(`${where}: unknown effect op '${v.op}'`);
       else if ('op' in v) for (const [name, param] of Object.entries(catalog[v.op].params || {})) {
-        if (param.required && v[name] === undefined) fail(`${where}: op ${v.op} needs '${name}'`);
+        if (param.required && v[name] === undefined && !(param.contentRequiredUnless && v[param.contentRequiredUnless] !== undefined)) fail(`${where}: op ${v.op} needs '${name}'`);
         else if (v[name] !== undefined && !paramOk(param.type, v[name])) fail(`${where}: op ${v.op} param '${name}' is not a ${param.type}`);
       }
       for (const [k, x] of Object.entries(v)) walk(x, `${where}.${k}`);
     };
-    for (const key of ['cards', 'enemyCards', 'resourceVariants', 'effectVariants']) if (content[key]) { walk(content[key], `content.${key}`); for (const e of formulaErrors(content[key], `content.${key}`)) fail(e); }
+    for (const key of ['cards', 'enemyCards', 'resourceVariants', 'effectVariants', 'enemies', 'characters']) if (content[key]) { walk(content[key], `content.${key}`); for (const e of formulaErrors(content[key], `content.${key}`)) fail(e); }
   }
   for (const [slug, m] of Object.entries(mechanics)) {
     for (const [q, def] of Object.entries(m.interface.queries || {})) for (const e of formulaErrors(def.value, `${slug} query ${q}`)) fail(e);

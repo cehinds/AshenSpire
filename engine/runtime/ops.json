@@ -638,7 +638,8 @@
         },
         "amount": {
           "type": "value",
-          "required": true
+          "required": true,
+          "contentRequiredUnless": "rule"
         },
         "damageType": {
           "type": "string",
@@ -651,6 +652,11 @@
         "ashenBlightBonusPct": {
           "type": "number",
           "required": false
+        },
+        "rule": {
+          "type": "string",
+          "required": false,
+          "description": "Legacy content form: take the amount from the named heal-rules shape (src/engine/actions.js). The portable runtime does not read it and still requires amount."
         }
       },
       "description": "Restores hp up to max hp.",
