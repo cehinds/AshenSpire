@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { targetHudConfig, targetHudEnabled, targetHudSide, placeTargetHudPanels, targetHudOverlaps, createTargetHudDwell } from '../src/ui/models/TargetHudModel.js';
+import { readFileSync } from 'node:fs';
+import { targetHudMatchup, TARGET_HUD_AURA, targetHudConfig, targetHudEnabled, targetHudSide, placeTargetHudPanels, targetHudOverlaps, createTargetHudDwell } from '../src/ui/models/TargetHudModel.js';
 
-test('target details are limited to alternative desktop and widescreen formation', () => {
-  for (const formFactor of ['desktop', 'widescreen']) assert.equal(targetHudEnabled({ formFactor, classic: false }), true);
-  for (const formFactor of ['mobile', 'tablet']) assert.equal(targetHudEnabled({ formFactor, classic: false }), false);
+test('target details support every alternative formation form factor', () => {
+  const config = JSON.parse(readFileSync(new URL('../content/config/ui/components/combatTargetHud.json', import.meta.url)));
+  for (const formFactor of ['mobile', 'tablet', 'desktop', 'widescreen']) assert.equal(targetHudEnabled({ formFactor, classic: false }, config), true);
   assert.equal(targetHudEnabled({ formFactor: 'desktop', classic: true }), false);
   assert.equal(targetHudEnabled({ formFactor: 'desktop', classic: false, layout: 'cards' }), false);
   assert.deepEqual([0, 1, 2].map(lane => targetHudSide('enemy', lane)), ['left', 'below', 'right']);
@@ -44,4 +45,19 @@ test('six crowded enemy panels remain visible, distinct and above the hand at de
     }
   }
   assert.equal(targetHudConfig().motion.dwellMs, 500);
+});
+
+test('selected-card matchup follows authored stances and never reads hidden amounts or profiles', () => {
+  const rules = { matchups: { attack: ['smash', 'prepared'], counter: ['attack'] } };
+  const action = { maneuver: 'attack' };
+  assert.equal(targetHudMatchup(action, { profile: { maneuver: 'smash' } }, rules), 'advantage');
+  assert.equal(targetHudMatchup(action, { profile: { maneuver: 'counter' } }, rules), 'disadvantage');
+  assert.equal(targetHudMatchup(action, { profile: { maneuver: 'defend' } }, rules), 'neutral');
+  assert.equal(targetHudMatchup(action, { profile: { maneuver: 'casting' } }, rules), 'advantage');
+  assert.equal(targetHudMatchup(action, { hidden: true, get profile() { throw new Error('private intent accessed'); } }, rules), 'neutral');
+  assert.equal(targetHudMatchup(action, { revealed: false, get profile() { throw new Error('private intent accessed'); } }, rules), 'neutral');
+  assert.equal(targetHudMatchup(action, { stance: 'smashing' }, rules), 'advantage');
+  assert.equal(targetHudMatchup(action, { profile: { maneuver: 'smash' } }, null), 'neutral');
+  assert.equal(targetHudMatchup(null, { profile: { maneuver: 'smash' } }, rules), 'neutral');
+  assert.deepEqual(Object.keys(TARGET_HUD_AURA), ['advantage','neutral','disadvantage']);
 });

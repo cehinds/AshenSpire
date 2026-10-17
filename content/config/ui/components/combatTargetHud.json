@@ -13,7 +13,7 @@
     "crowdedPaddingInlineEm": 0.6
   },
   "positioning": {
-    "gapPx": 12,
+    "gapPx": 8,
     "edgeInsetPx": 12,
     "staggerStepPx": 36,
     "enemyLaneSides": [
@@ -33,6 +33,8 @@
   },
   "behavior": {
     "formFactors": [
+      "mobile",
+      "tablet",
       "desktop",
       "widescreen"
     ],

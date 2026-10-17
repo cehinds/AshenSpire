@@ -89,3 +89,14 @@ export function createTargetHudDwell({ onChange, delay = targetHudConfig().motio
     dispose() { disposed = true; if (timer !== null) cancel(timer); timer = null; },
   };
 }
+
+export const TARGET_HUD_AURA = Object.freeze({ advantage: '#72d78c', neutral: '#e4cd59', disadvantage: '#f07870' });
+export function targetHudMatchup(action, intent, rules = {}) {
+  if (!action || !intent || intent.hidden || intent.revealed === false) return 'neutral';
+  const normalize = value => ({ casting: 'prepared', preparing: 'prepared', cast: 'prepared', ranged: 'attack', attacking: 'attack', smashing: 'smash', sweeping: 'sweep', defending: 'defend', countering: 'counter', evading: 'evade', block: 'defend' })[value] || value;
+  const attack = normalize(action.maneuver || 'prepared'), defense = normalize(intent.profile?.maneuver || intent.stance);
+  const table = rules?.matchups || {};
+  if (table[attack]?.includes(defense)) return 'advantage';
+  if (table[defense]?.includes(attack)) return 'disadvantage';
+  return 'neutral';
+}
