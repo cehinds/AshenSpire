@@ -9,7 +9,7 @@
 // bumps it as each impact-frame visual plays: the slash, spark, hit-stop).
 //
 // A REAL CLICK, A REAL CLOCK. A headless Chromium boots the source tree on a
-// fresh profile, takes Quick start (seed pinned), skips the opening and enters
+// fresh profile, creates the default Core character (seed entered), and enters
 // the first fight on the map. Every input is a CDP mouse click at the control's
 // own coordinates. The page records, on its own clock (performance.now), every
 // capturing `pointerup` and every `.float-num` element added to the document;
@@ -27,6 +27,7 @@
 // Exit 0 when both medians are within budget, 1 when it is not or the drive
 // fails, 2 when no browser or no play was measured (never a pass).
 
+import { CORE_ENTRY_SEED } from './core-entry-fixture.mjs';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -55,7 +56,7 @@ const args = process.argv.slice(2);
 const argOf = (flag) => { const i = args.indexOf(flag); return i >= 0 ? args[i + 1] : null; };
 const browserPath = argOf('--browser') || BROWSERS.find((p) => existsSync(p));
 const PLAYS = Number(argOf('--plays') || 5);
-const SEED = Number(argOf('--seed') || 1);
+const SEED = Number(argOf('--seed') || CORE_ENTRY_SEED);
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function connectCdp(wsUrl, pageErrors = []) {
@@ -92,8 +93,10 @@ const median = (xs) => {
 
 async function main() {
   if (!browserPath) { console.error('click-impact-probe: no Chrome/Chromium found — pass --browser PATH or set $CHROME'); process.exit(2); }
-  const { server, port } = await serve({ root: ROOT, port: 8251, open: false });
-  const base = `http://localhost:${port}/`;
+  const externalUrl = argOf('--url');
+  const hosted = externalUrl ? null : await serve({ root: ROOT, port: 8251, open: false });
+  const server = hosted?.server;
+  const base = externalUrl || `http://localhost:${hosted.port}/`;
   const { wsUrl, close: dropBrowser } = await launchBrowser({
     prefix: 'clickimpact-', browser: browserPath,
     args: ['--window-size=1440,860', '--disable-renderer-backgrounding', '--disable-background-timer-throttling', '--disable-backgrounding-occluded-windows'],
@@ -147,30 +150,48 @@ async function main() {
     await until(`document.readyState === 'complete'`, 'the page');
     await evalIn(`(() => { localStorage.clear(); return true; })()`);
     await cdp.send('Page.navigate', { url: base }, S);
-    await until(`!!(document.querySelector('.startup-gate') || document.querySelector('.title-menu [data-title-action="quick-start"]'))`, 'the startup gate or the title');
+    await until(`!!(document.querySelector('.startup-gate') || document.querySelector('.title-menu .slot-new'))`, 'the startup gate or the title');
     if (await evalIn(`!!document.querySelector('.startup-gate')`)) {
       for (const type of ['keyDown', 'keyUp']) await cdp.send('Input.dispatchKeyEvent', { type, key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, nativeVirtualKeyCode: 13 }, S);
     }
-    await until(`!!document.querySelector('.title-menu [data-title-action="quick-start"]:not([disabled])')`, 'Quick start');
-    await wait(300);
-    // Pin the seed exactly as tools/quick-start-inputs.mjs does.
-    await evalIn(`(() => { const real = Math.random; Math.random = () => { Math.random = real; return (${SEED} + 0.5) / 0xffffffff; }; return true; })()`);
-    await click('.title-menu [data-title-action="quick-start"]', 'Quick start');
-    await until(`!!(document.querySelector('.prologue-screen') || document.querySelector('.class-mastery-node') || document.querySelector('.map-node.reachable'))`, 'the opening, class tree or map');
-    if (await evalIn(`!!document.querySelector('.prologue-screen')`)) {
-      await evalIn(`(() => { const b = [...document.querySelectorAll('.prologue-screen .prologue-controls button')].find((c) => !c.hidden && /skip/i.test(c.textContent)); if (b) b.dataset.ciSkip = 'true'; return !!b; })()`);
-      await click('[data-ci-skip="true"]', 'Skip opening');
+    await until(`!!document.querySelector('.title-menu .slot-new:not([disabled])')`, 'New Game');
+    await click('.title-menu .slot-new', 'New Game');
+    await until(`!!document.querySelector('[data-title-action="modal-continue"]:not([disabled])')`, 'the slot picker');
+    await click('[data-title-action="modal-continue"]', 'Create character');
+    await until(`!!document.querySelector('[data-title-action="review-new"]:not([disabled])')`, 'the slot review');
+    await click('[data-title-action="review-new"]', 'Start');
+    await until(`!!document.querySelector('#cz-classes .cz-class')`, 'Core class creation');
+    await click('#cz-classes .cz-class', 'Reaver');
+    await click('#cz-next', 'Review');
+    await until(`document.querySelector('.cz-railed')?.dataset.creationStage === 'review'`, 'Core review');
+    await click('#seed-input', 'seed field');
+    for (const type of ['keyDown','keyUp']) await cdp.send('Input.dispatchKeyEvent', { type, key: 'a', code: 'KeyA', modifiers: 2, windowsVirtualKeyCode: 65 }, S);
+    await cdp.send('Input.insertText', { text: String(SEED) }, S);
+    await click('#cz-start', 'Begin Core');
+    // Walk the live entry rest, authored dungeon dialogue and map doors.
+    // These are real controls, never engine calls or injected run state.
+    for (let step = 0; step < 24; step += 1) {
+      if (await evalIn(`!!window.__combat && !!document.querySelector('.hand .card')`)) break;
+      const next = await evalIn(`(() => {
+        const visible = n => { if (!n || n.hidden || n.disabled || n.getAttribute('aria-disabled') === 'true') return false; const r=n.getBoundingClientRect(); return r.width>0 && r.height>0 && n.contains(document.elementFromPoint(r.left+r.width/2,r.top+r.height/2)); };
+        const pick = selector => [...document.querySelectorAll(selector)].find(visible);
+        const direct = pick('#shrine-leave, #leave-shop, .prologue-screen .prologue-controls button, .confirmation-modal .confirmation-confirm, .map-tray [data-map-action="enter"], .map-enter');
+        const node = direct || pick('.map-node.monster.reachable:not(.current)') || [...document.querySelectorAll('.map-node.reachable:not(.current):not(.visited)')].filter(visible).sort((a,b)=>a.getBoundingClientRect().left-b.getBoundingClientRect().left)[0];
+        const dialogue = node || [...document.querySelectorAll('.dialogue-screen button, .event-screen button, .class-mastery-node')].find(visible);
+        if (!dialogue) return null;
+        document.querySelectorAll('[data-input-probe-next]').forEach(n => delete n.dataset.inputProbeNext);
+        dialogue.dataset.inputProbeNext = 'true';
+        return (dialogue.textContent || dialogue.getAttribute('aria-label') || dialogue.className).trim().slice(0,100);
+      })()`);
+      if (next) await click('[data-input-probe-next="true"]', next);
+      else {
+
+        await wait(500);
+      }
     }
-    if (await evalIn(`!!document.querySelector('.class-mastery-node')`)) await click('.class-mastery-node', 'a tier 1 class-tree node');
-    await until(`!!document.querySelector('.map-node.monster.reachable')`, 'a reachable fight');
-    await click('.map-node.monster.reachable', 'a fight');
-    for (let guard = 0; guard < 12 && !(await evalIn(`!!window.__combat && !!document.querySelector('.hand .card')`)); guard += 1) {
-      const confirm = await evalIn(`(() => { const b = document.querySelector('.confirmation-modal .confirmation-confirm, .map-tray [data-map-action="enter"]:not([disabled]), .map-enter:not([disabled])'); if (!b) return false; b.dataset.ciConfirm = 'true'; return true; })()`);
-      if (confirm) await click('[data-ci-confirm="true"]', 'confirm the fight');
-      else await wait(500);
-    }
-    await until(`!!window.__combat && !!document.querySelector('.hand .card')`, 'the first fight');
+    await until(`!!window.__combat && !!document.querySelector('.hand .card')`, 'the first Core fight');
     await wait(1500);
+    if (await evalIn(`(() => { const n=document.querySelector('.combat .tut-skip'); return n && !n.hidden && n.getBoundingClientRect().width>0; })()`)) await click('.combat .tut-skip', 'Skip the first-combat tutorial');
 
     // The page's own clock: pointer releases and visible damage/protection.
     // Dedicated Poise/Ward payloads can update a bar without a damage float.
@@ -300,7 +321,7 @@ async function main() {
   } finally {
     cdp.close();
     await dropBrowser();
-    server.close();
+    server?.close();
   }
 }
 
