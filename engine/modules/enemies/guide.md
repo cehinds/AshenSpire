@@ -16,7 +16,7 @@ it lands, combat still plays the legacy `moves` from `src/content/enemies/act1-3
 | `include` | Tiers this profile fields (`minion`, `elite`, `boss`). |
 | `attributeGains` | Per-point gains; mirror the player's `stats.json` `levelGains` (CON → +10 HP, +0.5 SP; WIS → +1 MP; INT → +1 hand; STR → AR; DEX → DR). |
 | `tiers.<tier>.pools` | Base HP/SP/MP before attributes. Minion base 2 SP (CON 0 → 2); elite base 3 (CON 1 → 3); boss base 2 (CON 2 → 3). |
-| `tiers.<tier>.attributeBudget` | Allowed attribute total. A new player has 6; minions 3–5, elites 6–8, bosses 9–12. |
+| `tiers.<tier>.attributeBudget` | Allowed attribute total. Every enemy starts at 0 in all five and assigns 4 points (owner 2026-10-17); tier sets CON (minion 0, elite 1, boss 2). |
 | `tiers.<tier>.spRange` | Allowed derived SP; build fails outside it. Minion 1–2, elite 2–3, boss 2–3. |
 | `tiers.<tier>.hand` / `deckSize` | Base hand size and deck size range for the tier. |
 | `deck` | Global deck bounds and reshuffle/draw rules. |

@@ -33,6 +33,7 @@ test('pools derive from attributes: minions CON 0 / 2 SP, elites CON 1 / 3 SP, b
   const byTier = tier => enemies.filter(e => e.tier === tier).map(e => enemyPools(e, settings));
   const con = tier => new Set(enemies.filter(e => e.tier === tier).map(e => e.attributes.constitution));
   assert.ok(enemies.some(e => e.tier === 'minion'));
+  for (const e of enemies) assert.equal(Object.values(e.attributes).reduce((a, b) => a + b, 0), 4, `${e.id} assigns 4 points`);
   assert.deepEqual([...con('minion')], [0], 'minions carry no CON');
   assert.deepEqual([...con('elite')], [1], 'elites CON 1');
   assert.deepEqual([...con('boss')], [2], 'bosses CON 2');

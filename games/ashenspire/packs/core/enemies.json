@@ -145,9 +145,9 @@
     "tier": "elite",
     "attributes": {
       "strength": 1,
-      "dexterity": 1,
+      "dexterity": 0,
       "constitution": 1,
-      "wisdom": 3,
+      "wisdom": 2,
       "intelligence": 0
     },
     "deck": [
@@ -181,11 +181,11 @@
     "name": "The Fell Warden",
     "tier": "boss",
     "attributes": {
-      "strength": 4,
-      "dexterity": 2,
+      "strength": 1,
+      "dexterity": 1,
       "constitution": 2,
-      "wisdom": 1,
-      "intelligence": 1
+      "wisdom": 0,
+      "intelligence": 0
     },
     "deck": [
       "fellWarden.caneStrike",
@@ -350,11 +350,11 @@
     "name": "The Bell Keeper",
     "tier": "boss",
     "attributes": {
-      "strength": 4,
-      "dexterity": 1,
+      "strength": 1,
+      "dexterity": 0,
       "constitution": 2,
-      "wisdom": 2,
-      "intelligence": 1
+      "wisdom": 1,
+      "intelligence": 0
     },
     "deck": [
       "bellKeeper.bronzeToll",
@@ -402,11 +402,11 @@
     "name": "The Thorn Matriarch",
     "tier": "boss",
     "attributes": {
-      "strength": 2,
-      "dexterity": 2,
+      "strength": 1,
+      "dexterity": 0,
       "constitution": 2,
-      "wisdom": 2,
-      "intelligence": 2
+      "wisdom": 1,
+      "intelligence": 0
     },
     "deck": [
       "thornMatriarch.rootCrown",
@@ -622,10 +622,10 @@
     "name": "Duelist of the Court",
     "tier": "elite",
     "attributes": {
-      "strength": 2,
+      "strength": 1,
       "dexterity": 1,
       "constitution": 1,
-      "wisdom": 2,
+      "wisdom": 1,
       "intelligence": 0
     },
     "deck": [
@@ -659,11 +659,11 @@
     "name": "The Stitched King",
     "tier": "boss",
     "attributes": {
-      "strength": 4,
-      "dexterity": 2,
+      "strength": 1,
+      "dexterity": 1,
       "constitution": 2,
-      "wisdom": 1,
-      "intelligence": 1
+      "wisdom": 0,
+      "intelligence": 0
     },
     "deck": [
       "stitchedKing.scepterBlow",
@@ -792,11 +792,11 @@
     "name": "The Glass Regent",
     "tier": "boss",
     "attributes": {
-      "strength": 2,
-      "dexterity": 2,
+      "strength": 1,
+      "dexterity": 0,
       "constitution": 2,
-      "wisdom": 2,
-      "intelligence": 2
+      "wisdom": 1,
+      "intelligence": 0
     },
     "deck": [
       "glassRegent.prismGuard",
@@ -851,11 +851,11 @@
     "name": "The Marrow Organist",
     "tier": "boss",
     "attributes": {
-      "strength": 2,
-      "dexterity": 1,
+      "strength": 0,
+      "dexterity": 0,
       "constitution": 2,
-      "wisdom": 4,
-      "intelligence": 1
+      "wisdom": 2,
+      "intelligence": 0
     },
     "deck": [
       "marrowOrganist.bonePrelude",
@@ -1043,9 +1043,9 @@
     "tier": "elite",
     "attributes": {
       "strength": 1,
-      "dexterity": 1,
+      "dexterity": 0,
       "constitution": 1,
-      "wisdom": 3,
+      "wisdom": 2,
       "intelligence": 0
     },
     "deck": [
@@ -1080,11 +1080,11 @@
     "name": "The Blighted Valkyrie",
     "tier": "boss",
     "attributes": {
-      "strength": 2,
-      "dexterity": 2,
+      "strength": 1,
+      "dexterity": 0,
       "constitution": 2,
-      "wisdom": 2,
-      "intelligence": 2
+      "wisdom": 1,
+      "intelligence": 0
     },
     "deck": [
       "blightedValkyrie.spiralThrust",
@@ -1228,11 +1228,11 @@
     "name": "The Furnace Saint",
     "tier": "boss",
     "attributes": {
-      "strength": 4,
-      "dexterity": 2,
+      "strength": 1,
+      "dexterity": 1,
       "constitution": 2,
-      "wisdom": 1,
-      "intelligence": 1
+      "wisdom": 0,
+      "intelligence": 0
     },
     "deck": [
       "furnaceSaint.openFurnace",
@@ -1280,11 +1280,11 @@
     "name": "The Hollow Astronomer",
     "tier": "boss",
     "attributes": {
-      "strength": 2,
-      "dexterity": 1,
+      "strength": 1,
+      "dexterity": 0,
       "constitution": 2,
-      "wisdom": 3,
-      "intelligence": 2
+      "wisdom": 1,
+      "intelligence": 0
     },
     "deck": [
       "hollowAstronomer.starChart",
@@ -1333,11 +1333,11 @@
     "name": "The Ashheart Dragon",
     "tier": "boss",
     "attributes": {
-      "strength": 3,
-      "dexterity": 1,
+      "strength": 1,
+      "dexterity": 0,
       "constitution": 2,
-      "wisdom": 3,
-      "intelligence": 1
+      "wisdom": 1,
+      "intelligence": 0
     },
     "deck": [
       "ashheartDragon.obsidianClaws",

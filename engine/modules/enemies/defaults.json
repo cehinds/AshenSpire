@@ -28,8 +28,8 @@
   "tiers": {
     "minion": {
       "attributeBudget": [
-        3,
-        5
+        4,
+        4
       ],
       "pools": {
         "hp": 14,
@@ -48,8 +48,8 @@
     },
     "elite": {
       "attributeBudget": [
-        6,
-        8
+        4,
+        4
       ],
       "pools": {
         "hp": 50,
@@ -68,8 +68,8 @@
     },
     "boss": {
       "attributeBudget": [
-        9,
-        12
+        4,
+        4
       ],
       "pools": {
         "hp": 80,

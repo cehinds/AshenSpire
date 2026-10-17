@@ -982,8 +982,8 @@ export const gameProfileCatalog = {
         "tiers": {
           "minion": {
             "attributeBudget": [
-              3,
-              5
+              4,
+              4
             ],
             "pools": {
               "hp": 14,
@@ -1002,8 +1002,8 @@ export const gameProfileCatalog = {
           },
           "elite": {
             "attributeBudget": [
-              6,
-              8
+              4,
+              4
             ],
             "pools": {
               "hp": 50,
@@ -1022,8 +1022,8 @@ export const gameProfileCatalog = {
           },
           "boss": {
             "attributeBudget": [
-              9,
-              12
+              4,
+              4
             ],
             "pools": {
               "hp": 80,
@@ -1531,7 +1531,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/enemies/defaults.json",
           "id": "enemies",
           "version": "1.0.0",
-          "hash": "sha256:991625b0c6abf0038413cc9e9e3e1cbffd3e40784d966be4fd45df930f8479c3"
+          "hash": "sha256:42db3e4d607fa1057a772980166f95eb1a7b65cb078ea748f3fa3e9eafeaaaa9"
         },
         {
           "path": "engine/modules/enemies/settings.schema.json",
@@ -4420,9 +4420,9 @@ export const gameProfileCatalog = {
             "tier": "elite",
             "attributes": {
               "strength": 1,
-              "dexterity": 1,
+              "dexterity": 0,
               "constitution": 1,
-              "wisdom": 3,
+              "wisdom": 2,
               "intelligence": 0
             },
             "deck": [
@@ -4456,11 +4456,11 @@ export const gameProfileCatalog = {
             "name": "The Fell Warden",
             "tier": "boss",
             "attributes": {
-              "strength": 4,
-              "dexterity": 2,
+              "strength": 1,
+              "dexterity": 1,
               "constitution": 2,
-              "wisdom": 1,
-              "intelligence": 1
+              "wisdom": 0,
+              "intelligence": 0
             },
             "deck": [
               "fellWarden.caneStrike",
@@ -4625,11 +4625,11 @@ export const gameProfileCatalog = {
             "name": "The Bell Keeper",
             "tier": "boss",
             "attributes": {
-              "strength": 4,
-              "dexterity": 1,
+              "strength": 1,
+              "dexterity": 0,
               "constitution": 2,
-              "wisdom": 2,
-              "intelligence": 1
+              "wisdom": 1,
+              "intelligence": 0
             },
             "deck": [
               "bellKeeper.bronzeToll",
@@ -4677,11 +4677,11 @@ export const gameProfileCatalog = {
             "name": "The Thorn Matriarch",
             "tier": "boss",
             "attributes": {
-              "strength": 2,
-              "dexterity": 2,
+              "strength": 1,
+              "dexterity": 0,
               "constitution": 2,
-              "wisdom": 2,
-              "intelligence": 2
+              "wisdom": 1,
+              "intelligence": 0
             },
             "deck": [
               "thornMatriarch.rootCrown",
@@ -4897,10 +4897,10 @@ export const gameProfileCatalog = {
             "name": "Duelist of the Court",
             "tier": "elite",
             "attributes": {
-              "strength": 2,
+              "strength": 1,
               "dexterity": 1,
               "constitution": 1,
-              "wisdom": 2,
+              "wisdom": 1,
               "intelligence": 0
             },
             "deck": [
@@ -4934,11 +4934,11 @@ export const gameProfileCatalog = {
             "name": "The Stitched King",
             "tier": "boss",
             "attributes": {
-              "strength": 4,
-              "dexterity": 2,
+              "strength": 1,
+              "dexterity": 1,
               "constitution": 2,
-              "wisdom": 1,
-              "intelligence": 1
+              "wisdom": 0,
+              "intelligence": 0
             },
             "deck": [
               "stitchedKing.scepterBlow",
@@ -5067,11 +5067,11 @@ export const gameProfileCatalog = {
             "name": "The Glass Regent",
             "tier": "boss",
             "attributes": {
-              "strength": 2,
-              "dexterity": 2,
+              "strength": 1,
+              "dexterity": 0,
               "constitution": 2,
-              "wisdom": 2,
-              "intelligence": 2
+              "wisdom": 1,
+              "intelligence": 0
             },
             "deck": [
               "glassRegent.prismGuard",
@@ -5126,11 +5126,11 @@ export const gameProfileCatalog = {
             "name": "The Marrow Organist",
             "tier": "boss",
             "attributes": {
-              "strength": 2,
-              "dexterity": 1,
+              "strength": 0,
+              "dexterity": 0,
               "constitution": 2,
-              "wisdom": 4,
-              "intelligence": 1
+              "wisdom": 2,
+              "intelligence": 0
             },
             "deck": [
               "marrowOrganist.bonePrelude",
@@ -5318,9 +5318,9 @@ export const gameProfileCatalog = {
             "tier": "elite",
             "attributes": {
               "strength": 1,
-              "dexterity": 1,
+              "dexterity": 0,
               "constitution": 1,
-              "wisdom": 3,
+              "wisdom": 2,
               "intelligence": 0
             },
             "deck": [
@@ -5355,11 +5355,11 @@ export const gameProfileCatalog = {
             "name": "The Blighted Valkyrie",
             "tier": "boss",
             "attributes": {
-              "strength": 2,
-              "dexterity": 2,
+              "strength": 1,
+              "dexterity": 0,
               "constitution": 2,
-              "wisdom": 2,
-              "intelligence": 2
+              "wisdom": 1,
+              "intelligence": 0
             },
             "deck": [
               "blightedValkyrie.spiralThrust",
@@ -5503,11 +5503,11 @@ export const gameProfileCatalog = {
             "name": "The Furnace Saint",
             "tier": "boss",
             "attributes": {
-              "strength": 4,
-              "dexterity": 2,
+              "strength": 1,
+              "dexterity": 1,
               "constitution": 2,
-              "wisdom": 1,
-              "intelligence": 1
+              "wisdom": 0,
+              "intelligence": 0
             },
             "deck": [
               "furnaceSaint.openFurnace",
@@ -5555,11 +5555,11 @@ export const gameProfileCatalog = {
             "name": "The Hollow Astronomer",
             "tier": "boss",
             "attributes": {
-              "strength": 2,
-              "dexterity": 1,
+              "strength": 1,
+              "dexterity": 0,
               "constitution": 2,
-              "wisdom": 3,
-              "intelligence": 2
+              "wisdom": 1,
+              "intelligence": 0
             },
             "deck": [
               "hollowAstronomer.starChart",
@@ -5608,11 +5608,11 @@ export const gameProfileCatalog = {
             "name": "The Ashheart Dragon",
             "tier": "boss",
             "attributes": {
-              "strength": 3,
-              "dexterity": 1,
+              "strength": 1,
+              "dexterity": 0,
               "constitution": 2,
-              "wisdom": 3,
-              "intelligence": 1
+              "wisdom": 1,
+              "intelligence": 0
             },
             "deck": [
               "ashheartDragon.obsidianClaws",
@@ -8851,7 +8851,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/enemies.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:ebfda751ae2ae0484e41e67a1b3ae4473c53e706dd8e2d58c3291b670940c15a"
+          "hash": "sha256:636ed193ff6c6788b9434ec5e6edc3842bb3d16b8504f9c7bc224ee70251f9b2"
         },
         {
           "path": "games/ashenspire/packs/core/enemyCards.json",
