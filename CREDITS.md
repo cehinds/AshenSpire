@@ -702,3 +702,7 @@ No new generation, third-party artwork or Creative Commons license is introduced
 Separate transparent PNG layers, exact geometry and reproducible 420×468 composites
 are staged for intake into cehinds/AshenSpire-art and preserved on branch
 `worker/updateCharacterCreation/ornate-art-preview`. The game release pin remains unchanged.
+
+## Layered map design and prop wireframes
+
+The original technical illustrations, editable SVG wireframes, and 24 transparent prop-placeholder PNGs in [the map art handoff](docs/design/improve-map-battlefield-art/HANDOFF.md) were authored with Codex under human direction. They are documentation and integration prototypes, not registered production paintings. Their source is the adjacent generator scripts and prop definitions. No third-party artwork or licence is claimed.

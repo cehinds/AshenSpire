@@ -6,6 +6,12 @@ Build a sharper, addressable hex world whose locations assemble matching battlef
 
 This package is a design proposal, five illustrated design sheets, an editable region/tile JSON example, a reusable content catalog, an editor schema and an editing guide. It does not change gameplay, ship new art, or implement the renderer. The diagrams are original technical illustrations, not screenshots of a working feature. The agent team contributed art direction and two architecture reviews (two GPT-6.1 Sol agents and one available GPT-6 Luna agent; no Luna 6.1 model was available).
 
+## Shared integration handoff
+
+- [HANDOFF.md](HANDOFF.md) defines branch ownership, stable component IDs, PNG anchors, scene registration, selection and persistence.
+- [24 individual prop examples](props-examples/README.md) provide transparent 512 px PNGs and editable SVGs for integration prototypes. These are technical placeholders, not production paintings.
+- [Component contract JSON](art-component-contract.example.json) connects placeholder IDs to pending painted components. Production art remains on `feature/ImproveMapBattleFieldArt` and follows the separate art-repository intake path.
+
 ## Map props and discovery extension
 
 - [PNG prop suggestions and discovery rules](MAP-PROPS-AND-DISCOVERY.md): 24 icon ideas, sparse placement, section-entry discoveries, and map rewards.

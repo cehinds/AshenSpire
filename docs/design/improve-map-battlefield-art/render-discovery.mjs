@@ -1,6 +1,7 @@
 import {createRequire} from 'node:module';
-import {writeFileSync} from 'node:fs';
+import {mkdirSync, writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
+import {propDefinitions} from './props-examples/prop-definitions.mjs';
 const sharp=createRequire(import.meta.url)('sharp');
 const out=fileURLToPath(new URL('.',import.meta.url));
 const ink='#29433f',green='#3f8068',muted='#677b71',gold='#ad7f36',paper='#f4f2e8';
@@ -52,4 +53,48 @@ b+=txt(36,713,'Map layers · bottom to top',23);
 const layers=[['01','Terrain'],['02','Water + roads'],['03','PNG props'],['04','Discovery / fog'],['05','Selection + UI']];
 layers.forEach(([n,name],i)=>{let x=36+i*244;b+=box(x,736,232,60,i===2?'#b4d2b2':'#e0e8d9')+txt(x+14,774,n+'  '+name,17);});
 b+=txt(36,830,'Grid and tile labels remain OFF until separately enabled. Diagram colors explain reveal states.',14,muted);
-for(const [name,data] of [['04-map-prop-ideas',svg(a)],['05-map-reveal-ideas',svg(b,860)]]){writeFileSync(out+name+'.svg',data);await sharp(Buffer.from(data)).png().toFile(out+name+'.png');}
+if (!process.argv.includes('--props-only')) {
+  for(const [name,data] of [['04-map-prop-ideas',svg(a)],['05-map-reveal-ideas',svg(b,860)]]){writeFileSync(out+name+'.svg',data);await sharp(Buffer.from(data)).png().toFile(out+name+'.png');}
+}
+
+// Export the same original vector diagrams individually. No paper, labels,
+// checkerboards, ground guides or other opaque background enters these assets.
+const propsOut = out + 'props-examples/';
+mkdirSync(propsOut, {recursive: true});
+const manifest = {
+  formatVersion: 1,
+  status: 'wireframe-placeholder',
+  description: 'Original technical diagram examples for design handoff. Unregistered; not painted production game assets.',
+  source: '../render-discovery.mjs',
+  metadataSource: 'prop-definitions.mjs',
+  canvas: {width: 512, height: 512, background: 'transparent'},
+  coordinates: {
+    units: 'normalized-canvas',
+    origin: 'top-left',
+    xDirection: 'right',
+    yDirection: 'down',
+    anchorMeaning: 'Schematic ground/water contact used for placement and depth sorting; not an enforced collision boundary.',
+    footprintMeaning: 'Illustrative ground-plane placement rectangle; not alpha bounds, a click target, tile occupancy or a validated collision shape.',
+  },
+  assets: [],
+};
+for (const definition of propDefinitions) {
+  const {id, sourceIconId} = definition;
+  const item = items.find(([iconId]) => iconId === sourceIconId);
+  if (!icons[sourceIconId] || !item) throw new Error(`Missing source icon: ${sourceIconId}`);
+  const name = item[1];
+  const data = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title description"><title id="title">${name} wireframe placeholder</title><desc id="description">Original editable technical diagram. Transparent background; not production game art.</desc><g id="prop-${id}" transform="translate(256 286.4) scale(4.8)">${icons[sourceIconId]}</g></svg>\n`;
+  writeFileSync(propsOut + id + '.svg', data);
+  await sharp(Buffer.from(data)).png().toFile(propsOut + id + '.png');
+  manifest.assets.push({
+    ...definition,
+    name,
+    status: 'wireframe-placeholder',
+    placeholder: true,
+    pngAssetId: null,
+    png: id + '.png',
+    svg: id + '.svg',
+    anchor: {x: 0.5, y: 0.85},
+  });
+}
+writeFileSync(propsOut + 'manifest.json', JSON.stringify(manifest, null, 2) + '\n');

@@ -1,0 +1,242 @@
+{
+  "formatVersion": 1,
+  "status": "documentation-only",
+  "prototypeManifest": "props-examples/manifest.json",
+  "productionCoverage": "pending",
+  "coordinateConvention": {
+    "origin": "top-left",
+    "anchors": "normalized-source-canvas",
+    "untrimmedExports": true
+  },
+  "map": {
+    "display": {
+      "showGridLines": false,
+      "showTileLabels": false
+    },
+    "tileExports": [
+      {
+        "width": 512,
+        "height": 592,
+        "purpose": "close-view-2x"
+      },
+      {
+        "width": 256,
+        "height": 296,
+        "purpose": "lower-detail"
+      }
+    ],
+    "drawOrder": [
+      "terrain",
+      "water-and-routes",
+      "props",
+      "fog-and-discovery",
+      "selection-and-ui"
+    ]
+  },
+  "registrations": {
+    "forest-outdoor-landscape-v1": {
+      "status": "proposed-pending-painted-proof",
+      "canvas": {
+        "width": 2048,
+        "height": 1152
+      },
+      "visibleCrop": {
+        "x": 384,
+        "y": 216,
+        "width": 1280,
+        "height": 720
+      },
+      "horizonY": 460,
+      "floorContactGuideY": 860,
+      "cameraFamily": "scene-landscape-front",
+      "lightingFamily": "forest-day-clear",
+      "interior": false,
+      "drawOrder": [
+        "sky",
+        "rear-props",
+        "ground",
+        "actor-shadows",
+        "actors",
+        "ui"
+      ]
+    }
+  },
+  "components": [
+    {
+      "componentId": "map.bridge.stone.day.v1",
+      "prototypeId": "bridge",
+      "status": "pending-painted-asset",
+      "productionAssetId": null,
+      "exports": [],
+      "surface": "map",
+      "role": "props",
+      "sourceCanvas": {
+        "width": 512,
+        "height": 512
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85,
+        "meaning": "bottom-center-ground-contact"
+      },
+      "landmarkFamily": "stone-bridge",
+      "orientation": "E-W",
+      "tags": [
+        "bridge",
+        "stone",
+        "day"
+      ],
+      "requiresAllFacts": [
+        "river-crossing",
+        "valid-opposite-banks",
+        "registered-E-W-approaches"
+      ],
+      "placeholder": {
+        "kind": "neutral-silhouette",
+        "label": "Stone bridge — painting pending"
+      }
+    },
+    {
+      "componentId": "map.camp.sheltered.day.v1",
+      "prototypeId": "rest-camp",
+      "status": "pending-painted-asset",
+      "productionAssetId": null,
+      "exports": [],
+      "surface": "map",
+      "role": "props",
+      "sourceCanvas": {
+        "width": 512,
+        "height": 512
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85,
+        "meaning": "bottom-center-ground-contact"
+      },
+      "landmarkFamily": "forest-camp",
+      "tags": [
+        "forest",
+        "clearing",
+        "camp",
+        "day"
+      ],
+      "requiresAllFacts": [
+        "reachable",
+        "usable-ground",
+        "saved-rest-present",
+        "rest-discovered"
+      ],
+      "placeholder": {
+        "kind": "neutral-silhouette",
+        "label": "Sheltered camp — painting pending"
+      }
+    },
+    {
+      "componentId": "scene.forest-clearing.ground.day.v1",
+      "status": "pending-painted-asset",
+      "productionAssetId": null,
+      "exports": [],
+      "surface": "scene",
+      "role": "ground",
+      "registrationId": "forest-outdoor-landscape-v1",
+      "tags": [
+        "forest",
+        "clearing",
+        "earth",
+        "day",
+        "clear"
+      ],
+      "alphaRequirement": "transparent-above-floor-silhouette",
+      "placeholder": {
+        "kind": "floor-guide",
+        "label": "Ground — painting pending"
+      }
+    },
+    {
+      "componentId": "scene.forest-camp.props.day.v1",
+      "status": "pending-painted-asset",
+      "productionAssetId": null,
+      "exports": [],
+      "surface": "scene",
+      "role": "rear-props",
+      "registrationId": "forest-outdoor-landscape-v1",
+      "landmarkFamily": "forest-camp",
+      "tags": [
+        "forest",
+        "clearing",
+        "camp",
+        "day",
+        "clear"
+      ],
+      "alphaRequirement": "transparent-around-props",
+      "placeholder": {
+        "kind": "neutral-silhouette",
+        "label": "Camp props — painting pending"
+      }
+    },
+    {
+      "componentId": "scene.forest.sky.day.v1",
+      "status": "pending-painted-asset",
+      "productionAssetId": null,
+      "exports": [],
+      "surface": "scene",
+      "role": "sky",
+      "registrationId": "forest-outdoor-landscape-v1",
+      "tags": [
+        "forest",
+        "day",
+        "clear"
+      ],
+      "placeholder": {
+        "kind": "neutral-backdrop",
+        "label": "Sky — painting pending"
+      }
+    }
+  ],
+  "sceneExamples": {
+    "combat": {
+      "registrationId": "forest-outdoor-landscape-v1",
+      "groundComponentId": "scene.forest-clearing.ground.day.v1",
+      "propsComponentId": "scene.forest-camp.props.day.v1",
+      "skyComponentId": "scene.forest.sky.day.v1"
+    },
+    "rest": {
+      "registrationId": "forest-outdoor-landscape-v1",
+      "groundComponentId": "scene.forest-clearing.ground.day.v1",
+      "propsComponentId": "scene.forest-camp.props.day.v1",
+      "skyComponentId": "scene.forest.sky.day.v1",
+      "requiresAllFacts": [
+        "saved-rest-present",
+        "rest-discovered"
+      ]
+    }
+  },
+  "selection": {
+    "domain": "art-v1",
+    "keyParts": [
+      "existingRunSeed",
+      "stableLocationId",
+      "context",
+      "occurrenceCounter"
+    ],
+    "candidateOrder": "componentId-ascending",
+    "hardCompatibility": [
+      "surface",
+      "role",
+      "registrationId",
+      "cameraFamily",
+      "lightingFamily",
+      "interior"
+    ],
+    "tagScope": "per-role",
+    "persist": [
+      "artSeed",
+      "componentIds",
+      "productionAssetIds",
+      "resolvedWeatherId",
+      "resolvedTimeId"
+    ],
+    "resolutionChangeRerolls": false,
+    "missingRequiredBinding": "fail-production-coverage"
+  }
+}
