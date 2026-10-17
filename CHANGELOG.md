@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-17
+
+- **Core previews keep their offline and map checks after promotion** ([#2024](https://github.com/cehinds/AshenSpire/pull/2024), `0.7.1.1541`). Preview checks follow the current startup and Settings navigation, measure map dragging at the displayed zoom, and retain permanent coverage of Core's interface text after merging.
+
 ## 2026-10-16
 
 - **Core becomes the default, with consistent combat and shared HUD presentation** ([#2023](https://github.com/cehinds/AshenSpire/pull/2023), `0.7.1.1541`). New runs use the configurable Core game; existing saves retain their original rules. Map, combat, rest, and other run screens share the same responsive header. Combat uses cell-aligned sprites and health bars, head-relative intent and mini HUDs, consistent body height across held stances, native inspection gestures, readable card fans, and explicit scene layering.
