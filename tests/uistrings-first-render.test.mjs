@@ -190,7 +190,8 @@ test('both boards repaint through the shared paths, not their own literals', asy
   const { readFileSync } = await import('node:fs');
   const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
   const solo = read('src/ui/screens/combat.js');
-  const renderControls = solo.slice(solo.indexOf('function renderControls()'), solo.indexOf('function renderControls()') + 2500);
+  const start = solo.indexOf('function renderControls()');
+  const renderControls = solo.slice(start, solo.indexOf('\n  function ', start + 1));
   assert.match(renderControls, /paintEndTurnKey\(\$\('\.end-turn'\), etKey\)/, 'solo renderControls repaints End Turn its own way');
   assert.match(renderControls, /paintCombatActionCounts\(actionRow, \{ energy: combat\.player\.energy, energyMax: combat\.player\.energyMax,/, 'solo renderControls paints Actions its own way');
   assert.match(solo, /<div class="tt-title">\$\{esc\(t\('combat\.endTurn'\)\)\}<\/div>/, 'solo End Turn tooltip title');
