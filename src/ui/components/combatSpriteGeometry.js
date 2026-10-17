@@ -1,6 +1,7 @@
 // Read idle artwork once, excluding transparent padding. Cache by asset URL;
 // animation/stance changes must never resize the formation during a turn.
 import { stageFor } from '../services/PoseAnimator.js';
+import { projectBodyBounds } from '../models/CombatBodyModel.js';
 const boundsCache = new Map();
 // Painted enemy art shares a floor at 364/384 of its canvas height. The light
 // tier resizes that canvas to 120px; pixel 364 is not a floor in that image.
@@ -156,4 +157,15 @@ export function currentSpriteArtBounds(sprite, refresh = () => {}) {
   if (!boxes.length) return sprite.getBoundingClientRect();
   return { top: Math.min(...boxes.map(box => box.top)), bottom: Math.max(...boxes.map(box => box.bottom)),
     left: Math.min(...boxes.map(box => box.left)), right: Math.max(...boxes.map(box => box.right)) };
+}
+
+
+// Semantic body geometry follows the displayed frame and its physical motion.
+// Callers can distinguish assets awaiting landmarks from authored head/feet.
+export function currentSpriteBodyBounds(sprite, refresh = () => {}) {
+  const current = stageFor(sprite)?.currentArt;
+  if (current?.body) return projectBodyBounds(current.body, current.canvas.getBoundingClientRect(), current.canvas.width, current.canvas.height);
+  const bounds = currentSpriteArtBounds(sprite, refresh);
+  return { ...bounds, headY: bounds.top, feetY: bounds.bottom,
+    bodyHeight: bounds.bottom - bounds.top, source: 'unregistered' };
 }
