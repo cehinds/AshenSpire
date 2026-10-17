@@ -63,6 +63,9 @@ test('allowlist: editable sources only; traversal, generated files, .git and oth
   assert.equal(allowedKind('engine/modules/animation/defaults.json'), 'json');
   assert.equal(allowedKind('engine/modules/animation/module.json'), null, 'a module manifest is not editable here');
   assert.equal(allowedKind('engine/kernel/kernel.json'), null, 'the kernel is not editable here');
+  assert.equal(allowedKind('content/hud-layout/desktop.json'), 'json', 'HUD layout JSON is editable');
+  assert.equal(allowedKind('content/hud-layout/sub/desktop.json'), null, 'only one level under content/hud-layout');
+  assert.equal(allowedKind('content/hud-layout/desktop.css'), null);
   assert.equal(allowedKind('styles/main.css'), 'css');
   assert.equal(allowedKind('src/engine/rules.js'), 'js');
 });
@@ -383,4 +386,16 @@ test('engine module manifests, schemas and guides are readable and listable but 
   }
   const listed = await files.list('engine/modules', 'json');
   assert.deepEqual(listed.files, ['engine/modules/demo/defaults.json', 'engine/modules/demo/module.json', 'engine/modules/demo/settings.schema.json']);
+});
+
+test('a HUD layout JSON saves through the service, and bad JSON is refused', async (t) => {
+  const root = await project(t);
+  await fs.mkdir(path.join(root, 'content/hud-layout'), { recursive: true });
+  await fs.writeFile(path.join(root, 'content/hud-layout/desktop.json'), '{"a":1}\n');
+  const files = createFileService({ root, stateDir: path.join(root, '.wb-state') });
+  const read = await files.read('content/hud-layout/desktop.json');
+  const saved = await files.save([{ path: 'content/hud-layout/desktop.json', text: '{"a":2}\n', baseHash: read.hash }]);
+  assert.equal(saved.files.length, 1);
+  assert.equal(await fs.readFile(path.join(root, 'content/hud-layout/desktop.json'), 'utf8'), '{"a":2}\n');
+  await assert.rejects(files.save([{ path: 'content/hud-layout/desktop.json', text: '{oops', baseHash: saved.files[0].hash }]), (e) => e.status === 422);
 });
