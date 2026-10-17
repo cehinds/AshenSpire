@@ -46,6 +46,14 @@ try {
     await page.waitForFunction(() => document.querySelector('.mo-frame')?.src.includes('/modules/motion/render.html'));
     return (await page.locator('.mo-frame').elementHandle()).contentFrame();
   };
+  const painted = async frame => frame.waitForFunction(() => {
+    const canvas = document.querySelector('#stage .alternative-card-stage canvas');
+    if (!canvas) return false;
+    const pixels = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
+    let visible = 0;
+    for (let i = 3; i < pixels.length; i += 4) if (pixels[i] > 32 && ++visible > 1000) return true;
+    return false;
+  });
   const open = async (classId, action, available = true) => {
     const id = `combat:${classId}:${action}`;
     await page.evaluate(({ classId, id }) => { location.hash = new URLSearchParams({ mod: 'motion', class: classId, anim: id }).toString(); }, { classId, id });
@@ -55,12 +63,14 @@ try {
       const stage = document.getElementById('stage');
       return stage?.dataset.combatId === id && (!available || stage.dataset.combatReady === 'true');
     }, { id, available });
+    if (available) await painted(frame);
     return frame;
   };
   const scrub = async (time, expected) => {
     await page.locator('.mo-scrub').evaluate((element, time) => { element.value = String(time); element.dispatchEvent(new Event('input', { bubbles: true })); }, time);
     const frame = await renderer();
     if (expected) await frame.waitForFunction(pose => document.getElementById('stage').dataset.pose === pose, expected);
+    await painted(frame);
     return frame.locator('#stage').getAttribute('data-pose');
   };
   await open('reaver', 'smash');
