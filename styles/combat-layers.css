@@ -56,12 +56,13 @@
    must not split the physical tap area into strips: the transparent square
    belongs to the frame and uses the fitted height. On enemies it occupies the
    left side of the full footer, leaving the name's center for inspection.
-   Explicit overhead reading controls retain priority above this square. */
+   Explicit overhead reading controls retain priority above this square.
+   Until geometry is measured, no auxiliary square owns an input region. */
 :root .combat[data-layout='formation'] .combatant:is(.enemy-target-hitbox,.player-target-hitbox):not(.dead)::before {
   content: ''; display: block; position: absolute;
   left: var(--enemy-core-x, var(--enemy-hit-x)); top: var(--enemy-core-y, var(--enemy-hit-y));
-  width: min(var(--enemy-hit-width, calc(44px / var(--ui-zoom, 1))), var(--enemy-hit-height, calc(44px / var(--ui-zoom, 1))));
-  height: var(--enemy-hit-height, calc(44px / var(--ui-zoom, 1)));
+  width: min(var(--enemy-hit-width, 0px), var(--enemy-hit-height, 0px));
+  height: var(--enemy-hit-height, 0px);
   transform: translate(-50%, -50%); pointer-events: auto;
   background: none; border: 0; box-shadow: none;
   z-index: calc(var(--combat-layer-selection) + 2) !important;
@@ -164,14 +165,14 @@
 
 /* The hand owns a slim tool row; no side panel steals a phone's card slots. */
 :root .combat[data-layout='formation'] .combat-tools {
-  display: grid; grid-template-columns: 1fr 1fr; gap: calc(8px / var(--ui-zoom,1));
+  display: grid; grid-template-columns: auto auto minmax(0,1fr); gap: calc(8px / var(--ui-zoom,1));
   padding: 0; border: 0;
   /* HUD layout tokens: the row's backing (transparent = off). */
   background: var(--hud-tools-bg); box-shadow: var(--hud-panel-shadow, none);
   border-radius: var(--hud-panel-radius, 0px);
 }
-:root .combat[data-layout='formation'] .combat-tools > [data-combat-tool='log'] { justify-self: start; text-shadow: var(--hud-text-shadow, none); }
-:root .combat[data-layout='formation'] .combat-tools > [data-combat-tool='reaction'] { justify-self: end; }
+:root .combat[data-layout='formation'] .combat-tools > [data-combat-tool='log'] { grid-column: 1; grid-row: 1; justify-self: start; text-shadow: var(--hud-text-shadow, none); }
+:root .combat[data-layout='formation'] .combat-tools > [data-combat-tool='reaction'] { grid-column: 3; grid-row: 1; justify-self: end; }
 :root .combat[data-layout='formation'] .combat-tools > button {
   min-height: calc(30px / var(--ui-zoom,1)); height: calc(30px / var(--ui-zoom,1));
   padding: 0; border: 0; background: none; box-shadow: none;
