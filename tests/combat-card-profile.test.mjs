@@ -33,7 +33,14 @@ function verifyProfile(profile, name) {
 
 test('every current card, progression family, and equipment kit profile carries canonical combat identity', () => {
   assert.equal(new Set(cards.map(card => card.id)).size, cards.length);
-  for (const card of [...cards, ...contentBundle.cards]) verifyProfile(combatProfileFor(card), card.id);
+  const materialized = createRegistries(contentBundle);
+  for (const card of [...cards, ...contentBundle.cards]) {
+    const definition = materialized.cards.get(card.id);
+    if (definition.burden) {
+      assert.equal(definition.type, 'status', `${card.id}: burdens are status carriers`);
+      assert.ok(definition.keywords.includes('unplayable'), `${card.id}: a non-action burden cannot be played`);
+    } else verifyProfile(combatProfileFor(definition), card.id);
+  }
   for (const profile of basicCardProfiles) {
     verifyProfile(combatProfileFor({ id: profile.id, tags: objectTagIds('basicCardProfile', profile.id) }), profile.id);
   }
