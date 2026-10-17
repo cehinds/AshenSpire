@@ -1,7 +1,7 @@
 [
   {
     "id": "enemy.relic.ashenBlightCore",
-    "name": "Ashen Blight Core",
+    "name": "Ashen_Blight_Core",
     "modifiers": [
       "self.strength=+2",
       "self.constitution=+2",
@@ -12,7 +12,7 @@
   },
   {
     "id": "enemy.relic.emberBand",
-    "name": "Ember Band",
+    "name": "Ember_Band",
     "modifiers": [
       "self.constitution=+1"
     ],
@@ -20,7 +20,7 @@
   },
   {
     "id": "enemy.relic.graveSeal",
-    "name": "Grave Seal",
+    "name": "Grave_Seal",
     "modifiers": [
       "self.strength=+2"
     ],
@@ -28,7 +28,7 @@
   },
   {
     "id": "enemy.relic.titanHeart",
-    "name": "Titan Heart",
+    "name": "Titan_Heart",
     "modifiers": [
       "self.constitution=+2",
       "self.strength=+1"
@@ -37,7 +37,7 @@
   },
   {
     "id": "enemy.relic.ashenCore",
-    "name": "Ashen Core",
+    "name": "Ashen_Core",
     "modifiers": [
       "self.constitution=+2",
       "self.strength=+2",
@@ -47,7 +47,7 @@
   },
   {
     "id": "enemy.relic.abyssalCrown",
-    "name": "Abyssal Crown",
+    "name": "Abyssal_Crown",
     "modifiers": [
       "self.constitution=+2",
       "self.wisdom=+2",

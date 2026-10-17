@@ -155,6 +155,11 @@ function verifyContent(content) {
   for (const row of content.classes) if (!cards.has(row.specialCardId)) fail(`$/content/classes/${row.id}/specialCardId`, 'unresolved card reference');
   for (const row of content.starterDeck.shared) if (!cards.has(row.card) || !Number.isSafeInteger(row.copies) || row.copies < 1) fail('$/content/starterDeck/shared', 'invalid starter card reference/count');
 }
+// Names (owner 2026-10-17): no spaces. "_" stands for a space and is turned back into one for
+// display; "-" is a real hyphen and is kept. "Ember-Starved_Pilgrim" shows as "Ember-Starved Pilgrim".
+export const NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_.'-]*$/;
+export const displayName = name => String(name ?? '').replace(/_/g, ' ');
+const verifyNames = (rows, base) => { for (const row of rows || []) if (row.name !== undefined && !NAME_PATTERN.test(row.name)) fail(`${base}/${row.id}/name`, 'names use _ for spaces and - for hyphens; no spaces or symbols'); };
 // Gear module (owner 2026-10-17): every item has a ratings pool (AR/DR/Poise) and a bonus pool
 // (attributes; effect tags cost points, penalty tags refund), sized by rarity; `pools: merged`
 // joins them. Points an item sets are kept; the rest are filled by weights: the item's own,
@@ -215,6 +220,7 @@ export function resolveGearItem(item, settings) {
 }
 function verifyGearContent(content, settings) {
   if (!settings || !content.gear) return;
+  verifyNames(content.gear, '$/content/gear');
   const ids = new Set();
   for (const item of content.gear) {
     const at = `$/content/gear/${item.id}`;
@@ -313,6 +319,7 @@ function verifyEnemyContent(content, settings, gearSettings = null) {
   const WORD = /^[A-Za-z0-9][A-Za-z0-9 _.-]*$/;
   const words = (at, row, keys) => { for (const key of keys) if (row[key] !== undefined && !WORD.test(String(row[key]))) fail(`${at}/${key}`, 'expected letters, words or numbers, not symbols'); };
   for (const row of content.enemies) words(`$/content/enemies/${row.id}`, row, ['art', 'tint', 'size', 'artFaces']);
+  verifyNames(content.enemies, '$/content/enemies'); verifyNames(content.enemyCards, '$/content/enemyCards'); verifyNames(content.enemyRelics, '$/content/enemyRelics');
   for (const card of content.enemyCards) {
     const at = `$/content/enemyCards/${card.id}`;
     for (const key of ['cost', 'staminaCost', 'manaCost']) if (!(key === 'cost' && card[key] === 'X') && (!Number.isSafeInteger(card[key]) || card[key] < 0)) fail(`${at}/${key}`, 'expected nonnegative integer price');

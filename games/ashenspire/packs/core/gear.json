@@ -1,7 +1,7 @@
 [
   {
     "id": "straightSword",
-    "name": "Straight Sword",
+    "name": "Straight_Sword",
     "slot": "rightHand",
     "kind": "weapon",
     "rarity": "common",
@@ -163,7 +163,7 @@
   },
   {
     "id": "kiteShield",
-    "name": "Kite Shield",
+    "name": "Kite_Shield",
     "slot": "leftHand",
     "kind": "shield",
     "rarity": "common",
@@ -178,7 +178,7 @@
   },
   {
     "id": "towerShield",
-    "name": "Tower Shield",
+    "name": "Tower_Shield",
     "slot": "leftHand",
     "kind": "shield",
     "rarity": "rare",
@@ -195,7 +195,7 @@
   },
   {
     "id": "roundShield",
-    "name": "Round Shield",
+    "name": "Round_Shield",
     "slot": "leftHand",
     "kind": "shield",
     "rarity": "common",
@@ -210,7 +210,7 @@
   },
   {
     "id": "spikedShield",
-    "name": "Spiked Shield",
+    "name": "Spiked_Shield",
     "slot": "leftHand",
     "kind": "shield",
     "rarity": "uncommon",
@@ -259,7 +259,7 @@
   },
   {
     "id": "parryDagger",
-    "name": "Parrying Dagger",
+    "name": "Parrying_Dagger",
     "slot": "leftHand",
     "kind": "shield",
     "rarity": "uncommon",
@@ -275,7 +275,7 @@
   },
   {
     "id": "ashStaff",
-    "name": "Ash Staff",
+    "name": "Ash_Staff",
     "slot": "rightHand",
     "kind": "staff",
     "rarity": "common",
@@ -292,7 +292,7 @@
   },
   {
     "id": "starstoneStaff",
-    "name": "Starstone Staff",
+    "name": "Starstone_Staff",
     "slot": "rightHand",
     "kind": "staff",
     "rarity": "uncommon",
@@ -310,7 +310,7 @@
   },
   {
     "id": "boneSceptre",
-    "name": "Bone Sceptre",
+    "name": "Bone_Sceptre",
     "slot": "rightHand",
     "kind": "staff",
     "rarity": "uncommon",
@@ -328,7 +328,7 @@
   },
   {
     "id": "emberlightSceptre",
-    "name": "Emberlight Sceptre",
+    "name": "Emberlight_Sceptre",
     "slot": "rightHand",
     "kind": "staff",
     "rarity": "rare",
@@ -345,7 +345,7 @@
   },
   {
     "id": "goldboughBranch",
-    "name": "Goldbough Branch",
+    "name": "Goldbough_Branch",
     "slot": "rightHand",
     "kind": "staff",
     "rarity": "rare",
@@ -363,7 +363,7 @@
   },
   {
     "id": "blightRod",
-    "name": "Blight Rod",
+    "name": "Blight_Rod",
     "slot": "rightHand",
     "kind": "staff",
     "rarity": "uncommon",
@@ -381,7 +381,7 @@
   },
   {
     "id": "gorefireBrand",
-    "name": "Gorefire Brand",
+    "name": "Gorefire_Brand",
     "slot": "rightHand",
     "kind": "staff",
     "rarity": "rare",
@@ -398,7 +398,7 @@
   },
   {
     "id": "wyrmhornStaff",
-    "name": "Wyrmhorn Staff",
+    "name": "Wyrmhorn_Staff",
     "slot": "rightHand",
     "kind": "staff",
     "rarity": "rare",
@@ -417,7 +417,7 @@
   },
   {
     "id": "frostSpear",
-    "name": "Frost Spear",
+    "name": "Frost_Spear",
     "slot": "rightHand",
     "kind": "weapon",
     "rarity": "uncommon",
@@ -433,7 +433,7 @@
   },
   {
     "id": "cinderAxe",
-    "name": "Cinder Axe",
+    "name": "Cinder_Axe",
     "slot": "rightHand",
     "kind": "weapon",
     "rarity": "uncommon",
@@ -450,7 +450,7 @@
   },
   {
     "id": "duskChime",
-    "name": "Dusk Chime",
+    "name": "Dusk_Chime",
     "slot": "rightHand",
     "kind": "staff",
     "rarity": "rare",
@@ -468,7 +468,7 @@
   },
   {
     "id": "armor.wayfarerPlate",
-    "name": "Wayfarer Plate",
+    "name": "Wayfarer_Plate",
     "slot": "armor",
     "kind": "armor",
     "rarity": "common",
@@ -492,7 +492,7 @@
   },
   {
     "id": "armor.ashenVigil",
-    "name": "Ashen Vigil",
+    "name": "Ashen_Vigil",
     "slot": "armor",
     "kind": "armor",
     "rarity": "uncommon",
@@ -512,7 +512,7 @@
   },
   {
     "id": "armor.gildedOathsworn",
-    "name": "Gilded Oathsworn",
+    "name": "Gilded_Oathsworn",
     "slot": "armor",
     "kind": "armor",
     "rarity": "uncommon",
@@ -533,7 +533,7 @@
   },
   {
     "id": "armor.wardenMail",
-    "name": "Warden Mail",
+    "name": "Warden_Mail",
     "slot": "armor",
     "kind": "armor",
     "rarity": "uncommon",
@@ -577,7 +577,7 @@
   },
   {
     "id": "armor.eclipseHabit",
-    "name": "Eclipse Habit",
+    "name": "Eclipse_Habit",
     "slot": "armor",
     "kind": "armor",
     "rarity": "uncommon",
@@ -597,7 +597,7 @@
   },
   {
     "id": "armor.starlitSilks",
-    "name": "Starlit Silks",
+    "name": "Starlit_Silks",
     "slot": "armor",
     "kind": "armor",
     "rarity": "uncommon",
@@ -617,7 +617,7 @@
   },
   {
     "id": "armor.astralVestment",
-    "name": "Astral Vestment",
+    "name": "Astral_Vestment",
     "slot": "armor",
     "kind": "armor",
     "rarity": "uncommon",
@@ -638,7 +638,7 @@
   },
   {
     "id": "armor.riteVestments",
-    "name": "Rite Vestments",
+    "name": "Rite_Vestments",
     "slot": "armor",
     "kind": "armor",
     "rarity": "common",
@@ -661,7 +661,7 @@
   },
   {
     "id": "armor.ossuaryWeave",
-    "name": "Ossuary Weave",
+    "name": "Ossuary_Weave",
     "slot": "armor",
     "kind": "armor",
     "rarity": "uncommon",
@@ -680,7 +680,7 @@
   },
   {
     "id": "armor.emberlightHabit",
-    "name": "Emberlight Habit",
+    "name": "Emberlight_Habit",
     "slot": "armor",
     "kind": "armor",
     "rarity": "uncommon",
@@ -701,7 +701,7 @@
   },
   {
     "id": "armor.pilgrimWrap",
-    "name": "Pilgrim Wrap",
+    "name": "Pilgrim_Wrap",
     "slot": "armor",
     "kind": "armor",
     "rarity": "uncommon",
@@ -722,7 +722,7 @@
   },
   {
     "id": "armor.gutterLeathers",
-    "name": "Gutter Leathers",
+    "name": "Gutter_Leathers",
     "slot": "armor",
     "kind": "armor",
     "rarity": "common",
@@ -744,7 +744,7 @@
   },
   {
     "id": "armor.nightveilCoat",
-    "name": "Nightveil Coat",
+    "name": "Nightveil_Coat",
     "slot": "armor",
     "kind": "armor",
     "rarity": "uncommon",
@@ -764,7 +764,7 @@
   },
   {
     "id": "armor.duelistJerkin",
-    "name": "Duelist Jerkin",
+    "name": "Duelist_Jerkin",
     "slot": "armor",
     "kind": "armor",
     "rarity": "uncommon",
@@ -784,7 +784,7 @@
   },
   {
     "id": "armor.shadowMantle",
-    "name": "Shadow Mantle",
+    "name": "Shadow_Mantle",
     "slot": "armor",
     "kind": "armor",
     "rarity": "uncommon",
@@ -804,7 +804,7 @@
   },
   {
     "id": "armor.bastionHarness",
-    "name": "Bastion Harness",
+    "name": "Bastion_Harness",
     "slot": "armor",
     "kind": "armor",
     "rarity": "uncommon",
@@ -825,7 +825,7 @@
   },
   {
     "id": "armor.rimeweaveRobes",
-    "name": "Rimeweave Robes",
+    "name": "Rimeweave_Robes",
     "slot": "armor",
     "kind": "armor",
     "rarity": "uncommon",
@@ -845,7 +845,7 @@
   },
   {
     "id": "armor.waywatcherCoat",
-    "name": "Waywatcher Coat",
+    "name": "Waywatcher_Coat",
     "slot": "armor",
     "kind": "armor",
     "rarity": "uncommon",

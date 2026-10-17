@@ -138,3 +138,14 @@ test('display values are letters, words or numbers, never glyphs', () => {
   for (const e of enemies) for (const key of ['art', 'tint', 'size']) if (e[key] !== undefined) assert.match(String(e[key]), WORD, `${e.id}.${key}`);
   assert.throws(resolveWith(p => { p.enemyCards[0].icon = '\u2694'; }), /letters, words or numbers/);
 });
+
+test('names use _ for spaces and - for hyphens; displayName restores spaces', async () => {
+  const { NAME_PATTERN, displayName } = await import('../engine/kernel/gameConfig.js');
+  for (const row of [...enemies, ...enemyCards, ...profile.content.enemyRelics, ...profile.content.gear]) {
+    assert.match(row.name, NAME_PATTERN, row.id);
+    assert.ok(!row.name.includes(' '), row.id);
+  }
+  assert.equal(displayName('Ember-Starved_Pilgrim'), 'Ember-Starved Pilgrim');
+  assert.ok(enemies.some(e => e.name === 'Ember-Starved_Pilgrim'));
+  assert.throws(resolveWith(p => { p.enemies[0].name = 'Wandering Soldier'; }), /names use _ for spaces/);
+});

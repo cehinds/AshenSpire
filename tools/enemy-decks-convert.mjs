@@ -49,6 +49,8 @@ const PLAN = {
 };
 const ATTRS = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
 const words = s => String(s).replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/^./, c => c.toUpperCase());
+// Names: '_' for spaces (stripped for display), '-' kept as a real hyphen.
+const nameOf = s => String(s).trim().replace(/\s+/g, '_');
 const isSelfHeal = e => e.op === 'heal' && (e.target === 'self' || e.target == null);
 // Owner-relative targets: what the legacy enemy aimed at "player" is its opponent.
 const relative = target => (target === 'player' ? 'enemy' : target === 'allPlayers' ? 'allEnemies' : target || 'self');
@@ -90,7 +92,7 @@ function cardFor(enemy, tier, moveId, move) {
   if (move.delay) text.push(`Charges for ${move.delay.turns} turn${move.delay.turns === 1 ? '' : 's'}.`);
   return {
     id: `${enemy.id}.${moveId}`,
-    name: words(moveId),
+    name: nameOf(words(moveId)),
     class: 'enemy',
     rarity: 'enemy',
     cost: cost.sp,
@@ -157,12 +159,12 @@ function pickGear(attributes, plan, enemyId) {
 }
 // Enemy relics: attribute points only, 0-5 points across at most 3 attributes.
 const RELICS = [
-  { id: 'enemy.relic.ashenBlightCore', name: 'Ashen Blight Core', modifiers: ['self.strength=+2', 'self.constitution=+2', 'self.wisdom=-1', 'self.sp=-2'] },
-  { id: 'enemy.relic.emberBand', name: 'Ember Band', modifiers: ['self.constitution=+1'] },
-  { id: 'enemy.relic.graveSeal', name: 'Grave Seal', modifiers: ['self.strength=+2'] },
-  { id: 'enemy.relic.titanHeart', name: 'Titan Heart', modifiers: ['self.constitution=+2', 'self.strength=+1'] },
-  { id: 'enemy.relic.ashenCore', name: 'Ashen Core', modifiers: ['self.constitution=+2', 'self.strength=+2', 'self.wisdom=+1'] },
-  { id: 'enemy.relic.abyssalCrown', name: 'Abyssal Crown', modifiers: ['self.constitution=+2', 'self.wisdom=+2', 'self.intelligence=+1'] },
+  { id: 'enemy.relic.ashenBlightCore', name: 'Ashen_Blight_Core', modifiers: ['self.strength=+2', 'self.constitution=+2', 'self.wisdom=-1', 'self.sp=-2'] },
+  { id: 'enemy.relic.emberBand', name: 'Ember_Band', modifiers: ['self.constitution=+1'] },
+  { id: 'enemy.relic.graveSeal', name: 'Grave_Seal', modifiers: ['self.strength=+2'] },
+  { id: 'enemy.relic.titanHeart', name: 'Titan_Heart', modifiers: ['self.constitution=+2', 'self.strength=+1'] },
+  { id: 'enemy.relic.ashenCore', name: 'Ashen_Core', modifiers: ['self.constitution=+2', 'self.strength=+2', 'self.wisdom=+1'] },
+  { id: 'enemy.relic.abyssalCrown', name: 'Abyssal_Crown', modifiers: ['self.constitution=+2', 'self.wisdom=+2', 'self.intelligence=+1'] },
 ];
 const relicText = r => r.modifiers.map(m => { const [k, v] = m.split('='); return `${k.split('.')[1].slice(0, 3).toUpperCase()} ${v}`; }).join(', ');
 // Owner 2026-10-17: most minions and elites, and a couple of blighted bosses, carry the Ashen Blight Core.
@@ -196,7 +198,7 @@ for (const enemy of roster) {
     return p;
   }) : undefined;
   const row = {
-    id: enemy.id, name: enemy.name, tier, attributes, deck,
+    id: enemy.id, name: nameOf(enemy.name), tier, attributes, deck,
     ...(moves.some(([, m]) => m.locked) ? { unlockCards: moves.filter(([, m]) => m.locked).map(([id]) => ids.get(id)) } : {}),
     ...(enemy.firstMove ? { firstCard: ids.get(enemy.firstMove) } : {}),
     gear: pickGear(attributes, plan, enemy.id), relics: pickRelics(attributes, plan, enemy.id, tier),

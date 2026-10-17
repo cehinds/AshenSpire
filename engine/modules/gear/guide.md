@@ -51,3 +51,7 @@ costs above the pool.
 Data, settings, the fill algorithm (`resolveGearItem` in `engine/kernel/gameConfig.js`) and the
 validator. Player equipment at runtime still reads `content/source/weapons.csv` and
 `outfits.csv`; switching the runtime to resolved gear is a follow-up.
+
+## Names
+
+No spaces in `name`: `_` stands for a space and is turned back into one for display (`displayName` in `engine/kernel/gameConfig.js`); `-` is a real hyphen and is kept. `Ember-Starved_Pilgrim` shows as "Ember-Starved Pilgrim". The build refuses names with spaces or symbols.

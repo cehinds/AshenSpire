@@ -1,7 +1,7 @@
 {
   "$comment": "One row of packs/<pack>/enemies.json. Required: id, name, tier, attributes, deck. Stats derive from attributes + level + gear + relics (statRules).",
   "id": "ashenSentry",
-  "name": "Ashen Sentry",
+  "name": "Ashen_Sentry",
   "tier": "minion",
   "attributes": {
     "strength": 1,

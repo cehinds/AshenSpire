@@ -5867,7 +5867,7 @@ export const gameProfileCatalog = {
         "enemies": [
           {
             "id": "wanderingSoldier",
-            "name": "Wandering Soldier",
+            "name": "Wandering_Soldier",
             "tier": "minion",
             "attributes": {
               "strength": 1,
@@ -5913,7 +5913,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "blightHound",
-            "name": "Blight Hound",
+            "name": "Blight_Hound",
             "tier": "minion",
             "attributes": {
               "strength": 1,
@@ -5949,7 +5949,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "huskBrute",
-            "name": "Husk Brute",
+            "name": "Husk_Brute",
             "tier": "minion",
             "attributes": {
               "strength": 1,
@@ -5982,7 +5982,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "graveWisp",
-            "name": "Grave Wisp",
+            "name": "Grave_Wisp",
             "tier": "minion",
             "attributes": {
               "strength": 0,
@@ -6014,7 +6014,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "wyrmAspirant",
-            "name": "Wyrm Aspirant",
+            "name": "Wyrm_Aspirant",
             "tier": "elite",
             "attributes": {
               "strength": 0,
@@ -6050,7 +6050,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "fellWarden",
-            "name": "The Fell Warden",
+            "name": "The_Fell_Warden",
             "tier": "boss",
             "attributes": {
               "strength": 4,
@@ -6123,7 +6123,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "lanternMoth",
-            "name": "Lantern Moth",
+            "name": "Lantern_Moth",
             "tier": "minion",
             "attributes": {
               "strength": 0,
@@ -6155,7 +6155,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "briarHermit",
-            "name": "Briar Hermit",
+            "name": "Briar_Hermit",
             "tier": "minion",
             "attributes": {
               "strength": 1,
@@ -6190,7 +6190,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "chainScavenger",
-            "name": "Chain Scavenger",
+            "name": "Chain_Scavenger",
             "tier": "minion",
             "attributes": {
               "strength": 1,
@@ -6222,7 +6222,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "bellKeeper",
-            "name": "The Bell Keeper",
+            "name": "The_Bell_Keeper",
             "tier": "boss",
             "attributes": {
               "strength": 4,
@@ -6276,7 +6276,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "thornMatriarch",
-            "name": "The Thorn Matriarch",
+            "name": "The_Thorn_Matriarch",
             "tier": "boss",
             "attributes": {
               "strength": 2,
@@ -6336,7 +6336,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "gildedKnight",
-            "name": "Gilded Knight",
+            "name": "Gilded_Knight",
             "tier": "minion",
             "attributes": {
               "strength": 1,
@@ -6368,7 +6368,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "courtSurgeon",
-            "name": "Court Surgeon",
+            "name": "Court_Surgeon",
             "tier": "minion",
             "attributes": {
               "strength": 0,
@@ -6400,7 +6400,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "stitchedHound",
-            "name": "Stitched Hound",
+            "name": "Stitched_Hound",
             "tier": "minion",
             "attributes": {
               "strength": 1,
@@ -6435,7 +6435,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "courtMarionette",
-            "name": "Court Marionette",
+            "name": "Court_Marionette",
             "tier": "minion",
             "attributes": {
               "strength": 1,
@@ -6469,7 +6469,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "livingArmor",
-            "name": "Living Armor",
+            "name": "Living_Armor",
             "tier": "minion",
             "attributes": {
               "strength": 1,
@@ -6503,7 +6503,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "courtDuelist",
-            "name": "Duelist of the Court",
+            "name": "Duelist_of_the_Court",
             "tier": "elite",
             "attributes": {
               "strength": 2,
@@ -6541,7 +6541,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "stitchedKing",
-            "name": "The Stitched King",
+            "name": "The_Stitched_King",
             "tier": "boss",
             "attributes": {
               "strength": 4,
@@ -6608,7 +6608,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "mirrorScribe",
-            "name": "Mirror Scribe",
+            "name": "Mirror_Scribe",
             "tier": "minion",
             "attributes": {
               "strength": 0,
@@ -6640,7 +6640,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "stitchCrab",
-            "name": "Stitch Crab",
+            "name": "Stitch_Crab",
             "tier": "minion",
             "attributes": {
               "strength": 1,
@@ -6675,7 +6675,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "glassRegent",
-            "name": "The Glass Regent",
+            "name": "The_Glass_Regent",
             "tier": "boss",
             "attributes": {
               "strength": 2,
@@ -6736,7 +6736,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "marrowOrganist",
-            "name": "The Marrow Organist",
+            "name": "The_Marrow_Organist",
             "tier": "boss",
             "attributes": {
               "strength": 2,
@@ -6791,7 +6791,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "ashRevenant",
-            "name": "Ash Revenant",
+            "name": "Ash_Revenant",
             "tier": "minion",
             "attributes": {
               "strength": 1,
@@ -6825,7 +6825,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "emberStarvedPilgrim",
-            "name": "Ember-Starved Pilgrim",
+            "name": "Ember-Starved_Pilgrim",
             "tier": "minion",
             "attributes": {
               "strength": 1,
@@ -6859,7 +6859,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "valkyrieShade",
-            "name": "Valkyrie Shade",
+            "name": "Valkyrie_Shade",
             "tier": "minion",
             "attributes": {
               "strength": 1,
@@ -6893,7 +6893,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "charredColossus",
-            "name": "Charred Colossus",
+            "name": "Charred_Colossus",
             "tier": "minion",
             "attributes": {
               "strength": 1,
@@ -6930,7 +6930,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "wyrmLord",
-            "name": "Wyrm Lord",
+            "name": "Wyrm_Lord",
             "tier": "elite",
             "attributes": {
               "strength": 2,
@@ -6968,7 +6968,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "blightedValkyrie",
-            "name": "The Blighted Valkyrie",
+            "name": "The_Blighted_Valkyrie",
             "tier": "boss",
             "attributes": {
               "strength": 2,
@@ -7050,7 +7050,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "cinderMantis",
-            "name": "Cinder Mantis",
+            "name": "Cinder_Mantis",
             "tier": "minion",
             "attributes": {
               "strength": 1,
@@ -7082,7 +7082,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "eclipseCantor",
-            "name": "Eclipse Cantor",
+            "name": "Eclipse_Cantor",
             "tier": "minion",
             "attributes": {
               "strength": 0,
@@ -7114,7 +7114,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "furnaceSaint",
-            "name": "The Furnace Saint",
+            "name": "The_Furnace_Saint",
             "tier": "boss",
             "attributes": {
               "strength": 4,
@@ -7169,7 +7169,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "hollowAstronomer",
-            "name": "The Hollow Astronomer",
+            "name": "The_Hollow_Astronomer",
             "tier": "boss",
             "attributes": {
               "strength": 2,
@@ -7223,7 +7223,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "ashheartDragon",
-            "name": "The Ashheart Dragon",
+            "name": "The_Ashheart_Dragon",
             "tier": "boss",
             "attributes": {
               "strength": 4,
@@ -7684,7 +7684,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "wyrmAspirant.halberdSweep",
-            "name": "Halberd Sweep",
+            "name": "Halberd_Sweep",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -7719,7 +7719,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "wyrmAspirant.tailSlam",
-            "name": "Tail Slam",
+            "name": "Tail_Slam",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -7759,7 +7759,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "wyrmAspirant.goldenGuard",
-            "name": "Golden Guard",
+            "name": "Golden_Guard",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 3,
@@ -7799,7 +7799,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "fellWarden.caneStrike",
-            "name": "Cane Strike",
+            "name": "Cane_Strike",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -7834,7 +7834,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "fellWarden.hammerToss",
-            "name": "Hammer Toss",
+            "name": "Hammer_Toss",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -7870,7 +7870,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "fellWarden.heldBlade",
-            "name": "Held Blade",
+            "name": "Held_Blade",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -7911,7 +7911,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "fellWarden.twinDaggers",
-            "name": "Twin Daggers",
+            "name": "Twin_Daggers",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 3,
@@ -7946,7 +7946,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "lanternMoth.lanternDust",
-            "name": "Lantern Dust",
+            "name": "Lantern_Dust",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 0,
@@ -7980,7 +7980,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "lanternMoth.wingSparks",
-            "name": "Wing Sparks",
+            "name": "Wing_Sparks",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -8015,7 +8015,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "briarHermit.rootShelter",
-            "name": "Root Shelter",
+            "name": "Root_Shelter",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -8049,7 +8049,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "briarHermit.briarCast",
-            "name": "Briar Cast",
+            "name": "Briar_Cast",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -8089,7 +8089,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "briarHermit.sapMend",
-            "name": "Sap Mend",
+            "name": "Sap_Mend",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -8126,7 +8126,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "chainScavenger.hookCast",
-            "name": "Hook Cast",
+            "name": "Hook_Cast",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -8160,7 +8160,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "chainScavenger.chainSnare",
-            "name": "Chain Snare",
+            "name": "Chain_Snare",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 2,
@@ -8202,7 +8202,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "chainScavenger.draggingBlow",
-            "name": "Dragging Blow",
+            "name": "Dragging_Blow",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 2,
@@ -8243,7 +8243,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "bellKeeper.bronzeToll",
-            "name": "Bronze Toll",
+            "name": "Bronze_Toll",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -8284,7 +8284,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "bellKeeper.clapperSwing",
-            "name": "Clapper Swing",
+            "name": "Clapper_Swing",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -8319,7 +8319,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "bellKeeper.muffledPrayer",
-            "name": "Muffled Prayer",
+            "name": "Muffled_Prayer",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -8353,7 +8353,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "bellKeeper.crackedPeal",
-            "name": "Cracked Peal",
+            "name": "Cracked_Peal",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -8389,7 +8389,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "thornMatriarch.rootCrown",
-            "name": "Root Crown",
+            "name": "Root_Crown",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -8423,7 +8423,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "thornMatriarch.thornNeedles",
-            "name": "Thorn Needles",
+            "name": "Thorn_Needles",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -8459,7 +8459,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "thornMatriarch.entwiningRoots",
-            "name": "Entwining Roots",
+            "name": "Entwining_Roots",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 2,
@@ -8616,7 +8616,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "gildedKnight.gildedGuard",
-            "name": "Gilded Guard",
+            "name": "Gilded_Guard",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -9025,7 +9025,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "livingArmor.rimeCrush",
-            "name": "Rime Crush",
+            "name": "Rime_Crush",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -9066,7 +9066,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "courtDuelist.enGarde",
-            "name": "En Garde",
+            "name": "En_Garde",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 0,
@@ -9212,7 +9212,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "courtDuelist.bindingRiposte",
-            "name": "Binding Riposte",
+            "name": "Binding_Riposte",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -9246,7 +9246,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "stitchedKing.scepterBlow",
-            "name": "Scepter Blow",
+            "name": "Scepter_Blow",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -9281,7 +9281,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "stitchedKing.graspingHands",
-            "name": "Grasping Hands",
+            "name": "Grasping_Hands",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -9317,7 +9317,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "stitchedKing.courtlyDecree",
-            "name": "Courtly Decree",
+            "name": "Courtly_Decree",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -9357,7 +9357,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "stitchedKing.thousandHands",
-            "name": "Thousand Hands",
+            "name": "Thousand_Hands",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -9392,7 +9392,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "mirrorScribe.silverScript",
-            "name": "Silver Script",
+            "name": "Silver_Script",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 0,
@@ -9426,7 +9426,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "mirrorScribe.shardVolley",
-            "name": "Shard Volley",
+            "name": "Shard_Volley",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -9461,7 +9461,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "mirrorScribe.polishedWard",
-            "name": "Polished Ward",
+            "name": "Polished_Ward",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 2,
@@ -9502,7 +9502,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "stitchCrab.shellFold",
-            "name": "Shell Fold",
+            "name": "Shell_Fold",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -9536,7 +9536,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "stitchCrab.seamShears",
-            "name": "Seam Shears",
+            "name": "Seam_Shears",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -9577,7 +9577,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "stitchCrab.scuttleRush",
-            "name": "Scuttle Rush",
+            "name": "Scuttle_Rush",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -9612,7 +9612,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "glassRegent.prismGuard",
-            "name": "Prism Guard",
+            "name": "Prism_Guard",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -9646,7 +9646,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "glassRegent.crystalRapier",
-            "name": "Crystal Rapier",
+            "name": "Crystal_Rapier",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -9681,7 +9681,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "glassRegent.splinterRain",
-            "name": "Splinter Rain",
+            "name": "Splinter_Rain",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -9717,7 +9717,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "glassRegent.shatteredCourt",
-            "name": "Shattered Court",
+            "name": "Shattered_Court",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 2,
@@ -9759,7 +9759,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "marrowOrganist.bonePrelude",
-            "name": "Bone Prelude",
+            "name": "Bone_Prelude",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 0,
@@ -9793,7 +9793,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "marrowOrganist.ivoryKeys",
-            "name": "Ivory Keys",
+            "name": "Ivory_Keys",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -9829,7 +9829,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "marrowOrganist.funeralChord",
-            "name": "Funeral Chord",
+            "name": "Funeral_Chord",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 2,
@@ -9870,7 +9870,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "marrowOrganist.quietRefrain",
-            "name": "Quiet Refrain",
+            "name": "Quiet_Refrain",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 3,
@@ -9904,7 +9904,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "ashRevenant.cinderSlash",
-            "name": "Cinder Slash",
+            "name": "Cinder_Slash",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -9981,7 +9981,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "emberStarvedPilgrim.desperateClaw",
-            "name": "Desperate Claw",
+            "name": "Desperate_Claw",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -10061,7 +10061,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "valkyrieShade.spiralLance",
-            "name": "Spiral Lance",
+            "name": "Spiral_Lance",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -10096,7 +10096,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "valkyrieShade.bloodFeather",
-            "name": "Blood Feather",
+            "name": "Blood_Feather",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -10171,7 +10171,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "charredColossus.ashCloud",
-            "name": "Ash Cloud",
+            "name": "Ash_Cloud",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 0,
@@ -10273,7 +10273,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "wyrmLord.halberdReign",
-            "name": "Halberd Reign",
+            "name": "Halberd_Reign",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -10308,7 +10308,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "wyrmLord.tailSweep",
-            "name": "Tail Sweep",
+            "name": "Tail_Sweep",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -10348,7 +10348,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "wyrmLord.goldenBulwark",
-            "name": "Golden Bulwark",
+            "name": "Golden_Bulwark",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 3,
@@ -10388,7 +10388,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "blightedValkyrie.spiralThrust",
-            "name": "Spiral Thrust",
+            "name": "Spiral_Thrust",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -10471,7 +10471,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "blightedValkyrie.rotWings",
-            "name": "Rot Wings",
+            "name": "Rot_Wings",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -10511,7 +10511,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "blightedValkyrie.scarletDance",
-            "name": "Scarlet Dance",
+            "name": "Scarlet_Dance",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -10546,7 +10546,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "cinderMantis.scythePair",
-            "name": "Scythe Pair",
+            "name": "Scythe_Pair",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -10581,7 +10581,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "cinderMantis.emberPounce",
-            "name": "Ember Pounce",
+            "name": "Ember_Pounce",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 2,
@@ -10622,7 +10622,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "cinderMantis.foldedBlades",
-            "name": "Folded Blades",
+            "name": "Folded_Blades",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 2,
@@ -10663,7 +10663,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "eclipseCantor.darkHymn",
-            "name": "Dark Hymn",
+            "name": "Dark_Hymn",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 0,
@@ -10697,7 +10697,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "eclipseCantor.lunarRay",
-            "name": "Lunar Ray",
+            "name": "Lunar_Ray",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -10731,7 +10731,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "eclipseCantor.fadingEcho",
-            "name": "Fading Echo",
+            "name": "Fading_Echo",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -10772,7 +10772,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "furnaceSaint.openFurnace",
-            "name": "Open Furnace",
+            "name": "Open_Furnace",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 2,
@@ -10813,7 +10813,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "furnaceSaint.censerSweep",
-            "name": "Censer Sweep",
+            "name": "Censer_Sweep",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -10848,7 +10848,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "furnaceSaint.coolingAsh",
-            "name": "Cooling Ash",
+            "name": "Cooling_Ash",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -10882,7 +10882,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "hollowAstronomer.starChart",
-            "name": "Star Chart",
+            "name": "Star_Chart",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 0,
@@ -10916,7 +10916,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "hollowAstronomer.orbitalShards",
-            "name": "Orbital Shards",
+            "name": "Orbital_Shards",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -10952,7 +10952,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "hollowAstronomer.totalEclipse",
-            "name": "Total Eclipse",
+            "name": "Total_Eclipse",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 2,
@@ -10999,7 +10999,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "hollowAstronomer.fallingHeavens",
-            "name": "Falling Heavens",
+            "name": "Falling_Heavens",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -11035,7 +11035,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "ashheartDragon.obsidianClaws",
-            "name": "Obsidian Claws",
+            "name": "Obsidian_Claws",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -11071,7 +11071,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "ashheartDragon.tailBastion",
-            "name": "Tail Bastion",
+            "name": "Tail_Bastion",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 1,
@@ -11105,7 +11105,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "ashheartDragon.heartRumble",
-            "name": "Heart Rumble",
+            "name": "Heart_Rumble",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 0,
@@ -11139,7 +11139,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "ashheartDragon.ashBreath",
-            "name": "Ash Breath",
+            "name": "Ash_Breath",
             "class": "enemy",
             "rarity": "enemy",
             "cost": 2,
@@ -11183,7 +11183,7 @@ export const gameProfileCatalog = {
         "enemyRelics": [
           {
             "id": "enemy.relic.ashenBlightCore",
-            "name": "Ashen Blight Core",
+            "name": "Ashen_Blight_Core",
             "modifiers": [
               "self.strength=+2",
               "self.constitution=+2",
@@ -11194,7 +11194,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "enemy.relic.emberBand",
-            "name": "Ember Band",
+            "name": "Ember_Band",
             "modifiers": [
               "self.constitution=+1"
             ],
@@ -11202,7 +11202,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "enemy.relic.graveSeal",
-            "name": "Grave Seal",
+            "name": "Grave_Seal",
             "modifiers": [
               "self.strength=+2"
             ],
@@ -11210,7 +11210,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "enemy.relic.titanHeart",
-            "name": "Titan Heart",
+            "name": "Titan_Heart",
             "modifiers": [
               "self.constitution=+2",
               "self.strength=+1"
@@ -11219,7 +11219,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "enemy.relic.ashenCore",
-            "name": "Ashen Core",
+            "name": "Ashen_Core",
             "modifiers": [
               "self.constitution=+2",
               "self.strength=+2",
@@ -11229,7 +11229,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "enemy.relic.abyssalCrown",
-            "name": "Abyssal Crown",
+            "name": "Abyssal_Crown",
             "modifiers": [
               "self.constitution=+2",
               "self.wisdom=+2",
@@ -11241,7 +11241,7 @@ export const gameProfileCatalog = {
         "gear": [
           {
             "id": "straightSword",
-            "name": "Straight Sword",
+            "name": "Straight_Sword",
             "slot": "rightHand",
             "kind": "weapon",
             "rarity": "common",
@@ -11403,7 +11403,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "kiteShield",
-            "name": "Kite Shield",
+            "name": "Kite_Shield",
             "slot": "leftHand",
             "kind": "shield",
             "rarity": "common",
@@ -11418,7 +11418,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "towerShield",
-            "name": "Tower Shield",
+            "name": "Tower_Shield",
             "slot": "leftHand",
             "kind": "shield",
             "rarity": "rare",
@@ -11435,7 +11435,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "roundShield",
-            "name": "Round Shield",
+            "name": "Round_Shield",
             "slot": "leftHand",
             "kind": "shield",
             "rarity": "common",
@@ -11450,7 +11450,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "spikedShield",
-            "name": "Spiked Shield",
+            "name": "Spiked_Shield",
             "slot": "leftHand",
             "kind": "shield",
             "rarity": "uncommon",
@@ -11499,7 +11499,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "parryDagger",
-            "name": "Parrying Dagger",
+            "name": "Parrying_Dagger",
             "slot": "leftHand",
             "kind": "shield",
             "rarity": "uncommon",
@@ -11515,7 +11515,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "ashStaff",
-            "name": "Ash Staff",
+            "name": "Ash_Staff",
             "slot": "rightHand",
             "kind": "staff",
             "rarity": "common",
@@ -11532,7 +11532,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "starstoneStaff",
-            "name": "Starstone Staff",
+            "name": "Starstone_Staff",
             "slot": "rightHand",
             "kind": "staff",
             "rarity": "uncommon",
@@ -11550,7 +11550,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "boneSceptre",
-            "name": "Bone Sceptre",
+            "name": "Bone_Sceptre",
             "slot": "rightHand",
             "kind": "staff",
             "rarity": "uncommon",
@@ -11568,7 +11568,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "emberlightSceptre",
-            "name": "Emberlight Sceptre",
+            "name": "Emberlight_Sceptre",
             "slot": "rightHand",
             "kind": "staff",
             "rarity": "rare",
@@ -11585,7 +11585,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "goldboughBranch",
-            "name": "Goldbough Branch",
+            "name": "Goldbough_Branch",
             "slot": "rightHand",
             "kind": "staff",
             "rarity": "rare",
@@ -11603,7 +11603,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "blightRod",
-            "name": "Blight Rod",
+            "name": "Blight_Rod",
             "slot": "rightHand",
             "kind": "staff",
             "rarity": "uncommon",
@@ -11621,7 +11621,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "gorefireBrand",
-            "name": "Gorefire Brand",
+            "name": "Gorefire_Brand",
             "slot": "rightHand",
             "kind": "staff",
             "rarity": "rare",
@@ -11638,7 +11638,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "wyrmhornStaff",
-            "name": "Wyrmhorn Staff",
+            "name": "Wyrmhorn_Staff",
             "slot": "rightHand",
             "kind": "staff",
             "rarity": "rare",
@@ -11657,7 +11657,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "frostSpear",
-            "name": "Frost Spear",
+            "name": "Frost_Spear",
             "slot": "rightHand",
             "kind": "weapon",
             "rarity": "uncommon",
@@ -11673,7 +11673,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "cinderAxe",
-            "name": "Cinder Axe",
+            "name": "Cinder_Axe",
             "slot": "rightHand",
             "kind": "weapon",
             "rarity": "uncommon",
@@ -11690,7 +11690,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "duskChime",
-            "name": "Dusk Chime",
+            "name": "Dusk_Chime",
             "slot": "rightHand",
             "kind": "staff",
             "rarity": "rare",
@@ -11708,7 +11708,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "armor.wayfarerPlate",
-            "name": "Wayfarer Plate",
+            "name": "Wayfarer_Plate",
             "slot": "armor",
             "kind": "armor",
             "rarity": "common",
@@ -11732,7 +11732,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "armor.ashenVigil",
-            "name": "Ashen Vigil",
+            "name": "Ashen_Vigil",
             "slot": "armor",
             "kind": "armor",
             "rarity": "uncommon",
@@ -11752,7 +11752,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "armor.gildedOathsworn",
-            "name": "Gilded Oathsworn",
+            "name": "Gilded_Oathsworn",
             "slot": "armor",
             "kind": "armor",
             "rarity": "uncommon",
@@ -11773,7 +11773,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "armor.wardenMail",
-            "name": "Warden Mail",
+            "name": "Warden_Mail",
             "slot": "armor",
             "kind": "armor",
             "rarity": "uncommon",
@@ -11817,7 +11817,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "armor.eclipseHabit",
-            "name": "Eclipse Habit",
+            "name": "Eclipse_Habit",
             "slot": "armor",
             "kind": "armor",
             "rarity": "uncommon",
@@ -11837,7 +11837,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "armor.starlitSilks",
-            "name": "Starlit Silks",
+            "name": "Starlit_Silks",
             "slot": "armor",
             "kind": "armor",
             "rarity": "uncommon",
@@ -11857,7 +11857,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "armor.astralVestment",
-            "name": "Astral Vestment",
+            "name": "Astral_Vestment",
             "slot": "armor",
             "kind": "armor",
             "rarity": "uncommon",
@@ -11878,7 +11878,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "armor.riteVestments",
-            "name": "Rite Vestments",
+            "name": "Rite_Vestments",
             "slot": "armor",
             "kind": "armor",
             "rarity": "common",
@@ -11901,7 +11901,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "armor.ossuaryWeave",
-            "name": "Ossuary Weave",
+            "name": "Ossuary_Weave",
             "slot": "armor",
             "kind": "armor",
             "rarity": "uncommon",
@@ -11920,7 +11920,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "armor.emberlightHabit",
-            "name": "Emberlight Habit",
+            "name": "Emberlight_Habit",
             "slot": "armor",
             "kind": "armor",
             "rarity": "uncommon",
@@ -11941,7 +11941,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "armor.pilgrimWrap",
-            "name": "Pilgrim Wrap",
+            "name": "Pilgrim_Wrap",
             "slot": "armor",
             "kind": "armor",
             "rarity": "uncommon",
@@ -11962,7 +11962,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "armor.gutterLeathers",
-            "name": "Gutter Leathers",
+            "name": "Gutter_Leathers",
             "slot": "armor",
             "kind": "armor",
             "rarity": "common",
@@ -11984,7 +11984,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "armor.nightveilCoat",
-            "name": "Nightveil Coat",
+            "name": "Nightveil_Coat",
             "slot": "armor",
             "kind": "armor",
             "rarity": "uncommon",
@@ -12004,7 +12004,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "armor.duelistJerkin",
-            "name": "Duelist Jerkin",
+            "name": "Duelist_Jerkin",
             "slot": "armor",
             "kind": "armor",
             "rarity": "uncommon",
@@ -12024,7 +12024,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "armor.shadowMantle",
-            "name": "Shadow Mantle",
+            "name": "Shadow_Mantle",
             "slot": "armor",
             "kind": "armor",
             "rarity": "uncommon",
@@ -12044,7 +12044,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "armor.bastionHarness",
-            "name": "Bastion Harness",
+            "name": "Bastion_Harness",
             "slot": "armor",
             "kind": "armor",
             "rarity": "uncommon",
@@ -12065,7 +12065,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "armor.rimeweaveRobes",
-            "name": "Rimeweave Robes",
+            "name": "Rimeweave_Robes",
             "slot": "armor",
             "kind": "armor",
             "rarity": "uncommon",
@@ -12085,7 +12085,7 @@ export const gameProfileCatalog = {
           },
           {
             "id": "armor.waywatcherCoat",
-            "name": "Waywatcher Coat",
+            "name": "Waywatcher_Coat",
             "slot": "armor",
             "kind": "armor",
             "rarity": "uncommon",
@@ -12182,25 +12182,25 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/enemies.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:e8d1a8130a2d4287e58743c6601cf5ecfe748554bed415942309a96f582085e7"
+          "hash": "sha256:2478f4ce04ae990f057def0b75515c40f1a81a599866daa9e22d58c97fa4a6cb"
         },
         {
           "path": "games/ashenspire/packs/core/enemyCards.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:406e79baecc91752ba00a3bc2cc8137055ae4ca4372af0accb2bbe6b8a3bb71c"
+          "hash": "sha256:483c6db4516cac01d983dd86e7e8842d15776b59fae67b10aa2578c022b7a76e"
         },
         {
           "path": "games/ashenspire/packs/core/enemyRelics.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:170c789958744e6841b8e539eb785663e0928e9a72413d19b4e4679058dc882f"
+          "hash": "sha256:15bc7dbf01f9fb64d7b25119cae43e1aec64e0c9c5dbcc748660fe1ffb26d0e2"
         },
         {
           "path": "games/ashenspire/packs/core/gear.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:ced465633b8c92afa88e4f49cd784a9fc5833d9260e45b90e7622078c608231b"
+          "hash": "sha256:6586aba5bfbc68d0c659fbeeb99f37151c74c6a5132ba218624b06ba75266867"
         }
       ]
     },
@@ -23897,7 +23897,7 @@ export const gameProfileCatalog = {
       "path": "engine/kernel/gameConfig.js",
       "id": "ashen.runtime",
       "version": "1.0.0",
-      "hash": "sha256:35a63c15d17aff90f8e40d04ef96634e633ad9bdea041ede134e8e3db8fbbed2"
+      "hash": "sha256:6c7a94597e2846ddacc2f87e1b40245d06e49f62c92e87f6e24a3334fad65bc1"
     },
     {
       "path": "engine/contracts/game-profile.json",
@@ -28930,7 +28930,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:3f9a67884765cb5f920ef530e66ccdcc2d826819e6f981359b771d44a5b5bf66"
     }
   ],
-  "runtimeHash": "sha256:2319cf1ef795c65dcb60b3369d939b60a730149e13821a10c3fc9e4f47991b4f"
+  "runtimeHash": "sha256:23e9e84b36ea975fd999c8452ea9dddf44b6929c069b1fa11a44b3f0c3f7b4a8"
 };
 export const gameProfileAuthors = {
   "default": {

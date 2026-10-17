@@ -393,7 +393,7 @@
   },
   {
     "id": "wyrmAspirant.halberdSweep",
-    "name": "Halberd Sweep",
+    "name": "Halberd_Sweep",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -428,7 +428,7 @@
   },
   {
     "id": "wyrmAspirant.tailSlam",
-    "name": "Tail Slam",
+    "name": "Tail_Slam",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -468,7 +468,7 @@
   },
   {
     "id": "wyrmAspirant.goldenGuard",
-    "name": "Golden Guard",
+    "name": "Golden_Guard",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 3,
@@ -508,7 +508,7 @@
   },
   {
     "id": "fellWarden.caneStrike",
-    "name": "Cane Strike",
+    "name": "Cane_Strike",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -543,7 +543,7 @@
   },
   {
     "id": "fellWarden.hammerToss",
-    "name": "Hammer Toss",
+    "name": "Hammer_Toss",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -579,7 +579,7 @@
   },
   {
     "id": "fellWarden.heldBlade",
-    "name": "Held Blade",
+    "name": "Held_Blade",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -620,7 +620,7 @@
   },
   {
     "id": "fellWarden.twinDaggers",
-    "name": "Twin Daggers",
+    "name": "Twin_Daggers",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 3,
@@ -655,7 +655,7 @@
   },
   {
     "id": "lanternMoth.lanternDust",
-    "name": "Lantern Dust",
+    "name": "Lantern_Dust",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 0,
@@ -689,7 +689,7 @@
   },
   {
     "id": "lanternMoth.wingSparks",
-    "name": "Wing Sparks",
+    "name": "Wing_Sparks",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -724,7 +724,7 @@
   },
   {
     "id": "briarHermit.rootShelter",
-    "name": "Root Shelter",
+    "name": "Root_Shelter",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -758,7 +758,7 @@
   },
   {
     "id": "briarHermit.briarCast",
-    "name": "Briar Cast",
+    "name": "Briar_Cast",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -798,7 +798,7 @@
   },
   {
     "id": "briarHermit.sapMend",
-    "name": "Sap Mend",
+    "name": "Sap_Mend",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -835,7 +835,7 @@
   },
   {
     "id": "chainScavenger.hookCast",
-    "name": "Hook Cast",
+    "name": "Hook_Cast",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -869,7 +869,7 @@
   },
   {
     "id": "chainScavenger.chainSnare",
-    "name": "Chain Snare",
+    "name": "Chain_Snare",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 2,
@@ -911,7 +911,7 @@
   },
   {
     "id": "chainScavenger.draggingBlow",
-    "name": "Dragging Blow",
+    "name": "Dragging_Blow",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 2,
@@ -952,7 +952,7 @@
   },
   {
     "id": "bellKeeper.bronzeToll",
-    "name": "Bronze Toll",
+    "name": "Bronze_Toll",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -993,7 +993,7 @@
   },
   {
     "id": "bellKeeper.clapperSwing",
-    "name": "Clapper Swing",
+    "name": "Clapper_Swing",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -1028,7 +1028,7 @@
   },
   {
     "id": "bellKeeper.muffledPrayer",
-    "name": "Muffled Prayer",
+    "name": "Muffled_Prayer",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -1062,7 +1062,7 @@
   },
   {
     "id": "bellKeeper.crackedPeal",
-    "name": "Cracked Peal",
+    "name": "Cracked_Peal",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -1098,7 +1098,7 @@
   },
   {
     "id": "thornMatriarch.rootCrown",
-    "name": "Root Crown",
+    "name": "Root_Crown",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -1132,7 +1132,7 @@
   },
   {
     "id": "thornMatriarch.thornNeedles",
-    "name": "Thorn Needles",
+    "name": "Thorn_Needles",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -1168,7 +1168,7 @@
   },
   {
     "id": "thornMatriarch.entwiningRoots",
-    "name": "Entwining Roots",
+    "name": "Entwining_Roots",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 2,
@@ -1325,7 +1325,7 @@
   },
   {
     "id": "gildedKnight.gildedGuard",
-    "name": "Gilded Guard",
+    "name": "Gilded_Guard",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -1734,7 +1734,7 @@
   },
   {
     "id": "livingArmor.rimeCrush",
-    "name": "Rime Crush",
+    "name": "Rime_Crush",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -1775,7 +1775,7 @@
   },
   {
     "id": "courtDuelist.enGarde",
-    "name": "En Garde",
+    "name": "En_Garde",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 0,
@@ -1921,7 +1921,7 @@
   },
   {
     "id": "courtDuelist.bindingRiposte",
-    "name": "Binding Riposte",
+    "name": "Binding_Riposte",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -1955,7 +1955,7 @@
   },
   {
     "id": "stitchedKing.scepterBlow",
-    "name": "Scepter Blow",
+    "name": "Scepter_Blow",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -1990,7 +1990,7 @@
   },
   {
     "id": "stitchedKing.graspingHands",
-    "name": "Grasping Hands",
+    "name": "Grasping_Hands",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -2026,7 +2026,7 @@
   },
   {
     "id": "stitchedKing.courtlyDecree",
-    "name": "Courtly Decree",
+    "name": "Courtly_Decree",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -2066,7 +2066,7 @@
   },
   {
     "id": "stitchedKing.thousandHands",
-    "name": "Thousand Hands",
+    "name": "Thousand_Hands",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -2101,7 +2101,7 @@
   },
   {
     "id": "mirrorScribe.silverScript",
-    "name": "Silver Script",
+    "name": "Silver_Script",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 0,
@@ -2135,7 +2135,7 @@
   },
   {
     "id": "mirrorScribe.shardVolley",
-    "name": "Shard Volley",
+    "name": "Shard_Volley",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -2170,7 +2170,7 @@
   },
   {
     "id": "mirrorScribe.polishedWard",
-    "name": "Polished Ward",
+    "name": "Polished_Ward",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 2,
@@ -2211,7 +2211,7 @@
   },
   {
     "id": "stitchCrab.shellFold",
-    "name": "Shell Fold",
+    "name": "Shell_Fold",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -2245,7 +2245,7 @@
   },
   {
     "id": "stitchCrab.seamShears",
-    "name": "Seam Shears",
+    "name": "Seam_Shears",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -2286,7 +2286,7 @@
   },
   {
     "id": "stitchCrab.scuttleRush",
-    "name": "Scuttle Rush",
+    "name": "Scuttle_Rush",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -2321,7 +2321,7 @@
   },
   {
     "id": "glassRegent.prismGuard",
-    "name": "Prism Guard",
+    "name": "Prism_Guard",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -2355,7 +2355,7 @@
   },
   {
     "id": "glassRegent.crystalRapier",
-    "name": "Crystal Rapier",
+    "name": "Crystal_Rapier",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -2390,7 +2390,7 @@
   },
   {
     "id": "glassRegent.splinterRain",
-    "name": "Splinter Rain",
+    "name": "Splinter_Rain",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -2426,7 +2426,7 @@
   },
   {
     "id": "glassRegent.shatteredCourt",
-    "name": "Shattered Court",
+    "name": "Shattered_Court",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 2,
@@ -2468,7 +2468,7 @@
   },
   {
     "id": "marrowOrganist.bonePrelude",
-    "name": "Bone Prelude",
+    "name": "Bone_Prelude",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 0,
@@ -2502,7 +2502,7 @@
   },
   {
     "id": "marrowOrganist.ivoryKeys",
-    "name": "Ivory Keys",
+    "name": "Ivory_Keys",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -2538,7 +2538,7 @@
   },
   {
     "id": "marrowOrganist.funeralChord",
-    "name": "Funeral Chord",
+    "name": "Funeral_Chord",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 2,
@@ -2579,7 +2579,7 @@
   },
   {
     "id": "marrowOrganist.quietRefrain",
-    "name": "Quiet Refrain",
+    "name": "Quiet_Refrain",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 3,
@@ -2613,7 +2613,7 @@
   },
   {
     "id": "ashRevenant.cinderSlash",
-    "name": "Cinder Slash",
+    "name": "Cinder_Slash",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -2690,7 +2690,7 @@
   },
   {
     "id": "emberStarvedPilgrim.desperateClaw",
-    "name": "Desperate Claw",
+    "name": "Desperate_Claw",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -2770,7 +2770,7 @@
   },
   {
     "id": "valkyrieShade.spiralLance",
-    "name": "Spiral Lance",
+    "name": "Spiral_Lance",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -2805,7 +2805,7 @@
   },
   {
     "id": "valkyrieShade.bloodFeather",
-    "name": "Blood Feather",
+    "name": "Blood_Feather",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -2880,7 +2880,7 @@
   },
   {
     "id": "charredColossus.ashCloud",
-    "name": "Ash Cloud",
+    "name": "Ash_Cloud",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 0,
@@ -2982,7 +2982,7 @@
   },
   {
     "id": "wyrmLord.halberdReign",
-    "name": "Halberd Reign",
+    "name": "Halberd_Reign",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -3017,7 +3017,7 @@
   },
   {
     "id": "wyrmLord.tailSweep",
-    "name": "Tail Sweep",
+    "name": "Tail_Sweep",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -3057,7 +3057,7 @@
   },
   {
     "id": "wyrmLord.goldenBulwark",
-    "name": "Golden Bulwark",
+    "name": "Golden_Bulwark",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 3,
@@ -3097,7 +3097,7 @@
   },
   {
     "id": "blightedValkyrie.spiralThrust",
-    "name": "Spiral Thrust",
+    "name": "Spiral_Thrust",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -3180,7 +3180,7 @@
   },
   {
     "id": "blightedValkyrie.rotWings",
-    "name": "Rot Wings",
+    "name": "Rot_Wings",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -3220,7 +3220,7 @@
   },
   {
     "id": "blightedValkyrie.scarletDance",
-    "name": "Scarlet Dance",
+    "name": "Scarlet_Dance",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -3255,7 +3255,7 @@
   },
   {
     "id": "cinderMantis.scythePair",
-    "name": "Scythe Pair",
+    "name": "Scythe_Pair",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -3290,7 +3290,7 @@
   },
   {
     "id": "cinderMantis.emberPounce",
-    "name": "Ember Pounce",
+    "name": "Ember_Pounce",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 2,
@@ -3331,7 +3331,7 @@
   },
   {
     "id": "cinderMantis.foldedBlades",
-    "name": "Folded Blades",
+    "name": "Folded_Blades",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 2,
@@ -3372,7 +3372,7 @@
   },
   {
     "id": "eclipseCantor.darkHymn",
-    "name": "Dark Hymn",
+    "name": "Dark_Hymn",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 0,
@@ -3406,7 +3406,7 @@
   },
   {
     "id": "eclipseCantor.lunarRay",
-    "name": "Lunar Ray",
+    "name": "Lunar_Ray",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -3440,7 +3440,7 @@
   },
   {
     "id": "eclipseCantor.fadingEcho",
-    "name": "Fading Echo",
+    "name": "Fading_Echo",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -3481,7 +3481,7 @@
   },
   {
     "id": "furnaceSaint.openFurnace",
-    "name": "Open Furnace",
+    "name": "Open_Furnace",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 2,
@@ -3522,7 +3522,7 @@
   },
   {
     "id": "furnaceSaint.censerSweep",
-    "name": "Censer Sweep",
+    "name": "Censer_Sweep",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -3557,7 +3557,7 @@
   },
   {
     "id": "furnaceSaint.coolingAsh",
-    "name": "Cooling Ash",
+    "name": "Cooling_Ash",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -3591,7 +3591,7 @@
   },
   {
     "id": "hollowAstronomer.starChart",
-    "name": "Star Chart",
+    "name": "Star_Chart",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 0,
@@ -3625,7 +3625,7 @@
   },
   {
     "id": "hollowAstronomer.orbitalShards",
-    "name": "Orbital Shards",
+    "name": "Orbital_Shards",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -3661,7 +3661,7 @@
   },
   {
     "id": "hollowAstronomer.totalEclipse",
-    "name": "Total Eclipse",
+    "name": "Total_Eclipse",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 2,
@@ -3708,7 +3708,7 @@
   },
   {
     "id": "hollowAstronomer.fallingHeavens",
-    "name": "Falling Heavens",
+    "name": "Falling_Heavens",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -3744,7 +3744,7 @@
   },
   {
     "id": "ashheartDragon.obsidianClaws",
-    "name": "Obsidian Claws",
+    "name": "Obsidian_Claws",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -3780,7 +3780,7 @@
   },
   {
     "id": "ashheartDragon.tailBastion",
-    "name": "Tail Bastion",
+    "name": "Tail_Bastion",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 1,
@@ -3814,7 +3814,7 @@
   },
   {
     "id": "ashheartDragon.heartRumble",
-    "name": "Heart Rumble",
+    "name": "Heart_Rumble",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 0,
@@ -3848,7 +3848,7 @@
   },
   {
     "id": "ashheartDragon.ashBreath",
-    "name": "Ash Breath",
+    "name": "Ash_Breath",
     "class": "enemy",
     "rarity": "enemy",
     "cost": 2,

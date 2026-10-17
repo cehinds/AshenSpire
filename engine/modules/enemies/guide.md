@@ -65,3 +65,7 @@ After conversion the JSON is the source of truth; hand edits are expected.
 
 `"enemies": false` in `game.json` turns the module off; the pack data is ignored and enemies
 play their legacy weighted moves. The `current` bundle does not select this module.
+
+## Names
+
+No spaces in `name`: `_` stands for a space and is turned back into one for display (`displayName` in `engine/kernel/gameConfig.js`); `-` is a real hyphen and is kept. `Ember-Starved_Pilgrim` shows as "Ember-Starved Pilgrim". The build refuses names with spaces or symbols.

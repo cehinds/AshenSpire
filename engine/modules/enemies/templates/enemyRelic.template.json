@@ -1,7 +1,7 @@
 {
   "$comment": "One row of enemyRelics.json. Modifiers: self.<strength|dexterity|constitution|wisdom|intelligence|sp|mp|hp>=±N. Bonuses capped at equipment.maxPoints across equipment.maxStats attributes; penalties are free and floor at penaltyFloor.",
   "id": "enemy.relic.ashenBlightCore",
-  "name": "Ashen Blight Core",
+  "name": "Ashen_Blight_Core",
   "modifiers": [
     "self.strength=+2",
     "self.constitution=+2",

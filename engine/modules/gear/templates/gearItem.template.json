@@ -1,7 +1,7 @@
 {
   "$comment": "One row of packs/<pack>/gear.json. Required: id, name, slot, kind, rarity. points is optional and partial; unset points are filled by tag weights x priority, then kind, slot, global. One pool by default (poolSizes.merged).",
   "id": "emberGreatsword",
-  "name": "Ember Greatsword",
+  "name": "Ember_Greatsword",
   "slot": "rightHand",
   "kind": "weapon",
   "rarity": "uncommon",

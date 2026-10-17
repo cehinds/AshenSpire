@@ -17,6 +17,8 @@ function csv(path) {
   const head = parse(lines[0]);
   return lines.slice(1).map(l => { const v = parse(l); return Object.fromEntries(head.map((k, i) => [k, v[i] ?? ''])); });
 }
+// Names: '_' for spaces (stripped for display), '-' kept as a real hyphen.
+const nameOf = s => String(s).trim().replace(/\s+/g, '_');
 const camel = s => s.replace(/[^A-Za-z0-9]+(.)/g, (_, c) => c.toUpperCase()).replace(/^./, c => c.toLowerCase());
 
 const WEAPON_TYPE = {
@@ -72,7 +74,7 @@ const COMMON_ATTRIBUTE = { ashStaff: { intelligence: 1 }, shortbow: { dexterity:
 const gear = [];
 for (const w of csv('content/source/weapons.csv')) {
   const { tags, points } = fromMods(w.mods);
-  gear.push(fit({ id: w.id, name: w.name, slot: w.kind === 'shield' ? 'leftHand' : 'rightHand', kind: w.kind,
+  gear.push(fit({ id: w.id, name: nameOf(w.name), slot: w.kind === 'shield' ? 'leftHand' : 'rightHand', kind: w.kind,
     rarity: w.rarity, tags: [WEAPON_TYPE[w.id] || 'sword', ...tags], points, source: { file: 'content/source/weapons.csv', id: w.id } }));
 }
 const armour = new Map();
@@ -83,7 +85,7 @@ for (const o of csv('content/source/outfits.csv')) {
 }
 for (const [name, { row, classes }] of armour) {
   const { tags, points } = fromMods(row.mods);
-  gear.push(fit({ id: `armor.${camel(name)}`, name, slot: 'armor', kind: 'armor', rarity: SHARED_ARMOR.has(name) ? 'common' : 'uncommon',
+  gear.push(fit({ id: `armor.${camel(name)}`, name: nameOf(name), slot: 'armor', kind: 'armor', rarity: SHARED_ARMOR.has(name) ? 'common' : 'uncommon',
     tags: [ARMOR_TYPE(name), ...tags], points, classes: [...new Set(classes)].sort(), source: { file: 'content/source/outfits.csv', id: row.id } }));
 }
 
