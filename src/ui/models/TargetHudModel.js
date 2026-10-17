@@ -119,3 +119,12 @@ export function targetHudPanelSizing({ viewportWidth, count }, config = targetHu
   font: narrow ? sizing.narrowCrowdedFontPx ?? 11 : sizing.fontPx,
   statusSize: narrow ? sizing.narrowCrowdedStatusIconPx ?? 22 : sizing.statusIconPx };
 }
+
+// Body landmarks exclude raised weapons and transparent stage canvas. Both
+// readouts retain a fixed physical gap when a true pose changes its head.
+export function targetBodyHudPlacement({ body, frame, groupHeight = 61, intentHeight = 37, gap = 5, zoom = 1 }) {
+  const head = Number.isFinite(body.headY) ? body.headY : body.top;
+  return { miniTop: (head - frame.top - gap - groupHeight) / zoom,
+    selectedTop: (head - frame.top - gap - intentHeight) / zoom,
+    center: ((body.left + body.right) / 2 - frame.left) / zoom };
+}
