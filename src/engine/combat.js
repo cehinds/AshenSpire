@@ -2390,7 +2390,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
   }
   const p = combat.player;
   const isX = def.cost === 'X';
-  const priceReceipt = resolvedCardPriceReceipt(combat, def);
+  const priceReceipt = resolvedCardPriceReceipt(combat, def, claimedCharges(combat, inst.instanceId));
   const paidCosts = priceReceipt.paid;
   def=selectCardVariant(combat,def,paidCosts,targetId ? findEntity(combat,targetId) : null);
   // A queued card owns its discount charges. A restore's full display price
