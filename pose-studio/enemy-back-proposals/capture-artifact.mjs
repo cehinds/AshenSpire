@@ -3,6 +3,7 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {pathToFileURL} from 'node:url';
+import {createRequire} from 'node:module';
 const api=p=>JSON.parse(execFileSync('gh',['api',p],{encoding:'utf8',maxBuffer:32*1024*1024}));
 const repo='cehinds/AshenSpire',branch='feature/EnemyBackSprites';
 const source=api('repos/'+repo+'/branches/'+encodeURIComponent(branch)).commit.sha;
@@ -18,7 +19,7 @@ const bytes=download;
 console.log('Capturing exact downloaded artifact; public publication remains pending');
 const stamp=JSON.parse(await readFile(dir+'/buildordinal.json','utf8')),version=stamp.release+'.'+stamp.ordinal;
 const {chromium}=await import(pathToFileURL(process.env.PLAYWRIGHT_MODULE).href);
-const sharp=(await import(pathToFileURL(process.env.SHARP_MODULE).href)).default;
+const sharp=createRequire(import.meta.url)(process.env.SHARP_MODULE);
 const out='docs/preview/features/enemy-back-sprites';await mkdir(out,{recursive:true});
 const browser=await chromium.launch({headless:true}),records=[];
 try{
@@ -40,7 +41,7 @@ try{
   await gallery.locator('#grid img').evaluateAll(images=>Promise.race([Promise.all(images.map(img=>img.decode())),new Promise((_,reject)=>setTimeout(()=>reject(Error('Selected rear images failed to decode within 30 seconds')),30000))]));
   assert.equal(await gallery.locator('main').evaluate(main=>main.scrollWidth<=main.clientWidth),true);
   await gallery.locator('#grid').evaluate(grid=>window.scrollTo(0,grid.offsetTop-12));await page.screenshot({path:out+'/'+name+'.png'});
-  records.push({evidenceKind:'exact-artifact-browser-capture',name,width,height,actor,sourceCommit:source,version,digest:stamp.digest,playableUrl:url,verifiedActors:13,verifiedNeutralDesigns:130});
+  records.push({name,width,height,actor,sourceCommit:source,version,digest:stamp.digest,playableUrl:url,verifiedActors:13,verifiedNeutralDesigns:130});
   await page.close();
  }
 }finally{await browser.close();}
