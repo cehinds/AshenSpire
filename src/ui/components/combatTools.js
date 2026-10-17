@@ -23,7 +23,8 @@ export function combatToolsTokens(combatEl) {
 
 // Controls a raised tools row must not cover (docs/hud-layout-tokens.md).
 const TOOLS_OBSTACLES = '.topbar, .turn-ribbon, .combat-hud, .combatant .intent, .combatant-card > :is(.nm,.meters),'
-  + ' .combatant-leading button, .combatant-info, .combatant-mini-hud, .player-action-intent';
+  + ' .combatant-leading button, .combatant-info, .combatant-mini-hud, .player-action-intent,'
+  + ' .target-hud-detail, .target-hud-inspect-info, .target-hud-overhead-meters, .hand .card';
 
 /** Screen boxes of every visible control and fighter tap target above the dock. */
 function toolsObstacles(combatEl, zoom) {
@@ -180,10 +181,9 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange, onGr
     // A compact toolbar occupies the top of the card band. It never consumes
     // hand width: doing that collapsed every card onto one slot on phones.
     combatEl.style.setProperty('--combat-tools-reserve', '0px');
-    // The vertical offset only raises the row (toolsRowTop): it may rise into
-    // the field but never leaves the combat screen, never covers a control
-    // above it, and never drops over the cards below its dock (dy > 0 is
-    // ignored). Its height is read only for a raise: at 0 no layout is forced.
+    // Negative offsets may raise the dock, but cannot cover artwork, cards,
+    // or controls. Compact docking needs the measured row height; the desktop
+    // footer already supplies its top and only measures a requested raise.
     const corners = true;
     const dockTop = combatEl.querySelector('.hand-area')?.getBoundingClientRect().top ?? handBox?.top ?? combatBox.bottom;
     const split = combatEl.dataset.desktopFooter === 'true';
@@ -191,7 +191,11 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange, onGr
     const footerTop = split
       ? combatBox.top + parseFloat(getComputedStyle(combatEl).getPropertyValue('--desktop-tools-top')) * zoom
       : footerControls?.getBoundingClientRect().top ?? dockTop;
-    const top = split ? footerTop : footerTop - root.getBoundingClientRect().height - 4 / zoom;
+    const rowHeight = !split || dy < 0 ? root.getBoundingClientRect().height : 0;
+    const defaultTop = split ? footerTop : footerTop - rowHeight - 4 / zoom;
+    const top = dy < 0 ? toolsRowTop({ dockTop: defaultTop, dy: dy * zoom,
+      row: { left, width, height: rowHeight }, screenTop: combatBox.top,
+      obstacles: toolsObstacles(combatEl, zoom) }) : defaultTop;
     root.dataset.toolsPlacement = 'corners';
     const localDock = anchorLocalBox(combatEl, { left,
       top, width: 0, height: 0 }, { zoom });
