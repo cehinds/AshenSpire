@@ -348,7 +348,8 @@ const INTENT_OVERLAP = `(async () => {
   // Authored formations can make this neighbour narrower than an XL badge.
   // Grow only the fixture's artwork, retaining its normal stacking context.
   sprite.style.transformOrigin = 'center bottom';
-  sprite.style.scale = String(Math.max(1, (a.width + 16) / initial.width, (a.height + 64) / initial.height));
+  const existingScale = parseFloat(getComputedStyle(sprite).scale) || 1;
+  sprite.style.scale = String(existingScale * Math.max(1, (a.width + 16) / initial.width, (a.height + 64) / initial.height));
   const grown = sprite.getBoundingClientRect();
   const field = sprite.closest('.field'), fieldBox = field.getBoundingClientRect(), zoom = fieldBox.width / field.clientWidth;
   // A grid-cell centre can otherwise hit the player's name or artwork and
