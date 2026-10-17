@@ -1326,7 +1326,7 @@ test('DOM: an ordered deck on a phone shows one Draw order chip, and it toggles 
 
 test('DOM: every row names a stance and a rank; rank 0 reads Cantrip for magical cards and Basic for the rest', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
-  const stances = new Set(['attack', 'defense', 'evade', 'counter', 'smash', 'sweep', 'skill', 'power', 'consumable']);
+  const stances = new Set(['attack', 'defense', 'evade', 'counter', 'smash', 'sweep', 'skill', 'power', 'consumable', 'spell', 'prepare', 'status']);
   for (const classId of ['rogue', 'starseer', 'reaver']) {
     withDom(() => {
       const run = createRunState({ seed: 0x5eed, classId, registries: REG, combatExpansionVersion: 1 });
@@ -1335,7 +1335,7 @@ test('DOM: every row names a stance and a rank; rank 0 reads Cantrip for magical
         const stance = item.querySelector('.deck-editor-stance');
         assert.ok(stance && stances.has(stance.dataset.stance), `${classId}: every row names a known stance`);
         const rank = item.querySelector('.deck-editor-rank');
-        const ranksAlways = !['skill', 'power', 'consumable'].includes(stance.dataset.stance);
+        const ranksAlways = !['skill', 'power', 'consumable', 'prepare', 'status'].includes(stance.dataset.stance);
         assert.ok(!ranksAlways || rank, `${classId}: a ${stance.dataset.stance} row always shows its rank`);
         assert.ok(['physical', 'magical'].includes(item.querySelector('.deck-editor-camp')?.dataset.camp), `${classId}: every row marks physical or magical`);
         if (!rank) continue;
@@ -1376,7 +1376,7 @@ test('DOM: range follows the expanded combat delivery; the mark follows the camp
     assert.equal(read('phaseWard')[0], undefined, 'a card that attacks nothing shows no range');
     // A magical Power is a Power, with no Cantrip badge.
     const stargazer = row('stargazerCard');
-    assert.equal(stargazer?.querySelector('.deck-editor-stance')?.dataset.stance, 'power');
+    assert.equal(stargazer?.querySelector('.deck-editor-stance')?.dataset.stance, 'prepare');
     assert.equal(stargazer.querySelector('.deck-editor-rank'), null);
     editor.close();
   });
@@ -1606,16 +1606,16 @@ test('public deck group headings use canonical categories while raw filter kinds
     for (const cardId of ['forceCounter', 'frostCounter']) {
       const row = model.deck.find(row => row.cardId === cardId);
       assert.equal(row.type, 'skill', 'raw compatibility filter kind remains');
-      assert.equal(row.cardCategory, 'stance');
+      assert.equal(row.cardCategory, 'spell');
     }
     const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
     const groups = editor.root.querySelectorAll('.deck-editor-group');
-    assert.ok([...groups].some(group => /^Stance ·/.test(group.querySelector('summary').textContent)));
+    assert.ok([...groups].some(group => /^Spell ·/.test(group.querySelector('summary').textContent)));
     for (const group of groups) {
       const name = group.querySelector('summary').textContent.split(' ·')[0];
       for (const row of group.querySelectorAll('.deck-editor-item')) {
         const ref = run.deck.find(card => card.instanceId === row.dataset.instanceId);
-        if (ref?.cardId === 'forceCounter' || ref?.cardId === 'frostCounter') assert.equal(name, 'Stance');
+        if (ref?.cardId === 'forceCounter' || ref?.cardId === 'frostCounter') assert.equal(name, 'Spell');
       }
     }
     assert.equal(JSON.stringify(run.deck.filter(card => card.instanceId.startsWith('category-'))), saved,
