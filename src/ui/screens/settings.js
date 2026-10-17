@@ -1003,7 +1003,7 @@ export const ADVANCED_GROUP_IDS = Object.freeze(ADVANCED_GROUPS.map((group) => g
  * every tab means the next move cannot do that again.
  */
 export function formationLayoutRows() {
-  return ADVANCED_GROUP_IDS.flatMap((id) => advancedSubgroups(ROWS, id))
+  return ADVANCED_GROUP_IDS.flatMap((id) => advancedSubgroups(categoryHandler('Advanced').rows, id))
     .find((group) => group.id === 'Formation layout')?.rows || [];
 }
 
