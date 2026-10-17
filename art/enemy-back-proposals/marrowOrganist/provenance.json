@@ -1,0 +1,52 @@
+{
+  "bossId": "marrowOrganist",
+  "status": "draft-proposals",
+  "generator": "image_gen.imagegen",
+  "prompt": "Transparent PNG sprite sheet. EXACT 10 Marrow Organist boss sprites, 5 columns x 2 rows. Rotate boss first reference to face away upper-right, like rear camera in second image. Show backs of bronze organ pipe backpack, back of burgundy ivory robe, heels, rear head. No face or chest. Keep skull staff, skeletal hand, bronze pipes and same boss identity. Ten subtle rear outfit variants. Full figures with full weapons, large clear empty alpha gutters. NO backdrop, NO brown fill, NO gradient, NO floor, NO scenery, NO labels. Background must be entirely transparent alpha like original reference. Dark fantasy game sprite production art.",
+  "sources": [
+    {
+      "repository": "cehinds/AshenSpire-art",
+      "path": "hd/assets/enemy-poses/expansion/marrowOrganist/idle.webp",
+      "ref": "hd-assets-v23",
+      "blob": "4da89f3915d65392564b682ead0b9f55fd46f38a"
+    },
+    {
+      "repository": "cehinds/AshenSpire",
+      "path": "assets-display/alternative/reaver-default.webp",
+      "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+      "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+      "purpose": "rear camera only"
+    }
+  ],
+  "layout": {
+    "columns": 5,
+    "rows": 2,
+    "count": 10
+  },
+  "visualQA": {
+    "rearView": true,
+    "count10": true,
+    "notes": "Replacement generation visually passes rear/count/source identity, apparent alpha. Mechanical alpha/gutter validation pending."
+  },
+  "supersedes": {
+    "commit": "204c31472634328a3315a5d841de2cd8524e922e",
+    "reason": "Opaque brown background on prior generation"
+  },
+  "actorId": "marrowOrganist",
+  "master": "proposal-sheet.png",
+  "sourceReferences": [
+    {
+      "repository": "cehinds/AshenSpire-art",
+      "path": "hd/assets/enemy-poses/expansion/marrowOrganist/idle.webp",
+      "ref": "hd-assets-v23",
+      "blob": "4da89f3915d65392564b682ead0b9f55fd46f38a"
+    },
+    {
+      "repository": "cehinds/AshenSpire",
+      "path": "assets-display/alternative/reaver-default.webp",
+      "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+      "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+      "purpose": "rear camera only"
+    }
+  ]
+}
