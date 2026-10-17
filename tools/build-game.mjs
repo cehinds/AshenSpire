@@ -161,6 +161,8 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
     const walk = (v, where) => {
       if (Array.isArray(v)) return v.forEach((x, i) => walk(x, `${where}[${i}]`));
       if (!v || typeof v !== 'object') return;
+      // A declarative amount must name a provider exported by this profile.
+      if (v.op === 'heal' && v.rule !== undefined && (v.rule !== 'healRules' || !profile.modules['heal-rules'])) fail(`${where}: unknown or unavailable phase heal rule '${v.rule}'`);
       if ('op' in v && !catalog[v.op]) fail(`${where}: unknown effect op '${v.op}'`);
       else if ('op' in v) for (const [name, param] of Object.entries(catalog[v.op].params || {})) {
         if (param.required && v[name] === undefined && !(param.contentRequiredUnless && v[param.contentRequiredUnless] !== undefined)) fail(`${where}: op ${v.op} needs '${name}'`);

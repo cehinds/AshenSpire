@@ -7,12 +7,64 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validateGameSchema } from '../engine/kernel/gameConfig.js';
 import { createRuntime, runCases, loadMechanics } from '../engine/runtime/interpreter.mjs';
+import { evaluate } from '../src/model/formulas.js';
 import { buildGame, hashOf, summaryFile, summaryText } from '../tools/build-game.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const readJson = f => JSON.parse(readFileSync(join(ROOT, f), 'utf8'));
 const first = buildGame();
 const artifact = first.artifact;
+
+function queryFormula(formula) {
+  return buildGame({ patch: ({ mechanics }) => {
+    mechanics.fx_heal.interface.queries ||= {};
+    mechanics.fx_heal.interface.queries.validationProbe = { params: {}, returns: 'number', value: formula };
+  } });
+}
+
+test('enemy and character phase effects are checked independently before export', () => {
+  for (const kind of ['enemies', 'characters']) {
+    for (const [effect, error] of [
+      [{ op: 'definitelyUnknown' }, /unknown effect op 'definitelyUnknown'/],
+      [{ op: 'damage' }, /op damage needs 'amount'/],
+      [{ op: 'heal' }, /op heal needs 'amount'/],
+      [{ op: 'heal', rule: 'misspelledHealRules' }, /unknown or unavailable phase heal rule/],
+      [{ op: 'damage', amount: { f: 'definitelyUnknown' } }, /unknown formula 'definitelyUnknown'/],
+    ]) {
+      assert.throws(() => buildGame({ patch: ({ content }) => {
+        const row = content[kind].find(c => (kind === 'characters' ? c.enemy : c)?.phases?.some(p => p.do?.length));
+        assert.ok(row, `${kind}: a phase fixture exists`);
+        const owner = kind === 'characters' ? row.enemy : row;
+        // Detach the projected row from its shared character phase before planting.
+        owner.phases = structuredClone(owner.phases);
+        owner.phases[0].do = [effect];
+      } }), error, kind);
+    }
+  }
+});
+
+test('zero and negative formula multipliers remain valid; stacks divisors stay positive', () => {
+  const context = { entities: { self: { maxHp: 10, statuses: {} } }, energySpent: 3, cardsPlayedThisTurn: 3, weaponDamage: 3 };
+  for (const f of ['energySpent', 'cardsPlayedThisTurn', 'metric']) {
+    for (const per of [0, -2]) {
+      const formula = { f, per, ...(f === 'metric' ? { metric: 'weaponDamage' } : {}) };
+      assert.equal(evaluate(formula, context), 3 * per);
+      assert.doesNotThrow(() => queryFormula(formula), `${f}: per ${per}`);
+    }
+  }
+  for (const per of [0, -2]) assert.throws(() => queryFormula({ f: 'stacks', of: 'self', status: 'bleed', per }), /per must be a positive number/);
+});
+
+test('direct numeric formula fields reject nested formulas but recursive args and variables remain valid', () => {
+  for (const formula of [
+    { f: 'percentMaxHp', of: 'self', pct: { f: 'add', args: [50] } },
+    { f: 'energySpent', per: { f: 'add', args: [2] } },
+    { f: 'stacks', of: 'self', status: 'bleed', per: { f: 'add', args: [2] } },
+    { f: 'traitBonus', base: 10, pct: { f: 'add', args: [0.5] } },
+  ]) assert.throws(() => queryFormula(formula), /operand '(pct|per)' has the wrong type/);
+  assert.doesNotThrow(() => queryFormula({ f: 'add', args: [2, { f: 'mul', args: [3, 4] }] }));
+  assert.doesNotThrow(() => queryFormula({ f: 'percentMaxHp', of: '$target', pct: '$pct' }));
+});
 
 test('the build is deterministic: two builds give the same hash and bytes', () => {
   const second = buildGame();
