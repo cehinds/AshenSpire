@@ -54,10 +54,10 @@ test('different effects, upgrades and ranks stay separate even when their names 
     Object.assign(grant, saved);
   }
 });
-test('the ten-card core starter retains six distinct card rows and accurate finite counts', () => {
+test('the ten-card core starter retains each distinct card row and accurate finite counts', () => {
   const { run, rows } = fixture('core');
   assert.equal(run.deck.length, 10);
-  assert.equal(rows().length, 6);
+  assert.deepEqual(rows().map(row => row.cardId).sort(), [...new Set(run.deck.map(card => card.cardId))].sort());
   assert.equal(rows().reduce((sum, row) => sum + row.inDeck, 0), 10);
   assert.equal(rows().find(row => row.cardId === 'core.strike').owned, 3);
 });

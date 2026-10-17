@@ -212,6 +212,9 @@ test('confirming one boss relic adds exactly that relic and checkpoints the pick
     app.querySelector('.reward-kind[data-kind="relic"]').click();
     pickButtons(app)[1].click();
     app.querySelector('#reward-card-confirm').click();
+    assert.deepEqual(run.relics, [], 'review does not grant the relic');
+    assert.equal(app.querySelector('#reward-card-confirm').textContent, 'Continue');
+    app.querySelector('#reward-card-confirm').click();
     assert.deepEqual(run.relics, ['wardenHorn'], 'exactly the picked relic is held');
     assert.equal(checkpoint.chosenRelicId, 'wardenHorn', 'the pick is checkpointed');
     assert.equal(checkpoint.states.relic, 'taken');
@@ -225,6 +228,7 @@ test('a boss relic pick the run already holds lands nothing', () => {
     const { app, checkpoint } = mountBossReward(dom, { relicChoices: CHOICES, run });
     app.querySelector('.reward-kind[data-kind="relic"]').click();
     pickButtons(app)[1].click();
+    app.querySelector('#reward-card-confirm').click();
     app.querySelector('#reward-card-confirm').click();
     assert.deepEqual(run.relics, ['wardenHorn'], 'no second copy');
     assert.equal(checkpoint.states.relic, undefined, 'the row is not Taken');
