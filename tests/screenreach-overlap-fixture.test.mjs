@@ -156,3 +156,19 @@ test('zero-size proxies use artwork; undersized or noninteractive drawn proxies 
     assert.equal(calls[0], expectFrame ? frame : sprite);
   }
 });
+
+test('overlap artwork growth composes with an already scaled fighter', () => {
+  const start = tool.indexOf('  const existingScale =');
+  const end = tool.indexOf('  const grown =', start);
+  const growth = tool.slice(start, end);
+  for (const scale of [1, .5, .16]) {
+    const sprite = { style: {} };
+    const initial = { width: 100 * scale, height: 160 * scale };
+    runInNewContext(growth, { sprite, initial, a: { width: 44, height: 37 },
+      getComputedStyle: () => ({ scale: String(scale) }) });
+    const factor = Number(sprite.style.scale);
+    assert.ok(100 * factor >= 60);
+    assert.ok(160 * factor >= 101);
+    assert.ok(100 * factor <= 100, 'a previously small actor grows only enough for the intended overlap');
+  }
+});
