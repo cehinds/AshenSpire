@@ -379,6 +379,26 @@ test('profile.profiles has one row per game profile, matching game-config and th
   assert.equal(rows.filter((r) => r.isGameDefault).length, 1, 'exactly one preset equals games/ashenspire/game.json');
 });
 
+test('module.modules lists every engine module; module.settings.<id> carries the module settings schema', () => {
+  const rows = readJson(first.out, 'tables/module.modules.json');
+  const dirs = readdirSync(join(root, 'engine', 'modules'), { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name).sort();
+  assert.deepEqual(rows.map((r) => r.Name), dirs);
+  const profiles = readJson(first.out, 'tables/profile.profiles.json');
+  for (const row of rows) {
+    assert.match(row.version, /^\d+\.\d+\.\d+$/);
+    assert.ok(row.description.length > 0, `${row.Name} has a description`);
+    const expected = profiles.filter((p) => p.enabledModules.includes(row.Name)).map((p) => p.Name);
+    assert.deepEqual(row.enabledIn, expected, `${row.Name} enabledIn matches profile.profiles`);
+    const entry = manifest.tables.find((t) => t.id === row.settingsTable);
+    assert.equal(Boolean(entry), expected.length > 0, `${row.settingsTable} exists iff some profile enables ${row.Name}`);
+    if (!entry) continue;
+    const authored = JSON.parse(readFileSync(join(root, 'engine', 'modules', row.Name, 'settings.schema.json'), 'utf8'));
+    const schema = readJson(first.out, entry.schema);
+    assert.deepEqual(Object.keys(schema.items.properties).filter((k) => k !== 'Name' && k !== 'id').sort(), Object.keys(authored.properties).sort(), `${row.Name} schema keeps the authored settings`);
+    assert.deepEqual(readJson(first.out, entry.file).map((r) => r.Name), expected);
+  }
+});
+
 test('the new tables are additive: every legacy namespace is still exported and no config or art id changed', () => {
   const ids = manifest.tables.map((t) => t.id);
   for (const prefix of ['content.', 'source.', 'framework.']) assert.ok(ids.some((id) => id.startsWith(prefix)), `no ${prefix} tables`);

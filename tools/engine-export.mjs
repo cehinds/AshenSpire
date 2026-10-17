@@ -301,10 +301,62 @@ export async function collectProfiles() {
   return { catalog: gameProfileCatalog, authors: gameProfileAuthors, resolved, rows };
 }
 
+/** First prose line of a module's guide.md (its one-sentence purpose). */
+function guideSummary(id) {
+  try {
+    const text = readFileSync(join(ROOT, 'engine', 'modules', id, 'guide.md'), 'utf8');
+    return text.split(/\r?\n/).map((l) => l.trim()).find((l) => l && !l.startsWith('#')) ?? '';
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Engine modules: `module.modules` (one row per module) and, per module, a
+ * `module.settings.<id>` table of the settings each profile gives it, whose
+ * schema is the module's own settings.schema.json (rows are the settings keyed by
+ * profile id).
+ */
+export function collectModules({ catalog, resolved }) {
+  const tables = [];
+  const schemas = new Map();
+  const rows = [];
+  for (const id of Object.keys(catalog.modules).sort()) {
+    const { manifest, defaults, schema } = catalog.modules[id];
+    const enabledIn = Object.keys(resolved).sort().filter((pid) => resolved[pid].modules[id]);
+    rows.push({
+      id,
+      version: manifest.version,
+      description: guideSummary(id),
+      runtimeABI: manifest.runtimeABI,
+      implementation: manifest.implementation,
+      configuredAdapter: manifest.configuredAdapter === true,
+      defaults,
+      enabledIn,
+      settingsTable: `module.settings.${id}`,
+    });
+    const settingsRows = enabledIn.map((pid) => ({ id: pid, ...resolved[pid].modules[id] }));
+    if (settingsRows.length) {
+      tables.push([`module.settings.${id}`, settingsRows]);
+      const { $schema, $id, ...items } = schema;
+      // The row key `Name` is the profile id (from `id`); a settings schema never names `id`.
+      items.properties = { ...items.properties, id: { type: 'string' } };
+      items.required = [...new Set([...(items.required || []), 'id'])].sort();
+      schemas.set(`module.settings.${id}`, items);
+    }
+  }
+  tables.unshift(['module.modules', rows]);
+  return { tables, schemas };
+}
+
 async function collect() {
   const raw = []; // [id, value]
+  const schemaOverrides = new Map(); // table id → items schema
   const profiles = await collectProfiles();
   raw.push(['profile.profiles', profiles.rows]);
+  const modules = collectModules(profiles);
+  raw.push(...modules.tables);
+  for (const [id, schema] of modules.schemas) schemaOverrides.set(id, schema);
   const { contentBundle } = await import('../src/content/index.js');
   for (const key of Object.keys(contentBundle).sort()) {
     if (key === 'version') continue;
@@ -325,7 +377,7 @@ async function collect() {
     if (section === 'tokens' || !isPlainObject(v)) raw.push([`ui.${section}`, v]);
     else for (const name of Object.keys(v).sort()) raw.push([`ui.${section}.${name}`, v[name]]);
   }
-  return { raw, version: contentBundle.version };
+  return { raw, schemaOverrides, version: contentBundle.version };
 }
 
 // ---------------------------------------------------------------------------
@@ -361,8 +413,8 @@ export function inferSchema(values) {
   return schema;
 }
 
-function tableSchema(id, rows) {
-  const items = rows.length ? inferSchema(rows) : { type: 'object' };
+function tableSchema(id, rows, authored = null) {
+  const items = authored ? structuredClone(authored) : rows.length ? inferSchema(rows) : { type: 'object' };
   items.properties = { ...(items.properties || {}), Name: { type: 'string' } };
   items.required = [...new Set(['Name', ...(items.required || [])])].sort();
   return { $schema: SCHEMA_DIALECT, $id: `ashenspire/${id}.schema.json`, title: id, type: 'array', items };
@@ -389,7 +441,7 @@ function matchesOnly(id, only) {
 
 /** Build the whole export in memory: Map<relativePath, text> plus a summary. */
 export async function buildExport({ only = null } = {}) {
-  const { raw, version } = await collect();
+  const { raw, schemaOverrides, version } = await collect();
   const files = new Map();
   const tables = [];
   const configs = [];
@@ -408,7 +460,7 @@ export async function buildExport({ only = null } = {}) {
         const schemaFile = `schemas/${item.id}.schema.json`;
         const text = stableStringify(item.rows);
         files.set(file, text);
-        files.set(schemaFile, stableStringify(tableSchema(item.id, item.rows)));
+        files.set(schemaFile, stableStringify(tableSchema(item.id, item.rows, schemaOverrides.get(item.id))));
         tables.push({ id: item.id, file, schema: schemaFile, rows: item.rows.length, sha256: sha256(text), omittedFunctions: [] });
       } else {
         const file = `config/${item.id}.json`;
