@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "status": "approved-for-draft-proposals",
+  "reviewer": "root agent and elite_inventory",
+  "reviewDate": "2026-10-17",
+  "sourceSha256": "6ff0ecc1366b60664f56583c51bd81c3edbe1011edb5ebfdfce22cdbb5cff3a6",
+  "horizontalCut": 390,
+  "rowCuts": [
+    [
+      397,
+      794,
+      1189,
+      1583
+    ],
+    [
+      393,
+      792,
+      1191,
+      1590
+    ]
+  ],
+  "review": "Ten complete rear root/tendril figures inspected; ground-contact registration uses legacy feet schema. Draft authoring only."
+}
