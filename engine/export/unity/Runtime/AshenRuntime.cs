@@ -342,32 +342,28 @@ namespace Ashen.Runtime
         // ----- 4. Values -----
         object Lookup(Call call, Scope scope, string reference)
         {
+            // A present null is a value; only a missing key is unresolved (the reference rejects only undefined).
             var path = reference[1..].Split('.');
+            InvalidOperationException Unresolved() => new($"Unresolved {reference}");
             object cur;
-            if (path[0] == "model")
+            if (path[0] == "model" || path[0] == "state")
             {
-                // SPEC 4: the mechanic's own state merged over model.schema.json property defaults.
-                cur = ModelView(call, scope.Slug);
-                foreach (var key in path[1..]) cur = cur is Dictionary<string, object> d && d.TryGetValue(key, out var n) ? n : null;
-                return cur ?? throw new InvalidOperationException($"Unresolved {reference}");
+                // SPEC 4: $model is the mechanic's own state merged over model.schema.json property defaults.
+                if (path[0] == "model") cur = ModelView(call, scope.Slug);
+                else if (call.State.Mechanics.TryGetValue(scope.Slug, out var own)) cur = own;
+                else throw Unresolved();
+                foreach (var key in path[1..])
+                    if (!(cur is Dictionary<string, object> d && d.TryGetValue(key, out cur))) throw Unresolved();
+                return cur;
             }
-            if (path[0] == "state")
-            {
-                call.State.Mechanics.TryGetValue(scope.Slug, out var root);
-                cur = root;
-                foreach (var key in path[1..]) cur = cur is Dictionary<string, object> d && d.TryGetValue(key, out var n) ? n : null;
-                return cur ?? throw new InvalidOperationException($"Unresolved {reference}");
-            }
-            if (!scope.Vars.TryGetValue(path[0], out cur)) throw new InvalidOperationException($"Unresolved {reference}");
+            if (!scope.Vars.TryGetValue(path[0], out cur)) throw Unresolved();
             foreach (var key in path[1..])
             {
-                if (cur == null) throw new InvalidOperationException($"Unresolved {reference}");
                 // An entity ref reads that entity's field next.
-                if (cur is string name && call.State.Entities.TryGetValue(name, out var entity)) cur = EntityField(entity, key);
-                else if (cur is Dictionary<string, object> d) d.TryGetValue(key, out cur);
-                else cur = null;
+                if (cur is string name && call.State.Entities.TryGetValue(name, out var entity)) { cur = EntityField(entity, key); if (cur == null) throw Unresolved(); }
+                else if (!(cur is Dictionary<string, object> d && d.TryGetValue(key, out cur))) throw Unresolved();
             }
-            return cur ?? throw new InvalidOperationException($"Unresolved {reference}");
+            return cur;
         }
 
         Dictionary<string, object> ModelView(Call call, string slug)
@@ -464,8 +460,8 @@ namespace Ashen.Runtime
             foreach (var (name, v) in scope.Vars)
                 if (v is string s && ctx.Entities.TryGetValue(s, out var e)) ctx.Entities[name] = e;
             foreach (var (key, e) in call.State.Entities) if (e.Tags.Contains("enemy")) ctx.AllEnemies.Add(ctx.Entities[key]);
-            if (scope.Vars.TryGetValue("energySpent", out var es) && es is double d1) ctx.EnergySpent = d1;
-            if (scope.Vars.TryGetValue("cardsPlayedThisTurn", out var cp) && cp is double d2) ctx.CardsPlayedThisTurn = d2;
+            if (scope.Vars.TryGetValue("energySpent", out var es) && AsDouble(es) is double d1) ctx.EnergySpent = d1;
+            if (scope.Vars.TryGetValue("cardsPlayedThisTurn", out var cp) && AsDouble(cp) is double d2) ctx.CardsPlayedThisTurn = d2;
             return ctx;
         }
 
@@ -499,7 +495,7 @@ namespace Ashen.Runtime
         }
 
         // ----- 5. Conditions -----
-        static bool IsCondition(JsonElement n) => new[] { "all", "any", "not", "cmp", "hasTag", "hasStatus" }.Any(k => n.TryGetProperty(k, out _));
+        static bool IsCondition(JsonElement n) => n.ValueKind == JsonValueKind.Object && n.EnumerateObject().Count() == 1 && new[] { "all", "any", "not", "cmp", "hasTag", "hasStatus" }.Any(k => n.TryGetProperty(k, out _));
 
         bool Condition(Call call, Scope scope, JsonElement c)
         {

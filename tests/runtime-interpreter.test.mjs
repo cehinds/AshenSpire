@@ -482,3 +482,11 @@ test('set replaces a scalar prefix with a record', () => {
   const out = run([{ set: 'saved.field', value: 2 }], st);
   assert.deepEqual(out.state.mechanics.t.saved, { field: 2 });
 });
+
+test('funded is a value: variables and formulas resolve before subtracting', () => {
+  const state = { entities: { self: ent({ sp: 0, mp: 0 }) } };
+  let out = run([{ op: 'gainEnergy', target: 'self', amount: 5, funded: '$paid' }], state, { paid: 3 });
+  assert.equal(out.state.entities.self.sp, 2);
+  out = run([{ op: 'restoreMana', target: 'self', amount: 5, funded: '$paid' }], state, { paid: 4 });
+  assert.equal(out.state.entities.self.mp, 1);
+});

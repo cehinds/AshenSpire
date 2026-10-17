@@ -136,6 +136,16 @@ test('game.json can override module settings, and the validator follows the over
   assert.throws(resolveWith(() => {}, override), /cost must match heal shape 'cheap'/);
 });
 
+test('enemies: false ignores the enemy pack data even with characters on', () => {
+  const off = resolveWith(() => {}, a => ({ ...a, modules: { ...a.modules, enemies: false } }))();
+  assert.ok(profile.content.enemies.length > 0);
+  assert.equal(off.content.enemies, undefined);
+  assert.equal(off.content.enemyCards, undefined);
+  const enemyIds = new Set(profile.content.enemyCards.map(c => c.id));
+  assert.ok(!off.content.cards.some(c => enemyIds.has(c.id)));
+  assert.ok(off.content.classes.length > 0);
+});
+
 test('enemy SP/MP and other internals stay hidden unless a revealing tag is held', async () => {
   const { enemyVisibleFields } = await import('../engine/kernel/gameConfig.js');
   const bare = enemyVisibleFields(settings, []);

@@ -442,6 +442,8 @@ function deriveCharacterContent(content, modules) {
   const settings = characterSettings(modules);
   // enemy-relics off: enemies carry no relics.
   if (!settings.equipment) for (const c of content.characters) if (c.tags?.includes('character.enemy')) c.defaultRelics = [];
+  // enemies off: the enemy pack data is ignored (enemies/guide.md, Disabled): no enemy cards, no enemy rows.
+  if (!modules.enemies) { delete content.enemyCards; delete content.enemies; }
   if (Array.isArray(content.enemyCards) && !content.enemyCardsMerged) {
     const existing = new Set((content.cards || []).map(card => card.id));
     const added = content.enemyCards.filter(card => !existing.has(card.id));
@@ -455,7 +457,7 @@ function deriveCharacterContent(content, modules) {
   const players = content.characters.filter(c => c.tags?.includes('character.player'));
   const enemies = content.characters.filter(c => c.tags?.includes('character.enemy'));
   const flat = c => ({ ...c, ...(c.presentation || {}), ...(c.enemy || {}), ...(c.player || {}) });
-  content.enemies = enemies.map(c => { const row = flat(c); row.defaultDeck = resolveCharacterDeck(c, content, modules.gear, settings.cardPoolRules); row.tier = (c.tags.find(t => t.startsWith('tier.')) || 'tier.minion').slice(5); delete row.presentation; delete row.enemy; return row; });
+  if (modules.enemies) content.enemies = enemies.map(c => { const row = flat(c); row.defaultDeck = resolveCharacterDeck(c, content, modules.gear, settings.cardPoolRules); row.tier = (c.tags.find(t => t.startsWith('tier.')) || 'tier.minion').slice(5); delete row.presentation; delete row.enemy; return row; });
   content.classes = players.map(c => {
     const row = flat(c), gear = Object.fromEntries((c.defaultGear || []).map(g => [g.key, g.id]));
     const attributes = resolveEnemyAttributes(c, settings);

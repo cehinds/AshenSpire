@@ -454,7 +454,7 @@ const OPS = {
   },
   gainEnergy(state, step, api) {
     perTarget(state, step, api, (e, key, vars) => {
-      const amount = floorNonNegative(api.number(step.amount, 1, vars, 'amount') - (Number(step.funded) || 0));
+      const amount = floorNonNegative(api.number(step.amount, 1, vars, 'amount') - (step.funded === undefined ? 0 : api.number(step.funded, 0, vars, 'funded')));
       e.sp += amount;
       if (e.spMax !== undefined) e.sp = Math.min(e.spMax, e.sp);
     });
@@ -473,7 +473,7 @@ const OPS = {
         e.mp = e.mp >= floor ? cap : floor;
         return;
       }
-      e.mp += floorNonNegative(api.number(step.amount, 1, vars, 'amount') - (Number(step.funded) || 0));
+      e.mp += floorNonNegative(api.number(step.amount, 1, vars, 'amount') - (step.funded === undefined ? 0 : api.number(step.funded, 0, vars, 'funded')));
       if (e.mpMax !== undefined) e.mp = Math.min(e.mpMax, e.mp);
     });
   },
