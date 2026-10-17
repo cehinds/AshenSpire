@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "status": "approved-for-draft-proposals",
+  "reviewer": "boss_proposals_a independent review",
+  "reviewDate": "2026-10-17",
+  "sourceSha256": "217fe0743aa8cc0bf209a67eedfec6f4881eae6f50ca608891707d3390feb92e",
+  "horizontalCut": 400,
+  "rowCuts": [
+    [
+      424,
+      810,
+      1193,
+      1594
+    ],
+    [
+      435,
+      808,
+      1196,
+      1588
+    ]
+  ],
+  "review": "All ten complete rear figures inspected, including full crown/halo, clothing and weapons. No meaningful-alpha clipping; equipment does not dip below visible foot baseline. Draft authoring only."
+}
