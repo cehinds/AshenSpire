@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "status": "approved-for-draft-proposals",
+  "reviewer": "root agent and elite_inventory independent review",
+  "reviewDate": "2026-10-17",
+  "sourceSha256": "2222ea4b6a253963d0b3811c66e3936f5ce96b2104fb249ccdf48f741bae924d",
+  "horizontalCut": 388,
+  "rowCuts": [
+    [
+      409,
+      814,
+      1211,
+      1610
+    ],
+    [
+      414,
+      822,
+      1213,
+      1613
+    ]
+  ],
+  "review": "Complete rear figures, capes and flaming weapons visually inspected; no mechanical clipping. Draft authoring only."
+}
