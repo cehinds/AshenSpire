@@ -180,6 +180,11 @@ test('the solo screen reaction hook imports its timing helpers and calls the cur
     assert.equal(typeof factory(earlyBreak),'function','final defeat does not hide an earlier guard break');
     assert.equal(factory(lethalBreak),null,'the guard break after the lethal loss yields to defeat');
     assert.equal(factory({type:'combatAvoidanceResolved',targetId:'player',avoided:false,evade:{success:false}}),null);
+    fxCtx.figureAnimations=false;
+    assert.equal(factory(earlyEvade),null,'disabled authored figure reactions do not reach the stage');
+    assert.equal(factory(earlyBreak),null);
+    fxCtx.figureAnimations=true;
+    assert.equal(typeof factory(earlyEvade),'function');
   } finally { animationPace.setAnimSpeed('normal'); }
 });
 

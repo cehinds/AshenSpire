@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-17
 
+- **Combat figure animations follow the saved game module settings** ([#2067](https://github.com/cehinds/AshenSpire/pull/2067), `0.7.1.1551`). Core and Current keep the approved class-default weapon sequences enabled by default. Authors can disable figure motion through the animation module JSON while retaining static artwork, targeting, combat timing and damage feedback; Reading Desk playback follows the same setting.
+
 - **Rules, screens, maps and art are described as JSON that one build compiles for any engine** ([#2072](https://github.com/cehinds/AshenSpire/pull/2072), `0.7.1.1549`). Players and enemies now share one character format, stat formulas, card pool and gear pool, with enemy decks, gear point pools, the Ashen Blight Core relic, deck-training copy limits and mostly rank 1+ card rewards. Each tag has a mechanic folder (model, interface, rules, test cases), UI components and screens carry view models, act maps and the asset catalog are JSON, and `tools/build-game.mjs` writes one hashed artifact with a reference Unity loader. Combat on phones no longer re-measures the HUD every frame, and the player HUD stays on the player's right. The running game still uses its existing code for most rules.
 
 - **Core combat and route feedback is preserved for implementation** ([#2030](https://github.com/cehinds/AshenSpire/pull/2030), `0.7.1.1549`). Record the corrected stance bonuses, reaction costs, HUD, poise, potion, and map requests with examples, assumptions, and QA criteria. Gameplay and release work remain pending.
