@@ -183,7 +183,9 @@ test('an export entry that would leave the export folder fails before anything i
 
 test('staleGenerated runs the builders (or their --check) and names the stale ones; --no-build passes when current', async () => {
   const { staleGenerated, BUILDERS } = await import('../tools/engine-export.mjs');
-  assert.deepEqual(BUILDERS, ['tools/framework-data-build.mjs', 'tools/config-build.mjs', 'tools/content-build.mjs']);
+  assert.deepEqual(BUILDERS.map((b) => (typeof b === 'string' ? b : b.script)), ['tools/base-cards.mjs', 'tools/framework-data-build.mjs', 'tools/config-build.mjs', 'tools/content-build.mjs', 'tools/game-config.mjs']);
+  const gameConfig = BUILDERS.find((b) => typeof b !== 'string');
+  assert.deepEqual([gameConfig.build, gameConfig.check], [['build'], ['check']], 'game-config takes subcommands, not --check');
   const fixture = join(scratch, 'stale-fixture');
   mkdirSync(join(fixture, 'tools'), { recursive: true });
   // current.mjs is always current; stale.mjs fails its --check but builds fine.
@@ -194,6 +196,11 @@ test('staleGenerated runs the builders (or their --check) and names the stale on
   assert.deepEqual(checked.map((f) => f.script), ['tools/stale.mjs']);
   assert.match(checked[0].output, /STALE: out of date/);
   assert.deepEqual(await staleGenerated({ root: fixture, build: true, builders }), [], 'build mode does not pass --check');
+  // A subcommand builder gets its own argument lists, never --check.
+  writeFileSync(join(fixture, 'tools', 'sub.mjs'), "if (process.argv[2] === 'check') { console.error('STALE: sub'); process.exit(1); } if (process.argv[2] !== 'build') process.exit(3);\n");
+  const sub = [{ script: 'tools/sub.mjs', build: ['build'], check: ['check'] }];
+  assert.deepEqual(await staleGenerated({ root: fixture, build: true, builders: sub }), []);
+  assert.deepEqual((await staleGenerated({ root: fixture, build: false, builders: sub })).map((f) => f.script), ['tools/sub.mjs']);
 
   const r = run('--no-build', '--only', 'content.cards', '--out', join(scratch, 'no-build'));
   assert.equal(r.status, 0, `the checkout's generated modules are current:\n${r.stdout}${r.stderr}`);
@@ -354,4 +361,89 @@ test('the Unity importer prunes only the paths its import record lists', () => {
   assert.match(source, /IsPrunable\(stale\)[\s\S]*?LogWarning\(/, 'a refused path is reported with a warning, not deleted');
   assert.match(body, /if \(!IsPrunable\(stale\)\)|IsPrunable\(stale\)/, 'the delete loop checks the guard');
   assert.match(source, /ashenspire-import\.json/, 'the record file is named in the importer');
+});
+
+const NEW_TABLE = /^(profile|module|hudLayout|baseCards)\./;
+
+test('profile.profiles has one row per game profile, matching game-config and the lock', () => {
+  const entry = manifest.tables.find((t) => t.id === 'profile.profiles');
+  assert.ok(entry, 'no table profile.profiles');
+  const rows = readJson(first.out, entry.file);
+  assert.deepEqual(rows.map((r) => r.Name), ['core', 'current']);
+  const lock = JSON.parse(readFileSync(join(root, 'games', 'ashenspire', 'game.lock.json'), 'utf8'));
+  for (const row of rows) {
+    assert.equal(row.hash, lock.profiles[row.Name].hash, `${row.Name} hash matches game.lock.json`);
+    assert.equal(row.runtimeHash, lock.profiles[row.Name].runtimeHash);
+    assert.ok(row.enabledModules.length > 0 && Array.isArray(row.disabledModules));
+  }
+  assert.equal(rows.filter((r) => r.isGameDefault).length, 1, 'exactly one preset equals games/ashenspire/game.json');
+});
+
+test('module.modules lists every engine module; module.settings.<id> carries the module settings schema', () => {
+  const rows = readJson(first.out, 'tables/module.modules.json');
+  const dirs = readdirSync(join(root, 'engine', 'modules'), { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name).sort();
+  assert.deepEqual(rows.map((r) => r.Name), dirs);
+  const profiles = readJson(first.out, 'tables/profile.profiles.json');
+  for (const row of rows) {
+    assert.match(row.version, /^\d+\.\d+\.\d+$/);
+    assert.ok(row.description.length > 0, `${row.Name} has a description`);
+    const expected = profiles.filter((p) => p.enabledModules.includes(row.Name)).map((p) => p.Name);
+    assert.deepEqual(row.enabledIn, expected, `${row.Name} enabledIn matches profile.profiles`);
+    const entry = manifest.tables.find((t) => t.id === row.settingsTable);
+    assert.equal(Boolean(entry), expected.length > 0, `${row.settingsTable} exists iff some profile enables ${row.Name}`);
+    if (!entry) continue;
+    const authored = JSON.parse(readFileSync(join(root, 'engine', 'modules', row.Name, 'settings.schema.json'), 'utf8'));
+    const schema = readJson(first.out, entry.schema);
+    assert.deepEqual(Object.keys(schema.items.properties).filter((k) => k !== 'Name' && k !== 'id').sort(), Object.keys(authored.properties).sort(), `${row.Name} schema keeps the authored settings`);
+    assert.deepEqual(readJson(first.out, entry.file).map((r) => r.Name), expected);
+  }
+});
+
+test('hudLayout.* carries every content/hud-layout file and token', () => {
+  const files = readdirSync(join(root, 'content', 'hud-layout')).filter((f) => f.endsWith('.json')).sort();
+  const layouts = readJson(first.out, 'tables/hudLayout.layouts.json');
+  assert.deepEqual(layouts.map((r) => r.Name), files.map((f) => f.replace(/\.json$/, '')));
+  let tokenCount = 0;
+  for (const f of files) {
+    const src = JSON.parse(readFileSync(join(root, 'content', 'hud-layout', f), 'utf8'));
+    assert.deepEqual(layouts.find((r) => r.Name === src.formFactor).tokens, src.tokens);
+    tokenCount += Object.keys(src.tokens).length;
+  }
+  const tokens = readJson(first.out, 'tables/hudLayout.tokens.json');
+  assert.equal(tokens.length, tokenCount);
+  assert.ok(tokens.every((t) => t.Name === `${t.formFactor}:${t.token}`));
+});
+
+test('baseCards.* mirrors the compiled base-card pack', async () => {
+  const m = await import('../src/content/generated/baseCards.js');
+  const rows = (id) => readJson(first.out, `tables/baseCards.${id}.json`);
+  assert.deepEqual(rows('definitions').map((r) => r.Name), m.baseCardDefinitions.map((d) => d.id));
+  assert.equal(rows('tagging').length, m.baseCardTagging.length);
+  assert.deepEqual(rows('rewardIds').map((r) => r.Name), m.baseCardRewardIds);
+  assert.equal(rows('presentation').length, Object.keys(m.baseCardPresentation).length);
+  assert.equal(rows('statuses').length, m.baseCardStatuses.length);
+  assert.equal(rows('statusRules').length, Object.keys(m.baseCardStatusRules).length);
+  assert.ok(rows('groups').some((r) => r.Name === 'base.current-rewards'));
+  assert.equal(rows('resourceVariants').length, m.baseCardDefinitions.length);
+});
+
+test('the manifest carries the game.lock.json identity and the lock file itself', () => {
+  const text = readFileSync(join(root, 'games', 'ashenspire', 'game.lock.json'), 'utf8');
+  const lock = JSON.parse(text);
+  const gl = manifest.gameLock;
+  assert.ok(gl, 'no gameLock in the manifest');
+  assert.equal(gl.sha256, createHash('sha256').update(text).digest('hex'));
+  assert.equal(gl.formatVersion, lock.formatVersion);
+  assert.equal(readFileSync(join(first.out, gl.file), 'utf8'), text, 'the lock is copied verbatim');
+  assert.deepEqual(Object.keys(gl.profiles), Object.keys(lock.profiles).sort());
+  for (const [id, p] of Object.entries(gl.profiles)) assert.deepEqual(p, { hash: lock.profiles[id].hash, core: lock.profiles[id].core, runtimeABI: lock.profiles[id].runtimeABI, runtimeHash: lock.profiles[id].runtimeHash });
+  // Additive: the original manifest fields are all still there.
+  for (const key of ['format', 'version', 'release', 'buildOrdinal', 'gitSha', 'rowKey', 'tables', 'config', 'art']) assert.ok(key in manifest, key);
+});
+
+test('the new tables are additive: every legacy namespace is still exported and no config or art id changed', () => {
+  const ids = manifest.tables.map((t) => t.id);
+  for (const prefix of ['content.', 'source.', 'framework.']) assert.ok(ids.some((id) => id.startsWith(prefix)), `no ${prefix} tables`);
+  assert.ok(ids.filter((id) => !NEW_TABLE.test(id)).length > 100, 'the legacy tables are all still there');
+  assert.ok(manifest.config.every((c) => !NEW_TABLE.test(c.id)), 'new data is tables, not config');
 });
