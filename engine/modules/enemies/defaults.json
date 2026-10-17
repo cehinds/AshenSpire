@@ -7,22 +7,34 @@
   ],
   "fallback": "legacyMoves",
   "rounding": "down",
-  "attributeGains": {
-    "strength": {
-      "ar": 1
+  "levelFrom": "levelProfile.min",
+  "statRules": {
+    "hp": {
+      "constitution": 10,
+      "perLevel": 2
     },
-    "dexterity": {
-      "dr": 1
+    "sp": {
+      "dexterity": 0.25,
+      "constitution": 0.25,
+      "wisdom": 0.2,
+      "intelligence": 0.2,
+      "perLevel": 0.1
     },
-    "constitution": {
-      "hp": 10,
-      "sp": 0.5
+    "mp": {
+      "strength": 0.125,
+      "constitution": 0.25,
+      "wisdom": 0.5,
+      "intelligence": 0.125,
+      "perLevel": 0.2
     },
-    "wisdom": {
-      "mp": 1
+    "ar": {
+      "strength": 1
     },
-    "intelligence": {
-      "hand": 1
+    "dr": {
+      "dexterity": 1
+    },
+    "hand": {
+      "intelligence": 1
     }
   },
   "tiers": {
@@ -32,7 +44,7 @@
         4
       ],
       "pools": {
-        "hp": 14,
+        "hp": 40,
         "sp": 2,
         "mp": 0
       },
@@ -48,9 +60,9 @@
         5
       ],
       "pools": {
-        "hp": 50,
-        "sp": 2,
-        "mp": 0
+        "hp": 40,
+        "sp": 3,
+        "mp": 1
       },
       "hand": 3,
       "deckSize": [
@@ -64,9 +76,9 @@
         7
       ],
       "pools": {
-        "hp": 80,
-        "sp": 2,
-        "mp": 0
+        "hp": 40,
+        "sp": 3,
+        "mp": 1
       },
       "hand": 4,
       "deckSize": [

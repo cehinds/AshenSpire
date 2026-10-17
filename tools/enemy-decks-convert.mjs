@@ -8,6 +8,7 @@
 import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { enemyPools } from '../engine/kernel/gameConfig.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PACK = 'games/ashenspire/packs/core';
@@ -117,23 +118,21 @@ function split(total, weights) {
 // distinct. The legacy stat shape decides the spread; the only floors are what its own cards
 // need to be playable (WIS for MP costs, CON for SP costs above the tier base).
 function attributesFor(enemy, plan, cards, tier) {
-  const t = settings.tiers[tier], g = settings.attributeGains;
-  const needMp = Math.max(0, ...cards.map(c => c.manaCost)) - t.pools.mp;
-  const needSp = Math.max(0, ...cards.map(c => c.staminaCost)) - t.pools.sp;
-  const floor = { strength: 0, dexterity: 0, intelligence: 0,
-    wisdom: Math.max(0, Math.ceil(needMp / g.wisdom.mp)),
-    constitution: Math.max(0, Math.ceil(needSp / g.constitution.sp)) };
-  const out = { ...floor };
-  const rest = Math.max(0, plan.budget(enemy) - Object.values(floor).reduce((a, b) => a + b, 0));
+  const needMp = Math.max(0, ...cards.map(c => c.manaCost));
+  const needSp = Math.max(0, ...cards.map(c => c.staminaCost));
+  const out = Object.fromEntries(ATTRS.map(id => [id, 0]));
   // Sharpen the legacy shape (square it) so a brute leans STR and a wisp leans WIS.
   const weights = ATTRS.map(id => (Number(enemy.attributes?.[id]) || 1) ** 2);
-  split(rest, weights).forEach((n, i) => { out[ATTRS[i]] += n; });
-  // CON adds HP; a fragile enemy must not outgrow its HP, so surplus CON moves to its next-best stat.
+  split(plan.budget(enemy), weights).forEach((n, i) => { out[ATTRS[i]] += n; });
+  const rank = ATTRS.filter(id => id !== 'constitution').sort((a, b) => weights[ATTRS.indexOf(b)] - weights[ATTRS.indexOf(a)]);
+  const pools = () => enemyPools({ tier, attributes: out, levelProfile: enemy.levelProfile }, settings);
+  // Owner: enemies are hard already; CON stays small (at most 1), and never pushes HP >10% over legacy.
   const targetHp = Math.round(((enemy.hp?.[0] ?? 0) + (enemy.hp?.[1] ?? 0)) / 2);
-  const next = ATTRS.filter(id => id !== 'constitution').sort((a, b) => weights[ATTRS.indexOf(b)] - weights[ATTRS.indexOf(a)])[0];
-  // Owner: enemies are hard already; CON stays small (at most 1 beyond what their cards need).
-  while (out.constitution > Math.max(floor.constitution, 1)) { out.constitution--; out[next]++; }
-  while (out.constitution > floor.constitution && t.pools.hp + out.constitution * g.constitution.hp > targetHp * 1.1) { out.constitution--; out[next]++; }
+  while (out.constitution > 1 || (out.constitution > 0 && pools().hp > targetHp * 1.1)) { out.constitution--; out[rank[0]]++; }
+  // Only floors: enough WIS for the dearest MP card, enough DEX for the dearest SP card.
+  const donor = keep => rank.filter(id => id !== keep).find(id => out[id] > 0);
+  for (let guard = 0; guard < 20 && pools().mp < needMp; guard++) { const d = donor('wisdom'); if (!d) break; out[d]--; out.wisdom++; }
+  for (let guard = 0; guard < 20 && pools().sp < needSp; guard++) { const d = donor('dexterity'); if (!d) break; out[d]--; out.dexterity++; }
   return out;
 }
 
@@ -186,13 +185,12 @@ for (const enemy of roster) {
   const copies = split(size - active.length, active.map(x => x.m.weight ?? 1)).map(n => n + 1);
   const deck = active.flatMap((x, i) => Array(copies[i]).fill(x.card.id));
   const attributes = attributesFor(enemy, plan, enemyCards, tier);
-  const t = settings.tiers[tier], g = settings.attributeGains;
-  const baseHp = t.pools.hp + attributes.constitution * g.constitution.hp;
+  const derived = enemyPools({ tier, attributes, levelProfile: enemy.levelProfile }, settings);
+  const baseHp = derived.hp;
   const targetHp = Math.round(((enemy.hp?.[0] ?? baseHp) + (enemy.hp?.[1] ?? baseHp)) / 2);
-  const kit = hpKit(targetHp - baseHp, tier);
-  const hp = targetHp - kit.left;
-  const sp = Math.floor(t.pools.sp + attributes.constitution * g.constitution.sp);
-  const mp = Math.floor(t.pools.mp + attributes.wisdom * g.wisdom.mp);
+  const kit = hpKit(Math.max(0, targetHp - baseHp), tier);
+  const hp = baseHp + (targetHp > baseHp ? targetHp - baseHp - kit.left : 0);
+  const { sp, mp } = derived;
   const unlockIds = new Map(moves.map(([id], i) => [id, enemyCards[i].id]));
   const phases = enemy.phases ? structuredClone(enemy.phases).map(p => {
     if (p.unlockMoves) { p.unlockCards = p.unlockMoves.map(id => unlockIds.get(id)); delete p.unlockMoves; }

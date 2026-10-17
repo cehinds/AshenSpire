@@ -14,8 +14,9 @@ it lands, combat still plays the legacy `moves` from `src/content/enemies/act1-3
 | Setting | Meaning |
 |---|---|
 | `include` | Tiers this profile fields (`minion`, `elite`, `boss`). |
-| `attributeGains` | Per-point gains; mirror the player's `stats.json` `levelGains` (CON → +10 HP, +0.5 SP; WIS → +1 MP; INT → +1 hand; STR → AR; DEX → DR). |
-| `tiers.<tier>.pools` | Base HP/SP/MP before attributes. Every tier starts at 2 SP and 0 MP; CON and WIS raise them. |
+| `statRules` | Per-stat rows in the player's derived-stat shape (`src/content/derivedStats.js`): attribute weights and `perLevel`, each term floored on its own. HP = 40 + 10 per CON + 2 per level above 1 (owner 2026-10-17); SP/MP use the player's rows; AR = STR, DR = DEX, hand + INT. |
+| `levelFrom` | Which level the build checks against (`levelProfile.min` by default). |
+| `tiers.<tier>.pools` | Base before attributes and level: HP 40 every tier; SP 2 (minion) / 3 (elite, boss); MP 0 / 1 / 1. |
 | `tiers.<tier>.attributeBudget` | Points to assign. All five attributes start at 0; each enemy assigns freely (owner 2026-10-17): minion 4, elite 5, boss 6–7. CON stays small; enemies are hard already. |
 | `tiers.<tier>.spRange` | Optional. Allowed derived SP; build fails outside it. Unset by default. |
 | `tiers.<tier>.hand` / `deckSize` | Base hand size and deck size range for the tier. |

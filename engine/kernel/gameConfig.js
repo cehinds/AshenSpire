@@ -159,11 +159,24 @@ function verifyContent(content) {
 // card/gear/relic references, decks outside the configured bounds, attribute totals outside the
 // tier budget, and any deck card the enemy's own pools can never pay for.
 const ENEMY_ATTRIBUTES = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
-export function enemyPools(row, settings) {
-  const tier = settings.tiers[row.tier], gains = settings.attributeGains, round = settings.rounding === 'up' ? Math.ceil : settings.rounding === 'nearest' ? Math.round : Math.floor;
-  const pools = { hp: tier.pools.hp, sp: tier.pools.sp, mp: tier.pools.mp, hand: tier.hand, ar: 0, dr: 0 };
-  for (const id of ENEMY_ATTRIBUTES) for (const [stat, per] of Object.entries(gains[id] || {})) if (stat in pools) pools[stat] += (row.attributes[id] || 0) * per;
-  for (const key of Object.keys(pools)) pools[key] = round(pools[key]);
+// Same shape as the player's derived-stat rows (src/content/derivedStats.js): base, plus each
+// attribute's contribution and the level term, each floored on its own (owner 2026-10-17:
+// HP = 40 + 10 per CON; other stats and level feed in through the existing rows).
+// Gear/relic modifiers are not included; this is the character before equipment.
+export function enemyLevel(row, settings) {
+  const profile = row.levelProfile || {};
+  return Math.max(1, settings.levelFrom === 'levelProfile.max' ? profile.max ?? 1 : profile.min ?? 1);
+}
+export function enemyPools(row, settings, level = enemyLevel(row, settings)) {
+  const tier = settings.tiers[row.tier], round = settings.rounding === 'up' ? Math.ceil : settings.rounding === 'nearest' ? Math.round : Math.floor;
+  const base = { hp: tier.pools.hp, sp: tier.pools.sp, mp: tier.pools.mp, hand: tier.hand, ar: 0, dr: 0 };
+  const pools = {};
+  for (const [stat, rule] of Object.entries(settings.statRules)) {
+    let value = base[stat] ?? 0;
+    for (const id of ENEMY_ATTRIBUTES) if (rule[id]) value += round((row.attributes[id] || 0) * rule[id]);
+    if (rule.perLevel) value += round((level - 1) * rule.perLevel);
+    pools[stat] = value;
+  }
   return pools;
 }
 function verifyEnemyContent(content, settings) {

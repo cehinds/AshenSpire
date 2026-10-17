@@ -36,18 +36,34 @@ test('attributes start at 0 and are assigned freely: minion 4, elite 5, boss 6-7
     assert.ok(total(e) >= lo && total(e) <= hi, `${e.id} (${e.tier}) assigns ${total(e)}`);
     assert.deepEqual(settings.tiers[e.tier].attributeBudget, [lo, hi]);
   }
-  // Free assignment: enemies differ, and no tier is pinned to one CON value.
+  // Free assignment: stat shapes differ between enemies.
   assert.ok(new Set(enemies.map(e => JSON.stringify(e.attributes))).size >= 8, 'stat shapes vary');
-  assert.ok(new Set(enemies.filter(e => e.tier === 'minion').map(e => e.attributes.constitution)).size > 1);
 });
 
-test('CON stays small: at most 1 unless the enemy\'s own cards need more SP', () => {
+test('CON stays small (at most 1) and every enemy can pay its dearest card', () => {
   for (const e of enemies) {
     const pools = enemyPools(e, settings);
     const needs = Math.max(...[...e.deck, ...(e.unlockCards || [])].map(id => enemyCards.find(c => c.id === id)?.staminaCost ?? 0));
-    if (e.attributes.constitution > 1) assert.ok(needs > settings.tiers[e.tier].pools.sp, `${e.id} CON ${e.attributes.constitution} unjustified`);
+    assert.ok(e.attributes.constitution <= 1, `${e.id} CON ${e.attributes.constitution}`);
+    const needMp = Math.max(...[...e.deck, ...(e.unlockCards || [])].map(id => enemyCards.find(c => c.id === id)?.manaCost ?? 0));
+    assert.ok(needMp <= pools.mp, `${e.id} can pay its dearest MP card`);
     assert.ok(needs <= pools.sp, `${e.id} can pay its dearest card`);
   }
+});
+
+test('HP is 40 + 10 per CON, plus the level term; SP/MP/AR/DR/hand follow the existing stat rows', () => {
+  assert.equal(settings.statRules.hp.constitution, 10);
+  for (const tier of ['minion', 'elite', 'boss']) assert.equal(settings.tiers[tier].pools.hp, 40);
+  for (const e of enemies) {
+    const level = Math.max(1, e.levelProfile?.min ?? 1);
+    const p = enemyPools(e, settings);
+    assert.equal(p.hp, 40 + 10 * e.attributes.constitution + Math.floor((level - 1) * settings.statRules.hp.perLevel), e.id);
+    assert.equal(p.ar, e.attributes.strength, e.id);
+    assert.equal(p.dr, e.attributes.dexterity, e.id);
+  }
+  // Level feeds in: the same character is stronger at a higher level.
+  const wisp = enemies.find(e => e.id === 'graveWisp');
+  assert.ok(enemyPools(wisp, settings, 10).hp > enemyPools(wisp, settings, 1).hp);
 });
 
 test('enemy decks vary in size within the configured bounds and resolve every reference', () => {

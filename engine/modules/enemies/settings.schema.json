@@ -28,59 +28,6 @@
         "up"
       ]
     },
-    "attributeGains": {
-      "type": "object",
-      "properties": {
-        "strength": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "number",
-            "minimum": 0,
-            "maximum": 1000
-          }
-        },
-        "dexterity": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "number",
-            "minimum": 0,
-            "maximum": 1000
-          }
-        },
-        "constitution": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "number",
-            "minimum": 0,
-            "maximum": 1000
-          }
-        },
-        "wisdom": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "number",
-            "minimum": 0,
-            "maximum": 1000
-          }
-        },
-        "intelligence": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "number",
-            "minimum": 0,
-            "maximum": 1000
-          }
-        }
-      },
-      "required": [
-        "strength",
-        "dexterity",
-        "constitution",
-        "wisdom",
-        "intelligence"
-      ],
-      "additionalProperties": false
-    },
     "tiers": {
       "type": "object",
       "additionalProperties": {
@@ -376,6 +323,75 @@
         "respectMaxConsecutive"
       ],
       "additionalProperties": false
+    },
+    "statRules": {
+      "type": "object",
+      "properties": {
+        "hp": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000
+          }
+        },
+        "sp": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000
+          }
+        },
+        "mp": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000
+          }
+        },
+        "ar": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000
+          }
+        },
+        "dr": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000
+          }
+        },
+        "hand": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000
+          }
+        }
+      },
+      "required": [
+        "hp",
+        "sp",
+        "mp",
+        "ar",
+        "dr",
+        "hand"
+      ],
+      "additionalProperties": false
+    },
+    "levelFrom": {
+      "enum": [
+        "levelProfile.min",
+        "levelProfile.max",
+        "encounter"
+      ]
     }
   },
   "required": [
@@ -383,13 +399,14 @@
     "include",
     "fallback",
     "rounding",
-    "attributeGains",
     "tiers",
     "deck",
     "stanceCosts",
     "healRules",
     "stagger",
-    "ai"
+    "ai",
+    "statRules",
+    "levelFrom"
   ],
   "additionalProperties": false
 }
