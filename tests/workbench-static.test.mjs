@@ -66,6 +66,16 @@ describe('workbench static build', () => {
     assert.ok(!paths.some((p) => p.startsWith('docs/design/')), 'docs/design/ is never indexed');
   });
 
+  it('snapshots the game profile and the engine module defaults, not the build lock', () => {
+    const snapshot = JSON.parse(readFileSync(path.join(out, 'static-api', 'snapshot.json'), 'utf8'));
+    const paths = Object.keys(snapshot.index);
+    assert.ok(paths.includes('games/ashenspire/game.json'), 'games/ashenspire/game.json is indexed');
+    assert.ok(paths.some((p) => /^engine\/modules\/[\w.-]+\/defaults\.json$/.test(p)), 'an engine/modules/<id>/defaults.json is indexed');
+    // files/read refuses the lock (allowedKind in workbench/core/files.mjs), so it is never read.
+    assert.ok(!paths.includes('games/ashenspire/game.lock.json'), 'games/ashenspire/game.lock.json is not indexed');
+    assert.equal(existsSync(path.join(out, 'static-api', 'files', 'games', 'ashenspire', 'game.lock.json.json')), false);
+  });
+
   it('points the Library pages served at the site root to the published copy', () => {
     const snapshot = JSON.parse(readFileSync(path.join(out, 'static-api', 'snapshot.json'), 'utf8'));
     const entries = snapshot.snap.library.body.entries;
