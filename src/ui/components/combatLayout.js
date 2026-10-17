@@ -96,7 +96,7 @@ export function wireCombatLayout(combatEl) {
     const allocatedBands = allocateCombatBands({ width, height: combatEl.clientHeight, zoom, rem, compact, footerArtPx: footerArtHeight(width, zoom, formFactor) * zoom });
     // Mobile gives the original controls a shallow dock; the freed height
     // returns to the battlefield rather than an opaque hand backing.
-    const footer = formFactor === 'mobile' ? Math.max(56 / zoom, Math.min(72 / zoom, combatEl.clientHeight * .075)) : allocatedBands.footer;
+    const footer = formFactor === 'mobile' ? Math.max(76 / zoom, Math.min(84 / zoom, combatEl.clientHeight * .095)) : allocatedBands.footer;
     const bands = { ...allocatedBands, footer, battlefield: allocatedBands.battlefield + allocatedBands.footer - footer };
     // The W4 parent's bands (kit.css, shared with the quest dialogue): the
     // battlefield is the scene band, the grid's flexible row; the hand is the

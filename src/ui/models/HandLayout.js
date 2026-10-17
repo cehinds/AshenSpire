@@ -151,7 +151,7 @@ export function responsiveHandLayout(input, sizePlan = handLayout(input)) {
     return { x: start + index * step, y: t * t * arc, angle: t * style.angle };
   });
   const extra = (Math.sin(angle) * cardWidth + Math.cos(angle) * cardHeight - cardHeight) / 2;
-  const top = Math.max(0, (height - cardHeight - arc - extra - sizePlan.controlsReserve - 36 / zoom) * style.dock);
+  const top = Math.max(0, (height - cardHeight - arc - extra - sizePlan.controlsReserve - 66 / zoom) * style.dock);
   const restTop = cards.length ? Math.min(...cards.map(card => {
     const radians = card.angle * Math.PI / 180;
     return top + card.y + cardHeight / 2 - (Math.abs(Math.sin(radians)) * cardWidth + Math.cos(radians) * cardHeight) / 2;
