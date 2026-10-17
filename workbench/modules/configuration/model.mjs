@@ -122,6 +122,13 @@ function parseAuthor(draft) {
 const switchedOff = new Map();
 const memoryKey = (scope, id) => `${scope}\u0000${id}`;
 
+/** Drops the remembered settings of a scope (a draft was replaced from outside a toggle); no argument clears all. */
+export function forgetSwitchedOff(scope) {
+  if (scope === undefined) { switchedOff.clear(); return; }
+  const prefix = `${scope}\u0000`;
+  for (const key of [...switchedOff.keys()]) if (key.startsWith(prefix)) switchedOff.delete(key);
+}
+
 /**
  * The draft text with modules.<id> switched on or off. Off writes `false` and remembers what it replaced (a settings
  * object, or an absent entry that inherited); on restores that (the object, or removes the key to inherit again),

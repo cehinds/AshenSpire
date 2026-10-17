@@ -87,6 +87,18 @@ test('switching a module back on restores what switching it off replaced', () =>
   assert.equal(JSON.parse(sw(offA, 'cards', true, 'b')).modules.cards, true, 'another draft path has no memory of it');
 });
 
+test('forgetSwitchedOff drops one scope\'s memory and leaves the others', () => {
+  const obj = '{"formatVersion":1,"modules":{"cards":{"mode":"legacy"}}}';
+  const offA = C.setModuleEnabled(obj, 'cards', false, 'a');
+  const offB = C.setModuleEnabled(obj, 'cards', false, 'b');
+  C.forgetSwitchedOff('a');
+  assert.equal(JSON.parse(C.setModuleEnabled(offA, 'cards', true, 'a')).modules.cards, true, 'a replaced draft does not get the old object back');
+  assert.deepEqual(JSON.parse(C.setModuleEnabled(offB, 'cards', true, 'b')).modules.cards, { mode: 'legacy' }, 'another scope keeps its memory');
+  const offC = C.setModuleEnabled(obj, 'cards', false, 'c');
+  C.forgetSwitchedOff();
+  assert.equal(JSON.parse(C.setModuleEnabled(offC, 'cards', true, 'c')).modules.cards, true, 'no argument clears everything');
+});
+
 test('setModuleEnabled edits modules.<id> in the draft and keeps the rest', () => {
   const base = '{"formatVersion":1,"core":"c","$comment":"k","modules":{"cards":{"mode":"legacy"}}}';
   const off = JSON.parse(C.setModuleEnabled(base, 'cards', false));

@@ -2,7 +2,7 @@
 // each draft with the same resolver used by the game-config build.
 const CORE_PATH = 'games/ashenspire/game.json';
 const CURRENT_PATH = 'games/ashenspire/presets/current.json';
-import { profileFiles, moduleFiles, moduleEntry, authorState, schemaFields, parseFieldValue, setModuleEnabled, setModuleSetting } from './model.mjs';
+import { profileFiles, moduleFiles, moduleEntry, authorState, schemaFields, parseFieldValue, setModuleEnabled, setModuleSetting, forgetSwitchedOff } from './model.mjs';
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 export default {
@@ -231,6 +231,7 @@ export default {
       try {
         const file = await ctx.api(`files/read?path=${encodeURIComponent(path)}`);
         textarea.value = file.text;
+        forgetSwitchedOff(path);
         loadedText = file.text;
         baseHash = file.hash;
         loadedPath = path;
@@ -316,6 +317,7 @@ export default {
         const parsed = JSON.parse(text);
         if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw Error('JSON root must be an object.');
         textarea.value = `${JSON.stringify(parsed, null, 2)}\n`;
+        forgetSwitchedOff(pathSelect.value);
         validated = null;
         report.hidden = true;
         setStatus(`Imported ${file.name}; validate before saving or previewing.`);
