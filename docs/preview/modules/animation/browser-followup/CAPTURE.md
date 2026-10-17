@@ -8,10 +8,10 @@ crossed-swords placeholders and the fixture backdrop are expected.
 
 Source base: `61b1eeaa8885342a734fd3e28bc55d741b99a1ef` (Dev).
 Inherited build identity: `0.7.1.1551`, digest `fb5dff3704`.
-This is source-preview evidence of the uncommitted HUD correction, not a newly
-published build. Captured fixed `styles/combat.css` SHA-256:
+This is local source-preview evidence of the CSS correction as captured, not a
+newly published build. Captured fixed `styles/combat.css` SHA-256:
 `4c2540e842cbbf4dab3db16806c5f70d89d30b3bc12dfbd38f462fb215521a3d`.
-The consolidated feature preview will supply the published source/build identity.
+These screenshots are local source-preview evidence from this capture base and working CSS; they are not captures from the final consolidated runtime artifact or the public feature route. The consolidated feature preview will supply the candidate runtime source and published source/build identity after artifact verification.
 
 Both baseline and fixed captures await `document.fonts.ready` and all image
 `decode()` promises; the capture records report fonts loaded and zero failed
@@ -25,6 +25,20 @@ the exact base commit's combat stylesheet; fixed views use the working source.
 - Tablet: `after-768x1024-bars.png` (768 × 1024).
 - Baseline/fixed comparison: `before-390x844-bars.png`,
   `before-1280x800-bars.png`, `after-1280x800-bars.png`.
+
+## Fixed co-op HUD at four viewports
+
+These images show the local canned `mountCoop` screenshot fixture, not a live connection. The seats intentionally use placeholders because the snapshot has no player appearance.
+
+| Phone · 390 × 844 | Desktop · 1440 × 900 | Wide · 1280 × 720 | Tablet · 768 × 1024 |
+| --- | --- | --- | --- |
+| ![Fixed co-op HUD at phone size](after-390x844-bars.png) | ![Fixed co-op HUD at desktop size](after-1440x900-bars.png) | ![Fixed co-op HUD at wide size](after-1280x720-bars.png) | ![Fixed co-op HUD at tablet size](after-768x1024-bars.png) |
+
+## Consolidated feature identity
+
+Candidate runtime source commit: `7ba01e82987f43afb4a77bff2fd3e03da26f2b41`. The matching standalone feature artifact is build **0.7.1.1554**, ordinal **1554**, release `0.7.1`, artifact `12113886530`, archive SHA-256 `4d254e002141550519860677a96f4fbb9c9c955d44fd40d5af407abd5b0305c2`, source digest `18e60cd573` (workflow run [39067000100](https://github.com/cehinds/AshenSpire/actions/runs/39067000100), build log job 117496633455). The uploaded artifact is [available here](https://github.com/cehinds/AshenSpire/actions/runs/39067000100/artifacts/12113886530). These screenshots remain local captures from source base `61b1eeaa8885342a734fd3e28bc55d741b99a1ef` plus the recorded CSS correction; they are not screenshots of the final artifact or public route. The public route identity check is pending: [Module Browser Compatibility](https://cehinds.github.io/AshenSpire/branches/fix/ModuleBrowserCompatibility/latest/).
+
+The existing Release 0.7.1.1517 root README gallery was separately verified unchanged by read-only workflow [38698554816, attempt 4](https://github.com/cehinds/AshenSpire/actions/runs/38698554816) at 2026-10-17T20:21:11Z (job 117494404258, source `d310c277fffaaec6ec7a58a87de846577f12312d`, digest `a5b5079cb1`). This check is independent of the pending feature artifact proof.
 
 Before the correction, phone Leave reaches y=101.77 beyond the 76px HUD band;
 desktop resource bars start at y=-3.23 and Leave reaches y=82.27 beyond 80px.

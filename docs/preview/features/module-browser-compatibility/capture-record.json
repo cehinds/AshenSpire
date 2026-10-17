@@ -1,0 +1,96 @@
+{
+  "title": "Module Browser Compatibility consolidated browser follow-up",
+  "captureDate": "2026-10-17",
+  "permanentCaptureDirectory": "docs/preview/modules/animation/browser-followup",
+  "permanentCaptureCommit": "8664b9d44b020afb7c0c8a4d9c2e300192598926",
+  "captureSourceBase": "61b1eeaa8885342a734fd3e28bc55d741b99a1ef",
+  "captureSourceChannel": "Dev",
+  "captureMethod": "Production mountCoop renderer with explicit source screenshot fixture ?shot=coop&shotSettings={\"manaRing\":false}",
+  "fixedCombatStylesheetSha256": "4c2540e842cbbf4dab3db16806c5f70d89d30b3bc12dfbd38f462fb215521a3d",
+  "screenshots": {
+    "mobile": {
+      "file": "mobile.png",
+      "source": "after-390x844-bars.png",
+      "viewport": "390x844"
+    },
+    "desktop": {
+      "file": "desktop.png",
+      "source": "after-1440x900-bars.png",
+      "viewport": "1440x900"
+    },
+    "wide": {
+      "file": "wide.png",
+      "source": "after-1280x720-bars.png",
+      "viewport": "1280x720"
+    },
+    "tablet": {
+      "file": "tablet.png",
+      "source": "after-768x1024-bars.png",
+      "viewport": "768x1024"
+    }
+  },
+  "visualScope": "Co-op HUD top-band correction only. Before/after captures exist in the permanent gallery at phone and 1280x800; the feature gallery uses the four required after captures.",
+  "fixtureLimitations": [
+    "The transport and host snapshot are canned; captures do not show a live co-op connection.",
+    "Canned seats have no player appearance; crossed-swords placeholders and the fixture backdrop are expected."
+  ],
+  "captureChecks": {
+    "fontsLoaded": true,
+    "failedImageElements": 0,
+    "captureOnlyLayoutCss": false,
+    "tests": {
+      "command": "node --test tests/coop-hud-top.test.mjs tests/ui-component-catalogs.test.mjs",
+      "passed": 69,
+      "total": 69
+    },
+    "browserProbe": {
+      "command": "node tools/coop-hud-top.mjs",
+      "status": "GREEN",
+      "checksPassed": 6,
+      "checksTotal": 6,
+      "coverage": [
+        "ring on/off",
+        "390x844",
+        "844x390",
+        "1280x800",
+        "orb/seat/privacy/Counter/flask/vow checks",
+        "comparison with solo action bar"
+      ]
+    }
+  },
+  "finalArtifactIdentity": {
+    "status": "verified; public-route verification pending",
+    "candidateRuntimeSourceCommit": "7ba01e82987f43afb4a77bff2fd3e03da26f2b41",
+    "artifactId": 12113886530,
+    "artifactUrl": "https://github.com/cehinds/AshenSpire/actions/runs/39067000100/artifacts/12113886530",
+    "artifactArchiveSha256": "4d254e002141550519860677a96f4fbb9c9c955d44fd40d5af407abd5b0305c2",
+    "workflowRunId": 39067000100,
+    "workflowJobId": 117496633455,
+    "version": "0.7.1.1554",
+    "ordinal": 1554,
+    "release": "0.7.1",
+    "sourceDigest": "18e60cd573",
+    "source": "matching standalone feature-preview artifact; identity taken from build log"
+  },
+  "expectedFeatureUrl": "https://cehinds.github.io/AshenSpire/branches/fix/ModuleBrowserCompatibility/latest/",
+  "publicRouteVerification": {
+    "status": "pending",
+    "url": "https://cehinds.github.io/AshenSpire/branches/fix/ModuleBrowserCompatibility/latest/",
+    "note": "Artifact is available, but public Pages route identity has not yet been verified read-only."
+  },
+  "verificationScope": "Future public proof should establish publication and payload identity. The screenshots and 6/6 browser probe are local/source evidence; no live co-op connection is demonstrated.",
+  "permanentCaptureReadme": "docs/preview/modules/animation/browser-followup/CAPTURE.md",
+  "candidateRuntimeSourceCommit": "7ba01e82987f43afb4a77bff2fd3e03da26f2b41",
+  "releaseGalleryVerification": {
+    "status": "verified",
+    "verifiedAt": "2026-10-17T20:21:11Z",
+    "workflowRunId": 38698554816,
+    "attempt": 4,
+    "jobId": 117494404258,
+    "channel": "Release",
+    "build": "0.7.1.1517",
+    "sourceCommit": "d310c277fffaaec6ec7a58a87de846577f12312d",
+    "sourceDigest": "a5b5079cb1",
+    "result": "unchanged; successful read-only URL check"
+  }
+}
