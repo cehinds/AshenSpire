@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-2071",
+    "date": "2026-10-17",
+    "group": "2026-10-17",
+    "summary": "Rear enemy designs have a feature-only review gallery",
+    "detail": "Compare 130 rear design drafts, original identity references, and three elite pilot sets with nine held poses, attack and evade clips, and static hurt and defeated reactions. Missing clips stay explicit. This draft review is not promoted: runtime alignment, playable unlocks, other motion sets, and external art publication remain pending.",
+    "build": "0.7.1.1551",
+    "pullRequest": 2071,
+    "url": "https://github.com/cehinds/AshenSpire/pull/2071"
+  },
+  {
+    "id": "pr-2067",
+    "date": "2026-10-17",
+    "group": "2026-10-17",
+    "summary": "Combat figure animations follow the saved game module settings",
+    "detail": "Core and Current keep the approved class-default weapon sequences enabled by default. Authors can disable figure motion through the animation module JSON while retaining static artwork, targeting, combat timing and damage feedback; Reading Desk playback follows the same setting.",
+    "build": "0.7.1.1551",
+    "pullRequest": 2067,
+    "url": "https://github.com/cehinds/AshenSpire/pull/2067"
+  },
+  {
     "id": "pr-2030",
     "date": "2026-10-17",
     "group": "2026-10-17",

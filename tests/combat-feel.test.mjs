@@ -109,7 +109,7 @@ test('a painted sequence holds: its remaining frames move back by the hold', asy
   // reaverAttack's handle and the painted stage both expose hold(ms).
   assert.match(src('src/ui/reaverAttack.js'), /hold\(ms\) \{[\s\S]{0,250}schedule\(Math\.max\(0, due - Date\.now\(\)\) \+ ms\);/);
   assert.match(src('src/ui/paintedOutfits.js'), /hold\(ms\) \{[\s\S]{0,600}due: entry\.due \+ ms/);
-  assert.match(src('src/ui/screens/combat.js'), /hold: \(ms\) => \{ stage\?\.hold\?\.\(ms\); \}/);
+  assert.match(src('src/ui/screens/combat.js'), /hold: \(ms\) => \{ if \(fxCtx\.figureAnimations !== false\) stage\?\.hold\?\.\(ms\); \}/);
 });
 
 function drive(t, fn) {
