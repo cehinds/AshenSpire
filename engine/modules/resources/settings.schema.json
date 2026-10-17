@@ -1,0 +1,36 @@
+{
+  "type": "object",
+  "properties": {
+    "mode": {
+      "enum": [
+        "legacy",
+        "configured"
+      ]
+    },
+    "include": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "costPolicy": {
+      "enum": [
+        "authoredVariants"
+      ]
+    },
+    "recovery": {
+      "enum": [
+        "turnStart"
+      ]
+    }
+  },
+  "required": [
+    "mode",
+    "include",
+    "costPolicy",
+    "recovery"
+  ],
+  "additionalProperties": false
+}

@@ -1,5 +1,6 @@
+import { logicalViewport } from '../viewViewport.js';
 import { openModal } from './modalShell.js';
-import { hideTooltip } from './tooltip.js';
+import { attachTooltip, esc, hideTooltip } from './tooltip.js';
 import { decorateKeywords } from './tooltipGlossary.js';
 import { lightCard, countBeat, spendSelectingBeat, litCard, clearSelection } from './cardSelection.js';
 import { selectionRevealDelayMs } from '../models/SelectionEffectModel.js';
@@ -68,7 +69,7 @@ function doorStackBelowPx() {
   if (!Number.isFinite(inspect) || inspect <= 0) return cardDoorStackBelowPx();
   return inspect + doorReadableMinPx();
 }
-// MEASURE THE DOOR, NOT THE WINDOW. This compared `window.innerWidth`, and the
+// MEASURE THE DOOR, NOT THE WINDOW. This compared `logicalViewport().width`, and the
 // door is not the window: the reading modal is `size: 'lg'`, capped at 76rem,
 // so at a 1440px viewport the layout is 748px whatever the screen does. While
 // the inspect width was authored-only that gap was merely conservative and I
@@ -118,7 +119,7 @@ function decideCardDoorShape(widthPx, layout = document.querySelector('.card-ins
 function applyCardDoorShape() {
   const slimmest = narrowestDoorWidth();
   if (slimmest) decideCardDoorShape(slimmest.width, slimmest.node);
-  else decideCardDoorShape(window.innerWidth, null);
+  else decideCardDoorShape(logicalViewport().width, null);
 }
 // A DOOR CAN HOLD MORE THAN ONE LAYOUT, AND THE FIRST VERSION OF THIS WATCHED
 // THE WRONG ONE. `disconnect()` before `observe()` meant only the most recently
@@ -177,6 +178,36 @@ function narrowestDoorWidth() {
 export function refreshCardDoorShape() {
   applyCardDoorShape();
 }
+
+// The inspect face already contains the authoritative, rendered values for
+// these parts. Attach the shared tooltip machine to those native components so
+// mouse, keyboard/gamepad focus, and touch all read the same thing without
+// rebuilding card facts or guessing from a card name.
+function bindNativeCardTooltips(card) {
+  const face = card?.matches?.('.illustrated-card-face')
+    ? card
+    : card?.querySelector?.('.illustrated-card-face');
+  if (!face) return;
+  const bind = (target, label, value = target?.textContent) => {
+    const text = String(value || '').trim();
+    if (!target || !text || target.dataset.tipAttached === 'true') return;
+    if (!target.matches('button, a[href], input, select, textarea, [tabindex]')) target.tabIndex = 0;
+    attachTooltip(target, () => `<div class="tt-title">${esc(label)}</div>${esc(text)}`, {
+      intent: 'above', align: 'center',
+    });
+  };
+  bind(face.querySelector('[data-card-binding="name"]'), 'Card title');
+  bind(face.querySelector('[data-card-binding="stamina"]'), 'Stamina cost');
+  bind(face.querySelector('[data-card-binding="mana"]'), 'Mana cost');
+  const rankedCost = face.querySelector('.card-rank[title]');
+  if (rankedCost) bind(rankedCost, 'Cost', rankedCost.title || rankedCost.textContent);
+  else bind(face.querySelector('.card-rank'), 'Cost');
+  bind(face.querySelector('.card-type-name'), 'Card type');
+  bind(face.querySelector('.ic-text[data-card-binding="tags"]'), 'Card tags');
+  bind(face.querySelector('.ic-text[data-card-binding="rules"]'), 'Rules');
+  // Tag symbols carry their own authored `data-tip` copy and are adopted by
+  // the tooltip service; leave that copy and its one-tap behavior intact.
+}
 // AND A CLOSED DOOR'S LAYOUT IS RELEASED, NOT MERELY IGNORED. Skipping detached
 // nodes in `narrowestDoorWidth` stopped them voting but left them observed, and
 // an observer holds its targets — so every card you opened kept its whole
@@ -223,6 +254,7 @@ export function cardInspectionLayout(card, details) {
   observeDoorWidth(body);
   const art = document.createElement('div');
   art.className = 'card-inspection-art';
+  bindNativeCardTooltips(card);
   art.append(card);
   const tags = details.querySelector('.inspection-tags');
   if (tags) art.append(tags);

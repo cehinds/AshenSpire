@@ -132,8 +132,8 @@ import { eventChoiceRequirementProblems } from '../src/model/quests.js';
 export const ALLOWED_UNREACHABLE = [];
 
 const KINDS = ['cards', 'relics', 'events', 'encounters', 'enemies'];
-const CARD_OPS = new Set(['addCard', 'addCardToDeck']);
-const INJECTOR_OPS = new Set(['addCard', 'addCardToDeck', 'addRelic', 'startCombat', 'swapClass']);
+const CARD_OPS = new Set(['addCard', 'addCardToDeck', 'addBurden', 'moveCards']);
+const INJECTOR_OPS = new Set(['addCard', 'addCardToDeck', 'addBurden', 'moveCards', 'addRelic', 'startCombat', 'swapClass']);
 const DROP_RARITIES = ['common', 'uncommon', 'rare'];
 
 /** Every { op } in a value whose op is in `ops`. */
@@ -371,7 +371,7 @@ export function contentReach(bundle, opts = {}) {
   }
 
   function creditOp(op, where) {
-    if (CARD_OPS.has(op.op)) return note('cards', op.card, `C-inject ${op.op} in ${where}`);
+    if (CARD_OPS.has(op.op)) return note('cards', op.op === 'moveCards' ? op.transformTo : op.card, `C-inject ${op.op} in ${where}`);
     if (op.op === 'addRelic') {
       if (op.id) return note('relics', op.id, `R-event addRelic in ${where}`);
       if (op.random && !randomRelic) { randomRelic = where; return true; }
@@ -613,6 +613,19 @@ function selftest(real) {
   b.classes[0].cardPool = [...b.classes[0].cardPool, 'plantedCarrier'];
   r = contentReach(b);
   expect('P3  injection is transitive through a REACHED carrier only', bothRed && !orphaned(r, 'cards', 'plantedInjected'), true);
+
+  // Burden injection and temporary transformations are executable card routes,
+  // but only when the carrier is itself reachable.
+  for (const op of ['addBurden', 'moveCards']) {
+    b = clone(real);
+    const effect = op === 'addBurden'
+      ? { op, card: 'plantedZoneResult', count: 1 }
+      : { op, from: 'hand', to: 'hand', amount: 1, transformTo: 'plantedZoneResult' };
+    b.cards.push(card('plantedZoneCarrier', { effects: [effect] }), card('plantedZoneResult'));
+    const before = orphaned(contentReach(b), 'cards', 'plantedZoneResult');
+    b.classes[0].cardPool = [...b.classes[0].cardPool, 'plantedZoneCarrier'];
+    expect(`P3  ${op} follows only a reached carrier`, before && !orphaned(contentReach(b), 'cards', 'plantedZoneResult'), true);
+  }
 
   // P4 — an orphan RELIC: starter rarity (no drop pool), in no creation list,
   // and quest-pool so an event's "random relic" cannot draw it either. (A

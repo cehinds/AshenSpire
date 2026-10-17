@@ -1,0 +1,8 @@
+{
+  "mode": "configured",
+  "damageModel": "unified",
+  "elements": false,
+  "spellRanks": false,
+  "attackRatingWeight": 1,
+  "defenseRatingWeight": 1
+}

@@ -653,14 +653,14 @@ export const starseerCards = [
   // Attune: the Starseer's loop is stamina tension around scarce casts; one
   // card that buys the next cast.
   {
-    id: 'attune', name: 'Attune', class: 'starseer', rarity: 'starter', cost: 1, type: 'skill',
+    id: 'attune', name: 'Attune', class: 'starseer', rarity: 'starter', cost: 1, manaCost: 1, costRule: 'fixed', type: 'skill',
     flavor: "First exercise of the apprentice.\n\nHold the stone until pulse and rhythm match. The Starwatch taught that starstone answers rhythm, not force, and credited the principle to the Astronomer.\n\nThe standing stones upon the marches road hum in the same rhythm. They are older than he.",
     keywords: ['exhaust', 'retain'], icon: '✴',
-    effects: [{ op: 'restoreMana', target: 'self', amount: 1 }],
+    effects: [{ op: 'restoreMana', target: 'self', amount: 2 }],
     textTemplate: 'Restore {restoreMana} Mana. Exhaust.',
     upgrade: {
       keywords: ['retain'],
-      effects: [{ op: 'restoreMana', target: 'self', amount: 1 }],
+      effects: [{ op: 'restoreMana', target: 'self', amount: 2 }],
       textTemplate: 'Restore {restoreMana} Mana.',
     },
   },

@@ -1,3 +1,5 @@
+import { gameProfileRatingReceipt } from '../model/gameProfileRun.js';
+import { configuredCombat, configuredModule } from './gameProfileCombat.js';
 // engine/runCombat.js — the one door a run's fight is built through.
 //
 // The live game (src/main.js enterCombat) and every headless simulator
@@ -57,7 +59,7 @@ export function runCombatPlayer(run) {
   return {
     classId: run.class,
     ...(run.classUnequipped ? { classUnequipped: true } : {}),
-    attributes: run.combatExpansionVersion === 2 ? effectiveAshenBlightAttributes(run) : run.attributes,
+    attributes: !configuredCombat(run) && run.combatExpansionVersion === 2 ? effectiveAshenBlightAttributes(run) : run.attributes,
     allocatedAttributes: run.attributes,
     ashenBlight: run.ashenBlight,
     baseResourceMaxima: run.ashenBlightBasePools,
@@ -123,12 +125,13 @@ export function createRunCombat({
 }) {
   // The every-5th-level skill bonus is derived (SPEC §13.4o): stamped fresh
   // here so the fight's copies carry the levels and hands it starts with.
-  stampSkillBonuses(registries, run);
+  if (!configuredCombat(run)) stampSkillBonuses(registries, run);
   const knowledgeRun = run.enemyKnowledgeState ? { ...run, enemyKnowledgeState: structuredClone(run.enemyKnowledgeState) } : null;
   if (knowledgeRun) openKnowledgeEncounter(knowledgeRun, run.mapNodeId || 'combat', encounter?.id || enemyIds.join(','), enemyIds, enemyKnowledgeProfile);
   const combat = createCombat({
     ...(knowledgeRun ? { knowledge: { rules: run.enemyKnowledgeRules, encounter: knowledgeRun.enemyKnowledgeState.currentEncounter,
       bankable: knowledgeRun.enemyKnowledgeState.bankable, profiles: { player: mergeEnemyKnowledge(knowledgeRun.enemyKnowledgeState.pending, enemyKnowledgeProfile) } } } : {}),
+    gameProfile: run.gameProfile || null,
     combatExpansionVersion: run.combatExpansionVersion || 1,
     reactionRulesVersion: run.reactionRulesVersion || null,
     reactionRules: run.reactionRules,
@@ -155,7 +158,9 @@ export function createRunCombat({
     normalPreview: normalPreviewFor(run.advancedConfigSnapshot?.overrides),
     registries,
     rng,
-    player: { ...runCombatPlayer(run), ...player },
+    player: { ...runCombatPlayer(run),
+      ...(configuredCombat(run) ? { ratings: gameProfileRatingReceipt(registries,run).totals } : {}),
+      ...player },
     enemyIds,
     enemyLevels: enemyLevelsForFight(registries, run, enemyIds, encounter),
     hpMult,
@@ -177,6 +182,7 @@ export function createRunCombat({
 
 /** Write what a fight leaves behind back onto the run (live onCombatEnd's first half). */
 export function runCombatEnd(run, combat) {
+  if(combat.proposalRewards && !combat.proposalRewards.settled) {run.cinders=(run.cinders || 0)+Math.max(0,combat.proposalRewards.cinders || 0);combat.proposalRewards.settled=true;}
   reconcileCombatKnowledge(run, combat);
   if (combat.combatExpansionVersion === 2) {
     run.ashenBlight = structuredClone(combat.player.ashenBlight);

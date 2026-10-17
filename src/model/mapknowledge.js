@@ -1,3 +1,4 @@
+import { gameModule } from './gameProfile.js';
 // src/model/mapknowledge.js — HOW MUCH THE PLAYER KNOWS ABOUT A MAP NODE,
 // derived, on one ladder, for every map mode.
 //
@@ -89,7 +90,8 @@ export const MAP_MODES = Object.freeze(['path', 'fog']);
 export const MAP_MODE_DEFAULT = 'fog';
 
 /**
- * resolveMapMode(meta) → 'path' | 'fog'.
+ * resolveMapMode(meta, run?) → 'path' | 'fog'.
+ * Configured routes pin their authored visibility policy; legacy runs use an explicit viewer setting, then the authored profile default.
  *
  * Unset, or a value this build cannot read, is the SHIPPING DEFAULT — the same
  * rule `savedZoom` and `resolveTapSize` use one screen away, and for the same
@@ -97,9 +99,11 @@ export const MAP_MODE_DEFAULT = 'fog';
  * absent one. The settings row reads `MAP_MODES` and `MAP_MODE_DEFAULT` from
  * here, so the row and this resolver cannot disagree about what exists.
  */
-export function resolveMapMode(meta) {
+export function resolveMapMode(meta, run) {
+  const routes = gameModule(run, 'routes');
+  if (routes?.mode === 'configured') return MAP_MODES.includes(routes.mapMode) ? routes.mapMode : MAP_MODE_DEFAULT;
   const m = ((meta && meta.settings) || {}).mapMode;
-  return MAP_MODES.includes(m) ? m : MAP_MODE_DEFAULT;
+  return MAP_MODES.includes(m) ? m : MAP_MODES.includes(routes?.mapMode) ? routes.mapMode : MAP_MODE_DEFAULT;
 }
 
 /**

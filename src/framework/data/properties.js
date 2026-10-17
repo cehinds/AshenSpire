@@ -122,6 +122,24 @@ export const properties = {
       "priority": 12
     },
     {
+      "id": "damage.fire",
+      "parentId": "damage",
+      "domain": "DAMAGE",
+      "visibility": "SECONDARY",
+      "playerTermId": "term.fire",
+      "tooltipTermId": "term.tooltip.fire",
+      "priority": 16
+    },
+    {
+      "id": "damage.holy",
+      "parentId": "damage",
+      "domain": "DAMAGE",
+      "visibility": "SECONDARY",
+      "playerTermId": "term.sacred",
+      "tooltipTermId": "term.tooltip.sacred",
+      "priority": 17
+    },
+    {
       "id": "damage.blade",
       "parentId": "damage",
       "domain": "DAMAGE",
@@ -489,6 +507,15 @@ export const properties = {
       "playerTermId": "term.targetAlly",
       "tooltipTermId": "term.tooltip.targetAlly",
       "priority": 14
+    },
+    {
+      "id": "targeting.allAllies",
+      "parentId": "targeting",
+      "domain": "TARGETING",
+      "visibility": "CONTEXTUAL",
+      "playerTermId": "term.targetAllAllies",
+      "tooltipTermId": "term.tooltip.targetAllAllies",
+      "priority": 15
     },
     {
       "id": "internal",

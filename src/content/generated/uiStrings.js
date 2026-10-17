@@ -500,6 +500,20 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "combat.grid.label",
+    "extends": "",
+    "short": "Grid",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.grid.aria",
+    "extends": "",
+    "short": "Show battlefield grid",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "combat.status.applied.crimsonBlight",
     "extends": "",
     "short": "BLIGHTED",
@@ -5815,7 +5829,7 @@ export const uiStrings = [
   {
     "id": "deckEditor.keys",
     "extends": "",
-    "short": "Select to inspect · ＋ or － moves a card · {panes} switch panes · {filter} cycles filters · {move} picks up a row · {done} Done · {cancel} Cancel",
+    "short": "Select to inspect · ＋ or － moves a card · {panes} switch panes · {filter} cycles filters · {move} picks up a row · {done} Accept · {cancel} Cancel",
     "full": "",
     "tip": ""
   },
@@ -5830,7 +5844,7 @@ export const uiStrings = [
     "id": "deckEditor.cancel",
     "extends": "",
     "short": "Cancel",
-    "full": "Put the deck back exactly as it was when the editor opened.",
+    "full": "Discard deck changes after confirmation.",
     "tip": "Cancel"
   },
   {
@@ -10247,6 +10261,671 @@ export const uiStrings = [
     "id": "combat.callout.missed",
     "extends": "",
     "short": "Missed",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.creation.copy1",
+    "extends": "",
+    "short": "Choose your class",
+    "full": "Choose your class",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.creation.copy2",
+    "extends": "",
+    "short": "Begin the climb",
+    "full": "Begin the climb",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.creation.copy3",
+    "extends": "",
+    "short": "Back",
+    "full": "Back",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.creation.copy4",
+    "extends": "",
+    "short": "Run seed",
+    "full": "Run seed",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.copy1",
+    "extends": "",
+    "short": "Rest",
+    "full": "Rest",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.copy2",
+    "extends": "",
+    "short": "Strategize · Edit deck",
+    "full": "Strategize · Edit deck",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.copy3",
+    "extends": "",
+    "short": "Smith · Upgrade equipment",
+    "full": "Smith · Upgrade equipment",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.copy4",
+    "extends": "",
+    "short": "Level Up · Allocate earned point",
+    "full": "Level Up · Allocate earned point",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.copy5",
+    "extends": "",
+    "short": "Continue",
+    "full": "Continue",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.copy6",
+    "extends": "",
+    "short": "Equipment to upgrade",
+    "full": "Equipment to upgrade",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.copy7",
+    "extends": "",
+    "short": "Attribute to increase",
+    "full": "Attribute to increase",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.selector.copy1",
+    "extends": "",
+    "short": "New game:",
+    "full": "New game:",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.selector.copy2",
+    "extends": "",
+    "short": "New game configuration",
+    "full": "New game configuration",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.selector.copy3",
+    "extends": "",
+    "short": "Import game configuration JSON",
+    "full": "Import game configuration JSON",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.combat.attackTarget",
+    "extends": "",
+    "short": "Attack target",
+    "full": "Attack target",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.combat.attack",
+    "extends": "",
+    "short": "Attack",
+    "full": "Attack",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.combat.unreadIntent",
+    "extends": "",
+    "short": "Unread",
+    "full": "Unread",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.smithFree",
+    "extends": "",
+    "short": "Equipment upgrade: no currency cost.",
+    "full": "Equipment upgrade: no currency cost.",
+    "tip": ""
+  },
+  {
+    "id": "shop.bar.combatCards",
+    "extends": "",
+    "short": "Combat cards",
+    "full": "Combat card offers.",
+    "tip": ""
+  },
+  {
+    "id": "quit.title",
+    "extends": "",
+    "short": "THE EMBER GUTTERS",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "quit.message",
+    "extends": "",
+    "short": "The game has stopped. You may close this window.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.configured.buy",
+    "extends": "",
+    "short": "Buy this item?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.configured.buy.message",
+    "extends": "",
+    "short": "Spend {cost} of your {cinders} cinders ({left} left). The item joins your collection.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.review.starterDeck",
+    "extends": "",
+    "short": "Starting deck",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.configured.note",
+    "extends": "",
+    "short": "Choose {count}. Cards join your collection; edit your deck at Strategize.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.settings.title",
+    "extends": "",
+    "short": "Game rules",
+    "full": "Game rules",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.settings.current",
+    "extends": "",
+    "short": "Current game",
+    "full": "Current game",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.settings.core",
+    "extends": "",
+    "short": "Ashen core",
+    "full": "Ashen core",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.settings.imported",
+    "extends": "",
+    "short": "Imported configuration",
+    "full": "Imported configuration",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.settings.future",
+    "extends": "",
+    "short": "{profile} · applies to future new games. Existing runs keep their rules.",
+    "full": "{profile} · applies to future new games. Existing runs keep their rules.",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.settings.invalid",
+    "extends": "",
+    "short": "Configuration not applied: {error}",
+    "full": "Configuration not applied: {error}",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.settings.saveFailed",
+    "extends": "",
+    "short": "Game rules could not be saved.",
+    "full": "Game rules could not be saved.",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.settings.fileTooLarge",
+    "extends": "",
+    "short": "Choose a JSON file smaller than 1 MB.",
+    "full": "Choose a JSON file smaller than 1 MB.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.viewPreset",
+    "extends": "",
+    "short": "View mode",
+    "full": "Choose a layout for this device. Auto follows the window size.",
+    "tip": ""
+  },
+  {
+    "id": "settings.viewPreset.auto",
+    "extends": "",
+    "short": "Auto",
+    "full": "Auto",
+    "tip": ""
+  },
+  {
+    "id": "settings.viewPreset.desktop",
+    "extends": "",
+    "short": "Desktop",
+    "full": "Desktop",
+    "tip": ""
+  },
+  {
+    "id": "settings.viewPreset.mobile",
+    "extends": "",
+    "short": "Mobile",
+    "full": "Mobile",
+    "tip": ""
+  },
+  {
+    "id": "settings.viewPreset.widescreen",
+    "extends": "",
+    "short": "Widescreen",
+    "full": "Widescreen",
+    "tip": ""
+  },
+  {
+    "id": "settings.viewPreset.tablet",
+    "extends": "",
+    "short": "Tablet",
+    "full": "Tablet",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.settings.import",
+    "extends": "",
+    "short": "Import JSON",
+    "full": "Import JSON",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.service.strategize",
+    "extends": "",
+    "short": "Strategize",
+    "full": "Strategize",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.service.smith",
+    "extends": "",
+    "short": "Smith",
+    "full": "Smith",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.service.levelUp",
+    "extends": "",
+    "short": "Level Up",
+    "full": "Level Up",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.description.strategize",
+    "extends": "",
+    "short": "Edit your deck. Confirming fully restores your pools and flasks.",
+    "full": "Edit your deck. Confirming fully restores your pools and flasks.",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.description.smith",
+    "extends": "",
+    "short": "Review one equipment upgrade. Confirming fully restores your pools and flasks.",
+    "full": "Review one equipment upgrade. Confirming fully restores your pools and flasks.",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.description.levelUp",
+    "extends": "",
+    "short": "Assign one earned attribute point. Confirming fully restores your pools and flasks.",
+    "full": "Assign one earned attribute point. Confirming fully restores your pools and flasks.",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.spent",
+    "extends": "",
+    "short": "Your choice here is spent.",
+    "full": "Your choice here is spent.",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.noSmith",
+    "extends": "",
+    "short": "No owned equipment has an available upgrade.",
+    "full": "No owned equipment has an available upgrade.",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.noLevel",
+    "extends": "",
+    "short": "No earned attribute point is available.",
+    "full": "No earned attribute point is available.",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.chooseOne",
+    "extends": "",
+    "short": "Choose one service. Confirming restores HP and any active MP and SP pools and refills healing and MP flasks.",
+    "full": "Choose one service. Confirming restores HP and any active MP and SP pools and refills healing and MP flasks.",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.complete",
+    "extends": "",
+    "short": "{service} completed. Your choice here is spent.",
+    "full": "{service} completed. Your choice here is spent.",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.smithConsequence",
+    "extends": "",
+    "short": "Review the upgrade before confirming. One upgrade completes this visit and fully restores your pools and flasks.",
+    "full": "Review the upgrade before confirming. One upgrade completes this visit and fully restores your pools and flasks.",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.completesVisit",
+    "extends": "",
+    "short": "COMPLETES THIS VISIT",
+    "full": "COMPLETES THIS VISIT",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.smithDecision",
+    "extends": "",
+    "short": "and completes this visit with full pool and flask recovery",
+    "full": "and completes this visit with full pool and flask recovery",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.levelNote",
+    "extends": "",
+    "short": "Choose one attribute for one earned point. Existing points cannot be reduced. Confirming completes this visit.",
+    "full": "Choose one attribute for one earned point. Existing points cannot be reduced. Confirming completes this visit.",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.levelConfirm",
+    "extends": "",
+    "short": "Assign point and recover",
+    "full": "Assign point and recover",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.pool.hp",
+    "extends": "",
+    "short": "HP",
+    "full": "HP",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.pool.mp",
+    "extends": "",
+    "short": "MP",
+    "full": "MP",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.pool.sp",
+    "extends": "",
+    "short": "SP",
+    "full": "SP",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.pool.healingFlask",
+    "extends": "",
+    "short": "Healing flasks",
+    "full": "Healing flasks",
+    "tip": ""
+  },
+  {
+    "id": "gameProfile.rest.pool.mpFlask",
+    "extends": "",
+    "short": "MP flasks",
+    "full": "MP flasks",
+    "tip": ""
+  },
+  {
+    "id": "creation.class.unlockNextRun",
+    "extends": "",
+    "short": "Play 1 game to unlock.",
+    "full": "Play 1 game to unlock.",
+    "tip": ""
+  },
+  {
+    "id": "combat.cards.choose.title",
+    "extends": "",
+    "short": "Choose {count} cards",
+    "full": "Choose {count} cards",
+    "tip": "Choose {count} cards"
+  },
+  {
+    "id": "combat.cards.choose.prompt",
+    "extends": "",
+    "short": "Choose cards from {from} for {to}. Selected order is used from top to bottom.",
+    "full": "Choose cards from {from} for {to}. Selected order is used from top to bottom.",
+    "tip": "Choose cards from {from} for {to}. Selected order is used from top to bottom."
+  },
+  {
+    "id": "combat.cards.choose.confirm",
+    "extends": "",
+    "short": "Confirm selection",
+    "full": "Confirm selection",
+    "tip": "Confirm selection"
+  },
+  {
+    "id": "deckEditor.preview.card",
+    "extends": "",
+    "short": "Show card",
+    "full": "Show card",
+    "tip": "Show card"
+  },
+  {
+    "id": "deckEditor.preview.animation",
+    "extends": "",
+    "short": "Show animation",
+    "full": "Show animation",
+    "tip": "Show animation"
+  },
+  {
+    "id": "deckEditor.keywordExplanations",
+    "extends": "",
+    "short": "Keyword explanations",
+    "full": "Keyword explanations",
+    "tip": "Keyword explanations"
+  },
+  {
+    "id": "deckEditor.rulesAndKeywords",
+    "extends": "",
+    "short": "Rules and keywords",
+    "full": "Rules and keywords",
+    "tip": "Rules and keywords"
+  },
+  {
+    "id": "deckEditor.accept",
+    "extends": "",
+    "short": "Accept",
+    "full": "Save this deck.",
+    "tip": "Accept"
+  },
+  {
+    "id": "deckEditor.closeUnsaved.title",
+    "extends": "",
+    "short": "Discard deck changes?",
+    "full": "Discard deck changes?",
+    "tip": "Discard deck changes?"
+  },
+  {
+    "id": "deckEditor.closeUnsaved.message",
+    "extends": "",
+    "short": "Close without saving your deck edits?",
+    "full": "Close without saving your deck edits?",
+    "tip": "Close without saving your deck edits?"
+  },
+  {
+    "id": "deckEditor.closeUnsaved.discard",
+    "extends": "",
+    "short": "Discard changes",
+    "full": "Discard changes",
+    "tip": "Discard changes"
+  },
+  {
+    "id": "deckEditor.closeUnsaved.keepEditing",
+    "extends": "",
+    "short": "Keep editing",
+    "full": "Keep editing",
+    "tip": "Keep editing"
+  },
+  {
+    "id": "combat.targetHud.details",
+    "extends": "",
+    "short": "Combatant details",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.targetHud.namedDetails",
+    "extends": "",
+    "short": "{name} details",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.targetHud.unknown",
+    "extends": "",
+    "short": "Exact move, damage, and effects unread.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.targetHud.damageScope",
+    "extends": "",
+    "short": "Direct HP damage at current defenses and committed stance. Excludes delayed effects and retaliation.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.targetHud.ready",
+    "extends": "",
+    "short": "Ready",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.targetHud.prepare",
+    "extends": "",
+    "short": "Prepare",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.targetHud.defend",
+    "extends": "",
+    "short": "Defend",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "common.choose",
+    "extends": "",
+    "short": "Choose",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "common.chooseNamed",
+    "extends": "",
+    "short": "Choose {name}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "cardChoice.stanceTitle",
+    "extends": "",
+    "short": "Choose a stance",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "mastery.treeAria",
+    "extends": "",
+    "short": "Choose {name} class tree node",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.view.gridLabel",
+    "extends": "",
+    "short": "Grid",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.view.listLabel",
+    "extends": "",
+    "short": "List",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.chooseRank",
+    "extends": "",
+    "short": "Choose {name}, rank {rank}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.chooseSection",
+    "extends": "",
+    "short": "Choose {name}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "event.defaultOption",
+    "extends": "",
+    "short": "this event option",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "lobby.ready",
+    "extends": "",
+    "short": "Ready",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "lobby.beginWaiting",
+    "extends": "",
+    "short": "Begin the climb (waiting for ready)",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "sceneEditor.grid",
+    "extends": "",
+    "short": "Grid",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.view.grid",
+    "extends": "",
+    "short": "Grid view",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.view.list",
+    "extends": "",
+    "short": "List view",
     "full": "",
     "tip": ""
   }

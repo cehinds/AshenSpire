@@ -187,6 +187,7 @@ player's piles).
 | `targeting.ally` | 0 | SP | Not carried by a card today; the base. |
 | `targeting.randomEnemy` | 1 | SP | Not carried by a card today; between single and area. |
 | `targeting.allEnemies` | 2 | SP | Not carried by a card today; as targeting:area. |
+| `targeting.allAllies` | 2 | SP | Every ally at once; as targeting:area. |
 
 ### Magic schools
 

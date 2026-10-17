@@ -1,3 +1,4 @@
+import { t } from '../strings.js';
 // Shared themed confirmation surface for reversible, potentially destructive
 // choices. The action is not committed until the primary button is pressed.
 
@@ -51,8 +52,8 @@ export function closeConfirmationModal({ restoreFocus = false } = {}) {
 export function openConfirmationModal({
   title,
   message,
-  confirmLabel = 'Continue',
-  cancelLabel = 'Back',
+  confirmLabel = t('common.continue'),
+  cancelLabel = t('common.back'),
   consequence = '',
   target = '',
   detailsHtml = '',

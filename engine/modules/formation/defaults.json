@@ -1,0 +1,10 @@
+{
+  "mode": "configured",
+  "extraRow": {
+    "enabled": false,
+    "sides": [
+      "enemy"
+    ],
+    "capacityPerLane": 1
+  }
+}

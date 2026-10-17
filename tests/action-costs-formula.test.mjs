@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { applyAbilityGrade } from '../src/model/abilityGrades.js';
-import { COST_CONFIG, cardCostBudget, applyActionCosts, enemyPoolOf, enemyAttributesOf, isCostOptOut, validateCostConfig } from '../src/model/actionCosts.js';
+import { COST_CONFIG, cardCostBudget, applyActionCosts, enemyPoolOf, enemyAttributesOf, isCostOptOut, ownRestoreFunds, validateCostConfig } from '../src/model/actionCosts.js';
 import { COST_BUDGET, COST_TAGS, ENEMY_SP_ROW, ENEMY_SP_BANDS, ENEMY_BLIGHT_SHIFT } from '../src/content/actionCosts.js';
 import { derivedStatRules } from '../src/content/derivedStats.js';
 import * as Rounds from '../src/engine/combatRoundsAdapter.js';
@@ -176,37 +176,35 @@ test('a magic card\'s rank weighs on its Mana side as well as its Stamina side; 
   for (let rank = 1; rank <= 5; rank++) assert.ok(cardCostBudget(spell, { rank }).mp >= cardCostBudget(spell, { rank: rank - 1 }).mp, `rank ${rank}`);
 });
 
-// Owner, 2026-10-13: restore cards break even. A card costs what it restores in that pool, its own restore pays that
-// part, so it is castable at 0 of the pool and changes it by 0.
-test('a restore card costs exactly what it restores, in the same pool, and that part is funded by the restore', () => {
-  for (const id of ['attune', 'emberCommunion']) {
-    const card = registries.cards.get(id);
-    const priced = cardCostBudget(card);
-    const restored = card.effects.filter((e) => e.op === 'restoreMana').reduce((sum, e) => sum + e.amount, 0);
-    assert.ok(restored > 0, `fixture: ${id} restores Mana`);
-    assert.equal(COST_BUDGET.restoreWeight, 1, 'one Mana of price per Mana restored');
-    assert.equal(priced.mp, priced.rawMp + restored, `${id}: its Mana price is its other Mana price plus what it restores`);
-    assert.equal(priced.funded.mp, restored, `${id}: the restore funds that part`);
-    assert.equal(resolveCard(registries, { cardId: id }).manaCost, priced.mp, `${id}: the face shows the full price`);
-  }
+// Generic derived restores still fund their own price. The paid entry spells
+// opt into authored prices so restoring two Mana actually gains one after payment.
+test('derived restores fund their price while authored recovery spells keep their gain', () => {
   const surge = { id: 'surge', type: 'skill', cost: 1, effects: [{ op: 'gainEnergy', amount: 2 }, { op: 'damage', target: 'enemy', amount: 30 }], tags: ['camp:physical', 'heavy'] };
   const out = cardCostBudget(surge);
-  assert.equal(out.sp, Math.max(1, out.rawSp) + 2, 'its Stamina price plus the 2 Stamina it restores');
+  assert.equal(out.sp, Math.max(1, out.rawSp) + 2);
   assert.deepEqual({ ...out.funded }, { sp: 2, mp: 0 });
+  for (const id of ['attune', 'emberCommunion']) {
+    const card = resolveCard(registries, { cardId: id });
+    assert.equal(card.manaCost, 1, `${id}: actual payment stays one Mana`);
+    assert.equal(card.effects.find(e => e.op === 'restoreMana').amount, 2);
+    assert.deepEqual(ownRestoreFunds(card), { stamina: 0, mana: 0 });
+  }
 });
 
-test('Attune and Ember Communion are castable at 0 Mana and change Mana by exactly 0', () => {
+test('Attune and Ember Communion pay one Mana and restore two through the real interpreter', () => {
   for (const [classId, cardId] of [['herald', 'emberCommunion'], ['starseer', 'attune']]) {
-    for (const start of [0, 2]) {
+    for (const start of [0, 1, 2]) {
       const run = createRunState({ seed: 3, classId, registries });
       const combat = createRunCombat({ registries, rng: createRng(3), run, enemyIds: ['wanderingSoldier'], settings: {} });
-      combat.player.maxMana = Math.max(combat.player.maxMana, start);
+      combat.player.maxMana = Math.max(combat.player.maxMana, start + 2);
       combat.player.mana = start;
-      combat.piles.hand.push({ instanceId: `dry-${cardId}`, cardId, upgraded: false });
-      assert.ok(resolveCard(registries, { cardId }).manaCost >= 1, `${cardId} shows a Mana price`);
-      dispatch(combat, { type: 'playCard', cardInstanceId: `dry-${cardId}` });
-      assert.ok(combat.eventLog.some((e) => e.type === 'cardPlayed' && e.cardInstanceId === `dry-${cardId}`), `${cardId} was cast from ${start} Mana`);
-      assert.equal(combat.player.mana, start, `${cardId}: net Mana change 0 from ${start} Mana`);
+      combat.piles.hand.push({ instanceId: `paid-${cardId}`, cardId, upgraded: false });
+      const play = () => dispatch(combat, { type: 'playCard', cardInstanceId: `paid-${cardId}` });
+      if (start === 0) assert.throws(play, /Not enough Stamina or Mana/);
+      else play();
+      const played = combat.eventLog.some(e => e.type === 'cardPlayed' && e.cardInstanceId === `paid-${cardId}`);
+      assert.equal(played, start > 0, `${cardId}: one Mana is required`);
+      assert.equal(combat.player.mana, start ? start + 1 : 0, `${cardId}: paid cast gains exactly one net Mana`);
     }
   }
 });

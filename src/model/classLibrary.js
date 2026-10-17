@@ -1,3 +1,4 @@
+import { gameModule } from './gameProfile.js';
 // A run owns reusable class cards. run.class remains the last class identity
 // for legacy stat/armour readers; classUnequipped explicitly empties its core.
 import { swapRunClass } from './classSwap.js';
@@ -7,6 +8,7 @@ import { learnedClassIds as learnedClassIds_ } from './classLibraryState.js';
 export const learnedClassIds = learnedClassIds_;
 
 export function equipClassCard(registries, run, classId, { inCombat = false } = {}) {
+  if (gameModule(run, 'class-selection')?.mode === 'configured') throw new Error('Configured classes stay fixed for the run; choose an unlocked class when starting a new run');
   if (inCombat || run.combatEntered) throw new Error('Class cards can only change outside combat.');
   if (run.pendingReward) throw new Error('Finish the pending reward before changing class cards.');
   if (classId !== null && (!registries.classes.has(classId) || !learnedClassIds(run).includes(classId))) throw new Error('Learn this class before equipping it.');

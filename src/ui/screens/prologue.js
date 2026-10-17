@@ -1,3 +1,4 @@
+import { matchViewMedia } from '../viewViewport.js';
 import { prologueSceneMs, prologueTransitionMs } from '../../model/prologueTiming.js';
 import { paintPrologueCharacter, placePrologueCharacter } from '../prologueCharacter.js';
 import { el, button, openModal } from '../kit/index.js';
@@ -68,7 +69,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   const config = prologueConfig(settings), p = config.presentation;
   const classId = run.class || p.previewClass;
   const destination = prologueDestination(run);
-  const portrait = matchMedia(`(max-width: ${PROLOGUE_LAYOUT.sizing.mobileBreakpoint}px) and (orientation: portrait)`);
+  const portrait = matchViewMedia(`(max-width: ${PROLOGUE_LAYOUT.sizing.mobileBreakpoint}px) and (orientation: portrait)`);
   const prefersStill = matchMedia('(prefers-reduced-motion: reduce)');
   const root = el('section',{class:'prologue-screen', 'aria-label':t('prologue.aria')});
   const stage = el('div',{class:'prologue-stage','aria-hidden':'true'});
@@ -133,7 +134,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   // On a short landscape screen the caption layout is a side panel (the
   // stylesheet's max-height:500px fallback): it fills its column, so there is
   // no band to fit. The editor's phone preview stays one column in any window.
-  const shortLandscape = matchMedia('(max-height:500px) and (orientation:landscape)');
+  const shortLandscape = matchViewMedia('(max-height:500px) and (orientation:landscape)');
   const fixedCaption = stage => stage.captionFixedHeight === true
     && (stage.layout === 'letterbox' || (stage.layout === 'caption' && !(shortLandscape.matches && !root.closest('.pse-phone'))));
   function measureFit() {

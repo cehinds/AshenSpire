@@ -1,0 +1,7 @@
+{
+  "mode": "configured",
+  "include": [
+    "physical",
+    "magic"
+  ]
+}

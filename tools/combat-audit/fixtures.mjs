@@ -88,14 +88,19 @@ export function applyAuditScenario(api, combat, scenario = 'baseline') {
 }
 
 // Capability states for positive/negative predicate branches; no dispatch methods change.
+// Action-local predicates return metadata for the caller's evaluation context.
 export function setAuditPredicate(combat, predicate, truth, target = combat.enemies[0]) {
   const p = predicate;
   const entities = p.of === 'allEnemies' ? combat.enemies : [p.of === 'target' ? target : combat.player];
   switch (p.p) {
     case 'not': return setAuditPredicate(combat, p.pred, !truth, target);
-    case 'all': case 'any':
-      for (const child of p.preds) setAuditPredicate(combat, child, truth, target);
-      return;
+    case 'all': case 'any': {
+      const meta = {};
+      for (const child of p.preds) Object.assign(meta, setAuditPredicate(combat, child, truth, target));
+      return meta;
+    }
+    case 'resourcePaid':
+      return { [p.resource === 'mana' ? 'manaSpent' : 'staminaSpent']: truth ? p.amount ?? 1 : 0 };
     case 'hasBlock': for (const entity of entities) entity.block = truth ? 20 : 0; return;
     case 'hasStatus':
       for (const entity of entities) {

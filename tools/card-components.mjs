@@ -88,7 +88,7 @@ export function generateCardComponents(base=root){
 export function writeCardObjects(data,out){
   const dir=resolve(out,'cards');mkdirSync(dir,{recursive:true});
   for(const [id,card] of Object.entries(data.cards)){
-    if(!/^[\w-]+$/.test(id))throw Error('Unsafe card id');
+    if(!/^[\w-]+(?:\.[\w-]+)*$/.test(id)||id==='index')throw Error('Unsafe card id: '+id);
     writeFileSync(resolve(dir,id+'.json'),JSON.stringify(card,null,2)+'\n');
   }
   writeFileSync(resolve(dir,'index.json'),JSON.stringify({schemaVersion:1,cards:Object.keys(data.cards)},null,2)+'\n');

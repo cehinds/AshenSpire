@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { renderCard } from '../src/ui/components/card.js';
+import { illustratedCardHtml } from '../src/ui/components/illustratedCard.js';
 import { applyCardTraits } from '../src/content/traitProjection.js';
 import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
@@ -51,6 +52,13 @@ test('the same card with a preview gives the same line text when the numbers are
   assert.deepEqual(previewed.map(textOf), plain.map(textOf));
 }));
 
+test('the shared title fade appears on a base face without adding a sigil footer', () => {
+  const html = illustratedCardHtml({id:'bashingBlow',name:'Test Base Card',costs:{},type:{},sigils:null,sideTags:[],range:null},
+    {rules:'A short rule.'});
+  assert.match(html, /class="card-title-fade"/);
+  assert.doesNotMatch(html, /class="card-footer-backdrop"/);
+});
+
 test('with faceLineLimit 3 a card with more than three lines marks lines 4+ data-face-extra', () => withKitDom(dom => {
   const markup = trackInnerHtml(dom);
   const cardId = reg.cards.all().map(card => card.id).find(id => {
@@ -64,6 +72,22 @@ test('with faceLineLimit 3 a card with more than three lines marks lines 4+ data
     if (i < 3) assert.doesNotMatch(line.attrs, /data-face-extra/, `line ${i + 1} stays visible`);
     else assert.match(line.attrs, /data-face-extra="true"/, `line ${i + 1} is marked extra`);
   });
+}));
+
+test('a compact face keeps at most three rule lines visible and inspection retains every line', () => withKitDom(dom => {
+  const markup = trackInnerHtml(dom);
+  const cardId = reg.cards.all().map(card => card.id).find(id => {
+    const face = renderCard(reg, { cardId: id }, { inspection: false, level: 'glance' });
+    return faceLinesOf(markup.get(face)).length > 3;
+  });
+  assert.ok(cardId, 'a card with more than three face lines exists');
+  const compact = markup.get(renderCard(reg, { cardId }, { inspection: false, level: 'glance' }));
+  const full = markup.get(renderCard(reg, { cardId }, { inspection: false, level: 'inspect' }));
+  assert.match(compact, /data-rules-overflow="true"/);
+  assert.match(compact, /data-face-overflow="true"/);
+  assert.match(compact, /card-rules-inspect-cue/);
+  assert.doesNotMatch(full, /data-face-overflow="true"|card-rules-inspect-cue/);
+  assert.equal(faceLinesOf(full).length, faceLinesOf(compact).length, 'inspection preserves the full compact-face source text');
 }));
 
 test('the hand hides detail lines until the card is selected; other views show them', () => withKitDom(dom => {

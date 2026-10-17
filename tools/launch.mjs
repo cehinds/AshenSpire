@@ -124,6 +124,16 @@ if (content.code !== 0) {
   process.exit(content.code || 1);
 }
 
+// Compile the authored JSON game profiles into the immutable catalog imported by
+// the runtime. Profile data is independent of content tables but must be current
+// before the bundler starts reading the game graph.
+console.log('launch: compiling JSON game profiles…');
+const gameProfiles = await steps.run(resolve(ROOT, 'tools/game-config.mjs'), ['build']);
+if (gameProfiles.code !== 0) {
+  console.error('launch: game profile build failed — fix games/ashenspire and retry.');
+  process.exit(gameProfiles.code || 1);
+}
+
 const buildDir = resolve(ROOT, 'build');
 const distDir = resolve(ROOT, 'dist');
 

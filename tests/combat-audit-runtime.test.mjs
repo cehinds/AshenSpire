@@ -34,8 +34,11 @@ for (const mode of ['native', 'bundled']) test(`${mode}: registry inventory and 
   assert.equal(new Set(inventory.variants.map(v => v.key)).size, inventory.variants.length);
   for (const predicate of inventory.conditions) for (const truth of [false, true]) {
     const { combat } = makeAuditCombat(api, { classId: 'reaver' });
-    setAuditPredicate(combat, predicate, truth);
-    assert.equal(api.evalPredicate(combat, predicate, { owner: combat.player, source: combat.player, target: combat.enemies[0] }), truth, JSON.stringify(predicate));
+    const meta = setAuditPredicate(combat, predicate, truth);
+    // Empty conjunction/disjunction are constants, not two-state witnesses.
+    const expected = predicate.p === 'all' && !predicate.preds.length ? true
+      : predicate.p === 'any' && !predicate.preds.length ? false : truth;
+    assert.equal(api.evalPredicate(combat, predicate, { owner: combat.player, source: combat.player, target: combat.enemies[0], meta }), expected, JSON.stringify(predicate));
   }
   const { combat: staff } = makeAuditCombat(api, { classId: 'starseer', carrierId: 'ashStaff', instance: { cardId: 'strike', profileId: 'staffMagicAttack' } });
   assert.equal(staff.piles.hand[0].grantedBy, 'ashStaff');

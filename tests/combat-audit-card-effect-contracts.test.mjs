@@ -4,7 +4,7 @@ import { auditCardEffectContracts } from '../tools/combat-audit/card-effect-cont
 
 for (const mode of ['native', 'bundled']) test(`focused authored card-effect contracts: ${mode}`, async () => {
   const report = await auditCardEffectContracts({ mode });
-  assert.equal(report.inventory.cards, 304);
+  assert.equal(report.inventory.cards, 376);
   assert.equal(report.inventory.classes, 4);
   assert.equal(report.failures.length, 0);
   const counter = report.contracts.find(row => row.op === 'poiseDamage');
@@ -22,5 +22,5 @@ for (const mode of ['native', 'bundled']) test(`focused authored card-effect con
     assert.equal(report.candidates[op].authoredCount, 0, `${mode}: no card authors the ${op} DSL opcode`);
     assert.equal(report.unsupported.find(row => row.op === op).status, 'no-authored-card-op');
   }
-  assert.equal(report.neutral.filter(row => row.op === 'restoreMana').length, 2, `${mode}: both attune variants correctly report net-neutral recovery after payment`);
+  assert.equal(report.contracts.filter(row => row.op === 'restoreMana').length, 2, `${mode}: both attune variants reconcile recovery with upfront payment`);
 });

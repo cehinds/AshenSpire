@@ -689,8 +689,7 @@ test('the tooltip cost line renders identically through the framework for every 
       const rendered = `${pools.variable ? 'X' : pools.action} ${bridge.resourceWord('action')}`
         + (pools.mana ? ` + ${pools.mana} ${bridge.resourceWord('mana')}` : '');
       const legacy = `${def.cost} Stamina`
-        + (def.manaCost ? ` + ${def.manaCost} Mana` : '')
-        + (def.staminaCost ? ` + ${def.staminaCost} Stamina` : '');
+        + (def.manaCost ? ` + ${def.manaCost} Mana` : ''); // staminaCost is the cost-field alias, not a second charge.
       eq(rendered, legacy, `${card.id}${upgraded ? '+' : ''} cost line`);
     }
   }

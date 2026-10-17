@@ -1,0 +1,21 @@
+{
+  "mode": "configured",
+  "servicesPerVisit": 1,
+  "services": [
+    "strategize",
+    "smith",
+    "levelUp"
+  ],
+  "allowEmptyStrategize": true,
+  "recovery": {
+    "hp": "full",
+    "sp": "full",
+    "mp": "full",
+    "healingFlasks": "full",
+    "mpFlasks": "full"
+  },
+  "smith": {
+    "free": true,
+    "tiersPerService": 1
+  }
+}

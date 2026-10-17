@@ -1,3 +1,5 @@
+import { baseCardPresentation } from '../../content/generated/baseCards.js';
+import { gameModule } from '../../model/gameProfile.js';
 import { stanceOf, stanceEntryBonuses, stanceRulesFor, stanceRatingBonus } from '../../model/stanceRules.js';
 import { cardSideTags } from './cardTagSymbols.js';
 import { illustratedCardHtml, illustratedArtwork, fitIllustratedCards } from './illustratedCard.js';
@@ -293,21 +295,26 @@ export function renderCard(registries, ref, opts = {}) {
   let drawn = levelNow();
   // ONE TEXT FOR EVERY VIEW. The face lines are the shared model's output
   // (cardFaceText.js); a weight-priced card adds its pricing note as a detail line.
-  const faceLines = cardFaceLines(def, opts.preview || null, registries);
+  const faceRules = gameModule(registries, 'cards');
+  const allFaceLines = baseCardPresentation[def.id] ? null : cardFaceLines(def, opts.preview || null, registries);
+  const faceLines = allFaceLines && registries.gameProfile?.foundation?.mode === 'configured' && opts.level !== 'inspect'
+    ? allFaceLines.slice(0, Math.min(faceRules?.faceMaxEffects ?? Infinity, faceRules?.faceMaxLines ?? Infinity)) : allFaceLines;
   if (faceLines && def.weightClassPriced) faceLines.push({ kind: 'detail', html: 'Cost reflects your current weight' });
   // The combat hand passes faceLineLimit: lines past it stay in the DOM, hidden until the card is selected.
   const faceLineLimit = Number.isFinite(opts.faceLineLimit) ? opts.faceLineLimit : null;
   // In the hand, detail lines (a partial chance, usable-through, pricing) wait for selection: hidden at rest, shown when selected.
   const extraLine = (line, i) => faceLineLimit !== null && (i >= faceLineLimit || (line.kind === 'detail' && i > 0));
   const paint = (at) => {
-    const artwork = illustratedArtwork(ref, model.id, {large:at==='inspect',equipmentArt:equipmentPainting,
+    const visualCardId = baseCardPresentation[model.id]?.canonicalCardRef;
+    const artwork = illustratedArtwork(visualCardId ? { cardId: visualCardId } : ref, visualCardId || model.id, {large:at==='inspect',equipmentArt:equipmentPainting,
       definition:def,registries});
     const kept = el.children?[...el.children].filter(node=>node?.dataset?.cardPainted!=='1'):[];
     const authoredRules = def.weightClassPriced
       ? fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences).replace(/ Light:.*$/,'')+' Cost reflects your current weight.'
       : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences);
-    const rulesHtml = faceLines
-      ? compactCardRules(faceLines.map((line, i) => `<span class="face-line" data-face-kind="${line.kind}"${extraLine(line, i) ? ' data-face-extra="true"' : ''}>${line.html}</span>`).join(''))
+    const visibleLines = at === 'inspect' ? allFaceLines : faceLines;
+    const rulesHtml = visibleLines
+      ? compactCardRules(visibleLines.map((line, i) => `<span class="face-line" data-face-kind="${line.kind}"${extraLine(line, i) ? ' data-face-extra="true"' : ''}>${line.html}</span>`).join(''))
       // A face the shared model refused keeps the authored rules, never the looser summary.
       : compactCardRules(`${fallbackDamageLabel ? `${esc(fallbackDamageLabel)}: ` : ''}${authoredRules}`);
     el.dataset.faceLines = faceLines ? String(faceLines.length) : '';
@@ -319,6 +326,8 @@ export function renderCard(registries, ref, opts = {}) {
       artworkKind:artwork?.kind,
       artworkPosition:artwork?.position,
       artworkComposition:artwork,
+      completeRules: at === 'inspect',
+      rulesOverflow: at !== 'inspect' && Boolean(allFaceLines?.length > (faceLines?.length ?? 0)),
       glyph:engravedIconHtml(engravedGlyphId(model.icon))||esc(model.icon),
     });
     applyCardAppearance(el.querySelector('.illustrated-card-face'));
@@ -572,7 +581,7 @@ export function cardPlainText(registries, ref, opts = {}) {
   const model = opts.preview ? playingCardModel(registries, ref, { ...opts, definition: def })
     : { tokens: staticTokens(def), damageSequences: [] };
   const lines = opts.rules?.combatExpansionVersion === 2 || opts.preview?.combatExpansionVersion === 2
-    ? cardFaceLines(def, opts.preview || null, registries) : null;
+    ? (baseCardPresentation[def.id] ? null : cardFaceLines(def, opts.preview || null, registries)) : null;
   // Plain string work only: no DOM, so it runs the same headless and in a
   // browser. Tags go first; &amp; is decoded last so "&amp;lt;" stays literal.
   return String(lines ? lines.map(line => line.html).join(' · ') : fillTemplate(def, model.tokens, null, model.damageSequences))
@@ -660,7 +669,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
   // card tooltip had the identical defect; it is one fix, not two.
   const combatProfile = combatProfileFor(def);
   html += sigilExplanationHtml(cardSigilIdentity(combatCardType(def), combatProfile));
-  if (def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2) {
+  if (registries.gameProfile?.foundation?.mode !== 'configured' && (def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2)) {
     const stance = stanceOf(def);
     if (stance) {
       const ctx = { registries, combatExpansionVersion: 2, stanceRules: registries.balance?.stanceRules };

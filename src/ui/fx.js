@@ -1,3 +1,4 @@
+import { viewScale, viewViewportBox } from './viewViewport.js';
 import { playCombatEffect, clearCombatEffects } from './combatEffectSprites.js';
 import { combatEffectForEvent } from '../model/combatEffectEvents.js';
 // src/ui/fx.js — feedback effects (SPEC §7.4)
@@ -58,7 +59,11 @@ const rectOf = (o) => (o && typeof o.getBoundingClientRect === 'function' ? o.ge
 
 // The containing block of a `position: fixed` element is the viewport itself,
 // whatever it is nested in — origin (0, 0), so only the zoom separates the spaces.
-export const VIEWPORT_ORIGIN = { left: 0, top: 0, width: 0, height: 0 };
+export const VIEWPORT_ORIGIN = {
+  get left() { return viewViewportBox().left; },
+  get top() { return viewViewportBox().top; },
+  width: 0, height: 0,
+};
 
 /**
  * The page's `--ui-zoom`. Reading it is a computed-style read, which flushes
@@ -66,7 +71,7 @@ export const VIEWPORT_ORIGIN = { left: 0, top: 0, width: 0, height: 0 };
  * item reads it once, before its writes, and passes it as `zoom`.
  */
 export function uiZoom() {
-  return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
+  return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) * viewScale() || 1;
 }
 
 export function anchorLocalBox(layer, anchor, { zoom } = {}) {
@@ -92,7 +97,7 @@ export function anchorLocalBox(layer, anchor, { zoom } = {}) {
  * it as visual px and convert, never write it into a local-space property raw.
  */
 export function viewportLocalBox() {
-  return anchorLocalBox(VIEWPORT_ORIGIN, { left: 0, top: 0, width: innerWidth, height: innerHeight });
+  return anchorLocalBox(VIEWPORT_ORIGIN, viewViewportBox());
 }
 
 /**
@@ -319,6 +324,25 @@ export function placeAnchored(el, anchor, {
   return { left: at.left, top: at.top, width: b.width, height: b.height };
 }
 
+const combatReadoutLayers = new WeakMap();
+
+// Text feedback shares the combat root's ruler and escapes the sprite-FX
+// stacking context. Callers retain their original FX layer for sprite effects.
+export function combatReadoutLayer(layer, create = true) {
+  const combat = layer?.closest?.('.combat');
+  if (!combat) return layer;
+  let host = combatReadoutLayers.get(combat);
+  if (host?.parentNode === combat) return host;
+  if (!create) return null;
+  host = document.createElement('div');
+  host.className = 'combat-floater-layer';
+  host.setAttribute('aria-hidden', 'true');
+  Object.assign(host.style, { position: 'absolute', inset: '0', pointerEvents: 'none', overflow: 'visible', zIndex: '800' });
+  combat.appendChild(host);
+  combatReadoutLayers.set(combat, host);
+  return host;
+}
+
 /**
  * Spawn a floating number over an anchor element.
  *
@@ -328,6 +352,7 @@ export function placeAnchored(el, anchor, {
  */
 export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
   if (!layer || !anchor) return;
+  layer = combatReadoutLayer(layer);
   const x = Number.isFinite(placement.x) ? placement.x : 0;
   const y = Number.isFinite(placement.y) ? placement.y : 0;
   const jitter = placement.jitter !== false;
@@ -535,6 +560,7 @@ export function callout(layer, anchor, forId, kind) {
     ? (Object.prototype.hasOwnProperty.call(STATUS_WORDS, statusId) ? { string: `combat.status.applied.${statusId}`, tone: 'status', colour: STATUS_WORDS[statusId].colour } : null)
     : CALLOUT_KINDS[kind];
   if (!layer || !anchor || !def || forId == null) return null;
+  layer = combatReadoutLayer(layer);
   const now = Date.now();
   const q = queueFor(layer, forId);
   // Words that have finished leave the queue.
@@ -559,6 +585,9 @@ export function callout(layer, anchor, forId, kind) {
 
 /** A click-skip ends every callout in the layer. */
 export function clearCallouts(layer) {
+  layer = combatReadoutLayer(layer, false);
+  const queues = layer && calloutQueues.get(layer);
+  for (const queue of queues?.values() || []) for (const item of queue.items) clearTimeout(item.timer);
   for (const node of [...(layer?.children || [])]) if (node.dataset?.calloutFor !== undefined) node.remove();
   // The waiting queue goes with the visible words.
   if (layer) calloutQueues.delete(layer);

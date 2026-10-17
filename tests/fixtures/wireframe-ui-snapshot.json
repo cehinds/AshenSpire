@@ -54,9 +54,9 @@
   "combat": {
     "bands": [
       10,
-      55,
-      30,
-      5
+      49,
+      27,
+      14
     ],
     "footerMinimumPx": 56,
     "shortHostRails": true

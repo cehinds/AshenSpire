@@ -47,6 +47,8 @@ const DAMAGE_SCHOOL_PROPERTY = Object.freeze({
   physical: 'damage.physical',
   magic: 'damage.magic',
   arcane: 'damage.arcane',
+  holy: 'damage.holy',
+  fire: 'damage.fire',
 });
 
 const TARGET_PROPERTY = Object.freeze({
@@ -55,6 +57,7 @@ const TARGET_PROPERTY = Object.freeze({
   allEnemies: 'targeting.allEnemies',
   randomEnemy: 'targeting.randomEnemy',
   ally: 'targeting.ally',
+  allAllies: 'targeting.allAllies',
 });
 
 const PROFILE_ROLE_PROPERTY = Object.freeze({

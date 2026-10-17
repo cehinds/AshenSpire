@@ -204,3 +204,31 @@ test('Full log reads as a text link in the log header, keeping its 44px tap targ
   assert.match(css, /\.combat-log-head > \.combat-log-full:is\(:hover, :focus-visible[^)]*\) \{[^}]*text-decoration:underline/);
   assert.match(css, /\.combat-log-head > \.combat-log-full:focus-visible \{[^}]*outline:2px solid/);
 });
+
+test('live Grid checkbox waits for persistence and rolls back a refused preference', async () => {
+  for (const accepted of [true,false]) {
+    let checkbox, settle, root;
+    withToolsDom(dom => {
+      dom.document.documentElement = {dataset:{formationGrid:'true'}};
+      root = dom.document.documentElement;
+      const combatEl=dom.document.createElement('section');
+      dom.document.body.appendChild(combatEl);
+      mountCombatTools(combatEl,{state:{},onViewChange(){},onToggle(){},
+        onGridToggle:enabled=>new Promise(resolve=>{settle=()=>{
+          if(accepted) root.dataset.formationGrid=String(enabled);
+          resolve({ok:accepted});
+        };})});
+      checkbox=combatEl.querySelector('input[data-combat-tool="grid"]');
+      assert.equal(checkbox.getAttribute('aria-label'),'Show battlefield grid');
+      assert.equal(checkbox.checked,true);
+      checkbox.checked=false;
+      checkbox.dispatchEvent(new dom.Event('change'));
+      assert.equal(checkbox.disabled,true,'another write cannot race the pending save');
+      assert.equal(root.dataset.formationGrid,'true','no optimistic visual-grid change');
+      settle();
+    });
+    await Promise.resolve(); await Promise.resolve();
+    assert.equal(checkbox.disabled,false);
+    assert.equal(checkbox.checked,!accepted,'control reflects the actually persisted root value');
+  }
+});

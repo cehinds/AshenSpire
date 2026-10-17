@@ -34,7 +34,9 @@ const stored = (c) => JSON.stringify({ snapshot: serializeCombatSnapshot(c), rng
 test('every direct card, attack profile and armament has an explicit categorized source', () => {
   for (const card of regs.cards.all()) {
     if (![...card.effects, ...(card.upgrade?.effects || [])].some((e) => e.op === 'damage')) continue;
-    assert(attackDescriptor(card).source, `card ${card.id} missing source mapping`);
+    for (const effect of [...card.effects, ...(card.upgrade?.effects || [])].filter(e => e.op === 'damage')) {
+      assert(attackDescriptor({ ...card, attack: { ...card.attack, ...effect.attack }, tags: effect.tags || card.tags }).source, `card ${card.id} damage effect missing source mapping`);
+    }
   }
   for (const profile of regs.equipment.basicCardProfiles.filter((p) => p.role === 'attack')) assert(attackDescriptor(profile).source, profile.id);
   for (const item of regs.equipment.armaments) {

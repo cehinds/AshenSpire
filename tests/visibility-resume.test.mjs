@@ -351,13 +351,15 @@ test('combat.js ends a card drag through finishCardDrag, so the unit above is th
 // `.onblur`), a computed event name or a computed key must be
 // [entry, why it cannot move run/combat state].
 const KNOWN = {
-  'src/main.js': ["'resize'", "'load'", "'resize'", '.__worldJourney', '.__uiScale', '.__equipCfg', '.__profile', '.__archives', '.__runstatus', '.__startingAbilities', '.__flasks', '.__spoils', '.__fxProbe', '.__coopSnapshotForShot', '.__coopSentForShot', '.__receiveCoopSnapshotForShot', '.__shotAgeSlot'],
+  'src/main.js': ["'resize'", "'load'", "'resize'", '.__worldJourney', '.__uiScale', '.__equipCfg', '.__profile', '.__archives', '.__runstatus', '.__startingAbilities', '.__flasks', '.__spoils', '.__fxProbe', '.__coopSnapshotForShot', '.__coopSentForShot', '.__receiveCoopSnapshotForShot', '.__shotAgeSlot', '.__rewardStateForShot', '.__restStateForShot'],
   'src/ui/assets.js': ["'animationstart'"],
   'src/ui/audio.js': [['ev', "one of 'pointerdown', 'pointerup', 'touchend', 'keydown' (the literal list beside it): unlocks/resumes the AudioContext and music only"]],
   'src/ui/components/armamentRadial.js': ["'pointerdown'", "'keydown'"],
   'src/ui/components/battlefieldStage.js': ["'resize'"],
   'src/ui/components/card.js': ["'resize'"],
   'src/ui/components/cardInspection.js': ["'resize'"],
+  'src/ui/components/combatTargetHud.js': ["'resize'"],
+  'src/ui/viewViewport.js': [['type', 'MediaQueryList change-listener method accepts only change; resize observation updates geometry without run/combat mutation']],
   'src/ui/components/combatTools.js': ["'resize'"],
   'src/ui/components/confirmationModal.js': [['type', "one of keyEvents = ['keydown', 'keyup']: swallows keys while the confirmation shield stands"], "'keydown'"],
   'src/ui/components/creationInfoLayer.js': ["'resize'"],
