@@ -16,8 +16,8 @@ import { canonicalGameJSON, resolveGameAuthor, validateGameSchema } from '../eng
 import { loadGameProfileCatalog } from './game-config.mjs';
 import { loadMechanics, loadOps } from '../engine/runtime/interpreter.mjs';
 import { buildAssetCatalog } from './asset-catalog.mjs';
-import { resolveAtlasPath } from './maps-validate.mjs';
-import { visibilityErrors } from './ui-validate.mjs';
+import { resolveAtlasPath, validateMaps } from './maps-validate.mjs';
+import { visibilityErrors, validateUi } from './ui-validate.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const FORMAT = 'ashen.build@1';
@@ -130,6 +130,8 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
           const known = kind === 'call' ? commandsOf(hit.slug) : eventsOf(hit.slug);
           if (!known.includes(hit.name)) fail(`${slug}: ${kind} target '${full}' is not a ${kind === 'call' ? 'command' : 'event'} of ${hit.slug}`);
         };
+        // Step kinds, in the runtime's order (SPEC section 6): anything else is 'Unknown step' at run time.
+        if (!['op', 'if', 'forEach', 'emit', 'call', 'set'].some(k => k in step)) fail(`${slug}: unknown step ${JSON.stringify(step)}`);
         if ('call' in step) check('call', step.call);
         if ('emit' in step) check('emit', step.emit);
         // Ops: every op is in the catalog; a portable mechanic uses only portable ops (SPEC section 8).
@@ -155,6 +157,7 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   const layout = {};
   const addLayout = (ref, where) => {
     if (!ref) return;
+    if (!ref.startsWith('content/config/ui/')) return fail(`${where}: layout ref '${ref}' must live under content/config/ui/`);
     if (!existsSync(path.join(ROOT, ref))) return fail(`${where}: layout ref '${ref}' does not exist`);
     layout[ref] ||= readJson(ref);
   };
@@ -274,7 +277,12 @@ export function summarize(artifact, bytes) {
 }
 export const summaryText = summary => JSON.stringify(summary, null, 2) + '\n';
 
-function main(argv) {
+async function main(argv) {
+  // The standalone build refuses anything the dedicated validators refuse (map generator parity with
+  // src/content/mapconfig.js and src/engine/mapgen.js, UI rules), so an artifact never skips them.
+  const { problems } = await validateMaps();
+  const { errors: uiErrors } = validateUi();
+  if (problems.length || uiErrors.length) throw new Error(`build refused:\n  ${[...problems, ...uiErrors].join('\n  ')}`);
   const gameArg = argv.find(a => a.startsWith('--game='));
   const game = gameArg ? gameArg.slice(7) : 'ashenspire';
   const check = argv.includes('--check');
@@ -295,5 +303,5 @@ function main(argv) {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  try { main(process.argv.slice(2)); } catch (e) { console.error(e.message); process.exit(1); }
+  main(process.argv.slice(2)).catch(e => { console.error(e.message); process.exit(1); });
 }
