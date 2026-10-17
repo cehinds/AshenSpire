@@ -1,0 +1,445 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Editable hex region proposal",
+  "description": "Structure only. Resolve defaults and validate IDs, adjacency and catalog compatibility separately.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "minLength": 1
+    },
+    "formatVersion": {
+      "const": 2
+    },
+    "status": {
+      "const": "proposal-only"
+    },
+    "catalogFile": {
+      "type": "string",
+      "minLength": 1
+    },
+    "map": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "grid": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "orientation": {
+              "const": "pointy-top"
+            },
+            "layout": {
+              "const": "odd-r"
+            },
+            "coordinateOrigin": {
+              "const": "northwest"
+            },
+            "addressStyle": {
+              "const": "A1"
+            }
+          },
+          "required": [
+            "orientation",
+            "layout",
+            "coordinateOrigin",
+            "addressStyle"
+          ]
+        },
+        "display": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "showGridLines": {
+              "type": "boolean",
+              "default": false,
+              "description": "Independent grid toggle. Never enables tile labels."
+            },
+            "showTileLabels": {
+              "type": "boolean",
+              "default": false,
+              "description": "Only this setting enables tile address labels."
+            }
+          },
+          "required": [
+            "showGridLines",
+            "showTileLabels"
+          ]
+        },
+        "art": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "tileTextureWidth": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "lightTileTextureWidth": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "tileTextureWidth",
+            "lightTileTextureWidth"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "grid",
+        "display",
+        "art"
+      ]
+    },
+    "regions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/region"
+      }
+    },
+    "roads": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/road"
+      }
+    },
+    "biomeTransitions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/transition"
+      }
+    }
+  },
+  "required": [
+    "formatVersion",
+    "status",
+    "catalogFile",
+    "map",
+    "regions",
+    "roads",
+    "biomeTransitions"
+  ],
+  "$defs": {
+    "tileProperties": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "biome": {
+          "enum": [
+            "grassland",
+            "forest",
+            "jungle",
+            "swamp",
+            "snow",
+            "volcanic"
+          ]
+        },
+        "setting": {
+          "type": "string",
+          "minLength": 1
+        },
+        "artProfileId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "weatherProfileId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "difficulty": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "tier": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "multiplier": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "warning": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1
+            }
+          }
+        },
+        "encounters": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "poolId": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1
+            },
+            "chance": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          }
+        },
+        "environmentEffectIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "lootTableId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "questIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "discoveries": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "trainer": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "poolId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "minLength": 1
+                },
+                "chance": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              }
+            },
+            "restSpot": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "poolId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "minLength": 1
+                },
+                "chance": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              }
+            }
+          }
+        },
+        "timeOfDay": {
+          "enum": [
+            "inherit-run",
+            "day",
+            "dusk",
+            "night"
+          ],
+          "description": "Use the run presentation time, or pin this tile to an authored lighting context."
+        }
+      }
+    },
+    "tile": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "position": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "column": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "row": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "column",
+            "row"
+          ]
+        },
+        "existingNodeId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "properties": {
+          "$ref": "#/$defs/tileProperties"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "position",
+        "existingNodeId",
+        "tags",
+        "properties"
+      ]
+    },
+    "region": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "defaults": {
+          "$ref": "#/$defs/tileProperties"
+        },
+        "tiles": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/tile"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "defaults",
+        "tiles"
+      ]
+    },
+    "road": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tileIds": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "surface": {
+          "type": "string",
+          "minLength": 1
+        },
+        "surfaceChanges": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "fromTileId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "surface": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "fromTileId",
+              "surface"
+            ]
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "tileIds",
+        "surface",
+        "surfaceChanges"
+      ]
+    },
+    "transition": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fromTileId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "toTileId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "style": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ownerTileId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "fromTileId",
+        "toTileId",
+        "style",
+        "ownerTileId"
+      ]
+    }
+  }
+}

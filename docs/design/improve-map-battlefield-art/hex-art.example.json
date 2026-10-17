@@ -1,0 +1,363 @@
+{
+  "$schema": "./hex-art.schema.json",
+  "formatVersion": 2,
+  "status": "proposal-only",
+  "catalogFile": "tile-content.catalog.json",
+  "map": {
+    "id": "example-borderlands",
+    "name": "The Greenward Road",
+    "grid": {
+      "orientation": "pointy-top",
+      "layout": "odd-r",
+      "coordinateOrigin": "northwest",
+      "addressStyle": "A1"
+    },
+    "display": {
+      "showGridLines": false,
+      "showTileLabels": false
+    },
+    "art": {
+      "tileTextureWidth": 512,
+      "lightTileTextureWidth": 256
+    }
+  },
+  "regions": [
+    {
+      "id": "western-marches",
+      "name": "Western Marches",
+      "defaults": {
+        "biome": "grassland",
+        "setting": "road",
+        "artProfileId": "meadow",
+        "weatherProfileId": "temperate",
+        "difficulty": {
+          "tier": 1,
+          "multiplier": 1,
+          "warning": null
+        },
+        "encounters": {
+          "poolId": "road-raiders",
+          "chance": 0.25
+        },
+        "environmentEffectIds": [],
+        "lootTableId": null,
+        "questIds": [],
+        "discoveries": {
+          "trainer": {
+            "poolId": null,
+            "chance": 0
+          },
+          "restSpot": {
+            "poolId": null,
+            "chance": 0
+          }
+        },
+        "timeOfDay": "inherit-run"
+      },
+      "tiles": [
+        {
+          "id": "west-city",
+          "name": "Westwatch",
+          "position": {
+            "column": 0,
+            "row": 1
+          },
+          "existingNodeId": null,
+          "tags": [
+            "settlement",
+            "stone",
+            "city-gate"
+          ],
+          "properties": {
+            "setting": "city",
+            "artProfileId": "city",
+            "encounters": {
+              "poolId": null,
+              "chance": 0
+            },
+            "discoveries": {
+              "trainer": {
+                "poolId": "city-trainers",
+                "chance": 0.4
+              },
+              "restSpot": {
+                "poolId": "city-inns",
+                "chance": 1
+              }
+            }
+          }
+        },
+        {
+          "id": "crossroads",
+          "name": "Three Ways",
+          "position": {
+            "column": 1,
+            "row": 1
+          },
+          "existingNodeId": null,
+          "tags": [
+            "road",
+            "junction"
+          ],
+          "properties": {
+            "discoveries": {
+              "trainer": {
+                "poolId": "wandering-trainers",
+                "chance": 0.2
+              },
+              "restSpot": {
+                "poolId": "road-camps",
+                "chance": 0.3
+              }
+            }
+          }
+        },
+        {
+          "id": "ruined-watch",
+          "name": "The Broken Watch",
+          "position": {
+            "column": 1,
+            "row": 2
+          },
+          "existingNodeId": null,
+          "tags": [
+            "ruins",
+            "stone",
+            "danger"
+          ],
+          "properties": {
+            "setting": "ruins",
+            "artProfileId": "ruins",
+            "encounters": {
+              "poolId": "ruin-guardians",
+              "chance": 1
+            },
+            "difficulty": {
+              "tier": 3,
+              "multiplier": 1.6,
+              "warning": "Elite guardians beyond the broken arch"
+            },
+            "lootTableId": "watch-relic",
+            "questIds": [
+              "recover-watch-banner"
+            ]
+          }
+        },
+        {
+          "id": "forest-edge",
+          "name": "Fernwood Approach",
+          "position": {
+            "column": 2,
+            "row": 1
+          },
+          "existingNodeId": null,
+          "tags": [
+            "road",
+            "forest",
+            "transition"
+          ],
+          "properties": {
+            "biome": "forest",
+            "artProfileId": "forest",
+            "encounters": {
+              "poolId": "forest-hunters",
+              "chance": 0.35
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "verdant-reach",
+      "name": "Verdant Reach",
+      "defaults": {
+        "biome": "jungle",
+        "setting": "road",
+        "artProfileId": "jungle",
+        "weatherProfileId": "tropical",
+        "difficulty": {
+          "tier": 2,
+          "multiplier": 1.15,
+          "warning": null
+        },
+        "encounters": {
+          "poolId": "jungle-stalkers",
+          "chance": 0.45
+        },
+        "environmentEffectIds": [],
+        "lootTableId": null,
+        "questIds": [],
+        "discoveries": {
+          "trainer": {
+            "poolId": null,
+            "chance": 0
+          },
+          "restSpot": {
+            "poolId": null,
+            "chance": 0
+          }
+        },
+        "timeOfDay": "inherit-run"
+      },
+      "tiles": [
+        {
+          "id": "jungle-road",
+          "name": "The Overgrown Road",
+          "position": {
+            "column": 3,
+            "row": 1
+          },
+          "existingNodeId": null,
+          "tags": [
+            "road",
+            "jungle",
+            "vines"
+          ],
+          "properties": {}
+        },
+        {
+          "id": "east-city",
+          "name": "Canopy Gate",
+          "position": {
+            "column": 4,
+            "row": 1
+          },
+          "existingNodeId": null,
+          "tags": [
+            "settlement",
+            "city-gate",
+            "jungle"
+          ],
+          "properties": {
+            "setting": "city",
+            "artProfileId": "city",
+            "encounters": {
+              "poolId": null,
+              "chance": 0
+            },
+            "discoveries": {
+              "trainer": {
+                "poolId": "city-trainers",
+                "chance": 0.4
+              },
+              "restSpot": {
+                "poolId": "city-inns",
+                "chance": 1
+              }
+            }
+          }
+        },
+        {
+          "id": "sheltered-clearing",
+          "name": "Lantern Clearing",
+          "position": {
+            "column": 2,
+            "row": 2
+          },
+          "existingNodeId": null,
+          "tags": [
+            "jungle",
+            "clearing",
+            "sheltered"
+          ],
+          "properties": {
+            "setting": "clearing",
+            "encounters": {
+              "poolId": null,
+              "chance": 0
+            },
+            "discoveries": {
+              "trainer": {
+                "poolId": "herbalist-trainers",
+                "chance": 0.35
+              },
+              "restSpot": {
+                "poolId": "jungle-camps",
+                "chance": 1
+              }
+            },
+            "questIds": [
+              "find-the-herbalist"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "roads": [
+    {
+      "id": "greenward-road",
+      "name": "Greenward Road",
+      "tileIds": [
+        "west-city",
+        "crossroads",
+        "forest-edge",
+        "jungle-road",
+        "east-city"
+      ],
+      "surface": "cobblestone",
+      "surfaceChanges": [
+        {
+          "fromTileId": "forest-edge",
+          "surface": "worn-stone"
+        },
+        {
+          "fromTileId": "jungle-road",
+          "surface": "overgrown-stone"
+        }
+      ]
+    },
+    {
+      "id": "watch-spur",
+      "name": "Old Watch Spur",
+      "tileIds": [
+        "crossroads",
+        "ruined-watch"
+      ],
+      "surface": "dirt",
+      "surfaceChanges": []
+    },
+    {
+      "id": "lantern-trail",
+      "name": "Lantern Trail",
+      "tileIds": [
+        "forest-edge",
+        "sheltered-clearing"
+      ],
+      "surface": "forest-path",
+      "surfaceChanges": []
+    }
+  ],
+  "biomeTransitions": [
+    {
+      "fromTileId": "crossroads",
+      "toTileId": "forest-edge",
+      "style": "grass-to-ferns",
+      "ownerTileId": "forest-edge"
+    },
+    {
+      "fromTileId": "forest-edge",
+      "toTileId": "jungle-road",
+      "style": "ferns-to-vines",
+      "ownerTileId": "jungle-road"
+    },
+    {
+      "fromTileId": "forest-edge",
+      "toTileId": "sheltered-clearing",
+      "style": "ferns-to-vines",
+      "ownerTileId": "sheltered-clearing"
+    },
+    {
+      "fromTileId": "crossroads",
+      "toTileId": "sheltered-clearing",
+      "style": "grass-to-jungle",
+      "ownerTileId": "sheltered-clearing"
+    },
+    {
+      "fromTileId": "ruined-watch",
+      "toTileId": "sheltered-clearing",
+      "style": "grass-to-jungle",
+      "ownerTileId": "sheltered-clearing"
+    }
+  ]
+}
