@@ -14,7 +14,7 @@ it lands, combat still plays the legacy `moves` from `src/content/enemies/act1-3
 | Setting | Meaning |
 |---|---|
 | `include` | Tiers this profile fields (`minion`, `elite`, `boss`). |
-| `statRules` | Per-stat rows in the player's derived-stat shape (`src/content/derivedStats.js`): attribute weights and `perLevel`, each term floored on its own. HP = 10 + per point CON 10 / STR 5 / DEX 3 / WIS 2 / INT 2 + 5 per level above 1 (owner 2026-10-17); SP/MP use the player's rows; AR = STR, DR = DEX, hand + INT. |
+| `statRules` | Per-stat rows in the player's derived-stat shape (`src/content/derivedStats.js`): attribute weights and `perLevel`, each term floored on its own. HP = 10 + per point CON 10 / STR 5 / DEX 3 / WIS 2 / INT 1 + 5 per level above 1 (owner 2026-10-17); SP/MP use the player's rows; AR = STR, DR = DEX, hand + INT. |
 | `levelFrom` | Which level the build checks against (`levelProfile.min` by default). |
 | `tiers.<tier>.pools` | Base before attributes and level: HP 10 every tier; SP 2 (minion) / 3 (elite, boss); MP 1 every tier. |
 | `tiers.<tier>.attributeBudget` | Points to assign. All five attributes start at 0; each enemy assigns freely (owner 2026-10-17): minion 2, elite 4, boss 6. CON stays small; enemies are hard already. |

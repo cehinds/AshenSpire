@@ -968,7 +968,7 @@ export const gameProfileCatalog = {
             "dexterity": 3,
             "constitution": 10,
             "wisdom": 2,
-            "intelligence": 2,
+            "intelligence": 1,
             "perLevel": 5
           },
           "sp": {
@@ -1551,7 +1551,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/enemies/defaults.json",
           "id": "enemies",
           "version": "1.0.0",
-          "hash": "sha256:006d627914f129d3b65ceef741143ea4373c7fb9f8e1174e978a8a2ef249f05c"
+          "hash": "sha256:ef5d0806b184506bcbca113f614e6e4de3ebe56c8b83092bda892c520690446c"
         },
         {
           "path": "engine/modules/enemies/settings.schema.json",
@@ -4712,11 +4712,11 @@ export const gameProfileCatalog = {
             ],
             "firstCard": "thornMatriarch.rootCrown",
             "gear": [
-              "enemy.gear.heavyPlate",
-              "enemy.gear.luckyTooth"
+              "enemy.gear.hide"
             ],
             "relics": [
-              "enemy.relic.titanHeart"
+              "enemy.relic.titanHeart",
+              "enemy.relic.graveSeal"
             ],
             "poiseMax": 22,
             "levelProfile": {
@@ -5087,7 +5087,7 @@ export const gameProfileCatalog = {
             ],
             "firstCard": "glassRegent.prismGuard",
             "gear": [
-              "enemy.gear.luckyTooth"
+              "enemy.gear.hide"
             ],
             "relics": [
               "enemy.relic.ashenCore",
@@ -5144,7 +5144,8 @@ export const gameProfileCatalog = {
             ],
             "firstCard": "marrowOrganist.bonePrelude",
             "gear": [
-              "enemy.gear.mail"
+              "enemy.gear.mail",
+              "enemy.gear.luckyTooth"
             ],
             "relics": [
               "enemy.relic.abyssalCrown"
@@ -5358,7 +5359,9 @@ export const gameProfileCatalog = {
               "blightedValkyrie.scarletDance"
             ],
             "firstCard": "blightedValkyrie.spiralThrust",
-            "gear": [],
+            "gear": [
+              "enemy.gear.luckyTooth"
+            ],
             "relics": [
               "enemy.relic.abyssalCrown",
               "enemy.relic.titanHeart"
@@ -5551,12 +5554,9 @@ export const gameProfileCatalog = {
               "hollowAstronomer.fallingHeavens"
             ],
             "firstCard": "hollowAstronomer.starChart",
-            "gear": [
-              "enemy.gear.plating"
-            ],
+            "gear": [],
             "relics": [
-              "enemy.relic.ashenCore",
-              "enemy.relic.titanHeart"
+              "enemy.relic.abyssalCrown"
             ],
             "poiseMax": 25,
             "levelProfile": {
@@ -8823,7 +8823,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/enemies.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:fadd5b9b41dda3e7b8502fc9ffdd17a7d5588bb002b192c1371d40287fcb138f"
+          "hash": "sha256:125f23343307e021e128f428f4445c9c0873c41987e44d8f884efce276390875"
         },
         {
           "path": "games/ashenspire/packs/core/enemyCards.json",

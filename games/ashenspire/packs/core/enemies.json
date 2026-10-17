@@ -417,11 +417,11 @@
     ],
     "firstCard": "thornMatriarch.rootCrown",
     "gear": [
-      "enemy.gear.heavyPlate",
-      "enemy.gear.luckyTooth"
+      "enemy.gear.hide"
     ],
     "relics": [
-      "enemy.relic.titanHeart"
+      "enemy.relic.titanHeart",
+      "enemy.relic.graveSeal"
     ],
     "poiseMax": 22,
     "levelProfile": {
@@ -792,7 +792,7 @@
     ],
     "firstCard": "glassRegent.prismGuard",
     "gear": [
-      "enemy.gear.luckyTooth"
+      "enemy.gear.hide"
     ],
     "relics": [
       "enemy.relic.ashenCore",
@@ -849,7 +849,8 @@
     ],
     "firstCard": "marrowOrganist.bonePrelude",
     "gear": [
-      "enemy.gear.mail"
+      "enemy.gear.mail",
+      "enemy.gear.luckyTooth"
     ],
     "relics": [
       "enemy.relic.abyssalCrown"
@@ -1063,7 +1064,9 @@
       "blightedValkyrie.scarletDance"
     ],
     "firstCard": "blightedValkyrie.spiralThrust",
-    "gear": [],
+    "gear": [
+      "enemy.gear.luckyTooth"
+    ],
     "relics": [
       "enemy.relic.abyssalCrown",
       "enemy.relic.titanHeart"
@@ -1256,12 +1259,9 @@
       "hollowAstronomer.fallingHeavens"
     ],
     "firstCard": "hollowAstronomer.starChart",
-    "gear": [
-      "enemy.gear.plating"
-    ],
+    "gear": [],
     "relics": [
-      "enemy.relic.ashenCore",
-      "enemy.relic.titanHeart"
+      "enemy.relic.abyssalCrown"
     ],
     "poiseMax": 25,
     "levelProfile": {
