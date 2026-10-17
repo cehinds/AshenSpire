@@ -1,6 +1,6 @@
 {
   "id": "fellWarden",
-  "status": "draft-proposals-not-approved",
+  "status": "draft-proposals",
   "count": 10,
   "layout": {
     "columns": 5,
@@ -22,5 +22,22 @@
       "role": "camera only"
     }
   ],
-  "visualQA": "Ten full-body rear three-quarter figures observed; consistent fiery dark armor and torn red cape. Proposal sheet awaits normalized frame QA and art approval."
+  "visualQA": "Ten full-body rear three-quarter figures observed; consistent fiery dark armor and torn red cape. Proposal sheet awaits normalized frame QA and art approval.",
+  "actorId": "fellWarden",
+  "master": "proposal-sheet.png",
+  "sourceReferences": [
+    {
+      "repository": "cehinds/AshenSpire-art",
+      "path": "hd/assets/enemy-poses/expansion/fellWarden/idle.webp",
+      "ref": "hd-assets-v23",
+      "blob": "1aab912c5dcef9cd91f37c6a1dc5e49b5981162b"
+    },
+    {
+      "repository": "cehinds/AshenSpire",
+      "path": "assets-display/alternative/reaver-default.webp",
+      "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+      "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+      "role": "camera only"
+    }
+  ]
 }
