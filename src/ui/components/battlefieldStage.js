@@ -1190,7 +1190,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       : frame.matches('.enemy:not(.context-selected):not(.dead)'))
       .map(({frame, sprite}) => {
         const box = frame.getBoundingClientRect(), style = getComputedStyle(frame, '::before');
-        const art = sprite.getBoundingClientRect();
+        const artBox = targetHud ? currentSpriteArtBounds(sprite, refresh) : sprite.getBoundingClientRect();
+        const art = { ...artBox, width: artBox.right - artBox.left };
         return { id: frame.dataset.eid, frame, box, art,
           x: box.left + parseFloat(style.left) * zoom - fieldRect.left,
           y: box.top + parseFloat(style.top) * zoom - fieldRect.top, width: 44 };
