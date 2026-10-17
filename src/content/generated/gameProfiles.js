@@ -206,6 +206,74 @@ export const gameProfileCatalog = {
         }
       ]
     },
+    "attribute-variance": {
+      "manifest": {
+        "manifestVersion": 1,
+        "id": "attribute-variance",
+        "version": "1.0.0",
+        "runtimeABI": "ashen.runtime@1",
+        "defaults": "defaults.json",
+        "settingsSchema": "settings.schema.json",
+        "implementation": {
+          "kind": "legacy-adapter",
+          "portable": false
+        },
+        "guide": "guide.md",
+        "configuredAdapter": true
+      },
+      "defaults": {
+        "mode": "configured",
+        "points": 1,
+        "among": 3
+      },
+      "schema": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "enum": [
+              "legacy",
+              "configured"
+            ]
+          },
+          "points": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10
+          },
+          "among": {
+            "type": "integer",
+            "minimum": 2,
+            "maximum": 5
+          }
+        },
+        "required": [
+          "mode",
+          "points",
+          "among"
+        ],
+        "additionalProperties": false
+      },
+      "artifacts": [
+        {
+          "path": "engine/modules/attribute-variance/module.json",
+          "id": "attribute-variance",
+          "version": "1.0.0",
+          "hash": "sha256:799c43f76e4039402dd5a7c5731d3479a5a6a9688dd27f7c98c57cb523ea038f"
+        },
+        {
+          "path": "engine/modules/attribute-variance/defaults.json",
+          "id": "attribute-variance",
+          "version": "1.0.0",
+          "hash": "sha256:7e692dc6d0b91e006b50c7b5ab6ba479bbe65c55c0b43e83631b1c1e84240f6e"
+        },
+        {
+          "path": "engine/modules/attribute-variance/settings.schema.json",
+          "id": "attribute-variance",
+          "version": "1.0.0",
+          "hash": "sha256:a5dc40287aedb074dfd9acbbd04f799af48c96696536131282af3df98f3a2845"
+        }
+      ]
+    },
     "audio": {
       "manifest": {
         "manifestVersion": 1,
@@ -262,6 +330,65 @@ export const gameProfileCatalog = {
           "id": "audio",
           "version": "1.0.0",
           "hash": "sha256:cd31a5558d31f26c52ec26543a338758a0d290ef9bd39fd80249605ac3473dee"
+        }
+      ]
+    },
+    "card-pools": {
+      "manifest": {
+        "manifestVersion": 1,
+        "id": "card-pools",
+        "version": "1.0.0",
+        "runtimeABI": "ashen.runtime@1",
+        "defaults": "defaults.json",
+        "settingsSchema": "settings.schema.json",
+        "implementation": {
+          "kind": "legacy-adapter",
+          "portable": false
+        },
+        "guide": "guide.md",
+        "configuredAdapter": true
+      },
+      "defaults": {
+        "mode": "configured",
+        "weaponTypes": true
+      },
+      "schema": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "enum": [
+              "legacy",
+              "configured"
+            ]
+          },
+          "weaponTypes": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "mode",
+          "weaponTypes"
+        ],
+        "additionalProperties": false
+      },
+      "artifacts": [
+        {
+          "path": "engine/modules/card-pools/module.json",
+          "id": "card-pools",
+          "version": "1.0.0",
+          "hash": "sha256:0f3e1c83e40cd1519700c55d148f70ed9c30892fb1e91e90f6aba114b15fca7a"
+        },
+        {
+          "path": "engine/modules/card-pools/defaults.json",
+          "id": "card-pools",
+          "version": "1.0.0",
+          "hash": "sha256:e85550e29fecbe721560bbd83f94161c47a881202373447b33da6916929a018f"
+        },
+        {
+          "path": "engine/modules/card-pools/settings.schema.json",
+          "id": "card-pools",
+          "version": "1.0.0",
+          "hash": "sha256:d4e8df90fc7057568ad90a92b550ed06ecf15e07c7156f1b62782d5dd87f9ab2"
         }
       ]
     },
@@ -515,10 +642,6 @@ export const gameProfileCatalog = {
           ],
           "caps": {
             "constitution": 1
-          },
-          "variance": {
-            "points": 1,
-            "among": 3
           }
         },
         "penaltyFloor": {
@@ -634,56 +757,6 @@ export const gameProfileCatalog = {
               "mp": 1
             },
             "hand": 4
-          }
-        },
-        "deckEditing": {
-          "default": "owned",
-          "unlimited": [
-            {
-              "id": "basicTraining",
-              "requiresTag": "training.basic",
-              "pools": [
-                "strike",
-                "defend",
-                "counter",
-                "smash",
-                "sweep",
-                "evade"
-              ],
-              "cards": {
-                "rarity": [
-                  "starter"
-                ],
-                "tagsAny": [
-                  "maneuver:attack",
-                  "maneuver:defend",
-                  "maneuver:counter",
-                  "maneuver:smash",
-                  "maneuver:sweep"
-                ]
-              }
-            },
-            {
-              "id": "graduate",
-              "requiresTag": "training.graduate",
-              "pools": [],
-              "cards": {
-                "rarity": [
-                  "starter"
-                ],
-                "tagsAll": [
-                  "camp:spell"
-                ]
-              }
-            }
-          ],
-          "owned": {
-            "pools": [
-              "special"
-            ],
-            "tags": [
-              "classification.weaponArt"
-            ]
           }
         }
       },
@@ -829,33 +902,12 @@ export const gameProfileCatalog = {
                   }
                 },
                 "additionalProperties": false
-              },
-              "variance": {
-                "type": "object",
-                "properties": {
-                  "points": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "maximum": 10
-                  },
-                  "among": {
-                    "type": "integer",
-                    "minimum": 2,
-                    "maximum": 5
-                  }
-                },
-                "required": [
-                  "points",
-                  "among"
-                ],
-                "additionalProperties": false
               }
             },
             "required": [
               "defaultPriority",
               "priorityWeights",
-              "caps",
-              "variance"
+              "caps"
             ],
             "additionalProperties": false
           },
@@ -965,104 +1017,6 @@ export const gameProfileCatalog = {
               },
               "additionalProperties": false
             }
-          },
-          "deckEditing": {
-            "type": "object",
-            "properties": {
-              "default": {
-                "enum": [
-                  "owned",
-                  "unlimited"
-                ]
-              },
-              "unlimited": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "requiresTag": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "pools": {
-                      "type": "array",
-                      "uniqueItems": true,
-                      "items": {
-                        "type": "string",
-                        "minLength": 1
-                      }
-                    },
-                    "cards": {
-                      "type": "object",
-                      "properties": {
-                        "rarity": {
-                          "type": "array",
-                          "uniqueItems": true,
-                          "items": {
-                            "type": "string",
-                            "minLength": 1
-                          }
-                        },
-                        "tagsAny": {
-                          "type": "array",
-                          "uniqueItems": true,
-                          "items": {
-                            "type": "string",
-                            "minLength": 1
-                          }
-                        },
-                        "tagsAll": {
-                          "type": "array",
-                          "uniqueItems": true,
-                          "items": {
-                            "type": "string",
-                            "minLength": 1
-                          }
-                        }
-                      },
-                      "additionalProperties": false
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "requiresTag"
-                  ],
-                  "additionalProperties": false
-                }
-              },
-              "owned": {
-                "type": "object",
-                "properties": {
-                  "pools": {
-                    "type": "array",
-                    "uniqueItems": true,
-                    "items": {
-                      "type": "string",
-                      "minLength": 1
-                    }
-                  },
-                  "tags": {
-                    "type": "array",
-                    "uniqueItems": true,
-                    "items": {
-                      "type": "string",
-                      "minLength": 1
-                    }
-                  }
-                },
-                "additionalProperties": false
-              }
-            },
-            "required": [
-              "default",
-              "unlimited",
-              "owned"
-            ],
-            "additionalProperties": false
           }
         },
         "required": [
@@ -1072,8 +1026,7 @@ export const gameProfileCatalog = {
           "statRules",
           "attributeFill",
           "penaltyFloor",
-          "tagRules",
-          "deckEditing"
+          "tagRules"
         ],
         "additionalProperties": false
       },
@@ -1088,13 +1041,13 @@ export const gameProfileCatalog = {
           "path": "engine/modules/characters/defaults.json",
           "id": "characters",
           "version": "1.0.0",
-          "hash": "sha256:9c67cc227e1fa9f09c1034b5b1551978f60c5f36ca488089e80e08681580ca3a"
+          "hash": "sha256:d902f3986fcc864651785d18087029c4d668a5c315ad302b0f8802d46624a87f"
         },
         {
           "path": "engine/modules/characters/settings.schema.json",
           "id": "characters",
           "version": "1.0.0",
-          "hash": "sha256:4b97d6acd5ea6cf33a394e772e92c1881a66e60eccae0b4dfc79e3ec8f8d96aa"
+          "hash": "sha256:da42d5faa9a9221e38bcd75fd91f791e790fa254fe615a8ac147c365cd85e2f2"
         }
       ]
     },
@@ -1240,6 +1193,198 @@ export const gameProfileCatalog = {
           "id": "damage-types",
           "version": "1.0.0",
           "hash": "sha256:df98d4f5b099d98b25cc3325266fe539673d9c844c94f312a120884f4943ea7e"
+        }
+      ]
+    },
+    "deck-training": {
+      "manifest": {
+        "manifestVersion": 1,
+        "id": "deck-training",
+        "version": "1.0.0",
+        "runtimeABI": "ashen.runtime@1",
+        "defaults": "defaults.json",
+        "settingsSchema": "settings.schema.json",
+        "implementation": {
+          "kind": "legacy-adapter",
+          "portable": false
+        },
+        "guide": "guide.md",
+        "configuredAdapter": true
+      },
+      "defaults": {
+        "mode": "configured",
+        "default": "owned",
+        "unlimited": [
+          {
+            "id": "basicTraining",
+            "requiresTag": "training.basic",
+            "pools": [
+              "strike",
+              "defend",
+              "counter",
+              "smash",
+              "sweep",
+              "evade"
+            ],
+            "cards": {
+              "rarity": [
+                "starter"
+              ],
+              "tagsAny": [
+                "maneuver:attack",
+                "maneuver:defend",
+                "maneuver:counter",
+                "maneuver:smash",
+                "maneuver:sweep"
+              ]
+            }
+          },
+          {
+            "id": "graduate",
+            "requiresTag": "training.graduate",
+            "pools": [],
+            "cards": {
+              "rarity": [
+                "starter"
+              ],
+              "tagsAll": [
+                "camp:spell"
+              ]
+            }
+          }
+        ],
+        "owned": {
+          "pools": [
+            "special"
+          ],
+          "tags": [
+            "classification.weaponArt"
+          ]
+        }
+      },
+      "schema": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "enum": [
+              "legacy",
+              "configured"
+            ]
+          },
+          "default": {
+            "enum": [
+              "owned",
+              "unlimited"
+            ]
+          },
+          "unlimited": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "requiresTag": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "pools": {
+                  "type": "array",
+                  "uniqueItems": true,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "cards": {
+                  "type": "object",
+                  "properties": {
+                    "rarity": {
+                      "type": "array",
+                      "uniqueItems": true,
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "tagsAny": {
+                      "type": "array",
+                      "uniqueItems": true,
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "tagsAll": {
+                      "type": "array",
+                      "uniqueItems": true,
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "id",
+                "requiresTag"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "owned": {
+            "type": "object",
+            "properties": {
+              "pools": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "tags": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "mode",
+          "default",
+          "unlimited",
+          "owned"
+        ],
+        "additionalProperties": false
+      },
+      "artifacts": [
+        {
+          "path": "engine/modules/deck-training/module.json",
+          "id": "deck-training",
+          "version": "1.0.0",
+          "hash": "sha256:4688931f5dee21a793a5b4c3321168039775cfcad75f89be0d6619f76a0f0922"
+        },
+        {
+          "path": "engine/modules/deck-training/defaults.json",
+          "id": "deck-training",
+          "version": "1.0.0",
+          "hash": "sha256:5f18b4661e237722f7ba320a5efc650a3d52c60eaedb9719f460744894cde3f8"
+        },
+        {
+          "path": "engine/modules/deck-training/settings.schema.json",
+          "id": "deck-training",
+          "version": "1.0.0",
+          "hash": "sha256:516f735ebeca22c8aa3d4c98a0c0e4118d6ba8f443e8985c9f5d0607de0e703c"
         }
       ]
     },
@@ -1645,47 +1790,6 @@ export const gameProfileCatalog = {
             "mp": 1
           }
         },
-        "healRules": {
-          "match": "mostSpecific",
-          "authoredCostWins": true,
-          "shapes": [
-            {
-              "id": "full",
-              "tags": [
-                "fx:heal"
-              ],
-              "cost": {
-                "sp": 3,
-                "mp": 2
-              },
-              "amount": {
-                "percentMaxHp": 10
-              },
-              "exhaust": false
-            },
-            {
-              "id": "cheap",
-              "tags": [
-                "fx:heal",
-                "lifecycle.exhaust"
-              ],
-              "cost": {
-                "sp": 1,
-                "mp": 1
-              },
-              "amount": {
-                "percentMaxHp": 10
-              },
-              "exhaust": true
-            }
-          ]
-        },
-        "stagger": {
-          "spLoss": 1,
-          "status": "vulnerable",
-          "stacks": 1,
-          "damageTakenMultiplier": 1.25
-        },
         "ai": {
           "weightField": "aiWeight",
           "lowHpThreshold": 0.35,
@@ -1693,48 +1797,6 @@ export const gameProfileCatalog = {
           "lowHpHealBias": 2,
           "smashIntoBlockBias": 1.3,
           "respectMaxConsecutive": true
-        },
-        "equipment": {
-          "maxPoints": 5,
-          "maxStats": 3,
-          "source": "player"
-        },
-        "visibility": {
-          "shown": [
-            "hp",
-            "poise",
-            "intent",
-            "defense",
-            "statuses"
-          ],
-          "revealedBy": {
-            "sp": [
-              "insight",
-              "bestiary"
-            ],
-            "mp": [
-              "insight",
-              "bestiary"
-            ],
-            "cardCosts": [
-              "insight"
-            ],
-            "deck": [
-              "bestiary"
-            ],
-            "hand": [
-              "insight"
-            ],
-            "gear": [
-              "bestiary"
-            ],
-            "relics": [
-              "bestiary"
-            ],
-            "attributes": [
-              "bestiary"
-            ]
-          }
         }
       },
       "schema": {
@@ -1821,124 +1883,6 @@ export const gameProfileCatalog = {
               "additionalProperties": false
             }
           },
-          "healRules": {
-            "type": "object",
-            "properties": {
-              "match": {
-                "enum": [
-                  "mostSpecific",
-                  "first"
-                ]
-              },
-              "authoredCostWins": {
-                "type": "boolean"
-              },
-              "shapes": {
-                "type": "array",
-                "minItems": 1,
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "tags": {
-                      "type": "array",
-                      "minItems": 1,
-                      "uniqueItems": true,
-                      "items": {
-                        "type": "string",
-                        "minLength": 1
-                      }
-                    },
-                    "cost": {
-                      "type": "object",
-                      "properties": {
-                        "sp": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 99
-                        },
-                        "mp": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 99
-                        }
-                      },
-                      "required": [
-                        "sp",
-                        "mp"
-                      ],
-                      "additionalProperties": false
-                    },
-                    "amount": {
-                      "type": "object",
-                      "properties": {
-                        "percentMaxHp": {
-                          "type": "number",
-                          "minimum": 0,
-                          "maximum": 100
-                        }
-                      },
-                      "required": [
-                        "percentMaxHp"
-                      ],
-                      "additionalProperties": false
-                    },
-                    "exhaust": {
-                      "type": "boolean"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "tags",
-                    "cost",
-                    "amount",
-                    "exhaust"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            },
-            "required": [
-              "match",
-              "authoredCostWins",
-              "shapes"
-            ],
-            "additionalProperties": false
-          },
-          "stagger": {
-            "type": "object",
-            "properties": {
-              "spLoss": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 99
-              },
-              "status": {
-                "type": "string",
-                "minLength": 1
-              },
-              "stacks": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 99
-              },
-              "damageTakenMultiplier": {
-                "type": "number",
-                "minimum": 0,
-                "maximum": 10
-              }
-            },
-            "required": [
-              "spLoss",
-              "status",
-              "stacks",
-              "damageTakenMultiplier"
-            ],
-            "additionalProperties": false
-          },
           "ai": {
             "type": "object",
             "properties": {
@@ -1979,6 +1923,70 @@ export const gameProfileCatalog = {
               "respectMaxConsecutive"
             ],
             "additionalProperties": false
+          }
+        },
+        "required": [
+          "mode",
+          "include",
+          "fallback",
+          "deck",
+          "stanceCosts",
+          "ai"
+        ],
+        "additionalProperties": false
+      },
+      "artifacts": [
+        {
+          "path": "engine/modules/enemies/module.json",
+          "id": "enemies",
+          "version": "1.0.0",
+          "hash": "sha256:75c630a22e3cb883e429f621984063870fec4c8f998f440ee3b06a2d21ddc954"
+        },
+        {
+          "path": "engine/modules/enemies/defaults.json",
+          "id": "enemies",
+          "version": "1.0.0",
+          "hash": "sha256:e3b2b049f509a22ea2ba9d996e329dc4256f525a0c3cd753332ee301733d3ad9"
+        },
+        {
+          "path": "engine/modules/enemies/settings.schema.json",
+          "id": "enemies",
+          "version": "1.0.0",
+          "hash": "sha256:34fefaade15673baa80535b21fee8fa7d54d6cae7ba3cdfe965fe56e25c08aa3"
+        }
+      ]
+    },
+    "enemy-relics": {
+      "manifest": {
+        "manifestVersion": 1,
+        "id": "enemy-relics",
+        "version": "1.0.0",
+        "runtimeABI": "ashen.runtime@1",
+        "defaults": "defaults.json",
+        "settingsSchema": "settings.schema.json",
+        "implementation": {
+          "kind": "legacy-adapter",
+          "portable": false
+        },
+        "guide": "guide.md",
+        "configuredAdapter": true
+      },
+      "defaults": {
+        "mode": "configured",
+        "equipment": {
+          "maxPoints": 5,
+          "maxStats": 3,
+          "source": "player"
+        }
+      },
+      "schema": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "enum": [
+              "legacy",
+              "configured"
+            ]
           },
           "equipment": {
             "type": "object",
@@ -2006,181 +2014,254 @@ export const gameProfileCatalog = {
               "source"
             ],
             "additionalProperties": false
-          },
-          "visibility": {
-            "type": "object",
-            "properties": {
-              "shown": {
-                "type": "array",
-                "uniqueItems": true,
-                "items": {
-                  "enum": [
-                    "hp",
-                    "poise",
-                    "intent",
-                    "defense",
-                    "statuses",
-                    "sp",
-                    "mp",
-                    "cardCosts",
-                    "deck",
-                    "hand",
-                    "gear",
-                    "relics",
-                    "attributes"
-                  ]
-                }
-              },
-              "revealedBy": {
-                "type": "object",
-                "properties": {
-                  "hp": {
-                    "type": "array",
-                    "uniqueItems": true,
-                    "items": {
-                      "type": "string",
-                      "minLength": 1
-                    }
-                  },
-                  "poise": {
-                    "type": "array",
-                    "uniqueItems": true,
-                    "items": {
-                      "type": "string",
-                      "minLength": 1
-                    }
-                  },
-                  "intent": {
-                    "type": "array",
-                    "uniqueItems": true,
-                    "items": {
-                      "type": "string",
-                      "minLength": 1
-                    }
-                  },
-                  "defense": {
-                    "type": "array",
-                    "uniqueItems": true,
-                    "items": {
-                      "type": "string",
-                      "minLength": 1
-                    }
-                  },
-                  "statuses": {
-                    "type": "array",
-                    "uniqueItems": true,
-                    "items": {
-                      "type": "string",
-                      "minLength": 1
-                    }
-                  },
-                  "sp": {
-                    "type": "array",
-                    "uniqueItems": true,
-                    "items": {
-                      "type": "string",
-                      "minLength": 1
-                    }
-                  },
-                  "mp": {
-                    "type": "array",
-                    "uniqueItems": true,
-                    "items": {
-                      "type": "string",
-                      "minLength": 1
-                    }
-                  },
-                  "cardCosts": {
-                    "type": "array",
-                    "uniqueItems": true,
-                    "items": {
-                      "type": "string",
-                      "minLength": 1
-                    }
-                  },
-                  "deck": {
-                    "type": "array",
-                    "uniqueItems": true,
-                    "items": {
-                      "type": "string",
-                      "minLength": 1
-                    }
-                  },
-                  "hand": {
-                    "type": "array",
-                    "uniqueItems": true,
-                    "items": {
-                      "type": "string",
-                      "minLength": 1
-                    }
-                  },
-                  "gear": {
-                    "type": "array",
-                    "uniqueItems": true,
-                    "items": {
-                      "type": "string",
-                      "minLength": 1
-                    }
-                  },
-                  "relics": {
-                    "type": "array",
-                    "uniqueItems": true,
-                    "items": {
-                      "type": "string",
-                      "minLength": 1
-                    }
-                  },
-                  "attributes": {
-                    "type": "array",
-                    "uniqueItems": true,
-                    "items": {
-                      "type": "string",
-                      "minLength": 1
-                    }
-                  }
-                },
-                "additionalProperties": false
-              }
-            },
-            "required": [
-              "shown",
-              "revealedBy"
-            ],
-            "additionalProperties": false
           }
         },
         "required": [
           "mode",
-          "include",
-          "fallback",
-          "deck",
-          "stanceCosts",
-          "healRules",
-          "stagger",
-          "ai",
-          "equipment",
-          "visibility"
+          "equipment"
         ],
         "additionalProperties": false
       },
       "artifacts": [
         {
-          "path": "engine/modules/enemies/module.json",
-          "id": "enemies",
+          "path": "engine/modules/enemy-relics/module.json",
+          "id": "enemy-relics",
           "version": "1.0.0",
-          "hash": "sha256:75c630a22e3cb883e429f621984063870fec4c8f998f440ee3b06a2d21ddc954"
+          "hash": "sha256:54a4774c4f94d56ecc7906ff7c17475ba92687000ad773442f2a34981802f019"
         },
         {
-          "path": "engine/modules/enemies/defaults.json",
-          "id": "enemies",
+          "path": "engine/modules/enemy-relics/defaults.json",
+          "id": "enemy-relics",
           "version": "1.0.0",
-          "hash": "sha256:7e5321c1dc921b966f2b4460320263a1a2bdc5aab84cdc0b8c2f2e85c70339ba"
+          "hash": "sha256:df4439e71646c5b7468b333476edb60af4b556d68eba075b16c82dbcd504c397"
         },
         {
-          "path": "engine/modules/enemies/settings.schema.json",
-          "id": "enemies",
+          "path": "engine/modules/enemy-relics/settings.schema.json",
+          "id": "enemy-relics",
           "version": "1.0.0",
-          "hash": "sha256:6ea48565c0eaede7cc033e2711583db8520c41e3442dc43ffa0c4eba3fd99c7b"
+          "hash": "sha256:5887810e29a1c4b750053b7e1063ae08f8c584659ff7e37ecc8cf8104d7918a0"
+        }
+      ]
+    },
+    "enemy-visibility": {
+      "manifest": {
+        "manifestVersion": 1,
+        "id": "enemy-visibility",
+        "version": "1.0.0",
+        "runtimeABI": "ashen.runtime@1",
+        "defaults": "defaults.json",
+        "settingsSchema": "settings.schema.json",
+        "implementation": {
+          "kind": "legacy-adapter",
+          "portable": false
+        },
+        "guide": "guide.md",
+        "configuredAdapter": true
+      },
+      "defaults": {
+        "mode": "configured",
+        "shown": [
+          "hp",
+          "poise",
+          "intent",
+          "defense",
+          "statuses"
+        ],
+        "revealedBy": {
+          "sp": [
+            "insight",
+            "bestiary"
+          ],
+          "mp": [
+            "insight",
+            "bestiary"
+          ],
+          "cardCosts": [
+            "insight"
+          ],
+          "deck": [
+            "bestiary"
+          ],
+          "hand": [
+            "insight"
+          ],
+          "gear": [
+            "bestiary"
+          ],
+          "relics": [
+            "bestiary"
+          ],
+          "attributes": [
+            "bestiary"
+          ]
+        }
+      },
+      "schema": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "enum": [
+              "legacy",
+              "configured"
+            ]
+          },
+          "shown": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "hp",
+                "poise",
+                "intent",
+                "defense",
+                "statuses",
+                "sp",
+                "mp",
+                "cardCosts",
+                "deck",
+                "hand",
+                "gear",
+                "relics",
+                "attributes"
+              ]
+            }
+          },
+          "revealedBy": {
+            "type": "object",
+            "properties": {
+              "hp": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "poise": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "intent": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "defense": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "statuses": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "sp": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "mp": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "cardCosts": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "deck": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "hand": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "gear": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "relics": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "attributes": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "mode",
+          "shown",
+          "revealedBy"
+        ],
+        "additionalProperties": false
+      },
+      "artifacts": [
+        {
+          "path": "engine/modules/enemy-visibility/module.json",
+          "id": "enemy-visibility",
+          "version": "1.0.0",
+          "hash": "sha256:d7c01eaebb117b5b228e7c4b80028028e7c48cba81153ecd326177ec23828960"
+        },
+        {
+          "path": "engine/modules/enemy-visibility/defaults.json",
+          "id": "enemy-visibility",
+          "version": "1.0.0",
+          "hash": "sha256:081a77c34dd65f338ee5e59573692de6f4342ea44d2031ed1c6b58a6616c1692"
+        },
+        {
+          "path": "engine/modules/enemy-visibility/settings.schema.json",
+          "id": "enemy-visibility",
+          "version": "1.0.0",
+          "hash": "sha256:ac6ec1272f3d6300626c2c2bc614bd12bfc23f399ea57bc1bc073abbc35d7b6a"
         }
       ]
     },
@@ -3701,6 +3782,172 @@ export const gameProfileCatalog = {
         }
       ]
     },
+    "heal-rules": {
+      "manifest": {
+        "manifestVersion": 1,
+        "id": "heal-rules",
+        "version": "1.0.0",
+        "runtimeABI": "ashen.runtime@1",
+        "defaults": "defaults.json",
+        "settingsSchema": "settings.schema.json",
+        "implementation": {
+          "kind": "legacy-adapter",
+          "portable": false
+        },
+        "guide": "guide.md",
+        "configuredAdapter": true
+      },
+      "defaults": {
+        "mode": "configured",
+        "match": "mostSpecific",
+        "authoredCostWins": true,
+        "shapes": [
+          {
+            "id": "full",
+            "tags": [
+              "fx:heal"
+            ],
+            "cost": {
+              "sp": 3,
+              "mp": 2
+            },
+            "amount": {
+              "percentMaxHp": 10
+            },
+            "exhaust": false
+          },
+          {
+            "id": "cheap",
+            "tags": [
+              "fx:heal",
+              "lifecycle.exhaust"
+            ],
+            "cost": {
+              "sp": 1,
+              "mp": 1
+            },
+            "amount": {
+              "percentMaxHp": 10
+            },
+            "exhaust": true
+          }
+        ]
+      },
+      "schema": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "enum": [
+              "legacy",
+              "configured"
+            ]
+          },
+          "match": {
+            "enum": [
+              "mostSpecific",
+              "first"
+            ]
+          },
+          "authoredCostWins": {
+            "type": "boolean"
+          },
+          "shapes": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "tags": {
+                  "type": "array",
+                  "minItems": 1,
+                  "uniqueItems": true,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "cost": {
+                  "type": "object",
+                  "properties": {
+                    "sp": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 99
+                    },
+                    "mp": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 99
+                    }
+                  },
+                  "required": [
+                    "sp",
+                    "mp"
+                  ],
+                  "additionalProperties": false
+                },
+                "amount": {
+                  "type": "object",
+                  "properties": {
+                    "percentMaxHp": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 100
+                    }
+                  },
+                  "required": [
+                    "percentMaxHp"
+                  ],
+                  "additionalProperties": false
+                },
+                "exhaust": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "id",
+                "tags",
+                "cost",
+                "amount",
+                "exhaust"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "mode",
+          "match",
+          "authoredCostWins",
+          "shapes"
+        ],
+        "additionalProperties": false
+      },
+      "artifacts": [
+        {
+          "path": "engine/modules/heal-rules/module.json",
+          "id": "heal-rules",
+          "version": "1.0.0",
+          "hash": "sha256:96ba05ad114ba32c86103d5080318e8438a9575fd2b5bd7f3263c0eec0e834b5"
+        },
+        {
+          "path": "engine/modules/heal-rules/defaults.json",
+          "id": "heal-rules",
+          "version": "1.0.0",
+          "hash": "sha256:b0e67562237082c8dac12cc401140877fe94747b5d30bc056a4d29b80f5b5056"
+        },
+        {
+          "path": "engine/modules/heal-rules/settings.schema.json",
+          "id": "heal-rules",
+          "version": "1.0.0",
+          "hash": "sha256:857be96cfa609d570d1593cf478d64955b74467592a0a02737a39d444f3f97fb"
+        }
+      ]
+    },
     "intent": {
       "manifest": {
         "manifestVersion": 1,
@@ -4316,6 +4563,94 @@ export const gameProfileCatalog = {
         }
       ]
     },
+    "reward-ranks": {
+      "manifest": {
+        "manifestVersion": 1,
+        "id": "reward-ranks",
+        "version": "1.0.0",
+        "runtimeABI": "ashen.runtime@1",
+        "defaults": "defaults.json",
+        "settingsSchema": "settings.schema.json",
+        "implementation": {
+          "kind": "legacy-adapter",
+          "portable": false
+        },
+        "guide": "guide.md",
+        "configuredAdapter": true
+      },
+      "defaults": {
+        "mode": "configured",
+        "minRank": 1,
+        "lowerRankChance": 0.1,
+        "rankOfRarity": {
+          "starter": 0,
+          "common": 1,
+          "uncommon": 2,
+          "rare": 3
+        },
+        "skipOwnedBasics": true
+      },
+      "schema": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "enum": [
+              "legacy",
+              "configured"
+            ]
+          },
+          "minRank": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10
+          },
+          "lowerRankChance": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "rankOfRarity": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10
+            }
+          },
+          "skipOwnedBasics": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "mode",
+          "minRank",
+          "lowerRankChance",
+          "rankOfRarity",
+          "skipOwnedBasics"
+        ],
+        "additionalProperties": false
+      },
+      "artifacts": [
+        {
+          "path": "engine/modules/reward-ranks/module.json",
+          "id": "reward-ranks",
+          "version": "1.0.0",
+          "hash": "sha256:60a7c6539a0f192ef1b3271bb4061d722f9825ed4331d71f6b23bf371bab5468"
+        },
+        {
+          "path": "engine/modules/reward-ranks/defaults.json",
+          "id": "reward-ranks",
+          "version": "1.0.0",
+          "hash": "sha256:c99153c3ca8f3bedb632f3be2d83a000b133383324f854c7368f8e324dca6c19"
+        },
+        {
+          "path": "engine/modules/reward-ranks/settings.schema.json",
+          "id": "reward-ranks",
+          "version": "1.0.0",
+          "hash": "sha256:97d419a7cf2cdbf16a04b0270804349e31cc450d2e887052fbccf3e0f42187c7"
+        }
+      ]
+    },
     "rewards": {
       "manifest": {
         "manifestVersion": 1,
@@ -4570,6 +4905,87 @@ export const gameProfileCatalog = {
           "id": "shops",
           "version": "1.0.0",
           "hash": "sha256:b997b20e7344c52165b9fe737b4a46bf0c2a38636d25b173fcbb1aa3cbb34bba"
+        }
+      ]
+    },
+    "stagger": {
+      "manifest": {
+        "manifestVersion": 1,
+        "id": "stagger",
+        "version": "1.0.0",
+        "runtimeABI": "ashen.runtime@1",
+        "defaults": "defaults.json",
+        "settingsSchema": "settings.schema.json",
+        "implementation": {
+          "kind": "legacy-adapter",
+          "portable": false
+        },
+        "guide": "guide.md",
+        "configuredAdapter": true
+      },
+      "defaults": {
+        "mode": "configured",
+        "spLoss": 1,
+        "status": "vulnerable",
+        "stacks": 1,
+        "damageTakenMultiplier": 1.25
+      },
+      "schema": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "enum": [
+              "legacy",
+              "configured"
+            ]
+          },
+          "spLoss": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 99
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "stacks": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 99
+          },
+          "damageTakenMultiplier": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 10
+          }
+        },
+        "required": [
+          "mode",
+          "spLoss",
+          "status",
+          "stacks",
+          "damageTakenMultiplier"
+        ],
+        "additionalProperties": false
+      },
+      "artifacts": [
+        {
+          "path": "engine/modules/stagger/module.json",
+          "id": "stagger",
+          "version": "1.0.0",
+          "hash": "sha256:bf2311362adc54a6e6902e834b00c2fa39db71ca819228e3585b6d447522a552"
+        },
+        {
+          "path": "engine/modules/stagger/defaults.json",
+          "id": "stagger",
+          "version": "1.0.0",
+          "hash": "sha256:10dc5d9f08dabd93f6fde9469d7f23df34f031c8b2405c56877a39e8208bb4f7"
+        },
+        {
+          "path": "engine/modules/stagger/settings.schema.json",
+          "id": "stagger",
+          "version": "1.0.0",
+          "hash": "sha256:7fa78b3c409cf5996eb143b0c941dc5a66abd0a20d414a3124cd35aab2b86be8"
         }
       ]
     },
@@ -5029,6 +5445,38 @@ export const gameProfileCatalog = {
                 "capacityPerLane": 1
               }
             }
+          },
+          "heal-rules": {
+            "version": "1.0.0",
+            "settings": {}
+          },
+          "stagger": {
+            "version": "1.0.0",
+            "settings": {}
+          },
+          "enemy-visibility": {
+            "version": "1.0.0",
+            "settings": {}
+          },
+          "enemy-relics": {
+            "version": "1.0.0",
+            "settings": {}
+          },
+          "attribute-variance": {
+            "version": "1.0.0",
+            "settings": {}
+          },
+          "deck-training": {
+            "version": "1.0.0",
+            "settings": {}
+          },
+          "card-pools": {
+            "version": "1.0.0",
+            "settings": {}
+          },
+          "reward-ranks": {
+            "version": "1.0.0",
+            "settings": {}
           }
         },
         "packs": [
@@ -5107,7 +5555,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/bundles/core/bundle.json",
           "id": "ashen.core",
           "version": "1.0.0",
-          "hash": "sha256:4f8662743983c049830cb3d5bee93bea0bbfc55fb05f8470de5dfe2fbbb0c197"
+          "hash": "sha256:05906b73b977762b0cad9d842acb3f106294f98c2b64cd7489737c11c817d14d"
         }
       ]
     },
@@ -8811,17 +9259,6 @@ export const gameProfileCatalog = {
               "cardIds": [
                 "core.reaverSpecial"
               ]
-            },
-            "combatCards": {
-              "minRank": 1,
-              "lowerRankChance": 0.1,
-              "rankOfRarity": {
-                "starter": 0,
-                "common": 1,
-                "uncommon": 2,
-                "rare": 3
-              },
-              "skipOwnedBasics": true
             }
           }
         },
@@ -13177,7 +13614,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/rewards.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:e0180473ed45f5ff94fab3a272c708bb5cf8b877ce1ed01d0fea83fac6f8e916"
+          "hash": "sha256:1f48daac4730f5a4161a413124d681d0614644777bc1ff6ed3624db50274c65d"
         },
         {
           "path": "games/ashenspire/packs/core/provisionalPolicies.json",
@@ -24910,7 +25347,7 @@ export const gameProfileCatalog = {
       "path": "engine/kernel/gameConfig.js",
       "id": "ashen.runtime",
       "version": "1.0.0",
-      "hash": "sha256:e9b7391269655385e4c37d9092cfa69db41d62a3fa484e0c80e1cc096f942f9b"
+      "hash": "sha256:db8893c0498cc433cd5702be04cd01f8fa793df3d7365697bf81d49e8a008ffe"
     },
     {
       "path": "engine/contracts/game-profile.json",
@@ -29943,7 +30380,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:3f9a67884765cb5f920ef530e66ccdcc2d826819e6f981359b771d44a5b5bf66"
     }
   ],
-  "runtimeHash": "sha256:8b4675a87e84aa965b3d775e14c7317e7b1f6b450777242efecf8156c36a8a99"
+  "runtimeHash": "sha256:a4fce7a4de3e8fdcbae55cd246c55c39619557e5a791922155cd70bc60fd2fde"
 };
 export const gameProfileAuthors = {
   "default": {

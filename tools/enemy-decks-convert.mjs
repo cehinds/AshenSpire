@@ -6,17 +6,21 @@
 // relics, and stats from attributes + level. The JSON is the source of truth after conversion.
 //   node tools/enemy-decks-convert.mjs          write
 //   node tools/enemy-decks-convert.mjs --dry    report only
-import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { enemyPools, enemyItemBonuses, resolveGearItem, mergeGameSettings, resolveEnemyAttributes, enemyAttributeOutcomes, characterRule } from '../engine/kernel/gameConfig.js';
+import { enemyPools, enemyItemBonuses, resolveGearItem, mergeGameSettings, resolveEnemyAttributes, enemyAttributeOutcomes, characterRule, characterSettings } from '../engine/kernel/gameConfig.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PACK = 'games/ashenspire/packs/core';
 const DRY = process.argv.includes('--dry');
 const json = path => JSON.parse(readFileSync(resolve(ROOT, path), 'utf8'));
-// One algorithm for players and enemies: characters module rules + enemy-only rules.
-const settings = { ...json('engine/modules/enemies/defaults.json'), ...json('engine/modules/characters/defaults.json') };
+// Every module the Core bundle selects, defaults merged with bundle settings, viewed as one settings object.
+const bundleModules = () => { const b = JSON.parse(readFileSync(resolve(ROOT, 'games/ashenspire/bundles/core/bundle.json'), 'utf8'));
+  return Object.fromEntries(Object.entries(b.modules).filter(([id]) => existsSync(resolve(ROOT, 'engine/modules', id, 'defaults.json')))
+    .map(([id, entry]) => [id, mergeGameSettings(JSON.parse(readFileSync(resolve(ROOT, 'engine/modules', id, 'defaults.json'), 'utf8')), entry.settings || {})])); };
+// One algorithm for players and enemies, every feature from its own module.
+const settings = characterSettings(bundleModules());
 const bundle = json('games/ashenspire/bundles/core/bundle.json');
 const gearSettings = mergeGameSettings(json('engine/modules/gear/defaults.json'), bundle.modules.gear?.settings || {});
 const gear = json(`${PACK}/gear.json`);

@@ -266,8 +266,8 @@ export function resolveEnemyAttributes(row, settings, seed = null) {
     for (const [id, n] of Object.entries(share)) { const room = caps[id] === undefined ? n : Math.min(n, caps[id] - out[id]); out[id] += room; left -= room; }
     weights = open;
   }
-  const v = { ...fill.variance, ...(row.variance || {}) };
-  if (seed !== null && v.points > 0 && tier.variance) {
+  const v = { points: 0, among: 2, ...(settings.variance || {}), ...(row.variance || {}) };
+  if (seed !== null && settings.variance && v.points > 0 && tier.variance) {
     const order = (row.attributePriority || fill.defaultPriority).slice(0, v.among);
     let h = [...String(seed) + row.id].reduce((acc, c) => (acc * 31 + c.charCodeAt(0)) >>> 0, 7);
     for (let i = 0; i < v.points; i++) {
@@ -280,9 +280,9 @@ export function resolveEnemyAttributes(row, settings, seed = null) {
 }
 // Every attribute spread variance can produce (for validation): the base plus each single-point move.
 export function enemyAttributeOutcomes(row, settings) {
-  const fill = settings.attributeFill, v = { ...fill.variance, ...(row.variance || {}) }, base = resolveEnemyAttributes(row, settings);
+  const fill = settings.attributeFill, v = { points: 0, among: 2, ...(settings.variance || {}), ...(row.variance || {}) }, base = resolveEnemyAttributes(row, settings);
   const outcomes = [base];
-  if (!v.points || !characterRule(row, settings).variance) return outcomes;
+  if (!settings.variance || !v.points || !characterRule(row, settings).variance) return outcomes;
   const order = (row.attributePriority || fill.defaultPriority).slice(0, v.among), caps = { ...fill.caps, ...(row.attributeCaps || {}) };
   let frontier = [base];
   for (let step = 0; step < v.points; step++) {
@@ -360,6 +360,7 @@ export function enemyPools(row, settings, level = enemyLevel(row, settings), bon
 // What a viewer may see of an enemy: the always-shown fields plus any field one of the viewer's
 // tags reveals (owner 2026-10-17: SP/MP etc. stay hidden unless insight, a bestiary, … reveals them).
 export function enemyVisibleFields(settings, viewerTags = []) {
+  if (!settings.visibility) return new Set(['hp', 'poise', 'intent', 'defense', 'statuses', 'sp', 'mp', 'cardCosts', 'deck', 'hand', 'gear', 'relics', 'attributes']);
   const shown = new Set(settings.visibility.shown);
   for (const [field, tags] of Object.entries(settings.visibility.revealedBy)) if (tags.some(tag => viewerTags.includes(tag))) shown.add(field);
   return shown;
@@ -368,7 +369,7 @@ export function enemyVisibleFields(settings, viewerTags = []) {
 // through content.cardPools by the character's class tag and the gear-type tag of the item in the pool's
 // slot: byClass[class][type] -> byClass[class].default -> byTag[type] -> byTag.default. Plain card ids and
 // { card, copies } entries are used as written. Players and enemies draw from the same card pool.
-export function resolveCharacterDeck(row, content = {}, gearSettings = null) {
+export function resolveCharacterDeck(row, content = {}, gearSettings = null, poolRules = { weaponTypes: true }) {
   const pools = content.cardPools || {}, gear = new Map((content.gear || []).map(item => [item.id, item]));
   const bySlot = Object.fromEntries((row.defaultGear || []).map(entry => [entry.key, gear.get(entry.id)]));
   const typeTag = item => (item?.tags || []).find(tag => gearSettings?.tags?.[tag]?.group === 'type') || null;
@@ -381,7 +382,7 @@ export function resolveCharacterDeck(row, content = {}, gearSettings = null) {
     if (entry.pool) {
       const pool = pools[entry.pool];
       if (!pool) fail(`$/content/characters/${row.id}/defaultDeck`, `unknown card pool '${entry.pool}'`);
-      const type = typeTag(bySlot[pool.slot]) || typeTag(bySlot[pool.fallbackSlot]);
+      const type = poolRules?.weaponTypes ? typeTag(bySlot[pool.slot]) || typeTag(bySlot[pool.fallbackSlot]) : null;
       const byClass = classTag ? pool.byClass?.[classTag] : null;
       id = (type && byClass?.[type]) || byClass?.default || (type && pool.byTag?.[type]) || pool.byTag?.default;
       if (!id) fail(`$/content/characters/${row.id}/defaultDeck`, `pool '${entry.pool}' has no card for this character`);
@@ -399,7 +400,7 @@ export function deckCopyLimit(cardId, row, content = {}, settings = {}, gearSett
   const rules = settings.deckEditing, card = (content.cards || []).find(c => c.id === cardId);
   if (!rules || !card) return owned[cardId] || 0;
   const tags = card.tags || [], have = owned[cardId] || 0, charTags = characterTags(row);
-  const fromPools = pools => new Set((pools || []).flatMap(pool => content.cardPools?.[pool] ? resolveCharacterDeck({ ...row, defaultDeck: [{ pool, copies: 1 }] }, content, gearSettings) : []));
+  const fromPools = pools => new Set((pools || []).flatMap(pool => content.cardPools?.[pool] ? resolveCharacterDeck({ ...row, defaultDeck: [{ pool, copies: 1 }] }, content, gearSettings, settings.cardPoolRules) : []));
   if ((rules.owned.tags || []).some(t => tags.includes(t)) || fromPools(rules.owned.pools).has(cardId)) return have;
   for (const rule of rules.unlimited) {
     if (!charTags.includes(rule.requiresTag)) continue;
@@ -410,16 +411,23 @@ export function deckCopyLimit(cardId, row, content = {}, settings = {}, gearSett
   return rules.default === 'unlimited' ? Infinity : have;
 }
 // Enemies and players share the characters module's rules; enemy-only rules stay in the enemies module.
+// One settings view over the character-related modules (owner 2026-10-17: features split into modules).
+// A missing module leaves its field null, and that feature is off.
 export function characterSettings(modules) {
-  if (!modules.enemies) return null;
-  return { ...modules.enemies, ...(modules.characters || {}) };
+  if (!modules.enemies && !modules.characters) return null;
+  return { ...(modules.enemies || {}), ...(modules.characters || {}),
+    healRules: modules['heal-rules'] || null, stagger: modules.stagger || null, visibility: modules['enemy-visibility'] || null,
+    equipment: modules['enemy-relics']?.equipment || null, variance: modules['attribute-variance'] || null,
+    deckEditing: modules['deck-training'] || null, cardPoolRules: modules['card-pools'] || null, rewardRanks: modules['reward-ranks'] || null };
 }
 // characters.json (owner 2026-10-17): players and enemies in one shape; tags decide which block applies.
 // Derives the legacy views the game still reads (content.classes, content.enemies) and merges enemy cards
 // into the one shared card pool. HP etc. use the same algorithm for both (characterRule + statRules).
 function deriveCharacterContent(content, modules) {
   if (!modules.characters || !Array.isArray(content.characters)) return;
-  const settings = { ...(modules.enemies || {}), ...modules.characters };
+  const settings = characterSettings(modules);
+  // enemy-relics off: enemies carry no relics.
+  if (!settings.equipment) for (const c of content.characters) if (c.tags?.includes('character.enemy')) c.defaultRelics = [];
   if (Array.isArray(content.enemyCards) && !content.enemyCardsMerged) {
     const existing = new Set((content.cards || []).map(card => card.id));
     const added = content.enemyCards.filter(card => !existing.has(card.id));
@@ -433,12 +441,12 @@ function deriveCharacterContent(content, modules) {
   const players = content.characters.filter(c => c.tags?.includes('character.player'));
   const enemies = content.characters.filter(c => c.tags?.includes('character.enemy'));
   const flat = c => ({ ...c, ...(c.presentation || {}), ...(c.enemy || {}), ...(c.player || {}) });
-  content.enemies = enemies.map(c => { const row = flat(c); row.defaultDeck = resolveCharacterDeck(c, content, modules.gear); row.tier = (c.tags.find(t => t.startsWith('tier.')) || 'tier.minion').slice(5); delete row.presentation; delete row.enemy; return row; });
+  content.enemies = enemies.map(c => { const row = flat(c); row.defaultDeck = resolveCharacterDeck(c, content, modules.gear, settings.cardPoolRules); row.tier = (c.tags.find(t => t.startsWith('tier.')) || 'tier.minion').slice(5); delete row.presentation; delete row.enemy; return row; });
   content.classes = players.map(c => {
     const row = flat(c), gear = Object.fromEntries((c.defaultGear || []).map(g => [g.key, g.id]));
     const attributes = resolveEnemyAttributes(c, settings);
     const pools = enemyPools({ ...c, resolvedAttributes: attributes }, settings, enemyLevel(c, settings), enemyItemBonuses(c, content, modules.gear));
-    const deck = resolveCharacterDeck(c, content, modules.gear), cards = new Set((content.cards || []).map(card => card.id));
+    const deck = resolveCharacterDeck(c, content, modules.gear, settings.cardPoolRules), cards = new Set((content.cards || []).map(card => card.id));
     for (const id of deck) if (!cards.has(id)) fail(`$/content/characters/${c.id}/defaultDeck`, `unresolved card '${id}'`);
     return { id: c.id, name: row.displayName || displayName(c.name), attributes, defaultDeck: deck, loadout: { rightHand: gear.mainHand ?? null, leftHand: gear.offHand ?? null }, specialCardId: row.specialCardId, maxHp: pools.hp, ...(row.description ? { description: row.description } : {}) };
   });
@@ -457,7 +465,7 @@ function verifyEnemyContent(content, settings, gearSettings = null) {
   const playerCards = new Set((content.cards || []).map(card => card.id));
   // Enemy gear is player gear (lootable); relics are enemy relics with attribute modifiers.
   const gear = new Set((content.gear || []).map(row => row.id)), relics = new Set((content.enemyRelics || []).map(row => row.id));
-  for (const [kind, rows] of [['enemyRelics', content.enemyRelics || []]])
+  for (const [kind, rows] of settings.equipment ? [['enemyRelics', content.enemyRelics || []]] : [])
     for (const row of rows) {
       const at = `$/content/${kind}/${row.id}/modifiers`, rules = settings.equipment;
       if (!Array.isArray(row.modifiers) || row.modifiers.some(m => typeof m !== 'string' || !ITEM_MODIFIER.test(m))) fail(at, 'expected self.<attribute|sp|mp|hp>=±N modifiers');
@@ -487,7 +495,7 @@ function verifyEnemyContent(content, settings, gearSettings = null) {
       if ((effect.amount !== undefined || ['damage', 'block'].includes(effect.op)) && !adapterAmount(effect.amount)) fail(`${at}/effects/${i}/amount`, 'expected nonnegative finite adapter amount');
     }
     const hint = (content.enemies || []).map(e => e.cardHints?.[card.id]).find(Boolean);
-    if (card.tags.includes('fx:heal') && (hint?.costSource ?? 'healRules') === 'healRules') {
+    if (settings.healRules && card.tags.includes('fx:heal') && (hint?.costSource ?? 'healRules') === 'healRules') {
       const shapes = settings.healRules.shapes.filter(s => s.tags.every(t => card.tags.includes(t)));
       if (!shapes.length) fail(`$/content/enemyCards/${card.id}/tags`, 'healRules cost source but no heal shape matches its tags');
       const shape = settings.healRules.match === 'first' ? shapes[0] : shapes.sort((a, b) => b.tags.length - a.tags.length)[0];
@@ -581,6 +589,7 @@ export function resolveGameAuthor(author, catalog) {
   }
   appendBaseCardContent(content, modules, bundle.manifest.foundationMode);
   deriveCharacterContent(content, modules);
+  if (modules['reward-ranks'] && record(content.rewards)) { const { mode: _m, ...rule } = modules['reward-ranks']; content.rewards = { ...content.rewards, eligibility: { ...(content.rewards.eligibility || {}), combatCards: rule } }; }
   for (const binding of bundle.manifest.policyBindings || []) {
     if (!modules[binding.module]) continue;
     const policy = content[binding.content];
@@ -598,7 +607,7 @@ export function resolveGameAuthor(author, catalog) {
     for (const [field, setting] of Object.entries(binding.settings)) policy[field] = dataClone(modules[binding.module][setting]);
   }
   verifySettings(modules, instances);
-  verifyContent(content); verifyGearContent(content, modules.gear); verifyEnemyContent(content, characterSettings(modules), modules.gear);
+  verifyContent(content); verifyGearContent(content, modules.gear); verifyEnemyContent(content, modules.enemies ? characterSettings(modules) : null, modules.gear);
   if (content.classes) {
     content.classAttributes = Object.fromEntries(content.classes.map(row => [row.id, row.attributes]));
     content.startingHands = Object.fromEntries(content.classes.map(row => [row.id, content.stats.handBase + row.attributes.intelligence]));
@@ -623,6 +632,6 @@ export function validateResolvedGameProfile(snapshot, supportedRuntimeHash) {
     if (!value.schemas[id]) fail(`$/modules/${id}`, 'missing pinned settings schema');
     validateGameSchema(settings,value.schemas[id],`$/modules/${id}`);
   }
-  verifySettings(value.modules, value.instances); verifyContent(value.content); verifyGearContent(value.content, value.modules.gear); verifyEnemyContent(value.content, characterSettings(value.modules), value.modules.gear);
+  verifySettings(value.modules, value.instances); verifyContent(value.content); verifyGearContent(value.content, value.modules.gear); verifyEnemyContent(value.content, value.modules.enemies ? characterSettings(value.modules) : null, value.modules.gear);
   return freezeGameData({...value,hash});
 }

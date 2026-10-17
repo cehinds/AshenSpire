@@ -36,7 +36,7 @@ export function buildDerivedTables() {
     const hpTerms = { base: rule.pools.hp, constitution: t('constitution') * r.constitution, strength: t('strength') * r.strength,
       dexterity: t('dexterity') * r.dexterity, wisdom: t('wisdom') * r.wisdom, intelligence: t('intelligence') * r.intelligence, level: (level - 1) * r.perLevel };
     const pools = enemyPools({ ...row, resolvedAttributes: own }, s, level, bonus);
-    const deck = source.tags.includes('character.player') ? resolveCharacterDeck(source, c, g) : row.defaultDeck;
+    const deck = source.tags.includes('character.player') ? resolveCharacterDeck(source, c, g, s.cardPoolRules) : row.defaultDeck;
     return {
       id: source.id, name: source.name, displayName: displayName(source.name), tags: source.tags,
       kind: source.tags.includes('character.player') ? 'player' : 'enemy', tier: row.tier || null, level,

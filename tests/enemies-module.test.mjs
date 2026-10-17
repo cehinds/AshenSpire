@@ -121,8 +121,9 @@ test('validator refuses a heal card whose cost disagrees with its heal shape', (
 });
 
 test('game.json can override module settings, and the validator follows the override', () => {
-  const override = a => ({ ...a, modules: { ...a.modules, enemies: { healRules: { ...settings.healRules,
-    shapes: settings.healRules.shapes.map(s => s.id === 'cheap' ? { ...s, cost: { sp: 2, mp: 0 } } : s) } } } });
+  // Heal rules live in their own module (heal-rules).
+  const override = a => ({ ...a, modules: { ...a.modules, 'heal-rules': {
+    shapes: settings.healRules.shapes.map(s => s.id === 'cheap' ? { ...s, cost: { sp: 2, mp: 0 } } : s) } } });
   // Existing cheap heal cards (1 SP / 1 MP) no longer match the overridden shape.
   assert.throws(resolveWith(() => {}, override), /cost must match heal shape 'cheap'/);
 });

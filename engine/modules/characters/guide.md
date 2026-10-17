@@ -61,3 +61,23 @@ from `starterDeck.json`; switching it to `defaultDeck` is a follow-up.
 
 `node tools/enemy-decks-convert.mjs` (enemy rows and cards) and `node tools/characters-convert.mjs`
 (players, card pools, class HP calibration).
+
+## Feature modules
+
+Optional rules live in their own modules (owner 2026-10-17) so each can be kept in or left out of
+Core. All are selected by the Core bundle; turn one off with `{ "modules": { "<id>": false } }` in
+`game.json`.
+
+| Module | What it adds | Off |
+|---|---|---|
+| `attribute-variance` | seeded stat spread between copies of a character | identical copies |
+| `heal-rules` | tag-matched heal costs and amounts | heal cards not cost-checked |
+| `stagger` | poise-break penalty (SP loss, Vulnerable) | data only |
+| `enemy-visibility` | hide SP/MP etc. unless a tag reveals them | everything visible |
+| `enemy-relics` | attribute relics on enemies (Ashen Blight Core) | no enemy relics |
+| `card-pools` | weapon-type resolution of deck pool keys | pools give class/default cards |
+| `deck-training` | training tags unlock unlimited basic copies | owned copies only |
+| `reward-ranks` | card rewards mostly rank 1+, owned basics skipped | rewards ignore rank |
+
+`characterSettings(modules)` is the one view the kernel, tools and tests read; a missing module
+leaves its field `null`.

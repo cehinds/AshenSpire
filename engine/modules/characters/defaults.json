@@ -52,10 +52,6 @@
     ],
     "caps": {
       "constitution": 1
-    },
-    "variance": {
-      "points": 1,
-      "among": 3
     }
   },
   "penaltyFloor": {
@@ -171,56 +167,6 @@
         "mp": 1
       },
       "hand": 4
-    }
-  },
-  "deckEditing": {
-    "default": "owned",
-    "unlimited": [
-      {
-        "id": "basicTraining",
-        "requiresTag": "training.basic",
-        "pools": [
-          "strike",
-          "defend",
-          "counter",
-          "smash",
-          "sweep",
-          "evade"
-        ],
-        "cards": {
-          "rarity": [
-            "starter"
-          ],
-          "tagsAny": [
-            "maneuver:attack",
-            "maneuver:defend",
-            "maneuver:counter",
-            "maneuver:smash",
-            "maneuver:sweep"
-          ]
-        }
-      },
-      {
-        "id": "graduate",
-        "requiresTag": "training.graduate",
-        "pools": [],
-        "cards": {
-          "rarity": [
-            "starter"
-          ],
-          "tagsAll": [
-            "camp:spell"
-          ]
-        }
-      }
-    ],
-    "owned": {
-      "pools": [
-        "special"
-      ],
-      "tags": [
-        "classification.weaponArt"
-      ]
     }
   }
 }

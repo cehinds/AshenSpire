@@ -102,6 +102,38 @@
           "capacityPerLane": 1
         }
       }
+    },
+    "heal-rules": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "stagger": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "enemy-visibility": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "enemy-relics": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "attribute-variance": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "deck-training": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "card-pools": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "reward-ranks": {
+      "version": "1.0.0",
+      "settings": {}
     }
   },
   "packs": [

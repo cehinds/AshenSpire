@@ -39,47 +39,6 @@
       "mp": 1
     }
   },
-  "healRules": {
-    "match": "mostSpecific",
-    "authoredCostWins": true,
-    "shapes": [
-      {
-        "id": "full",
-        "tags": [
-          "fx:heal"
-        ],
-        "cost": {
-          "sp": 3,
-          "mp": 2
-        },
-        "amount": {
-          "percentMaxHp": 10
-        },
-        "exhaust": false
-      },
-      {
-        "id": "cheap",
-        "tags": [
-          "fx:heal",
-          "lifecycle.exhaust"
-        ],
-        "cost": {
-          "sp": 1,
-          "mp": 1
-        },
-        "amount": {
-          "percentMaxHp": 10
-        },
-        "exhaust": true
-      }
-    ]
-  },
-  "stagger": {
-    "spLoss": 1,
-    "status": "vulnerable",
-    "stacks": 1,
-    "damageTakenMultiplier": 1.25
-  },
   "ai": {
     "weightField": "aiWeight",
     "lowHpThreshold": 0.35,
@@ -87,47 +46,5 @@
     "lowHpHealBias": 2,
     "smashIntoBlockBias": 1.3,
     "respectMaxConsecutive": true
-  },
-  "equipment": {
-    "maxPoints": 5,
-    "maxStats": 3,
-    "source": "player"
-  },
-  "visibility": {
-    "shown": [
-      "hp",
-      "poise",
-      "intent",
-      "defense",
-      "statuses"
-    ],
-    "revealedBy": {
-      "sp": [
-        "insight",
-        "bestiary"
-      ],
-      "mp": [
-        "insight",
-        "bestiary"
-      ],
-      "cardCosts": [
-        "insight"
-      ],
-      "deck": [
-        "bestiary"
-      ],
-      "hand": [
-        "insight"
-      ],
-      "gear": [
-        "bestiary"
-      ],
-      "relics": [
-        "bestiary"
-      ],
-      "attributes": [
-        "bestiary"
-      ]
-    }
   }
 }

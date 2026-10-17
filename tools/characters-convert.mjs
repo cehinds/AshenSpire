@@ -7,12 +7,17 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { enemyPools, enemyItemBonuses, resolveEnemyAttributes, mergeGameSettings, enemyLevel } from '../engine/kernel/gameConfig.js';
+import { enemyPools, enemyItemBonuses, resolveEnemyAttributes, mergeGameSettings, enemyLevel, characterSettings } from '../engine/kernel/gameConfig.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PACK = 'games/ashenspire/packs/core';
 const json = p => JSON.parse(readFileSync(resolve(ROOT, p), 'utf8'));
 const CHAR_DEFAULTS = 'engine/modules/characters/defaults.json';
+// Every module the Core bundle selects, defaults merged with bundle settings, viewed as one settings object.
+const bundleModules = () => { const b = JSON.parse(readFileSync(resolve(ROOT, 'games/ashenspire/bundles/core/bundle.json'), 'utf8'));
+  return Object.fromEntries(Object.entries(b.modules).filter(([id]) => existsSync(resolve(ROOT, 'engine/modules', id, 'defaults.json')))
+    .map(([id, entry]) => [id, mergeGameSettings(JSON.parse(readFileSync(resolve(ROOT, 'engine/modules', id, 'defaults.json'), 'utf8')), entry.settings || {})])); };
+
 
 export const CARD_POOLS = {
   strike: { slot: 'mainHand', byTag: { default: 'core.strike' }, byClass: {} },
@@ -72,7 +77,7 @@ export function writeCharacters({ enemies } = {}) {
   const defaults = json(CHAR_DEFAULTS);
   const bundle = json('games/ashenspire/bundles/core/bundle.json');
   const gearSettings = mergeGameSettings(json('engine/modules/gear/defaults.json'), bundle.modules.gear?.settings || {});
-  const settings = { ...json('engine/modules/enemies/defaults.json'), ...defaults };
+  const settings = characterSettings(bundleModules());
   const content = { gear: json(`${PACK}/gear.json`), enemyRelics: json(`${PACK}/enemyRelics.json`) };
   // Owner 2026-10-17: no calibration to legacy max HP; players follow the shared formula.
   writeFileSync(resolve(ROOT, CHAR_DEFAULTS), JSON.stringify(defaults, null, 2) + '\n');
