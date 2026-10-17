@@ -1,0 +1,33 @@
+name: Enemy back module QA
+on:
+  push:
+    branches: ['worker/EnemyBackSprites/module']
+  pull_request:
+    branches: ['feature/EnemyBackSprites']
+    paths: ['pose-studio/enemy-back-proposals/**', '.github/workflows/enemy-back-module-qa.yml']
+permissions:
+  contents: read
+jobs:
+  module:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Model contract
+        run: node --test pose-studio/enemy-back-proposals/model.test.mjs
+      - name: Install isolated browser tooling
+        run: |
+          npm install --prefix /tmp/enemy-back-qa playwright
+          /tmp/enemy-back-qa/node_modules/.bin/playwright install --with-deps chromium
+      - name: Production gallery browser checks
+        env:
+          PLAYWRIGHT_MODULE: /tmp/enemy-back-qa/node_modules/playwright/index.mjs
+        run: node pose-studio/enemy-back-proposals/browser-qa.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: enemy-back-module-qa
+          path: /tmp/enemy-back-module-qa/
