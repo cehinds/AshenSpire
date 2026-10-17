@@ -86,7 +86,7 @@ async function play(page, enabled) {
   return { before, paid, trace, turn: await page.evaluate(() => window.__combat.turn) };
 }
 try {
-  for (const viewport of [{ width: 1440, height: 900 }, { width: 1280, height: 720 }, { width: 390, height: 844 }, { width: 360, height: 800 }]) {
+  for (const viewport of [{ width: 1440, height: 900 }, { width: 1280, height: 720 }, { width: 390, height: 844 }, { width: 768, height: 1024 }]) {
     let baseline;
     for (const enabled of [true, false]) {
       const page = await open('core', enabled, viewport);
