@@ -348,6 +348,15 @@ async function collectEvents(app, name, done, { onEvent, onOpen, timeoutMs = 800
   } finally { reader.cancel().catch(() => {}); }
 }
 
+test('the Workbench watches engine/ as well as the content, source and game trees', async (t) => {
+  const root = await project(t);
+  await fs.mkdir(path.join(root, 'engine/modules/animation'), { recursive: true });
+  const { call } = await boot(t, root);
+  const session = await (await call('/api/session')).json();
+  assert.ok(session.watching.engine, 'engine/ has a watch mode');
+  assert.ok(session.watching.styles, 'styles/ is still watched');
+});
+
 test('the game profile, base card and HUD layout outputs are build outputs', () => {
   assert.equal(isBuildOutput('src/content/generated/gameProfiles.js'), true);
   assert.equal(isBuildOutput('src/content/generated/baseCards.js'), true);
