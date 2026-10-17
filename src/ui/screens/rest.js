@@ -1,3 +1,4 @@
+import { mountGameProfileRest } from '../components/gameProfileRest.js';
 // src/ui/screens/rest.js — a location's Rest screen: Rest, and the services
 // the place carries (SPEC §7.1, §13.4j; what a Rest restores is the location's
 // tag set, engine/locations.js — this screen states no number of its own)
@@ -36,8 +37,7 @@ import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
 import { mountServiceOffer, openMountService, mountReceiptLine } from './smithServices.js';
 import { FOLD_GLYPH } from '../components/foldGlyph.js';
-import { runHudHtml, wireRunHud } from '../components/runHud.js';
-import { scenePainting } from '../components/scenePainting.js';
+import { mountRestFrame, restPresentation } from '../components/restFrame.js';
 import { engravedIconHtml } from '../components/engravedIcon.js';
 // THE FOLDS' INSIDES ARE THE KIT'S (2026-09-04, the sweep): a flask row is a
 // kit Row — the flask's identity as its LabelStack, a −/count/+ Stepper of
@@ -48,15 +48,9 @@ import { el, html, row, stepper, statusText, subtitle, statPair, button, modalFo
 // W1s: the Shrine is a choice body — the options beside their availability,
 // the head's {Status} from the same facts, Continue in the foot when the
 // Shrine has one (Multi-use). ChoiceBodyModel projects; this screen decides.
-import { mountChoiceBody } from '../components/choiceBody.js';
 import { restChoiceStatus } from '../models/ChoiceBodyModel.js';
 import { t, tFull, has } from '../strings.js';
 import { restReview } from '../models/ConfirmationReviewModel.js';
-
-const boundedNumber = (value, fallback, minimum, maximum) => {
-  const parsed = Number(value);
-  return Math.min(maximum, Math.max(minimum, Number.isFinite(parsed) ? parsed : fallback));
-};
 
 // THE REFILL LINE. `refill` is the plan engine/encounters.js ALREADY APPLIED on
 // arrival — this screen reports, it never decides, and it is passed the plan
@@ -112,9 +106,10 @@ function locationTitle(locationId) {
   return t('rest.title');
 }
 
-export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false, services = null, hud = null, visit = null, questBoard = null, deckEditor = null, revisit = null, onConsumed = null }) {
+export function mountRest(app, { gameProfileRest = null, registries, run, meta, onDone, onReallocate = null, onLevelUp = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false, services = null, hud = null, visit = null, questBoard = null, deckEditor = null, revisit = null, onConsumed = null }) {
   // E13's multi-use Shrine: an action re-opens the same screen (with what was
   // already taken recorded) instead of leaving; LEAVE is the one way out.
+  if (gameProfileRest) return mountGameProfileRest(app, { ...gameProfileRest, registries, run, meta, hud, remount: () => mountRest(app, { gameProfileRest, registries, run, meta, hud, onDone }) });
   const remount = (extra = {}) => mountRest(app, {
     registries, run, meta, onDone, onReallocate, onLevelUp, healMult, refill, openPanel: null, multiUse, rested, services, hud, visit, questBoard, deckEditor, revisit, onConsumed, ...extra,
   });
@@ -140,7 +135,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   // never a relic the player does not carry.
   const noRestCopy = relicNoRest
     ? `The ${registries.relics.get(stay.restDenied).name} will not let you rest here.`
-    : restedHere ? 'You have already rested here.' : 'Your choice here is spent.';
+    : restedHere ? 'You have already rested here.' : t('gameProfile.rest.spent');
   // Rest at full health and full Mana led the list as if it were the thing to
   // do — "Heal 0 HP (62 → 62/62)" in the first, brightest card (review,
   // 2026-09-11). It stays a choice (it is still the way to end a visit without
@@ -187,13 +182,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   // How many points wait — the card offers them all at once and commits them
   // one applyLevelUp at a time (model/levelup.js).
   const budget = levelUpBudget(registries, run);
-  const shrinePresentation = registries.balance?.ui?.shrinePresentation || {};
-  const authoredShrineLayout = shrinePresentation.optionLayout;
-  const shrineLayout = authoredShrineLayout === 'grid' ? 'grid' : 'list';
-  const foldedCardWidthViewportPct = boundedNumber(shrinePresentation.foldedCardWidthViewportPct, 88, 60, 100);
-  const foldedCardMaxWidthRem = boundedNumber(shrinePresentation.foldedCardMaxWidthRem, 44, 24, 72);
-  const foldedCardHeightViewportPct = boundedNumber(shrinePresentation.foldedCardHeightViewportPct, 10, 6, 18);
-  const foldedCardMaxHeightRem = boundedNumber(shrinePresentation.foldedCardMaxHeightRem, 6.5, 4, 12);
+  const shrineLayout = restPresentation(registries).optionLayout;
 
   // THE FLASK ROWS. One kit Row per charge kind: identity left, the stepper
   // trailing. THE STEPPER IS ONE UNIT AND WRAPS AS ONE — on a narrow shape the
@@ -235,7 +224,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
         <div class="class-pick${noRest ? ' locked' : nothingToRestore ? ' quiet' : ''}" id="rest-opt" role="button" tabindex="${noRest ? '-1' : '0'}" aria-disabled="${noRest ? 'true' : 'false'}">
           <div class="glyph">${engravedIconHtml('rest')}</div>
           <div class="cp-body">
-            <h3>Rest</h3>
+            <h3>${esc(t('rest.eyebrow'))}</h3>
             <p>${noRest ? noRestCopy : nothingToRestore ? `Nothing to restore — you stand at ${run.hp}/${run.maxHp} HP${run.mana >= run.maxMana ? ' with full Mana' : ''}. Resting still ${multiUse ? 'takes the rest' : 'ends the visit'}.` : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp})${manaGain > 0 ? ` and restore Mana (${run.mana} → ${manaAfter})` : ''}.`}</p>
           </div>
         </div>
@@ -280,7 +269,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
             <h3>Upgrade an Item</h3>
             <p>${canInspectSmithing
               ? `${smith.stones} Smithing Stone${smith.stones === 1 ? '' : 's'} · choose one owned armament.`
-              : spentHere ? 'Your choice here is spent.' : 'No owned armament has an effective tier remaining.'}</p>
+              : spentHere ? t('gameProfile.rest.spent') : 'No owned armament has an effective tier remaining.'}</p>
           </div>
         </div>` : ''}
         ${stay.services.flasks ? `<details class="class-pick shrine-fold" id="flask-reallocate"${openPanel === 'flask' ? ' open' : ''}>
@@ -316,7 +305,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
           <div class="glyph">⚙</div>
           <div class="cp-body">
             <h3>Extract a Card</h3>
-            <p>${spentHere ? 'Your choice here is spent.' : esc(extract.summary)}</p>
+            <p>${spentHere ? t('gameProfile.rest.spent') : esc(extract.summary)}</p>
           </div>
         </div>` : ''}
         ${install ? `<div class="class-pick${installOpen ? '' : ' locked'}" id="install-opt"
@@ -325,7 +314,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
           <div class="glyph">⚒</div>
           <div class="cp-body">
             <h3>Seat a Card</h3>
-            <p>${spentHere ? 'Your choice here is spent.' : esc(install.summary)}</p>
+            <p>${spentHere ? t('gameProfile.rest.spent') : esc(install.summary)}</p>
           </div>
         </div>` : ''}
         ${board ? `<div class="class-pick" id="board-opt" role="button" tabindex="0">
@@ -345,9 +334,6 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
       </div>
     `;
 
-  app.innerHTML = `
-    ${hud ? runHudHtml({ registries, run, meta, place: 'rest', headerClass: 'map-header room-header' }) : ''}
-    <div class="screen room-screen rest-screen" style="--shrine-folded-card-width:${foldedCardWidthViewportPct}vw;--shrine-folded-card-max-width:${foldedCardMaxWidthRem}rem;--shrine-folded-card-height:${foldedCardHeightViewportPct}vh;--shrine-folded-card-max-height:${foldedCardMaxHeightRem}rem"></div>`;
   // W1s {Status} and availability: one fact per offered choice, read off the
   // same plans that build and wire the cards above — never re-derived.
   const offeredChoices = [
@@ -367,10 +353,8 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   // #1195), so the foot is the way out.
   const leave = (multiUse || relicNoRest || revisit?.left || spentHere) ? button({ label: t('rest.continue'), weight: 'primary', id: 'shrine-leave', className: 'shrine-leave' }) : null;
   const consequences = el('aside', { class: 'choice-body-consequences choice-status rest-consequences', 'aria-label': t('rest.consequences.heading') });
-  app.querySelector('.rest-screen').appendChild(scenePainting('rest'));
-  mountChoiceBody(app.querySelector('.rest-screen'), {
-    className: 'rest-door',
-    eyebrow: t('rest.eyebrow'),
+  mountRestFrame(app, {
+    registries, run, meta, hud, remount,
     title: locationTitle(stay.locationId),
     status: t('rest.status.available', { available: availability.available, total: availability.total }),
     choices: el('div', { class: 'choice-body-choices rest-choices', html: choicesHtml }),
@@ -400,8 +384,6 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
       ]);
     })),
   ]));
-
-  if (hud) wireRunHud(app, { ...hud, registries, run, meta, remount: () => remount() });
 
   for (const [selector, variant] of [
     ['#rest-opt', 'rest'], ['#smith-opt', 'smith'],

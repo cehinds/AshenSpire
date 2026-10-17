@@ -34,6 +34,11 @@ jobs:
       - uses: ./.github/actions/fetch-art
         with:
           packs: all
+      - name: Run game profile and save migration checks
+        # These tests compile/mutate generated profile artifacts; serialize to avoid races.
+        run: node --test --test-concurrency=1 tests/game-profile-*.test.mjs tests/save-migration.test.mjs
+      - name: Check compiled JSON game profiles
+        run: node tools/game-config.mjs check
       - name: Build branch HEAD
         run: node tools/launch.mjs --build-only
       - name: Collect standalone and provenance

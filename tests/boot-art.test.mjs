@@ -82,8 +82,8 @@ test('the critical set is content/config’s: the title backdrops and the faces,
   assert.deepEqual([...fonts].sort(), [...allFonts].sort(), 'every face the common pack carries');
   for (const id of fonts) assert.ok(manifest[id].common, `${id} is a common record`);
   // Each backdrop is one the gate or the title's hall draws, in the orientation
-  // it is tagged for: the portrait rule is kit.css's `@media (orientation: portrait)`.
-  const portrait = kit.slice(kit.indexOf('@media (orientation: portrait) {\n  .tower-door-frame'));
+  // it is tagged for: the portrait rule is kit.css's viewport container query.
+  const portrait = kit.slice(kit.indexOf('@container game-viewport (orientation: portrait) {\n  .tower-door-frame'));
   const portraitBlock = portrait.slice(0, portrait.indexOf('\n}\n'));
   for (const { id, orientation } of backdrops) {
     assert.ok(manifest[id]?.light && manifest[id]?.high, `${id} ships in both art tiers`);

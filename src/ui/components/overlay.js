@@ -44,6 +44,7 @@ let unregisterOverlay = null;
 const PANELS = {
   settings: (host, ctx) => renderSettings(host, {
     settings: ctx.settings,
+    gameProfile: ctx.gameProfile,
     previewAttributes: ctx.run?.attributes,
     previewLevel: ctx.run ? characterLevelOf(ctx.run) : null,
     previewClassId: ctx.run?.class || null,
@@ -119,7 +120,7 @@ export function closeOverlay() {
  * openOverlay({ registries, run, meta, onSettingsChange, onSave, initialTab })
  * onSave (optional) → returns the slot number saved to (adds a Save action).
  */
-export function openOverlay({ registries, run, meta, saves = null, onSettingsChange, onOffline, onSave, onQuit, onArmoury, onLoad, onQuitWithoutSave, quickControls = {}, initialTab = 'settings' }) {
+export function openOverlay({ registries, run, meta, saves = null, onSettingsChange, onOffline, onSave, onQuit, onArmoury, onLoad, onQuitWithoutSave, quickControls = {}, initialTab = 'settings', gameProfile = null }) {
   closeFlaskActionMenu({ cancelled: true });
   closeOverlay();
   closeQuickNav(); // opened FROM the list on map/combat: it has done its job
@@ -161,7 +162,7 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
   // save: runs live in their own slot keys.
   const ctx = {
     registries, run, meta, settings, saves,
-    onSettingsChange, onOffline, onSave, onQuit, onArmoury, onLoad, onQuitWithoutSave,
+    onSettingsChange, onOffline, onSave, onQuit, onArmoury, onLoad, onQuitWithoutSave, gameProfile,
   };
 
   // The body is shared, but the marker and scroll offset belong to one render.

@@ -39,12 +39,14 @@ const SET_ID = /^\d{4}-\d{2}-\d{2}T[\d-]+Z-[a-f0-9]{6}$/;
 
 // Workbench additions to the editor's rules (the editor's editable() is kept as is).
 const JSON_TREE = /^(?:content\/config|pose-studio\/renewal|docs\/design)\/(?:[\w.-]+\/)*[\w.-]+\.json$/;
+// The two named Ashen profile entry files are authored inputs to the game-profile compiler.
+const GAME_PROFILE_FILES = new Set(['games/ashenspire/game.json', 'games/ashenspire/presets/current.json']);
 // One named file the game reads through tools/card-components.mjs (Layout Studio's Card layers mode).
 const JSON_FILES = new Set([LAYOUT_FILE]);
 const TEXT_TREE = /^(?:pose-studio\/stances|workbench\/workspace|ui-studio\/workspace)\/(?:[\w.-]+\/)*[\w.-]+$/;
 const TEXT_EXT = /\.(json|csv|js|mjs|css|html|md|txt|svg)$/i;
 // The trees a build reads: a save under any of them holds the build lock.
-const BUILD_INPUT = /^(?:content|src|styles)\//;
+const BUILD_INPUT = /^(?:(?:content|src|styles)\/|games\/ashenspire\/(?:game\.json|presets\/current\.json)$)/;
 
 const fail = (status, message, extra = {}) => Object.assign(Error(message), { status, ...extra });
 
@@ -60,7 +62,7 @@ function kindOf(rel) {
 export function allowedKind(rel) {
   if (typeof rel !== 'string' || refusedPath(rel)) return null;
   // A tag-model CSV is readable; a save of one is checked against its rule in commitLocked.
-  if (!(editable(rel) || JSON_TREE.test(rel) || JSON_FILES.has(rel) || (TEXT_TREE.test(rel) && TEXT_EXT.test(rel)) || tagModelTable(rel))) return null;
+  if (!(editable(rel) || JSON_TREE.test(rel) || GAME_PROFILE_FILES.has(rel) || JSON_FILES.has(rel) || (TEXT_TREE.test(rel) && TEXT_EXT.test(rel)) || tagModelTable(rel))) return null;
   return kindOf(rel);
 }
 
@@ -172,6 +174,10 @@ export function createFileService({ root, stateDir, keepBackups = () => 50, onSa
           let parsed;
           try { parsed = JSON.parse(c.text); } catch (e) { throw Error(`Invalid JSON: ${e.message}`); }
           validateText(c.path, c.text);
+          if (GAME_PROFILE_FILES.has(c.path)) {
+            const { resolveGameProfile } = await import('../../src/model/gameProfile.js');
+            resolveGameProfile(parsed);
+          }
           // The card layout is a schema the game compiler reads: each problem is listed on its own.
           if (c.path === LAYOUT_FILE) {
             const found = layoutProblems(parsed);

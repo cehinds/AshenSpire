@@ -1,3 +1,5 @@
+import { formationOccupancyProblems } from '../model/formationOccupancy.js';
+import { hasCardChoice } from './cardZones.js';
 import { ashenBlightProblems, ashenBlightCombatProblems } from '../model/ashenBlight.js';
 import { statusControlProblems } from '../model/combatStatusState.js';
 import { combatExpansionEntityProblems } from '../model/combatTacticsRules.js';
@@ -11,8 +13,10 @@ import { bringRangesForward } from '../model/combatRanges.js';
 // Runtime callbacks, catalogue projections and RNG objects never enter the save.
 const forbidden = new Set(['__proto__', 'prototype', 'constructor']);
 export function serializeCoopCombatSnapshot(combat) {
-  if (!combat?.players || combat._buffer !== null || (combat.queue?.length && !combat.pendingAbilityDiscard && !combat.pendingReaction
+  if (!combat?.players || combat._buffer !== null || (combat.queue?.length && !hasCardChoice(combat) && !combat.pendingReaction
     && !(combat.phase === 'suspended' && (combat.reactionCursor || combat.reactionStack || combat.reactionRootPlay)))) throw new Error('Co-op combat is still resolving');
+  const formationErrors = formationOccupancyProblems(combat);
+  if (formationErrors.length) throw new Error(formationErrors.join('; '));
   const nodes = [], seen = new Map();
   function encode(value) {
     if (value === null || typeof value === 'string' || typeof value === 'boolean') return value;

@@ -1,0 +1,163 @@
+{
+  "id": "ashen.core",
+  "version": "1.0.0",
+  "profileId": "core",
+  "foundationMode": "configured",
+  "modules": {
+    "cards": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "resources": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "stats": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "defenses": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "stances": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "effects": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "statuses": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "equipment": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "class-selection": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "progression": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "routes": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "rest": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "shops": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "rewards": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "art": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "animation": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "intent": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "reactions": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "formation": {
+      "version": "1.0.0",
+      "settings": {
+        "mode": "configured",
+        "extraRow": {
+          "enabled": false,
+          "sides": [
+            "enemy"
+          ],
+          "capacityPerLane": 1
+        }
+      }
+    }
+  },
+  "packs": [
+    {
+      "id": "ashen.core-content",
+      "version": "1.0.0",
+      "path": "../../packs/core/pack.json"
+    },
+    {
+      "id": "ashen.base-cards",
+      "version": "1.0.0",
+      "path": "../../packs/base-cards/pack.json"
+    }
+  ],
+  "policyBindings": [
+    {
+      "content": "routes",
+      "module": "routes",
+      "settings": {
+        "acts": "acts",
+        "prebossNodes": "prebossNodes",
+        "restsPerAct": "restsPerAct",
+        "restFloors": "restFloors",
+        "branchColumns": "branchColumns",
+        "minimumThreatFloor": "minimumThreatFloor",
+        "mapMode": "mapMode"
+      }
+    },
+    {
+      "content": "rests",
+      "module": "rest",
+      "settings": {
+        "servicesPerVisit": "servicesPerVisit",
+        "services": "services",
+        "allowEmptyStrategize": "allowEmptyStrategize",
+        "recovery": "recovery",
+        "smith": "smith"
+      }
+    },
+    {
+      "content": "rewards",
+      "module": "rewards",
+      "settings": {
+        "offerCount": "offerCount",
+        "takeCount": "takeCount"
+      }
+    },
+    {
+      "content": "shops",
+      "module": "shops",
+      "settings": {
+        "offerCount": "options",
+        "price": "price"
+      }
+    },
+    {
+      "content": "stats",
+      "module": "cards",
+      "settings": {
+        "handBase": "handBase",
+        "handAttribute": "handAttribute"
+      }
+    },
+    {
+      "content": "stats",
+      "module": "stats",
+      "settings": {
+        "attributePointTotal": "attributePointTotal",
+        "secondaryPolicy": "secondaryPolicy"
+      }
+    }
+  ]
+}

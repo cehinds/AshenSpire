@@ -6,7 +6,7 @@ import {createRunState,createCardInstance,serializeRun,deserializeRun,validateRu
 import {openRunClassMastery,registriesForClassMastery} from '../src/model/classMasteryRun.js';
 import {bankSkillXp,claimBankedSkillLevel,xpToNext,spendSkillDraft} from '../src/model/skills.js';
 import {rollPendingAbilityOffers} from '../src/model/abilityOffers.js';
-import {rollClassMilestoneRewards,claimClassMilestoneReward} from '../src/model/classMilestoneOffers.js';
+import {rollClassMilestoneRewards,claimClassMilestoneReward,classMilestoneOptions} from '../src/model/classMilestoneOffers.js';
 import {pendingRewardCheckpoint} from '../src/model/rewardSourcePolicy.js';
 import {createRng} from '../src/engine/rng.js';
 
@@ -49,8 +49,10 @@ test('serialized class milestone choices preserve a repeated family bonus grade'
     run.classMasteryState.earnedXp.reaver+=cost;claimBankedSkillLevel(reg,run,skillId);
   }
   const rows=rollClassMilestoneRewards(reg,rng,run),row=rows.find(row=>row.rewardKind==='cards'),offer=run.classMilestoneOffers[row.receiptId];
-  const cardId=offer.options.find(id=>root.cards.get(id).gradeProfiles);
+  // Plant a legal graded family: the live three-card roll may contain only ungraded cards.
+  const cardId=classMilestoneOptions(reg,run,'cards',offer.level).find(id=>root.cards.get(id).gradeProfiles);
   assert.ok(cardId);
+  offer.options[0]=cardId;offer.abilityRanks[0]=2;
   offer.options.push(cardId);offer.abilityRanks.push(3);offer.choiceIds=offer.options.map((id,index)=>Number.isInteger(offer.abilityRanks[index])?`${id}@${offer.abilityRanks[index]}`:id);
   Object.assign(row,structuredClone(offer));
   run.pendingReward=pendingRewardCheckpoint({classMilestoneRewards:rows},{source:'normal',after:'map'});

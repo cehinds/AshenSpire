@@ -92,8 +92,8 @@ test('weapon-art source metadata preserves every authored Counter identity on th
     assert.equal(profile.counterMode, mode, cardId);
     const card = renderCard(registries, ref, { inspection: false });
     assert.equal(card.dataset.combatManeuver, 'counter', cardId);
-    assert.match(markupFor(card), /data-primary-sigil="counter"/, cardId);
-    assert.match(markupFor(card), /role="img" aria-label="Counter"/, cardId);
+    assert.match(markupFor(card), new RegExp(`data-primary-sigil="${mode === 'spell' ? 'spell' : 'counter'}"`), cardId);
+    assert.match(markupFor(card), new RegExp(`role="img" aria-label="${mode === 'spell' ? 'Spell' : 'Counter'}"`), cardId);
   }
 }));
 

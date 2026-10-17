@@ -1,0 +1,41 @@
+import { uiConfig } from '../../config/generated/ui.js';
+
+// Physical desktop geometry; UI zoom changes the ruler, never the art's shape.
+export function desktopFooterEnabled({ formFactor, appearance, layout }) {
+  return ['desktop', 'widescreen'].includes(formFactor) && appearance === 'alternative' && layout === 'formation';
+}
+export function desktopFooterLayout({ width, height, zoom = 1 }, config = uiConfig.scenes.w4a.sizing.desktopFooter) {
+  const scale = Math.min(config.maximumScale, height * zoom / config.referenceHeightPx);
+  const unit = scale / zoom;
+  const bottom = height - config.bottomInsetPx * unit;
+  const corner = config.cornerInsetPx * unit;
+  const controls = {
+    sp: { x: corner, y: bottom - 106 * unit, w: 101 * unit, h: 106 * unit },
+    draw: { x: corner + 125 * unit, y: bottom - 108 * unit, w: 64.1584 * unit, h: 108 * unit },
+    discard: { x: width - corner - config.cornerWidthPx * unit, y: bottom - 101 * unit, w: 80.398 * unit, h: 101 * unit },
+    potions: { x: width - corner - 100 * unit, y: bottom - 91.6667 * unit, w: 100 * unit, h: 91.6667 * unit },
+    end: { x: (width - config.endHitWidthPx * unit) / 2, y: bottom - config.endHitHeightPx * unit,
+      w: config.endHitWidthPx * unit, h: config.endHitHeightPx * unit },
+  };
+  return { unit, controls, handTop: height - (config.handBottomPx + config.handHeightPx) * unit,
+    handHeight: config.handHeightPx * unit, backgroundTop: height - (config.referenceHeightPx - config.backgroundTopPx) * unit,
+    backgroundFadeHeight: config.backgroundFadeHeightPx * unit,
+    toolsTop: bottom - config.toolsBottomPx * unit, corner, endArtWidth: config.endArtWidthPx * unit,
+    endArtHeight: config.endArtHeightPx * unit };
+}
+export function desktopHandLayout({ width, height, count, zoom = 1 }, config = uiConfig.scenes.w4a.sizing.desktopFooter) {
+  const unit = height / config.handHeightPx;
+  const cardWidth = config.cardWidthPx * unit, cardHeight = config.cardHeightPx * unit;
+  const side = Math.max(14 / zoom, (width - 1010 * unit) / 2);
+  const step = count > 1 ? Math.max(44 / zoom, Math.min(config.cardStepPx * unit, (width - side * 2 - cardWidth) / (count - 1))) : 0;
+  const span = count ? cardWidth + (count - 1) * step : 0;
+  const start = Math.max(side, (width - span) / 2), middle = (count - 1) / 2;
+  const cards = Array.from({ length: count }, (_, i) => {
+    const t = count > 1 ? (i - middle) / Math.max(1, middle) : 0;
+    return { x: start + i * step, y: t * t * config.arcPx * unit, angle: t * config.fanAngleDegrees };
+  });
+  const top = 8 * unit;
+  const restTop = Math.min(...cards.map(c => top + c.y + cardHeight / 2 - (Math.abs(Math.sin(c.angle * Math.PI / 180)) * cardWidth + Math.cos(c.angle * Math.PI / 180) * cardHeight) / 2), top);
+  return { cardWidth, cardHeight, cards, capacity: Math.max(1, count), span, start, step, top, lift: 18 * unit,
+    restLeft: start - 12 * unit, restTop, clearanceTop: -10 * unit, controlsReserve: 0 };
+}

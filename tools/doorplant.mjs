@@ -51,7 +51,7 @@ const REAL_ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 // clean copy before any plant is read. Since step 12 a tool also asks
 // art-manifest.json, not a tree, whether an art id ships (tools/art-source.mjs
 // manifestIds), so a copy without it cannot answer.
-const COPY_SET = ['src', 'content', 'styles', 'index.html', 'tools', 'art-release.json', 'art-manifest.json'];
+const COPY_SET = ['src', 'engine', 'games', 'content', 'styles', 'index.html', 'tools', 'art-release.json', 'art-manifest.json'];
 
 // LINE ENDINGS ARE NOT PART OF THE PLANT (2026-09-17). Plants are authored with
 // `\n`, because that is what the committed blobs carry and what Linux CI checks

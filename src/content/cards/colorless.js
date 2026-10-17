@@ -19,12 +19,12 @@ export const colorlessCards = [
     upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 11 }, { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 3 }] },
   },
   {
-    id: 'greatswordSunderingHew', name: 'Sundering Hew', class: 'colorless', rarity: 'uncommon', cost: 2, type: 'attack',
+    id: 'greatswordSunderingHew', name: 'Sundering Hew', class: 'colorless', rarity: 'uncommon', cost: 2, manaCost: 1, costRule: 'fixed', type: 'attack',
     flavor: "Hew of a Court knight's greatsword.\n\nToo heavy to carry far, and too dear to leave. The corrupted knights pause at the sight of one in a Forsaken's hands, unable to believe an unmarked hand holds their steel.\n\nThat pause is worth the weight.",
     keywords: [], icon: '⚒',
-    effects: [{ op: 'damage', target: 'enemy', amount: 12 }, { op: 'poiseDamage', target: 'enemy', amount: 3 }, { op: 'applyStatus', target: 'enemy', status: 'vulnerable', stacks: 1 }],
+    effects: [{ op: 'damage', target: 'enemy', amount: 36 }, { op: 'poiseDamage', target: 'enemy', amount: 5 }, { op: 'applyStatus', target: 'enemy', status: 'vulnerable', stacks: 1 }],
     textTemplate: 'Deal {damage} damage and {poiseDamage} Poise damage. Apply {vulnerable} Vulnerable.',
-    upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 16 }, { op: 'poiseDamage', target: 'enemy', amount: 4 }, { op: 'applyStatus', target: 'enemy', status: 'vulnerable', stacks: 1 }] },
+    upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 48 }, { op: 'poiseDamage', target: 'enemy', amount: 7 }, { op: 'applyStatus', target: 'enemy', status: 'vulnerable', stacks: 1 }] },
   },
   // ---- Neutral playable colorless (Merchant stock, SPEC §1) ------------------
   {

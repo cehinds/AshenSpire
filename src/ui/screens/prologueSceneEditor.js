@@ -1,3 +1,4 @@
+import { matchViewMedia } from '../viewViewport.js';
 import { openModal } from '../kit/index.js';
 import { mountPrologue } from './prologue.js';
 import { placePrologueCharacter, prologueCharacterDimensions, prologueTravellerGeometry, prologueTravellerHeightForWidth, prologueTravellerResizeScale } from '../prologueCharacter.js';
@@ -56,7 +57,7 @@ export function openPrologueSceneEditor(settings, onChange, { sceneId = null, ta
   const first = prologueSequence(initial)[0];
   let selected = initial.scenes.some(scene => scene.id === sceneId) ? sceneId : initial.scenes[first]?.id;
   let path = 'crownfall';
-  let layout = matchMedia('(max-width: 760px) and (orientation: portrait)').matches ? 'mobile' : 'desktop';
+  let layout = matchViewMedia('(max-width: 760px) and (orientation: portrait)').matches ? 'mobile' : 'desktop';
   let group = tab;
   let cleanup = null;
   let refreshTimer = null;
@@ -73,7 +74,7 @@ export function openPrologueSceneEditor(settings, onChange, { sceneId = null, ta
     ['crownfall', 'Crownfall'], ['weald', 'Hollow Weald'], ['marches', 'Pale Marches · tundra'], ['reach', 'Cinder Reach'],
   ], path);
   const [classPicker, classInput] = select('Traveller', Object.entries(PROLOGUE_DEFAULTS.classes).map(([id, cls]) => [id, cls.name]), initial.presentation.previewClass);
-  const [layoutPicker, layoutInput] = select('Preview size', [['desktop', 'Desktop'], ['mobile', 'Mobile']], layout);
+  const [layoutPicker, layoutInput] = select('Preview size', [['desktop', t('settings.viewPreset.desktop')], ['mobile', t('settings.viewPreset.mobile')]], layout);
   toolbar.append(scenePicker, pathPicker, classPicker, layoutPicker);
 
   const workspace = element('div', 'pse-workspace');
@@ -82,7 +83,7 @@ export function openPrologueSceneEditor(settings, onChange, { sceneId = null, ta
   const arrangeBar = element('div', 'pse-arrange-bar');
   const gridLabel = element('label', 'pse-arrange-toggle');
   const gridToggle = element('input'); gridToggle.type = 'checkbox';
-  gridLabel.append(gridToggle, element('span', '', 'Grid'));
+  gridLabel.append(gridToggle, element('span', '', t('sceneEditor.grid')));
   const snapLabel = element('label', 'pse-arrange-toggle');
   const snapToggle = element('input'); snapToggle.type = 'checkbox';
   snapLabel.append(snapToggle, element('span', '', 'Snap'));

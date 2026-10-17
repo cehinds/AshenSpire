@@ -46,9 +46,15 @@ for (const kind of ['skillDraft', 'classMilestone']) test(`${kind} keeps two gra
     faces[1].click();
     assert.equal(app.querySelectorAll('.reward-selected').length, 1);
     assert.equal(run.deck.length, 0);
-    app.querySelector('#reward-back').click(); open();
+    app.querySelector('#reward-card-confirm').click();
+    assert.equal(run.deck.length, 0, 'Confirm opens review without granting');
+    app.querySelector('#reward-back').click();
+    assert.equal(checkpoint.states[key], undefined, 'Back from review does not skip the offer');
     assert.equal(app.querySelector('.reward-selected').dataset.pickId, identities[1]);
     const confirm = app.querySelector('#reward-card-confirm'); confirm.click();
+    assert.equal(run.deck.length, 0, 'Confirm stages review only');
+    assert.equal(confirm.textContent, 'Continue');
+    confirm.click();
     assert.equal(run.deck.length, 0, 'failed persistence rolls the selected grant back');
     assert.equal(run.skills['item:blade'].pendingDrafts, 1);
     assert.equal(confirm.disabled, false);
@@ -77,6 +83,8 @@ test('legacy skill drafts keep their raw card identity and rank overlay', () => 
     mountRewards(app, { registries, run, checkpoint, rewards: { skillDrafts: [{ skillId: 'item:blade', level: 1, cardIds: ['strike'], ranks: [2] }] }, onDone() {} });
     app.querySelector('[data-kind="skillDraft"]').click();
     app.querySelector('.reward-pick').click(); app.querySelector('#reward-card-confirm').click();
+    assert.equal(run.deck.length, 0, 'the legacy draft also reviews before granting');
+    app.querySelector('#reward-card-confirm').click();
     assert.equal(run.deck[0].cardId, 'strike'); assert.equal(run.deck[0].rank, 2);
     assert.equal(run.deck[0].abilityRank, undefined);
     assert.equal(checkpoint.chosenDraftCardIds['skillDraft:item:blade:0'], 'strike');
@@ -98,6 +106,9 @@ test('expanded ability receipt rolls back with a refused save and retries the ex
     const args = { registries, run, checkpoint, rewards: checkpoint.rewards, onDone() {}, onPersist() { if (refuse) return false; saves++; } };
     mountRewards(app, args); app.querySelector('[data-kind="skillDraft"]').click(); app.querySelectorAll('.reward-row .reward-pick')[3].click();
     const confirm = app.querySelector('#reward-card-confirm'); confirm.click();
+    assert.equal(run.deck.length, 0, 'Confirm stages review only');
+    assert.equal(confirm.textContent, 'Continue');
+    confirm.click();
     assert.equal(run.abilityDraftClaims, undefined, 'refused save restores an absent receipt ledger');
     assert.equal(run.skills[skillId].pendingDrafts, 1); assert.equal(run.deck.length, 0); assert.equal(checkpoint.states[key], undefined);
     assert.equal(run.pendingReward, checkpoint, 'rollback preserves the live persistence checkpoint');

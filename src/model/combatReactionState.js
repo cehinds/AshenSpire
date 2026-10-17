@@ -99,7 +99,7 @@ export function combatReactionProblems(state, { ownerIds = new Set(['player']), 
     if (!['enemy', 'player', 'suspended'].includes(state.phase)) problems.push('Reaction choice is outside combat');
   }
   if (state.reactionResume !== undefined && (!record(state.reactionResume) || !queued(state.reactionResume.queue)
-    || !state.pendingAbilityDiscard || !state.pendingAbilityPlay)) problems.push('Paid reaction continuation requires its nested choice');
+    || !(state.pendingAbilityDiscard || state.pendingCardChoice) || !state.pendingAbilityPlay)) problems.push('Paid reaction continuation requires its nested choice');
   if (record(state.reactionResume)) {
     const saved = state.reactionResume.foundation;
     if (state.foundation ? !record(saved) : saved !== null) problems.push('Reaction continuation requires its retained foundation context');

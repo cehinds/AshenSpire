@@ -1,3 +1,4 @@
+import { projectGameCard } from './gameProfile.js';
 // src/model/playingCard.js — what a playing card IS, with no opinion about
 // how it looks.
 //
@@ -98,7 +99,7 @@ export function combatCardDamageLabel(def, preview = null, registries = null, in
 
 export function combatCardType(def) {
   const classification = cardClassification(def);
-  const type = classification.stanceType || (classification.cardCategory === 'curse' ? 'status' : classification.cardCategory);
+  const type = (classification.stanceType !== 'prepare' && classification.stanceType) || (classification.cardCategory === 'curse' ? 'status' : classification.cardCategory);
   return type[0].toUpperCase() + type.slice(1);
 }
 
@@ -272,12 +273,24 @@ export function staticCardTokens(def) {
     return args.every(Number.isFinite) ? args.reduce((sum, item) => sum + item, 0) : undefined;
   };
   for (const binding of computeTokenBindings(effects)) {
-    const raw = (effects[binding.index] || {})[binding.field];
+    const effect = effects[binding.index] || {};
+    const raw = effect[binding.field];
     const value = constant(raw);
     if (typeof value === 'number') tokens[binding.token] = value;
     else {
       const authored = constantFormulaValue(raw) ?? describeFormula(raw);
       if (authored !== undefined) tokens[binding.token] = authored;
+      // Weapon-scaled attacks have a static authored multiplier even though
+      // their resolved damage depends on the equipped weapon. Keep that
+      // multiplier visible on non-combat faces without guessing a damage
+      // value from a runtime loadout.
+      else if (raw?.f === 'metric' && raw.metric === 'weaponDamage'
+          && raw.of === 'self'
+          && Number.isFinite(raw.per) && raw.per > 0
+          && Object.keys(raw).every(key => ['f', 'metric', 'of', 'per'].includes(key))
+          && effect.attack?.source === 'weapon') {
+        tokens[binding.token] = `${raw.per}×`;
+      }
     }
   }
   return tokens;
@@ -287,6 +300,8 @@ export function staticCardTokens(def) {
 export function playingCardDefinition(registries, ref, { preview = null, definition = null, rules = null } = {}) {
   if (preview?.resolvedDefinition) return preview.resolvedDefinition;
   if (definition) return definition;
+  const configured = projectGameCard(rules?.gameProfile ? rules : registries, ref);
+  if (configured) return configured;
   const def = rules?.breakMeterVersion == null
     ? resolveCard(registries, ref) : resolveCard(registries, ref, rules.breakMeterVersion);
   if (rules?.combatExpansionVersion !== 2) return def;

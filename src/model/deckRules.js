@@ -14,6 +14,7 @@ import { deckCopyLimit as deckCopyLimit_ } from './deckCopyLimit.js';
 // allocation for stampDeck to stamp — never a bare card outside the plan.
 
 import { deckRules } from '../content/deckRules.js';
+import { gameModule, gameContent } from './gameProfile.js';
 import { retiredAttackSlots } from './cardRemoval.js';
 import { equippedPieces, isCurrentEquipmentGrant, isItemOwned, stampDeck } from './loadout.js';
 import { resolveCard } from './registries.js';
@@ -83,11 +84,19 @@ export function deckEditingWhere(settings) {
 
 export function playInDeckOrder(settings) { return !!setting(settings, 'playInDeckOrder'); }
 
-/** True for a card the editor adds without limit: a basic, matched by role. */
-export function isUnlimitedBasic(card) {
+/** Configured decks name plain basics; legacy equipment decks mint by role. */
+export function unlimitedCardIds(run) {
+  return gameModule(run, 'cards')?.mode === 'configured'
+    ? (gameContent(run, 'editor')?.unlimitedBasicCards || [])
+    : deckRules.unlimitedCardIds;
+}
+
+/** True for a card the editor adds without limit under this run's policy. */
+export function isUnlimitedBasic(card, run = null) {
   if (!card || card.grantedBy || isItemOwned(card)) return false;
+  if (gameModule(run, 'cards')?.mode === 'configured') return !card.equipmentRole && unlimitedCardIds(run).includes(card.cardId);
   if (card.equipmentRole === 'attack' || card.equipmentRole === 'guard') return true;
-  return !card.equipmentRole && deckRules.unlimitedCardIds.includes(card.cardId);
+  return !card.equipmentRole && unlimitedCardIds(run).includes(card.cardId);
 }
 
 /** The editor's equipment gate, shared by its projection and mutation door. */
@@ -97,7 +106,7 @@ export function deckCardEquipmentEligible(registries, run, card) {
   // A lent card remains an instance of its source item's mount. Restoring it
   // while that mount is absent would make the next restamp discard it.
   if (card.grantedBy || isItemOwned(card)) return isCurrentEquipmentGrant(registries, run, card);
-  if (isUnlimitedBasic(card) || deckRules.unlimitedCardIds.includes(card.cardId)) return true;
+  if (isUnlimitedBasic(card, run) || unlimitedCardIds(run).includes(card.cardId)) return true;
   const tags = resolveCard(registries, card).tags || [];
   const rules = deckRules.equipmentEligibility;
   if (tags.some((tag) => rules.universalTags.includes(tag))) return true;
@@ -174,7 +183,7 @@ export function moveToSideboard(registries, run, instanceId) {
   // A pristine plain basic has nothing to keep; an upgraded, modded or ranked
   // one is kept like any owned card and comes back before a fresh one is minted.
   const pristine = !card.upgraded && !(Array.isArray(card.mods) && card.mods.length) && !(card.rank > 1);
-  if (!card.equipmentRole && !card.grantedBy && deckRules.unlimitedCardIds.includes(card.cardId) && pristine) return true;
+  if (!card.equipmentRole && !card.grantedBy && unlimitedCardIds(run).includes(card.cardId) && pristine) return true;
   sideboard(run).push(card);
   return true;
 }
@@ -205,7 +214,7 @@ export function moveFromSideboard(registries, run, instanceId, settings = {}) {
 }
 
 /** True for a run whose basics are slot-true (attack/guard by role): it has a loadout. */
-export function isEquippedRun(run) { return !!(run && run.loadout); }
+export function isEquippedRun(run) { return !!(run && run.loadout) && gameModule(run, 'cards')?.mode !== 'configured'; }
 
 /**
  * isSetAsideBasic(card) → true for a sideboarded basic worth keeping apart
@@ -215,8 +224,8 @@ export function isEquippedRun(run) { return !!(run && run.loadout); }
  * (loadout.js, "equipment-bound basics derive their upgrade from the source
  * piece"), so every copy of a role is the same card once it is back.
  */
-export function isSetAsideBasic(card) {
-  if (!card || card.equipmentRole || !isUnlimitedBasic(card)) return false;
+export function isSetAsideBasic(card, run = null) {
+  if (!card || card.equipmentRole || !isUnlimitedBasic(card, run)) return false;
   return !!card.upgraded || (Array.isArray(card.mods) && card.mods.length > 0) || card.rank > 1;
 }
 
@@ -232,12 +241,12 @@ export function isSetAsideBasic(card) {
  * is kept in the sideboard.
  */
 export function addBasicCard(registries, run, role, { plain = false, freshOnly = false } = {}) {
-  const restorable = (c) => !freshOnly || !isSetAsideBasic(c);
+  const restorable = (c) => !freshOnly || !isSetAsideBasic(c, run);
   if (plain) {
     // An equipped run's basics are slot-true: a bare Strike would sit outside
     // stampDeck's projection and the attack-slot allocation.
     if (isEquippedRun(run)) throw new Error(`addBasicCard: an equipped run adds basics by role ('attack' | 'guard'), not { plain: true }`);
-    if (!deckRules.unlimitedCardIds.includes(role)) throw new Error(`'${role}' is not an unlimited card id (${deckRules.unlimitedCardIds.join(', ')})`);
+    if (!unlimitedCardIds(run).includes(role)) throw new Error(`'${role}' is not an unlimited card id (${unlimitedCardIds(run).join(', ')})`);
     const kept = sideboard(run).find((c) => c && !c.equipmentRole && !c.grantedBy && c.cardId === role && restorable(c));
     if (kept) {
       moveFromSideboard(registries, run, kept.instanceId);

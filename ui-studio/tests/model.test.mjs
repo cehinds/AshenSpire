@@ -147,7 +147,7 @@ test('formatJson changes only the edited line and keeps a changed object in its 
   const out = M.formatJson(next, { original: text });
   const a = text.split('\n'), b = out.split('\n');
   assert.equal(a.length, b.length);
-  assert.deepEqual(b.filter((l, i) => l !== a[i]), ['    "bands": { "hud": 12, "scene": 53, "context": 30, "footer": 5 },']);
+  assert.deepEqual(b.filter((l, i) => l !== a[i]), ['    "bands": { "hud": 12, "scene": 47, "context": 27, "footer": 14 },']);
   // A many-line object that changes stays many-line; a one-line one stays one-line.
   const map = readFileSync(resolve(ROOT, 'content/config/ui/scenes/w4b-map.json'), 'utf8');
   const edited = M.formatJson(M.setPath(JSON.parse(map), 'behavior.tray.slideMs', 260), { original: map });
@@ -162,11 +162,11 @@ test('regionsFor draws the combat plan the game draws: physical minimums, the ha
   const configs = { 'ui/components/card.json': card };
   const regs = M.regionsFor(wf, w4a, { width: 1280, height: 800 }, { parent: w4, tokens, layoutMode: 'wide', zoom: 1.07, rootFontPx: 10, configs });
   const bands = regs.filter((r) => r.band);
-  // hud 10% = 80; the footer's 5% (40) rises to the W4 56 px minimum; the hand keeps 30% (240 > 208); the field takes the rest.
-  assert.deepEqual(bands.map((r) => [r.band, r.h]), [['hud', 80], ['scene', 800 - 80 - 240 - 56], ['context', 240], ['footer', 56]]);
+  // Authored combat bands reserve 10% HUD, 27% hand and 14% footer; none needs the physical minimum here.
+  assert.deepEqual(bands.map((r) => [r.band, M.round(r.h, 6)]), [['hud', 80], ['scene', 392], ['context', 216], ['footer', 112]]);
   assert.equal(bands[0].edit.kind, 'bandEdge');
   assert.equal(bands[3].edit, null);
-  assert.match(bands[3].note, /raised to the W4 minimum 56px/);
+  assert.doesNotMatch(bands[3].note || '', /raised/);
   const floor = regs.find((r) => r.id === 'floor');
   assert.equal(M.round(floor.y, 6), M.round(80 + bands[1].h * 0.8, 6));
   const hand = regs.find((r) => r.id === 'hand');
@@ -226,9 +226,9 @@ test('applyRegionDrag moves a band edge by the snapped percent and edits path va
   const regs = M.regionsFor(wf, w4a, vp, { parent: w4, tokens });
   const hud = regs.find((r) => r.band === 'hud');
   const next = M.applyRegionDrag(w4a, hud, 40, vp, { grid: { bandStepPercent: 1 }, regions: regs });
-  assert.deepEqual(next.sizing.bands, { hud: 15, scene: 50, context: 30, footer: 5 });
+  assert.deepEqual(next.sizing.bands, { hud: 15, scene: 44, context: 27, footer: 14 });
   const floor = regs.find((r) => r.id === 'floor');
-  assert.equal(M.applyRegionDrag(w4a, floor, 44, vp, { grid: { bandStepPercent: 1 }, regions: regs }).sizing.floorPercent, 90);
+  assert.equal(M.applyRegionDrag(w4a, floor, 44, vp, { grid: { bandStepPercent: 1 }, regions: regs }).sizing.floorPercent, 91);
   // A $ref is never dragged over.
   const map = readConfig('ui/scenes/w4b-map.json');
   const mapWf = M.DEFAULT_WIREFRAMES.find((w) => w.id === 'w4b');

@@ -90,12 +90,12 @@ test('historical1209 phone geometry packs full footers beside its original reser
   const sprite={};
   const player={classList:{contains:()=>false},dataset:{},querySelector:selector=>selector==='.sprite'?sprite:
     selector==='.combatant-leading'?leading:{getBoundingClientRect:()=>({left:0,top:0})}};
-  const combat={getBoundingClientRect:()=>({...placement.viewport,top:placement.viewport.top+delta,
+  const combat={dataset:{targetHud:'false'},getBoundingClientRect:()=>({...placement.viewport,top:placement.viewport.top+delta,
     bottom:placement.viewport.bottom+delta}),querySelector:selector=>selector==='.combat-tools'?null:{getBoundingClientRect:()=>({bottom:fieldTop+delta})}};
   const field={getBoundingClientRect:rect,closest:()=>combat,
     querySelectorAll:selector=>selector==='.combatant.player'?[player]:intents.map(box=>({...box,
       top:box.top+delta,bottom:box.bottom+delta}))};
-  const tracking=runInNewContext(stage.slice(start,end)+'\nplacePlayerHud',{hudGeometry,offsetPlacement,getComputedStyle:()=>({}),
+  const tracking=runInNewContext(stage.slice(start,end)+'\nplacePlayerHud',{classicAppearance:()=>true,hudGeometry,offsetPlacement,getComputedStyle:()=>({}),
     field,settledTargets:result,settledFooterSize:44,combatTargetHudFootprints,playerInfoRects:[],combatPlayerActionRect,placePlayerIntentGlyph:()=>null,
     uiZoom:()=>1,visibleCombatPanelRect:node=>node,combatPlayerInfoRect:()=>null,
     currentSpriteArtBounds:()=>({...trackingArt,top:trackingArt.top+delta,bottom:trackingArt.bottom+delta}),

@@ -101,6 +101,9 @@ test('a skill draft offers each card at its rolled rank, and the taken card keep
     assert.ok(faces[0].getAttribute('aria-label').includes('Attack'), 'the offered face names its primary sigil');
     faces[0].click();
     app.querySelector('#reward-card-confirm').click();
+    assert.equal(run.deck.length, 0, 'Confirm reviews the ranked offer without granting it');
+    assert.equal(app.querySelector('#reward-card-confirm').textContent, 'Continue');
+    app.querySelector('#reward-card-confirm').click();
     assert.equal(run.deck.at(-1).cardId, 'rend');
     assert.equal(run.deck.at(-1).rank, 3, 'the deck card arrives at the rank it was offered at');
   } finally { Object.assign(globalThis, saved); }

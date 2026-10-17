@@ -291,8 +291,13 @@ test('FINISH: the classic merchant\'s existing shelves are byte-identical on 50 
     'ashfallRite', 'phoenixChart', 'pyreLight', 'riteOfCinders', 'emberCommunion',
     'aspDart', 'viperStrike', 'septicBlade', 'lethalDose', 'mindSpike', 'dissonance', 'mindFracture', 'wakingNightmare',
     'stoneSling', 'rockfall', 'stoneskin', 'entomb']);
-  const CAPTURE_REG = createRegistries({ ...legacyContentBundle,
-    classes: legacyContentBundle.classes.map((c) => ({ ...c, cardPool: c.cardPool.filter((id) => !addedSinceCapture.has(id)) })) });
+  // The immutable pre-master catalog still has the original card definitions;
+  // the exclusions above restore this earlier shelf capture's class pools.
+  // Freeze colorless candidates too, since shops draw those outside cardPool.
+  const capturedCards = JSON.parse(readFileSync(new URL('./fixtures/shop-card-catalog-pre-master.json', import.meta.url), 'utf8')).cards;
+  const capturedIds = new Set(capturedCards.map(card => card.id));
+  const CAPTURE_REG = createRegistries({ ...legacyContentBundle, cards: capturedCards,
+    classes: legacyContentBundle.classes.map((c) => ({ ...c, cardPool: c.cardPool.filter((id) => capturedIds.has(id) && !addedSinceCapture.has(id)) })) });
   for (const n of seeds) {
     const before = fixture.shelves[n];
     const run = createRunState({ seed: before.runSeed, classId: before.classId, registries: CAPTURE_REG, combatExpansionVersion: 1 });

@@ -1,3 +1,5 @@
+import { gameModule } from './gameProfile.js';
+import { gameProfileServiceActive } from './gameProfileRun.js';
 // Smithing is a run-owned transaction over a namespaced item, never a card copy.
 // The caller supplies the balance block so this model does not become a second
 // home for economy tuning. Exact item/tier tags own every cost and change.
@@ -382,7 +384,7 @@ function genericCardChanges(affectedCards, requirements) {
 }
 
 /** Stable, distinct owned item choices with exact, non-noop change receipts. */
-export function smithingPlan(registries, run, explicitRules = undefined) {
+export function smithingPlan(registries, run, explicitRules = undefined, { free = false } = {}) {
   rulesFor(registries, explicitRules);
   const levelMap = levels(run);
   for (const [itemRef, level] of Object.entries(levelMap)) {
@@ -404,7 +406,7 @@ export function smithingPlan(registries, run, explicitRules = undefined) {
     const nextLevel = currentLevel + 1;
     const upgradeRows = itemUpgradeRows(registries, itemRef, nextLevel);
     if (!upgradeRows.length) continue;
-    const cost = itemUpgradeCost(upgradeRows);
+    const cost = free ? 0 : itemUpgradeCost(upgradeRows);
     const affectedCards = identity.itemKind === 'armament'
       ? sourceCards(registries, run, identity.itemId)
         .map((card) => smithingCardReceipt(registries, run, card, nextLevel))
@@ -467,6 +469,7 @@ export function restampSmithingCards(registries, run, cards = run.deck || []) {
 
 /** Host-side, revalidated generic commit. `free` is for event/keepsake grants. */
 export function commitItemUpgrade(registries, run, requestedItemRef, explicitRules = undefined, { free = false, cards = undefined, purse = 'stones' } = {}) {
+  if (gameModule(run, 'rest')?.mode === 'configured' && !gameProfileServiceActive(run, 'smith')) throw new Error('Configured equipment upgrades require a committed Smith rest service');
   const itemRef = typeof requestedItemRef === 'string' && requestedItemRef.includes('/')
     ? requestedItemRef
     : `armament/${requestedItemRef}`;
@@ -515,6 +518,7 @@ export function commitItemUpgrade(registries, run, requestedItemRef, explicitRul
 
 /** Backward-compatible name; bare ids still mean armament/<id>. */
 export function commitSmithing(registries, run, itemRefOrArmamentId, explicitRules = undefined, options = {}) {
+  if (gameModule(run, 'rest')?.mode === 'configured' && !gameProfileServiceActive(run, 'smith')) throw new Error('Configured equipment upgrades require a committed Smith rest service');
   return commitItemUpgrade(registries, run, itemRefOrArmamentId, explicitRules, options);
 }
 

@@ -5,7 +5,7 @@
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
 - Source branch: `dev`
-- Source commit: `8dcff9e4c0dff6495db9641603f8d78b60e22730`
+- Source commit: `1d0114db1297a930f95e57a6e7e4705ac02265ad`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
@@ -21,17 +21,17 @@
 
 | Area | Path | Tracked files |
 |---|---|---:|
-| Domain models and contracts | `src/model/` | 195 |
-| Headless simulation/services | `src/engine/` | 54 |
+| Domain models and contracts | `src/model/` | 205 |
+| Headless simulation/services | `src/engine/` | 61 |
 | Screen presenters/hosts | `src/ui/screens/` | 34 |
 | Presentation projections | `src/ui/viewModels/` | 1 |
-| Component models and behavior records | `src/ui/models/` | 104 |
-| DOM components and observer adapters | `src/ui/components/` | 130 |
-| Code-side content adapters | `src/content/` | 167 |
-| Authoritative JSON/CSV content | `content/source/` | 32 |
+| Component models and behavior records | `src/ui/models/` | 116 |
+| DOM components and observer adapters | `src/ui/components/` | 138 |
+| Code-side content adapters | `src/content/` | 172 |
+| Authoritative JSON/CSV content | `content/source/` | 33 |
 | Transport | `src/net/` | 1 |
-| Tests | `tests/` | 689 |
-| Architecture/tooling | `tools/` | 1824 |
+| Tests | `tests/` | 757 |
+| Architecture/tooling | `tools/` | 1830 |
 
 ## Current implementation signals
 
@@ -39,7 +39,7 @@
 - Shared presentation projection: `src/ui/viewModels/RunHudViewModel.js`.
 - Immutable presentation records: `src/ui/models/ComponentModel.js` and `BehaviorModel.js`.
 - Headless simulation boundary: `src/engine/` imports model/content, not UI/screens.
-- Authoritative content inputs: 7 JSON file(s) and 25 CSV file(s) under `content/source/`.
+- Authoritative content inputs: 8 JSON file(s) and 25 CSV file(s) under `content/source/`.
 
 ## Automated boundary checks
 
@@ -51,8 +51,8 @@
 
 ## File-shape summary
 
-Tracked files: **17298**.
-Extensions: `.bat` 1, `.cjs` 15, `.cmd` 4, `.cs` 2, `.css` 68, `.csv` 59, `.gif` 90, `.gitattributes` 5, `.gitignore` 6, `.html` 72, `.jpg` 380, `.js` 842, `.json` 1342, `.md` 287, `.mjs` 1289, `.mmd` 1, `.nojekyll` 1, `.nsi` 1, `.png` 2915, `.ps1` 12, `.py` 73, `.sh` 5, `.sql` 1, `.svg` 735, `.txt` 149, `.webp` 8901, `.woff2` 11, `.yml` 28, `.zip` 2, `(none)` 1.
+Tracked files: **17645**.
+Extensions: `.bat` 1, `.cjs` 15, `.cmd` 4, `.cs` 2, `.css` 73, `.csv` 59, `.gif` 90, `.gitattributes` 5, `.gitignore` 6, `.html` 85, `.jpg` 389, `.js` 887, `.json` 1459, `.md` 335, `.mjs` 1362, `.mmd` 1, `.nojekyll` 1, `.nsi` 1, `.png` 2935, `.ps1` 12, `.py` 74, `.sh` 5, `.sql` 1, `.svg` 751, `.txt` 149, `.webp` 8901, `.woff2` 11, `.yml` 28, `.zip` 2, `(none)` 1.
 
 This file is an inventory, not architecture authority. A refresh may update
 the counts, source commit, and observed signals, but it must not rewrite the

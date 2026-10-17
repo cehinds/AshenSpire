@@ -1,3 +1,5 @@
+import { settingsRowAvailable, activeSettingsProfile } from '../models/SettingsCapabilitiesModel.js';
+import { mountGameProfileSettings } from '../components/gameProfileSelector.js';
 import { previewPrologue } from './prologue.js';
 import { openPrologueSceneEditor } from './prologueSceneEditor.js';
 // src/ui/screens/settings.js — settings controls (SPEC §7)
@@ -449,7 +451,7 @@ const ROWS = [
   { cat: 'Advanced', advancedGroup: 'Rewards', key: 'useRestorativeFlasksOutsideCombat', def: true, label: t('settings.row.useRestorativeFlasksOutsideCombat'),
     note: tFull('settings.row.useRestorativeFlasksOutsideCombat') },
   { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victorySummaryMode', type: 'choice', def: 'continue',
-    choices: ['continue', 'anywhere', 'auto'], choiceLabels: { continue: 'Continue', anywhere: 'Click anywhere', auto: 'Expand automatically' },
+    choices: ['continue', 'anywhere', 'auto'], choiceLabels: { continue: t('common.continue'), anywhere: 'Click anywhere', auto: 'Expand automatically' },
     label: t('settings.row.victorySummaryMode'), note: tFull('settings.row.victorySummaryMode') },
   { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryReceiptSeconds', type: 'number', def: VICTORY_XP_DEFAULTS.seconds, min: 0, max: 12, step: 0.1,
     label: t('settings.row.victoryReceiptSeconds'), note: tFull('settings.row.victoryReceiptSeconds') },
@@ -519,14 +521,18 @@ const ROWS = [
   // built-in. 'Built-in', the old default, reads as Auto. A per-device key
   // (LOCAL_ONLY_KEYS, never synced): a folder here means nothing on another device.
   { cat: 'Display', key: ART_QUALITY_KEY, type: 'choice', def: ART_AUTO,
-    choices: ART_QUALITY_CHOICES, legacyChoices: LEGACY_ART_QUALITY, choiceDisabled: tierChoiceDisabled, describedBy: 'set-artQuality-tier',
+    choices: ART_QUALITY_CHOICES, choiceLabels: { [ART_AUTO]: t('settings.viewPreset.auto') }, legacyChoices: LEGACY_ART_QUALITY, choiceDisabled: tierChoiceDisabled, describedBy: 'set-artQuality-tier',
     label: t('settings.row.artQuality'), applied: artQualityHtml,
     note: tFull('settings.row.artQuality') },
   { cat: 'Display', key: CARD_ART_STYLE_KEY, type: 'choice', def: CARD_ART_SIMPLE,
     choices: CARD_ART_STYLE_CHOICES, label: t('settings.row.cardArtStyle'),
     note: tFull('settings.row.cardArtStyle') },
+  { cat: 'Display', key: 'viewPreset', type: 'choice', def: 'auto', dropdown: true,
+    choices: ['auto', 'desktop', 'mobile', 'widescreen', 'tablet'],
+    choiceLabels: Object.fromEntries(['auto', 'desktop', 'mobile', 'widescreen', 'tablet'].map(id => [id, t(`settings.viewPreset.${id}`)])),
+    label: t('settings.row.viewPreset'), note: tFull('settings.row.viewPreset') },
   { cat: 'Display', key: 'uiScale', type: 'choice', def: 'Auto',
-    choices: ['Auto', 'S', 'M', 'L', 'XL'], label: t('settings.row.uiScale'), applied: appliedHtml,
+    choices: ['Auto', 'S', 'M', 'L', 'XL'], choiceLabels: { Auto: t('settings.viewPreset.auto') }, label: t('settings.row.uiScale'), applied: appliedHtml,
     note: tFull('settings.row.uiScale') },
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'cardMotif', type: 'choice', def: UI_DEFAULTS.cardMotif,
     choices: UI_DEFAULTS.cardMotifModes, label: t('settings.row.cardMotif'),
@@ -637,7 +643,7 @@ const ROWS = [
   { cat: 'Accessibility', key: 'highContrast', def: true, label: t('settings.row.highContrast'),
     note: tFull('settings.row.highContrast') },
   { cat: 'Accessibility', key: 'textSize', type: 'choice', def: 'Auto',
-    choices: ['Auto', 'S', 'L', 'XL'], label: t('settings.row.textSize'),
+    choices: ['Auto', 'S', 'L', 'XL'], choiceLabels: { Auto: t('settings.viewPreset.auto') }, label: t('settings.row.textSize'),
     note: tFull('settings.row.textSize') },
   // Constantine, twice: "just make the tabs about 20% smaller or the size
   // configurable or scalable with UI or both", then "actually, I think it
@@ -968,8 +974,9 @@ export function developerSwitchHtml(state = debugSwitch()) {
 }
 
 /** visibleAdvancedGroups(debug) → the Advanced sections this build shows. */
-export function visibleAdvancedGroups(debug = pageDebug()) {
-  return debug ? ADVANCED_GROUPS : ADVANCED_GROUPS.filter((group) => RELEASE_ADVANCED_GROUP_IDS.includes(group.id));
+export function visibleAdvancedGroups(debug = pageDebug(), profile = null) {
+  const groups = debug ? ADVANCED_GROUPS : ADVANCED_GROUPS.filter((group) => RELEASE_ADVANCED_GROUP_IDS.includes(group.id));
+  return profile ? groups.filter(group => MOUNTED_ADVANCED_GROUPS[group.id] || cachedSubgroups(ROWS, group.id, profile).length) : groups;
 }
 
 /** The key the chosen category rides in. `meta.settings` is a free bag. */
@@ -996,7 +1003,7 @@ export const ADVANCED_GROUP_IDS = Object.freeze(ADVANCED_GROUPS.map((group) => g
  * every tab means the next move cannot do that again.
  */
 export function formationLayoutRows() {
-  return ADVANCED_GROUP_IDS.flatMap((id) => advancedSubgroups(ROWS, id))
+  return ADVANCED_GROUP_IDS.flatMap((id) => advancedSubgroups(categoryHandler('Advanced').rows, id))
     .find((group) => group.id === 'Formation layout')?.rows || [];
 }
 
@@ -1011,11 +1018,11 @@ const MOVED_ADVANCED_TOPICS = Object.freeze({
   Rules: ['Poise', 'Stagger', 'Mana'],
 });
 
-export function activeAdvancedGroup(settings) {
+export function activeAdvancedGroup(settings, profile = null) {
   const raw = settings?.[ADVANCED_CAT_KEY];
   const moved = MOVED_ADVANCED_TOPICS[raw]?.includes(settings?.[`settingsAdvancedSubgroup.${raw}`]);
   const stored = moved ? 'Stats' : MERGED_ADVANCED_GROUPS[raw] || raw;
-  const shown = visibleAdvancedGroups();
+  const shown = visibleAdvancedGroups(pageDebug(), profile);
   return shown.some((group) => group.id === stored) ? stored : shown[0].id;
 }
 
@@ -1045,7 +1052,12 @@ export const CATEGORY_ORDER = ['General', 'Accessibility', 'Advanced'];
 // plus a branch in `generalGroups`. They were four separate `['Display',
 // 'Audio']` literals before Combat existed, which is four places for a fifth
 // group to be forgotten in.
-export const GENERAL_GROUPS = ['Display', 'Combat', 'Audio'];
+// Custom sections declare their stored keys for group reset and Reset all.
+// Their controls own validation and persistence rather than ordinary row widgets.
+export const CUSTOM_GENERAL_GROUPS = Object.freeze({
+  'Game rules': Object.freeze(['newGameProfile', 'importedGameProfile']),
+});
+export const GENERAL_GROUPS = ['Display', 'Combat', 'Audio', ...Object.keys(CUSTOM_GENERAL_GROUPS)];
 
 /** The General group a stored value names, or the first one. Never undefined:
  *  a bag written by an older build can hold a group this one dropped. */
@@ -1056,7 +1068,7 @@ export function generalGroup(settings) {
 
 // W1a names the first category Display, as its id already is. (It read "Game"
 // from f17d9a2e; restoring that is one entry here.)
-const CATEGORY_LABELS = {};
+const CATEGORY_LABELS = { 'Game rules': t('gameProfile.settings.title') };
 
 function categoryLabel(cat) {
   return CATEGORY_LABELS[cat] || cat;
@@ -1555,7 +1567,8 @@ export function resetKeys(settings, onChange, keys, label = 'Reset', { promoted 
 
 /** allResettableKeys() → every stored key Reset all puts back, inert retired ones included. */
 export function allResettableKeys() {
-  return [...ROWS, ...INERT_CONFIG_ROWS].filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key);
+  return [...ROWS, ...INERT_CONFIG_ROWS].filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key)
+    .concat(Object.values(CUSTOM_GENERAL_GROUPS).flat());
 }
 
 /** confirmResetAll(onConfirm, returnFocusElement) — the danger confirmation both Reset-all doors open. */
@@ -1847,7 +1860,7 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
   const on = r.type === 'action' ? isFullscreen(doc) : controlOn(settings, r);
   return `${rowOpen()}
       ${stack()}
-      <span class="r-trail"><button type="button" class="as-toggle toggle ${on ? 'on' : ''}" data-key="${r.key}"${r.type === 'action' ? ` data-action="1" aria-label="${esc(r.label)}" aria-describedby="set-${r.key}-status"` : ''} role="switch" aria-checked="${on}"><span class="knob"></span></button></span>
+      <span class="r-trail"><button type="button" class="as-toggle toggle ${on ? 'on' : ''}" data-key="${r.key}" aria-label="${esc(r.label)}"${r.type === 'action' ? ` data-action="1" aria-describedby="set-${r.key}-status"` : ''} role="switch" aria-checked="${on}"><span class="knob"></span></button></span>
     </div>`;
 }
 
@@ -2421,9 +2434,10 @@ function shownCategories(saves) {
  * report that created it ("no good section to customize combat, combat
  * animation") is a claim about which NAME holds which ROW, and that claim is
  * only worth anything if something reads it back. */
-export function generalGroups(category) {
+export function generalGroups(category, profile = null) {
+  if (Object.hasOwn(CUSTOM_GENERAL_GROUPS, category)) return new Map([[categoryLabel(category), CUSTOM_GENERAL_GROUPS[category].map(key => ({ key }))]]);
   const groups = new Map();
-  for (const row of categoryHandler(category).rows) {
+  for (const row of categoryHandler(category).rows.filter(row => settingsRowAvailable(row, profile))) {
     const key = row.key;
     const label = category === 'Display' ? /^hud/.test(key) ? 'HUD' : /map|shrine/.test(key) ? 'Map'
       // "Effects & pacing" USED TO CATCH THE COMBAT ROWS TOO, and that is the
@@ -2565,9 +2579,10 @@ function visibleAdvancedSubgroups(rows, groupId) {
 // nothing else; a section draws only the topic that is open.
 const SEARCH_LIMIT = 120;
 const subgroupCache = new Map();
-function cachedSubgroups(rows, groupId) {
-  if (!subgroupCache.has(groupId)) subgroupCache.set(groupId, visibleAdvancedSubgroups(rows, groupId));
-  return subgroupCache.get(groupId);
+function cachedSubgroups(rows, groupId, profile = null) {
+  const key = `${groupId}:${profile?.hash || ''}`;
+  if (!subgroupCache.has(key)) subgroupCache.set(key, visibleAdvancedSubgroups(rows.filter(row => row.cat === 'Advanced' && settingsRowAvailable(row, profile)), groupId));
+  return subgroupCache.get(key);
 }
 
 /**
@@ -2576,7 +2591,7 @@ function cachedSubgroups(rows, groupId) {
  * fixed-draw rows while drawing to a hand size) is not a hit: it would be
  * counted, and reset, without being on screen.
  */
-export function settingsSearchHits(query, debug = pageDebug(), settings = null, { changedOnly = false } = {}) {
+export function settingsSearchHits(query, debug = pageDebug(), settings = null, { changedOnly = false, profile = null } = {}) {
   const q = String(query || '').trim().toLocaleLowerCase();
   if (!q && !changedOnly) return [];
   const words = q ? q.split(/\s+/) : [];
@@ -2585,7 +2600,7 @@ export function settingsSearchHits(query, debug = pageDebug(), settings = null, 
     for (const row of [...handRulesRows(), ...FIXED_DRAW_ROWS]) if (row.fixedOnly) hiddenByRules.add(row.key);
   }
   const hit = (row) => {
-    if (hiddenByRules.has(row.key)) return false;
+    if (hiddenByRules.has(row.key) || !settingsRowAvailable(row, profile)) return false;
     if (changedOnly && !rowModified(settings, row)) return false;
     const hay = `${row.label || ''} ${typeof row.note === 'string' ? row.note : ''} ${row.key || ''}`.toLocaleLowerCase();
     return words.every((word) => hay.includes(word));
@@ -2596,17 +2611,17 @@ export function settingsSearchHits(query, debug = pageDebug(), settings = null, 
     if (hit(row)) hits.push({ row, where: row.cat === 'Accessibility' ? 'Accessibility' : `General › ${row.cat}` });
   }
   const advanced = categoryHandler('Advanced')?.rows || [];
-  for (const group of visibleAdvancedGroups(debug)) {
+  for (const group of visibleAdvancedGroups(debug, profile)) {
     if (MOUNTED_ADVANCED_GROUPS[group.id]) continue;
-    for (const sub of cachedSubgroups(advanced, group.id)) {
+    for (const sub of cachedSubgroups(advanced, group.id, profile)) {
       for (const row of sub.rows) if (hit(row)) hits.push({ row, where: `${group.label} › ${sub.label}` });
     }
   }
   return hits;
 }
 
-function searchResultsHtml(settings, query, changedOnly = false) {
-  const hits = settingsSearchHits(query, pageDebug(), settings, { changedOnly });
+function searchResultsHtml(settings, query, changedOnly = false, profile = null) {
+  const hits = settingsSearchHits(query, pageDebug(), settings, { changedOnly, profile });
   if (!hits.length) {
     return `<p class="set-note set-search-empty" data-search-results="0">${changedOnly
       ? (query ? `No changed setting matches “${esc(query)}”.` : 'Nothing is changed: every setting is at its default.')
@@ -2627,25 +2642,25 @@ function searchResultsHtml(settings, query, changedOnly = false) {
 }
 
 /** categoryHtml(cat, settings, …) → one pane's markup (exported for tests). */
-export function categoryHtml(cat, settings, saves, previewAttributes = null, previewLevel = null, previewClassId = null, query = '', changedOnly = false) {
-  if (query || changedOnly) return searchResultsHtml(settings, query, changedOnly);
+export function categoryHtml(cat, settings, saves, previewAttributes = null, previewLevel = null, previewClassId = null, query = '', changedOnly = false, profile = null) {
+  if (query || changedOnly) return searchResultsHtml(settings, query, changedOnly, profile);
   if (cat === 'General' || cat === 'Accessibility') {
     const groups = cat === 'Accessibility' ? ['Accessibility'] : GENERAL_GROUPS;
     const selected = groups.includes(settings.settingsGeneralCategory) ? settings.settingsGeneralCategory : groups[0];
-    const topics = generalGroups(selected);
+    const topics = generalGroups(selected, profile);
     const storedTopic = settings[`settingsGeneralTopic.${selected}`];
     const topic = topics.has(storedTopic) ? storedTopic : topics.keys().next().value;
     const rows = topics.get(topic);
     const preview = settingsPreviewShown(cat, selected) ? settingsPreviewHtml(settings) : '';
     const firstFullscreen = selected === 'Display' && rows[0]?.key === 'fullscreen';
-    const rowHtml = rows.map(row => settingsRowHtml(settings, row));
+    const rowHtml = Object.hasOwn(CUSTOM_GENERAL_GROUPS, selected) ? [] : rows.map(row => settingsRowHtml(settings, row));
     // On a phone the expanded preview can fill the visible pane. Keep the
     // first Display control ahead of it so Fullscreen is reachable on entry.
-    const body = firstFullscreen
+    const body = selected === 'Game rules' ? '<div data-game-profile-settings></div>' : firstFullscreen
       ? `<div class="set-card-list">${rowHtml[0]}${preview}${rowHtml.slice(1).join('')}</div>`
       : `${preview}<div class="set-card-list">${rowHtml.join('')}</div>`;
     return '<div class="set-general-pickers">'
-      + (groups.length > 1 ? `<select class="set-general-select" data-general-select aria-label="General section">${groups.map(group => `<option${group === selected ? ' selected' : ''}>${group}</option>`).join('')}</select>` : '')
+      + (groups.length > 1 ? `<select class="set-general-select" data-general-select aria-label="General section">${groups.map(group => `<option value="${esc(group)}"${group === selected ? ' selected' : ''}>${esc(categoryLabel(group))}</option>`).join('')}</select>` : '')
       + (topics.size > 1 ? `<select class="set-general-select" data-general-topic aria-label="${cat} option group">${[...topics.keys()].map(label => `<option${label === topic ? ' selected' : ''}>${label}</option>`).join('')}</select>` : '')
       + `</div>${body}`;
   }
@@ -2664,8 +2679,8 @@ export function categoryHtml(cat, settings, saves, previewAttributes = null, pre
   // The selected tab is the pane's identity: the panel is labelled by it
   // (aria-labelledby), and the tip is still the tab's tooltip.
   if (cat === 'Advanced') {
-    const shownGroups = visibleAdvancedGroups();
-    const active = activeAdvancedGroup(settings);
+    const shownGroups = visibleAdvancedGroups(pageDebug(), profile);
+    const active = activeAdvancedGroup(settings, profile);
     const tabs = shownGroups.map((group) => `<button class="set-subtab${group.id === active ? ' on' : ''}"`
       + ` type="button" role="tab" aria-selected="${group.id === active}" aria-pressed="${group.id === active}"`
       + ` data-advanced-group="${esc(group.id)}">${esc(group.label)}</button>`).join('');
@@ -2679,7 +2694,7 @@ export function categoryHtml(cat, settings, saves, previewAttributes = null, pre
         return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"`
           + `><div class="${MOUNTED_ADVANCED_GROUPS[group.id]}"></div></section>`;
       }
-      const subgroups = cachedSubgroups(h.rows, group.id);
+      const subgroups = cachedSubgroups(h.rows, group.id, profile);
       const selected = storedAdvancedTopic(settings, group.id);
       const activeSub = subgroups.find(sub => sub.id === selected) || subgroups[0];
       const subTabs = subgroups.length > 1 ? `<div class="set-topic-tabs" role="tablist" aria-label="${esc(group.label)} groups">`
@@ -2709,7 +2724,7 @@ export function categoryHtml(cat, settings, saves, previewAttributes = null, pre
       + groups;
   }
   if (h.mount) return `<div class="${h.mount}"></div>`;
-  return `<div class="set-card-list">${h.rows.map((r) => settingsRowHtml(settings, r)).join('')}</div>`;
+  return `<div class="set-card-list">${h.rows.filter(row => settingsRowAvailable(row, profile)).map((r) => settingsRowHtml(settings, r)).join('')}</div>`;
 }
 
 // ---- keeping the player's place across a rebuild --------------------------
@@ -2801,7 +2816,8 @@ export function restoreView(root, view) {
  * its place in the ring all follow from that one list.
  */
 const MARKS_MODIFIED = Symbol('marks modified rows');
-export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onOffline = null, headerTools = null, previewAttributes = null, previewLevel = null, previewClassId = null }) {
+export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onOffline = null, headerTools = null, previewAttributes = null, previewLevel = null, previewClassId = null, gameProfile = null }) {
+  const activeProfile = () => activeSettingsProfile(gameProfile);
   panelSettings = settings;
   if (!onChange[MARKS_MODIFIED]) {
     const report = onChange;
@@ -2867,10 +2883,10 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         + `<div class="as-rail set-tabs" id="set-tabs" role="tablist" aria-label="${esc(t('settings.nav.sections'))}"`
         + ` aria-orientation="vertical" data-surface="settingsCategory">${tabs}</div>`
         + `<div class="as-pane set-panel" id="set-panel" role="tabpanel"`
-        + ` aria-labelledby="set-tab-${esc(current)}">${categoryHtml(current, settings, saves, previewAttributes, previewLevel, previewClassId, searchQuery(), changedOnly())}</div></div>`;
+        + ` aria-labelledby="set-tab-${esc(current)}">${categoryHtml(current, settings, saves, previewAttributes, previewLevel, previewClassId, searchQuery(), changedOnly(), activeProfile())}</div></div>`;
     }
   } else {
-    html = ROWS.filter((r) => !r.retired).map((r) => settingsRowHtml(settings, r)).join('');
+    html = ROWS.filter((r) => !r.retired && settingsRowAvailable(r, activeProfile())).map((r) => settingsRowHtml(settings, r)).join('');
   }
   const view = captureView(container);
   container.innerHTML = html;
@@ -2937,14 +2953,14 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     // the pane it lives in is rebuilt, or stay put when it cannot be applied.
     if (!applyPendingFormationSettings(container)) return;
     const panel = container.querySelector('.set-panel');
-    if (!panel) { renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId }); return; }
+    if (!panel) { renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile }); return; }
     const scroll = keepScroll ? panel.scrollTop : 0;
     const outer = keepScroll ? panel.parentElement?.scrollTop || 0 : 0;
     // A tab switch starts at the top on purpose, so only a keepScroll repaint
     // carries the scroll offsets over; focus is kept either way.
     const view = captureView(container, { scroll: keepScroll });
     container.querySelector('.set-tabs > .set-advanced-head')?.remove();
-    panel.innerHTML = categoryHtml(current, settings, saves, previewAttributes, previewLevel, previewClassId, searchQuery(), changedOnly());
+    panel.innerHTML = categoryHtml(current, settings, saves, previewAttributes, previewLevel, previewClassId, searchQuery(), changedOnly(), activeProfile());
     panel.setAttribute('aria-labelledby', `set-tab-${current}`);
     panel.dataset.searching = String(filtering());
     const groupReset = headerTools.querySelector('[data-reset-config="group"]');
@@ -3017,7 +3033,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     if (toggle) {
       // The rows Changed can show: on a release build, hidden tuning is
       // counted by Clear hidden tuning instead.
-      const count = settingsSearchHits('', pageDebug(), settings, { changedOnly: true }).length;
+      const count = settingsSearchHits('', pageDebug(), settings, { changedOnly: true, profile: activeProfile() }).length;
       toggle.textContent = count ? `Changed · ${count}` : 'Changed';
       toggle.setAttribute('aria-pressed', String(changedOnly()));
       toggle.classList.toggle('on', changedOnly());
@@ -3030,6 +3046,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     }
   }
   const wire = () => {
+  const profileHost = container.querySelector('[data-game-profile-settings]');
+  if (profileHost && !profileHost.childElementCount) mountGameProfileSettings(profileHost, { settings, onChange, gameProfile });
   mountFormationSettings(container, settings, onChange, formationLayoutRows());
   mountSettingsPreview(container, settings, onChange);
   placeAdvancedNavigation();
@@ -3060,13 +3078,13 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   container.querySelector('[data-general-select]')?.addEventListener('change', event => {
     settings.settingsGeneralCategory = event.target.value;
     onChange({ settingsGeneralCategory: event.target.value });
-    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
+    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile });
   });
   container.querySelector('[data-general-topic]')?.addEventListener('change', event => {
     const key = `settingsGeneralTopic.${current === 'Accessibility' ? 'Accessibility' : generalGroup(settings)}`;
     settings[key] = event.target.value;
     onChange({ [key]: event.target.value });
-    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
+    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile });
   });
   const syncTopicPicker = () => {
     const picker = container.querySelector('.set-topic-select');
@@ -3287,8 +3305,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
 
   headerTools.querySelectorAll('[data-reset-config]').forEach((button) => {
     button.onclick = () => {
-      const currentGroup = activeAdvancedGroup(settings);
-      const groups = visibleAdvancedSubgroups(ROWS, currentGroup);
+      const currentGroup = activeAdvancedGroup(settings, activeProfile());
+      const groups = cachedSubgroups(ROWS, currentGroup, activeProfile());
       const selected = storedAdvancedTopic(settings, currentGroup);
       // Reset all also clears inert retired keys: they are off the screen, so
       // this is the only door that can take a stale one out of a profile.
@@ -3297,20 +3315,21 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       // and never the section that was open behind the search.
       const query = searchQuery();
       const rows = button.dataset.resetConfig === 'all' ? [...ROWS, ...INERT_CONFIG_ROWS]
-        : filtering() ? settingsSearchHits(query, pageDebug(), settings, { changedOnly: changedOnly() }).map((hit) => hit.row)
+        : filtering() ? settingsSearchHits(query, pageDebug(), settings, { changedOnly: changedOnly(), profile: activeProfile() }).map((hit) => hit.row)
         : current === 'General' || current === 'Accessibility' ? (() => {
           const section = current === 'Accessibility' ? 'Accessibility' : generalGroup(settings);
-          const topics = generalGroups(section);
+          const topics = generalGroups(section, activeProfile());
           return topics.get(settings[`settingsGeneralTopic.${section}`]) || topics.values().next().value;
         })()
         : (groups.find(group => group.id === selected) || groups[0])?.rows || [];
-      const keys = rows.filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key);
+      const keys = button.dataset.resetConfig === 'all' ? allResettableKeys()
+        : rows.filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key);
       const label = button.dataset.resetConfig === 'all' ? 'All settings reset' : filtering() ? 'Results reset' : 'Group reset';
       const fromMenu = !!button.closest('.set-options');
       headerTools.querySelector('details').open = false;
       const run = async () => {
         await resetKeys(settings, onChange, keys, label);
-        renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
+        renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile });
       };
       // The menu is closed by now, so Cancel returns focus to its ⋮ summary.
       if (button.dataset.resetConfig === 'all') confirmResetAll(run, fromMenu ? headerTools.querySelector('.set-options summary') : button); else run();
@@ -3377,7 +3396,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       if (value === undefined) delete settings[key]; else settings[key] = value;
     }
     if ((await onChange(changes))?.ok === false) { showSettingsNotice('Settings could not be saved.'); return; }
-    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
+    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile });
     // A re-render replaces the button that was pressed, so reordering three
     // places from the keyboard meant hunting for the arrow again after each
     // press. The same control on the same scene takes the focus back.
@@ -3434,7 +3453,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         dragging?.classList.remove('set-scene-dragging');
         const moved = !dropped && dragging;
         dragging = null;
-        if (moved) renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
+        if (moved) renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile });
       });
       item.addEventListener('dragover', event => {
         if (!dragging || dragging === item) return;
@@ -3575,7 +3594,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   container.querySelectorAll('[data-btn="resetAllSettings"]').forEach((btn) => {
     btn.addEventListener('click', () => confirmResetAll(async () => {
       await resetKeys(settings, onChange, allResettableKeys(), 'All settings reset');
-      renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
+      renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile });
       container.querySelector('[data-btn="resetAllSettings"]')?.focus({ preventScroll: true });
     }, btn));
   });
@@ -3644,7 +3663,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         if (result?.ok === false) throw new Error('Settings could not be saved.');
         Object.assign(settings, saved);
         dropUndoOffer(); // an imported configuration replaces what an Undo was taken from
-        renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
+        renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile });
         showSettingsNotice(`Loaded ${Object.keys(changes).length} settings. Existing saved runs are unchanged.${warnings.length ? ` ${warnings.join(' ')}` : ''}`);
       } catch (error) {
         showSettingsNotice(`Import failed: ${error.message}`);
@@ -3848,51 +3867,57 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     });
   });
 
-  container.querySelectorAll('.set-choice-select').forEach(select => {
-    select.addEventListener('change', () => {
-      const wasAt = select.getBoundingClientRect().top;
-      settings[select.dataset.key] = select.value;
-      onChange({ [select.dataset.key]: select.value });
-      if (select.dataset.key.startsWith('gameConfig.')) reportAdvancedProblems();
-      else refreshGates(container, settings);
-      refreshApplied(container, settings);
-      refreshConditionNotes(container, settings);
-      anchorPressed(container, select, wasAt);
+  // Display settings apply after durable persistence, so derived readouts must
+  // wait for onChange. A pane can be closed or replaced while that promise runs.
+  const commitChoice = async (control, value) => {
+    const key = control.dataset.key;
+    const choices = control.matches('.choice') ? [...control.parentElement.querySelectorAll('.choice')] : [control];
+    if (control.disabled) return;
+    const disabled = choices.map(choice => choice.disabled);
+    const hadValue = Object.hasOwn(settings, key);
+    const previous = settings[key];
+    const previousSeed = settings[SEED_KEY];
+    const wasAt = control.getBoundingClientRect().top;
+    choices.forEach(choice => { choice.disabled = true; });
+    settings[key] = value;
+    let result;
+    try { result = await onChange({ [key]: value }); }
+    catch (error) {
+      result = { ok: false };
+      if (lifecycleSentinel.isConnected && control.isConnected) showSettingsNotice(error.message);
+    }
+    if (result?.ok === false) {
+      if (hadValue) settings[key] = previous; else delete settings[key];
+      if (previousSeed === undefined) delete settings[SEED_KEY]; else settings[SEED_KEY] = previousSeed;
+    }
+    // Both guards matter: the overlay keeps its container when another tab
+    // replaces the Settings controls; a modal can instead detach everything.
+    if (!lifecycleSentinel.isConnected || !control.isConnected || !container.contains(control)) return;
+    const row = ROWS.find(row => row.key === key);
+    const selected = settings[key] ?? rowDefault(row);
+    choices.forEach((choice, index) => {
+      choice.disabled = disabled[index];
+      if (choice.matches('.choice')) {
+        const on = String(selected) === choice.dataset.val;
+        choice.classList.toggle('on', on);
+        choice.setAttribute('aria-pressed', String(on));
+      } else choice.value = String(selected);
     });
+    markModified(container, settings, { [key]: settings[key] });
+    syncHeaderState();
+    if (key.startsWith('gameConfig.')) reportAdvancedProblems();
+    else refreshGates(container, settings);
+    refreshApplied(container, settings);
+    refreshConditionNotes(container, settings);
+    anchorPressed(container, control, wasAt);
+  };
+
+  container.querySelectorAll('.set-choice-select[data-key]').forEach(select => {
+    select.addEventListener('change', () => commitChoice(select, select.value));
   });
 
-  container.querySelectorAll('.choice').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      // SUNNA'S FLOOR: a control that changes layout must still be under the
-      // finger that changed it. Read where the pressed chip is BEFORE the change
-      // lands, so the anchor below has something to aim at.
-      const wasAt = btn.getBoundingClientRect().top;
-      btn.parentElement.querySelectorAll('.choice').forEach((b) => {
-        b.classList.toggle('on', b === btn);
-        b.setAttribute('aria-pressed', String(b === btn));
-      });
-      settings[btn.dataset.key] = btn.dataset.val;
-      onChange({ [btn.dataset.key]: btn.dataset.val });
-      if (btn.dataset.key.startsWith('gameConfig.')) reportAdvancedProblems();
-      else refreshGates(container, settings);
-      // AFTER onChange, which is what applies the zoom. Reading before it would
-      // report the previous value and the readout would always be one click
-      // behind — a display that lies more quietly than the one it replaced.
-      //
-      // Unconditional, over every slot on the panel. The old `if (key ===
-      // 'uiScale')` was the row's identity written a second time in the wiring,
-      // and the second row with a derived line under it would have been a
-      // second clause. There are at most two slots on a panel; asking both is
-      // cheaper than remembering which one moved.
-      refreshApplied(container, settings);
-      // ANCHOR LAST, and the order is load-bearing — it cost me a measurement.
-      // I anchored straight after onChange first, and the 44 step still lost the
-      // finger by 16.25 device px: the cost line above had not gone silent yet,
-      // so the anchor aimed at a layout that was one paragraph taller than the
-      // one the player ends up looking at. Everything that moves the page in
-      // response to this press has to have moved before the correction is read.
-      anchorPressed(container, btn, wasAt);
-    });
+  container.querySelectorAll('.choice').forEach(btn => {
+    btn.addEventListener('click', () => commitChoice(btn, btn.dataset.val));
   });
 
   container.querySelectorAll('.toggle[data-key]').forEach((btn) => {
@@ -4126,7 +4151,7 @@ function settingsHeaderTools() {
 // #1213 promises Download & saves "from Title or Settings", and only one of
 // those two was telling the truth. It is forwarded now, and lands in the same
 // one-row bar the in-run overlay uses.
-export function openSettings({ meta, onChange, saves = null, onOffline = null, previewAttributes = null, previewLevel = null, previewClassId = null }) {
+export function openSettings({ meta, onChange, saves = null, onOffline = null, previewAttributes = null, previewLevel = null, previewClassId = null, gameProfile = null }) {
   const settings = meta.settings || (meta.settings = {});
   // ONE DOOR-OPENER (kit §09): the shell owns veil, head, foot and dismissal;
   // this surface owns only the body, which is the NavRail + Pane it always was.
@@ -4143,7 +4168,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
     title: t('settings.title'),
     closeLabel: t('settings.close'),
     bodyClassName: 'set-body',
-    body: (host) => { rendered = renderSettings(host, { settings, onChange, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId }); },
+    body: (host) => { rendered = renderSettings(host, { settings, onChange, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile }); },
     secondary: pageDebug() ? [load] : [],
     primary: done,
     footSize: 'short',
@@ -4168,7 +4193,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
       if ((await onChange(saved))?.ok === false) throw new Error('Settings could not be saved.');
       Object.assign(settings, saved);
       dropUndoOffer(); // an imported configuration replaces what an Undo was taken from
-      rendered = renderSettings(door.body, { settings, onChange, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
+      rendered = renderSettings(door.body, { settings, onChange, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile });
       showSettingsNotice(warnings.length ? `Settings loaded. ${warnings.join(' ')}` : 'Settings loaded.');
     } catch (error) { showSettingsNotice(`Import failed: ${error.message}`); }
   });

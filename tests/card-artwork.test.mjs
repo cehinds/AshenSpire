@@ -59,3 +59,13 @@ test('the installed outline catalogue covers current cards, profiles, and unknow
   assert.ok(candidates[1].endsWith('default.svg'));
   assert.ok(candidates[2].startsWith('data:image/svg+xml;base64,'));
 });
+
+test('base card fallback motifs follow their authored effect families', () => {
+  const icon = id => DEFAULT_CARD_ART.cards[id];
+  assert.ok(icon('base.persistent-protection').endsWith('/shieldwall.svg'));
+  assert.ok(icon('base.poison').endsWith('/serpent.svg'));
+  assert.ok(icon('base.fire-cleanse').endsWith('/flame.svg'));
+  assert.ok(icon('base.evade').endsWith('/dodge.svg'));
+  assert.ok(icon('base.draw').endsWith('/book.svg'));
+  assert.ok(icon('base.smash').endsWith('/hammer.svg'));
+});

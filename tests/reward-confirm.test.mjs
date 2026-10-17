@@ -33,11 +33,15 @@ export function runRewardConfirmTests() {
       check(app.querySelector('#reward-card-confirm').disabled, false, `${pointerType} first tap enables Confirm`);
       check(run.deck.length, 0, 'selection never collects');
       check(app.querySelectorAll('.reward-selected').length, 1, 'one visible reward selection');
-      app.querySelector('#reward-back').click(); open();
+      app.querySelector('#reward-card-confirm').click();
+      check(run.deck.length, 0, 'review does not collect');
+      check(app.querySelector('#reward-card-confirm').textContent, 'Continue', 'review offers Continue');
+      app.querySelector('#reward-back').click();
       check(app.querySelectorAll('.reward-selected')[0].dataset.cardId, 'scholarsInsight', 'Back keeps selection');
       tap(app.querySelectorAll('.reward-row .card')[0]);
       check(app.querySelectorAll('.reward-selected').length, 1, 'switch replaces prior selection');
       const confirm = app.querySelector('#reward-card-confirm');
+      confirm.click(); // stage review; only Continue crosses the save door
       for (const failure of ['throw', true]) {
         fail = failure; confirm.click();
         check(run.deck.length, 0, 'failed save rolls deck back');
@@ -46,13 +50,30 @@ export function runRewardConfirmTests() {
         check(app.querySelector('.reward-confirm-status').hidden, false, 'save failure is visible');
       }
       fail = false; confirm.click(); confirm.click();
-      check(run.deck.map(card => card.cardId), ['frostNova'], 'Confirm collects selected card exactly once');
+      check(run.deck.map(card => card.cardId), ['frostNova'], 'Continue collects selected card exactly once');
       check(savedDeck, run.deck, 'selected card persisted');
       check(writes, 3, 'duplicate confirm cannot persist twice');
       check(checkpoint.states.card, 'taken', 'successful checkpoint records Taken');
       check(claimed(), '1 of 1 claimed', 'the head counts the taken card');
       check([...app.querySelectorAll('.reward-claim-row')].map(row => row.dataset.state), ['taken'], 'the status row matches the menu');
       check(app.querySelector('.reward-claim-required'), null, 'no choice waits once the card is taken');
+      app.remove();
+    }
+    {
+      const app = document.createElement('main'); document.body.append(app);
+      const run = { cinders: 11, deck: [], flasks: [], relics: [], loadout: { storage: [] } };
+      const checkpoint = { states: {}, chosenCardId: null };
+      let writes = 0;
+      mountRewards(app, { registries, run, checkpoint, rewards: { cinders: 7, cardIds: ['frostNova'] }, onDone() {}, onPersist() { writes++; } });
+      const paid = run.cinders;
+      app.querySelector('[data-kind="card"]').click();
+      check(app.querySelector('#reward-back').textContent, 'Skip', 'initial left action is Skip');
+      check(app.querySelector('#reward-back').classList.contains('danger'), true, 'Skip uses red treatment');
+      app.querySelector('#reward-back').click();
+      check(checkpoint.states.card, 'skipped', 'Skip persists only the unclaimed offer');
+      check(run.deck.length, 0, 'Skip grants no card');
+      check(run.cinders, paid, 'Skip preserves awarded battle Cinders');
+      check(writes > 0, true, 'Skip crosses existing save callback');
       app.remove();
     }
     // THE CLASS DRAFT (plan phase 5b): node tiles carry the node's name and its
@@ -78,6 +99,8 @@ export function runRewardConfirmTests() {
       check(run.coreTags, [], 'selection never picks');
       tiles[0].click();
       check(app.querySelectorAll('.reward-selected').map(tile => tile.dataset.nodeId), ['ironFooting'], 'switch replaces the prior tile');
+      confirm.click();
+      check(run.coreTags, [], 'class review never grants');
       confirm.click(); confirm.click();
       check(run.coreTags, ['ironFooting'], 'Confirm picks the node exactly once');
       check(run.skills['class:reaver'].pendingDrafts, 0, 'and spends the draft');

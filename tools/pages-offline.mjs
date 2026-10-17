@@ -9,7 +9,7 @@
 // tools/pages-site.mjs uses, serves it with tools/browser.mjs serveDir under
 // /AshenSpire/, and drives the game:
 //
-//   1. boots the page and opens Download & saves → "Make available offline";
+//   1. boots the page and opens Settings → Download & saves → "Make available offline";
 //   2. the worker is registered with scope /AshenSpire/ (never the host root)
 //      and controls the page; the page, its asset-base.json and its indexes are
 //      kept, and every light and common object is cached;
@@ -31,8 +31,8 @@
 //
 // VERDICT (tools/verdict.mjs form): "pages-offline: OK — N checks passed".
 // BOUNDARY: Chromium only, headless, local http on 127.0.0.1 (a potentially
-// trustworthy origin, as https Pages is). Controls are clicked by script, not
-// by trusted input. It does not prove Safari's 206 needs, eviction, or an
+// trustworthy origin, as https Pages is). Startup uses a trusted keyboard
+// press; Download controls are clicked by script. It does not prove Safari's 206 needs, eviction, or an
 // install prompt; the map tiles and the score folder are not objects the page
 // reads yet (step 3c), so their offline fallbacks are not exercised here.
 
@@ -142,6 +142,24 @@ function connect(wsUrl) {
 }
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// Travel the same startup door as a player: activation requires a complete
+// key press, and title navigation is unavailable until the reveal finishes.
+async function openDownloads({ cdp, sessionId, ev, until }) {
+  if (!await until(`!!document.querySelector('.startup-gate')`))
+    throw new Error('pages-offline: startup gate did not mount before Download & saves');
+  for (const type of ['keyDown', 'keyUp']) {
+    await cdp.send('Input.dispatchKeyEvent', {
+      type, key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13,
+    }, sessionId);
+  }
+  if (!await until(`!!document.querySelector('#settings')`))
+    throw new Error('pages-offline: startup activation did not reveal title Settings');
+  await ev(`document.querySelector('#settings').click()`);
+  if (!await until(`!!document.querySelector('#settings-download')`))
+    throw new Error('pages-offline: Settings did not offer Download & saves');
+  await ev(`document.querySelector('#settings-download').click()`);
+}
+
 let server = await serveDir(SITE, { prefix: 'AshenSpire' });
 const PORT = server.port;
 const ORIGIN = server.origin;
@@ -174,9 +192,7 @@ try {
   const booted = await until(`!!document.documentElement.dataset.builtInArt && !!document.querySelector('.startup-gate')`, 30000);
   const loadedTier = await ev('document.documentElement.dataset.builtInArt').catch(() => null);
   check('BOOT', booted && [tierOnline, 'light'].includes(loadedTier), `the page boots under /AshenSpire/${REL}/ and loads its pinned art (${loadedTier})`);
-  await ev(`document.querySelector('.startup-gate').click()`);
-  await until(`!!document.querySelector('#download-game')`);
-  await ev(`document.querySelector('#download-game').click()`);
+  await openDownloads({ cdp, sessionId: S, ev, until });
   const offered = await until(`!!document.querySelector('#offline-keep')`, 10000);
   check('OFFER', offered, 'Download & saves offers "Make available offline" on the hosted web edition');
   if (offered) {
@@ -208,10 +224,7 @@ try {
   // and does not claim to be kept (Codex, #1456).
   if (!GIVEN_SITE) {
     await go(`${ORIGIN}/AshenSpire/dev/2/`);
-    await until(`!!document.querySelector('.startup-gate')`, 30000);
-    await ev(`document.querySelector('.startup-gate').click()`);
-    await until(`!!document.querySelector('#download-game')`);
-    await ev(`document.querySelector('#download-game').click()`);
+    await openDownloads({ cdp, sessionId: S, ev, until });
     await until(`!!document.querySelector('#offline-keep')`, 10000);
     await wait(1500);
     const other = await ev(`({ label: document.querySelector('#offline-keep').textContent, status: document.querySelector('#offline-keep-status').textContent, remove: !document.querySelector('#offline-keep-remove').hidden })`);
@@ -314,6 +327,6 @@ try {
   else rmSync(SITE, { recursive: true, force: true });
 }
 if (exitCode) process.exit(exitCode);
-console.log('BOUNDARY: headless Chromium over local http on 127.0.0.1; controls clicked by script; Safari, eviction and install prompts are not exercised; tiles and the score folder are not objects yet (step 3c).');
+console.log('BOUNDARY: headless Chromium over local http on 127.0.0.1; startup activated by trusted keyboard input; Download controls clicked by script; Safari, eviction and install prompts are not exercised; tiles and the score folder are not objects yet (step 3c).');
 if (failures.length) { console.error(`pages-offline: FAILED — ${failures.length} check(s): ${[...new Set(failures)].join(', ')}`); process.exit(1); }
 console.log(`pages-offline: OK — ${checks} checks passed`);

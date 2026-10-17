@@ -69,7 +69,7 @@ const look = (table, key) => (table && Object.hasOwn(table, key) ? table[key] : 
 // relic list per leaf is the kind of cost that only shows up on a phone.
 const INDEXES = new WeakMap();
 function indexes(bundle) {
-  if (!bundle || typeof bundle !== 'object') return { relics: new Map(), nodes: new Map(), classes: new Map(), talents: new Map(), cards: new Map(), cardsByName: new Map(), statuses: new Map() };
+  if (!bundle || typeof bundle !== 'object') return { relics: new Map(), nodes: new Map(), classes: new Map(), talents: new Map(), cards: new Map(), cardsByName: new Map(), statuses: new Map(), statusesByName: new Map() };
   const cached = INDEXES.get(bundle);
   if (cached) return cached;
   const built = {
@@ -83,6 +83,11 @@ function indexes(bundle) {
       return map;
     }, new Map()),
     statuses: new Map((bundle.statuses || []).map((status) => [status.id, status])),
+    statusesByName: (bundle.statuses || []).reduce((map, status) => {
+      if (!map.has(status.name)) map.set(status.name, []);
+      map.get(status.name).push(status);
+      return map;
+    }, new Map()),
     talents: (bundle.classTree || []).reduce((map, row) => {
       // A LIST PER NODE, not a row per node. `new Map(rows.map(...))` let the
       // last tree that claimed a node win in silence, so a talent shared by
@@ -148,7 +153,12 @@ const FILLERS = Object.freeze({
     const sameOwner = namesakes.filter((other) => (other.class || 'colorless') === (card.class || 'colorless'));
     return sameOwner.length < 2 ? `${card.name} (${owner})` : `${card.name} (${owner}, ${card.id})`;
   },
-  statusLabel: (c, { bundle }) => (indexes(bundle).statuses.get(c.status) || {}).name || word(c.status),
+  statusLabel: (c, { bundle }) => {
+    const { statuses, statusesByName } = indexes(bundle);
+    const status = statuses.get(c.status);
+    if (!status?.name) return word(c.status);
+    return (statusesByName.get(status.name) || []).length > 1 ? `${status.name} (${status.id})` : status.name;
+  },
 
   // A talent's place in the tree. The three phrases are balance.js's; this
   // only picks one and names the classes, so a talent shared by two trees
@@ -181,13 +191,14 @@ const FILLERS = Object.freeze({
 });
 
 /** A key in a `[NOTE]` block, as the path it claims. Literal keys hold no `{`. */
+const PATH_SEPARATOR = String.fromCharCode(31);
 function keyPattern(key) {
   const source = key.split('.').map((segment) => segment
     .split(/(\{\w+\})/)
     .map((part) => (/^\{\w+\}$/.test(part)
-      ? `(?<${part.slice(1, -1)}>[^.]+?)`
+      ? `(?<${part.slice(1, -1)}>[^${PATH_SEPARATOR}]+?)`
       : part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
-    .join('')).join('\\.');
+    .join('')).join(PATH_SEPARATOR);
   return new RegExp(`^${source}$`);
 }
 const PATTERNS = new Map();
@@ -214,6 +225,21 @@ const asNote = (entry) => (typeof entry === 'string' ? { text: entry } : entry);
  * the authored tree: a relic id no `powers` row carries still meets the block
  * on `powers` itself, which is how a relic added tomorrow describes itself.
  */
+function pathSegments(path, root) {
+  if (Array.isArray(path)) return [...path];
+  const segments = [];
+  let remaining = String(path), node = root;
+  while (remaining) {
+    const key = node && typeof node === 'object' ? Object.keys(node)
+      .filter(key => remaining === key || remaining.startsWith(key + '.')).sort((a, b) => b.length - a.length)[0] : null;
+    const segment = key ?? remaining.split('.')[0];
+    segments.push(segment);
+    remaining = remaining.slice(segment.length + 1);
+    node = look(node, segment);
+  }
+  return segments;
+}
+
 function blocksAlong(root, segs) {
   const blocks = [];
   let node = root;
@@ -234,11 +260,11 @@ function blocksAlong(root, segs) {
  */
 export function noteMatches(path, root = authoredBalance) {
   const found = [];
-  for (const { block, rest, depth } of blocksAlong(root, String(path).split('.'))) {
-    const remaining = rest.join('.');
+  for (const { block, rest, depth } of blocksAlong(root, pathSegments(path, root))) {
+    const remaining = rest.join(PATH_SEPARATOR);
     for (const key of Object.keys(block)) {
       if (!key.includes('{')) {
-        if (key === remaining) found.push({ key, literal: true, depth });
+        if (key === rest.join('.')) found.push({ key, literal: true, depth });
       } else if (patternFor(key).test(remaining)) {
         found.push({ key, literal: false, depth });
       }
@@ -251,16 +277,16 @@ export function noteMatches(path, root = authoredBalance) {
  * balanceNote(path, { bundle, parent }) → the row's whole description, or null
  * for a path no note in balance.js claims.
  *
- * `path` is the dotted balance path without the `gameConfig.balance.` prefix.
+ * `path` is an array of actual keys, or the dotted balance path without the `gameConfig.balance.` prefix.
  * `parent` is the object or array the leaf sits in, which is how a row inside
  * an authored list names itself by its own id, tag or label. The notes are
  * read from `bundle.balance` when there is one, so a synthetic bundle in a
  * test brings its own; the authored balance answers otherwise.
  */
 export function balanceNote(path, { bundle = null, parent = null } = {}) {
-  if (typeof path !== 'string' || !path) return null;
+  if ((!Array.isArray(path) && typeof path !== 'string') || !path.length) return null;
   const root = (bundle && bundle.balance) || authoredBalance;
-  const blocks = blocksAlong(root, path.split('.'));
+  const blocks = blocksAlong(root, pathSegments(path, root));
 
   // A key naming the number outright wins at any depth.
   for (const { block, rest } of blocks) {
@@ -269,7 +295,7 @@ export function balanceNote(path, { bundle = null, parent = null } = {}) {
   }
   // Then the deepest pattern that claims it.
   for (const { block, rest } of blocks) {
-    const remaining = rest.join('.');
+    const remaining = rest.join(PATH_SEPARATOR);
     for (const key of Object.keys(block)) {
       if (!key.includes('{')) continue;
       const match = patternFor(key).exec(remaining);

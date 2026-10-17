@@ -53,6 +53,18 @@ test('stack descriptions distinguish whole-group counting from the amount cap', 
   }
 });
 
+test('authored dynamic formula descriptions preserve supported clamps and reject malformed bounds', () => {
+  assert.equal(describeFormula({ f: 'metric', metric: 'negativeStatusTypes', of: 'target',
+    statuses: ['weak'], per: 2, max: 5 }),
+  '2 per distinct negative status (maximum 5)');
+  assert.equal(describeFormula({ f: 'energySpent', per: 2, min: 1, max: 5 }),
+    '2 per SP spent (minimum 1) (maximum 5)');
+  assert.equal(describeFormula({ f: 'energySpent', per: 0.5 }),
+    '0.5 per SP spent (rounded down)');
+  assert.equal(describeFormula({ f: 'energySpent', per: 2, max: Infinity }), undefined);
+  assert.equal(describeFormula({ f: 'energySpent', per: 2, min: 5, max: 1 }), undefined);
+});
+
 test('all authored card variants resolve their supported formula placeholders without combat', () => {
   const refs = contentBundle.cards.flatMap(c => [{ cardId: c.id }, { cardId: c.id, upgraded: true },
     ...(c.gradeProfiles || []).map((_, abilityRank) => ({ cardId: c.id, abilityRank }))]);
@@ -66,6 +78,15 @@ test('all authored card variants resolve their supported formula placeholders wi
     assert.doesNotMatch(text, /\{[\w.]+\}/, JSON.stringify(ref));
   }
   assert.equal(staticCardTokens(resolveCard(reg, { cardId: 'cometFragment', abilityRank: 2 })).starstoneCharge, 1);
+});
+
+test('weapon-scaled authored damage keeps its static multiplier without inventing a loadout value', () => {
+  const def = resolveCard(reg, { cardId: 'base.divine-strike' });
+  assert.equal(staticCardTokens(def).damage, '3×');
+  assert.equal(staticCardTokens(def)['damage.2'], 6);
+  const text = def.textTemplate.replace(/\{([\w.]+)\}/g,
+    (original, token) => staticCardTokens(def)[token] ?? original);
+  assert.equal(text, 'Deal 3× weapon damage and 6 Sacred damage.');
 });
 
 test('summary quantities prefer explicit tokens, then matching live values, then authored values', () => {

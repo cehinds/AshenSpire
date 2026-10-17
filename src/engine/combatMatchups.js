@@ -1,3 +1,6 @@
+import { stanceMitigation } from './stanceMitigation.js';
+import { rememberCombatStance, defensiveCombatStance, activeCombatStances, stanceCapacity } from './concurrentStances.js';
+import { configuredCombat, configuredModule, setProfileStance } from './gameProfileCombat.js';
 import { removeStatus } from './statuses.js';
 import { stanceOf, sameStance, stanceEntryBonuses, stanceRulesFor } from '../model/stanceRules.js';
 import { syncWardMaximum } from './combatPools.js';
@@ -295,17 +298,19 @@ function restrictions(ctx, entity, options = {}) {
 
 /** Called only for an accepted play/telegraph; support preserves posture. */
 export function setCombatStance(ctx, entity, carrier) {
+  if (configuredCombat(ctx)) { setProfileStance(ctx, entity, carrier); return entity?.combatStance; }
   if (!combatExpansionEnabled(ctx) || !entity) return null;
   const profile = normalizedProfile(carrier);
   if (!profile.maneuver || profile.stanceTrigger === false) return entity.combatStance || null;
   if (profile.evade?.whileStatus) profile.evadeEligible = entity.statuses?.[profile.evade.whileStatus]?.stacks > 0;
   const next = stanceOf({ combatProfile: profile }, entity);
   if (!next) return entity.combatStance || null;
+  const previous=entity.combatStance;
   const changed = !sameStance(entity, { combatProfile: profile });
   const provenance = { ...(entity.kind === 'enemy' ? { preparing: true } : {}),
     triggeredBy: { kind: 'stance', id: entity.kind === 'enemy' ? 'combatStance' : next.maneuver, ownerId: entity.id } };
   // A fresh non-Counter card cannot retain an older hybrid Counter just because both are Evade.
-  if (!changed && profile.maneuver !== 'counter') clearCombatCounter(entity, ctx);
+  if (!changed && profile.maneuver !== 'counter' && stanceCapacity(ctx,entity)<=1) clearCombatCounter(entity, ctx);
   // Range and school track the accepted card even when the stance identity stays the same.
   const expiry = entity.combatStance?.expiresOnOwnerCycle;
   entity.combatStance = { ...next,
@@ -313,8 +318,9 @@ export function setCombatStance(ctx, entity, carrier) {
       ? { expiresOnOwnerCycle: (entity.combatOwnerCycle || 0) + profile.stanceExpiry }
       : !changed && expiry != null ? { expiresOnOwnerCycle: expiry } : {}),
   };
+  rememberCombatStance(ctx,entity,previous);
   if (changed) {
-    clearCombatCounter(entity, ctx);
+    if(stanceCapacity(ctx,entity)<=1) clearCombatCounter(entity, ctx);
     syncWardMaximum(ctx, entity);
     const grants = stanceEntryBonuses({ combatProfile: profile }, ctx);
     if (grants.evade > 0 && (profile.evade?.advantage || profile.evade?.disadvantage)) {
@@ -427,9 +433,9 @@ export function counterCoverageMatches(coverage, profile, effect = 'damage') {
 function preparedCounter(ctx, target, carrier, options) {
   const counter = target?.combatCounter;
   if (!counter?.charges || (carrier?.combatReaction && carrier.manualCounterSerial !== counter.serial) || restrictions(ctx, target, options).counterDisabled) return null;
-  const stance = target.combatStance?.maneuver;
+  const stance = activeCombatStances(ctx,target).some(row=>row.maneuver==='counter') ? 'counter' : target.combatStance?.maneuver;
   const authoredCounter = counter.carrier?.combatProfile?.maneuver === 'counter';
-  if (stance !== 'counter' && !(stance === 'evade' && authoredCounter)) return null;
+  if (!(configuredCombat(ctx) && !configuredModule(ctx, 'stances')) && stance !== 'counter' && !(stance === 'evade' && authoredCounter)) return null;
   if ((target.combatOwnerCycle || 0) >= counter.expiresOnOwnerCycle) return null;
   return counter;
 }
@@ -441,14 +447,14 @@ export function stancePressureMultiplier(ctx, source, target, carrier, hitReceip
   return stanceMultiplier(ctx, target, normalizedProfile(carrier), hit);
 }
 function stanceMultiplier(ctx, target, profile, hit) {
-  const stance = stanceOf(target?.combatStance);
+  const stance = stanceOf(defensiveCombatStance(ctx,target,{combatProfile:profile}));
   const incoming = profile.maneuver === 'counter' ? { maneuver: 'counter' } : stanceOf({ combatProfile: profile });
   if (!incoming) return 1;
   const cfg = stanceRulesFor(ctx);
-  if (incoming.maneuver === 'smash' && (['defend', 'casting'].includes(stance?.maneuver) || hit?.evadeAttempted)) return cfg.smashMultiplier;
-  if (incoming.maneuver === 'counter' && (['attack', 'smash'].includes(stance?.maneuver) || hit?.evadeAttempted)) return cfg.counterMultiplier;
-  if (incoming.maneuver === 'sweep' && stance?.maneuver === 'counter') return cfg.sweepCounterMultiplier;
-  return 1;
+  const offense = incoming.maneuver === 'smash' && (['defend', 'casting'].includes(stance?.maneuver) || hit?.evadeAttempted) ? cfg.smashMultiplier
+    : incoming.maneuver === 'counter' && (['attack', 'smash'].includes(stance?.maneuver) || hit?.evadeAttempted) ? cfg.counterMultiplier
+      : incoming.maneuver === 'sweep' && stance?.maneuver === 'counter' ? cfg.sweepCounterMultiplier : 1;
+  return offense * stanceMitigation(ctx, incoming.maneuver, stance?.maneuver).multiplier;
 }
 
 /** Largest-remainder distribution conserves the once-rounded action budget. */
@@ -481,6 +487,17 @@ export function previewTacticalAction(ctx, source, target, carrier, contacts = [
   const covered = profiles.map((profile, index) => counterCoverageMatches(counter?.coverage, profile, profile.effect || 'damage')
     && (profile.effect === 'status' ? number(contacts[index].pressure ?? contacts[index].amount) > 0 : number(contacts[index].amount) > 0));
   const eligible = !!counter && covered.some(Boolean);
+  // Configured profiles retain preparation/coverage and action grouping, while
+  // their single damage provider owns stance, accuracy, Block and Poise.
+  if (configuredCombat(ctx)) {
+    const amounts = contacts.map(contact => contact.effect ? 0 : number(contact.amount));
+    return { version: 2, targetKey: targetKey(ctx, target), profile: normalizedProfile(carrier), profiles,
+      amount: amounts.reduce((sum, value) => sum + value, 0), amounts,
+      counterEligible: eligible, counter: eligible ? structuredClone(counter) : null, covered,
+      counterDisabledAtStart: Boolean(control.counterDisabled), avoidance: { chance: 0 },
+      hpLoss: 0, blocked: 0, wardResisted: 0, statusAccepted: 0, statusResisted: 0,
+      avoided: false, connected: true, completed: false };
+  }
   const counterAttack = attackHitPreview(ctx, source, target, carrier, { additionalTargets: options.additionalTargets ?? carrier?.additionalTargets ?? 0, evadeDisabled: control.evadeDisabled });
   const multiplier = profiles.map(profile => stanceMultiplier(ctx, target, profile, counterAttack));
   const weighted = contacts.map((contact, index) => contact.effect === 'status' ? 0 : number(contact.amount) * multiplier[index]);
@@ -523,6 +540,14 @@ export function beginTacticalAction(ctx, source, target, carrier, contacts = [],
   if (options.receipt?.begun) return options.receipt;
   const receipt = previewTacticalAction(ctx, source, target, carrier, contacts, options);
   receipt.begun = true;
+  if (configuredCombat(ctx)) {
+    if (receipt.counterEligible) {
+      target.combatCounter.charges = 0;
+      ctx.emit?.('combatCounterConsumed', { ...eventCarrier(target, receipt.counter.carrier),
+        sourceId: target.id, targetId: source?.id, serial: receipt.counter.serial });
+    }
+    return receipt;
+  }
   const control = restrictions(ctx, target, options);
   const counterAttack = resolveAttackHit(ctx, source, target, carrier, { additionalTargets: options.additionalTargets ?? carrier?.additionalTargets ?? 0, evadeDisabled: control.evadeDisabled, suppressOutcomeEvent: true });
   if (counterAttack) receipt.counterAttack = counterAttack;
@@ -639,7 +664,12 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   const stillPrepared = counter && target?.combatCounter?.serial === counter.serial;
   const blocked = restrictions(ctx, target, options).counterDisabled || receipt.counterDisabledAtStart;
   const unreflectable = receipt.profiles.some(p => hasTrait(p, 'unreflectable'));
-  const resistedPayload = receipt.amount > 0 ? receipt.blocked + receipt.wardResisted >= receipt.amount : receipt.statusResisted > 0;
+  // Mitigation may round a positive incoming contact down to zero. Coverage
+  // records that original positive damage before defense; it remains a landed,
+  // fully resisted attack, unlike a zero-damage author row or an avoided hit.
+  const mitigatedContact = receipt.connected && receipt.covered.some((covered, index) => covered && !receipt.profiles[index]?.effect);
+  const resistedPayload = receipt.amount > 0 ? receipt.blocked + receipt.wardResisted >= receipt.amount
+    : receipt.statusResisted > 0 || mitigatedContact;
   if (!stillPrepared || blocked || receipt.avoided || receipt.counterBroken || unreflectable
     || !target?.alive || !source?.alive || receipt.hpLoss > 0 || receipt.statusAccepted > 0 || !resistedPayload
     || target.combatCounterReturnedCycle === (target.combatOwnerCycle || 0)) return queue;

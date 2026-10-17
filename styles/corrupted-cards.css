@@ -29,5 +29,5 @@
 .ashen-blight-feat ul { margin: 0 0 .65rem; padding-left: 1.25rem; line-height: 1.5; }
 .ashen-blight-benefit { color: #ead7bd; }
 .ashen-blight-drawback { color: #ffc5b7; }
-@media (max-width: 480px) { .ashen-blight-heading { font-size: .9rem; } .corrupted-card-label { font-size: .75rem; } }
+@container game-viewport (max-width: 480px) { .ashen-blight-heading { font-size: .9rem; } .corrupted-card-label { font-size: .75rem; } }
 @media (forced-colors: active) { :root .card.corrupted-card.corrupted-card::after { display: none; } .corrupted-card-label, .ashen-blight, .ashen-blight-pip { border-color: CanvasText; color: CanvasText; background: Canvas; } .ashen-blight-fill, .ashen-blight-pip.reached { background: Highlight; box-shadow: none; } }

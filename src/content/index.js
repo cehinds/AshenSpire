@@ -1,3 +1,4 @@
+import { baseCardDefinitions, baseCardTagging, baseCardRewardIds, baseCardStatuses, baseCardStatusRules } from './generated/baseCards.js';
 // src/content/index.js — the content bundle (shape: ENGINE-API §1)
 //
 // Aggregates every content file into the bundle createRegistries() consumes.
@@ -73,7 +74,7 @@ import { characterCreation } from './generated/characterCreation.js';
 import { deriveEnemyMoves } from '../model/enemyMoveSources.js';
 
 const expansionCards = [...corruptedCards, ...combatExpansionNewCards, ...combatExpansionCombos].map(({ tags, cardTags, ...card }) => ({ ...card, flavor: combatExpansionLore[card.id] }));
-const authoredCards = [...reaverCards, ...starseerCards, ...heraldCards, ...rogueCards, ...colorlessCards, ...coopCards, ...armamentCards, ...expansionCards];
+const authoredCards = [...reaverCards, ...starseerCards, ...heraldCards, ...rogueCards, ...colorlessCards, ...coopCards, ...armamentCards, ...expansionCards, ...baseCardDefinitions];
 const enemies = [...act1Enemies, ...act2Enemies, ...act3Enemies];
 const enemyMoves = deriveEnemyMoves(enemies);
 const exposureByCard = new Map(CARD_EXPOSURE.map((row) => [row.cardId, row]));
@@ -103,7 +104,8 @@ export const coreContentBundle = {
   companions,
   cards,
   relics,
-  statuses,
+  statuses: [...statuses, ...baseCardStatuses],
+  proposalStatusRules: baseCardStatusRules,
   stances,
   // HUD resource bars — one row per bar (Law 0: add a row, a bar appears).
   resources,
@@ -128,7 +130,7 @@ export const coreContentBundle = {
   speakers,
   atlasQuests: worldAtlas.quests,
   flasks,
-  classes,
+  classes: classes.map(row => ({ ...row, cardPool: [...row.cardPool, ...baseCardRewardIds] })),
   mapConfigs,
   scripts,
   // SFX recipes ride the bundle so validateContent rules on them at boot and
@@ -147,7 +149,7 @@ export const coreContentBundle = {
     targets: equipTargets,
     cardTargets: CARD_TARGETS,
     basicCardProfiles: BASIC_CARD_PROFILES,
-    cardExposure: CARD_EXPOSURE,
+    cardExposure: [...CARD_EXPOSURE, ...baseCardDefinitions.filter(card => card.effects.some(effect => effect.op === 'damage')).map(card => ({cardId:card.id, damageSchool:card.damageSchool, exposureBuildupPerHit:card.exposureBuildupPerHit}))],
     startingKits: STARTING_KITS,
     equipmentRequirements: EQUIPMENT_REQUIREMENTS,
     itemUpgradeChanges: ITEM_UPGRADE_CHANGES,
@@ -168,7 +170,7 @@ export const coreContentBundle = {
   tags: TAGS,
   tagFamilies: TAG_FAMILIES,
   tagFamilyDomains: TAG_FAMILY_DOMAINS,
-  tagging: TAGGING,
+  tagging: [...TAGGING, ...baseCardTagging],
   // What each `property` tag confers — one rule per tag (content/propertyRules.js).
   propertyRules: PROPERTY_RULES,
   // THE TREE the five tag tables and the property rules are views of

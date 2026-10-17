@@ -3,6 +3,36 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-2025",
+    "date": "2026-10-17",
+    "group": "2026-10-17",
+    "summary": "Pose Studio loads its shared engine and the balance reference stays current",
+    "detail": "Restore the studio's effect catalog after the engine-module split and refresh the historical reference report's measured damage and seeded encounter outcomes, without changing combat rules.",
+    "build": "0.7.1.1545",
+    "pullRequest": 2025,
+    "url": "https://github.com/cehinds/AshenSpire/pull/2025"
+  },
+  {
+    "id": "pr-2024",
+    "date": "2026-10-17",
+    "group": "2026-10-17",
+    "summary": "Core previews keep their offline and map checks after promotion",
+    "detail": "Preview checks follow the current startup and Settings navigation, measure map dragging at the displayed zoom, and retain permanent coverage of Core's interface text after merging.",
+    "build": "0.7.1.1543",
+    "pullRequest": 2024,
+    "url": "https://github.com/cehinds/AshenSpire/pull/2024"
+  },
+  {
+    "id": "pr-2023",
+    "date": "2026-10-16",
+    "group": "2026-10-16",
+    "summary": "Core becomes the default, with consistent combat and shared HUD presentation",
+    "detail": "New runs use the configurable Core game; existing saves retain their original rules. Map, combat, rest, and other run screens share the same responsive header. Combat uses cell-aligned sprites and health bars, head-relative intent and mini HUDs, consistent body height across held stances, native inspection gestures, readable card fans, and explicit scene layering.",
+    "build": "0.7.1.1541",
+    "pullRequest": 2023,
+    "url": "https://github.com/cehinds/AshenSpire/pull/2023"
+  },
+  {
     "id": "pr-2017",
     "date": "2026-10-15",
     "group": "2026-10-15",

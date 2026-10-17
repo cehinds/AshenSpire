@@ -54,12 +54,12 @@ export function combatantIntent(intent, content, registries = null, { onTarget =
   node.dataset.focusable = 'true';
   node.dataset.intentVisibility = badge.visibility;
   node.dataset.stance = badge.stance;
+  if (badge.projectedDamage?.tone) node.dataset.damageTone = badge.projectedDamage.tone;
   node.dataset.intentHidden = String(!!intent?.hidden);
   if (badge.damageClass) node.dataset.damageClass = badge.damageClass;
   const compact = document.createElement('span');
   compact.className = 'intent-compact';
-  if (badge.parts[0]) compact.append(intentIcon(badge.parts[0].icon));
-  if (badge.visibility !== 'known') compact.append(document.createTextNode(' ?'));
+  compact.append(intentParts(badge.parts, { unknown: badge.visibility !== 'known' }));
   node.append(compact);
   node.setAttribute('aria-label', `${stanceLabel}. ${intent?.hidden ? 'Exact move and amounts hidden.' : badge.parts.map(part => `${part.icon}: ${part.value ?? ''}`).join('. ')}`);
   {
@@ -113,7 +113,24 @@ export function playerActionIntent(profile, onTarget) {
   const node = document.createElement('button');
   node.type = 'button'; node.className = 'player-action-intent overhead-control';
   node.setAttribute('aria-label', `Selected action: ${profile.maneuver || 'prepare'}`);
-  node.append(intentIcon(icon));
+  node.append(intentParts([{ icon, value: null }]));
   node.addEventListener('click', event => { event.stopPropagation(); onTarget(); });
   return node;
+}
+
+// One centered action row for both combatant roles and their detailed HUD.
+// Values originate only from the observer-projected presentation.
+export function intentParts(parts = [], { unknown = false } = {}) {
+  const row = document.createElement('span'); row.className = 'intent-actions';
+  const visible = parts.length ? parts : [{ icon: 'prepare', value: null }];
+  for (const part of visible) {
+    const group = document.createElement('span'); group.className = 'intent-action'; group.dataset.action = part.icon;
+    group.dataset.valueKind = part.valueKind || (['defend', 'counter', 'evade', 'buff', 'prepare'].includes(part.icon) ? 'count' : 'damage');
+    if (part.value != null || unknown) {
+      const value = document.createElement('strong'); value.className = 'intent-action-value';
+      value.textContent = unknown ? '?' : String(part.value); group.append(value);
+    }
+    group.append(intentIcon(part.icon)); row.append(group);
+  }
+  return row;
 }

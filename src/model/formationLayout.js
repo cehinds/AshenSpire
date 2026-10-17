@@ -37,7 +37,11 @@ export const PERSPECTIVE_LANES = 3;
 // a four-player party needs four lanes.
 export function formationDimensions(values = {}, actorsPerSide = 0, partySize = 0) {
   if (values.perspectiveGrid) {
-    return { columns: 2, rows: Math.min(6, Math.max(PERSPECTIVE_LANES, Math.ceil(actorsPerSide / 2), partySize)), perspective: true };
+    const extra = values.formationPolicy?.extraRow;
+    const enabled = extra?.enabled === true && extra.sides?.includes('enemy');
+    const rows = Math.min(6, Math.max(PERSPECTIVE_LANES, Math.ceil(actorsPerSide / (enabled ? 3 : 2)), partySize));
+    const extraCells = enabled ? Array.from({ length: rows }, (_, row) => ({ cell: `${FORMATION_ROWS[row]}5`, row, lane: row, column: 2, side: 'enemy', visualBand: 'C', formationRole: 'extra' })) : [];
+    return { columns: 2, rows, perspective: true, ...(enabled ? { extraCells } : {}) };
   }
   const config = formationLayoutConfig(values);
   let columns = config.formationColumns, rows = config.formationRows;
@@ -47,8 +51,19 @@ export function formationDimensions(values = {}, actorsPerSide = 0, partySize = 
   return { columns, rows };
 }
 
-export function isFormationCell(cell, { columns, rows, perspective = false }, side = 'player') {
+// Stable gameplay addresses, ordered by the approved visual spawn priority.
+// Extra capacity extends the same ordering; saved occupants are never reassigned.
+export function perspectiveEnemyCellOrder({ rows, extraCells = [] }) {
+  const lanes = Array.from({ length: rows }, (_, i) => i);
+  const back = [rows - 1, 0, ...lanes.slice(1, -1)];
+  const front = [...lanes].reverse();
+  return [...back.map(lane => `${FORMATION_ROWS[lane]}4`),
+    ...front.map(lane => `${FORMATION_ROWS[lane]}3`), ...extraCells.map(cell => cell.cell)];
+}
+
+export function isFormationCell(cell, { columns, rows, perspective = false, extraCells = [] }, side = 'player') {
   if (typeof cell !== 'string' || !/^[A-F][1-6]$/.test(cell)) return false;
+  if (perspective && side === 'enemy' && extraCells.some(extra => extra.cell === cell)) return true;
   const column = Number(cell[1]);
   // The perspective's player rank is the outer column only.
   const playerColumns = perspective ? 1 : columns;

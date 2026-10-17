@@ -1,0 +1,17 @@
+{
+  "mode": "configured",
+  "include": [
+    "block",
+    "poise"
+  ],
+  "order": [
+    "block",
+    "poise"
+  ],
+  "poiseMultiplier": 0.75,
+  "poiseRounding": "floor",
+  "minimumPositiveDamage": 1,
+  "poiseActive": "positive",
+  "blockScope": "all",
+  "poiseDepletes": false
+}

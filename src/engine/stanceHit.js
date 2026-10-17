@@ -1,3 +1,4 @@
+import { proposalTargetPlan } from './proposalStatusRuntime.js';
 // One seeded Accuracy decision gates an entire committed hostile action.
 import { attackAccuracy, counterBaseEvasion } from './counterReturn.js';
 import * as Statuses from './statuses.js';
@@ -38,7 +39,8 @@ export function attackHitPreview(ctx, source, target, carrier, options = {}) {
   const tags = carrier?.authoredTags || carrier?.tags || [];
   const spell = ['spell', 'spells', 'magic', 'magical'].includes(profile.camp);
   // Explicit Target identity is different from an effect's target selector.
-  const bypass = spell && tags.includes('target');
+  const proposal=proposalTargetPlan(ctx,source,target,carrier);
+  const bypass = proposal.unavoidable || spell && tags.includes('target');
   const range = profile.range || 'melee';
   const requiredRange = carrier?.counterRequiredRange || target?.combatStance?.range || 'melee';
   const override = profile.rangeOverride === true || profile.adequateReach === true || profile.traits?.includes('adequateReach');
@@ -47,7 +49,7 @@ export function attackHitPreview(ctx, source, target, carrier, options = {}) {
   const precision = stacks(source, 'precision');
   const rules = stanceRulesFor(ctx);
   const sweep = profile.maneuver === 'sweep' ? rules.sweepPrecisionBase + rules.sweepPerAdditionalTarget * Math.max(0, options.additionalTargets ?? carrier?.additionalTargets ?? 0) : 0;
-  const accuracy = attackAccuracy(ctx, source, carrier) + precision + sweep;
+  const accuracy = attackAccuracy(ctx, source, carrier) + precision + sweep + proposal.accuracyDelta/5;
   const evadeStacks = options.evadeDisabled ? 0 : stacks(target, 'evade');
   const evasion = effectiveEvasion(ctx, target, options);
   const need = Math.max(2, Math.min(20, 8 + evasion - accuracy));
