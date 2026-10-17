@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-17",
     "summary": "Rear enemy designs have a feature-only review gallery",
     "detail": "Compare 130 rear design drafts, original identity references, and three elite pilot sets with nine held poses, attack and evade clips, and static hurt and defeated reactions. Missing clips stay explicit. This draft review is not promoted: runtime alignment, playable unlocks, other motion sets, and external art publication remain pending.",
-    "build": "0.7.1.1551",
+    "build": "0.7.1.1553",
     "pullRequest": 2071,
     "url": "https://github.com/cehinds/AshenSpire/pull/2071"
+  },
+  {
+    "id": "pr-2029",
+    "date": "2026-10-17",
+    "group": "2026-10-17",
+    "summary": "Stale origin branches are listed for cleanup, with restore points",
+    "detail": "Records which merged or week-old branches are removed and the commit each one pointed at, so any of them can be restored; the game is unchanged.",
+    "build": "0.7.1.1553",
+    "pullRequest": 2029,
+    "url": "https://github.com/cehinds/AshenSpire/pull/2029"
   },
   {
     "id": "pr-2067",
