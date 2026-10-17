@@ -115,6 +115,7 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   };
   for (const [slug, m] of Object.entries(mechanics)) {
     for (const [q, def] of Object.entries(m.interface.queries || {})) for (const e of formulaErrors(def.value, `${slug} query ${q}`)) fail(e);
+    for (const handler of m.service.handlers || []) if (handler.when !== undefined) for (const e of formulaErrors(handler.when, `${slug} handler ${handler.on} when`)) fail(e);
     // Handler entry points: command.<name> is a declared command; event.<slug>.<event> names a declared event (or runtime.*) the mechanic lists in listens.
     for (const handler of m.service.handlers || []) {
       const on = String(handler.on || '');
@@ -132,12 +133,14 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
     for (const handler of m.service.handlers || []) {
       for (const step of walkSteps(handler.do)) {
         const check = (kind, full) => {
-          if (typeof full !== 'string') return;
+          if (typeof full !== 'string') return fail(`${slug}: ${kind} target must be a string, got ${JSON.stringify(full)}`);
           if (kind === 'emit' && full.startsWith('runtime.')) return;
           const hit = splitName(full, slugs);
           if (!hit) return fail(`${slug}: ${kind} target '${full}' names no mechanic`);
           const known = kind === 'call' ? commandsOf(hit.slug) : eventsOf(hit.slug);
           if (!known.includes(hit.name)) fail(`${slug}: ${kind} target '${full}' is not a ${kind === 'call' ? 'command' : 'event'} of ${hit.slug}`);
+          // A call runs the target's command.<name> handler, so the target mechanic must implement it.
+          else if (kind === 'call' && !(mechanics[hit.slug].service.handlers || []).some(h => h.on === `command.${hit.name}`)) fail(`${slug}: call target '${full}' has no command.${hit.name} handler in ${hit.slug}`);
         };
         // Step kinds, in the runtime's order (SPEC section 6): anything else is 'Unknown step' at run time.
         if (!['op', 'if', 'forEach', 'emit', 'call', 'set'].some(k => k in step)) fail(`${slug}: unknown step ${JSON.stringify(step)}`);
@@ -290,11 +293,11 @@ export const summaryText = summary => JSON.stringify(summary, null, 2) + '\n';
 async function main(argv) {
   // The standalone build refuses anything the dedicated validators refuse (map generator parity with
   // src/content/mapconfig.js and src/engine/mapgen.js, UI rules), so an artifact never skips them.
-  const { problems } = await validateMaps();
-  const { errors: uiErrors } = validateUi();
-  if (problems.length || uiErrors.length) throw new Error(`build refused:\n  ${[...problems, ...uiErrors].join('\n  ')}`);
   const gameArg = argv.find(a => a.startsWith('--game='));
   const game = gameArg ? gameArg.slice(7) : 'ashenspire';
+  const { problems } = await validateMaps({ game });
+  const { errors: uiErrors } = validateUi({ games: [game] });
+  if (problems.length || uiErrors.length) throw new Error(`build refused:\n  ${[...problems, ...uiErrors].join('\n  ')}`);
   const check = argv.includes('--check');
   const { text, summary } = buildGame({ game });
   const out = path.join(ROOT, artifactFile(game));
