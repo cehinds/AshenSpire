@@ -57,7 +57,7 @@ def load_master(root, kind, spec, anchors, absolute=False):
         raise ValueError(f"{kind}: no fully transparent background")
     edge = boundary(alpha)
     if edge["above32"]:
-        raise ValueError(f"{kind}: artwork clipped at source boundary ({edge[\'above32\']} pixels above alpha32)")
+        raise ValueError(f"{kind}: artwork clipped at source boundary ({edge['above32']} pixels above alpha32)")
     width, height = image.size
     ycuts, gutters = [0], []
     for row in range(1, rows):
