@@ -7,15 +7,15 @@
   "generator": "image_gen.imagegen",
   "generationDate": "2026-10-17",
   "prompts": {
-    "stances": "Transparent game sprite sheet exactly NINE separate cutout sprites in THREE COLUMNS THREE ROWS square slots. Edit exact rear Wyrm Lord reference identity: towering dark charcoal dragon humanoid, red lava glow between scales, ornate black-gold plate armor, torn deep red cape, one prominent folded reddish membranous wing on left back, spined dragon head, huge long dark scaled tail curling left with orange glowing underside, claw feet, right arm armored gauntlet. Same rear threequarter camera upperright facing away, no front face, same detailed painterly sprite style. Distinct rowmajor held poses: neutral matching seed; smash both fists raised overhead knees bent; attack right gauntlet lunging punching forward; sweep torso twisting right arm sweeping left with tail counterbalance; counter right fist cocked by shoulder weight back; defend forearms crossed above bowed head wing tucked; evade deep lateral left sidestep crouch; spell left hand held high with small contained ember orb; preparing broad low crouch both hands curled at sides. Same character scale and floor baseline, full body tail wing inside each slot, wide empty transparent gutters, no background colors scenery labels shadows or borders. Actual anatomical changes, no repeats or whole sprite transforms.",
+    "stances": "Create TEN transparent cutout sprites of this exact armored winged Wyrm Lord dragon humanoid. Five columns by two rows. Same black red gold armor, folded red bat wings, horned dragon head, thick ember tail, red cloth. Rear threequarter upper-right camera, back toward viewer. SMALL complete figures occupying50% width and60%height of cells, enormous empty alpha gutters and outside margin. All wings folded compactly, tails curled close so characters never overlap. Held poses in reading order: neutral ready; smash fist overhead; attack forward claw strike; sweep sideways claw strike; counter raised claw ready riposte; defend crouched forearms guard; evade low sidestep lean; spell palm raised with small flame; preparing both fists cocked; neutral relaxed spare. Distinct articulated poses, consistent anatomy and scale. Full wings/horns/tails/claws inside each cell. No front chest, no human equipment. Transparent PNG only, no background, ground, shadows, labels, text or scenery.",
     "motion": "Create transparent PNG cutout sprites. Eight sprites FOURcolumns TWOrows. Exact reference rear WyrmLord charcoal dragon orange lava blackgoldarmor redcape leftwing thicktail. Each figure SMALL55%slotwidth55%slotheight INCLUDING tail wing hands. HUGE EMPTY TRANSPARENT gutters margins all sides. No colored background. Row1 four attack animation poses: fistcocked anticipation, rightpunch strike, low followthrough, readyrecovery. Row2 four evade poses: kneebend, deep leftsidestep, lowcrouch, ready. Same identity outfit proportions palette camera rear upperright, real articulated limbs. Transparent alpha between every sprite, no shadows scenery text.",
     "damage": "Transparent game sprite sheet exactly TWO fullbody cutout sprites one row two equal square slots. Edit exact rear Wyrm Lord seed identity charcoal dragon humanoid lava orange joints blackgold ornate plate armor torn red cape left reddish membranous wing curled thick tail clawfeet. Same scale detailed painterly style rear threequarter facing upperright no face. Left HURT recoil hunched forward left hand ribs right arm dropped knees bent wing contracted. Right DEFEATED non-graphic collapsed kneeling slump left forearm braced bowed head wing folded down tail limp. All body tail wing contained own slot with generous transparent gaps. No labels blood scenery background colors shadows borders. Different real anatomical poses."
   },
   "masters": {
     "stances": {
       "grid": [
-        3,
-        3
+        5,
+        2
       ],
       "labels": [
         "neutral",
@@ -26,7 +26,8 @@
         "defend",
         "evade",
         "spell",
-        "preparing"
+        "preparing",
+        "neutral-alt"
       ]
     },
     "motion": {
@@ -57,7 +58,7 @@
     }
   },
   "qa": {
-    "visual": "Rear identity, palette, armor, wing/cape/tail consistent, distinct articulated poses; foot floor is above hanging tail in some frames.",
+    "visual": "Root regenerated transparent 5x2 held stances. Last cell neutral-alt is spare, not a tenth stance. Requires new manual contact anchors and normalization review.",
     "inEngine": false,
     "motionRegeneration": "Regenerated from original rear v01 with small figures, wider transparent gutters; actual fist/torso attack articulation and crouched evade."
   },
@@ -90,44 +91,6 @@
       "damage": 0.54
     },
     "footAnchors": {
-      "stances": [
-        [
-          310,
-          390
-        ],
-        [
-          770,
-          390
-        ],
-        [
-          1140,
-          390
-        ],
-        [
-          390,
-          780
-        ],
-        [
-          800,
-          780
-        ],
-        [
-          1190,
-          780
-        ],
-        [
-          85,
-          1170
-        ],
-        [
-          780,
-          1180
-        ],
-        [
-          1190,
-          1180
-        ]
-      ],
       "motion": [
         [
           285,
