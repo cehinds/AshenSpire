@@ -13,11 +13,46 @@ def run(root):
     source=root/"proposal-sheet.png"
     im=Image.open(source).convert("RGBA")
     w,h=im.size
-    report={"schemaVersion":1,"source":{"path":source.as_posix(),"sha256":sha(source),"size":[w,h]},"grid":{"columns":5,"rows":2,"rectPolicy":"integer partition"},"output":{"size":[512,512],"anchor":[256,464],"sharedScale":None},"alphaThreshold":32,"sourceBoundary":boundary(im.getchannel("A")),"variants":[],"qa":{"errors":[],"warnings":[]}}
+    report={"schemaVersion":1,"source":{"path":source.as_posix(),"sha256":sha(source),"size":[w,h]},"grid":{"columns":5,"rows":2,"rectPolicy":"adaptive full zero-alpha gutters"},"output":{"size":[512,512],"anchor":[256,464],"sharedScale":None},"alphaThreshold":32,"sourceBoundary":boundary(im.getchannel("A")),"variants":[],"qa":{"errors":[],"warnings":[]}}
+    # Find full zero-alpha gutters nearest each nominal division. Never mask pixels.
+    alpha=im.getchannel("A")
+    def gap(axis, start, end, nominal):
+        counts=[]
+        for n in range(start,end):
+            line=alpha.crop((0,n,w,n+1) if axis=="y" else (n,row_top,n+1,row_bottom))
+            vals=list(line.getdata())
+            counts.append((n,sum(v>0 for v in vals),sum(v>32 for v in vals)))
+        bands=[]; begin=None
+        for n,c0,c32 in counts:
+            if c0==0 and begin is None: begin=n
+            if c0!=0 and begin is not None: bands.append([begin,n]); begin=None
+        if begin is not None: bands.append([begin,end])
+        if not bands: return None
+        band=min(bands,key=lambda b:abs((b[0]+b[1]-1)/2-nominal))
+        cut=(band[0]+band[1])//2
+        return {"band":band,"width":band[1]-band[0],"cut":cut,"alphaAbove0":0,"alphaAbove32":0}
+    horizontal=gap("y",int(h*.35),int(h*.65),h/2)
+    plan={"status":"draft-pending-crop-review","method":"full zero-alpha gutters","horizontal":horizontal,"rows":[]}
+    report["cropPlan"]=plan
+    rectangles=[]
+    if horizontal is None:
+        report["qa"]["errors"].append("no fully transparent horizontal gutter near midpoint")
+    else:
+        ys=[0,horizontal["cut"],h]
+        for row in range(2):
+            row_top,row_bottom=ys[row],ys[row+1]
+            gutters=[gap("x",int(w*(k/5-.07)),int(w*(k/5+.07)),w*k/5) for k in range(1,5)]
+            plan["rows"].append({"y":[row_top,row_bottom],"gutters":gutters})
+            if any(g is None for g in gutters):
+                report["qa"]["errors"].append(f"row {row+1}: no fully transparent gutter near a nominal column division")
+                continue
+            xs=[0]+[g["cut"] for g in gutters]+[w]
+            if xs!=sorted(set(xs)):
+                report["qa"]["errors"].append(f"row {row+1}: gutters do not form ordered cells")
+                continue
+            rectangles.extend([[xs[c],row_top,xs[c+1],row_bottom] for c in range(5)])
     cells=[]
-    for i in range(10):
-        col,row=i%5,i//5
-        rect=[col*w//5,row*h//2,(col+1)*w//5,(row+1)*h//2]
+    for i,rect in enumerate(rectangles):
         cell=im.crop(rect); a=cell.getchannel("A")
         bounds=a.point(lambda v:255 if v>32 else 0).getbbox()
         edge=boundary(a)
