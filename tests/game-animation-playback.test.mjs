@@ -28,7 +28,7 @@ function instrumentStage(anchor, calls) {
     ownsMotion: true, poses: ['smash'],
     actionTiming: (_pose, speed) => selectedWeaponSequenceTiming(selectedWeaponSequence('smash'), speed),
     play: pose => { calls.push(`play:${pose}`); return true; },
-    hold: () => calls.push('hold'), settle: () => calls.push('settle'),
+    hold: ms => calls.push(['hold', ms]), settle: () => calls.push('settle'),
   };
 }
 
@@ -46,7 +46,7 @@ test('disabled action handles preserve authored weighted timing and cancel effec
       assert.equal(typeof handle.cancel, 'function');
       assert.equal(actor.classList.contains('enemy-attack-pose'), enabled);
       handle.hold(60); handle.cancel();
-      assert.deepEqual(calls, enabled ? ['effect', 'play:smash', 'hold', 'cancel-effect', 'settle'] : ['effect', 'cancel-effect']);
+      assert.deepEqual(calls, enabled ? ['effect', 'play:smash', ['hold', 60], 'cancel-effect', 'settle'] : ['effect', 'cancel-effect']);
       assert.equal(actor.classList.contains('enemy-attack-pose'), false);
     }
   });
