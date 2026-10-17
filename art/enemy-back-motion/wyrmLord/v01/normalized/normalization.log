@@ -204,24 +204,24 @@
       ],
       "reviewedAnchor": true,
       "path": "art/enemy-back-motion/wyrmLord/v01/normalized/stances/neutral.png",
-      "sha256": "3aaf0481c670b5eb502685aaf2807aa9a1cf81125ffe0e8f80d51b3415372111",
+      "sha256": "1076f77ac15629d6ebebc3cd466aea7f6fa74a6f012c074d72034d1a2e76dc09",
       "translation": [
-        104,
-        262
+        98,
+        254
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.6678899082568807,
+      "calibratedScale": 0.6964322120285423,
       "omittedFaintPixels": 0,
       "omittedMaxAlpha": 0,
       "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        104,
-        262,
-        319,
-        472
+        98,
+        254,
+        322,
+        473
       ]
     },
     {
@@ -251,24 +251,24 @@
       ],
       "reviewedAnchor": true,
       "path": "art/enemy-back-motion/wyrmLord/v01/normalized/stances/smash.png",
-      "sha256": "b0be34cd474ab2e9d4bf9dfbf15fbc826bad4f5eac2f0214e8897cea7b185c9c",
+      "sha256": "d8adc9e69839fbca264769679dfe90a33d2ad43a324ff5ef4c2e428678123b3f",
       "translation": [
-        61,
-        227
+        53,
+        217
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.6678899082568807,
+      "calibratedScale": 0.6964322120285423,
       "omittedFaintPixels": 0,
       "omittedMaxAlpha": 0,
       "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        70,
-        227,
-        309,
-        483
+        53,
+        217,
+        312,
+        484
       ]
     },
     {
@@ -298,24 +298,24 @@
       ],
       "reviewedAnchor": true,
       "path": "art/enemy-back-motion/wyrmLord/v01/normalized/stances/attack.png",
-      "sha256": "804a13fbe08fcf892fb48223b20d5db617d1674f10a2498683bdb9f289fa7e05",
+      "sha256": "140c5c6b920f5fabe09e91e81206c66e8d967af9e1113896eeb359c57ea662b1",
       "translation": [
-        54,
-        253
+        45,
+        244
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.6678899082568807,
+      "calibratedScale": 0.6964322120285423,
       "omittedFaintPixels": 0,
       "omittedMaxAlpha": 0,
       "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        54,
-        273,
-        317,
-        477
+        45,
+        244,
+        319,
+        478
       ]
     },
     {
@@ -345,24 +345,24 @@
       ],
       "reviewedAnchor": true,
       "path": "art/enemy-back-motion/wyrmLord/v01/normalized/stances/sweep.png",
-      "sha256": "634bb113616ac5431f55b875fab3dcbc6b4423fbe9572f40ff5fced4a8389aea",
+      "sha256": "d7a280fd262e68591ae731c26c5af908524d7042b18296e25753b090afe45e07",
       "translation": [
-        50,
-        252
+        41,
+        243
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.6678899082568807,
+      "calibratedScale": 0.6964322120285423,
       "omittedFaintPixels": 0,
       "omittedMaxAlpha": 0,
       "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        50,
-        252,
-        320,
-        478
+        41,
+        243,
+        322,
+        479
       ]
     },
     {
@@ -392,24 +392,24 @@
       ],
       "reviewedAnchor": true,
       "path": "art/enemy-back-motion/wyrmLord/v01/normalized/stances/counter.png",
-      "sha256": "8333300096ccab038151f6f4ae92cffe3f898b4ebc74cc1684dbd1f3f4d388a6",
+      "sha256": "21f29e3174d0d9b81e44799d745cc08772b6b36ead81f3505d604747413f1fb2",
       "translation": [
-        72,
-        228
+        64,
+        218
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.6678899082568807,
+      "calibratedScale": 0.6964322120285423,
       "omittedFaintPixels": 0,
       "omittedMaxAlpha": 0,
       "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        72,
-        228,
-        299,
-        482
+        64,
+        218,
+        301,
+        483
       ]
     },
     {
@@ -439,24 +439,24 @@
       ],
       "reviewedAnchor": true,
       "path": "art/enemy-back-motion/wyrmLord/v01/normalized/stances/defend.png",
-      "sha256": "e77fb9ca161f89ce96c114c9e11d87adcfd9c393c09385da3d7b5233c8d5f866",
+      "sha256": "fdee01c381c55084e8bb27369d814dbd98b684b277ef672439bccfc232989262",
       "translation": [
-        112,
-        261
+        106,
+        252
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.6678899082568807,
+      "calibratedScale": 0.6964322120285423,
       "omittedFaintPixels": 0,
       "omittedMaxAlpha": 0,
       "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        112,
-        261,
-        346,
-        501
+        106,
+        252,
+        350,
+        502
       ]
     },
     {
@@ -486,24 +486,24 @@
       ],
       "reviewedAnchor": true,
       "path": "art/enemy-back-motion/wyrmLord/v01/normalized/stances/evade.png",
-      "sha256": "8debc3db82996fed903865dc433f1df00e53012169a7485eff59f6c9204ebf1f",
+      "sha256": "b69aa661f5970373fce7bffb6e86ac273ce66845d8e2f4438f454621f530392e",
       "translation": [
-        73,
-        265
+        65,
+        256
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.6678899082568807,
+      "calibratedScale": 0.6964322120285423,
       "omittedFaintPixels": 0,
       "omittedMaxAlpha": 0,
       "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        73,
-        268,
-        333,
-        496
+        65,
+        256,
+        337,
+        498
       ]
     },
     {
@@ -533,24 +533,24 @@
       ],
       "reviewedAnchor": true,
       "path": "art/enemy-back-motion/wyrmLord/v01/normalized/stances/spell.png",
-      "sha256": "340d98d365c0573d63da4615f87bddeb145c137680b1f12bc058fecdb9cb85f0",
+      "sha256": "bb079e48622c2485c0cedfd3542f4ea07ab32e45d35d06bf22f7eb41be722112",
       "translation": [
-        51,
-        242
+        42,
+        233
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.6678899082568807,
+      "calibratedScale": 0.6964322120285423,
       "omittedFaintPixels": 0,
       "omittedMaxAlpha": 0,
       "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        51,
-        242,
-        299,
-        489
+        42,
+        233,
+        301,
+        491
       ]
     },
     {
@@ -580,24 +580,24 @@
       ],
       "reviewedAnchor": true,
       "path": "art/enemy-back-motion/wyrmLord/v01/normalized/stances/preparing.png",
-      "sha256": "3138e34da80810005c315b5f91f34a19bfef42bad7b49cc292862a030d81e00d",
+      "sha256": "eece804d16cea8035b88c3ff2cfc8ec469ad9efe7a6e542742519e13d28fda22",
       "translation": [
-        48,
-        243
+        39,
+        233
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.6678899082568807,
+      "calibratedScale": 0.6964322120285423,
       "omittedFaintPixels": 0,
       "omittedMaxAlpha": 0,
       "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        48,
-        243,
-        311,
-        483
+        39,
+        233,
+        313,
+        484
       ]
     },
     {
@@ -627,23 +627,23 @@
       ],
       "reviewedAnchor": true,
       "path": "art/enemy-back-motion/wyrmLord/v01/normalized/stances/neutral-alt.png",
-      "sha256": "cb8f20b24b1eecc046685a03d1d0c6f50984f49f418d25beaf12b61de25a8367",
+      "sha256": "bbf679685901c951eb66b072474457c83f193be3b7d3b3cddf65836899068312",
       "translation": [
-        76,
-        242
+        69,
+        232
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.6678899082568807,
+      "calibratedScale": 0.6964322120285423,
       "omittedFaintPixels": 0,
       "omittedMaxAlpha": 0,
       "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        77,
-        242,
-        286,
+        70,
+        236,
+        288,
         483
       ]
     },
@@ -1124,7 +1124,7 @@
     "reviewer": "elite_motion agent",
     "method": "manual source-image visual estimate",
     "status": "draft-estimates-pending-normalized-preview",
-    "notes": "Anchors identify visible foot or support-contact baseline, using midpoint where both feet visible. Rear feet can be occluded. Values are visual estimates, not pixel-exact detections. Tail/cape alpha bottom is not used as floor. MasterScale calibrates separately generated damage anatomy to stances and preserves action crouch/height; shared scale then applies. Root must inspect normalized frames before accepting. Lord repaired10stances measured from native512 support-foot positions using anchor-delta conversion; rear feet occluded, tail bottom excluded. Source stance anatomy~300px, calibrated1.17 toward authored350px."
+    "notes": "Anchors identify visible foot or support-contact baseline, using midpoint where both feet visible. Rear feet can be occluded. Values are visual estimates, not pixel-exact detections. Tail/cape alpha bottom is not used as floor. MasterScale calibrates separately generated damage anatomy to stances and preserves action crouch/height; shared scale then applies. Root must inspect normalized frames before accepting. Lord repaired10stances measured from native512 support-foot positions using anchor-delta conversion; rear feet occluded, tail bottom excluded. Source stance anatomy~300px, calibrated1.17 toward authored350px. Recovery-body visual comparison by elite_motion: updated stance calibration1.22; excludes raised weapons, estimated remaining body-height drift under approximately6percent. Root final native-frame QA pending."
   },
   "seedReference": {
     "path": "art/enemy-back-proposals/wyrmLord/v01.png",
@@ -1135,7 +1135,7 @@
   "bodyScaleRelation": {
     "fitScale": 0.5708460754332314,
     "perMasterCalibration": {
-      "stances": 1.17,
+      "stances": 1.22,
       "motion": 1.2,
       "damage": 0.54
     },
@@ -1146,7 +1146,7 @@
   },
   "previewPolicy": "Separate four-frame attack/evade loops; stances and damage are labeled pose slideshows.",
   "masterScaleCalibration": {
-    "stances": 1.17,
+    "stances": 1.22,
     "motion": 1.2,
     "damage": 0.54
   }
