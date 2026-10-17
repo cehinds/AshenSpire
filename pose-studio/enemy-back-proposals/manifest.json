@@ -2886,19 +2886,1181 @@
       "id": "glassRegent",
       "name": "The Glass Regent",
       "role": "boss",
-      "defaultStance": null,
+      "defaultStance": "neutral",
       "reference": null,
-      "proposals": [],
-      "provisionalDefaultVersion": null
+      "proposals": [
+        {
+          "id": "v01",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "181e0bce04106ad31013ff5e4c379e5e7c2bfa3e3d36f68fda1c7162cd2ddd2f",
+            "prompt": "Create exactly TEN rear three-quarter sprite design alternatives for the SAME Glass Regent boss shown in reference1. Reference2 supplies ONLY gameplay camera: back dominant turned away facing upper-right. Preserve Glass Regent identity: tall humanoid regal armored knight, angular silver crystal plate with fine gold structural trim, jagged crystalline crown helmet, dark teal underlayers, flowing shredded teal-blue glassy cape, long icy pale blue sword, broad elongated angular silver crystal shield trimmed gold. Same anatomy proportions equipment silhouette and silver gold teal palette. Do not copy red player clothing. Show BACK of helmet, cape and rear armor on all ten, no face or chest/front view. Ten subtle distinct rear facet patterns, gold trim routes and cape shard splits, same character outfit proportions and production dark fantasy painterly sprite style matching ref1. Full body boots and ENTIRE sword and shield contained independently in each cell. Single transparent PNG canvas exact regular 5 columns by 2 rows grid, ten figures identical scale and foot baselines. Each figure occupies at most 78 percent of its cell in both directions, ample transparent gutters and at least 40 pixels clear outer padding including above crown tips and below feet. No cropping, contact, text labels numbers scene floor or poster. Design proposals not animation.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/glassRegent/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "ea65e4c6e7be07b93002a3d6dff3de5420598710"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/glassRegent/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/glassRegent/v01.png",
+                  "sha256": "f4f7953b0880a8d8c9ac4d98e5ff712bd76f13a4ff12f5da7678c35cc7241141",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v02",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "181e0bce04106ad31013ff5e4c379e5e7c2bfa3e3d36f68fda1c7162cd2ddd2f",
+            "prompt": "Create exactly TEN rear three-quarter sprite design alternatives for the SAME Glass Regent boss shown in reference1. Reference2 supplies ONLY gameplay camera: back dominant turned away facing upper-right. Preserve Glass Regent identity: tall humanoid regal armored knight, angular silver crystal plate with fine gold structural trim, jagged crystalline crown helmet, dark teal underlayers, flowing shredded teal-blue glassy cape, long icy pale blue sword, broad elongated angular silver crystal shield trimmed gold. Same anatomy proportions equipment silhouette and silver gold teal palette. Do not copy red player clothing. Show BACK of helmet, cape and rear armor on all ten, no face or chest/front view. Ten subtle distinct rear facet patterns, gold trim routes and cape shard splits, same character outfit proportions and production dark fantasy painterly sprite style matching ref1. Full body boots and ENTIRE sword and shield contained independently in each cell. Single transparent PNG canvas exact regular 5 columns by 2 rows grid, ten figures identical scale and foot baselines. Each figure occupies at most 78 percent of its cell in both directions, ample transparent gutters and at least 40 pixels clear outer padding including above crown tips and below feet. No cropping, contact, text labels numbers scene floor or poster. Design proposals not animation.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/glassRegent/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "ea65e4c6e7be07b93002a3d6dff3de5420598710"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/glassRegent/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/glassRegent/v02.png",
+                  "sha256": "d0c6ad2a227bf2d0fb52b9eaa74d16e94eb6ba96e8b55673f1472d137cbdfdda",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v03",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "181e0bce04106ad31013ff5e4c379e5e7c2bfa3e3d36f68fda1c7162cd2ddd2f",
+            "prompt": "Create exactly TEN rear three-quarter sprite design alternatives for the SAME Glass Regent boss shown in reference1. Reference2 supplies ONLY gameplay camera: back dominant turned away facing upper-right. Preserve Glass Regent identity: tall humanoid regal armored knight, angular silver crystal plate with fine gold structural trim, jagged crystalline crown helmet, dark teal underlayers, flowing shredded teal-blue glassy cape, long icy pale blue sword, broad elongated angular silver crystal shield trimmed gold. Same anatomy proportions equipment silhouette and silver gold teal palette. Do not copy red player clothing. Show BACK of helmet, cape and rear armor on all ten, no face or chest/front view. Ten subtle distinct rear facet patterns, gold trim routes and cape shard splits, same character outfit proportions and production dark fantasy painterly sprite style matching ref1. Full body boots and ENTIRE sword and shield contained independently in each cell. Single transparent PNG canvas exact regular 5 columns by 2 rows grid, ten figures identical scale and foot baselines. Each figure occupies at most 78 percent of its cell in both directions, ample transparent gutters and at least 40 pixels clear outer padding including above crown tips and below feet. No cropping, contact, text labels numbers scene floor or poster. Design proposals not animation.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/glassRegent/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "ea65e4c6e7be07b93002a3d6dff3de5420598710"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/glassRegent/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/glassRegent/v03.png",
+                  "sha256": "001c915bbfc157277c87a94369bda155162f21293166281fcea4ac5b86f6113d",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v04",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "181e0bce04106ad31013ff5e4c379e5e7c2bfa3e3d36f68fda1c7162cd2ddd2f",
+            "prompt": "Create exactly TEN rear three-quarter sprite design alternatives for the SAME Glass Regent boss shown in reference1. Reference2 supplies ONLY gameplay camera: back dominant turned away facing upper-right. Preserve Glass Regent identity: tall humanoid regal armored knight, angular silver crystal plate with fine gold structural trim, jagged crystalline crown helmet, dark teal underlayers, flowing shredded teal-blue glassy cape, long icy pale blue sword, broad elongated angular silver crystal shield trimmed gold. Same anatomy proportions equipment silhouette and silver gold teal palette. Do not copy red player clothing. Show BACK of helmet, cape and rear armor on all ten, no face or chest/front view. Ten subtle distinct rear facet patterns, gold trim routes and cape shard splits, same character outfit proportions and production dark fantasy painterly sprite style matching ref1. Full body boots and ENTIRE sword and shield contained independently in each cell. Single transparent PNG canvas exact regular 5 columns by 2 rows grid, ten figures identical scale and foot baselines. Each figure occupies at most 78 percent of its cell in both directions, ample transparent gutters and at least 40 pixels clear outer padding including above crown tips and below feet. No cropping, contact, text labels numbers scene floor or poster. Design proposals not animation.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/glassRegent/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "ea65e4c6e7be07b93002a3d6dff3de5420598710"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/glassRegent/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/glassRegent/v04.png",
+                  "sha256": "e180a83a45940d9b72ba7c8f3c810b7365894a3bffd431268d6871fa759b14c5",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v05",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "181e0bce04106ad31013ff5e4c379e5e7c2bfa3e3d36f68fda1c7162cd2ddd2f",
+            "prompt": "Create exactly TEN rear three-quarter sprite design alternatives for the SAME Glass Regent boss shown in reference1. Reference2 supplies ONLY gameplay camera: back dominant turned away facing upper-right. Preserve Glass Regent identity: tall humanoid regal armored knight, angular silver crystal plate with fine gold structural trim, jagged crystalline crown helmet, dark teal underlayers, flowing shredded teal-blue glassy cape, long icy pale blue sword, broad elongated angular silver crystal shield trimmed gold. Same anatomy proportions equipment silhouette and silver gold teal palette. Do not copy red player clothing. Show BACK of helmet, cape and rear armor on all ten, no face or chest/front view. Ten subtle distinct rear facet patterns, gold trim routes and cape shard splits, same character outfit proportions and production dark fantasy painterly sprite style matching ref1. Full body boots and ENTIRE sword and shield contained independently in each cell. Single transparent PNG canvas exact regular 5 columns by 2 rows grid, ten figures identical scale and foot baselines. Each figure occupies at most 78 percent of its cell in both directions, ample transparent gutters and at least 40 pixels clear outer padding including above crown tips and below feet. No cropping, contact, text labels numbers scene floor or poster. Design proposals not animation.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/glassRegent/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "ea65e4c6e7be07b93002a3d6dff3de5420598710"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/glassRegent/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/glassRegent/v05.png",
+                  "sha256": "708bad0e457f9a2c8e29158c286c24c953f89503fd7b445e401e78afccf43fc1",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v06",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "181e0bce04106ad31013ff5e4c379e5e7c2bfa3e3d36f68fda1c7162cd2ddd2f",
+            "prompt": "Create exactly TEN rear three-quarter sprite design alternatives for the SAME Glass Regent boss shown in reference1. Reference2 supplies ONLY gameplay camera: back dominant turned away facing upper-right. Preserve Glass Regent identity: tall humanoid regal armored knight, angular silver crystal plate with fine gold structural trim, jagged crystalline crown helmet, dark teal underlayers, flowing shredded teal-blue glassy cape, long icy pale blue sword, broad elongated angular silver crystal shield trimmed gold. Same anatomy proportions equipment silhouette and silver gold teal palette. Do not copy red player clothing. Show BACK of helmet, cape and rear armor on all ten, no face or chest/front view. Ten subtle distinct rear facet patterns, gold trim routes and cape shard splits, same character outfit proportions and production dark fantasy painterly sprite style matching ref1. Full body boots and ENTIRE sword and shield contained independently in each cell. Single transparent PNG canvas exact regular 5 columns by 2 rows grid, ten figures identical scale and foot baselines. Each figure occupies at most 78 percent of its cell in both directions, ample transparent gutters and at least 40 pixels clear outer padding including above crown tips and below feet. No cropping, contact, text labels numbers scene floor or poster. Design proposals not animation.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/glassRegent/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "ea65e4c6e7be07b93002a3d6dff3de5420598710"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/glassRegent/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/glassRegent/v06.png",
+                  "sha256": "80cc477c48919d7c8bcf47a321ba1bfd717c0b07bc52e528b569b762239678d3",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v07",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "181e0bce04106ad31013ff5e4c379e5e7c2bfa3e3d36f68fda1c7162cd2ddd2f",
+            "prompt": "Create exactly TEN rear three-quarter sprite design alternatives for the SAME Glass Regent boss shown in reference1. Reference2 supplies ONLY gameplay camera: back dominant turned away facing upper-right. Preserve Glass Regent identity: tall humanoid regal armored knight, angular silver crystal plate with fine gold structural trim, jagged crystalline crown helmet, dark teal underlayers, flowing shredded teal-blue glassy cape, long icy pale blue sword, broad elongated angular silver crystal shield trimmed gold. Same anatomy proportions equipment silhouette and silver gold teal palette. Do not copy red player clothing. Show BACK of helmet, cape and rear armor on all ten, no face or chest/front view. Ten subtle distinct rear facet patterns, gold trim routes and cape shard splits, same character outfit proportions and production dark fantasy painterly sprite style matching ref1. Full body boots and ENTIRE sword and shield contained independently in each cell. Single transparent PNG canvas exact regular 5 columns by 2 rows grid, ten figures identical scale and foot baselines. Each figure occupies at most 78 percent of its cell in both directions, ample transparent gutters and at least 40 pixels clear outer padding including above crown tips and below feet. No cropping, contact, text labels numbers scene floor or poster. Design proposals not animation.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/glassRegent/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "ea65e4c6e7be07b93002a3d6dff3de5420598710"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/glassRegent/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/glassRegent/v07.png",
+                  "sha256": "c3872fee5d4c656aa6cd363595b0b1f606f44fb1a2e8e8d11d6be7f0f5818e26",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v08",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "181e0bce04106ad31013ff5e4c379e5e7c2bfa3e3d36f68fda1c7162cd2ddd2f",
+            "prompt": "Create exactly TEN rear three-quarter sprite design alternatives for the SAME Glass Regent boss shown in reference1. Reference2 supplies ONLY gameplay camera: back dominant turned away facing upper-right. Preserve Glass Regent identity: tall humanoid regal armored knight, angular silver crystal plate with fine gold structural trim, jagged crystalline crown helmet, dark teal underlayers, flowing shredded teal-blue glassy cape, long icy pale blue sword, broad elongated angular silver crystal shield trimmed gold. Same anatomy proportions equipment silhouette and silver gold teal palette. Do not copy red player clothing. Show BACK of helmet, cape and rear armor on all ten, no face or chest/front view. Ten subtle distinct rear facet patterns, gold trim routes and cape shard splits, same character outfit proportions and production dark fantasy painterly sprite style matching ref1. Full body boots and ENTIRE sword and shield contained independently in each cell. Single transparent PNG canvas exact regular 5 columns by 2 rows grid, ten figures identical scale and foot baselines. Each figure occupies at most 78 percent of its cell in both directions, ample transparent gutters and at least 40 pixels clear outer padding including above crown tips and below feet. No cropping, contact, text labels numbers scene floor or poster. Design proposals not animation.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/glassRegent/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "ea65e4c6e7be07b93002a3d6dff3de5420598710"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/glassRegent/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/glassRegent/v08.png",
+                  "sha256": "4bb912eb58322bc93a5d1182028de474f6269494d160daa74a1f4a8a1a05b608",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v09",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "181e0bce04106ad31013ff5e4c379e5e7c2bfa3e3d36f68fda1c7162cd2ddd2f",
+            "prompt": "Create exactly TEN rear three-quarter sprite design alternatives for the SAME Glass Regent boss shown in reference1. Reference2 supplies ONLY gameplay camera: back dominant turned away facing upper-right. Preserve Glass Regent identity: tall humanoid regal armored knight, angular silver crystal plate with fine gold structural trim, jagged crystalline crown helmet, dark teal underlayers, flowing shredded teal-blue glassy cape, long icy pale blue sword, broad elongated angular silver crystal shield trimmed gold. Same anatomy proportions equipment silhouette and silver gold teal palette. Do not copy red player clothing. Show BACK of helmet, cape and rear armor on all ten, no face or chest/front view. Ten subtle distinct rear facet patterns, gold trim routes and cape shard splits, same character outfit proportions and production dark fantasy painterly sprite style matching ref1. Full body boots and ENTIRE sword and shield contained independently in each cell. Single transparent PNG canvas exact regular 5 columns by 2 rows grid, ten figures identical scale and foot baselines. Each figure occupies at most 78 percent of its cell in both directions, ample transparent gutters and at least 40 pixels clear outer padding including above crown tips and below feet. No cropping, contact, text labels numbers scene floor or poster. Design proposals not animation.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/glassRegent/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "ea65e4c6e7be07b93002a3d6dff3de5420598710"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/glassRegent/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/glassRegent/v09.png",
+                  "sha256": "ee0a63310d5aa2a2ab87d7cb7bc8e922b65bea4d0fc0d297291f4db915bcbea5",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v10",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "181e0bce04106ad31013ff5e4c379e5e7c2bfa3e3d36f68fda1c7162cd2ddd2f",
+            "prompt": "Create exactly TEN rear three-quarter sprite design alternatives for the SAME Glass Regent boss shown in reference1. Reference2 supplies ONLY gameplay camera: back dominant turned away facing upper-right. Preserve Glass Regent identity: tall humanoid regal armored knight, angular silver crystal plate with fine gold structural trim, jagged crystalline crown helmet, dark teal underlayers, flowing shredded teal-blue glassy cape, long icy pale blue sword, broad elongated angular silver crystal shield trimmed gold. Same anatomy proportions equipment silhouette and silver gold teal palette. Do not copy red player clothing. Show BACK of helmet, cape and rear armor on all ten, no face or chest/front view. Ten subtle distinct rear facet patterns, gold trim routes and cape shard splits, same character outfit proportions and production dark fantasy painterly sprite style matching ref1. Full body boots and ENTIRE sword and shield contained independently in each cell. Single transparent PNG canvas exact regular 5 columns by 2 rows grid, ten figures identical scale and foot baselines. Each figure occupies at most 78 percent of its cell in both directions, ample transparent gutters and at least 40 pixels clear outer padding including above crown tips and below feet. No cropping, contact, text labels numbers scene floor or poster. Design proposals not animation.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/glassRegent/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "ea65e4c6e7be07b93002a3d6dff3de5420598710"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/glassRegent/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/glassRegent/v10.png",
+                  "sha256": "19dcd806c99160e508294d191b533bd9915156cc6d466de1663f00a7b7d169e3",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "provisionalDefaultVersion": "v01"
     },
     {
       "id": "marrowOrganist",
       "name": "The Marrow Organist",
       "role": "boss",
-      "defaultStance": null,
+      "defaultStance": "neutral",
       "reference": null,
-      "proposals": [],
-      "provisionalDefaultVersion": null
+      "proposals": [
+        {
+          "id": "v01",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "9983c8fbf5bac34353616da6342ce48ba67cace47e5b7ec658897d368047dc96",
+            "prompt": "Transparent PNG sprite sheet. EXACT 10 Marrow Organist boss sprites, 5 columns x 2 rows. Rotate boss first reference to face away upper-right, like rear camera in second image. Show backs of bronze organ pipe backpack, back of burgundy ivory robe, heels, rear head. No face or chest. Keep skull staff, skeletal hand, bronze pipes and same boss identity. Ten subtle rear outfit variants. Full figures with full weapons, large clear empty alpha gutters. NO backdrop, NO brown fill, NO gradient, NO floor, NO scenery, NO labels. Background must be entirely transparent alpha like original reference. Dark fantasy game sprite production art.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/marrowOrganist/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "4da89f3915d65392564b682ead0b9f55fd46f38a"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "rear camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/marrowOrganist/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/marrowOrganist/v01.png",
+                  "sha256": "00ecf74d172c030e494d82ad6ec4b6a427fc370038bed22c83008add216a28c7",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v02",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "9983c8fbf5bac34353616da6342ce48ba67cace47e5b7ec658897d368047dc96",
+            "prompt": "Transparent PNG sprite sheet. EXACT 10 Marrow Organist boss sprites, 5 columns x 2 rows. Rotate boss first reference to face away upper-right, like rear camera in second image. Show backs of bronze organ pipe backpack, back of burgundy ivory robe, heels, rear head. No face or chest. Keep skull staff, skeletal hand, bronze pipes and same boss identity. Ten subtle rear outfit variants. Full figures with full weapons, large clear empty alpha gutters. NO backdrop, NO brown fill, NO gradient, NO floor, NO scenery, NO labels. Background must be entirely transparent alpha like original reference. Dark fantasy game sprite production art.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/marrowOrganist/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "4da89f3915d65392564b682ead0b9f55fd46f38a"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "rear camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/marrowOrganist/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/marrowOrganist/v02.png",
+                  "sha256": "d3996dd5ce541c9285615923a902f76e09fd5ca708bc8836985aa7513573036b",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v03",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "9983c8fbf5bac34353616da6342ce48ba67cace47e5b7ec658897d368047dc96",
+            "prompt": "Transparent PNG sprite sheet. EXACT 10 Marrow Organist boss sprites, 5 columns x 2 rows. Rotate boss first reference to face away upper-right, like rear camera in second image. Show backs of bronze organ pipe backpack, back of burgundy ivory robe, heels, rear head. No face or chest. Keep skull staff, skeletal hand, bronze pipes and same boss identity. Ten subtle rear outfit variants. Full figures with full weapons, large clear empty alpha gutters. NO backdrop, NO brown fill, NO gradient, NO floor, NO scenery, NO labels. Background must be entirely transparent alpha like original reference. Dark fantasy game sprite production art.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/marrowOrganist/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "4da89f3915d65392564b682ead0b9f55fd46f38a"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "rear camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/marrowOrganist/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/marrowOrganist/v03.png",
+                  "sha256": "2df25aab1c80409d1b3a3a9b3d6da4d331b39cdf33b6f736e3c37540c511304b",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v04",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "9983c8fbf5bac34353616da6342ce48ba67cace47e5b7ec658897d368047dc96",
+            "prompt": "Transparent PNG sprite sheet. EXACT 10 Marrow Organist boss sprites, 5 columns x 2 rows. Rotate boss first reference to face away upper-right, like rear camera in second image. Show backs of bronze organ pipe backpack, back of burgundy ivory robe, heels, rear head. No face or chest. Keep skull staff, skeletal hand, bronze pipes and same boss identity. Ten subtle rear outfit variants. Full figures with full weapons, large clear empty alpha gutters. NO backdrop, NO brown fill, NO gradient, NO floor, NO scenery, NO labels. Background must be entirely transparent alpha like original reference. Dark fantasy game sprite production art.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/marrowOrganist/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "4da89f3915d65392564b682ead0b9f55fd46f38a"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "rear camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/marrowOrganist/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/marrowOrganist/v04.png",
+                  "sha256": "a6811de01471b5754c9c9157092f344c01bff78052e7d54851140fbaa799989e",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v05",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "9983c8fbf5bac34353616da6342ce48ba67cace47e5b7ec658897d368047dc96",
+            "prompt": "Transparent PNG sprite sheet. EXACT 10 Marrow Organist boss sprites, 5 columns x 2 rows. Rotate boss first reference to face away upper-right, like rear camera in second image. Show backs of bronze organ pipe backpack, back of burgundy ivory robe, heels, rear head. No face or chest. Keep skull staff, skeletal hand, bronze pipes and same boss identity. Ten subtle rear outfit variants. Full figures with full weapons, large clear empty alpha gutters. NO backdrop, NO brown fill, NO gradient, NO floor, NO scenery, NO labels. Background must be entirely transparent alpha like original reference. Dark fantasy game sprite production art.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/marrowOrganist/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "4da89f3915d65392564b682ead0b9f55fd46f38a"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "rear camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/marrowOrganist/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/marrowOrganist/v05.png",
+                  "sha256": "702036930f1b10fa78bdfb512c2a3fe4a5a337865715ef898856baf44214a1dc",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v06",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "9983c8fbf5bac34353616da6342ce48ba67cace47e5b7ec658897d368047dc96",
+            "prompt": "Transparent PNG sprite sheet. EXACT 10 Marrow Organist boss sprites, 5 columns x 2 rows. Rotate boss first reference to face away upper-right, like rear camera in second image. Show backs of bronze organ pipe backpack, back of burgundy ivory robe, heels, rear head. No face or chest. Keep skull staff, skeletal hand, bronze pipes and same boss identity. Ten subtle rear outfit variants. Full figures with full weapons, large clear empty alpha gutters. NO backdrop, NO brown fill, NO gradient, NO floor, NO scenery, NO labels. Background must be entirely transparent alpha like original reference. Dark fantasy game sprite production art.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/marrowOrganist/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "4da89f3915d65392564b682ead0b9f55fd46f38a"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "rear camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/marrowOrganist/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/marrowOrganist/v06.png",
+                  "sha256": "d52436894688302f3a173642d36418b663663367708fb52e0e265a7740e7edaf",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v07",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "9983c8fbf5bac34353616da6342ce48ba67cace47e5b7ec658897d368047dc96",
+            "prompt": "Transparent PNG sprite sheet. EXACT 10 Marrow Organist boss sprites, 5 columns x 2 rows. Rotate boss first reference to face away upper-right, like rear camera in second image. Show backs of bronze organ pipe backpack, back of burgundy ivory robe, heels, rear head. No face or chest. Keep skull staff, skeletal hand, bronze pipes and same boss identity. Ten subtle rear outfit variants. Full figures with full weapons, large clear empty alpha gutters. NO backdrop, NO brown fill, NO gradient, NO floor, NO scenery, NO labels. Background must be entirely transparent alpha like original reference. Dark fantasy game sprite production art.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/marrowOrganist/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "4da89f3915d65392564b682ead0b9f55fd46f38a"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "rear camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/marrowOrganist/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/marrowOrganist/v07.png",
+                  "sha256": "9e9e1f2601ce38f2d0818b01afbbbeca5c32155d2443a6c0ba271655469707f3",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v08",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "9983c8fbf5bac34353616da6342ce48ba67cace47e5b7ec658897d368047dc96",
+            "prompt": "Transparent PNG sprite sheet. EXACT 10 Marrow Organist boss sprites, 5 columns x 2 rows. Rotate boss first reference to face away upper-right, like rear camera in second image. Show backs of bronze organ pipe backpack, back of burgundy ivory robe, heels, rear head. No face or chest. Keep skull staff, skeletal hand, bronze pipes and same boss identity. Ten subtle rear outfit variants. Full figures with full weapons, large clear empty alpha gutters. NO backdrop, NO brown fill, NO gradient, NO floor, NO scenery, NO labels. Background must be entirely transparent alpha like original reference. Dark fantasy game sprite production art.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/marrowOrganist/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "4da89f3915d65392564b682ead0b9f55fd46f38a"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "rear camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/marrowOrganist/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/marrowOrganist/v08.png",
+                  "sha256": "891917dcbe3388b822a38f87800e57d8771c898047c109004c1ed7ced193e6b2",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v09",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "9983c8fbf5bac34353616da6342ce48ba67cace47e5b7ec658897d368047dc96",
+            "prompt": "Transparent PNG sprite sheet. EXACT 10 Marrow Organist boss sprites, 5 columns x 2 rows. Rotate boss first reference to face away upper-right, like rear camera in second image. Show backs of bronze organ pipe backpack, back of burgundy ivory robe, heels, rear head. No face or chest. Keep skull staff, skeletal hand, bronze pipes and same boss identity. Ten subtle rear outfit variants. Full figures with full weapons, large clear empty alpha gutters. NO backdrop, NO brown fill, NO gradient, NO floor, NO scenery, NO labels. Background must be entirely transparent alpha like original reference. Dark fantasy game sprite production art.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/marrowOrganist/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "4da89f3915d65392564b682ead0b9f55fd46f38a"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "rear camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/marrowOrganist/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/marrowOrganist/v09.png",
+                  "sha256": "de9af6c2e2a3a4ba220c162810838467d2ce0cc835ba0cadcdcdea190d142db5",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v10",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "9983c8fbf5bac34353616da6342ce48ba67cace47e5b7ec658897d368047dc96",
+            "prompt": "Transparent PNG sprite sheet. EXACT 10 Marrow Organist boss sprites, 5 columns x 2 rows. Rotate boss first reference to face away upper-right, like rear camera in second image. Show backs of bronze organ pipe backpack, back of burgundy ivory robe, heels, rear head. No face or chest. Keep skull staff, skeletal hand, bronze pipes and same boss identity. Ten subtle rear outfit variants. Full figures with full weapons, large clear empty alpha gutters. NO backdrop, NO brown fill, NO gradient, NO floor, NO scenery, NO labels. Background must be entirely transparent alpha like original reference. Dark fantasy game sprite production art.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/marrowOrganist/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "4da89f3915d65392564b682ead0b9f55fd46f38a"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "rear camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/marrowOrganist/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/marrowOrganist/v10.png",
+                  "sha256": "1067206c77c1c493f5325e2ec70fec91f09a88f89b1061792eb9ef9e79cfe358",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "provisionalDefaultVersion": "v01"
     },
     {
       "id": "blightedValkyrie",

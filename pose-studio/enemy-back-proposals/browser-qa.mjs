@@ -15,6 +15,10 @@ const url='http://127.0.0.1:'+server.address().port+'/pose-studio/enemy-back-pro
 const embedTarget='pose-studio/enemy-back-proposals/embedded-check.html';
 await writeFile(embedTarget,'<!doctype html><html><body><h1>Embedding test host</h1></body></html>');
 execFileSync(process.execPath,['pose-studio/enemy-back-proposals/embed-gallery.mjs',embedTarget],{stdio:'inherit'});
+const policy="default-src 'none'; script-src 'self' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'self' blob:; frame-src 'self'; base-uri 'none'; form-action 'none'";
+const embedBytes=await readFile(embedTarget,'utf8');
+const sandboxTarget='pose-studio/enemy-back-proposals/sandbox-check.html';
+await writeFile(sandboxTarget,'<!doctype html><meta http-equiv="Content-Security-Policy" content="'+policy.replaceAll('"','&quot;')+'"><iframe id="preview" sandbox="allow-scripts allow-pointer-lock allow-popups" style="width:100vw;height:95vh"></iframe><script>document.getElementById("preview").srcdoc='+JSON.stringify(embedBytes).replaceAll('<','\\u003c')+';</script>');
 const browser=await chromium.launch({headless:true}),records=[];
 try{
  for(const [name,width,height] of [['mobile',390,844],['tablet',820,1180],['desktop',1440,900],['wide',1920,1080]]){
@@ -33,7 +37,7 @@ try{
   await page.waitForFunction(()=>[...document.querySelectorAll('#grid img')].every(img=>img.complete&&img.naturalWidth===512));
   assert.match(await page.locator('#notice').innerText(),/provisional draft design: v01/);
   await page.selectOption('#stance','evade');
-  assert.equal(await page.locator('#grid .missing').count(),10);
+  assert.equal(await page.locator('#grid .missing').count(),canonical.actors.find(a=>a.id==='wyrmAspirant').proposals.filter(p=>!p.stances?.evade?.frames?.length).length);
   await page.locator('[data-pick="v01"]').check();await page.locator('[data-pick="v02"]').check();
   assert.equal(await page.locator('#compare article').count(),2);
   await page.locator('[data-pick="v03"]').check();
@@ -66,6 +70,14 @@ try{
   assert.equal(await embedded.locator('#grid img').first().evaluate(img=>img.complete&&img.naturalWidth===512),true);
   await page.getByText('Close review',{exact:true}).click();
   assert.equal(await page.locator('dialog').evaluate(d=>d.open),false);
+  await page.goto('http://127.0.0.1:'+server.address().port+'/'+sandboxTarget);
+  const sandbox=page.frameLocator('#preview');await sandbox.locator('#enemy-rear-review-open').click();
+  const nested=sandbox.frameLocator('iframe');
+  await nested.locator('#grid .card').first().waitFor();
+  await nested.locator('#grid img').first().waitFor({state:'visible'});
+  await nested.locator('#grid img').first().evaluate(img=>img.decode());
+  assert.equal(await nested.locator('#grid img').first().evaluate(img=>img.naturalWidth),512);
+  await sandbox.getByText('Close review',{exact:true}).click();
   assert.deepEqual(errors,[]);
   records.push({name,width,height,url,status:'passed'});await page.close();
  }
