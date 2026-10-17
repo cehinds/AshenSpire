@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-17",
     "summary": "Stale origin branches are listed for cleanup, with restore points",
     "detail": "Records which merged or week-old branches are removed and the commit each one pointed at, so any of them can be restored; the game is unchanged.",
-    "build": "0.7.1.1551",
+    "build": "0.7.1.1553",
     "pullRequest": 2029,
     "url": "https://github.com/cehinds/AshenSpire/pull/2029"
   },
