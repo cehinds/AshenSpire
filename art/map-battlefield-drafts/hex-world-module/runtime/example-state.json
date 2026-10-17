@@ -52,5 +52,6 @@
       "restUses": 0,
       "encounterCleared": false
     }
-  ]
+  ],
+  "claimedRewardIds": []
 }

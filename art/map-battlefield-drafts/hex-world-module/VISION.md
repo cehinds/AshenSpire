@@ -46,7 +46,7 @@ Keep these effects in reveal/reward modules. Fog visibility, landmark discovery 
 - Store each enemy type once; encounter pools reference it with weights and tag conditions.
 - Separate encounter chance, group size, enemy weights and difficulty. A larger group is not the same knob as a harder enemy.
 - Reserve deliberate danger spikes for named areas and give the player a visible clue or warning.
-- Add level bands, faction, elite/boss eligibility, spawn budgets and cooldowns as the runtime needs them.
+- Four proposed level bands now define separate recommended-player, enemy and reward ranges. Add faction, elite/boss eligibility, spawn budgets and cooldowns as the runtime needs them.
 - Keep rest safety explicit. A "safe" tag should eventually enforce zero encounter risk; a risky camp should be tagged and signaled differently.
 
 ## 6. Keep effects composable

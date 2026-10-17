@@ -36,7 +36,8 @@
     "trainers": "gameplay/trainers.json",
     "quests": "gameplay/quests.json",
     "effects": "gameplay/effects.json",
-    "discoveries": "gameplay/discoveries.json"
+    "discoveries": "gameplay/discoveries.json",
+    "level-bands": "gameplay/level-bands.json"
   },
   "runtimeExample": "runtime/example-state.json",
   "scope": "Example coordinates do not locate any production world nodes; no engine integration or automatic assignment. Map terrain pools remain null until actual 512px hex ground exports exist.",

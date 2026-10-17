@@ -13,7 +13,7 @@
       "role": "melee",
       "levelRange": [
         1,
-        3
+        4
       ]
     },
     {
@@ -27,7 +27,7 @@
       "role": "flanker",
       "levelRange": [
         1,
-        3
+        4
       ]
     },
     {
@@ -40,8 +40,8 @@
       "productionBinding": null,
       "role": "defender",
       "levelRange": [
-        1,
-        3
+        2,
+        6
       ]
     }
   ]

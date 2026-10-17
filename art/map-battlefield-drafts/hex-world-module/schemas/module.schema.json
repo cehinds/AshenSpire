@@ -703,12 +703,21 @@
               "additionalProperties": false
             },
             "uniqueItems": true
+          },
+          "claimedRewardIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
           }
         },
         "required": [
           "mapId",
           "runId",
-          "tiles"
+          "tiles",
+          "claimedRewardIds"
         ],
         "additionalProperties": true
       }
@@ -1239,6 +1248,10 @@
                   "minLength": 1
                 },
                 "uniqueItems": true
+              },
+              "levelBandId": {
+                "type": "string",
+                "minLength": 1
               }
             },
             "required": [
@@ -1253,7 +1266,8 @@
               "environmentEffectIds",
               "movementCost",
               "difficultyTier",
-              "entryRequirements"
+              "entryRequirements",
+              "levelBandId"
             ],
             "additionalProperties": false
           },
@@ -1301,6 +1315,230 @@
         ],
         "additionalProperties": true
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "catalog"
+          },
+          "id": {
+            "const": "level-bands"
+          }
+        },
+        "required": [
+          "kind",
+          "id"
+        ]
+      },
+      "then": {
+        "properties": {
+          "items": {
+            "items": {
+              "type": "object",
+              "properties": {
+                "recommendedPlayerLevelRange": {
+                  "$ref": "#/$defs/levelRange"
+                },
+                "encounterLevelRange": {
+                  "$ref": "#/$defs/levelRange"
+                },
+                "rewardLevelRange": {
+                  "$ref": "#/$defs/levelRange"
+                }
+              },
+              "required": [
+                "recommendedPlayerLevelRange",
+                "encounterLevelRange",
+                "rewardLevelRange"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "catalog"
+          },
+          "id": {
+            "const": "enemy-types"
+          }
+        },
+        "required": [
+          "kind",
+          "id"
+        ]
+      },
+      "then": {
+        "properties": {
+          "items": {
+            "items": {
+              "type": "object",
+              "properties": {
+                "levelRange": {
+                  "$ref": "#/$defs/levelRange"
+                }
+              },
+              "required": [
+                "levelRange"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "catalog"
+          },
+          "id": {
+            "const": "rewards"
+          }
+        },
+        "required": [
+          "kind",
+          "id"
+        ]
+      },
+      "then": {
+        "properties": {
+          "items": {
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "category": {
+                  "enum": [
+                    "consumable",
+                    "currency",
+                    "material",
+                    "upgrade",
+                    "equipment",
+                    "map",
+                    "access",
+                    "recipe",
+                    "training",
+                    "rest",
+                    "reputation",
+                    "quest",
+                    "relic"
+                  ]
+                },
+                "rarity": {
+                  "enum": [
+                    "common",
+                    "uncommon",
+                    "rare",
+                    "epic"
+                  ]
+                },
+                "dropLevelRange": {
+                  "$ref": "#/$defs/levelRange"
+                },
+                "repeatPolicy": {
+                  "enum": [
+                    "repeatable",
+                    "once-per-run"
+                  ]
+                }
+              },
+              "required": [
+                "name",
+                "category",
+                "rarity",
+                "dropLevelRange",
+                "repeatPolicy"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "catalog"
+          },
+          "id": {
+            "const": "loot-tables"
+          }
+        },
+        "required": [
+          "kind",
+          "id"
+        ]
+      },
+      "then": {
+        "properties": {
+          "items": {
+            "items": {
+              "type": "object",
+              "properties": {
+                "rolls": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "entries": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "rewardId",
+                      "weight",
+                      "quantity"
+                    ],
+                    "properties": {
+                      "rewardId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "weight": {
+                        "type": "number",
+                        "exclusiveMinimum": 0
+                      },
+                      "quantity": {
+                        "$ref": "#/$defs/levelRange"
+                      }
+                    }
+                  }
+                }
+              },
+              "required": [
+                "rolls",
+                "entries"
+              ]
+            }
+          }
+        }
+      }
     }
-  ]
+  ],
+  "$defs": {
+    "levelRange": {
+      "type": "array",
+      "prefixItems": [
+        {
+          "type": "integer",
+          "minimum": 1
+        },
+        {
+          "type": "integer",
+          "minimum": 1
+        }
+      ],
+      "items": false,
+      "minItems": 2,
+      "maxItems": 2
+    }
+  }
 }

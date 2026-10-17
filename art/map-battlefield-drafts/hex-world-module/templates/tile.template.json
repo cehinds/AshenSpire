@@ -80,7 +80,8 @@
     "movementCost": 1,
     "difficultyTier": 1,
     "entryRequirements": [],
-    "discoveryPoolId": null
+    "discoveryPoolId": null,
+    "levelBandId": "starter"
   },
   "mapArt": {
     "terrainPoolId": null,

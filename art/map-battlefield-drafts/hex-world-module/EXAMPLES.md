@@ -221,3 +221,23 @@ The rest definition overrides battlefield art with a forest ground, forest backg
 ```
 
 Save visibility, collected loot, rest uses and encounter completion under `runtime/`, separate from the authored tile and shared catalogs. See [VISION.md](VISION.md) for the proposed editor and runtime workflow.
+
+## 6. Reward and level choices
+
+The tile references `gameplay.levelBandId`, while reward definitions keep their own drop eligibility, rarity label and repeat policy. See [the reward/level guide](REWARDS-AND-LEVELS.md) for the full tables.
+
+```json
+{
+  "id": "proposed-legacy-relic",
+  "productionBinding": null,
+  "name": "Legacy relic",
+  "category": "relic",
+  "rarity": "epic",
+  "dropLevelRange": [
+    7,
+    10
+  ],
+  "repeatPolicy": "once-per-run",
+  "description": "Proposed signature dungeon reward; effects and unique identity remain unbound."
+}
+```

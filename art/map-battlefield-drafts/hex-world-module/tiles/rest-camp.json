@@ -85,7 +85,8 @@
     "movementCost": 1,
     "difficultyTier": 1,
     "entryRequirements": [],
-    "discoveryPoolId": "sparse-road-discoveries"
+    "discoveryPoolId": "sparse-road-discoveries",
+    "levelBandId": "starter"
   },
   "mapArt": {
     "terrainPoolId": null,

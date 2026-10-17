@@ -85,16 +85,17 @@
   "gameplay": {
     "encounterPoolId": "river-encounters",
     "encounterChance": 0.35,
-    "lootTableId": "travel-supplies",
+    "lootTableId": "river-cache",
     "revealRuleId": "adjacent-reveal",
     "restSpotId": null,
     "trainerId": null,
     "questIds": [],
     "environmentEffectIds": [],
     "movementCost": 1,
-    "difficultyTier": 1,
+    "difficultyTier": 2,
     "entryRequirements": [],
-    "discoveryPoolId": "sparse-road-discoveries"
+    "discoveryPoolId": "sparse-road-discoveries",
+    "levelBandId": "frontier"
   },
   "mapArt": {
     "terrainPoolId": null,

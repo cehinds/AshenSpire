@@ -1,0 +1,86 @@
+{
+  "$schema": "../schemas/module.schema.json",
+  "kind": "catalog",
+  "id": "level-bands",
+  "status": "proposed-balance-not-runtime-bound",
+  "semantics": {
+    "ranges": "Inclusive [min, max] integer levels. These bands are illustrative, not a change to the live game progression curve.",
+    "recommendation": "Recommended player levels are guidance, not an entry lock. Explicit tile entryRequirements control locks.",
+    "encounters": "Choose only enemy types overlapping encounterLevelRange; roll the enemy level from that intersection. Area levels remain fixed rather than matching player level.",
+    "rewards": "Roll a reward level from rewardLevelRange, then filter rewards by dropLevelRange. Reward level is drop eligibility, not gear equip level or enemy level."
+  },
+  "items": [
+    {
+      "id": "starter",
+      "name": "Starter roads",
+      "recommendedPlayerLevelRange": [
+        1,
+        3
+      ],
+      "encounterLevelRange": [
+        1,
+        3
+      ],
+      "rewardLevelRange": [
+        1,
+        3
+      ],
+      "dangerWarning": null,
+      "productionBinding": null
+    },
+    {
+      "id": "frontier",
+      "name": "Forest and river frontier",
+      "recommendedPlayerLevelRange": [
+        2,
+        4
+      ],
+      "encounterLevelRange": [
+        2,
+        4
+      ],
+      "rewardLevelRange": [
+        2,
+        4
+      ],
+      "dangerWarning": "Stronger groups may appear beyond the town road.",
+      "productionBinding": null
+    },
+    {
+      "id": "danger",
+      "name": "Danger pocket",
+      "recommendedPlayerLevelRange": [
+        4,
+        6
+      ],
+      "encounterLevelRange": [
+        4,
+        6
+      ],
+      "rewardLevelRange": [
+        4,
+        6
+      ],
+      "dangerWarning": "Danger: enemies here can exceed the surrounding road level.",
+      "productionBinding": null
+    },
+    {
+      "id": "legacy",
+      "name": "Legacy dungeon",
+      "recommendedPlayerLevelRange": [
+        7,
+        10
+      ],
+      "encounterLevelRange": [
+        7,
+        10
+      ],
+      "rewardLevelRange": [
+        7,
+        10
+      ],
+      "dangerWarning": "High-level area; prepare before entering.",
+      "productionBinding": null
+    }
+  ]
+}

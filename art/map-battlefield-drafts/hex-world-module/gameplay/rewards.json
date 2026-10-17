@@ -6,28 +6,217 @@
     {
       "id": "proposed-provisions",
       "productionBinding": null,
-      "description": "Proposed travel provision reward"
+      "description": "Food and camp supplies.",
+      "name": "Travel rations",
+      "category": "consumable",
+      "rarity": "common",
+      "dropLevelRange": [
+        1,
+        10
+      ],
+      "repeatPolicy": "repeatable"
     },
     {
       "id": "proposed-coin-cache",
       "productionBinding": null,
-      "description": "Proposed currency reward"
+      "description": "Quantity counts individual coins, not whole caches.",
+      "name": "Coins",
+      "category": "currency",
+      "rarity": "common",
+      "dropLevelRange": [
+        1,
+        10
+      ],
+      "repeatPolicy": "repeatable"
+    },
+    {
+      "id": "proposed-healing-herbs",
+      "productionBinding": null,
+      "name": "Healing herbs",
+      "category": "material",
+      "rarity": "common",
+      "dropLevelRange": [
+        1,
+        10
+      ],
+      "repeatPolicy": "repeatable",
+      "description": "Ingredients for recovery consumables."
+    },
+    {
+      "id": "proposed-iron-scrap",
+      "productionBinding": null,
+      "name": "Iron scrap",
+      "category": "material",
+      "rarity": "common",
+      "dropLevelRange": [
+        1,
+        10
+      ],
+      "repeatPolicy": "repeatable",
+      "description": "Basic crafting or repair material."
+    },
+    {
+      "id": "proposed-health-draught",
+      "productionBinding": null,
+      "name": "Health draught",
+      "category": "consumable",
+      "rarity": "uncommon",
+      "dropLevelRange": [
+        1,
+        10
+      ],
+      "repeatPolicy": "repeatable",
+      "description": "A recovery potion; strength remains to be balanced."
+    },
+    {
+      "id": "proposed-upgrade-stone",
+      "productionBinding": null,
+      "name": "Upgrade stone",
+      "category": "upgrade",
+      "rarity": "uncommon",
+      "dropLevelRange": [
+        2,
+        10
+      ],
+      "repeatPolicy": "repeatable",
+      "description": "Material for improving equipment."
+    },
+    {
+      "id": "proposed-regional-trinket",
+      "productionBinding": null,
+      "name": "Regional trinket",
+      "category": "equipment",
+      "rarity": "rare",
+      "dropLevelRange": [
+        2,
+        10
+      ],
+      "repeatPolicy": "repeatable",
+      "description": "An equipment candidate themed to the region; stats and equip level remain unbound."
     },
     {
       "id": "connected-map-fragment",
       "productionBinding": null,
-      "description": "Reveal a connected patch of three hexes",
+      "description": "Reveal a connected patch of three hexes.",
       "effectIds": [
         "reveal-connected-fragment"
-      ]
+      ],
+      "name": "Survey fragment",
+      "category": "map",
+      "rarity": "uncommon",
+      "dropLevelRange": [
+        1,
+        10
+      ],
+      "repeatPolicy": "once-per-run"
     },
     {
       "id": "road-map",
       "productionBinding": null,
-      "description": "Reveal the road from town through bridge to camp",
+      "description": "Reveal the road from town through bridge to camp.",
       "effectIds": [
         "reveal-road-map"
-      ]
+      ],
+      "name": "Road chart",
+      "category": "map",
+      "rarity": "uncommon",
+      "dropLevelRange": [
+        1,
+        10
+      ],
+      "repeatPolicy": "once-per-run"
+    },
+    {
+      "id": "proposed-forgotten-key",
+      "productionBinding": null,
+      "name": "Forgotten key",
+      "category": "access",
+      "rarity": "rare",
+      "dropLevelRange": [
+        4,
+        10
+      ],
+      "repeatPolicy": "once-per-run",
+      "description": "Proposed access reward; a target lock must be authored before runtime use."
+    },
+    {
+      "id": "proposed-crafting-recipe",
+      "productionBinding": null,
+      "name": "Crafting recipe",
+      "category": "recipe",
+      "rarity": "rare",
+      "dropLevelRange": [
+        4,
+        10
+      ],
+      "repeatPolicy": "once-per-run",
+      "description": "Proposed unlock for a regional crafting recipe."
+    },
+    {
+      "id": "proposed-training-voucher",
+      "productionBinding": null,
+      "name": "Training voucher",
+      "category": "training",
+      "rarity": "rare",
+      "dropLevelRange": [
+        2,
+        10
+      ],
+      "repeatPolicy": "once-per-run",
+      "description": "Proposed credit toward a trainer service."
+    },
+    {
+      "id": "proposed-rest-token",
+      "productionBinding": null,
+      "name": "Rest token",
+      "category": "rest",
+      "rarity": "uncommon",
+      "dropLevelRange": [
+        1,
+        10
+      ],
+      "repeatPolicy": "repeatable",
+      "description": "Proposed credit for an inn or rest service."
+    },
+    {
+      "id": "proposed-faction-favor",
+      "productionBinding": null,
+      "name": "Faction favor",
+      "category": "reputation",
+      "rarity": "uncommon",
+      "dropLevelRange": [
+        2,
+        10
+      ],
+      "repeatPolicy": "repeatable",
+      "description": "Proposed reputation reward; faction binding is pending."
+    },
+    {
+      "id": "proposed-quest-evidence",
+      "productionBinding": null,
+      "name": "Quest evidence",
+      "category": "quest",
+      "rarity": "uncommon",
+      "dropLevelRange": [
+        1,
+        10
+      ],
+      "repeatPolicy": "once-per-run",
+      "description": "Proposed quest-only reward, not general random loot."
+    },
+    {
+      "id": "proposed-legacy-relic",
+      "productionBinding": null,
+      "name": "Legacy relic",
+      "category": "relic",
+      "rarity": "epic",
+      "dropLevelRange": [
+        7,
+        10
+      ],
+      "repeatPolicy": "once-per-run",
+      "description": "Proposed signature dungeon reward; effects and unique identity remain unbound."
     }
-  ]
+  ],
+  "raritySemantics": "Rarity is an authoring label. Actual chance comes only from eligible loot-entry weights."
 }

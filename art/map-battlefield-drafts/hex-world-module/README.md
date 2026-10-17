@@ -24,10 +24,13 @@ Start with [index.json](index.json). This standalone module contains six connect
 | Fog, rain and distant lightning | [art/weather.json](art/weather.json) |
 | Enemy definitions | [gameplay/enemy-types.json](gameplay/enemy-types.json) |
 | Enemy combinations, weights and conditions | [gameplay/encounter-pools.json](gameplay/encounter-pools.json) |
+| Level bands | [gameplay/level-bands.json](gameplay/level-bands.json) |
 | Loot and rewards | [gameplay/loot-tables.json](gameplay/loot-tables.json), [rewards](gameplay/rewards.json) |
 | Reveals, discoveries and rest | [reveal rules](gameplay/reveal.json), [discoveries](gameplay/discoveries.json), [rest spots](gameplay/rest-spots.json) |
 | Trainers, quests and buffs/debuffs | [trainers](gameplay/trainers.json), [quests](gameplay/quests.json), [effects](gameplay/effects.json) |
 | Example player progress, separate from authored content | [runtime/example-state.json](runtime/example-state.json) |
+
+[REWARDS-AND-LEVELS.md](REWARDS-AND-LEVELS.md) lists possible rewards and the four proposed level bands.
 
 [EXAMPLES.md](EXAMPLES.md) shows short JSON excerpts. [VISION.md](VISION.md) explains suggested authoring and gameplay behavior.
 

@@ -6,6 +6,15 @@ export const directions=['E','SE','SW','W','NW','NE'];
 export function neighbor(c,r,i){const parity=((r%2)+2)%2;return [[c+1,r],[c+parity,r+1],[c-1+parity,r+1],[c-1,r],[c-1+parity,r-1],[c+parity,r-1]][i];}
 export function eligible(rule,tags){return rule.all.every(t=>tags.includes(t))&&(!rule.any.length||rule.any.some(t=>tags.includes(t)))&&!rule.exclude.some(t=>tags.includes(t));}
 export function address(c,r){if(!Number.isInteger(c)||!Number.isInteger(r)||c<0||r<0)return null;let s='';for(c++;c;c=Math.floor((c-1)/26))s=String.fromCharCode(65+(c-1)%26)+s;return s+(r+1);}
+export function eligibleRewardEntries(table,rewards,level,claimed=[]){
+ const byId=new Map(rewards.map(r=>[r.id,r]));
+ return table.entries.filter(e=>{const r=byId.get(e.rewardId);return r&&level>=r.dropLevelRange[0]&&level<=r.dropLevelRange[1]&&!(r.repeatPolicy==='once-per-run'&&claimed.includes(r.id));});
+}
+function coversRange(ranges,[min,max]){
+ let next=min;
+ for(const [lo,hi]of [...ranges].sort((a,b)=>a[0]-b[0])){if(lo>next)break;if(hi>=next)next=hi+1;if(next>max)return true;}
+ return next>max;
+}
 export function validate(root=path.dirname(fileURLToPath(import.meta.url))){
  const errors=[];const check=(ok,msg)=>{if(!ok)errors.push(msg);};
  const read=p=>JSON.parse(fs.readFileSync(path.resolve(root,p),'utf8'));const index=read('index.json');const map=read(index.map);
@@ -24,7 +33,7 @@ for name in json.loads(sys.argv[2]):
  for(const [p,d] of docs){
   check(fs.existsSync(path.resolve(root,path.dirname(p),d.$schema)),`${p}: missing schema`);
   const items=d.items??[];const ids=items.map(x=>x.id);check(new Set(ids).size===ids.length,`${p}: duplicate IDs`);sets[d.id]=new Set(ids);
-  function walk(v){if(!v||typeof v!=='object')return;for(const [k,x]of Object.entries(v)){if(k==='tags'&&Array.isArray(x))for(const t of x)check(tags.has(t),`${p}: unknown tag ${t}`);if(k==='selection'){check(['all','any','exclude'].every(k=>Array.isArray(x[k])),`${p}: malformed selection`);for(const ts of Object.values(x))for(const t of ts)check(tags.has(t),`${p}: unknown selection tag ${t}`);}if(['spawnChance','encounterChance','encounterRisk','healFraction'].includes(k))check(Number.isFinite(x)&&x>=0&&x<=1,`${p}: invalid probability ${k}`);if(k==='weight')check(Number.isFinite(x)&&x>0,`${p}: invalid weight`);if(k==='productionBinding')check(x===null,`${p}: proposal cannot bind production`);walk(x);}}walk(d);
+  function walk(v){if(!v||typeof v!=='object')return;for(const [k,x]of Object.entries(v)){if(k==='tags'&&Array.isArray(x))for(const t of x)check(tags.has(t),`${p}: unknown tag ${t}`);if(k==='selection'){check(['all','any','exclude'].every(k=>Array.isArray(x[k])),`${p}: malformed selection`);for(const ts of Object.values(x))for(const t of ts)check(tags.has(t),`${p}: unknown selection tag ${t}`);}if(['spawnChance','encounterChance','encounterRisk','healFraction'].includes(k))check(Number.isFinite(x)&&x>=0&&x<=1,`${p}: invalid probability ${k}`);if(['levelRange','dropLevelRange','recommendedPlayerLevelRange','encounterLevelRange','rewardLevelRange','quantity'].includes(k)&&Array.isArray(x))check(Array.isArray(x)&&x.length===2&&x.every(n=>Number.isSafeInteger(n)&&n>=1)&&x[0]<=x[1],`${p}: invalid range ${k}`);if(k==='weight')check(Number.isFinite(x)&&x>0,`${p}: invalid weight`);if(k==='productionBinding')check(x===null,`${p}: proposal cannot bind production`);walk(x);}}walk(d);
   if(d.kind==='art'){
    const poolIds=d.pools.map(x=>x.id);check(new Set(poolIds).size===poolIds.length,`${p}: duplicate pool IDs`);sets[d.id+'-pools']=new Set(poolIds);
    for(const x of items){for(const file of [x.asset,...(x.animation?.frames??[])])check(fs.existsSync(path.resolve(root,d.assetBase,file)),`${p}: missing asset ${file}`);if(x.overscan?.descriptorFile)check(fs.existsSync(path.resolve(root,x.overscan.descriptorFile)),`${p}: missing overscan descriptor`);}
@@ -39,6 +48,10 @@ for name in json.loads(sys.argv[2]):
  for(const x of read(index.gameplay.effects).items)if(x.revealRuleId)ref('reveal',x.revealRuleId,x.id);
  for(const x of read(index.gameplay.trainers).items)ref('rewards',x.costRewardId,x.id);
  for(const x of read(index.gameplay.discoveries).items)for(const e of x.entries)ref({trainer:'trainers',rest:'rest-spots',loot:'loot-tables'}[e.kind],e.refId,x.id);
+ const levelBands=read(index.gameplay['level-bands']).items;
+ const rewards=read(index.gameplay.rewards).items;
+ const encounters=read(index.gameplay['encounter-pools']).items;
+ const enemies=read(index.gameplay['enemy-types']).items;
  const tiles=map.tiles.map(read);const byPos=new Map();const ids=new Set();const regions=new Set(map.regions.map(x=>x.id));
  for(const t of tiles){
   const {column:c,row:r,label}=t.position;const key=`${c},${r}`;check(!ids.has(t.id),`duplicate tile ID ${t.id}`);ids.add(t.id);check(!byPos.has(key),`duplicate position ${key}`);byPos.set(key,t);
@@ -54,6 +67,14 @@ for name in json.loads(sys.argv[2]):
    check(t.gameplay.encounterChance===0,`${t.id}: safe tile cannot have encounter chance`);
    const rest=read(index.gameplay['rest-spots']).items.find(x=>x.id===t.gameplay.restSpotId);
    if(rest)check(rest.encounterRisk===0,`${t.id}: safe tile cannot reference risky rest`);
+  }
+  ref('level-bands',t.gameplay.levelBandId,t.id);
+  const band=levelBands.find(b=>b.id===t.gameplay.levelBandId);
+  if(band){
+   const pool=encounters.find(p=>p.id===t.gameplay.encounterPoolId);
+   if(pool&&t.gameplay.encounterChance>0)check(pool.entries.some(e=>{const enemy=enemies.find(x=>x.id===e.enemyTypeId);return enemy&&Math.max(enemy.levelRange[0],band.encounterLevelRange[0])<=Math.min(enemy.levelRange[1],band.encounterLevelRange[1]);}),`${t.id}: no enemy levels overlap area band`);
+   const loot=read(index.gameplay['loot-tables']).items.find(x=>x.id===t.gameplay.lootTableId);
+   if(loot){const ranges=loot.entries.map(e=>rewards.find(r=>r.id===e.rewardId)?.dropLevelRange).filter(Boolean);check(coversRange(ranges,band.rewardLevelRange),`${t.id}: loot table leaves reward levels without eligible rewards`);}
   }
   check(t.gameplay.encounterChance===0||t.gameplay.encounterPoolId!==null,`${t.id}: positive encounter chance requires pool`);
   check(t.gameplay.encounterChance>=0&&t.gameplay.encounterChance<=1,`${t.id}: invalid encounter chance`);
@@ -89,7 +110,7 @@ for name in json.loads(sys.argv[2]):
   if(rule.mode==='connected-patch'){const seen=new Set(),queue=rule.tileIds.slice(0,1);while(queue.length){const id=queue.pop();if(seen.has(id))continue;seen.add(id);for(const next of rule.tileIds)if(!seen.has(next)&&adjacent(id,next))queue.push(next);}check(seen.size===rule.tileIds.length,`${rule.id}: reveal patch must be connected`);}
   check(rule.revealsFogOnly===true&&rule.triggersOnEnterDiscoveries===false&&rule.marksVisited===false,`${rule.id}: reward reveal must affect fog only`);
  }
- const runtime=read(index.runtimeExample);check(runtime.mapId===map.id,'runtime map mismatch');check(new Set(runtime.tiles.map(x=>x.tileId)).size===runtime.tiles.length,'duplicate runtime tile');for(const t of runtime.tiles)check(ids.has(t.tileId),`runtime unknown tile ${t.tileId}`);
+ const runtime=read(index.runtimeExample);for(const id of runtime.claimedRewardIds??[])ref('rewards',id,'runtime claimedRewardIds');check(runtime.mapId===map.id,'runtime map mismatch');check(new Set(runtime.tiles.map(x=>x.tileId)).size===runtime.tiles.length,'duplicate runtime tile');for(const t of runtime.tiles)check(ids.has(t.tileId),`runtime unknown tile ${t.tileId}`);
  return {errors,documents:docs.size,tiles:tiles.length};
 }
 if(process.argv[1]===fileURLToPath(import.meta.url)){const result=validate(process.argv[2]);console.log(JSON.stringify(result,null,2));if(result.errors.length)process.exitCode=1;}
