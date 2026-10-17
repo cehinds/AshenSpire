@@ -335,8 +335,11 @@ const INTENT_OVERLAP = `(async () => {
   }
   const frames = [...document.querySelectorAll('.combatant.enemy')];
   const depth = frame => Number(getComputedStyle(frame.querySelector('.combatant-card > .sprite')).zIndex);
-  const low = frames.reduce((a, b) => depth(a) < depth(b) ? a : b);
-  const high = frames.find(frame => depth(frame) > depth(low));
+  // Equal-depth Core formations paint later siblings above earlier ones.
+  // Stable sorting retains that DOM paint order when their z-indices tie.
+  const ordered = frames.toSorted((a, b) => depth(a) - depth(b));
+  const low = ordered[0];
+  const high = ordered.length > 1 ? ordered.at(-1) : null;
   const intent = low?.querySelector('.intent');
   const sprite = high?.querySelector('.combatant-card > .sprite');
   if (!intent || !sprite) throw new Error('screenreach: intent overlap fixture is missing its two enemies');
@@ -374,8 +377,10 @@ const INTENT_OVERLAP = `(async () => {
   const b = sprite.getBoundingClientRect(), frameBox = high.getBoundingClientRect();
   high.style.setProperty('--enemy-hit-x', ((b.left + b.width / 2 - frameBox.left) / zoom) + 'px');
   high.style.setProperty('--enemy-hit-y', ((b.bottom - frameBox.top) / zoom) + 'px');
-  intent.style.translate = ((b.left + b.width / 2 - a.left - a.width / 2) / intentScale) + 'px '
-    + ((b.top + 8 - a.top) / intentScale) + 'px';
+  // Compact Core intent layout resets translate with !important. The fixture
+  // must override that placement to stage the same measured overlap.
+  intent.style.setProperty('translate', ((b.left + b.width / 2 - a.left - a.width / 2) / intentScale) + 'px '
+    + ((b.top + 8 - a.top) / intentScale) + 'px', 'important');
   const moved = intent.getBoundingClientRect();
   if (b.left > moved.left || b.right < moved.right || b.top > moved.top || b.bottom < moved.bottom)
     throw new Error('screenreach: neighbouring sprite does not cover the intent fixture');
