@@ -40,6 +40,22 @@ export function targetOverheadPlacement({ art, box, headerBottom, gap = 14, zoom
     dy: (top - box.top) / zoom };
 }
 
+// Core uses the painted sprite as its usual target. Only genuinely tiny art
+// needs an independent physical44px door; remove it as soon as normal art returns.
+export function syncCoreTinyTarget(frame, art, frameBox, zoom = 1) {
+  const keys = ['--enemy-hit-x', '--enemy-hit-y', '--enemy-hit-width', '--enemy-hit-height'];
+  const width = art.right - art.left, height = art.bottom - art.top;
+  const tiny = [art.left, art.right, art.top, art.bottom, frameBox.left, frameBox.top, zoom].every(Number.isFinite)
+    && zoom > 0 && width > 0 && height > 0 && (width < 24 || height < 24);
+  for (const key of keys) frame.style.removeProperty(key);
+  if (!tiny) { delete frame.dataset.coreTinyTarget; return false; }
+  frame.dataset.coreTinyTarget = 'true';
+  const values = [(art.left + width / 2 - frameBox.left) / zoom,
+    (art.top + height / 2 - frameBox.top) / zoom, COMBAT_TARGET_HIT_PX / zoom, COMBAT_TARGET_HIT_PX / zoom];
+  keys.forEach((key, index) => frame.style.setProperty(key, `${values[index]}px`));
+  return true;
+}
+
 // Hidden panels can retain layout rectangles. Reserve controls that will paint
 // together at the layout boundary, including during its common screen fade.
 // Individually hidden children and intermediate ancestors remain excluded.
@@ -1158,6 +1174,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       leadingHost.style.translate = `0 ${hostShiftY + dy}px`;
     }
     }
+    if (targetHud) for (const { frame, sprite } of placed) {
+      syncCoreTinyTarget(frame, currentSpriteArtBounds(sprite, refresh), frame.getBoundingClientRect(), zoom);
+    }
     // Idle names do not reserve footer rows, but their independent tap cores
     // still need separate space when two formation rows meet on a short field.
     // Move only these transparent cores; keep art and readable plates fixed.
@@ -1166,7 +1185,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       frame.style.removeProperty('--enemy-core-y');
       delete frame.dataset.coreObstructed;
     }
-    const idleCores = placed.filter(({frame}) => frame.matches('.enemy:not(.context-selected):not(.dead)'))
+    const idleCores = placed.filter(({frame}) => targetHud
+      ? frame.dataset.coreTinyTarget === 'true' && !frame.classList.contains('dead')
+      : frame.matches('.enemy:not(.context-selected):not(.dead)'))
       .map(({frame, sprite}) => {
         const box = frame.getBoundingClientRect(), style = getComputedStyle(frame, '::before');
         const art = sprite.getBoundingClientRect();
@@ -1185,7 +1206,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // A context-selected enemy and the player keep their fitted cores. They are
     // not repacked, but an idle core must leave them room rather than sit over
     // them (the player's square takes self-cast cards).
-    const fixedCores = placed.filter(({frame}) => frame.matches('.enemy.context-selected:not(.dead), .player:not(.dead)'))
+    const fixedCores = placed.filter(({frame}) => frame.matches('.enemy.context-selected:not(.dead), .player:not(.dead)')
+      && !(targetHud && frame.dataset.coreTinyTarget === 'true'))
       .map(({frame}) => {
         const box = frame.getBoundingClientRect(), style = getComputedStyle(frame, '::before');
         if (style.display === 'none' || style.pointerEvents === 'none') return null;
@@ -1201,11 +1223,11 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         return { ownerId:frame.dataset.eid, x, y, left:x-22, right:x+22, top:y-22, bottom:y+22 };
       }).filter(Boolean);
     const near = (a, b) => Math.abs(a.x-b.x) < 44 && Math.abs(a.y-b.y) < 44;
-    if (idleCores.some((core, i) => core.y > core.art.bottom - fieldRect.top || stealsArtwork(core) || fixedCores.some(fixed => near(core, fixed))
+    if (idleCores.some((core, i) => targetHud || core.y > core.art.bottom - fieldRect.top || stealsArtwork(core) || fixedCores.some(fixed => near(core, fixed))
       || idleCores.slice(i + 1).some(other => near(core, other)))) {
       const boundary = Math.min(combat.querySelector('.combat-tools')?.getBoundingClientRect().top ?? Infinity,
         readRestingHand()?.clearanceTop ?? Infinity, fieldRect.top + fieldRect.height);
-      const obstacles = [...combat.querySelectorAll('.combat-hud, .turn-ribbon, .combatant-leading, .combatant-info, .combatant-card > .meters, .combatant-card > .nm')]
+      const obstacles = [...combat.querySelectorAll('.combat-hud, .turn-ribbon, .combatant-leading, .combatant-info, .combatant-card > .meters, .combatant-card > .nm, .target-hud-overhead-meters > .meters, .target-hud-overhead-meters > .intent, .target-hud-overhead-meters > .player-action-intent, .target-hud-inspect-info, .target-hud-panel')]
         .map(node => visibleCombatPanelRect(node, combat)).filter(Boolean)
         .map(box => ({ left:box.left-fieldRect.left, right:box.right-fieldRect.left,
           top:box.top-fieldRect.top, bottom:box.bottom-fieldRect.top }));
@@ -1219,6 +1241,14 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         frame.style.setProperty('--enemy-core-x', `${(fieldRect.left+core.x-box.left)/zoom}px`);
         frame.style.setProperty('--enemy-core-y', `${(fieldRect.top+core.y-box.top)/zoom}px`);
         frame.dataset.coreObstructed = String(!!core.obstructed);
+        if (targetHud) {
+          // The plate and its auxiliary door share the one measured receipt.
+          // An infeasible square cannot take input from another actor or HUD.
+          frame.style.setProperty('--enemy-hit-x', `${(fieldRect.left+core.x-box.left)/zoom}px`);
+          frame.style.setProperty('--enemy-hit-y', `${(fieldRect.top+core.y-box.top)/zoom}px`);
+          frame.style.setProperty('--enemy-hit-width', `${core.obstructed ? 0 : COMBAT_TARGET_HIT_PX / zoom}px`);
+          frame.style.setProperty('--enemy-hit-height', `${core.obstructed ? 0 : COMBAT_TARGET_HIT_PX / zoom}px`);
+        }
       }
     }
     const rect = combat.getBoundingClientRect();
