@@ -1352,8 +1352,9 @@ async function orderCorpus(ordinalFile) {
   }
   return { caught, total: plants.length + 1 + pendingPlants.length };
 }
+// Compact generated JS data keeps the standalone pack small; authored sources stay readable.
 function generatedText(entries) {
-  return `// GENERATED from /CHANGELOG.md by tools/about-changelog.mjs --write.\n// Do not edit: the focused check refuses any drift from the authoritative Markdown.\n\nexport const GENERATED_CHANGELOG = Object.freeze(${JSON.stringify(entries, null, 2)});\n`;
+  return `// GENERATED from /CHANGELOG.md by tools/about-changelog.mjs --write.\n// Do not edit: the focused check refuses any drift from the authoritative Markdown.\n\nexport const GENERATED_CHANGELOG = Object.freeze(${JSON.stringify(entries)});\n`;
 }
 
 async function generatedEntries() {

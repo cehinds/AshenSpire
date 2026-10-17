@@ -1,0 +1,278 @@
+# Origin branches slated for deletion 2026-10-17 (chore/BranchCleanup); owner approved 2026-10-17.
+# Before deletion, every tip marked ARCHIVED (not reachable from dev) is pushed as tag archive/2026-10-17/<branch>,
+# so its commits survive garbage collection. Tips marked in-dev are ancestors of dev.
+# Delete only by exact SHA: git push --force-with-lease=refs/heads/<branch>:<sha> origin :refs/heads/<branch>.
+# A branch whose live tip differs from <sha> has moved: skip it and keep it.
+# Restore: git push origin refs/tags/archive/2026-10-17/<branch>:refs/heads/<branch>   (ARCHIVED)
+#          git push origin <sha>:refs/heads/<branch>                                   (in-dev)
+# <tip sha> <branch> <last commit date> <ARCHIVED|in-dev>
+802aa3bd84a4c472ad168d3f31905bd642dd6a40 Feature/AddSubClasses 2026-10-15 ARCHIVED
+63ee50d0ff5f241d1259207f230ccbfcab315939 Feature/json-game-modules 2026-10-17 in-dev
+3df7b3ec4e452e9f255a70bfebf3f54d357b5d85 codex/alternative-canvas-test-20261008 2026-10-08 in-dev
+cf25e9b0c8faee452dbb0b75cdef9da5ed08c15d codex/combat-expansion-alternative-20261007 2026-10-09 in-dev
+f139e21ec4b397ca23139b132f1dfc28c8eb372e codex/enemy-knowledge-alt 2026-10-08 ARCHIVED
+5f38084c71f57f8467e1d6f61eca26dc82b5d9b4 codex/enemy-knowledge-runtime 2026-10-08 ARCHIVED
+2e67f535ec994461b11f3064e15ab785e7c38edd codex/mobile-alt-reconcile 2026-10-09 ARCHIVED
+a912bbd11d427b58c7a8ad535a3e6793a8362748 codex/mobile-target-clearance-20261004 2026-10-04 ARCHIVED
+0332006844ccfe47fd22b23b56c9f31ab148d5bc codex/readme-player-guide-20261008 2026-10-08 in-dev
+4b6ae60c68bd19270adfbf8bdbccbaa18c0ab970 codex/reconcile-test-history-20261008 2026-10-08 ARCHIVED
+3178fd1b590a9bfae1589846181f16e54a48af57 codex/session-continuations-20261008 2026-10-08 in-dev
+9b9e1dfaa3485abe4c6181163b47e4c6f4a232ce codex/settings-button-order-corpus 2026-10-04 ARCHIVED
+a11a093a94cee2029512d0715c24e07dee544b01 fix/ConfiguredAuditScope 2026-10-15 in-dev
+2eae12d09b8c265b3d11531d5f05b1a0acb88ec0 fix/CounterstrikeSupportPreview 2026-10-15 in-dev
+2134f96133046459411fcb2215014a63a603ca29 fix/SandboxRunStart 2026-10-11 in-dev
+9bb83e97fc398b40a0f143f0f6d97ba46cffc64d fix/abandon-restarts-combat 2026-10-10 in-dev
+0d7fb597edcc291ffb877172a6ddb05a5d48ff61 fix/area-upcast-no-target 2026-10-10 in-dev
+041e4df2497ec9bd1e7625ded9785caa8775697d fix/battlefield-stage-threads 2026-10-10 in-dev
+4bd165a46b110be479dd2eae5eef4ff898f99d1e fix/class-swap-veteran-grants 2026-10-10 in-dev
+cf62bca4071a5c18106ce4457cbd8974a952560e fix/coop-hud-threads 2026-10-10 in-dev
+4cae31a0bf435192533cebe6c30d858902c735e3 fix/coop-layout-cache 2026-10-10 in-dev
+4769430a7fcfd09562d7ff2c5236ff287a50da90 fix/counter-hit-stop 2026-10-10 in-dev
+787fbaecc424b2dfdcbcf82b4cda69f23312c4b7 fix/discard-action-parity 2026-10-10 in-dev
+b88706e787bcda93b3d16dd57c3225db62bfa45e fix/enemy-hit-spacing 2026-10-10 in-dev
+ae76e149d13938edd6765aad83e62b812f838b34 fix/enemy-name-full-read 2026-10-10 in-dev
+8e0deeca75458ef6264db57447b9718cb3b9f199 fix/footer-art-threads 2026-10-10 in-dev
+d0e33d3dc2b96c4eab1deec053c4edc4c348ba31 fix/level-cap-banked-xp 2026-10-10 in-dev
+1220b49ff0c3daa68784f10fe074657ff5d3c515 fix/shrine-one-choice 2026-10-10 in-dev
+a89085b2a220b5399f7b09b0cc0469805c789fae fix/tagrefactor-receipt-stamps 2026-10-13 in-dev
+950e278b3fc67ab5268f86477df52c99126ccb39 fix/target-picker-threads 2026-10-10 in-dev
+901e4aaf32a4e7cda07795221b5030869c357516 fix/upcast-shift-reset 2026-10-10 in-dev
+11ddac8f04ae5de50145fbcc1fca6fee812c7222 wb/a0-modules 2026-10-11 in-dev
+9cfeb486301f85bbfe4604b85b708c529993ad3a wb/a1-files 2026-10-11 in-dev
+83e2dc410ef388f3de860a079ef1758483dd5be6 wb/a3-canvas 2026-10-11 in-dev
+fb25edf5673d00ec3276937e99200c504867e3b9 wb/a4-grid 2026-10-11 in-dev
+60c65171e71ef59daea075ee3242f658697b2f63 wb/b1-data 2026-10-11 in-dev
+b4b24026ca2ab49ab2eb55445b09bf7fe657c070 wb/b10-retire 2026-10-11 in-dev
+70b2d5c89215eac2c2e4df108df5448a1bff5ec4 wb/b11-card-layers 2026-10-11 in-dev
+db30694bc4c4df4324da36209fdf3d5207a9aaf4 wb/b12-tag-model 2026-10-11 in-dev
+a638b252f8229aae422fc89ed7e4d12f92006aaf wb/b2-layout 2026-10-11 in-dev
+96990f3d9098261a7df76daf5f8fd9707e54b8d7 wb/b3-entities 2026-10-11 in-dev
+31408cd0bc70e243e3333adf4222cb77941c42ad wb/b4-assets 2026-10-11 in-dev
+447e52b0854cde84704bb3e29b6829a3d0eef3e0 wb/b5-review 2026-10-11 in-dev
+9d300238d80af640fdafbd4f636599e6d39dbaea wb/b6-motion 2026-10-11 in-dev
+d315df048cf53d7028530d58bb2c0a41b5ab3dc4 wb/b7-layout-modes 2026-10-11 in-dev
+a86b591321e3ba1bef7fca69f8583468b69a282f wb/b8-layout-deck-orb 2026-10-11 in-dev
+eac91594f6bc5b1e0a567ed98fc355eb511a2c89 wb/b9-layout-book-cards 2026-10-11 in-dev
+ef36a15c49cbb1cee671714264a077edbc91928e wb/p1-polish 2026-10-11 in-dev
+5f034419d2f71012dff2496e3273f87daa82d67f wb/p2-polish 2026-10-11 in-dev
+2f9fa5a2c6f74a5c85be63e7f630942028d98bc1 wb/q2-qa 2026-10-11 in-dev
+4b09b0ad2a5d1f27f80b265f0552b7fd83e8cae5 wb/q3-qa 2026-10-11 in-dev
+55231e3968b60acc6a4b7eb72a8210896cebf558 wb/r12 2026-10-11 in-dev
+62ef8ca86a6cb07d5426fbf4418394e6241e27f3 wb/r13 2026-10-11 in-dev
+40f649cb0b5cdca5c2aca906d14e0aa258a80a23 wb/r15 2026-10-11 in-dev
+2555c287cfed23e02648e6583cc7359b05417d1f wb/r16 2026-10-11 in-dev
+1ff82b13e0c087483ae9a490a8941c7808c78af8 wb/r17 2026-10-11 in-dev
+7ba7154ca126bff0498929b4f204ba4a45eb1805 wb/r18 2026-10-11 in-dev
+0a389e311a23041f7074f11dd61367cd922eeac2 wb/r19 2026-10-11 in-dev
+395da246d73c982c9c5b4dd1ff1e8d61a014dd72 wb/r20 2026-10-11 in-dev
+fd77d992fe908cc5e30859d68fb7964de9a8c7e5 wb/r21 2026-10-11 in-dev
+b48c9767e27f300e59bcd35f86238ded16e8c595 wb/r22 2026-10-11 in-dev
+be84607b10ac2765a142a1d0832f91577b2d067d wb/r23 2026-10-11 in-dev
+217345920b3096b95e2661a1636f488d2d507c51 wb/r24 2026-10-11 in-dev
+88f527c04899cece270325fd6b76ac3babb06f7d wb/r25 2026-10-11 in-dev
+b9e85c1e9eb5359691eda732d3a304d53bc192f5 wb/r26 2026-10-11 in-dev
+ba2c6bd149d77e9847fba4f3200f6cd1941b1b00 wb/r27 2026-10-11 in-dev
+262791626c2641208464ec901747e4c6610caabf wb/r28 2026-10-11 in-dev
+9e85fa38061198d727d663a84105b13aa2516d3c wb/r29 2026-10-11 in-dev
+bd0b3cf04e597b0dbc491429d74c2d72c3e7528a wb/r30 2026-10-11 in-dev
+e7be5f12592f41a20190377915675ddd6e9fc961 wb/r31 2026-10-11 in-dev
+55c8bdb207c791f4d4c22320f3851517a0a51b2f wb/r32 2026-10-11 in-dev
+e2176f44d3951b35faaedc83404194e7bf6c1574 wb/r33 2026-10-11 in-dev
+235a85058b39be5226cddf236e123feada7b690e wb/r34 2026-10-11 in-dev
+8d34884d0a9d25783035831544717e7c778579a9 wb/r35 2026-10-11 in-dev
+d42e7c4205b58c54ee397e89f310d6833cac498f wb/r36 2026-10-11 in-dev
+7da4358e4b742178a4364188efacb7de6f26f097 wb/r37 2026-10-11 in-dev
+5dfd4ddcfe75cc60842651c1a66d5615ddd74dcb wb/r38 2026-10-11 in-dev
+d4c5395d369de6285922187c6ff6969723acdfda wb/r39 2026-10-11 in-dev
+585277009a3ec7251c2a3f701e0fc6b6c94d1da7 wb/r40 2026-10-11 in-dev
+527269ea3b5e956b6794d632c30e075b62290569 wb/r41 2026-10-11 in-dev
+103521a7dc8e3ff4c4b3a1f2e72881c10e82c37f wb/r42 2026-10-11 in-dev
+406590b89449f972b9f7dee7bb850860f99c3ff1 wb/r43 2026-10-11 in-dev
+d85c5aa8f324165d219afc6fa4fd875ff7479ed2 wb/r44 2026-10-11 in-dev
+8f4a75705e234d2a6b770a87ad2a0374ecde5078 wb/r45 2026-10-11 in-dev
+ea4f3e3221dacffa9eef0b3363400dc44e7686a1 wb/r46 2026-10-11 in-dev
+74ea3daf3bef0acb02309aa35c37d51114a571b4 wb/r47 2026-10-11 in-dev
+f815aa66fdee030b1af931876bf135647f4b2854 wb/r48 2026-10-11 in-dev
+3c3d112b4e13315563a86deb1d0086c795926130 wb/r49 2026-10-11 in-dev
+25f9bd602677cc961ba05defaef8fe04b586d857 wb/r50 2026-10-11 in-dev
+1f7ea090f2cc7ec8863f6cee7bed369467bc8976 wb/r51 2026-10-11 in-dev
+622848707f919fd33bc9b233b92978ba4ae78b91 wb/r52-registry 2026-10-11 in-dev
+b9083efaa92374f2b92a1f08f11777e50e92bccf wb/r53-reload 2026-10-11 in-dev
+ab65eee404575c43d6f5434633b2714378ddda36 wb/r54-card-layers 2026-10-11 in-dev
+7fc20c70a4868608d4d6a546e1891fc35e8653e4 wb/r55-tag-model 2026-10-11 in-dev
+61d07f043dc83cef43327967b77e053b18737dae wb/rebal-engine 2026-10-12 in-dev
+d739b02120e2008834113342b57a44837adc6d0a wb/rebal-exposures 2026-10-12 in-dev
+624232e0dc6aa058b3632b7e0605f2034cd22323 wb/rebal-numbers 2026-10-12 in-dev
+c352679a7379bd85d213cd18f57bf298429a50cf wb/rebal-tagmodel 2026-10-12 in-dev
+5427d7d09a95749370c00d68ff9e9c3c736122be wb/rebal-tags 2026-10-12 in-dev
+6909ec63c8c55f585d4533ccdcd7f479d8a5fda6 worker/FixCombatUi/hand-band 2026-10-11 ARCHIVED
+fca896936eb3e8cdbb302a4db11b28fb2013b75d worker/FixCombatUi/hand-band-tall 2026-10-11 ARCHIVED
+46b0b9ce89b0e793860492de35921b5148500387 worker/FixCombatUi/round2-combined 2026-10-12 ARCHIVED
+e6ae8436595367bbe91b1bdc8f03511e00467d3a worker/FixMagicResistanceFeedback/intent-clamp 2026-10-12 ARCHIVED
+da866e65f7faea214a8115b18b114a74cb664f96 worker/FullCombatAudit/browser-combat 2026-10-15 ARCHIVED
+aacd82c2ac2d925e97cd25b2c6f5989c5ab9bcb0 worker/FullCombatAudit/cleanup-proof 2026-10-15 ARCHIVED
+2068e8c9c7293f115eb18697d02901f42c80e264 worker/FullCombatAudit/final-combat-captures 2026-10-15 ARCHIVED
+c66d97fb4335c958f4548cb90cd5ca594ce90ec6 worker/FullCombatAudit/final-compiled-parity 2026-10-15 ARCHIVED
+92d516ff5a9ac1e16642deafe6f8965ff5d7a7ea worker/FullCombatAudit/hosted-replay 2026-10-15 ARCHIVED
+2d1f7bc3cce60bc9c8428d8ab60ae4ff0949d302 worker/FullCombatAudit/hosted-resume 2026-10-15 ARCHIVED
+6a767e9f9337ce861d1570a349adf3f68d25e1fa worker/FullCombatAudit/menu-ui 2026-10-15 ARCHIVED
+ee33d73be0573a0030bcf85f9ffa350e112aeaef worker/FullCombatAudit/readme-public-proof 2026-10-15 ARCHIVED
+113fba4c6e809c7aeb777cfd4d5e7a67f227c183 worker/FullCombatAudit/relic-current 2026-10-15 ARCHIVED
+7053ad29f39eedbfd7b469f5d22100592b61d566 worker/FullCombatAudit/relic-enemy 2026-10-14 ARCHIVED
+89bda54d788e6b3dee63f9f9295efacfa8bb1a71 worker/FullCombatAudit/resume-browser 2026-10-15 ARCHIVED
+44ec0daa548a0a017da5a836f95e8757f59479ea worker/FullCombatAudit/rogue-compiled-parity 2026-10-15 ARCHIVED
+b1243f02a5cb8133b708dabe5b2f4d2b1eee19b9 worker/FullCombatAudit/stances 2026-10-15 ARCHIVED
+6b5293d0ee1d80b41632d23a04df094d508bd932 worker/FullCombatAudit/title-pointer-trace 2026-10-15 ARCHIVED
+6a7eaa8879347489df46324b6efba458a94dd6ff worker/OtherClassSmash/herald-art 2026-10-14 ARCHIVED
+c89ca1c299d75db0e54c748e5b29e7e5812e805c worker/OtherClassSmash/rogue-art 2026-10-14 ARCHIVED
+fd5204e19a460accbb1825d0ccdd48a3a6d3ec3b worker/OtherClassSmash/stance-gallery 2026-10-14 ARCHIVED
+c413063f6b8b0358357a9a4318f0307e8bae5486 worker/OtherClassSmash/starseer-art 2026-10-14 ARCHIVED
+c055571fea589f47a74197a584d20a5882bfb9e9 worker/core-default-integration/final-preview-gate 2026-10-17 ARCHIVED
+03cb7f3dfa78feb509a8977785970cb1465edc2a worker/json-game-modules/base-card-pack 2026-10-16 ARCHIVED
+9ad17e88112c758c84a1bd4c1488a66a27d89744 worker/json-game-modules/base-status-integration 2026-10-16 ARCHIVED
+1f0a8c08d9601f76266840ea66b95f8b1c89bebf worker/json-game-modules/battlefield-layout 2026-10-16 ARCHIVED
+505f07584086edc5ff9e3392f34cdfa77e29811b worker/json-game-modules/card-base-visual 2026-10-16 ARCHIVED
+aa5ee9fe0987010d499747008e2876de82cf3eb8 worker/json-game-modules/catalog-handoff 2026-10-16 ARCHIVED
+ea3cc924c2434242294beff38a8b5b6714996824 worker/json-game-modules/combat-top-hud 2026-10-16 ARCHIVED
+0c5ed75e8113a533d432f3b447f80de72922a422 worker/json-game-modules/configured-ui-qa 2026-10-15 ARCHIVED
+f70da6e8bee177d8b033e59403a429af8ccb74ff worker/json-game-modules/core-reward-filters 2026-10-15 ARCHIVED
+a3c38250ccb86bcf5c27584c09169e9871eb8045 worker/json-game-modules/current-mana-payoff 2026-10-16 ARCHIVED
+b1b184ae6606c704f1135deb4259ae14607b8638 worker/json-game-modules/dark-veil-qa 2026-10-16 ARCHIVED
+0ea0e149bfff3882da870c8d935b202fdc3acdfd worker/json-game-modules/delivery-final 2026-10-15 ARCHIVED
+55799394021bd20e5fbfe24bdbb6c315621fff7e worker/json-game-modules/exit-width 2026-10-15 ARCHIVED
+b8ef17bcaa5bd8e9346fc290ce2452bb93be7d92 worker/json-game-modules/final-engine-fixtures 2026-10-17 ARCHIVED
+9bd168ac97ef689381ad1ba2236c30aa75b693cc worker/json-game-modules/final-ui-qa 2026-10-16 ARCHIVED
+0cf335b90788f98e54db23a3db86679e40eca252 worker/json-game-modules/final-wave-qa 2026-10-16 ARCHIVED
+180b5e6923c1e5efcdd8d398f8e4a44e1d16d72f worker/json-game-modules/fix-map 2026-10-15 ARCHIVED
+c5ec18c14aaac739c7612b97688f68a9b900e3ee worker/json-game-modules/fix-presentation 2026-10-15 ARCHIVED
+4da2c7e1c26fe5a6c1495541c3d521170f9717d9 worker/json-game-modules/fix-qa 2026-10-15 ARCHIVED
+b18dc442caa7168d2b0b7bf5654adf30ad3a8071 worker/json-game-modules/fix-reactions 2026-10-15 ARCHIVED
+e4ba6d1bf0a4041b845c721430ff12e615d84c5f worker/json-game-modules/fix-shared-ui 2026-10-15 ARCHIVED
+1ad0ba297c856d53451fbbb91e8d3113cc1fa335 worker/json-game-modules/footer-fade-qa 2026-10-16 ARCHIVED
+3686b927c7fd77976f541c13c2e27bc5b93e670e worker/json-game-modules/formation-grid-qa 2026-10-16 ARCHIVED
+aa861d2fdc188852cdb2a6abd2c38768bf04a107 worker/json-game-modules/formation-policy 2026-10-16 ARCHIVED
+f0ef46a224a2c5a97a18d895ddf8fab25fff868b worker/json-game-modules/formation-shot 2026-10-16 ARCHIVED
+b54a9d8d7ec0d63e94134c2a02db0aab78e88d5e worker/json-game-modules/implement-combat 2026-10-15 ARCHIVED
+5f7fdcb7b9115fb63b9721957bdd0469ccd91682 worker/json-game-modules/implement-resolver 2026-10-15 ARCHIVED
+5c100492f2e74099fd08b62a12c11cf5293a9b9c worker/json-game-modules/implement-run 2026-10-15 ARCHIVED
+750b83a8656d0ec90be703504c2e6c9438ae2b1c worker/json-game-modules/implement-ui 2026-10-15 ARCHIVED
+fe7b496d09f34f5117112fd40874676bbec8124f worker/json-game-modules/integration-engine-gates 2026-10-17 ARCHIVED
+51252bcd213e429379c0661f5a8f12152d907ee2 worker/json-game-modules/integration-oracle 2026-10-17 ARCHIVED
+cd0b328ad056bbe510bfad0628f951b5dd7c5b53 worker/json-game-modules/intent-hp-projection 2026-10-16 ARCHIVED
+201cbe2f2452a5ba3f207ee4f4e22668be93f86c worker/json-game-modules/legacy-fixture-batch 2026-10-17 ARCHIVED
+c1213eb5a77a547cdbe10e6ed5f9e8fdf020db77 worker/json-game-modules/locked-class-veil 2026-10-16 ARCHIVED
+539425d3397d8e69bf50e990c52309589e0fd8b5 worker/json-game-modules/mana-floor 2026-10-16 ARCHIVED
+a94beee867742bacf1571e271976ceb5e7c5a3a5 worker/json-game-modules/menu-settings 2026-10-15 ARCHIVED
+349bff9ffc3ed243a15b7d9c314bad8082174804 worker/json-game-modules/mitigated-counter-contact 2026-10-16 ARCHIVED
+2102ed62e8d5c30a76c9f1e2b52e85977541a7c0 worker/json-game-modules/next-class-lock 2026-10-15 ARCHIVED
+23c07a09dd3f9671f062a56f1a95bced81378563 worker/json-game-modules/profile-guides 2026-10-15 ARCHIVED
+d27a786c0a257b05ce000fe20a0cb4ad1723efbb worker/json-game-modules/profile-save-ci-serial 2026-10-16 ARCHIVED
+22a4d5213c03a70b6c433444ace8390ab9c36968 worker/json-game-modules/profile-ui-load-wait 2026-10-15 ARCHIVED
+012fede13950dc662e271213f95f90ab3fd53c6c worker/json-game-modules/proposal-runtime 2026-10-16 ARCHIVED
+e2f9f5c5fb825b56b3b5ea7d5b850378363d59dd worker/json-game-modules/proposal-status-rules 2026-10-16 ARCHIVED
+f1fad4fe071f5dc695d97b649a190c620b573265 worker/json-game-modules/reading-desk 2026-10-16 ARCHIVED
+41a741cbd0fca46a745c05991682ff64b8e473c1 worker/json-game-modules/responsive-chrome-hand 2026-10-17 ARCHIVED
+720a8abd2c8e689293852287fc449ca7216ca4c0 worker/json-game-modules/responsive-formation 2026-10-17 ARCHIVED
+8086199d13e157d611191f976ccc16ef40130710 worker/json-game-modules/responsive-symbols 2026-10-17 ARCHIVED
+ffdf9d3b7a3cc560c1c01b2f60366437a80575f9 worker/json-game-modules/responsive-target-hud 2026-10-17 ARCHIVED
+24894ad9489295d51b83a9e3701bf57948511ce8 worker/json-game-modules/rest-shared-ui 2026-10-15 ARCHIVED
+bb3c7ccd17ad82ac43493476c6f968182172e190 worker/json-game-modules/rest-sidebar 2026-10-16 ARCHIVED
+8aa7be3e91757e99cd9078ba815eb3346e8b334c worker/json-game-modules/rest-start-fog 2026-10-16 ARCHIVED
+808233c5acac5899c89541519ba1adfe8a8b2f9f worker/json-game-modules/rest-ui-qa 2026-10-15 ARCHIVED
+4d24da9ca7deabfe9ac2e03daef920c4621eb405 worker/json-game-modules/review-card-scale 2026-10-15 ARCHIVED
+11fb6fc316329636b55c8d8277d79a8cd7452432 worker/json-game-modules/reward-configured-shot 2026-10-16 ARCHIVED
+7490a084c0808eb73f0149573973416fe994b733 worker/json-game-modules/reward-review 2026-10-16 ARCHIVED
+e021c3fffb5493417eedf849e4a06f85ef3698d2 worker/json-game-modules/reward-review-colors 2026-10-16 ARCHIVED
+1c2ad6941dde1dbfeeacdf15d41b10be39c91fa0 worker/json-game-modules/round2-engine-fixtures 2026-10-17 ARCHIVED
+89197f1f8ef920a7bb49495ae9f58a72a406e652 worker/json-game-modules/settings-capabilities 2026-10-16 ARCHIVED
+14462ba93ec66fa67dda34ea4277637158be41fa worker/json-game-modules/settings-qa 2026-10-15 ARCHIVED
+8f89723afabd07c5e651860e1a9ed1fc071da354 worker/json-game-modules/settings-qa-final 2026-10-15 ARCHIVED
+256bb6b9ef58e96f63c16c0103dd9d63e3d3cc2c worker/json-game-modules/stance-defense-mitigation 2026-10-16 ARCHIVED
+7f180c2dc0327dfe8c96624d2057d87590c26d16 worker/json-game-modules/sweep-aoe 2026-10-16 ARCHIVED
+0c2b503b4377c3eadb6cc2bd65254841f3f9d33a worker/json-game-modules/view-presets 2026-10-15 ARCHIVED
+8d4d8354fb5a718315f01dfa5e74414e4a99e743 worker/updateCharacterCreation/card-preview-pages 2026-10-16 ARCHIVED
+fbee6162589ec2374664c19c4c78ee2795691d7e worker/updateCharacterCreation/card-tag-design 2026-10-16 ARCHIVED
+b07cd9f80f96fbe91b9007ca2e1b3fc378a5dc51 worker/updateCharacterCreation/class-row-layout 2026-10-14 ARCHIVED
+6d8ad19c6a13267309419644b05a5031d4c055b2 worker/updateCharacterCreation/combat-arena 2026-10-15 ARCHIVED
+b13790e3a58d67f56eb64f03e31eabd6abd60585 worker/updateCharacterCreation/combat-cell-gestures 2026-10-15 ARCHIVED
+f7a24e0e39dd7823c15f89afd6023782526655d0 worker/updateCharacterCreation/combat-feedback-integration 2026-10-15 ARCHIVED
+86a873c53c771976ddd629dc4517bfae89f94fa9 worker/updateCharacterCreation/combat-profiles 2026-10-15 ARCHIVED
+153173296db2c01b76bbc33cceed0d716eaa2854 worker/updateCharacterCreation/compact-navigation 2026-10-14 ARCHIVED
+9abc680ddb4ad3a6108e65da10f997eccfbdfd49 worker/updateCharacterCreation/density 2026-10-14 ARCHIVED
+28bc1f4392a5067193976e44216d58b06bc33488 worker/updateCharacterCreation/feat-art 2026-10-12 ARCHIVED
+ca6e602617c0de0e44b50f14d2b7c99304179472 worker/updateCharacterCreation/flow-integration 2026-10-14 ARCHIVED
+6839b3b1c03f81f9eb39b3eef54efe45ff6617c1 worker/updateCharacterCreation/icon-alignment 2026-10-14 ARCHIVED
+413488967252ffc25375601f02f9f243705550bb worker/updateCharacterCreation/locked-choices 2026-10-14 ARCHIVED
+bb2b0fda735a631c47d85c33141f7a8b1cf4ddb5 worker/updateCharacterCreation/step-order-tier 2026-10-14 ARCHIVED
+7e6393d2b7782f4f4fe030b5e79ef4d42e57a09d backup/blacksmith-2026-10-01 2026-10-01 ARCHIVED
+
+# KEPT (69): protected, open PR, or unmerged with commits in the last 7 days
+# feature/CombatRoundsPlayable 2026-10-17 (new commits after the plan; kept)
+# feature/CombatRoundsPlayable-ui 2026-10-17 (new commits after the plan; kept)
+# feature/RevampCharacterCreation 2026-10-17 (new commits after the plan; kept)
+# feature/festive-lamport-2kmhma 2026-10-17 (new commits after the plan; kept)
+# feature/simultaneousAction 2026-10-17 (new commits after the plan; kept)
+# feature/tagged-combat-recovery-source 2026-10-17 (new commits after the plan; kept)
+# Chore/ResistedReaction 2026-10-11
+# Chore/improveEquippingCards 2026-10-11
+# Feature/CardPreview 2026-10-16
+# Feature/json-game-current-preview 2026-10-17
+# Feature/updateCharacterCreation 2026-10-15
+# alternative/dev 2026-10-09
+# alternative/release 2026-10-07
+# alternative/test 2026-10-09
+# bot/art-pin-hd-assets-v20 2026-10-13
+# bot/art-pin-hd-assets-v22 2026-10-14
+# codex/card-master-alternative-sync 2026-10-10
+# dev 2026-10-17
+# feature/CombatRoundsPreview 2026-10-13
+# feature/ImproveMapBattleFieldArt 2026-10-17
+# feature/PrSweepHandoff 2026-10-14
+# feature/WardToBlock 2026-10-14
+# feature/combat-enemy-hold 2026-10-14
+# fix/AcceptedStancePreview 2026-10-15
+# fix/ArchSyncEnemyReactionWindow 2026-10-12
+# fix/CardFaceOutOfCombat 2026-10-13
+# fix/ChangelogReceiptOrder 2026-10-12
+# fix/ConfiguredCombatAudit 2026-10-15
+# fix/EnemyReactionsWindowName 2026-10-12
+# fix/RatingsPoiseStaggered 2026-10-12
+# fix/SandboxedPreviewRunStart 2026-10-11
+# fix/StampOrderTestDateGroups 2026-10-13
+# fix/StampReceiptDateGroup 2026-10-13
+# fix/combat-target-and-fade 2026-10-15
+# fix/core-offline-preview-entry 2026-10-17
+# fix/core-preview-pose-studio 2026-10-17
+# fix/core-responsive-controls 2026-10-17
+# fix/core-tiny-targets 2026-10-17
+# fix/core-ui-coverage-promotion 2026-10-17
+# fix/final-animation-gate 2026-10-17
+# fix/intent-badge-plant 2026-10-10
+# fix/intent-content-hit-area 2026-10-17
+# fix/schema-version-build-gate 2026-10-17
+# fix/screenreach-expansion-plant 2026-10-10
+# main 2026-10-03
+# release 2026-10-14
+# test 2026-10-16
+# wb/q1-qa 2026-10-11
+# wb/rebal-feint 2026-10-12
+# worker/AddSubClasses/concise-class-tiles 2026-10-14
+# worker/AddSubClasses/core 2026-10-14
+# worker/AddSubClasses/design 2026-10-12
+# worker/AddSubClasses/enemy-inspection-gestures 2026-10-15
+# worker/AddSubClasses/integration 2026-10-14
+# worker/AddSubClasses/possession-face-budget 2026-10-15
+# worker/ResistedReaction/fx 2026-10-11
+# worker/ResistedReaction/log 2026-10-11
+# worker/ResistedReaction/ward-rule 2026-10-11
+# worker/SmashSweepExamples/references 2026-10-12
+# worker/card-face/concise-effects 2026-10-15
+# worker/card-face/three-line-renderer 2026-10-15
+# worker/combat-card-stances/fade-order 2026-10-14
+# worker/combat/readable-pacing 2026-10-15
+# worker/core-default-art-animation 2026-10-17
+# worker/core-default-base-card-art 2026-10-17
+# worker/core-default-gate-fixes 2026-10-17
+# worker/player-hud-clearance-qa 2026-10-17
+# worker/rest-screen-layout 2026-10-16
+# worker/status-rule-presentation 2026-10-15
