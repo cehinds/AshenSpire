@@ -154,8 +154,6 @@ function featButtons(registries, run, feats) {
 }
 
 export function openSkillInspection({ registries, run, track, opener }) {
-  const configured = run.gameProfile?.foundation?.mode === 'configured';
-  if (configured) { tab = 'character'; onRewards = null; onRespec = null; offers = { ...offers, feats: false, classTree: false }; }
   registries = characterSheetRegistries(registries, run);
   const model = skillInspection(registries, run, track);
   const cards = el('div', { class: 'progression-associated-cards' }, model.cards.map(card => renderCard(registries, { cardId: card.id, upgraded: false,
@@ -251,6 +249,8 @@ function skillsPane(registries, run, sheet, state) {
  * player's settings switch on (CharacterSheetModel DEFAULT_LEVEL_OFFERS).
  */
 export function openCharacterSheet({ registries, run, offers = DEFAULT_LEVEL_OFFERS, tab = 'character', track = '', opener, onClose = null, settings = {}, onChange = null, onRewards = null, onRespec = null } = {}) {
+  const configured = run.gameProfile?.foundation?.mode === 'configured';
+  if (configured) { tab = 'character'; onRewards = null; onRespec = null; offers = { ...offers, feats: false, classTree: false }; }
   registries = characterSheetRegistries(registries, run);
   let bodyHost = null;
   const state = { tab, track, show: null, settings, onChange, onRewards, close: null };
