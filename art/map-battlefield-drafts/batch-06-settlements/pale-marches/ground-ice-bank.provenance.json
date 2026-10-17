@@ -1,0 +1,48 @@
+{
+  "asset": "ground-ice-bank.png",
+  "prompt": "Paint an isolated wide combat-ground layer for a frozen Pale Marches shoreline. Use the combat reference for cold environment style and the batch-05 frozen-shore layer only for the low ground silhouette. Target 16:9 canvas, 3072 x 1728. Set a low snowbank horizon at y\u224853%; everything above the horizon is truly transparent. From the horizon down, a broad perfectly walkable level floor fills the lower portion and reaches the left, right, and bottom canvas edges. This is frozen lake-edge ice, and it must read distinctly as blue translucent-looking ice material: a broad pale cyan and steel-blue sheet with visible layered depth, soft cloudy inclusions under the surface, delicate branching cracks and a few wider natural cracks concentrated along the rear quarter near the snowbank. Keep the central and foreground combat floor flat, quiet, and uncluttered, with only subtle ice grain and faint fracture lines. Snowbanks hug the distant rear edge and side edges without covering the central surface. The entire floor, including the visually translucent-looking ice, must be fully opaque rendered pixels (alpha 255), with transparency only above the horizon. Cool icy cyan, blue-gray, slate and snow white, soft upper-left cold light, painted dark-fantasy environment art. No actual see-through alpha on floor, no dark open water, no large lake vista, no sky, no mountains, no horizon scenery, no props, no rocks scattered on the floor, no people, no text or UI.",
+  "output_path": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-06-settlements/pale-marches/ground-ice-bank.png",
+  "generated_original_path": "/workspace/generated_images/exec-26b88aa8-19cb-42d1-a129-361305573bdb.png",
+  "alternative_generated_original_paths": [
+    "/workspace/generated_images/exec-64d2260b-1a93-44e7-9cd6-caa7f3c02053.png"
+  ],
+  "style_reference_paths": [
+    "/workspace/AshenSpire/assets-mobile/environments/pale-marches-combat.webp",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/pale-marches/ground-frozen-shore.png"
+  ],
+  "generator": "image_gen.imagegen",
+  "status": "draft",
+  "requested_dimensions_px": [
+    3072,
+    1728
+  ],
+  "dimensions_px": [
+    1672,
+    941
+  ],
+  "format": "PNG",
+  "color_mode": "RGBA",
+  "sha256": "1aa420875266e87e8de3f10554b81dac66d4ab64baceed901de6a3e585c9b050",
+  "original_copy_sha256_matches": true,
+  "canvas_limitation": "Generator returned 1672x941 px, not requested 3072x1728 px; original retained unchanged.",
+  "alpha_findings": {
+    "alphaByteRange": [
+      0,
+      255
+    ],
+    "transparentPixels": 875575,
+    "partialAlphaPixels": 697696,
+    "opaquePixels": 81,
+    "outerBorderNonzeroAlphaPixels": 2574,
+    "bboxAtAlpha16": [
+      0,
+      487,
+      1672,
+      941
+    ],
+    "top45PercentMaxAlpha": 1,
+    "bottomLeftAlpha": 243,
+    "bottomRightAlpha": 249
+  },
+  "visual_qa_limitations": "Strong, readable blue ice material with branching cracks concentrated around the rear and outer areas. Center stays relatively quiet; scattered cyan/blue alpha fringe remains along the horizon."
+}

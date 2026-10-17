@@ -1,0 +1,25 @@
+{
+  "status": "draft-unregistered",
+  "generator": "OpenAI image generation",
+  "prompt": "Create one original reusable 2D fantasy RPG ground-layer transparent PNG, very wide landscape 3072x1728. Only a continuous flat walkable floor fills LOWER 47 percent; UPPER 53 percent true alpha zero, no sky, buildings, walls or checkerboard. Frozen mountain castle dungeon: blue-gray large stone flagstones, thin frost crystalline white veins along stone joints, dark gray ice patches at extreme left/right edges. Ice material must be painted opaque alpha255, not semi-transparent cutouts. Quiet flat central actor lane, no spikes or boulders. Restrained detailed hand-painted realism, cold pale cyan and slate palette. Low slightly elevated side-on battle-stage view, horizontal floor lip at53% image height. Continuous material reaches left,right,bottom edges; generous spare coverage for responsive camera cropping. No floor island, vignette, fade, props, characters, text or symbols.",
+  "sourceOutputPath": "/workspace/generated_images/exec-da3d157b-1438-4809-a936-eb2c94fa1898.png",
+  "referencesPassed": [],
+  "inspectedStyleReferences": [
+    "art/map-battlefield-drafts/batch-05-regions/interiors/ground-dungeon-flagstones.png",
+    "assets-mobile/environments/pale-marches-map.webp"
+  ],
+  "requestedDimensions": [
+    3072,
+    1728
+  ],
+  "processing": "Byte-identical copy of generated original; no pixel edits.",
+  "actualDimensions": [
+    1672,
+    941
+  ],
+  "sha256": "5d69cdaa00e3ec2bbe84dfff129f524709ce7dc32f87c284e1e61c14e8f6f0f1",
+  "limitations": [
+    "Returned smaller than requested; wider painted overscan still pending.",
+    "Generated edge fringe and material alpha need production review."
+  ]
+}

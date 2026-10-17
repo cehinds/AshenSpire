@@ -1,0 +1,276 @@
+{
+  "version": 1,
+  "status": "preview-only",
+  "canvas": {
+    "width": 1672,
+    "height": 941
+  },
+  "cameras": {
+    "landscape": {
+      "left": 356,
+      "top": 200,
+      "width": 960,
+      "height": 540
+    },
+    "portrait": {
+      "left": 611,
+      "top": 70,
+      "width": 450,
+      "height": 800
+    },
+    "ultrawide": {
+      "left": 196,
+      "top": 200,
+      "width": 1280,
+      "height": 540
+    }
+  },
+  "propPlacementRule": "Position measured alpha >= 32 silhouettes relative to each camera. Keep props behind the ground; baseOcclusionPixels sets overlap. Placement is illustrative, not runtime logic.",
+  "backdropPlacementRule": "Scale uniformly around bottom center; scale defaults to 1. Values above 1 crop/zoom existing pixels without adding source detail.",
+  "presets": [
+    {
+      "id": "ashen-crown/city",
+      "label": "Ashen Crown settlement",
+      "group": "settlements",
+      "regionId": "ashen-crown",
+      "ground": "ashen-crown/ground-market-cobbles.png",
+      "backdrop": "../batch-05-regions/ashen-crown/backdrop-ashen-highlands.png",
+      "backdropScale": 1,
+      "groundContactY": 503,
+      "props": [
+        {
+          "file": "ashen-crown/prop-half-timber-house.png",
+          "anchorU": 0.2,
+          "visibleWidthFraction": 0.3,
+          "maximumHeightFraction": 0.53,
+          "baseOcclusionPixels": 16
+        },
+        {
+          "file": "../batch-05-regions/ashen-crown/prop-market-stall.png",
+          "anchorU": 0.84,
+          "visibleWidthFraction": 0.18,
+          "maximumHeightFraction": 0.32,
+          "baseOcclusionPixels": 12
+        }
+      ]
+    },
+    {
+      "id": "ashen-crown/dungeon",
+      "label": "Ashen Crown dungeon floor",
+      "group": "interiors",
+      "regionId": "ashen-crown",
+      "ground": "interiors/ground-dusty-keep.png",
+      "backdrop": "../batch-05-regions/interiors/backdrop-vaulted-depths.png",
+      "groundContactY": 503,
+      "props": [
+        {
+          "file": "../batch-05-regions/interiors/prop-iron-gate.png",
+          "anchorU": 0.82,
+          "visibleWidthFraction": 0.24,
+          "maximumHeightFraction": 0.48,
+          "baseOcclusionPixels": 16
+        }
+      ]
+    },
+    {
+      "id": "hollow-weald/city",
+      "label": "Hollow Weald settlement",
+      "group": "settlements",
+      "regionId": "hollow-weald",
+      "ground": "hollow-weald/ground-village-pavers.png",
+      "backdrop": "../batch-05-regions/hollow-weald/backdrop-deep-weald.png",
+      "backdropScale": 1,
+      "groundContactY": 532,
+      "props": [
+        {
+          "file": "hollow-weald/prop-stilt-lodge.png",
+          "anchorU": 0.2,
+          "visibleWidthFraction": 0.3,
+          "maximumHeightFraction": 0.53,
+          "baseOcclusionPixels": 16
+        },
+        {
+          "file": "../batch-05-regions/hollow-weald/prop-woodland-shrine.png",
+          "anchorU": 0.84,
+          "visibleWidthFraction": 0.18,
+          "maximumHeightFraction": 0.32,
+          "baseOcclusionPixels": 12
+        }
+      ]
+    },
+    {
+      "id": "hollow-weald/dungeon",
+      "label": "Hollow Weald dungeon floor",
+      "group": "interiors",
+      "regionId": "hollow-weald",
+      "ground": "hollow-weald/ground-root-cellar.png",
+      "backdrop": "../batch-05-regions/interiors/backdrop-vaulted-depths.png",
+      "groundContactY": 536,
+      "props": [
+        {
+          "file": "../batch-05-regions/interiors/prop-iron-gate.png",
+          "anchorU": 0.82,
+          "visibleWidthFraction": 0.24,
+          "maximumHeightFraction": 0.48,
+          "baseOcclusionPixels": 16
+        }
+      ]
+    },
+    {
+      "id": "pale-marches/city",
+      "label": "Pale Marches settlement",
+      "group": "settlements",
+      "regionId": "pale-marches",
+      "ground": "pale-marches/ground-snow-courtyard.png",
+      "backdrop": "../batch-05-regions/pale-marches/backdrop-snow-valley.png",
+      "backdropScale": 1.6,
+      "groundContactY": 530,
+      "props": [
+        {
+          "file": "pale-marches/prop-snow-watchtower.png",
+          "anchorU": 0.2,
+          "visibleWidthFraction": 0.3,
+          "maximumHeightFraction": 0.53,
+          "baseOcclusionPixels": 16
+        },
+        {
+          "file": "../batch-05-regions/pale-marches/prop-frozen-wall.png",
+          "anchorU": 0.84,
+          "visibleWidthFraction": 0.18,
+          "maximumHeightFraction": 0.32,
+          "baseOcclusionPixels": 12
+        }
+      ]
+    },
+    {
+      "id": "pale-marches/dungeon",
+      "label": "Pale Marches dungeon floor",
+      "group": "interiors",
+      "regionId": "pale-marches",
+      "ground": "interiors/ground-frost-vault.png",
+      "backdrop": "../batch-05-regions/interiors/backdrop-vaulted-depths.png",
+      "groundContactY": 494,
+      "props": [
+        {
+          "file": "../batch-05-regions/interiors/prop-iron-gate.png",
+          "anchorU": 0.82,
+          "visibleWidthFraction": 0.24,
+          "maximumHeightFraction": 0.48,
+          "baseOcclusionPixels": 16
+        }
+      ]
+    },
+    {
+      "id": "cinder-reach/city",
+      "label": "Cinder Reach settlement",
+      "group": "settlements",
+      "regionId": "cinder-reach",
+      "ground": "cinder-reach/ground-foundry-court.png",
+      "backdrop": "../batch-05-regions/cinder-reach/backdrop-volcanic.png",
+      "backdropScale": 1,
+      "groundContactY": 518,
+      "props": [
+        {
+          "file": "cinder-reach/prop-foundry-hall.png",
+          "anchorU": 0.2,
+          "visibleWidthFraction": 0.3,
+          "maximumHeightFraction": 0.53,
+          "baseOcclusionPixels": 16
+        },
+        {
+          "file": "../batch-05-regions/cinder-reach/prop-broken-forge.png",
+          "anchorU": 0.84,
+          "visibleWidthFraction": 0.18,
+          "maximumHeightFraction": 0.32,
+          "baseOcclusionPixels": 12
+        }
+      ]
+    },
+    {
+      "id": "cinder-reach/dungeon",
+      "label": "Cinder Reach dungeon floor",
+      "group": "interiors",
+      "regionId": "cinder-reach",
+      "ground": "cinder-reach/ground-obsidian-vault.png",
+      "backdrop": "../batch-05-regions/interiors/backdrop-vaulted-depths.png",
+      "groundContactY": 507,
+      "props": [
+        {
+          "file": "../batch-05-regions/interiors/prop-iron-gate.png",
+          "anchorU": 0.82,
+          "visibleWidthFraction": 0.24,
+          "maximumHeightFraction": 0.48,
+          "baseOcclusionPixels": 16
+        }
+      ]
+    },
+    {
+      "id": "drowned-coast/city",
+      "label": "Drowned Coast settlement",
+      "group": "settlements",
+      "regionId": "drowned-coast",
+      "ground": "drowned-coast/ground-harbor-paving.png",
+      "backdrop": "../batch-05-regions/drowned-coast/backdrop-tidal-coast.png",
+      "backdropScale": 1,
+      "groundContactY": 532,
+      "props": [
+        {
+          "file": "drowned-coast/prop-fishers-house.png",
+          "anchorU": 0.2,
+          "visibleWidthFraction": 0.3,
+          "maximumHeightFraction": 0.53,
+          "baseOcclusionPixels": 16
+        },
+        {
+          "file": "../batch-05-regions/drowned-coast/prop-broken-jetty.png",
+          "anchorU": 0.84,
+          "visibleWidthFraction": 0.18,
+          "maximumHeightFraction": 0.32,
+          "baseOcclusionPixels": 12
+        }
+      ]
+    },
+    {
+      "id": "drowned-coast/dungeon",
+      "label": "Drowned Coast dungeon floor",
+      "group": "interiors",
+      "regionId": "drowned-coast",
+      "ground": "drowned-coast/ground-flooded-crypt.png",
+      "backdrop": "../batch-05-regions/interiors/backdrop-vaulted-depths.png",
+      "groundContactY": 506,
+      "props": [
+        {
+          "file": "../batch-05-regions/interiors/prop-iron-gate.png",
+          "anchorU": 0.82,
+          "visibleWidthFraction": 0.24,
+          "maximumHeightFraction": 0.48,
+          "baseOcclusionPixels": 16
+        }
+      ]
+    },
+    {
+      "id": "pale-marches/shore",
+      "label": "Pale Marches frozen inlet",
+      "group": "shore",
+      "regionId": "pale-marches",
+      "ground": "pale-marches/ground-ice-bank.png",
+      "backdrop": "interiors/backdrop-frozen-inlet.png",
+      "groundContactY": 539,
+      "props": [
+        {
+          "file": "../batch-05-regions/pale-marches/prop-frozen-wall.png",
+          "anchorU": 0.82,
+          "visibleWidthFraction": 0.24,
+          "maximumHeightFraction": 0.25,
+          "baseOcclusionPixels": 16
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "All sources remain unchanged. Previews compose separate layers.",
+    "Landscape side margins are 356px; ultrawide side margins 196px; portrait top/bottom margins about 70px. Wider vertical motion requires more painted source.",
+    "Regional dungeon floors reuse a shared vaulted backdrop and iron gate, pending bespoke architecture/lighting.",
+    "House scales are rear-scene composition examples; actor-scale and contact-shadow checks remain pending."
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "status": "draft-unregistered",
+  "generator": "OpenAI image generation",
+  "prompt": "Create one original reusable 2D fantasy RPG ground-layer PNG, very wide landscape 3072x1728. Only a continuous flat walkable floor across the LOWER 47 percent of the canvas. UPPER 53 percent must be true alpha zero transparent, no scenery, no walls, no sky, no checkerboard. A dusty abandoned castle keep in dry ochre highlands: warm gray limestone flagstones, subtle tan dust in joints, small chipped slabs only at far outer edges. Dark restrained painterly realism matching medieval fantasy game art. Low slightly elevated side-on battle-stage perspective, quiet flat central actor lane. Floor surface extends fully through left, right, and bottom image edges with extra quiet coverage for responsive screen crops; no isolated island or fading lower edges. All material interiors completely opaque alpha255. No props, people, symbols, lettering, furniture or objects. Straight distant floor lip at 53% canvas height, consistent scale. Original painted asset, not a composite screenshot.",
+  "sourceOutputPath": "/workspace/generated_images/exec-64d2260b-1a93-44e7-9cd6-caa7f3c02053.png",
+  "referencesPassed": [],
+  "inspectedStyleReferences": [
+    "art/map-battlefield-drafts/batch-05-regions/interiors/ground-dungeon-flagstones.png",
+    "assets-mobile/environments/pale-marches-map.webp"
+  ],
+  "requestedDimensions": [
+    3072,
+    1728
+  ],
+  "processing": "Byte-identical copy of generated original; no pixel edits.",
+  "actualDimensions": [
+    1672,
+    941
+  ],
+  "sha256": "593de5465bd22e625b337b80bee830db6fc58a8a992178988ba56bfb65f89650",
+  "limitations": [
+    "Returned smaller than requested; wider painted overscan still pending.",
+    "Generated edge fringe and material alpha need production review."
+  ]
+}

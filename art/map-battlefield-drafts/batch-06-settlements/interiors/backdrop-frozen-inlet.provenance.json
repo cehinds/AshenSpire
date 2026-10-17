@@ -1,0 +1,24 @@
+{
+  "status": "draft-unregistered",
+  "generator": "OpenAI image generation",
+  "prompt": "Create one original panoramic opaque fantasy game backdrop, 3072x1728 landscape, for a layered frozen coastal battle scene. Pale Marches: vast blue teal frozen inlet with clearly readable bands of frozen turquoise lake ice and a few dark open-water channels, distant snowy gray mountain peaks and low weatherworn ruins far at the left and right ends. Restrained painterly realism, cohesive cold blue-gray palette and softly overcast winter daylight. IMPORTANT composition: mountain peaks visible from 12% to30% canvas height, distant waterline at35% height, ice/water occupies middle 35-65%, and lower35% continues simple water ice texture to frameedge. Not a sky-dominated image. Keep central middle open and low contrast for battle characters. No foreground shore ground, no large buildings, no close props, no people, labels or text. Quiet extended peripheral scenery at every edge for wide/portrait crops. Fill full rectangle opaque, no border or transparency.",
+  "sourceOutputPath": "/workspace/generated_images/exec-96059f77-a4d3-46f0-bf77-2d63278cee8b.png",
+  "referencesPassed": [],
+  "inspectedStyleReferences": [
+    "art/map-battlefield-drafts/batch-05-regions/interiors/ground-dungeon-flagstones.png",
+    "assets-mobile/environments/pale-marches-map.webp"
+  ],
+  "requestedDimensions": [
+    3072,
+    1728
+  ],
+  "processing": "Byte-identical copy of generated original; no pixel edits.",
+  "actualDimensions": [
+    1672,
+    941
+  ],
+  "sha256": "e229e00a854e73a250f21b34243589c8849f5cd251f5b5638a1b135bda1ec61b",
+  "limitations": [
+    "Returned smaller than requested; foreground ice is baked into this opaque backdrop."
+  ]
+}

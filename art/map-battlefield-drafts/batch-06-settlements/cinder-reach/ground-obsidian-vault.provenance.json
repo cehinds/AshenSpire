@@ -1,0 +1,87 @@
+{
+  "generator": "image_gen.imagegen",
+  "status": "draft",
+  "region": "cinder-reach",
+  "role": "ground",
+  "prompt": "Paint ONE independent OBSIDIAN VAULT DUNGEON FLOOR ground layer for a dark-fantasy battle scene in Cinder Reach. This is ONLY a constructed volcanic dungeon floor, no room walls. Broad flat fitted dark obsidian-stone rectangular/square slabs, rough satin-black and charcoal surfaces with restrained warm-gray ash weathering, old shallow seams. Keep central60percent of floor quiet dark and entirely NON-GLOWING for actors. Only along extreme outer LEFT and RIGHT margins, a few DISCREET THIN dim burnt-orange cracks suggest old volcanic heat; NO bright river of lava, center fissure, luminous symbols, circular seal or dramatic focal detail. Painterly dark fantasy background art, muted soot black/warm stone, soft diffuse ambient light from UPPER LEFT matching Cinder Reach stone/iron settlement palette; no spotlight or blue night light. LEVEL human eye/chest-height battle camera, not isometric/aerial/world-map view. Wide panoramic target3072x1728. TOP53PERCENT COMPLETELY EMPTY TRUE ALPHA0. Nearly straight far floor silhouette at normalized y0.53 just BELOW the vertical midpoint; absolutely no painted pixels above y0.51. Ground occupies LOWER47PERCENT and MUST continue FULLY OPAQUE ALPHA255 to ALL BOTTOM pixels and both lower SIDE boundaries. No transparent holes, fade, vignette, foreground border, isolated slab/platform/island or cutaway. Broad quiet lateral and foreground continuation supports panorama center crops and camera overscan. No sky, backdrop, horizon mountains, walls, columns, torches, rocks above floor, doors, people, props, vegetation, smoke/fog, embers, text, labels, UI or frames. Transparent above floor, opaque below; not a black opaque full-frame scene. Clean neutral alpha boundary without colored outline/fringe.",
+  "referencedImagePaths": [],
+  "inspectedStyleReferencePaths": [
+    "/workspace/AshenSpire/assets-mobile/environments/cinder-reach-map.webp",
+    "/workspace/AshenSpire/assets-mobile/environments/cinder-reach-combat.webp",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/cinder-reach/ground-ash-flagstones.png",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/cinder-reach/prop-broken-forge.png"
+  ],
+  "referenceStrategy": "Inspected live and batch05 art; fresh generation from written material/palette/camera descriptions to avoid copying map perspective, atlas panels or alpha fringe.",
+  "sourceOutputPath": "/workspace/generated_images/exec-7a6b68f2-f99d-4109-ba9b-b13a3e5f8412.png",
+  "outputPath": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-06-settlements/cinder-reach/ground-obsidian-vault.png",
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "transparentBackgroundRequested": true,
+  "processing": "Copied original generated PNG unchanged; no resizing, alpha cleanup or compositing.",
+  "productionRegistered": false,
+  "requestedHorizonNormalizedY": 0.53,
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "mode": "RGBA",
+  "sha256": "ae977bb5b9255bb9141e54cce4dc0b32430651795901acef9c03a7c9cec92059",
+  "alphaExtrema": [
+    0,
+    254
+  ],
+  "alphaBoundsByThreshold": {
+    "0": [
+      0,
+      23,
+      1672,
+      941
+    ],
+    "1": [
+      0,
+      502,
+      1672,
+      941
+    ],
+    "8": [
+      0,
+      505,
+      1672,
+      941
+    ],
+    "128": [
+      0,
+      507,
+      1672,
+      941
+    ]
+  },
+  "topHalfFullyTransparentFraction": 0.9990354270589433,
+  "topHalfAlphaAbove8Fraction": 0.0,
+  "bottomAlphaExtrema": [
+    248,
+    254
+  ],
+  "lowerLeftAlphaExtrema": [
+    248,
+    253
+  ],
+  "lowerRightAlphaExtrema": [
+    250,
+    254
+  ],
+  "medianFloorAlphaOnsetNormalizedAbove128": 0.5388,
+  "visualReview": {
+    "inspected": true,
+    "observations": [
+      "Constructed dark fitted volcanic vault slabs with quiet center; orange cracks confined to outer sides, no walls/props/sky.",
+      "Median meaningful alpha onset0.5388 approximates requested0.53; top half has no alpha above8.",
+      "Floor reaches all lower sides and bottom but bottom alpha248–254 is slightly translucent rather than requested255; entire image alpha maximum254.",
+      "Thin red/yellow horizon edge pixels remain; actual1672x941 is smaller than requested3072x1728."
+    ],
+    "productionApproved": false
+  },
+  "alphaFindings": "True alpha0 empty areas exist. Original generated alpha is preserved, including slight floor translucency/edge fringe or near-transparent prop-border specks; see measured alpha metrics."
+}

@@ -1,0 +1,48 @@
+{
+  "asset": "ground-snow-courtyard.png",
+  "prompt": "Paint one isolated wide combat-ground layer for a Pale Marches stone courtyard in winter. Use the combat reference only for cool snowy palette and environmental finish; use the batch-05 snow-road layer only for alpha silhouette and the low horizon. Target 16:9, 3072 x 1728. At y\u224853% create a low irregular snowbank horizon, and keep everything above it truly transparent. Beneath the horizon, a broad flat walkable floor fills the lower portion and reaches the left, right, and bottom edges. Make this clearly constructed paving: large irregular rectangular limestone flagstones in muted cool gray, visible seams and a few chipped edges, with thin patchy snow settled between stones and in scattered small patches. Expose enough stone across the whole floor that it reads immediately as paving, not an unbroken snowfield. Keep the center quiet, level, and uncluttered for combat. Snowy side shoulders remain low and do not intrude into the center. Soft upper-left winter light; white-gray snow, slate gray paving, muted blue shadows and restrained cyan frost, painted dark-fantasy game art. Ground only: no sky, distant mountains, structures, columns, walls, trees, objects, people, text, labels, or UI. Preserve true transparent alpha above the horizon and no opaque background.",
+  "output_path": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-06-settlements/pale-marches/ground-snow-courtyard.png",
+  "generated_original_path": "/workspace/generated_images/exec-89d1a8ff-1ad8-45b8-a638-36bad11da7fd.png",
+  "alternative_generated_original_paths": [
+    "/workspace/generated_images/exec-47c6b8ce-10e7-41b1-886d-bbd8052b856a.png"
+  ],
+  "style_reference_paths": [
+    "/workspace/AshenSpire/assets-mobile/environments/pale-marches-combat.webp",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/pale-marches/ground-snow-road.png"
+  ],
+  "generator": "image_gen.imagegen",
+  "status": "draft",
+  "requested_dimensions_px": [
+    3072,
+    1728
+  ],
+  "dimensions_px": [
+    1672,
+    941
+  ],
+  "format": "PNG",
+  "color_mode": "RGBA",
+  "sha256": "07efbabf0d3607bc9fde63bf03003c230499c12903507b123ca19b30ec9d4901",
+  "original_copy_sha256_matches": true,
+  "canvas_limitation": "Generator returned 1672x941 px, not requested 3072x1728 px; original retained unchanged.",
+  "alpha_findings": {
+    "alphaByteRange": [
+      0,
+      255
+    ],
+    "transparentPixels": 864702,
+    "partialAlphaPixels": 708525,
+    "opaquePixels": 125,
+    "outerBorderNonzeroAlphaPixels": 2621,
+    "bboxAtAlpha16": [
+      0,
+      478,
+      1672,
+      941
+    ],
+    "top45PercentMaxAlpha": 1,
+    "bottomLeftAlpha": 236,
+    "bottomRightAlpha": 223
+  },
+  "visual_qa_limitations": "Clearly constructed irregular flagstone paving with patchy snow. The palette is warmer and browner than the Pale Marches combat reference, and fine texture remains somewhat busy."
+}

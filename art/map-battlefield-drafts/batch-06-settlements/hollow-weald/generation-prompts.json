@@ -1,0 +1,32 @@
+{
+  "status": "generated-native-output",
+  "assets": [
+    {
+      "file": "prop-stilt-lodge.png",
+      "transparent_background": true,
+      "refs": [
+        "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/hollow-weald/prop-woodland-shrine.png",
+        "/workspace/AshenSpire/assets-mobile/environments/hollow-weald-map.webp"
+      ],
+      "prompt": "AshenSpire Hollow Weald dark-fantasy environment art. Cohesive painterly realism for a layered 2D battlefield, damp muted moss greens and desaturated teal-gray shadows, weathered timber and earth, subdued diffuse upper-left light. Match supplied existing biome palette and texture rendering. No people, creatures, text, lettering, UI, labels, borders, panels or contact sheets. One standalone image. Create a 1536x1536 SQUARE true-alpha isolated scenery prop: one small mossy timber swamp-village LODGE on SHORT wooden support posts. A clear house silhouette, modest broad pitched plank roof, simple weathered timber walls, dark doorway and a small shuttered window, restrained roof-edge moss. Supports lift the building only a short distance (approximately one step) above the eventual separate floor; no tall stilts and no treehouse. VIEW FROM HUMAN EYE LEVEL, slight three-quarter SIDE view with visible front and one side; vertical wall faces dominate, roof top only subtly visible. This is a REAR BATTLEFIELD SCENERY prop, NOT an isometric map icon, not bird's-eye. IMPORTANT: make the entire lodge deliberately small within the square: maximum silhouette extents x=18% to82%, y=18% to82%; at least15% fully transparent safety margin along EVERY edge. All posts and roof tips completely inside those bounds. Rest of canvas fully transparent alpha, no background. Visible solid surfaces alpha255; soft antialias only at outer contour. NO attached ground island, earth mound, water, floor, garden, paving base, trees, terrain, backdrop or cast shadow plane. No light sources or glowing windows. Single intact lodge only."
+    },
+    {
+      "file": "ground-village-pavers.png",
+      "transparent_background": true,
+      "refs": [
+        "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/hollow-weald/ground-moss-clearing.png",
+        "/workspace/AshenSpire/assets-mobile/environments/hollow-weald-map.webp"
+      ],
+      "prompt": "AshenSpire Hollow Weald dark-fantasy environment art. Cohesive painterly realism for a layered 2D battlefield, damp muted moss greens and desaturated teal-gray shadows, weathered timber and earth, subdued diffuse upper-left light. Match supplied existing biome palette and texture rendering. No people, creatures, text, lettering, UI, labels, borders, panels or contact sheets. One standalone image. Create a WIDE landscape 3072x1728 transparent PNG GROUND FLOOR LAYER only. LOW EYE-LEVEL battle-stage camera looks across a broad level swamp-village commons made of worn CONSTRUCTED small rectangular gray-green pavers: irregular handmade laid stone rows, moss and dark damp mud in shallow joints, restrained small weathering. Must visibly read as built paving rather than a natural moss clearing. Broad quiet flat WALKABLE central floor with no big gaps, no obstacles, no dramatic perspective feature. Floor starts at one near-horizontal horizon silhouette y=53% of canvas height and fills the entire lower47% to every left/right/bottom edge. Upper53% is pure truly transparent alpha0, no black fill or checkerboard. ALL lower floor interior INCLUDING every pixel along bottom edge must be solid fully opaque alpha255, NOT translucent or fading; antialias only on thin horizon contour. No vignette, no corner fade or edge fade. Reference ground supplies floor-layer geometry and muted palette, NOT its natural moss material. Lots of quiet panoramic side bleed; small pattern scale toward distant horizon. NO buildings, walls, trees, shrubs, tall vegetation, props, standalone objects, people, sky, background painting, terrain island or oval base. Full-width floor plane only."
+    },
+    {
+      "file": "ground-root-cellar.png",
+      "transparent_background": true,
+      "refs": [
+        "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/hollow-weald/ground-moss-clearing.png",
+        "/workspace/AshenSpire/assets-mobile/environments/hollow-weald-map.webp"
+      ],
+      "prompt": "AshenSpire Hollow Weald dark-fantasy environment art. Cohesive painterly realism for a layered 2D battlefield, damp muted moss greens and desaturated teal-gray shadows, weathered timber and earth, subdued diffuse upper-left light. Match supplied existing biome palette and texture rendering. No people, creatures, text, lettering, UI, labels, borders, panels or contact sheets. One standalone image. Create a WIDE landscape 3072x1728 transparent PNG GROUND FLOOR LAYER only for a Hollow Weald root cellar / damp woodland dungeon. LOW EYE-LEVEL battle-stage camera across a level constructed dark slate-gray stone flagstone floor. Stable worn rectangular and irregular fitted slabs; muted cool teal-gray stone, restrained moss in joints, damp earth only near outer sides. Keep the central60% of the lower floor quiet, flat, intact, unobstructed and walkable. A few thin natural tree roots may weave ONLY along the extreme outer left and right floor margins; no roots across the central standing area. This is an interior floor alone, NO walls, ceiling, columns, stairs, doors, traps, holes, objects, trees, skyline or scenery behind. Near-horizontal distant floor silhouette at y=53% total canvas height. Entire upper53% pure transparent alpha0; all lower47% full-width painted floor with fully opaque alpha255, including all bottom and lower side edges. No translucent floor, no fading opacity at edges, no black matte or checkerboard. Only thin silhouette antialias. Floor continues off left/right/bottom, not a cutout island or platform. Generous quiet side bleed for camera pans, subtle texture perspective but no steep slope. Match reference muted biome texture style while clearly expressing dark dungeon stone."
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "asset": "prop-snow-watchtower.png",
+  "prompt": "Create a standalone compact snow-covered stone guardtower as one isolated combat-scene prop. Use the Pale Marches combat reference only for cool snow/stone palette and painterly environmental mood; use the batch-05 snowy waystone only for cool material palette, not its shape. Low eye-level three-quarter rear battle-prop view, consistent with a ground-level tactical battlefield, showing the tower's side and rear faces. A squat sturdy square limestone watchtower, about twice as tall as wide, with a narrow dark roof cap, a few small shadowed arrow slits, snow resting on ledges and roof, blue-gray stone shadows, muted cool cyan frost, soft upper-left winter light. Bold clear silhouette with simple large forms readable at small game size. Keep full object inside a transparent square canvas with about 15% clear margin on every side. No ground island, attached wall, scenery, sky, terrain, people, flags, text, symbols, UI, colored fringe, alpha dust, or giant cast shadow. Target 1536 x 1536 transparent PNG; preserve genuinely transparent margins.",
+  "output_path": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-06-settlements/pale-marches/prop-snow-watchtower.png",
+  "generated_original_path": "/workspace/generated_images/exec-cdf74d66-9cb0-4e35-9ec7-c6f2ef31dfb3.png",
+  "alternative_generated_original_paths": [
+    "/workspace/generated_images/exec-d1056103-355b-4d8c-9358-911f87a13413.png"
+  ],
+  "style_reference_paths": [
+    "/workspace/AshenSpire/assets-mobile/environments/pale-marches-combat.webp",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/pale-marches/prop-snowy-waystone.png"
+  ],
+  "generator": "image_gen.imagegen",
+  "status": "draft",
+  "requested_dimensions_px": [
+    1536,
+    1536
+  ],
+  "dimensions_px": [
+    1254,
+    1254
+  ],
+  "format": "PNG",
+  "color_mode": "RGBA",
+  "sha256": "a594667d1354cba4e094875099241672a949170d3d56169a9f8a1a3938879eaf",
+  "original_copy_sha256_matches": true,
+  "canvas_limitation": "Generator returned 1254x1254 px, not requested 1536x1536 px; original retained unchanged.",
+  "alpha_findings": {
+    "alphaByteRange": [
+      0,
+      255
+    ],
+    "transparentPixels": 914597,
+    "partialAlphaPixels": 657207,
+    "opaquePixels": 712,
+    "outerBorderNonzeroAlphaPixels": 160,
+    "bboxAtAlpha16": [
+      241,
+      73,
+      1042,
+      1182
+    ],
+    "alpha15PercentInsetTransparent": false
+  },
+  "visual_qa_limitations": "Clear snow-covered stone guardtower. The returned tower has a snowy pointed roof cap rather than a narrow dark cap and is taller than the requested compact proportions. It does not meet the requested 15% top/bottom margin (about 6%); blue edge fringe is visible."
+}

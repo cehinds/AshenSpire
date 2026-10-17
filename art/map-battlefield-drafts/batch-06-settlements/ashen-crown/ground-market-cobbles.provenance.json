@@ -1,0 +1,54 @@
+{
+  "status": "draft-unregistered",
+  "region": "ashen-crown",
+  "generator": "OpenAI image_gen",
+  "role": "ground",
+  "prompt": "Create ONLY one Ashen Crown MARKET COBBLES GROUND layer for a layered combat scene. Requested canvas3072x1728 wide landscape PNG. True RGBA alpha: upper half completely transparent alpha0, NO black/white background or checkerboard; painted ground interior MUST be fully opaque alpha255, never translucent. Use referenced courtyard ground as camera/composition guide, but replace large flagstones with smaller well-worn settled-town cobbles in muted warm-gray limestone and restrained dry ochre seams. Existing map and timber reference establish the Ashen Crown muted palette and soft neutral daylight. Nearly level distant floor boundary at normalized y0.53; lower half is continuous wide level walkable cobbled square filling left,right,bottom edges without gaps, vignette, terrain island or edge fade. Quiet broad central actor standing area with subdued small cobble pattern; gently larger stones toward foreground for natural eye-level perspective. Oversized broad empty edge extension allows camera repositioning. Eye-level combat camera gently looking down over a flat floor, not aerial/isometric map view. Soft neutral upper-left diffuse lighting, no golden sunset, glare or dramatic shadows. No buildings, props, grass clumps, separate rocks, curbs, walls, sky, distant scenery, people, text, grid or frame. Clean natural alpha horizon with fully opaque stone interiors and no colored fringe. Single ground layer, no collage.",
+  "sourceReferences": [
+    "/workspace/AshenSpire/assets-mobile/environments/ashen-crown-map.webp",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/ashen-crown/prop-market-stall.png",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/ashen-crown/ground-worn-courtyard.png"
+  ],
+  "sourceOutputPath": "/workspace/generated_images/exec-1fa54431-5d04-427f-a48e-1d2a55a7bc30.png",
+  "outputPath": "ground-market-cobbles.png",
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "sha256": "68d895df8108f58c2da554ebe3dd470d34697ac09a66036de296e58a0a5e94d6",
+  "sourceSha256": "68d895df8108f58c2da554ebe3dd470d34697ac09a66036de296e58a0a5e94d6",
+  "processing": "Byte-identical copy of original generated PNG. No image editing, normalization, resizing or trimming.",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGBA",
+    "alphaMin": 0,
+    "alphaMax": 254,
+    "transparentFraction": 0.5259840137489894,
+    "visibleBoundsAlpha16": [
+      0,
+      502,
+      1671,
+      940
+    ],
+    "visibleInteriorAlphaMedian": 252.0,
+    "visibleInteriorAlphaMode": 252,
+    "upper45PercentAlphaMax": 1,
+    "bottomEdgeAlphaMin": 237,
+    "bottomEdgeAlphaMedian": 249.0,
+    "leftLower35PercentAlphaMin": 238,
+    "rightLower35PercentAlphaMin": 237,
+    "saturatedRedResidueCount": 931,
+    "saturatedRedResidueMaxAlpha": 1
+  },
+  "limitations": [
+    "Output smaller than requested; unchanged original has not been upscaled.",
+    "Painted material alpha is not uniformly255 despite explicit prompt; inspect slight scene bleed before production.",
+    "Straight floor horizon is approximately0.53; upper area may contain alpha1 residue.",
+    "Cobbles fill lower sides/bottom; no props or buildings."
+  ]
+}

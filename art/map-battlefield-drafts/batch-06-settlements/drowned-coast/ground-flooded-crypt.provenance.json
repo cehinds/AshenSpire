@@ -1,0 +1,85 @@
+{
+  "formatVersion": 1,
+  "status": "draft",
+  "generator": "image_gen.imagegen",
+  "regionId": "drowned-coast",
+  "id": "ground-flooded-crypt",
+  "prompt": "Paint a distinct FLOODED COASTAL CRYPT dungeon floor layer. Ground-only layered combat asset. Use supplied tidal-stone image ONLY for the transparent upper-half and continuous lower-floor LAYOUT, replace surface material completely. Low slightly elevated side-on battle camera; no overhead map or isometric terrain tile. Upper half of canvas has genuine alpha0, completely empty. The floor's distant boundary is a nearly level, unobtrusive thin organic line at normalized y0.53. Below that line a broad FLAT walkable combat floor fills the entire canvas to both side edges and bottom edge, fully painted/opaque with alpha255. No transparent margins on the lower-floor sides or bottom. Plenty of quiet level center, foreground and side bleed for actor placement and cropping; no mound or perspective ramp. No objects, props, walls, columns, doors, platforms, cliffs, stairs, water horizon, ocean, skyline, sky, people, vegetation tufts, text or UI. This is only a floor over alpha, not a complete scene or isolated terrain island. Muted painterly dark-fantasy Drowned Coast materials, cool blue-gray/green-gray dampness, soft diffuse upper-left overcast illumination, restrained highlights. Use regional references only for muted coastal palette; never reproduce the map, split-panel combat reference or scenery. Clean alpha boundary with no colored fringe. One wide16:9 single-frame standalone asset; target3072x1728 if supported, retain native dimensions if unavailable. Material must read as ancient constructed DUNGEON STONE, not beach sand, natural shoreline or outdoor road: large worn dark green-gray rectangular stone slabs in deliberate old masonry courses, some fine cracks and dark recessed joints. Thin shallow puddles sit ON the slabs, never enough water to hide the solid walkable floor. Desaturated deep green algae around peripheral cracks and outer floor areas; central actor lane remains unobstructed and mostly exposed stone. Slightly darker subdued cool ambient treatment than an outdoor harbor, but the same diffuse upper-left family lighting. No dungeon walls, doorways, tombs, pillars, stairs, pools of deep water, glowing runes, skeletons, candles or objects. No waterline horizon; floor material meets alpha cleanly at y0.53.",
+  "sourceOutputPath": "/workspace/generated_images/exec-74e6a4aa-d668-40fc-9a45-79e61bd5fa75.png",
+  "outputPath": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-06-settlements/drowned-coast/ground-flooded-crypt.png",
+  "referencedImagePaths": [
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/drowned-coast/ground-tidal-stone.png",
+    "/workspace/AshenSpire/assets-mobile/environments/drowned-coast-map.webp",
+    "/workspace/AshenSpire/assets-mobile/environments/drowned-coast-combat.webp"
+  ],
+  "contextReferencesInspected": [
+    "/workspace/AshenSpire/assets-mobile/environments/drowned-coast-map.webp",
+    "/workspace/AshenSpire/assets-mobile/environments/drowned-coast-combat.webp",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/drowned-coast/ground-tidal-stone.png"
+  ],
+  "targetDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "transparentBackgroundRequested": true,
+  "processing": "Selected generated original copied byte-for-byte with no editing, resizing, alpha cleanup or color correction. All original generations preserved.",
+  "productionRegistered": false,
+  "productionAssetId": null,
+  "limitations": [
+    "Draft only; not registered or integrated into game runtime.",
+    "Requested targetdimensions were not honored by generator. Native pixels preserved without resizing/upscaling.",
+    "Faint alpha noise and any generated colored edge pixels are retained unchanged.",
+    "Distant floor boundary and targety0.53 require composition alignment.",
+    "Generated floor alpha may be near-opaque instead of exact255; measured coverage is reported below, no alpha normalization applied."
+  ],
+  "width": 1672,
+  "height": 941,
+  "mode": "RGBA",
+  "sha256": "9244cfd87d6520bfddeb040cdcc282b3dbcf7e741ffeed816e3df93553a48691",
+  "alphaBounds": [
+    0,
+    0,
+    1672,
+    941
+  ],
+  "visibleBoundsAlphaAbove8": [
+    0,
+    499,
+    1672,
+    941
+  ],
+  "referenceHashes": {
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/drowned-coast/ground-tidal-stone.png": "7c20ebe21b58a00bee4e9c4efdc1f593eb5b4970e37bdd1c8c3a09d4c37f97fb",
+    "/workspace/AshenSpire/assets-mobile/environments/drowned-coast-map.webp": "7014764294d4a8e542b695b2984aa821e5e28b8515a8448e2e37bb1d99971d6e",
+    "/workspace/AshenSpire/assets-mobile/environments/drowned-coast-combat.webp": "18897020039f8d66e0f1fe54b7730a20bd3c920bfd5640ed3f6f85563f17f83f"
+  },
+  "alphaStatistics": {
+    "min": 0,
+    "max": 255,
+    "transparentPixels": 837893,
+    "alpha1Pixels": 3910,
+    "opaquePixels": 1
+  },
+  "colorArtifactProbe": {
+    "scope": "All pixels with alpha>8; heuristic only, no cleanup",
+    "redPixels": 0,
+    "yellowPixels": 0,
+    "bluePixels": 0,
+    "magentaPixels": 0
+  },
+  "groundLayerQA": {
+    "upperHalfVisiblePixelsAlphaAbove8": 0,
+    "upperHalfNonzeroAlphaPixels": 1425,
+    "bottomEdgeCoverageAlphaAbove240": 1.0,
+    "bottomEdgeCoverageAlphaExactly255": 0.0,
+    "lowerSideEdgesCoverageAlphaAbove240": 1.0,
+    "centerColumnFirstVisibleY": 505,
+    "centerColumnFirstVisibleNormalizedY": 0.536663124335813,
+    "requestedFloorBoundaryY": 0.53
+  },
+  "validation": {
+    "sourceCopyByteIdentical": true,
+    "hashAndDimensionsMeasured": true,
+    "visibleGeometryReviewed": true
+  }
+}

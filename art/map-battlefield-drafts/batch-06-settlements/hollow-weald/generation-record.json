@@ -1,0 +1,308 @@
+{
+  "status": "native-generated-inspected",
+  "assets": [
+    {
+      "file": "prop-stilt-lodge.png",
+      "transparent_background": true,
+      "refs": [
+        "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/hollow-weald/prop-woodland-shrine.png",
+        "/workspace/AshenSpire/assets-mobile/environments/hollow-weald-map.webp"
+      ],
+      "prompt": "AshenSpire Hollow Weald dark-fantasy environment art. Cohesive painterly realism for a layered 2D battlefield, damp muted moss greens and desaturated teal-gray shadows, weathered timber and earth, subdued diffuse upper-left light. Match supplied existing biome palette and texture rendering. No people, creatures, text, lettering, UI, labels, borders, panels or contact sheets. One standalone image. Create a 1536x1536 SQUARE true-alpha isolated scenery prop: one small mossy timber swamp-village LODGE on SHORT wooden support posts. A clear house silhouette, modest broad pitched plank roof, simple weathered timber walls, dark doorway and a small shuttered window, restrained roof-edge moss. Supports lift the building only a short distance (approximately one step) above the eventual separate floor; no tall stilts and no treehouse. VIEW FROM HUMAN EYE LEVEL, slight three-quarter SIDE view with visible front and one side; vertical wall faces dominate, roof top only subtly visible. This is a REAR BATTLEFIELD SCENERY prop, NOT an isometric map icon, not bird's-eye. IMPORTANT: make the entire lodge deliberately small within the square: maximum silhouette extents x=18% to82%, y=18% to82%; at least15% fully transparent safety margin along EVERY edge. All posts and roof tips completely inside those bounds. Rest of canvas fully transparent alpha, no background. Visible solid surfaces alpha255; soft antialias only at outer contour. NO attached ground island, earth mound, water, floor, garden, paving base, trees, terrain, backdrop or cast shadow plane. No light sources or glowing windows. Single intact lodge only.",
+      "originalPath": "/workspace/generated_images/exec-47c6b8ce-10e7-41b1-886d-bbd8052b856a.png",
+      "destinationPath": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-06-settlements/hollow-weald/prop-stilt-lodge.png",
+      "actualDimensions": {
+        "width": 1254,
+        "height": 1254
+      },
+      "sourceMode": "RGBA",
+      "originalSha256": "1d70d1a197c5de7d355f33f602aa7814d561b5b6de8e5f1769426de22b50c1d3",
+      "copySha256": "1d70d1a197c5de7d355f33f602aa7814d561b5b6de8e5f1769426de22b50c1d3",
+      "nativePngUnchanged": true,
+      "alphaQA": {
+        "range": [
+          0,
+          255
+        ],
+        "nonzeroBBox": [
+          0,
+          7,
+          1242,
+          1254
+        ],
+        "bboxAlphaGreaterThan16": [
+          168,
+          229,
+          1087,
+          1065
+        ],
+        "bboxAlphaGreaterThan128": [
+          168,
+          230,
+          1085,
+          1064
+        ],
+        "exactTransparentFraction": 0.6837125981548041,
+        "exactOpaqueFraction": 0.0001774226780522424,
+        "dominantAlphaValues": [
+          {
+            "alpha": 0,
+            "count": 1075149
+          },
+          {
+            "alpha": 252,
+            "count": 225638
+          },
+          {
+            "alpha": 253,
+            "count": 207432
+          },
+          {
+            "alpha": 251,
+            "count": 16668
+          },
+          {
+            "alpha": 1,
+            "count": 14644
+          },
+          {
+            "alpha": 250,
+            "count": 4263
+          }
+        ],
+        "significantMarginsFractions": {
+          "left": 0.1339712918660287,
+          "right": 0.1331738437001595,
+          "top": 0.18261562998405104,
+          "bottom": 0.1507177033492823
+        }
+      },
+      "referenceFiles": [
+        {
+          "path": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/hollow-weald/prop-woodland-shrine.png",
+          "sha256": "6604699dd360e9b8760528118b26c50b919ff301c11636bce0d0841847d3a42b",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "path": "/workspace/AshenSpire/assets-mobile/environments/hollow-weald-map.webp",
+          "sha256": "4657a59ad3ab092b98987b6bda295d5b3c1f754bc6909644930b50f58405e486",
+          "dimensions": [
+            171,
+            256
+          ]
+        }
+      ],
+      "limitations": [
+        "Standalone timber dwelling on short posts with moss roof; front/side eye-level three-quarter form, no attached terrain base.",
+        "Model follows existing shrine timber craft closely. Display scale should be smaller than canvas to maintain generous stage margins.",
+        "Main cutout is true alpha, but very faint low-alpha speckles expand the strict nonzero bounding box.",
+        "Significant left/right margins are13.4%/13.3%, short of requested15%; top18.3% and bottom15.1% meet target."
+      ]
+    },
+    {
+      "file": "ground-village-pavers.png",
+      "transparent_background": true,
+      "refs": [
+        "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/hollow-weald/ground-moss-clearing.png",
+        "/workspace/AshenSpire/assets-mobile/environments/hollow-weald-map.webp"
+      ],
+      "prompt": "AshenSpire Hollow Weald dark-fantasy environment art. Cohesive painterly realism for a layered 2D battlefield, damp muted moss greens and desaturated teal-gray shadows, weathered timber and earth, subdued diffuse upper-left light. Match supplied existing biome palette and texture rendering. No people, creatures, text, lettering, UI, labels, borders, panels or contact sheets. One standalone image. Create a WIDE landscape 3072x1728 transparent PNG GROUND FLOOR LAYER only. LOW EYE-LEVEL battle-stage camera looks across a broad level swamp-village commons made of worn CONSTRUCTED small rectangular gray-green pavers: irregular handmade laid stone rows, moss and dark damp mud in shallow joints, restrained small weathering. Must visibly read as built paving rather than a natural moss clearing. Broad quiet flat WALKABLE central floor with no big gaps, no obstacles, no dramatic perspective feature. Floor starts at one near-horizontal horizon silhouette y=53% of canvas height and fills the entire lower47% to every left/right/bottom edge. Upper53% is pure truly transparent alpha0, no black fill or checkerboard. ALL lower floor interior INCLUDING every pixel along bottom edge must be solid fully opaque alpha255, NOT translucent or fading; antialias only on thin horizon contour. No vignette, no corner fade or edge fade. Reference ground supplies floor-layer geometry and muted palette, NOT its natural moss material. Lots of quiet panoramic side bleed; small pattern scale toward distant horizon. NO buildings, walls, trees, shrubs, tall vegetation, props, standalone objects, people, sky, background painting, terrain island or oval base. Full-width floor plane only.",
+      "originalPath": "/workspace/generated_images/exec-671c3871-ff30-4228-b109-a445ce8ba82e.png",
+      "destinationPath": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-06-settlements/hollow-weald/ground-village-pavers.png",
+      "actualDimensions": {
+        "width": 1672,
+        "height": 941
+      },
+      "sourceMode": "RGBA",
+      "originalSha256": "9f8fa06010f9aafd5591389c7fbac71fd1b34caa1b1c743e855119ec6642dd4a",
+      "copySha256": "9f8fa06010f9aafd5591389c7fbac71fd1b34caa1b1c743e855119ec6642dd4a",
+      "nativePngUnchanged": true,
+      "alphaQA": {
+        "range": [
+          0,
+          255
+        ],
+        "nonzeroBBox": [
+          0,
+          29,
+          1672,
+          941
+        ],
+        "bboxAlphaGreaterThan16": [
+          0,
+          519,
+          1672,
+          941
+        ],
+        "bboxAlphaGreaterThan128": [
+          0,
+          520,
+          1672,
+          941
+        ],
+        "exactTransparentFraction": 0.5520239590377741,
+        "exactOpaqueFraction": 5.402478275681475e-05,
+        "dominantAlphaValues": [
+          {
+            "alpha": 0,
+            "count": 868528
+          },
+          {
+            "alpha": 252,
+            "count": 476226
+          },
+          {
+            "alpha": 253,
+            "count": 130239
+          },
+          {
+            "alpha": 251,
+            "count": 69767
+          },
+          {
+            "alpha": 1,
+            "count": 12052
+          },
+          {
+            "alpha": 250,
+            "count": 4098
+          }
+        ],
+        "upper53PercentAlphaGreaterThan16Fraction": 0.0,
+        "bottomEdgeExactOpaqueFraction": 0.0,
+        "bottomEdgeMeanAlpha": 252.01913875598086,
+        "firstSignificantPaintedYFraction": 0.5515409139213603
+      },
+      "referenceFiles": [
+        {
+          "path": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/hollow-weald/ground-moss-clearing.png",
+          "sha256": "cb41a93c89de368a45b2f7131ba2db0202f3b3673e6e1f0af2b38762451ab198",
+          "dimensions": [
+            1672,
+            941
+          ]
+        },
+        {
+          "path": "/workspace/AshenSpire/assets-mobile/environments/hollow-weald-map.webp",
+          "sha256": "4657a59ad3ab092b98987b6bda295d5b3c1f754bc6909644930b50f58405e486",
+          "dimensions": [
+            171,
+            256
+          ]
+        }
+      ],
+      "limitations": [
+        "Clearly constructed small pavers, moss/mud joints and unobstructed center; full-width floor geometry.",
+        "Visible horizon lands lower than requested y=.53; registration must use actual alpha silhouette.",
+        "Native painted floor is mostly near-opaque alpha251-253, not strict255, and low-alpha speckles remain above floor. No source correction performed."
+      ]
+    },
+    {
+      "file": "ground-root-cellar.png",
+      "transparent_background": true,
+      "refs": [
+        "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/hollow-weald/ground-moss-clearing.png",
+        "/workspace/AshenSpire/assets-mobile/environments/hollow-weald-map.webp"
+      ],
+      "prompt": "AshenSpire Hollow Weald dark-fantasy environment art. Cohesive painterly realism for a layered 2D battlefield, damp muted moss greens and desaturated teal-gray shadows, weathered timber and earth, subdued diffuse upper-left light. Match supplied existing biome palette and texture rendering. No people, creatures, text, lettering, UI, labels, borders, panels or contact sheets. One standalone image. Create a WIDE landscape 3072x1728 transparent PNG GROUND FLOOR LAYER only for a Hollow Weald root cellar / damp woodland dungeon. LOW EYE-LEVEL battle-stage camera across a level constructed dark slate-gray stone flagstone floor. Stable worn rectangular and irregular fitted slabs; muted cool teal-gray stone, restrained moss in joints, damp earth only near outer sides. Keep the central60% of the lower floor quiet, flat, intact, unobstructed and walkable. A few thin natural tree roots may weave ONLY along the extreme outer left and right floor margins; no roots across the central standing area. This is an interior floor alone, NO walls, ceiling, columns, stairs, doors, traps, holes, objects, trees, skyline or scenery behind. Near-horizontal distant floor silhouette at y=53% total canvas height. Entire upper53% pure transparent alpha0; all lower47% full-width painted floor with fully opaque alpha255, including all bottom and lower side edges. No translucent floor, no fading opacity at edges, no black matte or checkerboard. Only thin silhouette antialias. Floor continues off left/right/bottom, not a cutout island or platform. Generous quiet side bleed for camera pans, subtle texture perspective but no steep slope. Match reference muted biome texture style while clearly expressing dark dungeon stone.",
+      "originalPath": "/workspace/generated_images/exec-117f3006-f4f2-4eb9-9672-5dce99094fed.png",
+      "destinationPath": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-06-settlements/hollow-weald/ground-root-cellar.png",
+      "actualDimensions": {
+        "width": 1672,
+        "height": 941
+      },
+      "sourceMode": "RGBA",
+      "originalSha256": "95a915b629494004aa40b596fc57547476204d699c39d58df226103f4cd0d765",
+      "copySha256": "95a915b629494004aa40b596fc57547476204d699c39d58df226103f4cd0d765",
+      "nativePngUnchanged": true,
+      "alphaQA": {
+        "range": [
+          0,
+          255
+        ],
+        "nonzeroBBox": [
+          0,
+          13,
+          1672,
+          941
+        ],
+        "bboxAlphaGreaterThan16": [
+          0,
+          491,
+          1672,
+          941
+        ],
+        "bboxAlphaGreaterThan128": [
+          0,
+          493,
+          1672,
+          941
+        ],
+        "exactTransparentFraction": 0.5461765707864483,
+        "exactOpaqueFraction": 0.0003158860827074933,
+        "dominantAlphaValues": [
+          {
+            "alpha": 0,
+            "count": 859328
+          },
+          {
+            "alpha": 252,
+            "count": 471626
+          },
+          {
+            "alpha": 253,
+            "count": 152467
+          },
+          {
+            "alpha": 251,
+            "count": 51839
+          },
+          {
+            "alpha": 1,
+            "count": 23957
+          },
+          {
+            "alpha": 250,
+            "count": 3171
+          }
+        ],
+        "upper53PercentAlphaGreaterThan16Fraction": 0.0002948480693444305,
+        "bottomEdgeExactOpaqueFraction": 0.0,
+        "bottomEdgeMeanAlpha": 251.64413875598086,
+        "firstSignificantPaintedYFraction": 0.5217853347502657
+      },
+      "referenceFiles": [
+        {
+          "path": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/hollow-weald/ground-moss-clearing.png",
+          "sha256": "cb41a93c89de368a45b2f7131ba2db0202f3b3673e6e1f0af2b38762451ab198",
+          "dimensions": [
+            1672,
+            941
+          ]
+        },
+        {
+          "path": "/workspace/AshenSpire/assets-mobile/environments/hollow-weald-map.webp",
+          "sha256": "4657a59ad3ab092b98987b6bda295d5b3c1f754bc6909644930b50f58405e486",
+          "dimensions": [
+            171,
+            256
+          ]
+        }
+      ],
+      "limitations": [
+        "Flat stone slabs with fine roots at outer sides and clear center; no walls or attached props.",
+        "Dark cool stone palette still carries diffuse outdoor-like reference illumination; an interior backdrop and restrained lighting treatment are needed for a full dungeon scene.",
+        "Side roots raise the silhouette, so a single exact y=.53 horizon is not achieved. Native alpha is near-opaque rather than strict255; source remains unchanged."
+      ]
+    }
+  ],
+  "notes": [
+    "Three new image_gen PNGs only. Byte-identical copies of preserved originals.",
+    "Requested grounds3072x1728 and prop1536x1536; use actualDimensions for delivered source sizes.",
+    "Python used only to read image metadata and write this provenance JSON; no image edits, resizes, recolors or alpha corrections.",
+    "No shared manifests, runtime files, commits or pushes changed."
+  ]
+}

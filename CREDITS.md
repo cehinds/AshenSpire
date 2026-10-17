@@ -756,3 +756,14 @@ are retained with source hashes and measured dimensions. Browser previews
 compose unchanged sources using editable placement and crop recipes. Candidate
 location mappings preserve the existing presentation profile assignments. These
 remain unregistered feature-branch art; no third-party artwork or license is claimed.
+
+### Settlement and regional floor paintings — batch 06 (2026-10-17)
+
+Seventeen original OpenAI-generated drafts in
+`art/map-battlefield-drafts/batch-06-settlements/` add eleven grounds, five
+independent regional buildings and a frozen-inlet backdrop. Existing first-party
+map art and earlier regional drafts informed the palette and material direction.
+Exact prompts, reference paths, original outputs, measured dimensions and hashes
+are retained. Browser previews combine these unchanged sources with earlier
+backdrops and accents through editable recipes. The source library remains
+unregistered feature-branch art; no third-party artwork or license is claimed.

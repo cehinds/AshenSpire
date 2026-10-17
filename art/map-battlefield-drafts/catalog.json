@@ -28,6 +28,11 @@
       "id": "batch-05-regions",
       "manifest": "batch-05-regions/manifest.json",
       "sourceCount": 32
+    },
+    {
+      "id": "batch-06-settlements",
+      "manifest": "batch-06-settlements/manifest.json",
+      "sourceCount": 17
     }
   ],
   "editableRecipes": [
@@ -50,11 +55,19 @@
     {
       "id": "live-location-candidates",
       "file": "batch-05-regions/location-coverage.example.json"
+    },
+    {
+      "id": "regional-settlements-and-floors",
+      "file": "batch-06-settlements/composition.example.json"
+    },
+    {
+      "id": "location-art-pools",
+      "file": "batch-06-settlements/location-pools.example.json"
     }
   ],
   "nextFamilies": [
-    "regional-interior-variants",
-    "settlement-architecture",
+    "regional-dungeon-backdrops-and-props",
+    "coastal-dock-connections",
     "expanded-panoramic-masters",
     "alpha-and-contact-cleanup"
   ],

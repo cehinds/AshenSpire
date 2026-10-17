@@ -1,0 +1,78 @@
+{
+  "generator": "image_gen.imagegen",
+  "status": "draft",
+  "region": "cinder-reach",
+  "role": "prop",
+  "prompt": "Paint ONE compact standalone VILLAGE FOUNDRY HALL for a dark-fantasy combat rear-scene prop in Cinder Reach. A modest broad low medieval workshop building of soot-dark basalt block walls and aged riveted iron, low pitched dark iron-tile roof, one short thick chimney, heavy iron-reinforced door, two or three TINY warm amber windows. Warm windows are subdued points, not a glowing factory, inferno or lava source. Keep one coherent small foundry hall, no extra buildings or separate equipment. Dark charcoal basalt, ash-gray edges, rusty umber ironwork, restrained muted painterly dark fantasy texture, soft overcast UPPER-LEFT daylight. Level human-eye/chest-height combat-camera, SIDE three-quarter view showing doorway end and one long side, not elevated world-map/isometric camera. Square target1536x1536 TRUE TRANSPARENT PNG. Entire building including chimney must stay inside central70percent of canvas with at least15percent TRUE TRANSPARENT MARGIN on each edge. Make the building comfortably smaller than the canvas; do not enlarge it to fill frame. Foot contacts on one level implied baseline. Only building pixels: NO floor island, ground patch, pedestal, courtyard slab, external cast shadow plane, grass, landscape, background, sky, clouds, mountains, people, horses, loose tools, crates, separate anvil, carts, street, fence, text, labels, UI or frame. No massive fortress, castle or tall tower. Match an inhabited village workshop in an ash-covered volcanic province. Clean neutral alpha edges with no colored fringe, outline or halo.",
+  "referencedImagePaths": [],
+  "inspectedStyleReferencePaths": [
+    "/workspace/AshenSpire/assets-mobile/environments/cinder-reach-map.webp",
+    "/workspace/AshenSpire/assets-mobile/environments/cinder-reach-combat.webp",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/cinder-reach/ground-ash-flagstones.png",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/cinder-reach/prop-broken-forge.png"
+  ],
+  "referenceStrategy": "Inspected live and batch05 art; fresh generation from written material/palette/camera descriptions to avoid copying map perspective, atlas panels or alpha fringe.",
+  "sourceOutputPath": "/workspace/generated_images/exec-54a91b44-ec4f-4b85-a7e5-22dbd5b0abd9.png",
+  "outputPath": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-06-settlements/cinder-reach/prop-foundry-hall.png",
+  "requestedDimensions": {
+    "width": 1536,
+    "height": 1536
+  },
+  "transparentBackgroundRequested": true,
+  "processing": "Copied original generated PNG unchanged; no resizing, alpha cleanup or compositing.",
+  "productionRegistered": false,
+  "actualDimensions": {
+    "width": 1254,
+    "height": 1254
+  },
+  "mode": "RGBA",
+  "sha256": "1a7122cfb84fee115813dabd046be8a943e376d3fd738d3a56daacba03192655",
+  "alphaExtrema": [
+    0,
+    255
+  ],
+  "alphaBoundsByThreshold": {
+    "0": [
+      0,
+      22,
+      1216,
+      1254
+    ],
+    "1": [
+      90,
+      322,
+      1178,
+      947
+    ],
+    "8": [
+      92,
+      325,
+      1176,
+      941
+    ],
+    "128": [
+      93,
+      326,
+      1175,
+      940
+    ]
+  },
+  "maximumBorderAlpha": 1,
+  "visibleMarginFractionsAlphaAbove8": {
+    "left": 0.0734,
+    "top": 0.2592,
+    "right": 0.0622,
+    "bottom": 0.2496
+  },
+  "visualReview": {
+    "inspected": true,
+    "observations": [
+      "One independent compact basalt/iron village foundry hall, three small warm windows, slight side three-quarter level scene camera; no attached floor island or scenery.",
+      "Meaningful side margins are only7.34percent left and6.22percent right rather than requested15percent; top/bottom margins are ample.",
+      "Thin colored edge specks and near-transparent border dust remain.",
+      "Actual1254x1254 is smaller than requested1536square; original remains unchanged."
+    ],
+    "productionApproved": false
+  },
+  "alphaFindings": "True alpha0 empty areas exist. Original generated alpha is preserved, including slight floor translucency/edge fringe or near-transparent prop-border specks; see measured alpha metrics."
+}

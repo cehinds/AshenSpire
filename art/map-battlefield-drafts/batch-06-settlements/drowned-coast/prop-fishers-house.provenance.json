@@ -1,0 +1,105 @@
+{
+  "formatVersion": 1,
+  "status": "draft",
+  "generator": "image_gen.imagegen",
+  "regionId": "drowned-coast",
+  "id": "prop-fishers-house",
+  "prompt": "Reframe this exact isolated coastal fisher's house on its square transparent canvas. Keep the same painted salt-worn stone/timber structure, low3/4 battle camera, short stilts, attached net and rope, darkslate roof and cool diffuse lighting. Change ONLY framing: ZOOM OUT so the complete house silhouette fits inside the central55PERCENT of canvas WIDTH AND HEIGHT, centered horizontally and vertically. Leave at least22PERCENT clear empty transparent margin on ALLfour sides around every roof/stilt/net pixel. Make the building significantly smaller within the same square canvas; do not just shift it. All surrounding space must be genuine alpha0 transparency, not a black/white/checkerboard background. No ground island, water, shadow backdrop, scenery, people, extraobjects, text or UI. Preserve fine painterly details, clean neutralalpha edges. Target1536square if supported; retainnative generateddimensions.",
+  "sourceOutputPath": "/workspace/generated_images/exec-99c4d0a5-c8db-4353-9e07-a437ebadbdbd.png",
+  "outputPath": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-06-settlements/drowned-coast/prop-fishers-house.png",
+  "referencedImagePaths": [
+    "/workspace/generated_images/exec-69ca44cd-9c9b-444b-9b20-4aa8f35dabf0.png"
+  ],
+  "contextReferencesInspected": [
+    "/workspace/AshenSpire/assets-mobile/environments/drowned-coast-map.webp",
+    "/workspace/AshenSpire/assets-mobile/environments/drowned-coast-combat.webp",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/drowned-coast/ground-tidal-stone.png"
+  ],
+  "targetDimensions": {
+    "width": 1536,
+    "height": 1536
+  },
+  "transparentBackgroundRequested": true,
+  "processing": "Selected generated original copied byte-for-byte with no editing, resizing, alpha cleanup or color correction. All original generations preserved.",
+  "productionRegistered": false,
+  "productionAssetId": null,
+  "limitations": [
+    "Draft only; not registered or integrated into game runtime.",
+    "Requested targetdimensions were not honored by generator. Native pixels preserved without resizing/upscaling.",
+    "Faint alpha noise and any generated colored edge pixels are retained unchanged.",
+    "Reframing retry used to increase transparent margins. Production anchor/scale/support plane still need registration."
+  ],
+  "attempts": [
+    {
+      "selected": false,
+      "prompt": "Create ONE isolated fisher's HOUSE building as a separate transparent rear battle-scene prop for the Drowned Coast. A modest single-room salt-worn coastal dwelling combining pale cool gray limestone lower walls and desaturated weathered gray timber upper walls, patched dark slate pitched roof, one simple wooden door and two small shuttered windows. The house stands on a few SHORT sturdy wooden stilts just high enough to show clear gaps below. One small muted dark fishing net is attached along a wall, with one restrained rope coil hanging from a beam; NO people, fish, loose cargo, boats or extra props. Side three-quarter low battle camera with slight downward view about15degrees, not high isometric map perspective; show front and side wall, recognizable rear scenery building. Cool diffuse upper-left overcast coastal light, teal-gray ambient shadows, weathered gray-green algae only low on stilt feet, muted painterly fantasy treatment matching provided regional palette. No warm orange windows, smoke or colorful flags. Only attached house structure, net and rope: no water, sand, terrain island, foundation display plinth, dock, ground patch, landscape, backdrop or cast shadow painted outside the structure. TRUE transparent canvas and gaps. Entire building including roof and all stilts fits within central70percent of square canvas: at least15percent genuinely clear transparent margin on EVERY side. No colored matte, red/yellow fringe, outlines, text, labels, UI, border or watermark. Use supplied region references for palette only, do not paint their ruins, sea, map or split panels. One single standalone house, not a village/collage. Target1536x1536square if supported; preserve native output size.",
+      "referencedImagePaths": [
+        "/workspace/AshenSpire/assets-mobile/environments/drowned-coast-map.webp",
+        "/workspace/AshenSpire/assets-mobile/environments/drowned-coast-combat.webp"
+      ],
+      "sourceOutputPath": "/workspace/generated_images/exec-69ca44cd-9c9b-444b-9b20-4aa8f35dabf0.png",
+      "reasonRejected": "Insufficient transparent margins on horizontal sides.",
+      "sha256": "2b8683b89c3804d597e0bff4dc34d1d3d04d606ca21be1b82489ed471c4909f1"
+    },
+    {
+      "selected": true,
+      "prompt": "Reframe this exact isolated coastal fisher's house on its square transparent canvas. Keep the same painted salt-worn stone/timber structure, low3/4 battle camera, short stilts, attached net and rope, darkslate roof and cool diffuse lighting. Change ONLY framing: ZOOM OUT so the complete house silhouette fits inside the central55PERCENT of canvas WIDTH AND HEIGHT, centered horizontally and vertically. Leave at least22PERCENT clear empty transparent margin on ALLfour sides around every roof/stilt/net pixel. Make the building significantly smaller within the same square canvas; do not just shift it. All surrounding space must be genuine alpha0 transparency, not a black/white/checkerboard background. No ground island, water, shadow backdrop, scenery, people, extraobjects, text or UI. Preserve fine painterly details, clean neutralalpha edges. Target1536square if supported; retainnative generateddimensions.",
+      "referencedImagePaths": [
+        "/workspace/generated_images/exec-69ca44cd-9c9b-444b-9b20-4aa8f35dabf0.png"
+      ],
+      "sourceOutputPath": "/workspace/generated_images/exec-99c4d0a5-c8db-4353-9e07-a437ebadbdbd.png",
+      "reason": "Reframed smaller within transparent square to achieve at least15percent visible margins.",
+      "sha256": "8f69f33680c3e66b824493e4fbdc08d6aeffb38203e27239d6e3aabd5d363460"
+    }
+  ],
+  "width": 1254,
+  "height": 1254,
+  "mode": "RGBA",
+  "sha256": "8f69f33680c3e66b824493e4fbdc08d6aeffb38203e27239d6e3aabd5d363460",
+  "alphaBounds": [
+    0,
+    53,
+    1194,
+    1150
+  ],
+  "visibleBoundsAlphaAbove8": [
+    260,
+    350,
+    1026,
+    980
+  ],
+  "referenceHashes": {
+    "/workspace/generated_images/exec-69ca44cd-9c9b-444b-9b20-4aa8f35dabf0.png": "2b8683b89c3804d597e0bff4dc34d1d3d04d606ca21be1b82489ed471c4909f1"
+  },
+  "alphaStatistics": {
+    "min": 0,
+    "max": 255,
+    "transparentPixels": 1229935,
+    "alpha1Pixels": 4343,
+    "opaquePixels": 1017
+  },
+  "colorArtifactProbe": {
+    "scope": "All pixels with alpha>8; heuristic only, no cleanup",
+    "redPixels": 0,
+    "yellowPixels": 0,
+    "bluePixels": 0,
+    "magentaPixels": 0
+  },
+  "visibleMarginsAlphaAbove8": {
+    "left": 260,
+    "top": 350,
+    "right": 228,
+    "bottom": 274
+  },
+  "visibleMarginFractions": {
+    "left": 0.20733652312599682,
+    "top": 0.27910685805422647,
+    "right": 0.18181818181818182,
+    "bottom": 0.21850079744816586
+  },
+  "validation": {
+    "sourceCopyByteIdentical": true,
+    "hashAndDimensionsMeasured": true,
+    "visibleGeometryReviewed": true
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "status": "draft-unregistered",
+  "region": "ashen-crown",
+  "generator": "OpenAI image_gen",
+  "role": "prop",
+  "prompt": "Generate ONE standalone Ashen Crown half-timber HOUSE prop for layered combat scenery. Requested1536x1536 PNG with genuine RGBA transparent background. A small modest medieval house: warm-gray weathered stone lower walls, muted ochre plaster upper panels crossed by aged dark timber beams, weathered slate roof and one small stone chimney, simple closed wood door and small unlit windows. Single building only, no annex, garden, fence, trees, barrels, crates, people, sign, ground platform or scenery. The complete house MUST fit inside center70 percent of canvas: transparent margins at least15 percent left,right,top,bottom, contact baseline y0.85. Eye-level three-quarter SIDE view suitable as a rear combat-scene prop viewed from ground-level; upright verticals, do not use aerial, top-down or isometric map-icon camera. First reference is Ashen Crown geographic palette only; second reference provides matching weathered timber and neutral daylight style; third provides matching warm-gray masonry palette only. Hand-painted realistic dark fantasy, restrained details, soft neutral diffuse upper-left light, no golden sunset, no dramatic rimlight. True alpha0 outside silhouette; fully opaque alpha255 on painted interior surfaces. Clean natural antialiased silhouette with no colored matte fringe, checkerboard, labels, shadows extending outside building or frame. One isolated house, no ground.",
+  "sourceReferences": [
+    "/workspace/AshenSpire/assets-mobile/environments/ashen-crown-map.webp",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/ashen-crown/prop-market-stall.png",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/ashen-crown/ground-worn-courtyard.png"
+  ],
+  "sourceOutputPath": "/workspace/generated_images/exec-d1056103-355b-4d8c-9358-911f87a13413.png",
+  "outputPath": "prop-half-timber-house.png",
+  "requestedDimensions": {
+    "width": 1536,
+    "height": 1536
+  },
+  "actualDimensions": {
+    "width": 1254,
+    "height": 1254
+  },
+  "sha256": "051c25908904df0037cdacbc8485486a01da8b0b8dca3d8b483fe32351afb2f4",
+  "sourceSha256": "051c25908904df0037cdacbc8485486a01da8b0b8dca3d8b483fe32351afb2f4",
+  "processing": "Byte-identical copy of original generated PNG. No image editing, normalization, resizing or trimming.",
+  "qa": {
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "alphaMin": 0,
+    "alphaMax": 255,
+    "transparentFraction": 0.3350713124699526,
+    "visibleBoundsAlpha16": [
+      28,
+      48,
+      1235,
+      1195
+    ],
+    "visibleInteriorAlphaMedian": 253.0,
+    "visibleInteriorAlphaMode": 253,
+    "upper45PercentAlphaMax": 255,
+    "bottomEdgeAlphaMin": 0,
+    "bottomEdgeAlphaMedian": 0.0,
+    "leftLower35PercentAlphaMin": 0,
+    "rightLower35PercentAlphaMin": 0,
+    "saturatedRedResidueCount": 249,
+    "saturatedRedResidueMaxAlpha": 2
+  },
+  "limitations": [
+    "Output smaller than requested; unchanged original has not been upscaled.",
+    "Painted material alpha is not uniformly255 despite explicit prompt; inspect slight scene bleed before production.",
+    "Requested15% margins were not honored; measured silhouette bounds must guide placement.",
+    "Standalone ground-level three-quarter house, no terrain platform; foundation baseline slightly sloped by perspective."
+  ]
+}

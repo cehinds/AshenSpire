@@ -1,0 +1,87 @@
+{
+  "generator": "image_gen.imagegen",
+  "status": "draft",
+  "region": "cinder-reach",
+  "role": "ground",
+  "prompt": "Create ONE painted dark-fantasy combat GROUND LAYER for a Cinder Reach village FOUNDRY COURT. Constructed soot-black SQUARE PAVERS, old volcanic basalt cut blocks with slightly worn edges, ash dust in shallow joints, a handful of TINY dark ember-orange cinder cracks only toward outer margins. It must read as a built village courtyard, not an irregular natural rock field or glowing lava floor. Flat quiet broad central actor standing space with subtle square paving grid in perspective; no object, circular emblem, dramatic focal crack, raised feature or bright glow in center. Muted charcoal, soot brown and warm gray, restrained orange at edges, painterly dark fantasy environment texture, diffuse OVERCAST UPPER-LEFT light matching an ash-covered basalt/iron settlement. LEVEL human eye/chest-height combat camera looking horizontally across the floor, not aerial map/isometric camera. WIDE PANORAMIC target3072x1728. Exact registration intent: top53percent EMPTY TRUE ALPHA0, nearly straight very slightly irregular floor horizon at normalized y0.53 just BELOW midpoint. Below that edge the floor must be FULLY OPAQUE ALPHA255, continuing flush to every pixel of BOTTOM and the entire lower LEFT/RIGHT boundaries: absolutely no transparency, fading, holes, vignette or isolated island at those edges. The floor occupies lower47percent only, with broad quiet interchangeable lateral and foreground continuation for center crops and overscan. No sky, background, walls, buildings, foundry, ruins, rocks standing above floor, columns, people, props, vegetation, fire, smoke, fog, text, labels, UI or borders. Transparent above floor, opaque below; no solid black or gray backdrop, no colored outline/fringe at the horizon. One continuous plain low battle floor, no collage.",
+  "referencedImagePaths": [],
+  "inspectedStyleReferencePaths": [
+    "/workspace/AshenSpire/assets-mobile/environments/cinder-reach-map.webp",
+    "/workspace/AshenSpire/assets-mobile/environments/cinder-reach-combat.webp",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/cinder-reach/ground-ash-flagstones.png",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-05-regions/cinder-reach/prop-broken-forge.png"
+  ],
+  "referenceStrategy": "Inspected live and batch05 art; fresh generation from written material/palette/camera descriptions to avoid copying map perspective, atlas panels or alpha fringe.",
+  "sourceOutputPath": "/workspace/generated_images/exec-2754833a-78f1-4fb4-bca7-c4093cf441b3.png",
+  "outputPath": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-06-settlements/cinder-reach/ground-foundry-court.png",
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "transparentBackgroundRequested": true,
+  "processing": "Copied original generated PNG unchanged; no resizing, alpha cleanup or compositing.",
+  "productionRegistered": false,
+  "requestedHorizonNormalizedY": 0.53,
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "mode": "RGBA",
+  "sha256": "ff3bf7247edf48d16eadd1317ed535abdff6f8c5628f4247ad9c1e2c353e0238",
+  "alphaExtrema": [
+    0,
+    255
+  ],
+  "alphaBoundsByThreshold": {
+    "0": [
+      0,
+      19,
+      1672,
+      941
+    ],
+    "1": [
+      0,
+      514,
+      1672,
+      941
+    ],
+    "8": [
+      0,
+      516,
+      1672,
+      941
+    ],
+    "128": [
+      0,
+      517,
+      1672,
+      941
+    ]
+  },
+  "topHalfFullyTransparentFraction": 0.9981153924462995,
+  "topHalfAlphaAbove8Fraction": 0.0,
+  "bottomAlphaExtrema": [
+    246,
+    254
+  ],
+  "lowerLeftAlphaExtrema": [
+    246,
+    254
+  ],
+  "lowerRightAlphaExtrema": [
+    250,
+    254
+  ],
+  "medianFloorAlphaOnsetNormalizedAbove128": 0.5505,
+  "visualReview": {
+    "inspected": true,
+    "observations": [
+      "Built soot-dark square-paver floor with quiet flat center; small orange cinder seams stay mainly near outer sides.",
+      "Median meaningful alpha onset0.5505 is lower than requested0.53; top half has no alpha above8.",
+      "Floor reaches all lower sides and bottom but bottom alpha246–254 is slightly translucent rather than requested255.",
+      "Thin red/yellow horizon edge pixels remain; actual1672x941 is smaller than requested3072x1728."
+    ],
+    "productionApproved": false
+  },
+  "alphaFindings": "True alpha0 empty areas exist. Original generated alpha is preserved, including slight floor translucency/edge fringe or near-transparent prop-border specks; see measured alpha metrics."
+}
