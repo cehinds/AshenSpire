@@ -3,7 +3,9 @@
 //
 // Writes every content table the game reads (the composed content bundle, the
 // authored content/source files, the framework JSON, the compiled UI config)
-// plus the art manifests, in a shape Unity and Unreal Engine import without
+// plus the art manifests, the Core profile system (profile.profiles, module.modules,
+// module.settings.<id>, hudLayout.*, baseCards.*; the manifest's gameLock carries the
+// hashes of games/ashenspire/game.lock.json and the lock is copied to lock/), in a shape Unity and Unreal Engine import without
 // knowing anything about this repository: one JSON array of row objects per
 // table, every row keyed by a string `Name` (the Unreal DataTable row key),
 // a JSON Schema per table, and one manifest that lists them all with hashes.
@@ -22,7 +24,8 @@
 // The export reads the generated modules (src/content/generated, src/framework/
 // data, src/config/generated) next to the authored files they are compiled
 // from. So that it never mixes the two at different edits, it first runs the
-// builders that own those modules (each rewrites only what changed); with
+// builders that own those modules (tools/base-cards.mjs, framework-data-build,
+// config-build, content-build, game-config; each rewrites only what changed); with
 // --no-build it runs their --check instead and stops when one is stale.
 //
 // The output is deterministic: no timestamps, keys sorted, arrays in authored
@@ -235,8 +238,15 @@ function walkJson(dir) {
 // Generated modules: current before they are read.
 // ---------------------------------------------------------------------------
 
-/** The builders whose output collect() imports. content-build last: it refuses a framework or config JSON whose generated mirror is not current yet. */
-export const BUILDERS = ['tools/framework-data-build.mjs', 'tools/config-build.mjs', 'tools/content-build.mjs'];
+/** The builders whose output collect() imports. content-build runs after framework-data and config (it refuses a mirror that is not current); game-config last (its lock hashes src/**). An entry is a script path, or {script, build, check} argument lists for a CLI that takes subcommands. */
+export const BUILDERS = [
+  'tools/base-cards.mjs',
+  'tools/framework-data-build.mjs',
+  'tools/config-build.mjs',
+  'tools/content-build.mjs',
+  // game-config locks a hash of src/**, so it runs after every other builder has written; it takes a subcommand, not --check.
+  { script: 'tools/game-config.mjs', build: ['build'], check: ['check'] },
+];
 
 // The runner for the builders this CLI starts: main stops it on a signal, so a builder never outlives the lock.
 const STEPS = createStepRunner();
@@ -250,16 +260,149 @@ const STEPS = createStepRunner();
  */
 export async function staleGenerated({ root = ROOT, build = true, builders = BUILDERS, steps = STEPS } = {}) {
   const failed = [];
-  for (const script of builders) {
+  for (const entry of builders) {
+    const script = typeof entry === 'string' ? entry : entry.script;
     if (!existsSync(join(root, script))) continue;
-    const r = await steps.run(join(root, script), build ? [] : ['--check'], { capture: true, cwd: root, env: { ...process.env, FORCE_COLOR: '0' } });
+    const args = typeof entry === 'string' ? (build ? [] : ['--check']) : (build ? entry.build : entry.check) || [];
+    const r = await steps.run(join(root, script), args, { capture: true, cwd: root, env: { ...process.env, FORCE_COLOR: '0' } });
     if (r.code !== 0) failed.push({ script, status: r.code, output: `${r.output}${r.error ? r.error.message : ''}`.trim() });
   }
   return failed;
 }
 
+/** True when a preset resolves to the same profile as the game default: equal resolved hashes (the lock's per-profile hash), not equal JSON text. */
+export function sameResolvedHash(a, b) {
+  return typeof a === 'string' && a !== '' && a === b;
+}
+
+/**
+ * The game profiles (default, core, current) resolved exactly as `game-config.mjs export` resolves them: one compact row each, plus the resolved profiles for later tables.
+ * `default` is the profile the game launches (games/ashenspire/game.json); it gets its own row, flagged isGameDefault, and
+ * a preset that resolves to the same hash carries sameAsDefault.
+ */
+export async function collectProfiles() {
+  const { gameProfileCatalog, gameProfileAuthors } = await import('../src/content/generated/gameProfiles.js');
+  const { resolveGameAuthor } = await import('../engine/kernel/gameConfig.js');
+  const resolved = {};
+  const rows = [];
+  const defaultHash = resolveGameAuthor(gameProfileAuthors.default, gameProfileCatalog).hash;
+  for (const key of Object.keys(gameProfileAuthors).sort()) {
+    const author = gameProfileAuthors[key];
+    const p = resolveGameAuthor(author, gameProfileCatalog);
+    // The row is keyed by the author name (the lock's profile key): `default` resolves with the id of the core it names.
+    resolved[key] = p;
+    const ids = Object.keys(p.modules).sort();
+    const row = {
+      id: key,
+      core: author.core,
+      hash: p.hash,
+      isGameDefault: key === 'default',
+      enabledModules: ids.filter((m) => p.modules[m]),
+      disabledModules: ids.filter((m) => !p.modules[m]),
+      portable: p.portability.portable,
+      requiredCapabilities: p.portability.requiredCapabilities,
+      portabilityReason: p.portability.reason ?? null,
+      runtimeABI: p.lock.runtimeABI,
+      numericPolicy: p.lock.numericPolicy,
+      runtimeHash: p.lock.runtimeHash,
+      artifactCount: p.lock.artifacts.length,
+      contentKinds: Object.keys(p.content).sort(),
+    };
+    if (key !== 'default' && sameResolvedHash(p.hash, defaultHash)) row.sameAsDefault = true;
+    rows.push(row);
+  }
+  return { catalog: gameProfileCatalog, authors: gameProfileAuthors, resolved, rows };
+}
+
+/** First prose line of a module's guide.md (its one-sentence purpose). */
+function guideSummary(id) {
+  try {
+    const text = readFileSync(join(ROOT, 'engine', 'modules', id, 'guide.md'), 'utf8');
+    return text.split(/\r?\n/).map((l) => l.trim()).find((l) => l && !l.startsWith('#')) ?? '';
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Engine modules: `module.modules` (one row per module) and, per module, a
+ * `module.settings.<id>` table of the settings each profile gives it, whose
+ * schema is the module's own settings.schema.json (rows are the settings keyed by
+ * profile id).
+ */
+export function collectModules({ catalog, resolved }) {
+  const tables = [];
+  const schemas = new Map();
+  const rows = [];
+  for (const id of Object.keys(catalog.modules).sort()) {
+    const { manifest, defaults, schema } = catalog.modules[id];
+    const enabledIn = Object.keys(resolved).sort().filter((pid) => resolved[pid].modules[id]);
+    rows.push({
+      id,
+      version: manifest.version,
+      description: guideSummary(id),
+      runtimeABI: manifest.runtimeABI,
+      implementation: manifest.implementation,
+      configuredAdapter: manifest.configuredAdapter === true,
+      defaults,
+      enabledIn,
+      settingsTable: `module.settings.${id}`,
+    });
+    const settingsRows = enabledIn.map((pid) => ({ id: pid, ...resolved[pid].modules[id] }));
+    if (settingsRows.length) {
+      tables.push([`module.settings.${id}`, settingsRows]);
+      const { $schema, $id, ...items } = schema;
+      // The row key `Name` is the profile id (from `id`); a settings schema never names `id`.
+      items.properties = { ...items.properties, id: { type: 'string' } };
+      items.required = [...new Set([...(items.required || []), 'id'])].sort();
+      schemas.set(`module.settings.${id}`, items);
+    }
+  }
+  tables.unshift(['module.modules', rows]);
+  return { tables, schemas };
+}
+
+/** HUD layout tokens (content/hud-layout/<form factor>.json): `hudLayout.layouts` (one row per form factor) and `hudLayout.tokens` (one row per form factor and token). */
+export function collectHudLayout() {
+  const dir = join(ROOT, 'content', 'hud-layout');
+  const layouts = [];
+  const tokens = [];
+  for (const file of listDir(dir, /\.json$/)) {
+    const layout = JSON.parse(readFileSync(join(dir, file), 'utf8'));
+    const id = layout.formFactor || basename(file, '.json');
+    layouts.push({ id, ...layout, formFactor: id });
+    for (const token of Object.keys(layout.tokens || {}).sort()) tokens.push({ id: `${id}:${token}`, formFactor: id, token, value: layout.tokens[token] });
+  }
+  return [['hudLayout.layouts', layouts], ['hudLayout.tokens', tokens]];
+}
+
+/** The base-card pack (games/ashenspire/packs/base-cards), from the compiled module plus the pack's groups and resource variants. */
+export async function collectBaseCards() {
+  const m = await import('../src/content/generated/baseCards.js');
+  const pack = join(ROOT, 'games', 'ashenspire', 'packs', 'base-cards');
+  const readPack = (name) => JSON.parse(readFileSync(join(pack, name), 'utf8'));
+  return [
+    ['baseCards.definitions', m.baseCardDefinitions],
+    ['baseCards.tagging', m.baseCardTagging.map((t) => ({ id: `${t.objectId}:${t.tagId}`, ...t }))],
+    ['baseCards.rewardIds', m.baseCardRewardIds.map((id, order) => ({ id, order }))],
+    ['baseCards.presentation', m.baseCardPresentation],
+    ['baseCards.statuses', m.baseCardStatuses],
+    ['baseCards.statusRules', m.baseCardStatusRules],
+    ['baseCards.groups', readPack('groups.json')],
+    ['baseCards.resourceVariants', readPack('resourceVariants.json')],
+  ];
+}
+
 async function collect() {
   const raw = []; // [id, value]
+  const schemaOverrides = new Map(); // table id → items schema
+  const profiles = await collectProfiles();
+  raw.push(['profile.profiles', profiles.rows]);
+  const modules = collectModules(profiles);
+  raw.push(...modules.tables);
+  for (const [id, schema] of modules.schemas) schemaOverrides.set(id, schema);
+  raw.push(...collectHudLayout());
+  raw.push(...await collectBaseCards());
   const { contentBundle } = await import('../src/content/index.js');
   for (const key of Object.keys(contentBundle).sort()) {
     if (key === 'version') continue;
@@ -280,7 +423,7 @@ async function collect() {
     if (section === 'tokens' || !isPlainObject(v)) raw.push([`ui.${section}`, v]);
     else for (const name of Object.keys(v).sort()) raw.push([`ui.${section}.${name}`, v[name]]);
   }
-  return { raw, version: contentBundle.version };
+  return { raw, schemaOverrides, version: contentBundle.version };
 }
 
 // ---------------------------------------------------------------------------
@@ -316,8 +459,8 @@ export function inferSchema(values) {
   return schema;
 }
 
-function tableSchema(id, rows) {
-  const items = rows.length ? inferSchema(rows) : { type: 'object' };
+function tableSchema(id, rows, authored = null) {
+  const items = authored ? structuredClone(authored) : rows.length ? inferSchema(rows) : { type: 'object' };
   items.properties = { ...(items.properties || {}), Name: { type: 'string' } };
   items.required = [...new Set(['Name', ...(items.required || [])])].sort();
   return { $schema: SCHEMA_DIALECT, $id: `ashenspire/${id}.schema.json`, title: id, type: 'array', items };
@@ -344,7 +487,7 @@ function matchesOnly(id, only) {
 
 /** Build the whole export in memory: Map<relativePath, text> plus a summary. */
 export async function buildExport({ only = null } = {}) {
-  const { raw, version } = await collect();
+  const { raw, schemaOverrides, version } = await collect();
   const files = new Map();
   const tables = [];
   const configs = [];
@@ -363,7 +506,7 @@ export async function buildExport({ only = null } = {}) {
         const schemaFile = `schemas/${item.id}.schema.json`;
         const text = stableStringify(item.rows);
         files.set(file, text);
-        files.set(schemaFile, stableStringify(tableSchema(item.id, item.rows)));
+        files.set(schemaFile, stableStringify(tableSchema(item.id, item.rows, schemaOverrides.get(item.id))));
         tables.push({ id: item.id, file, schema: schemaFile, rows: item.rows.length, sha256: sha256(text), omittedFunctions: [] });
       } else {
         const file = `config/${item.id}.json`;
@@ -406,6 +549,25 @@ export async function buildExport({ only = null } = {}) {
     release = bo.release ?? null;
   } catch { /* absent in a partial checkout */ }
 
+  // The game lock: its identity and hashes, so an engine can detect that its
+  // imported data no longer matches the game it was built from.
+  let gameLock = null;
+  try {
+    const text = readFileSync(join(ROOT, 'games', 'ashenspire', 'game.lock.json'), 'utf8');
+    const lock = JSON.parse(text);
+    files.set('lock/game.lock.json', text);
+    gameLock = {
+      source: 'games/ashenspire/game.lock.json',
+      file: 'lock/game.lock.json',
+      sha256: sha256(text),
+      formatVersion: lock.formatVersion,
+      profiles: Object.fromEntries(Object.keys(lock.profiles).sort().map((id) => {
+        const p = lock.profiles[id];
+        return [id, { hash: p.hash, core: p.core, runtimeABI: p.runtimeABI, runtimeHash: p.runtimeHash }];
+      })),
+    };
+  } catch { /* absent in a partial checkout */ }
+
   const manifest = {
     format: FORMAT,
     version,
@@ -416,6 +578,7 @@ export async function buildExport({ only = null } = {}) {
     tables: tables.sort((a, b) => (a.id < b.id ? -1 : 1)),
     config: configs.sort((a, b) => (a.id < b.id ? -1 : 1)),
     art,
+    ...(gameLock ? { gameLock } : {}),
     // A --only export lists some tables: importers must not prune the rest as stale.
     ...(only ? { partial: true } : {}),
   };
