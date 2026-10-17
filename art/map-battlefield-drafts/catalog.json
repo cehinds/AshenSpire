@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "status": "draft-source-library",
+  "branch": "feature/ImproveMapBattleFieldArt",
+  "assetKeyFormat": "batchId/assetId",
+  "batches": [
+    {
+      "id": "batch-01",
+      "manifest": "batch-01/manifest.json",
+      "sourceCount": 8
+    },
+    {
+      "id": "batch-02",
+      "manifest": "batch-02/manifest.json",
+      "sourceCount": 10
+    },
+    {
+      "id": "batch-03",
+      "manifest": "batch-03/manifest.json",
+      "sourceCount": 8
+    }
+  ],
+  "editableRecipes": [
+    {
+      "id": "night-forest",
+      "file": "batch-02/composition.example.json"
+    },
+    {
+      "id": "misty-forest-combinations",
+      "file": "batch-03/composition.example.json"
+    }
+  ],
+  "nextFamilies": [
+    "swamp",
+    "snow",
+    "volcanic"
+  ],
+  "productionBindings": null
+}

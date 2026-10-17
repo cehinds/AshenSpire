@@ -1,0 +1,357 @@
+{
+  "version": 1,
+  "status": "draft-not-runtime-bound",
+  "branch": "feature/ImproveMapBattleFieldArt",
+  "assets": [
+    {
+      "id": "map-ferry",
+      "file": "map-ferry.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "mapProp",
+      "tags": {
+        "purpose": [
+          "travel",
+          "river-crossing"
+        ],
+        "biomes": [
+          "river",
+          "shore"
+        ],
+        "lighting": [
+          "diffuse-day"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "89492b3ce2392283d55e59b02b0ab78ad2f19089cb053a10d60324143e8ae62f",
+      "provenanceFile": "map-ferry.provenance.json",
+      "anchor": null,
+      "alpha": {
+        "range": [
+          0,
+          255
+        ],
+        "visibleBoundsAt16": [
+          63,
+          140,
+          1212,
+          1125
+        ],
+        "edgePixelCountAt1": 123,
+        "edgePixelCountAt16": 0
+      },
+      "reviewNotes": [
+        "Added mast with furled blue-gray cloth and curved bow after64px silhouette review.",
+        "Body opacity is slightly below255 across much of the subject; test on contrasting terrain before export."
+      ]
+    },
+    {
+      "id": "map-road-signpost",
+      "file": "map-road-signpost.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "mapProp",
+      "tags": {
+        "purpose": [
+          "travel",
+          "junction"
+        ],
+        "biomes": [
+          "road",
+          "town",
+          "forest"
+        ],
+        "lighting": [
+          "diffuse-day"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "83424544050e1e426d0cf5d4486624b755b46f200f3b512b1a2891e7f8c5257c",
+      "provenanceFile": "map-road-signpost.provenance.json",
+      "anchor": null,
+      "alpha": {
+        "range": [
+          0,
+          255
+        ],
+        "visibleBoundsAt16": [
+          169,
+          34,
+          1088,
+          1219
+        ],
+        "edgePixelCountAt1": 113,
+        "edgePixelCountAt16": 0
+      }
+    },
+    {
+      "id": "map-watchtower",
+      "file": "map-watchtower.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "mapProp",
+      "tags": {
+        "purpose": [
+          "landmark",
+          "vantage-point"
+        ],
+        "biomes": [
+          "forest",
+          "grassland",
+          "town"
+        ],
+        "lighting": [
+          "diffuse-day"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "35d6aa63de3cad9fca93084f4709d35fb86514c373a4252949cd161ad2a553ef",
+      "provenanceFile": "map-watchtower.provenance.json",
+      "anchor": null,
+      "alpha": {
+        "range": [
+          0,
+          255
+        ],
+        "visibleBoundsAt16": [
+          287,
+          42,
+          990,
+          1226
+        ],
+        "edgePixelCountAt1": 32,
+        "edgePixelCountAt16": 0
+      }
+    },
+    {
+      "id": "map-wooden-bridge",
+      "file": "map-wooden-bridge.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "mapProp",
+      "tags": {
+        "purpose": [
+          "travel",
+          "bridge"
+        ],
+        "biomes": [
+          "river",
+          "ravine"
+        ],
+        "lighting": [
+          "diffuse-day"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "101ca03d59b9b3dd091616539cab99020ae3cafce81ffe7f3487724f9d122f67",
+      "provenanceFile": "map-wooden-bridge.provenance.json",
+      "anchor": null,
+      "alpha": {
+        "range": [
+          0,
+          255
+        ],
+        "visibleBoundsAt16": [
+          65,
+          164,
+          1219,
+          1074
+        ],
+        "edgePixelCountAt1": 2,
+        "edgePixelCountAt16": 0
+      }
+    },
+    {
+      "id": "scene-forest-ground-misty",
+      "file": "scene-forest-ground-misty.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "ground",
+      "tags": {
+        "purpose": [
+          "ground",
+          "combat",
+          "rest"
+        ],
+        "biomes": [
+          "forest",
+          "clearing"
+        ],
+        "lighting": [
+          "overcast"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "e8b8a37fa31a98fdf24d1616a6cce311383da68abb9d92267d86f9cf3fc7e3b7",
+      "provenanceFile": "scene-forest-ground-misty.provenance.json",
+      "anchor": null,
+      "alpha": {
+        "range": [
+          0,
+          255
+        ],
+        "visibleBoundsAt16": [
+          0,
+          479,
+          1672,
+          941
+        ],
+        "edgePixelCountAt1": 2618,
+        "edgePixelCountAt16": 2589
+      }
+    },
+    {
+      "id": "scene-prop-ruined-arch-misty",
+      "file": "scene-prop-ruined-arch-misty.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "sceneProp",
+      "tags": {
+        "purpose": [
+          "rear-prop",
+          "ruins"
+        ],
+        "biomes": [
+          "forest",
+          "road",
+          "ruins"
+        ],
+        "lighting": [
+          "overcast"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "9d7f6ecb33a1234965321e54e4c547a9de225abea598aa4e2b85e09f2ad1af65",
+      "provenanceFile": "scene-prop-ruined-arch-misty.provenance.json",
+      "anchor": null,
+      "alpha": {
+        "range": [
+          0,
+          255
+        ],
+        "visibleBoundsAt16": [
+          103,
+          48,
+          1174,
+          1179
+        ],
+        "edgePixelCountAt1": 110,
+        "edgePixelCountAt16": 0
+      }
+    },
+    {
+      "id": "scene-prop-tent-misty",
+      "file": "scene-prop-tent-misty.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "sceneProp",
+      "tags": {
+        "purpose": [
+          "rear-prop",
+          "rest-camp"
+        ],
+        "biomes": [
+          "forest",
+          "clearing"
+        ],
+        "lighting": [
+          "overcast"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "b7ce8cc1c38196ab5f44b0e5a85ae8db9904b83d5923c8917e9e77a73149524d",
+      "provenanceFile": "scene-prop-tent-misty.provenance.json",
+      "anchor": null,
+      "alpha": {
+        "range": [
+          0,
+          255
+        ],
+        "visibleBoundsAt16": [
+          76,
+          333,
+          1183,
+          920
+        ],
+        "edgePixelCountAt1": 1,
+        "edgePixelCountAt16": 0
+      }
+    },
+    {
+      "id": "scene-road-ground-misty",
+      "file": "scene-road-ground-misty.png",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "category": "ground",
+      "tags": {
+        "purpose": [
+          "ground",
+          "combat",
+          "travel"
+        ],
+        "biomes": [
+          "forest",
+          "road"
+        ],
+        "lighting": [
+          "overcast"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "c8dc881ec3591e52c1aa8bb86f13d8b8a6059716c6a398c81c7977a63653d1dc",
+      "provenanceFile": "scene-road-ground-misty.provenance.json",
+      "anchor": null,
+      "alpha": {
+        "range": [
+          0,
+          255
+        ],
+        "visibleBoundsAt16": [
+          0,
+          476,
+          1672,
+          941
+        ],
+        "edgePixelCountAt1": 2601,
+        "edgePixelCountAt16": 2593
+      }
+    }
+  ],
+  "reusedAssets": [
+    {
+      "file": "../batch-02/scene-forest-sky-misty.png",
+      "sha256": "33f1070d4e6f870b6e813f54e8db612a74d98e91c012bc5feea61aad75f0b3d3",
+      "role": "sky"
+    }
+  ],
+  "previews": {
+    "composition": "preview-misty-composition.png",
+    "combinations": "preview-scene-combinations.png",
+    "mapProps": "preview-map-props.png",
+    "recipe": "composition.example.json",
+    "generator": "render-previews.mjs"
+  },
+  "reviewRequired": [
+    "Clean residual alpha dust and colored fringes.",
+    "Validate placement and ground contact using actors and shadows.",
+    "Assign production anchors, bridge endpoints, ferry shore rules and final tag vocabulary.",
+    "Export map512px/256px variants and registered scene components through art intake."
+  ],
+  "authorship": "Original AI-generated artwork under user direction; source prompts and references retained. No third-party license asserted."
+}

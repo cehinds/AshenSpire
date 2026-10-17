@@ -1,0 +1,97 @@
+{
+  "generator": "image_gen.imagegen",
+  "status": "draft",
+  "generatedDate": "2026-10-17",
+  "prompt": "Edit ONLY this isolated wooden ferry sprite. Preserve its weathered cool desaturated gray timber boat hull, open plank deck, high three-quarter map camera, upper-left soft light, compact footprint, rope posts and muted realistic hand-painted dark fantasy style. Make its silhouette clearly DIFFERENT FROM A FLAT BRIDGE when shown at only 64 pixels. Add ONE short upright CENTRAL MAST rising above the middle of the open deck, with a visible bundle of FURLED MUTED BLUE-GRAY SAILCLOTH tied around a short horizontal spar just below the mast top. The furled cloth must read as one clear broad desaturated slate-blue shape extending to both sides of the mast, with one draped fold, NOT a large unfurled sail or flag, not tiny invisible string. Mast and blue-gray cloth give a distinct modest vertical boat silhouette; keep mast total height around half the boat length, no tall sailing-ship rigging. Change the bow at the lower-left end into a stronger smoothly CURVED raised boat prow with a clear rounded/tapered watercraft outline; preserve its small flat-bottom ferry function. Retain a short punting pole resting diagonally on deck and one rope coil if possible. No people, passengers, water, waves, wake, docks, river, terrain tile, ground patch, display base or environment. Keep entire mast, sailcloth and boat comfortably inside the square canvas with real transparent margins. Fully transparent background and spaces. No colored matte, red/yellow edge fringe, bright halo, outlines, text, UI, borders or watermark. Maintain image quality and preserve native square dimensions; target1024 square if supported. Produce one standalone ferry asset.",
+  "sourceOutputPath": "/workspace/generated_images/exec-9815f9eb-d377-47dd-9a1a-2a3ac7790501.png",
+  "outputPath": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-03/map-ferry.png",
+  "referencedImagePaths": [
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-03/map-ferry.png"
+  ],
+  "contextStyleReferencesInspected": [
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-02/preview-map-props.png"
+  ],
+  "styleReferenceNote": "Edited the previous ferry draft after independent 64px review; the input version remains preserved at editInputOriginalPreservedAt. Batch-02 preview had been inspected for the original generation.",
+  "transparentBackgroundRequested": true,
+  "targetDimensions": {
+    "width": 1024,
+    "height": 1024
+  },
+  "processing": "Original generated PNG copied byte-for-byte; no resize, upscale, recolor, alpha cleanup or other image editing. Generated original preserved.",
+  "productionRegistered": false,
+  "productionAssetId": null,
+  "limitations": [
+    "Draft art only; not approved or registered for runtime use. Production anchors, footprints and traversal bindings remain unmeasured.",
+    "Native output differs from requested 1024 square; generated dimensions preserved unchanged.",
+    "Requested central-65-percent composition was not strictly followed; visible subject margins must be reviewed before production.",
+    "Near-transparent alpha noise and any colored edge pixels are preserved as generated; no cleanup has been applied.",
+    "Ferry uses a small flat-bottom shallow hull with a short pole and rope posts; docks, route endpoints and water contact metadata are not included."
+  ],
+  "width": 1254,
+  "height": 1254,
+  "mode": "RGBA",
+  "sha256": "89492b3ce2392283d55e59b02b0ab78ad2f19089cb053a10d60324143e8ae62f",
+  "alphaBounds": [
+    0,
+    77,
+    1234,
+    1254
+  ],
+  "visibleBoundsAlphaAbove1": [
+    61,
+    138,
+    1214,
+    1127
+  ],
+  "visibleBoundsAlphaAbove8": [
+    63,
+    140,
+    1212,
+    1125
+  ],
+  "alphaStatistics": {
+    "transparentPixels": 1030856,
+    "alpha1Pixels": 11860,
+    "translucentPixels": 541349,
+    "opaquePixels": 311
+  },
+  "colorArtifactProbe": {
+    "scope": "All pixels with alpha > 1; simple pixel-color heuristic only, not production approval",
+    "redPixels": 7,
+    "yellowPixels": 0,
+    "bluePixels": 0,
+    "magentaPixels": 0
+  },
+  "visibleMarginsAlphaAbove1": {
+    "left": 61,
+    "top": 138,
+    "right": 40,
+    "bottom": 127
+  },
+  "styleReferenceHashes": {
+    "art/map-battlefield-drafts/batch-02/preview-map-props.png": "aa46f1d522004dd3380f60b9ab4fc3aa0441f876647b135b33d516bd51fac7dd"
+  },
+  "attempts": [
+    {
+      "selected": false,
+      "prompt": "Paint ONE isolated small wooden ferry as an original dark fantasy videogame world-map prop on a genuinely transparent background. High three-quarter orthographic map camera looking downward about 35 degrees, soft diffuse upper-left daylight, realistic muted hand-painted brush texture, broad readable forms rather than tiny linework. A compact flat-bottom river ferry raft-boat built from thick rough weathered gray wooden planks: wide shallow rectangular hull with softly tapered squared bow, clearly visible open plank deck and low sturdy side gunwales. Four short stout rope posts stand at its corners, one neatly coiled dark hemp rope on deck and a simple short securing rope between two posts. One SHORT wooden punting pole lies diagonally across the open deck and protrudes only a little beyond one side; no tall mast, sail or long pole spoiling the compact silhouette. The whole silhouette is a simple legible ferry, distinct from a dock, bridge or full sailing ship. Cool ash-gray desaturated wood with subdued brown rope and charcoal shadows, subtle restrained grain, broad readable map-scale forms recognizable at 64px. No cargo clutter. Ferry alone: no docks, river, water patch, waves, wake, terrain tile, ground island, display stand, people, animals or surrounding environment. Real transparent alpha background including open spaces, no cast-shadow backdrop. Keep all parts inside the central 65 percent of a square canvas with generous empty transparent margins on all four sides. No colored matte, checkerboard, warm orange/gold/red fringe, harsh outlines or rim glow. No writing, labels, UI, frame, border, watermark, collage or sheet. Match a sober muted painterly fantasy asset family with cool gray stone, desaturated moss, subdued brown canvas and soft upper-left light. Produce one standalone sprite. Target 1024 by 1024 if supported; preserve native generated dimensions.",
+      "referencedImagePaths": [],
+      "sourceOutputPath": "/workspace/generated_images/exec-594cb4a4-89ee-4973-8546-6b10064b7b35.png",
+      "sha256": "5f0db716929c0181a812b51bd5acac4b54cd96159dbe9184f43e2fe305b2a335",
+      "reasonRejected": "Independent 64px review found flat silhouette too similar to wooden bridge."
+    },
+    {
+      "selected": true,
+      "prompt": "Edit ONLY this isolated wooden ferry sprite. Preserve its weathered cool desaturated gray timber boat hull, open plank deck, high three-quarter map camera, upper-left soft light, compact footprint, rope posts and muted realistic hand-painted dark fantasy style. Make its silhouette clearly DIFFERENT FROM A FLAT BRIDGE when shown at only 64 pixels. Add ONE short upright CENTRAL MAST rising above the middle of the open deck, with a visible bundle of FURLED MUTED BLUE-GRAY SAILCLOTH tied around a short horizontal spar just below the mast top. The furled cloth must read as one clear broad desaturated slate-blue shape extending to both sides of the mast, with one draped fold, NOT a large unfurled sail or flag, not tiny invisible string. Mast and blue-gray cloth give a distinct modest vertical boat silhouette; keep mast total height around half the boat length, no tall sailing-ship rigging. Change the bow at the lower-left end into a stronger smoothly CURVED raised boat prow with a clear rounded/tapered watercraft outline; preserve its small flat-bottom ferry function. Retain a short punting pole resting diagonally on deck and one rope coil if possible. No people, passengers, water, waves, wake, docks, river, terrain tile, ground patch, display base or environment. Keep entire mast, sailcloth and boat comfortably inside the square canvas with real transparent margins. Fully transparent background and spaces. No colored matte, red/yellow edge fringe, bright halo, outlines, text, UI, borders or watermark. Maintain image quality and preserve native square dimensions; target1024 square if supported. Produce one standalone ferry asset.",
+      "referencedImagePaths": [
+        "/workspace/AshenSpire/art/map-battlefield-drafts/batch-03/map-ferry.png"
+      ],
+      "editInputOriginalPreservedAt": "/workspace/generated_images/exec-594cb4a4-89ee-4973-8546-6b10064b7b35.png",
+      "editInputSHA256": "5f0db716929c0181a812b51bd5acac4b54cd96159dbe9184f43e2fe305b2a335",
+      "sourceOutputPath": "/workspace/generated_images/exec-9815f9eb-d377-47dd-9a1a-2a3ac7790501.png",
+      "sha256": "89492b3ce2392283d55e59b02b0ab78ad2f19089cb053a10d60324143e8ae62f",
+      "revisionReason": "Add short central mast, visible furled muted blue-gray sailcloth and curved boat bow for a silhouette distinct from the bridge."
+    }
+  ],
+  "editInputOriginalPreservedAt": "/workspace/generated_images/exec-594cb4a4-89ee-4973-8546-6b10064b7b35.png"
+}

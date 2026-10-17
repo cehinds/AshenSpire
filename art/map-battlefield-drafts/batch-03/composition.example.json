@@ -1,0 +1,168 @@
+{
+  "version": 1,
+  "status": "preview-only",
+  "canvas": {
+    "width": 1672,
+    "height": 941
+  },
+  "cameraExample": {
+    "left": 196,
+    "top": 110,
+    "width": 1280,
+    "height": 720
+  },
+  "presets": [
+    {
+      "id": "misty-camp",
+      "label": "Misty campsite",
+      "layersBackToFront": [
+        {
+          "id": "sky",
+          "file": "../batch-02/scene-forest-sky-misty.png",
+          "placement": {
+            "left": 0,
+            "top": 0,
+            "width": 1672,
+            "height": 941
+          }
+        },
+        {
+          "id": "tent",
+          "file": "scene-prop-tent-misty.png",
+          "placement": {
+            "left": 230,
+            "top": 193,
+            "width": 500,
+            "height": 500
+          }
+        },
+        {
+          "id": "ground",
+          "file": "scene-forest-ground-misty.png",
+          "placement": {
+            "left": 0,
+            "top": 0,
+            "width": 1672,
+            "height": 941
+          }
+        }
+      ]
+    },
+    {
+      "id": "misty-clearing",
+      "label": "Camp and ruins",
+      "layersBackToFront": [
+        {
+          "id": "sky",
+          "file": "../batch-02/scene-forest-sky-misty.png",
+          "placement": {
+            "left": 0,
+            "top": 0,
+            "width": 1672,
+            "height": 941
+          }
+        },
+        {
+          "id": "tent",
+          "file": "scene-prop-tent-misty.png",
+          "placement": {
+            "left": 230,
+            "top": 193,
+            "width": 500,
+            "height": 500
+          }
+        },
+        {
+          "id": "ruinedArch",
+          "file": "scene-prop-ruined-arch-misty.png",
+          "placement": {
+            "left": 1040,
+            "top": 120,
+            "width": 440,
+            "height": 440
+          }
+        },
+        {
+          "id": "ground",
+          "file": "scene-forest-ground-misty.png",
+          "placement": {
+            "left": 0,
+            "top": 0,
+            "width": 1672,
+            "height": 941
+          }
+        }
+      ]
+    },
+    {
+      "id": "misty-ruined-road",
+      "label": "Ruined roadside",
+      "layersBackToFront": [
+        {
+          "id": "sky",
+          "file": "../batch-02/scene-forest-sky-misty.png",
+          "placement": {
+            "left": 0,
+            "top": 0,
+            "width": 1672,
+            "height": 941
+          }
+        },
+        {
+          "id": "ruinedArch",
+          "file": "scene-prop-ruined-arch-misty.png",
+          "placement": {
+            "left": 1040,
+            "top": 120,
+            "width": 440,
+            "height": 440
+          }
+        },
+        {
+          "id": "ground",
+          "file": "scene-road-ground-misty.png",
+          "placement": {
+            "left": 0,
+            "top": 0,
+            "width": 1672,
+            "height": 941
+          }
+        }
+      ]
+    },
+    {
+      "id": "misty-road",
+      "label": "Open woodland road",
+      "layersBackToFront": [
+        {
+          "id": "sky",
+          "file": "../batch-02/scene-forest-sky-misty.png",
+          "placement": {
+            "left": 0,
+            "top": 0,
+            "width": 1672,
+            "height": 941
+          }
+        },
+        {
+          "id": "ground",
+          "file": "scene-road-ground-misty.png",
+          "placement": {
+            "left": 0,
+            "top": 0,
+            "width": 1672,
+            "height": 941
+          }
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "Tent and arch are independent PNGs, with independent placements and presence in each preset.",
+    "All source PNGs are unchanged. Object display sizes are deliberate preview transforms; runtime registration is pending.",
+    "Ground is in front of rear props and conceals their base seam. Actor placement and contact shadows still need validation.",
+    "Sky reuses batch02 misty background; ground and all props come from batch03.",
+    "Camera is an example viewport, not a validated pan range.",
+    "Road art bends to left rear; this does not define game-map route connectivity."
+  ]
+}

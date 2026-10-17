@@ -1,0 +1,17 @@
+{
+  "asset": "map-road-signpost.png",
+  "prompt": "One isolated dark fantasy map prop: a compact weathered timber forked road signpost, high three-quarter orthographic view. A single stout crooked post carries exactly three plain rectangular timber boards at different heights, each board mounted horizontally and pointing to a different side by extending left, right, or left. All board ends are flat blunt rectangles with square corners: absolutely no arrowhead shapes, chevrons, triangles, or pointed ends. Each plank face is completely blank, with natural wood grain only. A tiny faded slate-green cloth strip is tied near the top. Muted cool painterly fantasy miniature art, dark weathered brown wood, restrained gray and moss-olive details, soft upper-left lighting, bold simple silhouette readable at 64px. Keep the planks visibly blank: absolutely no readable text, no letters, no glyphs, no numbers, no symbols, no arrows, no painted marks, no UI-like details. Self-contained signpost only, no road, no ground island or terrain base, no scenery, no people, no extra props. Center the full post on a square transparent canvas with generous empty transparent margin on all sides. Clean natural antialiased silhouette; no colored outline or fringe, no halo, no stray alpha pixels or edge dust, no cast shadow beyond tiny contact at the post base. Target 1024x1024 transparent PNG.",
+  "output_path": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-03/map-road-signpost.png",
+  "generated_original_path": "/workspace/generated_images/exec-676ef993-28b5-42cb-8122-c3bda0c21e24.png",
+  "superseded_generated_original_paths": [
+    "/workspace/generated_images/exec-52b195f9-dcce-498f-81e9-143bdfa284a9.png"
+  ],
+  "referenced_image_paths": [],
+  "style_context_path": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-02/preview-map-props.png",
+  "generator": "image_gen.imagegen",
+  "status": "draft",
+  "dimensions_px": [1254, 1254],
+  "format": "PNG",
+  "color_mode": "RGBA",
+  "sha256": "83424544050e1e426d0cf5d4486624b755b46f200f3b512b1a2891e7f8c5257c"
+}

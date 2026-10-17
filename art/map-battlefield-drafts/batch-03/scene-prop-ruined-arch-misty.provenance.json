@@ -1,0 +1,70 @@
+{
+  "generator": "image_gen.imagegen",
+  "status": "draft",
+  "prompt": "Create ONE ISOLATED painted dark-fantasy rear-scene prop: a tall upright mossy ruined limestone arch, one complete recognizable arched opening with irregular broken top stones and short broken masonry shoulders at either side, restrained olive moss in joints. The two upright stone foot contacts sit on one horizontal baseline. The opening through the arch must be TRANSPARENT so an independently composited sky layer shows through it. Camera at standing human chest/eye height looking horizontally across a battlefield, near front-facing with only a slight three-quarter turn to reveal masonry thickness. This is a LEVEL COMBAT-SCENE CAMERA, NOT an elevated map icon, aerial view, isometric object or top-down view. Quiet hand-painted fantasy game background art, broad painterly cold slate limestone planes, restrained detail, soft diffuse COLD OVERCAST DAYLIGHT, neutral slate-gray and subdued moss palette that belongs under a misty forest sky. No strong key light, blue moonlight, blue spotlight, blue rim, warm firelight or lantern glow. No lantern. Produce only this one independent upright arch cutout, not a paired tent-and-arch composition. TRUE TRANSPARENT BACKGROUND including the central arch opening. No background scenery, sky, fog layer, trees, floor, ground slab, terrain island, ground texture, cast shadow outside the stones, steps, campfire, crates, people or creeping foliage extending far from the masonry. The arch masonry and moss attached to it are the only visible pixels. Clean natural neutral-colored alpha edges: no colored outlines, red/yellow fringe, halo, selection stroke or edge glow. Center the entire arch within the middle 65 percent of a square 1024x1024 canvas with generous fully transparent margins on every side, including below its feet. Keep all stones inside the canvas. No text, logo, labels, UI or frame.",
+  "sourceOutputPath": "/workspace/generated_images/exec-23f2cd81-b264-4920-8b7b-28b286479cd2.png",
+  "outputPath": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-03/scene-prop-ruined-arch-misty.png",
+  "referencedImagePaths": [],
+  "inspectedStyleReferencePaths": [
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-02/scene-forest-props-night.png",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-02/scene-forest-sky-misty.png"
+  ],
+  "referenceStrategy": "Fresh generation from written description after inspecting prior props and misty sky; source images not passed to generator to reduce colored alpha fringe propagation.",
+  "requestedDimensions": {
+    "width": 1024,
+    "height": 1024
+  },
+  "transparentBackgroundRequested": true,
+  "processing": "Original generated PNG copied unchanged; no resizing, upscaling or alpha cleanup.",
+  "productionRegistered": false,
+  "actualDimensions": {
+    "width": 1254,
+    "height": 1254
+  },
+  "mode": "RGBA",
+  "sha256": "9d7f6ecb33a1234965321e54e4c547a9de225abea598aa4e2b85e09f2ad1af65",
+  "alphaExtrema": [
+    0,
+    255
+  ],
+  "alphaBoundsByThreshold": {
+    "0": [
+      0,
+      3,
+      1232,
+      1254
+    ],
+    "1": [
+      99,
+      46,
+      1177,
+      1188
+    ],
+    "8": [
+      102,
+      48,
+      1174,
+      1179
+    ],
+    "128": [
+      104,
+      49,
+      1174,
+      1178
+    ]
+  },
+  "maximumBorderAlpha": 1,
+  "centerAlpha": 0,
+  "alphaFindings": "RGBA alpha includes fully transparent background and opaque prop pixels. Near-transparent alpha=1 dust reaches canvas borders; colored edge fringe persists. Original output preserved unchanged.",
+  "visualReview": {
+    "inspected": true,
+    "observations": [
+      "Independent upright mossy arch with level foot baseline, no attached scenery, floor island or external shadow.",
+      "Near-front level scene camera with slight masonry thickness, diffuse cold gray stone; no moonlit blue spotlight or lantern glow.",
+      "Center alpha is 0: opening is transparent for separately composited backdrop.",
+      "Visible subject uses roughly 91 percent of canvas height; top/bottom margins are narrower than requested.",
+      "Thin yellow/red edge pixels remain around portions of masonry; generated alpha=1 specks reach left and bottom borders."
+    ],
+    "productionApproved": false
+  }
+}

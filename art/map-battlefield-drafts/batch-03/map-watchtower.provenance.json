@@ -1,0 +1,14 @@
+{
+  "asset": "map-watchtower.png",
+  "prompt": "A single isolated map prop for a dark fantasy strategy RPG: a squat, sturdy stone watchtower shown in a high three-quarter orthographic map view. Bold, compact silhouette that reads clearly at 64-pixel icon size: broad square limestone rubble base, short thick tower shaft, and a small dark slate roof with simple corner supports. The tower is complete, self-contained and standing on its own, with no surrounding wall, no attached buildings, no terrain island or ground tile. Painterly hand-rendered miniature environment art, tactile weathered stone, restrained cool gray and muted olive-moss palette, charcoal roof, subtle warm upper-left light, dark fantasy mood, simplified broad shapes and moderate detail. Center the complete tower on a square transparent canvas with generous clear padding on every side, no crop. True transparent background; no colored fringe, outline halo, stray alpha dust, background, cast shadow, base, text, symbols, flags, people, weapons, UI, labels or border. Target a 1024x1024 transparent PNG.",
+  "output_path": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-03/map-watchtower.png",
+  "generated_original_path": "/workspace/generated_images/exec-9de5ded4-4463-4698-9b8a-eaae4ffeda56.png",
+  "referenced_image_paths": [],
+  "style_context_path": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-02/preview-map-props.png",
+  "generator": "image_gen.imagegen",
+  "status": "draft",
+  "dimensions_px": [1254, 1254],
+  "format": "PNG",
+  "color_mode": "RGBA",
+  "sha256": "35d6aa63de3cad9fca93084f4709d35fb86514c373a4252949cd161ad2a553ef"
+}

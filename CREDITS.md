@@ -725,3 +725,12 @@ Source PNGs, exact prompts, reference provenance, hashes and review limitations
 are retained together. Browser-rendered previews use the editable composition
 recipe and preserve the original source pixels. These remain unregistered drafts;
 no third-party artwork or license is claimed.
+
+### Map and battlefield draft paintings — batch 03 (2026-10-17)
+
+Eight original OpenAI-generated paintings in
+`art/map-battlefield-drafts/batch-03/` add four travel landmarks, separate misty
+tent and arch props, and two ground variants. Exact prompts, source outputs,
+reference provenance and draft QA are retained. Editable preview recipes reuse
+the batch02 misty sky. Sources remain unregistered on the art feature branch;
+no third-party artwork or license is claimed.

@@ -1,0 +1,69 @@
+{
+  "generator": "image_gen.imagegen",
+  "status": "draft",
+  "prompt": "Create ONE ISOLATED painted dark-fantasy rear-scene prop: a single low broad medieval canvas camping tent, muted worn slate-gray cloth with a little desaturated moss-green staining, simple wooden supporting poles and restrained guy ropes. The broad tent base sits level on one horizontal baseline; roof has a low ridge and a clearly readable dark open entrance. Camera at standing human chest/eye height looking horizontally across a battlefield, near front-facing with just enough three-quarter turn to show one tent side. This is a LEVEL COMBAT-SCENE CAMERA, NOT an elevated map icon, aerial view, isometric object or top-down view. Quiet hand-painted fantasy game background art, broad painterly cloth folds, restrained detail, soft diffuse COLD OVERCAST DAYLIGHT, neutral slate-gray and subdued moss palette that belongs under a misty forest sky. No strong key light, blue moonlight, blue spotlight, blue rim, warm firelight or lantern glow. No lantern needed. Produce only this one independent tent cutout, not a paired tent-and-arch composition. TRUE TRANSPARENT BACKGROUND. No background scenery, sky, fog layer, trees, floor, ground slab, terrain island, ground texture, cast shadow outside the tent, rocks, campfire, crates or people. The tent itself and its poles/ropes are the only visible pixels. Clean natural neutral-colored alpha edges: no colored outlines, red/yellow fringe, halo, selection stroke or edge glow. Position the entire tent in the central 65 percent of a square 1024x1024 canvas with generous fully transparent margins on every side, including below the tent's ground contact. Never crop any rope/pole. No text, logo, labels, UI or frame.",
+  "sourceOutputPath": "/workspace/generated_images/exec-ece9f555-56f3-4224-973c-023730494b5a.png",
+  "outputPath": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-03/scene-prop-tent-misty.png",
+  "referencedImagePaths": [],
+  "inspectedStyleReferencePaths": [
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-02/scene-forest-props-night.png",
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-02/scene-forest-sky-misty.png"
+  ],
+  "referenceStrategy": "Fresh generation from written description after inspecting prior props and misty sky; source images not passed to generator to reduce colored alpha fringe propagation.",
+  "requestedDimensions": {
+    "width": 1024,
+    "height": 1024
+  },
+  "transparentBackgroundRequested": true,
+  "processing": "Original generated PNG copied unchanged; no resizing, upscaling or alpha cleanup.",
+  "productionRegistered": false,
+  "actualDimensions": {
+    "width": 1254,
+    "height": 1254
+  },
+  "mode": "RGBA",
+  "sha256": "b7ce8cc1c38196ab5f44b0e5a85ae8db9904b83d5923c8917e9e77a73149524d",
+  "alphaExtrema": [
+    0,
+    255
+  ],
+  "alphaBoundsByThreshold": {
+    "0": [
+      0,
+      29,
+      1226,
+      1230
+    ],
+    "1": [
+      73,
+      331,
+      1187,
+      922
+    ],
+    "8": [
+      76,
+      333,
+      1185,
+      920
+    ],
+    "128": [
+      77,
+      334,
+      1183,
+      919
+    ]
+  },
+  "maximumBorderAlpha": 1,
+  "centerAlpha": 253,
+  "alphaFindings": "RGBA alpha includes fully transparent background and opaque prop pixels. Near-transparent alpha=1 dust reaches canvas borders; colored edge fringe persists. Original output preserved unchanged.",
+  "visualReview": {
+    "inspected": true,
+    "observations": [
+      "Independent low broad tent with no attached scenery, floor island or external shadow.",
+      "Near-level scene camera with a slight three-quarter turn, diffuse slate cloth and restrained moss staining; no moonlit blue spotlight or lantern glow.",
+      "Visible subject uses roughly 89 percent of canvas width, so side margins are narrower than the requested middle-65-percent placement.",
+      "Thin yellow/red edge pixels remain around some ropes and lower cloth edges; generated alpha=1 specks reach the left border."
+    ],
+    "productionApproved": false
+  }
+}

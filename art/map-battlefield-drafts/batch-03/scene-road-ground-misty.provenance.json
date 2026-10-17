@@ -1,0 +1,14 @@
+{
+  "status": "draft",
+  "generator": "OpenAI image_gen",
+  "prompt": "Edit this transparent misty clearing GROUND layer into a distinct worn ROAD ground variant. Retain full wide canvas and exact horizon around y0.56, upper half truly alpha transparent, continuous opaque floor through bottom and side edges. A broad old dirt and broken-cobblestone road sweeps gently from lower left foreground toward center-right horizon, with two subtle wheel ruts and desaturated moss edging. Road must leave a large flat open combat area across center, no steep slope or clutter. Cool gray-brown damp stone, soft overcast misty-day illumination, understated highlights and painterly dark fantasy. No sky/background, fog overlay, forest scenery, buildings, fence, people, text, UI, markings or arrows. Clean organic silhouette with no neon fringe or detached alpha specks. No isolated terrain island; ground fills lower canvas and bleeds beyond screen edges. Ideally exactly1672x941, do not crop.",
+  "sourceOutputPath": "/workspace/generated_images/exec-03721169-12a0-45b2-93bc-9c4eabfe6062.png",
+  "sourceReferences": [
+    "scene-forest-ground-misty.png"
+  ],
+  "outputPath": "scene-road-ground-misty.png",
+  "processing": "Unchanged generated output.",
+  "reviewNotes": [
+    "Generated road bends toward the left rear rather than the requested center-right. Treat route direction as visible art; do not infer network connectivity."
+  ]
+}

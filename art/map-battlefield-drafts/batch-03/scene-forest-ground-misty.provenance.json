@@ -1,0 +1,12 @@
+{
+  "status": "draft",
+  "generator": "OpenAI image_gen",
+  "prompt": "Edit FIRST reference transparent forest ground to match SECOND reference misty overcast sky. Only output GROUND, true alpha transparent upper half; do not include background sky or distant forests. Preserve the wide floor geometry, horizon roughly y0.56 and continuous opaque earth down to bottom and side edges. Damp cool slate-gray earth, sparse desaturated moss, flat stones with subtle wet sheen, diffuse cloudy daylight without golden sunlight or blue nighttime illumination. Broad calm central combat floor with few distracting details, vegetation kept at outer edges. Painterly dark fantasy, clean organic alpha horizon without neon colored outlines or floating edge specks. No fog painted over transparent upper area, trees, tent, ruins, props, people, UI, text, border or terrain island. Entire wide canvas ideally exactly1672x941, no crop. Ground will be composited above separately positioned objects and a misty background.",
+  "sourceOutputPath": "/workspace/generated_images/exec-639c649b-02ea-49f0-9ff2-ada96bd30c1e.png",
+  "sourceReferences": [
+    "../batch-01/scene-forest-ground-day.png",
+    "../batch-02/scene-forest-sky-misty.png"
+  ],
+  "outputPath": "scene-forest-ground-misty.png",
+  "processing": "Unchanged generated output; placements are separate preview metadata."
+}

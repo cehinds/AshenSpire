@@ -1,0 +1,72 @@
+{
+  "generator": "image_gen.imagegen",
+  "status": "draft",
+  "generatedDate": "2026-10-17",
+  "prompt": "Paint ONE isolated weathered wooden bridge as an original dark fantasy videogame world-map prop on a genuinely transparent background. High three-quarter orthographic map camera looking downward about 35 degrees, soft diffuse upper-left daylight, realistic muted hand-painted brush texture, broad readable forms rather than tiny linework. A short straight wooden footbridge span runs diagonally from lower left to upper right: two clearly identifiable open squared-off approach ends, broad continuous deck of thick rough weathered planks, low simple wooden side rails on stout posts, visible timber stringers under the deck, four short structural feet ending just below the span. Keep the deck open and readable, not a roofed bridge or enclosed tunnel. Cool ash-gray desaturated wood with subtle dark grain, charcoal crevices, a very few faded moss traces. Restrained believable aged medieval construction. Bold compact silhouette that reads at 64px, slight silhouette asymmetry from worn planks but no broken impassable gaps. Bridge alone: no river, water, banks, stones, ground/terrain island, paving tile, display plinth, surrounding trees, landscape, people, animals, hanging banners or scenery. All bridge parts remain inside the central 65 percent of a square canvas, surrounded by generous transparent margins on every side. Real alpha transparency outside timber and between rails. No colored matte, checkerboard, opaque shadow backdrop, warm orange/gold/red edges, colored fringe, harsh outline or rim glow. No writing, labels, UI, border or watermark. Match a sober painterly fantasy map asset family: cool gray stone companions, desaturated moss, subdued brown canvas, soft upper-left light. Produce one single standalone sprite, not a sheet or composition. Target 1024 by 1024 if supported; preserve native generated dimensions.",
+  "sourceOutputPath": "/workspace/generated_images/exec-572ce185-a465-42a2-8d78-b9c32c83657c.png",
+  "outputPath": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-03/map-wooden-bridge.png",
+  "referencedImagePaths": [],
+  "contextStyleReferencesInspected": [
+    "/workspace/AshenSpire/art/map-battlefield-drafts/batch-02/preview-map-props.png"
+  ],
+  "styleReferenceNote": "Batch-02 prop preview was viewed before authoring prompts. Fresh generation describes its muted painterly style in words; no raster image was passed to the generator.",
+  "transparentBackgroundRequested": true,
+  "targetDimensions": {
+    "width": 1024,
+    "height": 1024
+  },
+  "processing": "Original generated PNG copied byte-for-byte; no resize, upscale, recolor, alpha cleanup or other image editing. Generated original preserved.",
+  "productionRegistered": false,
+  "productionAssetId": null,
+  "limitations": [
+    "Draft art only; not approved or registered for runtime use. Production anchors, footprints and traversal bindings remain unmeasured.",
+    "Native output differs from requested 1024 square; generated dimensions preserved unchanged.",
+    "Requested central-65-percent composition was not strictly followed; visible subject margins must be reviewed before production.",
+    "Near-transparent alpha noise and any colored edge pixels are preserved as generated; no cleanup has been applied.",
+    "Only one bridge orientation is provided. Endpoints are visually identifiable but have no measured connector metadata."
+  ],
+  "width": 1254,
+  "height": 1254,
+  "mode": "RGBA",
+  "sha256": "101ca03d59b9b3dd091616539cab99020ae3cafce81ffe7f3487724f9d122f67",
+  "alphaBounds": [
+    0,
+    11,
+    1242,
+    1230
+  ],
+  "visibleBoundsAlphaAbove1": [
+    63,
+    162,
+    1221,
+    1076
+  ],
+  "visibleBoundsAlphaAbove8": [
+    65,
+    164,
+    1219,
+    1074
+  ],
+  "alphaStatistics": {
+    "transparentPixels": 1084597,
+    "alpha1Pixels": 13477,
+    "translucentPixels": 487338,
+    "opaquePixels": 581
+  },
+  "colorArtifactProbe": {
+    "scope": "All pixels with alpha > 1; simple pixel-color heuristic only, not production approval",
+    "redPixels": 0,
+    "yellowPixels": 1,
+    "bluePixels": 0,
+    "magentaPixels": 0
+  },
+  "visibleMarginsAlphaAbove1": {
+    "left": 63,
+    "top": 162,
+    "right": 33,
+    "bottom": 178
+  },
+  "styleReferenceHashes": {
+    "art/map-battlefield-drafts/batch-02/preview-map-props.png": "aa46f1d522004dd3380f60b9ab4fc3aa0441f876647b135b33d516bd51fac7dd"
+  }
+}
