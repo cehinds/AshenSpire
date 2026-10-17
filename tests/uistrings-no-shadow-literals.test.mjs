@@ -31,7 +31,7 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const csvIds = (text) => new Set(text.split('\n').filter((line) => line && !line.startsWith('#')).map((line) => line.split(',')[0]).filter((id) => id && id !== 'id'));
 
 const frozenMigrationIds = (number) => JSON.parse(readFileSync(join(ROOT, `tests/fixtures/uistrings-migrated-${number}.json`), 'utf8')).ids;
-const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1651, 1671, 1767, 1850, 1915, 'common-controls'].flatMap(frozenMigrationIds));
+const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1651, 1671, 1767, 1850, 1915, 'common-controls', 'core-profile'].flatMap(frozenMigrationIds));
 
 function migratedIds() {
   // Merged rows must remain protected when origin/dev advances or is absent.
@@ -164,9 +164,9 @@ function migratedTexts(ids = migratedIds()) {
 
 // Compiled once, swept once: both assertions below read the same hits.
 let swept;
-function sweep() {
-  if (swept) return swept;
-  const patterns = [...migratedTexts()].map(([text, rows]) => ({
+function sweep(ids = null) {
+  if (!ids && swept) return swept;
+  const patterns = [...migratedTexts(ids ?? migratedIds())].map(([text, rows]) => ({
     text, rows, re: new RegExp(`(?<=['"\`>])${reEscape(text)}(?=['"\`<]| ?\\$\\{| ['"\`])`),
   }));
   const hits = [];
@@ -179,7 +179,8 @@ function sweep() {
       }
     });
   }
-  return (swept = hits);
+  if (!ids) swept = hits;
+  return hits;
 }
 
 test('the sweep has rows to sweep', () => {
@@ -272,4 +273,28 @@ test('shared controls and hidden intent copy remain protected after promotion', 
   const texts = migratedTexts(permanentMigratedIds());
   assert.ok(texts.get('Exact move, damage, and effects unread.')?.includes('combat.targetHud.unknown.short'));
   assert.ok(texts.get('Choose')?.includes('common.chooseNamed.short'));
+});
+
+
+test('all Core-default migration rows and semantic allowances survive an empty branch delta', () => {
+  const frozen = frozenMigrationIds('core-profile');
+  assert.equal(frozen.length, 99, 'retain all97 added rows and both migrated Deck Editor rows from PR2023');
+  assert.equal(new Set(frozen).size, 99, 'each migration row is frozen once');
+  const permanent = permanentMigratedIds();
+  for (const id of frozen) {
+    assert.ok(permanent.has(id), `missing permanent coverage for ${id}`);
+    assert.ok(uiStrings.some(row => row.id === id), `missing authored row ${id}`);
+  }
+  assert.ok(frozen.includes('deckEditor.cancel') && frozen.includes('deckEditor.keys'),
+    'existing rows migrated by the feature retain coverage alongside added rows');
+  const texts = migratedTexts(permanent);
+  assert.ok(texts.get('Game rules')?.includes('gameProfile.settings.title.short'));
+  assert.ok(texts.get('Auto')?.includes('settings.viewPreset.auto.short'));
+  // Supplying only frozen IDs simulates origin/dev already containing every
+  // feature row, or a checkout with no remote history. No branch delta helps.
+  const hits = sweep(permanent);
+  for (const [file, text] of ALLOWED) {
+    assert.ok(hits.some(hit => hit.file === file && hit.text === text),
+      `${file} "${text}" must remain checked even after the branch delta disappears`);
+  }
 });
