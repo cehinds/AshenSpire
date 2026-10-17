@@ -244,3 +244,12 @@ test('a basic card the character already owns is not offered as a reward', () =>
   const src = readFileSync(new URL('../src/model/gameProfileRewards.js', import.meta.url), 'utf8');
   assert.match(src, /skipOwnedBasics && cardRank\(card, rules\) < \(cardRule\.minRank \?\? 0\) && ownedIds\.has\(card\.id\)/);
 });
+
+test('variance outcomes stay unique and bounded even at the schema maximum', async () => {
+  const { enemyAttributeOutcomes, characterSettings: cs } = await import('../engine/kernel/gameConfig.js');
+  const s = { ...cs(profile.modules), variance: { mode: 'configured', points: 10, among: 5 } };
+  const boss = profile.content.enemies.find(e => e.tier === 'boss');
+  const outcomes = enemyAttributeOutcomes(boss, s);
+  assert.equal(new Set(outcomes.map(o => JSON.stringify(o))).size, outcomes.length);
+  assert.ok(outcomes.length < 5000, `${outcomes.length} spreads`);
+});

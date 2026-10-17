@@ -25347,7 +25347,7 @@ export const gameProfileCatalog = {
       "path": "engine/kernel/gameConfig.js",
       "id": "ashen.runtime",
       "version": "1.0.0",
-      "hash": "sha256:fb1824a5b9103a3e3f9da424b9de1c8746708a94c15c10bb5844b12223031798"
+      "hash": "sha256:736f52e6e6bd3f5b16998af1f77a2c6359e3e416acb1a8f5c474b425d723ec8e"
     },
     {
       "path": "engine/contracts/game-profile.json",
@@ -30380,7 +30380,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:23af16d4e9c9f6d88fe655d32ecf1a688b47df39f9e3a1d6d193ce63923593ab"
     }
   ],
-  "runtimeHash": "sha256:05198aaa8a753169d3166185e5876043d700aca5a058be073a54ed01d97a5c8c"
+  "runtimeHash": "sha256:d37be8de5dfc09c65bd2b7482090af52ab4d083cde016436f924fa6a32845760"
 };
 export const gameProfileAuthors = {
   "default": {

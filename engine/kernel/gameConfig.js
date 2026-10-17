@@ -292,12 +292,18 @@ export function enemyAttributeOutcomes(row, settings) {
   const outcomes = [base];
   if (!settings.variance || !v.points || !characterRule(row, settings).variance) return outcomes;
   const order = (row.attributePriority || fill.defaultPriority).slice(0, v.among), caps = { ...fill.caps, ...(row.attributeCaps || {}) };
+  // Track unique spreads only: many move orders reach the same spread, and expanding duplicates grows
+  // exponentially with variance.points (the schema allows up to 10).
+  const seen = new Set([canonicalGameJSON(base)]);
   let frontier = [base];
-  for (let step = 0; step < v.points; step++) {
+  for (let step = 0; step < v.points && frontier.length; step++) {
     const next = [];
-    for (const a of frontier) for (const from of order) for (const to of order)
-      if (from !== to && a[from] > (row.attributes?.[from] || 0) && (caps[to] === undefined || a[to] < caps[to])) next.push({ ...a, [from]: a[from] - 1, [to]: a[to] + 1 });
-    outcomes.push(...next); frontier = next;
+    for (const a of frontier) for (const from of order) for (const to of order) {
+      if (from === to || a[from] <= (row.attributes?.[from] || 0) || (caps[to] !== undefined && a[to] >= caps[to])) continue;
+      const moved = { ...a, [from]: a[from] - 1, [to]: a[to] + 1 }, key = canonicalGameJSON(moved);
+      if (!seen.has(key)) { seen.add(key); next.push(moved); outcomes.push(moved); }
+    }
+    frontier = next;
   }
   return outcomes;
 }

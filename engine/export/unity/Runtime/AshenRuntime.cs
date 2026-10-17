@@ -343,6 +343,13 @@ namespace Ashen.Runtime
         {
             var path = reference[1..].Split('.');
             object cur;
+            if (path[0] == "model")
+            {
+                // SPEC 4: the mechanic's own state merged over model.schema.json property defaults.
+                cur = ModelView(call, scope.Slug);
+                foreach (var key in path[1..]) cur = cur is Dictionary<string, object> d && d.TryGetValue(key, out var n) ? n : null;
+                return cur ?? throw new InvalidOperationException($"Unresolved {reference}");
+            }
             if (path[0] == "state")
             {
                 call.State.Mechanics.TryGetValue(scope.Slug, out var root);
@@ -361,6 +368,46 @@ namespace Ashen.Runtime
             }
             return cur ?? throw new InvalidOperationException($"Unresolved {reference}");
         }
+
+        Dictionary<string, object> ModelView(Call call, string slug)
+        {
+            var defaults = _build.Mechanics.TryGetValue(slug, out var m) && m.Model.ValueKind == JsonValueKind.Object
+                ? SchemaDefaults(m.Model) : new Dictionary<string, object>();
+            call.State.Mechanics.TryGetValue(slug, out var own);
+            return MergeOver(defaults, own);
+        }
+
+        static Dictionary<string, object> SchemaDefaults(JsonElement schema)
+        {
+            var out_ = new Dictionary<string, object>();
+            if (!schema.TryGetProperty("properties", out var props) || props.ValueKind != JsonValueKind.Object) return out_;
+            foreach (var p in props.EnumerateObject())
+            {
+                if (p.Value.TryGetProperty("default", out var dflt)) out_[p.Name] = FromJson(dflt);
+                else if (p.Value.TryGetProperty("properties", out _)) out_[p.Name] = SchemaDefaults(p.Value);
+            }
+            return out_;
+        }
+
+        static Dictionary<string, object> MergeOver(Dictionary<string, object> baseValues, Dictionary<string, object> over)
+        {
+            var result = (Dictionary<string, object>)GameState.DeepCopy(baseValues);
+            if (over == null) return result;
+            foreach (var (k, v) in over)
+                result[k] = result.TryGetValue(k, out var b) && b is Dictionary<string, object> bd && v is Dictionary<string, object> vd ? MergeOver(bd, vd) : GameState.DeepCopy(v);
+            return result;
+        }
+
+        static object FromJson(JsonElement e) => e.ValueKind switch
+        {
+            JsonValueKind.Object => e.EnumerateObject().ToDictionary(p => p.Name, p => FromJson(p.Value)),
+            JsonValueKind.Array => e.EnumerateArray().Select(FromJson).ToList(),
+            JsonValueKind.Number => e.GetDouble(),
+            JsonValueKind.String => e.GetString(),
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            _ => null,
+        };
 
         static object EntityField(Entity e, string key) => key switch
         {
@@ -592,10 +639,10 @@ namespace Ashen.Runtime
                         if (e.SpMax is int cap) e.Sp = Math.Min(cap, e.Sp);
                     });
                     break;
-                case "restoreStamina":
+                case "restoreStamina":   // signed: a negative amount removes SP, floored at 0 (SPEC 8)
                     PerTarget((e, key, sc) =>
                     {
-                        e.Sp += Floor0(Num("amount", 1, sc));
+                        e.Sp = Math.Max(0, e.Sp + (int)Math.Floor(Num("amount", 1, sc)));
                         if (e.SpMax is int cap) e.Sp = Math.Min(cap, e.Sp);
                     });
                     break;
