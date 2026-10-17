@@ -24,7 +24,7 @@ export function normalizedProposals(actorId,report,provenance,footReview=null,cr
   return {id:v.id,status:'draft',perspective:'rear',provenance:{sourceSha256:report.source.sha256,prompt:provenance.prompt||provenance.promptSummary,promptKind:provenance.prompt?'exact':'summary',sourceReferences:references,publicationStatus:'draft-unpublished',artRelease:null,normalization:'art/enemy-back-proposals/'+actorId+'/normalized.json',cropReview:cropApproval?.status||report.cropPlan?.status||'pending',...(cropApproval?{cropApproval}:{})},stances:{neutral:{frames:[{asset,sha256:v.sha256,durationMs:1000,canvas:v.size,anchors:{feet:feet.map((n,i)=>n/v.size[i])},registration:{boundsAnchorPixels:v.boundsAnchor||v.anchor,feetSource:override?'manual-visible-foot-draft':'bounds-floor-reference',footReviewStatus:footReview?.status||'not-independently-reviewed'}}]}}};
  });
 }
-export function integrateNormalized(manifest,actorId,report,provenance,footReview=null){
+export function integrateNormalized(manifest,actorId,report,provenance,footReview=null,cropApproval=null){
  const next=structuredClone(manifest),actor=next.actors.find(a=>a.id===actorId);
  if(!actor)throw Error('Actor is not in the audited roster');
  const incoming=normalizedProposals(actorId,report,provenance,footReview,cropApproval);
