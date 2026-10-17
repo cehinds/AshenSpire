@@ -1,6 +1,8 @@
-# Origin branches slated for deletion 2026-10-17 (chore/BranchCleanup); not deleted until the owner confirms.
+# Origin branches slated for deletion 2026-10-17 (chore/BranchCleanup); owner approved 2026-10-17.
 # Before deletion, every tip marked ARCHIVED (not reachable from dev) is pushed as tag archive/2026-10-17/<branch>,
 # so its commits survive garbage collection. Tips marked in-dev are ancestors of dev.
+# Delete only by exact SHA: git push --force-with-lease=refs/heads/<branch>:<sha> origin :refs/heads/<branch>.
+# A branch whose live tip differs from <sha> has moved: skip it and keep it.
 # Restore: git push origin refs/tags/archive/2026-10-17/<branch>:refs/heads/<branch>   (ARCHIVED)
 #          git push origin <sha>:refs/heads/<branch>                                   (in-dev)
 # <tip sha> <branch> <last commit date> <ARCHIVED|in-dev>
