@@ -1136,7 +1136,7 @@ export function playTimeline(events, ctx, done) {
       activeActorAnimation = actorAnimation;
     } else {
       actorAnimation = null;
-      if (actorEl && beat.kind !== 'reveal') {
+      if (ctx.figureAnimations !== false && actorEl && beat.kind !== 'reveal') {
         const attacking = beat.kind === 'attack' || beat.kind === 'counter';
         safe(() => flash(actorEl, attacking ? 'act-attack' : 'act-move', speed.lungeMs));
         safe(() => playPoseOn(actorEl, attacking ? 'attack' : 'guard', speed.lungeMs));
@@ -1214,7 +1214,7 @@ export function playTimeline(events, ctx, done) {
             safe(() => actorEl && hold(actorEl, holdMs));
             safe(() => {
               if (activeActorAnimation?.hold) activeActorAnimation.hold(holdMs);
-              else stageFor(actorEl)?.hold?.(holdMs);
+              else if (ctx.figureAnimations !== false) stageFor(actorEl)?.hold?.(holdMs);
             });
             heldMs += holdMs;
             hitStop = holdMs;
@@ -1667,7 +1667,7 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
         },
         reaction: (ctx) => {
           const anchor = ctx.anchorFor(e.targetId);
-          if (parts.guard && !parts.damage && anchor?.closest('.enemy')) playPoseOn(anchor, 'guardHit', 220);
+          if (ctx.figureAnimations !== false && parts.guard && !parts.damage && anchor?.closest('.enemy')) playPoseOn(anchor, 'guardHit', 220);
           if (!parts.damage) return;
           // The victim flashes + recoils (CSS); heavy hits recoil further
           // (hit-heavy) and kick the screen. A held hit (hit-stop) starts the
@@ -1676,8 +1676,10 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           flash(anchor, 'hitflash', heavy ? 380 : 220, held);
           // An animated figure recoils in its own art as well as in CSS, and holds
           // it as long as the flash it belongs to.
-          playPoseOn(anchor, 'hit', heavy ? 380 : 220);
-          if (held) stageFor(anchor)?.hold?.(held);
+          if (ctx.figureAnimations !== false) {
+            playPoseOn(anchor, 'hit', heavy ? 380 : 220);
+            if (held) stageFor(anchor)?.hold?.(held);
+          }
           if (heavy) flash(anchor, 'hit-heavy', 380 + held);
           hold(anchor, held);
           // Every HP hit shakes, by the HP it cost (SPEC §7.4).
@@ -1719,7 +1721,10 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
       return {
         reaction: (ctx) => {
           const anchor = ctx.anchorFor(e.targetId);
-          if (e.amount > 0) { playPoseOn(anchor, 'hit', 300); flash(anchor, 'hitflash', 300); }
+          if (e.amount > 0) {
+            if (ctx.figureAnimations !== false) playPoseOn(anchor, 'hit', 300);
+            flash(anchor, 'hitflash', 300);
+          }
         },
         numbers: proc
           ? (ctx) => {
