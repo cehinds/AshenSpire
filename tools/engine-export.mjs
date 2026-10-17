@@ -268,8 +268,43 @@ export async function staleGenerated({ root = ROOT, build = true, builders = BUI
   return failed;
 }
 
+/** The game profiles (core, current) resolved exactly as `game-config.mjs export` resolves them: one compact row each, plus the resolved profiles for later tables. */
+export async function collectProfiles() {
+  const { gameProfileCatalog, gameProfileAuthors } = await import('../src/content/generated/gameProfiles.js');
+  const { resolveGameAuthor } = await import('../engine/kernel/gameConfig.js');
+  const gameAuthor = JSON.stringify(gameProfileAuthors.default);
+  const resolved = {};
+  const rows = [];
+  for (const key of Object.keys(gameProfileAuthors).sort()) {
+    const author = gameProfileAuthors[key];
+    if (key === 'default') continue; // games/ashenspire/game.json: flagged on the preset it equals
+    const p = resolveGameAuthor(author, gameProfileCatalog);
+    resolved[p.id] = p;
+    const ids = Object.keys(p.modules).sort();
+    rows.push({
+      id: p.id,
+      core: author.core,
+      hash: p.hash,
+      isGameDefault: JSON.stringify(author) === gameAuthor,
+      enabledModules: ids.filter((m) => p.modules[m]),
+      disabledModules: ids.filter((m) => !p.modules[m]),
+      portable: p.portability.portable,
+      requiredCapabilities: p.portability.requiredCapabilities,
+      portabilityReason: p.portability.reason ?? null,
+      runtimeABI: p.lock.runtimeABI,
+      numericPolicy: p.lock.numericPolicy,
+      runtimeHash: p.lock.runtimeHash,
+      artifactCount: p.lock.artifacts.length,
+      contentKinds: Object.keys(p.content).sort(),
+    });
+  }
+  return { catalog: gameProfileCatalog, authors: gameProfileAuthors, resolved, rows };
+}
+
 async function collect() {
   const raw = []; // [id, value]
+  const profiles = await collectProfiles();
+  raw.push(['profile.profiles', profiles.rows]);
   const { contentBundle } = await import('../src/content/index.js');
   for (const key of Object.keys(contentBundle).sort()) {
     if (key === 'version') continue;

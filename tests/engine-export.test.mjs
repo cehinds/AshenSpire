@@ -362,3 +362,26 @@ test('the Unity importer prunes only the paths its import record lists', () => {
   assert.match(body, /if \(!IsPrunable\(stale\)\)|IsPrunable\(stale\)/, 'the delete loop checks the guard');
   assert.match(source, /ashenspire-import\.json/, 'the record file is named in the importer');
 });
+
+const NEW_TABLE = /^(profile|module|hudLayout|baseCards)\./;
+
+test('profile.profiles has one row per game profile, matching game-config and the lock', () => {
+  const entry = manifest.tables.find((t) => t.id === 'profile.profiles');
+  assert.ok(entry, 'no table profile.profiles');
+  const rows = readJson(first.out, entry.file);
+  assert.deepEqual(rows.map((r) => r.Name), ['core', 'current']);
+  const lock = JSON.parse(readFileSync(join(root, 'games', 'ashenspire', 'game.lock.json'), 'utf8'));
+  for (const row of rows) {
+    assert.equal(row.hash, lock.profiles[row.Name].hash, `${row.Name} hash matches game.lock.json`);
+    assert.equal(row.runtimeHash, lock.profiles[row.Name].runtimeHash);
+    assert.ok(row.enabledModules.length > 0 && Array.isArray(row.disabledModules));
+  }
+  assert.equal(rows.filter((r) => r.isGameDefault).length, 1, 'exactly one preset equals games/ashenspire/game.json');
+});
+
+test('the new tables are additive: every legacy namespace is still exported and no config or art id changed', () => {
+  const ids = manifest.tables.map((t) => t.id);
+  for (const prefix of ['content.', 'source.', 'framework.']) assert.ok(ids.some((id) => id.startsWith(prefix)), `no ${prefix} tables`);
+  assert.ok(ids.filter((id) => !NEW_TABLE.test(id)).length > 100, 'the legacy tables are all still there');
+  assert.ok(manifest.config.every((c) => !NEW_TABLE.test(c.id)), 'new data is tables, not config');
+});
