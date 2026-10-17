@@ -11,7 +11,7 @@
   "statRules": {
     "hp": {
       "constitution": 20,
-      "perLevel": 2
+      "perLevel": 5
     },
     "sp": {
       "dexterity": 0.25,

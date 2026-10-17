@@ -965,7 +965,7 @@ export const gameProfileCatalog = {
         "statRules": {
           "hp": {
             "constitution": 20,
-            "perLevel": 2
+            "perLevel": 5
           },
           "sp": {
             "dexterity": 0.25,
@@ -1547,7 +1547,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/enemies/defaults.json",
           "id": "enemies",
           "version": "1.0.0",
-          "hash": "sha256:859ede645383e4dc80d71e646b7efcafa389afc02a595259512b8a79196e4d88"
+          "hash": "sha256:57390f7656e631f48cec622a606d963468c38fdac0b7ee4d8fc5b888977ec1b0"
         },
         {
           "path": "engine/modules/enemies/settings.schema.json",
@@ -4390,7 +4390,8 @@ export const gameProfileCatalog = {
               "huskBrute.brace"
             ],
             "gear": [
-              "enemy.gear.heavyPlate"
+              "enemy.gear.mail",
+              "enemy.gear.ironTalisman"
             ],
             "relics": [],
             "poiseMax": 16,
@@ -4456,11 +4457,10 @@ export const gameProfileCatalog = {
             ],
             "firstCard": "wyrmAspirant.consecrate",
             "gear": [
-              "enemy.gear.mail",
-              "enemy.gear.ironTalisman"
+              "enemy.gear.heavyPlate"
             ],
             "relics": [
-              "enemy.relic.titanHeart"
+              "enemy.relic.graveSeal"
             ],
             "poiseMax": 24,
             "levelProfile": {
@@ -4498,12 +4498,10 @@ export const gameProfileCatalog = {
               "fellWarden.twinDaggers"
             ],
             "firstCard": "fellWarden.caneStrike",
-            "gear": [
-              "enemy.gear.heavyPlate",
-              "enemy.gear.luckyTooth"
-            ],
+            "gear": [],
             "relics": [
-              "enemy.relic.ashenCore"
+              "enemy.relic.ashenCore",
+              "enemy.relic.emberBand"
             ],
             "poiseMax": 30,
             "levelProfile": {
@@ -4563,7 +4561,7 @@ export const gameProfileCatalog = {
               "lanternMoth.wingSparks"
             ],
             "gear": [
-              "enemy.gear.ironTalisman"
+              "enemy.gear.luckyTooth"
             ],
             "relics": [],
             "poiseMax": 5,
@@ -4596,10 +4594,10 @@ export const gameProfileCatalog = {
             ],
             "firstCard": "briarHermit.rootShelter",
             "gear": [
-              "enemy.gear.heavyPlate"
+              "enemy.gear.ironTalisman"
             ],
             "relics": [
-              "enemy.relic.graveSeal"
+              "enemy.relic.titanHeart"
             ],
             "poiseMax": 9,
             "levelProfile": {
@@ -4630,9 +4628,11 @@ export const gameProfileCatalog = {
               "chainScavenger.draggingBlow"
             ],
             "gear": [
-              "enemy.gear.heavyPlate"
+              "enemy.gear.ironTalisman"
             ],
-            "relics": [],
+            "relics": [
+              "enemy.relic.emberBand"
+            ],
             "poiseMax": 8,
             "levelProfile": {
               "min": 2,
@@ -4670,11 +4670,11 @@ export const gameProfileCatalog = {
             ],
             "firstCard": "bellKeeper.bronzeToll",
             "gear": [
-              "enemy.gear.plating"
+              "enemy.gear.heavyPlate",
+              "enemy.gear.ironTalisman"
             ],
             "relics": [
-              "enemy.relic.ashenCore",
-              "enemy.relic.titanHeart"
+              "enemy.relic.ashenCore"
             ],
             "poiseMax": 25,
             "levelProfile": {
@@ -4719,9 +4719,7 @@ export const gameProfileCatalog = {
               "thornMatriarch.entwiningRoots"
             ],
             "firstCard": "thornMatriarch.rootCrown",
-            "gear": [
-              "enemy.gear.mail"
-            ],
+            "gear": [],
             "relics": [
               "enemy.relic.ashenCore"
             ],
@@ -4773,11 +4771,9 @@ export const gameProfileCatalog = {
               "gildedKnight.gildedGuard"
             ],
             "gear": [
-              "enemy.gear.hide"
+              "enemy.gear.plating"
             ],
-            "relics": [
-              "enemy.relic.graveSeal"
-            ],
+            "relics": [],
             "poiseMax": 18,
             "levelProfile": {
               "min": 6,
@@ -4806,9 +4802,7 @@ export const gameProfileCatalog = {
               "courtSurgeon.stitch",
               "courtSurgeon.stitch"
             ],
-            "gear": [
-              "enemy.gear.mail"
-            ],
+            "gear": [],
             "relics": [],
             "poiseMax": 10,
             "levelProfile": {
@@ -4838,9 +4832,7 @@ export const gameProfileCatalog = {
               "stitchedHound.rend",
               "stitchedHound.rend"
             ],
-            "gear": [
-              "enemy.gear.ironTalisman"
-            ],
+            "gear": [],
             "relics": [],
             "poiseMax": 8,
             "levelProfile": {
@@ -4901,12 +4893,8 @@ export const gameProfileCatalog = {
               "livingArmor.crush",
               "livingArmor.rimeCrush"
             ],
-            "gear": [
-              "enemy.gear.ironTalisman"
-            ],
-            "relics": [
-              "enemy.relic.emberBand"
-            ],
+            "gear": [],
+            "relics": [],
             "poiseMax": 22,
             "levelProfile": {
               "min": 7,
@@ -4939,12 +4927,10 @@ export const gameProfileCatalog = {
             ],
             "firstCard": "courtDuelist.enGarde",
             "gear": [
-              "enemy.gear.heavyPlate",
+              "enemy.gear.mail",
               "enemy.gear.ironTalisman"
             ],
-            "relics": [
-              "enemy.relic.graveSeal"
-            ],
+            "relics": [],
             "poiseMax": 26,
             "levelProfile": {
               "min": 10,
@@ -4982,12 +4968,11 @@ export const gameProfileCatalog = {
             ],
             "firstCard": "stitchedKing.courtlyDecree",
             "gear": [
-              "enemy.gear.heavyPlate",
-              "enemy.gear.ironTalisman"
+              "enemy.gear.mail",
+              "enemy.gear.luckyTooth"
             ],
             "relics": [
-              "enemy.relic.abyssalCrown",
-              "enemy.relic.graveSeal"
+              "enemy.relic.abyssalCrown"
             ],
             "poiseMax": 34,
             "levelProfile": {
@@ -5040,9 +5025,7 @@ export const gameProfileCatalog = {
               "mirrorScribe.polishedWard",
               "mirrorScribe.polishedWard"
             ],
-            "gear": [
-              "enemy.gear.plating"
-            ],
+            "gear": [],
             "relics": [],
             "poiseMax": 8,
             "levelProfile": {
@@ -5073,9 +5056,7 @@ export const gameProfileCatalog = {
               "stitchCrab.scuttleRush"
             ],
             "firstCard": "stitchCrab.shellFold",
-            "gear": [
-              "enemy.gear.mail"
-            ],
+            "gear": [],
             "relics": [],
             "poiseMax": 17,
             "levelProfile": {
@@ -5115,8 +5096,7 @@ export const gameProfileCatalog = {
             "firstCard": "glassRegent.prismGuard",
             "gear": [],
             "relics": [
-              "enemy.relic.abyssalCrown",
-              "enemy.relic.titanHeart"
+              "enemy.relic.abyssalCrown"
             ],
             "poiseMax": 26,
             "levelProfile": {
@@ -5171,7 +5151,7 @@ export const gameProfileCatalog = {
             "gear": [],
             "relics": [
               "enemy.relic.abyssalCrown",
-              "enemy.relic.ashenCore"
+              "enemy.relic.titanHeart"
             ],
             "poiseMax": 30,
             "levelProfile": {
@@ -5215,9 +5195,7 @@ export const gameProfileCatalog = {
               "ashRevenant.reform",
               "ashRevenant.reform"
             ],
-            "gear": [
-              "enemy.gear.luckyTooth"
-            ],
+            "gear": [],
             "relics": [],
             "poiseMax": 10,
             "levelProfile": {
@@ -5277,9 +5255,7 @@ export const gameProfileCatalog = {
               "valkyrieShade.bloodFeather",
               "valkyrieShade.bloodFeather"
             ],
-            "gear": [
-              "enemy.gear.ironTalisman"
-            ],
+            "gear": [],
             "relics": [],
             "poiseMax": 14,
             "levelProfile": {
@@ -5309,9 +5285,7 @@ export const gameProfileCatalog = {
               "charredColossus.harden",
               "charredColossus.harden"
             ],
-            "gear": [
-              "enemy.gear.heavyPlate"
-            ],
+            "gear": [],
             "relics": [],
             "poiseMax": 30,
             "levelProfile": {
@@ -5348,11 +5322,9 @@ export const gameProfileCatalog = {
             ],
             "firstCard": "wyrmLord.consecration",
             "gear": [
-              "enemy.gear.mail"
+              "enemy.gear.heavyPlate"
             ],
-            "relics": [
-              "enemy.relic.ashenCore"
-            ],
+            "relics": [],
             "poiseMax": 30,
             "levelProfile": {
               "min": 18,
@@ -5390,11 +5362,11 @@ export const gameProfileCatalog = {
             ],
             "firstCard": "blightedValkyrie.spiralThrust",
             "gear": [
-              "enemy.gear.hide"
+              "enemy.gear.heavyPlate"
             ],
             "relics": [
               "enemy.relic.abyssalCrown",
-              "enemy.relic.abyssalCrown"
+              "enemy.relic.titanHeart"
             ],
             "poiseMax": 36,
             "levelProfile": {
@@ -5462,9 +5434,7 @@ export const gameProfileCatalog = {
               "cinderMantis.emberPounce",
               "cinderMantis.foldedBlades"
             ],
-            "gear": [
-              "enemy.gear.luckyTooth"
-            ],
+            "gear": [],
             "relics": [],
             "poiseMax": 11,
             "levelProfile": {
@@ -5530,12 +5500,11 @@ export const gameProfileCatalog = {
             ],
             "firstCard": "furnaceSaint.openFurnace",
             "gear": [
-              "enemy.gear.hide"
+              "enemy.gear.heavyPlate"
             ],
             "relics": [
               "enemy.relic.abyssalCrown",
-              "enemy.relic.ashenCore",
-              "enemy.relic.titanHeart"
+              "enemy.relic.graveSeal"
             ],
             "poiseMax": 40,
             "levelProfile": {
@@ -5587,10 +5556,11 @@ export const gameProfileCatalog = {
               "hollowAstronomer.fallingHeavens"
             ],
             "firstCard": "hollowAstronomer.starChart",
-            "gear": [],
+            "gear": [
+              "enemy.gear.ironTalisman"
+            ],
             "relics": [
-              "enemy.relic.abyssalCrown",
-              "enemy.relic.ashenCore"
+              "enemy.relic.abyssalCrown"
             ],
             "poiseMax": 25,
             "levelProfile": {
@@ -5638,10 +5608,13 @@ export const gameProfileCatalog = {
               "ashheartDragon.ashBreath"
             ],
             "firstCard": "ashheartDragon.obsidianClaws",
-            "gear": [],
+            "gear": [
+              "enemy.gear.heavyPlate",
+              "enemy.gear.ironTalisman"
+            ],
             "relics": [
               "enemy.relic.abyssalCrown",
-              "enemy.relic.abyssalCrown"
+              "enemy.relic.graveSeal"
             ],
             "poiseMax": 34,
             "levelProfile": {
@@ -8856,7 +8829,7 @@ export const gameProfileCatalog = {
           "path": "games/ashenspire/packs/core/enemies.json",
           "id": "ashen.core-content",
           "version": "1.0.0",
-          "hash": "sha256:062ac35ef8ac9c174e10c350a16c716f24aed315a303378a0eee29410336f668"
+          "hash": "sha256:d8cc4fd78cd6e17ce6b155136c226c67c8d49b8a71102d153f38c087f1cde214"
         },
         {
           "path": "games/ashenspire/packs/core/enemyCards.json",
