@@ -1,3 +1,4 @@
+import { figureAnimationsEnabled } from '../../model/gameAnimationPolicy.js';
 import { matchViewMedia } from '../viewViewport.js';
 import { el, button } from '../kit/index.js';
 import { createPaintedStage } from '../paintedOutfits.js';
@@ -50,6 +51,7 @@ export function deckCardAnimationPlan(registries, run, ref) {
 
 /** Lazy desktop-only playback. Pausing freezes the exact frame; disposal owns every listener/frame. */
 export function deckCardAnimationPreview({ registries, run, ref, paused = false, onPaused = () => {} }, { createStage = (classId, armourId, options) => createAlternativeCardStage(classId, options) || createPaintedStage(classId, armourId, options) } = {}) {
+  const animationsEnabled = figureAnimationsEnabled(run);
   const root = el('section', { class: 'deck-editor-animation', 'aria-label': t('deckEditor.animation') });
   const host = el('div', { class: 'deck-editor-animation-stage', 'aria-hidden': 'true' });
   const toggle = button({ label: t(paused ? 'deckEditor.animation.play' : 'deckEditor.animation.pause'), className: 'deck-editor-animation-toggle' });
@@ -72,7 +74,7 @@ export function deckCardAnimationPreview({ registries, run, ref, paused = false,
   };
   const frame = time => {
     tick = null;
-    if (disposed || userPaused || !desktop?.matches || document.hidden || !stage) return;
+    if (disposed || !animationsEnabled || userPaused || !desktop?.matches || document.hidden || !stage) return;
     if (lastTime !== null) elapsed += Math.max(0, time - lastTime);
     lastTime = time;
     paint();
@@ -92,7 +94,7 @@ export function deckCardAnimationPreview({ registries, run, ref, paused = false,
       frames = playback.frames.filter(pose => stage?.poses.includes(pose));
       if (stage) host.replaceChildren(stage.el);
     }
-    const available = !!stage && frames.length > 1 && playback.duration !== 0;
+    const available = animationsEnabled && !!stage && frames.length > 1 && playback.duration !== 0;
     caption.textContent = t(available ? 'deckEditor.animation' : frames.length ? 'deckEditor.animation.still' : 'deckEditor.animation.unavailable');
     host.hidden = !frames.length;
     toggle.disabled = !available;
@@ -100,13 +102,13 @@ export function deckCardAnimationPreview({ registries, run, ref, paused = false,
     toggle.textContent = t(userPaused ? 'deckEditor.animation.play' : 'deckEditor.animation.pause');
     // An authored one-frame cast/buff is still the card's pose. Show it even
     // though it has no timeline to loop; otherwise the preview stays idle.
-    if (frames.length) paint();
+    if (frames.length && animationsEnabled) paint();
     if (!available) return;
     if (!userPaused && !document.hidden) tick = requestAnimationFrame(frame);
   }
-  const onToggle = () => { if (disposed) return; userPaused = !userPaused; onPaused(userPaused); sync(); };
+  const onToggle = () => { if (disposed || !animationsEnabled) return; userPaused = !userPaused; onPaused(userPaused); sync(); };
   const onMotionChange = () => {
-    if (disposed) return;
+    if (disposed || !animationsEnabled) return;
     // Preference changes stop playback immediately. Turning reduced motion
     // off does not restart a paused preview; Play is an explicit opt-in.
     if (reducedMotionRequested() && !userPaused) { userPaused = true; onPaused(true); }
