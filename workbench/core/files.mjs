@@ -22,6 +22,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { refusedPath, safePath } from '../lib/safe-path.mjs';
 import { editable, validateText, hash } from '../../editor/core.mjs';
 import { tableData } from '../../editor/tables.mjs';
@@ -118,6 +119,9 @@ async function checkJs(rel, text) {
  * tagModelLock({ timeoutMs, signal }) resolves to a release function once no tag-model job runs (the server passes
  * the jobs' tag-model group); a tag-model save takes it. Without it a tag-model save does not wait.
  */
+const execFileP = promisify(execFile);
+const GAME_CFG_INPUT = /^(games\/ashenspire\/|engine\/modules\/[\w.-]+\/defaults\.json$)/;
+
 export function createFileService({ root, stateDir, keepBackups = () => 50, onSaved = () => {}, onWritten = () => {}, lockWaitMs = 10 * 60 * 1000, fileFault = null, pruneFault = null, signal = undefined, tagModelLock = null }) {
   let tail = Promise.resolve();
   const serialize = (task) => { const run = tail.then(task, task); tail = run.catch(() => {}); return run; };
@@ -230,6 +234,29 @@ export function createFileService({ root, stateDir, keepBackups = () => 50, onSa
       for (const message of errors) {
         const owner = configChanges.find((c) => message.startsWith(`content/config/${c.path.slice('content/config/'.length)}`));
         problems.push({ path: owner ? owner.path : 'content/config', message });
+      }
+    }
+    // Game-profile inputs (bundles, packs, presets, an engine module's defaults) are checked the way the
+    // build reads them: a candidate copy of the tree runs tools/game-config.mjs validate, so a save that
+    // would break the live build (e.g. a group naming a removed card) is refused here.
+    const gameChanges = changes.filter((c) => c.kind === 'json' && GAME_CFG_INPUT.test(c.path));
+    if (gameChanges.length) {
+      const tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'wb-gamecfg-'));
+      try {
+        for (const rel of ['src', 'engine', 'games/ashenspire', 'tools/game-config.mjs', 'tools/base-cards.mjs']) {
+          await fs.mkdir(path.dirname(path.join(tmp, rel)), { recursive: true });
+          await fs.cp(path.join(root, rel), path.join(tmp, rel), { recursive: true });
+        }
+        for (const c of gameChanges) {
+          await fs.mkdir(path.dirname(path.join(tmp, c.path)), { recursive: true });
+          await fs.writeFile(path.join(tmp, c.path), c.text);
+        }
+        await execFileP(process.execPath, [path.join(tmp, 'tools/game-config.mjs'), 'validate'], { cwd: tmp, timeout: 60000 });
+      } catch (e) {
+        const detail = String(e.stderr || '').trim() || e.message;
+        problems.push({ path: gameChanges[0].path, message: detail.slice(-2000) });
+      } finally {
+        await fs.rm(tmp, { recursive: true, force: true });
       }
     }
     return problems;
