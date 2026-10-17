@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "status": "draft-candidate",
   "productionBinding": null,
-  "pathBase": "directory containing this file",
+  "pathBase": "batch directory (modules/index.json assetBase); flat exports use their containing directory",
   "provenance": {
     "locationPresentation": "../../../content/source/locationPresentation.json",
     "worldAtlas": "../../../content/source/worldAtlas.json",

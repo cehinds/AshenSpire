@@ -1,0 +1,67 @@
+{
+  "regionId": "pale-marches",
+  "presets": [
+    {
+      "id": "pale-marches/city",
+      "label": "Pale Marches settlement",
+      "group": "settlements",
+      "regionId": "pale-marches",
+      "ground": "pale-marches/ground-snow-courtyard.png",
+      "backdrop": "../batch-05-regions/pale-marches/backdrop-snow-valley.png",
+      "backdropScale": 1.6,
+      "groundContactY": 530,
+      "props": [
+        {
+          "file": "pale-marches/prop-snow-watchtower.png",
+          "anchorU": 0.2,
+          "visibleWidthFraction": 0.3,
+          "maximumHeightFraction": 0.53,
+          "baseOcclusionPixels": 16
+        },
+        {
+          "file": "../batch-05-regions/pale-marches/prop-frozen-wall.png",
+          "anchorU": 0.84,
+          "visibleWidthFraction": 0.18,
+          "maximumHeightFraction": 0.32,
+          "baseOcclusionPixels": 12
+        }
+      ]
+    },
+    {
+      "id": "pale-marches/dungeon",
+      "label": "Pale Marches dungeon floor",
+      "group": "interiors",
+      "regionId": "pale-marches",
+      "ground": "interiors/ground-frost-vault.png",
+      "backdrop": "../batch-05-regions/interiors/backdrop-vaulted-depths.png",
+      "groundContactY": 494,
+      "props": [
+        {
+          "file": "../batch-05-regions/interiors/prop-iron-gate.png",
+          "anchorU": 0.82,
+          "visibleWidthFraction": 0.24,
+          "maximumHeightFraction": 0.48,
+          "baseOcclusionPixels": 16
+        }
+      ]
+    },
+    {
+      "id": "pale-marches/shore",
+      "label": "Pale Marches frozen inlet",
+      "group": "shore",
+      "regionId": "pale-marches",
+      "ground": "pale-marches/ground-ice-bank.png",
+      "backdrop": "interiors/backdrop-frozen-inlet.png",
+      "groundContactY": 539,
+      "props": [
+        {
+          "file": "../batch-05-regions/pale-marches/prop-frozen-wall.png",
+          "anchorU": 0.82,
+          "visibleWidthFraction": 0.24,
+          "maximumHeightFraction": 0.25,
+          "baseOcclusionPixels": 16
+        }
+      ]
+    }
+  ]
+}

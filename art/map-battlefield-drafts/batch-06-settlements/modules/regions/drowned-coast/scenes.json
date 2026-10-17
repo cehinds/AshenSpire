@@ -1,0 +1,49 @@
+{
+  "regionId": "drowned-coast",
+  "presets": [
+    {
+      "id": "drowned-coast/city",
+      "label": "Drowned Coast settlement",
+      "group": "settlements",
+      "regionId": "drowned-coast",
+      "ground": "drowned-coast/ground-harbor-paving.png",
+      "backdrop": "../batch-05-regions/drowned-coast/backdrop-tidal-coast.png",
+      "backdropScale": 1,
+      "groundContactY": 532,
+      "props": [
+        {
+          "file": "drowned-coast/prop-fishers-house.png",
+          "anchorU": 0.2,
+          "visibleWidthFraction": 0.3,
+          "maximumHeightFraction": 0.53,
+          "baseOcclusionPixels": 16
+        },
+        {
+          "file": "../batch-05-regions/drowned-coast/prop-broken-jetty.png",
+          "anchorU": 0.84,
+          "visibleWidthFraction": 0.18,
+          "maximumHeightFraction": 0.32,
+          "baseOcclusionPixels": 12
+        }
+      ]
+    },
+    {
+      "id": "drowned-coast/dungeon",
+      "label": "Drowned Coast dungeon floor",
+      "group": "interiors",
+      "regionId": "drowned-coast",
+      "ground": "drowned-coast/ground-flooded-crypt.png",
+      "backdrop": "../batch-05-regions/interiors/backdrop-vaulted-depths.png",
+      "groundContactY": 506,
+      "props": [
+        {
+          "file": "../batch-05-regions/interiors/prop-iron-gate.png",
+          "anchorU": 0.82,
+          "visibleWidthFraction": 0.24,
+          "maximumHeightFraction": 0.48,
+          "baseOcclusionPixels": 16
+        }
+      ]
+    }
+  ]
+}

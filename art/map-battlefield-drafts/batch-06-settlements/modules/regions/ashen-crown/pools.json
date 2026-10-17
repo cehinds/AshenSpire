@@ -1,0 +1,192 @@
+{
+  "regionId": "ashen-crown",
+  "profiles": [
+    {
+      "profileId": "ashen-crown/city",
+      "status": "draft-candidate",
+      "productionBinding": null,
+      "nodeCount": 9,
+      "assignmentSource": {
+        "path": "../../../content/source/locationPresentation.json",
+        "array": "nodeProfiles",
+        "filter": {
+          "profileId": "ashen-crown/city"
+        }
+      },
+      "selectionTags": {
+        "region": "ashen-crown",
+        "setting": "city",
+        "material": "cobbles"
+      },
+      "primaryPools": [
+        {
+          "candidateId": "ashen-crown/city/primary",
+          "origin": "batch-06-settlement",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "ashen-crown/ground-market-cobbles.png",
+          "backdrop": "../batch-05-regions/ashen-crown/backdrop-ashen-highlands.png",
+          "props": [
+            "ashen-crown/prop-half-timber-house.png",
+            "../batch-05-regions/ashen-crown/prop-market-stall.png"
+          ]
+        }
+      ],
+      "fallbackPools": [
+        {
+          "candidateId": "ashen-crown/city/batch-05-fallback",
+          "origin": "batch-05",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "../batch-05-regions/ashen-crown/ground-worn-courtyard.png",
+          "backdrop": "../batch-05-regions/ashen-crown/backdrop-ashen-highlands.png",
+          "props": [
+            "../batch-05-regions/ashen-crown/prop-market-stall.png"
+          ]
+        }
+      ],
+      "reviewNotes": [
+        "New regional courtyard and building candidates use the existing regional backdrop. Review scale, grounding, palette and playable-space clearance."
+      ]
+    },
+    {
+      "profileId": "ashen-crown/dungeon",
+      "status": "draft-candidate",
+      "productionBinding": null,
+      "nodeCount": 8,
+      "assignmentSource": {
+        "path": "../../../content/source/locationPresentation.json",
+        "array": "nodeProfiles",
+        "filter": {
+          "profileId": "ashen-crown/dungeon"
+        }
+      },
+      "selectionTags": {
+        "region": "ashen-crown",
+        "setting": "dungeon",
+        "material": "dusty stone"
+      },
+      "primaryPools": [
+        {
+          "candidateId": "ashen-crown/dungeon/primary",
+          "origin": "batch-06-regional-interior",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "interiors/ground-dusty-keep.png",
+          "backdrop": "../batch-05-regions/interiors/backdrop-vaulted-depths.png",
+          "props": [
+            "../batch-05-regions/interiors/prop-iron-gate.png"
+          ]
+        }
+      ],
+      "fallbackPools": [
+        {
+          "candidateId": "ashen-crown/dungeon/batch-05-fallback",
+          "origin": "batch-05",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "../batch-05-regions/interiors/ground-dungeon-flagstones.png",
+          "backdrop": "../batch-05-regions/interiors/backdrop-vaulted-depths.png",
+          "props": [
+            "../batch-05-regions/interiors/prop-iron-gate.png"
+          ]
+        }
+      ],
+      "reviewNotes": [
+        "Ground is a regional candidate; vaulted backdrop and iron gate remain shared batch-05 interior assets. A bespoke regional dungeon background and prop set are still pending."
+      ]
+    },
+    {
+      "profileId": "ashen-crown/forest",
+      "status": "draft-candidate",
+      "productionBinding": null,
+      "nodeCount": 0,
+      "assignmentSource": {
+        "path": "../../../content/source/locationPresentation.json",
+        "array": "nodeProfiles",
+        "filter": {
+          "profileId": "ashen-crown/forest"
+        }
+      },
+      "selectionTags": {
+        "region": "ashen-crown",
+        "setting": "forest",
+        "material": "regional outdoor material"
+      },
+      "primaryPools": [
+        {
+          "candidateId": "ashen-crown/forest/primary",
+          "origin": "batch-05-retained",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "../batch-05-regions/ashen-crown/ground-worn-courtyard.png",
+          "backdrop": "../batch-05-regions/ashen-crown/backdrop-ashen-highlands.png",
+          "props": [
+            "../batch-05-regions/ashen-crown/prop-broken-column.png"
+          ]
+        }
+      ],
+      "fallbackPools": [
+        {
+          "candidateId": "ashen-crown/forest/batch-05-fallback",
+          "origin": "batch-05",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "../batch-05-regions/ashen-crown/ground-worn-courtyard.png",
+          "backdrop": "../batch-05-regions/ashen-crown/backdrop-ashen-highlands.png",
+          "props": [
+            "../batch-05-regions/ashen-crown/prop-broken-column.png"
+          ]
+        }
+      ],
+      "reviewNotes": [
+        "Regional outdoor palette candidate; add forest-specific vegetation density and edge framing."
+      ]
+    },
+    {
+      "profileId": "ashen-crown/road",
+      "status": "draft-candidate",
+      "productionBinding": null,
+      "nodeCount": 24,
+      "assignmentSource": {
+        "path": "../../../content/source/locationPresentation.json",
+        "array": "nodeProfiles",
+        "filter": {
+          "profileId": "ashen-crown/road"
+        }
+      },
+      "selectionTags": {
+        "region": "ashen-crown",
+        "setting": "road",
+        "material": "regional outdoor material"
+      },
+      "primaryPools": [
+        {
+          "candidateId": "ashen-crown/road/primary",
+          "origin": "batch-05-retained",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "../batch-05-regions/ashen-crown/ground-dry-meadow.png",
+          "backdrop": "../batch-05-regions/ashen-crown/backdrop-ashen-highlands.png",
+          "props": [
+            "../batch-05-regions/ashen-crown/prop-broken-column.png"
+          ]
+        }
+      ],
+      "fallbackPools": [
+        {
+          "candidateId": "ashen-crown/road/batch-05-fallback",
+          "origin": "batch-05",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "../batch-05-regions/ashen-crown/ground-dry-meadow.png",
+          "backdrop": "../batch-05-regions/ashen-crown/backdrop-ashen-highlands.png",
+          "props": [
+            "../batch-05-regions/ashen-crown/prop-broken-column.png"
+          ]
+        }
+      ],
+      "reviewNotes": []
+    }
+  ]
+}

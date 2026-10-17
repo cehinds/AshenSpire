@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "status": "draft-authoring-modules",
+  "assetBase": "..",
+  "pathRules": "Module paths resolve from this index. Asset, provenance and source-data paths inside modules resolve from assetBase.",
+  "shared": {
+    "locationPools": "shared/location-pools.json",
+    "composition": "shared/composition.json"
+  },
+  "regions": [
+    {
+      "regionId": "ashen-crown",
+      "pools": "regions/ashen-crown/pools.json",
+      "scenes": "regions/ashen-crown/scenes.json"
+    },
+    {
+      "regionId": "hollow-weald",
+      "pools": "regions/hollow-weald/pools.json",
+      "scenes": "regions/hollow-weald/scenes.json"
+    },
+    {
+      "regionId": "pale-marches",
+      "pools": "regions/pale-marches/pools.json",
+      "scenes": "regions/pale-marches/scenes.json"
+    },
+    {
+      "regionId": "cinder-reach",
+      "pools": "regions/cinder-reach/pools.json",
+      "scenes": "regions/cinder-reach/scenes.json"
+    },
+    {
+      "regionId": "drowned-coast",
+      "pools": "regions/drowned-coast/pools.json",
+      "scenes": "regions/drowned-coast/scenes.json"
+    }
+  ],
+  "sceneOrder": [
+    "ashen-crown/city",
+    "ashen-crown/dungeon",
+    "hollow-weald/city",
+    "hollow-weald/dungeon",
+    "pale-marches/city",
+    "pale-marches/dungeon",
+    "cinder-reach/city",
+    "cinder-reach/dungeon",
+    "drowned-coast/city",
+    "drowned-coast/dungeon",
+    "pale-marches/shore"
+  ]
+}

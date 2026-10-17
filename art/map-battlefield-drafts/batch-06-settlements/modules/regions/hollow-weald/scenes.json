@@ -1,0 +1,49 @@
+{
+  "regionId": "hollow-weald",
+  "presets": [
+    {
+      "id": "hollow-weald/city",
+      "label": "Hollow Weald settlement",
+      "group": "settlements",
+      "regionId": "hollow-weald",
+      "ground": "hollow-weald/ground-village-pavers.png",
+      "backdrop": "../batch-05-regions/hollow-weald/backdrop-deep-weald.png",
+      "backdropScale": 1,
+      "groundContactY": 532,
+      "props": [
+        {
+          "file": "hollow-weald/prop-stilt-lodge.png",
+          "anchorU": 0.2,
+          "visibleWidthFraction": 0.3,
+          "maximumHeightFraction": 0.53,
+          "baseOcclusionPixels": 16
+        },
+        {
+          "file": "../batch-05-regions/hollow-weald/prop-woodland-shrine.png",
+          "anchorU": 0.84,
+          "visibleWidthFraction": 0.18,
+          "maximumHeightFraction": 0.32,
+          "baseOcclusionPixels": 12
+        }
+      ]
+    },
+    {
+      "id": "hollow-weald/dungeon",
+      "label": "Hollow Weald dungeon floor",
+      "group": "interiors",
+      "regionId": "hollow-weald",
+      "ground": "hollow-weald/ground-root-cellar.png",
+      "backdrop": "../batch-05-regions/interiors/backdrop-vaulted-depths.png",
+      "groundContactY": 536,
+      "props": [
+        {
+          "file": "../batch-05-regions/interiors/prop-iron-gate.png",
+          "anchorU": 0.82,
+          "visibleWidthFraction": 0.24,
+          "maximumHeightFraction": 0.48,
+          "baseOcclusionPixels": 16
+        }
+      ]
+    }
+  ]
+}

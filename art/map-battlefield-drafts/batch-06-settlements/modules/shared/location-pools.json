@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "status": "draft-candidate",
+  "productionBinding": null,
+  "pathBase": "batch directory (modules/index.json assetBase); flat exports use their containing directory",
+  "provenance": {
+    "locationPresentation": "../../../content/source/locationPresentation.json",
+    "worldAtlas": "../../../content/source/worldAtlas.json",
+    "fallbackCandidates": "../batch-05-regions/location-coverage.example.json",
+    "nodeAssignments": {
+      "sourceArray": "nodeProfiles",
+      "count": 200,
+      "canonicalization": "Sort [nodeId, profileId] pairs lexicographically; encode compact JSON as UTF-8.",
+      "sha256": "d236d7cc225b8e5d12cb6ca752d4ce0627f3aae29100bec83fffc0714da895fe"
+    }
+  },
+  "poolSemantics": {
+    "primaryPools": "Ordered preferred complete composition candidates for this exact profile. New batch-06 assets appear where available; unchanged profiles retain batch-05 candidates. Not an active runtime binding.",
+    "fallbackPools": "Ordered complete earlier batch-05 candidates for manual review if the primary is unsuitable. Not an automatic runtime failover.",
+    "selection": "Choose a complete candidate within the exact profileId. Props are optional compositional accents. Do not randomly mix grounds, backdrops or props across regions. Arrays permit future alternatives; no weights or runtime selection behavior are defined.",
+    "sharedInteriors": "Shared interior backdrops and props are explicitly permitted only where referenced; regional ground candidates do not make the whole interior bespoke."
+  },
+  "coverage": {
+    "regions": 5,
+    "profiles": 21,
+    "nodeAssignments": 200,
+    "note": "Ashen Crown forest is preserved with zero node assignments. Exact assignments remain in source, not copied here."
+  }
+}

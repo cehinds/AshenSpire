@@ -1,0 +1,192 @@
+{
+  "regionId": "hollow-weald",
+  "profiles": [
+    {
+      "profileId": "hollow-weald/city",
+      "status": "draft-candidate",
+      "productionBinding": null,
+      "nodeCount": 4,
+      "assignmentSource": {
+        "path": "../../../content/source/locationPresentation.json",
+        "array": "nodeProfiles",
+        "filter": {
+          "profileId": "hollow-weald/city"
+        }
+      },
+      "selectionTags": {
+        "region": "hollow-weald",
+        "setting": "city",
+        "material": "mossy pavers"
+      },
+      "primaryPools": [
+        {
+          "candidateId": "hollow-weald/city/primary",
+          "origin": "batch-06-settlement",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "hollow-weald/ground-village-pavers.png",
+          "backdrop": "../batch-05-regions/hollow-weald/backdrop-deep-weald.png",
+          "props": [
+            "hollow-weald/prop-stilt-lodge.png",
+            "../batch-05-regions/hollow-weald/prop-woodland-shrine.png"
+          ]
+        }
+      ],
+      "fallbackPools": [
+        {
+          "candidateId": "hollow-weald/city/batch-05-fallback",
+          "origin": "batch-05",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "../batch-05-regions/hollow-weald/ground-moss-clearing.png",
+          "backdrop": "../batch-05-regions/hollow-weald/backdrop-deep-weald.png",
+          "props": [
+            "../batch-05-regions/hollow-weald/prop-woodland-shrine.png"
+          ]
+        }
+      ],
+      "reviewNotes": [
+        "New regional courtyard and building candidates use the existing regional backdrop. Review scale, grounding, palette and playable-space clearance."
+      ]
+    },
+    {
+      "profileId": "hollow-weald/dungeon",
+      "status": "draft-candidate",
+      "productionBinding": null,
+      "nodeCount": 1,
+      "assignmentSource": {
+        "path": "../../../content/source/locationPresentation.json",
+        "array": "nodeProfiles",
+        "filter": {
+          "profileId": "hollow-weald/dungeon"
+        }
+      },
+      "selectionTags": {
+        "region": "hollow-weald",
+        "setting": "dungeon",
+        "material": "rootbound stone"
+      },
+      "primaryPools": [
+        {
+          "candidateId": "hollow-weald/dungeon/primary",
+          "origin": "batch-06-regional-interior",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "hollow-weald/ground-root-cellar.png",
+          "backdrop": "../batch-05-regions/interiors/backdrop-vaulted-depths.png",
+          "props": [
+            "../batch-05-regions/interiors/prop-iron-gate.png"
+          ]
+        }
+      ],
+      "fallbackPools": [
+        {
+          "candidateId": "hollow-weald/dungeon/batch-05-fallback",
+          "origin": "batch-05",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "../batch-05-regions/interiors/ground-dungeon-flagstones.png",
+          "backdrop": "../batch-05-regions/interiors/backdrop-vaulted-depths.png",
+          "props": [
+            "../batch-05-regions/interiors/prop-iron-gate.png"
+          ]
+        }
+      ],
+      "reviewNotes": [
+        "Ground is a regional candidate; vaulted backdrop and iron gate remain shared batch-05 interior assets. A bespoke regional dungeon background and prop set are still pending."
+      ]
+    },
+    {
+      "profileId": "hollow-weald/forest",
+      "status": "draft-candidate",
+      "productionBinding": null,
+      "nodeCount": 11,
+      "assignmentSource": {
+        "path": "../../../content/source/locationPresentation.json",
+        "array": "nodeProfiles",
+        "filter": {
+          "profileId": "hollow-weald/forest"
+        }
+      },
+      "selectionTags": {
+        "region": "hollow-weald",
+        "setting": "forest",
+        "material": "regional outdoor material"
+      },
+      "primaryPools": [
+        {
+          "candidateId": "hollow-weald/forest/primary",
+          "origin": "batch-05-retained",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "../batch-05-regions/hollow-weald/ground-moss-clearing.png",
+          "backdrop": "../batch-05-regions/hollow-weald/backdrop-deep-weald.png",
+          "props": [
+            "../batch-05-regions/hollow-weald/prop-gnarled-root.png"
+          ]
+        }
+      ],
+      "fallbackPools": [
+        {
+          "candidateId": "hollow-weald/forest/batch-05-fallback",
+          "origin": "batch-05",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "../batch-05-regions/hollow-weald/ground-moss-clearing.png",
+          "backdrop": "../batch-05-regions/hollow-weald/backdrop-deep-weald.png",
+          "props": [
+            "../batch-05-regions/hollow-weald/prop-gnarled-root.png"
+          ]
+        }
+      ],
+      "reviewNotes": [
+        "Regional outdoor palette candidate; add forest-specific vegetation density and edge framing."
+      ]
+    },
+    {
+      "profileId": "hollow-weald/road",
+      "status": "draft-candidate",
+      "productionBinding": null,
+      "nodeCount": 24,
+      "assignmentSource": {
+        "path": "../../../content/source/locationPresentation.json",
+        "array": "nodeProfiles",
+        "filter": {
+          "profileId": "hollow-weald/road"
+        }
+      },
+      "selectionTags": {
+        "region": "hollow-weald",
+        "setting": "road",
+        "material": "regional outdoor material"
+      },
+      "primaryPools": [
+        {
+          "candidateId": "hollow-weald/road/primary",
+          "origin": "batch-05-retained",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "../batch-05-regions/hollow-weald/ground-bog-path.png",
+          "backdrop": "../batch-05-regions/hollow-weald/backdrop-deep-weald.png",
+          "props": [
+            "../batch-05-regions/hollow-weald/prop-gnarled-root.png"
+          ]
+        }
+      ],
+      "fallbackPools": [
+        {
+          "candidateId": "hollow-weald/road/batch-05-fallback",
+          "origin": "batch-05",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "../batch-05-regions/hollow-weald/ground-bog-path.png",
+          "backdrop": "../batch-05-regions/hollow-weald/backdrop-deep-weald.png",
+          "props": [
+            "../batch-05-regions/hollow-weald/prop-gnarled-root.png"
+          ]
+        }
+      ],
+      "reviewNotes": []
+    }
+  ]
+}

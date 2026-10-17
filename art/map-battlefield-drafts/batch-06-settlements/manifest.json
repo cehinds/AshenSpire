@@ -576,6 +576,7 @@
       ]
     }
   ],
+  "authoringModules": "modules/index.json",
   "coverage": "location-pools.example.json",
   "recipe": "composition.example.json",
   "requestedGroundDimensions": [

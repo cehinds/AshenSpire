@@ -14,6 +14,7 @@
 ![Regional settlement combinations](batch-06-settlements/preview-settlements.png)
 
 - [catalog.json](catalog.json) links the batch manifests and editable scene recipes.
+- [Latest modular JSON](batch-06-settlements/modules/README.md) separates region pools/scenes from shared camera and selection rules, with portable single-file exports.
 - Manifest IDs are local to their batch; use the batch ID plus asset ID as a library key. Revised subjects can exist in multiple batches.
 - Source PNGs, prompts, provenance and measured dimensions are retained together. Previews demonstrate composition and small-size readability; they are not production exports.
 - Scene source canvases currently reach about 1672 × 941; more overscan and registration are still required for wider camera motion. Map masters are 1254px square; 512px/256px exports remain pending.

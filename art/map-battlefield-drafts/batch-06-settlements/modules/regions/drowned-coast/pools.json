@@ -1,0 +1,190 @@
+{
+  "regionId": "drowned-coast",
+  "profiles": [
+    {
+      "profileId": "drowned-coast/city",
+      "status": "draft-candidate",
+      "productionBinding": null,
+      "nodeCount": 16,
+      "assignmentSource": {
+        "path": "../../../content/source/locationPresentation.json",
+        "array": "nodeProfiles",
+        "filter": {
+          "profileId": "drowned-coast/city"
+        }
+      },
+      "selectionTags": {
+        "region": "drowned-coast",
+        "setting": "city",
+        "material": "wet paving"
+      },
+      "primaryPools": [
+        {
+          "candidateId": "drowned-coast/city/primary",
+          "origin": "batch-06-settlement",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "drowned-coast/ground-harbor-paving.png",
+          "backdrop": "../batch-05-regions/drowned-coast/backdrop-tidal-coast.png",
+          "props": [
+            "drowned-coast/prop-fishers-house.png",
+            "../batch-05-regions/drowned-coast/prop-broken-jetty.png"
+          ]
+        }
+      ],
+      "fallbackPools": [
+        {
+          "candidateId": "drowned-coast/city/batch-05-fallback",
+          "origin": "batch-05",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "../batch-05-regions/drowned-coast/ground-tidal-stone.png",
+          "backdrop": "../batch-05-regions/drowned-coast/backdrop-tidal-coast.png",
+          "props": [
+            "../batch-05-regions/drowned-coast/prop-broken-jetty.png"
+          ]
+        }
+      ],
+      "reviewNotes": [
+        "New regional courtyard and building candidates use the existing regional backdrop. Review scale, grounding, palette and playable-space clearance."
+      ]
+    },
+    {
+      "profileId": "drowned-coast/dungeon",
+      "status": "draft-candidate",
+      "productionBinding": null,
+      "nodeCount": 1,
+      "assignmentSource": {
+        "path": "../../../content/source/locationPresentation.json",
+        "array": "nodeProfiles",
+        "filter": {
+          "profileId": "drowned-coast/dungeon"
+        }
+      },
+      "selectionTags": {
+        "region": "drowned-coast",
+        "setting": "dungeon",
+        "material": "flooded stone"
+      },
+      "primaryPools": [
+        {
+          "candidateId": "drowned-coast/dungeon/primary",
+          "origin": "batch-06-regional-interior",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "drowned-coast/ground-flooded-crypt.png",
+          "backdrop": "../batch-05-regions/interiors/backdrop-vaulted-depths.png",
+          "props": [
+            "../batch-05-regions/interiors/prop-iron-gate.png"
+          ]
+        }
+      ],
+      "fallbackPools": [
+        {
+          "candidateId": "drowned-coast/dungeon/batch-05-fallback",
+          "origin": "batch-05",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "../batch-05-regions/interiors/ground-dungeon-flagstones.png",
+          "backdrop": "../batch-05-regions/interiors/backdrop-vaulted-depths.png",
+          "props": [
+            "../batch-05-regions/interiors/prop-iron-gate.png"
+          ]
+        }
+      ],
+      "reviewNotes": [
+        "Ground is a regional candidate; vaulted backdrop and iron gate remain shared batch-05 interior assets. A bespoke regional dungeon background and prop set are still pending."
+      ]
+    },
+    {
+      "profileId": "drowned-coast/road",
+      "status": "draft-candidate",
+      "productionBinding": null,
+      "nodeCount": 18,
+      "assignmentSource": {
+        "path": "../../../content/source/locationPresentation.json",
+        "array": "nodeProfiles",
+        "filter": {
+          "profileId": "drowned-coast/road"
+        }
+      },
+      "selectionTags": {
+        "region": "drowned-coast",
+        "setting": "road",
+        "material": "regional outdoor material"
+      },
+      "primaryPools": [
+        {
+          "candidateId": "drowned-coast/road/primary",
+          "origin": "batch-05-retained",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "../batch-05-regions/drowned-coast/ground-wet-sand.png",
+          "backdrop": "../batch-05-regions/drowned-coast/backdrop-tidal-coast.png",
+          "props": [
+            "../batch-05-regions/drowned-coast/prop-shipwreck-ribs.png"
+          ]
+        }
+      ],
+      "fallbackPools": [
+        {
+          "candidateId": "drowned-coast/road/batch-05-fallback",
+          "origin": "batch-05",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "../batch-05-regions/drowned-coast/ground-wet-sand.png",
+          "backdrop": "../batch-05-regions/drowned-coast/backdrop-tidal-coast.png",
+          "props": [
+            "../batch-05-regions/drowned-coast/prop-shipwreck-ribs.png"
+          ]
+        }
+      ],
+      "reviewNotes": []
+    },
+    {
+      "profileId": "drowned-coast/shore",
+      "status": "draft-candidate",
+      "productionBinding": null,
+      "nodeCount": 4,
+      "assignmentSource": {
+        "path": "../../../content/source/locationPresentation.json",
+        "array": "nodeProfiles",
+        "filter": {
+          "profileId": "drowned-coast/shore"
+        }
+      },
+      "selectionTags": {
+        "region": "drowned-coast",
+        "setting": "shore",
+        "material": "regional outdoor material"
+      },
+      "primaryPools": [
+        {
+          "candidateId": "drowned-coast/shore/primary",
+          "origin": "batch-05-retained",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "../batch-05-regions/drowned-coast/ground-tidal-stone.png",
+          "backdrop": "../batch-05-regions/drowned-coast/backdrop-tidal-coast.png",
+          "props": [
+            "../batch-05-regions/drowned-coast/prop-shipwreck-ribs.png"
+          ]
+        }
+      ],
+      "fallbackPools": [
+        {
+          "candidateId": "drowned-coast/shore/batch-05-fallback",
+          "origin": "batch-05",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "../batch-05-regions/drowned-coast/ground-tidal-stone.png",
+          "backdrop": "../batch-05-regions/drowned-coast/backdrop-tidal-coast.png",
+          "props": [
+            "../batch-05-regions/drowned-coast/prop-shipwreck-ribs.png"
+          ]
+        }
+      ],
+      "reviewNotes": []
+    }
+  ]
+}

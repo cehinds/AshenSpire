@@ -1,0 +1,192 @@
+{
+  "regionId": "pale-marches",
+  "profiles": [
+    {
+      "profileId": "pale-marches/city",
+      "status": "draft-candidate",
+      "productionBinding": null,
+      "nodeCount": 10,
+      "assignmentSource": {
+        "path": "../../../content/source/locationPresentation.json",
+        "array": "nodeProfiles",
+        "filter": {
+          "profileId": "pale-marches/city"
+        }
+      },
+      "selectionTags": {
+        "region": "pale-marches",
+        "setting": "city",
+        "material": "snowy stone"
+      },
+      "primaryPools": [
+        {
+          "candidateId": "pale-marches/city/primary",
+          "origin": "batch-06-settlement",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "pale-marches/ground-snow-courtyard.png",
+          "backdrop": "../batch-05-regions/pale-marches/backdrop-snow-valley.png",
+          "props": [
+            "pale-marches/prop-snow-watchtower.png",
+            "../batch-05-regions/pale-marches/prop-frozen-wall.png"
+          ]
+        }
+      ],
+      "fallbackPools": [
+        {
+          "candidateId": "pale-marches/city/batch-05-fallback",
+          "origin": "batch-05",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "../batch-05-regions/pale-marches/ground-frozen-shore.png",
+          "backdrop": "../batch-05-regions/pale-marches/backdrop-snow-valley.png",
+          "props": [
+            "../batch-05-regions/pale-marches/prop-frozen-wall.png"
+          ]
+        }
+      ],
+      "reviewNotes": [
+        "New regional courtyard and building candidates use the existing regional backdrop. Review scale, grounding, palette and playable-space clearance."
+      ]
+    },
+    {
+      "profileId": "pale-marches/dungeon",
+      "status": "draft-candidate",
+      "productionBinding": null,
+      "nodeCount": 1,
+      "assignmentSource": {
+        "path": "../../../content/source/locationPresentation.json",
+        "array": "nodeProfiles",
+        "filter": {
+          "profileId": "pale-marches/dungeon"
+        }
+      },
+      "selectionTags": {
+        "region": "pale-marches",
+        "setting": "dungeon",
+        "material": "frosted stone"
+      },
+      "primaryPools": [
+        {
+          "candidateId": "pale-marches/dungeon/primary",
+          "origin": "batch-06-regional-interior",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "interiors/ground-frost-vault.png",
+          "backdrop": "../batch-05-regions/interiors/backdrop-vaulted-depths.png",
+          "props": [
+            "../batch-05-regions/interiors/prop-iron-gate.png"
+          ]
+        }
+      ],
+      "fallbackPools": [
+        {
+          "candidateId": "pale-marches/dungeon/batch-05-fallback",
+          "origin": "batch-05",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "../batch-05-regions/interiors/ground-dungeon-flagstones.png",
+          "backdrop": "../batch-05-regions/interiors/backdrop-vaulted-depths.png",
+          "props": [
+            "../batch-05-regions/interiors/prop-iron-gate.png"
+          ]
+        }
+      ],
+      "reviewNotes": [
+        "Ground is a regional candidate; vaulted backdrop and iron gate remain shared batch-05 interior assets. A bespoke regional dungeon background and prop set are still pending."
+      ]
+    },
+    {
+      "profileId": "pale-marches/road",
+      "status": "draft-candidate",
+      "productionBinding": null,
+      "nodeCount": 25,
+      "assignmentSource": {
+        "path": "../../../content/source/locationPresentation.json",
+        "array": "nodeProfiles",
+        "filter": {
+          "profileId": "pale-marches/road"
+        }
+      },
+      "selectionTags": {
+        "region": "pale-marches",
+        "setting": "road",
+        "material": "regional outdoor material"
+      },
+      "primaryPools": [
+        {
+          "candidateId": "pale-marches/road/primary",
+          "origin": "batch-05-retained",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "../batch-05-regions/pale-marches/ground-snow-road.png",
+          "backdrop": "../batch-05-regions/pale-marches/backdrop-snow-valley.png",
+          "props": [
+            "../batch-05-regions/pale-marches/prop-snowy-waystone.png"
+          ]
+        }
+      ],
+      "fallbackPools": [
+        {
+          "candidateId": "pale-marches/road/batch-05-fallback",
+          "origin": "batch-05",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "../batch-05-regions/pale-marches/ground-snow-road.png",
+          "backdrop": "../batch-05-regions/pale-marches/backdrop-snow-valley.png",
+          "props": [
+            "../batch-05-regions/pale-marches/prop-snowy-waystone.png"
+          ]
+        }
+      ],
+      "reviewNotes": []
+    },
+    {
+      "profileId": "pale-marches/shore",
+      "status": "draft-candidate",
+      "productionBinding": null,
+      "nodeCount": 4,
+      "assignmentSource": {
+        "path": "../../../content/source/locationPresentation.json",
+        "array": "nodeProfiles",
+        "filter": {
+          "profileId": "pale-marches/shore"
+        }
+      },
+      "selectionTags": {
+        "region": "pale-marches",
+        "setting": "shore",
+        "material": "snow and shore ice"
+      },
+      "primaryPools": [
+        {
+          "candidateId": "pale-marches/shore/primary",
+          "origin": "batch-06-frozen-shore",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "pale-marches/ground-ice-bank.png",
+          "backdrop": "interiors/backdrop-frozen-inlet.png",
+          "props": [
+            "../batch-05-regions/pale-marches/prop-snowy-waystone.png"
+          ]
+        }
+      ],
+      "fallbackPools": [
+        {
+          "candidateId": "pale-marches/shore/batch-05-fallback",
+          "origin": "batch-05",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "../batch-05-regions/pale-marches/ground-frozen-shore.png",
+          "backdrop": "../batch-05-regions/pale-marches/backdrop-snow-valley.png",
+          "props": [
+            "../batch-05-regions/pale-marches/prop-snowy-waystone.png"
+          ]
+        }
+      ],
+      "reviewNotes": [
+        "Frozen inlet backdrop is physically stored under interiors but is selected only for Pale Marches shore. Review visible water/ice horizon, snow blending and existing prop scale."
+      ]
+    }
+  ]
+}

@@ -18,11 +18,12 @@ Pale Marches also receives a separate **ice-bank ground and frozen-inlet backdro
 
 ## Editable choices
 
-- [Location pools](location-pools.example.json) contain 21 existing profiles and reference the existing 200 node assignments without duplicating the node list.
+- **[JSON module index](modules/index.json)** is the authoring entry point. Each region has separate `pools.json` and `scenes.json` files; common rules/cameras live in `modules/shared/`. See the [editing guide](modules/README.md).
+- Regional location pools contain 21 existing profiles and reference the existing 200 node assignments without duplicating the node list. [Single-file location export](location-pools.example.json) remains available for other tools.
 - Each profile has ordered **primaryPools** and **fallbackPools**. Pick a complete candidate within the exact profile; props can be omitted. These arrays describe art proposals, not implemented random placement or runtime selection.
 - Eleven profiles gain new primary candidates: five settlements, five dungeon floors and one frozen shore. Ten retain their previous candidates.
 - Earlier batch 05 art remains available as fallbacks. All 49 referenced PNGs exist: 17 new and 32 earlier sources.
-- [Composition recipe](composition.example.json) provides 11 editable examples with independent prop position, size and overlap values.
+- Regional scene modules provide 11 editable examples with independent prop position, size and overlap values. The [single-file composition export](composition.example.json) is generated from those modules.
 - [Manifest](manifest.json) records measured dimensions, hashes, tags, alpha bounds and provenance. [Coverage notes](COVERAGE.md) explain selection semantics and remaining gaps.
 - Layer order is backdrop → props → ground. The building PNGs are rear-scene components; map icon exports and runtime placement are separate work.
 
@@ -46,9 +47,10 @@ From the repository root, with Python/Pillow, Node/Playwright and Chromium insta
 
 ```sh
 python art/map-battlefield-drafts/batch-06-settlements/build-metadata.py
+node art/map-battlefield-drafts/batch-06-settlements/json-modules.mjs
 node art/map-battlefield-drafts/batch-06-settlements/render-previews.mjs
 ```
 
-The metadata script preserves an existing composition recipe. Its optional `--reset-recipe` flag explicitly replaces that editable JSON with defaults. Set `CHROMIUM_PATH` if Chromium is elsewhere. The renderer starts a temporary loopback server and writes five PNG sheets and [composition checks](composition-checks.json). Neither script rewrites source images.
+The metadata script only measures PNGs and rebuilds the manifest. It never resets authored modules or scene recipes. The JSON export command rebuilds the two portable flat files; previews load modules directly. Set `CHROMIUM_PATH` if Chromium is elsewhere. The renderer starts a temporary loopback server and writes five PNG sheets and [composition checks](composition-checks.json). Neither script rewrites source images.
 
 [Camera crop proof](preview-camera-crops.png) shows independent portrait/landscape/ultrawide compositions. Source prompts and provenance are adjacent to each PNG; Hollow Weald uses a shared generation record. All art remains unregistered on `feature/ImproveMapBattleFieldArt`, with no live content changes.

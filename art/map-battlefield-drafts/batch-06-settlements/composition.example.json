@@ -27,6 +27,12 @@
   },
   "propPlacementRule": "Position measured alpha >= 32 silhouettes relative to each camera. Keep props behind the ground; baseOcclusionPixels sets overlap. Placement is illustrative, not runtime logic.",
   "backdropPlacementRule": "Scale uniformly around bottom center; scale defaults to 1. Values above 1 crop/zoom existing pixels without adding source detail.",
+  "notes": [
+    "All sources remain unchanged. Previews compose separate layers.",
+    "Landscape side margins are 356px; ultrawide side margins 196px; portrait top/bottom margins about 70px. Wider vertical motion requires more painted source.",
+    "Regional dungeon floors reuse a shared vaulted backdrop and iron gate, pending bespoke architecture/lighting.",
+    "House scales are rear-scene composition examples; actor-scale and contact-shadow checks remain pending."
+  ],
   "presets": [
     {
       "id": "ashen-crown/city",
@@ -266,11 +272,5 @@
         }
       ]
     }
-  ],
-  "notes": [
-    "All sources remain unchanged. Previews compose separate layers.",
-    "Landscape side margins are 356px; ultrawide side margins 196px; portrait top/bottom margins about 70px. Wider vertical motion requires more painted source.",
-    "Regional dungeon floors reuse a shared vaulted backdrop and iron gate, pending bespoke architecture/lighting.",
-    "House scales are rear-scene composition examples; actor-scale and contact-shadow checks remain pending."
   ]
 }

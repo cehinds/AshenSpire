@@ -1,0 +1,240 @@
+{
+  "regionId": "cinder-reach",
+  "profiles": [
+    {
+      "profileId": "cinder-reach/city",
+      "status": "draft-candidate",
+      "productionBinding": null,
+      "nodeCount": 10,
+      "assignmentSource": {
+        "path": "../../../content/source/locationPresentation.json",
+        "array": "nodeProfiles",
+        "filter": {
+          "profileId": "cinder-reach/city"
+        }
+      },
+      "selectionTags": {
+        "region": "cinder-reach",
+        "setting": "city",
+        "material": "sooty masonry"
+      },
+      "primaryPools": [
+        {
+          "candidateId": "cinder-reach/city/primary",
+          "origin": "batch-06-settlement",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "cinder-reach/ground-foundry-court.png",
+          "backdrop": "../batch-05-regions/cinder-reach/backdrop-volcanic.png",
+          "props": [
+            "cinder-reach/prop-foundry-hall.png",
+            "../batch-05-regions/cinder-reach/prop-broken-forge.png"
+          ]
+        }
+      ],
+      "fallbackPools": [
+        {
+          "candidateId": "cinder-reach/city/batch-05-fallback",
+          "origin": "batch-05",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "../batch-05-regions/cinder-reach/ground-ash-flagstones.png",
+          "backdrop": "../batch-05-regions/cinder-reach/backdrop-volcanic.png",
+          "props": [
+            "../batch-05-regions/cinder-reach/prop-broken-forge.png"
+          ]
+        }
+      ],
+      "reviewNotes": [
+        "New regional courtyard and building candidates use the existing regional backdrop. Review scale, grounding, palette and playable-space clearance."
+      ]
+    },
+    {
+      "profileId": "cinder-reach/dungeon",
+      "status": "draft-candidate",
+      "productionBinding": null,
+      "nodeCount": 1,
+      "assignmentSource": {
+        "path": "../../../content/source/locationPresentation.json",
+        "array": "nodeProfiles",
+        "filter": {
+          "profileId": "cinder-reach/dungeon"
+        }
+      },
+      "selectionTags": {
+        "region": "cinder-reach",
+        "setting": "dungeon",
+        "material": "obsidian"
+      },
+      "primaryPools": [
+        {
+          "candidateId": "cinder-reach/dungeon/primary",
+          "origin": "batch-06-regional-interior",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "cinder-reach/ground-obsidian-vault.png",
+          "backdrop": "../batch-05-regions/interiors/backdrop-vaulted-depths.png",
+          "props": [
+            "../batch-05-regions/interiors/prop-iron-gate.png"
+          ]
+        }
+      ],
+      "fallbackPools": [
+        {
+          "candidateId": "cinder-reach/dungeon/batch-05-fallback",
+          "origin": "batch-05",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "../batch-05-regions/interiors/ground-dungeon-flagstones.png",
+          "backdrop": "../batch-05-regions/interiors/backdrop-vaulted-depths.png",
+          "props": [
+            "../batch-05-regions/interiors/prop-iron-gate.png"
+          ]
+        }
+      ],
+      "reviewNotes": [
+        "Ground is a regional candidate; vaulted backdrop and iron gate remain shared batch-05 interior assets. A bespoke regional dungeon background and prop set are still pending."
+      ]
+    },
+    {
+      "profileId": "cinder-reach/mine",
+      "status": "draft-candidate",
+      "productionBinding": null,
+      "nodeCount": 4,
+      "assignmentSource": {
+        "path": "../../../content/source/locationPresentation.json",
+        "array": "nodeProfiles",
+        "filter": {
+          "profileId": "cinder-reach/mine"
+        }
+      },
+      "selectionTags": {
+        "region": "cinder-reach",
+        "setting": "mine",
+        "material": "mine gravel"
+      },
+      "primaryPools": [
+        {
+          "candidateId": "cinder-reach/mine/primary",
+          "origin": "batch-05-retained",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "../batch-05-regions/interiors/ground-mine-gravel.png",
+          "backdrop": "../batch-05-regions/interiors/backdrop-mine-depths.png",
+          "props": [
+            "../batch-05-regions/interiors/prop-mine-cart.png"
+          ]
+        }
+      ],
+      "fallbackPools": [
+        {
+          "candidateId": "cinder-reach/mine/batch-05-fallback",
+          "origin": "batch-05",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "../batch-05-regions/interiors/ground-mine-gravel.png",
+          "backdrop": "../batch-05-regions/interiors/backdrop-mine-depths.png",
+          "props": [
+            "../batch-05-regions/interiors/prop-mine-cart.png"
+          ]
+        }
+      ],
+      "reviewNotes": [
+        "Retained shared mine ground, backdrop and cart require regional material review."
+      ]
+    },
+    {
+      "profileId": "cinder-reach/road",
+      "status": "draft-candidate",
+      "productionBinding": null,
+      "nodeCount": 23,
+      "assignmentSource": {
+        "path": "../../../content/source/locationPresentation.json",
+        "array": "nodeProfiles",
+        "filter": {
+          "profileId": "cinder-reach/road"
+        }
+      },
+      "selectionTags": {
+        "region": "cinder-reach",
+        "setting": "road",
+        "material": "regional outdoor material"
+      },
+      "primaryPools": [
+        {
+          "candidateId": "cinder-reach/road/primary",
+          "origin": "batch-05-retained",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "../batch-05-regions/cinder-reach/ground-basalt-road.png",
+          "backdrop": "../batch-05-regions/cinder-reach/backdrop-volcanic.png",
+          "props": [
+            "../batch-05-regions/cinder-reach/prop-basalt-spires.png"
+          ]
+        }
+      ],
+      "fallbackPools": [
+        {
+          "candidateId": "cinder-reach/road/batch-05-fallback",
+          "origin": "batch-05",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "../batch-05-regions/cinder-reach/ground-basalt-road.png",
+          "backdrop": "../batch-05-regions/cinder-reach/backdrop-volcanic.png",
+          "props": [
+            "../batch-05-regions/cinder-reach/prop-basalt-spires.png"
+          ]
+        }
+      ],
+      "reviewNotes": []
+    },
+    {
+      "profileId": "cinder-reach/shore",
+      "status": "draft-candidate",
+      "productionBinding": null,
+      "nodeCount": 2,
+      "assignmentSource": {
+        "path": "../../../content/source/locationPresentation.json",
+        "array": "nodeProfiles",
+        "filter": {
+          "profileId": "cinder-reach/shore"
+        }
+      },
+      "selectionTags": {
+        "region": "cinder-reach",
+        "setting": "shore",
+        "material": "regional outdoor material"
+      },
+      "primaryPools": [
+        {
+          "candidateId": "cinder-reach/shore/primary",
+          "origin": "batch-05-retained",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "../batch-05-regions/cinder-reach/ground-ash-flagstones.png",
+          "backdrop": "../batch-05-regions/cinder-reach/backdrop-volcanic-shore.png",
+          "props": [
+            "../batch-05-regions/cinder-reach/prop-basalt-spires.png"
+          ]
+        }
+      ],
+      "fallbackPools": [
+        {
+          "candidateId": "cinder-reach/shore/batch-05-fallback",
+          "origin": "batch-05",
+          "status": "draft-candidate",
+          "productionBinding": null,
+          "ground": "../batch-05-regions/cinder-reach/ground-ash-flagstones.png",
+          "backdrop": "../batch-05-regions/cinder-reach/backdrop-volcanic-shore.png",
+          "props": [
+            "../batch-05-regions/cinder-reach/prop-basalt-spires.png"
+          ]
+        }
+      ],
+      "reviewNotes": [
+        "Review volcanic coastal backdrop against the map shoreline, including sea/tidal horizon and wet basalt.",
+        "Basalt road ground and spires are material candidates; refine into wet coastal basalt ground and shoreline props."
+      ]
+    }
+  ]
+}

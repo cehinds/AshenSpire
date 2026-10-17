@@ -4,6 +4,8 @@ Draft candidate compositions for 21 existing profiles, five regions and 200 live
 
 ## Editing and selection
 
+Edit `modules/regions/<region>/pools.json`; common rules/source metadata live in `modules/shared/location-pools.json`. The [module index](modules/index.json) connects them. `location-pools.example.json` is a generated flat export for other tools. Regenerate it with `node json-modules.mjs` from this batch directory after edits.
+
 Each profile contains ordered `primaryPools` and `fallbackPools`. Select one complete composition within the exact profile. A primary prefers batch 06 where available; a fallback preserves the previous batch 05 proposal. Unchanged profiles intentionally have identical primary and fallback assets. Add alternatives to the appropriate array rather than mixing arbitrary regions. Props are optional accents requiring composition review. Paths resolve from this directory.
 
 Structured selection tags record region, existing setting and material. Tags support manual discovery; they do not create live IDs or change source assignments. `assignmentSource` points directly to live `nodeProfiles` filtered by exact profile ID. The provenance digest records the exact source node/profile pairs without duplicating 200 node IDs.

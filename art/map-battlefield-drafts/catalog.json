@@ -32,7 +32,8 @@
     {
       "id": "batch-06-settlements",
       "manifest": "batch-06-settlements/manifest.json",
-      "sourceCount": 17
+      "sourceCount": 17,
+      "authoringModules": "batch-06-settlements/modules/index.json"
     }
   ],
   "editableRecipes": [
@@ -58,11 +59,15 @@
     },
     {
       "id": "regional-settlements-and-floors",
-      "file": "batch-06-settlements/composition.example.json"
+      "file": "batch-06-settlements/modules/index.json",
+      "portableExport": "batch-06-settlements/composition.example.json",
+      "document": "composition"
     },
     {
       "id": "location-art-pools",
-      "file": "batch-06-settlements/location-pools.example.json"
+      "file": "batch-06-settlements/modules/index.json",
+      "portableExport": "batch-06-settlements/location-pools.example.json",
+      "document": "locationPools"
     }
   ],
   "nextFamilies": [
