@@ -159,7 +159,8 @@ export function wireRunHud(app, {
     const current = entry.count;
     const icon = trayIcon({
       art: flaskPresentation(def, { showName: false }), count: current, tone: def.tint || '', label: def.name, disabled: current <= 0,
-      attrs: { class: 'flask-slot flask-charge', dataset: { flaskKind: kind } },
+      // These actionable DIV pips join unified keyboard/controller navigation.
+      attrs: { class: 'flask-slot flask-charge', dataset: { flaskKind: kind, focusable: '' } },
       tip: () => flaskTooltipHtml(def, { charges: current }),
       activate: (node) => {
         const canUse = settingOn(meta.settings, 'useRestorativeFlasksOutsideCombat') && current > 0;

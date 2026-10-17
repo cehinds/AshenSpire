@@ -15,8 +15,12 @@
 //   node tools/hybrid-input-parity.mjs --screenshots
 //   node tools/hybrid-input-parity.mjs --standalone --screenshots
 //   node tools/hybrid-input-parity.mjs --self-target-only --only 320x640
+//   node tools/hybrid-input-parity.mjs --flask-menu-only --only 390x844
 //   node tools/hybrid-input-parity.mjs --artifact-parity  # only after shared artifacts may move
 //   CHROME=/path/to/chrome node tools/hybrid-input-parity.mjs
+//
+// The focused flask mode covers Current map HUD charge menus with the authored
+// optional roomRail=true configuration; it does not claim full combat parity.
 //
 // Exit 0 = every measured cell held; 1 = a product finding; 2 = nothing was
 // measured / browser or fixture failure. Generated root/build/dist artifacts
@@ -38,6 +42,10 @@ const screenshots = args.includes('--screenshots');
 const standalone = args.includes('--standalone');
 const artifactParity = args.includes('--artifact-parity');
 const selfTargetOnly = args.includes('--self-target-only');
+const flaskMenuOnly = args.includes('--flask-menu-only');
+if (flaskMenuOnly && (selfTargetOnly || screenshots || standalone || artifactParity)) {
+  throw new Error('--flask-menu-only is a focused source probe, without screenshot or artifact evidence');
+}
 const evidenceDoor = standalone ? 'root standalone' : 'source';
 const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const canonicalLfBytes = (bytes) => {
@@ -177,8 +185,8 @@ if (args.includes('--selftest')) {
     }, {
       name: 'top-bar flask anchors are removed from the unified cursor',
       file: 'src/ui/input.js',
-      find: "(el) => !el.closest?.('[inert]') && visible(el) && (inModal || el.matches('.flask-slot') || !(el.closest && el.closest(CHROME)))",
-      replace: "(el) => !el.closest?.('[inert]') && visible(el) && (inModal || !(el.closest && el.closest(CHROME)))",
+      find: "(el) => (key === null || keyOf(el) === key) && !el.closest?.('[inert]') && visible(el)\n      && (inModal || el.matches('.flask-slot') || !(el.closest && el.closest(CHROME)))",
+      replace: "(el) => (key === null || keyOf(el) === key) && !el.closest?.('[inert]') && visible(el)\n      && (inModal || !(el.closest && el.closest(CHROME)))",
       expectRed: /FAIL keyboard Crimson menu opens on Use and arrows to Inspect/,
     }, {
       name: 'D-pad menu movement no longer synchronizes DOM focus',
@@ -260,13 +268,16 @@ if (args.includes('--selftest')) {
   }
   if (sourcePlants.length) {
     const focusedSelfTargetPlant = wantedPlant && wantedPlant.includes('controller self');
+    const focusedFlaskPlant = wantedPlant && wantedPlant.includes('top-bar flask anchors');
     const sourceStatus = await doorSelftest({
       tool: 'hybrid-input-parity.mjs',
       args: focusedSelfTargetPlant
         ? ['--self-target-only', '--only', '390x844']
+        : focusedFlaskPlant ? ['--flask-menu-only', '--only', '390x844']
         : ['--only', '390x844'],
       timeoutMs: 180000,
-      extraCopy: ['AshenSpire.html'],
+      // Source browser copies need the same verified art trees as this checkout.
+      extraCopy: ['AshenSpire.html', 'assets', 'assets-mobile', 'music', 'map-detail'],
       plants: sourcePlants,
     });
     if (sourceStatus) process.exit(sourceStatus);
@@ -483,9 +494,10 @@ const browserPath = BROWSERS.find((path) => existsSync(path));
 const wait = (ms) => new Promise((resolveWait) => setTimeout(resolveWait, ms));
 
 function cdpConnect(url) {
-  const ws = new WebSocket(url); let nextId = 1; const pending = new Map();
+  const ws = new WebSocket(url); let nextId = 1; const pending = new Map(); const listeners = new Set();
   ws.addEventListener('message', (event) => {
     const message = JSON.parse(event.data);
+    if (!message.id) { for (const listener of listeners) listener(message); return; }
     if (!message.id || !pending.has(message.id)) return;
     const { resolveCall, rejectCall } = pending.get(message.id); pending.delete(message.id);
     if (message.error) rejectCall(new Error(message.error.message)); else resolveCall(message.result);
@@ -494,6 +506,7 @@ function cdpConnect(url) {
     ready: new Promise((resolveReady, rejectReady) => {
       ws.addEventListener('open', resolveReady); ws.addEventListener('error', rejectReady);
     }),
+    on(listener) { listeners.add(listener); },
     send(method, params = {}, sessionId) {
       const id = nextId++;
       return new Promise((resolveCall, rejectCall) => {
@@ -725,6 +738,24 @@ async function main() {
       const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
       await cdp.send('Page.enable', {}, sessionId); await cdp.send('Runtime.enable', {}, sessionId);
       await cdp.send('Page.addScriptToEvaluateOnNewDocument', { source: PAD_SHIM }, sessionId);
+      if (flaskMenuOnly) {
+        // Same authored optional rail fixture as flask-menu-probe.mjs: the
+        // browser reads the real config module with only roomRail enabled.
+        const configPath = 'src/config/generated/ui.js';
+        const config = readFileSync(join(ROOT, configPath), 'utf8');
+        const railOn = config.replace(/("roomRail"\s*:\s*)false/, '$1true');
+        if (!/"roomRail"\s*:\s*true/.test(railOn)) throw new Error('map flask fixture has no authored roomRail config row');
+        cdp.on((message) => {
+          if (message.method !== 'Fetch.requestPaused' || message.sessionId !== sessionId) return;
+          cdp.send('Fetch.fulfillRequest', {
+            requestId: message.params.requestId, responseCode: 200,
+            responseHeaders: [{ name: 'Content-Type', value: 'text/javascript; charset=utf-8' }, { name: 'Cache-Control', value: 'no-store' }],
+            body: Buffer.from(railOn).toString('base64'),
+          }, sessionId).catch(() => {});
+        });
+        await cdp.send('Fetch.enable', { patterns: [{ urlPattern: `*/${configPath}*`, requestStage: 'Request' }] }, sessionId);
+      }
+
       await cdp.send('Emulation.setDeviceMetricsOverride', {
         width, height, deviceScaleFactor: 1, mobile: width < 700,
       }, sessionId);
@@ -744,14 +775,27 @@ async function main() {
         }
         throw new Error(`${shape}: timeout waiting for ${label}`);
       };
+      // The focused map fixture needs Current's charge flasks. Full parity
+      // retains its existing profile route and authored combat assumptions.
       const openCombat = async ({ artifact = standalone, textSize = 'M', hand = 5 } = {}) => {
-        const settings = encodeURIComponent(JSON.stringify({ textSize }));
+        const settings = encodeURIComponent(JSON.stringify({ textSize, ...(flaskMenuOnly ? { useRestorativeFlasksOutsideCombat: true } : {}) }));
         const page = artifact ? 'AshenSpire.html' : 'index.html';
-        await cdp.send('Page.navigate', { url: `${base.replace(/index\.html$/, page)}?shot=combat&shotHand=${hand}&shotSettings=${settings}` }, sessionId);
-        await until(`!!document.querySelector('.combat .hand .card') && !!window.__parityPad`, 'combat + gamepad shim');
+        await cdp.send('Page.navigate', { url: `${base.replace(/index\.html$/, page)}?${flaskMenuOnly ? 'gameProfile=current&shot=map' : 'shot=combat'}&shotHand=${hand}&shotSettings=${settings}` }, sessionId);
+        await until(flaskMenuOnly
+          ? `!!document.querySelector('.mapscreen') && !!window.__flasks && !!window.__parityPad`
+          : `!!document.querySelector('.combat .hand .card') && !!window.__parityPad`,
+        flaskMenuOnly ? 'Current map + flask ledger + gamepad shim' : 'combat + gamepad shim');
         await wait(350);
       };
-      const state = () => ev(STATE);
+      const state = async () => {
+        const reading = await ev(STATE);
+        if (flaskMenuOnly) {
+          const ledger = await ev('window.__flasks()');
+          reading.flaskCharges = { live: ledger.charges, saved: ledger.savedCharges };
+          reading.flasks = ledger.carried;
+        }
+        return reading;
+      };
       const key = async (keyName) => {
         const code = /^[1-9]$/.test(keyName) ? `Digit${keyName}` : keyName === 'Enter' ? 'Enter'
           : keyName === 'Escape' ? 'Escape' : keyName;
@@ -878,6 +922,11 @@ async function main() {
         return false;
       };
       const focusAnchor = async (marker, mode) => {
+        if (flaskMenuOnly) return walkCursor({
+          targetExpr: `document.querySelector('[data-parity-anchor="${marker}"]')`,
+          mode, ratio: 0.55, steps: 40,
+          reached: (current) => current.focus?.parityAnchor === marker,
+        });
         for (let i = 0; i < 40; i++) {
           const current = await state();
           if (current.focus?.parityAnchor === marker) return true;
@@ -929,7 +978,8 @@ async function main() {
         && next.discard === prior.discard + 1 && next.exhaust === prior.exhaust
         && next.player.hp === prior.player.hp && next.player.block === prior.player.block + 7
         && JSON.stringify(next.enemies) === JSON.stringify(prior.enemies);
-      const markFlaskAnchors = () => ev(`(() => {
+      const markFlaskAnchors = async () => {
+        const anchors = await ev(`(() => {
         const charges=[...document.querySelectorAll('.flask-slot.flask-charge')];
         if(charges[0])charges[0].dataset.parityAnchor='crimson-charge';
         if(charges[1])charges[1].dataset.parityAnchor='azure-charge';
@@ -940,6 +990,17 @@ async function main() {
           names:[...document.querySelectorAll('.flask-slot')].map((node)=>(node.textContent||'').replace(/\\s+/g,' ').trim()),
         };
       })()`);
+        if (flaskMenuOnly) {
+          const visible = await ev(`[...document.querySelectorAll('[data-parity-anchor="crimson-charge"], [data-parity-anchor="azure-charge"]')].filter((node) => { const r=node.getBoundingClientRect(); const css=getComputedStyle(node); return r.width>0 && r.height>0 && css.display!=='none' && css.visibility!=='hidden'; }).length`);
+          if (!anchors.crimson || !anchors.azure || visible !== 2) throw new Error('Current map flask precondition: visible Crimson and Azure anchors are required; no fault verdict measured');
+          const eligibility = await ev(`[...document.querySelectorAll('.hud-potions .flask-charge')].map((node) => ({ kind:node.dataset.flaskKind, role:node.getAttribute('role'), tabIndex:node.tabIndex, eligible:node.matches('button:not([disabled]), [data-focusable]') }))`);
+          const eligible = eligibility.length === 2 && eligibility.map((row) => row.kind).sort().join(',') === 'hp,mana'
+            && eligibility.every((row) => row.role === 'button' && row.tabIndex === 0 && row.eligible);
+          check(eligible, 'map charge-flask anchors declare actionable unified focus eligibility', JSON.stringify(eligibility));
+          if (!eligible) throw new Error('Current map flask precondition: actionable anchors must enter unified navigation; no fault verdict measured');
+        }
+        return anchors;
+      };
       const poseMulti = async () => ev(`(() => {
         const donor=window.__combat.piles.hand[0];
         const trigger=[...document.querySelectorAll('.hand .card')].find((node)=>/Slashing Strike/.test(node.textContent));
@@ -1077,10 +1138,89 @@ async function main() {
         check(cleanTargeting(after), 'controller self completion clears targeting state', JSON.stringify(after));
       };
 
-      console.log(`\n  ${shape} — ${evidenceDoor} real page input parity`);
+      const runChargeFlaskMenus = async () => {
+        // Contextual flask menus: opening and inspecting are inert, arrow/D-pad
+        // navigation stays inside the menu, and Cancel returns DOM focus to the
+        // exact slot that opened it. Crimson is driven by keyboard; Azure by the
+        // standard pad. Neither path may spend a charge.
+        const cancelChargeMenu = async (mode, marker) => {
+          await openCombat();
+          const anchors = await markFlaskAnchors();
+          const prior = await state();
+          const reachedAnchor = await focusAnchor(marker, mode);
+          if (reachedAnchor) {
+            if (mode === 'keyboard') await key('Enter'); else await pad(0);
+            // Map tray icons explain on their first pointer/pad activation;
+            // their second activation acts, as documented by iconTray.js.
+            if (flaskMenuOnly && mode === 'controller' && !(await state()).menu) await pad(0);
+          }
+          const opened = await state();
+          let ended = null;
+          let homed = null;
+          if (mode === 'keyboard') {
+            await key('End'); ended = await state();
+            await key('Home'); homed = await state();
+            await key('ArrowDown');
+          } else await pad(13);
+          const navigated = await state();
+          const menuGeometry = await ev(`(() => [...document.querySelectorAll('.flask-action')].map((node) => {
+            const rect=node.getBoundingClientRect();
+            return {name:(node.textContent||'').trim(),width:+rect.width.toFixed(2),height:+rect.height.toFixed(2)};
+          }))()`);
+          await screenshot(`${mode}-${marker}-menu`);
+          if (mode === 'keyboard') await key('Escape'); else await pad(1);
+          const cancelled = await state();
+          return { anchors, prior, reachedAnchor, opened, ended, homed, navigated, menuGeometry, cancelled };
+        };
+        const expectedMenuActions = flaskMenuOnly ? 'use,inspect,drop' : 'use,inspect';
+        const expectedMenuRows = flaskMenuOnly ? 3 : 2;
+        const menuActionsMatch = (menu) => menu?.actions.map((row) => row.id).join(',') === expectedMenuActions
+          && (!flaskMenuOnly || menu.actions.map((row) => row.enabled).join(',') === 'true,true,false');
+        const crimsonMenu = await cancelChargeMenu('keyboard', 'crimson-charge');
+        check(crimsonMenu.reachedAnchor && crimsonMenu.opened.menu
+          && menuActionsMatch(crimsonMenu.opened.menu)
+          && crimsonMenu.opened.active?.flaskAction === 'use'
+          && crimsonMenu.navigated.active?.flaskAction === 'inspect',
+        'keyboard Crimson menu opens on Use and arrows to Inspect', JSON.stringify(crimsonMenu));
+        check(crimsonMenu.ended?.active?.flaskAction === (flaskMenuOnly ? 'drop' : 'inspect')
+          && crimsonMenu.ended?.focus?.flaskAction === (flaskMenuOnly ? 'drop' : 'inspect')
+          && crimsonMenu.homed?.active?.flaskAction === 'use'
+          && crimsonMenu.homed?.focus?.flaskAction === 'use',
+        'keyboard Home/End keep DOM focus and the unified cursor aligned', JSON.stringify(crimsonMenu));
+        check(crimsonMenu.menuGeometry.length === expectedMenuRows
+          && crimsonMenu.menuGeometry.every((row) => Math.min(row.width, row.height) >= 44),
+        'keyboard Crimson menu rows retain the 44 device-pixel floor', JSON.stringify(crimsonMenu.menuGeometry));
+        check(!crimsonMenu.cancelled.menu && crimsonMenu.cancelled.active?.parityAnchor === 'crimson-charge'
+          && gameplay(crimsonMenu.cancelled) === gameplay(crimsonMenu.prior),
+        'keyboard Crimson cancel returns the exact anchor and spends no charge', JSON.stringify(crimsonMenu));
+
+        const azureMenu = await cancelChargeMenu('controller', 'azure-charge');
+        check(azureMenu.reachedAnchor && azureMenu.opened.menu
+          && menuActionsMatch(azureMenu.opened.menu)
+          && azureMenu.opened.active?.flaskAction === 'use'
+          && azureMenu.navigated.active?.flaskAction === 'inspect'
+          && azureMenu.cancelled.pad.mapping === 'standard'
+          && azureMenu.cancelled.pad.reads > azureMenu.prior.pad.reads,
+        'controller Azure menu opens on Use and D-pad moves to Inspect', JSON.stringify(azureMenu));
+        check(azureMenu.menuGeometry.length === expectedMenuRows
+          && azureMenu.menuGeometry.every((row) => Math.min(row.width, row.height) >= 44),
+        'controller Azure menu rows retain the 44 device-pixel floor', JSON.stringify(azureMenu.menuGeometry));
+        check(!azureMenu.cancelled.menu && azureMenu.cancelled.active?.parityAnchor === 'azure-charge'
+          && gameplay(azureMenu.cancelled) === gameplay(azureMenu.prior),
+        'controller Azure cancel returns the exact anchor and spends no charge', JSON.stringify(azureMenu));
+
+      };
+
+      console.log(`\n  ${shape} — ${evidenceDoor} ${flaskMenuOnly ? 'Current map-flask-menu-only parity (roomRail=true, outside-combat Use=on; full combat parity not measured)' : 'real page input parity'}`);
 
       if (selfTargetOnly) {
         await runControllerSelfTarget();
+        await cdp.send('Target.closeTarget', { targetId });
+        continue;
+      }
+
+      if (flaskMenuOnly) {
+        await runChargeFlaskMenus();
         await cdp.send('Target.closeTarget', { targetId });
         continue;
       }
@@ -1298,68 +1438,7 @@ async function main() {
 
       await runControllerSelfTarget();
 
-      // Contextual flask menus: opening and inspecting are inert, arrow/D-pad
-      // navigation stays inside the menu, and Cancel returns DOM focus to the
-      // exact slot that opened it. Crimson is driven by keyboard; Azure by the
-      // standard pad. Neither path may spend a charge.
-      const cancelChargeMenu = async (mode, marker) => {
-        await openCombat();
-        const anchors = await markFlaskAnchors();
-        const prior = await state();
-        const reachedAnchor = await focusAnchor(marker, mode);
-        if (reachedAnchor) {
-          if (mode === 'keyboard') await key('Enter'); else await pad(0);
-        }
-        const opened = await state();
-        let ended = null;
-        let homed = null;
-        if (mode === 'keyboard') {
-          await key('End'); ended = await state();
-          await key('Home'); homed = await state();
-          await key('ArrowDown');
-        } else await pad(13);
-        const navigated = await state();
-        const menuGeometry = await ev(`(() => [...document.querySelectorAll('.flask-action')].map((node) => {
-          const rect=node.getBoundingClientRect();
-          return {name:(node.textContent||'').trim(),width:+rect.width.toFixed(2),height:+rect.height.toFixed(2)};
-        }))()`);
-        await screenshot(`${mode}-${marker}-menu`);
-        if (mode === 'keyboard') await key('Escape'); else await pad(1);
-        const cancelled = await state();
-        return { anchors, prior, reachedAnchor, opened, ended, homed, navigated, menuGeometry, cancelled };
-      };
-      const crimsonMenu = await cancelChargeMenu('keyboard', 'crimson-charge');
-      check(crimsonMenu.reachedAnchor && crimsonMenu.opened.menu
-        && crimsonMenu.opened.menu.actions.map((row) => row.id).join(',') === 'use,inspect'
-        && crimsonMenu.opened.active?.flaskAction === 'use'
-        && crimsonMenu.navigated.active?.flaskAction === 'inspect',
-      'keyboard Crimson menu opens on Use and arrows to Inspect', JSON.stringify(crimsonMenu));
-      check(crimsonMenu.ended?.active?.flaskAction === 'inspect'
-        && crimsonMenu.ended?.focus?.flaskAction === 'inspect'
-        && crimsonMenu.homed?.active?.flaskAction === 'use'
-        && crimsonMenu.homed?.focus?.flaskAction === 'use',
-      'keyboard Home/End keep DOM focus and the unified cursor aligned', JSON.stringify(crimsonMenu));
-      check(crimsonMenu.menuGeometry.length === 2
-        && crimsonMenu.menuGeometry.every((row) => Math.min(row.width, row.height) >= 44),
-      'keyboard Crimson menu rows retain the 44 device-pixel floor', JSON.stringify(crimsonMenu.menuGeometry));
-      check(!crimsonMenu.cancelled.menu && crimsonMenu.cancelled.active?.parityAnchor === 'crimson-charge'
-        && gameplay(crimsonMenu.cancelled) === gameplay(crimsonMenu.prior),
-      'keyboard Crimson cancel returns the exact anchor and spends no charge', JSON.stringify(crimsonMenu));
-
-      const azureMenu = await cancelChargeMenu('controller', 'azure-charge');
-      check(azureMenu.reachedAnchor && azureMenu.opened.menu
-        && azureMenu.opened.menu.actions.map((row) => row.id).join(',') === 'use,inspect'
-        && azureMenu.opened.active?.flaskAction === 'use'
-        && azureMenu.navigated.active?.flaskAction === 'inspect'
-        && azureMenu.cancelled.pad.mapping === 'standard'
-        && azureMenu.cancelled.pad.reads > azureMenu.prior.pad.reads,
-      'controller Azure menu opens on Use and D-pad moves to Inspect', JSON.stringify(azureMenu));
-      check(azureMenu.menuGeometry.length === 2
-        && azureMenu.menuGeometry.every((row) => Math.min(row.width, row.height) >= 44),
-      'controller Azure menu rows retain the 44 device-pixel floor', JSON.stringify(azureMenu.menuGeometry));
-      check(!azureMenu.cancelled.menu && azureMenu.cancelled.active?.parityAnchor === 'azure-charge'
-        && gameplay(azureMenu.cancelled) === gameplay(azureMenu.prior),
-      'controller Azure cancel returns the exact anchor and spends no charge', JSON.stringify(azureMenu));
+      await runChargeFlaskMenus();
 
       // Contextual-menu lifecycle: a second activation is a real toggle;
       // click-away and competing surfaces dismiss without hijacking the new
@@ -1556,7 +1635,7 @@ async function main() {
       }
       writeFileSync(join(ROOT, 'docs', 'preview', manifestName), manifestText);
     }
-    if (!selfTargetOnly) {
+    if (!selfTargetOnly && !flaskMenuOnly) {
       const dragArgs = [join(ROOT, 'tools', 'card-drag-targeting.mjs'), '--text', 'M'];
       if (standalone) dragArgs.push('--dist');
       if (only) dragArgs.push('--only', only);
@@ -1571,7 +1650,7 @@ async function main() {
       check(drag.status === 0, 'composed card-drag-targeting same-door gate remains GREEN',
         drag.status === 0 ? 'exact pointer-drag acceptance composed' : `exit ${drag.status}; ${String(drag.error || '').trim()}`);
     }
-    console.log(`\n${findings ? `FAIL — ${findings} finding(s) in ${checks} checks` : `PASS — ${checks} parity checks across ${measured} viewport(s)`}`);
+    console.log(`\n${findings ? `FAIL — ${findings} finding(s) in ${checks} checks` : `PASS — ${checks} ${flaskMenuOnly ? 'Current map-flask-menu-only' : 'parity'} checks across ${measured} viewport(s)`}`);
     process.exitCode = findings ? 1 : 0;
   } finally {
     cdp.close(); await launched.close(); served.server.close();
