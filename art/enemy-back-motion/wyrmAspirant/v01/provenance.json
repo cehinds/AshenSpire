@@ -2,7 +2,9 @@
   "status": "draft-generated-not-normalized",
   "seed": {
     "path": "art/enemy-back-proposals/wyrmAspirant/v01.png",
-    "ref": "89089322d763c27917ee2ef5e3f071f39640ecbc"
+    "ref": "12744f2f1eca51993c1e42bb95e23ae8f6b0d2d3",
+    "repository": "cehinds/AshenSpire",
+    "sha256": "ea5beb41f4e0d63f182a5393fa3ed124ed73eab772f33a152094debbca52738d"
   },
   "generator": "image_gen.imagegen",
   "generationDate": "2026-10-17",

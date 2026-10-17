@@ -2,7 +2,9 @@
   "status": "draft-generated-not-normalized",
   "seed": {
     "path": "art/enemy-back-proposals/courtDuelist/v01.png",
-    "ref": "worker/EnemyBackSprites/normalize-duelist"
+    "ref": "12744f2f1eca51993c1e42bb95e23ae8f6b0d2d3",
+    "repository": "cehinds/AshenSpire",
+    "sha256": "a9d30e6c5c92040a073e388b70ebf2665340afc93cbe3d59ca51a0384cbb6e8e"
   },
   "generator": "image_gen.imagegen",
   "generationDate": "2026-10-17",
