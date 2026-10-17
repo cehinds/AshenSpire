@@ -13,6 +13,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/2029"
   },
   {
+    "id": "pr-2076",
+    "date": "2026-10-17",
+    "group": "2026-10-17",
+    "summary": "Co-op controls stay inside the combat HUD, and browser checks follow each game profile",
+    "detail": "Keep co-op bars, stances and formation controls clear at phone, tablet and desktop sizes. Map-camera, tutorial and full-run checks follow Core's shorter creation flow; legacy flask checks select Current, and hand-side checks measure the page's actual zoom. Source-link checks include the shared engine.",
+    "build": "0.7.1.1553",
+    "pullRequest": 2076,
+    "url": "https://github.com/cehinds/AshenSpire/pull/2076"
+  },
+  {
     "id": "pr-2067",
     "date": "2026-10-17",
     "group": "2026-10-17",

@@ -35,7 +35,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 ## 2026-10-17
 
 - **Stale origin branches are listed for cleanup, with restore points** ([#2029](https://github.com/cehinds/AshenSpire/pull/2029), `0.7.1.1553`). Records which merged or week-old branches are removed and the commit each one pointed at, so any of them can be restored; the game is unchanged.
-- **Core's map-camera check follows its shorter character creation** ([#PR](https://github.com/cehinds/AshenSpire/pull/PR), `0.7.1.1553`). The full browser check continues from Class to Review for Core and still walks Current's detailed creation steps before verifying saved map position.
+- **Co-op controls stay inside the combat HUD, and browser checks follow each game profile** ([#2076](https://github.com/cehinds/AshenSpire/pull/2076), `0.7.1.1553`). Keep co-op bars, stances and formation controls clear at phone, tablet and desktop sizes. Map-camera, tutorial and full-run checks follow Core's shorter creation flow; legacy flask checks select Current, and hand-side checks measure the page's actual zoom. Source-link checks include the shared engine.
 
 - **Combat figure animations follow the saved game module settings** ([#2067](https://github.com/cehinds/AshenSpire/pull/2067), `0.7.1.1551`). Core and Current keep the approved class-default weapon sequences enabled by default. Authors can disable figure motion through the animation module JSON while retaining static artwork, targeting, combat timing and damage feedback; Reading Desk playback follows the same setting.
 
