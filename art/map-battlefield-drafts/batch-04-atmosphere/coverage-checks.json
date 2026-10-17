@@ -1,0 +1,303 @@
+{
+  "status": "passed",
+  "scope": "Overlay canvas coverage only, not painted scenery framing",
+  "checks": [
+    {
+      "case": "portrait",
+      "offsetViewportUnits": [
+        -0.2,
+        -0.2
+      ],
+      "coverage": true,
+      "minimumEdgeMargin": 576.0,
+      "fieldSidePixels": 3840,
+      "useVectorExport": false
+    },
+    {
+      "case": "portrait",
+      "offsetViewportUnits": [
+        -0.2,
+        0
+      ],
+      "coverage": true,
+      "minimumEdgeMargin": 960.0,
+      "fieldSidePixels": 3840,
+      "useVectorExport": false
+    },
+    {
+      "case": "portrait",
+      "offsetViewportUnits": [
+        -0.2,
+        0.2
+      ],
+      "coverage": true,
+      "minimumEdgeMargin": 576.0,
+      "fieldSidePixels": 3840,
+      "useVectorExport": false
+    },
+    {
+      "case": "portrait",
+      "offsetViewportUnits": [
+        0,
+        -0.2
+      ],
+      "coverage": true,
+      "minimumEdgeMargin": 576.0,
+      "fieldSidePixels": 3840,
+      "useVectorExport": false
+    },
+    {
+      "case": "portrait",
+      "offsetViewportUnits": [
+        0,
+        0
+      ],
+      "coverage": true,
+      "minimumEdgeMargin": 960.0,
+      "fieldSidePixels": 3840,
+      "useVectorExport": false
+    },
+    {
+      "case": "portrait",
+      "offsetViewportUnits": [
+        0,
+        0.2
+      ],
+      "coverage": true,
+      "minimumEdgeMargin": 576.0,
+      "fieldSidePixels": 3840,
+      "useVectorExport": false
+    },
+    {
+      "case": "portrait",
+      "offsetViewportUnits": [
+        0.2,
+        -0.2
+      ],
+      "coverage": true,
+      "minimumEdgeMargin": 576.0,
+      "fieldSidePixels": 3840,
+      "useVectorExport": false
+    },
+    {
+      "case": "portrait",
+      "offsetViewportUnits": [
+        0.2,
+        0
+      ],
+      "coverage": true,
+      "minimumEdgeMargin": 960.0,
+      "fieldSidePixels": 3840,
+      "useVectorExport": false
+    },
+    {
+      "case": "portrait",
+      "offsetViewportUnits": [
+        0.2,
+        0.2
+      ],
+      "coverage": true,
+      "minimumEdgeMargin": 576.0,
+      "fieldSidePixels": 3840,
+      "useVectorExport": false
+    },
+    {
+      "case": "widescreen",
+      "offsetViewportUnits": [
+        -0.2,
+        -0.2
+      ],
+      "coverage": true,
+      "minimumEdgeMargin": 576.0,
+      "fieldSidePixels": 3840,
+      "useVectorExport": false
+    },
+    {
+      "case": "widescreen",
+      "offsetViewportUnits": [
+        -0.2,
+        0
+      ],
+      "coverage": true,
+      "minimumEdgeMargin": 576.0,
+      "fieldSidePixels": 3840,
+      "useVectorExport": false
+    },
+    {
+      "case": "widescreen",
+      "offsetViewportUnits": [
+        -0.2,
+        0.2
+      ],
+      "coverage": true,
+      "minimumEdgeMargin": 576.0,
+      "fieldSidePixels": 3840,
+      "useVectorExport": false
+    },
+    {
+      "case": "widescreen",
+      "offsetViewportUnits": [
+        0,
+        -0.2
+      ],
+      "coverage": true,
+      "minimumEdgeMargin": 960.0,
+      "fieldSidePixels": 3840,
+      "useVectorExport": false
+    },
+    {
+      "case": "widescreen",
+      "offsetViewportUnits": [
+        0,
+        0
+      ],
+      "coverage": true,
+      "minimumEdgeMargin": 960.0,
+      "fieldSidePixels": 3840,
+      "useVectorExport": false
+    },
+    {
+      "case": "widescreen",
+      "offsetViewportUnits": [
+        0,
+        0.2
+      ],
+      "coverage": true,
+      "minimumEdgeMargin": 960.0,
+      "fieldSidePixels": 3840,
+      "useVectorExport": false
+    },
+    {
+      "case": "widescreen",
+      "offsetViewportUnits": [
+        0.2,
+        -0.2
+      ],
+      "coverage": true,
+      "minimumEdgeMargin": 576.0,
+      "fieldSidePixels": 3840,
+      "useVectorExport": false
+    },
+    {
+      "case": "widescreen",
+      "offsetViewportUnits": [
+        0.2,
+        0
+      ],
+      "coverage": true,
+      "minimumEdgeMargin": 576.0,
+      "fieldSidePixels": 3840,
+      "useVectorExport": false
+    },
+    {
+      "case": "widescreen",
+      "offsetViewportUnits": [
+        0.2,
+        0.2
+      ],
+      "coverage": true,
+      "minimumEdgeMargin": 576.0,
+      "fieldSidePixels": 3840,
+      "useVectorExport": false
+    },
+    {
+      "case": "ultrawide",
+      "offsetViewportUnits": [
+        -0.2,
+        -0.2
+      ],
+      "coverage": true,
+      "minimumEdgeMargin": 768.0,
+      "fieldSidePixels": 5120,
+      "useVectorExport": true
+    },
+    {
+      "case": "ultrawide",
+      "offsetViewportUnits": [
+        -0.2,
+        0
+      ],
+      "coverage": true,
+      "minimumEdgeMargin": 768.0,
+      "fieldSidePixels": 5120,
+      "useVectorExport": true
+    },
+    {
+      "case": "ultrawide",
+      "offsetViewportUnits": [
+        -0.2,
+        0.2
+      ],
+      "coverage": true,
+      "minimumEdgeMargin": 768.0,
+      "fieldSidePixels": 5120,
+      "useVectorExport": true
+    },
+    {
+      "case": "ultrawide",
+      "offsetViewportUnits": [
+        0,
+        -0.2
+      ],
+      "coverage": true,
+      "minimumEdgeMargin": 1280.0,
+      "fieldSidePixels": 5120,
+      "useVectorExport": true
+    },
+    {
+      "case": "ultrawide",
+      "offsetViewportUnits": [
+        0,
+        0
+      ],
+      "coverage": true,
+      "minimumEdgeMargin": 1280.0,
+      "fieldSidePixels": 5120,
+      "useVectorExport": true
+    },
+    {
+      "case": "ultrawide",
+      "offsetViewportUnits": [
+        0,
+        0.2
+      ],
+      "coverage": true,
+      "minimumEdgeMargin": 1280.0,
+      "fieldSidePixels": 5120,
+      "useVectorExport": true
+    },
+    {
+      "case": "ultrawide",
+      "offsetViewportUnits": [
+        0.2,
+        -0.2
+      ],
+      "coverage": true,
+      "minimumEdgeMargin": 768.0,
+      "fieldSidePixels": 5120,
+      "useVectorExport": true
+    },
+    {
+      "case": "ultrawide",
+      "offsetViewportUnits": [
+        0.2,
+        0
+      ],
+      "coverage": true,
+      "minimumEdgeMargin": 768.0,
+      "fieldSidePixels": 5120,
+      "useVectorExport": true
+    },
+    {
+      "case": "ultrawide",
+      "offsetViewportUnits": [
+        0.2,
+        0.2
+      ],
+      "coverage": true,
+      "minimumEdgeMargin": 768.0,
+      "fieldSidePixels": 5120,
+      "useVectorExport": true
+    }
+  ]
+}

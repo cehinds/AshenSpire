@@ -1,0 +1,378 @@
+{
+  "purpose": "Full-canvas translucent atmosphere color washes; technical editable vector overlays, not generated landscape art.",
+  "rasterizer": {
+    "name": "Chromium",
+    "version": "Chromium 154.0.8037.57 built on Debian GNU/Linux 13 (trixie)",
+    "driver": "Playwright",
+    "script": "render.mjs",
+    "deviceScaleFactor": 1
+  },
+  "canvasPolicy": {
+    "masterDimensionsPx": [
+      4096,
+      4096
+    ],
+    "layout": "square transparent master; center-crop to target viewport aspect ratio",
+    "intendedCrops": [
+      "portrait 9:16",
+      "landscape 16:9",
+      "ultrawide 21:9"
+    ],
+    "overscan": "At 2x sampling, keep target viewport longest side at or below 2048 CSS px; crop master to viewport aspect ratio before display. Larger viewports need a larger master or reduced sampling.",
+    "nativeRasterization": "Each PNG was rendered directly from its 4096x4096 SVG in Chromium; no existing raster image was resized or edited."
+  },
+  "alphaPolicy": "All pixels are semi-transparent (no zero-alpha or opaque-alpha pixels); output alpha values remain within the requested wash ranges.",
+  "styleContextPath": "../../batch-03/preview-misty-composition.png (inspected for QA; not used as generation input)",
+  "imageGenerationUsed": false,
+  "filters": [
+    {
+      "id": "day",
+      "svg": "filter-day.svg",
+      "png": "filter-day.png",
+      "color": "#F3DDB6",
+      "svgOpacityStops": [
+        0.08
+      ],
+      "dimensionsPx": [
+        4096,
+        4096
+      ],
+      "format": "PNG",
+      "mode": "RGBA",
+      "alphaByteRange": [
+        20,
+        20
+      ],
+      "alphaOpacityRange": [
+        0.0784,
+        0.0784
+      ],
+      "zeroAlphaPixels": 0,
+      "opaqueAlphaPixels": 0,
+      "partialAlphaPixels": 16777216,
+      "centerCropAlphaByteRanges": {
+        "portrait9x16": [
+          20,
+          20
+        ],
+        "landscape16x9": [
+          20,
+          20
+        ],
+        "ultrawide21x9": [
+          20,
+          20
+        ]
+      },
+      "svgSha256": "15efc1ff50f50e4c093f7b947ddb78011eae1c76aac39ef0ae53d78bca9844b3",
+      "pngSha256": "5e01e1a0b4d246dbfa748f1f4bc774e024f7e8366ea164c69fa6c8510f9c0eef"
+    },
+    {
+      "id": "night",
+      "svg": "filter-night.svg",
+      "png": "filter-night.png",
+      "color": "#101C3B",
+      "svgOpacityStops": [
+        0.32
+      ],
+      "dimensionsPx": [
+        4096,
+        4096
+      ],
+      "format": "PNG",
+      "mode": "RGBA",
+      "alphaByteRange": [
+        82,
+        82
+      ],
+      "alphaOpacityRange": [
+        0.3216,
+        0.3216
+      ],
+      "zeroAlphaPixels": 0,
+      "opaqueAlphaPixels": 0,
+      "partialAlphaPixels": 16777216,
+      "centerCropAlphaByteRanges": {
+        "portrait9x16": [
+          82,
+          82
+        ],
+        "landscape16x9": [
+          82,
+          82
+        ],
+        "ultrawide21x9": [
+          82,
+          82
+        ]
+      },
+      "svgSha256": "c06c9ffe82119fc5f1ad45d37384f55f40e85b6cf13d89feb499331311925cb1",
+      "pngSha256": "2b1ed3aadec271a639f4a82882d8faef02951474c3f7afac1b1159b317a7a706"
+    },
+    {
+      "id": "fog",
+      "svg": "filter-fog.svg",
+      "png": "filter-fog.png",
+      "color": "#B9C6C9",
+      "svgOpacityStops": [
+        0.02,
+        0.08,
+        0.15,
+        0.18
+      ],
+      "dimensionsPx": [
+        4096,
+        4096
+      ],
+      "format": "PNG",
+      "mode": "RGBA",
+      "alphaByteRange": [
+        5,
+        46
+      ],
+      "alphaOpacityRange": [
+        0.0196,
+        0.1804
+      ],
+      "zeroAlphaPixels": 0,
+      "opaqueAlphaPixels": 0,
+      "partialAlphaPixels": 16777216,
+      "centerCropAlphaByteRanges": {
+        "portrait9x16": [
+          5,
+          46
+        ],
+        "landscape16x9": [
+          16,
+          41
+        ],
+        "ultrawide21x9": [
+          19,
+          40
+        ]
+      },
+      "svgSha256": "b810a28a7638db5c76375cf906d987d2e9313105e168937ec6c08b3900cdb0bb",
+      "pngSha256": "8ba97ae1ea6e4e4f655ad64e7234afb3f70153a8e86dc1db770caeed285c494d"
+    },
+    {
+      "id": "stormy",
+      "svg": "filter-stormy.svg",
+      "png": "filter-stormy.png",
+      "color": "#536578",
+      "svgOpacityStops": [
+        0.22,
+        0.24,
+        0.2
+      ],
+      "dimensionsPx": [
+        4096,
+        4096
+      ],
+      "format": "PNG",
+      "mode": "RGBA",
+      "alphaByteRange": [
+        51,
+        61
+      ],
+      "alphaOpacityRange": [
+        0.2,
+        0.2392
+      ],
+      "zeroAlphaPixels": 0,
+      "opaqueAlphaPixels": 0,
+      "partialAlphaPixels": 16777216,
+      "centerCropAlphaByteRanges": {
+        "portrait9x16": [
+          51,
+          61
+        ],
+        "landscape16x9": [
+          56,
+          61
+        ],
+        "ultrawide21x9": [
+          57,
+          61
+        ]
+      },
+      "svgSha256": "11847e2e8fe7d2f7252621cfe61b8c9bfd53e06543946b4205e3bfd6845ff0d8",
+      "pngSha256": "dbbc83c7e7deffeb7f3ab52579655ae51cd8a5117397bbbf6bfa91a0173e9cb7"
+    },
+    {
+      "id": "swamp",
+      "svg": "filter-swamp.svg",
+      "png": "filter-swamp.png",
+      "color": "#78834C",
+      "svgOpacityStops": [
+        0.1,
+        0.14,
+        0.18
+      ],
+      "dimensionsPx": [
+        4096,
+        4096
+      ],
+      "format": "PNG",
+      "mode": "RGBA",
+      "alphaByteRange": [
+        26,
+        46
+      ],
+      "alphaOpacityRange": [
+        0.102,
+        0.1804
+      ],
+      "zeroAlphaPixels": 0,
+      "opaqueAlphaPixels": 0,
+      "partialAlphaPixels": 16777216,
+      "centerCropAlphaByteRanges": {
+        "portrait9x16": [
+          26,
+          46
+        ],
+        "landscape16x9": [
+          30,
+          41
+        ],
+        "ultrawide21x9": [
+          31,
+          39
+        ]
+      },
+      "svgSha256": "f79b2f500e9b99d91f1a54aca9dc7777e67c5eb01c2252942909aff91c8250fd",
+      "pngSha256": "ca80769a6b876bcd31f47f42fb0092827ebaa02621e5bc7bd9a24c8fff2e8ff2"
+    },
+    {
+      "id": "hot",
+      "svg": "filter-hot.svg",
+      "png": "filter-hot.png",
+      "color": "#D99A50",
+      "svgOpacityStops": [
+        0.18,
+        0.13,
+        0.08
+      ],
+      "dimensionsPx": [
+        4096,
+        4096
+      ],
+      "format": "PNG",
+      "mode": "RGBA",
+      "alphaByteRange": [
+        22,
+        46
+      ],
+      "alphaOpacityRange": [
+        0.0863,
+        0.1804
+      ],
+      "zeroAlphaPixels": 0,
+      "opaqueAlphaPixels": 0,
+      "partialAlphaPixels": 16777216,
+      "centerCropAlphaByteRanges": {
+        "portrait9x16": [
+          26,
+          46
+        ],
+        "landscape16x9": [
+          28,
+          46
+        ],
+        "ultrawide21x9": [
+          30,
+          46
+        ]
+      },
+      "svgSha256": "884d2abd9063a2dab36695caa1b4f14351ab2737efd68ee5ea11d378c3cd06cc",
+      "pngSha256": "3a405a7d9bf00abecac059297fb186f81c70ac1a7d745617bd2ffe8bc157976c"
+    },
+    {
+      "id": "rain",
+      "svg": "filter-rain.svg",
+      "png": "filter-rain.png",
+      "color": "#74899B",
+      "svgOpacityStops": [
+        0.08,
+        0.12,
+        0.16
+      ],
+      "dimensionsPx": [
+        4096,
+        4096
+      ],
+      "format": "PNG",
+      "mode": "RGBA",
+      "alphaByteRange": [
+        20,
+        41
+      ],
+      "alphaOpacityRange": [
+        0.0784,
+        0.1608
+      ],
+      "zeroAlphaPixels": 0,
+      "opaqueAlphaPixels": 0,
+      "partialAlphaPixels": 16777216,
+      "centerCropAlphaByteRanges": {
+        "portrait9x16": [
+          20,
+          41
+        ],
+        "landscape16x9": [
+          24,
+          36
+        ],
+        "ultrawide21x9": [
+          26,
+          34
+        ]
+      },
+      "svgSha256": "00d7d6c3d7bc9f1522073b356633b05d89229e4f6fd230a663e7769019b19547",
+      "pngSha256": "93b390da04b2e5b8c4ab8752b6933b49aec399a591a7cf9bcdef1619e8c1fde6"
+    },
+    {
+      "id": "cold",
+      "svg": "filter-cold.svg",
+      "png": "filter-cold.png",
+      "color": "#9CCBE3",
+      "svgOpacityStops": [
+        0.1,
+        0.15,
+        0.2
+      ],
+      "dimensionsPx": [
+        4096,
+        4096
+      ],
+      "format": "PNG",
+      "mode": "RGBA",
+      "alphaByteRange": [
+        26,
+        51
+      ],
+      "alphaOpacityRange": [
+        0.102,
+        0.2
+      ],
+      "zeroAlphaPixels": 0,
+      "opaqueAlphaPixels": 0,
+      "partialAlphaPixels": 16777216,
+      "centerCropAlphaByteRanges": {
+        "portrait9x16": [
+          26,
+          51
+        ],
+        "landscape16x9": [
+          30,
+          45
+        ],
+        "ultrawide21x9": [
+          32,
+          43
+        ]
+      },
+      "svgSha256": "b5e4be9d238f80ca52df654908a182000502ef4f9bb0c875663f96872955348b",
+      "pngSha256": "67aff39986172d764f7a212106b0aed5504e8aee7d5dfb7f86d27dbea8a1f71c"
+    }
+  ]
+}

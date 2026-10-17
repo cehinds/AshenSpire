@@ -1,0 +1,62 @@
+{
+  "formatVersion": 1,
+  "status": "draft",
+  "effectId": "atmosphere.lightning.distant.v1",
+  "tags": {
+    "weather": [
+      "storm",
+      "thunderstorm"
+    ],
+    "time": [
+      "day",
+      "dusk",
+      "night"
+    ],
+    "setting": [
+      "outdoor"
+    ],
+    "layerRole": "distant-lightning"
+  },
+  "recommendedPlacement": "above-sky-below-ground-props-actors-and-ui",
+  "requestedNormalizedRegion": {
+    "xMin": 0.68,
+    "xMax": 0.82,
+    "yMin": 0.07,
+    "yMax": 0.3
+  },
+  "pixelRegistrationVerified": false,
+  "registrationNote": "Source02 was edited from source01, but native width changed1672→1671 and alpha bounds changed. Similar location/path is visible; pixel-exact correspondence is not established.",
+  "playback": {
+    "mode": "one-shot-then-hidden",
+    "autoplay": false,
+    "continuousFastLoop": false,
+    "frames": [
+      {
+        "file": "lightning-frame-01.png",
+        "durationMs": 80,
+        "recommendedOpacity": 0.3
+      },
+      {
+        "file": "lightning-frame-02.png",
+        "durationMs": 140,
+        "recommendedOpacity": 0.55
+      }
+    ],
+    "afterSequence": {
+      "visible": false,
+      "hiddenIntervalMinMs": 12000,
+      "hiddenIntervalMaxMs": 30000
+    },
+    "reducedMotion": "disable-lightning-flashes"
+  },
+  "draftConcerns": [
+    "Meaningful bolt extends down to normalized y0.36–0.37, beyond requested y0.30.",
+    "Blue-gray halo is broader than requested delicate distant-leader style.",
+    "Do not alternate these two frames as a perpetual fast loop.",
+    "No geometry alignment or background registration has been applied."
+  ],
+  "provenanceFiles": [
+    "lightning-frame-01.provenance.json",
+    "lightning-frame-02.provenance.json"
+  ]
+}

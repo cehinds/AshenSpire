@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="4096" height="4096" viewBox="0 0 4096 4096">
+  <title>Swamp atmospheric color wash</title>
+  <desc>Muted olive transparent wash, slightly denser toward the lower scene.</desc>
+  <defs><linearGradient id="swamp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#78834C" stop-opacity="0.10"/><stop offset="0.55" stop-color="#78834C" stop-opacity="0.14"/><stop offset="1" stop-color="#78834C" stop-opacity="0.18"/></linearGradient></defs>
+  <rect width="4096" height="4096" fill="url(#swamp)"/>
+</svg>

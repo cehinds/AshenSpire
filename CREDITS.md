@@ -734,3 +734,14 @@ tent and arch props, and two ground variants. Exact prompts, source outputs,
 reference provenance and draft QA are retained. Editable preview recipes reuse
 the batch02 misty sky. Sources remain unregistered on the art feature branch;
 no third-party artwork or license is claimed.
+
+### Map atmosphere layers — batch 04 (2026-10-17)
+
+Original editable vector illustrations provide eight translucent color filters,
+three seamless particle patterns and an oversized neutral fog field in
+`art/map-battlefield-drafts/batch-04-atmosphere/`. Browser exports, deterministic
+source scripts and pixel/coverage checks are retained. Two lightning frames and
+one alternate fog texture are original OpenAI-generated paintings with exact
+prompts and provenance. Composition stills and a motion video preserve source
+assets and demonstrate editable placement/timing. These remain unregistered art
+feature drafts; no third-party artwork or license is claimed.

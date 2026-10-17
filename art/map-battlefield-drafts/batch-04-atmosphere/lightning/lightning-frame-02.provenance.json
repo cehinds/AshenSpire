@@ -1,0 +1,80 @@
+{
+  "generator": "image_gen.imagegen",
+  "status": "draft",
+  "prompt": "Edit the supplied lightning frame01 into animation frame02. Preserve the SAME 1672x941 wide canvas, SAME exact lightning path, fork shape, endpoints and upper-right placement. Do not move, enlarge, rotate, add a different bolt, recenter or recrop anything. Increase ONLY the brightness and opacity of the existing thin silver-blue lightning path into a brighter main discharge, still delicate and distant. Keep restrained narrow pale silver-blue glow confined immediately around the lightning; eliminate any broad flat gray ribbon around the line. It must stay a narrow natural lightning fork with at most its existing tiny side twigs. All meaningful visible effect must remain in normalized x0.68..0.82, y0.07..0.30, with the rest FULLY TRANSPARENT including all central/lower battlefield pixels. Preserve TRUE alpha transparency. No screenwide white flash, bloom field, background sky, cloudscape, fog, land, ground, trees, buildings, scenery, text or UI. Dark fantasy painterly atmospheric overlay, subtle desaturated silver-blue rather than saturated neon. This brighter source frame follows the faint leader for140 milliseconds then becomes entirely hidden for12 to30 seconds. The timing is descriptive only: do not write it on the image.",
+  "referencedImagePaths": [
+    "/workspace/generated_images/exec-eff3163c-13e0-42e5-ae34-0ed3d8a0c369.png"
+  ],
+  "sourceOutputPath": "/workspace/generated_images/exec-9b6707d5-a262-4a98-a4f8-0fb62f4980fb.png",
+  "outputPath": "/workspace/AshenSpire/art/map-battlefield-drafts/batch-04-atmosphere/lightning/lightning-frame-02.png",
+  "requestedDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "transparentBackgroundRequested": true,
+  "processing": "Copied original generated PNG unchanged; no resizing, alpha cleanup or repositioning.",
+  "productionRegistered": false,
+  "actualDimensions": {
+    "width": 1671,
+    "height": 941
+  },
+  "mode": "RGBA",
+  "sha256": "18989051c814b5204c6b4a29b19c4893a20090e593d0cf1bc51526237bad25b0",
+  "alphaExtrema": [
+    0,
+    253
+  ],
+  "alphaBoundsByThreshold": {
+    "0": [
+      1191,
+      80,
+      1340,
+      461
+    ],
+    "1": [
+      1192,
+      81,
+      1338,
+      353
+    ],
+    "8": [
+      1194,
+      83,
+      1335,
+      350
+    ],
+    "32": [
+      1198,
+      85,
+      1332,
+      348
+    ],
+    "128": [
+      1203,
+      89,
+      1329,
+      342
+    ]
+  },
+  "meaningfulBoundsNormalizedAlphaAbove32": [
+    0.7169,
+    0.0903,
+    0.7971,
+    0.3698
+  ],
+  "nonzeroAlphaPixels": 12183,
+  "alphaAbove32Pixels": 7433,
+  "alphaCoverageFraction": 0.007747974289164856,
+  "alphaFindings": "Most canvas is truly alpha0; the small lightning effect and halo include translucent pixels. See actual normalized bounds: lower extent exceeds requested y0.30. Low-opacity artifacts extend beyond meaningful bolt.",
+  "visualReview": {
+    "inspected": true,
+    "observations": [
+      "Upper-right isolated lightning effect without sky/biome scenery or screenwide flash.",
+      "Frame02 is visibly brighter than frame01, with broadly similar angular path.",
+      "Broad blue-gray halo and saturated blue/cyan edge specks remain; thin muted leader request is only partly met.",
+      "Meaningful lightning extends below requested upper region; faint alpha artifacts extend farther.",
+      "Native widths differ by1px and paths/alpha bounds are not verified as pixel-registered."
+    ],
+    "productionApproved": false
+  }
+}

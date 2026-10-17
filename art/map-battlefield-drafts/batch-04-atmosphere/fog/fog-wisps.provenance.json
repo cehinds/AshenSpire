@@ -1,0 +1,13 @@
+{
+  "status": "draft",
+  "generator": "OpenAI image_gen",
+  "prompt": "Create one reusable TRANSPARENT FOG OVERLAY PNG for a layered dark-fantasy game scene. Only soft horizontal wisps of neutral cool-gray mist, no scene or objects. Wide landscape canvas ideally2048x1152. Very translucent diffuse mist concentrated along bottom quarter and gently at outer sides, with broad center and top remaining mostly transparent; irregular wispy organic edges, light airy overlapping bands, no hard rectangle, no opaque white fill, no black or colored background. Mist should not obscure combatants when composited; avoid dense clouds or dramatic smoke, no ground, trees, mountains, buildings, people, particles, text, UI, border. Genuine alpha transparency throughout the empty regions and graduated alpha in wisps. This is a subtle atmosphere layer placed above an existing scene, not a background image. Restrained hand-painted softness, neutral silver-gray so color can come from a separate tint filter.",
+  "sourceOutputPath": "/workspace/generated_images/exec-52a83fb8-f7a2-4c56-8d75-6b9a480974c2.png",
+  "outputPath": "fog-wisps.png",
+  "processing": "Unchanged generated output.",
+  "reviewNotes": [
+    "Mist is denser and more cloudlike than requested. Use low placement opacity (suggested0.18) rather than full opacity.",
+    "Not tileable. Use gentle oscillation within oversized bounds, not a repeating scroll.",
+    "Inspect colored alpha-edge noise before production export."
+  ]
+}

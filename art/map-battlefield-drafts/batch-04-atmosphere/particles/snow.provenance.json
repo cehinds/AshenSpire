@@ -1,0 +1,64 @@
+{
+  "formatVersion": 1,
+  "id": "atmosphere.particles.snow.draft.v1",
+  "status": "draft",
+  "origin": "original-vector-illustration",
+  "generator": "render.mjs deterministic SVG geometry; Chromium Canvas 2D PNG rasterization",
+  "description": "Sparse soft round pale flakes, varied radius and opacity.",
+  "source": "snow.svg",
+  "png": "snow.png",
+  "dimensions": {
+    "width": 1024,
+    "height": 1024
+  },
+  "mode": "RGBA",
+  "transparentBackground": true,
+  "patternPeriod": {
+    "x": 256,
+    "y": 256,
+    "units": "source-pixels"
+  },
+  "seed": 66379,
+  "particlesPerPeriod": 14,
+  "boundaryWrapping": "Each particle has all nine toroidal neighbor copies, clipped inside a repeating 256px SVG pattern. Snow blur is applied before tile clipping.",
+  "recommendedMotion": {
+    "direction": "down-right",
+    "velocityPixelsPerSecond": {
+      "x": 8,
+      "y": 32
+    },
+    "loopSeconds": 32,
+    "layerOpacity": 0.65,
+    "coordinateSystem": "screen x-right, y-down; source pixels at 1:1 display scale",
+    "note": "Move texture in this direction; reduce speed proportionally when scaling the texture. One loop translates by integer multiples of both repeat periods."
+  },
+  "sha256": "a4a75a850b7653bb21c764e61fea3e13bfa2dbb53fe37378218766b1ae32451f",
+  "svgSHA256": "ba43a4e527601f6e4e79978452146c5b4678cb7ffedebfb48959e8944ae185b4",
+  "browserVersion": "154.0.8037.57",
+  "alpha": {
+    "min": 0,
+    "max": 154,
+    "transparentPixels": 1044048,
+    "visiblePixels": 4528,
+    "visibleFraction": 0.0043182373046875
+  },
+  "validation": {
+    "exactRGBAPeriodAcrossAllPixels": true,
+    "outerEdgePairsMatchInternalJoin": true,
+    "exactRGBAAfterFullPeriodTranslation": true,
+    "width": 1024,
+    "height": 1024
+  },
+  "provenance": {
+    "imageGenerationServiceUsed": false,
+    "existingImageEdited": false,
+    "sourceImages": [],
+    "process": "Simple original seeded strokes, circles and polygon flecks; no terrain or background pixels are painted."
+  },
+  "productionRegistered": false,
+  "limitations": [
+    "Draft particle density, opacity and speeds need motion review in the actual scene.",
+    "Pattern repeats every 256 pixels; the small repeat unit can become visible at high opacity.",
+    "These files contain particle art only. No runtime animation, weather logic, terrain, fog or gameplay changes are included."
+  ]
+}

@@ -18,6 +18,11 @@
       "id": "batch-03",
       "manifest": "batch-03/manifest.json",
       "sourceCount": 8
+    },
+    {
+      "id": "batch-04-atmosphere",
+      "manifest": "batch-04-atmosphere/manifest.json",
+      "sourceCount": 15
     }
   ],
   "editableRecipes": [
@@ -28,6 +33,10 @@
     {
       "id": "misty-forest-combinations",
       "file": "batch-03/composition.example.json"
+    },
+    {
+      "id": "atmosphere-presets",
+      "file": "batch-04-atmosphere/atmosphere.example.json"
     }
   ],
   "nextFamilies": [
@@ -35,5 +44,6 @@
     "snow",
     "volcanic"
   ],
-  "productionBindings": null
+  "productionBindings": null,
+  "overscanPolicy": "Atmosphere fields2x longestviewport edge; earlier paintings still need expanded edges."
 }

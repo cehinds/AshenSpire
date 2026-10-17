@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="4096" height="4096" viewBox="0 0 4096 4096" role="img" aria-labelledby="title description">
+<title id="title">Oversized neutral fog field · original vector draft</title>
+<desc id="description">4096px transparent diffuse wisps with central texture and stronger peripheral variation. Non-tileable; use bounded oscillation over a viewport with maximum edge 2048px.</desc>
+<defs>
+<radialGradient id="wisp"><stop offset="0" stop-color="#bdc5c8" stop-opacity="0.8"/><stop offset="0.32" stop-color="#bdc5c8" stop-opacity="0.56"/><stop offset="0.65" stop-color="#bdc5c8" stop-opacity="0.2"/><stop offset="1" stop-color="#bdc5c8" stop-opacity="0"/></radialGradient>
+<radialGradient id="haze"><stop offset="0" stop-color="#bdc5c8" stop-opacity="0.13"/><stop offset="0.75" stop-color="#bdc5c8" stop-opacity="0.1"/><stop offset="1" stop-color="#bdc5c8" stop-opacity="0"/></radialGradient>
+<linearGradient id="edgeX"><stop offset="0" stop-color="black"/><stop offset="0.1" stop-color="white"/><stop offset="0.9" stop-color="white"/><stop offset="1" stop-color="black"/></linearGradient>
+<linearGradient id="edgeY" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="black"/><stop offset="0.1" stop-color="white"/><stop offset="0.9" stop-color="white"/><stop offset="1" stop-color="black"/></linearGradient>
+<mask id="fadeX" maskUnits="userSpaceOnUse" x="0" y="0" width="4096" height="4096"><rect width="4096" height="4096" fill="url(#edgeX)"/></mask>
+<mask id="fadeY" maskUnits="userSpaceOnUse" x="0" y="0" width="4096" height="4096"><rect width="4096" height="4096" fill="url(#edgeY)"/></mask>
+<filter id="diffuse" x="-50%" y="-100%" width="200%" height="300%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="125"/></filter>
+</defs>
+<g mask="url(#fadeX)"><g mask="url(#fadeY)"><g opacity="0.28">
+<ellipse cx="2048" cy="2048" rx="2700" ry="2700" fill="url(#haze)"/>
+<g filter="url(#diffuse)">
+<ellipse cx="621.841" cy="2807.361" rx="1107.372" ry="337.856" transform="rotate(35.654 621.841 2807.361)" fill="url(#wisp)" opacity="0.642"/>
+<ellipse cx="3491.816" cy="3385.279" rx="1318.905" ry="306.295" transform="rotate(-42.581 3491.816 3385.279)" fill="url(#wisp)" opacity="0.738"/>
+<ellipse cx="335.657" cy="595.681" rx="1004.918" ry="421.017" transform="rotate(-0.088 335.657 595.681)" fill="url(#wisp)" opacity="0.702"/>
+<ellipse cx="538.013" cy="3536.97" rx="1404.961" ry="449.662" transform="rotate(9.239 538.013 3536.97)" fill="url(#wisp)" opacity="0.669"/>
+<ellipse cx="434.364" cy="3276.369" rx="983.891" ry="493.315" transform="rotate(23.315 434.364 3276.369)" fill="url(#wisp)" opacity="0.604"/>
+<ellipse cx="3690.749" cy="2878.935" rx="1050.522" ry="369.797" transform="rotate(20.118 3690.749 2878.935)" fill="url(#wisp)" opacity="0.731"/>
+<ellipse cx="3226.357" cy="532.408" rx="946.97" ry="506.267" transform="rotate(-25.642 3226.357 532.408)" fill="url(#wisp)" opacity="0.75"/>
+<ellipse cx="3622.169" cy="3342.684" rx="983.534" ry="458.97" transform="rotate(-39.778 3622.169 3342.684)" fill="url(#wisp)" opacity="0.641"/>
+<ellipse cx="545.217" cy="2936.318" rx="950.263" ry="365.742" transform="rotate(5.285 545.217 2936.318)" fill="url(#wisp)" opacity="0.679"/>
+<ellipse cx="3690.738" cy="3379.343" rx="1026.64" ry="528.618" transform="rotate(-16.739 3690.738 3379.343)" fill="url(#wisp)" opacity="0.761"/>
+<ellipse cx="2614.862" cy="488.702" rx="1138.201" ry="338.217" transform="rotate(24.308 2614.862 488.702)" fill="url(#wisp)" opacity="0.602"/>
+<ellipse cx="1143.032" cy="3348.412" rx="951.538" ry="557.343" transform="rotate(39.018 1143.032 3348.412)" fill="url(#wisp)" opacity="0.64"/>
+<ellipse cx="402.399" cy="1645.525" rx="1260.126" ry="297.174" transform="rotate(-0.652 402.399 1645.525)" fill="url(#wisp)" opacity="0.657"/>
+<ellipse cx="3395.081" cy="1216.914" rx="970.878" ry="314.213" transform="rotate(4.523 3395.081 1216.914)" fill="url(#wisp)" opacity="0.628"/>
+<ellipse cx="3524.022" cy="446.393" rx="1058.409" ry="448.685" transform="rotate(-44.342 3524.022 446.393)" fill="url(#wisp)" opacity="0.625"/>
+<ellipse cx="2773.459" cy="3421.726" rx="1288.817" ry="383.911" transform="rotate(17.457 2773.459 3421.726)" fill="url(#wisp)" opacity="0.642"/>
+<ellipse cx="1972.087" cy="2938.384" rx="898.176" ry="518.3" transform="rotate(-6.096 1972.087 2938.384)" fill="url(#wisp)" opacity="0.426"/>
+<ellipse cx="1183.779" cy="2269.864" rx="804.856" ry="237.839" transform="rotate(-1.641 1183.779 2269.864)" fill="url(#wisp)" opacity="0.577"/>
+<ellipse cx="2212.613" cy="2737.184" rx="1166.264" ry="366.293" transform="rotate(26.342 2212.613 2737.184)" fill="url(#wisp)" opacity="0.328"/>
+<ellipse cx="2368.256" cy="2194.512" rx="746.545" ry="276.017" transform="rotate(-17.932 2368.256 2194.512)" fill="url(#wisp)" opacity="0.544"/>
+<ellipse cx="1324.365" cy="1489.403" rx="737.115" ry="291.903" transform="rotate(-30.976 1324.365 1489.403)" fill="url(#wisp)" opacity="0.346"/>
+<ellipse cx="1343.043" cy="1592.934" rx="675.471" ry="421.723" transform="rotate(-5.075 1343.043 1592.934)" fill="url(#wisp)" opacity="0.505"/>
+<ellipse cx="2935.906" cy="2268.298" rx="871.679" ry="233.027" transform="rotate(-29.99 2935.906 2268.298)" fill="url(#wisp)" opacity="0.337"/>
+<ellipse cx="3152.972" cy="2461.425" rx="738.917" ry="416.98" transform="rotate(-29.279 3152.972 2461.425)" fill="url(#wisp)" opacity="0.381"/>
+<ellipse cx="1736.835" cy="2366.284" rx="759.075" ry="309.865" transform="rotate(6.734 1736.835 2366.284)" fill="url(#wisp)" opacity="0.511"/>
+<ellipse cx="2758.191" cy="2276.595" rx="1178.019" ry="387.598" transform="rotate(23.703 2758.191 2276.595)" fill="url(#wisp)" opacity="0.504"/>
+</g>
+</g></g></g>
+</svg>

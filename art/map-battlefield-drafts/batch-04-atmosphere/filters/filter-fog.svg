@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="4096" height="4096" viewBox="0 0 4096 4096">
+  <title>Fog atmospheric color wash</title>
+  <desc>Cool gray transparent gradient concentrated through the center and lower half.</desc>
+  <defs><linearGradient id="fog" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#B9C6C9" stop-opacity="0.02"/><stop offset="0.32" stop-color="#B9C6C9" stop-opacity="0.08"/><stop offset="0.62" stop-color="#B9C6C9" stop-opacity="0.15"/><stop offset="1" stop-color="#B9C6C9" stop-opacity="0.18"/></linearGradient></defs>
+  <rect width="4096" height="4096" fill="url(#fog)"/>
+</svg>

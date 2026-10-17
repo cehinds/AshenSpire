@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="4096" height="4096" viewBox="0 0 4096 4096">
+  <title>Storm atmospheric color wash</title>
+  <desc>Desaturated slate transparent wash with a gentle vertical gradient.</desc>
+  <defs><linearGradient id="storm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#536578" stop-opacity="0.22"/><stop offset="0.55" stop-color="#536578" stop-opacity="0.24"/><stop offset="1" stop-color="#536578" stop-opacity="0.20"/></linearGradient></defs>
+  <rect width="4096" height="4096" fill="url(#storm)"/>
+</svg>

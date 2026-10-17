@@ -1,0 +1,557 @@
+{
+  "formatVersion": 1,
+  "id": "atmosphere.fog.overscan-neutral.draft.v1",
+  "status": "draft",
+  "origin": "original-vector-illustration",
+  "source": "fog-overscan-neutral.svg",
+  "png": "fog-overscan-neutral.png",
+  "generator": "render.mjs seeded gradients and blurred ellipses; Chromium Canvas 2D native PNG rasterization",
+  "dimensions": {
+    "width": 4096,
+    "height": 4096
+  },
+  "mode": "RGBA",
+  "transparentBackground": true,
+  "seed": 917231,
+  "wispCount": 26,
+  "tileable": false,
+  "patternPeriod": null,
+  "recommendedMotion": {
+    "kind": "bounded-sine-oscillation",
+    "maxTranslationViewportFraction": {
+      "x": 0.2,
+      "y": 0.2
+    },
+    "examplePeriodsSeconds": {
+      "x": 34,
+      "y": 47
+    },
+    "neverModuloWrap": true
+  },
+  "placement": {
+    "fieldDisplaySide": "2 * max(viewportWidth, viewportHeight)",
+    "centered": true,
+    "supportedNativeViewportMaxEdge": 2048,
+    "sourcePixelEdgeClearanceAtWorstCase": 614,
+    "note": "One square field covers the viewport with a side twice its longest edge. Center it, then translate by at most 0.2 of each corresponding viewport dimension. Scale uniformly when max viewport edge differs from 2048."
+  },
+  "alpha": {
+    "min": 0,
+    "max": 58,
+    "maxNormalized": 0.22745098039215686,
+    "mean": 17.61887687444687,
+    "visiblePixels": 16159354,
+    "visibleFraction": 0.9631725549697876,
+    "outerBoundaryMax": 0
+  },
+  "validation": {
+    "nativeDimensions": true,
+    "transparentBoundary": true,
+    "testedCropCount": 27,
+    "allCropsInsideSource": true,
+    "allCropsHaveCoverageAndVariation": true,
+    "crops": [
+      {
+        "viewport": "portrait",
+        "offsetFraction": {
+          "x": -0.2,
+          "y": -0.2
+        },
+        "sourceCrop": {
+          "x": 1242,
+          "y": 614,
+          "width": 1152,
+          "height": 2048
+        },
+        "alpha": {
+          "min": 7,
+          "max": 35,
+          "mean": 16.584854973687065
+        }
+      },
+      {
+        "viewport": "portrait",
+        "offsetFraction": {
+          "x": -0.2,
+          "y": 0
+        },
+        "sourceCrop": {
+          "x": 1242,
+          "y": 1024,
+          "width": 1152,
+          "height": 2048
+        },
+        "alpha": {
+          "min": 8,
+          "max": 35,
+          "mean": 19.795194413926865
+        }
+      },
+      {
+        "viewport": "portrait",
+        "offsetFraction": {
+          "x": -0.2,
+          "y": 0.2
+        },
+        "sourceCrop": {
+          "x": 1242,
+          "y": 1434,
+          "width": 1152,
+          "height": 2048
+        },
+        "alpha": {
+          "min": 8,
+          "max": 39,
+          "mean": 22.09804916381836
+        }
+      },
+      {
+        "viewport": "portrait",
+        "offsetFraction": {
+          "x": 0,
+          "y": -0.2
+        },
+        "sourceCrop": {
+          "x": 1472,
+          "y": 614,
+          "width": 1152,
+          "height": 2048
+        },
+        "alpha": {
+          "min": 7,
+          "max": 36,
+          "mean": 16.362681070963543
+        }
+      },
+      {
+        "viewport": "portrait",
+        "offsetFraction": {
+          "x": 0,
+          "y": 0
+        },
+        "sourceCrop": {
+          "x": 1472,
+          "y": 1024,
+          "width": 1152,
+          "height": 2048
+        },
+        "alpha": {
+          "min": 8,
+          "max": 36,
+          "mean": 19.464390224880642
+        }
+      },
+      {
+        "viewport": "portrait",
+        "offsetFraction": {
+          "x": 0,
+          "y": 0.2
+        },
+        "sourceCrop": {
+          "x": 1472,
+          "y": 1434,
+          "width": 1152,
+          "height": 2048
+        },
+        "alpha": {
+          "min": 8,
+          "max": 36,
+          "mean": 21.908241271972656
+        }
+      },
+      {
+        "viewport": "portrait",
+        "offsetFraction": {
+          "x": 0.2,
+          "y": -0.2
+        },
+        "sourceCrop": {
+          "x": 1702,
+          "y": 614,
+          "width": 1152,
+          "height": 2048
+        },
+        "alpha": {
+          "min": 7,
+          "max": 39,
+          "mean": 16.958531697591145
+        }
+      },
+      {
+        "viewport": "portrait",
+        "offsetFraction": {
+          "x": 0.2,
+          "y": 0
+        },
+        "sourceCrop": {
+          "x": 1702,
+          "y": 1024,
+          "width": 1152,
+          "height": 2048
+        },
+        "alpha": {
+          "min": 8,
+          "max": 37,
+          "mean": 19.308264838324654
+        }
+      },
+      {
+        "viewport": "portrait",
+        "offsetFraction": {
+          "x": 0.2,
+          "y": 0.2
+        },
+        "sourceCrop": {
+          "x": 1702,
+          "y": 1434,
+          "width": 1152,
+          "height": 2048
+        },
+        "alpha": {
+          "min": 8,
+          "max": 37,
+          "mean": 22.052577548556858
+        }
+      },
+      {
+        "viewport": "widescreen",
+        "offsetFraction": {
+          "x": -0.2,
+          "y": -0.2
+        },
+        "sourceCrop": {
+          "x": 614,
+          "y": 1242,
+          "width": 2048,
+          "height": 1152
+        },
+        "alpha": {
+          "min": 8,
+          "max": 36,
+          "mean": 19.106881035698784
+        }
+      },
+      {
+        "viewport": "widescreen",
+        "offsetFraction": {
+          "x": -0.2,
+          "y": 0
+        },
+        "sourceCrop": {
+          "x": 614,
+          "y": 1472,
+          "width": 2048,
+          "height": 1152
+        },
+        "alpha": {
+          "min": 8,
+          "max": 36,
+          "mean": 20.64549509684245
+        }
+      },
+      {
+        "viewport": "widescreen",
+        "offsetFraction": {
+          "x": -0.2,
+          "y": 0.2
+        },
+        "sourceCrop": {
+          "x": 614,
+          "y": 1702,
+          "width": 2048,
+          "height": 1152
+        },
+        "alpha": {
+          "min": 9,
+          "max": 46,
+          "mean": 21.39105012681749
+        }
+      },
+      {
+        "viewport": "widescreen",
+        "offsetFraction": {
+          "x": 0,
+          "y": -0.2
+        },
+        "sourceCrop": {
+          "x": 1024,
+          "y": 1242,
+          "width": 2048,
+          "height": 1152
+        },
+        "alpha": {
+          "min": 8,
+          "max": 37,
+          "mean": 19.163855234781902
+        }
+      },
+      {
+        "viewport": "widescreen",
+        "offsetFraction": {
+          "x": 0,
+          "y": 0
+        },
+        "sourceCrop": {
+          "x": 1024,
+          "y": 1472,
+          "width": 2048,
+          "height": 1152
+        },
+        "alpha": {
+          "min": 8,
+          "max": 37,
+          "mean": 21.317731645372177
+        }
+      },
+      {
+        "viewport": "widescreen",
+        "offsetFraction": {
+          "x": 0,
+          "y": 0.2
+        },
+        "sourceCrop": {
+          "x": 1024,
+          "y": 1702,
+          "width": 2048,
+          "height": 1152
+        },
+        "alpha": {
+          "min": 8,
+          "max": 37,
+          "mean": 22.421353234185112
+        }
+      },
+      {
+        "viewport": "widescreen",
+        "offsetFraction": {
+          "x": 0.2,
+          "y": -0.2
+        },
+        "sourceCrop": {
+          "x": 1434,
+          "y": 1242,
+          "width": 2048,
+          "height": 1152
+        },
+        "alpha": {
+          "min": 7,
+          "max": 37,
+          "mean": 17.662122938368057
+        }
+      },
+      {
+        "viewport": "widescreen",
+        "offsetFraction": {
+          "x": 0.2,
+          "y": 0
+        },
+        "sourceCrop": {
+          "x": 1434,
+          "y": 1472,
+          "width": 2048,
+          "height": 1152
+        },
+        "alpha": {
+          "min": 7,
+          "max": 37,
+          "mean": 20.46239683363173
+        }
+      },
+      {
+        "viewport": "widescreen",
+        "offsetFraction": {
+          "x": 0.2,
+          "y": 0.2
+        },
+        "sourceCrop": {
+          "x": 1434,
+          "y": 1702,
+          "width": 2048,
+          "height": 1152
+        },
+        "alpha": {
+          "min": 7,
+          "max": 37,
+          "mean": 23.061729855007595
+        }
+      },
+      {
+        "viewport": "ultrawide",
+        "offsetFraction": {
+          "x": -0.2,
+          "y": -0.2
+        },
+        "sourceCrop": {
+          "x": 614,
+          "y": 1433,
+          "width": 2048,
+          "height": 878
+        },
+        "alpha": {
+          "min": 8,
+          "max": 36,
+          "mean": 19.58222700740319
+        }
+      },
+      {
+        "viewport": "ultrawide",
+        "offsetFraction": {
+          "x": -0.2,
+          "y": 0
+        },
+        "sourceCrop": {
+          "x": 614,
+          "y": 1609,
+          "width": 2048,
+          "height": 878
+        },
+        "alpha": {
+          "min": 8,
+          "max": 36,
+          "mean": 20.78222934314493
+        }
+      },
+      {
+        "viewport": "ultrawide",
+        "offsetFraction": {
+          "x": -0.2,
+          "y": 0.2
+        },
+        "sourceCrop": {
+          "x": 614,
+          "y": 1785,
+          "width": 2048,
+          "height": 878
+        },
+        "alpha": {
+          "min": 9,
+          "max": 36,
+          "mean": 21.13077762403901
+        }
+      },
+      {
+        "viewport": "ultrawide",
+        "offsetFraction": {
+          "x": 0,
+          "y": -0.2
+        },
+        "sourceCrop": {
+          "x": 1024,
+          "y": 1433,
+          "width": 2048,
+          "height": 878
+        },
+        "alpha": {
+          "min": 8,
+          "max": 37,
+          "mean": 19.21624797569049
+        }
+      },
+      {
+        "viewport": "ultrawide",
+        "offsetFraction": {
+          "x": 0,
+          "y": 0
+        },
+        "sourceCrop": {
+          "x": 1024,
+          "y": 1609,
+          "width": 2048,
+          "height": 878
+        },
+        "alpha": {
+          "min": 8,
+          "max": 37,
+          "mean": 21.773621578694478
+        }
+      },
+      {
+        "viewport": "ultrawide",
+        "offsetFraction": {
+          "x": 0,
+          "y": 0.2
+        },
+        "sourceCrop": {
+          "x": 1024,
+          "y": 1785,
+          "width": 2048,
+          "height": 878
+        },
+        "alpha": {
+          "min": 8,
+          "max": 37,
+          "mean": 23.286551577626707
+        }
+      },
+      {
+        "viewport": "ultrawide",
+        "offsetFraction": {
+          "x": 0.2,
+          "y": -0.2
+        },
+        "sourceCrop": {
+          "x": 1434,
+          "y": 1433,
+          "width": 2048,
+          "height": 878
+        },
+        "alpha": {
+          "min": 7,
+          "max": 37,
+          "mean": 17.118186307659453
+        }
+      },
+      {
+        "viewport": "ultrawide",
+        "offsetFraction": {
+          "x": 0.2,
+          "y": 0
+        },
+        "sourceCrop": {
+          "x": 1434,
+          "y": 1609,
+          "width": 2048,
+          "height": 878
+        },
+        "alpha": {
+          "min": 7,
+          "max": 37,
+          "mean": 20.774729943764235
+        }
+      },
+      {
+        "viewport": "ultrawide",
+        "offsetFraction": {
+          "x": 0.2,
+          "y": 0.2
+        },
+        "sourceCrop": {
+          "x": 1434,
+          "y": 1785,
+          "width": 2048,
+          "height": 878
+        },
+        "alpha": {
+          "min": 8,
+          "max": 37,
+          "mean": 23.908149180488326
+        }
+      }
+    ]
+  },
+  "provenance": {
+    "imageGenerationServiceUsed": false,
+    "existingImageEdited": false,
+    "sourceImages": [],
+    "process": "26 seeded broad elliptical radial gradients, diffuse vector blur and soft frame masks; SVG source is retained."
+  },
+  "sha256": "833677597d95da3b6a3f320e9ce400e9cd1080127c0d5a6470712b025788ad1e",
+  "svgSHA256": "75c920537d172bc92c267d4f09665d779f539388148e33b2b03a303c15ff96ad",
+  "browserVersion": "154.0.8037.57",
+  "productionRegistered": false,
+  "limitations": [
+    "Non-tileable: use bounded oscillation; never repeat or wrap this field.",
+    "Draft opacity and motion require actual scene review. Apply additional layer opacity if needed.",
+    "No terrain, particles, runtime weather logic or generated-fog edits are included."
+  ]
+}

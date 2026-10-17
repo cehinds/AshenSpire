@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="4096" height="4096" viewBox="0 0 4096 4096">
+  <title>Rain atmospheric color wash</title>
+  <desc>Cool blue gray transparent wash with a subtle lower-scene gradient.</desc>
+  <defs><linearGradient id="rain" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#74899B" stop-opacity="0.08"/><stop offset="0.55" stop-color="#74899B" stop-opacity="0.12"/><stop offset="1" stop-color="#74899B" stop-opacity="0.16"/></linearGradient></defs>
+  <rect width="4096" height="4096" fill="url(#rain)"/>
+</svg>
