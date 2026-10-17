@@ -1,17 +1,5 @@
 # AshenSpire
 
-<!-- feature-preview:start -->
-## Feature preview — JSON build export
-
-[Play this feature build](https://cehinds.github.io/AshenSpire/branches/Feature/JsonBuildExport/latest/)
-
-Combat HUD after #2072: the player bar stays anchored over the player and is not re-measured every frame on phones. Capture record: [docs/preview/features/json-build-export/README.md](docs/preview/features/json-build-export/README.md).
-
-| Mobile | Desktop | Wide | Tablet |
-| --- | --- | --- | --- |
-| ![Mobile: player HUD anchored over the player](docs/preview/features/json-build-export/mobile.png) | ![Desktop: player HUD anchored over the player](docs/preview/features/json-build-export/desktop.png) | ![Wide: player HUD anchored over the player](docs/preview/features/json-build-export/wide.png) | ![Tablet: player HUD anchored over the player](docs/preview/features/json-build-export/tablet.png) |
-<!-- feature-preview:end -->
-
 
 
 A browser roguelike: build a character, explore a seeded world, and fight with cards.
