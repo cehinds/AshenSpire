@@ -1,0 +1,39 @@
+{
+  "format": "ashen.formulas@1",
+  "reference": { "file": "src/model/formulas.js", "symbol": "evaluate" },
+  "description": "Closed set of formula objects. A value is a number or { f: <op>, ... }. No strings are parsed.",
+  "flooring": {
+    "rule": "The final result of every evaluation is floored once toward negative infinity (Math.floor).",
+    "clamps": "Any node may carry min and max. They apply to that node's raw value before the final floor.",
+    "exception": "stacks with per floors the division at once (whole groups of per).",
+    "traitBonus": "Floors its base first, then applies a + max(floor(a * pct), 1) for a > 0; other values are unchanged."
+  },
+  "of": {
+    "values": ["self", "owner", "target", "enemy", "player", "allEnemies"],
+    "meaning": "Entity reference read by the op. allEnemies is a group and is valid only for stacks, which sums over the group."
+  },
+  "ops": {
+    "add": { "fields": { "args": "array of values, required" }, "result": "sum of args" },
+    "mul": { "fields": { "args": "array of values, required" }, "result": "product of args" },
+    "percentMaxHp": { "fields": { "of": "entity ref, required", "pct": "number, required" }, "result": "maxHp * pct / 100" },
+    "missingHp": { "fields": { "of": "entity ref, required" }, "result": "max(0, maxHp - hp)" },
+    "missingMana": { "fields": { "of": "entity ref, required" }, "result": "max(0, maxMana - mana), absent fields read as 0" },
+    "stacks": { "fields": { "of": "entity ref or allEnemies, required", "status": "status id, required", "per": "number, optional" }, "result": "total stacks of the status on the entity (or group); with per, floor(total / per)" },
+    "energySpent": { "fields": { "per": "number, optional, default 1" }, "result": "energySpent from the context * per; 0 when absent" },
+    "blockOf": { "fields": { "of": "entity ref, required" }, "result": "block of the entity" },
+    "hpOf": { "fields": { "of": "entity ref, required" }, "result": "hp of the entity" },
+    "cardsPlayedThisTurn": { "fields": { "per": "number, optional, default 1" }, "result": "cardsPlayedThisTurn from the context * per; 0 when absent" },
+    "metric": {
+      "fields": { "metric": "metric name, required", "of": "entity ref, default self", "statuses": "array of status ids, for the status metrics", "per": "number, optional, default 1" },
+      "result": "named combat metric * per",
+      "metrics": ["weaponDamage", "negativeStatusTypes", "negativeStatusStacks", "damageTakenThisTurn", "sameCardPlays", "cardsPlayed", "distinctTypes", "manaSpent", "staminaSpent"]
+    },
+    "traitBonus": { "fields": { "base": "value, required", "pct": "number as a fraction, required" }, "result": "base + max(floor(base * pct), 1) for base > 0, else base" }
+  },
+  "context": {
+    "entities": "Map of entity ref to { hp, maxHp, block, mana, maxMana, statuses: { id: { stacks } } }.",
+    "energySpent": "number, default 0",
+    "cardsPlayedThisTurn": "number, default 0"
+  },
+  "errors": ["unknown op", "unresolvable of ref", "non-numeric required field", "result is not a number"]
+}
