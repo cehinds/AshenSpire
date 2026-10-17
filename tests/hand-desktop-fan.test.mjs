@@ -27,8 +27,8 @@ test('the desktop fan is retired: handLayout has no desktop flag and hand.js sen
   assert.doesNotMatch(layoutSource, /desktop\s*=\s*false|DESKTOP_FAN|fan = desktop/);
   const handSource = readFileSync(new URL('../src/ui/components/hand.js', import.meta.url), 'utf8');
   assert.doesNotMatch(handSource, /wideFan|isWideFormFactor/);
-  assert.match(handSource, /headroom: compact \? toolsHeight : 0 \}\);/);
-  assert.match(handSource, /const toolsRow = desktop \? /, 'the desktop tool-row check stays where it was');
+  assert.match(handSource, /responsiveHandLayout\(input, layoutHand\(input\)\)/);
+  assert.match(handSource, /const toolsHeight = 0/, 'tools no longer consume a row above the fan');
 });
 
 test('below the cap the wide card fills the hand band in the phone proportion, and scales with it', () => {

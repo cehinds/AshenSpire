@@ -5,8 +5,10 @@
 
 The same runtime supports two authored configurations. **Product core** includes its required bundled modules and keeps optional gameplay packages off where the core has a fallback. **Current game** preserves the full legacy configuration.
 
-- **Product core:** [Play on Pages (latest publication unverified)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-modules/latest/) · [standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38976523633/artifacts/12079182071) · [build run](https://github.com/cehinds/AshenSpire/actions/runs/38976523633)
-- **Current game:** [Play on Pages (latest publication unverified)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-current-preview/latest/) · [standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38976558207/artifacts/12079610146) · [build run](https://github.com/cehinds/AshenSpire/actions/runs/38976558207)
+- **Product core:** [Play on Pages (latest publication unverified)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-modules/latest/) · [standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38989926062/artifacts/12084523482) · [build run](https://github.com/cehinds/AshenSpire/actions/runs/38989926062)
+- **Current game:** [Play on Pages (latest publication unverified)](https://cehinds.github.io/AshenSpire/branches/Feature/json-game-current-preview/latest/) · [standalone build](https://github.com/cehinds/AshenSpire/actions/runs/38989927501/artifacts/12084274056) · [build run](https://github.com/cehinds/AshenSpire/actions/runs/38989927501)
+
+The latest responsive combat update applies cell-aligned sprites and mini HP, relative selected-HUD/info placement, uniform intents, corrected layering, card fanning, symbol colors, and native inspection gestures to phone, tablet, and desktop. Both exact-source preview builds passed CI. [Reviewed screenshot collection for Core and Current](docs/preview/features/json-game-modules/responsive-combat/README.md).
 
 Mobile now raises visible floor art to clear back-row shadows by 10px and gives the player a full-width mini HP bar, with defenses below-left and HP below-right. Resizing preserves clearance; centered Mobile presets keep combatants in their game area. [Reviewed mobile screenshots and builds](docs/preview/features/json-game-modules/mobile-grounding/README.md).
 

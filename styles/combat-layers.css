@@ -475,3 +475,8 @@
    and they sit above any card that reaches a corner. */
 :root .combat[data-layout='formation'] .combat-tools[data-tools-placement='corners'] { z-index: calc(var(--combat-layer-cards) + 1) !important; }
 :root .combat[data-layout='formation'] .combat-tools[data-tools-placement='corners'] > * { pointer-events: auto; }
+
+/* Text feedback portals out of sprite effects so 800 is a root paint level. */
+:root .combat[data-layout='formation'] > .combat-floater-layer {
+  position: absolute; inset: 0; pointer-events: none; overflow: visible; z-index: 800;
+}

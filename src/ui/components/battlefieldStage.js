@@ -521,7 +521,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       footerClearance: logicalViewport().height <= 480 && logicalViewport().width >= 600 ? 48 : 0,
       friends: frames.filter(f => f.classList.contains('player')).map(f => f.dataset.eid),
       enemies: frames.filter(f => f.classList.contains('enemy')).map(f => f.dataset.eid) });
-    if (!classicAppearance()) alternativeFormation(plan, fieldRect.width, fieldRect.height, document.documentElement.dataset.layout === 'narrow', presentation);
+    if (!classicAppearance()) alternativeFormation(plan, fieldRect.width, fieldRect.height, document.documentElement.dataset.layout === 'narrow', { ...presentation, formFactor: document.documentElement.dataset.formFactor });
     const nameWidth = Math.min(...plan.slots.map(slot => slot.width));
     // Three or more lanes on a phone cap HUD width while retaining physical type/tap floors.
     combat.style.setProperty('--combat-enemy-hud-scale', String(Math.min(
@@ -814,6 +814,20 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         frame.dataset.targetHudCellPolygon = JSON.stringify([[left + skew * height / 2, top],
           [left + width + skew * height / 2, top], [left + width - skew * height / 2, top + height],
           [left - skew * height / 2, top + height]]);
+      }
+      if (!classicAppearance() && Number.isFinite(slot.miniHudWidth)) {
+        const miniHud = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
+        const peers = actors.filter(other => other.slot.visualBand === slot.visualBand);
+        const groupTop = Math.min(...peers.map(other => {
+          const fit = sizes.find(size => size.id === other.slot.id);
+          return (fit?.ground ?? other.slot.ground) - (fit?.visibleHeight ?? 0);
+        })) - miniHud.miniHudGroupHeightPx - miniHud.miniHudSpriteGapPx;
+        frame.style.setProperty('--combat-mini-hud-left', `${(slot.miniHudLeft - x + nameWidth / 2) / pageZoom}px`);
+        frame.style.setProperty('--combat-mini-hud-top', `${groupTop / pageZoom}px`);
+        frame.style.setProperty('--combat-mini-hud-width', `${slot.miniHudWidth / pageZoom}px`);
+        frame.dataset.miniHudLeft = String(slot.miniHudLeft);
+        frame.dataset.miniHudTop = String(groupTop);
+        frame.dataset.miniHudWidth = String(slot.miniHudWidth);
       }
       frame.dataset.baseSpriteScale = String(fitted.scale);
       frame.dataset.presentationScale = String(multiplier);
@@ -1213,13 +1227,13 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // Continue real ground past the lowered footer fade, including on phones
     // where the hand consumes much of the viewport. Keep the same horizon.
     const sceneHeight = fieldTop + fieldRect.height / zoom;
-    const floorShadowTop = document.documentElement.dataset.formFactor === 'mobile' ? mobileFloorShadowTop(placed.filter(({frame}) => frame.classList.contains('enemy') && !frame.classList.contains('dead')).map(({frame,sprite}) => {
+    const floorShadowTop = mobileFloorShadowTop(placed.filter(({frame}) => frame.classList.contains('enemy') && !frame.classList.contains('dead')).map(({frame,sprite}) => {
       const box = sprite.getBoundingClientRect(), style = getComputedStyle(sprite), shadow = getComputedStyle(sprite, '::before');
       const spriteZoom = box.height / (parseFloat(style.height) || sprite.offsetHeight || 1);
       const translatedY = new DOMMatrix(shadow.transform === 'none' ? undefined : shadow.transform).m42;
       return { band: frame.dataset.visualBand,
         top: box.bottom - (parseFloat(shadow.bottom) + parseFloat(shadow.height) - translatedY) * spriteZoom };
-    })) : undefined;
+    }));
 
     if (!classicAppearance()) fitAlternativeBackdrop(combat, { width: rect.width / zoom, height: fieldRect.height / zoom,
       fieldTop, ground: combatSceneryGround(sizes, actors, plan.ground) / zoom,
