@@ -40,7 +40,7 @@ def cut(alpha, axis, nominal, radius, span):
     _, _, point, value = min(candidates)
     return point, value
 
-def load_master(root, kind, spec, anchors):
+def load_master(root, kind, spec, anchors, absolute=False):
     cols, rows = LAYOUTS[kind]
     if tuple(spec["grid"]) != (cols, rows):
         raise ValueError(f"{kind}: unexpected grid")
@@ -90,7 +90,9 @@ def load_master(root, kind, spec, anchors):
             if not bounds or boundary(channel)["above32"]:
                 raise ValueError(f"{kind}/{labels[index]}: empty or clipped cell")
             reviewed = kind in anchors
-            anchor = anchors[kind][index] if reviewed else [(bounds[0]+bounds[2])/2, bounds[3]]
+            anchor = list(anchors[kind][index]) if reviewed else [(bounds[0]+bounds[2])/2, bounds[3]]
+            if reviewed and absolute:
+                anchor = [anchor[0]-rect[0], anchor[1]-rect[1]]
             if len(anchor) != 2 or not all(isinstance(v, (int,float)) and math.isfinite(v) for v in anchor):
                 raise ValueError(f"{kind}/{labels[index]}: invalid anchor")
             if not (0 <= anchor[0] <= cell.width and 0 <= anchor[1] <= cell.height):
@@ -120,7 +122,7 @@ def run(root):
         for kind in LAYOUTS:
             if kind in anchors and len(anchors[kind]) != math.prod(LAYOUTS[kind]):
                 raise ValueError(f"{kind}: anchor count mismatch")
-            source, items = load_master(root, kind, provenance["masters"][kind], anchors)
+            source, items = load_master(root, kind, provenance["masters"][kind], anchors, normalization.get("anchorCoordinates") == "source")
             report["masters"][kind] = source
             factor = calibration.get(kind, 1.0)
             if not isinstance(factor, (int,float)) or not math.isfinite(factor) or factor <= 0:
