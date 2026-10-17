@@ -1,0 +1,822 @@
+{
+  "W.object.0": {
+    "id": "W.object.0",
+    "kind": "object",
+    "category": "W",
+    "digit": 0,
+    "name": "Broken scythes 0",
+    "src": "cutouts/W/objects/0.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      37,
+      32,
+      474,
+      480
+    ],
+    "sha256": "9ff393427feff23f27f291f75aee21e5feb6c78e9cbbe5ecdd7a5d374c2a6fa0",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/W-reference.png",
+      "referenceSha256": "5c9cb30825c139f5d1b1865a5bd6ccb5150f507ace2af76345a7363480d6ffed",
+      "sourceFile": "exec-deb3945a-a932-4557-bf31-2336427d2cd9.png",
+      "sourceSha256": "a7be751bf0fc4bc29d5dad6064dc08662a3a4661502592bf633582059df71f89",
+      "sourceCell": {
+        "x": 0,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 53,
+        "y": 42,
+        "width": 309,
+        "height": 317
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "L.object.0",
+      "baseAssetSha256": "1d97b8b2361a0c2d883df5f1feee8f9c023d8b7ce36c315e3660e96aff851dd6"
+    },
+    "condition": "broken",
+    "intactAssetId": "L.object.0"
+  },
+  "W.object.1": {
+    "id": "W.object.1",
+    "kind": "object",
+    "category": "W",
+    "digit": 1,
+    "name": "Broken scythes 1",
+    "src": "cutouts/W/objects/1.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      49,
+      480,
+      463
+    ],
+    "sha256": "f107fbb2163764ed75f547657331b0e945e7716f7d8ba61ac142b460076d9835",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/W-reference.png",
+      "referenceSha256": "5c9cb30825c139f5d1b1865a5bd6ccb5150f507ace2af76345a7363480d6ffed",
+      "sourceFile": "exec-deb3945a-a932-4557-bf31-2336427d2cd9.png",
+      "sourceSha256": "a7be751bf0fc4bc29d5dad6064dc08662a3a4661502592bf633582059df71f89",
+      "sourceCell": {
+        "x": 397,
+        "y": 0,
+        "width": 396,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 442,
+        "y": 53,
+        "width": 320,
+        "height": 296
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "L.object.1",
+      "baseAssetSha256": "719321c5868b332c29aa234136a4cfc95ede496c28394c9d285159529ed9e5bb"
+    },
+    "condition": "broken",
+    "intactAssetId": "L.object.1"
+  },
+  "W.object.2": {
+    "id": "W.object.2",
+    "kind": "object",
+    "category": "W",
+    "digit": 2,
+    "name": "Broken scythes 2",
+    "src": "cutouts/W/objects/2.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      89,
+      32,
+      423,
+      480
+    ],
+    "sha256": "73bd9effd265ee33336cac06764ffab9ae35223687d5175e81b5e26317649c94",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/W-reference.png",
+      "referenceSha256": "5c9cb30825c139f5d1b1865a5bd6ccb5150f507ace2af76345a7363480d6ffed",
+      "sourceFile": "exec-deb3945a-a932-4557-bf31-2336427d2cd9.png",
+      "sourceSha256": "a7be751bf0fc4bc29d5dad6064dc08662a3a4661502592bf633582059df71f89",
+      "sourceCell": {
+        "x": 793,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 871,
+        "y": 37,
+        "width": 242,
+        "height": 325
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "L.object.2",
+      "baseAssetSha256": "4893cd8da7cd0ea1e464391984e8eba3ea4dd8564a103d071d668a4aab9e2bde"
+    },
+    "condition": "broken",
+    "intactAssetId": "L.object.2"
+  },
+  "W.object.3": {
+    "id": "W.object.3",
+    "kind": "object",
+    "category": "W",
+    "digit": 3,
+    "name": "Broken scythes 3",
+    "src": "cutouts/W/objects/3.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      32,
+      480,
+      479
+    ],
+    "sha256": "1eb5d642f4e19f6b270c368d1c4722a5009b275c4a1433beabbdb8f92456b932",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/W-reference.png",
+      "referenceSha256": "5c9cb30825c139f5d1b1865a5bd6ccb5150f507ace2af76345a7363480d6ffed",
+      "sourceFile": "exec-deb3945a-a932-4557-bf31-2336427d2cd9.png",
+      "sourceSha256": "a7be751bf0fc4bc29d5dad6064dc08662a3a4661502592bf633582059df71f89",
+      "sourceCell": {
+        "x": 1190,
+        "y": 0,
+        "width": 396,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 1233,
+        "y": 42,
+        "width": 317,
+        "height": 316
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "L.object.3",
+      "baseAssetSha256": "30ef372d88cedf7fcf11549f3556f1dc13c06d054d89d6512c2c566d335180d2"
+    },
+    "condition": "broken",
+    "intactAssetId": "L.object.3"
+  },
+  "W.object.4": {
+    "id": "W.object.4",
+    "kind": "object",
+    "category": "W",
+    "digit": 4,
+    "name": "Broken scythes 4",
+    "src": "cutouts/W/objects/4.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      38,
+      480,
+      473
+    ],
+    "sha256": "1a867d84ba5ae41669821e97727d57bc929bffdd4395380a1a916918e24923d7",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/W-reference.png",
+      "referenceSha256": "5c9cb30825c139f5d1b1865a5bd6ccb5150f507ace2af76345a7363480d6ffed",
+      "sourceFile": "exec-deb3945a-a932-4557-bf31-2336427d2cd9.png",
+      "sourceSha256": "a7be751bf0fc4bc29d5dad6064dc08662a3a4661502592bf633582059df71f89",
+      "sourceCell": {
+        "x": 1586,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 1653,
+        "y": 53,
+        "width": 300,
+        "height": 291
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "L.object.4",
+      "baseAssetSha256": "6914181c80ba9a59a7ca4f60ee267fe9cb919d199842ef7fc4430b97c2623fea"
+    },
+    "condition": "broken",
+    "intactAssetId": "L.object.4"
+  },
+  "W.object.5": {
+    "id": "W.object.5",
+    "kind": "object",
+    "category": "W",
+    "digit": 5,
+    "name": "Broken scythes 5",
+    "src": "cutouts/W/objects/5.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      33,
+      480,
+      478
+    ],
+    "sha256": "a6c153c3a6439daf1eedd4ff25d092961af8dac14c8b29518ac49728ffcae2ab",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/W-reference.png",
+      "referenceSha256": "5c9cb30825c139f5d1b1865a5bd6ccb5150f507ace2af76345a7363480d6ffed",
+      "sourceFile": "exec-deb3945a-a932-4557-bf31-2336427d2cd9.png",
+      "sourceSha256": "a7be751bf0fc4bc29d5dad6064dc08662a3a4661502592bf633582059df71f89",
+      "sourceCell": {
+        "x": 0,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 52,
+        "y": 441,
+        "width": 312,
+        "height": 310
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "L.object.5",
+      "baseAssetSha256": "8ce954e6258a6d401d6a1b24dd28667a8c65ca67152863060c0dcec4ce3ec1e3"
+    },
+    "condition": "broken",
+    "intactAssetId": "L.object.5"
+  },
+  "W.object.6": {
+    "id": "W.object.6",
+    "kind": "object",
+    "category": "W",
+    "digit": 6,
+    "name": "Broken scythes 6",
+    "src": "cutouts/W/objects/6.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      35,
+      32,
+      477,
+      480
+    ],
+    "sha256": "f70de48904faee12adf4368086482b1fec8e3b8aeae49cf7f0ab2669d8f028de",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/W-reference.png",
+      "referenceSha256": "5c9cb30825c139f5d1b1865a5bd6ccb5150f507ace2af76345a7363480d6ffed",
+      "sourceFile": "exec-deb3945a-a932-4557-bf31-2336427d2cd9.png",
+      "sourceSha256": "a7be751bf0fc4bc29d5dad6064dc08662a3a4661502592bf633582059df71f89",
+      "sourceCell": {
+        "x": 397,
+        "y": 396,
+        "width": 396,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 459,
+        "y": 439,
+        "width": 305,
+        "height": 309
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "L.object.6",
+      "baseAssetSha256": "b3b51c11ab38f9d0c5c5cfeb44f075643af6f0bfc892908ccd8712a119e416e3"
+    },
+    "condition": "broken",
+    "intactAssetId": "L.object.6"
+  },
+  "W.object.7": {
+    "id": "W.object.7",
+    "kind": "object",
+    "category": "W",
+    "digit": 7,
+    "name": "Broken scythes 7",
+    "src": "cutouts/W/objects/7.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      35,
+      480,
+      477
+    ],
+    "sha256": "f4d112628fde9aa2e61384032d5af1b5a22ccbc64606307b838d54be1bae7df3",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/W-reference.png",
+      "referenceSha256": "5c9cb30825c139f5d1b1865a5bd6ccb5150f507ace2af76345a7363480d6ffed",
+      "sourceFile": "exec-deb3945a-a932-4557-bf31-2336427d2cd9.png",
+      "sourceSha256": "a7be751bf0fc4bc29d5dad6064dc08662a3a4661502592bf633582059df71f89",
+      "sourceCell": {
+        "x": 793,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 862,
+        "y": 452,
+        "width": 291,
+        "height": 287
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "L.object.7",
+      "baseAssetSha256": "e72bd4801b6727948131b186250bd1fac25b727a29ae4fadb464ae95b511ef8a"
+    },
+    "condition": "broken",
+    "intactAssetId": "L.object.7"
+  },
+  "W.object.8": {
+    "id": "W.object.8",
+    "kind": "object",
+    "category": "W",
+    "digit": 8,
+    "name": "Broken scythes 8",
+    "src": "cutouts/W/objects/8.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      45,
+      32,
+      467,
+      480
+    ],
+    "sha256": "d6101a2667d6ab44cdb37511dd3b230566ea87d55d767a28ea37641a8c37dff1",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/W-reference.png",
+      "referenceSha256": "5c9cb30825c139f5d1b1865a5bd6ccb5150f507ace2af76345a7363480d6ffed",
+      "sourceFile": "exec-deb3945a-a932-4557-bf31-2336427d2cd9.png",
+      "sourceSha256": "a7be751bf0fc4bc29d5dad6064dc08662a3a4661502592bf633582059df71f89",
+      "sourceCell": {
+        "x": 1190,
+        "y": 396,
+        "width": 396,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 1252,
+        "y": 439,
+        "width": 296,
+        "height": 314
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "L.object.8",
+      "baseAssetSha256": "aabe352ce90163a679ad67d9e613375fc781978e4a203a187e05cff54b6e8328"
+    },
+    "condition": "broken",
+    "intactAssetId": "L.object.8"
+  },
+  "W.object.9": {
+    "id": "W.object.9",
+    "kind": "object",
+    "category": "W",
+    "digit": 9,
+    "name": "Broken scythes 9",
+    "src": "cutouts/W/objects/9.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      35,
+      32,
+      476,
+      480
+    ],
+    "sha256": "0914b3218ba52c851ac2fe911e46a40d4aaccb40d21828033b41883dc05eabf3",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/W-reference.png",
+      "referenceSha256": "5c9cb30825c139f5d1b1865a5bd6ccb5150f507ace2af76345a7363480d6ffed",
+      "sourceFile": "exec-deb3945a-a932-4557-bf31-2336427d2cd9.png",
+      "sourceSha256": "a7be751bf0fc4bc29d5dad6064dc08662a3a4661502592bf633582059df71f89",
+      "sourceCell": {
+        "x": 1586,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 1631,
+        "y": 444,
+        "width": 300,
+        "height": 305
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "L.object.9",
+      "baseAssetSha256": "8b72ee8d4d63557e6a543a80db6535e709da76771d92dd6749efdc11a34e8a05"
+    },
+    "condition": "broken",
+    "intactAssetId": "L.object.9"
+  }
+}
