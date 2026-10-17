@@ -9,7 +9,7 @@ jobs:
   capture:
     if: github.event.head_commit.message == '[capture enemy rear evidence]'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:

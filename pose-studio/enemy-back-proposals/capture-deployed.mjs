@@ -12,9 +12,18 @@ const artifact=api('repos/'+repo+'/actions/runs/'+run.id+'/artifacts').artifacts
 const dir='/tmp/enemy-rear-published-build';await mkdir(dir,{recursive:true});
 execFileSync('gh',['run','download',String(run.id),'--repo',repo,'--name',artifact.name,'--dir',dir],{stdio:'inherit'});
 const url='https://cehinds.github.io/AshenSpire/branches/'+branch+'/latest/';
-const response=await fetch(url+'build.txt',{cache:'no-store'});assert.ok(response.ok);
-const bytes=Buffer.from(await response.arrayBuffer()),download=await readFile(dir+'/AshenSpire.html');
-const hash=b=>createHash('sha256').update(b).digest('hex');assert.equal(hash(bytes),hash(download),'Published build must equal exact feature artifact');
+const download=await readFile(dir+'/AshenSpire.html');
+const hash=b=>createHash('sha256').update(b).digest('hex'),expectedHash=hash(download);
+let bytes=null,etag=null;
+for(let attempt=0;attempt<31;attempt++){
+ try{
+  const response=await fetch(url+'build.txt',{cache:'no-store',headers:etag?{'If-None-Match':etag}:{},signal:AbortSignal.timeout(60000)});
+  if(response.ok){etag=response.headers.get('etag');const candidate=Buffer.from(await response.arrayBuffer());if(hash(candidate)===expectedHash){bytes=candidate;break;}console.log('Publication still has a different build',attempt);}
+  else console.log('Waiting for exact published build',attempt,response.status);
+ }catch(error){console.log('Publication check retry',attempt,error.message);}
+ if(attempt<30)await new Promise(resolve=>setTimeout(resolve,30000));
+}
+assert.ok(bytes,'Exact final feature artifact was not published within bounded polling');
 const stamp=JSON.parse(await readFile(dir+'/buildordinal.json','utf8')),version=stamp.release+'.'+stamp.ordinal;
 const {chromium}=await import(pathToFileURL(process.env.PLAYWRIGHT_MODULE).href);
 const sharp=(await import(pathToFileURL(process.env.SHARP_MODULE).href)).default;
@@ -36,7 +45,7 @@ try{
    assert.equal(await gallery.locator('#grid img').evaluateAll(images=>images.every(img=>img.naturalWidth===512)),true);
   }
   await gallery.locator('#actor').selectOption(actor);await gallery.locator('#stance').selectOption('neutral');
-  await gallery.locator('#grid img').evaluateAll(images=>Promise.all(images.map(img=>img.decode())));
+  await gallery.locator('#grid img').evaluateAll(images=>Promise.race([Promise.all(images.map(img=>img.decode())),new Promise((_,reject)=>setTimeout(()=>reject(Error('Selected rear images failed to decode within 30 seconds')),30000))]));
   assert.equal(await gallery.locator('main').evaluate(main=>main.scrollWidth<=main.clientWidth),true);
   await gallery.locator('#grid').evaluate(grid=>window.scrollTo(0,grid.offsetTop-12));await page.screenshot({path:out+'/'+name+'.png'});
   records.push({name,width,height,actor,sourceCommit:source,version,digest:stamp.digest,playableUrl:url,verifiedActors:13,verifiedNeutralDesigns:130});
