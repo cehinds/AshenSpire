@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { combatSequenceReview, combatSequenceReviews, sampleCombatSequenceReview, COMBAT_SEQUENCE_REVIEW_SOURCE } from '../src/model/combatSequenceReview.js';
 import { alternativeCardAnimationFamily } from '../src/model/cardAnimationFamily.js';
 import { combatWeaponProfilesFor } from '../src/model/combatWeaponPresentation.js';
@@ -11,7 +11,7 @@ import { poseIndexAt, poseTicks, stepPose, isGenerated, isDirtyFile } from '../w
 
 test('review resolves current default class weapons and keeps the canonical SM03/SW09 source references', () => {
   const entries = combatSequenceReviews(ANIM_SPEEDS.normal);
-  assert.equal(entries.length, 40);
+  assert.equal(entries.length, 52);
   for (const entry of entries) {
     assert.ok(existsSync(new URL('../' + entry.source, import.meta.url)), entry.source);
     assert.ok(entry.note.includes('Co-op continuation remains paused'));
@@ -20,7 +20,16 @@ test('review resolves current default class weapons and keeps the canonical SM03
     if (entry.available && !['fully-defended', 'guard-break'].includes(entry.actionId)) {
       assert.deepEqual(entry.sequence, base.family.sequences[entry.actionId]);
     }
+    if (entry.available) {
+      assert.equal(entry.sequence.durations.length, entry.sequence.poses.length);
+      assert.ok(entry.sequence.durations.every(weight => Number.isFinite(weight) && weight > 0));
+      assert.ok(entry.sequence.poses.every(pose => pose === 'origin' || entry.frames[pose]?.path));
+    }
   }
+  const authored = JSON.parse(readFileSync(new URL('../' + COMBAT_SEQUENCE_REVIEW_SOURCE, import.meta.url))).behavior;
+  assert.equal(new Set(authored.classes).size, authored.classes.length);
+  assert.equal(new Set(authored.actions.map(row => row.id)).size, authored.actions.length);
+  for (const classId of authored.classes) for (const action of authored.actions) assert.ok(combatSequenceReview(classId, action.id, ANIM_SPEEDS.normal));
   assert.ok(existsSync(new URL('../' + COMBAT_SEQUENCE_REVIEW_SOURCE, import.meta.url)));
   for (const action of ['smash', 'sweep']) {
     const entry = combatSequenceReview('reaver', action, ANIM_SPEEDS.normal);
@@ -54,6 +63,10 @@ test('Guard, Parry and Resisted share runtime impact weights; both Counter flavo
 
 test('unavailable class reactions and Evade fallbacks stay explicit instead of borrowing Reaver art', () => {
   for (const classId of ['rogue', 'starseer', 'herald']) {
+    const smash = combatSequenceReview(classId, 'smash', ANIM_SPEEDS.normal);
+    assert.equal(smash.source, `pose-studio/stances/class-smash/${classId}/production.json`);
+    assert.doesNotMatch(smash.label, /SM03/);
+    assert.doesNotMatch(combatSequenceReview(classId, 'sweep', ANIM_SPEEDS.normal).label, /SW09/);
     for (const action of ['fully-defended', 'guard-break', 'counter-guard', 'counter-evade']) {
       const entry = combatSequenceReview(classId, action, ANIM_SPEEDS.normal);
       assert.equal(entry.available, false);

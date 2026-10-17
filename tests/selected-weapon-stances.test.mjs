@@ -315,6 +315,18 @@ test('selected holds preserve existing returns and finite reactions restore the 
     advance(66);assert.equal(stage.pose,'pilot-impact-v');
     advance(100);assert.equal(stage.pose,'pilot-impact-g');
     advance(260);assert.equal(stage.pose,'stance-counter');
+    stage.reactPose('fully-defended',full.totalMs);advance(100);
+    const reactionArt=stage.currentArt;
+    const scheduled=raf.size;
+    assert.equal(stage.seekReaction('fully-defended',100,full.totalMs),true);
+    assert.equal(stage.pose,'pilot-impact-v');
+    assert.deepEqual([stage.currentArt.left,stage.currentArt.top,stage.currentArt.width,stage.currentArt.height],
+      [reactionArt.left,reactionArt.top,reactionArt.width,reactionArt.height],'inspection keeps actual reaction body registration');
+    assert.equal(stage.currentArt.image,reactionArt.image);
+    assert.equal(raf.size,scheduled-1,'seeking cancels its pending animation clock');
+    advance(50);assert.equal(stage.pose,'pilot-impact-v','inspection never starts a wall clock');
+    stage.seekReaction('fully-defended',full.totalMs,full.totalMs);assert.equal(stage.pose,'pilot-defend','scrubbing to the end shows the final authored phase');
+    stage.endReaction();assert.equal(stage.pose,'stance-counter');
     stage.settle();stage.setStance('smash');stage.play('smash',500);advance(150);
     assert.equal(stage.pose,'pilot-smash-takeoff');
     assert.equal(stage.reactPose('guard-break',180),true);assert.equal(stage.pose,'pilot-guard-break');
@@ -333,7 +345,9 @@ test('selected holds preserve existing returns and finite reactions restore the 
     stage.reactPose('evade',280);stage.settle({reaction:true});assert.equal(stage.pose,'stance-sweep');
     stage.reactPose('guard-break',280);stage.setRestPose('defeated');assert.equal(stage.pose,'defeated');
     assert.equal(stage.reactPose('evade',280),false,'defeat wins over a later reaction');
+    assert.equal(stage.seekReaction('evade',0,280),false,'inspection cannot replace a defeated body');
     const fallback=await make({});assert.equal(fallback.reactPose('evade'),false);fallback.setStance('counter');
+    assert.equal(fallback.seekReaction('evade',0,180),false,'inspection never borrows missing reaction art');
     assert.equal(fallback.actionTiming('sweep').totalMs,195);assert.equal(fallback.actionTiming('sweep').impactMs,41.25,'other profiles retain the original Sweep contact');
     assert.equal(fallback.el.dataset.maximumWidthRatio,undefined,'the edge envelope is scoped to the selected weapon profile');
     assert.equal(fallback.pose,'stance-counter');assert.doesNotMatch(fallback.currentArt.image.url,/pilot/);

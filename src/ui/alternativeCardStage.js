@@ -236,6 +236,15 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
       if(request!==null)cancelAnimationFrame(request);request=null;
       playing={action,sequence,duration};elapsed=time;paint();return true;
     },
+    /** Inspection transport: use the real reaction painter without starting its wall clock. */
+    seekReaction(kind, time, duration=280){
+      if(disposed || rest==='defeated' || !pilotFrames || !['evade','guard-break','fully-defended','defend'].includes(kind))return false;
+      const sequence=selectedWeaponSequence(kind);
+      if(!sequence.poses.every(pose=>frames[pose]))return false;
+      if(request!==null)cancelAnimationFrame(request);request=null;
+      playing=null;bodyReaction={kind,sequence,elapsed:time,last:performance.now(),duration};
+      paint();return true;
+    },
     setRestPose(next='idle',{resume,immediate=false}={}){
       if(next===rest&&playing&&!resume)return;
       rest=next;el.dataset.rest=next;if(next==='defeated'){bodyReaction=null;flashAt=null;}

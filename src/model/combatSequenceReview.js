@@ -21,8 +21,8 @@ export function combatSequenceReview(classId, actionId, speed) {
   const fallback = available && sequence.fallbackAction
     ? `No registered painted ${actionId} clip for this class; combat uses its ${sequence.fallbackAction} preparation.`
     : available ? '' : row.fallback || 'No registered painted sequence for this class.';
-  return { id: `combat:${classId}:${actionId}`, classId, actionId, label: row.label,
-    origin: row.origin, source: row.source || COMBAT_SEQUENCE_REVIEW_SOURCE,
+  return { id: `combat:${classId}:${actionId}`, classId, actionId, label: row.labelsByClass?.[classId] || row.label,
+    origin: row.origin, reaction: !!row.reaction, source: row.sourcesByClass?.[classId] || COMBAT_SEQUENCE_REVIEW_SOURCE,
     note: review().note, available, fallback, sequence: available ? sequence : null,
     frames: assembled.frames, originFrame: assembled.heldFrames[row.origin] || assembled.frames.ready,
     ...timing };
@@ -36,5 +36,5 @@ export function sampleCombatSequenceReview(entry, time) {
   if (!entry?.available) return null;
   const sample = sampleSequence(entry.sequence, time, entry.totalMs);
   const pose = entry.sequence.poses[sample.index];
-  return { ...sample, pose, frame: pose === 'origin' ? entry.originFrame : entry.frames[pose] };
+  return { ...sample, pose, frame: pose === 'origin' || pose === 'ready' ? entry.originFrame : entry.frames[pose] };
 }

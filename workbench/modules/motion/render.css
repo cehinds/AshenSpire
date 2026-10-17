@@ -13,6 +13,7 @@ html, body { margin: 0; height: 100%; background: #15211e; color: var(--mo-ink);
 .mo-stage[data-bg="plain"] { background: #1d2a24; }
 .mo-stage[data-bg="combat"] { background: radial-gradient(circle at 46% 42%, #364335 0%, #202d26 60%, #15211e 100%); }
 .mo-box { transform-origin: 50% 50%; }
+.mo-combat-box { position: absolute; left: 50%; top: 54%; transform-origin: 50% 50%; }
 .mo-fig, .mo-onion, .mo-fx { pointer-events: none; user-select: none; -webkit-user-drag: none; }
 .mo-fx-behind { z-index: 0; }
 .mo-fx-front { z-index: 2; }

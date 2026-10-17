@@ -28,7 +28,7 @@ const MODULE_SOURCE = 'ashen-motion-module';
 const RENDER_SOURCE = 'ashen-motion';
 const NARROW_PX = 1100;
 const SETS_DIRS = [['pose-studio/renewal', false], ['pose-studio/stances', true]];
-const KIND_LABEL = { all: 'All', class: 'Classes', outfit: 'Outfits', stance: 'Stances', animation: 'Animation sets' };
+const KIND_LABEL = { all: 'All', class: 'Classes', outfit: 'Outfits', stance: 'Stances', animation: 'Animation sets', combat: 'Combat sequences' };
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmtMs = (ms) => `${(ms / 1000).toFixed(2)} s`;
 
@@ -50,7 +50,7 @@ export default {
   mount(el, ctx) {
     el.innerHTML = `<link rel="stylesheet" href="/modules/motion/motion.css"><div class="mo">
       <header class="mo-head">
-        <div class="mo-title"><h2 class="mo-name">Motion Studio</h2><span class="mo-file"></span><span class="mo-dirty" hidden>Unsaved</span></div>
+        <div class="mo-title"><h2 class="mo-name">Motion Studio</h2><span class="mo-file"></span><span class="mo-readonly" hidden>Read-only review</span><span class="mo-dirty" hidden>Unsaved</span></div>
         <div class="mo-head-actions">
           <button type="button" class="btn btn-sm mo-toggle" data-overlay="lib" aria-expanded="false">Library</button>
           <button type="button" class="btn btn-sm mo-toggle" data-overlay="insp" aria-expanded="false">Inspector</button>
@@ -59,7 +59,7 @@ export default {
       </header>
       <div class="mo-body">
         <aside class="mo-lib" aria-label="Library">
-          <label class="mo-field">Search<input type="search" class="mo-q" placeholder="Class, outfit, stance or set" autocomplete="off"></label>
+          <label class="mo-field">Search<input type="search" class="mo-q" placeholder="Class, outfit, stance or combat sequence" autocomplete="off"></label>
           <div class="mo-kinds" role="group" aria-label="Kind">${LIBRARY_KINDS.map((k) => `<button type="button" class="btn btn-sm" data-kind="${k}" aria-pressed="${k === 'all'}">${esc(KIND_LABEL[k])}</button>`).join('')}</div>
           <label class="mo-field">Class<select class="mo-class"><option value="">All classes</option></select></label>
           <p class="mo-count" role="status"></p>
@@ -170,7 +170,7 @@ export default {
     function onionIndexes() {
       const p = viewProject();
       if (!p) return { prev: null, next: null };
-      const n = onionNeighbours(p.poses.length, p.duration, st.time);
+      const n = onionNeighbours(p.poses.length, p.duration, st.time, p.weights);
       return { prev: st.onion.prev ? n.prev : null, next: st.onion.next ? n.next : null };
     }
     function onMessage(ev) {
@@ -199,11 +199,15 @@ export default {
       st.index.cues = d.cues || null;
       st.index.effects = Array.isArray(d.effects) ? d.effects : [];
       st.index.labels = d.effectLabels || {};
+      for (const entry of d.combatEntries || []) st.sets.set(entry.path, entry);
+      // A restarted game renderer carries newly compiled canonical sequences.
+      if (st.file?.project?.combatId && st.sets.has(st.file.path)) openFile(st.file.path);
       classEl.innerHTML = '<option value="">All classes</option>' + st.index.classes.map((c) => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
       classEl.value = st.filter.classId;
       renderLibrary();
       renderTimeline();
       renderInspector();
+      if (pendingLink?.anim?.startsWith('combat:')) { const link = pendingLink; pendingLink = null; applyLink(link); }
     }
 
     // ---------- the library ----------
@@ -220,7 +224,7 @@ export default {
       countEl.textContent = `${shown.length} of ${all.length}${st.setsListed ? '' : ' (animation sets still loading)'}`;
       const dirty = new Set(dirtyPathsOf(st.drafts));
       list.innerHTML = shown.map((e) => {
-        const current = (e.kind === 'outfit' && st.outfit === e.id) || ((e.kind === 'animation' || e.kind === 'stance') && st.file?.path === e.id);
+        const current = (e.kind === 'outfit' && st.outfit === e.id) || (['animation', 'stance', 'combat'].includes(e.kind) && st.file?.path === e.id);
         return `<li><button type="button" class="mo-item" data-kind="${e.kind}" data-id="${esc(e.id)}" aria-current="${current ? 'true' : 'false'}"><span class="mo-item-label">${esc(e.label)}</span>${dirty.has(e.id) ? '<span class="mo-item-dirty">Unsaved</span>' : ''}<span class="mo-item-sub">${esc(e.sub)}</span></button></li>`;
       }).join('') || '<li class="mo-empty">Nothing matches. Clear the search or the filters.</li>';
       el.querySelectorAll('.mo-kinds [data-kind]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.kind === st.filter.kind)));
@@ -228,7 +232,7 @@ export default {
     function pickEntry(kind, id) {
       if (kind === 'class') { st.filter.classId = id; classEl.value = id; st.outfit = id; }
       else if (kind === 'outfit') { st.outfit = id; st.filter.classId = st.index.outfitClass[id] || ''; classEl.value = st.filter.classId; }
-      else if (kind === 'animation' || kind === 'stance') {
+      else if (kind === 'animation' || kind === 'stance' || kind === 'combat') {
         const s = st.sets.get(id);
         if (s?.actor) { st.filter.classId = s.actor; classEl.value = s.actor; if (st.index.outfits.includes(s.actor)) st.outfit = s.actor; }
         openFile(id);
@@ -269,6 +273,14 @@ export default {
     /** Resolves 'deleted' when the file is gone from disk (its read was a 404), otherwise nothing. */
     async function openFile(path) {
       const gen = selection.begin();
+      if (path.startsWith('combat:')) {
+        const entry = st.sets.get(path);
+        if (!entry?.combat) { pendingLink = { ...pendingLink, anim: path }; return; }
+        st.mode = 'stage';
+        showFile({ path, project: clone(entry.project), original: JSON.stringify(entry.project), problems: [], combat: entry }, true);
+        renderTransport();
+        return;
+      }
       // A file with unsaved edits comes back as it was left: its draft, not a second read of the disk.
       const held = st.drafts.get(path);
       if (isDirtyFile(held)) { showFile(held, false); return; }
@@ -322,7 +334,7 @@ export default {
     function applyFrame(index) {
       const p = viewProject();
       if (!p) return;
-      st.time = poseStart(p.poses.length, p.duration, index);
+      st.time = poseStart(p.poses.length, p.duration, index, p.weights);
       pendingLink = pendingLink && { ...pendingLink, frame: null };
       renderAll();
     }
@@ -347,8 +359,12 @@ export default {
       const d = duration();
       scrub.max = String(d || 1000);
       scrub.value = String(Math.round(st.time));
-      scrub.disabled = !p;
-      timeEl.textContent = p ? `${fmtMs(st.time)} / ${fmtMs(d)} · pose ${poseIndexAt(p.poses.length, d, st.time) + 1} of ${p.poses.length}` : 'No file open';
+      scrub.disabled = !p || st.file.combat?.available === false;
+      playBtn.disabled = !p || st.file.combat?.available === false;
+      $('.mo-readonly').hidden = !st.file?.combat;
+      for (const button of el.querySelectorAll('[data-mode="edit"]')) button.disabled = !!st.file?.combat;
+      prevEl.disabled = nextEl.disabled = !!st.file?.combat;
+      timeEl.textContent = st.file?.combat?.available === false ? 'No painted sequence · common effects fallback' : p ? `${fmtMs(st.time)} / ${fmtMs(d)} · pose ${poseIndexAt(p.poses.length, d, st.time, p.weights) + 1} of ${p.poses.length}` : 'No file open';
       playBtn.textContent = st.playing ? 'Pause' : 'Play';
       playBtn.setAttribute('aria-pressed', String(st.playing));
       playhead.style.left = d ? `${(st.time / d) * 100}%` : '0';
@@ -357,6 +373,7 @@ export default {
       bgEl.value = st.background;
       prevEl.checked = st.onion.prev;
       nextEl.checked = st.onion.next;
+      el.querySelectorAll('.mo-pprev,.mo-pnext,.mo-fprev,.mo-fnext').forEach(button => { button.disabled = !p?.poses.length; });
       el.querySelectorAll('[data-facing]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.facing === st.facing)));
       el.querySelectorAll('[data-size]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.size === st.size)));
       frame.parentElement.style.setProperty('--mo-scale', String(SIZES[st.size]));
@@ -370,7 +387,7 @@ export default {
       const p = viewProject();
       const d = duration();
       if (!p) { ticks.innerHTML = ''; clipsEl.innerHTML = ''; return; }
-      ticks.innerHTML = poseTicks(p.poses.length, d).map((t) => `<button type="button" class="mo-tick" style="left:${t.at * 100}%" data-pose="${t.index}" title="Pose ${t.index + 1}: ${esc(p.poses[t.index])}" aria-label="Pose ${t.index + 1}, ${esc(p.poses[t.index])}"><span>${esc(p.poses[t.index])}</span></button>`).join('');
+      ticks.innerHTML = poseTicks(p.poses.length, d, p.weights).map((t) => `<button type="button" class="mo-tick" style="left:${t.at * 100}%" data-pose="${t.index}" title="Pose ${t.index + 1}: ${esc(p.poses[t.index])}" aria-label="Pose ${t.index + 1}, ${esc(p.poses[t.index])}"><span>${esc(p.poses[t.index])}</span></button>`).join('');
       clipsEl.innerHTML = p.clips.map((c) => {
         const bar = clipBar(c, d, st.index.cues || {});
         const sel = st.selected?.kind === 'clip' && st.selected.id === c.id;
@@ -381,8 +398,8 @@ export default {
       const p = viewProject();
       const cls = st.filter.classId || p?.actor || '';
       const outfitKey = st.outfit || cls;
-      const frames = st.index.frames[outfitKey] || st.index.frames[cls] || {};
-      const pose = p ? p.poses[poseIndexAt(p.poses.length, p.duration, st.time)] : null;
+      const frames = st.file?.combat ? { ...st.file.combat.frames, origin: st.file.combat.originPath } : st.index.frames[outfitKey] || st.index.frames[cls] || {};
+      const pose = p ? p.poses[poseIndexAt(p.poses.length, p.duration, st.time, p.weights)] : null;
       const source = p ? sourceFrameOf({ project: p, pose, frames }) : null;
       const problems = st.file?.problems || [];
       const sel = st.selected;
@@ -391,18 +408,18 @@ export default {
         <h2 class="mo-insp-title">${p ? esc(p.name || st.file.path) : 'Pick a file'}</h2>
         ${p ? `<dl class="mo-meta">
           <dt>Class</dt><dd>${esc(p.actor)}</dd>
-          <dt>Outfit</dt><dd>${esc(outfitKey || '—')}</dd>
+          <dt>Outfit</dt><dd>${st.file.combat ? 'Class default weapons and armour' : esc(outfitKey || '—')}</dd>
           <dt>Duration</dt><dd>${fmtMs(p.duration)}</dd>
-          <dt>Poses</dt><dd>${p.poses.map((x, i) => `<span class="mo-chip${i === poseIndexAt(p.poses.length, p.duration, st.time) ? ' is-on' : ''}">${i + 1}. ${esc(x)}</span>`).join(' ')}</dd>
+          <dt>Poses</dt><dd>${p.poses.map((x, i) => `<span class="mo-chip${i === poseIndexAt(p.poses.length, p.duration, st.time, p.weights) ? ' is-on' : ''}">${i + 1}. ${esc(x)}</span>`).join(' ')}</dd>
           <dt>Effects</dt><dd>${p.clips.length} · bindings ${p.bindings.length}</dd>
-          <dt>Source</dt><dd><code>${esc(st.file.path)}</code></dd>
+          <dt>Source</dt><dd><code>${esc(st.file.combat?.source || st.file.path)}</code></dd>
         </dl>` : '<p class="mo-note">Choose an animation set, stance or outfit in the library. Stances and sets open here; an outfit alone shows its painted frames.</p>'}
-        ${p && isGenerated(st.file.path) ? `<p class="mo-note mo-generated">${esc(GENERATED_NOTE)}</p>` : ''}
+        ${st.file?.combat ? `<p class="mo-note mo-generated">Read-only combat sequence · Normal game pace. Playback speed changes the review clock only.</p><p class="mo-note">${esc(st.file.combat.note)}</p>${st.file.combat.fallback ? `<p class="mo-problems">${esc(st.file.combat.fallback)}</p>` : ''}${st.file.combat.available ? `<p class="mo-note">Contact: ${fmtMs(st.file.combat.impactMs)}. Phase holds follow the game's authored weights.</p>` : ''}` : p && isGenerated(st.file.path) ? `<p class="mo-note mo-generated">${esc(GENERATED_NOTE)}</p>` : ''}
         ${problems.length ? `<div class="mo-problems"><p>This file does not match the game format:</p><ul>${problems.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div>` : ''}
         ${clip ? clipInspector(clip) : ''}
-        ${p ? anchorInspector(p) : ''}
-        ${p ? effectsInspector() : ''}
-        ${p ? bindingsInspector(p) : ''}
+        ${p && !st.file.combat ? anchorInspector(p) : ''}
+        ${p && !st.file.combat ? effectsInspector() : ''}
+        ${p && !st.file.combat ? bindingsInspector(p) : ''}
         <h3>Links</h3>
         <div class="mo-links">
           ${cls ? `<button type="button" class="btn btn-sm mo-x-entities" data-class="${esc(cls)}">Open in Entity Browser</button>` : ''}
@@ -514,7 +531,7 @@ export default {
       const doc = canvasDocOf(p);
       // A generated file's handles show where the anchors and effects sit but cannot be dragged.
       if (isGenerated(st.file.path)) for (const item of doc.items) item.locked = true;
-      const pose = p.poses[poseIndexAt(p.poses.length, p.duration, st.time)];
+      const pose = p.poses[poseIndexAt(p.poses.length, p.duration, st.time, p.weights)];
       const side = Math.round(REF.height * FIGURE_SCALE);
       const feet = (p.anchors.feet?.[1] ?? 0.85) * REF.height;
       const torso = (p.anchors.torso?.[0] ?? 0.3) * REF.width;
@@ -566,6 +583,7 @@ export default {
       ensureCanvas().setDoc(editDoc());
     }
     function setMode(mode) {
+      if (st.file?.combat && mode === 'edit') return;
       st.mode = mode;
       if (mode === 'edit') { setPlaying(false); syncCanvas(); }
       renderTransport();
@@ -700,7 +718,7 @@ export default {
       if (st.playing) rafId = requestAnimationFrame(tick);
     }
     function setPlaying(on) {
-      if (on && !st.file) return;
+      if (on && (!st.file || st.file.combat?.available === false)) return;
       st.playing = on;
       lastTick = 0;
       if (on && !rafId) rafId = requestAnimationFrame(tick);
@@ -741,15 +759,15 @@ export default {
     playBtn.addEventListener('click', () => setPlaying(!st.playing));
     scrub.addEventListener('input', () => { setPlaying(false); seek(Number(scrub.value)); });
     const poseCount = () => viewProject()?.poses.length || 0;
-    $('.mo-pprev').addEventListener('click', () => { setPlaying(false); seek(stepPose(poseCount(), duration(), st.time, -1)); });
-    $('.mo-pnext').addEventListener('click', () => { setPlaying(false); seek(stepPose(poseCount(), duration(), st.time, 1)); });
+    $('.mo-pprev').addEventListener('click', () => { setPlaying(false); seek(stepPose(poseCount(), duration(), st.time, -1, viewProject()?.weights)); });
+    $('.mo-pnext').addEventListener('click', () => { setPlaying(false); seek(stepPose(poseCount(), duration(), st.time, 1, viewProject()?.weights)); });
     $('.mo-fprev').addEventListener('click', () => { setPlaying(false); seek(stepFrame(st.time, -1, duration())); });
     $('.mo-fnext').addEventListener('click', () => { setPlaying(false); seek(stepFrame(st.time, 1, duration())); });
     ticks.addEventListener('click', (e) => {
       const b = e.target.closest('.mo-tick');
       if (!b) return;
       setPlaying(false);
-      seek(poseStart(st.file.project.poses.length, duration(), Number(b.dataset.pose)));
+      seek(poseStart(st.file.project.poses.length, duration(), Number(b.dataset.pose), st.file.project.weights));
     });
     track.addEventListener('pointerdown', (e) => {
       if (e.target.closest('.mo-clip,.mo-tick') || !st.file) return;

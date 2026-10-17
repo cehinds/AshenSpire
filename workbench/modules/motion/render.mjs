@@ -17,6 +17,10 @@
 import { sample, CUES, ANCHORS, VERSION } from '../../../src/model/presentationSequence.js';
 import { PRESENTATION_POSES } from '../../../src/model/presentationPoseCatalog.js';
 import { effectFrames, labels } from '../../../pose-studio/catalog.mjs';
+import { combatSequenceReviews, sampleCombatSequenceReview } from '../../../src/model/combatSequenceReview.js';
+import { combatWeaponProfilesFor } from '../../../src/model/combatWeaponPresentation.js';
+import { createAlternativeCardStage } from '../../../src/ui/alternativeCardStage.js';
+import { ANIM_SPEEDS } from '../../../src/ui/animationPace.js';
 
 const SOURCE = 'ashen-motion';
 const MODULE_SOURCE = 'ashen-motion-module';
@@ -27,11 +31,62 @@ const params = new URLSearchParams(location.search);
 const parentOrigin = params.get('po') || '';
 const stage = document.getElementById('stage');
 const note = stage.querySelector('.mo-note');
+let combatEntries = new Map(), combatIndexError = null;
+let combatStage = null, combatStageId = null, combatReady = false;
+
+function drawCombat(entry, state) {
+  if (combatStageId !== entry.id) {
+    combatStage?.dispose();
+    combatStageId = entry.id;
+    combatReady = false;
+    combatStage = entry.available ? createAlternativeCardStage(entry.classId, combatWeaponProfilesFor({ classId: entry.classId })) : null;
+    combatStage?.setStance(entry.origin);
+    const pending = combatStage;
+    pending?.ready.then(ready => {
+      if (combatStage !== pending) return;
+      combatReady = ready;
+      redraw();
+    });
+  }
+  stage.replaceChildren();
+  stage.dataset.bg = state.background;
+  stage.dataset.facing = state.facing;
+  if (!entry.available || !combatStage) {
+    note.textContent = entry.fallback || 'This class has no registered painted sequence.';
+    note.hidden = false;
+    stage.append(note);
+    stage.dataset.pose = '';
+    stage.dataset.poseIndex = '0';
+    return;
+  }
+  const box = document.createElement('div');
+  box.className = 'mo-combat-box';
+  const scale = Math.min((stage.clientWidth || REF_W) / REF_W, (stage.clientHeight || REF_H) / REF_H) * 1.7;
+  box.style.transform = `translate(-50%, -50%) scale(${state.facing === 'left' ? -scale : scale}, ${scale})`;
+  box.append(combatStage.el);
+  stage.append(box);
+  const sampled = sampleCombatSequenceReview(entry, state.time);
+  if (entry.reaction) combatStage.seekReaction(entry.actionId, state.time, entry.totalMs);
+  else combatStage.seek(entry.actionId, state.time, entry.totalMs);
+  stage.dataset.pose = combatStage.pose;
+  stage.dataset.poseIndex = String(sampled.index);
+  stage.dataset.combatReady = String(combatReady);
+  if (!combatReady) {
+    note.textContent = combatStage.el.dataset.artError || 'Loading the registered combat artwork…';
+    note.hidden = false;
+    stage.append(note);
+  }
+}
 
 const post = (type, data = {}) => {
   if (window.parent === window || !parentOrigin) return;
   window.parent.postMessage({ source: SOURCE, type, ...data }, parentOrigin);
 };
+try {
+  combatEntries = new Map(combatSequenceReviews(ANIM_SPEEDS.normal).map(entry => [entry.id, entry]));
+} catch (error) {
+  combatIndexError = `Combat sequence configuration could not load: ${error.message}`;
+}
 
 /** The painted outfit a project draws with: the chosen outfit, else the project's actor. */
 function artFor(project, outfit) {
@@ -66,6 +121,9 @@ function figure(src, { cls, side, left, top, opacity = 1, flip = false }) {
 
 function draw(state) {
   const { project, outfit = null, time = 0, facing = 'right', background = 'checker', onion = {} } = state;
+  const combat = combatEntries.get(project?.combatId);
+  if (combat) { drawCombat(combat, state); return; }
+  if (combatStage) { combatStage.dispose(); combatStage = null; combatStageId = null; delete stage.dataset.combatReady; }
   stage.dataset.bg = background;
   stage.dataset.facing = facing === 'left' ? 'left' : 'right';
   stage.replaceChildren();
@@ -145,6 +203,17 @@ window.addEventListener('message', (ev) => {
 window.addEventListener('resize', () => redraw());
 
 post('index', {
+  combatEntries: [...combatEntries.values()].map(entry => ({
+    path: entry.id, name: `${entry.classId} · ${entry.label}`, actor: entry.classId,
+    poses: entry.sequence?.poses.length || 0, duration: entry.totalMs, combat: true,
+    available: entry.available, fallback: entry.fallback, note: entry.note,
+    source: entry.source, impactMs: entry.impactMs,
+    frames: { ...Object.fromEntries(Object.entries(entry.frames).map(([pose, frame]) => [pose, frame.path])), ready: entry.originFrame.path },
+    originPath: entry.originFrame.path,
+    project: { id: entry.id, combatId: entry.id, name: `${entry.classId} · ${entry.label}`,
+      actor: entry.classId, duration: entry.totalMs, poses: entry.sequence?.poses || [],
+      weights: entry.sequence?.durations || [], anchors: {}, clips: [], bindings: [] },
+  })),
   cues: CUES,
   anchors: Object.keys(ANCHORS),
   effects: Object.keys(effectFrames),
@@ -153,4 +222,5 @@ post('index', {
   frames: Object.fromEntries(Object.entries(PRESENTATION_POSES).map(([key, art]) => [key, Object.fromEntries(Object.entries(art.frames || {}).map(([pose, frame]) => [pose, frame.file]))])),
   version: VERSION,
 });
-post('ready');
+if (combatIndexError) post('error', { message: combatIndexError });
+else post('ready');
