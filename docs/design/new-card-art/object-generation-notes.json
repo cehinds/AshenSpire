@@ -1,0 +1,125 @@
+{
+  "reference": "User's Counter/Sweep/Sundering Art/Smash/Strike screenshot.",
+  "method": "Image generation of seven transparent 5-column, 2-row atlases. Technical rectangular cropping and normalization to independent PNGs. Each row item is a proposal, not an approved master.",
+  "families": [
+    {
+      "letter": "A",
+      "id": "swords",
+      "label": "Swords",
+      "items": [
+        "Straight broad longsword with simple crossguard; diagonal lower-left to upper-right",
+        "Worn arming sword with thick short blade; opposite diagonal",
+        "Slim straight thrusting sword with small ring guard; near upright",
+        "Heavy straight two-handed sword with long black grip; upper-left to lower-right",
+        "Broad chipped straight sword with plain bronze guard; shallow diagonal",
+        "Straight single-fuller sword with worn leather grip; three-quarter tilt",
+        "Short broad cavalry sword, straight blade and plain knuckle bow; diagonal",
+        "Long narrow straight sword with round pommel; strong diagonal",
+        "Wide straight square-shouldered sword with tapering point; tilted left",
+        "Simple battered straight hand-and-a-half sword; steep diagonal"
+      ]
+    },
+    {
+      "letter": "B",
+      "id": "scimitars",
+      "label": "Scimitars",
+      "items": [
+        "Classic single curved scimitar with plain bronze guard; tip upper-right",
+        "Broad heavy scimitar with dark leather grip; opposite diagonal",
+        "Slim deeply curved scimitar; near upright",
+        "Short heavy falchion-like scimitar, curved blade; low diagonal",
+        "Long shallow-curved scimitar; blade rising right",
+        "Scimitar with widened curved tip and plain black guard; tilt left",
+        "Compact hooked curved scimitar; three-quarter angle",
+        "Wide weathered curved scimitar with thick spine; tip upper-left",
+        "Narrow sweeping scimitar with simple straight crossguard; diagonal",
+        "Long worn scimitar with black handle and rounded pommel; steep diagonal"
+      ]
+    },
+    {
+      "letter": "C",
+      "id": "scythes",
+      "label": "Scythes",
+      "items": [
+        "Long dark shaft and short crescent steel scythe blade; diagonal",
+        "Short-shaft battle scythe with broad inward crescent; opposite diagonal",
+        "Long narrow-bladed scythe; near upright",
+        "Rough wooden shaft with heavy hooked scythe blade; low tilt",
+        "Black iron shaft with compact crescent scythe blade; tilt right",
+        "Worn scythe with thick short cutting crescent; tilt left",
+        "Long-shaft scythe with slender hooked steel blade; three-quarter",
+        "Short heavy battle scythe with pronounced inner curve; diagonal",
+        "Iron-bound wooden scythe shaft and plain crescent blade; steep diagonal",
+        "Simple large crescent scythe on weathered black shaft; horizontal diagonal"
+      ]
+    },
+    {
+      "letter": "D",
+      "id": "hammers",
+      "label": "Hammers",
+      "items": [
+        "Square iron warhammer with short black handle; head lower-left handle upper-right",
+        "Broad block-headed hammer; opposite diagonal",
+        "Long-handled great maul with rectangular iron head; near upright",
+        "Compact double-faced blacksmith-like battle hammer; low diagonal",
+        "Heavy cuboid stone-headed hammer on iron shaft; tilt right",
+        "Long rectangular sledge head with worn brass bands; tilt left",
+        "Short squat square hammer with plain wrapped grip; three-quarter",
+        "Tall block-headed warhammer with battered iron corners; diagonal",
+        "Broad double-faced sledge with dark wood handle; steep diagonal",
+        "Large heavy rectangular warhammer with simple plain steel head; diagonal"
+      ]
+    },
+    {
+      "letter": "E",
+      "id": "shields",
+      "label": "Shields",
+      "items": [
+        "Worn kite shield with bronze boss, near front tilted slightly",
+        "Round iron buckler with central boss, three-quarter left",
+        "Tall battered rectangular tower shield, three-quarter right",
+        "Faceted triangular steel shield, tilted clockwise",
+        "Broad rounded heater shield with dark plain face, front tilted left",
+        "Small layered-rim round shield, strong three-quarter",
+        "Long narrow kite shield with thick border, near upright",
+        "Oval shield with plain iron reinforcement and bronze boss, tilted",
+        "Heavy square shield with beveled corners, three-quarter view",
+        "Simple battered teardrop shield with plain central boss, opposite tilt"
+      ]
+    },
+    {
+      "letter": "F",
+      "id": "cards",
+      "label": "Cards",
+      "items": [
+        "Single blank dark rectangular card with thin worn bronze rim, diagonal",
+        "Single thick blank parchment card with frayed edges, opposite diagonal",
+        "Single blank charcoal card with fine silver double border, near upright",
+        "Single blank aged ivory card with dark corners, low tilt",
+        "Single blank black card with worn chamfered corners, tilt right",
+        "Single blank dark green-gray card with subtle leather-like texture, tilt left",
+        "Single blank thick gray card with chipped edge, three-quarter view",
+        "Single blank brown parchment card with slightly curled corner, diagonal",
+        "Single blank slate-colored card with narrow bronze edge, steep diagonal",
+        "Single blank heavy dark card with simple pale bevel, opposite diagonal"
+      ]
+    },
+    {
+      "letter": "G",
+      "id": "leaves",
+      "label": "Leaves",
+      "items": [
+        "One pointed olive leaf with central vein, diagonal upward",
+        "One broad dark green oak-like leaf with simple lobes, opposite diagonal",
+        "One narrow lance-shaped pale olive leaf, near upright",
+        "One curled pointed medicinal leaf, low diagonal",
+        "One rounded slightly serrated dark leaf, tilt right",
+        "One long folded gray-green leaf, tilt left",
+        "One weathered broad silver-green leaf, three-quarter view",
+        "One small pointed sage-like leaf with short stem, diagonal",
+        "One large dark elongated leaf with visible central vein, steep diagonal",
+        "One simple curled olive-green leaf with worn edges, opposite diagonal"
+      ]
+    }
+  ]
+}
