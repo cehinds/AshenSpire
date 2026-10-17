@@ -296,12 +296,12 @@ namespace Ashen.Runtime
             }
             if (step.TryGetProperty("emit", out var emit))
             {
-                Dispatch(call, emit.GetString(), AsDict(WithValue(call, scope, step)));
+                Dispatch(call, emit.GetString(), (Dictionary<string, object>)GameState.DeepCopy(AsDict(WithValue(call, scope, step))));
                 return;
             }
             if (step.TryGetProperty("call", out var cmd))
             {
-                InvokeCommand(call, cmd.GetString(), AsDict(WithValue(call, scope, step)));
+                InvokeCommand(call, cmd.GetString(), (Dictionary<string, object>)GameState.DeepCopy(AsDict(WithValue(call, scope, step))));
                 return;
             }
             if (step.TryGetProperty("set", out var set))
@@ -313,7 +313,8 @@ namespace Ashen.Runtime
                     if (!cur.TryGetValue(key, out var next) || next is not Dictionary<string, object>) cur[key] = next = new Dictionary<string, object>();
                     cur = (Dictionary<string, object>)next;
                 }
-                cur[path[^1]] = Value(call, scope, step.GetProperty("value"));
+                // Clone so a later set never writes into the caller's params or an emitted payload (SPEC 1).
+                cur[path[^1]] = GameState.DeepCopy(Value(call, scope, step.GetProperty("value")));
                 return;
             }
             throw new InvalidOperationException($"Unknown step {step.GetRawText()}");
@@ -535,6 +536,10 @@ namespace Ashen.Runtime
         {
             if (!_build.Ops.TryGetProperty(name, out var def)) throw new InvalidOperationException($"Unknown op '{name}'");
             if (def.GetProperty("reference").GetString() != "portable") throw new InvalidOperationException($"legacy op {name} is not portable");
+            if (def.TryGetProperty("params", out var declared) && declared.ValueKind == JsonValueKind.Object)
+                foreach (var param in declared.EnumerateObject())
+                    if (param.Value.TryGetProperty("required", out var req) && req.ValueKind == JsonValueKind.True && !step.TryGetProperty(param.Name, out _))
+                        throw new InvalidOperationException($"op {name} needs '{param.Name}'");
             var s = call.State;
 
             // Optional numeric param, evaluated in the given scope.
