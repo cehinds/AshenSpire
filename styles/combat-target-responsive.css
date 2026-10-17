@@ -14,8 +14,9 @@
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters {
   position:absolute; left:var(--combat-mini-hud-left,0px); top:var(--combat-mini-hud-top,-63px);
   width:var(--combat-mini-hud-width,100%); display:flex!important; flex-direction:column; align-items:center;
-  gap:calc(5px / var(--ui-zoom,1)); pointer-events:auto; padding:0; margin:0; transform:none; translate:none;
+  gap:calc(5px / var(--ui-zoom,1)); pointer-events:none; padding:0; margin:0; transform:none; translate:none;
 }
+:root .combat[data-target-hud='true'] .target-hud-overhead-meters > .meters { pointer-events:auto; }
 :root .combat[data-target-hud='true'] .combatant.target-hud-selected > .target-hud-overhead-meters {
   display:flex!important; top:var(--combat-selected-intent-top,calc(var(--combat-mini-hud-top,-63px) + 22px / var(--ui-zoom,1)));
   left:calc(var(--combat-selected-intent-center,50%) - var(--combat-mini-hud-width,100%) / 2);
@@ -23,7 +24,10 @@
 :root .combat[data-target-hud='true'] .combatant.target-hud-selected > .target-hud-overhead-meters > .meters { display:none!important; }
 :root .combat[data-target-hud='true'] .target-hud-overhead-meters > :is(.intent,.player-action-intent) {
   position:static!important; inset:auto!important; transform:none!important; translate:none!important; zoom:1!important;
-  display:flex!important; justify-content:center; align-items:flex-end; min-width:0!important; width:100%!important;
+  /* Only the centered action row owns intent input. The full-width host
+     aligns the health bar; its empty sides must pass through to other UI. */
+  display:flex!important; justify-content:center; align-items:flex-end;
+  min-width:min(100%, calc(44px / var(--ui-zoom,1)))!important; width:max-content!important; pointer-events:auto;
   height:calc(37px / var(--ui-zoom,1))!important; min-height:calc(37px / var(--ui-zoom,1))!important; max-height:calc(37px / var(--ui-zoom,1))!important; flex:0 0 calc(37px / var(--ui-zoom,1)); margin:0!important; padding:0!important;
   background:transparent!important; border:0!important; box-shadow:none!important; color:#ffe7ab;
 }
