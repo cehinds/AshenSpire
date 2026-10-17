@@ -31,10 +31,8 @@ def cut(alpha, axis, nominal, radius, span):
     for point in range(max(1, round(nominal-radius)), min(limit-1, round(nominal+radius))+1):
         rect = (span[0], point, span[1], point+1) if axis == "y" else (point, span[0], point+1, span[1])
         value = counts(alpha.crop(rect))
-        previous = (span[0], point-1, span[1], point) if axis == "y" else (point-1, span[0], point, span[1])
-        prior = counts(alpha.crop(previous))
-        if value["above32"] == 0 and prior["above32"] == 0:
-            candidates.append((value["above0"]+prior["above0"] != 0, abs(point-nominal), point, value))
+        if value["above32"] == 0:
+            candidates.append((value["above0"] != 0, abs(point-nominal), point, value))
     if not candidates:
         raise ValueError(f"no safe {axis} gutter near {nominal:.1f}")
     _, _, point, value = min(candidates)
@@ -82,7 +80,9 @@ def load_master(root, kind, spec, anchors, absolute=False):
             raise ValueError(f"{kind}: unordered column cuts")
         for col in range(cols):
             index = row*cols+col
-            rect = (xcuts[col], top, xcuts[col+1], bottom)
+            rect = (xcuts[col], top, xcuts[col+1]+(col < cols-1), bottom+(row < rows-1))
+            # Include the safe cut line in both neighbors, so even one-pixel
+            # transparent gutters retain a transparent frame boundary. No meaningful alpha overlaps.
             cell = image.crop(rect)
             channel = cell.getchannel("A")
             bounds = channel.point(lambda v: 255 if v > THRESHOLD else 0).getbbox()
