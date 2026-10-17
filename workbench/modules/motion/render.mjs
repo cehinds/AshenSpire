@@ -52,6 +52,7 @@ function drawCombat(entry, state) {
   stage.dataset.bg = state.background;
   stage.dataset.facing = state.facing;
   stage.dataset.combatId = entry.id;
+  stage.dataset.combatReady = String(combatReady);
   if (!entry.available || !combatStage) {
     note.textContent = entry.fallback || 'This class has no registered painted sequence.';
     note.hidden = false;
