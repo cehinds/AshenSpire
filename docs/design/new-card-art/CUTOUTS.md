@@ -1,7 +1,7 @@
 # Actual PNG cutouts — selection set 07
 
 Open [cutouts.html](cutouts.html) to select, layer, rotate, resize and keep multiple
-choices. The downloadable `card-art-cutouts-v9.zip` includes the standalone
+choices. The downloadable `card-art-cutouts-v10.zip` includes the standalone
 viewer, all PNGs and the JSON. Extract the ZIP and open `cutouts.html`
 in a browser. It uses plain local scripts and needs no build step. If browser
 policy blocks local files, run `python3 -m http.server 8765` in the extracted
@@ -208,3 +208,7 @@ The composition fits the scepter inside the spectral grip. Each shape has its ow
 ## Larger scythe projections (revision 9)
 
 Y effect digits 2 and 7 now use `scaleX: 1.2` and `scaleY: 1.35` in all 20 scepter combinations. The projection anchor moves along the spectral shaft to keep the enlarged outline reaching the physical pommel. The assembly moves right to keep the full blade within the 512 × 640 art area. The original transparent PNGs are unchanged. Reset saved scythe placements to adopt these defaults. `revision-v9.json` records the change; `resize-scythes-v9.py` reapplies it after revision 8.
+
+## Smaller physical scythe scepters (revision 10)
+
+All 20 scythe compositions shrink the physical scepter from 437 to 305.9 pixels, around its pommel. The foreground attachment uses a matching `referenceParentSize` and compensating local offset so the enlarged spectral scythe remains in the same world position at the same scale. The offset moves with the scepter when rotating the assembly. Other compositions and every PNG remain unchanged. Reset saved scythe placements to adopt these defaults. `resize-scepters-v10.py` applies this after revision 9; `revision-v10.json` records the change.

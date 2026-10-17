@@ -1,4 +1,8 @@
-## Current revision: larger scythe projections
+## Current revision: smaller physical scepters for scythes
+
+Revision 10 reduces the physical scepters by 30% in both scythe color families. The enlarged spectral scythes retain their position and scale. [View the gallery](expansion-v6.html), [edit the scythe](cutouts.html?category=Y&code=Y22), or [download revision 10](card-art-cutouts-v10.zip). Reset saved scythe compositions to use this placement.
+
+## Revision 9: larger scythe projections
 
 Revision 9 makes both ethereal scythes 35% taller and 20% wider, with the full blade inside the art crop and the spectral shaft extending to the physical pommel. All 362 component PNGs and the approved Y00 sword remain unchanged. [View the gallery](expansion-v6.html), [edit the scythe](cutouts.html?category=Y&code=Y22), or [download revision 9](card-art-cutouts-v9.zip). Reset saved scythe compositions to use the enlarged placement.
 
