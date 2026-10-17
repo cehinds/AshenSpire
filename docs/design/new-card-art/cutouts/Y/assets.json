@@ -1,0 +1,882 @@
+{
+  "Y.effect.0": {
+    "id": "Y.effect.0",
+    "kind": "effect",
+    "category": "Y",
+    "digit": 0,
+    "name": "Sword \u00b7 blue ethereal extension",
+    "src": "cutouts/Y/effects/0.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      40,
+      480,
+      472
+    ],
+    "sha256": "37d189a8cc93f099d22d9be6fcb1476235a231e1c895602ae4eff979ecf705fa",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "attack",
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/V-reference.png",
+      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
+      "sourceFile": "exec-f92d53e7-f5a9-405c-ac05-0d7fab41da3e.png",
+      "sourceSha256": "8c0641dfb5acdb04a9ff18228a620bf9cebd8249e511fb3b9f7ff2e1830530a3",
+      "sourceCell": {
+        "x": 0,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 0,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "V.object.0"
+    },
+    "anchors": {
+      "emissionRoot": {
+        "x": 0.14,
+        "y": 0.86
+      }
+    },
+    "magicRole": "ethereal-melee",
+    "weaponShape": "sword"
+  },
+  "Y.effect.1": {
+    "id": "Y.effect.1",
+    "kind": "effect",
+    "category": "Y",
+    "digit": 1,
+    "name": "Hammer \u00b7 blue ethereal extension",
+    "src": "cutouts/Y/effects/1.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      35,
+      480,
+      476
+    ],
+    "sha256": "b175d9990d4baa13594ab6f3295e2a535ab96d933efdec95e19e9b60c236ab4f",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "smash",
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/V-reference.png",
+      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
+      "sourceFile": "exec-f92d53e7-f5a9-405c-ac05-0d7fab41da3e.png",
+      "sourceSha256": "8c0641dfb5acdb04a9ff18228a620bf9cebd8249e511fb3b9f7ff2e1830530a3",
+      "sourceCell": {
+        "x": 397,
+        "y": 0,
+        "width": 396,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 397,
+        "y": 0,
+        "width": 396,
+        "height": 396
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "V.object.1"
+    },
+    "anchors": {
+      "emissionRoot": {
+        "x": 0.14,
+        "y": 0.86
+      }
+    },
+    "magicRole": "ethereal-melee",
+    "weaponShape": "hammer"
+  },
+  "Y.effect.2": {
+    "id": "Y.effect.2",
+    "kind": "effect",
+    "category": "Y",
+    "digit": 2,
+    "name": "Scythe \u00b7 blue ethereal extension",
+    "src": "cutouts/Y/effects/2.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      37,
+      480,
+      474
+    ],
+    "sha256": "d9bc98871e6c188d3f11b0f5239e3e3d431e6b5a2e32251f59eeb9d18ec4723d",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep",
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/V-reference.png",
+      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
+      "sourceFile": "exec-f92d53e7-f5a9-405c-ac05-0d7fab41da3e.png",
+      "sourceSha256": "8c0641dfb5acdb04a9ff18228a620bf9cebd8249e511fb3b9f7ff2e1830530a3",
+      "sourceCell": {
+        "x": 793,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 793,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "V.object.2"
+    },
+    "anchors": {
+      "emissionRoot": {
+        "x": 0.14,
+        "y": 0.86
+      }
+    },
+    "magicRole": "ethereal-melee",
+    "weaponShape": "scythe"
+  },
+  "Y.effect.3": {
+    "id": "Y.effect.3",
+    "kind": "effect",
+    "category": "Y",
+    "digit": 3,
+    "name": "Scimitar \u00b7 blue ethereal extension",
+    "src": "cutouts/Y/effects/3.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      37,
+      480,
+      475
+    ],
+    "sha256": "82f443a70ae17b7b08f0e75fb23fa656ce81132442c2f761ec73839f30038ec3",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep",
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/V-reference.png",
+      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
+      "sourceFile": "exec-f92d53e7-f5a9-405c-ac05-0d7fab41da3e.png",
+      "sourceSha256": "8c0641dfb5acdb04a9ff18228a620bf9cebd8249e511fb3b9f7ff2e1830530a3",
+      "sourceCell": {
+        "x": 1190,
+        "y": 0,
+        "width": 396,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 1190,
+        "y": 0,
+        "width": 396,
+        "height": 396
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "V.object.3"
+    },
+    "anchors": {
+      "emissionRoot": {
+        "x": 0.14,
+        "y": 0.86
+      }
+    },
+    "magicRole": "ethereal-melee",
+    "weaponShape": "scimitar"
+  },
+  "Y.effect.4": {
+    "id": "Y.effect.4",
+    "kind": "effect",
+    "category": "Y",
+    "digit": 4,
+    "name": "Shield ward \u00b7 blue ethereal extension",
+    "src": "cutouts/Y/effects/4.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      37,
+      480,
+      474
+    ],
+    "sha256": "099b43fd9781d06368379defa3997ca2e5dddada09c13dde3764659316bddc42",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "defend",
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/V-reference.png",
+      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
+      "sourceFile": "exec-f92d53e7-f5a9-405c-ac05-0d7fab41da3e.png",
+      "sourceSha256": "8c0641dfb5acdb04a9ff18228a620bf9cebd8249e511fb3b9f7ff2e1830530a3",
+      "sourceCell": {
+        "x": 1586,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 1586,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "V.object.4"
+    },
+    "anchors": {
+      "emissionRoot": {
+        "x": 0.14,
+        "y": 0.86
+      }
+    },
+    "magicRole": "ethereal-melee",
+    "weaponShape": "shield ward"
+  },
+  "Y.effect.5": {
+    "id": "Y.effect.5",
+    "kind": "effect",
+    "category": "Y",
+    "digit": 5,
+    "name": "Sword \u00b7 violet ethereal extension",
+    "src": "cutouts/Y/effects/5.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      34,
+      32,
+      478,
+      480
+    ],
+    "sha256": "274a616add4756c9fe84d5177fb842ae63c94a8a3d631e67f73098fb41534ee0",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "attack",
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/V-reference.png",
+      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
+      "sourceFile": "exec-f92d53e7-f5a9-405c-ac05-0d7fab41da3e.png",
+      "sourceSha256": "8c0641dfb5acdb04a9ff18228a620bf9cebd8249e511fb3b9f7ff2e1830530a3",
+      "sourceCell": {
+        "x": 0,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 0,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "V.object.5"
+    },
+    "anchors": {
+      "emissionRoot": {
+        "x": 0.14,
+        "y": 0.86
+      }
+    },
+    "magicRole": "ethereal-melee",
+    "weaponShape": "sword"
+  },
+  "Y.effect.6": {
+    "id": "Y.effect.6",
+    "kind": "effect",
+    "category": "Y",
+    "digit": 6,
+    "name": "Hammer \u00b7 violet ethereal extension",
+    "src": "cutouts/Y/effects/6.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      35,
+      32,
+      476,
+      480
+    ],
+    "sha256": "40a894580c2c18c2f901e5a358678b4642af4207fb5cf1ff3075ea3677240e35",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "smash",
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/V-reference.png",
+      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
+      "sourceFile": "exec-f92d53e7-f5a9-405c-ac05-0d7fab41da3e.png",
+      "sourceSha256": "8c0641dfb5acdb04a9ff18228a620bf9cebd8249e511fb3b9f7ff2e1830530a3",
+      "sourceCell": {
+        "x": 397,
+        "y": 396,
+        "width": 396,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 397,
+        "y": 396,
+        "width": 396,
+        "height": 397
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "V.object.6"
+    },
+    "anchors": {
+      "emissionRoot": {
+        "x": 0.14,
+        "y": 0.86
+      }
+    },
+    "magicRole": "ethereal-melee",
+    "weaponShape": "hammer"
+  },
+  "Y.effect.7": {
+    "id": "Y.effect.7",
+    "kind": "effect",
+    "category": "Y",
+    "digit": 7,
+    "name": "Scythe \u00b7 violet ethereal extension",
+    "src": "cutouts/Y/effects/7.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      32,
+      480,
+      480
+    ],
+    "sha256": "e969f44aa1645d2757e7bae1ee05d862cb8f5f47a6786a5a758fa8e43ec68923",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep",
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/V-reference.png",
+      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
+      "sourceFile": "exec-f92d53e7-f5a9-405c-ac05-0d7fab41da3e.png",
+      "sourceSha256": "8c0641dfb5acdb04a9ff18228a620bf9cebd8249e511fb3b9f7ff2e1830530a3",
+      "sourceCell": {
+        "x": 793,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 793,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "V.object.7"
+    },
+    "anchors": {
+      "emissionRoot": {
+        "x": 0.14,
+        "y": 0.86
+      }
+    },
+    "magicRole": "ethereal-melee",
+    "weaponShape": "scythe"
+  },
+  "Y.effect.8": {
+    "id": "Y.effect.8",
+    "kind": "effect",
+    "category": "Y",
+    "digit": 8,
+    "name": "Scimitar \u00b7 violet ethereal extension",
+    "src": "cutouts/Y/effects/8.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      43,
+      480,
+      469
+    ],
+    "sha256": "d4bf745a01eae3c2cec9c16d540dae763b5356c40ce19af0f150a4108ebbc2b5",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep",
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/V-reference.png",
+      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
+      "sourceFile": "exec-f92d53e7-f5a9-405c-ac05-0d7fab41da3e.png",
+      "sourceSha256": "8c0641dfb5acdb04a9ff18228a620bf9cebd8249e511fb3b9f7ff2e1830530a3",
+      "sourceCell": {
+        "x": 1190,
+        "y": 396,
+        "width": 396,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 1190,
+        "y": 396,
+        "width": 396,
+        "height": 397
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "V.object.8"
+    },
+    "anchors": {
+      "emissionRoot": {
+        "x": 0.14,
+        "y": 0.86
+      }
+    },
+    "magicRole": "ethereal-melee",
+    "weaponShape": "scimitar"
+  },
+  "Y.effect.9": {
+    "id": "Y.effect.9",
+    "kind": "effect",
+    "category": "Y",
+    "digit": 9,
+    "name": "Shield ward \u00b7 violet ethereal extension",
+    "src": "cutouts/Y/effects/9.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      36,
+      480,
+      475
+    ],
+    "sha256": "d04cd6ecd15f0c852f079777045f0e39c3e0254588a9a35c17ac00097782f799",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "defend",
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/V-reference.png",
+      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
+      "sourceFile": "exec-f92d53e7-f5a9-405c-ac05-0d7fab41da3e.png",
+      "sourceSha256": "8c0641dfb5acdb04a9ff18228a620bf9cebd8249e511fb3b9f7ff2e1830530a3",
+      "sourceCell": {
+        "x": 1586,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 1586,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "V.object.9"
+    },
+    "anchors": {
+      "emissionRoot": {
+        "x": 0.14,
+        "y": 0.86
+      }
+    },
+    "magicRole": "ethereal-melee",
+    "weaponShape": "shield ward"
+  }
+}
