@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:66a18ebc5bf1654c1c9224b5ef777f487b49f884c98572e80b480e0846a73cc8",
+      "hash": "sha256:e0c6c2e35b63b591dea2495460e102b91db5b916ebe68e3a93cd15070e9d66a4",
       "formatVersion": 1,
       "core": "ashen.core@1.0.0",
       "artifacts": [
@@ -490,15 +490,15 @@
           "id": "ashen.source-runtime",
           "version": "1.0.0",
           "path": "src/** (excluding generated gameProfiles/changelog)",
-          "hash": "sha256:9449f200ae2cb7040ec80200aecdecd3214f1c8c1ba11ae79b03afa9e24b807a"
+          "hash": "sha256:d607b99396a4715dad94a5f80a3169946b4f803f4210631cbbc5a16a6f71a6da"
         }
       ],
       "runtimeABI": "ashen.runtime@1",
       "numericPolicy": "ashen.adapter-numbers@1",
-      "runtimeHash": "sha256:6aa4f51072c794bba5689f3adecf1a09e7ace44eee5baa647a8b39026f657023"
+      "runtimeHash": "sha256:ee649f54cfdf3a57ff7961a98f69843bdf0db4259c32be002879e8c4bc3a1b0e"
     },
     "core": {
-      "hash": "sha256:66a18ebc5bf1654c1c9224b5ef777f487b49f884c98572e80b480e0846a73cc8",
+      "hash": "sha256:e0c6c2e35b63b591dea2495460e102b91db5b916ebe68e3a93cd15070e9d66a4",
       "formatVersion": 1,
       "core": "ashen.core@1.0.0",
       "artifacts": [
@@ -986,15 +986,15 @@
           "id": "ashen.source-runtime",
           "version": "1.0.0",
           "path": "src/** (excluding generated gameProfiles/changelog)",
-          "hash": "sha256:9449f200ae2cb7040ec80200aecdecd3214f1c8c1ba11ae79b03afa9e24b807a"
+          "hash": "sha256:d607b99396a4715dad94a5f80a3169946b4f803f4210631cbbc5a16a6f71a6da"
         }
       ],
       "runtimeABI": "ashen.runtime@1",
       "numericPolicy": "ashen.adapter-numbers@1",
-      "runtimeHash": "sha256:6aa4f51072c794bba5689f3adecf1a09e7ace44eee5baa647a8b39026f657023"
+      "runtimeHash": "sha256:ee649f54cfdf3a57ff7961a98f69843bdf0db4259c32be002879e8c4bc3a1b0e"
     },
     "current": {
-      "hash": "sha256:ad7c19c8b575e7b446723505a17360b862e67074d2e8eb2bc0cfd77ab4e3d9d9",
+      "hash": "sha256:5943b01c4911d12b01ff9c7bbf7eb9aba4b89c23cf4e472d2afdf8403f3e7872",
       "formatVersion": 1,
       "core": "ashen.current@1.0.0",
       "artifacts": [
@@ -1572,12 +1572,12 @@
           "id": "ashen.source-runtime",
           "version": "1.0.0",
           "path": "src/** (excluding generated gameProfiles/changelog)",
-          "hash": "sha256:9449f200ae2cb7040ec80200aecdecd3214f1c8c1ba11ae79b03afa9e24b807a"
+          "hash": "sha256:d607b99396a4715dad94a5f80a3169946b4f803f4210631cbbc5a16a6f71a6da"
         }
       ],
       "runtimeABI": "ashen.runtime@1",
       "numericPolicy": "ashen.adapter-numbers@1",
-      "runtimeHash": "sha256:6aa4f51072c794bba5689f3adecf1a09e7ace44eee5baa647a8b39026f657023"
+      "runtimeHash": "sha256:ee649f54cfdf3a57ff7961a98f69843bdf0db4259c32be002879e8c4bc3a1b0e"
     }
   }
 }
