@@ -25,6 +25,7 @@ it lands, combat still plays the legacy `moves` from `src/content/enemies/act1-3
 | `healRules` | Tag-matched heal shapes. `heal` → 3 SP + 2 MP, 10% max HP. `heal` + `exhaust` → 1 SP + 1 MP, 10%, exhausts. Most specific match wins; an authored cost wins over a shape unless the card says `costSource: "healRules"`. Add shapes by tag set. |
 | `stagger` | Break penalty on an enemy: −1 SP next turn, Vulnerable 1 (+25% damage taken). |
 | `ai` | Planner weights (card `aiWeight`, low-HP defend/heal bias, smash into block). |
+| `visibility` | `shown` (default: hp, poise, intent, defense, statuses) and `revealedBy` (field → tags that reveal it, e.g. sp/mp → insight, bestiary). Read with `enemyVisibleFields(settings, viewerTags)`. |
 | `rounding` | `down` (default), `nearest`, `up` for derived pools. |
 
 Override any of them from `game.json`:

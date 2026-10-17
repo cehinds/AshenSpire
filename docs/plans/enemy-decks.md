@@ -122,8 +122,11 @@ The tier model below was superseded by Core-scale pools: tier `pools` (HP/SP/MP 
 
 ## UI
 
-- Enemy mini-HUD: SP and MP pips; Inspect shows deck/draw/discard counts, gear, relics.
-- Intent shows each planned card with its cost.
+Owner 2026-10-17: enemies play cards and carry gear and relics in Core, but the player sees only
+**HP, Poise, intent, defense and status effects**. SP, MP, card costs, deck, hand, gear, relics and
+attributes are hidden unless a tag the player holds reveals them (`visibility.revealedBy`, e.g.
+`insight`, `bestiary`), supplied by a future module. Intents show what the enemy will do, not
+what it costs. `enemyVisibleFields(settings, viewerTags)` in the kernel is the one check the UI reads.
 
 ## Phases (one PR each, owner review before dev)
 

@@ -121,3 +121,13 @@ test('game.json can override module settings, and the validator follows the over
   // Existing cheap heal cards (1 SP / 1 MP) no longer match the overridden shape.
   assert.throws(resolveWith(() => {}, override), /cost must match heal shape 'cheap'/);
 });
+
+test('enemy SP/MP and other internals stay hidden unless a revealing tag is held', async () => {
+  const { enemyVisibleFields } = await import('../engine/kernel/gameConfig.js');
+  const bare = enemyVisibleFields(settings, []);
+  assert.deepEqual([...bare].sort(), ['defense', 'hp', 'intent', 'poise', 'statuses']);
+  for (const hidden of ['sp', 'mp', 'cardCosts', 'deck', 'gear', 'relics']) assert.ok(!bare.has(hidden), hidden);
+  const insight = enemyVisibleFields(settings, ['insight']);
+  assert.ok(insight.has('sp') && insight.has('mp') && insight.has('cardCosts'));
+  assert.ok(enemyVisibleFields(settings, ['bestiary']).has('gear'));
+});

@@ -445,6 +445,147 @@
         "hp"
       ],
       "additionalProperties": false
+    },
+    "visibility": {
+      "type": "object",
+      "properties": {
+        "shown": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "hp",
+              "poise",
+              "intent",
+              "defense",
+              "statuses",
+              "sp",
+              "mp",
+              "cardCosts",
+              "deck",
+              "hand",
+              "gear",
+              "relics",
+              "attributes"
+            ]
+          }
+        },
+        "revealedBy": {
+          "type": "object",
+          "properties": {
+            "hp": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "poise": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "intent": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "defense": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "statuses": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "sp": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "mp": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "cardCosts": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "deck": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "hand": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "gear": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "relics": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "attributes": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "shown",
+        "revealedBy"
+      ],
+      "additionalProperties": false
     }
   },
   "required": [
@@ -461,7 +602,8 @@
     "statRules",
     "levelFrom",
     "equipment",
-    "penaltyFloor"
+    "penaltyFloor",
+    "visibility"
   ],
   "additionalProperties": false
 }

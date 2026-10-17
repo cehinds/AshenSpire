@@ -279,6 +279,13 @@ export function enemyPools(row, settings, level = enemyLevel(row, settings), bon
   }
   return pools;
 }
+// What a viewer may see of an enemy: the always-shown fields plus any field one of the viewer's
+// tags reveals (owner 2026-10-17: SP/MP etc. stay hidden unless insight, a bestiary, … reveals them).
+export function enemyVisibleFields(settings, viewerTags = []) {
+  const shown = new Set(settings.visibility.shown);
+  for (const [field, tags] of Object.entries(settings.visibility.revealedBy)) if (tags.some(tag => viewerTags.includes(tag))) shown.add(field);
+  return shown;
+}
 function verifyEnemyContent(content, settings, gearSettings = null) {
   if (!settings) return;
   const base = '$/content/enemies';

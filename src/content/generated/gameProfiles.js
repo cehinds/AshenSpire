@@ -1136,6 +1136,43 @@ export const gameProfileCatalog = {
           "sp": 1,
           "mp": 0,
           "hp": 1
+        },
+        "visibility": {
+          "shown": [
+            "hp",
+            "poise",
+            "intent",
+            "defense",
+            "statuses"
+          ],
+          "revealedBy": {
+            "sp": [
+              "insight",
+              "bestiary"
+            ],
+            "mp": [
+              "insight",
+              "bestiary"
+            ],
+            "cardCosts": [
+              "insight"
+            ],
+            "deck": [
+              "bestiary"
+            ],
+            "hand": [
+              "insight"
+            ],
+            "gear": [
+              "bestiary"
+            ],
+            "relics": [
+              "bestiary"
+            ],
+            "attributes": [
+              "bestiary"
+            ]
+          }
         }
       },
       "schema": {
@@ -1585,6 +1622,147 @@ export const gameProfileCatalog = {
               "hp"
             ],
             "additionalProperties": false
+          },
+          "visibility": {
+            "type": "object",
+            "properties": {
+              "shown": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "enum": [
+                    "hp",
+                    "poise",
+                    "intent",
+                    "defense",
+                    "statuses",
+                    "sp",
+                    "mp",
+                    "cardCosts",
+                    "deck",
+                    "hand",
+                    "gear",
+                    "relics",
+                    "attributes"
+                  ]
+                }
+              },
+              "revealedBy": {
+                "type": "object",
+                "properties": {
+                  "hp": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "poise": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "intent": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "defense": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "statuses": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "sp": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "mp": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "cardCosts": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "deck": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "hand": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "gear": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "relics": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "attributes": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "shown",
+              "revealedBy"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -1601,7 +1779,8 @@ export const gameProfileCatalog = {
           "statRules",
           "levelFrom",
           "equipment",
-          "penaltyFloor"
+          "penaltyFloor",
+          "visibility"
         ],
         "additionalProperties": false
       },
@@ -1616,13 +1795,13 @@ export const gameProfileCatalog = {
           "path": "engine/modules/enemies/defaults.json",
           "id": "enemies",
           "version": "1.0.0",
-          "hash": "sha256:d4d8b90f50d8f418b0a895e226139098e8beb4d9fa227bff75fa935b0c2ab07a"
+          "hash": "sha256:be6cad15dab2ed08203f0cdc8bfea5b759f701b8e7cfb9d8bcad345a0dc888b9"
         },
         {
           "path": "engine/modules/enemies/settings.schema.json",
           "id": "enemies",
           "version": "1.0.0",
-          "hash": "sha256:5d8c4bc06570fac5c69ccbfc5e0639cceb23c45684c6680797fb356b730218fb"
+          "hash": "sha256:d358cdbcb67030ac8a4443b4a03c59f249dfb6b90f1cdad8f3a498f31c097246"
         }
       ]
     },
@@ -23718,7 +23897,7 @@ export const gameProfileCatalog = {
       "path": "engine/kernel/gameConfig.js",
       "id": "ashen.runtime",
       "version": "1.0.0",
-      "hash": "sha256:7a9849412e12d6f49f50aacf0c14c77da9a5792d3628f3da2ecc5001dd213236"
+      "hash": "sha256:4664d688084b67c2d48e75b2db021b382c27fbbcb7086055ccfc5c73efe492b8"
     },
     {
       "path": "engine/contracts/game-profile.json",
@@ -28751,7 +28930,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:3f9a67884765cb5f920ef530e66ccdcc2d826819e6f981359b771d44a5b5bf66"
     }
   ],
-  "runtimeHash": "sha256:0d7e81faf2b1ae6715c31d7bfd2dd71edd259698186017e06ef28179dcfa523a"
+  "runtimeHash": "sha256:ebfa8a4e6d131ed4d198190fd0e7819f3cb939ac293ca96cfdb4f1b9f3c37147"
 };
 export const gameProfileAuthors = {
   "default": {
