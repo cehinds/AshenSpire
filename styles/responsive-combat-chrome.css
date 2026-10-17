@@ -1,0 +1,59 @@
+/* Shared combat paint contract. Actor-local art stays below root readouts. */
+:root .combat[data-layout='formation'] {
+  --combat-layer-scenery: 0;
+  --combat-layer-shadows: 100;
+  --combat-layer-enemy: 200;
+  --combat-layer-player: 200;
+  --combat-layer-fade: 150;
+  --combat-layer-selection: 800;
+  --combat-layer-cards: 900;
+  --combat-layer-hud: 700;
+  --combat-layer-banner: 1000;
+}
+:root .combat[data-layout='formation'] .fx-layer { z-index: 400; }
+:root .combat[data-layout='formation'] :is(.combat-floater-layer,.target-hud-layer,.combat-info-portals) { z-index: 800; }
+:root .combat[data-layout='formation'] .combat-tools,
+:root .combat[data-layout='formation'] .combat-tools[data-tools-placement='corners'] { z-index: 700 !important; }
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] { overflow: visible; touch-action: pan-y; }
+:root .combat[data-layout='formation'] .hand-overlay > :is(.hand-prev,.hand-next) { display: none; }
+/* The footer is the only lower backing; its fade rises gently into the field. */
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] > .hand-area { background: transparent; }
+:root .combat[data-layout='formation']:has(> .environment-backdrop)::before { background: none; }
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] > .hand-area::before {
+  content: ''; position: absolute; inset: auto 0 0; height: calc(var(--w4-band-footer) * 1.65);
+  background: linear-gradient(to bottom, transparent, #211d16 65%); pointer-events: none; z-index: 0;
+}
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud > .hud-top {
+  display: grid; grid-template-columns: minmax(0,1fr) auto;
+  grid-template-areas: 'meters actions' 'belt purse';
+  gap: calc(2px / var(--ui-zoom,1)) calc(8px / var(--ui-zoom,1));
+}
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .hud-vitals-panel {
+  max-width: none; width: 100%; padding: 0; border: 0; background: transparent;
+}
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .hud-bottom { grid-area: belt; margin: 0; }
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .hud-info-row.hud-cinders-strip {
+  grid-area: purse; position: static; transform: none; max-width: none; width: auto;
+  justify-content: center; padding: 0; color: white;
+  text-shadow: -1px -1px #000,1px -1px #000,-1px 1px #000,1px 1px #000;
+}
+:root .combat[data-layout='formation'] > .combat-hud .resbars,
+:root .combat[data-layout='formation'] > .combat-hud .resline { width: 100%; }
+:root .combat[data-layout='formation'] > .combat-hud .resunit[data-res='hp'] {
+  display: flex; flex-direction: row; align-items: center; width: 100%; gap: .5em;
+}
+:root .combat[data-layout='formation'] > .combat-hud .resunit[data-res='hp'] .m-plate {
+  display: flex; position: static; flex: 0 0 auto; width: auto; gap: .3em;
+}
+:root .combat[data-layout='formation'] > .combat-hud .resunit[data-res='hp'] .m-label { font-size: 0; }
+:root .combat[data-layout='formation'] > .combat-hud .resunit[data-res='hp'] .m-label .engraved-icon { font-size: calc(20px / var(--ui-zoom,1)); }
+:root .combat[data-layout='formation'] > .combat-hud .resunit[data-res='hp'] .m-well { flex: 1; min-width: 0; width: auto; }
+:root .combat[data-layout='formation'] .turn-ribbon {
+  position: absolute; top: calc(7px / var(--ui-zoom,1)); left: 50%; translate: -50% 0;
+  font-size: calc(12px / var(--ui-zoom,1)); min-height: 0; padding-block: 0;
+}
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'][data-desktop-footer='true'] > .hand-area::before {
+  inset: auto 0 0; height: calc(var(--w4-band-footer) * 1.65);
+  background: linear-gradient(to bottom, transparent, #211d16 65%);
+}
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] .turn-ribbon { font-size: calc(12px / var(--ui-zoom,1)); }

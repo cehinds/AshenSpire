@@ -121,6 +121,41 @@ export function handLayout({ width, height, count, rem = 16, zoom = 1, compact =
   });
 }
 
+// Each form factor authors its own fan; all distances scale with the card.
+export const RESPONSIVE_HAND = Object.freeze({
+  mobile: { spread: .58, angle: 4, arc: .045, dock: .96 },
+  tablet: { spread: .64, angle: 4, arc: .045, dock: .96 },
+  desktop: { spread: .68, angle: 4, arc: .045, dock: .96 },
+  widescreen: { spread: .68, angle: 4, arc: .045, dock: .96 },
+});
+
+export function responsiveHandLayout(input, sizePlan = handLayout(input)) {
+  const style = RESPONSIVE_HAND[input.formFactor] || RESPONSIVE_HAND.mobile;
+  const { width, height, count, zoom = 1 } = input;
+  const { cardWidth, cardHeight } = sizePlan;
+  const angle = style.angle * Math.PI / 180;
+  const edge = (Math.cos(angle) * cardWidth + Math.sin(angle) * cardHeight - cardWidth) / 2;
+  const side = Math.max(2 / zoom, edge + 2 / zoom);
+  // Five overlap; fewer spread further and larger hands compress to fit.
+  const preferred = cardWidth * Math.min(.94, style.spread * Math.sqrt(5 / Math.max(1, count)));
+  const step = count > 1 ? Math.max(0, Math.min(preferred, (width - cardWidth - side * 2) / (count - 1))) : 0;
+  const span = count ? cardWidth + (count - 1) * step : 0;
+  const start = (width - span) / 2, middle = (count - 1) / 2;
+  const arc = cardHeight * style.arc;
+  const cards = Array.from({ length: count }, (_, index) => {
+    const t = count > 1 ? (index - middle) / middle : 0;
+    return { x: start + index * step, y: t * t * arc, angle: t * style.angle };
+  });
+  const extra = (Math.sin(angle) * cardWidth + Math.cos(angle) * cardHeight - cardHeight) / 2;
+  const top = Math.max(0, (height - cardHeight - arc - extra - sizePlan.controlsReserve - 2 / zoom) * style.dock);
+  const restTop = cards.length ? Math.min(...cards.map(card => {
+    const radians = card.angle * Math.PI / 180;
+    return top + card.y + cardHeight / 2 - (Math.abs(Math.sin(radians)) * cardWidth + Math.cos(radians) * cardHeight) / 2;
+  })) : 0;
+  return { ...sizePlan, cards, step, span, start, top, capacity: Math.max(1, count),
+    restLeft: start - edge, restTop, clearanceTop: Math.min(restTop, top - sizePlan.lift) };
+}
+
 export function handGeometryKey({ width, height, zoom, fontSize, left }) {
   return [width, height, zoom, fontSize, left].join(':');
 }
