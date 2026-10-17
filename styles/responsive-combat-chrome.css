@@ -74,3 +74,6 @@
 :root .combat[data-layout='formation'] .formation-grid { z-index: 100; }
 :root[data-form-factor='mobile'] .combat[data-layout='formation'] > .hand-area::before { height: calc(var(--w4-band-footer) * 1.15); }
 :root[data-form-factor='tablet'] .combat[data-layout='formation'] > .hand-area::before { height: calc(var(--w4-band-footer) * 1.2); }
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .hud-bottom {
+  grid-area: meters; align-self: start; margin-top: calc(24px / var(--ui-zoom,1));
+}

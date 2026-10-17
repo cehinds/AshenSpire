@@ -11,6 +11,7 @@ for (const [formFactor, width, height] of [['mobile',390,250],['tablet',820,300]
       assert.ok(plan.cards[Math.floor(count/2)].y < plan.cards[0].y);
       assert.ok(plan.step < plan.cardWidth, 'cards overlap');
       assert.equal(plan.capacity, count, 'all cards remain in the same viewport');
+      assert.ok(plan.top + plan.cardHeight + plan.cards[0].y < height - 30, 'tool row stays below resting fan');
       return plan;
     });
     assert.ok(plans[0].step > plans[1].step);
