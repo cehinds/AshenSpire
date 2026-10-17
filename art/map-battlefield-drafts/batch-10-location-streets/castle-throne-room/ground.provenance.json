@@ -1,0 +1,50 @@
+{
+  "generator": "OpenAI image_gen",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Tactile hand-painted realistic medieval fantasy, weathered matte stone/timber/rock and subdued natural colors, broad controlled detail, subtle material edges, no heavy cartoon outline, glossy toy rendering or photographic sparkle. Low ground-level player-height near-frontal camera with mild three-quarter perspective, NEVER elevated/isometric map-icon camera. This is an INSIDE-THE-LOCATION layered combat scene. Architecture/rock/trees are nearby framing elements at sides and the middle stays clear for characters. No people, text, lettering, numbers, logos or frames. Keep weather particles separate.\n\nROLE IS FLOOR TEXTURE LAYER ONLY. Wide 3072x1728 requested. Transparent background. Upper 55 percent is entirely empty transparent alpha. Lower 45 percent contains ONLY a flat continuous plane of matte worn gray stone flags with a faded muted burgundy cloth runner lying flat down its center. Shallow ground-level perspective. Floor extends opaquely to left, right and bottom edges, straight horizontal far edge at 55 percent height. No room. NO throne, furniture, walls, columns, statues, stairs, lamps, torches, braziers, architecture, props, background or upright object of any kind. Soft neutral interior light. Broad subdued detail, no text, no people.",
+  "sourceOutputPath": "/workspace/generated_images/exec-025cd0ed-5d3a-40cc-9fae-47e43d41affe.png",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-ground",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "sha256": "fb095100e607acee3d3044a62afb18f8e7bde2188154f31e5b5baee79fc892cf",
+  "sourceSha256": "fb095100e607acee3d3044a62afb18f8e7bde2188154f31e5b5baee79fc892cf",
+  "processing": "Byte-identical original imagegen output; no pixel editing, resizing, trimming or upscaling.",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "visibleBoundsAt32": [
+      0,
+      528,
+      1672,
+      941
+    ],
+    "alphaQA": {
+      "transparentFraction": 0.5538620728228648,
+      "borderPixelsAt32": 2494,
+      "normalizedMarginsAt32": [
+        0.0,
+        0.5611052072263549,
+        0.0,
+        0.0
+      ]
+    },
+    "medianCenterHorizonY": 529,
+    "bottomAlphaRange": [
+      248,
+      254
+    ]
+  }
+}

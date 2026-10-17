@@ -1,0 +1,72 @@
+{
+  "items": [
+    {
+      "id": "city-street/backdrop",
+      "verdict": "approved",
+      "reason": "Close stone and timber facades frame a clear street toward an arch; convincingly inside town. Matte weathered materials, modest banner motifs but no lettering. Some fine paving detail.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "8e7d3bfb63f304f31ac0e3d9bcb4d5a7f96454b91cf6c14a39d36026b326ccfd",
+      "actualDimensions": {
+        "width": 1672,
+        "height": 941
+      },
+      "solidAlphaBounds": [
+        0,
+        0,
+        1672,
+        941
+      ]
+    },
+    {
+      "id": "city-street/ground",
+      "verdict": "approved",
+      "reason": "Ground-only replacement: worn gray cobblestones, no architecture or objects. Transparent upper field is about61.7%, deeper than52\u201355% requested; adjust placement in composition. Quiet broad floor extends to all lower edges.",
+      "profileId": "battlefield-ground",
+      "sha256": "df388cac1b7afe8dc3f0c9822cf4751adfd4c52ab7900884795b2449b5cbbcf7",
+      "actualDimensions": {
+        "width": 1672,
+        "height": 940
+      },
+      "solidAlphaBounds": [
+        0,
+        580,
+        1672,
+        940
+      ]
+    },
+    {
+      "id": "city-street/prop-left",
+      "verdict": "approved",
+      "reason": "Complete tall storefront, blank sign, roof/chimney and doorstep visible. Very narrow top/bottom alpha margins; full solid silhouette retained. Mild low-angle three-quarter view. Small warm lantern is localized.",
+      "profileId": "battlefield-prop",
+      "sha256": "a9aaacbfe9095b70829f474d708b0e499cac037f7d8c07411eb1c1ce70a9f8f6",
+      "actualDimensions": {
+        "width": 1254,
+        "height": 1254
+      },
+      "solidAlphaBounds": [
+        81,
+        11,
+        1179,
+        1238
+      ]
+    },
+    {
+      "id": "city-street/prop-right",
+      "verdict": "approved",
+      "reason": "Complete timber balcony townhouse with closed shutters, stone base and roof. Narrow margins under15%; source silhouette complete. Low player-height view faces gently left.",
+      "profileId": "battlefield-prop",
+      "sha256": "ef49759ac97c2c07108d541eac744c2f306b6329554faca940593cd675a55559",
+      "actualDimensions": {
+        "width": 1254,
+        "height": 1254
+      },
+      "solidAlphaBounds": [
+        102,
+        35,
+        1182,
+        1215
+      ]
+    }
+  ]
+}

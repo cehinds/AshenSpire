@@ -1,0 +1,11 @@
+{
+  "items": [
+    {
+      "id": "boss-arena-exterior/backdrop",
+      "verdict": "approved",
+      "reason": "Vast empty ruined open-air arena, surrounding tall walls and sealed far gate; no fighters. Restrained circular floor pattern remains visible.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "3b9fd114d1a3ccbc10cc814c848f7a37dcd48d12c91cf6cd944da7f789caa884"
+    }
+  ]
+}

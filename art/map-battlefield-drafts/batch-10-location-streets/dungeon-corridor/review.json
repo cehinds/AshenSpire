@@ -1,0 +1,96 @@
+{
+  "items": [
+    {
+      "id": "dungeon-corridor/backdrop",
+      "verdict": "approved",
+      "reason": "Massive close masonry bays and enclosed ribbed ceiling surround a clear route to the iron door. Cool stone and localized torch amber; some fine floor specular highlights remain.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "7af33df551cb6ce3530342bcbb8296eed4bbfa13b320ff913783d462d88a7e48",
+      "actualDimensions": {
+        "width": 1672,
+        "height": 941
+      },
+      "alphaBounds": [
+        0,
+        0,
+        1672,
+        941
+      ],
+      "solidAlphaBounds": [
+        0,
+        0,
+        1672,
+        941
+      ]
+    },
+    {
+      "id": "dungeon-corridor/ground",
+      "verdict": "approved",
+      "reason": "Regenerated floor-only layer: broad quiet matte stone/gravel surface, nearly horizontal far edge, empty transparent upper field across full width, opaque floor to bottom/side edges. No walls, columns, lamps, fire, furniture or scene props.",
+      "profileId": "battlefield-ground",
+      "sha256": "cab211482404bc0b09b6978bbd310e0924457be935b875ad7d7eea30bcca978a",
+      "actualDimensions": {
+        "width": 1672,
+        "height": 941
+      },
+      "alphaBounds": [
+        0,
+        19,
+        1672,
+        941
+      ],
+      "solidAlphaBounds": [
+        0,
+        497,
+        1672,
+        941
+      ]
+    },
+    {
+      "id": "dungeon-corridor/prop-left",
+      "verdict": "approved",
+      "reason": "Complete heavy masonry pier and inward torch bracket; no slab or source clipping. Vertical alpha margins are narrow; faint alpha dust remains.",
+      "profileId": "battlefield-prop",
+      "sha256": "f7e5455636e3dfef8015f1f51a729ed73efc1f0c2ab9f8e8c02bdb011334682f",
+      "actualDimensions": {
+        "width": 1254,
+        "height": 1254
+      },
+      "alphaBounds": [
+        0,
+        17,
+        1218,
+        1224
+      ],
+      "solidAlphaBounds": [
+        353,
+        20,
+        935,
+        1218
+      ]
+    },
+    {
+      "id": "dungeon-corridor/prop-right",
+      "verdict": "approved",
+      "reason": "Complete barred recess pier and inward torch, textured gray stone; no ground slab or clipping. Narrow vertical margins and faint alpha dust remain.",
+      "profileId": "battlefield-prop",
+      "sha256": "442aefdae179311fbc165d2eb7ce5bf129e8d69d8aed7a02ad0d2ba92e9dcf98",
+      "actualDimensions": {
+        "width": 1254,
+        "height": 1254
+      },
+      "alphaBounds": [
+        0,
+        0,
+        1242,
+        1254
+      ],
+      "solidAlphaBounds": [
+        262,
+        11,
+        991,
+        1236
+      ]
+    }
+  ]
+}

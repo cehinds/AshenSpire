@@ -1,0 +1,11 @@
+{
+  "items": [
+    {
+      "id": "intro-forge/prop-left",
+      "verdict": "approved",
+      "reason": "Complete anvil, leather bellows and compact hearth silhouette on alpha; matte aged iron, timber and masonry with localized ember. Margins narrower than 15 percent, no solid clipping.",
+      "profileId": "battlefield-prop",
+      "sha256": "e29f6bd7d625c024c1c3525bcaa61a0565f0b4a599e89cbb321caa79318f64e8"
+    }
+  ]
+}

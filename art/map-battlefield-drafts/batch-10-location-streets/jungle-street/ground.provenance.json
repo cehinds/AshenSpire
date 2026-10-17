@@ -1,0 +1,50 @@
+{
+  "generator": "OpenAI image_gen",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Tactile hand-painted realistic medieval fantasy, weathered matte stone/timber/rock and subdued natural colors, broad controlled detail, subtle material edges, no heavy cartoon outline, glossy toy rendering or photographic sparkle. Low ground-level player-height near-frontal camera with mild three-quarter perspective, NEVER elevated/isometric map-icon camera. This is an INSIDE-THE-LOCATION layered combat scene. Architecture/rock/trees are nearby framing elements at sides and the middle stays clear for characters. No people, text, lettering, numbers, logos or frames. Keep weather particles separate.\n\nSetting: Inside a jungle settlement lane. Palette: moss-gray stone, dark aged timber, muted deep greens, faded thatch. Lighting: soft diffuse canopy daylight. Subject: weathered gray pavers and compacted earth with modest roots/moss limited to edges. Role requirements: Transparent upper52\u201355%; opaque bottom plane extends fully to left/right/bottom edges. Shallow ground-level perspective and quiet combat center. Wide3072x1728 requested. ONLY flat street floor. Absolutely no buildings, walls, posts, awnings, furniture or vertical objects. All upper 55 percent entirely empty transparent. Opaque paving starts at y=55 percent and fills full lower width.",
+  "sourceOutputPath": "/workspace/generated_images/exec-2e2209a9-292e-4fa9-9077-cccfeeaa800c.png",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-ground",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "sha256": "e3bccb8b8f96a018335170aaa1400107cea76c09d4cb7496170bcbabf16a46e5",
+  "sourceSha256": "e3bccb8b8f96a018335170aaa1400107cea76c09d4cb7496170bcbabf16a46e5",
+  "processing": "Byte-identical original imagegen output; no pixel editing, resizing, trimming or upscaling.",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "visibleBoundsAt32": [
+      0,
+      545,
+      1672,
+      941
+    ],
+    "alphaQA": {
+      "transparentFraction": 0.5840619263839243,
+      "borderPixelsAt32": 2459,
+      "normalizedMarginsAt32": [
+        0.0,
+        0.5791710945802337,
+        0.0,
+        0.0
+      ]
+    },
+    "medianCenterHorizonY": 554,
+    "bottomAlphaRange": [
+      244,
+      254
+    ]
+  }
+}

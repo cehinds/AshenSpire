@@ -51,6 +51,12 @@
       "manifest": "batch-09-biome-architecture/manifest.json",
       "sourceCount": 45,
       "authoringModules": "batch-09-biome-architecture/modules/index.json"
+    },
+    {
+      "id": "batch-10-location-streets",
+      "manifest": "batch-10-location-streets/manifest.json",
+      "sourceCount": 86,
+      "authoringModules": "batch-10-location-streets/modules/index.json"
     }
   ],
   "editableRecipes": [
@@ -90,6 +96,11 @@
       "id": "biome-architecture-scenes",
       "file": "batch-09-biome-architecture/modules/index.json",
       "portableExport": "batch-09-biome-architecture/composition.example.json"
+    },
+    {
+      "id": "close-location-scenes-and-intro-map",
+      "file": "batch-10-location-streets/modules/index.json",
+      "portableExport": "batch-10-location-streets/composition.example.json"
     }
   ],
   "nextFamilies": [
@@ -124,6 +135,12 @@
       "id": "biome-architecture",
       "file": "batch-09-biome-architecture/modules/index.json",
       "guide": "batch-09-biome-architecture/README.md",
+      "status": "draft-art-authoring"
+    },
+    {
+      "id": "location-streets",
+      "file": "batch-10-location-streets/modules/index.json",
+      "guide": "batch-10-location-streets/README.md",
       "status": "draft-art-authoring"
     }
   ],

@@ -1,0 +1,45 @@
+{
+  "generator": "OpenAI image_gen",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Tactile hand-painted realistic medieval fantasy, weathered matte stone/timber/rock and subdued natural colors, broad controlled detail, subtle material edges, no heavy cartoon outline, glossy toy rendering or photographic sparkle. Low ground-level player-height near-frontal camera with mild three-quarter perspective, NEVER elevated/isometric map-icon camera. This is an INSIDE-THE-LOCATION layered combat scene. Architecture/rock/trees are nearby framing elements at sides and the middle stays clear for characters. No people, text, lettering, numbers, logos or frames. Keep weather particles separate.\n\nSetting: Inside a village lane. Palette: aged brown timber, warm-gray stone, faded tan thatch, muted moss. Lighting: soft neutral daylight. Subject: one modest timber/stone cottage facade with thatched roof, simple door and wooden shutters. Role: One complete transparent near-side framing prop, near-frontal mild3quarter view toward street center on RIGHT. Request1536square, object central75%, generous alpha margins, fully visible and no terrain slab. Entire roof, walls and base silhouette contained inside the canvas with transparent margins on all sides. A facade component only, not a miniature whole settlement or floating terrain diorama. Upright player-height view, with visible facade planes.",
+  "sourceOutputPath": "/workspace/generated_images/exec-74a4f003-cb94-4ea9-aaa5-cfb94d0fdc2f.png",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 1536,
+    "height": 1536
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-prop",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1254,
+    "height": 1254
+  },
+  "sha256": "262de1961af0121ba5facf19f2943c54b09fb1d72decc296797b9d4b391167f0",
+  "sourceSha256": "262de1961af0121ba5facf19f2943c54b09fb1d72decc296797b9d4b391167f0",
+  "processing": "Byte-identical original imagegen output; no pixel editing, resizing, trimming or upscaling.",
+  "qa": {
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "visibleBoundsAt32": [
+      19,
+      72,
+      1241,
+      1168
+    ],
+    "alphaQA": {
+      "transparentFraction": 0.3674875168201786,
+      "borderPixelsAt32": 0,
+      "normalizedMarginsAt32": [
+        0.015151515151515152,
+        0.05741626794258373,
+        0.01036682615629984,
+        0.0685805422647528
+      ]
+    }
+  }
+}

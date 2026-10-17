@@ -1,0 +1,18 @@
+{
+  "items": [
+    {
+      "id": "cinder-tower/backdrop",
+      "verdict": "approved",
+      "reason": "Tall circular enclosed basalt tower walls and narrow high slit windows convey scale; clear lower center, localized ember accents, no outdoor panorama or rain.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "cd639fca433e14d80aef80f6600a77e525251573e86cd23f2c1cea1152e3aa46"
+    },
+    {
+      "id": "cinder-tower/prop-left",
+      "verdict": "approved",
+      "reason": "Complete curved basalt stair flight with iron railing, all finials and step ends retained. Matte charcoal stone and tiny ember accents, isolated without surrounding floor; alpha margin narrow at top.",
+      "profileId": "battlefield-prop",
+      "sha256": "30bc517c2f5fa614ba0f4313de84e691375d1d458e75a174c8eafd7f447f5f4c"
+    }
+  ]
+}

@@ -1,0 +1,96 @@
+{
+  "items": [
+    {
+      "id": "cave-interior/backdrop",
+      "verdict": "approved",
+      "reason": "Fully enclosed bare rock cave with nearby rough walls and natural ceiling; central path recedes into darkness without outdoor opening or crystals.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "5eb5c1bf2466fc044fa517fcadbd55d3423c3836fb3786b7d5f6fc6dd12ec487",
+      "actualDimensions": {
+        "width": 1672,
+        "height": 941
+      },
+      "alphaBounds": [
+        0,
+        0,
+        1672,
+        941
+      ],
+      "solidAlphaBounds": [
+        0,
+        0,
+        1672,
+        941
+      ]
+    },
+    {
+      "id": "cave-interior/ground",
+      "verdict": "approved",
+      "reason": "Regenerated floor-only layer: broad quiet matte stone/gravel surface, nearly horizontal far edge, empty transparent upper field across full width, opaque floor to bottom/side edges. No walls, columns, lamps, fire, furniture or scene props.",
+      "profileId": "battlefield-ground",
+      "sha256": "e2ec32f3242d1c52b55655a849dcdd4fe1c6322173b47d6bb30948b16905679d",
+      "actualDimensions": {
+        "width": 1672,
+        "height": 941
+      },
+      "alphaBounds": [
+        0,
+        19,
+        1672,
+        941
+      ],
+      "solidAlphaBounds": [
+        0,
+        525,
+        1672,
+        941
+      ]
+    },
+    {
+      "id": "cave-interior/prop-left",
+      "verdict": "approved",
+      "reason": "Complete irregular rock wall with mineral ridges and hanging formations; subdued gray-brown texture. Narrow vertical margins and faint alpha dust remain; no source clipping.",
+      "profileId": "battlefield-prop",
+      "sha256": "3dead9f86ff1691627d19baf2715c40ebd42b2f37f42364706397587e5879d8b",
+      "actualDimensions": {
+        "width": 1254,
+        "height": 1254
+      },
+      "alphaBounds": [
+        0,
+        17,
+        1242,
+        1254
+      ],
+      "solidAlphaBounds": [
+        277,
+        25,
+        1156,
+        1231
+      ]
+    },
+    {
+      "id": "cave-interior/prop-right",
+      "verdict": "approved",
+      "reason": "Complete tall mineral-ridged rock shoulder with a short side stalagmite; no terrain slab or source clipping. Narrow vertical margins and faint alpha dust remain.",
+      "profileId": "battlefield-prop",
+      "sha256": "1f42f1b425e01aea9dfe90bcde7e811067b872305b6a02fdda3017a6bdacea7b",
+      "actualDimensions": {
+        "width": 1254,
+        "height": 1254
+      },
+      "alphaBounds": [
+        0,
+        14,
+        1240,
+        1240
+      ],
+      "solidAlphaBounds": [
+        222,
+        18,
+        1036,
+        1237
+      ]
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "generator": "OpenAI image_gen",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Tactile hand-painted realistic medieval fantasy, weathered matte stone/timber/rock and subdued natural colors, broad controlled detail, subtle material edges, no heavy cartoon outline, glossy toy rendering or photographic sparkle. Low ground-level player-height near-frontal camera with mild three-quarter perspective, NEVER elevated/isometric map-icon camera. This is an INSIDE-THE-LOCATION layered combat scene. Architecture/rock/trees are nearby framing elements at sides and the middle stays clear for characters. No people, text, lettering, numbers, logos or frames. Keep weather particles separate.\n\nSetting: Beside a massive gate and gate walls. Palette: aged gray masonry, desaturated dark iron, restrained moss and brown wear. Light: soft diffuse neutral daylight.\nSubject: player-height view directly in front of an enormous fortress gate and surrounding high curtain walls, towering closed dark iron-and-timber gates in mid-background, gate towers frame sides, broad clear approach foreground conveys monumental scale.\nRole requirements: Opaque wide3072x1728 requested. Ground-level view with side framing and depth. No characters, text or large blocking object in central40%.",
+  "sourceOutputPath": "/workspace/generated_images/exec-a63dd168-63f6-4db3-b4a6-1690a0f9a2cd.png",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-backdrop",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "sha256": "1b5e42e3b8ba764f8886bdf1af30c155114dac014067104372ba601b1a29d052",
+  "sourceSha256": "1b5e42e3b8ba764f8886bdf1af30c155114dac014067104372ba601b1a29d052",
+  "processing": "Byte-identical original imagegen output; no pixel editing, resizing, trimming or upscaling.",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGB"
+  }
+}

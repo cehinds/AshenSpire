@@ -1,0 +1,45 @@
+{
+  "generator": "OpenAI image_gen",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Tactile hand-painted realistic medieval fantasy, weathered matte stone/timber/rock and subdued natural colors, broad controlled detail, subtle material edges, no heavy cartoon outline, glossy toy rendering or photographic sparkle. Low ground-level player-height near-frontal camera with mild three-quarter perspective, NEVER elevated/isometric map-icon camera. This is an INSIDE-THE-LOCATION layered combat scene. Architecture/rock/trees are nearby framing elements at sides and the middle stays clear for characters. No people, text, lettering, numbers, logos or frames. Keep weather particles separate.\n\nSetting: In front of a cave. Palette: weathered gray-brown rock, muted earth, restrained moss-green accents. Lighting: soft diffuse neutral daylight.\nSubject: one rugged rock shoulder beside a cave entrance with restrained moss, complete isolated silhouette.\nRole rule: One complete transparent near-side framing prop, near-frontal mild3quarter view toward street center on RIGHT. Request1536square, object central75%, generous alpha margins, fully visible and no terrain slab. Complete solid silhouette fits fully inside source canvas including all roots/branches/stone edges; no contact with any image edge. Transparent empty background, no ground plane, no cast shadow.",
+  "sourceOutputPath": "/workspace/generated_images/exec-98b707f4-bf10-48e2-9668-67d39c445868.png",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 1536,
+    "height": 1536
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-prop",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1254,
+    "height": 1254
+  },
+  "sha256": "6ce664fc6628e0e48d2108eeba718e4171803542ca66e20aebb6dba576f57a50",
+  "sourceSha256": "6ce664fc6628e0e48d2108eeba718e4171803542ca66e20aebb6dba576f57a50",
+  "processing": "Byte-identical original imagegen output; no pixel editing, resizing, trimming or upscaling.",
+  "qa": {
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "visibleBoundsAt32": [
+      44,
+      98,
+      1210,
+      1155
+    ],
+    "alphaQA": {
+      "transparentFraction": 0.4938353568421561,
+      "borderPixelsAt32": 0,
+      "normalizedMarginsAt32": [
+        0.03508771929824561,
+        0.07814992025518341,
+        0.03508771929824561,
+        0.07894736842105263
+      ]
+    }
+  }
+}

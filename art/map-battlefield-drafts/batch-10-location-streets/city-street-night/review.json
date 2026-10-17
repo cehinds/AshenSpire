@@ -1,0 +1,89 @@
+{
+  "items": [
+    {
+      "id": "city-street-night/backdrop",
+      "verdict": "approved",
+      "reason": "Inside street at player height with close facade sides, distant archway and open center. Cool dark materials have localized warm windows/lanterns. Damp floor reflections are stronger than ideal matte but localized and lower backdrop will be overlaid.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "87f5f76076ffcc1f3bb7d20995e85a4670a2f5e985dda243f63838ac6656dd50",
+      "alphaMeasurements": {
+        "dimensions": [
+          1672,
+          941
+        ],
+        "alphaBounds16": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "transparentFraction": 0.0,
+        "opaqueFraction": 1.0
+      }
+    },
+    {
+      "id": "city-street-night/ground",
+      "verdict": "approved",
+      "reason": "Floor-only dim cool blue-gray cobblestones, localized amber pools at far edges without baked fixtures; quiet matte central plane and transparent upper field.",
+      "profileId": "battlefield-ground",
+      "sha256": "3c898c6141d5b4a364e98e2aaa028f4b7f26042b765537673f4cbf6cdcf0e311",
+      "alphaMeasurements": {
+        "dimensions": [
+          1672,
+          941
+        ],
+        "alphaBounds16": [
+          0,
+          510,
+          1672,
+          941
+        ],
+        "transparentFraction": 0.5430749126705277,
+        "opaqueFraction": 0.0009177857211863589,
+        "upper52TransparentFraction": 0.9906140840109197
+      }
+    },
+    {
+      "id": "city-street-night/prop-left",
+      "verdict": "approved",
+      "reason": "Replacement retains full chimney and roof within transparent margins; cool slate/stone/timber planes and two small warm upper windows plus local lantern. Upright near facade, no slab.",
+      "profileId": "battlefield-prop",
+      "sha256": "b1dfdbe0477dd55264f49b7e05776168a85fb6088f987fc8b23a7531df3b0fae",
+      "alphaMeasurements": {
+        "dimensions": [
+          1254,
+          1254
+        ],
+        "alphaBounds16": [
+          84,
+          76,
+          1174,
+          1142
+        ],
+        "transparentFraction": 0.47108328309537073,
+        "opaqueFraction": 0.0004794863772451282
+      }
+    },
+    {
+      "id": "city-street-night/prop-right",
+      "verdict": "approved",
+      "reason": "Full townhouse silhouette with cool material planes, closed shutters and single warm window/lantern; source complete with narrow top margin. Some soft amber alpha fringe around lamp.",
+      "profileId": "battlefield-prop",
+      "sha256": "3d6bb114b39c83ab31af1f70cfed0d18d8449a7c57195725f276007f15818d1b",
+      "alphaMeasurements": {
+        "dimensions": [
+          1254,
+          1254
+        ],
+        "alphaBounds16": [
+          109,
+          9,
+          1181,
+          1217
+        ],
+        "transparentFraction": 0.4085891653884603,
+        "opaqueFraction": 0.00037519491057642657
+      }
+    }
+  ]
+}

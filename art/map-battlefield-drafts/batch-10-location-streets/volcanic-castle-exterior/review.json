@@ -1,0 +1,32 @@
+{
+  "items": [
+    {
+      "id": "volcanic-castle-exterior/backdrop",
+      "verdict": "approved",
+      "reason": "Nearby towering basalt castle and side masonry frame an open court; dark neutral ash atmosphere, localized ember accents and distant lava hints. No lava river blocks center. Delivered 1672x941; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "e639a90e683d2775d6a942012fc104ee8914b3c3d0bd6f83b47483e5c00f1a60"
+    },
+    {
+      "id": "volcanic-castle-exterior/ground",
+      "verdict": "approved",
+      "reason": "Ground-only dark matte basalt flag surface with clear quiet center, orange fissures confined to outer margins; upper field transparent. Delivered 1672x941; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-ground",
+      "sha256": "10d93555a5773dfc8d031c29b03e0f3c998f5e96865d1e83942913b78a919d4a"
+    },
+    {
+      "id": "volcanic-castle-exterior/prop-left",
+      "verdict": "approved",
+      "reason": "Complete basalt wall pier and battlement section with dark matte stone and narrow localized orange cracks; narrow margins, no broad glow. Delivered 1254x1254; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-prop",
+      "sha256": "cc1a6f3a6e8e83bb63396bed0edc25f7b0090168981d7db62d5de46b0f20b700"
+    },
+    {
+      "id": "volcanic-castle-exterior/prop-right",
+      "verdict": "approved",
+      "reason": "Complete basalt buttress/parapet silhouette with ash wear, dark matte stone and small fissure accents; no broad orange wash. Delivered 1254x1254; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-prop",
+      "sha256": "02782eba2414c41cde9f40498750f9608badb87e26042873b6ad40b826bfcd75"
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "generator": "OpenAI image_gen",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Tactile hand-painted realistic medieval fantasy, weathered matte stone/timber/rock and subdued natural colors, broad controlled detail, subtle material edges, no heavy cartoon outline, glossy toy rendering or photographic sparkle. Low ground-level player-height near-frontal camera with mild three-quarter perspective, NEVER elevated/isometric map-icon camera. This is an INSIDE-THE-LOCATION layered combat scene. Architecture/rock/trees are nearby framing elements at sides and the middle stays clear for characters. No people, text, lettering, numbers, logos or frames. Keep weather particles separate.\n\nSetting: Indoor boss arena. Palette: massive weathered gray masonry, dark iron, sparse amber lights. Lighting: dim atmospheric neutral/cool interior with restrained torch points. Subject: one massive dark iron boss-arena gate leaf with weathered masonry support, full isolated silhouette. Role: One complete transparent near-side framing prop, near-frontal mild3quarter view toward street center on RIGHT. Request1536square, object central75%, generous alpha margins, fully visible and no terrain slab. Additional constraints: matte hand-painted world family; no people or text; clear center for combat. Fully enclosed architecture, no precipitation or rain graphics. ",
+  "sourceOutputPath": "/workspace/generated_images/exec-68ea6761-4cc5-4485-8af7-431bdb6b8bab.png",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 1536,
+    "height": 1536
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-prop",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1254,
+    "height": 1254
+  },
+  "sha256": "8ec782c3d32184e5376cb2d7731ae80d357a1891bada42d6bc8f2808fc5a5afc",
+  "sourceSha256": "8ec782c3d32184e5376cb2d7731ae80d357a1891bada42d6bc8f2808fc5a5afc",
+  "processing": "Byte-identical original imagegen output; no pixel editing, resizing, trimming or upscaling.",
+  "qa": {
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "visibleBoundsAt32": [
+      209,
+      4,
+      1235,
+      1234
+    ],
+    "alphaQA": {
+      "transparentFraction": 0.42912377362138127,
+      "borderPixelsAt32": 0,
+      "normalizedMarginsAt32": [
+        0.16666666666666666,
+        0.003189792663476874,
+        0.015151515151515152,
+        0.01594896331738437
+      ]
+    }
+  }
+}

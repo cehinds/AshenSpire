@@ -1,0 +1,25 @@
+{
+  "generator": "OpenAI image_gen",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Tactile hand-painted realistic medieval fantasy, weathered matte stone/timber/rock and subdued natural colors, broad controlled detail, subtle material edges, no heavy cartoon outline, glossy toy rendering or photographic sparkle. Low ground-level player-height near-frontal camera with mild three-quarter perspective, NEVER elevated/isometric map-icon camera. This is an INSIDE-THE-LOCATION layered combat scene. Architecture/rock/trees are nearby framing elements at sides and the middle stays clear for characters. No people, text, lettering, numbers, logos or frames. Keep weather particles separate.\n\nSetting: Inside a snowy town street. Palette: cool gray stone, dark timber, chalk snow, muted steel-blue shadows. Lighting: soft diffuse winter daylight. Subject: eye-level street between close stone/timber alpine houses with snowy roofs, distant gateway, quiet central street, no big panoramic mountains occupying center. Role: Opaque wide3072x1728 requested. Ground-level view with side framing and depth. No characters, text or large blocking object in central40%.",
+  "sourceOutputPath": "/workspace/generated_images/exec-ba6133f6-68be-4c72-85c8-a11b1746000a.png",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-backdrop",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "sha256": "ae44a1292107c2e047966f25da5d46e5d24412a24f148c84bd4e8967a5320d63",
+  "sourceSha256": "ae44a1292107c2e047966f25da5d46e5d24412a24f148c84bd4e8967a5320d63",
+  "processing": "Byte-identical original imagegen output; no pixel editing, resizing, trimming or upscaling.",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGB"
+  }
+}

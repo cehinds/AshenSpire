@@ -1,0 +1,45 @@
+{
+  "generator": "OpenAI image_gen",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Tactile hand-painted realistic medieval fantasy, weathered matte stone/timber/rock and subdued natural colors, broad controlled detail, subtle material edges, no heavy cartoon outline, glossy toy rendering or photographic sparkle. Low ground-level player-height near-frontal camera with mild three-quarter perspective, NEVER elevated/isometric map-icon camera. This is an INSIDE-THE-LOCATION layered combat scene. Architecture/rock/trees are nearby framing elements at sides and the middle stays clear for characters. No people, text, lettering, numbers, logos or frames. Keep weather particles separate.\n\nSetting: Inside a village lane. Palette: aged brown timber, warm-gray stone, faded tan thatch, muted moss. Lighting: soft neutral daylight. Subject: one low village cottage facade with stone chimney and short fence section attached near its side. Role: One complete transparent near-side framing prop, near-frontal mild3quarter view toward street center on LEFT. Request1536square, object central75%, generous alpha margins, fully visible and no terrain slab. Entire roof, walls and base silhouette contained inside the canvas with transparent margins on all sides. A facade component only, not a miniature whole settlement or floating terrain diorama. Upright player-height view, with visible facade planes. CRITICAL: entire roof eaves must end comfortably inside canvas, absolutely no solid part touching any canvas border. Scale subject to 70% of square canvas width and height, with 15% empty transparent padding all four sides. Humble low cottage, attached short fence. Full silhouette.",
+  "sourceOutputPath": "/workspace/generated_images/exec-4fea1bb8-1590-4736-afce-65bbab645299.png",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 1536,
+    "height": 1536
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-prop",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1254,
+    "height": 1254
+  },
+  "sha256": "5c0baecee571c406d51af7663dee0a7d23eacab01c91546e6144f0aecff14cee",
+  "sourceSha256": "5c0baecee571c406d51af7663dee0a7d23eacab01c91546e6144f0aecff14cee",
+  "processing": "Byte-identical original imagegen output; no pixel editing, resizing, trimming or upscaling.",
+  "qa": {
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "visibleBoundsAt32": [
+      70,
+      123,
+      1204,
+      1095
+    ],
+    "alphaQA": {
+      "transparentFraction": 0.5445540776691621,
+      "borderPixelsAt32": 0,
+      "normalizedMarginsAt32": [
+        0.05582137161084529,
+        0.09808612440191387,
+        0.03987240829346093,
+        0.12679425837320574
+      ]
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "generator": "OpenAI image_gen",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Tactile hand-painted realistic medieval fantasy, weathered matte stone/timber/rock and subdued natural colors, broad controlled detail, subtle material edges, no heavy cartoon outline, glossy toy rendering or photographic sparkle. Low ground-level player-height near-frontal camera with mild three-quarter perspective, NEVER elevated/isometric map-icon camera. This is an INSIDE-THE-LOCATION layered combat scene. Architecture/rock/trees are nearby framing elements at sides and the middle stays clear for characters. No people, text, lettering, numbers, logos or frames. Keep weather particles separate.\nSetting: Inside a tunnel. Palette: aged warm-gray masonry and rough rock, dark iron, subtle amber lamps. Lighting: dim neutral interior reflected light with restrained amber lamp accents. Subject: player-height view INSIDE a long old stone tunnel with large repeated arches receding into dim depth, enclosed ceiling, quiet central route, no outdoor opening or sky.\nOpaque wide3072x1728 requested. Ground-level view with side framing and depth. No characters, text or large blocking object in central40%.\nNo outdoor sky or precipitation in cave/dungeon interiors. Strong nearby wall framing on both sides and a fully enclosed ceiling. Clear central combat lane. Request 3072x1728 wide landscape.",
+  "sourceOutputPath": "/workspace/generated_images/exec-1bb10f67-c35c-4e8e-af1e-eac612b7f963.png",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-backdrop",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "sha256": "eb1ed8c77ccb95f469860cf3be4645b936537dcc8638adbc57d6caa571e6d041",
+  "sourceSha256": "eb1ed8c77ccb95f469860cf3be4645b936537dcc8638adbc57d6caa571e6d041",
+  "processing": "Byte-identical original imagegen output; no pixel editing, resizing, trimming or upscaling.",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGB"
+  }
+}

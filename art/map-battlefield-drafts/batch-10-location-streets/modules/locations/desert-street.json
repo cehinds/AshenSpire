@@ -1,0 +1,56 @@
+{
+  "id": "desert-street",
+  "label": "Inside a desert bazaar street",
+  "condition": "day",
+  "interior": false,
+  "tags": {
+    "location": [
+      "desert-street"
+    ],
+    "lighting": [
+      "day"
+    ],
+    "camera": [
+      "player-height",
+      "close-location"
+    ]
+  },
+  "productionBinding": null,
+  "layers": [
+    {
+      "role": "backdrop",
+      "asset": "desert-street/backdrop.png"
+    },
+    {
+      "id": "prop-left",
+      "role": "prop",
+      "asset": "desert-street/prop-left.png",
+      "placement": {
+        "mode": "side-framing",
+        "side": "left",
+        "innerEdgeU": 0.28,
+        "heightFraction": 1.02,
+        "baseOcclusionPixels": 14,
+        "intentionalViewportCrop": true
+      }
+    },
+    {
+      "id": "prop-right",
+      "role": "prop",
+      "asset": "desert-street/prop-right.png",
+      "placement": {
+        "mode": "side-framing",
+        "side": "right",
+        "innerEdgeU": 0.72,
+        "heightFraction": 1.02,
+        "baseOcclusionPixels": 14,
+        "intentionalViewportCrop": true
+      }
+    },
+    {
+      "role": "ground",
+      "asset": "desert-street/ground.png"
+    }
+  ],
+  "reuse": {}
+}

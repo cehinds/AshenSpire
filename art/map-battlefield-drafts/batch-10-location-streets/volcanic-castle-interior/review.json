@@ -1,0 +1,11 @@
+{
+  "items": [
+    {
+      "id": "volcanic-castle-interior/backdrop",
+      "verdict": "approved",
+      "reason": "Enclosed basalt hall with close receding masonry ribs, distant doorway and clear broad lower floor; restrained ember fissures and local braziers, no lava river, sky or precipitation.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "9a51ba31718829c29b3848c1ce7b22a69fdc19de4680b0a83c6073b4c6f68ef5"
+    }
+  ]
+}

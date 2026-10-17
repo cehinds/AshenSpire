@@ -1,0 +1,25 @@
+{
+  "generator": "OpenAI image_gen",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Tactile hand-painted realistic medieval fantasy, weathered matte stone/timber/rock and subdued natural colors, broad controlled detail, subtle material edges, no heavy cartoon outline, glossy toy rendering or photographic sparkle. Low ground-level player-height near-frontal camera with mild three-quarter perspective, NEVER elevated/isometric map-icon camera. This is an INSIDE-THE-LOCATION layered combat scene. Architecture/rock/trees are nearby framing elements at sides and the middle stays clear for characters. No people, text, lettering, numbers, logos or frames. Keep weather particles separate.\n\nSetting: Beside a great tree. Palette: ancient dark bark, muted moss-green, weathered gray rock, subdued brown earth. Light: soft diffuse canopy daylight with restrained highlights, no magical neon glow.\nSubject: ground-level view beside a colossal ancient tree with a trunk many times wider than a house, huge root buttresses at far sides and high canopy, soft woodland depth, open clearing directly in front conveys immense scale, no people.\nRole requirements: Opaque wide3072x1728 requested. Ground-level view with side framing and depth. No characters, text or large blocking object in central40%. Colossal broad trunk fills the rear wall of the image behind the clear stage; huge roots stand at far left and right. The tree is immediately nearby, not a distant tree landscape.",
+  "sourceOutputPath": "/workspace/generated_images/exec-06e01e02-813c-4eb4-957f-c56b8ec85387.png",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-backdrop",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "sha256": "43f02161aef78d44f1eeb0e765b8ca15534a29974d84b48d0e3d87cef474a269",
+  "sourceSha256": "43f02161aef78d44f1eeb0e765b8ca15534a29974d84b48d0e3d87cef474a269",
+  "processing": "Byte-identical original imagegen output; no pixel editing, resizing, trimming or upscaling.",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGB"
+  }
+}

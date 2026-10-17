@@ -1,0 +1,32 @@
+{
+  "items": [
+    {
+      "id": "castle-grounds/backdrop",
+      "verdict": "approved",
+      "reason": "Nearby curtain walls and tall towers enclose an open courtyard approach; natural gray matte masonry. Some banner heraldic ornament is present, without lettering. Delivered 1672x941; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "42dfd917bc2037f62e0d6be78d67e01034ed5bc9521e7dc395dab8e30e06247b"
+    },
+    {
+      "id": "castle-grounds/ground",
+      "verdict": "approved",
+      "reason": "Ground-only worn courtyard flags, transparent upper field and uninterrupted opaque lower plane; broad quiet central earth and stone. Delivered 1672x941; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-ground",
+      "sha256": "e94ea3b1f2e070fa04effd766bb759f455e5d328fde9e05f914f89ccd99e9e0c"
+    },
+    {
+      "id": "castle-grounds/prop-left",
+      "verdict": "approved",
+      "reason": "Complete crenellated wall pier and short wall, tactile gray masonry. Narrow top/right margin but solid silhouette is contained. Delivered 1254x1254; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-prop",
+      "sha256": "881d40d8b1e5a6224b724b175429605764c7692f051aed30b46cbc3bb86059e3"
+    },
+    {
+      "id": "castle-grounds/prop-right",
+      "verdict": "approved",
+      "reason": "Complete tall buttress with short crenellated parapet, subdued moss and material wear; narrow top margin. Delivered 1254x1254; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-prop",
+      "sha256": "06d4ccfda293097e2c22082916782bc41db0475d009db1ab67f245588526b7e5"
+    }
+  ]
+}

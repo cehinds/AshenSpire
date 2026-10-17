@@ -822,3 +822,16 @@ Editable JSON records responsive placement and any preview ambient grading;
 neutral city/castle/entrance props are not claimed as painted night relights.
 These remain unregistered feature-branch drafts; no third-party artwork or
 license is claimed.
+
+### Close-location layered paintings — batch 10 (2026-10-17)
+
+Eighty-six original OpenAI image_gen paintings in
+`art/map-battlefield-drafts/batch-10-location-streets/` provide 25 opaque
+backdrops, 19 transparent ground planes and 42 transparent nearby props.
+Exact prompts, original generated output paths, native dimensions and SHA-256
+records accompany unchanged source PNGs. Hash-bound reviews are indexed in
+`style-system/audit-location-streets.json`. The [editable modules](art/map-battlefield-drafts/batch-10-location-streets/modules/index.json)
+define 28 layered scenes and [12 Crownfall intro-map art candidates](art/map-battlefield-drafts/batch-10-location-streets/modules/intro-map.json).
+Preview crops and declared viewport-edge prop framing do not alter source files.
+These remain unregistered feature-branch drafts; no third-party artwork or
+license is claimed.

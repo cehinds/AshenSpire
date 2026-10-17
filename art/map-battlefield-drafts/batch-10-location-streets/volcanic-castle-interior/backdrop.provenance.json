@@ -1,0 +1,25 @@
+{
+  "generator": "OpenAI image_gen",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Tactile hand-painted realistic medieval fantasy, weathered matte stone/timber/rock and subdued natural colors, broad controlled detail, subtle material edges, no heavy cartoon outline, glossy toy rendering or photographic sparkle. Low ground-level player-height near-frontal camera with mild three-quarter perspective, NEVER elevated/isometric map-icon camera. This is an INSIDE-THE-LOCATION layered combat scene. Architecture/rock/trees are nearby framing elements at sides and the middle stays clear for characters. No people, text, lettering, numbers, logos or frames. Keep weather particles separate.\n\nSetting: Inside a volcanic castle. Palette: charcoal basalt, ash-gray stone, dark iron, restrained ember accents. Lighting: dim cool/neutral reflected light with restrained ember-orange local accents. Subject: player-height interior of a black-basalt castle hall, massive receding masonry ribs, dim distant doorway, restrained tiny molten fissures at outer walls, clear central space, no outdoor sky or lava river. Role: Opaque wide3072x1728 requested. Ground-level view with side framing and depth. No characters, text or large blocking object in central40%. Additional constraints: matte hand-painted world family; no people or text; clear center for combat. Fully enclosed architecture, no precipitation or rain graphics. ",
+  "sourceOutputPath": "/workspace/generated_images/exec-608df070-1611-4dd2-89a3-6e43b66c0266.png",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-backdrop",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "sha256": "9a51ba31718829c29b3848c1ce7b22a69fdc19de4680b0a83c6073b4c6f68ef5",
+  "sourceSha256": "9a51ba31718829c29b3848c1ce7b22a69fdc19de4680b0a83c6073b4c6f68ef5",
+  "processing": "Byte-identical original imagegen output; no pixel editing, resizing, trimming or upscaling.",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGB"
+  }
+}

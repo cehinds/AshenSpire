@@ -1,0 +1,32 @@
+{
+  "items": [
+    {
+      "id": "cave-approach/backdrop",
+      "verdict": "approved",
+      "reason": "Nearby cave face and dark entrance with clear approach, muted weathered rock, no figures.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "aa6aae95eb44f679c76b905be231a3c6c03c555ae107f24e1ce2a7e629c79224"
+    },
+    {
+      "id": "cave-approach/ground",
+      "verdict": "approved",
+      "reason": "Floor-only shallow earth/stone plane with quiet middle and edge detail; transparent upper field around 55 percent, lower plane reaches all three edges. Minor irregular alpha fringe retained unchanged.",
+      "profileId": "battlefield-ground",
+      "sha256": "e5cb729119c3035379ca38cfc002a0e42cfd999b339e502e4bc91b88ad8b9d97"
+    },
+    {
+      "id": "cave-approach/prop-left",
+      "verdict": "approved",
+      "reason": "Complete isolated matte natural framing silhouette, mild low three-quarter view, no terrain slab or scene background. Alpha margins are narrower than 15 percent in places; all solid subject ends remain within canvas. Faint edge dust retained unchanged.",
+      "profileId": "battlefield-prop",
+      "sha256": "6ce664fc6628e0e48d2108eeba718e4171803542ca66e20aebb6dba576f57a50"
+    },
+    {
+      "id": "cave-approach/prop-right",
+      "verdict": "approved",
+      "reason": "Complete isolated matte natural framing silhouette, mild low three-quarter view, no terrain slab or scene background. Alpha margins are narrower than 15 percent in places; all solid subject ends remain within canvas. Faint edge dust retained unchanged.",
+      "profileId": "battlefield-prop",
+      "sha256": "d4b1f3232382036e4351f4c50d13c345e19e3e6a7170fb35c8f22141c39883a8"
+    }
+  ]
+}

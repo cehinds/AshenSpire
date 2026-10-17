@@ -1,0 +1,50 @@
+{
+  "generator": "OpenAI image_gen",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Tactile hand-painted realistic medieval fantasy, weathered matte stone/timber/rock and subdued natural colors, broad controlled detail, subtle material edges, no heavy cartoon outline, glossy toy rendering or photographic sparkle. Low ground-level player-height near-frontal camera with mild three-quarter perspective, NEVER elevated/isometric map-icon camera. This is an INSIDE-THE-LOCATION layered combat scene. Architecture/rock/trees are nearby framing elements at sides and the middle stays clear for characters. No people, text, lettering, numbers, logos or frames. Keep weather particles separate.\n\nSetting: Inside a city street at night. Palette: low-key blue-gray stone and timber, restrained warm amber windows and lamps. Lighting: painted cool low-key moonlit ambient, restrained localized amber light; override daylight defaults. Subject: dim blue-gray worn cobblestones, very soft localized amber patches near the outer edges, quiet central floor. Role: Transparent upper52\u201355%; opaque bottom plane extends fully to left/right/bottom edges. Shallow ground-level perspective and quiet combat center. Wide3072x1728 requested. No buildings or sky. The top 53% of the canvas must be entirely transparent; broad continuous opaque floor below, reaching both sides and bottom. STRICT FLOOR ONLY. No buildings, walls, columns, trees, torches, lanterns, barrels, crates, fences, objects, furniture or tall rocks. Only a flat low ground plane with minor curbs/grit at edges. Delete all standing objects from the concept. Transparent top 55%, uninterrupted floor below. Matte soft texture, no glossy specular highlights.",
+  "sourceOutputPath": "/workspace/generated_images/exec-26871d75-ff51-4980-869b-75f080c1d644.png",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-ground",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "sha256": "3c898c6141d5b4a364e98e2aaa028f4b7f26042b765537673f4cbf6cdcf0e311",
+  "sourceSha256": "3c898c6141d5b4a364e98e2aaa028f4b7f26042b765537673f4cbf6cdcf0e311",
+  "processing": "Byte-identical original imagegen output; no pixel editing, resizing, trimming or upscaling.",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "visibleBoundsAt32": [
+      0,
+      510,
+      1672,
+      941
+    ],
+    "alphaQA": {
+      "transparentFraction": 0.5430749126705277,
+      "borderPixelsAt32": 2523,
+      "normalizedMarginsAt32": [
+        0.0,
+        0.5419766206163655,
+        0.0,
+        0.0
+      ]
+    },
+    "medianCenterHorizonY": 519,
+    "bottomAlphaRange": [
+      247,
+      254
+    ]
+  }
+}

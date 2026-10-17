@@ -1,0 +1,25 @@
+{
+  "generator": "OpenAI image_gen",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Tactile hand-painted realistic medieval fantasy, weathered matte stone/timber/rock and subdued natural colors, broad controlled detail, subtle material edges, no heavy cartoon outline, glossy toy rendering or photographic sparkle. Low ground-level player-height near-frontal camera with mild three-quarter perspective, NEVER elevated/isometric map-icon camera. This is an INSIDE-THE-LOCATION layered combat scene. Architecture/rock/trees are nearby framing elements at sides and the middle stays clear for characters. No people, text, lettering, numbers, logos or frames. Keep weather particles separate.\nSetting: Inside a cave. Palette: muted gray-brown rough rock, subdued cool depth, sparse mineral variation. Lighting: dim cool reflected cave ambient, subtle light from viewer side; no neon glow. Subject: eye-level natural cave tunnel interior, irregular receding rock walls and distant darkness, no outdoor opening, quiet central floor, no glowing crystals.\nOpaque wide3072x1728 requested. Ground-level view with side framing and depth. No characters, text or large blocking object in central40%.\nNo outdoor sky or precipitation in cave/dungeon interiors. Strong nearby wall framing on both sides and a fully enclosed ceiling. Clear central combat lane. Request 3072x1728 wide landscape.",
+  "sourceOutputPath": "/workspace/generated_images/exec-7088e593-5be3-4511-ae54-ba504439b7f6.png",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-backdrop",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "sha256": "5eb5c1bf2466fc044fa517fcadbd55d3423c3836fb3786b7d5f6fc6dd12ec487",
+  "sourceSha256": "5eb5c1bf2466fc044fa517fcadbd55d3423c3836fb3786b7d5f6fc6dd12ec487",
+  "processing": "Byte-identical original imagegen output; no pixel editing, resizing, trimming or upscaling.",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGB"
+  }
+}

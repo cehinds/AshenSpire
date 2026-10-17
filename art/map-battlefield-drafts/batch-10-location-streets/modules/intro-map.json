@@ -1,0 +1,283 @@
+{
+  "formatVersion": 1,
+  "status": "candidate-art-mapping",
+  "mapId": "local:crownfall",
+  "ownerNodeId": "crownfall",
+  "sourceAtlas": "../../../content/source/worldAtlas.json",
+  "sourceSha256": "d6c2c135dc533f9f2ec955a1508365fdba99c0072977a35edf33da5736a00f3e",
+  "mapAsset": "../../../assets-mobile/environments/crownfall-local.webp",
+  "prologueArtReferences": [
+    "../../../assets-mobile/prologue/road-desktop.webp",
+    "../../../assets-mobile/prologue/step-crownfall-desktop.webp"
+  ],
+  "bindingPolicy": "Candidate art references only; does not alter the intro, atlas nodes or live presentation bindings. Regional gates remain in Crownfall; destination tags do not move them into another biome.",
+  "items": [
+    {
+      "nodeId": "crownfall",
+      "displayName": "Crownfall",
+      "nodeTypeId": "start",
+      "sceneId": "city-street",
+      "position": null,
+      "tags": {
+        "origin": [
+          "intro-map",
+          "crownfall"
+        ],
+        "location": [
+          "start"
+        ]
+      },
+      "productionBinding": null,
+      "additionalProps": []
+    },
+    {
+      "nodeId": "crownfall/forge",
+      "displayName": "Blacksmith",
+      "nodeTypeId": "service",
+      "sceneId": "intro-forge",
+      "position": {
+        "x": 0.32,
+        "y": 0.59
+      },
+      "tags": {
+        "origin": [
+          "intro-map",
+          "crownfall"
+        ],
+        "location": [
+          "service"
+        ]
+      },
+      "productionBinding": null,
+      "additionalProps": []
+    },
+    {
+      "nodeId": "crownfall/market",
+      "displayName": "Old Market",
+      "nodeTypeId": "service",
+      "sceneId": "city-street",
+      "position": {
+        "x": 0.6,
+        "y": 0.62
+      },
+      "tags": {
+        "origin": [
+          "intro-map",
+          "crownfall"
+        ],
+        "location": [
+          "service"
+        ]
+      },
+      "productionBinding": null,
+      "additionalProps": [
+        {
+          "role": "prop",
+          "asset": "../batch-05-regions/ashen-crown/prop-market-stall.png",
+          "placement": {
+            "mode": "side-framing",
+            "side": "left",
+            "innerEdgeU": 0.36,
+            "heightFraction": 0.42,
+            "baseOcclusionPixels": 14,
+            "intentionalViewportCrop": true
+          }
+        }
+      ]
+    },
+    {
+      "nodeId": "crownfall/inn",
+      "displayName": "Wayfarer\u2019s Inn",
+      "nodeTypeId": "service",
+      "sceneId": "city-street-night",
+      "position": {
+        "x": 0.68,
+        "y": 0.41
+      },
+      "tags": {
+        "origin": [
+          "intro-map",
+          "crownfall"
+        ],
+        "location": [
+          "service"
+        ]
+      },
+      "productionBinding": null,
+      "additionalProps": []
+    },
+    {
+      "nodeId": "crownfall/chapel",
+      "displayName": "Chapel of Embers",
+      "nodeTypeId": "service",
+      "sceneId": "intro-chapel",
+      "position": {
+        "x": 0.45,
+        "y": 0.3
+      },
+      "tags": {
+        "origin": [
+          "intro-map",
+          "crownfall"
+        ],
+        "location": [
+          "service"
+        ]
+      },
+      "productionBinding": null,
+      "additionalProps": []
+    },
+    {
+      "nodeId": "crownfall/archive",
+      "displayName": "Royal Archive",
+      "nodeTypeId": "service",
+      "sceneId": "intro-archive",
+      "position": {
+        "x": 0.29,
+        "y": 0.35
+      },
+      "tags": {
+        "origin": [
+          "intro-map",
+          "crownfall"
+        ],
+        "location": [
+          "service"
+        ]
+      },
+      "productionBinding": null,
+      "additionalProps": []
+    },
+    {
+      "nodeId": "crownfall/warden",
+      "displayName": "Road Warden",
+      "nodeTypeId": "quest",
+      "sceneId": "fortress-gate",
+      "position": {
+        "x": 0.48,
+        "y": 0.73
+      },
+      "tags": {
+        "origin": [
+          "intro-map",
+          "crownfall"
+        ],
+        "location": [
+          "quest"
+        ]
+      },
+      "productionBinding": null,
+      "additionalProps": []
+    },
+    {
+      "nodeId": "crownfall/gate:ashen-crown",
+      "displayName": "The Ashen Crown Gate",
+      "nodeTypeId": "gate",
+      "sceneId": "fortress-gate",
+      "position": {
+        "x": 0.12,
+        "y": 0.91
+      },
+      "tags": {
+        "origin": [
+          "intro-map",
+          "crownfall"
+        ],
+        "location": [
+          "gate"
+        ]
+      },
+      "productionBinding": null,
+      "additionalProps": [],
+      "destinationRegionId": "ashen-crown"
+    },
+    {
+      "nodeId": "crownfall/gate:hollow-weald",
+      "displayName": "The Hollow Weald Gate",
+      "nodeTypeId": "gate",
+      "sceneId": "fortress-gate",
+      "position": {
+        "x": 0.3,
+        "y": 0.91
+      },
+      "tags": {
+        "origin": [
+          "intro-map",
+          "crownfall"
+        ],
+        "location": [
+          "gate"
+        ]
+      },
+      "productionBinding": null,
+      "additionalProps": [],
+      "destinationRegionId": "hollow-weald"
+    },
+    {
+      "nodeId": "crownfall/gate:pale-marches",
+      "displayName": "The Pale Marches Gate",
+      "nodeTypeId": "gate",
+      "sceneId": "fortress-gate",
+      "position": {
+        "x": 0.48,
+        "y": 0.91
+      },
+      "tags": {
+        "origin": [
+          "intro-map",
+          "crownfall"
+        ],
+        "location": [
+          "gate"
+        ]
+      },
+      "productionBinding": null,
+      "additionalProps": [],
+      "destinationRegionId": "pale-marches"
+    },
+    {
+      "nodeId": "crownfall/gate:cinder-reach",
+      "displayName": "The Cinder Reach Gate",
+      "nodeTypeId": "gate",
+      "sceneId": "fortress-gate",
+      "position": {
+        "x": 0.66,
+        "y": 0.91
+      },
+      "tags": {
+        "origin": [
+          "intro-map",
+          "crownfall"
+        ],
+        "location": [
+          "gate"
+        ]
+      },
+      "productionBinding": null,
+      "additionalProps": [],
+      "destinationRegionId": "cinder-reach"
+    },
+    {
+      "nodeId": "crownfall/gate:drowned-coast",
+      "displayName": "The Drowned Coast Gate",
+      "nodeTypeId": "gate",
+      "sceneId": "fortress-gate",
+      "position": {
+        "x": 0.84,
+        "y": 0.91
+      },
+      "tags": {
+        "origin": [
+          "intro-map",
+          "crownfall"
+        ],
+        "location": [
+          "gate"
+        ]
+      },
+      "productionBinding": null,
+      "additionalProps": [],
+      "destinationRegionId": "drowned-coast"
+    }
+  ]
+}

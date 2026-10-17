@@ -1,0 +1,32 @@
+{
+  "items": [
+    {
+      "id": "forest-path/backdrop",
+      "verdict": "approved",
+      "reason": "Viewer within close trunks and canopy; quiet open path and muted moss palette.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "b992c3cd851b3320173489b8c723171be712002f7c12233ed50571893f23caac"
+    },
+    {
+      "id": "forest-path/ground",
+      "verdict": "approved",
+      "reason": "Floor-only shallow earth/stone plane with quiet middle and edge detail; transparent upper field around 55 percent, lower plane reaches all three edges. Minor irregular alpha fringe retained unchanged.",
+      "profileId": "battlefield-ground",
+      "sha256": "aca987e61aafa773a917a9f079c3069022c7b3ca35b2ec4003a798e78dd569da"
+    },
+    {
+      "id": "forest-path/prop-left",
+      "verdict": "approved",
+      "reason": "Complete isolated matte natural framing silhouette, mild low three-quarter view, no terrain slab or scene background. Alpha margins are narrower than 15 percent in places; all solid subject ends remain within canvas. Faint edge dust retained unchanged.",
+      "profileId": "battlefield-prop",
+      "sha256": "a77996eb662142449d7d5edf6a99bfc9011be3e074cc79123878afa519af8519"
+    },
+    {
+      "id": "forest-path/prop-right",
+      "verdict": "approved",
+      "reason": "Complete isolated matte natural framing silhouette, mild low three-quarter view, no terrain slab or scene background. Alpha margins are narrower than 15 percent in places; all solid subject ends remain within canvas. Faint edge dust retained unchanged.",
+      "profileId": "battlefield-prop",
+      "sha256": "ccebf860c44d176cddd8dea70c7b789c447cd302116b831d3862ff78b1f1d4d6"
+    }
+  ]
+}

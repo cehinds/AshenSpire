@@ -1,0 +1,45 @@
+{
+  "generator": "OpenAI image_gen",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Tactile hand-painted realistic medieval fantasy, weathered matte stone/timber/rock and subdued natural colors, broad controlled detail, subtle material edges, no heavy cartoon outline, glossy toy rendering or photographic sparkle. Low ground-level player-height near-frontal camera with mild three-quarter perspective, NEVER elevated/isometric map-icon camera. This is an INSIDE-THE-LOCATION layered combat scene. Architecture/rock/trees are nearby framing elements at sides and the middle stays clear for characters. No people, text, lettering, numbers, logos or frames. Keep weather particles separate.\n\nSetting: Inside a city street at night. Palette: low-key blue-gray stone and timber, restrained warm amber windows and lamps. Lighting: painted cool low-key moonlit ambient, restrained localized amber light; override daylight defaults. Subject: one stone and timber storefront facade in cool moonlight, restrained warm windows and one small lantern. Role: One complete transparent near-side framing prop, near-frontal mild3quarter view toward street center on RIGHT. Request1536square, object central75%, generous alpha margins, fully visible and no terrain slab. Entire roof, walls and base silhouette contained inside the canvas with transparent margins on all sides. A facade component only, not a miniature whole settlement or floating terrain diorama. Upright player-height view, with visible facade planes. CRITICAL: keep the entire chimney top and roof silhouette fully visible, minimum 12% empty transparent padding ABOVE the tallest chimney and below base, and 10% to both sides. Reduce subject scale to 72% of canvas height. Matte cool materials and only two small warm windows; no broad glass retail display.",
+  "sourceOutputPath": "/workspace/generated_images/exec-8e430079-326d-4390-8457-6b40eba50ed2.png",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 1536,
+    "height": 1536
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-prop",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1254,
+    "height": 1254
+  },
+  "sha256": "b1dfdbe0477dd55264f49b7e05776168a85fb6088f987fc8b23a7531df3b0fae",
+  "sourceSha256": "b1dfdbe0477dd55264f49b7e05776168a85fb6088f987fc8b23a7531df3b0fae",
+  "processing": "Byte-identical original imagegen output; no pixel editing, resizing, trimming or upscaling.",
+  "qa": {
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "visibleBoundsAt32": [
+      84,
+      76,
+      1174,
+      1142
+    ],
+    "alphaQA": {
+      "transparentFraction": 0.47108328309537073,
+      "borderPixelsAt32": 0,
+      "normalizedMarginsAt32": [
+        0.06698564593301436,
+        0.06060606060606061,
+        0.06379585326953748,
+        0.08931419457735247
+      ]
+    }
+  }
+}

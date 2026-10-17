@@ -1,0 +1,50 @@
+{
+  "generator": "OpenAI image_gen",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Tactile hand-painted realistic medieval fantasy, weathered matte stone/timber/rock and subdued natural colors, broad controlled detail, subtle material edges, no heavy cartoon outline, glossy toy rendering or photographic sparkle. Low ground-level player-height near-frontal camera with mild three-quarter perspective, NEVER elevated/isometric map-icon camera. This is an INSIDE-THE-LOCATION layered combat scene. Architecture/rock/trees are nearby framing elements at sides and the middle stays clear for characters. No people, text, lettering, numbers, logos or frames. Keep weather particles separate.\n\nSetting: Beside a great tree. Palette: ancient dark bark, muted moss-green, weathered gray rock, subdued brown earth. Light: soft diffuse canopy daylight with restrained highlights, no magical neon glow.\nSubject: broad smooth woodland clearing floor, earth and sparse leaves, giant roots limited to far edges.\nRole requirements: Transparent upper52\u201355%; opaque bottom plane extends fully to left/right/bottom edges. Shallow ground-level perspective and quiet combat center. Wide3072x1728 requested.\nCRITICAL: ONLY THE GROUND SURFACE. Absolutely no architecture, walls, towers, trees, foliage silhouettes, poles or upright objects. The entire upper 55 percent of canvas must be empty transparent alpha. A low horizontal ground boundary across full width at 55 percent from top, then opaque ground continues uninterrupted to bottom and both side edges. Do not illustrate the setting buildings.",
+  "sourceOutputPath": "/workspace/generated_images/exec-ddf79e17-25a8-4545-995f-27cdf779b75f.png",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-ground",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "sha256": "694eaa6feeb7b3c25bbcb79d213578eb01d141e23ace9d741d58b6af8e37b1f2",
+  "sourceSha256": "694eaa6feeb7b3c25bbcb79d213578eb01d141e23ace9d741d58b6af8e37b1f2",
+  "processing": "Byte-identical original imagegen output; no pixel editing, resizing, trimming or upscaling.",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "visibleBoundsAt32": [
+      0,
+      525,
+      1672,
+      941
+    ],
+    "alphaQA": {
+      "transparentFraction": 0.5647426640700873,
+      "borderPixelsAt32": 2478,
+      "normalizedMarginsAt32": [
+        0.0,
+        0.5579171094580234,
+        0.0,
+        0.0
+      ]
+    },
+    "medianCenterHorizonY": 537,
+    "bottomAlphaRange": [
+      241,
+      254
+    ]
+  }
+}

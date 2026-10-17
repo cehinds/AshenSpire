@@ -1,0 +1,56 @@
+{
+  "id": "astrologer-chamber",
+  "label": "Inside the astrologer chamber",
+  "condition": "interior",
+  "interior": true,
+  "tags": {
+    "location": [
+      "astrologer-chamber"
+    ],
+    "lighting": [
+      "interior"
+    ],
+    "camera": [
+      "player-height",
+      "close-location"
+    ]
+  },
+  "productionBinding": null,
+  "layers": [
+    {
+      "role": "backdrop",
+      "asset": "astrologer-chamber/backdrop.png"
+    },
+    {
+      "id": "prop-left",
+      "role": "prop",
+      "asset": "astrologer-chamber/prop-left.png",
+      "placement": {
+        "mode": "side-framing",
+        "side": "left",
+        "innerEdgeU": 0.28,
+        "heightFraction": 0.8,
+        "baseOcclusionPixels": 14,
+        "intentionalViewportCrop": true
+      }
+    },
+    {
+      "id": "prop-right",
+      "role": "prop",
+      "asset": "astrologer-chamber/prop-right.png",
+      "placement": {
+        "mode": "side-framing",
+        "side": "right",
+        "innerEdgeU": 0.72,
+        "heightFraction": 1.02,
+        "baseOcclusionPixels": 14,
+        "intentionalViewportCrop": true
+      }
+    },
+    {
+      "role": "ground",
+      "asset": "astrologer-chamber/ground.png"
+    }
+  ],
+  "reuse": {}
+}

@@ -1,0 +1,4422 @@
+{
+  "version": 1,
+  "status": "draft-not-runtime-bound",
+  "branch": "feature/ImproveMapBattleFieldArt",
+  "styleSystem": {
+    "guide": "../style-system/style-guide.json",
+    "library": "../style-system/library.json"
+  },
+  "assets": [
+    {
+      "id": "city-street/backdrop",
+      "file": "city-street/backdrop.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "location": [
+          "city-street"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "background"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "8e7d3bfb63f304f31ac0e3d9bcb4d5a7f96454b91cf6c14a39d36026b326ccfd",
+      "provenanceFile": "city-street/backdrop.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "city-street/ground",
+      "file": "city-street/ground.png",
+      "category": "ground",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground",
+      "tags": {
+        "location": [
+          "city-street"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "ground"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "floor"
+        ]
+      },
+      "width": 1672,
+      "height": 940,
+      "mode": "RGBA",
+      "sha256": "df388cac1b7afe8dc3f0c9822cf4751adfd4c52ab7900884795b2449b5cbbcf7",
+      "provenanceFile": "city-street/ground.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        580,
+        1672,
+        940
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.6089763819607045,
+        "borderPixelsAt32": 2390,
+        "normalizedMarginsAt32": [
+          0,
+          0.6170212765957447,
+          0,
+          0
+        ]
+      },
+      "medianCenterHorizonY": 581,
+      "bottomAlphaRange": [
+        249,
+        254
+      ],
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "city-street/prop-left",
+      "file": "city-street/prop-left.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "city-street"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "prop-left"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "a9aaacbfe9095b70829f474d708b0e499cac037f7d8c07411eb1c1ce70a9f8f6",
+      "provenanceFile": "city-street/prop-left.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        80,
+        11,
+        1179,
+        1238
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.33501598711873204,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.06379585326953748,
+          0.008771929824561403,
+          0.05980861244019139,
+          0.012759170653907496
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "city-street/prop-right",
+      "file": "city-street/prop-right.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "city-street"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "prop-right"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "ef49759ac97c2c07108d541eac744c2f306b6329554faca940593cd675a55559",
+      "provenanceFile": "city-street/prop-right.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        102,
+        34,
+        1182,
+        1216
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.3844107150579072,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.08133971291866028,
+          0.02711323763955343,
+          0.05741626794258373,
+          0.030303030303030304
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "desert-street/backdrop",
+      "file": "desert-street/backdrop.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "location": [
+          "desert-street"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "background"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "9e2e4a63888b0549d3eec9e817630a6eb32408fb67bbb9596dcf86ca6c422d1e",
+      "provenanceFile": "desert-street/backdrop.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "desert-street/ground",
+      "file": "desert-street/ground.png",
+      "category": "ground",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground",
+      "tags": {
+        "location": [
+          "desert-street"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "ground"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "floor"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "0ac0fb00bb5f8bb11ae0e1bacac85d3b611b28055ee91fbc99c4120ad822c332",
+      "provenanceFile": "desert-street/ground.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        561,
+        1672,
+        941
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5860970717296574,
+        "borderPixelsAt32": 2427,
+        "normalizedMarginsAt32": [
+          0,
+          0.5961742826780021,
+          0,
+          0
+        ]
+      },
+      "medianCenterHorizonY": 563,
+      "bottomAlphaRange": [
+        235,
+        254
+      ],
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "desert-street/prop-left",
+      "file": "desert-street/prop-left.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "desert-street"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "prop-left"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "58fdc7f8fe0574d424f98d7d8ef67b8dd6de25b1561394c6bc3e866df40ef1b0",
+      "provenanceFile": "desert-street/prop-left.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        22,
+        22,
+        1246,
+        1227
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.24163760495918643,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.017543859649122806,
+          0.017543859649122806,
+          0.006379585326953748,
+          0.0215311004784689
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "desert-street/prop-right",
+      "file": "desert-street/prop-right.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "desert-street"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "prop-right"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "037cefbec6ac59ba2325d6853b947c16a4f5b4fa127a7137de5a0ff0ef64a858",
+      "provenanceFile": "desert-street/prop-right.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        54,
+        59,
+        1205,
+        1197
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.3235795375055007,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.0430622009569378,
+          0.04704944178628389,
+          0.03907496012759171,
+          0.045454545454545456
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "jungle-street/backdrop",
+      "file": "jungle-street/backdrop.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "location": [
+          "jungle-street"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "background"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "1f472543924801477aa1e6a27002d4e467f30ffad73f90720ddfef2efb0577aa",
+      "provenanceFile": "jungle-street/backdrop.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "jungle-street/ground",
+      "file": "jungle-street/ground.png",
+      "category": "ground",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground",
+      "tags": {
+        "location": [
+          "jungle-street"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "ground"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "floor"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "e3bccb8b8f96a018335170aaa1400107cea76c09d4cb7496170bcbabf16a46e5",
+      "provenanceFile": "jungle-street/ground.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        545,
+        1672,
+        941
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5840619263839243,
+        "borderPixelsAt32": 2459,
+        "normalizedMarginsAt32": [
+          0,
+          0.5791710945802337,
+          0,
+          0
+        ]
+      },
+      "medianCenterHorizonY": 554,
+      "bottomAlphaRange": [
+        244,
+        254
+      ],
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "jungle-street/prop-left",
+      "file": "jungle-street/prop-left.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "jungle-street"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "prop-left"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "998c741fdc5e385ed4fc95803005b14f4ddfa8c8826fd32a6ea4dcc4d0f41c75",
+      "provenanceFile": "jungle-street/prop-left.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        16,
+        14,
+        1237,
+        1217
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.3583403920850408,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.012759170653907496,
+          0.011164274322169059,
+          0.013556618819776715,
+          0.029505582137161084
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "jungle-street/prop-right",
+      "file": "jungle-street/prop-right.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "jungle-street"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "prop-right"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "6f458e9bc63764df93c15f3cad80bfed0f116751b05676d97f66ced0f1498f4e",
+      "provenanceFile": "jungle-street/prop-right.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        24,
+        43,
+        1238,
+        1203
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.34999071551577215,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.019138755980861243,
+          0.0342902711323764,
+          0.012759170653907496,
+          0.04066985645933014
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "snowy-street/backdrop",
+      "file": "snowy-street/backdrop.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "location": [
+          "snowy-street"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "background"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "ae44a1292107c2e047966f25da5d46e5d24412a24f148c84bd4e8967a5320d63",
+      "provenanceFile": "snowy-street/backdrop.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "snowy-street/ground",
+      "file": "snowy-street/ground.png",
+      "category": "ground",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground",
+      "tags": {
+        "location": [
+          "snowy-street"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "ground"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "floor"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "6e20646fe28068277b374a2047d23f4dd3c6e6937e8a226df993bb99fb9d56c9",
+      "provenanceFile": "snowy-street/ground.provenance.json",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "visibleBoundsAt32": [
+        0,
+        564,
+        1672,
+        941
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.6026477228236276,
+        "borderPixelsAt32": 2402,
+        "normalizedMarginsAt32": [
+          0,
+          0.5993623804463337,
+          0,
+          0
+        ]
+      },
+      "medianCenterHorizonY": 571,
+      "bottomAlphaRange": [
+        247,
+        254
+      ],
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "snowy-street/prop-left",
+      "file": "snowy-street/prop-left.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "snowy-street"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "prop-left"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "1c0d3f078c44cec2e4dbab18541b5dd905096ee600728e4ffbc9529c65630562",
+      "provenanceFile": "snowy-street/prop-left.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        63,
+        22,
+        1234,
+        1228
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.3496593993320259,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.050239234449760764,
+          0.017543859649122806,
+          0.01594896331738437,
+          0.02073365231259968
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "snowy-street/prop-right",
+      "file": "snowy-street/prop-right.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "snowy-street"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "prop-right"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "3562332a6d28c3564a8c945ed4953123117a4d76e33093600ea6504402412e50",
+      "provenanceFile": "snowy-street/prop-right.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        25,
+        30,
+        1231,
+        1174
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.3723497884918182,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.019936204146730464,
+          0.023923444976076555,
+          0.018341307814992026,
+          0.06379585326953748
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "city-street-night/backdrop",
+      "file": "city-street-night/backdrop.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "location": [
+          "city-street-night"
+        ],
+        "lighting": [
+          "night"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "background"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "87f5f76076ffcc1f3bb7d20995e85a4670a2f5e985dda243f63838ac6656dd50",
+      "provenanceFile": "city-street-night/backdrop.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "city-street-night/ground",
+      "file": "city-street-night/ground.png",
+      "category": "ground",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground",
+      "tags": {
+        "location": [
+          "city-street-night"
+        ],
+        "lighting": [
+          "night"
+        ],
+        "role": [
+          "ground"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "floor"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "3c898c6141d5b4a364e98e2aaa028f4b7f26042b765537673f4cbf6cdcf0e311",
+      "provenanceFile": "city-street-night/ground.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        510,
+        1672,
+        941
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5430749126705277,
+        "borderPixelsAt32": 2523,
+        "normalizedMarginsAt32": [
+          0,
+          0.5419766206163655,
+          0,
+          0
+        ]
+      },
+      "medianCenterHorizonY": 519,
+      "bottomAlphaRange": [
+        247,
+        254
+      ],
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "city-street-night/prop-left",
+      "file": "city-street-night/prop-left.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "city-street-night"
+        ],
+        "lighting": [
+          "night"
+        ],
+        "role": [
+          "prop-left"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "b1dfdbe0477dd55264f49b7e05776168a85fb6088f987fc8b23a7531df3b0fae",
+      "provenanceFile": "city-street-night/prop-left.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        84,
+        76,
+        1174,
+        1142
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.47108328309537073,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.06698564593301436,
+          0.06060606060606061,
+          0.06379585326953748,
+          0.08931419457735247
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "city-street-night/prop-right",
+      "file": "city-street-night/prop-right.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "city-street-night"
+        ],
+        "lighting": [
+          "night"
+        ],
+        "role": [
+          "prop-right"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "3d6bb114b39c83ab31af1f70cfed0d18d8449a7c57195725f276007f15818d1b",
+      "provenanceFile": "city-street-night/prop-right.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        109,
+        9,
+        1181,
+        1217
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.4085891653884603,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.08692185007974482,
+          0.007177033492822967,
+          0.058213716108452954,
+          0.029505582137161084
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "village-lane/backdrop",
+      "file": "village-lane/backdrop.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "location": [
+          "village-lane"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "background"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "6f861984d54fe33ca0f9f1fa001288c86052e0abd5f3a8d1c582e0715b0fa7f6",
+      "provenanceFile": "village-lane/backdrop.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "village-lane/ground",
+      "file": "village-lane/ground.png",
+      "category": "ground",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground",
+      "tags": {
+        "location": [
+          "village-lane"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "ground"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "floor"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "98f85873a4e9254f29e2044a19c6a069322eec83f923565922056b63081f6148",
+      "provenanceFile": "village-lane/ground.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        531,
+        1672,
+        941
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5677057645078787,
+        "borderPixelsAt32": 2485,
+        "normalizedMarginsAt32": [
+          0,
+          0.5642933049946866,
+          0,
+          0
+        ]
+      },
+      "medianCenterHorizonY": 558,
+      "bottomAlphaRange": [
+        231,
+        252
+      ],
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "village-lane/prop-left",
+      "file": "village-lane/prop-left.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "village-lane"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "prop-left"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "262de1961af0121ba5facf19f2943c54b09fb1d72decc296797b9d4b391167f0",
+      "provenanceFile": "village-lane/prop-left.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        19,
+        72,
+        1241,
+        1168
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.3674875168201786,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.015151515151515152,
+          0.05741626794258373,
+          0.01036682615629984,
+          0.0685805422647528
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "village-lane/prop-right",
+      "file": "village-lane/prop-right.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "village-lane"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "prop-right"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "5c0baecee571c406d51af7663dee0a7d23eacab01c91546e6144f0aecff14cee",
+      "provenanceFile": "village-lane/prop-right.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        70,
+        123,
+        1204,
+        1095
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5445540776691621,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.05582137161084529,
+          0.09808612440191387,
+          0.03987240829346093,
+          0.12679425837320574
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "dungeon-corridor/backdrop",
+      "file": "dungeon-corridor/backdrop.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "location": [
+          "dungeon-corridor"
+        ],
+        "lighting": [
+          "interior"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "background"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "7af33df551cb6ce3530342bcbb8296eed4bbfa13b320ff913783d462d88a7e48",
+      "provenanceFile": "dungeon-corridor/backdrop.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "dungeon-corridor/ground",
+      "file": "dungeon-corridor/ground.png",
+      "category": "ground",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground",
+      "tags": {
+        "location": [
+          "dungeon-corridor"
+        ],
+        "lighting": [
+          "interior"
+        ],
+        "role": [
+          "ground"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "floor"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "cab211482404bc0b09b6978bbd310e0924457be935b875ad7d7eea30bcca978a",
+      "provenanceFile": "dungeon-corridor/ground.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        497,
+        1672,
+        941
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5214827959668276,
+        "borderPixelsAt32": 2558,
+        "normalizedMarginsAt32": [
+          0,
+          0.5281615302869288,
+          0,
+          0
+        ]
+      },
+      "medianCenterHorizonY": 498,
+      "bottomAlphaRange": [
+        247,
+        254
+      ],
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "dungeon-corridor/prop-left",
+      "file": "dungeon-corridor/prop-left.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "dungeon-corridor"
+        ],
+        "lighting": [
+          "interior"
+        ],
+        "role": [
+          "prop-left"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "f7e5455636e3dfef8015f1f51a729ed73efc1f0c2ab9f8e8c02bdb011334682f",
+      "provenanceFile": "dungeon-corridor/prop-left.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        352,
+        19,
+        935,
+        1218
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.6702252950049474,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.2807017543859649,
+          0.015151515151515152,
+          0.2543859649122807,
+          0.028708133971291867
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "dungeon-corridor/prop-right",
+      "file": "dungeon-corridor/prop-right.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "dungeon-corridor"
+        ],
+        "lighting": [
+          "interior"
+        ],
+        "role": [
+          "prop-right"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "442aefdae179311fbc165d2eb7ce5bf129e8d69d8aed7a02ad0d2ba92e9dcf98",
+      "provenanceFile": "dungeon-corridor/prop-right.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        262,
+        10,
+        992,
+        1236
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5346495679535216,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.20893141945773525,
+          0.007974481658692184,
+          0.20893141945773525,
+          0.014354066985645933
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "cave-interior/backdrop",
+      "file": "cave-interior/backdrop.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "location": [
+          "cave-interior"
+        ],
+        "lighting": [
+          "interior"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "background"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "5eb5c1bf2466fc044fa517fcadbd55d3423c3836fb3786b7d5f6fc6dd12ec487",
+      "provenanceFile": "cave-interior/backdrop.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "cave-interior/ground",
+      "file": "cave-interior/ground.png",
+      "category": "ground",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground",
+      "tags": {
+        "location": [
+          "cave-interior"
+        ],
+        "lighting": [
+          "interior"
+        ],
+        "role": [
+          "ground"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "floor"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "e2ec32f3242d1c52b55655a849dcdd4fe1c6322173b47d6bb30948b16905679d",
+      "provenanceFile": "cave-interior/ground.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        525,
+        1672,
+        941
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5506040606297892,
+        "borderPixelsAt32": 2496,
+        "normalizedMarginsAt32": [
+          0,
+          0.5579171094580234,
+          0,
+          0
+        ]
+      },
+      "medianCenterHorizonY": 527,
+      "bottomAlphaRange": [
+        246,
+        254
+      ],
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "cave-interior/prop-left",
+      "file": "cave-interior/prop-left.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "cave-interior"
+        ],
+        "lighting": [
+          "interior"
+        ],
+        "role": [
+          "prop-left"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "3dead9f86ff1691627d19baf2715c40ebd42b2f37f42364706397587e5879d8b",
+      "provenanceFile": "cave-interior/prop-left.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        276,
+        24,
+        1157,
+        1232
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5317866400087503,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.22009569377990432,
+          0.019138755980861243,
+          0.0773524720893142,
+          0.017543859649122806
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "cave-interior/prop-right",
+      "file": "cave-interior/prop-right.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "cave-interior"
+        ],
+        "lighting": [
+          "interior"
+        ],
+        "role": [
+          "prop-right"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "1f42f1b425e01aea9dfe90bcde7e811067b872305b6a02fdda3017a6bdacea7b",
+      "provenanceFile": "cave-interior/prop-right.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        222,
+        17,
+        1036,
+        1238
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.6334536500741487,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.17703349282296652,
+          0.013556618819776715,
+          0.17384370015948963,
+          0.012759170653907496
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "cave-approach/backdrop",
+      "file": "cave-approach/backdrop.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "location": [
+          "cave-approach"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "background"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "aa6aae95eb44f679c76b905be231a3c6c03c555ae107f24e1ce2a7e629c79224",
+      "provenanceFile": "cave-approach/backdrop.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "cave-approach/ground",
+      "file": "cave-approach/ground.png",
+      "category": "ground",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground",
+      "tags": {
+        "location": [
+          "cave-approach"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "ground"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "floor"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "e5cb729119c3035379ca38cfc002a0e42cfd999b339e502e4bc91b88ad8b9d97",
+      "provenanceFile": "cave-approach/ground.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        526,
+        1672,
+        941
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.553696820546197,
+        "borderPixelsAt32": 2490,
+        "normalizedMarginsAt32": [
+          0,
+          0.5589798087141339,
+          0,
+          0
+        ]
+      },
+      "medianCenterHorizonY": 532,
+      "bottomAlphaRange": [
+        245,
+        254
+      ],
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "cave-approach/prop-left",
+      "file": "cave-approach/prop-left.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "cave-approach"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "prop-left"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "6ce664fc6628e0e48d2108eeba718e4171803542ca66e20aebb6dba576f57a50",
+      "provenanceFile": "cave-approach/prop-left.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        44,
+        98,
+        1210,
+        1155
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.4938353568421561,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.03508771929824561,
+          0.07814992025518341,
+          0.03508771929824561,
+          0.07894736842105263
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "cave-approach/prop-right",
+      "file": "cave-approach/prop-right.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "cave-approach"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "prop-right"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "d4b1f3232382036e4351f4c50d13c345e19e3e6a7170fb35c8f22141c39883a8",
+      "provenanceFile": "cave-approach/prop-right.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        37,
+        50,
+        1217,
+        1199
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.43485026543450117,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.029505582137161084,
+          0.03987240829346093,
+          0.029505582137161084,
+          0.043859649122807015
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "forest-path/backdrop",
+      "file": "forest-path/backdrop.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "location": [
+          "forest-path"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "background"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "b992c3cd851b3320173489b8c723171be712002f7c12233ed50571893f23caac",
+      "provenanceFile": "forest-path/backdrop.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "forest-path/ground",
+      "file": "forest-path/ground.png",
+      "category": "ground",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground",
+      "tags": {
+        "location": [
+          "forest-path"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "ground"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "floor"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "aca987e61aafa773a917a9f079c3069022c7b3ca35b2ec4003a798e78dd569da",
+      "provenanceFile": "forest-path/ground.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        530,
+        1672,
+        941
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5347245880133625,
+        "borderPixelsAt32": 2490,
+        "normalizedMarginsAt32": [
+          0,
+          0.563230605738576,
+          0,
+          0
+        ]
+      },
+      "medianCenterHorizonY": 531,
+      "bottomAlphaRange": [
+        229,
+        254
+      ],
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "forest-path/prop-left",
+      "file": "forest-path/prop-left.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "forest-path"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "prop-left"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "a77996eb662142449d7d5edf6a99bfc9011be3e074cc79123878afa519af8519",
+      "provenanceFile": "forest-path/prop-left.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        197,
+        91,
+        1105,
+        1210
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.6680052857967741,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.15709728867623604,
+          0.07256778309409888,
+          0.11881977671451356,
+          0.03508771929824561
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "forest-path/prop-right",
+      "file": "forest-path/prop-right.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "forest-path"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "prop-right"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "ccebf860c44d176cddd8dea70c7b789c447cd302116b831d3862ff78b1f1d4d6",
+      "provenanceFile": "forest-path/prop-right.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        86,
+        32,
+        1190,
+        1217
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.586253494400057,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.0685805422647528,
+          0.025518341307814992,
+          0.051036682615629984,
+          0.029505582137161084
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "mountain-road/backdrop",
+      "file": "mountain-road/backdrop.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "location": [
+          "mountain-road"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "background"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "fdbebda5a60bcbda9a369cc9c18abc60941836157ba0bdcd65011ef4470a1353",
+      "provenanceFile": "mountain-road/backdrop.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "mountain-road/ground",
+      "file": "mountain-road/ground.png",
+      "category": "ground",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground",
+      "tags": {
+        "location": [
+          "mountain-road"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "ground"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "floor"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "90498e7b5dcf315ab1bb3513fef107ce541610305032d8cf5c6591b6ea5b81e8",
+      "provenanceFile": "mountain-road/ground.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        523,
+        1672,
+        941
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5509650732957405,
+        "borderPixelsAt32": 2503,
+        "normalizedMarginsAt32": [
+          0,
+          0.5557917109458024,
+          0,
+          0
+        ]
+      },
+      "medianCenterHorizonY": 530,
+      "bottomAlphaRange": [
+        232,
+        254
+      ],
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "mountain-road/prop-left",
+      "file": "mountain-road/prop-left.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "mountain-road"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "prop-left"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "4c96ac5aad4897a06cd48cc7c7b86f756e258ca57e35c7ce3f317743281af66a",
+      "provenanceFile": "mountain-road/prop-left.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        58,
+        58,
+        1207,
+        1206
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.4775646161946842,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.046251993620414676,
+          0.046251993620414676,
+          0.037480063795853266,
+          0.03827751196172249
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "mountain-road/prop-right",
+      "file": "mountain-road/prop-right.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "mountain-road"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "prop-right"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "80d50db1be3254b7fc07ff616a537f1722e5a26ec8e995c2f191fb3639b97eb6",
+      "provenanceFile": "mountain-road/prop-right.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        50,
+        134,
+        1204,
+        1096
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.6080872945012961,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.03987240829346093,
+          0.10685805422647528,
+          0.03987240829346093,
+          0.12599681020733652
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "castle-grounds/backdrop",
+      "file": "castle-grounds/backdrop.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "location": [
+          "castle-grounds"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "background"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "42dfd917bc2037f62e0d6be78d67e01034ed5bc9521e7dc395dab8e30e06247b",
+      "provenanceFile": "castle-grounds/backdrop.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "castle-grounds/ground",
+      "file": "castle-grounds/ground.png",
+      "category": "ground",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground",
+      "tags": {
+        "location": [
+          "castle-grounds"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "ground"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "floor"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "e94ea3b1f2e070fa04effd766bb759f455e5d328fde9e05f914f89ccd99e9e0c",
+      "provenanceFile": "castle-grounds/ground.provenance.json",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "visibleBoundsAt32": [
+        0,
+        505,
+        1672,
+        941
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5287170321708048,
+        "borderPixelsAt32": 2540,
+        "normalizedMarginsAt32": [
+          0,
+          0.536663124335813,
+          0,
+          0
+        ]
+      },
+      "medianCenterHorizonY": 506,
+      "bottomAlphaRange": [
+        247,
+        254
+      ],
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "castle-grounds/prop-left",
+      "file": "castle-grounds/prop-left.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "castle-grounds"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "prop-left"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "881d40d8b1e5a6224b724b175429605764c7692f051aed30b46cbc3bb86059e3",
+      "provenanceFile": "castle-grounds/prop-left.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        24,
+        10,
+        1243,
+        1238
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.3357689206341939,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.019138755980861243,
+          0.007974481658692184,
+          0.008771929824561403,
+          0.012759170653907496
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "castle-grounds/prop-right",
+      "file": "castle-grounds/prop-right.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "castle-grounds"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "prop-right"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "06d4ccfda293097e2c22082916782bc41db0475d009db1ab67f245588526b7e5",
+      "provenanceFile": "castle-grounds/prop-right.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        132,
+        21,
+        1204,
+        1192
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.577585220118587,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.10526315789473684,
+          0.01674641148325359,
+          0.03987240829346093,
+          0.049441786283891544
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "fortress-gate/backdrop",
+      "file": "fortress-gate/backdrop.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "location": [
+          "fortress-gate"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "background"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "1b5e42e3b8ba764f8886bdf1af30c155114dac014067104372ba601b1a29d052",
+      "provenanceFile": "fortress-gate/backdrop.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "fortress-gate/ground",
+      "file": "fortress-gate/ground.png",
+      "category": "ground",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground",
+      "tags": {
+        "location": [
+          "fortress-gate"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "ground"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "floor"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "4f8d34eadbf7d96db084f621f9d68338c72797e70e7397502159236f9d186f13",
+      "provenanceFile": "fortress-gate/ground.provenance.json",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "visibleBoundsAt32": [
+        0,
+        501,
+        1672,
+        941
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5305449765850235,
+        "borderPixelsAt32": 2549,
+        "normalizedMarginsAt32": [
+          0,
+          0.5324123273113709,
+          0,
+          0
+        ]
+      },
+      "medianCenterHorizonY": 502,
+      "bottomAlphaRange": [
+        248,
+        254
+      ],
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "fortress-gate/prop-left",
+      "file": "fortress-gate/prop-left.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "fortress-gate"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "prop-left"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "0739a826f6e2d0217ccc700d85c38ee37b3e432b42b7c94bd40638941552550b",
+      "provenanceFile": "fortress-gate/prop-left.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        36,
+        33,
+        1222,
+        1211
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.39532316364348596,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.028708133971291867,
+          0.02631578947368421,
+          0.025518341307814992,
+          0.0342902711323764
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "fortress-gate/prop-right",
+      "file": "fortress-gate/prop-right.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "fortress-gate"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "prop-right"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "bcfc6c23a618000701f61857f43c91ee74c52bfb1a89e99cb041026cb953b3ba",
+      "provenanceFile": "fortress-gate/prop-right.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        120,
+        21,
+        1171,
+        1230
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5585997217198426,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.09569377990430622,
+          0.01674641148325359,
+          0.06618819776714513,
+          0.019138755980861243
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "great-tree/backdrop",
+      "file": "great-tree/backdrop.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "location": [
+          "great-tree"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "background"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "43f02161aef78d44f1eeb0e765b8ca15534a29974d84b48d0e3d87cef474a269",
+      "provenanceFile": "great-tree/backdrop.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "great-tree/ground",
+      "file": "great-tree/ground.png",
+      "category": "ground",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground",
+      "tags": {
+        "location": [
+          "great-tree"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "ground"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "floor"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "694eaa6feeb7b3c25bbcb79d213578eb01d141e23ace9d741d58b6af8e37b1f2",
+      "provenanceFile": "great-tree/ground.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        525,
+        1672,
+        941
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5647426640700873,
+        "borderPixelsAt32": 2478,
+        "normalizedMarginsAt32": [
+          0,
+          0.5579171094580234,
+          0,
+          0
+        ]
+      },
+      "medianCenterHorizonY": 537,
+      "bottomAlphaRange": [
+        241,
+        254
+      ],
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "great-tree/prop-left",
+      "file": "great-tree/prop-left.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "great-tree"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "prop-left"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "de0fe38ca2a7d6a6812e604a971c12558f5fb55779eaebfce8e6b35e4860297c",
+      "provenanceFile": "great-tree/prop-left.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        39,
+        30,
+        1236,
+        1216
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.513882847614905,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.03110047846889952,
+          0.023923444976076555,
+          0.014354066985645933,
+          0.030303030303030304
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "great-tree/prop-right",
+      "file": "great-tree/prop-right.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "great-tree"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "prop-right"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "1b235d39a2bc2acac07c680bfa21ce785d2b464908bf4e3c8a9b611cf2c185dc",
+      "provenanceFile": "great-tree/prop-right.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        29,
+        140,
+        1225,
+        1120
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5117741250327501,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.023125996810207338,
+          0.11164274322169059,
+          0.023125996810207338,
+          0.10685805422647528
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "tunnel-interior/backdrop",
+      "file": "tunnel-interior/backdrop.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "location": [
+          "tunnel-interior"
+        ],
+        "lighting": [
+          "interior"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "background"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "eb1ed8c77ccb95f469860cf3be4645b936537dcc8638adbc57d6caa571e6d041",
+      "provenanceFile": "tunnel-interior/backdrop.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "tunnel-interior/ground",
+      "file": "tunnel-interior/ground.png",
+      "category": "ground",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground",
+      "tags": {
+        "location": [
+          "tunnel-interior"
+        ],
+        "lighting": [
+          "interior"
+        ],
+        "role": [
+          "ground"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "floor"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "45ac2b3f22809e33dd680e223f91b6c0c9436a4bd00148ec9f6ae55d18a3fce8",
+      "provenanceFile": "tunnel-interior/ground.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        521,
+        1672,
+        941
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5507998210190727,
+        "borderPixelsAt32": 2509,
+        "normalizedMarginsAt32": [
+          0,
+          0.5536663124335813,
+          0,
+          0
+        ]
+      },
+      "medianCenterHorizonY": 522,
+      "bottomAlphaRange": [
+        245,
+        254
+      ],
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "tunnel-interior/prop-left",
+      "file": "tunnel-interior/prop-left.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "tunnel-interior"
+        ],
+        "lighting": [
+          "interior"
+        ],
+        "role": [
+          "prop-left"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "4830c69e588a1e4ce17470e41c11e77fcc13f3b16a3c8d16e82c6434c283d70a",
+      "provenanceFile": "tunnel-interior/prop-left.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        52,
+        48,
+        1223,
+        1213
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.4527616889112734,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.04146730462519936,
+          0.03827751196172249,
+          0.024720893141945772,
+          0.03269537480063796
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "tunnel-interior/prop-right",
+      "file": "tunnel-interior/prop-right.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "tunnel-interior"
+        ],
+        "lighting": [
+          "interior"
+        ],
+        "role": [
+          "prop-right"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "e78751100d52280b2c93b6aa613cc160b1ad66ef2019caaf012b6d57d91609dd",
+      "provenanceFile": "tunnel-interior/prop-right.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        28,
+        28,
+        1238,
+        1212
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.3922840848678169,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.022328548644338118,
+          0.022328548644338118,
+          0.012759170653907496,
+          0.03349282296650718
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "open-road/backdrop",
+      "file": "open-road/backdrop.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "location": [
+          "open-road"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "background"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "adb4fce128bacdf505ee659e82a9ddc7a43373d14e15cdb1c4e830c1d7f34090",
+      "provenanceFile": "open-road/backdrop.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "open-road/ground",
+      "file": "open-road/ground.png",
+      "category": "ground",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground",
+      "tags": {
+        "location": [
+          "open-road"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "ground"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "floor"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "0c70e63cef12f106726b04a289d289e72a18e01bbbb6ff075346d6e75e1703ce",
+      "provenanceFile": "open-road/ground.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        508,
+        1672,
+        941
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5303562076382144,
+        "borderPixelsAt32": 2532,
+        "normalizedMarginsAt32": [
+          0,
+          0.5398512221041445,
+          0,
+          0
+        ]
+      },
+      "medianCenterHorizonY": 512,
+      "bottomAlphaRange": [
+        244,
+        254
+      ],
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "open-road/prop-left",
+      "file": "open-road/prop-left.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "open-road"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "prop-left"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "0e4b8f9fb75cb970c520462899a0fa775b86ccd40d253adc01a4d204c8b3d96e",
+      "provenanceFile": "open-road/prop-left.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        18,
+        268,
+        1237,
+        1041
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.6087130433013083,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.014354066985645933,
+          0.21371610845295055,
+          0.013556618819776715,
+          0.16985645933014354
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "open-road/prop-right",
+      "file": "open-road/prop-right.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "open-road"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "prop-right"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "ba0f2746b25d5e8ecf9642b3d6d29e582361b3ebe80b84adc8480d0c0f3c6c53",
+      "provenanceFile": "open-road/prop-right.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        137,
+        45,
+        1155,
+        1220
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.6911821564931613,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.10925039872408293,
+          0.03588516746411483,
+          0.07894736842105263,
+          0.02711323763955343
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "dungeon-stairs/backdrop",
+      "file": "dungeon-stairs/backdrop.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "location": [
+          "dungeon-stairs"
+        ],
+        "lighting": [
+          "interior"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "background"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "63b21978194762a2792a642ddbc39e005dd664d0e940d5a732fb96c902d4109f",
+      "provenanceFile": "dungeon-stairs/backdrop.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "dungeon-stairs/prop-left",
+      "file": "dungeon-stairs/prop-left.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "dungeon-stairs"
+        ],
+        "lighting": [
+          "interior"
+        ],
+        "role": [
+          "prop-left"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "6273bafce4cd51da6a525e2ab402fcbba4a841fb4d249fd4a644b594a0ba37ec",
+      "provenanceFile": "dungeon-stairs/prop-left.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        52,
+        13,
+        1235,
+        1217
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5480694632041899,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.04146730462519936,
+          0.01036682615629984,
+          0.015151515151515152,
+          0.029505582137161084
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "boss-arena-interior/backdrop",
+      "file": "boss-arena-interior/backdrop.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "location": [
+          "boss-arena-interior"
+        ],
+        "lighting": [
+          "interior"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "background"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "7494d4107889c01ce7c2713d0132128326b652969c9132c0005cad8ed2f8133d",
+      "provenanceFile": "boss-arena-interior/backdrop.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "boss-arena-interior/prop-left",
+      "file": "boss-arena-interior/prop-left.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "boss-arena-interior"
+        ],
+        "lighting": [
+          "interior"
+        ],
+        "role": [
+          "prop-left"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "8ec782c3d32184e5376cb2d7731ae80d357a1891bada42d6bc8f2808fc5a5afc",
+      "provenanceFile": "boss-arena-interior/prop-left.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        209,
+        4,
+        1235,
+        1234
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.42912377362138127,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.16666666666666666,
+          0.003189792663476874,
+          0.015151515151515152,
+          0.01594896331738437
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "boss-arena-exterior/backdrop",
+      "file": "boss-arena-exterior/backdrop.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "location": [
+          "boss-arena-exterior"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "background"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "3b9fd114d1a3ccbc10cc814c848f7a37dcd48d12c91cf6cd944da7f789caa884",
+      "provenanceFile": "boss-arena-exterior/backdrop.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "castle-throne-room/backdrop",
+      "file": "castle-throne-room/backdrop.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "location": [
+          "castle-throne-room"
+        ],
+        "lighting": [
+          "interior"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "background"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "47d6e4ba047594374396e027cfaa19a4838ff3a452eb3afd74f793f4d636362e",
+      "provenanceFile": "castle-throne-room/backdrop.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "castle-throne-room/ground",
+      "file": "castle-throne-room/ground.png",
+      "category": "ground",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground",
+      "tags": {
+        "location": [
+          "castle-throne-room"
+        ],
+        "lighting": [
+          "interior"
+        ],
+        "role": [
+          "ground"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "floor"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "fb095100e607acee3d3044a62afb18f8e7bde2188154f31e5b5baee79fc892cf",
+      "provenanceFile": "castle-throne-room/ground.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        528,
+        1672,
+        941
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5538620728228648,
+        "borderPixelsAt32": 2494,
+        "normalizedMarginsAt32": [
+          0,
+          0.5611052072263549,
+          0,
+          0
+        ]
+      },
+      "medianCenterHorizonY": 529,
+      "bottomAlphaRange": [
+        248,
+        254
+      ],
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "castle-throne-room/prop-left",
+      "file": "castle-throne-room/prop-left.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "castle-throne-room"
+        ],
+        "lighting": [
+          "interior"
+        ],
+        "role": [
+          "prop-left"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "26b19a41147aa0e99e0ffb8a609aaa9eb6ae4769ab3f4e34c223ca595dd4ec83",
+      "provenanceFile": "castle-throne-room/prop-left.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        282,
+        84,
+        995,
+        1144
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.6823014837368905,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.22488038277511962,
+          0.06698564593301436,
+          0.2065390749601276,
+          0.08771929824561403
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "volcanic-castle-exterior/backdrop",
+      "file": "volcanic-castle-exterior/backdrop.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "location": [
+          "volcanic-castle-exterior"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "background"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "e639a90e683d2775d6a942012fc104ee8914b3c3d0bd6f83b47483e5c00f1a60",
+      "provenanceFile": "volcanic-castle-exterior/backdrop.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "volcanic-castle-exterior/ground",
+      "file": "volcanic-castle-exterior/ground.png",
+      "category": "ground",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground",
+      "tags": {
+        "location": [
+          "volcanic-castle-exterior"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "ground"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "floor"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "10d93555a5773dfc8d031c29b03e0f3c998f5e96865d1e83942913b78a919d4a",
+      "provenanceFile": "volcanic-castle-exterior/ground.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        532,
+        1672,
+        941
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5671083139691563,
+        "borderPixelsAt32": 2482,
+        "normalizedMarginsAt32": [
+          0,
+          0.565356004250797,
+          0,
+          0
+        ]
+      },
+      "medianCenterHorizonY": 540,
+      "bottomAlphaRange": [
+        238,
+        254
+      ],
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "volcanic-castle-exterior/prop-left",
+      "file": "volcanic-castle-exterior/prop-left.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "volcanic-castle-exterior"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "prop-left"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "cc1a6f3a6e8e83bb63396bed0edc25f7b0090168981d7db62d5de46b0f20b700",
+      "provenanceFile": "volcanic-castle-exterior/prop-left.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        38,
+        17,
+        1223,
+        1225
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.4692550028107822,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.030303030303030304,
+          0.013556618819776715,
+          0.024720893141945772,
+          0.023125996810207338
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "volcanic-castle-exterior/prop-right",
+      "file": "volcanic-castle-exterior/prop-right.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "volcanic-castle-exterior"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "prop-right"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "02782eba2414c41cde9f40498750f9608badb87e26042873b6ad40b826bfcd75",
+      "provenanceFile": "volcanic-castle-exterior/prop-right.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        81,
+        53,
+        1178,
+        1203
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5430215018479939,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.0645933014354067,
+          0.04226475279106858,
+          0.06060606060606061,
+          0.04066985645933014
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "volcanic-castle-interior/backdrop",
+      "file": "volcanic-castle-interior/backdrop.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "location": [
+          "volcanic-castle-interior"
+        ],
+        "lighting": [
+          "interior"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "background"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "9a51ba31718829c29b3848c1ce7b22a69fdc19de4680b0a83c6073b4c6f68ef5",
+      "provenanceFile": "volcanic-castle-interior/backdrop.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "cinder-tower/backdrop",
+      "file": "cinder-tower/backdrop.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "location": [
+          "cinder-tower"
+        ],
+        "lighting": [
+          "interior"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "background"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "cd639fca433e14d80aef80f6600a77e525251573e86cd23f2c1cea1152e3aa46",
+      "provenanceFile": "cinder-tower/backdrop.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "cinder-tower/prop-left",
+      "file": "cinder-tower/prop-left.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "cinder-tower"
+        ],
+        "lighting": [
+          "interior"
+        ],
+        "role": [
+          "prop-left"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "30bc517c2f5fa614ba0f4313de84e691375d1d458e75a174c8eafd7f447f5f4c",
+      "provenanceFile": "cinder-tower/prop-left.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        198,
+        50,
+        1030,
+        1188
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.6615309478568103,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.15789473684210525,
+          0.03987240829346093,
+          0.17862838915470494,
+          0.05263157894736842
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "astrologer-chamber/backdrop",
+      "file": "astrologer-chamber/backdrop.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "location": [
+          "astrologer-chamber"
+        ],
+        "lighting": [
+          "interior"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "background"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "66cd045920ac1bbe700fe1165d146c930603f5da3b9e1127a54443a8aa2bd8f8",
+      "provenanceFile": "astrologer-chamber/backdrop.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "astrologer-chamber/ground",
+      "file": "astrologer-chamber/ground.png",
+      "category": "ground",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-ground",
+      "tags": {
+        "location": [
+          "astrologer-chamber"
+        ],
+        "lighting": [
+          "interior"
+        ],
+        "role": [
+          "ground"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "floor"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGBA",
+      "sha256": "7beb160021927a6bf34986fd8a2f8aff502130adf3140f78595ddd7de98371e0",
+      "provenanceFile": "astrologer-chamber/ground.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        0,
+        426,
+        1672,
+        941
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.4457769145111838,
+        "borderPixelsAt32": 2698,
+        "normalizedMarginsAt32": [
+          0,
+          0.4527098831030818,
+          0,
+          0
+        ]
+      },
+      "medianCenterHorizonY": 427,
+      "bottomAlphaRange": [
+        248,
+        253
+      ],
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "astrologer-chamber/prop-left",
+      "file": "astrologer-chamber/prop-left.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "astrologer-chamber"
+        ],
+        "lighting": [
+          "interior"
+        ],
+        "role": [
+          "prop-left"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "4dfb52247f08d3e69b2bb47f5bc0dd9f16b6c32bf1234f55720976034d5793ca",
+      "provenanceFile": "astrologer-chamber/prop-left.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        243,
+        10,
+        1061,
+        1230
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.6867478613890097,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.1937799043062201,
+          0.007974481658692184,
+          0.15390749601275916,
+          0.019138755980861243
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "astrologer-chamber/prop-right",
+      "file": "astrologer-chamber/prop-right.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "astrologer-chamber"
+        ],
+        "lighting": [
+          "interior"
+        ],
+        "role": [
+          "prop-right"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "05dac93805c664aa3968cfb1c7034b5fac8ba2a0accdd7c561a8c36c19415d68",
+      "provenanceFile": "astrologer-chamber/prop-right.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        240,
+        25,
+        1037,
+        1190
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.5255278801614737,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.19138755980861244,
+          0.019936204146730464,
+          0.17304625199362042,
+          0.051036682615629984
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "intro-forge/prop-left",
+      "file": "intro-forge/prop-left.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "intro-forge"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "prop-left"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "e29f6bd7d625c024c1c3525bcaa61a0565f0b4a599e89cbb321caa79318f64e8",
+      "provenanceFile": "intro-forge/prop-left.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        50,
+        50,
+        1217,
+        1192
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.410684533575493,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.03987240829346093,
+          0.03987240829346093,
+          0.029505582137161084,
+          0.049441786283891544
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "intro-chapel/prop-left",
+      "file": "intro-chapel/prop-left.png",
+      "category": "prop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-prop",
+      "tags": {
+        "location": [
+          "intro-chapel"
+        ],
+        "lighting": [
+          "day"
+        ],
+        "role": [
+          "prop-left"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "near"
+        ]
+      },
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "02013b1027749113557e99bd4d5fe63f70c75cfca4eaa0f7a1d8355e6127fea7",
+      "provenanceFile": "intro-chapel/prop-left.provenance.json",
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visibleBoundsAt32": [
+        41,
+        13,
+        1211,
+        1176
+      ],
+      "alphaQA": {
+        "transparentFraction": 0.4561435304950792,
+        "borderPixelsAt32": 0,
+        "normalizedMarginsAt32": [
+          0.03269537480063796,
+          0.01036682615629984,
+          0.0342902711323764,
+          0.06220095693779904
+        ]
+      },
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    },
+    {
+      "id": "intro-archive/backdrop",
+      "file": "intro-archive/backdrop.png",
+      "category": "backdrop",
+      "status": "draft-unregistered",
+      "productionAssetId": null,
+      "styleFamilyId": "ashen-spire-painted-v1",
+      "styleProfileId": "battlefield-backdrop",
+      "tags": {
+        "location": [
+          "intro-archive"
+        ],
+        "lighting": [
+          "interior"
+        ],
+        "role": [
+          "backdrop"
+        ],
+        "camera": [
+          "player-height",
+          "close-location"
+        ],
+        "depth": [
+          "background"
+        ]
+      },
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB",
+      "sha256": "b4e624acd3f1a5336145eb837b2220acb500d76a614f320f927aa96a2a29240e",
+      "provenanceFile": "intro-archive/backdrop.provenance.json",
+      "styleReview": {
+        "verdict": "approved",
+        "replacedBy": null
+      }
+    }
+  ]
+}

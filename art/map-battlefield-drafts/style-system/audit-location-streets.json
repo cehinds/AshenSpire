@@ -1,0 +1,607 @@
+{
+  "scope": "86 new source paintings. Generating agents inspect every final image; independent composition review is recorded in batch-10 REVIEW.md.",
+  "items": [
+    {
+      "assetKey": "batch-10-location-streets/city-street/backdrop",
+      "verdict": "approved",
+      "reason": "Close stone and timber facades frame a clear street toward an arch; convincingly inside town. Matte weathered materials, modest banner motifs but no lettering. Some fine paving detail.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "8e7d3bfb63f304f31ac0e3d9bcb4d5a7f96454b91cf6c14a39d36026b326ccfd"
+    },
+    {
+      "assetKey": "batch-10-location-streets/city-street/ground",
+      "verdict": "approved",
+      "reason": "Ground-only replacement: worn gray cobblestones, no architecture or objects. Transparent upper field is about61.7%, deeper than52\u201355% requested; adjust placement in composition. Quiet broad floor extends to all lower edges.",
+      "profileId": "battlefield-ground",
+      "sha256": "df388cac1b7afe8dc3f0c9822cf4751adfd4c52ab7900884795b2449b5cbbcf7"
+    },
+    {
+      "assetKey": "batch-10-location-streets/city-street/prop-left",
+      "verdict": "approved",
+      "reason": "Complete tall storefront, blank sign, roof/chimney and doorstep visible. Very narrow top/bottom alpha margins; full solid silhouette retained. Mild low-angle three-quarter view. Small warm lantern is localized.",
+      "profileId": "battlefield-prop",
+      "sha256": "a9aaacbfe9095b70829f474d708b0e499cac037f7d8c07411eb1c1ce70a9f8f6"
+    },
+    {
+      "assetKey": "batch-10-location-streets/city-street/prop-right",
+      "verdict": "approved",
+      "reason": "Complete timber balcony townhouse with closed shutters, stone base and roof. Narrow margins under15%; source silhouette complete. Low player-height view faces gently left.",
+      "profileId": "battlefield-prop",
+      "sha256": "ef49759ac97c2c07108d541eac744c2f306b6329554faca940593cd675a55559"
+    },
+    {
+      "assetKey": "batch-10-location-streets/desert-street/backdrop",
+      "verdict": "approved",
+      "reason": "Close sandstone bazaar walls and awnings create inhabited street depth, open central lane toward shaded arch. Muted dusty ochre and matte timber; merchandise details stay at sides.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "9e2e4a63888b0549d3eec9e817630a6eb32408fb67bbb9596dcf86ca6c422d1e"
+    },
+    {
+      "assetKey": "batch-10-location-streets/desert-street/ground",
+      "verdict": "approved",
+      "reason": "Only dust-worn sandstone floor, no structures or furniture. Broad quiet plane reaches lower edges. Transparent upper area about59%, above52\u201355% request; compose with vertical placement adjustment.",
+      "profileId": "battlefield-ground",
+      "sha256": "0ac0fb00bb5f8bb11ae0e1bacac85d3b611b28055ee91fbc99c4120ad822c332"
+    },
+    {
+      "assetKey": "batch-10-location-streets/desert-street/prop-left",
+      "verdict": "approved",
+      "reason": "Complete sandstone bazaar facade with faded awning, recessed door and rooftop shade. Narrow alpha margins, especially base and sides; solid architecture fully contained, faint edge dust possible.",
+      "profileId": "battlefield-prop",
+      "sha256": "58fdc7f8fe0574d424f98d7d8ef67b8dd6de25b1561394c6bc3e866df40ef1b0"
+    },
+    {
+      "assetKey": "batch-10-location-streets/desert-street/prop-right",
+      "verdict": "approved",
+      "reason": "Complete sandstone house with timber balcony, closed shutters and faded cloth. Low-angle gently left-facing architecture, narrow alpha margins and faint base dust; no ground slab.",
+      "profileId": "battlefield-prop",
+      "sha256": "037cefbec6ac59ba2325d6853b947c16a4f5b4fa127a7137de5a0ff0ef64a858"
+    },
+    {
+      "assetKey": "batch-10-location-streets/jungle-street/backdrop",
+      "verdict": "approved",
+      "reason": "Player stands among nearby stilt houses and mossy retaining walls; foliage rises beyond roofs. Clear central lane and subdued green-gray material family; side detail denser than center.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "1f472543924801477aa1e6a27002d4e467f30ffad73f90720ddfef2efb0577aa"
+    },
+    {
+      "assetKey": "batch-10-location-streets/jungle-street/ground",
+      "verdict": "approved",
+      "reason": "Only gray pavers/compacted earth with moss and roots near edges; no vertical scenery. Transparent upper field about58%, exceeding52\u201355% request. Lower plane fills edges and keeps center quiet.",
+      "profileId": "battlefield-ground",
+      "sha256": "e3bccb8b8f96a018335170aaa1400107cea76c09d4cb7496170bcbabf16a46e5"
+    },
+    {
+      "assetKey": "batch-10-location-streets/jungle-street/prop-left",
+      "verdict": "approved",
+      "reason": "Complete thatched stilt-house facade and side stair with stone foundation, matte aged timber and muted vines. Narrow alpha margins under15%, stair and roof silhouette contained. Ground-level three-quarter view.",
+      "profileId": "battlefield-prop",
+      "sha256": "998c741fdc5e385ed4fc95803005b14f4ddfa8c8826fd32a6ea4dcc4d0f41c75"
+    },
+    {
+      "assetKey": "batch-10-location-streets/jungle-street/prop-right",
+      "verdict": "approved",
+      "reason": "Complete stone/timber house with thatch, shutters and subdued vines. Tall chimney and porch fully visible; narrow alpha margins, particularly sides/base. No terrain slab; mild low-angle perspective.",
+      "profileId": "battlefield-prop",
+      "sha256": "6f458e9bc63764df93c15f3cad80bfed0f116751b05676d97f66ced0f1498f4e"
+    },
+    {
+      "assetKey": "batch-10-location-streets/snowy-street/backdrop",
+      "verdict": "approved",
+      "reason": "Player-height inside street, large nearby cool gray stone/timber facades frame quiet open center; matte snow. Mountains visible above distant gateway but do not replace close street enclosure.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "ae44a1292107c2e047966f25da5d46e5d24412a24f148c84bd4e8967a5320d63"
+    },
+    {
+      "assetKey": "batch-10-location-streets/snowy-street/ground",
+      "verdict": "approved",
+      "reason": "Floor-only matte snowy gray cobblestone plane; clear transparent upper field and uninterrupted quiet lower center, no standing props.",
+      "profileId": "battlefield-ground",
+      "sha256": "6e20646fe28068277b374a2047d23f4dd3c6e6937e8a226df993bb99fb9d56c9"
+    },
+    {
+      "assetKey": "batch-10-location-streets/snowy-street/prop-left",
+      "verdict": "approved",
+      "reason": "Complete upright snowy timber and gray-stone facade, closed shutters and door; mild low three-quarter orientation to right. Narrow but intact roof/base margins.",
+      "profileId": "battlefield-prop",
+      "sha256": "1c0d3f078c44cec2e4dbab18541b5dd905096ee600728e4ffbc9529c65630562"
+    },
+    {
+      "assetKey": "batch-10-location-streets/snowy-street/prop-right",
+      "verdict": "approved",
+      "reason": "Complete gray stone shopfront with slate snow roof, porch and blank sign; mild low three-quarter orientation toward left. Narrow margins and fine alpha fringe recorded.",
+      "profileId": "battlefield-prop",
+      "sha256": "3562332a6d28c3564a8c945ed4953123117a4d76e33093600ea6504402412e50"
+    },
+    {
+      "assetKey": "batch-10-location-streets/city-street-night/backdrop",
+      "verdict": "approved",
+      "reason": "Inside street at player height with close facade sides, distant archway and open center. Cool dark materials have localized warm windows/lanterns. Damp floor reflections are stronger than ideal matte but localized and lower backdrop will be overlaid.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "87f5f76076ffcc1f3bb7d20995e85a4670a2f5e985dda243f63838ac6656dd50"
+    },
+    {
+      "assetKey": "batch-10-location-streets/city-street-night/ground",
+      "verdict": "approved",
+      "reason": "Floor-only dim cool blue-gray cobblestones, localized amber pools at far edges without baked fixtures; quiet matte central plane and transparent upper field.",
+      "profileId": "battlefield-ground",
+      "sha256": "3c898c6141d5b4a364e98e2aaa028f4b7f26042b765537673f4cbf6cdcf0e311"
+    },
+    {
+      "assetKey": "batch-10-location-streets/city-street-night/prop-left",
+      "verdict": "approved",
+      "reason": "Replacement retains full chimney and roof within transparent margins; cool slate/stone/timber planes and two small warm upper windows plus local lantern. Upright near facade, no slab.",
+      "profileId": "battlefield-prop",
+      "sha256": "b1dfdbe0477dd55264f49b7e05776168a85fb6088f987fc8b23a7531df3b0fae"
+    },
+    {
+      "assetKey": "batch-10-location-streets/city-street-night/prop-right",
+      "verdict": "approved",
+      "reason": "Full townhouse silhouette with cool material planes, closed shutters and single warm window/lantern; source complete with narrow top margin. Some soft amber alpha fringe around lamp.",
+      "profileId": "battlefield-prop",
+      "sha256": "3d6bb114b39c83ab31af1f70cfed0d18d8449a7c57195725f276007f15818d1b"
+    },
+    {
+      "assetKey": "batch-10-location-streets/village-lane/backdrop",
+      "verdict": "approved",
+      "reason": "Player-height inside humble thatch cottage lane with close facade/fence sides, garden edges and open dirt center. Warm gray/tan weathered materials; no aerial camera. Tiny mountain glimpses and chimney smoke baked into distant backdrop.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "6f861984d54fe33ca0f9f1fa001288c86052e0abd5f3a8d1c582e0715b0fa7f6"
+    },
+    {
+      "assetKey": "batch-10-location-streets/village-lane/ground",
+      "verdict": "approved",
+      "reason": "Floor-only compact earth lane with sparse worn flat stepping stones, grass/grit limited to edge areas; clear upper alpha and quiet center, no fences or standing objects.",
+      "profileId": "battlefield-ground",
+      "sha256": "98f85873a4e9254f29e2044a19c6a069322eec83f923565922056b63081f6148"
+    },
+    {
+      "assetKey": "batch-10-location-streets/village-lane/prop-left",
+      "verdict": "approved",
+      "reason": "Full simple humble thatch/timber/stone cottage with door and shuttered window, low three-quarter toward right; no terrain slab. Fine fringe and narrow side margins.",
+      "profileId": "battlefield-prop",
+      "sha256": "262de1961af0121ba5facf19f2943c54b09fb1d72decc296797b9d4b391167f0"
+    },
+    {
+      "assetKey": "batch-10-location-streets/village-lane/prop-right",
+      "verdict": "approved",
+      "reason": "Replacement complete humble cottage, full thatch roof, chimney and short attached fence with transparent perimeter; no source cropping or ground slab. Mild orientation and muted matte materials.",
+      "profileId": "battlefield-prop",
+      "sha256": "5c0baecee571c406d51af7663dee0a7d23eacab01c91546e6144f0aecff14cee"
+    },
+    {
+      "assetKey": "batch-10-location-streets/dungeon-corridor/backdrop",
+      "verdict": "approved",
+      "reason": "Massive close masonry bays and enclosed ribbed ceiling surround a clear route to the iron door. Cool stone and localized torch amber; some fine floor specular highlights remain.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "7af33df551cb6ce3530342bcbb8296eed4bbfa13b320ff913783d462d88a7e48"
+    },
+    {
+      "assetKey": "batch-10-location-streets/dungeon-corridor/ground",
+      "verdict": "approved",
+      "reason": "Regenerated floor-only layer: broad quiet matte stone/gravel surface, nearly horizontal far edge, empty transparent upper field across full width, opaque floor to bottom/side edges. No walls, columns, lamps, fire, furniture or scene props.",
+      "profileId": "battlefield-ground",
+      "sha256": "cab211482404bc0b09b6978bbd310e0924457be935b875ad7d7eea30bcca978a"
+    },
+    {
+      "assetKey": "batch-10-location-streets/dungeon-corridor/prop-left",
+      "verdict": "approved",
+      "reason": "Complete heavy masonry pier and inward torch bracket; no slab or source clipping. Vertical alpha margins are narrow; faint alpha dust remains.",
+      "profileId": "battlefield-prop",
+      "sha256": "f7e5455636e3dfef8015f1f51a729ed73efc1f0c2ab9f8e8c02bdb011334682f"
+    },
+    {
+      "assetKey": "batch-10-location-streets/dungeon-corridor/prop-right",
+      "verdict": "approved",
+      "reason": "Complete barred recess pier and inward torch, textured gray stone; no ground slab or clipping. Narrow vertical margins and faint alpha dust remain.",
+      "profileId": "battlefield-prop",
+      "sha256": "442aefdae179311fbc165d2eb7ce5bf129e8d69d8aed7a02ad0d2ba92e9dcf98"
+    },
+    {
+      "assetKey": "batch-10-location-streets/cave-interior/backdrop",
+      "verdict": "approved",
+      "reason": "Fully enclosed bare rock cave with nearby rough walls and natural ceiling; central path recedes into darkness without outdoor opening or crystals.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "5eb5c1bf2466fc044fa517fcadbd55d3423c3836fb3786b7d5f6fc6dd12ec487"
+    },
+    {
+      "assetKey": "batch-10-location-streets/cave-interior/ground",
+      "verdict": "approved",
+      "reason": "Regenerated floor-only layer: broad quiet matte stone/gravel surface, nearly horizontal far edge, empty transparent upper field across full width, opaque floor to bottom/side edges. No walls, columns, lamps, fire, furniture or scene props.",
+      "profileId": "battlefield-ground",
+      "sha256": "e2ec32f3242d1c52b55655a849dcdd4fe1c6322173b47d6bb30948b16905679d"
+    },
+    {
+      "assetKey": "batch-10-location-streets/cave-interior/prop-left",
+      "verdict": "approved",
+      "reason": "Complete irregular rock wall with mineral ridges and hanging formations; subdued gray-brown texture. Narrow vertical margins and faint alpha dust remain; no source clipping.",
+      "profileId": "battlefield-prop",
+      "sha256": "3dead9f86ff1691627d19baf2715c40ebd42b2f37f42364706397587e5879d8b"
+    },
+    {
+      "assetKey": "batch-10-location-streets/cave-interior/prop-right",
+      "verdict": "approved",
+      "reason": "Complete tall mineral-ridged rock shoulder with a short side stalagmite; no terrain slab or source clipping. Narrow vertical margins and faint alpha dust remain.",
+      "profileId": "battlefield-prop",
+      "sha256": "1f42f1b425e01aea9dfe90bcde7e811067b872305b6a02fdda3017a6bdacea7b"
+    },
+    {
+      "assetKey": "batch-10-location-streets/cave-approach/backdrop",
+      "verdict": "approved",
+      "reason": "Nearby cave face and dark entrance with clear approach, muted weathered rock, no figures.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "aa6aae95eb44f679c76b905be231a3c6c03c555ae107f24e1ce2a7e629c79224"
+    },
+    {
+      "assetKey": "batch-10-location-streets/cave-approach/ground",
+      "verdict": "approved",
+      "reason": "Floor-only shallow earth/stone plane with quiet middle and edge detail; transparent upper field around 55 percent, lower plane reaches all three edges. Minor irregular alpha fringe retained unchanged.",
+      "profileId": "battlefield-ground",
+      "sha256": "e5cb729119c3035379ca38cfc002a0e42cfd999b339e502e4bc91b88ad8b9d97"
+    },
+    {
+      "assetKey": "batch-10-location-streets/cave-approach/prop-left",
+      "verdict": "approved",
+      "reason": "Complete isolated matte natural framing silhouette, mild low three-quarter view, no terrain slab or scene background. Alpha margins are narrower than 15 percent in places; all solid subject ends remain within canvas. Faint edge dust retained unchanged.",
+      "profileId": "battlefield-prop",
+      "sha256": "6ce664fc6628e0e48d2108eeba718e4171803542ca66e20aebb6dba576f57a50"
+    },
+    {
+      "assetKey": "batch-10-location-streets/cave-approach/prop-right",
+      "verdict": "approved",
+      "reason": "Complete isolated matte natural framing silhouette, mild low three-quarter view, no terrain slab or scene background. Alpha margins are narrower than 15 percent in places; all solid subject ends remain within canvas. Faint edge dust retained unchanged.",
+      "profileId": "battlefield-prop",
+      "sha256": "d4b1f3232382036e4351f4c50d13c345e19e3e6a7170fb35c8f22141c39883a8"
+    },
+    {
+      "assetKey": "batch-10-location-streets/forest-path/backdrop",
+      "verdict": "approved",
+      "reason": "Viewer within close trunks and canopy; quiet open path and muted moss palette.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "b992c3cd851b3320173489b8c723171be712002f7c12233ed50571893f23caac"
+    },
+    {
+      "assetKey": "batch-10-location-streets/forest-path/ground",
+      "verdict": "approved",
+      "reason": "Floor-only shallow earth/stone plane with quiet middle and edge detail; transparent upper field around 55 percent, lower plane reaches all three edges. Minor irregular alpha fringe retained unchanged.",
+      "profileId": "battlefield-ground",
+      "sha256": "aca987e61aafa773a917a9f079c3069022c7b3ca35b2ec4003a798e78dd569da"
+    },
+    {
+      "assetKey": "batch-10-location-streets/forest-path/prop-left",
+      "verdict": "approved",
+      "reason": "Complete isolated matte natural framing silhouette, mild low three-quarter view, no terrain slab or scene background. Alpha margins are narrower than 15 percent in places; all solid subject ends remain within canvas. Faint edge dust retained unchanged.",
+      "profileId": "battlefield-prop",
+      "sha256": "a77996eb662142449d7d5edf6a99bfc9011be3e074cc79123878afa519af8519"
+    },
+    {
+      "assetKey": "batch-10-location-streets/forest-path/prop-right",
+      "verdict": "approved",
+      "reason": "Complete isolated matte natural framing silhouette, mild low three-quarter view, no terrain slab or scene background. Alpha margins are narrower than 15 percent in places; all solid subject ends remain within canvas. Faint edge dust retained unchanged.",
+      "profileId": "battlefield-prop",
+      "sha256": "ccebf860c44d176cddd8dea70c7b789c447cd302116b831d3862ff78b1f1d4d6"
+    },
+    {
+      "assetKey": "batch-10-location-streets/mountain-road/backdrop",
+      "verdict": "approved",
+      "reason": "Player-height broad ledge immediately beside rock face; distant ridges visible beyond and clear central route.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "fdbebda5a60bcbda9a369cc9c18abc60941836157ba0bdcd65011ef4470a1353"
+    },
+    {
+      "assetKey": "batch-10-location-streets/mountain-road/ground",
+      "verdict": "approved",
+      "reason": "Floor-only shallow earth/stone plane with quiet middle and edge detail; transparent upper field around 55 percent, lower plane reaches all three edges. Minor irregular alpha fringe retained unchanged.",
+      "profileId": "battlefield-ground",
+      "sha256": "90498e7b5dcf315ab1bb3513fef107ce541610305032d8cf5c6591b6ea5b81e8"
+    },
+    {
+      "assetKey": "batch-10-location-streets/mountain-road/prop-left",
+      "verdict": "approved",
+      "reason": "Complete isolated matte natural framing silhouette, mild low three-quarter view, no terrain slab or scene background. Alpha margins are narrower than 15 percent in places; all solid subject ends remain within canvas. Faint edge dust retained unchanged.",
+      "profileId": "battlefield-prop",
+      "sha256": "4c96ac5aad4897a06cd48cc7c7b86f756e258ca57e35c7ce3f317743281af66a"
+    },
+    {
+      "assetKey": "batch-10-location-streets/mountain-road/prop-right",
+      "verdict": "approved",
+      "reason": "Complete isolated matte natural framing silhouette, mild low three-quarter view, no terrain slab or scene background. Alpha margins are narrower than 15 percent in places; all solid subject ends remain within canvas. Faint edge dust retained unchanged.",
+      "profileId": "battlefield-prop",
+      "sha256": "80d50db1be3254b7fc07ff616a537f1722e5a26ec8e995c2f191fb3639b97eb6"
+    },
+    {
+      "assetKey": "batch-10-location-streets/castle-grounds/backdrop",
+      "verdict": "approved",
+      "reason": "Nearby curtain walls and tall towers enclose an open courtyard approach; natural gray matte masonry. Some banner heraldic ornament is present, without lettering. Delivered 1672x941; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "42dfd917bc2037f62e0d6be78d67e01034ed5bc9521e7dc395dab8e30e06247b"
+    },
+    {
+      "assetKey": "batch-10-location-streets/castle-grounds/ground",
+      "verdict": "approved",
+      "reason": "Ground-only worn courtyard flags, transparent upper field and uninterrupted opaque lower plane; broad quiet central earth and stone. Delivered 1672x941; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-ground",
+      "sha256": "e94ea3b1f2e070fa04effd766bb759f455e5d328fde9e05f914f89ccd99e9e0c"
+    },
+    {
+      "assetKey": "batch-10-location-streets/castle-grounds/prop-left",
+      "verdict": "approved",
+      "reason": "Complete crenellated wall pier and short wall, tactile gray masonry. Narrow top/right margin but solid silhouette is contained. Delivered 1254x1254; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-prop",
+      "sha256": "881d40d8b1e5a6224b724b175429605764c7692f051aed30b46cbc3bb86059e3"
+    },
+    {
+      "assetKey": "batch-10-location-streets/castle-grounds/prop-right",
+      "verdict": "approved",
+      "reason": "Complete tall buttress with short crenellated parapet, subdued moss and material wear; narrow top margin. Delivered 1254x1254; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-prop",
+      "sha256": "06d4ccfda293097e2c22082916782bc41db0475d009db1ab67f245588526b7e5"
+    },
+    {
+      "assetKey": "batch-10-location-streets/fortress-gate/backdrop",
+      "verdict": "approved",
+      "reason": "Enormous closed iron-and-timber gate dominates nearby rear wall; flanking towers and clear approach convey monumental scale. Delivered 1672x941; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "1b5e42e3b8ba764f8886bdf1af30c155114dac014067104372ba601b1a29d052"
+    },
+    {
+      "assetKey": "batch-10-location-streets/fortress-gate/ground",
+      "verdict": "approved",
+      "reason": "Ground-only worn approach paving with quiet center and sparse edge grit; transparent upper field. Delivered 1672x941; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-ground",
+      "sha256": "4f8d34eadbf7d96db084f621f9d68338c72797e70e7397502159236f9d186f13"
+    },
+    {
+      "assetKey": "batch-10-location-streets/fortress-gate/prop-left",
+      "verdict": "approved",
+      "reason": "Complete tower and attached gate-wall section; muted gray stone, contained battlements and base, narrow source margin. Gate leaf is attached architectural detail. Delivered 1254x1254; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-prop",
+      "sha256": "0739a826f6e2d0217ccc700d85c38ee37b3e432b42b7c94bd40638941552550b"
+    },
+    {
+      "assetKey": "batch-10-location-streets/fortress-gate/prop-right",
+      "verdict": "approved",
+      "reason": "Complete buttressed tower with attached gate arch and iron bracket; matte stone and restrained moss, narrow top/base margin. Delivered 1254x1254; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-prop",
+      "sha256": "bcfc6c23a618000701f61857f43c91ee74c52bfb1a89e99cb041026cb953b3ba"
+    },
+    {
+      "assetKey": "batch-10-location-streets/great-tree/backdrop",
+      "verdict": "approved",
+      "reason": "Colossal trunk fills the rear plane immediately behind a clear clearing, immense root shoulders at sides; subdued bark and moss. Delivered 1672x941; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "43f02161aef78d44f1eeb0e765b8ca15534a29974d84b48d0e3d87cef474a269"
+    },
+    {
+      "assetKey": "batch-10-location-streets/great-tree/ground",
+      "verdict": "approved",
+      "reason": "Ground-only woodland floor with sparse leaves and small edge roots and stones; no large tree forms, transparent upper field and opaque bottom. Delivered 1672x941; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-ground",
+      "sha256": "694eaa6feeb7b3c25bbcb79d213578eb01d141e23ace9d741d58b6af8e37b1f2"
+    },
+    {
+      "assetKey": "batch-10-location-streets/great-tree/prop-left",
+      "verdict": "approved",
+      "reason": "Complete irregular ancient trunk/root buttress with naturally broken branching crown; dark matte bark, limited moss, contained solid silhouette with narrow margins. Delivered 1254x1254; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-prop",
+      "sha256": "de0fe38ca2a7d6a6812e604a971c12558f5fb55779eaebfce8e6b35e4860297c"
+    },
+    {
+      "assetKey": "batch-10-location-streets/great-tree/prop-right",
+      "verdict": "approved",
+      "reason": "Complete mossy root arch integrated with small rock cluster, irregular natural silhouette and transparent arch opening; narrow side margin. Delivered 1254x1254; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-prop",
+      "sha256": "1b235d39a2bc2acac07c680bfa21ce785d2b464908bf4e3c8a9b611cf2c185dc"
+    },
+    {
+      "assetKey": "batch-10-location-streets/tunnel-interior/backdrop",
+      "verdict": "approved",
+      "reason": "Repeated old round masonry arches and rock shoulders enclose a clear central route. Restrained local lamps; floor has some concentrated amber highlights.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "eb1ed8c77ccb95f469860cf3be4645b936537dcc8638adbc57d6caa571e6d041"
+    },
+    {
+      "assetKey": "batch-10-location-streets/tunnel-interior/ground",
+      "verdict": "approved",
+      "reason": "Regenerated floor-only layer: broad quiet matte stone/gravel surface, nearly horizontal far edge, empty transparent upper field across full width, opaque floor to bottom/side edges. No walls, columns, lamps, fire, furniture or scene props.",
+      "profileId": "battlefield-ground",
+      "sha256": "45ac2b3f22809e33dd680e223f91b6c0c9436a4bd00148ec9f6ae55d18a3fce8"
+    },
+    {
+      "assetKey": "batch-10-location-streets/tunnel-interior/prop-left",
+      "verdict": "approved",
+      "reason": "Complete isolated masonry arch and lamp; both bases fully visible, no terrain slab or source clipping. Wider arch must be placed at viewport side to protect combat center. Narrow margins and faint alpha dust remain.",
+      "profileId": "battlefield-prop",
+      "sha256": "4830c69e588a1e4ce17470e41c11e77fcc13f3b16a3c8d16e82c6434c283d70a"
+    },
+    {
+      "assetKey": "batch-10-location-streets/tunnel-interior/prop-right",
+      "verdict": "approved",
+      "reason": "Complete rock-backed masonry pier, partial architectural arch segment and lamp; all source silhouette edges retained without canvas clipping. Narrow margins and faint alpha dust remain.",
+      "profileId": "battlefield-prop",
+      "sha256": "e78751100d52280b2c93b6aa613cc160b1ad66ef2019caaf012b6d57d91609dd"
+    },
+    {
+      "assetKey": "batch-10-location-streets/open-road/backdrop",
+      "verdict": "approved",
+      "reason": "Player-height broad old countryside road with nearby fence edges, low hills and open center; subdued natural earth and foliage. Delivered 1672x941; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "adb4fce128bacdf505ee659e82a9ddc7a43373d14e15cdb1c4e830c1d7f34090"
+    },
+    {
+      "assetKey": "batch-10-location-streets/open-road/ground",
+      "verdict": "approved",
+      "reason": "Ground-only compacted road and gravel, quiet central strip and subtle edge ruts; transparent upper field, no upright props. Delivered 1672x941; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-ground",
+      "sha256": "0c70e63cef12f106726b04a289d289e72a18e01bbbb6ff075346d6e75e1703ce"
+    },
+    {
+      "assetKey": "batch-10-location-streets/open-road/prop-left",
+      "verdict": "approved",
+      "reason": "Complete short aged timber fence and stone marker with small vegetated footing, no lettering; narrow side margin and fine plant alpha at base. Delivered 1254x1254; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-prop",
+      "sha256": "0e4b8f9fb75cb970c520462899a0fa775b86ccd40d253adc01a4d204c8b3d96e"
+    },
+    {
+      "assetKey": "batch-10-location-streets/open-road/prop-right",
+      "verdict": "approved",
+      "reason": "Complete blank wooden signpost and low rock/grass footing; weathered matte wood, all board tips and base contained. Delivered 1254x1254; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-prop",
+      "sha256": "ba0f2746b25d5e8ecf9642b3d6d29e582361b3ebe80b84adc8480d0c0f3c6c53"
+    },
+    {
+      "assetKey": "batch-10-location-streets/dungeon-stairs/backdrop",
+      "verdict": "approved",
+      "reason": "Enclosed low viewpoint with large stairs at right, repeating arches and open central landing; cool worn masonry with local torchlight, no sky or precipitation.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "63b21978194762a2792a642ddbc39e005dd664d0e940d5a732fb96c902d4109f"
+    },
+    {
+      "assetKey": "batch-10-location-streets/dungeon-stairs/prop-left",
+      "verdict": "approved",
+      "reason": "Complete masonry stair flight and parapet with small lamps, no surrounding floor slab; low three-quarter silhouette faces central stage. Alpha margins narrow but solid silhouette intact.",
+      "profileId": "battlefield-prop",
+      "sha256": "6273bafce4cd51da6a525e2ab402fcbba4a841fb4d249fd4a644b594a0ba37ec"
+    },
+    {
+      "assetKey": "batch-10-location-streets/boss-arena-interior/backdrop",
+      "verdict": "approved",
+      "reason": "Monumental circular chamber with vast sealed gate, towering columns and unoccupied center. Hooded forms are architectural stone statues, no living figures; floor light reflections remain subdued.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "7494d4107889c01ce7c2713d0132128326b652969c9132c0005cad8ed2f8133d"
+    },
+    {
+      "assetKey": "batch-10-location-streets/boss-arena-interior/prop-left",
+      "verdict": "approved",
+      "reason": "Complete dark iron gate leaf and masonry hinge support isolated on alpha, worn matte materials and small torch. Narrow top/bottom margins but all finials and bottom teeth retained.",
+      "profileId": "battlefield-prop",
+      "sha256": "8ec782c3d32184e5376cb2d7731ae80d357a1891bada42d6bc8f2808fc5a5afc"
+    },
+    {
+      "assetKey": "batch-10-location-streets/boss-arena-exterior/backdrop",
+      "verdict": "approved",
+      "reason": "Vast empty ruined open-air arena, surrounding tall walls and sealed far gate; no fighters. Restrained circular floor pattern remains visible.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "3b9fd114d1a3ccbc10cc814c848f7a37dcd48d12c91cf6cd944da7f789caa884"
+    },
+    {
+      "assetKey": "batch-10-location-streets/castle-throne-room/backdrop",
+      "verdict": "approved",
+      "reason": "Vaulted castle hall with side columns, burgundy banners and distant empty dais; no throne baked into scene, broad clear combat floor and soft interior light.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "47d6e4ba047594374396e027cfaa19a4838ff3a452eb3afd74f793f4d636362e"
+    },
+    {
+      "assetKey": "batch-10-location-streets/castle-throne-room/ground",
+      "verdict": "approved",
+      "reason": "Floor-only worn stone flags and subdued burgundy runner; no furniture, columns, stairs or fixtures. Empty transparent upper field and opaque floor extends to both sides and bottom.",
+      "profileId": "battlefield-ground",
+      "sha256": "fb095100e607acee3d3044a62afb18f8e7bde2188154f31e5b5baee79fc892cf"
+    },
+    {
+      "assetKey": "batch-10-location-streets/castle-throne-room/prop-left",
+      "verdict": "approved",
+      "reason": "Complete dark timber throne with aged bronze lion fittings and faded burgundy upholstery; all finials and feet retained on alpha, no dais or ground platform. Margins below requested 15 percent but silhouette intact.",
+      "profileId": "battlefield-prop",
+      "sha256": "26b19a41147aa0e99e0ffb8a609aaa9eb6ae4769ab3f4e34c223ca595dd4ec83"
+    },
+    {
+      "assetKey": "batch-10-location-streets/volcanic-castle-exterior/backdrop",
+      "verdict": "approved",
+      "reason": "Nearby towering basalt castle and side masonry frame an open court; dark neutral ash atmosphere, localized ember accents and distant lava hints. No lava river blocks center. Delivered 1672x941; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "e639a90e683d2775d6a942012fc104ee8914b3c3d0bd6f83b47483e5c00f1a60"
+    },
+    {
+      "assetKey": "batch-10-location-streets/volcanic-castle-exterior/ground",
+      "verdict": "approved",
+      "reason": "Ground-only dark matte basalt flag surface with clear quiet center, orange fissures confined to outer margins; upper field transparent. Delivered 1672x941; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-ground",
+      "sha256": "10d93555a5773dfc8d031c29b03e0f3c998f5e96865d1e83942913b78a919d4a"
+    },
+    {
+      "assetKey": "batch-10-location-streets/volcanic-castle-exterior/prop-left",
+      "verdict": "approved",
+      "reason": "Complete basalt wall pier and battlement section with dark matte stone and narrow localized orange cracks; narrow margins, no broad glow. Delivered 1254x1254; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-prop",
+      "sha256": "cc1a6f3a6e8e83bb63396bed0edc25f7b0090168981d7db62d5de46b0f20b700"
+    },
+    {
+      "assetKey": "batch-10-location-streets/volcanic-castle-exterior/prop-right",
+      "verdict": "approved",
+      "reason": "Complete basalt buttress/parapet silhouette with ash wear, dark matte stone and small fissure accents; no broad orange wash. Delivered 1254x1254; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-prop",
+      "sha256": "02782eba2414c41cde9f40498750f9608badb87e26042873b6ad40b826bfcd75"
+    },
+    {
+      "assetKey": "batch-10-location-streets/volcanic-castle-interior/backdrop",
+      "verdict": "approved",
+      "reason": "Enclosed basalt hall with close receding masonry ribs, distant doorway and clear broad lower floor; restrained ember fissures and local braziers, no lava river, sky or precipitation.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "9a51ba31718829c29b3848c1ce7b22a69fdc19de4680b0a83c6073b4c6f68ef5"
+    },
+    {
+      "assetKey": "batch-10-location-streets/cinder-tower/backdrop",
+      "verdict": "approved",
+      "reason": "Tall circular enclosed basalt tower walls and narrow high slit windows convey scale; clear lower center, localized ember accents, no outdoor panorama or rain.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "cd639fca433e14d80aef80f6600a77e525251573e86cd23f2c1cea1152e3aa46"
+    },
+    {
+      "assetKey": "batch-10-location-streets/cinder-tower/prop-left",
+      "verdict": "approved",
+      "reason": "Complete curved basalt stair flight with iron railing, all finials and step ends retained. Matte charcoal stone and tiny ember accents, isolated without surrounding floor; alpha margin narrow at top.",
+      "profileId": "battlefield-prop",
+      "sha256": "30bc517c2f5fa614ba0f4313de84e691375d1d458e75a174c8eafd7f447f5f4c"
+    },
+    {
+      "assetKey": "batch-10-location-streets/astrologer-chamber/backdrop",
+      "verdict": "approved",
+      "reason": "Enclosed vaulted observatory with tall night windows, bronze orrery overhead, side work alcove and clear lower center; cool stone with local lamps, no people or labels. Central floor design is decorative rather than text.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "66cd045920ac1bbe700fe1165d146c930603f5da3b9e1127a54443a8aa2bd8f8"
+    },
+    {
+      "assetKey": "batch-10-location-streets/astrologer-chamber/ground",
+      "verdict": "approved",
+      "reason": "Independent floor-only worn gray flags with sparse aged bronze rings, no furniture or architectural fixtures. Broad quiet central plane and transparent upper field; far floor edge sits slightly above requested 52 percent.",
+      "profileId": "battlefield-ground",
+      "sha256": "7beb160021927a6bf34986fd8a2f8aff502130adf3140f78595ddd7de98371e0"
+    },
+    {
+      "assetKey": "batch-10-location-streets/astrologer-chamber/prop-left",
+      "verdict": "approved",
+      "reason": "Complete aged bronze armillary sphere on dark wooden tripod; matte metal rings, intact finial and feet, no table or slab, isolated alpha. Top and lower margins narrow but no solid clipping.",
+      "profileId": "battlefield-prop",
+      "sha256": "4dfb52247f08d3e69b2bb47f5bc0dd9f16b6c32bf1234f55720976034d5793ca"
+    },
+    {
+      "assetKey": "batch-10-location-streets/astrologer-chamber/prop-right",
+      "verdict": "approved",
+      "reason": "Complete tall dark timber bookcase with old books, rolled charts and small subdued bronze instruments; no readable lettering, no floor slab, intact finials and feet. Margins narrow but silhouette complete.",
+      "profileId": "battlefield-prop",
+      "sha256": "05dac93805c664aa3968cfb1c7034b5fac8ba2a0accdd7c561a8c36c19415d68"
+    },
+    {
+      "assetKey": "batch-10-location-streets/intro-forge/prop-left",
+      "verdict": "approved",
+      "reason": "Complete anvil, leather bellows and compact hearth silhouette on alpha; matte aged iron, timber and masonry with localized ember. Margins narrower than 15 percent, no solid clipping.",
+      "profileId": "battlefield-prop",
+      "sha256": "e29f6bd7d625c024c1c3525bcaa61a0565f0b4a599e89cbb321caa79318f64e8"
+    },
+    {
+      "assetKey": "batch-10-location-streets/intro-chapel/prop-left",
+      "verdict": "approved",
+      "reason": "Complete pointed chapel facade, closed doors, stone flame relief and small brazier; restrained amber against gray masonry, no terrain slab or readable text. Top margin narrow but finial complete.",
+      "profileId": "battlefield-prop",
+      "sha256": "02013b1027749113557e99bd4d5fe63f70c75cfca4eaa0f7a1d8355e6127fea7"
+    },
+    {
+      "assetKey": "batch-10-location-streets/intro-archive/backdrop",
+      "verdict": "approved",
+      "reason": "Nearby tall shelves and vaulted stone sides enclose a broad open floor with distant reading alcove; no people or lettering. Painted stone has modest light reflections, no precipitation.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "b4e624acd3f1a5336145eb837b2220acb500d76a614f320f927aa96a2a29240e"
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "id": "boss-arena-interior",
+  "label": "Indoor boss arena",
+  "condition": "interior",
+  "interior": true,
+  "tags": {
+    "location": [
+      "boss-arena-interior"
+    ],
+    "lighting": [
+      "interior"
+    ],
+    "camera": [
+      "player-height",
+      "close-location"
+    ]
+  },
+  "productionBinding": null,
+  "layers": [
+    {
+      "role": "backdrop",
+      "asset": "boss-arena-interior/backdrop.png"
+    },
+    {
+      "id": "prop-left",
+      "role": "prop",
+      "asset": "boss-arena-interior/prop-left.png",
+      "placement": {
+        "mode": "side-framing",
+        "side": "left",
+        "innerEdgeU": 0.28,
+        "heightFraction": 1.02,
+        "baseOcclusionPixels": 14,
+        "intentionalViewportCrop": true
+      }
+    },
+    {
+      "id": "prop-right",
+      "role": "prop",
+      "asset": "dungeon-corridor/prop-right.png",
+      "placement": {
+        "mode": "side-framing",
+        "side": "right",
+        "innerEdgeU": 0.72,
+        "heightFraction": 1.02,
+        "baseOcclusionPixels": 14,
+        "intentionalViewportCrop": true
+      }
+    },
+    {
+      "role": "ground",
+      "asset": "dungeon-corridor/ground.png"
+    }
+  ],
+  "reuse": {
+    "ground": "dungeon-corridor/ground",
+    "prop-right": "dungeon-corridor/prop-right"
+  }
+}

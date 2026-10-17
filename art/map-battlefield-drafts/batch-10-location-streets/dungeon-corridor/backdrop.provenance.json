@@ -1,0 +1,25 @@
+{
+  "generator": "OpenAI image_gen",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Tactile hand-painted realistic medieval fantasy, weathered matte stone/timber/rock and subdued natural colors, broad controlled detail, subtle material edges, no heavy cartoon outline, glossy toy rendering or photographic sparkle. Low ground-level player-height near-frontal camera with mild three-quarter perspective, NEVER elevated/isometric map-icon camera. This is an INSIDE-THE-LOCATION layered combat scene. Architecture/rock/trees are nearby framing elements at sides and the middle stays clear for characters. No people, text, lettering, numbers, logos or frames. Keep weather particles separate.\nSetting: Inside a dungeon corridor. Palette: dark weathered gray masonry, desaturated iron, restrained amber torchlight. Lighting: dim neutral/cool interior ambient and restrained local amber light, no daylight sky. Subject: eye-level old dungeon corridor with massive receding masonry bays, distant iron door, quiet center, architecture encloses viewer, no outdoor sky.\nOpaque wide3072x1728 requested. Ground-level view with side framing and depth. No characters, text or large blocking object in central40%.\nNo outdoor sky or precipitation in cave/dungeon interiors. Strong nearby wall framing on both sides and a fully enclosed ceiling. Clear central combat lane. Request 3072x1728 wide landscape.",
+  "sourceOutputPath": "/workspace/generated_images/exec-0dc0eb9e-d4fd-40b5-ad9a-1f4d480dfb6f.png",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-backdrop",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "sha256": "7af33df551cb6ce3530342bcbb8296eed4bbfa13b320ff913783d462d88a7e48",
+  "sourceSha256": "7af33df551cb6ce3530342bcbb8296eed4bbfa13b320ff913783d462d88a7e48",
+  "processing": "Byte-identical original imagegen output; no pixel editing, resizing, trimming or upscaling.",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGB"
+  }
+}

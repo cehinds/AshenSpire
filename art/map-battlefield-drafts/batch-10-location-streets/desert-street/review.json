@@ -1,0 +1,72 @@
+{
+  "items": [
+    {
+      "id": "desert-street/backdrop",
+      "verdict": "approved",
+      "reason": "Close sandstone bazaar walls and awnings create inhabited street depth, open central lane toward shaded arch. Muted dusty ochre and matte timber; merchandise details stay at sides.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "9e2e4a63888b0549d3eec9e817630a6eb32408fb67bbb9596dcf86ca6c422d1e",
+      "actualDimensions": {
+        "width": 1672,
+        "height": 941
+      },
+      "solidAlphaBounds": [
+        0,
+        0,
+        1672,
+        941
+      ]
+    },
+    {
+      "id": "desert-street/ground",
+      "verdict": "approved",
+      "reason": "Only dust-worn sandstone floor, no structures or furniture. Broad quiet plane reaches lower edges. Transparent upper area about59%, above52\u201355% request; compose with vertical placement adjustment.",
+      "profileId": "battlefield-ground",
+      "sha256": "0ac0fb00bb5f8bb11ae0e1bacac85d3b611b28055ee91fbc99c4120ad822c332",
+      "actualDimensions": {
+        "width": 1672,
+        "height": 941
+      },
+      "solidAlphaBounds": [
+        0,
+        561,
+        1672,
+        941
+      ]
+    },
+    {
+      "id": "desert-street/prop-left",
+      "verdict": "approved",
+      "reason": "Complete sandstone bazaar facade with faded awning, recessed door and rooftop shade. Narrow alpha margins, especially base and sides; solid architecture fully contained, faint edge dust possible.",
+      "profileId": "battlefield-prop",
+      "sha256": "58fdc7f8fe0574d424f98d7d8ef67b8dd6de25b1561394c6bc3e866df40ef1b0",
+      "actualDimensions": {
+        "width": 1254,
+        "height": 1254
+      },
+      "solidAlphaBounds": [
+        22,
+        23,
+        1246,
+        1226
+      ]
+    },
+    {
+      "id": "desert-street/prop-right",
+      "verdict": "approved",
+      "reason": "Complete sandstone house with timber balcony, closed shutters and faded cloth. Low-angle gently left-facing architecture, narrow alpha margins and faint base dust; no ground slab.",
+      "profileId": "battlefield-prop",
+      "sha256": "037cefbec6ac59ba2325d6853b947c16a4f5b4fa127a7137de5a0ff0ef64a858",
+      "actualDimensions": {
+        "width": 1254,
+        "height": 1254
+      },
+      "solidAlphaBounds": [
+        55,
+        59,
+        1204,
+        1197
+      ]
+    }
+  ]
+}

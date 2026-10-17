@@ -1,0 +1,25 @@
+{
+  "generator": "OpenAI image_gen",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Tactile hand-painted realistic medieval fantasy, weathered matte stone/timber/rock and subdued natural colors, broad controlled detail, subtle material edges, no heavy cartoon outline, glossy toy rendering or photographic sparkle. Low ground-level player-height near-frontal camera with mild three-quarter perspective, NEVER elevated/isometric map-icon camera. This is an INSIDE-THE-LOCATION layered combat scene. Architecture/rock/trees are nearby framing elements at sides and the middle stays clear for characters. No people, text, lettering, numbers, logos or frames. Keep weather particles separate.\n\nSetting: Inside a desert bazaar street. Palette: muted ochre sandstone, pale dust, aged dark timber, faded taupe linen. Lighting: soft diffuse daylight, no blazing yellow sunset. Subject: eye-level view down a sandstone oasis bazaar lane between close buildings, modest awnings high at sides, open quiet central lane, distant shaded doorway. Role requirements: Opaque wide3072x1728 requested. Ground-level view with side framing and depth. No characters, text or large blocking object in central40%.",
+  "sourceOutputPath": "/workspace/generated_images/exec-724695ae-f9ae-47a3-ad70-5f5e78bb6016.png",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-backdrop",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "sha256": "9e2e4a63888b0549d3eec9e817630a6eb32408fb67bbb9596dcf86ca6c422d1e",
+  "sourceSha256": "9e2e4a63888b0549d3eec9e817630a6eb32408fb67bbb9596dcf86ca6c422d1e",
+  "processing": "Byte-identical original imagegen output; no pixel editing, resizing, trimming or upscaling.",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGB"
+  }
+}

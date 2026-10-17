@@ -1,0 +1,32 @@
+{
+  "items": [
+    {
+      "id": "astrologer-chamber/backdrop",
+      "verdict": "approved",
+      "reason": "Enclosed vaulted observatory with tall night windows, bronze orrery overhead, side work alcove and clear lower center; cool stone with local lamps, no people or labels. Central floor design is decorative rather than text.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "66cd045920ac1bbe700fe1165d146c930603f5da3b9e1127a54443a8aa2bd8f8"
+    },
+    {
+      "id": "astrologer-chamber/ground",
+      "verdict": "approved",
+      "reason": "Independent floor-only worn gray flags with sparse aged bronze rings, no furniture or architectural fixtures. Broad quiet central plane and transparent upper field; far floor edge sits slightly above requested 52 percent.",
+      "profileId": "battlefield-ground",
+      "sha256": "7beb160021927a6bf34986fd8a2f8aff502130adf3140f78595ddd7de98371e0"
+    },
+    {
+      "id": "astrologer-chamber/prop-left",
+      "verdict": "approved",
+      "reason": "Complete aged bronze armillary sphere on dark wooden tripod; matte metal rings, intact finial and feet, no table or slab, isolated alpha. Top and lower margins narrow but no solid clipping.",
+      "profileId": "battlefield-prop",
+      "sha256": "4dfb52247f08d3e69b2bb47f5bc0dd9f16b6c32bf1234f55720976034d5793ca"
+    },
+    {
+      "id": "astrologer-chamber/prop-right",
+      "verdict": "approved",
+      "reason": "Complete tall dark timber bookcase with old books, rolled charts and small subdued bronze instruments; no readable lettering, no floor slab, intact finials and feet. Margins narrow but silhouette complete.",
+      "profileId": "battlefield-prop",
+      "sha256": "05dac93805c664aa3968cfb1c7034b5fac8ba2a0accdd7c561a8c36c19415d68"
+    }
+  ]
+}

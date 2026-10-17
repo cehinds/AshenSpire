@@ -1,0 +1,56 @@
+{
+  "id": "city-street-night",
+  "label": "Inside a city street at night",
+  "condition": "night",
+  "interior": false,
+  "tags": {
+    "location": [
+      "city-street-night"
+    ],
+    "lighting": [
+      "night"
+    ],
+    "camera": [
+      "player-height",
+      "close-location"
+    ]
+  },
+  "productionBinding": null,
+  "layers": [
+    {
+      "role": "backdrop",
+      "asset": "city-street-night/backdrop.png"
+    },
+    {
+      "id": "prop-left",
+      "role": "prop",
+      "asset": "city-street-night/prop-left.png",
+      "placement": {
+        "mode": "side-framing",
+        "side": "left",
+        "innerEdgeU": 0.28,
+        "heightFraction": 1.02,
+        "baseOcclusionPixels": 14,
+        "intentionalViewportCrop": true
+      }
+    },
+    {
+      "id": "prop-right",
+      "role": "prop",
+      "asset": "city-street-night/prop-right.png",
+      "placement": {
+        "mode": "side-framing",
+        "side": "right",
+        "innerEdgeU": 0.72,
+        "heightFraction": 1.02,
+        "baseOcclusionPixels": 14,
+        "intentionalViewportCrop": true
+      }
+    },
+    {
+      "role": "ground",
+      "asset": "city-street-night/ground.png"
+    }
+  ],
+  "reuse": {}
+}

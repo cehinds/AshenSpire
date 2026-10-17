@@ -1,0 +1,60 @@
+{
+  "id": "volcanic-castle-interior",
+  "label": "Inside a volcanic castle",
+  "condition": "interior",
+  "interior": true,
+  "tags": {
+    "location": [
+      "volcanic-castle-interior"
+    ],
+    "lighting": [
+      "interior"
+    ],
+    "camera": [
+      "player-height",
+      "close-location"
+    ]
+  },
+  "productionBinding": null,
+  "layers": [
+    {
+      "role": "backdrop",
+      "asset": "volcanic-castle-interior/backdrop.png"
+    },
+    {
+      "id": "prop-left",
+      "role": "prop",
+      "asset": "volcanic-castle-exterior/prop-left.png",
+      "placement": {
+        "mode": "side-framing",
+        "side": "left",
+        "innerEdgeU": 0.28,
+        "heightFraction": 1.02,
+        "baseOcclusionPixels": 14,
+        "intentionalViewportCrop": true
+      }
+    },
+    {
+      "id": "prop-right",
+      "role": "prop",
+      "asset": "volcanic-castle-exterior/prop-right.png",
+      "placement": {
+        "mode": "side-framing",
+        "side": "right",
+        "innerEdgeU": 0.72,
+        "heightFraction": 1.02,
+        "baseOcclusionPixels": 14,
+        "intentionalViewportCrop": true
+      }
+    },
+    {
+      "role": "ground",
+      "asset": "volcanic-castle-exterior/ground.png"
+    }
+  ],
+  "reuse": {
+    "ground": "volcanic-castle-exterior/ground",
+    "prop-left": "volcanic-castle-exterior/prop-left",
+    "prop-right": "volcanic-castle-exterior/prop-right"
+  }
+}

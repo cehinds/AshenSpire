@@ -1,0 +1,25 @@
+{
+  "generator": "OpenAI image_gen",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Tactile hand-painted realistic medieval fantasy, weathered matte stone/timber/rock and subdued natural colors, broad controlled detail, subtle material edges, no heavy cartoon outline, glossy toy rendering or photographic sparkle. Low ground-level player-height near-frontal camera with mild three-quarter perspective, NEVER elevated/isometric map-icon camera. This is an INSIDE-THE-LOCATION layered combat scene. Architecture/rock/trees are nearby framing elements at sides and the middle stays clear for characters. No people, text, lettering, numbers, logos or frames. Keep weather particles separate.\n\nSetting: Inside Crownfall Royal Archive. Palette: weathered gray stone, dark timber shelves, aged paper, restrained bronze. Lighting: soft neutral/cool interior window light, restrained warm lamp accents. Subject: player-height interior of a medieval royal archive, tall dark timber bookshelves and vaulted stone side walls, distant reading alcove, quiet open central floor, no readable lettering, no people. Role: Opaque wide3072x1728 requested. Ground-level view with side framing and depth. No characters, text or large blocking object in central40%. Additional constraints: matte hand-painted world family; no people or text; clear center for combat. Fully enclosed architecture, no precipitation or rain graphics. ",
+  "sourceOutputPath": "/workspace/generated_images/exec-c7db048e-152d-46f1-8ddc-70fc4eeaceaf.png",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-backdrop",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "sha256": "b4e624acd3f1a5336145eb837b2220acb500d76a614f320f927aa96a2a29240e",
+  "sourceSha256": "b4e624acd3f1a5336145eb837b2220acb500d76a614f320f927aa96a2a29240e",
+  "processing": "Byte-identical original imagegen output; no pixel editing, resizing, trimming or upscaling.",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGB"
+  }
+}

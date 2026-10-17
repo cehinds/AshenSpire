@@ -1,0 +1,50 @@
+{
+  "generator": "OpenAI image_gen",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Tactile hand-painted realistic medieval fantasy, weathered matte stone/timber/rock and subdued natural colors, broad controlled detail, subtle material edges, no heavy cartoon outline, glossy toy rendering or photographic sparkle. Low ground-level player-height near-frontal camera with mild three-quarter perspective, NEVER elevated/isometric map-icon camera. This is an INSIDE-THE-LOCATION layered combat scene. Architecture/rock/trees are nearby framing elements at sides and the middle stays clear for characters. No people, text, lettering, numbers, logos or frames. Keep weather particles separate.\n\nSetting: Inside a stone city street. Palette: weathered warm-gray stone, aged dark timber, muted plaster, slate roofs. Lighting: soft neutral upper-left daylight. Subject: broad worn cobblestone lane, shallow curb details at far edges, subtle damp wear without mirror puddles. Role requirements: Transparent upper52\u201355%; opaque bottom plane extends fully to left/right/bottom edges. Shallow ground-level perspective and quiet combat center. Wide3072x1728 requested. ONLY flat street floor. Absolutely no buildings, walls, posts, awnings, furniture or vertical objects. All upper 55 percent entirely empty transparent. Opaque paving starts at y=55 percent and fills full lower width.",
+  "sourceOutputPath": "/workspace/generated_images/exec-7619b834-1064-45f8-a2df-a69a9dadb452.png",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-ground",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1672,
+    "height": 940
+  },
+  "sha256": "df388cac1b7afe8dc3f0c9822cf4751adfd4c52ab7900884795b2449b5cbbcf7",
+  "sourceSha256": "df388cac1b7afe8dc3f0c9822cf4751adfd4c52ab7900884795b2449b5cbbcf7",
+  "processing": "Byte-identical original imagegen output; no pixel editing, resizing, trimming or upscaling.",
+  "qa": {
+    "width": 1672,
+    "height": 940,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "visibleBoundsAt32": [
+      0,
+      580,
+      1672,
+      940
+    ],
+    "alphaQA": {
+      "transparentFraction": 0.6089763819607045,
+      "borderPixelsAt32": 2390,
+      "normalizedMarginsAt32": [
+        0.0,
+        0.6170212765957447,
+        0.0,
+        0.0
+      ]
+    },
+    "medianCenterHorizonY": 581,
+    "bottomAlphaRange": [
+      249,
+      254
+    ]
+  }
+}

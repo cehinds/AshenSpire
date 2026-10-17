@@ -1,0 +1,25 @@
+{
+  "generator": "OpenAI image_gen",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Tactile hand-painted realistic medieval fantasy, weathered matte stone/timber/rock and subdued natural colors, broad controlled detail, subtle material edges, no heavy cartoon outline, glossy toy rendering or photographic sparkle. Low ground-level player-height near-frontal camera with mild three-quarter perspective, NEVER elevated/isometric map-icon camera. This is an INSIDE-THE-LOCATION layered combat scene. Architecture/rock/trees are nearby framing elements at sides and the middle stays clear for characters. No people, text, lettering, numbers, logos or frames. Keep weather particles separate.\n\nSetting: Outside a volcanic castle. Palette: charcoal basalt, desaturated ash, dark iron, restrained ember-orange fissures. Light: dim neutral diffuse ash-cloud daylight with sparse ember accents, no huge orange glow.\nSubject: player-height courtyard immediately beside a vast black-basalt castle in a volcanic landscape, nearby walls and tower at sides, subtle distant smoke and ember haze, open fighting center, no huge lava river across floor.\nRole requirements: Opaque wide3072x1728 requested. Ground-level view with side framing and depth. No characters, text or large blocking object in central40%.",
+  "sourceOutputPath": "/workspace/generated_images/exec-08ae6c24-4315-47ae-a61a-ff987ef21719.png",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-backdrop",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "sha256": "e639a90e683d2775d6a942012fc104ee8914b3c3d0bd6f83b47483e5c00f1a60",
+  "sourceSha256": "e639a90e683d2775d6a942012fc104ee8914b3c3d0bd6f83b47483e5c00f1a60",
+  "processing": "Byte-identical original imagegen output; no pixel editing, resizing, trimming or upscaling.",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGB"
+  }
+}

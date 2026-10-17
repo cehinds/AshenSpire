@@ -1,0 +1,18 @@
+{
+  "items": [
+    {
+      "id": "boss-arena-interior/backdrop",
+      "verdict": "approved",
+      "reason": "Monumental circular chamber with vast sealed gate, towering columns and unoccupied center. Hooded forms are architectural stone statues, no living figures; floor light reflections remain subdued.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "7494d4107889c01ce7c2713d0132128326b652969c9132c0005cad8ed2f8133d"
+    },
+    {
+      "id": "boss-arena-interior/prop-left",
+      "verdict": "approved",
+      "reason": "Complete dark iron gate leaf and masonry hinge support isolated on alpha, worn matte materials and small torch. Narrow top/bottom margins but all finials and bottom teeth retained.",
+      "profileId": "battlefield-prop",
+      "sha256": "8ec782c3d32184e5376cb2d7731ae80d357a1891bada42d6bc8f2808fc5a5afc"
+    }
+  ]
+}

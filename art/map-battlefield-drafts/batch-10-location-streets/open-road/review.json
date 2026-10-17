@@ -1,0 +1,32 @@
+{
+  "items": [
+    {
+      "id": "open-road/backdrop",
+      "verdict": "approved",
+      "reason": "Player-height broad old countryside road with nearby fence edges, low hills and open center; subdued natural earth and foliage. Delivered 1672x941; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "adb4fce128bacdf505ee659e82a9ddc7a43373d14e15cdb1c4e830c1d7f34090"
+    },
+    {
+      "id": "open-road/ground",
+      "verdict": "approved",
+      "reason": "Ground-only compacted road and gravel, quiet central strip and subtle edge ruts; transparent upper field, no upright props. Delivered 1672x941; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-ground",
+      "sha256": "0c70e63cef12f106726b04a289d289e72a18e01bbbb6ff075346d6e75e1703ce"
+    },
+    {
+      "id": "open-road/prop-left",
+      "verdict": "approved",
+      "reason": "Complete short aged timber fence and stone marker with small vegetated footing, no lettering; narrow side margin and fine plant alpha at base. Delivered 1254x1254; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-prop",
+      "sha256": "0e4b8f9fb75cb970c520462899a0fa775b86ccd40d253adc01a4d204c8b3d96e"
+    },
+    {
+      "id": "open-road/prop-right",
+      "verdict": "approved",
+      "reason": "Complete blank wooden signpost and low rock/grass footing; weathered matte wood, all board tips and base contained. Delivered 1254x1254; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-prop",
+      "sha256": "ba0f2746b25d5e8ecf9642b3d6d29e582361b3ebe80b84adc8480d0c0f3c6c53"
+    }
+  ]
+}

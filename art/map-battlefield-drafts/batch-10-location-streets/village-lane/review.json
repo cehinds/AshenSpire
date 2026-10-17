@@ -1,0 +1,89 @@
+{
+  "items": [
+    {
+      "id": "village-lane/backdrop",
+      "verdict": "approved",
+      "reason": "Player-height inside humble thatch cottage lane with close facade/fence sides, garden edges and open dirt center. Warm gray/tan weathered materials; no aerial camera. Tiny mountain glimpses and chimney smoke baked into distant backdrop.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "6f861984d54fe33ca0f9f1fa001288c86052e0abd5f3a8d1c582e0715b0fa7f6",
+      "alphaMeasurements": {
+        "dimensions": [
+          1672,
+          941
+        ],
+        "alphaBounds16": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "transparentFraction": 0.0,
+        "opaqueFraction": 1.0
+      }
+    },
+    {
+      "id": "village-lane/ground",
+      "verdict": "approved",
+      "reason": "Floor-only compact earth lane with sparse worn flat stepping stones, grass/grit limited to edge areas; clear upper alpha and quiet center, no fences or standing objects.",
+      "profileId": "battlefield-ground",
+      "sha256": "98f85873a4e9254f29e2044a19c6a069322eec83f923565922056b63081f6148",
+      "alphaMeasurements": {
+        "dimensions": [
+          1672,
+          941
+        ],
+        "alphaBounds16": [
+          0,
+          530,
+          1672,
+          941
+        ],
+        "transparentFraction": 0.5677057645078787,
+        "opaqueFraction": 1.2711713589838765e-06,
+        "upper52TransparentFraction": 0.9773974814336455
+      }
+    },
+    {
+      "id": "village-lane/prop-left",
+      "verdict": "approved",
+      "reason": "Full simple humble thatch/timber/stone cottage with door and shuttered window, low three-quarter toward right; no terrain slab. Fine fringe and narrow side margins.",
+      "profileId": "battlefield-prop",
+      "sha256": "262de1961af0121ba5facf19f2943c54b09fb1d72decc296797b9d4b391167f0",
+      "alphaMeasurements": {
+        "dimensions": [
+          1254,
+          1254
+        ],
+        "alphaBounds16": [
+          18,
+          71,
+          1242,
+          1168
+        ],
+        "transparentFraction": 0.3674875168201786,
+        "opaqueFraction": 0.0002104907040691478
+      }
+    },
+    {
+      "id": "village-lane/prop-right",
+      "verdict": "approved",
+      "reason": "Replacement complete humble cottage, full thatch roof, chimney and short attached fence with transparent perimeter; no source cropping or ground slab. Mild orientation and muted matte materials.",
+      "profileId": "battlefield-prop",
+      "sha256": "5c0baecee571c406d51af7663dee0a7d23eacab01c91546e6144f0aecff14cee",
+      "alphaMeasurements": {
+        "dimensions": [
+          1254,
+          1254
+        ],
+        "alphaBounds16": [
+          69,
+          122,
+          1204,
+          1095
+        ],
+        "transparentFraction": 0.5445540776691621,
+        "opaqueFraction": 0.0005475302000106835
+      }
+    }
+  ]
+}

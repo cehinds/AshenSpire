@@ -1,0 +1,84 @@
+{
+  "formatVersion": 1,
+  "assetBase": "..",
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "status": "draft-close-location-art",
+  "productionBinding": null,
+  "sceneFiles": [
+    "locations/city-street.json",
+    "locations/desert-street.json",
+    "locations/jungle-street.json",
+    "locations/snowy-street.json",
+    "locations/city-street-night.json",
+    "locations/village-lane.json",
+    "locations/dungeon-corridor.json",
+    "locations/cave-interior.json",
+    "locations/cave-approach.json",
+    "locations/forest-path.json",
+    "locations/mountain-road.json",
+    "locations/castle-grounds.json",
+    "locations/fortress-gate.json",
+    "locations/great-tree.json",
+    "locations/tunnel-interior.json",
+    "locations/open-road.json",
+    "locations/dungeon-stairs.json",
+    "locations/boss-arena-interior.json",
+    "locations/boss-arena-exterior.json",
+    "locations/castle-throne-room.json",
+    "locations/volcanic-castle-exterior.json",
+    "locations/volcanic-castle-interior.json",
+    "locations/cinder-tower.json",
+    "locations/astrologer-chamber.json",
+    "locations/intro-forge.json",
+    "locations/intro-chapel.json",
+    "locations/intro-archive.json",
+    "locations/city-street-rain.json"
+  ],
+  "introMap": "intro-map.json",
+  "canvas": {
+    "width": 1672,
+    "height": 941
+  },
+  "cameras": [
+    {
+      "id": "native",
+      "x": 0,
+      "y": 0,
+      "width": 1672,
+      "height": 941
+    },
+    {
+      "id": "landscape",
+      "x": 356,
+      "y": 200,
+      "width": 960,
+      "height": 540
+    },
+    {
+      "id": "portrait",
+      "x": 611,
+      "y": 70,
+      "width": 450,
+      "height": 800
+    },
+    {
+      "id": "ultrawide",
+      "x": 196,
+      "y": 200,
+      "width": 1280,
+      "height": 540
+    }
+  ],
+  "framingPolicy": {
+    "sideProps": "Large near left/right pieces may intentionally extend beyond the viewport. Original source silhouettes remain intact. Keep the inner40% open except explicit rear focal props above the ground.",
+    "layerOrder": [
+      "backdrop",
+      "prop",
+      "ground",
+      "filter",
+      "particles"
+    ],
+    "groundContact": "Use measured center horizon; prop base overlaps ground by declared pixels.",
+    "overscan": "Review static crops only; arbitrary camera motion needs expanded source edges."
+  }
+}

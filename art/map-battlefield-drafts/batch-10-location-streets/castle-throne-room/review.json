@@ -1,0 +1,25 @@
+{
+  "items": [
+    {
+      "id": "castle-throne-room/backdrop",
+      "verdict": "approved",
+      "reason": "Vaulted castle hall with side columns, burgundy banners and distant empty dais; no throne baked into scene, broad clear combat floor and soft interior light.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "47d6e4ba047594374396e027cfaa19a4838ff3a452eb3afd74f793f4d636362e"
+    },
+    {
+      "id": "castle-throne-room/ground",
+      "verdict": "approved",
+      "reason": "Floor-only worn stone flags and subdued burgundy runner; no furniture, columns, stairs or fixtures. Empty transparent upper field and opaque floor extends to both sides and bottom.",
+      "profileId": "battlefield-ground",
+      "sha256": "fb095100e607acee3d3044a62afb18f8e7bde2188154f31e5b5baee79fc892cf"
+    },
+    {
+      "id": "castle-throne-room/prop-left",
+      "verdict": "approved",
+      "reason": "Complete dark timber throne with aged bronze lion fittings and faded burgundy upholstery; all finials and feet retained on alpha, no dais or ground platform. Margins below requested 15 percent but silhouette intact.",
+      "profileId": "battlefield-prop",
+      "sha256": "26b19a41147aa0e99e0ffb8a609aaa9eb6ae4769ab3f4e34c223ca595dd4ec83"
+    }
+  ]
+}

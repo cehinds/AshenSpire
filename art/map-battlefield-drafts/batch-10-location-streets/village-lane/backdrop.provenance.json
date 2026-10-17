@@ -1,0 +1,25 @@
+{
+  "generator": "OpenAI image_gen",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Tactile hand-painted realistic medieval fantasy, weathered matte stone/timber/rock and subdued natural colors, broad controlled detail, subtle material edges, no heavy cartoon outline, glossy toy rendering or photographic sparkle. Low ground-level player-height near-frontal camera with mild three-quarter perspective, NEVER elevated/isometric map-icon camera. This is an INSIDE-THE-LOCATION layered combat scene. Architecture/rock/trees are nearby framing elements at sides and the middle stays clear for characters. No people, text, lettering, numbers, logos or frames. Keep weather particles separate.\n\nSetting: Inside a village lane. Palette: aged brown timber, warm-gray stone, faded tan thatch, muted moss. Lighting: soft neutral daylight. Subject: eye-level view along a small village lane between nearby cottages, low fences and garden edges, distant cottage, clear central walking area. Role: Opaque wide3072x1728 requested. Ground-level view with side framing and depth. No characters, text or large blocking object in central40%.",
+  "sourceOutputPath": "/workspace/generated_images/exec-f6beb788-8c8d-42cc-8305-e9c7f8485003.png",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-backdrop",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "sha256": "6f861984d54fe33ca0f9f1fa001288c86052e0abd5f3a8d1c582e0715b0fa7f6",
+  "sourceSha256": "6f861984d54fe33ca0f9f1fa001288c86052e0abd5f3a8d1c582e0715b0fa7f6",
+  "processing": "Byte-identical original imagegen output; no pixel editing, resizing, trimming or upscaling.",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGB"
+  }
+}

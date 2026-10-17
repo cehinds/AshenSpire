@@ -1,0 +1,45 @@
+{
+  "generator": "OpenAI image_gen",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Tactile hand-painted realistic medieval fantasy, weathered matte stone/timber/rock and subdued natural colors, broad controlled detail, subtle material edges, no heavy cartoon outline, glossy toy rendering or photographic sparkle. Low ground-level player-height near-frontal camera with mild three-quarter perspective, NEVER elevated/isometric map-icon camera. This is an INSIDE-THE-LOCATION layered combat scene. Architecture/rock/trees are nearby framing elements at sides and the middle stays clear for characters. No people, text, lettering, numbers, logos or frames. Keep weather particles separate.\n\nSetting: Along a mountain road. Palette: weathered gray/ochre rock, dusty muted earth, desaturated distant blue-gray ridges. Lighting: soft diffuse upper-left daylight.\nSubject: one tall rugged gray mountain rock-wall shoulder, whole isolated silhouette.\nRole rule: One complete transparent near-side framing prop, near-frontal mild3quarter view toward street center on RIGHT. Request1536square, object central75%, generous alpha margins, fully visible and no terrain slab. Complete solid silhouette fits fully inside source canvas including all roots/branches/stone edges; no contact with any image edge. Transparent empty background, no ground plane, no cast shadow.",
+  "sourceOutputPath": "/workspace/generated_images/exec-9095139c-22ad-4d74-8000-33fb4f4a3983.png",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 1536,
+    "height": 1536
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-prop",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1254,
+    "height": 1254
+  },
+  "sha256": "4c96ac5aad4897a06cd48cc7c7b86f756e258ca57e35c7ce3f317743281af66a",
+  "sourceSha256": "4c96ac5aad4897a06cd48cc7c7b86f756e258ca57e35c7ce3f317743281af66a",
+  "processing": "Byte-identical original imagegen output; no pixel editing, resizing, trimming or upscaling.",
+  "qa": {
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "visibleBoundsAt32": [
+      58,
+      58,
+      1207,
+      1206
+    ],
+    "alphaQA": {
+      "transparentFraction": 0.4775646161946842,
+      "borderPixelsAt32": 0,
+      "normalizedMarginsAt32": [
+        0.046251993620414676,
+        0.046251993620414676,
+        0.037480063795853266,
+        0.03827751196172249
+      ]
+    }
+  }
+}

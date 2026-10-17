@@ -1,0 +1,5 @@
+Ashen Spire shared art family ashen-spire-painted-v1. Tactile hand-painted realistic medieval fantasy, weathered matte stone/timber/rock and subdued natural colors, broad controlled detail, subtle material edges, no heavy cartoon outline, glossy toy rendering or photographic sparkle. Low ground-level player-height near-frontal camera with mild three-quarter perspective, NEVER elevated/isometric map-icon camera. This is an INSIDE-THE-LOCATION layered combat scene. Architecture/rock/trees are nearby framing elements at sides and the middle stays clear for characters. No people, text, lettering, numbers, logos or frames. Keep weather particles separate.
+
+Setting: Inside a forest path. Palette: muted moss and olive foliage, dark bark, warm-gray stones, subdued brown earth. Lighting: soft diffuse canopy daylight, no golden beams or dramatic spotlights.
+Subject: eye-level view within a forest path enclosed by tall trunks and canopy at sides, soft gray-green depth beyond, calm central opening, no buildings.
+Role rule: Opaque wide3072x1728 requested. Ground-level view with side framing and depth. No characters, text or large blocking object in central40%.

@@ -1,0 +1,32 @@
+{
+  "items": [
+    {
+      "id": "great-tree/backdrop",
+      "verdict": "approved",
+      "reason": "Colossal trunk fills the rear plane immediately behind a clear clearing, immense root shoulders at sides; subdued bark and moss. Delivered 1672x941; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "43f02161aef78d44f1eeb0e765b8ca15534a29974d84b48d0e3d87cef474a269"
+    },
+    {
+      "id": "great-tree/ground",
+      "verdict": "approved",
+      "reason": "Ground-only woodland floor with sparse leaves and small edge roots and stones; no large tree forms, transparent upper field and opaque bottom. Delivered 1672x941; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-ground",
+      "sha256": "694eaa6feeb7b3c25bbcb79d213578eb01d141e23ace9d741d58b6af8e37b1f2"
+    },
+    {
+      "id": "great-tree/prop-left",
+      "verdict": "approved",
+      "reason": "Complete irregular ancient trunk/root buttress with naturally broken branching crown; dark matte bark, limited moss, contained solid silhouette with narrow margins. Delivered 1254x1254; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-prop",
+      "sha256": "de0fe38ca2a7d6a6812e604a971c12558f5fb55779eaebfce8e6b35e4860297c"
+    },
+    {
+      "id": "great-tree/prop-right",
+      "verdict": "approved",
+      "reason": "Complete mossy root arch integrated with small rock cluster, irregular natural silhouette and transparent arch opening; narrow side margin. Delivered 1254x1254; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-prop",
+      "sha256": "1b235d39a2bc2acac07c680bfa21ce785d2b464908bf4e3c8a9b611cf2c185dc"
+    }
+  ]
+}

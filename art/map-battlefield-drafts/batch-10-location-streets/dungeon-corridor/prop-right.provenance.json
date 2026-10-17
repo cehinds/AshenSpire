@@ -1,0 +1,45 @@
+{
+  "generator": "OpenAI image_gen",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Tactile hand-painted realistic medieval fantasy, weathered matte stone/timber/rock and subdued natural colors, broad controlled detail, subtle material edges, no heavy cartoon outline, glossy toy rendering or photographic sparkle. Low ground-level player-height near-frontal camera with mild three-quarter perspective, NEVER elevated/isometric map-icon camera. This is an INSIDE-THE-LOCATION layered combat scene. Architecture/rock/trees are nearby framing elements at sides and the middle stays clear for characters. No people, text, lettering, numbers, logos or frames. Keep weather particles separate.\nSetting: Inside a dungeon corridor. Palette: dark weathered gray masonry, desaturated iron, restrained amber torchlight. Lighting: dim neutral/cool interior ambient and restrained local amber light, no daylight sky. Subject: one aged masonry wall pier section with a narrow iron-barred recess.\nOne complete transparent near-side framing prop, near-frontal mild3quarter view toward street center on LEFT. Request1536square, object central75%, generous alpha margins, fully visible and no terrain slab.\nNo outdoor sky or precipitation in cave/dungeon interiors. Request 1536x1536 square. Entire solid subject within canvas, all tips and edges complete, generous transparent margins on every side. No ground slab, no surrounding scene.",
+  "sourceOutputPath": "/workspace/generated_images/exec-9a287a86-1808-41f5-8302-bed7d00e6bb3.png",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 1536,
+    "height": 1536
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-prop",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1254,
+    "height": 1254
+  },
+  "sha256": "442aefdae179311fbc165d2eb7ce5bf129e8d69d8aed7a02ad0d2ba92e9dcf98",
+  "sourceSha256": "442aefdae179311fbc165d2eb7ce5bf129e8d69d8aed7a02ad0d2ba92e9dcf98",
+  "processing": "Byte-identical original imagegen output; no pixel editing, resizing, trimming or upscaling.",
+  "qa": {
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "visibleBoundsAt32": [
+      262,
+      10,
+      992,
+      1236
+    ],
+    "alphaQA": {
+      "transparentFraction": 0.5346495679535216,
+      "borderPixelsAt32": 0,
+      "normalizedMarginsAt32": [
+        0.20893141945773525,
+        0.007974481658692184,
+        0.20893141945773525,
+        0.014354066985645933
+      ]
+    }
+  }
+}

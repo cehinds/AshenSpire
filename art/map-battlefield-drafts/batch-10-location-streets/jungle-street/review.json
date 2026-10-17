@@ -1,0 +1,72 @@
+{
+  "items": [
+    {
+      "id": "jungle-street/backdrop",
+      "verdict": "approved",
+      "reason": "Player stands among nearby stilt houses and mossy retaining walls; foliage rises beyond roofs. Clear central lane and subdued green-gray material family; side detail denser than center.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "1f472543924801477aa1e6a27002d4e467f30ffad73f90720ddfef2efb0577aa",
+      "actualDimensions": {
+        "width": 1672,
+        "height": 941
+      },
+      "solidAlphaBounds": [
+        0,
+        0,
+        1672,
+        941
+      ]
+    },
+    {
+      "id": "jungle-street/ground",
+      "verdict": "approved",
+      "reason": "Only gray pavers/compacted earth with moss and roots near edges; no vertical scenery. Transparent upper field about58%, exceeding52\u201355% request. Lower plane fills edges and keeps center quiet.",
+      "profileId": "battlefield-ground",
+      "sha256": "e3bccb8b8f96a018335170aaa1400107cea76c09d4cb7496170bcbabf16a46e5",
+      "actualDimensions": {
+        "width": 1672,
+        "height": 941
+      },
+      "solidAlphaBounds": [
+        0,
+        545,
+        1672,
+        941
+      ]
+    },
+    {
+      "id": "jungle-street/prop-left",
+      "verdict": "approved",
+      "reason": "Complete thatched stilt-house facade and side stair with stone foundation, matte aged timber and muted vines. Narrow alpha margins under15%, stair and roof silhouette contained. Ground-level three-quarter view.",
+      "profileId": "battlefield-prop",
+      "sha256": "998c741fdc5e385ed4fc95803005b14f4ddfa8c8826fd32a6ea4dcc4d0f41c75",
+      "actualDimensions": {
+        "width": 1254,
+        "height": 1254
+      },
+      "solidAlphaBounds": [
+        18,
+        14,
+        1237,
+        1216
+      ]
+    },
+    {
+      "id": "jungle-street/prop-right",
+      "verdict": "approved",
+      "reason": "Complete stone/timber house with thatch, shutters and subdued vines. Tall chimney and porch fully visible; narrow alpha margins, particularly sides/base. No terrain slab; mild low-angle perspective.",
+      "profileId": "battlefield-prop",
+      "sha256": "6f458e9bc63764df93c15f3cad80bfed0f116751b05676d97f66ced0f1498f4e",
+      "actualDimensions": {
+        "width": 1254,
+        "height": 1254
+      },
+      "solidAlphaBounds": [
+        25,
+        43,
+        1236,
+        1202
+      ]
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "generator": "OpenAI image_gen",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Tactile hand-painted realistic medieval fantasy, weathered matte stone/timber/rock and subdued natural colors, broad controlled detail, subtle material edges, no heavy cartoon outline, glossy toy rendering or photographic sparkle. Low ground-level player-height near-frontal camera with mild three-quarter perspective, NEVER elevated/isometric map-icon camera. This is an INSIDE-THE-LOCATION layered combat scene. Architecture/rock/trees are nearby framing elements at sides and the middle stays clear for characters. No people, text, lettering, numbers, logos or frames. Keep weather particles separate.\nGenerate a FLOOR-ONLY TRANSPARENT GAME LAYER. Setting palette: muted gray-brown rough rock, subdued cool depth, sparse mineral variation. Lighting: dim cool reflected cave ambient, subtle light from viewer side; no neon glow. Material: packed cave gravel and worn stone floor, small pebbles at edges, smooth quiet central path.\nCRITICAL ROLE: ONLY a single flat broad shallow-perspective floor surface occupying the bottom 45 percent of a wide3072x1728 canvas. Entire upper55 percent completely empty transparent alpha, including upper left and upper right corners. Floor spans full left/right/bottom edges. Its far edge is almost horizontal across entire width near55 percent height. NO WALLS, NO COLUMNS, NO STAIRS, NO TORCHES, NO BRAZIERS, NO OBJECTS, NO FIRE, NO FURNITURE, NO ROCK WALLS, NO BOULDERS, NO TIMBER, NO ARCHES. No raised side framing or vignette. No background or surrounding environment. Quiet restrained broad material texture. No sky or precipitation.",
+  "sourceOutputPath": "/workspace/generated_images/exec-1f4f10c4-c113-4fc1-ab59-f7082b6d2149.png",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-ground",
+  "generationHistory": [
+    {
+      "sourceOutputPath": "/workspace/generated_images/exec-d48b2a7c-c74e-4959-861f-b419f6c7f95f.png",
+      "reason": "Rejected raised walls/rocks and lighting props baked into floor layer."
+    }
+  ],
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "sha256": "e2ec32f3242d1c52b55655a849dcdd4fe1c6322173b47d6bb30948b16905679d",
+  "sourceSha256": "e2ec32f3242d1c52b55655a849dcdd4fe1c6322173b47d6bb30948b16905679d",
+  "processing": "Byte-identical original imagegen output; no pixel editing, resizing, trimming or upscaling.",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "visibleBoundsAt32": [
+      0,
+      525,
+      1672,
+      941
+    ],
+    "alphaQA": {
+      "transparentFraction": 0.5506040606297892,
+      "borderPixelsAt32": 2496,
+      "normalizedMarginsAt32": [
+        0.0,
+        0.5579171094580234,
+        0.0,
+        0.0
+      ]
+    },
+    "medianCenterHorizonY": 527,
+    "bottomAlphaRange": [
+      246,
+      254
+    ]
+  }
+}

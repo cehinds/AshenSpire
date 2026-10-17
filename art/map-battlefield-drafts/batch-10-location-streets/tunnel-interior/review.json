@@ -1,0 +1,96 @@
+{
+  "items": [
+    {
+      "id": "tunnel-interior/backdrop",
+      "verdict": "approved",
+      "reason": "Repeated old round masonry arches and rock shoulders enclose a clear central route. Restrained local lamps; floor has some concentrated amber highlights.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "eb1ed8c77ccb95f469860cf3be4645b936537dcc8638adbc57d6caa571e6d041",
+      "actualDimensions": {
+        "width": 1672,
+        "height": 941
+      },
+      "alphaBounds": [
+        0,
+        0,
+        1672,
+        941
+      ],
+      "solidAlphaBounds": [
+        0,
+        0,
+        1672,
+        941
+      ]
+    },
+    {
+      "id": "tunnel-interior/ground",
+      "verdict": "approved",
+      "reason": "Regenerated floor-only layer: broad quiet matte stone/gravel surface, nearly horizontal far edge, empty transparent upper field across full width, opaque floor to bottom/side edges. No walls, columns, lamps, fire, furniture or scene props.",
+      "profileId": "battlefield-ground",
+      "sha256": "45ac2b3f22809e33dd680e223f91b6c0c9436a4bd00148ec9f6ae55d18a3fce8",
+      "actualDimensions": {
+        "width": 1672,
+        "height": 941
+      },
+      "alphaBounds": [
+        0,
+        23,
+        1672,
+        941
+      ],
+      "solidAlphaBounds": [
+        0,
+        522,
+        1672,
+        941
+      ]
+    },
+    {
+      "id": "tunnel-interior/prop-left",
+      "verdict": "approved",
+      "reason": "Complete isolated masonry arch and lamp; both bases fully visible, no terrain slab or source clipping. Wider arch must be placed at viewport side to protect combat center. Narrow margins and faint alpha dust remain.",
+      "profileId": "battlefield-prop",
+      "sha256": "4830c69e588a1e4ce17470e41c11e77fcc13f3b16a3c8d16e82c6434c283d70a",
+      "actualDimensions": {
+        "width": 1254,
+        "height": 1254
+      },
+      "alphaBounds": [
+        0,
+        2,
+        1230,
+        1254
+      ],
+      "solidAlphaBounds": [
+        52,
+        49,
+        1223,
+        1213
+      ]
+    },
+    {
+      "id": "tunnel-interior/prop-right",
+      "verdict": "approved",
+      "reason": "Complete rock-backed masonry pier, partial architectural arch segment and lamp; all source silhouette edges retained without canvas clipping. Narrow margins and faint alpha dust remain.",
+      "profileId": "battlefield-prop",
+      "sha256": "e78751100d52280b2c93b6aa613cc160b1ad66ef2019caaf012b6d57d91609dd",
+      "actualDimensions": {
+        "width": 1254,
+        "height": 1254
+      },
+      "alphaBounds": [
+        0,
+        25,
+        1253,
+        1254
+      ],
+      "solidAlphaBounds": [
+        29,
+        28,
+        1238,
+        1212
+      ]
+    }
+  ]
+}

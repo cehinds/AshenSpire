@@ -1,0 +1,50 @@
+{
+  "generator": "OpenAI image_gen",
+  "prompt": "Ashen Spire shared art family ashen-spire-painted-v1. Tactile hand-painted realistic medieval fantasy, weathered matte stone/timber/rock and subdued natural colors, broad controlled detail, subtle material edges, no heavy cartoon outline, glossy toy rendering or photographic sparkle. Low ground-level player-height near-frontal camera with mild three-quarter perspective, NEVER elevated/isometric map-icon camera. This is an INSIDE-THE-LOCATION layered combat scene. Architecture/rock/trees are nearby framing elements at sides and the middle stays clear for characters. No people, text, lettering, numbers, logos or frames. Keep weather particles separate.\n\nSetting: Inside the astrologer chamber. Palette: weathered gray stone, dark wood, aged subdued bronze, desaturated midnight-blue cloth. Lighting: cool dim interior ambient with restrained warm lamp accents, no magical neon glow. Subject: broad worn gray stone observatory floor with very subtle sparse aged bronze circular inlay near outer edges, center visually quiet, no written symbols or dense star grid. Role: Transparent upper52\u201355%; opaque bottom plane extends fully to left/right/bottom edges. Shallow ground-level perspective and quiet combat center. Wide3072x1728 requested. Additional constraints: matte hand-painted world family; no people or text; clear center for combat. Fully enclosed architecture, no precipitation or rain graphics. ",
+  "sourceOutputPath": "/workspace/generated_images/exec-4ce6e416-44fb-437b-9d8f-a62384f417ab.png",
+  "sourceReferences": [],
+  "requestedDimensions": {
+    "width": 3072,
+    "height": 1728
+  },
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "styleProfileId": "battlefield-ground",
+  "status": "draft-unregistered",
+  "actualDimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "sha256": "7beb160021927a6bf34986fd8a2f8aff502130adf3140f78595ddd7de98371e0",
+  "sourceSha256": "7beb160021927a6bf34986fd8a2f8aff502130adf3140f78595ddd7de98371e0",
+  "processing": "Byte-identical original imagegen output; no pixel editing, resizing, trimming or upscaling.",
+  "qa": {
+    "width": 1672,
+    "height": 941,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "visibleBoundsAt32": [
+      0,
+      426,
+      1672,
+      941
+    ],
+    "alphaQA": {
+      "transparentFraction": 0.4457769145111838,
+      "borderPixelsAt32": 2698,
+      "normalizedMarginsAt32": [
+        0.0,
+        0.4527098831030818,
+        0.0,
+        0.0
+      ]
+    },
+    "medianCenterHorizonY": 427,
+    "bottomAlphaRange": [
+      248,
+      253
+    ]
+  }
+}

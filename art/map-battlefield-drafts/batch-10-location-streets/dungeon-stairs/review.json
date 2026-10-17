@@ -1,0 +1,18 @@
+{
+  "items": [
+    {
+      "id": "dungeon-stairs/backdrop",
+      "verdict": "approved",
+      "reason": "Enclosed low viewpoint with large stairs at right, repeating arches and open central landing; cool worn masonry with local torchlight, no sky or precipitation.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "63b21978194762a2792a642ddbc39e005dd664d0e940d5a732fb96c902d4109f"
+    },
+    {
+      "id": "dungeon-stairs/prop-left",
+      "verdict": "approved",
+      "reason": "Complete masonry stair flight and parapet with small lamps, no surrounding floor slab; low three-quarter silhouette faces central stage. Alpha margins narrow but solid silhouette intact.",
+      "profileId": "battlefield-prop",
+      "sha256": "6273bafce4cd51da6a525e2ab402fcbba4a841fb4d249fd4a644b594a0ba37ec"
+    }
+  ]
+}

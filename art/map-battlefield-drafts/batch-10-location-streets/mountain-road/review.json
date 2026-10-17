@@ -1,0 +1,32 @@
+{
+  "items": [
+    {
+      "id": "mountain-road/backdrop",
+      "verdict": "approved",
+      "reason": "Player-height broad ledge immediately beside rock face; distant ridges visible beyond and clear central route.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "fdbebda5a60bcbda9a369cc9c18abc60941836157ba0bdcd65011ef4470a1353"
+    },
+    {
+      "id": "mountain-road/ground",
+      "verdict": "approved",
+      "reason": "Floor-only shallow earth/stone plane with quiet middle and edge detail; transparent upper field around 55 percent, lower plane reaches all three edges. Minor irregular alpha fringe retained unchanged.",
+      "profileId": "battlefield-ground",
+      "sha256": "90498e7b5dcf315ab1bb3513fef107ce541610305032d8cf5c6591b6ea5b81e8"
+    },
+    {
+      "id": "mountain-road/prop-left",
+      "verdict": "approved",
+      "reason": "Complete isolated matte natural framing silhouette, mild low three-quarter view, no terrain slab or scene background. Alpha margins are narrower than 15 percent in places; all solid subject ends remain within canvas. Faint edge dust retained unchanged.",
+      "profileId": "battlefield-prop",
+      "sha256": "4c96ac5aad4897a06cd48cc7c7b86f756e258ca57e35c7ce3f317743281af66a"
+    },
+    {
+      "id": "mountain-road/prop-right",
+      "verdict": "approved",
+      "reason": "Complete isolated matte natural framing silhouette, mild low three-quarter view, no terrain slab or scene background. Alpha margins are narrower than 15 percent in places; all solid subject ends remain within canvas. Faint edge dust retained unchanged.",
+      "profileId": "battlefield-prop",
+      "sha256": "80d50db1be3254b7fc07ff616a537f1722e5a26ec8e995c2f191fb3639b97eb6"
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "items": [
+    {
+      "id": "fortress-gate/backdrop",
+      "verdict": "approved",
+      "reason": "Enormous closed iron-and-timber gate dominates nearby rear wall; flanking towers and clear approach convey monumental scale. Delivered 1672x941; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "1b5e42e3b8ba764f8886bdf1af30c155114dac014067104372ba601b1a29d052"
+    },
+    {
+      "id": "fortress-gate/ground",
+      "verdict": "approved",
+      "reason": "Ground-only worn approach paving with quiet center and sparse edge grit; transparent upper field. Delivered 1672x941; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-ground",
+      "sha256": "4f8d34eadbf7d96db084f621f9d68338c72797e70e7397502159236f9d186f13"
+    },
+    {
+      "id": "fortress-gate/prop-left",
+      "verdict": "approved",
+      "reason": "Complete tower and attached gate-wall section; muted gray stone, contained battlements and base, narrow source margin. Gate leaf is attached architectural detail. Delivered 1254x1254; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-prop",
+      "sha256": "0739a826f6e2d0217ccc700d85c38ee37b3e432b42b7c94bd40638941552550b"
+    },
+    {
+      "id": "fortress-gate/prop-right",
+      "verdict": "approved",
+      "reason": "Complete buttressed tower with attached gate arch and iron bracket; matte stone and restrained moss, narrow top/base margin. Delivered 1254x1254; original generated PNG retained unchanged. Faint low-alpha peripheral dust may remain.",
+      "profileId": "battlefield-prop",
+      "sha256": "bcfc6c23a618000701f61857f43c91ee74c52bfb1a89e99cb041026cb953b3ba"
+    }
+  ]
+}

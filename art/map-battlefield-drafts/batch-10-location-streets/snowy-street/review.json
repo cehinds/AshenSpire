@@ -1,0 +1,89 @@
+{
+  "items": [
+    {
+      "id": "snowy-street/backdrop",
+      "verdict": "approved",
+      "reason": "Player-height inside street, large nearby cool gray stone/timber facades frame quiet open center; matte snow. Mountains visible above distant gateway but do not replace close street enclosure.",
+      "profileId": "battlefield-backdrop",
+      "sha256": "ae44a1292107c2e047966f25da5d46e5d24412a24f148c84bd4e8967a5320d63",
+      "alphaMeasurements": {
+        "dimensions": [
+          1672,
+          941
+        ],
+        "alphaBounds16": [
+          0,
+          0,
+          1672,
+          941
+        ],
+        "transparentFraction": 0.0,
+        "opaqueFraction": 1.0
+      }
+    },
+    {
+      "id": "snowy-street/ground",
+      "verdict": "approved",
+      "reason": "Floor-only matte snowy gray cobblestone plane; clear transparent upper field and uninterrupted quiet lower center, no standing props.",
+      "profileId": "battlefield-ground",
+      "sha256": "6e20646fe28068277b374a2047d23f4dd3c6e6937e8a226df993bb99fb9d56c9",
+      "alphaMeasurements": {
+        "dimensions": [
+          1672,
+          941
+        ],
+        "alphaBounds16": [
+          0,
+          563,
+          1672,
+          941
+        ],
+        "transparentFraction": 0.6026477228236276,
+        "opaqueFraction": 0.0,
+        "upper52TransparentFraction": 0.9997443762781186
+      }
+    },
+    {
+      "id": "snowy-street/prop-left",
+      "verdict": "approved",
+      "reason": "Complete upright snowy timber and gray-stone facade, closed shutters and door; mild low three-quarter orientation to right. Narrow but intact roof/base margins.",
+      "profileId": "battlefield-prop",
+      "sha256": "1c0d3f078c44cec2e4dbab18541b5dd905096ee600728e4ffbc9529c65630562",
+      "alphaMeasurements": {
+        "dimensions": [
+          1254,
+          1254
+        ],
+        "alphaBounds16": [
+          62,
+          21,
+          1235,
+          1228
+        ],
+        "transparentFraction": 0.3496593993320259,
+        "opaqueFraction": 0.00035039389106374753
+      }
+    },
+    {
+      "id": "snowy-street/prop-right",
+      "verdict": "approved",
+      "reason": "Complete gray stone shopfront with slate snow roof, porch and blank sign; mild low three-quarter orientation toward left. Narrow margins and fine alpha fringe recorded.",
+      "profileId": "battlefield-prop",
+      "sha256": "3562332a6d28c3564a8c945ed4953123117a4d76e33093600ea6504402412e50",
+      "alphaMeasurements": {
+        "dimensions": [
+          1254,
+          1254
+        ],
+        "alphaBounds16": [
+          25,
+          30,
+          1231,
+          1174
+        ],
+        "transparentFraction": 0.3723497884918182,
+        "opaqueFraction": 0.0006257488000122098
+      }
+    }
+  ]
+}
