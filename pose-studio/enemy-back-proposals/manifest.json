@@ -2296,10 +2296,591 @@
       "id": "stitchedKing",
       "name": "The Stitched King",
       "role": "boss",
-      "defaultStance": null,
+      "defaultStance": "neutral",
       "reference": null,
-      "proposals": [],
-      "provisionalDefaultVersion": null
+      "proposals": [
+        {
+          "id": "v01",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "217fe0743aa8cc0bf209a67eedfec6f4881eae6f50ca608891707d3390feb92e",
+            "prompt": "Create exactly TEN rear three-quarter sprite design alternatives for the SAME Stitched King in reference1. Reference2 supplies ONLY gameplay camera, back dominant, turned away facing upper-right. Preserve reference1's very bulky stout heavy humanoid body, squat powerful legs, dark patched stitched leather and iron armor, enclosed black cylindrical helmet topped by dull golden crown, worn belt, crimson ragged cape, massive rectangular chipped butcher cleaver with circular hole near corner, same dark brown iron muted red and gold palette. Do not turn him slender or copy player gear. All ten show BACK of crowned helmet, shoulders, patchwork back armor and cape, no front chest or face, no front poses. Ten subtle distinct back stitch layouts, cape tears and strap routes preserving same costume proportions and silhouette family. Complete full bodies including boots, full cleaver blade and handle in every cell, dark fantasy painterly production game sprite style as reference1. Single transparent PNG canvas exact regular 5 columns by 2 rows, ten independent figures same scale and foot baselines with generous transparent gaps and outer margins. No cropping, no touching, no scene ground text labels numbers. Draft designs not animation. CRITICAL LAYOUT: shrink each figure to occupy at most 78 percent of cell height and 78 percent cell width. Leave fully empty transparent padding above every crown and below every boot, at least 40 pixels on outer canvas edges. Crowns MUST NOT touch top canvas edge. Five equal cells across two equal rows.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/stitchedKing/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "2ed7af50b795df6dd094393d8c5111d7e63379cc"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/stitchedKing/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/stitchedKing/v01.png",
+                  "sha256": "ce401e1191ab83565abcac2930aa6f8ce58af89cb368011332e3521d6155fade",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v02",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "217fe0743aa8cc0bf209a67eedfec6f4881eae6f50ca608891707d3390feb92e",
+            "prompt": "Create exactly TEN rear three-quarter sprite design alternatives for the SAME Stitched King in reference1. Reference2 supplies ONLY gameplay camera, back dominant, turned away facing upper-right. Preserve reference1's very bulky stout heavy humanoid body, squat powerful legs, dark patched stitched leather and iron armor, enclosed black cylindrical helmet topped by dull golden crown, worn belt, crimson ragged cape, massive rectangular chipped butcher cleaver with circular hole near corner, same dark brown iron muted red and gold palette. Do not turn him slender or copy player gear. All ten show BACK of crowned helmet, shoulders, patchwork back armor and cape, no front chest or face, no front poses. Ten subtle distinct back stitch layouts, cape tears and strap routes preserving same costume proportions and silhouette family. Complete full bodies including boots, full cleaver blade and handle in every cell, dark fantasy painterly production game sprite style as reference1. Single transparent PNG canvas exact regular 5 columns by 2 rows, ten independent figures same scale and foot baselines with generous transparent gaps and outer margins. No cropping, no touching, no scene ground text labels numbers. Draft designs not animation. CRITICAL LAYOUT: shrink each figure to occupy at most 78 percent of cell height and 78 percent cell width. Leave fully empty transparent padding above every crown and below every boot, at least 40 pixels on outer canvas edges. Crowns MUST NOT touch top canvas edge. Five equal cells across two equal rows.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/stitchedKing/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "2ed7af50b795df6dd094393d8c5111d7e63379cc"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/stitchedKing/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/stitchedKing/v02.png",
+                  "sha256": "bcd6d4d2783f3da0e2f5c234d8a9a1b79ae1e0f400da1fdfd8abb3929a35babd",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v03",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "217fe0743aa8cc0bf209a67eedfec6f4881eae6f50ca608891707d3390feb92e",
+            "prompt": "Create exactly TEN rear three-quarter sprite design alternatives for the SAME Stitched King in reference1. Reference2 supplies ONLY gameplay camera, back dominant, turned away facing upper-right. Preserve reference1's very bulky stout heavy humanoid body, squat powerful legs, dark patched stitched leather and iron armor, enclosed black cylindrical helmet topped by dull golden crown, worn belt, crimson ragged cape, massive rectangular chipped butcher cleaver with circular hole near corner, same dark brown iron muted red and gold palette. Do not turn him slender or copy player gear. All ten show BACK of crowned helmet, shoulders, patchwork back armor and cape, no front chest or face, no front poses. Ten subtle distinct back stitch layouts, cape tears and strap routes preserving same costume proportions and silhouette family. Complete full bodies including boots, full cleaver blade and handle in every cell, dark fantasy painterly production game sprite style as reference1. Single transparent PNG canvas exact regular 5 columns by 2 rows, ten independent figures same scale and foot baselines with generous transparent gaps and outer margins. No cropping, no touching, no scene ground text labels numbers. Draft designs not animation. CRITICAL LAYOUT: shrink each figure to occupy at most 78 percent of cell height and 78 percent cell width. Leave fully empty transparent padding above every crown and below every boot, at least 40 pixels on outer canvas edges. Crowns MUST NOT touch top canvas edge. Five equal cells across two equal rows.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/stitchedKing/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "2ed7af50b795df6dd094393d8c5111d7e63379cc"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/stitchedKing/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/stitchedKing/v03.png",
+                  "sha256": "a279c481073e19748c435157d3e3a095ef1406ccc282efa7b365a1c8921ca27b",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v04",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "217fe0743aa8cc0bf209a67eedfec6f4881eae6f50ca608891707d3390feb92e",
+            "prompt": "Create exactly TEN rear three-quarter sprite design alternatives for the SAME Stitched King in reference1. Reference2 supplies ONLY gameplay camera, back dominant, turned away facing upper-right. Preserve reference1's very bulky stout heavy humanoid body, squat powerful legs, dark patched stitched leather and iron armor, enclosed black cylindrical helmet topped by dull golden crown, worn belt, crimson ragged cape, massive rectangular chipped butcher cleaver with circular hole near corner, same dark brown iron muted red and gold palette. Do not turn him slender or copy player gear. All ten show BACK of crowned helmet, shoulders, patchwork back armor and cape, no front chest or face, no front poses. Ten subtle distinct back stitch layouts, cape tears and strap routes preserving same costume proportions and silhouette family. Complete full bodies including boots, full cleaver blade and handle in every cell, dark fantasy painterly production game sprite style as reference1. Single transparent PNG canvas exact regular 5 columns by 2 rows, ten independent figures same scale and foot baselines with generous transparent gaps and outer margins. No cropping, no touching, no scene ground text labels numbers. Draft designs not animation. CRITICAL LAYOUT: shrink each figure to occupy at most 78 percent of cell height and 78 percent cell width. Leave fully empty transparent padding above every crown and below every boot, at least 40 pixels on outer canvas edges. Crowns MUST NOT touch top canvas edge. Five equal cells across two equal rows.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/stitchedKing/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "2ed7af50b795df6dd094393d8c5111d7e63379cc"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/stitchedKing/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/stitchedKing/v04.png",
+                  "sha256": "e8f17e9332430325520784d4dd9913877f3dbc93c05dec833fc0584d6446a43f",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v05",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "217fe0743aa8cc0bf209a67eedfec6f4881eae6f50ca608891707d3390feb92e",
+            "prompt": "Create exactly TEN rear three-quarter sprite design alternatives for the SAME Stitched King in reference1. Reference2 supplies ONLY gameplay camera, back dominant, turned away facing upper-right. Preserve reference1's very bulky stout heavy humanoid body, squat powerful legs, dark patched stitched leather and iron armor, enclosed black cylindrical helmet topped by dull golden crown, worn belt, crimson ragged cape, massive rectangular chipped butcher cleaver with circular hole near corner, same dark brown iron muted red and gold palette. Do not turn him slender or copy player gear. All ten show BACK of crowned helmet, shoulders, patchwork back armor and cape, no front chest or face, no front poses. Ten subtle distinct back stitch layouts, cape tears and strap routes preserving same costume proportions and silhouette family. Complete full bodies including boots, full cleaver blade and handle in every cell, dark fantasy painterly production game sprite style as reference1. Single transparent PNG canvas exact regular 5 columns by 2 rows, ten independent figures same scale and foot baselines with generous transparent gaps and outer margins. No cropping, no touching, no scene ground text labels numbers. Draft designs not animation. CRITICAL LAYOUT: shrink each figure to occupy at most 78 percent of cell height and 78 percent cell width. Leave fully empty transparent padding above every crown and below every boot, at least 40 pixels on outer canvas edges. Crowns MUST NOT touch top canvas edge. Five equal cells across two equal rows.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/stitchedKing/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "2ed7af50b795df6dd094393d8c5111d7e63379cc"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/stitchedKing/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/stitchedKing/v05.png",
+                  "sha256": "c934be232a2e29243f6357186e5e3a4c7002183fbb5c579194071d1ef6dfbc19",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v06",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "217fe0743aa8cc0bf209a67eedfec6f4881eae6f50ca608891707d3390feb92e",
+            "prompt": "Create exactly TEN rear three-quarter sprite design alternatives for the SAME Stitched King in reference1. Reference2 supplies ONLY gameplay camera, back dominant, turned away facing upper-right. Preserve reference1's very bulky stout heavy humanoid body, squat powerful legs, dark patched stitched leather and iron armor, enclosed black cylindrical helmet topped by dull golden crown, worn belt, crimson ragged cape, massive rectangular chipped butcher cleaver with circular hole near corner, same dark brown iron muted red and gold palette. Do not turn him slender or copy player gear. All ten show BACK of crowned helmet, shoulders, patchwork back armor and cape, no front chest or face, no front poses. Ten subtle distinct back stitch layouts, cape tears and strap routes preserving same costume proportions and silhouette family. Complete full bodies including boots, full cleaver blade and handle in every cell, dark fantasy painterly production game sprite style as reference1. Single transparent PNG canvas exact regular 5 columns by 2 rows, ten independent figures same scale and foot baselines with generous transparent gaps and outer margins. No cropping, no touching, no scene ground text labels numbers. Draft designs not animation. CRITICAL LAYOUT: shrink each figure to occupy at most 78 percent of cell height and 78 percent cell width. Leave fully empty transparent padding above every crown and below every boot, at least 40 pixels on outer canvas edges. Crowns MUST NOT touch top canvas edge. Five equal cells across two equal rows.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/stitchedKing/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "2ed7af50b795df6dd094393d8c5111d7e63379cc"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/stitchedKing/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/stitchedKing/v06.png",
+                  "sha256": "f1da336b8d64dbde9024ad5921ba8d69029e8a6708526719d9affdb57bbedbb6",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v07",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "217fe0743aa8cc0bf209a67eedfec6f4881eae6f50ca608891707d3390feb92e",
+            "prompt": "Create exactly TEN rear three-quarter sprite design alternatives for the SAME Stitched King in reference1. Reference2 supplies ONLY gameplay camera, back dominant, turned away facing upper-right. Preserve reference1's very bulky stout heavy humanoid body, squat powerful legs, dark patched stitched leather and iron armor, enclosed black cylindrical helmet topped by dull golden crown, worn belt, crimson ragged cape, massive rectangular chipped butcher cleaver with circular hole near corner, same dark brown iron muted red and gold palette. Do not turn him slender or copy player gear. All ten show BACK of crowned helmet, shoulders, patchwork back armor and cape, no front chest or face, no front poses. Ten subtle distinct back stitch layouts, cape tears and strap routes preserving same costume proportions and silhouette family. Complete full bodies including boots, full cleaver blade and handle in every cell, dark fantasy painterly production game sprite style as reference1. Single transparent PNG canvas exact regular 5 columns by 2 rows, ten independent figures same scale and foot baselines with generous transparent gaps and outer margins. No cropping, no touching, no scene ground text labels numbers. Draft designs not animation. CRITICAL LAYOUT: shrink each figure to occupy at most 78 percent of cell height and 78 percent cell width. Leave fully empty transparent padding above every crown and below every boot, at least 40 pixels on outer canvas edges. Crowns MUST NOT touch top canvas edge. Five equal cells across two equal rows.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/stitchedKing/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "2ed7af50b795df6dd094393d8c5111d7e63379cc"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/stitchedKing/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/stitchedKing/v07.png",
+                  "sha256": "23f10b0cac62e4b880b2751b3834d3cbc9442a72a035d0afb36d164a1913e4df",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v08",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "217fe0743aa8cc0bf209a67eedfec6f4881eae6f50ca608891707d3390feb92e",
+            "prompt": "Create exactly TEN rear three-quarter sprite design alternatives for the SAME Stitched King in reference1. Reference2 supplies ONLY gameplay camera, back dominant, turned away facing upper-right. Preserve reference1's very bulky stout heavy humanoid body, squat powerful legs, dark patched stitched leather and iron armor, enclosed black cylindrical helmet topped by dull golden crown, worn belt, crimson ragged cape, massive rectangular chipped butcher cleaver with circular hole near corner, same dark brown iron muted red and gold palette. Do not turn him slender or copy player gear. All ten show BACK of crowned helmet, shoulders, patchwork back armor and cape, no front chest or face, no front poses. Ten subtle distinct back stitch layouts, cape tears and strap routes preserving same costume proportions and silhouette family. Complete full bodies including boots, full cleaver blade and handle in every cell, dark fantasy painterly production game sprite style as reference1. Single transparent PNG canvas exact regular 5 columns by 2 rows, ten independent figures same scale and foot baselines with generous transparent gaps and outer margins. No cropping, no touching, no scene ground text labels numbers. Draft designs not animation. CRITICAL LAYOUT: shrink each figure to occupy at most 78 percent of cell height and 78 percent cell width. Leave fully empty transparent padding above every crown and below every boot, at least 40 pixels on outer canvas edges. Crowns MUST NOT touch top canvas edge. Five equal cells across two equal rows.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/stitchedKing/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "2ed7af50b795df6dd094393d8c5111d7e63379cc"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/stitchedKing/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/stitchedKing/v08.png",
+                  "sha256": "7fc10768e77d6e74822e978da1f27ee4e6f56b463af35fa7d3ff88999f1eefb0",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v09",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "217fe0743aa8cc0bf209a67eedfec6f4881eae6f50ca608891707d3390feb92e",
+            "prompt": "Create exactly TEN rear three-quarter sprite design alternatives for the SAME Stitched King in reference1. Reference2 supplies ONLY gameplay camera, back dominant, turned away facing upper-right. Preserve reference1's very bulky stout heavy humanoid body, squat powerful legs, dark patched stitched leather and iron armor, enclosed black cylindrical helmet topped by dull golden crown, worn belt, crimson ragged cape, massive rectangular chipped butcher cleaver with circular hole near corner, same dark brown iron muted red and gold palette. Do not turn him slender or copy player gear. All ten show BACK of crowned helmet, shoulders, patchwork back armor and cape, no front chest or face, no front poses. Ten subtle distinct back stitch layouts, cape tears and strap routes preserving same costume proportions and silhouette family. Complete full bodies including boots, full cleaver blade and handle in every cell, dark fantasy painterly production game sprite style as reference1. Single transparent PNG canvas exact regular 5 columns by 2 rows, ten independent figures same scale and foot baselines with generous transparent gaps and outer margins. No cropping, no touching, no scene ground text labels numbers. Draft designs not animation. CRITICAL LAYOUT: shrink each figure to occupy at most 78 percent of cell height and 78 percent cell width. Leave fully empty transparent padding above every crown and below every boot, at least 40 pixels on outer canvas edges. Crowns MUST NOT touch top canvas edge. Five equal cells across two equal rows.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/stitchedKing/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "2ed7af50b795df6dd094393d8c5111d7e63379cc"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/stitchedKing/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/stitchedKing/v09.png",
+                  "sha256": "deb5dc4486188048103871fc8c6f1519308e15fc2b62f9da1957b28d8cfdc78f",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v10",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "217fe0743aa8cc0bf209a67eedfec6f4881eae6f50ca608891707d3390feb92e",
+            "prompt": "Create exactly TEN rear three-quarter sprite design alternatives for the SAME Stitched King in reference1. Reference2 supplies ONLY gameplay camera, back dominant, turned away facing upper-right. Preserve reference1's very bulky stout heavy humanoid body, squat powerful legs, dark patched stitched leather and iron armor, enclosed black cylindrical helmet topped by dull golden crown, worn belt, crimson ragged cape, massive rectangular chipped butcher cleaver with circular hole near corner, same dark brown iron muted red and gold palette. Do not turn him slender or copy player gear. All ten show BACK of crowned helmet, shoulders, patchwork back armor and cape, no front chest or face, no front poses. Ten subtle distinct back stitch layouts, cape tears and strap routes preserving same costume proportions and silhouette family. Complete full bodies including boots, full cleaver blade and handle in every cell, dark fantasy painterly production game sprite style as reference1. Single transparent PNG canvas exact regular 5 columns by 2 rows, ten independent figures same scale and foot baselines with generous transparent gaps and outer margins. No cropping, no touching, no scene ground text labels numbers. Draft designs not animation. CRITICAL LAYOUT: shrink each figure to occupy at most 78 percent of cell height and 78 percent cell width. Leave fully empty transparent padding above every crown and below every boot, at least 40 pixels on outer canvas edges. Crowns MUST NOT touch top canvas edge. Five equal cells across two equal rows.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/stitchedKing/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "2ed7af50b795df6dd094393d8c5111d7e63379cc"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/stitchedKing/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/stitchedKing/v10.png",
+                  "sha256": "b00b27f5a756b9cb9870f15a2a2c9f14dcd68daff4c8d9e708851bfadedfb67a",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "provisionalDefaultVersion": "v01"
     },
     {
       "id": "glassRegent",
@@ -2332,10 +2913,591 @@
       "id": "furnaceSaint",
       "name": "The Furnace Saint",
       "role": "boss",
-      "defaultStance": null,
+      "defaultStance": "neutral",
       "reference": null,
-      "proposals": [],
-      "provisionalDefaultVersion": null
+      "proposals": [
+        {
+          "id": "v01",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "dbe2e1b6bb09fbd551f51a6845df71003a6d8a93976be84f4a4c32f8a4eb19a3",
+            "prompt": "Create EXACTLY TEN rear-view design proposals of Furnace Saint boss first reference, same character rotated to face AWAY upper-right from camera matching only second reference player's rear three-quarter direction. We see back of hood, back of glowing circular sun halo, broad back armor and torn burgundy/ivory mantle, heels and rear legs. NO face, NO front chest furnace grille. Preserve bronze black plate armor, orange furnace fire, circular flaming halo, hanging chain censer and tattered red/white saint vestments. Ten subtly varied recognizable back mantle/armor seam arrangements, all idle full bodies with full halo and hanging censer contained in each slot. Production painted dark fantasy game sprites, same anatomy palette silhouette and outfit proportions as first source. Precisely FIVE columns x TWO rows, big transparent gutters and outer margins, absolutely separate complete silhouettes. EMPTY TRANSPARENT ALPHA background, no colored canvas, no gradient, no floor or scenery or text labels. The second player reference sets camera direction only, do not turn this boss into player.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/furnaceSaint/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "a2a6200f6915d46995a6371d9a4caa2f72b57d15"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "rear camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/furnaceSaint/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/furnaceSaint/v01.png",
+                  "sha256": "01d2fbf37556331570d60bd1ae94715ccd7f5c61fcab38a1df8f9663a930c5ca",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v02",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "dbe2e1b6bb09fbd551f51a6845df71003a6d8a93976be84f4a4c32f8a4eb19a3",
+            "prompt": "Create EXACTLY TEN rear-view design proposals of Furnace Saint boss first reference, same character rotated to face AWAY upper-right from camera matching only second reference player's rear three-quarter direction. We see back of hood, back of glowing circular sun halo, broad back armor and torn burgundy/ivory mantle, heels and rear legs. NO face, NO front chest furnace grille. Preserve bronze black plate armor, orange furnace fire, circular flaming halo, hanging chain censer and tattered red/white saint vestments. Ten subtly varied recognizable back mantle/armor seam arrangements, all idle full bodies with full halo and hanging censer contained in each slot. Production painted dark fantasy game sprites, same anatomy palette silhouette and outfit proportions as first source. Precisely FIVE columns x TWO rows, big transparent gutters and outer margins, absolutely separate complete silhouettes. EMPTY TRANSPARENT ALPHA background, no colored canvas, no gradient, no floor or scenery or text labels. The second player reference sets camera direction only, do not turn this boss into player.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/furnaceSaint/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "a2a6200f6915d46995a6371d9a4caa2f72b57d15"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "rear camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/furnaceSaint/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/furnaceSaint/v02.png",
+                  "sha256": "2944f650c273d779c4537b38dc7dc8138def8dce0a1723ed026873289f80463f",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v03",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "dbe2e1b6bb09fbd551f51a6845df71003a6d8a93976be84f4a4c32f8a4eb19a3",
+            "prompt": "Create EXACTLY TEN rear-view design proposals of Furnace Saint boss first reference, same character rotated to face AWAY upper-right from camera matching only second reference player's rear three-quarter direction. We see back of hood, back of glowing circular sun halo, broad back armor and torn burgundy/ivory mantle, heels and rear legs. NO face, NO front chest furnace grille. Preserve bronze black plate armor, orange furnace fire, circular flaming halo, hanging chain censer and tattered red/white saint vestments. Ten subtly varied recognizable back mantle/armor seam arrangements, all idle full bodies with full halo and hanging censer contained in each slot. Production painted dark fantasy game sprites, same anatomy palette silhouette and outfit proportions as first source. Precisely FIVE columns x TWO rows, big transparent gutters and outer margins, absolutely separate complete silhouettes. EMPTY TRANSPARENT ALPHA background, no colored canvas, no gradient, no floor or scenery or text labels. The second player reference sets camera direction only, do not turn this boss into player.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/furnaceSaint/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "a2a6200f6915d46995a6371d9a4caa2f72b57d15"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "rear camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/furnaceSaint/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/furnaceSaint/v03.png",
+                  "sha256": "d1573038efc47fee96b75676b749ed3a0ec43393afa4eba6f5e7ba7b7873b58e",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v04",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "dbe2e1b6bb09fbd551f51a6845df71003a6d8a93976be84f4a4c32f8a4eb19a3",
+            "prompt": "Create EXACTLY TEN rear-view design proposals of Furnace Saint boss first reference, same character rotated to face AWAY upper-right from camera matching only second reference player's rear three-quarter direction. We see back of hood, back of glowing circular sun halo, broad back armor and torn burgundy/ivory mantle, heels and rear legs. NO face, NO front chest furnace grille. Preserve bronze black plate armor, orange furnace fire, circular flaming halo, hanging chain censer and tattered red/white saint vestments. Ten subtly varied recognizable back mantle/armor seam arrangements, all idle full bodies with full halo and hanging censer contained in each slot. Production painted dark fantasy game sprites, same anatomy palette silhouette and outfit proportions as first source. Precisely FIVE columns x TWO rows, big transparent gutters and outer margins, absolutely separate complete silhouettes. EMPTY TRANSPARENT ALPHA background, no colored canvas, no gradient, no floor or scenery or text labels. The second player reference sets camera direction only, do not turn this boss into player.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/furnaceSaint/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "a2a6200f6915d46995a6371d9a4caa2f72b57d15"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "rear camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/furnaceSaint/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/furnaceSaint/v04.png",
+                  "sha256": "dbf357386e02b5d5bd5c3ccfc509c6fa23ac75d5539dbefb9b056310b7bc2aff",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v05",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "dbe2e1b6bb09fbd551f51a6845df71003a6d8a93976be84f4a4c32f8a4eb19a3",
+            "prompt": "Create EXACTLY TEN rear-view design proposals of Furnace Saint boss first reference, same character rotated to face AWAY upper-right from camera matching only second reference player's rear three-quarter direction. We see back of hood, back of glowing circular sun halo, broad back armor and torn burgundy/ivory mantle, heels and rear legs. NO face, NO front chest furnace grille. Preserve bronze black plate armor, orange furnace fire, circular flaming halo, hanging chain censer and tattered red/white saint vestments. Ten subtly varied recognizable back mantle/armor seam arrangements, all idle full bodies with full halo and hanging censer contained in each slot. Production painted dark fantasy game sprites, same anatomy palette silhouette and outfit proportions as first source. Precisely FIVE columns x TWO rows, big transparent gutters and outer margins, absolutely separate complete silhouettes. EMPTY TRANSPARENT ALPHA background, no colored canvas, no gradient, no floor or scenery or text labels. The second player reference sets camera direction only, do not turn this boss into player.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/furnaceSaint/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "a2a6200f6915d46995a6371d9a4caa2f72b57d15"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "rear camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/furnaceSaint/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/furnaceSaint/v05.png",
+                  "sha256": "7ce9fa001dc55f8d618793ecf3024657c940aa6565ff613f5077f2bd1afec580",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v06",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "dbe2e1b6bb09fbd551f51a6845df71003a6d8a93976be84f4a4c32f8a4eb19a3",
+            "prompt": "Create EXACTLY TEN rear-view design proposals of Furnace Saint boss first reference, same character rotated to face AWAY upper-right from camera matching only second reference player's rear three-quarter direction. We see back of hood, back of glowing circular sun halo, broad back armor and torn burgundy/ivory mantle, heels and rear legs. NO face, NO front chest furnace grille. Preserve bronze black plate armor, orange furnace fire, circular flaming halo, hanging chain censer and tattered red/white saint vestments. Ten subtly varied recognizable back mantle/armor seam arrangements, all idle full bodies with full halo and hanging censer contained in each slot. Production painted dark fantasy game sprites, same anatomy palette silhouette and outfit proportions as first source. Precisely FIVE columns x TWO rows, big transparent gutters and outer margins, absolutely separate complete silhouettes. EMPTY TRANSPARENT ALPHA background, no colored canvas, no gradient, no floor or scenery or text labels. The second player reference sets camera direction only, do not turn this boss into player.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/furnaceSaint/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "a2a6200f6915d46995a6371d9a4caa2f72b57d15"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "rear camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/furnaceSaint/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/furnaceSaint/v06.png",
+                  "sha256": "ab93dd79ed58fc272c307cf3232e4cda083e00d0596056912323d82f6c20ff16",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v07",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "dbe2e1b6bb09fbd551f51a6845df71003a6d8a93976be84f4a4c32f8a4eb19a3",
+            "prompt": "Create EXACTLY TEN rear-view design proposals of Furnace Saint boss first reference, same character rotated to face AWAY upper-right from camera matching only second reference player's rear three-quarter direction. We see back of hood, back of glowing circular sun halo, broad back armor and torn burgundy/ivory mantle, heels and rear legs. NO face, NO front chest furnace grille. Preserve bronze black plate armor, orange furnace fire, circular flaming halo, hanging chain censer and tattered red/white saint vestments. Ten subtly varied recognizable back mantle/armor seam arrangements, all idle full bodies with full halo and hanging censer contained in each slot. Production painted dark fantasy game sprites, same anatomy palette silhouette and outfit proportions as first source. Precisely FIVE columns x TWO rows, big transparent gutters and outer margins, absolutely separate complete silhouettes. EMPTY TRANSPARENT ALPHA background, no colored canvas, no gradient, no floor or scenery or text labels. The second player reference sets camera direction only, do not turn this boss into player.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/furnaceSaint/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "a2a6200f6915d46995a6371d9a4caa2f72b57d15"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "rear camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/furnaceSaint/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/furnaceSaint/v07.png",
+                  "sha256": "495cb9984d1e534571e2a817405d7321fc72172207cba662a65003b488d67b34",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v08",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "dbe2e1b6bb09fbd551f51a6845df71003a6d8a93976be84f4a4c32f8a4eb19a3",
+            "prompt": "Create EXACTLY TEN rear-view design proposals of Furnace Saint boss first reference, same character rotated to face AWAY upper-right from camera matching only second reference player's rear three-quarter direction. We see back of hood, back of glowing circular sun halo, broad back armor and torn burgundy/ivory mantle, heels and rear legs. NO face, NO front chest furnace grille. Preserve bronze black plate armor, orange furnace fire, circular flaming halo, hanging chain censer and tattered red/white saint vestments. Ten subtly varied recognizable back mantle/armor seam arrangements, all idle full bodies with full halo and hanging censer contained in each slot. Production painted dark fantasy game sprites, same anatomy palette silhouette and outfit proportions as first source. Precisely FIVE columns x TWO rows, big transparent gutters and outer margins, absolutely separate complete silhouettes. EMPTY TRANSPARENT ALPHA background, no colored canvas, no gradient, no floor or scenery or text labels. The second player reference sets camera direction only, do not turn this boss into player.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/furnaceSaint/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "a2a6200f6915d46995a6371d9a4caa2f72b57d15"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "rear camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/furnaceSaint/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/furnaceSaint/v08.png",
+                  "sha256": "22b1f2efe88b1d09081e08729d9ea5d009348abc24084efda8ad2d9ad94a7b9a",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v09",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "dbe2e1b6bb09fbd551f51a6845df71003a6d8a93976be84f4a4c32f8a4eb19a3",
+            "prompt": "Create EXACTLY TEN rear-view design proposals of Furnace Saint boss first reference, same character rotated to face AWAY upper-right from camera matching only second reference player's rear three-quarter direction. We see back of hood, back of glowing circular sun halo, broad back armor and torn burgundy/ivory mantle, heels and rear legs. NO face, NO front chest furnace grille. Preserve bronze black plate armor, orange furnace fire, circular flaming halo, hanging chain censer and tattered red/white saint vestments. Ten subtly varied recognizable back mantle/armor seam arrangements, all idle full bodies with full halo and hanging censer contained in each slot. Production painted dark fantasy game sprites, same anatomy palette silhouette and outfit proportions as first source. Precisely FIVE columns x TWO rows, big transparent gutters and outer margins, absolutely separate complete silhouettes. EMPTY TRANSPARENT ALPHA background, no colored canvas, no gradient, no floor or scenery or text labels. The second player reference sets camera direction only, do not turn this boss into player.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/furnaceSaint/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "a2a6200f6915d46995a6371d9a4caa2f72b57d15"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "rear camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/furnaceSaint/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/furnaceSaint/v09.png",
+                  "sha256": "337aa3ec7e3438da015ae71c69e91784a59e0ca20fcb37e93b138ca1fbc6e32a",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v10",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "dbe2e1b6bb09fbd551f51a6845df71003a6d8a93976be84f4a4c32f8a4eb19a3",
+            "prompt": "Create EXACTLY TEN rear-view design proposals of Furnace Saint boss first reference, same character rotated to face AWAY upper-right from camera matching only second reference player's rear three-quarter direction. We see back of hood, back of glowing circular sun halo, broad back armor and torn burgundy/ivory mantle, heels and rear legs. NO face, NO front chest furnace grille. Preserve bronze black plate armor, orange furnace fire, circular flaming halo, hanging chain censer and tattered red/white saint vestments. Ten subtly varied recognizable back mantle/armor seam arrangements, all idle full bodies with full halo and hanging censer contained in each slot. Production painted dark fantasy game sprites, same anatomy palette silhouette and outfit proportions as first source. Precisely FIVE columns x TWO rows, big transparent gutters and outer margins, absolutely separate complete silhouettes. EMPTY TRANSPARENT ALPHA background, no colored canvas, no gradient, no floor or scenery or text labels. The second player reference sets camera direction only, do not turn this boss into player.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/furnaceSaint/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "a2a6200f6915d46995a6371d9a4caa2f72b57d15"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "purpose": "rear camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/furnaceSaint/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/furnaceSaint/v10.png",
+                  "sha256": "711045021e5b1f53ecd77778daed24b9dd2a707c131afcf6340b60af558b1ba0",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "provisionalDefaultVersion": "v01"
     },
     {
       "id": "hollowAstronomer",

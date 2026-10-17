@@ -1,0 +1,47 @@
+{
+  "bossId": "furnaceSaint",
+  "status": "draft-proposals",
+  "prompt": "Create EXACTLY TEN rear-view design proposals of Furnace Saint boss first reference, same character rotated to face AWAY upper-right from camera matching only second reference player's rear three-quarter direction. We see back of hood, back of glowing circular sun halo, broad back armor and torn burgundy/ivory mantle, heels and rear legs. NO face, NO front chest furnace grille. Preserve bronze black plate armor, orange furnace fire, circular flaming halo, hanging chain censer and tattered red/white saint vestments. Ten subtly varied recognizable back mantle/armor seam arrangements, all idle full bodies with full halo and hanging censer contained in each slot. Production painted dark fantasy game sprites, same anatomy palette silhouette and outfit proportions as first source. Precisely FIVE columns x TWO rows, big transparent gutters and outer margins, absolutely separate complete silhouettes. EMPTY TRANSPARENT ALPHA background, no colored canvas, no gradient, no floor or scenery or text labels. The second player reference sets camera direction only, do not turn this boss into player.",
+  "sources": [
+    {
+      "repository": "cehinds/AshenSpire-art",
+      "path": "hd/assets/enemy-poses/expansion/furnaceSaint/idle.webp",
+      "ref": "hd-assets-v23",
+      "blob": "a2a6200f6915d46995a6371d9a4caa2f72b57d15"
+    },
+    {
+      "repository": "cehinds/AshenSpire",
+      "path": "assets-display/alternative/reaver-default.webp",
+      "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+      "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+      "purpose": "rear camera only"
+    }
+  ],
+  "layout": {
+    "columns": 5,
+    "rows": 2,
+    "count": 10
+  },
+  "visualQA": {
+    "rearView": true,
+    "count10": true,
+    "notes": "Visually inspected complete ten rear silhouettes; alpha/gutters await mechanical normalization checks."
+  },
+  "actorId": "furnaceSaint",
+  "master": "proposal-sheet.png",
+  "sourceReferences": [
+    {
+      "repository": "cehinds/AshenSpire-art",
+      "path": "hd/assets/enemy-poses/expansion/furnaceSaint/idle.webp",
+      "ref": "hd-assets-v23",
+      "blob": "a2a6200f6915d46995a6371d9a4caa2f72b57d15"
+    },
+    {
+      "repository": "cehinds/AshenSpire",
+      "path": "assets-display/alternative/reaver-default.webp",
+      "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+      "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+      "purpose": "rear camera only"
+    }
+  ]
+}

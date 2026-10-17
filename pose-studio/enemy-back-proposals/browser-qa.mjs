@@ -22,6 +22,11 @@ try{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(url);await page.locator('#grid .card').first().waitFor();
   assert.equal(await page.locator('#actor option').count(),13);
+  for(const candidate of canonical.actors.filter(a=>a.proposals.length)){
+   await page.selectOption('#actor',candidate.id);await page.selectOption('#stance','neutral');
+   await page.waitForFunction(()=>document.querySelectorAll('#grid img').length===10&&[...document.querySelectorAll('#grid img')].every(img=>img.complete&&img.naturalWidth===512));
+  }
+  await page.selectOption('#actor','wyrmAspirant');await page.selectOption('#stance','neutral');
   assert.equal(await page.locator('#stance option').count(),9);
   assert.equal(await page.locator('#grid .card').count(),10);
   assert.equal(await page.locator('#grid img').count(),10);
