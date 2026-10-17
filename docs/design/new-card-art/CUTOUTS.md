@@ -1,7 +1,7 @@
 # Actual PNG cutouts — selection set 07
 
 Open [cutouts.html](cutouts.html) to select, layer, rotate, resize and keep multiple
-choices. The downloadable `card-art-cutouts-v10.zip` includes the standalone
+choices. The downloadable `card-art-cutouts-v11.zip` includes the standalone
 viewer, all PNGs and the JSON. Extract the ZIP and open `cutouts.html`
 in a browser. It uses plain local scripts and needs no build step. If browser
 policy blocks local files, run `python3 -m http.server 8765` in the extracted
@@ -212,3 +212,7 @@ Y effect digits 2 and 7 now use `scaleX: 1.2` and `scaleY: 1.35` in all 20 scept
 ## Smaller physical scythe scepters (revision 10)
 
 All 20 scythe compositions shrink the physical scepter from 437 to 305.9 pixels, around its pommel. The foreground attachment uses a matching `referenceParentSize` and compensating local offset so the enlarged spectral scythe remains in the same world position at the same scale. The offset moves with the scepter when rotating the assembly. Other compositions and every PNG remain unchanged. Reset saved scythe placements to adopt these defaults. `resize-scepters-v10.py` applies this after revision 9; `revision-v10.json` records the change.
+
+## Half-size aligned scepters (revision 11)
+
+The physical scepter is now exactly 50% of its revision-10 dimensions: 152.95 × 152.95 instead of 305.9 × 305.9. The grip follows the transformed spectral staff centerline and its pommel sits at the spectral lower cap. Attachment offset, relative rotation and reference size compensate for the new physical pose, preserving the spectral scythe's world position and matrix. All 20 blue/violet scythe combinations are updated; all other compositions and PNG assets are unchanged. `resize-scepters-v11.mjs` applies this once after revision 10. Reset saved scythe placements to use the revised defaults. Revision-specific preview filenames distinguish this result from earlier previews.

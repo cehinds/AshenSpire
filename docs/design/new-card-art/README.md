@@ -1,4 +1,8 @@
-## Current revision: smaller physical scepters for scythes
+## Current revision: half-size scepters aligned with the spectral staff
+
+Revision 11 halves the physical scythe scepters from 305.9 to 152.95 pixels and aligns their grips with the spectral staff. The spectral scythes keep exactly the same size and position. [View the comparison](scythe-scepter-comparison-v11.png), [open the gallery](expansion-v6.html), or [download revision 11](card-art-cutouts-v11.zip). Reset saved scythe compositions to use the new placement.
+
+## Revision 10: smaller physical scepters for scythes
 
 Revision 10 reduces the physical scepters by 30% in both scythe color families. The enlarged spectral scythes retain their position and scale. [View the gallery](expansion-v6.html), [edit the scythe](cutouts.html?category=Y&code=Y22), or [download revision 10](card-art-cutouts-v10.zip). Reset saved scythe compositions to use this placement.
 
