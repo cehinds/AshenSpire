@@ -52,7 +52,7 @@ const actor=(id,art,x,y,idle)=>{
     style:{removeProperty:key=>delete properties[key],setProperty:(key,value)=>{properties[key]=value;}},properties,x,y},
     sprite:{art,getBoundingClientRect:()=>({...art,width:art.right-art.left,height:art.bottom-art.top})}};
 };
-const runStage=placed=>runInNewContext(stageSource.slice(stageStart,stageEnd),{placed,zoom:1,refresh:()=>{},
+const runStage=placed=>runInNewContext(stageSource.slice(stageStart,stageEnd),{placed,targetHud:false,zoom:1,refresh:()=>{},
   fieldRect:{left:0,top:0,width:844,height:190},
   getComputedStyle:frame=>({left:String(frame.x),top:String(frame.y)}),
   currentSpriteArtBounds:sprite=>sprite.art,
@@ -64,7 +64,7 @@ test('stage repairs one idle core over a selected neighbour even without a core/
   const placed=[actor('e1',{left:342,right:392,top:138,bottom:164},367,176,false),
     actor('e3',{left:361,right:373,top:138,bottom:151},337,164,true)];
   const before=placed.map(actor=>structuredClone(actor.sprite.art));
-  runInNewContext(source.slice(start,end),{placed,zoom:1,refresh:()=>{},
+  runInNewContext(source.slice(start,end),{placed,targetHud:false,zoom:1,refresh:()=>{},
     fieldRect:{left:0,top:0,width:844,height:190},
     getComputedStyle:frame=>({left:String(frame.x),top:String(frame.y)}),
     currentSpriteArtBounds:sprite=>sprite.art,
@@ -93,11 +93,26 @@ test('an idle core never snaps back over a selected neighbour\'s fixed core', ()
 });
 
 test('the player\'s self-cast square is a fixed obstacle for idle-core packing', () => {
-  const fixed = stageSource.match(/const fixedCores = placed\.filter\(\(\{frame\}\) => frame\.matches\('([^']+)'\)\)/);
-  assert.ok(fixed, 'fixed-core selection is present');
-  const selectors = fixed[1].split(',').map(part => part.trim());
-  assert.ok(selectors.includes('.player:not(.dead)'), 'the living player square is never covered by a packed enemy core');
-  assert.ok(selectors.includes('.enemy.context-selected:not(.dead)'));
+  const selection = stageSource.slice(stageSource.indexOf('const fixedCores = placed.filter('));
+  const fixed = selection.match(/^const fixedCores = placed\.filter\(([\s\S]*?)\)\s*\.map/);
+  assert.ok(fixed, 'the complete production fixed-core predicate is present');
+  const candidate = (role, selected = false, tiny = false, dead = false) => ({
+    dataset: tiny ? { coreTinyTarget:'true' } : {},
+    matches: selectors => selectors.split(',').some(selector => !dead &&
+      (selector.trim() === '.player:not(.dead)' ? role === 'player' : role === 'enemy' && selected)),
+  });
+  const player = candidate('player'), selected = candidate('enemy', true);
+  const tinyPlayer = candidate('player', false, true), tinySelected = candidate('enemy', true, true);
+  const idle = candidate('enemy'), deadPlayer = candidate('player', false, false, true);
+  for (const targetHud of [false, true]) {
+    const predicate = runInNewContext(`(${fixed[1]})`, { targetHud });
+    assert.equal(predicate({frame:player}), true, 'normal living player remains a fixed self-cast obstacle');
+    assert.equal(predicate({frame:selected}), true, 'normal selected enemy retains its fixed square');
+    assert.equal(predicate({frame:tinyPlayer}), !targetHud, 'only Core tiny players join movable target packing');
+    assert.equal(predicate({frame:tinySelected}), !targetHud, 'only Core tiny selected enemies join movable target packing');
+    assert.equal(predicate({frame:idle}), false, 'idle enemies are packed instead of reserved as fixed');
+    assert.equal(predicate({frame:deadPlayer}), false, 'dead actors never reserve a fixed square');
+  }
 });
 
 
