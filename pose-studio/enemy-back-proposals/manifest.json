@@ -508,10 +508,581 @@
       "id": "courtDuelist",
       "name": "Duelist of the Court",
       "role": "elite",
-      "defaultStance": null,
+      "defaultStance": "neutral",
       "reference": null,
-      "proposals": [],
-      "provisionalDefaultVersion": null
+      "proposals": [
+        {
+          "id": "v01",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "b64d1af2f376da5b80a89ec7535b8fcc888d0f7e3f99955925ebfc153da699ae",
+            "prompt": "Create an AshenSpire production sprite proposal sheet: TEN rear three-quarter alternate base sprites of the Duelist of the Court from FIRST reference. SECOND reference is ONLY the camera/facing example: player seen from behind, looking away toward upper-right/right; do not copy knight equipment. Preserve the exact duelist identity: slender human court fencer, broad dark brown cavalier hat with tall RED AND CREAM plume, weathered pale skull-like mask mostly hidden from rear, ornate bronze/gold-trimmed burgundy long tailed coat and flowing red cape, dark fitted breeches, brown knee boots, gloves and narrow rapier in right hand angled down/right. Render BACK of hat, shoulders, coat and cape; no face/chest facing viewer. Same proportions, costume palette, weapons and painted dark-fantasy game style in all ten. Ten distinct proposal interpretations of back cape drape, coat-tail split, plume curve, rear gold embroidery arrangement, rapier rest and neutral dueling weight distribution; not recolors, not sequential animation frames. All rear three-quarter facing upper-right consistently. EXACT 5 columns by 2 rows, 10 equal square slots, each character occupies only central 70% of its cell with FULL EMPTY TRANSPARENT margins on all four sides, including around plume and rapier. Do NOT fill the sheet edge to edge. Every complete hat, plume, cape, boot and rapier tip visible inside its own cell; no part clipped or touching another slot. Consistent feet baseline and shared character scale in every slot. Wide transparent RGBA sheet, no background, floor, scenery, text, numbers, labels or borders. Maximum high resolution. Neutral combat-ready stance proposals, same weapon handedness. Slots indexed v01-v05 top row and v06-v10 bottom row.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "ref": "hd-assets-v23",
+                "path": "hd/assets/enemy-poses/expansion/courtDuelist/idle.webp",
+                "blob": "4382381506498b6215e63c0b698090812f4630e2"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/courtDuelist/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/courtDuelist/v01.png",
+                  "sha256": "a9d30e6c5c92040a073e388b70ebf2665340afc93cbe3d59ca51a0384cbb6e8e",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v02",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "b64d1af2f376da5b80a89ec7535b8fcc888d0f7e3f99955925ebfc153da699ae",
+            "prompt": "Create an AshenSpire production sprite proposal sheet: TEN rear three-quarter alternate base sprites of the Duelist of the Court from FIRST reference. SECOND reference is ONLY the camera/facing example: player seen from behind, looking away toward upper-right/right; do not copy knight equipment. Preserve the exact duelist identity: slender human court fencer, broad dark brown cavalier hat with tall RED AND CREAM plume, weathered pale skull-like mask mostly hidden from rear, ornate bronze/gold-trimmed burgundy long tailed coat and flowing red cape, dark fitted breeches, brown knee boots, gloves and narrow rapier in right hand angled down/right. Render BACK of hat, shoulders, coat and cape; no face/chest facing viewer. Same proportions, costume palette, weapons and painted dark-fantasy game style in all ten. Ten distinct proposal interpretations of back cape drape, coat-tail split, plume curve, rear gold embroidery arrangement, rapier rest and neutral dueling weight distribution; not recolors, not sequential animation frames. All rear three-quarter facing upper-right consistently. EXACT 5 columns by 2 rows, 10 equal square slots, each character occupies only central 70% of its cell with FULL EMPTY TRANSPARENT margins on all four sides, including around plume and rapier. Do NOT fill the sheet edge to edge. Every complete hat, plume, cape, boot and rapier tip visible inside its own cell; no part clipped or touching another slot. Consistent feet baseline and shared character scale in every slot. Wide transparent RGBA sheet, no background, floor, scenery, text, numbers, labels or borders. Maximum high resolution. Neutral combat-ready stance proposals, same weapon handedness. Slots indexed v01-v05 top row and v06-v10 bottom row.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "ref": "hd-assets-v23",
+                "path": "hd/assets/enemy-poses/expansion/courtDuelist/idle.webp",
+                "blob": "4382381506498b6215e63c0b698090812f4630e2"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/courtDuelist/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/courtDuelist/v02.png",
+                  "sha256": "9889ad21ad41e051c0b4681021862f4162eb1eda0316fb33a33c4552cd29366e",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v03",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "b64d1af2f376da5b80a89ec7535b8fcc888d0f7e3f99955925ebfc153da699ae",
+            "prompt": "Create an AshenSpire production sprite proposal sheet: TEN rear three-quarter alternate base sprites of the Duelist of the Court from FIRST reference. SECOND reference is ONLY the camera/facing example: player seen from behind, looking away toward upper-right/right; do not copy knight equipment. Preserve the exact duelist identity: slender human court fencer, broad dark brown cavalier hat with tall RED AND CREAM plume, weathered pale skull-like mask mostly hidden from rear, ornate bronze/gold-trimmed burgundy long tailed coat and flowing red cape, dark fitted breeches, brown knee boots, gloves and narrow rapier in right hand angled down/right. Render BACK of hat, shoulders, coat and cape; no face/chest facing viewer. Same proportions, costume palette, weapons and painted dark-fantasy game style in all ten. Ten distinct proposal interpretations of back cape drape, coat-tail split, plume curve, rear gold embroidery arrangement, rapier rest and neutral dueling weight distribution; not recolors, not sequential animation frames. All rear three-quarter facing upper-right consistently. EXACT 5 columns by 2 rows, 10 equal square slots, each character occupies only central 70% of its cell with FULL EMPTY TRANSPARENT margins on all four sides, including around plume and rapier. Do NOT fill the sheet edge to edge. Every complete hat, plume, cape, boot and rapier tip visible inside its own cell; no part clipped or touching another slot. Consistent feet baseline and shared character scale in every slot. Wide transparent RGBA sheet, no background, floor, scenery, text, numbers, labels or borders. Maximum high resolution. Neutral combat-ready stance proposals, same weapon handedness. Slots indexed v01-v05 top row and v06-v10 bottom row.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "ref": "hd-assets-v23",
+                "path": "hd/assets/enemy-poses/expansion/courtDuelist/idle.webp",
+                "blob": "4382381506498b6215e63c0b698090812f4630e2"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/courtDuelist/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/courtDuelist/v03.png",
+                  "sha256": "9400fe4a6271788ca3c1fc34c57668e744538581fc78e86dad40565e579bef21",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v04",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "b64d1af2f376da5b80a89ec7535b8fcc888d0f7e3f99955925ebfc153da699ae",
+            "prompt": "Create an AshenSpire production sprite proposal sheet: TEN rear three-quarter alternate base sprites of the Duelist of the Court from FIRST reference. SECOND reference is ONLY the camera/facing example: player seen from behind, looking away toward upper-right/right; do not copy knight equipment. Preserve the exact duelist identity: slender human court fencer, broad dark brown cavalier hat with tall RED AND CREAM plume, weathered pale skull-like mask mostly hidden from rear, ornate bronze/gold-trimmed burgundy long tailed coat and flowing red cape, dark fitted breeches, brown knee boots, gloves and narrow rapier in right hand angled down/right. Render BACK of hat, shoulders, coat and cape; no face/chest facing viewer. Same proportions, costume palette, weapons and painted dark-fantasy game style in all ten. Ten distinct proposal interpretations of back cape drape, coat-tail split, plume curve, rear gold embroidery arrangement, rapier rest and neutral dueling weight distribution; not recolors, not sequential animation frames. All rear three-quarter facing upper-right consistently. EXACT 5 columns by 2 rows, 10 equal square slots, each character occupies only central 70% of its cell with FULL EMPTY TRANSPARENT margins on all four sides, including around plume and rapier. Do NOT fill the sheet edge to edge. Every complete hat, plume, cape, boot and rapier tip visible inside its own cell; no part clipped or touching another slot. Consistent feet baseline and shared character scale in every slot. Wide transparent RGBA sheet, no background, floor, scenery, text, numbers, labels or borders. Maximum high resolution. Neutral combat-ready stance proposals, same weapon handedness. Slots indexed v01-v05 top row and v06-v10 bottom row.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "ref": "hd-assets-v23",
+                "path": "hd/assets/enemy-poses/expansion/courtDuelist/idle.webp",
+                "blob": "4382381506498b6215e63c0b698090812f4630e2"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/courtDuelist/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/courtDuelist/v04.png",
+                  "sha256": "2821cc22cc44227152db6a7633519843d7eed049818d2a53cfe6bd09c25c620e",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v05",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "b64d1af2f376da5b80a89ec7535b8fcc888d0f7e3f99955925ebfc153da699ae",
+            "prompt": "Create an AshenSpire production sprite proposal sheet: TEN rear three-quarter alternate base sprites of the Duelist of the Court from FIRST reference. SECOND reference is ONLY the camera/facing example: player seen from behind, looking away toward upper-right/right; do not copy knight equipment. Preserve the exact duelist identity: slender human court fencer, broad dark brown cavalier hat with tall RED AND CREAM plume, weathered pale skull-like mask mostly hidden from rear, ornate bronze/gold-trimmed burgundy long tailed coat and flowing red cape, dark fitted breeches, brown knee boots, gloves and narrow rapier in right hand angled down/right. Render BACK of hat, shoulders, coat and cape; no face/chest facing viewer. Same proportions, costume palette, weapons and painted dark-fantasy game style in all ten. Ten distinct proposal interpretations of back cape drape, coat-tail split, plume curve, rear gold embroidery arrangement, rapier rest and neutral dueling weight distribution; not recolors, not sequential animation frames. All rear three-quarter facing upper-right consistently. EXACT 5 columns by 2 rows, 10 equal square slots, each character occupies only central 70% of its cell with FULL EMPTY TRANSPARENT margins on all four sides, including around plume and rapier. Do NOT fill the sheet edge to edge. Every complete hat, plume, cape, boot and rapier tip visible inside its own cell; no part clipped or touching another slot. Consistent feet baseline and shared character scale in every slot. Wide transparent RGBA sheet, no background, floor, scenery, text, numbers, labels or borders. Maximum high resolution. Neutral combat-ready stance proposals, same weapon handedness. Slots indexed v01-v05 top row and v06-v10 bottom row.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "ref": "hd-assets-v23",
+                "path": "hd/assets/enemy-poses/expansion/courtDuelist/idle.webp",
+                "blob": "4382381506498b6215e63c0b698090812f4630e2"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/courtDuelist/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/courtDuelist/v05.png",
+                  "sha256": "a83bd9e1264356ea5ea8a98bf116bc7f5c41273b2707718eaaeef0b0d96f663a",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v06",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "b64d1af2f376da5b80a89ec7535b8fcc888d0f7e3f99955925ebfc153da699ae",
+            "prompt": "Create an AshenSpire production sprite proposal sheet: TEN rear three-quarter alternate base sprites of the Duelist of the Court from FIRST reference. SECOND reference is ONLY the camera/facing example: player seen from behind, looking away toward upper-right/right; do not copy knight equipment. Preserve the exact duelist identity: slender human court fencer, broad dark brown cavalier hat with tall RED AND CREAM plume, weathered pale skull-like mask mostly hidden from rear, ornate bronze/gold-trimmed burgundy long tailed coat and flowing red cape, dark fitted breeches, brown knee boots, gloves and narrow rapier in right hand angled down/right. Render BACK of hat, shoulders, coat and cape; no face/chest facing viewer. Same proportions, costume palette, weapons and painted dark-fantasy game style in all ten. Ten distinct proposal interpretations of back cape drape, coat-tail split, plume curve, rear gold embroidery arrangement, rapier rest and neutral dueling weight distribution; not recolors, not sequential animation frames. All rear three-quarter facing upper-right consistently. EXACT 5 columns by 2 rows, 10 equal square slots, each character occupies only central 70% of its cell with FULL EMPTY TRANSPARENT margins on all four sides, including around plume and rapier. Do NOT fill the sheet edge to edge. Every complete hat, plume, cape, boot and rapier tip visible inside its own cell; no part clipped or touching another slot. Consistent feet baseline and shared character scale in every slot. Wide transparent RGBA sheet, no background, floor, scenery, text, numbers, labels or borders. Maximum high resolution. Neutral combat-ready stance proposals, same weapon handedness. Slots indexed v01-v05 top row and v06-v10 bottom row.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "ref": "hd-assets-v23",
+                "path": "hd/assets/enemy-poses/expansion/courtDuelist/idle.webp",
+                "blob": "4382381506498b6215e63c0b698090812f4630e2"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/courtDuelist/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/courtDuelist/v06.png",
+                  "sha256": "0d6ed4d9094adf818175282b7ff99edbf76ed93942815f576df3528d66fb4e47",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v07",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "b64d1af2f376da5b80a89ec7535b8fcc888d0f7e3f99955925ebfc153da699ae",
+            "prompt": "Create an AshenSpire production sprite proposal sheet: TEN rear three-quarter alternate base sprites of the Duelist of the Court from FIRST reference. SECOND reference is ONLY the camera/facing example: player seen from behind, looking away toward upper-right/right; do not copy knight equipment. Preserve the exact duelist identity: slender human court fencer, broad dark brown cavalier hat with tall RED AND CREAM plume, weathered pale skull-like mask mostly hidden from rear, ornate bronze/gold-trimmed burgundy long tailed coat and flowing red cape, dark fitted breeches, brown knee boots, gloves and narrow rapier in right hand angled down/right. Render BACK of hat, shoulders, coat and cape; no face/chest facing viewer. Same proportions, costume palette, weapons and painted dark-fantasy game style in all ten. Ten distinct proposal interpretations of back cape drape, coat-tail split, plume curve, rear gold embroidery arrangement, rapier rest and neutral dueling weight distribution; not recolors, not sequential animation frames. All rear three-quarter facing upper-right consistently. EXACT 5 columns by 2 rows, 10 equal square slots, each character occupies only central 70% of its cell with FULL EMPTY TRANSPARENT margins on all four sides, including around plume and rapier. Do NOT fill the sheet edge to edge. Every complete hat, plume, cape, boot and rapier tip visible inside its own cell; no part clipped or touching another slot. Consistent feet baseline and shared character scale in every slot. Wide transparent RGBA sheet, no background, floor, scenery, text, numbers, labels or borders. Maximum high resolution. Neutral combat-ready stance proposals, same weapon handedness. Slots indexed v01-v05 top row and v06-v10 bottom row.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "ref": "hd-assets-v23",
+                "path": "hd/assets/enemy-poses/expansion/courtDuelist/idle.webp",
+                "blob": "4382381506498b6215e63c0b698090812f4630e2"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/courtDuelist/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/courtDuelist/v07.png",
+                  "sha256": "e4c08907ac44ab1369c148388c7468f18164489210597ecc91294da3abddb623",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v08",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "b64d1af2f376da5b80a89ec7535b8fcc888d0f7e3f99955925ebfc153da699ae",
+            "prompt": "Create an AshenSpire production sprite proposal sheet: TEN rear three-quarter alternate base sprites of the Duelist of the Court from FIRST reference. SECOND reference is ONLY the camera/facing example: player seen from behind, looking away toward upper-right/right; do not copy knight equipment. Preserve the exact duelist identity: slender human court fencer, broad dark brown cavalier hat with tall RED AND CREAM plume, weathered pale skull-like mask mostly hidden from rear, ornate bronze/gold-trimmed burgundy long tailed coat and flowing red cape, dark fitted breeches, brown knee boots, gloves and narrow rapier in right hand angled down/right. Render BACK of hat, shoulders, coat and cape; no face/chest facing viewer. Same proportions, costume palette, weapons and painted dark-fantasy game style in all ten. Ten distinct proposal interpretations of back cape drape, coat-tail split, plume curve, rear gold embroidery arrangement, rapier rest and neutral dueling weight distribution; not recolors, not sequential animation frames. All rear three-quarter facing upper-right consistently. EXACT 5 columns by 2 rows, 10 equal square slots, each character occupies only central 70% of its cell with FULL EMPTY TRANSPARENT margins on all four sides, including around plume and rapier. Do NOT fill the sheet edge to edge. Every complete hat, plume, cape, boot and rapier tip visible inside its own cell; no part clipped or touching another slot. Consistent feet baseline and shared character scale in every slot. Wide transparent RGBA sheet, no background, floor, scenery, text, numbers, labels or borders. Maximum high resolution. Neutral combat-ready stance proposals, same weapon handedness. Slots indexed v01-v05 top row and v06-v10 bottom row.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "ref": "hd-assets-v23",
+                "path": "hd/assets/enemy-poses/expansion/courtDuelist/idle.webp",
+                "blob": "4382381506498b6215e63c0b698090812f4630e2"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/courtDuelist/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/courtDuelist/v08.png",
+                  "sha256": "bb4919f24048d3fd44930122aa2cdc8d2be11b076b080ca6c04eb83df886bed7",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v09",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "b64d1af2f376da5b80a89ec7535b8fcc888d0f7e3f99955925ebfc153da699ae",
+            "prompt": "Create an AshenSpire production sprite proposal sheet: TEN rear three-quarter alternate base sprites of the Duelist of the Court from FIRST reference. SECOND reference is ONLY the camera/facing example: player seen from behind, looking away toward upper-right/right; do not copy knight equipment. Preserve the exact duelist identity: slender human court fencer, broad dark brown cavalier hat with tall RED AND CREAM plume, weathered pale skull-like mask mostly hidden from rear, ornate bronze/gold-trimmed burgundy long tailed coat and flowing red cape, dark fitted breeches, brown knee boots, gloves and narrow rapier in right hand angled down/right. Render BACK of hat, shoulders, coat and cape; no face/chest facing viewer. Same proportions, costume palette, weapons and painted dark-fantasy game style in all ten. Ten distinct proposal interpretations of back cape drape, coat-tail split, plume curve, rear gold embroidery arrangement, rapier rest and neutral dueling weight distribution; not recolors, not sequential animation frames. All rear three-quarter facing upper-right consistently. EXACT 5 columns by 2 rows, 10 equal square slots, each character occupies only central 70% of its cell with FULL EMPTY TRANSPARENT margins on all four sides, including around plume and rapier. Do NOT fill the sheet edge to edge. Every complete hat, plume, cape, boot and rapier tip visible inside its own cell; no part clipped or touching another slot. Consistent feet baseline and shared character scale in every slot. Wide transparent RGBA sheet, no background, floor, scenery, text, numbers, labels or borders. Maximum high resolution. Neutral combat-ready stance proposals, same weapon handedness. Slots indexed v01-v05 top row and v06-v10 bottom row.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "ref": "hd-assets-v23",
+                "path": "hd/assets/enemy-poses/expansion/courtDuelist/idle.webp",
+                "blob": "4382381506498b6215e63c0b698090812f4630e2"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/courtDuelist/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/courtDuelist/v09.png",
+                  "sha256": "10264b1b356f602bf03434c795365200ae08e6ed193fa68e56e264963d80bfef",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v10",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "b64d1af2f376da5b80a89ec7535b8fcc888d0f7e3f99955925ebfc153da699ae",
+            "prompt": "Create an AshenSpire production sprite proposal sheet: TEN rear three-quarter alternate base sprites of the Duelist of the Court from FIRST reference. SECOND reference is ONLY the camera/facing example: player seen from behind, looking away toward upper-right/right; do not copy knight equipment. Preserve the exact duelist identity: slender human court fencer, broad dark brown cavalier hat with tall RED AND CREAM plume, weathered pale skull-like mask mostly hidden from rear, ornate bronze/gold-trimmed burgundy long tailed coat and flowing red cape, dark fitted breeches, brown knee boots, gloves and narrow rapier in right hand angled down/right. Render BACK of hat, shoulders, coat and cape; no face/chest facing viewer. Same proportions, costume palette, weapons and painted dark-fantasy game style in all ten. Ten distinct proposal interpretations of back cape drape, coat-tail split, plume curve, rear gold embroidery arrangement, rapier rest and neutral dueling weight distribution; not recolors, not sequential animation frames. All rear three-quarter facing upper-right consistently. EXACT 5 columns by 2 rows, 10 equal square slots, each character occupies only central 70% of its cell with FULL EMPTY TRANSPARENT margins on all four sides, including around plume and rapier. Do NOT fill the sheet edge to edge. Every complete hat, plume, cape, boot and rapier tip visible inside its own cell; no part clipped or touching another slot. Consistent feet baseline and shared character scale in every slot. Wide transparent RGBA sheet, no background, floor, scenery, text, numbers, labels or borders. Maximum high resolution. Neutral combat-ready stance proposals, same weapon handedness. Slots indexed v01-v05 top row and v06-v10 bottom row.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "ref": "hd-assets-v23",
+                "path": "hd/assets/enemy-poses/expansion/courtDuelist/idle.webp",
+                "blob": "4382381506498b6215e63c0b698090812f4630e2"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/courtDuelist/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/courtDuelist/v10.png",
+                  "sha256": "b7aaf67b8a4bc7c29a7ecad5a66a59099fc765ffc5fad66c13063d41dcc17477",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "provisionalDefaultVersion": "v01"
     },
     {
       "id": "wyrmLord",
@@ -526,10 +1097,591 @@
       "id": "fellWarden",
       "name": "The Fell Warden",
       "role": "boss",
-      "defaultStance": null,
+      "defaultStance": "neutral",
       "reference": null,
-      "proposals": [],
-      "provisionalDefaultVersion": null
+      "proposals": [
+        {
+          "id": "v01",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "2222ea4b6a253963d0b3811c66e3936f5ce96b2104fb249ccdf48f741bae924d",
+            "prompt": "Create exactly TEN distinct rear-view sprite design proposals for the SAME Fell Warden boss shown in reference image 1. Reference image 2 is ONLY the required rear three-quarter gameplay camera: character turned away from viewer, back of head/back armor and cape prominent, facing toward upper-right. Do not copy reference 2's identity or equipment. Preserve Fell Warden's black scorched heavy full plate armor, sealed angular helmet, broad heavy body, jagged dark crimson shredded cape, fiery orange ember fissures and enormous two-handed flaming poleaxe from image 1. Every variant must show his BACK from this camera, never front or front three-quarter, no visible facial/front chest view. Ten alternatives vary plausible rear cape tears, backplate construction and ember seam arrangements subtly while retaining identical character identity, anatomy, palette, silhouette and outfit proportions. Production dark fantasy painterly game sprite style matching reference 1, isolated FULL bodies including boots and entire poleaxe blades and shaft. ONE transparent PNG canvas, exact 5 columns by 2 rows regular grid, one full character per cell, exactly ten characters, generous transparent gaps and external margins, consistent scale and foot baselines, no touching/overlap between cells, no cropping, no labels, no numbering, no scenery, no poster composition. These are ten design proposals, not animation or ten front-facing poses.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/fellWarden/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "1aab912c5dcef9cd91f37c6a1dc5e49b5981162b"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/fellWarden/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/fellWarden/v01.png",
+                  "sha256": "039ac9b80a7369a2264addec1109a4e0e4f30e1b571e1acf591f717c8c7c458c",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v02",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "2222ea4b6a253963d0b3811c66e3936f5ce96b2104fb249ccdf48f741bae924d",
+            "prompt": "Create exactly TEN distinct rear-view sprite design proposals for the SAME Fell Warden boss shown in reference image 1. Reference image 2 is ONLY the required rear three-quarter gameplay camera: character turned away from viewer, back of head/back armor and cape prominent, facing toward upper-right. Do not copy reference 2's identity or equipment. Preserve Fell Warden's black scorched heavy full plate armor, sealed angular helmet, broad heavy body, jagged dark crimson shredded cape, fiery orange ember fissures and enormous two-handed flaming poleaxe from image 1. Every variant must show his BACK from this camera, never front or front three-quarter, no visible facial/front chest view. Ten alternatives vary plausible rear cape tears, backplate construction and ember seam arrangements subtly while retaining identical character identity, anatomy, palette, silhouette and outfit proportions. Production dark fantasy painterly game sprite style matching reference 1, isolated FULL bodies including boots and entire poleaxe blades and shaft. ONE transparent PNG canvas, exact 5 columns by 2 rows regular grid, one full character per cell, exactly ten characters, generous transparent gaps and external margins, consistent scale and foot baselines, no touching/overlap between cells, no cropping, no labels, no numbering, no scenery, no poster composition. These are ten design proposals, not animation or ten front-facing poses.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/fellWarden/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "1aab912c5dcef9cd91f37c6a1dc5e49b5981162b"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/fellWarden/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/fellWarden/v02.png",
+                  "sha256": "bfed95dfa8183337755effef67c0a36abc918ea7a4b96403fc2ebd7a0de3389d",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v03",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "2222ea4b6a253963d0b3811c66e3936f5ce96b2104fb249ccdf48f741bae924d",
+            "prompt": "Create exactly TEN distinct rear-view sprite design proposals for the SAME Fell Warden boss shown in reference image 1. Reference image 2 is ONLY the required rear three-quarter gameplay camera: character turned away from viewer, back of head/back armor and cape prominent, facing toward upper-right. Do not copy reference 2's identity or equipment. Preserve Fell Warden's black scorched heavy full plate armor, sealed angular helmet, broad heavy body, jagged dark crimson shredded cape, fiery orange ember fissures and enormous two-handed flaming poleaxe from image 1. Every variant must show his BACK from this camera, never front or front three-quarter, no visible facial/front chest view. Ten alternatives vary plausible rear cape tears, backplate construction and ember seam arrangements subtly while retaining identical character identity, anatomy, palette, silhouette and outfit proportions. Production dark fantasy painterly game sprite style matching reference 1, isolated FULL bodies including boots and entire poleaxe blades and shaft. ONE transparent PNG canvas, exact 5 columns by 2 rows regular grid, one full character per cell, exactly ten characters, generous transparent gaps and external margins, consistent scale and foot baselines, no touching/overlap between cells, no cropping, no labels, no numbering, no scenery, no poster composition. These are ten design proposals, not animation or ten front-facing poses.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/fellWarden/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "1aab912c5dcef9cd91f37c6a1dc5e49b5981162b"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/fellWarden/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/fellWarden/v03.png",
+                  "sha256": "fc22539491099353c9de087e801c24d7860396be45afe25e01711e9ff47616d4",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v04",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "2222ea4b6a253963d0b3811c66e3936f5ce96b2104fb249ccdf48f741bae924d",
+            "prompt": "Create exactly TEN distinct rear-view sprite design proposals for the SAME Fell Warden boss shown in reference image 1. Reference image 2 is ONLY the required rear three-quarter gameplay camera: character turned away from viewer, back of head/back armor and cape prominent, facing toward upper-right. Do not copy reference 2's identity or equipment. Preserve Fell Warden's black scorched heavy full plate armor, sealed angular helmet, broad heavy body, jagged dark crimson shredded cape, fiery orange ember fissures and enormous two-handed flaming poleaxe from image 1. Every variant must show his BACK from this camera, never front or front three-quarter, no visible facial/front chest view. Ten alternatives vary plausible rear cape tears, backplate construction and ember seam arrangements subtly while retaining identical character identity, anatomy, palette, silhouette and outfit proportions. Production dark fantasy painterly game sprite style matching reference 1, isolated FULL bodies including boots and entire poleaxe blades and shaft. ONE transparent PNG canvas, exact 5 columns by 2 rows regular grid, one full character per cell, exactly ten characters, generous transparent gaps and external margins, consistent scale and foot baselines, no touching/overlap between cells, no cropping, no labels, no numbering, no scenery, no poster composition. These are ten design proposals, not animation or ten front-facing poses.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/fellWarden/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "1aab912c5dcef9cd91f37c6a1dc5e49b5981162b"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/fellWarden/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/fellWarden/v04.png",
+                  "sha256": "d85f49d12fe81178c08d6a575bcb8521f17009333ab0b3e42e1ae0d9744c6afe",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v05",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "2222ea4b6a253963d0b3811c66e3936f5ce96b2104fb249ccdf48f741bae924d",
+            "prompt": "Create exactly TEN distinct rear-view sprite design proposals for the SAME Fell Warden boss shown in reference image 1. Reference image 2 is ONLY the required rear three-quarter gameplay camera: character turned away from viewer, back of head/back armor and cape prominent, facing toward upper-right. Do not copy reference 2's identity or equipment. Preserve Fell Warden's black scorched heavy full plate armor, sealed angular helmet, broad heavy body, jagged dark crimson shredded cape, fiery orange ember fissures and enormous two-handed flaming poleaxe from image 1. Every variant must show his BACK from this camera, never front or front three-quarter, no visible facial/front chest view. Ten alternatives vary plausible rear cape tears, backplate construction and ember seam arrangements subtly while retaining identical character identity, anatomy, palette, silhouette and outfit proportions. Production dark fantasy painterly game sprite style matching reference 1, isolated FULL bodies including boots and entire poleaxe blades and shaft. ONE transparent PNG canvas, exact 5 columns by 2 rows regular grid, one full character per cell, exactly ten characters, generous transparent gaps and external margins, consistent scale and foot baselines, no touching/overlap between cells, no cropping, no labels, no numbering, no scenery, no poster composition. These are ten design proposals, not animation or ten front-facing poses.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/fellWarden/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "1aab912c5dcef9cd91f37c6a1dc5e49b5981162b"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/fellWarden/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/fellWarden/v05.png",
+                  "sha256": "c2cadfc027eb529367b51dbc598bfb1bf423f504efc27a52ab9c6612a078f6a1",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v06",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "2222ea4b6a253963d0b3811c66e3936f5ce96b2104fb249ccdf48f741bae924d",
+            "prompt": "Create exactly TEN distinct rear-view sprite design proposals for the SAME Fell Warden boss shown in reference image 1. Reference image 2 is ONLY the required rear three-quarter gameplay camera: character turned away from viewer, back of head/back armor and cape prominent, facing toward upper-right. Do not copy reference 2's identity or equipment. Preserve Fell Warden's black scorched heavy full plate armor, sealed angular helmet, broad heavy body, jagged dark crimson shredded cape, fiery orange ember fissures and enormous two-handed flaming poleaxe from image 1. Every variant must show his BACK from this camera, never front or front three-quarter, no visible facial/front chest view. Ten alternatives vary plausible rear cape tears, backplate construction and ember seam arrangements subtly while retaining identical character identity, anatomy, palette, silhouette and outfit proportions. Production dark fantasy painterly game sprite style matching reference 1, isolated FULL bodies including boots and entire poleaxe blades and shaft. ONE transparent PNG canvas, exact 5 columns by 2 rows regular grid, one full character per cell, exactly ten characters, generous transparent gaps and external margins, consistent scale and foot baselines, no touching/overlap between cells, no cropping, no labels, no numbering, no scenery, no poster composition. These are ten design proposals, not animation or ten front-facing poses.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/fellWarden/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "1aab912c5dcef9cd91f37c6a1dc5e49b5981162b"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/fellWarden/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/fellWarden/v06.png",
+                  "sha256": "4709d9c93e79614cd75a95615edfc9bd57f449ab0134292036e26d6eaa501b5b",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v07",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "2222ea4b6a253963d0b3811c66e3936f5ce96b2104fb249ccdf48f741bae924d",
+            "prompt": "Create exactly TEN distinct rear-view sprite design proposals for the SAME Fell Warden boss shown in reference image 1. Reference image 2 is ONLY the required rear three-quarter gameplay camera: character turned away from viewer, back of head/back armor and cape prominent, facing toward upper-right. Do not copy reference 2's identity or equipment. Preserve Fell Warden's black scorched heavy full plate armor, sealed angular helmet, broad heavy body, jagged dark crimson shredded cape, fiery orange ember fissures and enormous two-handed flaming poleaxe from image 1. Every variant must show his BACK from this camera, never front or front three-quarter, no visible facial/front chest view. Ten alternatives vary plausible rear cape tears, backplate construction and ember seam arrangements subtly while retaining identical character identity, anatomy, palette, silhouette and outfit proportions. Production dark fantasy painterly game sprite style matching reference 1, isolated FULL bodies including boots and entire poleaxe blades and shaft. ONE transparent PNG canvas, exact 5 columns by 2 rows regular grid, one full character per cell, exactly ten characters, generous transparent gaps and external margins, consistent scale and foot baselines, no touching/overlap between cells, no cropping, no labels, no numbering, no scenery, no poster composition. These are ten design proposals, not animation or ten front-facing poses.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/fellWarden/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "1aab912c5dcef9cd91f37c6a1dc5e49b5981162b"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/fellWarden/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/fellWarden/v07.png",
+                  "sha256": "05f528ed515aaa68a160d6d7b76c2b42c6e318c7ba7bb525235bd6677a301a38",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v08",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "2222ea4b6a253963d0b3811c66e3936f5ce96b2104fb249ccdf48f741bae924d",
+            "prompt": "Create exactly TEN distinct rear-view sprite design proposals for the SAME Fell Warden boss shown in reference image 1. Reference image 2 is ONLY the required rear three-quarter gameplay camera: character turned away from viewer, back of head/back armor and cape prominent, facing toward upper-right. Do not copy reference 2's identity or equipment. Preserve Fell Warden's black scorched heavy full plate armor, sealed angular helmet, broad heavy body, jagged dark crimson shredded cape, fiery orange ember fissures and enormous two-handed flaming poleaxe from image 1. Every variant must show his BACK from this camera, never front or front three-quarter, no visible facial/front chest view. Ten alternatives vary plausible rear cape tears, backplate construction and ember seam arrangements subtly while retaining identical character identity, anatomy, palette, silhouette and outfit proportions. Production dark fantasy painterly game sprite style matching reference 1, isolated FULL bodies including boots and entire poleaxe blades and shaft. ONE transparent PNG canvas, exact 5 columns by 2 rows regular grid, one full character per cell, exactly ten characters, generous transparent gaps and external margins, consistent scale and foot baselines, no touching/overlap between cells, no cropping, no labels, no numbering, no scenery, no poster composition. These are ten design proposals, not animation or ten front-facing poses.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/fellWarden/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "1aab912c5dcef9cd91f37c6a1dc5e49b5981162b"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/fellWarden/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/fellWarden/v08.png",
+                  "sha256": "3130aff6e1c7546f1255c55cbba12572a9de18141d1462ccef940cf6d481a7a8",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v09",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "2222ea4b6a253963d0b3811c66e3936f5ce96b2104fb249ccdf48f741bae924d",
+            "prompt": "Create exactly TEN distinct rear-view sprite design proposals for the SAME Fell Warden boss shown in reference image 1. Reference image 2 is ONLY the required rear three-quarter gameplay camera: character turned away from viewer, back of head/back armor and cape prominent, facing toward upper-right. Do not copy reference 2's identity or equipment. Preserve Fell Warden's black scorched heavy full plate armor, sealed angular helmet, broad heavy body, jagged dark crimson shredded cape, fiery orange ember fissures and enormous two-handed flaming poleaxe from image 1. Every variant must show his BACK from this camera, never front or front three-quarter, no visible facial/front chest view. Ten alternatives vary plausible rear cape tears, backplate construction and ember seam arrangements subtly while retaining identical character identity, anatomy, palette, silhouette and outfit proportions. Production dark fantasy painterly game sprite style matching reference 1, isolated FULL bodies including boots and entire poleaxe blades and shaft. ONE transparent PNG canvas, exact 5 columns by 2 rows regular grid, one full character per cell, exactly ten characters, generous transparent gaps and external margins, consistent scale and foot baselines, no touching/overlap between cells, no cropping, no labels, no numbering, no scenery, no poster composition. These are ten design proposals, not animation or ten front-facing poses.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/fellWarden/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "1aab912c5dcef9cd91f37c6a1dc5e49b5981162b"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/fellWarden/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/fellWarden/v09.png",
+                  "sha256": "1ef60a3867f1f3b3a2b7686db366176f3c52f574c0aca614d2bc16cb26b9962a",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "v10",
+          "status": "draft",
+          "perspective": "rear",
+          "provenance": {
+            "sourceSha256": "2222ea4b6a253963d0b3811c66e3936f5ce96b2104fb249ccdf48f741bae924d",
+            "prompt": "Create exactly TEN distinct rear-view sprite design proposals for the SAME Fell Warden boss shown in reference image 1. Reference image 2 is ONLY the required rear three-quarter gameplay camera: character turned away from viewer, back of head/back armor and cape prominent, facing toward upper-right. Do not copy reference 2's identity or equipment. Preserve Fell Warden's black scorched heavy full plate armor, sealed angular helmet, broad heavy body, jagged dark crimson shredded cape, fiery orange ember fissures and enormous two-handed flaming poleaxe from image 1. Every variant must show his BACK from this camera, never front or front three-quarter, no visible facial/front chest view. Ten alternatives vary plausible rear cape tears, backplate construction and ember seam arrangements subtly while retaining identical character identity, anatomy, palette, silhouette and outfit proportions. Production dark fantasy painterly game sprite style matching reference 1, isolated FULL bodies including boots and entire poleaxe blades and shaft. ONE transparent PNG canvas, exact 5 columns by 2 rows regular grid, one full character per cell, exactly ten characters, generous transparent gaps and external margins, consistent scale and foot baselines, no touching/overlap between cells, no cropping, no labels, no numbering, no scenery, no poster composition. These are ten design proposals, not animation or ten front-facing poses.",
+            "promptKind": "exact",
+            "sourceReferences": [
+              {
+                "repository": "cehinds/AshenSpire-art",
+                "path": "hd/assets/enemy-poses/expansion/fellWarden/idle.webp",
+                "ref": "hd-assets-v23",
+                "blob": "1aab912c5dcef9cd91f37c6a1dc5e49b5981162b"
+              },
+              {
+                "repository": "cehinds/AshenSpire",
+                "path": "assets-display/alternative/reaver-default.webp",
+                "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+                "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+                "role": "camera only"
+              }
+            ],
+            "publicationStatus": "draft-unpublished",
+            "artRelease": null,
+            "normalization": "art/enemy-back-proposals/fellWarden/normalized.json",
+            "cropReview": "draft-pending-crop-review"
+          },
+          "stances": {
+            "neutral": {
+              "frames": [
+                {
+                  "asset": "art/enemy-back-proposals/fellWarden/v10.png",
+                  "sha256": "dc6b7f3ecaf686959e6e8518d53561528b57173e410c94452345d3fb3695cf9c",
+                  "durationMs": 1000,
+                  "canvas": [
+                    512,
+                    512
+                  ],
+                  "anchors": {
+                    "feet": [
+                      0.5,
+                      0.90625
+                    ]
+                  },
+                  "registration": {
+                    "boundsAnchorPixels": [
+                      256,
+                      464
+                    ],
+                    "feetSource": "bounds-floor-reference",
+                    "footReviewStatus": "not-independently-reviewed"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "provisionalDefaultVersion": "v01"
     },
     {
       "id": "bellKeeper",

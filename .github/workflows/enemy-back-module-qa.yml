@@ -1,7 +1,7 @@
 name: Enemy back module QA
 on:
   push:
-    branches: ['worker/EnemyBackSprites/module', 'worker/EnemyBackSprites/gallery-preview']
+    branches: ['worker/EnemyBackSprites/module', 'worker/EnemyBackSprites/gallery-preview', 'worker/EnemyBackSprites/gallery-content']
   pull_request:
     branches: ['feature/EnemyBackSprites']
     paths: ['pose-studio/enemy-back-proposals/**', '.github/workflows/enemy-back-module-qa.yml']
@@ -29,7 +29,7 @@ jobs:
             package.json
             art-manifest.json
             art-release.json
-            art/enemy-back-proposals/wyrmAspirant
+            art/enemy-back-proposals
           sparse-checkout-cone-mode: false
       - uses: actions/setup-node@v4
         with:
@@ -37,7 +37,10 @@ jobs:
       - name: Build actual static Workbench without external art
         run: node tools/workbench-static.mjs --out /tmp/enemy-back-static --base /qa/workbench/ --no-art
       - name: Verify normalized art hashes
-        run: node pose-studio/enemy-back-proposals/integrate-normalized.mjs wyrmAspirant
+        run: |
+          node pose-studio/enemy-back-proposals/integrate-normalized.mjs wyrmAspirant
+          node pose-studio/enemy-back-proposals/integrate-normalized.mjs courtDuelist
+          node pose-studio/enemy-back-proposals/integrate-normalized.mjs fellWarden
       - name: Model contract
         run: node --test pose-studio/enemy-back-proposals/model.test.mjs
       - name: Install isolated browser tooling

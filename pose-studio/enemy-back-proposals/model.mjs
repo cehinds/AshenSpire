@@ -2,7 +2,7 @@
 export const STANCES = ['neutral','smash','attack','sweep','counter','defend','evade','spell','preparing'];
 export const VERSION_IDS = Array.from({length:10},(_,i)=>'v'+String(i+1).padStart(2,'0'));
 export function safeAsset(value) {
- return typeof value==='string' && /^(?:assets(?:-alternative)?|art\/enemy-back-proposals)\/[a-zA-Z0-9_./-]+\.(?:png|webp)$/.test(value) && !value.split('/').includes('..') ? value : null;
+ return typeof value==='string' && /^(?:assets(?:-alternative)?|art\/enemy-back-(?:proposals|motion))\/[a-zA-Z0-9_./-]+\.(?:png|webp)$/.test(value) && !value.split('/').includes('..') ? value : null;
 }
 export function proposalsOf(actor) { return VERSION_IDS.map(id=>actor.proposals?.find(p=>p.id===id)||{id,status:'missing',perspective:'rear',stances:{}}); }
 export function framesOf(proposal,stance) { return proposal?.perspective==='rear' ? (proposal.stances?.[stance]?.frames||[]).filter(f=>safeAsset(f.asset)) : []; }

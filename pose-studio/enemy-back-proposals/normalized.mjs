@@ -1,23 +1,29 @@
 import {VERSION_IDS,validateManifest,safeAsset} from './model.mjs';
 /** Converts verified normalization metadata to drafts, never attack animations. */
-export function normalizedProposals(actorId,report,provenance) {
+export function normalizedProposals(actorId,report,provenance,footReview=null) {
  if(!/^[a-zA-Z0-9_-]+$/.test(actorId)||(provenance.actorId||provenance.enemyId)!==actorId)throw Error('Canonical actor mismatch');
  if(report.qa?.errors?.length)throw Error('Normalization reports errors');
  if(!/^[a-f0-9]{64}$/.test(report.source?.sha256||''))throw Error('Missing source hash');
  if(!provenance.prompt&&!provenance.promptSummary)throw Error('Missing generation prompt');
  if(report.variants?.length!==10||new Set(report.variants.map(v=>v.id)).size!==10)throw Error('Expected ten distinct variants');
+ if(footReview&&(footReview.actorId!==actorId||footReview.sourceSha256!==report.source.sha256))throw Error('Foot review source mismatch');
+ const references=provenance.sourceReferences||[provenance.source,provenance.cameraReference].filter(Boolean).map(ref=>({repository:ref.repository||ref.repo,ref:ref.ref,path:ref.path,blob:ref.blob||ref.sha}));
  return report.variants.map(v=>{
   if(!VERSION_IDS.includes(v.id)||v.sourceBoundaryClipped)throw Error('Invalid or clipped variant '+v.id);
   if(!/^[a-f0-9]{64}$/.test(v.sha256||''))throw Error('Missing output hash');
+  const override=footReview?.overrides?.[v.id];
+  if(override&&(override.imageSha256!==v.sha256||!Array.isArray(override.feetPixels)||override.feetPixels.length!==2||override.feetPixels.some((n,i)=>!Number.isFinite(n)||n<0||n>v.size[i])))throw Error('Foot override image or coordinates mismatch: '+v.id);
+  const feet=override?.feetPixels||v.boundsAnchor||v.anchor;
+  if(!Array.isArray(feet))throw Error('Missing frame registration: '+v.id);
   const asset='art/enemy-back-proposals/'+actorId+'/'+v.id+'.png';
   if(!safeAsset(asset))throw Error('Invalid draft asset');
-  return {id:v.id,status:'draft',perspective:'rear',provenance:{sourceSha256:report.source.sha256,prompt:provenance.prompt||provenance.promptSummary,promptKind:provenance.prompt?'exact':'summary',sourceReferences:provenance.sourceReferences||[],publicationStatus:'draft-unpublished',artRelease:null,normalization:'art/enemy-back-proposals/'+actorId+'/normalized.json',cropReview:report.cropPlan?.status||'pending'},stances:{neutral:{frames:[{asset,sha256:v.sha256,durationMs:1000,canvas:v.size,anchors:{feet:v.anchor.map((n,i)=>n/v.size[i])}}]}}};
+  return {id:v.id,status:'draft',perspective:'rear',provenance:{sourceSha256:report.source.sha256,prompt:provenance.prompt||provenance.promptSummary,promptKind:provenance.prompt?'exact':'summary',sourceReferences:references,publicationStatus:'draft-unpublished',artRelease:null,normalization:'art/enemy-back-proposals/'+actorId+'/normalized.json',cropReview:report.cropPlan?.status||'pending'},stances:{neutral:{frames:[{asset,sha256:v.sha256,durationMs:1000,canvas:v.size,anchors:{feet:feet.map((n,i)=>n/v.size[i])},registration:{boundsAnchorPixels:v.boundsAnchor||v.anchor,feetSource:override?'manual-visible-foot-draft':'bounds-floor-reference',footReviewStatus:footReview?.status||'not-independently-reviewed'}}]}}};
  });
 }
-export function integrateNormalized(manifest,actorId,report,provenance){
+export function integrateNormalized(manifest,actorId,report,provenance,footReview=null){
  const next=structuredClone(manifest),actor=next.actors.find(a=>a.id===actorId);
  if(!actor)throw Error('Actor is not in the audited roster');
- const incoming=normalizedProposals(actorId,report,provenance);
+ const incoming=normalizedProposals(actorId,report,provenance,footReview);
  actor.proposals=incoming.map(nextProposal=>{
   const previous=actor.proposals.find(p=>p.id===nextProposal.id);if(!previous)return nextProposal;
   const hasMotion=Object.keys(previous.animations||{}).length>0||Object.keys(previous.stances||{}).some(s=>s!=='neutral')||['reviewed','selected'].includes(previous.status);

@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "actorId": "courtDuelist",
+  "status": "draft-proposals",
+  "generator": "OpenAI image generation",
+  "prompt": "Create an AshenSpire production sprite proposal sheet: TEN rear three-quarter alternate base sprites of the Duelist of the Court from FIRST reference. SECOND reference is ONLY the camera/facing example: player seen from behind, looking away toward upper-right/right; do not copy knight equipment. Preserve the exact duelist identity: slender human court fencer, broad dark brown cavalier hat with tall RED AND CREAM plume, weathered pale skull-like mask mostly hidden from rear, ornate bronze/gold-trimmed burgundy long tailed coat and flowing red cape, dark fitted breeches, brown knee boots, gloves and narrow rapier in right hand angled down/right. Render BACK of hat, shoulders, coat and cape; no face/chest facing viewer. Same proportions, costume palette, weapons and painted dark-fantasy game style in all ten. Ten distinct proposal interpretations of back cape drape, coat-tail split, plume curve, rear gold embroidery arrangement, rapier rest and neutral dueling weight distribution; not recolors, not sequential animation frames. All rear three-quarter facing upper-right consistently. EXACT 5 columns by 2 rows, 10 equal square slots, each character occupies only central 70% of its cell with FULL EMPTY TRANSPARENT margins on all four sides, including around plume and rapier. Do NOT fill the sheet edge to edge. Every complete hat, plume, cape, boot and rapier tip visible inside its own cell; no part clipped or touching another slot. Consistent feet baseline and shared character scale in every slot. Wide transparent RGBA sheet, no background, floor, scenery, text, numbers, labels or borders. Maximum high resolution. Neutral combat-ready stance proposals, same weapon handedness. Slots indexed v01-v05 top row and v06-v10 bottom row.",
+  "master": "proposal-sheet.png",
+  "grid": {
+    "columns": 5,
+    "rows": 2,
+    "order": "row-major v01-v10"
+  },
+  "sourceReferences": [
+    {
+      "repository": "cehinds/AshenSpire-art",
+      "ref": "hd-assets-v23",
+      "path": "hd/assets/enemy-poses/expansion/courtDuelist/idle.webp",
+      "blob": "4382381506498b6215e63c0b698090812f4630e2"
+    },
+    {
+      "repository": "cehinds/AshenSpire",
+      "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+      "path": "assets-display/alternative/reaver-default.webp",
+      "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd"
+    }
+  ],
+  "qa": {
+    "visualReview": "pending",
+    "normalization": "pending",
+    "runtimePublication": "not published"
+  },
+  "licensing": "Original AI-generated proposal derived from the project's existing references; no third-party license claim."
+}
