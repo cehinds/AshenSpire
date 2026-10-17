@@ -1,0 +1,30 @@
+{
+  "bossId": "blightedValkyrie",
+  "status": "draft-proposal-not-art-approved",
+  "prompt": "Generate exactly TEN BACK VIEW design variants of the Blighted Valkyrie boss from first image. Rotate character away 180 degrees: rear three-quarter camera facing upper-right AWAY like second player image; see back of helmet, shoulder blades, rear armor, rear wing attachment roots, heels. NO face, NO breastplate front. Preserve first image's slender dark bronze armored valkyrie, enormous ivory feather wings, spear and ragged dark burgundy skirt; anatomical same character and palette. Second reference supplies camera orientation only, not costume. Full bodies, complete wings and full spear contained individually, wing shapes separated from neighboring sprites. Precisely FIVE columns by TWO rows with generous gutters and exterior margins. Ten coherent alternative rear wing-feather layering/back armor details, idle standing. Transparent empty alpha canvas mandatory, no colored backdrop, no gradient, no scenery, no floor, no words or labels. Match original painted dark fantasy game sprite asset style. All ten are clearly seen from behind with rear armor and wing roots visible.",
+  "sources": [
+    {
+      "repository": "cehinds/AshenSpire-art",
+      "path": "hd/assets/enemy-poses/expansion/blightedValkyrie/idle.webp",
+      "ref": "hd-assets-v23",
+      "blob": "9bfb5609e3a1add763a29225e68a63f39be1a836"
+    },
+    {
+      "repository": "cehinds/AshenSpire",
+      "path": "assets-display/alternative/reaver-default.webp",
+      "ref": "b1b4d91c2c7758137d315a941096eee18a6fbcef",
+      "blob": "62b89cbd283b14dafb26a465b55bff0b1f9a37bd",
+      "purpose": "rear camera only"
+    }
+  ],
+  "layout": {
+    "columns": 5,
+    "rows": 2,
+    "count": 10
+  },
+  "visualQA": {
+    "rearView": true,
+    "count10": true,
+    "notes": "Rear identity and ten separate figures visually inspected. Alpha and clipping require mechanical validation; draft only."
+  }
+}
