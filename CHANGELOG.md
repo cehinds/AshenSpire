@@ -34,6 +34,12 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-17
 
+- **Combat figure animations follow the saved game module settings** ([#2067](https://github.com/cehinds/AshenSpire/pull/2067), `0.7.1.1551`). Core and Current keep the approved class-default weapon sequences enabled by default. Authors can disable figure motion through the animation module JSON while retaining static artwork, targeting, combat timing and damage feedback; Reading Desk playback follows the same setting.
+
+- **Core combat and route feedback is preserved for implementation** ([#2030](https://github.com/cehinds/AshenSpire/pull/2030), `0.7.1.1549`). Record the corrected stance bonuses, reaction costs, HUD, poise, potion, and map requests with examples, assumptions, and QA criteria. Gameplay and release work remain pending.
+
+- **Layered map and battlefield art has an editable design handoff** ([#2028](https://github.com/cehinds/AshenSpire/pull/2028), `0.7.1.1547`). Document sharper hex terrain, reusable map and combat/rest layers, independent grid and label controls, region and tile authoring, sparse landmarks, and map-item discovery rewards. Includes illustrated proposals, validated JSON examples, 24 transparent prop placeholders with editable SVGs, and stable component contracts; gameplay and rendering are unchanged.
+
 - **Pose Studio loads its shared engine and the balance reference stays current** ([#2025](https://github.com/cehinds/AshenSpire/pull/2025), `0.7.1.1545`). Restore the studio's effect catalog after the engine-module split and refresh the historical reference report's measured damage and seeded encounter outcomes, without changing combat rules.
 
 - **Core previews keep their offline and map checks after promotion** ([#2024](https://github.com/cehinds/AshenSpire/pull/2024), `0.7.1.1543`). Preview checks follow the current startup and Settings navigation, measure map dragging at the displayed zoom, and retain permanent coverage of Core's interface text after merging.

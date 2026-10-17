@@ -10,5 +10,6 @@
     "portable": false
   },
   "guide": "guide.md",
-  "configuredAdapter": true
+  "configuredAdapter": true,
+  "legacySettingsAdapter": true
 }

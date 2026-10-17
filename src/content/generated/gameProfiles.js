@@ -95,7 +95,8 @@ export const gameProfileCatalog = {
           "portable": false
         },
         "guide": "guide.md",
-        "configuredAdapter": true
+        "configuredAdapter": true,
+        "legacySettingsAdapter": true
       },
       "defaults": {
         "mode": "configured",
@@ -111,7 +112,8 @@ export const gameProfileCatalog = {
             ]
           },
           "enabled": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Enable solo-combat authored figure clips, action choreography and Reading Desk playback; combat timing and foundation feedback are preserved."
           }
         },
         "required": [
@@ -125,7 +127,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/animation/module.json",
           "id": "animation",
           "version": "1.0.0",
-          "hash": "sha256:79e8e9bc51d549f17f6d719e1cb858028cc785f463ac6cc9985d95a87ca31e06"
+          "hash": "sha256:6bfd1bcc1e1cd2b0355a2134a428ff7f3d947cd3b8867a9f5f9f4bb0dd097999"
         },
         {
           "path": "engine/modules/animation/defaults.json",
@@ -137,7 +139,7 @@ export const gameProfileCatalog = {
           "path": "engine/modules/animation/settings.schema.json",
           "id": "animation",
           "version": "1.0.0",
-          "hash": "sha256:cd31a5558d31f26c52ec26543a338758a0d290ef9bd39fd80249605ac3473dee"
+          "hash": "sha256:fe539a26c12f977e4c2c3c0ef4bd31e1dae836731ba1b14023d3b491be98e693"
         }
       ]
     },
@@ -15442,7 +15444,7 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "path": "src/** (excluding generated gameProfiles/changelog)",
-      "hash": "sha256:008a8b85699bd955b5ecdd545d58c1f34ccd0e7d543cd4c03e15c18878804c98"
+      "hash": "sha256:9449f200ae2cb7040ec80200aecdecd3214f1c8c1ba11ae79b03afa9e24b807a"
     }
   ],
   "runtimeSources": [
@@ -17733,6 +17735,12 @@ export const gameProfileCatalog = {
       "hash": "sha256:9b50fe149933eb97b7c37885e4302ea2d3c18d07fcf6b1e6424c7be9549b561c"
     },
     {
+      "path": "src/model/gameAnimationPolicy.js",
+      "id": "ashen.source-runtime",
+      "version": "1.0.0",
+      "hash": "sha256:08ca8cfaafd86aa13ad4ea21cc020fd976b79a74b4e0f3128437bae05e6900d7"
+    },
+    {
       "path": "src/model/gameProfile.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
@@ -18738,7 +18746,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/components/deckCardAnimationPreview.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:ddc65816d36bb13a546150616289a02536d01cc7c06868a2872fd10df9b5bd6f"
+      "hash": "sha256:1caa3d6070d8ef9f34784884467ddd4af9ba6e8a57e21511c86ffc98a50c3783"
     },
     {
       "path": "src/ui/components/dialogueStage.js",
@@ -19332,7 +19340,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/fx.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:6e9f2bfce5ecbd432ced8285348e500a39b26222d10083e466608b43be79e895"
+      "hash": "sha256:489a0ccddb72b1f0edaafd4112548679d2f827fa80bd37a072eb921e501aaa9e"
     },
     {
       "path": "src/ui/gesture.js",
@@ -20202,7 +20210,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/screens/combat.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:23b037082cb033d858aa917cbf23798b0f9ffc469f8b24ab352ca998a42a24f6"
+      "hash": "sha256:ed0a834ddf214a8d61dd95102fdb043c415ac2c5df3dab70acc5f1e70f62e2b3"
     },
     {
       "path": "src/ui/screens/combatTest.js",
@@ -20457,7 +20465,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:23af16d4e9c9f6d88fe655d32ecf1a688b47df39f9e3a1d6d193ce63923593ab"
     }
   ],
-  "runtimeHash": "sha256:d2a5c2e44488179290aad7fb64e725b9aee7cd9f247ba9a805d43e050251ee21"
+  "runtimeHash": "sha256:6aa4f51072c794bba5689f3adecf1a09e7ace44eee5baa647a8b39026f657023"
 };
 export const gameProfileAuthors = {
   "default": {

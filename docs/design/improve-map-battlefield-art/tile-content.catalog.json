@@ -1,0 +1,693 @@
+{
+  "formatVersion": 2,
+  "status": "proposal-only",
+  "description": "Reusable example definitions. All content IDs are proposed; asset pools are intentionally empty. No live content is installed.",
+  "artProfiles": {
+    "meadow": {
+      "compatibleBiomes": [
+        "grassland"
+      ],
+      "map": {
+        "groundPoolId": "meadow-map-ground",
+        "propsPoolId": "meadow-map-props"
+      },
+      "combat": {
+        "groundPoolId": "meadow-ground",
+        "propsPoolId": "meadow-props",
+        "skyPoolId": "outdoor-sky"
+      },
+      "rest": {
+        "groundPoolId": "meadow-ground",
+        "propsPoolId": "meadow-rest-props",
+        "skyPoolId": "outdoor-sky"
+      }
+    },
+    "forest": {
+      "compatibleBiomes": [
+        "forest"
+      ],
+      "map": {
+        "groundPoolId": "forest-map-ground",
+        "propsPoolId": "forest-map-props"
+      },
+      "combat": {
+        "groundPoolId": "forest-ground",
+        "propsPoolId": "forest-props",
+        "skyPoolId": "outdoor-sky"
+      },
+      "rest": {
+        "groundPoolId": "forest-ground",
+        "propsPoolId": "forest-rest-props",
+        "skyPoolId": "outdoor-sky"
+      }
+    },
+    "jungle": {
+      "compatibleBiomes": [
+        "jungle"
+      ],
+      "map": {
+        "groundPoolId": "jungle-map-ground",
+        "propsPoolId": "jungle-map-props"
+      },
+      "combat": {
+        "groundPoolId": "jungle-ground",
+        "propsPoolId": "jungle-props",
+        "skyPoolId": "outdoor-sky"
+      },
+      "rest": {
+        "groundPoolId": "jungle-ground",
+        "propsPoolId": "jungle-rest-props",
+        "skyPoolId": "outdoor-sky"
+      }
+    },
+    "city": {
+      "compatibleBiomes": [
+        "grassland",
+        "jungle"
+      ],
+      "map": {
+        "groundPoolId": "city-map-ground",
+        "propsPoolId": "city-map-props"
+      },
+      "combat": {
+        "groundPoolId": "city-ground",
+        "propsPoolId": "city-props",
+        "skyPoolId": "outdoor-sky"
+      },
+      "rest": {
+        "groundPoolId": "city-ground",
+        "propsPoolId": "city-rest-props",
+        "skyPoolId": "outdoor-sky"
+      }
+    },
+    "ruins": {
+      "compatibleBiomes": [
+        "grassland"
+      ],
+      "map": {
+        "groundPoolId": "ruins-map-ground",
+        "propsPoolId": "ruins-map-props"
+      },
+      "combat": {
+        "groundPoolId": "ruins-ground",
+        "propsPoolId": "ruins-props",
+        "skyPoolId": "outdoor-sky"
+      },
+      "rest": {
+        "groundPoolId": "ruins-ground",
+        "propsPoolId": "ruins-rest-props",
+        "skyPoolId": "outdoor-sky"
+      }
+    }
+  },
+  "artPools": {
+    "meadow-map-ground": {
+      "surface": "map",
+      "layer": "ground",
+      "requiredTags": [
+        "grass"
+      ],
+      "assetIds": []
+    },
+    "meadow-map-props": {
+      "surface": "map",
+      "layer": "props",
+      "requiredTags": [
+        "wayside"
+      ],
+      "assetIds": []
+    },
+    "meadow-ground": {
+      "surface": "scene",
+      "layer": "ground",
+      "requiredTags": [
+        "grass"
+      ],
+      "assetIds": []
+    },
+    "meadow-props": {
+      "surface": "scene",
+      "layer": "props",
+      "requiredTags": [
+        "wayside"
+      ],
+      "assetIds": []
+    },
+    "meadow-rest-props": {
+      "surface": "scene",
+      "layer": "props",
+      "requiredTags": [
+        "rest",
+        "wayside"
+      ],
+      "assetIds": []
+    },
+    "forest-map-ground": {
+      "surface": "map",
+      "layer": "ground",
+      "requiredTags": [
+        "earth"
+      ],
+      "assetIds": []
+    },
+    "forest-map-props": {
+      "surface": "map",
+      "layer": "props",
+      "requiredTags": [
+        "forest"
+      ],
+      "assetIds": []
+    },
+    "forest-ground": {
+      "surface": "scene",
+      "layer": "ground",
+      "requiredTags": [
+        "earth"
+      ],
+      "assetIds": []
+    },
+    "forest-props": {
+      "surface": "scene",
+      "layer": "props",
+      "requiredTags": [
+        "forest"
+      ],
+      "assetIds": []
+    },
+    "forest-rest-props": {
+      "surface": "scene",
+      "layer": "props",
+      "requiredTags": [
+        "rest",
+        "forest"
+      ],
+      "assetIds": []
+    },
+    "jungle-map-ground": {
+      "surface": "map",
+      "layer": "ground",
+      "requiredTags": [
+        "earth"
+      ],
+      "assetIds": []
+    },
+    "jungle-map-props": {
+      "surface": "map",
+      "layer": "props",
+      "requiredTags": [
+        "jungle"
+      ],
+      "assetIds": []
+    },
+    "jungle-ground": {
+      "surface": "scene",
+      "layer": "ground",
+      "requiredTags": [
+        "earth"
+      ],
+      "assetIds": []
+    },
+    "jungle-props": {
+      "surface": "scene",
+      "layer": "props",
+      "requiredTags": [
+        "jungle"
+      ],
+      "assetIds": []
+    },
+    "jungle-rest-props": {
+      "surface": "scene",
+      "layer": "props",
+      "requiredTags": [
+        "rest",
+        "jungle"
+      ],
+      "assetIds": []
+    },
+    "city-map-ground": {
+      "surface": "map",
+      "layer": "ground",
+      "requiredTags": [
+        "cobble"
+      ],
+      "assetIds": []
+    },
+    "city-map-props": {
+      "surface": "map",
+      "layer": "props",
+      "requiredTags": [
+        "city-gate"
+      ],
+      "assetIds": []
+    },
+    "city-ground": {
+      "surface": "scene",
+      "layer": "ground",
+      "requiredTags": [
+        "cobble"
+      ],
+      "assetIds": []
+    },
+    "city-props": {
+      "surface": "scene",
+      "layer": "props",
+      "requiredTags": [
+        "city-gate"
+      ],
+      "assetIds": []
+    },
+    "city-rest-props": {
+      "surface": "scene",
+      "layer": "props",
+      "requiredTags": [
+        "rest",
+        "city-gate"
+      ],
+      "assetIds": []
+    },
+    "ruins-map-ground": {
+      "surface": "map",
+      "layer": "ground",
+      "requiredTags": [
+        "stone"
+      ],
+      "assetIds": []
+    },
+    "ruins-map-props": {
+      "surface": "map",
+      "layer": "props",
+      "requiredTags": [
+        "broken-arch"
+      ],
+      "assetIds": []
+    },
+    "ruins-ground": {
+      "surface": "scene",
+      "layer": "ground",
+      "requiredTags": [
+        "stone"
+      ],
+      "assetIds": []
+    },
+    "ruins-props": {
+      "surface": "scene",
+      "layer": "props",
+      "requiredTags": [
+        "broken-arch"
+      ],
+      "assetIds": []
+    },
+    "ruins-rest-props": {
+      "surface": "scene",
+      "layer": "props",
+      "requiredTags": [
+        "rest",
+        "broken-arch"
+      ],
+      "assetIds": []
+    },
+    "outdoor-sky": {
+      "surface": "scene",
+      "layer": "sky",
+      "requiredTags": [
+        "outdoors"
+      ],
+      "assetIds": []
+    }
+  },
+  "weatherProfiles": {
+    "temperate": [
+      {
+        "weatherId": "clear",
+        "weight": 60
+      },
+      {
+        "weatherId": "cloudy",
+        "weight": 30
+      },
+      {
+        "weatherId": "misty",
+        "weight": 10
+      }
+    ],
+    "tropical": [
+      {
+        "weatherId": "clear",
+        "weight": 35
+      },
+      {
+        "weatherId": "rain",
+        "weight": 45
+      },
+      {
+        "weatherId": "misty",
+        "weight": 20
+      }
+    ]
+  },
+  "weather": {
+    "clear": {
+      "visualTags": [
+        "clear"
+      ],
+      "gameplay": {
+        "enabled": false,
+        "effectIds": []
+      }
+    },
+    "cloudy": {
+      "visualTags": [
+        "cloudy"
+      ],
+      "gameplay": {
+        "enabled": false,
+        "effectIds": []
+      }
+    },
+    "misty": {
+      "visualTags": [
+        "misty"
+      ],
+      "gameplay": {
+        "enabled": false,
+        "effectIds": [
+          "mist-concealment"
+        ]
+      }
+    },
+    "rain": {
+      "visualTags": [
+        "rain",
+        "wet"
+      ],
+      "gameplay": {
+        "enabled": false,
+        "effectIds": [
+          "rain-soaked"
+        ]
+      }
+    }
+  },
+  "effects": {
+    "mist-concealment": {
+      "kind": "buff",
+      "description": "Future concealment bonus during mist.",
+      "enabled": false,
+      "trigger": "while-weather-active",
+      "targets": "all-combatants",
+      "duration": "while-condition-active",
+      "stacking": "refresh",
+      "removeOn": "weather-change",
+      "modifiers": [
+        {
+          "stat": "evasion",
+          "operation": "add",
+          "value": 0.05
+        }
+      ]
+    },
+    "rain-soaked": {
+      "kind": "debuff",
+      "description": "Future lightning vulnerability during rain.",
+      "enabled": false,
+      "trigger": "while-weather-active",
+      "targets": "all-combatants",
+      "duration": "while-condition-active",
+      "stacking": "refresh",
+      "removeOn": "weather-change",
+      "modifiers": [
+        {
+          "stat": "lightning-damage-taken",
+          "operation": "multiply",
+          "value": 1.1
+        }
+      ]
+    },
+    "well-rested": {
+      "kind": "buff",
+      "description": "Future reward after completing a rest.",
+      "enabled": false,
+      "trigger": "rest-completed",
+      "targets": "party",
+      "duration": "next-combat",
+      "stacking": "refresh",
+      "removeOn": "combat-end",
+      "modifiers": [
+        {
+          "stat": "stamina-recovery",
+          "operation": "multiply",
+          "value": 1.1
+        }
+      ]
+    }
+  },
+  "encounterPools": {
+    "road-raiders": [
+      {
+        "encounterId": "raider-patrol",
+        "weight": 3
+      },
+      {
+        "encounterId": "lone-raider",
+        "weight": 1
+      }
+    ],
+    "forest-hunters": [
+      {
+        "encounterId": "forest-wolves",
+        "weight": 1
+      }
+    ],
+    "jungle-stalkers": [
+      {
+        "encounterId": "jungle-panthers",
+        "weight": 3
+      },
+      {
+        "encounterId": "vine-stalkers",
+        "weight": 2
+      }
+    ],
+    "ruin-guardians": [
+      {
+        "encounterId": "watch-guardians",
+        "weight": 1
+      }
+    ]
+  },
+  "encounters": {
+    "raider-patrol": {
+      "name": "Raider patrol",
+      "enemyIds": [
+        "raider",
+        "raider"
+      ],
+      "kind": "standard"
+    },
+    "lone-raider": {
+      "name": "Lone raider",
+      "enemyIds": [
+        "raider"
+      ],
+      "kind": "standard"
+    },
+    "forest-wolves": {
+      "name": "Forest wolves",
+      "enemyIds": [
+        "forest-wolf",
+        "forest-wolf"
+      ],
+      "kind": "standard"
+    },
+    "jungle-panthers": {
+      "name": "Jungle panthers",
+      "enemyIds": [
+        "jungle-panther"
+      ],
+      "kind": "standard"
+    },
+    "vine-stalkers": {
+      "name": "Vine stalkers",
+      "enemyIds": [
+        "vine-stalker",
+        "vine-stalker"
+      ],
+      "kind": "standard"
+    },
+    "watch-guardians": {
+      "name": "Watch guardians",
+      "enemyIds": [
+        "watch-guardian",
+        "watch-guardian"
+      ],
+      "kind": "elite"
+    }
+  },
+  "enemies": {
+    "raider": {
+      "name": "Road raider",
+      "runtimeId": null
+    },
+    "forest-wolf": {
+      "name": "Forest wolf",
+      "runtimeId": null
+    },
+    "jungle-panther": {
+      "name": "Jungle panther",
+      "runtimeId": null
+    },
+    "vine-stalker": {
+      "name": "Vine stalker",
+      "runtimeId": null
+    },
+    "watch-guardian": {
+      "name": "Watch guardian",
+      "runtimeId": null
+    }
+  },
+  "lootTables": {
+    "watch-relic": {
+      "trigger": "combat-victory",
+      "rollPolicy": "once-per-tile-per-run",
+      "drops": [
+        {
+          "dropId": "watch-medallion-drop",
+          "itemId": "watch-medallion",
+          "chance": 0.15,
+          "quantity": 1,
+          "uniqueScope": "run"
+        }
+      ]
+    }
+  },
+  "items": {
+    "watch-medallion": {
+      "name": "Medallion of the Watch",
+      "runtimeId": null
+    }
+  },
+  "quests": {
+    "recover-watch-banner": {
+      "name": "Recover the Watch Banner",
+      "runtimeId": null,
+      "offerWhen": {
+        "questState": "not-started"
+      },
+      "objective": "Recover the banner from the ruined watch."
+    },
+    "find-the-herbalist": {
+      "name": "A Lantern in the Green",
+      "runtimeId": null,
+      "offerWhen": {
+        "questState": "not-started",
+        "requiresTrainerId": "jungle-herbalist"
+      },
+      "objective": "Meet the herbalist if present; the encounter remains discoverable on a later journey."
+    }
+  },
+  "trainerPools": {
+    "city-trainers": [
+      {
+        "trainerId": "sword-tutor",
+        "weight": 1
+      }
+    ],
+    "wandering-trainers": [
+      {
+        "trainerId": "wandering-duelist",
+        "weight": 1
+      }
+    ],
+    "herbalist-trainers": [
+      {
+        "trainerId": "jungle-herbalist",
+        "weight": 1
+      }
+    ]
+  },
+  "trainers": {
+    "sword-tutor": {
+      "name": "City sword tutor",
+      "skillTags": [
+        "sword"
+      ],
+      "runtimeId": null
+    },
+    "wandering-duelist": {
+      "name": "Wandering duelist",
+      "skillTags": [
+        "sword",
+        "evasion"
+      ],
+      "runtimeId": null
+    },
+    "jungle-herbalist": {
+      "name": "Jungle herbalist",
+      "skillTags": [
+        "herbalism",
+        "recovery"
+      ],
+      "runtimeId": null
+    }
+  },
+  "restPools": {
+    "city-inns": [
+      {
+        "restSpotId": "courtyard-inn",
+        "weight": 1
+      }
+    ],
+    "road-camps": [
+      {
+        "restSpotId": "wayside-camp",
+        "weight": 1
+      }
+    ],
+    "jungle-camps": [
+      {
+        "restSpotId": "sheltered-camp",
+        "weight": 1
+      }
+    ]
+  },
+  "restSpots": {
+    "courtyard-inn": {
+      "name": "Courtyard inn",
+      "tags": [
+        "rest",
+        "inn",
+        "courtyard"
+      ],
+      "artContext": "rest",
+      "completedRestEffectIds": [
+        "well-rested"
+      ]
+    },
+    "wayside-camp": {
+      "name": "Wayside camp",
+      "tags": [
+        "rest",
+        "camp",
+        "tent",
+        "fire"
+      ],
+      "artContext": "rest",
+      "completedRestEffectIds": [
+        "well-rested"
+      ]
+    },
+    "sheltered-camp": {
+      "name": "Sheltered jungle camp",
+      "tags": [
+        "rest",
+        "camp",
+        "canopy",
+        "lantern"
+      ],
+      "artContext": "rest",
+      "completedRestEffectIds": [
+        "well-rested"
+      ]
+    }
+  }
+}

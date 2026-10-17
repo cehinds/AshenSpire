@@ -90,6 +90,7 @@ function withPreview(options, check) {
   let preview;
   try {
     const run = createRunState({ seed: 21, classId: options.classId || 'reaver', registries });
+    if (options.animation !== undefined) run.gameProfile = { formatVersion: 1, modules: { animation: options.animation } };
     const before = structuredClone(run);
     const ref = options.ref || { cardId: 'strike', profileId: 'bladeAttack', sourceArmamentId: 'straightSword' };
     const plan = deckCardAnimationPlan(registries, run, ref);
@@ -250,4 +251,24 @@ test('replacing an inspected card disposes its old stage and queued frame before
     assert.equal(old.painted.length, count, 'an already queued old callback cannot repaint the previous card');
     assert.equal(raf.size, 0, 'disposal cannot restart the old animation');
   });
+});
+
+
+test('disabled run animation keeps the same stage geometry and never starts or resumes Reading Desk playback', () => {
+  for (const animation of [false, { mode: 'configured', enabled: false }]) {
+    withPreview({ animation }, ({ stages, raf, button, desktop, reduced, pauses, step, hide }) => {
+      assert.equal(stages.length, 1, 'the normal stage is still constructed');
+      assert.equal(stages[0].presentation.still, undefined, 'factory capabilities and geometry stay unchanged');
+      assert.equal(button.disabled, true);
+      assert.equal(raf.size, 0);
+      assert.deepEqual(stages[0].painted, [], 'disabled preview never seeks into an authored clip');
+      button.click(); hide(true); hide(false); reduced.change(true); reduced.change(false); step(10000);
+      assert.equal(raf.size, 0);
+      assert.deepEqual(pauses, []);
+      desktop.change(false); assert.equal(stages[0].disposed, true);
+      desktop.change(true); assert.equal(stages.length, 2);
+      assert.equal(raf.size, 0);
+      assert.deepEqual(stages[1].painted, []);
+    });
+  }
 });

@@ -3,6 +3,36 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-2067",
+    "date": "2026-10-17",
+    "group": "2026-10-17",
+    "summary": "Combat figure animations follow the saved game module settings",
+    "detail": "Core and Current keep the approved class-default weapon sequences enabled by default. Authors can disable figure motion through the animation module JSON while retaining static artwork, targeting, combat timing and damage feedback; Reading Desk playback follows the same setting.",
+    "build": "0.7.1.1551",
+    "pullRequest": 2067,
+    "url": "https://github.com/cehinds/AshenSpire/pull/2067"
+  },
+  {
+    "id": "pr-2030",
+    "date": "2026-10-17",
+    "group": "2026-10-17",
+    "summary": "Core combat and route feedback is preserved for implementation",
+    "detail": "Record the corrected stance bonuses, reaction costs, HUD, poise, potion, and map requests with examples, assumptions, and QA criteria. Gameplay and release work remain pending.",
+    "build": "0.7.1.1549",
+    "pullRequest": 2030,
+    "url": "https://github.com/cehinds/AshenSpire/pull/2030"
+  },
+  {
+    "id": "pr-2028",
+    "date": "2026-10-17",
+    "group": "2026-10-17",
+    "summary": "Layered map and battlefield art has an editable design handoff",
+    "detail": "Document sharper hex terrain, reusable map and combat/rest layers, independent grid and label controls, region and tile authoring, sparse landmarks, and map-item discovery rewards. Includes illustrated proposals, validated JSON examples, 24 transparent prop placeholders with editable SVGs, and stable component contracts; gameplay and rendering are unchanged.",
+    "build": "0.7.1.1547",
+    "pullRequest": 2028,
+    "url": "https://github.com/cehinds/AshenSpire/pull/2028"
+  },
+  {
     "id": "pr-2025",
     "date": "2026-10-17",
     "group": "2026-10-17",
