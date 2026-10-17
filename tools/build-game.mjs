@@ -8,7 +8,7 @@
 //
 // The full artifact is build output (dist/build/, git-ignored); the summary is committed.
 // Contract: docs/ai/json-game-modules/MECHANICS-ARCHITECTURE.md (Build artifact). Consumers: engine/export/README.md.
-import { readFileSync, readdirSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync, realpathSync, mkdirSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -271,16 +271,24 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   // ----- maps -----
   // Atlas documents the maps and components reference travel with the artifact (like ui.layout), so a consumer
   // that loads only the artifact can resolve atlas.ref / atlas.path and placement.atlas.
-  const atlasRefs = new Set([...Object.values(mapDocs).map(m => m.atlas?.ref), ...Object.values(mapComponents).map(c => c.placement?.atlas)].filter(r => r && existsSync(path.join(ROOT, r))));
-  const maps = { components: mapComponents, maps: mapDocs, atlas: Object.fromEntries([...atlasRefs].sort().map(r => [r, readJson(r)])) };
+  const atlas = {};
+  const sourceRoot = realpathSync(path.join(ROOT, 'content/source'));
+  const addAtlas = (ref, where) => {
+    if (typeof ref !== 'string' || !ref.startsWith('content/source/') || path.extname(ref) !== '.json') return fail(`${where}: atlas ref '${ref}' must live under content/source/ as JSON`);
+    const file = path.join(ROOT, ref);
+    if (!existsSync(file)) return fail(`${where}: atlas ref '${ref}' does not exist`);
+    const relative = path.relative(sourceRoot, realpathSync(file));
+    if (relative.startsWith(`..${path.sep}`) || relative === '..' || path.isAbsolute(relative)) return fail(`${where}: atlas ref '${ref}' must live under content/source/`);
+    atlas[ref] ||= readJson(ref);
+  };
   // Same rules as tools/maps-validate.mjs: every node has a component, every weighted type is a listed node component.
   const nodeComponents = new Set(Object.values(mapComponents).filter(c => c.kind === 'node').map(c => c.id));
-  for (const c of Object.values(mapComponents)) if (c.placement?.atlas && !existsSync(path.join(ROOT, c.placement.atlas))) fail(`map component ${c.id}: atlas '${c.placement.atlas}' does not exist`);
+  for (const c of Object.values(mapComponents)) if (c.placement?.atlas) addAtlas(c.placement.atlas, `map component ${c.id}`);
   for (const [id, m] of Object.entries(mapDocs)) {
     for (const n of m.nodes || []) if (!mapComponents[n]) fail(`map ${id}: node '${n}' has no map component`);
     if (m.atlas) {
-      if (!m.atlas.ref || !existsSync(path.join(ROOT, m.atlas.ref))) fail(`map ${id}: atlas ref '${m.atlas.ref}' does not exist`);
-      else if (m.atlas.path && resolveAtlasPath(readJson(m.atlas.ref), m.atlas.path) === undefined) fail(`map ${id}: atlas path '${m.atlas.path}' does not resolve in ${m.atlas.ref}`);
+      addAtlas(m.atlas.ref, `map ${id}`);
+      if (atlas[m.atlas.ref] && m.atlas.path && resolveAtlasPath(atlas[m.atlas.ref], m.atlas.path) === undefined) fail(`map ${id}: atlas path '${m.atlas.path}' does not resolve in ${m.atlas.ref}`);
     }
     for (const [label, w] of Object.entries({ weights: m.generator?.weights, 'proposed.weights': m.generator?.proposed?.weights })) {
       for (const k of Object.keys(w || {})) {
@@ -290,6 +298,7 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
     }
     for (const [from, to] of Object.entries(m.generator?.proposed?.names || {})) if (!nodeComponents.has(to)) fail(`map ${id}: proposed.names ${from} -> '${to}' is not a node component`);
   }
+  const maps = { components: mapComponents, maps: mapDocs, atlas: sortKeys(atlas) };
 
   // ----- assets -----
   const assets = { catalog: buildAssetCatalog({ game }) };

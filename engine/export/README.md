@@ -34,7 +34,7 @@ node --test tests/build-game.test.mjs
 | `mechanics` | slug to `{ manifest, model, interface, service, cases }` |
 | `content` | all pack content, resolved: cards, characters, gear, enemies, rewards, shops, stats ... |
 | `ui` | `components`, `screens`, `layout` (the `content/config/ui` files they reference, keyed by path) |
-| `maps` | `components` (node types) and `maps` (one per act) |
+| `maps` | `components` (node types), `maps` (one per act), `atlas` (referenced `content/source` JSON documents keyed by path) |
 | `assets` | `catalog`: asset id to `{ kind, files: { light, high, common }, placeholder? }` |
 | `report` | counts and the lists of gaps (below) |
 

@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { validateGameSchema } from '../engine/kernel/gameConfig.js';
 import { createRuntime, runCases, loadMechanics } from '../engine/runtime/interpreter.mjs';
 import { evaluate } from '../src/model/formulas.js';
+import { resolveAtlasPath } from '../tools/maps-validate.mjs';
 import { buildGame, hashOf, summaryFile, summaryText } from '../tools/build-game.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -184,4 +185,21 @@ test('the artifact carries every atlas document its maps and map components refe
   const refs = [...Object.values(artifact.maps.maps).map(m => m.atlas?.ref), ...Object.values(artifact.maps.components).map(c => c.placement?.atlas)].filter(Boolean);
   assert.ok(refs.length > 0);
   for (const ref of refs) assert.ok(artifact.maps.atlas[ref] && typeof artifact.maps.atlas[ref] === 'object', ref);
+});
+
+test('serialized maps resolve their atlas paths without repository access', () => {
+  const { maps } = JSON.parse(first.text);
+  for (const map of Object.values(maps.maps)) if (map.atlas) {
+    assert.ok(maps.atlas[map.atlas.ref], `embedded atlas: ${map.atlas.ref}`);
+    assert.notEqual(resolveAtlasPath(maps.atlas[map.atlas.ref], map.atlas.path), undefined, map.id);
+  }
+  assert.deepEqual(Object.keys(maps.atlas), ['content/source/worldAtlas.json']);
+  assert.deepEqual(maps.atlas['content/source/worldAtlas.json'], readJson('content/source/worldAtlas.json'));
+});
+
+test('atlas embedding refuses references outside authored content sources', () => {
+  for (const ref of ['engine/runtime/formulas.json', 'content/source/../../engine/runtime/formulas.json']) {
+    assert.throws(() => buildGame({ patch: ({ mapDocs }) => { Object.values(mapDocs)[0].atlas = { ref }; } }), /atlas ref .* must live under content\/source\//);
+    assert.throws(() => buildGame({ patch: ({ mapComponents }) => { Object.values(mapComponents)[0].placement = { atlas: ref }; } }), /atlas ref .* must live under content\/source\//);
+  }
 });

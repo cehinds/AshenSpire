@@ -75,3 +75,20 @@ test('a zero lowerRankChance is honored even when no rank 1+ card is eligible', 
     assert.equal(offer.options.some(row => row.kind === 'combatCards'), false);
   }
 });
+
+test('empty high-rank pools honor probability boundaries across combat, level and shop offers',()=>{
+  for(const chance of [0,1]) {
+    const selected=resolveGameProfile({formatVersion:1,core:'ashen.core@1.0.0',modules:{'reward-ranks':{minRank:10,lowerRankChance:chance},rewards:{offerCount:1000},shops:{options:1000}}});
+    const reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,selected)),selected);
+    const run=fresh('reaver',reg),rng=createRng(40);
+    const combat=gameProfileRewardOffers(reg,run,rng,{offerId:'rank-combat'});
+    const level=gameProfileRewardOffers(reg,run,rng,{offerId:'rank-level',source:'level'});
+    const shop=gameProfileShopStock(reg,run,rng,{shopId:'rank-shop'});
+    for(const offer of [combat,level,shop]) {
+      assert.equal(offer.options.some(row=>row.kind==='combatCards'),chance===1, `${offer.source}: chance ${chance}`);
+      assert.equal(new Set(offer.options.map(row=>`${row.kind}:${row.id}`)).size,offer.options.length);
+    }
+    assert.ok(combat.options.some(row=>row.kind!=='combatCards'),'other categories remain available');
+    assert.equal(gameProfileRewardOffers(reg,run,rng,{offerId:'rank-level',source:'level'}),level,'empty offers persist without rerolling');
+  }
+});
