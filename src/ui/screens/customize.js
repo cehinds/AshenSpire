@@ -917,7 +917,7 @@ export function mountCustomize(app, {
       remaining: remainingPoints(),
       modal: true,
       cancelLabel: t('common.cancel'),
-      doneLabel: 'Continue',
+      doneLabel: t('common.continue'),
       rows: rowsNow(),
       onDecrease: (id) => step(id, -1),
       onIncrease: (id) => step(id, 1),
@@ -1352,7 +1352,7 @@ export function mountCustomize(app, {
     equipmentFold = mountDisclosure($('#cz-equipment-fold'), equipmentSectionViews.map((section) => ({
       key: section.id, kind: 'pick', disclosure: 'face',
       face: { node: equipmentFaces.get(section.id).node },
-      reveal: { node: equipmentNodes.get(section.id), sense: `Choose ${section.label.toLowerCase()}.` },
+      reveal: { node: equipmentNodes.get(section.id), sense: t('creation.chooseSection', { name: section.label.toLowerCase() }) },
     })), { structure: 'details' });
     const abilityFace = $('#cz-equipment-fold [data-face="startingAbilities"]');
     abilityFace?.addEventListener('click', event => {

@@ -930,7 +930,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       ], 'enemy', entity),
       intent: {
         name: intent.hidden ? intent.label || '?' : currentMoveId ? words(currentMoveId) : words(intent.kind || 'Unknown'),
-        detail: intent.hidden ? 'Exact move, damage, and effects unread.' : moveDetail(current, intent),
+        detail: intent.hidden ? t('combat.targetHud.unknown') : moveDetail(current, intent),
         hidden: intent.hidden, knowledgeRead: intent.knowledgeRead, stance: intent.stance, profile: intent.profile,
         active: true,
       },

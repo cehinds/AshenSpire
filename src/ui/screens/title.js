@@ -114,7 +114,7 @@ export function mountTitle(app, {
       name: 'ASHEN SPIRE',
       subtitle: 'A roguelike deckbuilder',
       entries: [
-        ...(continueSlot == null ? [] : [entry('Continue', 'continue', { className: 'slot-continue' })]),
+        ...(continueSlot == null ? [] : [entry(t('common.continue'), 'continue', { className: 'slot-continue' })]),
         entry('New Game', 'new', { id: 'new-game', className: 'slot-new' }),
         ...(continueSlot == null ? [] : [entry('Load Game', 'load', { id: 'load-game' })]),
         entry('Settings', 'settings', { id: 'settings' }),

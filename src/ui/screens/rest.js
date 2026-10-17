@@ -135,7 +135,7 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
   // never a relic the player does not carry.
   const noRestCopy = relicNoRest
     ? `The ${registries.relics.get(stay.restDenied).name} will not let you rest here.`
-    : restedHere ? 'You have already rested here.' : 'Your choice here is spent.';
+    : restedHere ? 'You have already rested here.' : t('gameProfile.rest.spent');
   // Rest at full health and full Mana led the list as if it were the thing to
   // do — "Heal 0 HP (62 → 62/62)" in the first, brightest card (review,
   // 2026-09-11). It stays a choice (it is still the way to end a visit without
@@ -224,7 +224,7 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
         <div class="class-pick${noRest ? ' locked' : nothingToRestore ? ' quiet' : ''}" id="rest-opt" role="button" tabindex="${noRest ? '-1' : '0'}" aria-disabled="${noRest ? 'true' : 'false'}">
           <div class="glyph">${engravedIconHtml('rest')}</div>
           <div class="cp-body">
-            <h3>Rest</h3>
+            <h3>${esc(t('rest.eyebrow'))}</h3>
             <p>${noRest ? noRestCopy : nothingToRestore ? `Nothing to restore — you stand at ${run.hp}/${run.maxHp} HP${run.mana >= run.maxMana ? ' with full Mana' : ''}. Resting still ${multiUse ? 'takes the rest' : 'ends the visit'}.` : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp})${manaGain > 0 ? ` and restore Mana (${run.mana} → ${manaAfter})` : ''}.`}</p>
           </div>
         </div>
@@ -269,7 +269,7 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
             <h3>Upgrade an Item</h3>
             <p>${canInspectSmithing
               ? `${smith.stones} Smithing Stone${smith.stones === 1 ? '' : 's'} · choose one owned armament.`
-              : spentHere ? 'Your choice here is spent.' : 'No owned armament has an effective tier remaining.'}</p>
+              : spentHere ? t('gameProfile.rest.spent') : 'No owned armament has an effective tier remaining.'}</p>
           </div>
         </div>` : ''}
         ${stay.services.flasks ? `<details class="class-pick shrine-fold" id="flask-reallocate"${openPanel === 'flask' ? ' open' : ''}>
@@ -305,7 +305,7 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
           <div class="glyph">⚙</div>
           <div class="cp-body">
             <h3>Extract a Card</h3>
-            <p>${spentHere ? 'Your choice here is spent.' : esc(extract.summary)}</p>
+            <p>${spentHere ? t('gameProfile.rest.spent') : esc(extract.summary)}</p>
           </div>
         </div>` : ''}
         ${install ? `<div class="class-pick${installOpen ? '' : ' locked'}" id="install-opt"
@@ -314,7 +314,7 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
           <div class="glyph">⚒</div>
           <div class="cp-body">
             <h3>Seat a Card</h3>
-            <p>${spentHere ? 'Your choice here is spent.' : esc(install.summary)}</p>
+            <p>${spentHere ? t('gameProfile.rest.spent') : esc(install.summary)}</p>
           </div>
         </div>` : ''}
         ${board ? `<div class="class-pick" id="board-opt" role="button" tabindex="0">

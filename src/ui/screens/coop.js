@@ -1126,7 +1126,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           } } : {}), intent: {
           ...intent,
           name: intent.hidden ? intent.label || '?' : (moveCards?.find(card => card.active)?.name || intent.label || intent.stance),
-          detail: intent.hidden ? 'Exact move, damage, and effects unread.' : intentTooltip(intent),
+          detail: intent.hidden ? t('combat.targetHud.unknown') : intentTooltip(intent),
         } }
         : { abilities }) };
       closeCombatantDoor();
@@ -1622,7 +1622,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
             settings: meta.settings || {},
           }))}
           <span class="mh-stat mh-prog">${snap.actNumber > 3 ? `Act ${snap.actNumber}` : `Act ${snap.actNumber} / 3`} · Floor ${snap.floor}</span>
-          <span class="mh-stat mh-seed" title="Run seed">SEED ${esc(snap.seedString)}</span>
+          <span class="mh-stat mh-seed" title="${esc(t('gameProfile.creation.copy4'))}">SEED ${esc(snap.seedString)}</span>
           ${voteLine}
           <div class="coop-partybar"></div>
           <div class="mh-actions"><button class="subtle coop-leave" id="coop-leave">Leave</button></div>
@@ -1766,7 +1766,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       for(const choiceId of row.choiceIds || row.cardIds){
         const pick=abilityDraftChoice(row,choiceId);if(!pick)continue;
         const card=renderCard(memberRegistries(),{cardId:pick.cardId,abilityRank:pick.abilityRank,upgraded:false},{});
-        card.classList.add('coop-progression-choice');card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',`Choose ${registries.cards.get(pick.cardId).name}, rank ${pick.abilityRank}`);
+        card.classList.add('coop-progression-choice');card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',t('progression.chooseRank', { name: registries.cards.get(pick.cardId).name, rank: pick.abilityRank }));
         const take=()=>send({t:'chooseAbilityDraft',offerId:row.offerId,choiceId:pick.choiceId,catchup},{progressionPopup});
         card.addEventListener('click',take);card.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();take();}});grid.appendChild(card);
       }
@@ -1781,7 +1781,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       for(const [index,id] of row.options.entries()){
         const selection=row.choiceIds?.[index] || id,rank=row.abilityRanks?.[index],name=classRespecOptionName(registries,row.rewardKind,id,rank);
         const option=row.rewardKind==='cards'?renderCard(memberRegistries(),{cardId:id,upgraded:false,...(Number.isInteger(rank)?{abilityRank:rank}:{})},{}):button({label:name});
-        option.classList.add('coop-progression-choice');option.tabIndex=0;option.setAttribute('role','button');option.setAttribute('aria-label',`Choose ${name}`);
+        option.classList.add('coop-progression-choice');option.tabIndex=0;option.setAttribute('role','button');option.setAttribute('aria-label',t('common.chooseNamed', { name }));
         const take=()=>send({t:'chooseClassMilestone',receiptId:row.receiptId,selection},{progressionPopup});option.addEventListener('click',take);
         if(row.rewardKind==='cards')option.addEventListener('keydown',event=>{if(['Enter',' '].includes(event.key)){event.preventDefault();take();}});
         grid.append(option);
@@ -1871,7 +1871,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     sceneDoor({
       title: 'Shrine of Emberlight',
       children: done ? [waiting('Waiting for the party…')] : [options([
-        choice({ glyph: '✚', name: 'Rest', description: restDenied ? `The ${restDenied} will not let you rest here.` : restCopy, disabled: !!restDenied, reason: restDenied ? `The ${restDenied} will not let you rest here.` : '', attrs: restDenied ? {} : { dataset: { shrine: 'rest' } } }),
+        choice({ glyph: '✚', name: t('rest.eyebrow'), description: restDenied ? `The ${restDenied} will not let you rest here.` : restCopy, disabled: !!restDenied, reason: restDenied ? `The ${restDenied} will not let you rest here.` : '', attrs: restDenied ? {} : { dataset: { shrine: 'rest' } } }),
         choice({ glyph: '⚒', name: 'Upgrade an item', description: `${stones} Stone${stones === 1 ? '' : 's'}`, disabled: !candidates.length, reason: candidates.length ? '' : 'Nothing here can be upgraded.', attrs: { id: 'coop-smith' } }),
         ...allies.map((a) => choice({ glyph: '❤', name: `Mend ${a.name}`, description: '+30% HP', className: 'coop-take', attrs: { dataset: { mend: a.id } } })),
         // A denied Rest is not a way on: the member leaves instead, and the
@@ -1907,7 +1907,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const need = c.requires && typeof c.requires.cinders === 'number' ? c.requires.cinders : null;
     const short = need != null && purse < need;
     return choice({
-      name: c.label || c.text || 'Choose',
+      name: c.label || c.text || t('common.choose'),
       disabled: short, reason: short ? `Needs ${need} cinders` : '',
       attrs: { dataset: { [datasetKey]: String(i), ...(short ? { requires: '1' } : {}) } },
     });
@@ -1940,7 +1940,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           prose(text, { class: 'coop-event-result' }),
           fallen ? waiting('You have fallen. The party reads on without you.')
             : acked ? waiting('Waiting for the party…') : options([
-            choice({ glyph: '›', name: snap.scene.next.kind === 'combat' ? 'Steel yourself' : 'Continue', attrs: { dataset: { evContinue: '1' } } }),
+            choice({ glyph: '›', name: snap.scene.next.kind === 'combat' ? 'Steel yourself' : t('common.continue'), attrs: { dataset: { evContinue: '1' } } }),
           ], { class: 'coop-choices' }),
         ],
       });
@@ -1949,7 +1949,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       return;
     }
     const purse = (myMember() || {}).cinders ?? 0;
-    const cards = (ev && ev.choices ? ev.choices : [{ label: 'Continue' }]).map((c, i) => ({ c, i }))
+    const cards = (ev && ev.choices ? ev.choices : [{ label: t('common.continue') }]).map((c, i) => ({ c, i }))
       // Only the choices this seat's history admits (scene.open, by authored
       // index, from the host); a gated choice drawn here would be refused
       // with no visible answer. No projection = every authored choice.
@@ -1988,7 +1988,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           title, eyebrow: debt,
           children: [
             prose(item.done.resultText || '', { class: 'coop-event-result' }),
-            options([choice({ glyph: '›', name: 'Continue', attrs: { dataset: { cuGo: '1' } } })], { class: 'coop-choices' }),
+            options([choice({ glyph: '›', name: t('common.continue'), attrs: { dataset: { cuGo: '1' } } })], { class: 'coop-choices' }),
           ],
         });
         const go = app.querySelector('[data-cu-go]');
@@ -2003,7 +2003,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         note: `The party met ${ev ? ev.name : 'a happening'} while you were away. Make the choice you would have made.`,
         children: [
           ev && ev.text ? prose(ev.text, { class: 'coop-event-result' }) : null,
-          options(cards.length ? cards : [choice({ glyph: '›', name: 'Continue', attrs: { dataset: { cuEv: '-1' } } })], { class: 'coop-choices' }),
+          options(cards.length ? cards : [choice({ glyph: '›', name: t('common.continue'), attrs: { dataset: { cuEv: '-1' } } })], { class: 'coop-choices' }),
         ],
       });
       app.querySelectorAll('[data-cu-ev]').forEach((b) => b.addEventListener('click', () => {

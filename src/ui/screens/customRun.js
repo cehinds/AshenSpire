@@ -190,18 +190,18 @@ export function mountCustomRun(app, { registries, defaultSeedString, onBack, onS
     shapeHost = el('div', { id: 'cr-shape', class: 'cz-disc' }, shapeBody);
   }
 
-  const head = modalHead({ eyebrow: 'Custom climb', title: 'Shape your own ascent', closeLabel: 'Back' });
+  const head = modalHead({ eyebrow: 'Custom climb', title: 'Shape your own ascent', closeLabel: t('common.back') });
   head.querySelector('.modal-close').hidden = true; // the way back is Back, in the foot
-  const back = button({ label: 'Back', role: 'exit', id: 'cr-back', attrs: { 'data-back': '' } });
-  const start = button({ label: 'Begin the climb', id: 'cr-start', weight: 'primary' });
+  const back = button({ label: t('common.back'), role: 'exit', id: 'cr-back', attrs: { 'data-back': '' } });
+  const start = button({ label: t('gameProfile.creation.copy2'), id: 'cr-start', weight: 'primary' });
   const foot = modalFooter({ note: 'Results are kept out of win-rate stats.', secondary: [back], primary: start, size: 'medium' });
   const body = el('div', { class: 'modal-body' }, [
     subtitle('Results are kept out of win-rate stats.'),
-    section('Choose', 'Class', classes),
+    section(t('common.choose'), 'Class', classes),
     section('Difficulty', 'Ascension', [ascRow, ascNote]),
     section('Rules', 'Difficulty rules', diffBox),
     section('Rules', 'Chaos', chaosBox),
-    section('Deck', 'Starting deck', deckBox),
+    section('Deck', t('creation.review.starterDeck'), deckBox),
     shapeable ? section('Advanced · debug', 'Run shape', shapeHost, { id: 'cr-shape-section' }) : null,
     section('Seed', 'Seed', seedRow),
     summary,
@@ -290,7 +290,7 @@ export function mountCustomRun(app, { registries, defaultSeedString, onBack, onS
   // ---- deck mode: a Segmented ----
   const deckSeg = segmented({
     options: DECK_MODES.map((m, i) => ({ label: m.label, value: m.id, pressed: i === 0, attrs: { dataset: { deck: m.id }, 'aria-label': `${m.label} — ${m.desc}` } })),
-    attrs: { role: 'group', 'aria-label': 'Starting deck' },
+    attrs: { role: 'group', 'aria-label': t('creation.review.starterDeck') },
   });
   const deckNote = flavour(DECK_MODES[0].desc, { id: 'cr-deck-note' });
   deckBox.appendChild(row({ tag: 'div', setting: true, labelNode: labelStack({ label: 'Deck mode' }), trail: deckSeg }));

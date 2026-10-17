@@ -21,7 +21,7 @@ export function openCardChoiceModal({ plan, cardName = 'Card', opener = document
     className: 'card-choice',
     opener,
     eyebrow: cardName,
-    title: plan.kind === 'stance' ? 'Choose a stance' : 'Choose',
+    title: plan.kind === 'stance' ? t('cardChoice.stanceTitle') : t('common.choose'),
     closeLabel: `${t('common.cancel')} ${cardName}`,
     bodyClassName: 'as-pane card-choice-body',
     body: (host) => {

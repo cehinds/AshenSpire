@@ -395,7 +395,7 @@ function buildArmoury(L, ui) {
     slots.append(collection, ui.armamentGridDetail(ordered));
   }
   const equipment = el('section', { class: 'armoury-equipment armoury-section', dataset: { component: 'armoury.armamentsCard', armamentView: ui.armamentView } });
-  const toggle = button({ label: ui.armamentView === 'list' ? 'Grid view' : 'List view', className: 'armoury-armament-view-toggle' });
+  const toggle = button({ label: t(ui.armamentView === 'list' ? 'armoury.view.grid' : 'armoury.view.list'), className: 'armoury-armament-view-toggle' });
   toggle.setAttribute('aria-label', `Show Armaments as ${ui.armamentView === 'list' ? 'grid' : 'list'}`);
   toggle.addEventListener('click', ui.toggleArmamentView);
   const compact = ui.layout.equipment.compactList;
