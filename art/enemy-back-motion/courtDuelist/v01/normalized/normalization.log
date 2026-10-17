@@ -120,6 +120,18 @@
           ]
         }
       ],
+      "detachedComponentAssignments": [
+        {
+          "component": 6,
+          "slot": 4,
+          "pixels": 1
+        },
+        {
+          "component": 12,
+          "slot": 9,
+          "pixels": 2
+        }
+      ],
       "partitionAlphaPixels": 559955,
       "sourceMeaningfulPixels": 428850,
       "assignedMeaningfulPixels": 428850,
@@ -232,29 +244,29 @@
         502
       ],
       "anchor": [
-        182.0,
-        386
+        177,
+        384
       ],
-      "reviewedAnchor": false,
+      "reviewedAnchor": true,
       "path": "art/enemy-back-motion/courtDuelist/v01/normalized/stances/neutral.png",
-      "sha256": "4d13804e1bef07023bd50eedf048c1a91a2e1e52a64508b38949c65937c3d28d",
+      "sha256": "edd04c697accd50c2b47160c58cb6e88145a5901777baaa5cae4dd0a2c78008e",
       "translation": [
-        142,
-        222
+        134,
+        199
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.6265734265734266,
-      "omittedFaintPixels": 18,
+      "calibratedScale": 0.6892307692307693,
+      "omittedFaintPixels": 50,
       "omittedMaxAlpha": 1,
       "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        142,
-        222,
-        366,
-        511
+        134,
+        199,
+        380,
+        512
       ]
     },
     {
@@ -279,29 +291,29 @@
         505
       ],
       "anchor": [
-        223.5,
-        407
+        257,
+        402
       ],
-      "reviewedAnchor": false,
+      "reviewedAnchor": true,
       "path": "art/enemy-back-motion/courtDuelist/v01/normalized/stances/smash.png",
-      "sha256": "aa269b720664062e400ff8f3066a171156054237820dc021b29666e5548d5b9b",
+      "sha256": "31dc6eeff55d18d97ecb73d222c3bdd3ad5710657a7f25010d34db868dfedaad",
       "translation": [
-        116,
-        209
+        79,
+        187
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.6265734265734266,
+      "calibratedScale": 0.6892307692307693,
       "omittedFaintPixels": 2,
       "omittedMaxAlpha": 1,
       "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        116,
-        209,
-        381,
-        502
+        79,
+        187,
+        371,
+        510
       ]
     },
     {
@@ -326,29 +338,29 @@
         485
       ],
       "anchor": [
-        242.0,
-        414
+        169,
+        411
       ],
-      "reviewedAnchor": false,
+      "reviewedAnchor": true,
       "path": "art/enemy-back-motion/courtDuelist/v01/normalized/stances/attack.png",
-      "sha256": "ea6f299f9bde511eced22d573f028f9b9bfd7799208bcf5179d28a38ea22f355",
+      "sha256": "c73d6fa1cc601f844436470950f1c67ae6c8822bc3a3effcee913ef3cd02bb11",
       "translation": [
-        104,
-        205
+        140,
+        181
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.6265734265734266,
-      "omittedFaintPixels": 0,
-      "omittedMaxAlpha": 0,
+      "calibratedScale": 0.6892307692307693,
+      "omittedFaintPixels": 8,
+      "omittedMaxAlpha": 1,
       "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        105,
-        205,
-        390,
-        508
+        140,
+        181,
+        455,
+        512
       ]
     },
     {
@@ -373,29 +385,29 @@
         507
       ],
       "anchor": [
-        267.5,
-        414
+        226,
+        412
       ],
-      "reviewedAnchor": false,
+      "reviewedAnchor": true,
       "path": "art/enemy-back-motion/courtDuelist/v01/normalized/stances/sweep.png",
-      "sha256": "8dcde915ad76ca5a721330e04de3f1bdcf84e938c2e6c6515a1924865cf1250a",
+      "sha256": "1923274c9ffa7fee2813d445d495a8cdb0c6ba377a83083e45d4dab928c808b5",
       "translation": [
-        88,
-        205
+        100,
+        180
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.6265734265734266,
-      "omittedFaintPixels": 50,
+      "calibratedScale": 0.6892307692307693,
+      "omittedFaintPixels": 58,
       "omittedMaxAlpha": 1,
       "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        88,
-        205,
-        394,
-        498
+        100,
+        180,
+        436,
+        510
       ]
     },
     {
@@ -420,29 +432,29 @@
         439
       ],
       "anchor": [
-        167.5,
-        420
+        182,
+        418
       ],
-      "reviewedAnchor": false,
+      "reviewedAnchor": true,
       "path": "art/enemy-back-motion/courtDuelist/v01/normalized/stances/counter.png",
-      "sha256": "328d0e1788df4ac4eb1be7f3b6211ab12073907c5cd3547cb3797b5dec8c0e24",
+      "sha256": "00a03513812da4b12f6685b105ec42f4f422dd53acbb8b27b19ba7bdbf509f86",
       "translation": [
-        151,
-        201
+        131,
+        176
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.6265734265734266,
+      "calibratedScale": 0.6892307692307693,
       "omittedFaintPixels": 0,
       "omittedMaxAlpha": 0,
       "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        151,
-        210,
-        344,
-        476
+        131,
+        176,
+        343,
+        478
       ]
     },
     {
@@ -467,29 +479,29 @@
         372
       ],
       "anchor": [
-        157.0,
-        344
+        179,
+        341
       ],
-      "reviewedAnchor": false,
+      "reviewedAnchor": true,
       "path": "art/enemy-back-motion/courtDuelist/v01/normalized/stances/defend.png",
-      "sha256": "b2666310a6110453e0d0221f6649bb2a25f1d92078835a769fa1a16dee24b34c",
+      "sha256": "a129bf620c036317eefa02e28d18d09821fcdc1ca3b4f864967b92e5d408f017",
       "translation": [
-        158,
-        248
+        133,
+        229
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.6265734265734266,
+      "calibratedScale": 0.6892307692307693,
       "omittedFaintPixels": 0,
       "omittedMaxAlpha": 0,
       "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        158,
-        248,
+        133,
+        229,
         410,
-        481
+        485
       ]
     },
     {
@@ -514,29 +526,29 @@
         370
       ],
       "anchor": [
-        204.5,
-        328
+        217,
+        320
       ],
-      "reviewedAnchor": false,
+      "reviewedAnchor": true,
       "path": "art/enemy-back-motion/courtDuelist/v01/normalized/stances/evade.png",
-      "sha256": "42f817177c77e7880195ce37e3ed922fd3bcfe2045a09487387b36f9b1604963",
+      "sha256": "e061cc1daf2a40dbf7b797eb1789724307f5013697f475d66a8e6ca71d72b375",
       "translation": [
-        128,
-        258
+        106,
+        243
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.6265734265734266,
+      "calibratedScale": 0.6892307692307693,
       "omittedFaintPixels": 0,
       "omittedMaxAlpha": 0,
       "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        128,
-        258,
-        384,
-        489
+        106,
+        243,
+        387,
+        498
       ]
     },
     {
@@ -561,29 +573,29 @@
         443
       ],
       "anchor": [
-        194.5,
-        389
+        195,
+        387
       ],
-      "reviewedAnchor": false,
+      "reviewedAnchor": true,
       "path": "art/enemy-back-motion/courtDuelist/v01/normalized/stances/spell.png",
-      "sha256": "2f8ac756d341831a10e5ffd591c731a36149bc6c29456d7951c155f13f734b9e",
+      "sha256": "43ad80168eda4a540a175b2a3cf04263574d7a2ba1cd0157ff75b5db308d050f",
       "translation": [
-        134,
-        220
+        122,
+        197
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.6265734265734266,
+      "calibratedScale": 0.6892307692307693,
       "omittedFaintPixels": 0,
       "omittedMaxAlpha": 0,
       "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        134,
-        220,
-        368,
-        498
+        122,
+        197,
+        380,
+        502
       ]
     },
     {
@@ -608,29 +620,29 @@
         332
       ],
       "anchor": [
-        205.0,
-        307
+        195,
+        305
       ],
-      "reviewedAnchor": false,
+      "reviewedAnchor": true,
       "path": "art/enemy-back-motion/courtDuelist/v01/normalized/stances/preparing.png",
-      "sha256": "3a58d1e88d3027a4593f59bdecde7a47e0c294e38bdb8cf84ff5c11577962d06",
+      "sha256": "497977b0bcf717cae89867e440a35180c714875c738b71ec098235fed77178fa",
       "translation": [
-        128,
-        272
+        122,
+        254
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.6265734265734266,
+      "calibratedScale": 0.6892307692307693,
       "omittedFaintPixels": 0,
       "omittedMaxAlpha": 0,
       "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        128,
-        272,
-        384,
-        479
+        122,
+        254,
+        404,
+        483
       ]
     },
     {
@@ -655,29 +667,29 @@
         419
       ],
       "anchor": [
-        180.5,
-        383
+        192,
+        381
       ],
-      "reviewedAnchor": false,
+      "reviewedAnchor": true,
       "path": "art/enemy-back-motion/courtDuelist/v01/normalized/stances/neutral-alt.png",
-      "sha256": "05f217dae4f5d8360fb5141b5042d484a4eead24f920eaceefaa5fc500b6554b",
+      "sha256": "581983a50b526f4e49a2ce1c2d4cbc573ed03e4c1a48fef9803a5cbf4b4d8132",
       "translation": [
-        143,
-        224
+        124,
+        201
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.6265734265734266,
+      "calibratedScale": 0.6892307692307693,
       "omittedFaintPixels": 0,
       "omittedMaxAlpha": 0,
       "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        143,
-        224,
-        352,
-        469
+        124,
+        201,
+        354,
+        490
       ]
     },
     {
@@ -1152,14 +1164,12 @@
     }
   ],
   "errors": [],
-  "warnings": [
-    "Automatic bounds-bottom anchors require visual foot/root/weapon review; no anatomical foot detection is claimed."
-  ],
+  "warnings": [],
   "manualReview": {
     "reviewer": "elite_motion agent",
     "method": "manual source-image visual estimate",
     "status": "draft-estimates-pending-normalized-preview",
-    "notes": "Anchors identify visible foot or support-contact baseline, using midpoint where both feet visible. Rear feet can be occluded. Values are visual estimates, not pixel-exact detections. Tail/cape alpha bottom is not used as floor. MasterScale calibrates separately generated damage anatomy to stances and preserves action crouch/height; shared scale then applies. Root must inspect normalized frames before accepting."
+    "notes": "Anchors identify visible foot or support-contact baseline, using midpoint where both feet visible. Rear feet can be occluded. Values are visual estimates, not pixel-exact detections. Tail/cape alpha bottom is not used as floor. MasterScale calibrates separately generated damage anatomy to stances and preserves action crouch/height; shared scale then applies. Root must inspect normalized frames before accepting. Court repaired10stance feet measured from native512 views with anchor-delta conversion; midpoint visible feet, defend partly occluded estimate. Source neutralbody327px vsseed365px, stancecal1.1."
   },
   "seedReference": {
     "path": "art/enemy-back-proposals/courtDuelist/v01.png",
@@ -1170,18 +1180,18 @@
   "bodyScaleRelation": {
     "fitScale": 0.6265734265734266,
     "perMasterCalibration": {
-      "stances": 1,
+      "stances": 1.1,
       "motion": 1.25,
       "damage": 0.54
     },
     "previewScaleToAuthoredStances": 1.5959821428571428,
-    "seedBodyHeightPixels": null,
-    "stanceBodyHeightPixels": null,
+    "seedBodyHeightPixels": 365,
+    "stanceBodyHeightPixels": 327,
     "status": "authored anatomy calibrated by manual estimates; exact seed body-height alignment pending"
   },
   "previewPolicy": "Separate four-frame attack/evade loops; stances and damage are labeled pose slideshows.",
   "masterScaleCalibration": {
-    "stances": 1,
+    "stances": 1.1,
     "motion": 1.25,
     "damage": 0.54
   }
