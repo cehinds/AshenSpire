@@ -209,7 +209,7 @@
       "icon": "\u25c9",
       "stackMode": "add",
       "decay": "none",
-      "tooltip": "Reveal opposing burden hand card identities and counts while active. Lose one stack at the next turn start."
+      "tooltip": "Marks a targeted Read Intent. The read belongs to its owner and selected enemy. Lose one stack at the next turn start."
     },
     {
       "id": "base.stagger",
@@ -816,11 +816,7 @@
         "phase": "start",
         "stacks": 1
       },
-      "behaviors": [
-        {
-          "kind": "revealIntent"
-        }
-      ]
+      "behaviors": []
     },
     "base.stagger": {
       "requires": {

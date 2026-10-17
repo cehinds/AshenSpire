@@ -18,7 +18,7 @@ function fight({ coop = false, wardOnly = false, block = 3, poiseMax = 3, poiseG
       effects: [{ op: 'damage', target: 'enemy', amount: 4, combatProfile: profile }] } : card),
     enemies: legacyContentBundle.enemies.map(enemy => enemy.id === 'gildedKnight' ? { ...enemy, firstMove: 'parry' } : enemy),
   });
-  const player = { classId: 'reaver', hp: 200, maxHp: 200, energyMax: 10, drawPerTurn: 1,
+  const player = { classId: 'reaver', hp: 200, maxHp: 200, mana: 10, maxMana: 10, energyMax: 10, drawPerTurn: 1,
     deck: [{ instanceId: 'smash1', cardId: 'kilnCleave' }], relicIds: [] };
   const options = { registries, rng: createRng(50), enemyIds: ['gildedKnight', 'wanderingSoldier'], ratingsRules: null,
     ...(foundation ? { ruleset: combatRules, combatProfiles: { player: { sources: { mainHand: {

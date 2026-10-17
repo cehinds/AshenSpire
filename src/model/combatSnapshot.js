@@ -48,6 +48,9 @@ function entityProblems(entity, path, { player = false } = {}) {
   if (entity.combatTraitGuard !== undefined) problems.push(...combatTraitGuardProblems(entity.combatTraitGuard, `${path}.combatTraitGuard`));
   if (entity.intentRevealed !== undefined && typeof entity.intentRevealed !== 'boolean') problems.push(`${path}.intentRevealed must be boolean`);
   if (entity.intentReads !== undefined && (!record(entity.intentReads) || Object.entries(entity.intentReads).some(([id, value]) => !nonEmptyString(id) || typeof value !== 'boolean'))) problems.push(`${path}.intentReads must map player ids to booleans`);
+  if (entity.proposalIntentRevealedUntilByOwner !== undefined && (!record(entity.proposalIntentRevealedUntilByOwner)
+    || Object.entries(entity.proposalIntentRevealedUntilByOwner).some(([id, until]) => !nonEmptyString(id) || !Number.isSafeInteger(until) || until < 0)))
+    problems.push(`${path}.proposalIntentRevealedUntilByOwner must map player ids to non-negative turn numbers`);
   if (entity.intent?.counterDefensePrimed !== undefined) {
     if (typeof entity.intent.counterDefensePrimed !== 'boolean') problems.push(`${path}.intent.counterDefensePrimed must be boolean`);
     else if (entity.intent.counterDefensePrimed && (!nonEmptyString(entity.intent.moveId) || entity.intent.combatProfile?.maneuver !== 'counter')) problems.push(`${path}.intent.counterDefensePrimed requires the committed Counter move`);

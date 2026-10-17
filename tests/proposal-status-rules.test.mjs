@@ -164,5 +164,6 @@ test('retention never creates Block and Many Forms extends capacity through expl
  assert.equal(proposalRetainProtection({actor:owner,amount:3,rules}),3);
  assert.equal(proposalRetainProtection({actor:owner,pool:'barrier',amount:9,rules}),0);
  assert.equal(proposalCardRules({actor:owner,card,rules}).additionalStanceCapacity,1);
- assert.equal(proposalCardRules({actor:actor('p',{'read-intent':1}),card,rules}).revealIntent,true);
+ assert.equal(proposalCardRules({actor:actor('p',{'read-intent':1}),card,rules}).revealIntent,undefined,
+  'the status marker cannot reveal intents without a selected-target read ledger');
 });

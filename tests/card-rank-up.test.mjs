@@ -109,6 +109,9 @@ test('the reward door raises the chosen card and spends the rank-up', async () =
     assert.match(mine.getAttribute('aria-label'), /rank 2$/, 'shown at the rank it would rise to');
     mine.click();
     app.querySelector('#reward-card-confirm').click();
+    assert.equal(run.deck.find(c => c.instanceId === 'own-rend').rank, undefined, 'Confirm reviews the rank without spending it');
+    assert.equal(app.querySelector('#reward-card-confirm').textContent, 'Continue');
+    app.querySelector('#reward-card-confirm').click();
     assert.equal(run.deck.find((c) => c.instanceId === 'own-rend').rank, 2);
     assert.equal(run.skills[BLADE].pendingRankUps, 0);
     assert.ok(persisted > 0);

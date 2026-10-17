@@ -18,7 +18,7 @@ function registry(effects = []) {
   });
 }
 function player() {
-  return { classId: 'reaver', hp: 500, maxHp: 500, energyMax: 3, drawPerTurn: 1,
+  return { classId: 'reaver', hp: 500, maxHp: 500, mana: 10, maxMana: 10, energyMax: 3, drawPerTurn: 1,
     deck: [{ instanceId: 'guard', cardId: 'defend' }], relicIds: [] };
 }
 function fight(registries, coop = false) {
