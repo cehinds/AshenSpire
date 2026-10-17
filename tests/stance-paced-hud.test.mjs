@@ -6,6 +6,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createCombat } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
+import { projectCombatIntent } from '../src/ui/models/CombatIntentProjectionModel.js';
 import { effectiveEvasion } from '../src/engine/stanceHit.js';
 
 const registries = createRegistries({ ...contentBundle,
@@ -26,7 +27,7 @@ test('paced HUD uses canonical plated armour, buckler, attributes and enemy defi
       mana: 20, maxMana: 20, stamina: 20, maxStamina: 20, energyMax: 20, drawPerTurn: 0, deck: [], loadout,
       attributes: { dexterity: 20, wisdom: 10, intelligence: 10, strength: 10, constitution: 10 } } });
   const snapshot = vm.runInNewContext(`(() => { ${screen.slice(start, end)} return snapEnt; })()`, {
-    combat, structuredClone, previewIntent: () => null, enemyStanceCategory: () => null,
+    combat, structuredClone, projectCombatIntent, previewIntent: () => null, enemyStanceCategory: () => null,
   });
   for (const entity of [combat.player, combat.enemies[0]]) {
     entity.statuses.evade = { stacks: 1 };
