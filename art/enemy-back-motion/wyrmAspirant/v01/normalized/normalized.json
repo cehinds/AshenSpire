@@ -11,8 +11,8 @@
       256,
       464
     ],
-    "sharedScale": 0.5595238095238095,
-    "authoredScaleCompensation": 1.7872340425531914,
+    "sharedScale": 0.7044025157232704,
+    "authoredScaleCompensation": 1.4196428571428572,
     "runtimeAlignment": "unverified; native PNG size includes fit scale, compensate when comparing with authored seed"
   },
   "masters": {
@@ -190,21 +190,24 @@
       ],
       "reviewedAnchor": true,
       "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/stances/neutral.png",
-      "sha256": "14d027b966075aff9361b02c304e508c10c961106443d31f2f8d8715f6264ceb",
+      "sha256": "7bc319bf75838043ca474477918b4a18bf4936927c694501f0ca4c4382899a2e",
       "translation": [
-        125,
-        254
+        90,
+        199
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.5595238095238095,
+      "calibratedScale": 0.7044025157232704,
+      "omittedFaintPixels": 0,
+      "omittedMaxAlpha": 0,
+      "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        125,
-        254,
-        371,
-        471
+        90,
+        199,
+        400,
+        472
       ]
     },
     {
@@ -228,21 +231,24 @@
       ],
       "reviewedAnchor": true,
       "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/stances/smash.png",
-      "sha256": "4215fdff302a05179e500f860ac64ad20744af76fa134f281ee2aef9074342d5",
+      "sha256": "01b267a0edc8cc6ae1750b48f77ff0a1090a315c49543b0a2fef551e54d6e861",
       "translation": [
-        128,
-        247
+        95,
+        191
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.5595238095238095,
+      "calibratedScale": 0.7044025157232704,
+      "omittedFaintPixels": 0,
+      "omittedMaxAlpha": 0,
+      "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        128,
-        247,
-        343,
-        474
+        95,
+        191,
+        366,
+        476
       ]
     },
     {
@@ -266,21 +272,24 @@
       ],
       "reviewedAnchor": true,
       "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/stances/attack.png",
-      "sha256": "a04d03f27b8abf5055483d23441e301a3ea659e49030ee25c250fb1cdbdf81e6",
+      "sha256": "500f8bcbb14e8e3905a489cd0259bdaf499e0e7a353844c82cfb8ed36630237f",
       "translation": [
-        109,
-        261
+        71,
+        208
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.5595238095238095,
+      "calibratedScale": 0.7044025157232704,
+      "omittedFaintPixels": 0,
+      "omittedMaxAlpha": 0,
+      "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        109,
-        262,
-        348,
-        474
+        71,
+        208,
+        372,
+        476
       ]
     },
     {
@@ -304,21 +313,24 @@
       ],
       "reviewedAnchor": true,
       "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/stances/sweep.png",
-      "sha256": "17107955d2b6adbaeb92d0bbb04bb82930d1e0a7d9a8f667a70ef32bdf645443",
+      "sha256": "6fe8aaadd560f78104ce4c8bda5d032688f5a59a519d6784a7c2ac389ca8831c",
       "translation": [
-        113,
-        255
+        76,
+        201
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.5595238095238095,
+      "calibratedScale": 0.7044025157232704,
+      "omittedFaintPixels": 0,
+      "omittedMaxAlpha": 0,
+      "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        113,
-        255,
-        370,
-        473
+        76,
+        201,
+        400,
+        476
       ]
     },
     {
@@ -342,21 +354,24 @@
       ],
       "reviewedAnchor": true,
       "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/stances/counter.png",
-      "sha256": "d18a62dfd6ed66ef988ef479354ad980381ab1e9487fe5d8bd0b2dea7e6a0052",
+      "sha256": "c7b0188e36eb995cb2b941b4cd72700073fc4393da8c8f0324f9f36cc86ca663",
       "translation": [
-        133,
-        255
+        102,
+        201
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.5595238095238095,
+      "calibratedScale": 0.7044025157232704,
+      "omittedFaintPixels": 0,
+      "omittedMaxAlpha": 0,
+      "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        133,
-        255,
-        343,
-        473
+        102,
+        201,
+        366,
+        476
       ]
     },
     {
@@ -380,21 +395,24 @@
       ],
       "reviewedAnchor": true,
       "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/stances/defend.png",
-      "sha256": "3bd418d452342a7cfe26f62c94b67084286a745558ec4d63b9ca9c1ed17761d5",
+      "sha256": "85f4c785971bffb2c09714d0cf2acc7cf9b09598d0669e6ef4c957c3a0cd7d07",
       "translation": [
-        131,
-        255
+        99,
+        201
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.5595238095238095,
+      "calibratedScale": 0.7044025157232704,
+      "omittedFaintPixels": 0,
+      "omittedMaxAlpha": 0,
+      "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        131,
-        255,
-        362,
-        473
+        99,
+        201,
+        392,
+        475
       ]
     },
     {
@@ -418,21 +436,24 @@
       ],
       "reviewedAnchor": true,
       "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/stances/evade.png",
-      "sha256": "6f26ad7fc2a38cea479de42de902a8473b5df39709245b9ac63455a8dbf54ddd",
+      "sha256": "d3d9c7ce7d461e5957f8598d538410959173916f78c6899cd144b9a7ddb6c86e",
       "translation": [
-        108,
-        260
+        69,
+        208
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.5595238095238095,
+      "calibratedScale": 0.7044025157232704,
+      "omittedFaintPixels": 3,
+      "omittedMaxAlpha": 1,
+      "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        108,
-        260,
-        359,
-        511
+        69,
+        208,
+        385,
+        510
       ]
     },
     {
@@ -456,21 +477,24 @@
       ],
       "reviewedAnchor": true,
       "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/stances/spell.png",
-      "sha256": "9549f16cdeec4de03712b13fb8dc008054da7c91b09c9b0093f617de1e4edf95",
+      "sha256": "d0113b8b1625b18e1ad2edea5dc063772ba7c163745e89c067246b7ae6d947b0",
       "translation": [
-        132,
-        246
+        100,
+        190
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.5595238095238095,
+      "calibratedScale": 0.7044025157232704,
+      "omittedFaintPixels": 0,
+      "omittedMaxAlpha": 0,
+      "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        132,
-        246,
-        345,
-        489
+        100,
+        190,
+        368,
+        496
       ]
     },
     {
@@ -494,21 +518,24 @@
       ],
       "reviewedAnchor": true,
       "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/stances/preparing.png",
-      "sha256": "100abda094d77f73f42d6692d9c0c60a8e9c7d938391a8523790189626cbc877",
+      "sha256": "68213d237e24e848b45eca21f3e799fdad23a9b3d30c24d6770c4bcdd8cb8fab",
       "translation": [
-        110,
-        258
+        72,
+        205
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.5595238095238095,
+      "calibratedScale": 0.7044025157232704,
+      "omittedFaintPixels": 12,
+      "omittedMaxAlpha": 1,
+      "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        110,
-        260,
-        338,
-        508
+        72,
+        205,
+        359,
+        507
       ]
     },
     {
@@ -532,21 +559,24 @@
       ],
       "reviewedAnchor": true,
       "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/motion/attack-01.png",
-      "sha256": "d9fe697d8fb70ef4be7cab2826954b8af92e0fc58d70167794842909fe925b30",
+      "sha256": "6954e34540f3d980e8fbda49d0d268abb4a239d890332478bda34eeaee323857",
       "translation": [
-        108,
-        204
+        70,
+        137
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.6714285714285714,
+      "calibratedScale": 0.8452830188679245,
+      "omittedFaintPixels": 0,
+      "omittedMaxAlpha": 0,
+      "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        108,
-        204,
-        374,
-        483
+        70,
+        137,
+        410,
+        488
       ]
     },
     {
@@ -570,21 +600,24 @@
       ],
       "reviewedAnchor": true,
       "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/motion/attack-02.png",
-      "sha256": "9ac14110de9f31c53868d8ea4041d49f67d7fad6ca538e09d88dbdc9084e55f8",
+      "sha256": "6340d090c955a3ab02074197e044b2d22755c5a4fe2cdfd37d3a13ff3e3d035b",
       "translation": [
-        116,
-        201
+        80,
+        133
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.6714285714285714,
+      "calibratedScale": 0.8452830188679245,
+      "omittedFaintPixels": 0,
+      "omittedMaxAlpha": 0,
+      "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        116,
-        201,
-        427,
-        488
+        80,
+        133,
+        471,
+        495
       ]
     },
     {
@@ -608,21 +641,24 @@
       ],
       "reviewedAnchor": true,
       "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/motion/attack-03.png",
-      "sha256": "09c6359fa7959a9e836cdd4a72f0b5e1c24ec5c9d29b154355fb1120e925987c",
+      "sha256": "1910b3f74df7e0b3f74421726cb13a0caa556093be1b3449ec84a77a6a1874a9",
       "translation": [
-        115,
-        207
+        78,
+        140
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.6714285714285714,
+      "calibratedScale": 0.8452830188679245,
+      "omittedFaintPixels": 0,
+      "omittedMaxAlpha": 0,
+      "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        115,
-        207,
-        439,
-        491
+        78,
+        140,
+        486,
+        498
       ]
     },
     {
@@ -646,21 +682,24 @@
       ],
       "reviewedAnchor": true,
       "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/motion/attack-04.png",
-      "sha256": "be3068d1481fdcfc341dde35cf2696a3afbbc3d404908de1cf3c2a02e510cf34",
+      "sha256": "7977779113f26f9cfbceb3dffbc2bd0238efa57af8e01b436757d0c1bbe404d1",
       "translation": [
-        163,
-        199
+        139,
+        130
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.6714285714285714,
+      "calibratedScale": 0.8452830188679245,
+      "omittedFaintPixels": 0,
+      "omittedMaxAlpha": 0,
+      "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        165,
-        199,
-        393,
-        492
+        139,
+        130,
+        429,
+        499
       ]
     },
     {
@@ -684,21 +723,24 @@
       ],
       "reviewedAnchor": true,
       "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/motion/evade-01.png",
-      "sha256": "2daff91828803ca6454192a7fc018d4b15100480c18725d749591360fbcad5d4",
+      "sha256": "d8bb272db34f1c8c557fa8e8081fcdf8a3ffd92e3340cf06494515759352ad94",
       "translation": [
-        126,
-        232
+        92,
+        172
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.6714285714285714,
+      "calibratedScale": 0.8452830188679245,
+      "omittedFaintPixels": 0,
+      "omittedMaxAlpha": 0,
+      "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        126,
-        232,
-        392,
-        493
+        92,
+        172,
+        427,
+        500
       ]
     },
     {
@@ -722,21 +764,24 @@
       ],
       "reviewedAnchor": true,
       "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/motion/evade-02.png",
-      "sha256": "cd3228892b41e85bb24eb8e7c1dc7fceadefbf52173e9f9a605d9a07e0ce76f1",
+      "sha256": "fb911a843e9726b18ce2e207522ff54f8edba9ebd98fae4ee92a598a2e852ce5",
       "translation": [
-        107,
-        234
+        68,
+        174
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.6714285714285714,
+      "calibratedScale": 0.8452830188679245,
+      "omittedFaintPixels": 0,
+      "omittedMaxAlpha": 0,
+      "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        107,
-        235,
-        427,
-        500
+        68,
+        174,
+        471,
+        509
       ]
     },
     {
@@ -760,21 +805,24 @@
       ],
       "reviewedAnchor": true,
       "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/motion/evade-03.png",
-      "sha256": "21ad43265eac7251f1c17a4080e7c32e62cb3f2b3a70f6a5e767254141f67cf2",
+      "sha256": "09c25c28ad6aa47bc216b427ce7e17219b7aa25e4f1c77a1ec8286ab0fd39597",
       "translation": [
-        106,
-        234
+        67,
+        175
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.6714285714285714,
+      "calibratedScale": 0.8452830188679245,
+      "omittedFaintPixels": 1,
+      "omittedMaxAlpha": 1,
+      "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        106,
-        234,
-        410,
-        506
+        67,
+        175,
+        450,
+        509
       ]
     },
     {
@@ -798,21 +846,24 @@
       ],
       "reviewedAnchor": true,
       "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/motion/evade-04.png",
-      "sha256": "aa06673bee262acf09b6dacefff7098379879d0f401e3408086e3456b706c27c",
+      "sha256": "d7128ebcdf9915959d70ec4fc6903e062afd4201b67d23165eb9d4071e6ffb27",
       "translation": [
-        151,
-        248
+        124,
+        193
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.6714285714285714,
+      "calibratedScale": 0.8452830188679245,
+      "omittedFaintPixels": 0,
+      "omittedMaxAlpha": 0,
+      "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        151,
-        248,
-        397,
-        498
+        124,
+        193,
+        433,
+        507
       ]
     },
     {
@@ -836,21 +887,24 @@
       ],
       "reviewedAnchor": true,
       "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/damage/hurt.png",
-      "sha256": "f51def5e64062d77738ee04eb31c229c61a57181a4007ea6458e54320ca4a562",
+      "sha256": "b00d435b157cbfad0226008454f432f423fa71b3119b14d29f1a00578b4b4c40",
       "translation": [
-        100,
-        240
+        60,
+        182
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.30214285714285716,
+      "calibratedScale": 0.38037735849056603,
+      "omittedFaintPixels": 0,
+      "omittedMaxAlpha": 0,
+      "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        121,
-        260,
-        368,
-        477
+        86,
+        184,
+        397,
+        479
       ]
     },
     {
@@ -874,21 +928,24 @@
       ],
       "reviewedAnchor": true,
       "path": "art/enemy-back-motion/wyrmAspirant/v01/normalized/damage/defeated.png",
-      "sha256": "d2b9faf050d8a2eebe790ee41faebb6c7729e13bd717ac0961e65beb10c90e01",
+      "sha256": "50c65351dbb71d963d1eb5f41c2ae4e93a776d949d71cd3827333632848f7abb",
       "translation": [
-        116,
-        259
+        80,
+        206
       ],
       "outputAnchor": [
         256,
         464
       ],
-      "calibratedScale": 0.30214285714285716,
+      "calibratedScale": 0.38037735849056603,
+      "omittedFaintPixels": 0,
+      "omittedMaxAlpha": 0,
+      "omittedMeaningfulPixels": 0,
       "outputAlphaBounds": [
-        116,
-        329,
-        378,
-        485
+        80,
+        242,
+        410,
+        490
       ]
     }
   ],
@@ -905,13 +962,13 @@
     "ref": "89089322d763c27917ee2ef5e3f071f39640ecbc"
   },
   "bodyScaleRelation": {
-    "fitScale": 0.5595238095238095,
+    "fitScale": 0.7044025157232704,
     "perMasterCalibration": {
       "stances": 1,
       "motion": 1.2,
       "damage": 0.54
     },
-    "previewScaleToAuthoredStances": 1.7872340425531914,
+    "previewScaleToAuthoredStances": 1.4196428571428572,
     "seedBodyHeightPixels": null,
     "stanceBodyHeightPixels": null,
     "status": "authored anatomy calibrated by manual estimates; exact seed body-height alignment pending"
