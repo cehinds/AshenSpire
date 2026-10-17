@@ -132,6 +132,9 @@ formula set. Control steps:
 | `{ "call": "<mechanic>.<command>", "with": {…} }` | invoke another mechanic's command |
 | `{ "set": "<model path>", "value": v }` | write this mechanic's own state |
 
+`$model.<path>` reads the mechanic's own state merged over the defaults of its `model.schema.json`
+(engine/runtime/SPEC.md section 4), so a service never hardcodes a tunable number.
+
 Conditions: `{ "all": [] }`, `{ "any": [] }`, `{ "not": c }`, `{ "cmp": ["<", a, b] }`,
 `{ "hasTag": [ref, tag] }`, `{ "hasStatus": [ref, status] }`.
 

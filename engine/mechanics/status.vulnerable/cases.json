@@ -13,17 +13,15 @@
     "when": {
       "command": "status.vulnerable.apply",
       "with": {
-        "target": "enemy",
-        "stacks": 2
+        "stacks": 2,
+        "target": "enemy"
       }
     },
     "then": {
       "entities": {
         "enemy": {
           "statuses": {
-            "vulnerable": {
-              "stacks": 2
-            }
+            "vulnerable": 2
           }
         }
       },
@@ -40,9 +38,7 @@
           "hp": 30,
           "maxHp": 30,
           "statuses": {
-            "vulnerable": {
-              "stacks": 2
-            }
+            "vulnerable": 2
           }
         }
       }
@@ -50,17 +46,15 @@
     "when": {
       "command": "status.vulnerable.apply",
       "with": {
-        "target": "enemy",
-        "stacks": 3
+        "stacks": 3,
+        "target": "enemy"
       }
     },
     "then": {
       "entities": {
         "enemy": {
           "statuses": {
-            "vulnerable": {
-              "stacks": 5
-            }
+            "vulnerable": 5
           }
         }
       },
@@ -77,9 +71,7 @@
           "hp": 30,
           "maxHp": 30,
           "statuses": {
-            "vulnerable": {
-              "stacks": 4
-            }
+            "vulnerable": 4
           }
         }
       }
@@ -87,22 +79,54 @@
     "when": {
       "command": "status.vulnerable.remove",
       "with": {
-        "target": "enemy",
-        "amount": 1
+        "amount": 1,
+        "target": "enemy"
       }
     },
     "then": {
       "entities": {
         "enemy": {
           "statuses": {
-            "vulnerable": {
-              "stacks": 3
-            }
+            "vulnerable": 3
           }
         }
       },
       "events": [
         "status.vulnerable.removed"
+      ]
+    }
+  },
+  {
+    "name": "leaves other statuses on the target alone",
+    "given": {
+      "entities": {
+        "enemy": {
+          "hp": 30,
+          "maxHp": 30,
+          "statuses": {
+            "dazed": 1
+          }
+        }
+      }
+    },
+    "when": {
+      "command": "status.vulnerable.apply",
+      "with": {
+        "target": "enemy",
+        "stacks": 1
+      }
+    },
+    "then": {
+      "entities": {
+        "enemy": {
+          "statuses": {
+            "dazed": 1,
+            "vulnerable": 1
+          }
+        }
+      },
+      "events": [
+        "status.vulnerable.applied"
       ]
     }
   }
