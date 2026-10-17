@@ -10,6 +10,8 @@ def boundary(a):
     values=list(a.crop((0,0,w,1)).getdata())+list(a.crop((0,h-1,w,h)).getdata())+list(a.crop((0,1,1,h-1)).getdata())+list(a.crop((w-1,1,w,h-1)).getdata())
     return {"alphaAbove0":sum(v>0 for v in values),"alphaAbove32":sum(v>32 for v in values)}
 def run(root):
+    for name in [f"v{i:02}.png" for i in range(1,11)]+["contact-sheet.png"]:
+        (root/name).unlink(missing_ok=True)
     source=root/"proposal-sheet.png"
     im=Image.open(source).convert("RGBA")
     w,h=im.size
