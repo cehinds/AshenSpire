@@ -1,0 +1,132 @@
+{
+  "A-objects": {
+    "path": "/workspace/generated_images/exec-e33eb2f7-719c-490f-a0d0-4aa1ef832fd0.png",
+    "layout": {
+      "columns": 5,
+      "rows": 2
+    },
+    "selection": "Seven-family correction for object atlases; separately generated effect atlas."
+  },
+  "B-objects": {
+    "path": "/workspace/generated_images/exec-9b06e3eb-e100-4293-a0b7-8a159cdae62f.png",
+    "layout": {
+      "columns": 5,
+      "rows": 2
+    },
+    "selection": "Seven-family correction for object atlases; separately generated effect atlas."
+  },
+  "C-objects": {
+    "path": "/workspace/generated_images/exec-fdb165af-9d00-43d5-84e6-bbb3bbea714e.png",
+    "layout": {
+      "columns": 5,
+      "rows": 2
+    },
+    "selection": "Seven-family correction for object atlases; separately generated effect atlas."
+  },
+  "D-objects": {
+    "path": "/workspace/generated_images/exec-c6e3fbf8-2beb-4c0e-989d-8ac1e1e9c888.png",
+    "layout": {
+      "columns": 5,
+      "rows": 2
+    },
+    "selection": "Seven-family correction for object atlases; separately generated effect atlas."
+  },
+  "A-effects": {
+    "path": "/workspace/generated_images/exec-dfe31d0c-c281-4596-bb02-7f6d4a5775e6.png",
+    "layout": {
+      "columns": 5,
+      "rows": 2
+    },
+    "selection": "Seven-family correction for object atlases; separately generated effect atlas."
+  },
+  "B-effects": {
+    "path": "/workspace/generated_images/exec-c639b99c-3a90-4472-b7e4-e4b43607c5d4.png",
+    "layout": {
+      "columns": 5,
+      "rows": 2
+    },
+    "selection": "Seven-family correction for object atlases; separately generated effect atlas."
+  },
+  "C-effects": {
+    "path": "/workspace/generated_images/exec-c639b99c-3a90-4472-b7e4-e4b43607c5d4.png",
+    "layout": {
+      "columns": 5,
+      "rows": 2
+    },
+    "selection": "Seven-family correction for object atlases; separately generated effect atlas."
+  },
+  "D-effects": {
+    "path": "/workspace/generated_images/exec-b6755350-9946-4d5a-a303-ce2103858d90.png",
+    "layout": {
+      "columns": 5,
+      "rows": 2
+    },
+    "selection": "Seven-family correction for object atlases; separately generated effect atlas."
+  },
+  "E-effects": {
+    "path": "/workspace/generated_images/exec-4abc05d5-6dd9-411b-af65-2cb286fa012c.png",
+    "layout": {
+      "columns": 5,
+      "rows": 2
+    },
+    "selection": "Seven-family correction for object atlases; separately generated effect atlas."
+  },
+  "F-effects": {
+    "path": "/workspace/generated_images/exec-3876761a-2705-4a06-b03f-66e3c286702c.png",
+    "layout": {
+      "columns": 5,
+      "rows": 2
+    },
+    "selection": "Seven-family correction for object atlases; separately generated effect atlas."
+  },
+  "G-effects": {
+    "path": "/workspace/generated_images/exec-3876761a-2705-4a06-b03f-66e3c286702c.png",
+    "layout": {
+      "columns": 5,
+      "rows": 2
+    },
+    "selection": "Seven-family correction for object atlases; separately generated effect atlas."
+  },
+  "E-objects": {
+    "path": "/workspace/generated_images/exec-e34eb480-981c-422a-9b60-0e9e3e4293f7.png",
+    "layout": {
+      "columns": 5,
+      "rows": 2
+    }
+  },
+  "F-objects": {
+    "path": "/workspace/generated_images/exec-bedb3677-b36f-4a4a-b3f5-f9af3514f138.png",
+    "layout": {
+      "columns": 5,
+      "rows": 2
+    }
+  },
+  "G-objects": {
+    "path": "/workspace/generated_images/exec-0744075c-1ad5-48c5-a436-65d2605f1cd6.png",
+    "layout": {
+      "columns": 5,
+      "rows": 2
+    }
+  },
+  "H-objects": {
+    "path": "/workspace/generated_images/exec-0d218b69-da50-421a-a483-2663a4dde3bb.png",
+    "layout": {
+      "columns": 5,
+      "rows": 2
+    }
+  },
+  "H-effects": {
+    "path": "/workspace/generated_images/exec-4387c5de-1cdf-41e5-a850-5369a63cda09.png",
+    "layout": {
+      "columns": 5,
+      "rows": 2
+    }
+  },
+  "backgrounds": {
+    "path": "/workspace/generated_images/exec-036a1e09-f6bf-46f2-b682-0d0c76c6f502.png",
+    "layout": {
+      "columns": 5,
+      "rows": 2
+    }
+  }
+}
