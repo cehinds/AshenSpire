@@ -80,6 +80,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
       - uses: actions/download-artifact@v4
         with:
           pattern: normalized-*
@@ -91,13 +93,21 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           python - <<'PY'
-          import glob,subprocess
+          import glob,subprocess,json,hashlib
           from pathlib import Path
           paths=[]
           for report in glob.glob('art/enemy-back-proposals/*/normalized.json'):
               root=Path(report).parent
-              paths.extend(str(p) for p in root.iterdir() if p.name in ['normalized.json','contact-sheet.png','normalization.log'] or (p.name.startswith('v') and len(p.name)==7 and p.suffix=='.png' and p.stem[1:].isdigit()))
-          if paths: subprocess.run(['git','add','-f','--',*paths],check=True)
+              data=json.loads(Path(report).read_text())
+              source=Path(data['source']['path'])
+              assert hashlib.sha256(source.read_bytes()).hexdigest()==data['source']['sha256'], 'Source changed while matrix ran'
+              exports=[root/f'v{i:02}.png' for i in range(1,11)]+[root/'contact-sheet.png']
+              if data['qa']['errors']:
+                  for p in exports: p.unlink(missing_ok=True)
+              tracked=subprocess.check_output(['git','ls-files','--',str(root)],text=True).splitlines()
+              intended={str(p) for p in exports}|{str(root/'normalized.json'),str(root/'normalization.log')}
+              paths.extend(p for p in intended if Path(p).exists() or p in tracked)
+          if paths: subprocess.run(['git','add','-A','-f','--',*paths],check=True)
           PY
           if ! git diff --cached --quiet; then
             git commit -m "Record mechanical enemy back normalization evidence"
