@@ -189,8 +189,8 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'the fullscreen switch loses its accessible name',
         file: 'src/ui/screens/settings.js',
-        find: ' ? ` data-action="1" aria-label="${esc(r.label)}" aria-describedby="set-${r.key}-status"` : \'\'}',
-        replace: ' ? ` data-action="1" aria-describedby="set-${r.key}-status"` : \'\'}',
+        find: 'data-key="${r.key}" aria-label="${esc(r.label)}"${r.type === \'action\' ? ` data-action="1" aria-describedby="set-${r.key}-status"` : \'\'}',
+        replace: 'data-key="${r.key}"${r.type === \'action\' ? ` data-action="1" aria-describedby="set-${r.key}-status"` : \'\'}',
         expectRed: /fullscreen switch lacks an accessible name or description/,
       },
       {
