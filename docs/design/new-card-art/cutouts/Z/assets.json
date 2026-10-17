@@ -1,0 +1,872 @@
+{
+  "Z.effect.0": {
+    "id": "Z.effect.0",
+    "kind": "effect",
+    "category": "Z",
+    "digit": 0,
+    "name": "Divine projectile",
+    "src": "cutouts/Z/effects/0.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      32,
+      480,
+      479
+    ],
+    "sha256": "c560adee86e28197be8c6359c8bc564758dbcf80f3bd31ca8faab7f5ffa38432",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/V-reference.png",
+      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
+      "sourceFile": "exec-aa1a42e9-e8ee-4bbf-80f8-3398bf459b9e.png",
+      "sourceSha256": "c7c32db345e77c0fe8d3cd771f8e3e6989913834c187d7188fdd0c831023749c",
+      "sourceCell": {
+        "x": 0,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 0,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "V.object.0"
+    },
+    "anchors": {
+      "emissionRoot": {
+        "x": 0.14,
+        "y": 0.86
+      }
+    },
+    "magicRole": "ranged-projectile",
+    "elementProposal": "divine"
+  },
+  "Z.effect.1": {
+    "id": "Z.effect.1",
+    "kind": "effect",
+    "category": "Z",
+    "digit": 1,
+    "name": "Necrotic projectile",
+    "src": "cutouts/Z/effects/1.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      39,
+      480,
+      472
+    ],
+    "sha256": "585796be5b14a2b519bc387b9c45a9a5cf1b40659ef96c4030585f48957c3b70",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/V-reference.png",
+      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
+      "sourceFile": "exec-aa1a42e9-e8ee-4bbf-80f8-3398bf459b9e.png",
+      "sourceSha256": "c7c32db345e77c0fe8d3cd771f8e3e6989913834c187d7188fdd0c831023749c",
+      "sourceCell": {
+        "x": 397,
+        "y": 0,
+        "width": 396,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 397,
+        "y": 0,
+        "width": 396,
+        "height": 396
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "V.object.1"
+    },
+    "anchors": {
+      "emissionRoot": {
+        "x": 0.14,
+        "y": 0.86
+      }
+    },
+    "magicRole": "ranged-projectile",
+    "elementProposal": "necrotic"
+  },
+  "Z.effect.2": {
+    "id": "Z.effect.2",
+    "kind": "effect",
+    "category": "Z",
+    "digit": 2,
+    "name": "Force projectile",
+    "src": "cutouts/Z/effects/2.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      33,
+      480,
+      479
+    ],
+    "sha256": "10f186887663f83447f0ff3d2942aaef0f61883e4449f358b057dcaeb32b4140",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/V-reference.png",
+      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
+      "sourceFile": "exec-aa1a42e9-e8ee-4bbf-80f8-3398bf459b9e.png",
+      "sourceSha256": "c7c32db345e77c0fe8d3cd771f8e3e6989913834c187d7188fdd0c831023749c",
+      "sourceCell": {
+        "x": 793,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 793,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "V.object.2"
+    },
+    "anchors": {
+      "emissionRoot": {
+        "x": 0.14,
+        "y": 0.86
+      }
+    },
+    "magicRole": "ranged-projectile",
+    "elementProposal": "force"
+  },
+  "Z.effect.3": {
+    "id": "Z.effect.3",
+    "kind": "effect",
+    "category": "Z",
+    "digit": 3,
+    "name": "Earth projectile",
+    "src": "cutouts/Z/effects/3.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      32,
+      480,
+      480
+    ],
+    "sha256": "5721627cd435eec7731008b365d3bc3dbe0d2de0504440cfee3c46c95f4199e3",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/V-reference.png",
+      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
+      "sourceFile": "exec-aa1a42e9-e8ee-4bbf-80f8-3398bf459b9e.png",
+      "sourceSha256": "c7c32db345e77c0fe8d3cd771f8e3e6989913834c187d7188fdd0c831023749c",
+      "sourceCell": {
+        "x": 1190,
+        "y": 0,
+        "width": 396,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 1190,
+        "y": 0,
+        "width": 396,
+        "height": 396
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "V.object.3"
+    },
+    "anchors": {
+      "emissionRoot": {
+        "x": 0.14,
+        "y": 0.86
+      }
+    },
+    "magicRole": "ranged-projectile",
+    "elementProposal": "earth"
+  },
+  "Z.effect.4": {
+    "id": "Z.effect.4",
+    "kind": "effect",
+    "category": "Z",
+    "digit": 4,
+    "name": "Frost projectile",
+    "src": "cutouts/Z/effects/4.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      38,
+      32,
+      473,
+      480
+    ],
+    "sha256": "fc841a50b39e3f1a5734332cb1e4d5bb217689023247ebf832f99cbd3e5a3b12",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/V-reference.png",
+      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
+      "sourceFile": "exec-aa1a42e9-e8ee-4bbf-80f8-3398bf459b9e.png",
+      "sourceSha256": "c7c32db345e77c0fe8d3cd771f8e3e6989913834c187d7188fdd0c831023749c",
+      "sourceCell": {
+        "x": 1586,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 1586,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "V.object.4"
+    },
+    "anchors": {
+      "emissionRoot": {
+        "x": 0.14,
+        "y": 0.86
+      }
+    },
+    "magicRole": "ranged-projectile",
+    "elementProposal": "frost"
+  },
+  "Z.effect.5": {
+    "id": "Z.effect.5",
+    "kind": "effect",
+    "category": "Z",
+    "digit": 5,
+    "name": "Fire projectile",
+    "src": "cutouts/Z/effects/5.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      44,
+      32,
+      468,
+      480
+    ],
+    "sha256": "4e863cbb5c46d16aaba13454eb97810bd42c43b5d46faa6c14d90dbef03cc6a5",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/V-reference.png",
+      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
+      "sourceFile": "exec-aa1a42e9-e8ee-4bbf-80f8-3398bf459b9e.png",
+      "sourceSha256": "c7c32db345e77c0fe8d3cd771f8e3e6989913834c187d7188fdd0c831023749c",
+      "sourceCell": {
+        "x": 0,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 0,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "V.object.5"
+    },
+    "anchors": {
+      "emissionRoot": {
+        "x": 0.14,
+        "y": 0.86
+      }
+    },
+    "magicRole": "ranged-projectile",
+    "elementProposal": "fire"
+  },
+  "Z.effect.6": {
+    "id": "Z.effect.6",
+    "kind": "effect",
+    "category": "Z",
+    "digit": 6,
+    "name": "Lightning projectile",
+    "src": "cutouts/Z/effects/6.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      39,
+      480,
+      472
+    ],
+    "sha256": "1f434ba09f9ca9e668faf680935607550862b4df568ba233859670170879e4bb",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/V-reference.png",
+      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
+      "sourceFile": "exec-aa1a42e9-e8ee-4bbf-80f8-3398bf459b9e.png",
+      "sourceSha256": "c7c32db345e77c0fe8d3cd771f8e3e6989913834c187d7188fdd0c831023749c",
+      "sourceCell": {
+        "x": 397,
+        "y": 396,
+        "width": 396,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 397,
+        "y": 396,
+        "width": 396,
+        "height": 397
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "V.object.6"
+    },
+    "anchors": {
+      "emissionRoot": {
+        "x": 0.14,
+        "y": 0.86
+      }
+    },
+    "magicRole": "ranged-projectile",
+    "elementProposal": "lightning"
+  },
+  "Z.effect.7": {
+    "id": "Z.effect.7",
+    "kind": "effect",
+    "category": "Z",
+    "digit": 7,
+    "name": "Psychic projectile",
+    "src": "cutouts/Z/effects/7.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      45,
+      480,
+      467
+    ],
+    "sha256": "1382a0a9e06744705003a7f3c8b6e3578f195ad879a0f585ea4ddb7cc4b67699",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/V-reference.png",
+      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
+      "sourceFile": "exec-aa1a42e9-e8ee-4bbf-80f8-3398bf459b9e.png",
+      "sourceSha256": "c7c32db345e77c0fe8d3cd771f8e3e6989913834c187d7188fdd0c831023749c",
+      "sourceCell": {
+        "x": 793,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 793,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "V.object.7"
+    },
+    "anchors": {
+      "emissionRoot": {
+        "x": 0.14,
+        "y": 0.86
+      }
+    },
+    "magicRole": "ranged-projectile",
+    "elementProposal": "psychic"
+  },
+  "Z.effect.8": {
+    "id": "Z.effect.8",
+    "kind": "effect",
+    "category": "Z",
+    "digit": 8,
+    "name": "Alteration projectile",
+    "src": "cutouts/Z/effects/8.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      33,
+      32,
+      478,
+      480
+    ],
+    "sha256": "647610ef44561309d08190ff16bcf528f82435f9bee486130ad2e069137cf793",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/V-reference.png",
+      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
+      "sourceFile": "exec-aa1a42e9-e8ee-4bbf-80f8-3398bf459b9e.png",
+      "sourceSha256": "c7c32db345e77c0fe8d3cd771f8e3e6989913834c187d7188fdd0c831023749c",
+      "sourceCell": {
+        "x": 1190,
+        "y": 396,
+        "width": 396,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 1190,
+        "y": 396,
+        "width": 396,
+        "height": 397
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "V.object.8"
+    },
+    "anchors": {
+      "emissionRoot": {
+        "x": 0.14,
+        "y": 0.86
+      }
+    },
+    "magicRole": "ranged-projectile",
+    "elementProposal": "alteration"
+  },
+  "Z.effect.9": {
+    "id": "Z.effect.9",
+    "kind": "effect",
+    "category": "Z",
+    "digit": 9,
+    "name": "Wind projectile",
+    "src": "cutouts/Z/effects/9.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      32,
+      479,
+      480
+    ],
+    "sha256": "6bd9b8141b7ce1ca78f851897d976655f097dab0b986a662a1ebde780925b2ba",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/V-reference.png",
+      "referenceSha256": "da297eb312a16b1ac8df4951dd3073a49bdda0092fb10a241bedc1b85c545141",
+      "sourceFile": "exec-aa1a42e9-e8ee-4bbf-80f8-3398bf459b9e.png",
+      "sourceSha256": "c7c32db345e77c0fe8d3cd771f8e3e6989913834c187d7188fdd0c831023749c",
+      "sourceCell": {
+        "x": 1586,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 1586,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "V.object.9"
+    },
+    "anchors": {
+      "emissionRoot": {
+        "x": 0.14,
+        "y": 0.86
+      }
+    },
+    "magicRole": "ranged-projectile",
+    "elementProposal": "wind"
+  }
+}
