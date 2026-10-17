@@ -30,6 +30,8 @@ test('moduleFiles and moduleEntry list modules from module.json paths, toleratin
   assert.equal(out[0].guide, 'engine/modules/a/guide.md');
   assert.deepEqual(C.moduleEntry('a', { name: 'Alpha', description: 'D', version: '1.0.0' }), { id: 'a', name: 'Alpha', description: 'D', version: '1.0.0' });
   assert.deepEqual(C.moduleEntry('a', null), { id: 'a', name: 'a', description: '', version: '' });
+  assert.equal(C.moduleEntry('a', {}, '# `a` module guide\n\nDoes A things.\n\nMore.').description, 'Does A things.');
+  assert.equal(C.guideSummary(undefined), '');
 });
 
 test('authorState reads false, true, an object, or nothing', () => {
@@ -64,6 +66,8 @@ test('parseFieldValue validates against the field', () => {
   assert.deepEqual(C.parseFieldValue(n, ''), { ok: true, value: undefined });
   for (const bad of ['0', '6', '2.5', 'x']) assert.equal(C.parseFieldValue(n, bad).ok, false, bad);
   assert.equal(C.parseFieldValue({ kind: 'json' }, '1').ok, false);
+  assert.deepEqual(C.parseFieldValue({ kind: 'boolean' }, 'false'), { ok: true, value: false });
+  assert.deepEqual(C.parseFieldValue({ kind: 'boolean' }, ''), { ok: true, value: undefined });
 });
 
 test('setModuleEnabled edits modules.<id> in the draft and keeps the rest', () => {

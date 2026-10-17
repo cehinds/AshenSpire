@@ -44,9 +44,18 @@ export function moduleFiles(paths = []) {
 }
 
 /** A listing row from a parsed module.json (any shape: missing parts become empty strings). */
-export function moduleEntry(id, manifest) {
+export function moduleEntry(id, manifest, guide = '') {
   const m = isObject(manifest) ? manifest : {};
-  return { id, name: String(m.name || m.title || id), description: String(m.description || m.summary || ''), version: String(m.version || '') };
+  return { id, name: String(m.name || m.title || id), description: String(m.description || m.summary || guideSummary(guide)), version: String(m.version || '') };
+}
+
+/** The first prose line of a guide.md after its heading ('' when there is none). */
+export function guideSummary(guide) {
+  for (const line of String(guide || '').split(/\r?\n/)) {
+    const t = line.trim();
+    if (t && !t.startsWith('#') && !t.startsWith('```')) return t;
+  }
+  return '';
 }
 
 /**
@@ -82,8 +91,8 @@ export function schemaFields(schema, defaults) {
 
 /** An editable field's raw input -> { ok, value } or { ok: false, error }. '' clears the override (value undefined). */
 export function parseFieldValue(field, raw) {
-  if (field.kind === 'boolean') return { ok: true, value: raw === true || raw === 'true' };
   if (raw === '' || raw === undefined || raw === null) return { ok: true, value: undefined };
+  if (field.kind === 'boolean') return { ok: true, value: raw === true || raw === 'true' };
   if (field.kind === 'string') return { ok: true, value: String(raw) };
   if (field.kind === 'enum') {
     const hit = field.options.find((o) => String(o) === String(raw));
