@@ -11,7 +11,7 @@
  const fields=['rotationDeg','opacity','x','y','width','height','scaleX','scaleY'];
  const asset=id=>data.assets[id];
  function css(t){return {position:'absolute',left:`${t.x/512*100}%`,top:`${t.y/640*100}%`,width:`${t.width/512*100}%`,height:`${t.height/640*100}%`,objectFit:'contain',transformOrigin:'50% 50%',transform:`translate(-50%, -50%) rotate(${t.rotationDeg}deg) scale(${t.scaleX}, ${t.scaleY})`,opacity:String(t.opacity),mixBlendMode:t.blendMode,pointerEvents:'none'};}
- function resolved(layer){const a=asset(layer.assetId),t={...a.defaultTransform,...layer.overrides};return {...layer,src:a.src,transform:t,css:{...css(t),zIndex:String(layer.zIndex),display:layer.visible?'block':'none'}};}
+ function resolved(layer){const a=asset(layer.assetId),t={...a.defaultTransform,...layer.overrides};return {...layer,src:a.src,references:a.references,transform:t,css:{...css(t),zIndex:String(layer.zIndex),display:layer.visible?'block':'none'}};}
  function save(){edits[activeCode]=copy(current);try{localStorage.setItem('ashen-card-cutouts-families-v3',JSON.stringify({kept,edits}));}catch{$('status').textContent='Browser storage is unavailable; export JSON to retain these edits.';}}
  function imageLayer(layer){const r=resolved(layer),img=document.createElement('img');img.src=r.src;img.alt='';img.dataset.layer=r.id;Object.assign(img.style,r.css);return img;}
  function paintStage(node,composition){node.replaceChildren(...composition.layers.map(imageLayer));}
@@ -60,7 +60,7 @@
  $('secondary-object').addEventListener('change',()=>{const l=current.layers.find(l=>l.id==='secondaryObject'),v=$('secondary-object').value;l.visible=v!=='hidden';if(l.visible)l.assetId=v;save();syncEditor();});
  const backgrounds=Object.values(data.assets).filter(a=>a.kind==='background');
  $('background').innerHTML=backgrounds.map(a=>`<option value="${a.id}">${a.digit} — ${esc(a.name)}</option>`).join('');
- $('backgrounds').innerHTML=backgrounds.map(a=>`<article class="tile"><a href="${a.src}" download="background-${a.digit}.png"><img class="cutout" loading="lazy" src="${a.src}" alt="${esc(a.name)} background"></a><h3>Background ${a.digit}</h3><p class="small">${esc(a.name)}</p><a href="${a.src}" download>PNG</a></article>`).join('');
+ $('backgrounds').innerHTML=backgrounds.map(a=>`<article class="tile"><a href="${a.src}" download="${a.id}.png"><img class="cutout" loading="lazy" src="${a.src}" alt="${esc(a.name)} background"></a><h3>${esc(a.id)}</h3><p class="small">${esc(a.name)}</p><a href="${a.src}" download>PNG</a></article>`).join('');
  for(const id of ['object','effect'])$(id).addEventListener('change',()=>selectCode(`${category.letter}${$('object').value}${$('effect').value}`));
  $('background').addEventListener('change',()=>{current.layers.find(l=>l.id==='background').assetId=$('background').value;save();syncEditor();});
  $('layer').addEventListener('change',syncEditor);
@@ -81,4 +81,6 @@
   const blob=new Blob([JSON.stringify(result,null,2)+'\n'],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='card-art-selection.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);$('status').textContent='Exported kept choices, PNG references, transforms and CSS.';
  });
  renderCategory();
+ const requested=new URLSearchParams(location.search).get('code');
+ if(requested && data.compositions[requested]?.category===category.letter)selectCode(requested);
 })();

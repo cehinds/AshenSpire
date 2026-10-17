@@ -1,7 +1,7 @@
-# Actual PNG cutouts — selection set 04
+# Actual PNG cutouts — selection set 05
 
 Open [cutouts.html](cutouts.html) to select, layer, rotate, resize and keep multiple
-choices. The downloadable `card-art-cutouts-v4.zip` includes the standalone
+choices. The downloadable `card-art-cutouts-v5.zip` includes the standalone
 viewer, all PNGs and the JSON. Extract the ZIP and open `cutouts.html`
 in a browser. It uses plain local scripts and needs no build step. If browser
 policy blocks local files, run `python3 -m http.server 8765` in the extracted
@@ -10,10 +10,10 @@ this environment used local HTTP because its policy blocks file URLs.
 
 ## Deliverables and codes
 
-- **120 object PNGs:** the original 70, plus 50 new options—ten each of spellbooks, swords, hammers, scythes and shields.
-- An additional ten Cleansed fire objects, 90 effect PNG exports, and ten separate background PNGs.
-- Some compatible families reuse an effect source; effect exports are not claimed to be 90 unique effect designs.
-- All object/effect PNGs have a 512×512 transparent canvas and a clear outer margin.
+- **132 object PNGs:** the original 70, 50 later spellbook/weapon options, and 12 components from existing artwork.
+- An additional ten Cleansed fire objects, 100 effect PNG exports, and twenty separate background PNGs.
+- Some compatible families reuse an effect source; effect exports are not claimed to be 100 unique effect designs.
+- A–N object/effect PNGs use 512×512 transparent canvases. O uses 512×640; P preserves native 256×256 pixels. Backgrounds are opaque; object/effect layers have real alpha.
 - Background PNGs are 512×640. The composed art crop is also 512×640.
 - `cutout-manifest.json` contains component references, dimensions, anchor,
   position, sizing, rotation, scale, opacity, blend mode, layer order and CSS.
@@ -35,10 +35,12 @@ this environment used local HTTP because its policy blocks file URLs.
 | L | Scythes II — ten new alternatives |
 | M | Shields II — ten new alternatives |
 | N | Counter — ten starting shield-and-sword pairs using M and J |
+| O | Existing card art — ten reconstructed objects, effects and backgrounds |
+| P | Native inventory sword and shield — two unchanged objects |
 
 **0 is a real option, not absence.** New weapon groups reuse compatible earlier effect files; isolated effect tiles retain the original component letter. Every selection code has one letter and two
 digits. `A34` selects sword object 3 and effect 4. `A00` selects object 0 and
-effect 0. Each category contains all 100 combinations, 00–99. Ten initial examples
+effect 0. A–O contain 100 combinations each, 00–99. P has two native objects and ten effects: P00–P19. Ten initial examples
 pair matching digits: A00, A11, A22, …, A99.
 
 An isolated view hides a layer; it does not replace its digit with “none.” The
@@ -140,7 +142,7 @@ For Counter, use two independent object layers referencing E (shield) and A (swo
 
 ## Verification
 
-`python3 validate-cutouts.py` checks all 230 PNG files, real alpha, dimensions, hashes, the original 70 plus 50 new objects and 1,400 combinations. Browser checks covered all families, image decoding, independent transforms, a second object, visibility, multiple kept choices, JSON download, persisted edits and 390px layouts. Existing combat identity validation also passes.
+`python3 validate-cutouts.py` checks all 262 PNG files, real alpha, dimensions, hashes, 132 physical objects plus ten cleansing fires and 1,520 combinations. Browser checks covered all families, image decoding, independent transforms, a second object, visibility, multiple kept choices, JSON download, persisted edits and 390px layouts. Existing combat identity validation also passes.
 
 
 ## Counter pair codes
@@ -150,3 +152,13 @@ For Counter, use two independent object layers referencing E (shield) and A (swo
 ## Rebuilding the expansion
 
 `export-cutouts.py` rebuilds the original revision 3 catalog. For revision 4, run `expand-cutouts.py --family I` (then J, K, L and M) using `generation-sources-v4.json`, and run `expand-cutouts.py` to assemble the expanded manifest. Source sheets remain provenance; object crops follow complete connected-object bounding boxes to avoid clipping objects that drift across nominal grid lines. `package-cutouts.py` builds the current portable ZIP.
+
+## Existing-art reuse (revision 5)
+
+Open [source-breakdown.html](source-breakdown.html) to compare original artwork, individual PNGs and recompositions. O digits 0–4 are silver-blue Attack, Smash, Sweep, Defend and Counter; digits 5–9 are their red-black variants. Their sources are the repository's actual `assets-mobile/cards/library/physical-*-01/03-1024.webp` files. Despite the filenames, these local light-tier images are **480×720**. Source release: `hd-assets-v23`.
+
+The original cards are flattened. O components are image-edit reconstructions referenced to that artwork, not exact recovered source layers. Backgrounds contain reconstructed obscured pixels; object proportions and fog may differ. Object crops preserve complete silhouettes and normalize them onto transparent canvases. CSS transforms remain editable. Counter reuses a matching Attack sword behind its extracted shield; it does not claim to recover the original occluded sword.
+
+P converts `icon_straightSwordInventory2026.webp` and `icon_kiteShieldInventory2026.webp` to PNG without altering decoded RGBA pixels, verified byte for byte. These remain 256×256. No matching painted spellbook was found in the existing library, so the I spellbooks remain the proposal options.
+
+Every new asset records its source path, original asset ID, source SHA-256, conversion/reconstruction method and CSS transform. Source copies are included in the portable pack. `reuse-v5.json` records the audit choices; `generation-sources-v5.json` records reconstruction sheets. Run `reuse-cutouts.py` against revision 4 or 5 to rebuild the new entries while preserving A–N. Then run the validator and package script. Source generation files live outside the portable pack.

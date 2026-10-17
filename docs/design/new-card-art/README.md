@@ -1,8 +1,12 @@
-## Latest expansion: spellbooks and more weapons
+## Current set: existing-art components
 
-Revision 4 adds 50 transparent objects in I–M and ten editable Counter starting pairs in N. [Open the composer](cutouts.html) or [view the new objects](objects-overview.html?new). [Download the current pack](card-art-cutouts-v4.zip). Original A–H IDs are preserved.
+Revision 5 adds 30 reconstructed components from ten existing card illustrations and two unchanged native inventory PNGs. [Compare sources and layers](source-breakdown.html), [edit compositions](cutouts.html?category=O), or [download the current pack](card-art-cutouts-v5.zip). JSON includes source provenance and CSS transforms. A–N IDs remain unchanged. Total: 262 PNGs, 132 physical objects plus ten cleansing fires, and 1,520 compositions.
 
-## Latest: 70 standalone object cutouts
+## Previous expansion: spellbooks and more weapons
+
+Revision 4 adds 50 transparent objects in I–M and ten editable Counter starting pairs in N. [Open the composer](cutouts.html) or [view the new objects](objects-overview.html?new). [Revision 4 pack](card-art-cutouts-v4.zip). Original A–H IDs are preserved.
+
+## Original set: 70 standalone object cutouts
 
 Open [objects-overview.html](objects-overview.html) for ten variants each of seven core objects, or [cutouts.html](cutouts.html) for separate layers and transform controls. See [CUTOUTS.md](CUTOUTS.md) for codes, alpha exports and JSON. Earlier concept boards below are retained as reference, not the current candidate count.
 

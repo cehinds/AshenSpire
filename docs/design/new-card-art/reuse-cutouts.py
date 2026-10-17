@@ -79,7 +79,7 @@ for key, kind in [('objects', 'object'), ('effects', 'effect'), ('backgrounds', 
         else:
             args += ['-resize', '512x640!']
         args += ['-alpha', 'off'] if kind == 'background' else ['-define', 'png:color-type=6']
-        subprocess.run([*args, str(out)], check=True)
+        subprocess.run([*args, '-define', 'png:exclude-chunk=date,time', str(out)], check=True)
         register(out, f'O.{kind}.{i}', kind, 'O', i,
             f"Existing {r['action']} · {r['palette']} · {kind}", r,
             'reconstructed-from-flattened-card', {
@@ -93,7 +93,7 @@ for r in spec['nativeObjects']:
     i = r['digit']; source = ROOT / r['reference']
     out = ROOT / 'cutouts' / 'P' / 'objects' / f'{i}.png'
     out.parent.mkdir(parents=True, exist_ok=True)
-    subprocess.run(['magick', str(source), '-define', 'png:color-type=6', str(out)], check=True)
+    subprocess.run(['magick', str(source), '-define', 'png:color-type=6', '-define', 'png:exclude-chunk=date,time', str(out)], check=True)
     original = Image.open(source).convert('RGBA'); converted = Image.open(out).convert('RGBA')
     assert original.size == converted.size and original.tobytes() == converted.tobytes(), source
     register(out, f'P.object.{i}', 'object', 'P', i, r['name'], r,
@@ -127,7 +127,7 @@ for c in data['categories'][-2:]:
                 if i in [4,9]:
                     sword = f'O.object.{0 if i == 4 else 5}'
                     layers['secondaryObject'].update(assetId=sword, visible=True, zIndex=15,
-                        overrides={'x':330,'y':345,'width':460,'height':575,'rotationDeg':-25})
+                        overrides={'x':330,'y':310,'width':400,'height':500,'rotationDeg':-20})
                     comp['reuseNote'] = 'Counter shield reconstructed from its card; sword reuses the matching Attack component, rather than claiming to recover its hidden original.'
             elif i == 1 and j in [4,9]:
                 layers['secondaryObject'].update(assetId='P.object.0', visible=True, zIndex=15,
@@ -141,6 +141,8 @@ data['codeScheme']['nativeReuse'] = 'P has two existing objects (digits 0 and 1)
 data['scope'].update(categoryCount=16, totalPngCount=262, totalObjectCountIncludingFire=142,
     physicalObjectCount=132, effectFileCount=100, backgroundCount=20,
     latestBatchObjectCount=12, latestBatchReconstructedComponentCount=30, latestBatchUnchangedObjectCount=2)
+data['scope']['objectsPerCategory'] = {c['letter']:len(c['objectIds']) for c in data['categories']}
+data['scope']['exampleCombinationsPerCategory'] = {c['letter']:len(c['exampleCodes']) for c in data['categories']}
 for t in data['cardTypes']:
     if t['id'] in ['attack','smash','sweep','defend','counter'] and 'O' not in t['objectFamilies']:
         t['objectFamilies'].append('O')

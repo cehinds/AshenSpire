@@ -10,6 +10,9 @@ files = ['cutouts.html', 'cutout-compositor.js', 'cutouts-data.js', 'cutout-mani
          'objects-overview.html', 'art-selection-v3.json', 'art-catalog.json',
          'art-proposals-v2.json', 'CUTOUTS.md', 'object-generation-notes.json',
          'expansion-v4.json', '70-objects.png', '50-new-objects.png', 'counter-pairs.png']
+if data['revision'] >= 5:
+    files += ['source-breakdown.html', 'reuse-v5.json', 'reuse-overview.png']
+    files += [str(path.relative_to(root)) for path in (root/'source-art-v5').glob('*.webp')]
 with zipfile.ZipFile(out, 'w', zipfile.ZIP_DEFLATED) as archive:
     for name in files:
         archive.write(root / name, name)
