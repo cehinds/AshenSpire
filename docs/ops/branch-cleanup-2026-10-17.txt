@@ -16,12 +16,6 @@ a912bbd11d427b58c7a8ad535a3e6793a8362748 codex/mobile-target-clearance-20261004 
 4b6ae60c68bd19270adfbf8bdbccbaa18c0ab970 codex/reconcile-test-history-20261008 2026-10-08 ARCHIVED
 3178fd1b590a9bfae1589846181f16e54a48af57 codex/session-continuations-20261008 2026-10-08 in-dev
 9b9e1dfaa3485abe4c6181163b47e4c6f4a232ce codex/settings-button-order-corpus 2026-10-04 ARCHIVED
-0e2754b705f6ecd3d01eecfa6aeb12945ee400c9 feature/CombatRoundsPlayable 2026-10-12 in-dev
-29acc6dd7a079fd319102a73decff85b0b44d928 feature/CombatRoundsPlayable-ui 2026-10-12 in-dev
-4fc951335fb7ce736a97f4cf5f66c107980222c4 feature/RevampCharacterCreation 2026-10-11 in-dev
-7e6393d2b7782f4f4fe030b5e79ef4d42e57a09d feature/festive-lamport-2kmhma 2026-10-01 ARCHIVED
-96c966b94595d049473b2ccd3625531e6b2c888f feature/simultaneousAction 2026-10-11 in-dev
-34a3ea4471e23e7449777d1730c8027cdd83e2e9 feature/tagged-combat-recovery-source 2026-10-07 ARCHIVED
 a11a093a94cee2029512d0715c24e07dee544b01 fix/ConfiguredAuditScope 2026-10-15 in-dev
 2eae12d09b8c265b3d11531d5f05b1a0acb88ec0 fix/CounterstrikeSupportPreview 2026-10-15 in-dev
 2134f96133046459411fcb2215014a63a603ca29 fix/SandboxRunStart 2026-10-11 in-dev
@@ -208,8 +202,15 @@ ca6e602617c0de0e44b50f14d2b7c99304179472 worker/updateCharacterCreation/flow-int
 6839b3b1c03f81f9eb39b3eef54efe45ff6617c1 worker/updateCharacterCreation/icon-alignment 2026-10-14 ARCHIVED
 413488967252ffc25375601f02f9f243705550bb worker/updateCharacterCreation/locked-choices 2026-10-14 ARCHIVED
 bb2b0fda735a631c47d85c33141f7a8b1cf4ddb5 worker/updateCharacterCreation/step-order-tier 2026-10-14 ARCHIVED
+7e6393d2b7782f4f4fe030b5e79ef4d42e57a09d backup/blacksmith-2026-10-01 2026-10-01 ARCHIVED
 
-# KEPT (64): protected, open PR, or unmerged with commits in the last 7 days
+# KEPT (69): protected, open PR, or unmerged with commits in the last 7 days
+# feature/CombatRoundsPlayable 2026-10-17 (new commits after the plan; kept)
+# feature/CombatRoundsPlayable-ui 2026-10-17 (new commits after the plan; kept)
+# feature/RevampCharacterCreation 2026-10-17 (new commits after the plan; kept)
+# feature/festive-lamport-2kmhma 2026-10-17 (new commits after the plan; kept)
+# feature/simultaneousAction 2026-10-17 (new commits after the plan; kept)
+# feature/tagged-combat-recovery-source 2026-10-17 (new commits after the plan; kept)
 # Chore/ResistedReaction 2026-10-11
 # Chore/improveEquippingCards 2026-10-11
 # Feature/CardPreview 2026-10-16
@@ -218,7 +219,6 @@ bb2b0fda735a631c47d85c33141f7a8b1cf4ddb5 worker/updateCharacterCreation/step-ord
 # alternative/dev 2026-10-09
 # alternative/release 2026-10-07
 # alternative/test 2026-10-09
-# backup/blacksmith-2026-10-01 2026-10-01
 # bot/art-pin-hd-assets-v20 2026-10-13
 # bot/art-pin-hd-assets-v22 2026-10-14
 # codex/card-master-alternative-sync 2026-10-10
