@@ -173,7 +173,7 @@ export function mountEvent(app, opts) {
       // one and always was.
       disarmers.push(arm(btn, 'eventChoice', {
         ctx: { binding },
-        question: `Choose ${choice.label || choice.text || 'this event option'}?`,
+        question: t('dialogue.respond.question', { label: choice.label || choice.text || t('event.defaultOption') }),
         detailHtml: choice.resultText ? `<p>${esc(choice.resultText)}</p>` : '',
         confirmLabel: 'CHOOSE',
         onConfirm: commit,

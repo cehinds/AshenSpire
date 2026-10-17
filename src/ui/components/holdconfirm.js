@@ -1,3 +1,4 @@
+import { t } from '../strings.js';
 // src/ui/components/holdconfirm.js — THE SECOND BEAT, in both its forms.
 //
 // Constantine, asked whether to build it: "yes press and hold" — and the same
@@ -1104,7 +1105,7 @@ export function beatArmer(meta, registries) {
         tone: reviewTone(current, policy ? registries.framework.confirmationTone(policy) : 'normal'),
         detailsHtml: authoredDetail || '',
         confirmLabel: confirmLabel || 'Confirm change',
-        cancelLabel: 'Back',
+        cancelLabel: t('common.back'),
         onConfirm,
         returnFocusElement: el,
       });

@@ -35,7 +35,13 @@ test('live mana cost selects the exact supplied banner and never displays action
  assert.match(combined,/Changed &lt;title&gt;/);assert.match(combined,/>2<\/div>/);assert.match(combined,/>7<\/div>/);
  assert.match(combined,/data-cost-layout="staminaMana"/);assert.match(combined,/data-component="mana-icon"/);
  assert.doesNotMatch(combined,/data-component="energy-(icon|value)"/);
- assert.ok(combined.includes(layout.artworkByCard.gorefireSlash));assert.match(combined,/-webkit-line-clamp:2/);
+ assert.ok(combined.includes(layout.artworkByCard.gorefireSlash));
+ const rulesLayer=compileCardComponents(layout,contentBundle.cards).cards[model.id].layers.find(layer=>layer.bind==='rules');
+ const rulesElement=combined.match(/<div class="ic-text" data-card-binding="rules"[^>]*>/)?.[0];
+ assert.ok(rulesElement,'the per-card rules layer is rendered');
+ assert.ok(Number.isInteger(rulesLayer.maxLines)&&rulesLayer.maxLines>0,'authored rules have a finite positive line limit');
+ assert.match(rulesElement,new RegExp(`data-max-lines="${rulesLayer.maxLines}"`));
+ assert.match(rulesElement,new RegExp(`-webkit-line-clamp:${rulesLayer.maxLines};`));
  const short=illustratedCardHtml({...model,costs:{...model.costs,mana:0,stamina:0}},options);
  assert.match(short,/data-cost-layout="staminaOnly"/);assert.doesNotMatch(short,/data-component="mana-(icon|value)"/);
  assert.doesNotMatch(short,/data-component="energy-(icon|value)"/);assert.match(short,/>0<\/div>/);

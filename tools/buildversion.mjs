@@ -326,6 +326,53 @@ function isContractColumn(file, key, value) {
   return CONTRACT_COLUMN_SITES.some((c) => c.file === file && c.key === key) && isProse(value);
 }
 
+/** Independent catalog protocol/package versions, identified by their exact schema locations.
+ * Never clear a whole generated file: UI/release fields and appended declarations
+ * still pass through both second-copy detectors. Noncanonical input fails closed.
+ */
+export function catalogSchemaVersionLines(file, text) {
+  const lines = new Set();
+  if (file !== 'src/content/generated/gameProfiles.js') return lines;
+  const prefix = 'export const gameProfileCatalog = ';
+  const start = text.indexOf(prefix);
+  const end = text.indexOf('\n};', start);
+  if (start < 0 || end < 0) return lines;
+  const json = text.slice(start + prefix.length, end + 2);
+  let catalog;
+  try { catalog = JSON.parse(json); } catch { return lines; }
+  if (JSON.stringify(catalog, null, 2) !== json) return lines;
+  const owners = new WeakSet();
+  const allow = value => { if (value && typeof value === 'object') owners.add(value); };
+  const artifacts = values => { for (const value of values || []) allow(value); };
+  allow(catalog.contracts);
+  allow(catalog.foundation);
+  for (const entry of Object.values(catalog.modules || {})) {
+    allow(entry.manifest);
+    artifacts(entry.artifacts);
+  }
+  for (const kind of ['bundles', 'packs']) {
+    for (const entry of Object.values(catalog[kind] || {})) {
+      allow(entry.manifest);
+      artifacts(entry.artifacts);
+      if (kind === 'bundles') {
+        for (const module of Object.values(entry.manifest?.modules || {})) allow(module);
+        artifacts(entry.manifest?.packs);
+      }
+    }
+  }
+  artifacts(catalog.runtimeArtifacts);
+  artifacts(catalog.runtimeSources);
+  const marker = '__BUILDVERSION_SCHEMA_SITE__';
+  const marked = JSON.stringify(catalog, function(key, value) {
+    return key === 'version' && typeof value === 'string' && owners.has(this) ? marker : value;
+  }, 2);
+  const offset = text.slice(0, start).split('\n').length - 1;
+  marked.split('\n').forEach((line, i) => {
+    if (/^\s*"version": "__BUILDVERSION_SCHEMA_SITE__",?$/.test(line)) lines.add(offset + i);
+  });
+  return lines;
+}
+
 /**
  * SECOND VERSION SITES THAT ARE KNOWN, STATED AND OPEN — not clean, not fresh.
  *
@@ -871,7 +918,9 @@ export function check(root = REPO_ROOT) {
     if (f === RELEASE_HOME) continue;
     if (!/\.(js|css|html|json)$/.test(f)) continue;
     const text = readFileSync(resolve(root, f), 'utf8');
+    const schemaVersions = catalogSchemaVersionLines(f, text);
     text.split('\n').forEach((line, i) => {
+      if (schemaVersions.has(i)) return;
       const t = line.trim();
       // arm 1 — the value equals the release
       if (line.includes(`'${rel}'`) || line.includes(`"${rel}"`) || line.includes(`\`${rel}\``)) {
@@ -914,7 +963,7 @@ export function check(root = REPO_ROOT) {
   } else {
     add(true, 'B NO SECOND COPY',
       `no second home for the release under ${INPUT_ROOTS.join(', ')}: no file re-types '${rel}'`
-      + ` outside ${RELEASE_HOME} (arm 1), and no other site declares a version at all (arm 2,`
+      + ` outside ${RELEASE_HOME} (arm 1), and no other release-version site is declared (arm 2,`
       + ` which never compares the value to the release, so it does not go quiet when the value drifts).`
       + ` ${commentHits} prose mention${commentHits === 1 ? '' : 's'} in comments, which assert nothing and are not copies.`);
   }

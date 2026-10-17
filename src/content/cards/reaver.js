@@ -700,18 +700,19 @@ export const reaverCards = [
   // A levelled sword or shield drafts from its own school at every rarity it
   // has opened; these join the retagged pool so each has at least four.
   {
-    id: 'hewingArc', name: 'Hewing Arc', class: 'reaver', rarity: 'uncommon', cost: 1, type: 'attack',
+    id: 'hewingArc', name: 'Hewing Arc', class: 'reaver', rarity: 'uncommon', cost: 2, manaCost: 0, costRule: 'fixed', type: 'attack',
     flavor: "A wide cut that opens old wounds.\n\nTaught in the Vanguard's yard to recruits who had never held a blade. The sergeants said the arc forgives a poor grip, and the Gorefire does the rest.\n\nThe yard is ash now. The recruits still swing it wide, as they were shown.",
     keywords: [], icon: '⌒',
     effects: [
-      { op: 'damage', target: 'enemy', amount: 6 },
-      { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 3, if: { p: 'inStance', stance: 'gorefire' } },
+      { op: 'damage', target: 'allEnemies', amount: 6 },
+      { op: 'applyStatus', target: 'allEnemies', status: 'bleed', stacks: 3, if: { p: 'inStance', stance: 'gorefire' } },
     ],
-    textTemplate: 'Deal {damage} damage. If in Gorefire Stance: apply {bleed} Bleed.',
-    upgrade: {
+    textTemplate: 'Deal {damage} damage to ALL enemies. If in Gorefire Stance: apply {bleed} Bleed to ALL.',
+    // Keep its pre-fix resolved price; area targeting must not add a tax.
+    upgrade: { cost: 3,
       effects: [
-        { op: 'damage', target: 'enemy', amount: 8 },
-        { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 4, if: { p: 'inStance', stance: 'gorefire' } },
+        { op: 'damage', target: 'allEnemies', amount: 8 },
+        { op: 'applyStatus', target: 'allEnemies', status: 'bleed', stacks: 4, if: { p: 'inStance', stance: 'gorefire' } },
       ],
     },
   },

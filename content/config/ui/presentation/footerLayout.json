@@ -1,7 +1,7 @@
 {
   "sizing": {
-    "maximumWidthPx": 600,
-    "desktopMaximumWidthPx": 450,
+    "maximumWidthPx": 720,
+    "desktopMaximumWidthPx": 600,
     "minimumHeightPx": 92,
     "compactBelowPx": 680
   },

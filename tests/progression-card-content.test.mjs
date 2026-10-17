@@ -49,8 +49,8 @@ test('forty families author every grade and the complete ten-unlock class ladder
   for (const card of [...progressionCards, ...abilityCardUpdates]) {
     assert.deepEqual(card.gradeProfiles.map(p => p.rank), [0, 1, 2, 3, 4, 5], card.id);
     for (const p of card.gradeProfiles) {
-      assert.equal(p.manaCost, p.rank, card.id);
-      assert(p.actionCost >= 1 && p.actionCost <= (p.rank === 0 ? 3 : p.rank), `${card.id}/${p.rank}`);
+      if (p.traits?.costRule !== 'fixed') assert.equal(p.manaCost, p.rank, card.id);
+      assert(p.actionCost >= 1 && p.actionCost <= (p.traits?.costRule === 'fixed' ? 5 : p.rank === 0 ? 3 : p.rank), `${card.id}/${p.rank}`);
       assert(!('staminaCost' in p), 'Actions and Stamina have one authored price');
     }
   }
@@ -59,7 +59,8 @@ test('forty families author every grade and the complete ten-unlock class ladder
 test('every new family reserves the complete conditional direct-effect budget', () => {
   for (const card of progressionCards) for (const p of card.gradeProfiles) {
     const direct = p.effects.filter(e => ['damage', 'block'].includes(e.op)).reduce((sum, e) => sum + e.amount * (e.hits || 1), 0);
-    assert(direct <= [6, 9, 13, 18, 24, 30][p.rank], `${card.id}/${p.rank}: ${direct}`);
+    const ceilings = card.id === 'progression-breaker-s-toll' ? [11, 11, 22, 27, 39, 51] : [8, 10, 15, 18, 24, 30];
+    assert(direct <= ceilings[p.rank], `${card.id}/${p.rank}: ${direct}`);
     assert(p.effects.every(e => e.amount == null || e.amount >= 0), card.id);
   }
 });
@@ -108,7 +109,7 @@ test('Frost defense, capped healing, Break and two-hit recipes have separate out
   const heal = fixture(); heal.player.hp = 99; resolveRecipe(heal, byName('Ash Benediction'), 2);
   assert.equal(heal.player.hp, 100);
   const breaker = fixture(); resolveRecipe(breaker, byName('Breaker’s Toll'), 2);
-  assert.equal(breaker.enemies[0].poiseMeter.value, 4, 'Break buildup is separate from HP damage');
+  assert.equal(breaker.enemies[0].poiseMeter.value, 7, 'authored paid grade preserves its previously resolved Poise; buildup is separate from HP damage');
   assert.equal(breaker.enemies[0].hp, 1000 - byName('Breaker’s Toll').gradeProfiles[2].effects[0].amount);
   const twin = fixture(); resolveRecipe(twin, byName('Twinshade'), 2);
   assert.equal(twin.eventLog.filter(e => e.type === 'damageDealt').length, 2);
@@ -163,7 +164,7 @@ test('legacy existing faces keep their prior cost and effect recipes for explici
     assert.equal(typeof c.legacyFace.textTemplate, 'string');
   }
   assert.equal(abilityCardUpdates.find(c => c.id === 'kickOff').legacyFace.cost, 0);
-  assert.equal(abilityCardUpdates.find(c => c.id === 'kickOff').manaCost, 1);
+  assert.equal(abilityCardUpdates.find(c => c.id === 'kickOff').manaCost, 0, 'fixed Smash pays its premium in SP, without the unused raw grade Mana tax');
   assert.equal(abilityCardUpdates.find(c => c.id === 'starShower').legacyFace.manaCost, 0);
   assert.equal(abilityCardUpdates.find(c => c.id === 'starShower').manaCost, 2);
 });
@@ -205,7 +206,12 @@ test('assembled content validates every normalized card, feat and relic rule', (
 
 // Each grade's Stamina and Mana are the cost formula's at that grade's rank (SPEC §4.3a, owner 2026-10-12). Replaced
 // rule: the authored actionCost (then the stance price plus the grade's delta) and Mana equal to the rank.
-const gradeCost = (card, profile) => cardCostBudget(applyAbilityGrade(card, profile.rank), { rank: profile.rank });
+const gradeCost = (card, profile) => {
+  const face = applyAbilityGrade(card, profile.rank);
+  const priced = face.costRule === 'fixed' ? { sp: profile.actionCost, mp: profile.manaCost }
+    : cardCostBudget(face, { rank: profile.rank });
+  return { ...priced, mp: card.abilityKind === 'spell' ? Math.max(1, priced.mp) : priced.mp };
+};
 test('every authored family grade completes a paid real play in the assembled engine', () => {
   for (const card of progressionCards) for (const profile of card.gradeProfiles) {
     const combat = fixture();

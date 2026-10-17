@@ -1,0 +1,13 @@
+{
+  "mode": "configured",
+  "roundShuffle": "entireDeck",
+  "retainHand": false,
+  "handBase": 4,
+  "handAttribute": "intelligence",
+  "turnPolicy": "multiCard",
+  "freeCommandLimit": 32,
+  "editorEnabled": true,
+  "editorWhere": "strategize",
+  "faceMaxEffects": 2,
+  "faceMaxLines": 3
+}

@@ -20,7 +20,7 @@ function fight(coop, { split = false, smash = false } = {}) {
         : 'Deal {damage} damage {hits} times.',
     } : card),
   });
-  const actor = { classId: 'reaver', hp: 500, maxHp: 500, energyMax: 3, drawPerTurn: 1,
+  const actor = { classId: 'reaver', hp: 500, maxHp: 500, mana: 10, maxMana: 10, energyMax: 3, drawPerTurn: 1,
     deck: [{ instanceId: 'flurry', cardId: 'twinbladeFlurry' }], relicIds: [] };
   const options = { registries, rng: createRng(50), enemyIds: ['wanderingSoldier'], ratingsRules: null };
   const combat = coop ? createCoopCombat({ ...options, players: [{ id: 'p1', ...actor }] })

@@ -1,3 +1,9 @@
+import { initializeFormationOccupancy, formationOccupancyProblems } from '../model/formationOccupancy.js';
+import { proposalCardPlan, applyProposalPlan, proposalTurn, proposalRetained } from './proposalStatusRuntime.js';
+import * as Rounds from './combatRoundsAdapter.js';
+import { beginEnemyBurdens, endEnemyBurdens, allowBurdenMove } from './enemyBurdens.js';
+import { selectCardVariant } from './cardBehavior.js';
+import { hasCardChoice, chooseZoneCards, returnHiddenCards } from './cardZones.js';
 import { decayStanceRoundStart } from './combatMatchups.js';
 import { combatMatchups, combatIntent, combatExpansionMatchups } from '../content/combatMatchups.js';
 import { ownRestoreFunds } from '../model/actionCosts.js';
@@ -172,6 +178,8 @@ export function createCoopCombat({ registries, rng, players, enemyIds, enemyLeve
     }
     for (const enemy of saved.enemies) if (!registries.enemies.has(enemy.enemyId)) throw new Error('Saved co-op enemy is unavailable');
     Object.assign(C, saved);
+    const formationErrors = formationOccupancyProblems(C);
+    if (formationErrors.length) throw new Error(formationErrors.join('; '));
     for (const P of C.players.values()) {
       bindTurnStamina(P.entity);
       // Older expanded seats omitted this equipment context. The member's
@@ -219,6 +227,7 @@ export function createCoopCombat({ registries, rng, players, enemyIds, enemyLeve
 
   // Players — each an entity + own shuffled piles (Innate on top).
   for (const p of players) addPlayerState(C, p, { initial: true });
+  initializeFormationOccupancy(C);
   if (knowledge) initializeCombatKnowledge(C, knowledge);
   if (C.sharedExpansionVersion === 2 && !livingPlayers(C).length) { finish(C, 'defeat'); return C; }
 
@@ -475,6 +484,7 @@ export function joinCombat(C, player) {
     return existing;
   }
   const seat = addPlayerState(C, player);
+  initializeFormationOccupancy(C);
   if (C.enemyKnowledge && seat.entity.alive && !C.result) addKnowledgeObserver(C, player.id, player.enemyKnowledgeProfile);
   return seat;
 }
@@ -509,7 +519,7 @@ export function leaveCombat(C, playerId) {
     return;
   }
   if (!connectedCount(C)) { C.phase = 'suspended'; return; }
-  if (C.pendingAbilityDiscard) return;
+  if (hasCardChoice(C)) return;
   maybeEndPlayerPhase(C);
 }
 
@@ -537,7 +547,7 @@ function drainQueue(C) {
     if (seatId) setActive(C, C.players.get(seatId));
     Reactions.startQueuedEnemy(C, action);
     A.executeAction(C, action);
-    if (C.pendingAbilityDiscard) return;
+    if (hasCardChoice(C)) return;
     endCheck(C);
     if (C.result) { C.queue.length = 0; return; }
   }
@@ -578,6 +588,7 @@ function startPlayerPhase(C) {
   for (const P of livingPlayers(C)) {
     setActive(C, P);
     const e = P.entity;
+    returnHiddenCards(C);
     delete e.combatRetainedCards;
     // Barrier lasts until its owner's next turn starts (solo clears it at the same point).
     if (C.combatExpansionVersion === 2) e.barrier = 0;
@@ -592,7 +603,7 @@ function startPlayerPhase(C) {
     // endOnePlayerTurn, so the counter is zeroed here, at every seat's turn
     // start, and never survives into a later turn to suppress its recovery.
     e.counters.staminaSpentThisTurn = 0;
-    if (!S.getFlag(C, e, 'retainBlock')) e.block = Math.min(e.block, passiveMax(C.registries, e.relicIds, 'retainBlockUpTo', propertyMountsOf(C, e)));
+    if (!S.getFlag(C, e, 'retainBlock')) e.block = Math.min(e.block,Math.max(proposalRetained(C,e), passiveMax(C.registries, e.relicIds, 'retainBlockUpTo', propertyMountsOf(C, e))));
     else { const cap = S.getCap(C, e, 'blockCap'); if (cap != null) e.block = Math.min(e.block, cap); }
     reconcileWardBlock(e);
     clearMeterGuards(e);
@@ -617,6 +628,7 @@ function startPlayerPhase(C) {
       A.drawCards(C, !P.opened ? Math.max(1, count - (C.combatExpansionVersion === 2 ? ashenBlightBonuses(e).openingHandPenalty : 0)) : count);
     }
     P.opened = true;
+    proposalTurn(C,e,'start');
     C.emit('playerTurnStart', { turn: C.turn, playerId: P.id });
     if (C.combatExpansionVersion !== 2) fireOwnerHooks(C, e, 'ownerTurnStart');
     drainQueue(C);
@@ -724,9 +736,10 @@ function doPlayCard(C, { cardInstanceId, targetId, choice, upcastTier, selectedB
   const idx = C.piles.hand.findIndex((c) => c.instanceId === cardInstanceId);
   if (idx < 0) throw new Error(`Card '${cardInstanceId}' is not in hand`);
   const inst = C.piles.hand[idx];
-  const def = resolveCombatCard(C, inst, { upcastTier });
+  let def = resolveCombatCard(C, inst, { upcastTier });
   if (!controlGate(C, p, def).allowed) throw F.playRefusal('Recover from active control before playing this card', 'controlled');
   if (!preflightOnly && C.combatExpansionVersion === 2 && p.ashenBlight?.milestones.some(row => row.path === null)) throw new Error('Choose the pending Ashen Blight feat first');
+  const statusPlan=proposalCardPlan(C,p,def);if(!statusPlan.allowed)throw F.playRefusal(statusPlan.refusal,'controlled');
   const kws = def.keywords || [];
   const chosen = assertCardChoice(cardChoice(C.registries, def, p.classId), choice);
   F.assertFoundationPlayable(C, def, chosen);
@@ -738,6 +751,7 @@ function doPlayCard(C, { cardInstanceId, targetId, choice, upcastTier, selectedB
   const pools = F.foundationCosts(C, def, playerWeightClass(C).weightClass, C.registries.framework.costProfile(def, { weightClass: playerWeightClass(C).weightClass }));
   let manaCost = Math.max(0, pools.mana - R.matchingAbilityCharges(p, { ...def, type: cardKind(def), authoredTags: def.cardTags || def.tags }).manaDiscount) + (def.upcastSurcharge || 0);
   let staminaCost = expandedCosts?.stamina ?? cost;
+  def=selectCardVariant(C,def,{energy:cost,mana:manaCost,stamina:staminaCost},C.enemies.find(e=>e.id===targetId) || null);
 
   const friendlyPlan = friendlyTargetPlan(def, C.playerKey, [...C.players.values()].map((entry) => ({
     id: entry.id,
@@ -850,7 +864,7 @@ function doPlayCard(C, { cardInstanceId, targetId, choice, upcastTier, selectedB
   p.counters.cardsPlayedThisTurn += 1;
   p.counters.cardsPlayedThisCombat += 1;
   const meta = {
-    ...before,
+    ...before,proposalTargetDecisions:{},
     energySpent: cost,
     manaSpent: manaCost,
     staminaSpent: staminaCost,
@@ -873,6 +887,7 @@ function doPlayCard(C, { cardInstanceId, targetId, choice, upcastTier, selectedB
     R.attachAbilityCharges(action, charges, charged);
   }
   enqueueExpandedAction(C, actions, { source: p, target, carrier: cardRef });
+  applyProposalPlan(C,statusPlan,p,target,cardRef);
   enqueueCounterWard(C, p, cardRef, meta);
   C.emit('cardPlayed', {
     ...before, abilityKind: cardRef.abilityKind, printedManaCost: def.manaCost || 0, sourceId: p.id, sourcePlayerId: C.playerKey,
@@ -1030,7 +1045,7 @@ export function chooseReaction(C, playerId, intent) {
 }
 
 function resumeReaction(C) {
-  if (C.pendingAbilityDiscard || C.reactionResume || C.phase === 'suspended') return;
+  if (hasCardChoice(C) || C.reactionResume || C.phase === 'suspended') return;
   if (!C.reactionCursor) { drainQueue(C); finishAbilityPlay(C); return; }
   enemyPhase(C);
   if (C.result || Reactions.reactionPaused(C)) return;
@@ -1039,13 +1054,13 @@ function resumeReaction(C) {
 
 export function chooseDiscard(C, playerId, cardInstanceIds) {
   if (!C._foundationTransaction) return F.foundationTransaction(C, candidate => chooseDiscard(candidate, playerId, cardInstanceIds), { advanceAction: !C.reactionResume });
-  if (C.pendingAbilityDiscard?.playerId !== playerId) throw new Error('This discard choice belongs to another player');
+  if ((C.pendingAbilityDiscard || C.pendingCardChoice)?.playerId !== playerId) throw new Error('This discard choice belongs to another player');
   const P = C.players.get(playerId);
   if (!P) throw new Error('Unknown player');
   setActive(C, P);
   C._buffer = [];
   try {
-    R.chooseAbilityDiscard(C, cardInstanceIds);
+    if (C.pendingCardChoice) chooseZoneCards(C,cardInstanceIds); else R.chooseAbilityDiscard(C, cardInstanceIds);
     drainQueue(C);
     finishAbilityPlay(C);
     if (Reactions.restoreReactionQueue(C) || C.reactionCursor) resumeReaction(C);
@@ -1056,6 +1071,7 @@ export function chooseDiscard(C, playerId, cardInstanceIds) {
 function endOnePlayerTurn(C, P) {
   const p = P.entity;
   C.emit('playerTurnEnd', { turn: C.turn, playerId: P.id });
+  proposalTurn(C,p,'end');
   fireOwnerHooks(C, p, 'ownerTurnEnd');
   drainQueue(C);
   if (C.result) return;
@@ -1148,10 +1164,12 @@ function enemyPhase(C) {
     if (C.result) return;
     if (!enemy.alive) continue;
     if (cursor.stage === 'start') {
+    beginEnemyBurdens(C,enemy,Rounds.enemyPool(C.registries.enemies.get(enemy.enemyId)));
     Reactions.revealActor(C, enemy);
     setActive(C, firstLiving(C));
     let tacticalProtection = { block: 0, barrier: 0 };
     if (C.sharedExpansionVersion === 2) { C.combatExpansionVersion = 2; enemy.barrier = 0; tacticalProtection = startTacticalTurn(C, enemy); }
+    proposalTurn(C,enemy,'start');
     fireOwnerHooks(C, enemy, 'ownerTurnStart');
     drainQueue(C);
     if (C.result || !enemy.alive) continue;
@@ -1202,7 +1220,7 @@ function enemyPhase(C) {
     drainQueue(C);
     if (Reactions.reactionPaused(C)) return;
     if (C.result) return;
-    if (enemy.alive) { setActive(C, firstLiving(C)); fireOwnerHooks(C, enemy, 'ownerTurnEnd'); drainQueue(C); if (C.result) return; if (enemy.alive) S.decayAtTurnEnd(C, enemy); }
+    if (enemy.alive) { endEnemyBurdens(C,enemy); proposalTurn(C,enemy,'end'); setActive(C, firstLiving(C)); fireOwnerHooks(C, enemy, 'ownerTurnEnd'); drainQueue(C); if (C.result) return; if (enemy.alive) S.decayAtTurnEnd(C, enemy); }
   }
   C.emit('enemyTurnEnd', { turn: C.turn });
   setActive(C, firstLiving(C));
@@ -1254,6 +1272,7 @@ function executeMove(C, enemy, move, moveId) {
 const SEAT_PILE_OPS = new Set(['addCard', 'draw', 'discard', 'exhaust', 'shuffleDiscardIntoDraw']);
 
 function executeExpandedEnemyPayload(C, enemy, move, moveId, carrier, start = null, extraMeta = null) {
+  if(!allowBurdenMove(C,enemy,Rounds.enemyMoveSp(move,{enemy,moveId,combat:C}),move)) return;
   if (Reactions.usesReactions(C)) {
     const actions = [];
     for (const P of livingPlayers(C)) {
@@ -1375,5 +1394,5 @@ export function coopOutcome(C) {
   const survivors = {};
   for (const P of C.players.values()) survivors[P.id] = { hp: Math.max(0, P.entity.hp), downed: !P.entity.alive,
     ...(P.entity.ashenBlight ? { ashenBlight: structuredClone(P.entity.ashenBlight) } : {}), blightTerminal: !!P.entity.blightTerminal };
-  return { survivors, result: C.result || (C.phase === 'suspended' ? 'suspended' : null) };
+  return { survivors,...(C.proposalRewards?.byPlayer ? {earnedCinders:{...C.proposalRewards.byPlayer}} : {}), result: C.result || (C.phase === 'suspended' ? 'suspended' : null) };
 }

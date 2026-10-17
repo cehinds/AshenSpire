@@ -59,6 +59,11 @@ export const COMBAT_OPCODES = Object.freeze([
   'applyStatus',
   'removeStatus',
   'grantCardCharge',
+  'modifyCards',
+  'castLinkedSpell',
+  'addBurden',
+  'revealIntent',
+  'moveCards',
   'draw',
   'discard',
   'exhaust',
@@ -106,6 +111,7 @@ export const TARGETS = Object.freeze([
   'randomEnemy',
   'player',
   'owner',
+  'allAllies',
   'ally', // co-op: a chosen living teammate; resolves to self in solo play
   // Every living enemy EXCEPT the one the firing event names (and the action's
   // own target): a break's ripple reaches the others, never the broken one.
@@ -131,6 +137,10 @@ export const EVENTS = Object.freeze([
   'enemyActorTurnStarted', 'combatReactionOffered', 'combatReactionChosen',
   // SPEC §4.10: why no reaction was offered; a Smash broke physical Guard.
   'combatReactionUnavailable', 'combatGuardBroken',
+  'proposalHitAvoided',
+  'enemyBurdenAdded','enemyBurdenDrawn','enemyBurdenBlocked','intentRevealed',
+  'cardModified',
+  'cardMoved',
   'cardDrawn',
   'cardPlayed',
   'cardPreparing',
@@ -220,6 +230,7 @@ export const PREDICATES = Object.freeze([
   'enemyNegativeStatusNew',
   'cardAbilityKindIs',
   'cardTargetsAllEnemies',
+  'resourcePaid',
   'inStance',
   'hasStatus',
   'hasBlock',
@@ -542,6 +553,11 @@ export const EFFECT_SPECS = Object.freeze({
   applyStatus: { allowed: ['status', 'stacks'], required: ['status'], refs: { status: 'statuses' } },
   removeStatus: { allowed: ['status', 'amount'], required: ['status'], refs: { status: 'statuses' } },
   grantCardCharge: { allowed: ['key', 'cardType', 'cardTag', 'abilityKind', 'damage', 'damageScope', 'manaDiscount', 'block', 'heal', 'break', 'buildup', 'buildupStatus'], required: ['key'], refs: { buildupStatus: 'statuses' } },
+  modifyCards: { allowed: ['from','selection','look','changes'], required: ['from','amount','changes'], refs: {} },
+  castLinkedSpell:{allowed:['card'],required:['card'],refs:{card:'cards'}},
+  addBurden:{allowed:['card','count','pile'],required:['card'],refs:{card:'cards'}},
+  revealIntent:{allowed:[],required:['amount'],refs:{}},
+  moveCards: { allowed: ['from','to','selection','position','look','transformTo'], required: ['from','to','amount'], refs: { transformTo: 'cards' } },
   draw: { allowed: [], required: ['amount'], refs: {} },
   discard: { allowed: ['random', 'choose'], required: [], refs: {} },
   exhaust: { allowed: ['random'], required: [], refs: {} },
@@ -558,7 +574,7 @@ export const EFFECT_SPECS = Object.freeze({
   shuffleDiscardIntoDraw: { allowed: [], required: [], refs: {} },
   // Exactly one of `stance` (a fixed stance) or `choose` (a pending choice the
   // play intent answers, model/cardChoices.js); validate.js refuses neither and both.
-  enterStance: { allowed: ['stance', 'choose'], required: [], refs: { stance: 'stances' } },
+  enterStance: { allowed: ['stance', 'choose','maneuver'], required: [], refs: { stance: 'stances' } },
   poiseDamage: { allowed: [], required: ['amount'], refs: {} },
   // Exactly one of `amount` (points) or `pct` (of the target's own threshold);
   // validate.js refuses neither or both. The school is the firing event's.
@@ -832,6 +848,11 @@ export const SCHEMAS = Object.freeze({
     legacyGradeMap: opt(mapOf(int)),
     legacyFace: opt(any),
     requirements: opt(any),
+    playLimit:opt(int),
+    burden: opt(obj({skipActions:opt(int),staminaTax:opt(int),manaTax:opt(int),status:opt(ref('statuses')),ranges:opt(arr(str)),cardTypes:opt(arr(str))})),
+    costGrowth: opt(obj({stamina:opt(num),mana:opt(num),perUse:opt(num),max:opt(num)})),
+    effectVariants: opt(arr(obj({if:{k:'predicate'},effects,textTemplate:opt(str)}))),
+    targetLimit: opt({k:'formulaOrNum'}),
     gradeProfiles: opt(arr(obj({ rank: int, actionCost: int, manaCost: int, effects, textTemplate: opt(str), traits: opt(any) }))),
     weightClassPriced: opt(bool),
     type: en(...CARD_TYPES),

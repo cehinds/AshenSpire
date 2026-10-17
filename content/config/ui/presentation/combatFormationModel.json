@@ -39,22 +39,26 @@
     ],
     "perspectiveGrid": {
       "wide": {
-        "left": 0.15,
-        "right": 0.85,
+        "left": 0.1125,
+        "right": 0.7875,
         "enemyTop": 0.45,
         "enemyRowHeight": 0.11,
         "playerTop": 0.68,
         "playerRowHeight": 0.26,
-        "skew": 0.45
+        "skew": 0.95,
+        "top": 0.52,
+        "rowHeight": 0.11
       },
       "narrow": {
-        "left": 0.0,
-        "right": 1.0,
+        "left": 0.01,
+        "right": 0.99,
         "enemyTop": 0.31,
         "enemyRowHeight": 0.15,
         "playerTop": 0.68,
         "playerRowHeight": 0.28,
-        "skew": 0.18
+        "skew": 0.15,
+        "top": 0.32,
+        "rowHeight": 0.16
       },
       "footFraction": {
         "enemy": 0.62,
@@ -68,17 +72,125 @@
       "backRankShift": 0.3,
       "bodyWidthFraction": 0.8,
       "bodyWidthMaxPx": 180,
+      "footprintInsetPx": 6,
       "playerBelowFootPx": 32,
       "shortBelowPx": 280,
       "short": {
-        "left": 0.2,
-        "right": 0.8,
+        "left": 0.12,
+        "right": 0.88,
         "enemyTop": 0.56,
         "enemyRowHeight": 0.12,
         "playerTop": 0.8,
         "playerRowHeight": 0.2,
-        "skew": 0.45
-      }
+        "skew": 0.45,
+        "top": 0.52,
+        "rowHeight": 0.115
+      },
+      "bands": [
+        {
+          "id": "enemy-back",
+          "index": 0,
+          "anchor": {
+            "x": 0.5,
+            "y": 0.24
+          },
+          "depth": 0.84,
+          "layer": 0
+        },
+        {
+          "id": "enemy-front",
+          "index": 1,
+          "anchor": {
+            "x": 0.5,
+            "y": 0.24
+          },
+          "depth": 0.92,
+          "layer": 1
+        },
+        {
+          "id": "extra-combatants",
+          "index": 2,
+          "anchor": {
+            "x": 0.5,
+            "y": 0.24
+          },
+          "depth": 0.96,
+          "layer": 2
+        },
+        {
+          "id": "player",
+          "index": 3,
+          "anchor": {
+            "x": 0.5,
+            "y": 0.4
+          },
+          "depth": 1,
+          "layer": 3
+        }
+      ],
+      "playerArtworkScale": 1.5,
+      "miniHudScale": 1.8,
+      "scene": {
+        "topHeightFraction": -0.1556,
+        "widthScale": 1,
+        "heightPerWidth": 0.6666666666666666,
+        "mobileFloor": {
+          "shadowClearancePx": 10,
+          "paintAlphaThreshold": 128,
+          "paintStarts": {
+            "ashen-crown-ground": 0.49122807017543857,
+            "BS-ground": 0.5146198830409356,
+            "cinder-reach-ground": 0.5146198830409356,
+            "drowned-coast-ground": 0.5029239766081871,
+            "FC-ground": 0.49122807017543857,
+            "glass-lake-ground": 0.4619883040935672,
+            "grave-ships-ground": 0.4678362573099415,
+            "HM-ground": 0.49122807017543857,
+            "pale-marches-ground": 0.49122807017543857,
+            "hollow-weald-ground": 0.5694444444444444
+          }
+        }
+      },
+      "enemyMiniHudScale": 1.5,
+      "spaciousEnemyClassHeightFraction": 0.717,
+      "profiles": {
+        "mobile": {
+          "left": 0.01,
+          "right": 0.99,
+          "enemyTop": 0.31,
+          "enemyRowHeight": 0.15,
+          "playerTop": 0.68,
+          "playerRowHeight": 0.28,
+          "skew": 0.15,
+          "top": 0.32,
+          "rowHeight": 0.16
+        },
+        "tablet": {
+          "left": 0.06,
+          "right": 0.94,
+          "enemyTop": 0.45,
+          "enemyRowHeight": 0.11,
+          "playerTop": 0.68,
+          "playerRowHeight": 0.26,
+          "skew": 0.32,
+          "top": 0.38,
+          "rowHeight": 0.145
+        },
+        "desktop": {
+          "left": 0.1125,
+          "right": 0.7875,
+          "enemyTop": 0.45,
+          "enemyRowHeight": 0.11,
+          "playerTop": 0.68,
+          "playerRowHeight": 0.26,
+          "skew": 0.95,
+          "top": 0.52,
+          "rowHeight": 0.11
+        }
+      },
+      "miniHudInsetPx": 2,
+      "miniHudGroupHeightPx": 61,
+      "miniHudSpriteGapPx": 5
     }
   }
 }

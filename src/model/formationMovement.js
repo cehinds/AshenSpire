@@ -3,7 +3,7 @@ import { resolveDisplayAppearance } from './displayAppearance.js';
 import { formationDimensions, formationSpawn, isFormationCell, playerFormationCell } from './formationLayout.js';
 
 function playerFormationState(combat, settings) {
-  const config = { ...presentationConfig(settings), perspectiveGrid: resolveDisplayAppearance(settings) === 'alternative' };
+  const config = { ...presentationConfig(settings), formationPolicy: combat.formationPolicy, perspectiveGrid: resolveDisplayAppearance(settings) === 'alternative' };
   const dimensions = formationDimensions(config, Math.max(1, combat.enemies?.length || 0));
   const current = playerFormationCell(combat.player.formationCell, dimensions) ?? formationSpawn(config, 'player', dimensions);
   return { config, dimensions, current };

@@ -69,6 +69,18 @@ export const nodeTerms = [
     "template": ""
   },
   {
+    "nodeId": "damage.fire",
+    "playerTermId": "term.fire",
+    "tooltipTermId": "term.tooltip.fire",
+    "template": ""
+  },
+  {
+    "nodeId": "damage.holy",
+    "playerTermId": "term.sacred",
+    "tooltipTermId": "term.tooltip.sacred",
+    "template": ""
+  },
+  {
     "nodeId": "damage.blade",
     "playerTermId": "term.blade",
     "tooltipTermId": "term.tooltip.blade",
@@ -282,6 +294,12 @@ export const nodeTerms = [
     "nodeId": "targeting.ally",
     "playerTermId": "term.targetAlly",
     "tooltipTermId": "term.tooltip.targetAlly",
+    "template": ""
+  },
+  {
+    "nodeId": "targeting.allAllies",
+    "playerTermId": "term.targetAllAllies",
+    "tooltipTermId": "term.tooltip.targetAllAllies",
     "template": ""
   },
   {

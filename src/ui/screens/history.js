@@ -1,3 +1,4 @@
+import { t } from '../strings.js';
 // src/ui/screens/history.js — run history + aggregate win rates (SPEC §3.12, §9 M4)
 //
 // Reads the last 20 run results recorded by save.recordResult (sote_meta_v1)
@@ -53,7 +54,7 @@ export function mountHistory(app, { meta, onBack }) {
     });
   });
 
-  const back = button({ label: 'Back', role: 'exit', id: 'hx-back', attrs: { 'data-back': '' } });
+  const back = button({ label: t('common.back'), role: 'exit', id: 'hx-back', attrs: { 'data-back': '' } });
   const customNote = customCount ? ` · ${customCount} custom (not counted)` : '';
   const children = results.length
     ? [

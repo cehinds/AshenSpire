@@ -1,4 +1,7 @@
-import test from 'node:test';
+import test, { beforeEach, afterEach } from 'node:test';
+const priorWindow = globalThis.window;
+beforeEach(() => { globalThis.window = { innerWidth: 390, innerHeight: 844 }; });
+afterEach(() => { if (priorWindow === undefined) delete globalThis.window; else globalThis.window = priorWindow; });
 import assert from 'node:assert/strict';
 import { handLayout, handInfoPosition } from '../src/ui/models/HandLayout.js';
 import { revealHandUpcastControl } from '../src/ui/components/handInspectionOverlay.js';

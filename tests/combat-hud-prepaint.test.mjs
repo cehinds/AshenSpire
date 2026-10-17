@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
+// These source-slice fixtures exercise the retained Classic/co-op HUD path.
+// Alternative native body-head placement has its own real-pose browser tests.
 // HUD layout geometry tokens unset (getComputedStyle → {}): every offset is 0.
 import {hudGeometry,offsetPlacement} from '../src/ui/models/HudLayoutOffsetModel.js';
 import {combatPlayerInfoRect,combatPlayerActionRect,combatTargetHudFootprints,visibleCombatPanelRect} from '../src/ui/components/battlefieldStage.js';
@@ -16,7 +18,7 @@ test('current HUD tracking and footer reads reserve the incoming independent Inf
   let delta=0,visible=false,options;
   const fieldRect=()=>({left:0,top:81+delta});
   const viewport=()=>({left:0,top:delta,right:390,bottom:650+delta});
-  const combat={style:{opacity:'0'},parentElement:null,getBoundingClientRect:viewport};
+  const combat={dataset:{targetHud:'false'},style:{opacity:'0'},parentElement:null,getBoundingClientRect:viewport};
   const tools={style:{},parentElement:combat,getBoundingClientRect:()=>({left:164,right:384,top:356+delta,bottom:400+delta,width:220,height:44})};
   const field={style:{},parentElement:combat,getBoundingClientRect:fieldRect,closest:()=>combat};
   const leading={style:{},parentElement:field,getBoundingClientRect:()=>({left:parseFloat(leading.style.left)*zoom||134,
@@ -30,7 +32,7 @@ test('current HUD tracking and footer reads reserve the incoming independent Inf
   combat.querySelectorAll=()=>[]; // The hidden reading door has no painted DOM rectangle.
   field.querySelectorAll=selector=>selector==='.combatant.player'?[player]:[];
   const settledTargets=[{id:'e1',x:264,y:200,width:88},{id:'e3',x:264,y:154,width:88}];
-  const context={hudGeometry,offsetPlacement,getComputedStyle:()=>({}),field,settledTargets,settledFooterSize:44,playerInfoRects:[],combatTargetHudFootprints,
+  const context={hudGeometry,offsetPlacement,classicAppearance:()=>true,getComputedStyle:()=>({}),field,settledTargets,settledFooterSize:44,playerInfoRects:[],combatTargetHudFootprints,
     combatPlayerInfoRect,combatPlayerActionRect,placePlayerIntentGlyph:()=>null,visibleCombatPanelRect,uiZoom:()=>zoom,
     currentSpriteArtBounds:()=>({left:50,right:130,top:230+delta,bottom:300+delta}),readRestingHand:()=>({clearanceTop:404+delta}),
     playerDetailsPlacement:input=>{options=input;return playerDetailsPlacement(input);},
@@ -66,7 +68,7 @@ test('the first co-op panel reserves every later independently anchored Info bef
   const source=readFileSync(new URL('../src/ui/components/battlefieldStage.js',import.meta.url),'utf8');
   const begin=source.indexOf('  function placePlayerHud('),end=source.indexOf('  function trackPlayerHud()',begin);
   const calls=[],viewport={left:0,top:0,right:600,bottom:650};
-  const combat={getBoundingClientRect:()=>viewport,querySelector:()=>null};
+  const combat={dataset:{targetHud:'false'},getBoundingClientRect:()=>viewport,querySelector:()=>null};
   const infos=[{width:44,height:44,left:60,right:104,top:176,bottom:220},
     {width:44,height:44,left:340,right:384,top:176,bottom:220}];
   const players=infos.map((infoRect,index)=>{
@@ -78,7 +80,7 @@ test('the first co-op panel reserves every later independently anchored Info bef
   });
   const field={closest:()=>combat,getBoundingClientRect:()=>({left:0,top:80}),
     querySelectorAll:selector=>selector==='.combatant.player'?players:[]};
-  const tracking=runInNewContext(source.slice(begin,end)+'\nplacePlayerHud',{hudGeometry,offsetPlacement,getComputedStyle:()=>({}),
+  const tracking=runInNewContext(source.slice(begin,end)+'\nplacePlayerHud',{hudGeometry,offsetPlacement,classicAppearance:()=>true,getComputedStyle:()=>({}),
     field,uiZoom:()=>1,visibleCombatPanelRect:()=>null,settledTargets:[],settledFooterSize:44,
     readRestingHand:()=>null,currentSpriteArtBounds:sprite=>({left:60+sprite.index*280,right:104+sprite.index*280,top:224,bottom:300}),
     combatPlayerInfoRect:node=>node.infoRect,combatPlayerActionRect,placePlayerIntentGlyph:()=>null,combatTargetHudFootprints,playerInfoRects:[],

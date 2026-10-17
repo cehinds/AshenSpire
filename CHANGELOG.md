@@ -32,6 +32,16 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-17
+
+- **Pose Studio loads its shared engine and the balance reference stays current** ([#2025](https://github.com/cehinds/AshenSpire/pull/2025), `0.7.1.1545`). Restore the studio's effect catalog after the engine-module split and refresh the historical reference report's measured damage and seeded encounter outcomes, without changing combat rules.
+
+- **Core previews keep their offline and map checks after promotion** ([#2024](https://github.com/cehinds/AshenSpire/pull/2024), `0.7.1.1543`). Preview checks follow the current startup and Settings navigation, measure map dragging at the displayed zoom, and retain permanent coverage of Core's interface text after merging.
+
+## 2026-10-16
+
+- **Core becomes the default, with consistent combat and shared HUD presentation** ([#2023](https://github.com/cehinds/AshenSpire/pull/2023), `0.7.1.1541`). New runs use the configurable Core game; existing saves retain their original rules. Map, combat, rest, and other run screens share the same responsive header. Combat uses cell-aligned sprites and health bars, head-relative intent and mini HUDs, consistent body height across held stances, native inspection gestures, readable card fans, and explicit scene layering.
+
 ## 2026-10-15
 
 - **Card previews use the stance the card will enter** ([#2017](https://github.com/cehinds/AshenSpire/pull/2017), `0.7.1.1539`). Rogue Piercing Flurry now previews both damage hits with its accepted Attack rating before play. Spell Counter previews include their Counterstrike protection boost. Previewing a card leaves the live fight and its resources unchanged. Combat audit tools distinguish configured new-run defaults from raw authored fixtures, and the real-browser full-run check avoids unnecessarily scrolling visible controls before clicking.

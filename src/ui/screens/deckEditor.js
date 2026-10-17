@@ -1,3 +1,5 @@
+import { matchViewMedia } from '../viewViewport.js';
+import { anchorLocalBox } from '../fx.js';
 import { progressionTip } from '../components/progressionCards.js';
 // src/ui/screens/deckEditor.js — the deck editor (SPEC §14.1 UX), mounted over
 // whatever opened it: the Armoury or an eligible Rest screen.
@@ -27,6 +29,7 @@ import { progressionTip } from '../components/progressionCards.js';
 
 import { el, button } from '../kit/index.js';
 import { bindModalDismiss, modalFooter, modalHead } from '../components/modalShell.js';
+import { openConfirmationModal, closeConfirmationModal } from '../components/confirmationModal.js';
 import { markUiComponent, UI_COMPONENTS as UI } from '../components/uiComponents.js';
 import { actionLabel, focusElement, matchAction, setInputGate, setTabRing } from '../input.js';
 import { DECK_PANES, deckEditorModel, deckEditorView, deckVariantKey, nextFilterPreset, openDeckEdit } from '../models/DeckEditorModel.js';
@@ -42,9 +45,10 @@ import { cardArtLayersHtml } from '../cardArtLayers.js';
 import { registerCardArtRefresh } from '../cardArtStyle.js';
 import { assetUrl } from '../assetmap.js';
 import { markArtPlaceholder } from '../artFallback.js';
-import { cardShapeCssProperties, cardLevelWidthCss } from '../models/CardSizeModel.js';
+import { cardShape, cardShapeCssProperties, cardLevelWidthCss } from '../models/CardSizeModel.js';
 import { keywordExplanations } from '../components/tooltipGlossary.js';
 import { deckCardAnimationPreview } from '../components/deckCardAnimationPreview.js';
+import { deckEditorCollectionRows } from '../models/deckEditorCollectionRows.js';
 import { deckEditorCosts, deckEditorResourceGroups } from '../models/deckEditorCosts.js';
 
 // Standard-mapping pad buttons the editor reads directly while a row is held
@@ -89,18 +93,20 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   let mobileView = 'collection';
   let inspectOrigin = 'collection';
   let filtersOpen = false;
-  let libraryScope = 'all';
   let deckQuery = '';
   let deckDisplay = 'list';
   const foldedTypes = new Set();
   let success = '';
   let animationPreview = null;
   let animationPaused = false;
+  let animationVisible = false;
+  let closeConfirmationOpen = false;
+  let previewFitObserver = null;
 
 
   const root = el('div', { class: 'modal-veil deck-editor-veil' });
   const panel = el('section', {
-    class: 'deck-editor', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'deck-editor-title',
+    class: 'deck-editor deck-editor-reading-desk', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'deck-editor-title',
   });
   root.appendChild(panel);
   panel.style.setProperty('--deck-cost-count', String(deckEditorResourceGroups().length));
@@ -127,7 +133,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
 
   function header() {
     const counter = el('p', {
-      class: 'deck-editor-counter', role: 'status', 'aria-live': 'polite',
+      class: 'deck-editor-counter', role: 'status', 'aria-live': 'polite', 'aria-invalid': model.counter.outOfBounds ? 'true' : 'false',
       dataset: { state: model.counter.outOfBounds ? 'out' : 'ok' }, title: tFull('deckEditor.counter', null),
       text: model.counter.text,
     });
@@ -174,7 +180,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       draw();
     }, `sort:${s.id}`));
     const details = el('details', { class: 'deck-editor-tools', open: filtersOpen }, [
-      el('summary', { text: t('deckEditor.filterSort') }),
+      el('summary', { text: t('deckEditor.filters') }),
       el('div', { class: 'deck-editor-chips', role: 'group', 'aria-label': t('deckEditor.filters') }, [
         el('span', { class: 'deck-editor-chips-label', text: t('deckEditor.filters') }), ...filterChips,
       ]),
@@ -224,7 +230,9 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   function select(row, source, open = false) {
     if (source === 'collection' && row.equipmentEligible === false) return;
     selected = { key: selectionKey(row, source), source, row };
-    if (open) { inspected = selected; inspectOrigin = source; mobileView = 'inspect'; }
+    inspected = selected;
+    inspectOrigin = source;
+    if (open) { mobileView = 'inspect'; }
     panel.dataset.mobileView = mobileView;
     for (const node of panel.querySelectorAll('.deck-editor-main')) {
       const on = node.dataset.selectionKey === selected.key && node.dataset.selectionSource === source;
@@ -234,15 +242,17 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     }
     trackInspect();
     const inspector = panel.querySelector('.deck-editor-inspector');
-    if (open && inspector) { inspector.parentNode.insertBefore(inspectPane(), inspector); inspector.remove(); }
+    if (inspector) { inspector.parentNode.insertBefore(inspectPane(), inspector); inspector.remove(); }
     syncPanes();
     syncInert();
-    if (open && typeof matchMedia === 'function' && matchMedia('(max-width: 1000px)').matches) {
+    if (open && typeof matchMedia === 'function' && matchViewMedia('(max-width: 1000px)').matches) {
       focusNode(panel.querySelector('[data-focus-key="inspect-back"]'));
     }
   }
 
   function inspectPane() {
+    previewFitObserver?.disconnect();
+    previewFitObserver = null;
     animationPreview?.dispose();
     animationPreview = null;
     const section = el('section', { class: 'deck-editor-inspector', 'aria-label': t('deckEditor.inspect') });
@@ -278,7 +288,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     // variant. Remove takes one copy: the tile's last deck copy, or this row.
     const deckCard = source === 'deck' ? run.deck.find(card => card.instanceId === row.instanceId) : null;
     const addTile = source === 'collection' ? row
-      : (deckCard ? model.collection.find(tile => tile.key === row.tileKey) : null) || null;
+      : (deckCard ? model.collection.find(tile => tile.key === row.tileKey || tile.memberKeys?.includes(row.tileKey)) : null) || null;
     const addOn = !!addTile?.addable;
     const removeOn = !!row.removable;
     const removeId = source === 'collection' ? row.removeInstanceId : row.instanceId;
@@ -298,28 +308,67 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     // (where the oversized card face covered it). It follows a refusal too, so
     // the inspector always names the stance.
     const reasonText = [reasons.length ? reasons.join(' ') : base, stanceName(row)].filter(Boolean).join(' · ');
-    animationPreview = deckCardAnimationPreview({ registries, run, ref: row.ref, paused: animationPaused,
+    const showAnimation = animationVisible && (typeof matchMedia !== 'function' || matchViewMedia('(min-width: 1001px)').matches);
+    if (showAnimation) animationPreview = deckCardAnimationPreview({ registries, run, ref: row.ref, paused: animationPaused,
       onPaused: paused => { animationPaused = paused; } });
+    const previewToggle = focusable(el('input', { type: 'checkbox', checked: animationVisible,
+      'aria-label': t('deckEditor.preview.animation') }), 'preview:animation');
+    previewToggle.addEventListener('change', () => {
+      animationVisible = previewToggle.checked;
+      const current = panel.querySelector('.deck-editor-inspector');
+      if (current) { current.parentNode.insertBefore(inspectPane(), current); current.remove(); }
+      focusNode(panel.querySelector('[data-focus-key="preview:animation"]'));
+    });
+    const previewControl = el('label', { class: 'deck-editor-preview-toggle' }, [previewToggle,
+      el('span', { text: t('deckEditor.preview.animation') })]);
     const details = el('div', { class: 'deck-editor-rules' });
     details.innerHTML = cardDetailHtml(registries, row.ref, { rules: run, definition: combatDef(row) });
+    // Keep the effect description before the longer combat explanations. Tags
+    // and glossary prose remain available in one expandable reference below.
+    const effectText = details.querySelector('.ctext');
+    const meta = details.querySelector('.ti-meta');
+    if (effectText && meta?.nextSibling) details.insertBefore(effectText, meta.nextSibling);
+    const extraTags = details.querySelector('.inspection-tags');
+    const sigilReference = details.querySelector('.inspection-sigils');
+    const combatReference = [...details.querySelectorAll('.combat-rule-hint')];
+    const glossaryEntries = keywordExplanations(registries, rulesFor(row));
+    const glossary = extraTags || sigilReference || combatReference.length || glossaryEntries.length ? el('details', { class: 'deck-editor-glossary' }, [
+      el('summary', { text: t('deckEditor.rulesAndKeywords') }),
+      ...combatReference,
+      ...(sigilReference ? [sigilReference] : []),
+      ...(extraTags ? [extraTags] : []),
+      ...glossaryEntries.map(entry => el('div', { class: 'deck-editor-keyword' }, [
+        el('strong', { text: entry.name }), el('p', { text: entry.explanation }),
+      ])),
+    ]) : null;
     section.append(
-      el('div', { class: 'deck-editor-reading' }, [face,
-        el('label', { class: 'deck-editor-art-toggle' }, [
-          el('input', { type: 'checkbox', disabled: true, 'aria-label': t('deckEditor.art.alternative') }),
-          el('span', { text: t('deckEditor.art.alternative') }),
-          el('small', { text: t('deckEditor.art.basicOnly') }),
-        ]),
-        animationPreview.root,
+      el('div', { class: 'deck-editor-reading' }, [
+        el('div', { class: `deck-editor-preview${showAnimation ? ' animation-mode' : ''}` }, [showAnimation ? animationPreview.root : face, previewControl]),
         details,
-        ...keywordExplanations(registries, rulesFor(row)).map(entry => el('div', { class: 'deck-editor-keyword' }, [
-          el('strong', { text: entry.name }), el('p', { text: entry.explanation }),
-        ])),
+        ...(glossary ? [glossary] : []),
       ]),
       el('div', { class: 'deck-editor-selected-actions' }, [
         el('p', { id: 'deck-editor-selected-reason', class: 'deck-editor-selected-reason', text: reasonText }),
-        el('div', { class: 'deck-editor-selected-buttons' }, [addNode, removeNode]),
+        el('div', { class: 'deck-editor-selected-buttons' }, [...(removeOn ? [removeNode] : []), addNode]),
       ]),
     );
+    // Fit the preview against the live reading box, including UI zoom. The
+    // main effect text and collapsed reference heading own their height first.
+    if (!showAnimation && typeof ResizeObserver === 'function') {
+      const reading = section.querySelector('.deck-editor-reading');
+      const fitPreview = () => {
+        if (!section.isConnected || matchViewMedia('(max-width: 1000px)').matches) return;
+        const rootFont = parseFloat(getComputedStyle(document.documentElement).fontSize) || 10;
+        const referenceHeight = glossary?.querySelector('summary')?.offsetHeight || 0;
+        const available = reading.clientHeight - details.offsetHeight - previewControl.offsetHeight - referenceHeight - 3.5 * rootFont;
+        const width = Math.floor(Math.min(30 * rootFont, Math.max(22 * rootFont, available * cardShape().ratio)));
+        face.style.setProperty('--deck-preview-fitted-width', `${width}px`);
+      };
+      previewFitObserver = new ResizeObserver(fitPreview);
+      previewFitObserver.observe(reading);
+      previewFitObserver.observe(details);
+      previewFitObserver.observe(previewControl);
+    }
     return section;
   }
 
@@ -327,7 +376,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // inert (out of the tab order and the focus cursor) and hidden from assistive
   // tech. The inspector itself is never inert.
   function syncInert() {
-    const phone = typeof matchMedia === 'function' && matchMedia('(max-width: 1000px)').matches;
+    const phone = typeof matchMedia === 'function' && matchViewMedia('(max-width: 1000px)').matches;
     const hide = mobileView === 'inspect' && phone;
     for (const node of panel.querySelectorAll('[data-pane], .deck-editor-toolbar')) {
       if (hide) { node.setAttribute('inert', ''); node.inert = true; node.setAttribute('aria-hidden', 'true'); }
@@ -345,7 +394,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // ordered deck can still be reworked on a phone.
   function navigation() {
     if (!model.ordered) return null;
-    const onDeck = mobileView === 'deck';
+    const onDeck = pane === 'deck';
     const node = chip(t('deckEditor.drawOrder'), onDeck, () => {
       mobileView = onDeck ? 'collection' : 'deck';
       pane = mobileView;
@@ -454,15 +503,17 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // box so it needs no reserved space in any layout. Rows without art keep the
   // stylesheet's position.
   let inspectObserver = null;
-  function placeInspect(node) {
-    const item = node?.closest?.('.deck-editor-item');
-    const main = item?.querySelector('.deck-editor-main');
-    const art = main?.querySelector('.deck-editor-art');
-    if (!art || !Number.isFinite(art.offsetWidth) || !art.offsetWidth) return;
+  function placeInspect(inspectButton) {
+    const item = inspectButton?.closest?.('.deck-editor-item');
+    const layoutDeckMain = item?.querySelector('.deck-editor-main');
+    const layoutDeckArt = layoutDeckMain?.querySelector('.deck-editor-art');
+    if (!layoutDeckArt || !Number.isFinite(layoutDeckArt.getBoundingClientRect().width) || !layoutDeckArt.getBoundingClientRect().width) return;
+    const artBox = anchorLocalBox(item, layoutDeckArt);
+    const buttonBox = anchorLocalBox(item, inspectButton);
     const inset = 3;
-    node.classList.add('on-art');
-    node.style.left = `${main.offsetLeft + art.offsetLeft + (art.offsetWidth - node.offsetWidth) / 2}px`;
-    node.style.top = `${main.offsetTop + art.offsetTop + art.offsetHeight - node.offsetHeight - inset}px`;
+    inspectButton.classList.add('on-art');
+    inspectButton.style.left = `${artBox.left + (artBox.width - buttonBox.width) / 2}px`;
+    inspectButton.style.top = `${artBox.top + artBox.height - buttonBox.height - inset}px`;
   }
   function trackInspect() {
     inspectObserver?.disconnect();
@@ -494,7 +545,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   function stepperCount(tile) {
     const kept = tile.key.startsWith('kept:');
     const inDeck = tile.inDeck;
-    const owned = kept ? tile.inDeck + tile.owned : tile.owned;
+    const owned = tile.totalOwned ?? (kept ? tile.inDeck + tile.owned : tile.owned);
     return { inDeck, owned, unlimited: !!tile.unlimited };
   }
   const stepperText = (count) => (count.unlimited ? t('deckEditor.stepperCount.unlimited', { inDeck: count.inDeck })
@@ -513,7 +564,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       try { next.setSelectionRange(caret, caret); } catch { /* search selection varies by browser */ }
     });
     const list = el('div', { class: 'deck-editor-list', role: 'list' });
-    const rows = model.collection.filter(row => (libraryScope === 'all' || row.inDeck > 0) && `${row.name} ${rulesFor(row)}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
+    const rows = model.collection.filter(row => `${row.name} ${rulesFor(row)}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
     for (const tile of rows) {
       const main = focusable(el('button', {
         type: 'button', class: 'deck-editor-main', disabled: tile.equipmentEligible === false, dataset: { action: 'add', key: tile.key, illustrated: 'true' },
@@ -550,9 +601,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       ])]));
     }
     if (!rows.length) list.appendChild(el('p', { class: 'deck-editor-empty', text: t('deckEditor.empty.collection') }));
-    return paneSection('collection', t('deckEditor.pane.collection'), list, [
-      chip(t('deckEditor.all'), libraryScope === 'all', () => { libraryScope = 'all'; draw(); }, 'scope:all'),
-      chip(t('deckEditor.inDeck'), libraryScope === 'deck', () => { libraryScope = 'deck'; draw(); }, 'scope:deck'),
+    return paneSection('collection', '', list, [
       tools(),
       search,
     ]);
@@ -640,8 +689,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // onto the bar's own line.
   function paneSection(id, title, list, controls = []) {
     const section = el('section', {
-      class: `deck-editor-pane${pane === id ? ' active' : ''}`, dataset: { pane: id }, 'aria-label': title,
-    }, [el('div', { class: 'deck-editor-pane-bar' }, [el('h3', { class: 'deck-editor-pane-title', text: title }), ...controls]), list]);
+      class: `deck-editor-pane${pane === id ? ' active' : ''}`, dataset: { pane: id }, 'aria-label': title || t('deckEditor.pane.deck'),
+    }, [el('div', { class: 'deck-editor-pane-bar' }, [...(title ? [el('h3', { class: 'deck-editor-pane-title', text: title })] : []), ...controls]), list]);
     return section;
   }
 
@@ -677,6 +726,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     if (!hit || !isInside(hit, panel)) return null;
     const row = hit.closest?.('.deck-editor-row');
     if (kind === 'row' && model.ordered && row) return { kind: 'row', node: row, instanceId: row.dataset.instanceId };
+    const inspector = hit.closest?.('.deck-editor-inspector');
+    if (inspector) return { kind: 'pane', node: inspector, pane: kind === 'tile' ? 'deck' : 'collection' };
     const paneNode = hit.closest?.('[data-pane]');
     if (!paneNode) return null;
     if (kind === 'tile' && paneNode.dataset.pane === 'deck') return { kind: 'pane', node: paneNode, pane: 'deck' };
@@ -743,15 +794,13 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   }, true);
 
   function footer() {
-    const undo = focusable(button({ label: t('deckEditor.undo'), disabled: !session.canUndo, className: 'deck-editor-undo' }), 'undo');
-    undo.addEventListener('click', () => { drop(); session.undo(); success = ''; notice = ''; draw(); });
     const cancel = button({ label: t('deckEditor.cancel'), id: 'deck-editor-cancel', className: 'deck-editor-cancel', attrs: { title: tFull('deckEditor.cancel') } });
     const done = button({
-      label: t('deckEditor.done'), weight: 'primary', id: 'deck-editor-done', className: 'deck-editor-done',
-      disabled: model.done.disabled, attrs: { title: tFull('deckEditor.done'), 'aria-describedby': 'deck-editor-refusal' },
+      label: t('deckEditor.accept'), weight: 'primary', id: 'deck-editor-done', className: 'deck-editor-done',
+      disabled: model.done.disabled, attrs: { title: tFull('deckEditor.accept'), 'aria-describedby': 'deck-editor-refusal' },
     });
     done.setAttribute('aria-disabled', model.done.disabled ? 'true' : 'false');
-    cancel.addEventListener('click', doCancel);
+    cancel.addEventListener('click', requestClose);
     done.addEventListener('click', doDone);
     focusable(cancel, 'cancel');
     focusable(done, 'done');
@@ -768,14 +817,15 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
           panes: '[ ]', filter: actionLabel('deck'), move: actionLabel('endTurn'), done: actionLabel('menu'), cancel: actionLabel('cancel'),
         }),
     });
-    const foot = modalFooter({ secondary: [undo, cancel], primary: done, className: 'deck-editor-foot', size: 'medium' });
+    const foot = modalFooter({ secondary: [cancel], primary: done, className: 'deck-editor-foot', size: 'medium' });
     return el('div', { class: 'deck-editor-footer' }, [refusal,
       el('div', { class: 'deck-editor-feedback', hidden: !success, role: 'status', 'aria-live': 'polite', text: success }), keys, foot]);
   }
 
   function draw() {
     combatDefCache.clear();
-    model = deckEditorModel({ registries, run, settings, view });
+    const rawModel = deckEditorModel({ registries, run, settings, view });
+    model = { ...rawModel, collection: deckEditorCollectionRows({ registries, run, collection: rawModel.collection }) };
     if (!model.ordered && mobileView === 'deck') mobileView = 'collection';
     const rows = selected?.source === 'deck' ? model.deck : model.collection;
     const current = selected && rows.find(row => selectionKey(row, selected.source) === selected.key);
@@ -796,7 +846,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     if (onNavigate) {
       const head = modalHead({ tabs: [
         { id: 'character', label: t('progression.tab.character') }, { id: 'armory', label: t('armoury.hub.armory') }, { id: 'deck', label: t('armoury.hub.deck'), selected: true },
-      ], showMenuButton: false, onClose: doCancel, onTab: id => {
+      ], showMenuButton: false, onClose: requestClose, onTab: id => {
         if (id === 'deck') return;
         const result = session.confirm();
         if (!result.ok) { notice = result.refusal || model.done.refusal; draw(); return; }
@@ -809,7 +859,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     // The toolbar row holds only the phone's Draw order chip; it is left out
     // when there is nothing for it (the filters live on the collection's bar).
     const nav = navigation();
-    panel.append(header(), ...(nav ? [el('div', { class: 'deck-editor-toolbar' }, [nav])] : []), el('div', { class: 'deck-editor-panes', dataset: { active: pane } }, [collectionPane(), inspectPane(), deckPane()]), footer());
+    panel.append(header(), ...(nav ? [el('div', { class: 'deck-editor-toolbar' }, [nav])] : []), el('div', { class: 'deck-editor-panes', dataset: { active: pane } }, [inspectPane(), collectionPane(), deckPane()]), footer());
     syncInert();
     restoreFocus();
     trackInspect();
@@ -856,7 +906,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // ---- actions --------------------------------------------------------------
   function add(key) {
     const name = model.collection.find(row => row.key === key)?.name || '';
-    const result = session.add(key);
+    const tile = model.collection.find(row => row.key === key || row.memberKeys?.includes(key));
+    const result = session.add(tile?.addKey || key);
     notice = result.ok ? '' : result.refusal;
     success = result.ok ? t('deckEditor.added', { name }) : '';
     draw();
@@ -897,7 +948,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
 
   /** The held row's inputs. True when consumed (input.js stops there). */
   function heldInput(input) {
-    if (!held) return false;
+    if (!held || closeConfirmationOpen) return false;
     const keyboard = input.family === 'keyboard';
     const up = keyboard ? input.key === 'ArrowUp' : input.button === PAD.up;
     const down = keyboard ? input.key === 'ArrowDown' : input.button === PAD.down;
@@ -908,7 +959,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     }
     // Cancel is Cancel even mid-move: Esc and B restore the whole edit (the
     // hold included). Only Enter, A and X (the End Turn key) drop the row.
-    if (keyboard ? input.key === 'Escape' : input.button === PAD.b) { doCancel(); return true; }
+    if (keyboard ? input.key === 'Escape' : input.button === PAD.b) { requestClose(); return true; }
     const dropNow = keyboard
       ? (input.key === 'Enter' || matchAction({ key: input.key }, 'endTurn'))
       : [PAD.a, PAD.x].includes(input.button);
@@ -920,7 +971,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // order chip is then the only way to it), so pane switching does nothing
   // there for an unordered deck.
   function switchPane(step) {
-    if (!model.ordered && typeof matchMedia === 'function' && matchMedia('(max-width: 1000px)').matches) return false;
+    if (!model.ordered && typeof matchMedia === 'function' && matchViewMedia('(max-width: 1000px)').matches) return false;
     const at = DECK_PANES.indexOf(pane);
     pane = DECK_PANES[(at + step + DECK_PANES.length) % DECK_PANES.length];
     mobileView = pane;
@@ -954,6 +1005,18 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     return result;
   }
 
+  function requestClose() {
+    if (closeConfirmationOpen) return;
+    if (!session.canUndo) { doCancel(); return; }
+    closeConfirmationOpen = true;
+    openConfirmationModal({ title: t('deckEditor.closeUnsaved.title'),
+      message: t('deckEditor.closeUnsaved.message'),
+      confirmLabel: t('deckEditor.closeUnsaved.discard'), cancelLabel: t('deckEditor.closeUnsaved.keepEditing'),
+      tone: 'danger', onConfirm: () => { closeConfirmationOpen = false; doCancel(); },
+      onCancel: () => { closeConfirmationOpen = false; },
+    });
+  }
+
   function doCancel() {
     if (session.closed) return;
     session.cancel();
@@ -967,12 +1030,12 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
    * test all come through here.
    */
   function dispatch(input) {
-    if (session.closed) return false;
+    if (session.closed || closeConfirmationOpen) return false;
     if (held && heldInput(input)) return true;
     if (input.family === 'controller') {
       switch (input.button) {
         case PAD.a: activateFocused(); return true;
-        case PAD.b: doCancel(); return true;
+        case PAD.b: requestClose(); return true;
         case PAD.x: { const row = focusedRow(); if (row && model.ordered) togglePick(row); return !!row; }
         case PAD.y: cycleFilters(); return true;
         case PAD.lb: return switchPane(-1);
@@ -983,7 +1046,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     }
     const key = input.key || '';
     const probe = { key };
-    if (key === 'Escape') { doCancel(); return true; }
+    if (key === 'Escape') { requestClose(); return true; }
     if (focused()?.tagName === 'INPUT') return false;
     // `[` / `]` are the tab ring's (input.js), which switches the pane once;
     // answering them here too switched it twice, i.e. not at all.
@@ -1045,10 +1108,13 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     sibling.setAttribute('inert', '');
     madeInert.push(sibling);
   }
-  const releaseDismiss = bindModalDismiss({ veil: root, panel, close: () => doCancel() });
+  const releaseDismiss = bindModalDismiss({ veil: root, panel, close: requestClose });
 
   function close() {
+    if (closeConfirmationOpen) { closeConfirmationModal({ restoreFocus: false }); closeConfirmationOpen = false; }
     inspectObserver?.disconnect();
+    previewFitObserver?.disconnect();
+    previewFitObserver = null;
     animationPreview?.dispose();
     animationPreview = null;
     drop();
@@ -1066,7 +1132,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
 
   // A window that narrows to phone width while the deck pane stands leaves it:
   // on a phone an unordered deck has no deck pane to stand in.
-  const phoneQuery = typeof matchMedia === 'function' ? matchMedia('(max-width: 1000px)') : null;
+  const phoneQuery = typeof matchMedia === 'function' ? matchViewMedia('(max-width: 1000px)') : null;
   const onPhoneChange = (ev) => {
     if (ev?.matches && !model.ordered) {
       // An open inspection stays open; its Back goes to the library list.
@@ -1088,8 +1154,9 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       draw();
       return;
     }
-    // Widening back to desktop releases the panes too.
-    syncInert();
+    // Rebuild the preview when crossing the phone boundary: a desktop
+    // animation becomes the card face on phones and resumes on return.
+    draw();
   };
   if (phoneQuery) {
     if (phoneQuery.addEventListener) phoneQuery.addEventListener('change', onPhoneChange);

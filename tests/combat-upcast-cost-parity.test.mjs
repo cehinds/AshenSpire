@@ -171,15 +171,16 @@ for (const coop of [false, true]) test(`${coop ? 'co-op' : 'solo'} authored Shie
   const receipt = coop ? previewCoopCard(combat, 'a', shield.instanceId, 'a', 2)
     : previewCard(combat, shield.instanceId, 'player', 2);
   // Shield Bash's SP is the cost formula's (SPEC §4.3a), plus the tier-2 surcharge of 2.
-  const sp = resolveCard(registries, { cardId: 'shieldBash' }).cost + 2;
-  assert.deepEqual([receipt.cost, receipt.staminaCost, receipt.manaCost], [sp, sp, 2]);
+  const base = resolveCard(registries, { cardId: 'shieldBash' });
+  const sp = base.cost + 2, mp = base.manaCost + 2;
+  assert.deepEqual([receipt.cost, receipt.staminaCost, receipt.manaCost], [sp, sp, mp]);
   const html = renderCard(registries, shield, { preview: receipt, tooltip: false, inspection: false }).innerHTML;
   assert.match(html, new RegExp(`data-card-binding="stamina"[^>]*>${sp}</div>`));
-  assert.match(html, /data-card-binding="mana"[^>]*>2<\/div>/);
+  assert.match(html, new RegExp(`data-card-binding="mana"[^>]*>${mp}</div>`));
   if (coop) playCard(combat, 'a', shield.instanceId, 'a', undefined, 2);
   else dispatch(combat, { type: 'playCard', cardInstanceId: shield.instanceId, targetId: 'player', upcastTier: 2 });
   const paid = coop ? combat.players.get('a').entity : combat.player;
-  assert.deepEqual([paid.energy, paid.stamina, paid.mana], [10 - sp, 10 - sp, 8]);
+  assert.deepEqual([paid.energy, paid.stamina, paid.mana], [10 - sp, 10 - sp, 10 - mp]);
   assert.equal(paid.combatCounter.charges, 1);
 });
 

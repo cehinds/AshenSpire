@@ -1,3 +1,5 @@
+import { uiZoom } from '../fx.js';
+import { viewViewportBox } from '../viewViewport.js';
 // src/ui/kit/categoryNav.js — THE ONE W1 CATEGORY NAVIGATION (kit NavRail).
 //
 // FRONTEND-WIREFRAMES rule 11: a menu with several categories is W1 — a left
@@ -182,10 +184,10 @@ export function categoryNav({
     if (!host || !host.isConnected) return mode;
     const root = document.documentElement;
     const rootStyle = getComputedStyle(root);
-    const zoom = parseFloat(rootStyle.getPropertyValue('--ui-zoom')) || 1;
+    const zoom = uiZoom();
     const result = categoryNavPlan({
       hostWidthPx: host.getBoundingClientRect().width / zoom,
-      viewportHeightPx: window.innerHeight / zoom,
+      viewportHeightPx: viewViewportBox().height / zoom,
       rootFontPx: parseFloat(rootStyle.fontSize),
       itemMinHeightPx: items[0] ? parseFloat(getComputedStyle(items[0]).minHeight) : 0,
       categoryCount: items.length,

@@ -218,7 +218,13 @@ test('banked XP covers the bar with Level up; the press opens the level popup wi
     offer.click();
     assert.equal(app.querySelectorAll('.reward-row .card').length, 2);
     app.querySelectorAll('.reward-row .card')[0].click();
-    app.querySelector('#reward-card-confirm').click();
+    {
+      const beforeReview = JSON.stringify(run);
+      app.querySelector('#reward-card-confirm').click();
+      assert.equal(JSON.stringify(run), beforeReview, 'Confirm changes presentation only');
+      assert.equal(app.querySelector('#reward-card-confirm').textContent, 'Continue');
+      app.querySelector('#reward-card-confirm').click();
+    }
     assert.equal(run.deck.length, before + 1);
     assert.ok(app.querySelector('#reward-level-continue'), 'a confirmed pick returns to the level popup');
     assert.equal(app.querySelector('.reward-kind[data-key="levelCard:0"]').dataset.state, 'taken');
@@ -261,7 +267,13 @@ test('each ready skill bar claims one level and lifts its own draft into the men
     offer.click();
     assert.equal(app.querySelectorAll('.reward-row .card').length, 2);
     app.querySelectorAll('.reward-row .card')[0].click();
-    app.querySelector('#reward-card-confirm').click();
+    {
+      const beforeReview = JSON.stringify(run);
+      app.querySelector('#reward-card-confirm').click();
+      assert.equal(JSON.stringify(run), beforeReview, 'Confirm changes presentation only');
+      assert.equal(app.querySelector('#reward-card-confirm').textContent, 'Continue');
+      app.querySelector('#reward-card-confirm').click();
+    }
     assert.equal(run.skills['item:blade'].pendingDrafts, 0);
   } finally {
     Object.assign(globalThis, saved);
@@ -288,7 +300,13 @@ test('a claimed character level offers a permanent feat instead of a default car
     app.querySelector('.reward-kind[data-key="levelChoice:0"]').click();
     assert.equal(app.querySelectorAll('.reward-row .reward-node').length, 3);
     app.querySelectorAll('.reward-row .reward-node')[0].click();
-    app.querySelector('#reward-card-confirm').click();
+    {
+      const beforeReview = JSON.stringify(run);
+      app.querySelector('#reward-card-confirm').click();
+      assert.equal(JSON.stringify(run), beforeReview, 'Confirm changes presentation only');
+      assert.equal(app.querySelector('#reward-card-confirm').textContent, 'Continue');
+      app.querySelector('#reward-card-confirm').click();
+    }
     assert.deepEqual(run.feats, ['fieldStudy']);
     assert.equal(run.deck.length, 0, 'the level choice did not add a card');
   } finally {
@@ -314,7 +332,13 @@ test('a character level can offer a class-tree choice alongside feats', () => {
     app.querySelector('.reward-level-up').click();
     app.querySelector('.reward-kind[data-key="levelChoice:0"]').click();
     app.querySelectorAll('.reward-row .reward-node')[1].click();
-    app.querySelector('#reward-card-confirm').click();
+    {
+      const beforeReview = JSON.stringify(run);
+      app.querySelector('#reward-card-confirm').click();
+      assert.equal(JSON.stringify(run), beforeReview, 'Confirm changes presentation only');
+      assert.equal(app.querySelector('#reward-card-confirm').textContent, 'Continue');
+      app.querySelector('#reward-card-confirm').click();
+    }
     assert.deepEqual(run.coreTags, ['ironFooting']);
     assert.deepEqual(run.feats || [], []);
   } finally {
@@ -557,9 +581,7 @@ test('no level claims itself: each waits for its press, and its popup lists only
       assert.equal(run.level.level, level);
       assert.deepEqual(app.querySelectorAll('.reward-level-rewards .reward-kind').map(row => row.dataset.key), [key], 'the popup lists this level\'s reward only');
       assert.equal(app.querySelector('.reward-door'), door, 'the one door stays open through every claim');
-      app.querySelector(`.reward-kind[data-key="${key}"]`).click();
-      app.querySelector('#reward-back').click();
-      assert.ok(app.querySelector('#reward-level-continue'), 'Back from the chooser returns to the level popup');
+      assert.ok(app.querySelector('#reward-level-continue'), 'an unchosen reward remains available while leaving its level popup');
       app.querySelector('#reward-level-continue').click();
       assert.equal(app.querySelector('#reward-continue').disabled, true, 'Continue is gated during the nonzero refill');
       await advance(0); // start the scheduled fill

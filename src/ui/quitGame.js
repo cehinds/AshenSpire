@@ -1,3 +1,5 @@
+import { t } from './strings.js';
+import { esc } from './components/tooltip.js';
 // Electron and script-opened windows honor window.close(). A normal browser
 // tab may refuse it without throwing, so keep an explicit, recoverable screen.
 export function mountQuitScreen(app, {
@@ -10,7 +12,7 @@ export function mountQuitScreen(app, {
 }) {
   app.innerHTML = `
     <div class="screen farewell">
-      <h1 class="title-big">THE EMBER GUTTERS</h1>
+      <h1 class="title-big">${esc(t('quit.title'))}</h1>
       <p class="subtitle" style="text-align:center" role="status" id="farewell-status">${savedRun ? 'Your climb is saved. ' : ''}Closing Ashen Spire…</p>
       <button class="subtle" id="farewell-back" data-back>Return to title</button>
     </div>`;

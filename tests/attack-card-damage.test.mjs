@@ -25,10 +25,10 @@ const expectedFaceEffects = (authored, upgraded) => {
   return applyActionCosts({ ...card, cost, effects }, card).effects;
 };
 // A sweep's damage stays unscaled at 2 SP (owner, 2026-10-13: its area pays for it).
-const scaledFor = (face, n) => (face.cost >= 2 && !(face.tags || []).includes('maneuver:sweep') ? Math.round(n * TWO_COST_EFFECT_MULTIPLIER) : n);
+const scaledFor = (face, n) => (face.costRule !== 'fixed' && face.cost >= 2 && !(face.cardTags || face.tags || []).includes('maneuver:sweep') ? Math.round(n * TWO_COST_EFFECT_MULTIPLIER) : n);
 // The formula reads the authored cost (the step runs after it), so the formula sees the authored face.
 const authoredFaceFor = (authored, upgraded) => ({ ...authored, effects: upgraded ? authored.upgrade.effects ?? authored.effects : authored.effects,
-  cost: upgraded && authored.upgrade?.cost !== undefined ? authored.upgrade.cost : authored.cost });
+  cost: authored.costRule === 'fixed' ? authored.cost : upgraded && authored.upgrade?.cost !== undefined ? authored.upgrade.cost : authored.cost });
 
 const defaults = contentBundle.balance.damage.attackCards;
 
@@ -50,7 +50,7 @@ test('every status has a configurable non-negative multiplier', () => {
   const rowKeys = new Set(advancedConfigRows(contentBundle).map((row) => row.key));
   for (const configName of ['attackCards', 'defenseCards', 'potencyCards', 'poiseCards', 'wardCards']) {
     assert.deepEqual(
-      Object.keys(contentBundle.balance.damage[configName].statusMultipliers).sort(),
+      Object.keys(tagged.balance.damage[configName].statusMultipliers).sort(),
       contentBundle.statuses.map((status) => status.id).sort(),
     );
     for (const status of contentBundle.statuses) {
@@ -66,15 +66,15 @@ test('every status has a configurable non-negative multiplier', () => {
 
 test('registry projection recalculates every fixed-cost attack and both card faces', () => {
   const registries = createRegistries(contentBundle);
-  for (const authored of contentBundle.cards.filter((card) => card.type === 'attack' && card.cost !== 'X')) {
+  for (const authored of contentBundle.cards.filter((card) => card.type === 'attack' && card.cost !== 'X' && !Array.isArray(card.gradeProfiles))) {
     for (const upgraded of [false, true]) {
       if (upgraded && !authored.upgrade) continue;
       const face = resolveCard(registries, { cardId: authored.id, upgraded });
       const config = cardIsMagical(face)
         ? registries.balance.damage.potencyCards
         : registries.balance.damage.attackCards;
-      const expected = attackCardBaseDamage(authoredFaceFor(authored, upgraded), config);
-      const primary = face.effects.find((effect) => effect.op === 'damage' && !effect.if);
+      const expected = attackCardBaseDamage({ ...authoredFaceFor(authored, upgraded), damageSchool: face.damageSchool, tags: face.tags }, config);
+      const primary = face.effects.find((effect) => effect.op === 'damage' && typeof effect.amount === 'number' && !effect.if);
       const conditional = face.effects.filter((effect) => effect.op === 'damage' && typeof effect.amount === 'number');
       const baseAmounts = authored.effects
         .filter((effect) => effect.op === 'damage' && typeof effect.amount === 'number');
@@ -412,4 +412,37 @@ test('a card a staff package deals resolves through the magical formulas', () =>
     'the PR formula moves it');
   const physical = resolveCard(tuned, { cardId: 'stomp', legacyAbility: true });
   assert.equal(physical.effects[0].amount, scaledFor(physical, authored.effects[0].amount), 'and not its physical face (after the action-cost step)');
+});
+
+
+test('fixed upgrades preserve authored value deltas while advanced settings still retune their base budget', () => {
+  for (const multiplier of [1, 2]) {
+    const bundle = configuredContentBundle(contentBundle, {
+      'gameConfig.balance.damage.attackCards.actionCostMultiplier': multiplier,
+    });
+    const reg = createRegistries(bundle);
+    const base = resolveCard(reg, { cardId: 'hewingArc' });
+    const upgraded = resolveCard(reg, { cardId: 'hewingArc', upgraded: true });
+    assert.equal(base.cost, 2);
+    assert.equal(upgraded.cost, 3, 'actual upgraded payment is preserved');
+    assert.equal(base.effects[0].amount, 6 + (multiplier - 1) * 2);
+    assert.equal(upgraded.effects[0].amount, 8 + (multiplier - 1) * 2);
+  }
+});
+
+
+test('fixed upgrade effect valuation leaves preview and live payment at its authored price', async () => {
+  const { createCombat, dispatch, previewCard } = await import('../src/engine/combat.js');
+  const { createRng } = await import('../src/engine/rng.js');
+  const reg = createRegistries(contentBundle);
+  const combat = createCombat({ registries: reg, rng: createRng(70), enemyIds: ['wanderingSoldier'],
+    player: { classId: 'reaver', hp: 100, maxHp: 100, energyMax: 10, mana: 10, maxMana: 10, drawPerTurn: 1,
+      deck: [{ cardId: 'hewingArc', upgraded: true, instanceId: 'fixed-upgrade' }] } });
+  const shown = previewCard(combat, 'fixed-upgrade');
+  assert.equal(shown.cost, 3);
+  assert.equal(shown.resolvedDefinition.effects[0].amount, 8);
+  const energy = combat.player.energy;
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'fixed-upgrade' });
+  assert.equal(combat.player.energy, energy - 3);
+  assert.equal(combat.eventLog.find(e => e.type === 'cardPlayed').energySpent, 3);
 });

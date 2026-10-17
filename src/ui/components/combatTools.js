@@ -1,3 +1,4 @@
+import { viewViewportBox } from '../viewViewport.js';
 import { button, el } from '../kit/index.js';
 import { childModel } from '../models/ComponentModel.js';
 import { combatLogHeight, combatLogSnapSize, combatLogDragScale, COMBAT_LOG_SIZES } from '../models/CombatToolsModel.js';
@@ -22,7 +23,8 @@ export function combatToolsTokens(combatEl) {
 
 // Controls a raised tools row must not cover (docs/hud-layout-tokens.md).
 const TOOLS_OBSTACLES = '.topbar, .turn-ribbon, .combat-hud, .combatant .intent, .combatant-card > :is(.nm,.meters),'
-  + ' .combatant-leading button, .combatant-info, .combatant-mini-hud, .player-action-intent';
+  + ' .combatant-leading button, .combatant-info, .combatant-mini-hud, .player-action-intent,'
+  + ' .target-hud-detail, .target-hud-inspect-info, .target-hud-overhead-meters, .hand .card';
 
 /** Screen boxes of every visible control and fighter tap target above the dock. */
 function toolsObstacles(combatEl, zoom) {
@@ -61,9 +63,22 @@ export function closeCombatFullLog(state) {
 // Gap between a corner tool and the combat screen's edge, in CSS px.
 const CORNER_INSET = 16;
 
-export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
+export function mountCombatTools(combatEl, { state, onToggle, onViewChange, onGridToggle }) {
   const root = markUiComponent(el('aside', { class: 'combat-tools', 'data-combat-read-only': '' }), UI.combatTools);
   const logButton = button({ label: t('combat.log.title'), attrs: { 'data-combat-tool': 'log', 'aria-expanded': 'false', 'aria-controls': 'combat-log' } });
+  const gridLabel = el('label', { class: 'combat-grid-toggle' });
+  const gridCheckbox = el('input', { type: 'checkbox', 'data-combat-tool': 'grid', 'aria-label': t('combat.grid.aria') });
+  gridLabel.append(gridCheckbox, el('span', { text: t('combat.grid.label') }));
+  const gridRoot = document.documentElement;
+  const syncGrid = () => { gridCheckbox.checked = gridRoot?.dataset?.formationGrid !== 'false'; };
+  syncGrid();
+  gridCheckbox.addEventListener('change', async () => {
+    const enabled = gridCheckbox.checked;
+    gridCheckbox.disabled = true;
+    try { await onGridToggle?.(enabled); }
+    catch (error) { console.warn('[combat] grid preference refused:', error.message); }
+    finally { if (!released) { syncGrid(); gridCheckbox.disabled = false; } }
+  });
   logButton.style.touchAction = 'none';
   logButton.style.userSelect = 'none';
   logButton.setAttribute('aria-keyshortcuts', 'ArrowUp ArrowDown Home End');
@@ -88,12 +103,12 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
   head.append(title, fullLog);
   const list = el('div', { class: 'combat-log-entries', 'data-combat-tool': 'entries', tabindex: '0', role: 'region', 'aria-label': t('combat.log.actions') });
   list.addEventListener('scroll', () => { state.scrollTop = list.scrollTop; state.followLatest = list.scrollTop + list.clientHeight >= list.scrollHeight - 4; });
-  panel.append(head, list); root.append(panel, logButton, reaction); combatEl.append(root);
+  panel.append(head, list); root.append(panel, logButton, reaction, gridLabel); combatEl.append(root);
   let drag = null, suppressClick = false, released = false;
   const snapHeights = () => {
     const menuBottom = [...combatEl.querySelectorAll('.topbar button')].reduce((max, node) => Math.max(max, node.getBoundingClientRect().bottom), 0);
     const space = { cardHeight: combatEl.querySelector('.hand .card')?.getBoundingClientRect().height || 250,
-      viewportHeight: window.visualViewport?.height || innerHeight, dockTop: root.getBoundingClientRect().top - 6,
+      viewportHeight: viewViewportBox().height, dockTop: root.getBoundingClientRect().top - 6,
       menuBottom, gap: parseFloat(getComputedStyle(root).getPropertyValue('--combat-tools-gap')) || 8 };
     return Object.fromEntries(COMBAT_LOG_SIZES.map(size => [size, combatLogHeight({ ...space, size })]));
   };
@@ -105,7 +120,7 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
     if (event.button !== 0 || drag) return;
     suppressClick = false;
     const heights = snapHeights();
-    const dragScale = combatLogDragScale({ heights, viewportHeight: window.visualViewport?.height || innerHeight,
+    const dragScale = combatLogDragScale({ heights, viewportHeight: viewViewportBox().bottom,
       handleBottom: root.getBoundingClientRect().bottom });
     const gesture = drag = { pointerId: event.pointerId, y: event.clientY, active: false,
       open: state.open, size: state.size, height: state.open ? heights[state.size] : heights.Small, heights };
@@ -158,36 +173,30 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
     const handBox = hand?.getBoundingClientRect();
     // HUD layout tokens (docs/hud-layout-tokens.md), read once per pass.
     const { span, dy } = combatToolsTokens(combatEl);
-    // 'field' (the default) spans the hand's full row, as it always has.
-    // 'hand' spans only the card band: the first card's left edge to the last
-    // card's right edge, never narrower than the two tools need.
-    let width = Math.max(0, (handBox?.width || innerWidth) - 12);
-    let left = (handBox?.right || innerWidth) - width - 6;
-    const band = span === 'hand' ? cardBand(hand) : null;
-    if (band && handBox) {
-      const minWidth = Math.min(handBox.width - 12, TOOLS_MIN_WIDTH * zoom);
-      width = Math.max(band.right - band.left, minWidth);
-      const center = (band.left + band.right) / 2;
-      left = Math.max(handBox.left + 6, Math.min(center - width / 2, handBox.right - 6 - width));
-    }
+    // Tools belong to the screen edges, never the current fan or hand width.
+    const width = Math.max(0, combatBox.width - 2 * CORNER_INSET * zoom);
+    const left = combatBox.left + CORNER_INSET * zoom;
     const localWidth = anchorLocalBox(VIEWPORT_ORIGIN, { left: 0, top: 0, width, height: 0 }, { zoom });
     root.style.width = `${localWidth.width}px`;
     // A compact toolbar occupies the top of the card band. It never consumes
     // hand width: doing that collapsed every card onto one slot on phones.
     combatEl.style.setProperty('--combat-tools-reserve', '0px');
-    // The vertical offset only raises the row (toolsRowTop): it may rise into
-    // the field but never leaves the combat screen, never covers a control
-    // above it, and never drops over the cards below its dock (dy > 0 is
-    // ignored). Its height is read only for a raise: at 0 no layout is forced.
-    // Owner (2026-10-12), desktop only: the log sits in the screen's left
-    // corner and the reaction switch in its right, level with the card
-    // bottoms, so the strip above the cards stays free.
-    const corners = globalThis.document?.documentElement?.dataset.formFactor === 'desktop' && handBox;
-    const dockTop = handBox?.top || 0;
-    const top = corners ? handBox.bottom - root.getBoundingClientRect().height - CORNER_INSET * zoom
-      : dy < 0 ? toolsRowTop({ dockTop, dy: dy * zoom, screenTop: combatBox.top,
-        row: { left, width, height: root.getBoundingClientRect().height }, obstacles: toolsObstacles(combatEl, zoom) }) : dockTop;
-    root.dataset.toolsPlacement = corners ? 'corners' : 'row';
+    // Negative offsets may raise the dock, but cannot cover artwork, cards,
+    // or controls. Compact docking needs the measured row height; the desktop
+    // footer already supplies its top and only measures a requested raise.
+    const corners = true;
+    const dockTop = combatEl.querySelector('.hand-area')?.getBoundingClientRect().top ?? handBox?.top ?? combatBox.bottom;
+    const split = combatEl.dataset.desktopFooter === 'true';
+    const footerControls = combatEl.querySelector('.combat-action-row');
+    const footerTop = split
+      ? combatBox.top + parseFloat(getComputedStyle(combatEl).getPropertyValue('--desktop-tools-top')) * zoom
+      : footerControls?.getBoundingClientRect().top ?? dockTop;
+    const rowHeight = !split || dy < 0 ? root.getBoundingClientRect().height : 0;
+    const defaultTop = split ? footerTop : footerTop - rowHeight - 4 / zoom;
+    const top = dy < 0 ? toolsRowTop({ dockTop: defaultTop, dy: dy * zoom,
+      row: { left, width, height: rowHeight }, screenTop: combatBox.top,
+      obstacles: toolsObstacles(combatEl, zoom) }) : defaultTop;
+    root.dataset.toolsPlacement = 'corners';
     const localDock = anchorLocalBox(combatEl, { left,
       top, width: 0, height: 0 }, { zoom });
     root.style.top = `${localDock.top}px`;
@@ -195,8 +204,8 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
     root.style.right = 'auto';
     if (corners) {
       // The corners hug the combat screen's own edges, in its local px.
-      root.style.left = `${CORNER_INSET}px`;
-      root.style.right = `${CORNER_INSET}px`;
+      root.style.left = `${split ? parseFloat(getComputedStyle(combatEl).getPropertyValue('--desktop-corner-inset')) : CORNER_INSET}px`;
+      root.style.right = `${split ? parseFloat(getComputedStyle(combatEl).getPropertyValue('--desktop-corner-inset')) : CORNER_INSET}px`;
       root.style.width = 'auto';
     }
     const height = drag?.active ? drag.height : snapHeights()[state.size];
@@ -223,6 +232,8 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
     if (records.some(record => record.oldValue !== document.documentElement.getAttribute('data-form-factor'))) flushGeometry();
   });
   formFactorObserver.observe(document.documentElement, { attributes: true, attributeOldValue: true, attributeFilter: ['data-form-factor'] });
+  const gridObserver = new MutationObserver(syncGrid);
+  gridObserver.observe(gridRoot, { attributes: true, attributeFilter: ['data-formation-grid'] });
   function update(model) {
     const toggle = childModel(model, UI.reactionToggle).properties;
     const log = childModel(model, UI.combatLogDrawer).properties;
@@ -246,5 +257,5 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
     focusedTool() { return root.contains(document.activeElement) ? document.activeElement.dataset.combatTool || null : null; },
     restoreFocus(token) { if (token) root.querySelector(`[data-combat-tool="${CSS.escape(token)}"]`)?.focus({ preventScroll: true }); },
     // A remount releases this instance but leaves an open full log to the next one.
-    release() { released = true; observer.disconnect(); formFactorObserver.disconnect(); cancelAnimationFrame(frame); window.visualViewport?.removeEventListener('resize', schedule); removeEventListener('resize', schedule); root.remove(); } };
+    release() { released = true; observer.disconnect(); formFactorObserver.disconnect(); gridObserver.disconnect(); cancelAnimationFrame(frame); window.visualViewport?.removeEventListener('resize', schedule); removeEventListener('resize', schedule); root.remove(); } };
 }
