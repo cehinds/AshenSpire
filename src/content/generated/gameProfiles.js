@@ -24928,7 +24928,7 @@ export const gameProfileCatalog = {
       "id": "ashen.source-runtime",
       "version": "1.0.0",
       "path": "src/** (excluding generated gameProfiles/changelog)",
-      "hash": "sha256:69889eaa08b1eab5ae851fcce06d0f7535522fbc42332dfa9c702792d1249a3c"
+      "hash": "sha256:b8d6ea931e9d671235fb81b7829397f65055dba155f8cfd2bb47f3ab26c69041"
     }
   ],
   "runtimeSources": [
@@ -24948,7 +24948,7 @@ export const gameProfileCatalog = {
       "path": "src/config/generated/ui.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:4fa1dab5eadfe9132d55f79432634b33d8206628d28d28970370b0239865a439"
+      "hash": "sha256:7c5eb6c05694eecd2fca46c6c7f6a8790d1e26fd04053ded0b988ceb3edbd5be"
     },
     {
       "path": "src/content/actionAnimations.js",
@@ -27978,7 +27978,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/components/battlefieldStage.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:11b5ff471f07239e0a2e4a199396eba3bbb773cda1b99fc76a6d0c2bfa04722c"
+      "hash": "sha256:d17f63d052da16894d0088d7a23dd3bcb64bf98e91ac043575e5fa68c12d019b"
     },
     {
       "path": "src/ui/components/bookArt.js",
@@ -29496,7 +29496,7 @@ export const gameProfileCatalog = {
       "path": "src/ui/models/TargetHudModel.js",
       "id": "ashen.source-runtime",
       "version": "1.0.0",
-      "hash": "sha256:a17d44a5064b84597b7c07d787afd1057c9d228e7c43d0c86e6d94ae77c55f25"
+      "hash": "sha256:bcf6e63ffbc873580ccc211b46ec6ed22de20d629b3aae6f32e40bc0dd37bcff"
     },
     {
       "path": "src/ui/models/TargetLayerModel.js",
@@ -29943,7 +29943,7 @@ export const gameProfileCatalog = {
       "hash": "sha256:3f9a67884765cb5f920ef530e66ccdcc2d826819e6f981359b771d44a5b5bf66"
     }
   ],
-  "runtimeHash": "sha256:60a241a13395fb3bf75b9c1c5d9429f640b7fdddae4962ec7e75724ac1038a3e"
+  "runtimeHash": "sha256:8b4675a87e84aa965b3d775e14c7317e7b1f6b450777242efecf8156c36a8a99"
 };
 export const gameProfileAuthors = {
   "default": {
