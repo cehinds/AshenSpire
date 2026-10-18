@@ -1,5 +1,5 @@
 // Validates the JSON UI layer (engine/ui/components, games/<game>/ui/screens) and writes engine/ui/index.json.
-// Beyond schema and refs it checks that every event names a command in engine/runtime/commands.json, every asset slot
+// Beyond schema and refs it checks that every event names a command in engine/ui/commands.json, every asset slot
 // resolves (catalog, games/<game>/assets/aliases.json or missing.json) and every src/ path in a description exists.
 //   node tools/ui-validate.mjs           validate, then write the index
 //   node tools/ui-validate.mjs --check   validate and fail if the index is stale (writes nothing)
@@ -12,7 +12,7 @@ import { buildAssetCatalog, readAliases, readMissing } from './asset-catalog.mjs
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const readJson = (file, root = ROOT) => JSON.parse(readFileSync(path.join(root, file), 'utf8'));
-const COMMANDS_FILE = 'engine/runtime/commands.json';
+const COMMANDS_FILE = 'engine/ui/commands.json';
 const SRC_PATH = /src\/[\w/.-]+\.js(?![\w])/g;
 const GATED_FIELDS = ['sp', 'mp', 'cardCosts'];
 const VISIBILITY_QUERY = 'enemy_visibility.visibleFields';

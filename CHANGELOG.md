@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-18
 
+- **UI command registry moved out of the save-hash scope** ([#2096](https://github.com/cehinds/AshenSpire/pull/2096), `0.7.1.1575`). engine/runtime/commands.json now lives at engine/ui/commands.json, so editing button wiring no longer invalidates in-progress saves; saves made before #2092 resume again.
+
 - **The local dev server can reload the game as you edit** ([#2090](https://github.com/cehinds/AshenSpire/pull/2090), `0.7.1.1575`). Development-process change only, nothing in the game changes. Starting the local server with --watch reloads the page when a source, style, content or game file changes, rebuilds the compiled content first, and shows a build error on screen instead of a broken page.
 - **The JSON user-interface layer is checked against the code it describes** ([#2092](https://github.com/cehinds/AshenSpire/pull/2092), `0.7.1.1573`). Development-process change only, nothing in the game changes. Every command a JSON screen or component names is registered, every art slot it names resolves to a catalog entry or a deliberate placeholder, and every source file it mentions must exist, so the JSON layer cannot silently drift from the game.
 - **Performance and download-size budgets can be measured** ([#2091](https://github.com/cehinds/AshenSpire/pull/2091), `0.7.1.1571`). Development-process change only, nothing in the game changes. Two tools count the combat screen's layout work per card play and the size of every build output against the preview-build budgets, so later performance fixes can show before and after numbers.
