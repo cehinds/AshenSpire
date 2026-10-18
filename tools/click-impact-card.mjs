@@ -9,14 +9,14 @@ export function hasImmediateHostileDamage(def, { targeted = false } = {}) {
     && (targeted ? effect.target === 'enemy' : HOSTILE_TARGETS.has(effect.target)));
 }
 
-// A Counter may give immediate protection while its attack waits for a reply.
-// Keep that visible preparation eligible without counting the deferred damage.
+// Immediate protection, including Counter preparation, provides a visible
+// numeric readout even when the hostile matchup cannot be hit from this range.
 export function hasImmediateCombatImpact(def) {
   const effects = immediateCardEffects(def);
   return hasImmediateHostileDamage(def)
     || effects.some(effect => ['poiseDamage', 'wardDamage'].includes(effect.op)
       && HOSTILE_TARGETS.has(effect.target))
-    || (def?.counterPayload != null && effects.some(effect =>
+    || effects.some(effect =>
       ['block', 'gainBarrier', 'gainPoise', 'gainWard'].includes(effect.op)
-      && effect.target === 'self'));
+      && effect.target === 'self');
 }

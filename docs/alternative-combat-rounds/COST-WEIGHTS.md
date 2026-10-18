@@ -222,6 +222,7 @@ player's piles).
 | `oath` | 0 | SP | An archetype chip. |
 | `ash` | 0 | SP | An archetype chip. |
 | `basic` | 0 | SP | An archetype chip. |
+| `rank.cantrip` | 0 | SP | Training classification only; the numerical rank and authored effects own the cost. |
 | `extractable` | 0 | SP | A loot marker. |
 | `target` | 0 | MP | Spell identity; its authored effects and range own the price. |
 | `hex` | 0 | MP | Spell identity; its authored effects and range own the price. |

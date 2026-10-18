@@ -1,4 +1,4 @@
-// Core preview route (owner, 2026-10-18): the intent module's `reads: exact` shows every enemy intent exactly and
+// Archived Core1 preview route (owner, 2026-10-18): the intent module's `reads: exact` shows every enemy intent exactly and
 // skips the hidden-intent roll (SPEC §4.7). A run without that setting (Current, the legacy fallback) keeps the roll.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -31,15 +31,15 @@ function playTurns(combat, turns) {
   return reads;
 }
 
-test('Core resolves intent reads exact; Current and the module default stay rolled', () => {
-  assert.equal(gameModule({ gameProfile: resolveGameProfile('core') }, 'intent').reads, 'exact');
+test('Core1 resolves intent reads exact; Current and the module default stay rolled', () => {
+  assert.equal(gameModule({ gameProfile: resolveGameProfile('ashen.core@1.0.0') }, 'intent').reads, 'exact');
   assert.equal(gameModule({ gameProfile: resolveGameProfile('current') }, 'intent')?.reads ?? 'rolled', 'rolled');
 });
 
-test('Core: every enemy intent is read exactly and the visibility stream is never drawn, across 20 seeds', () => {
+test('Core1: every enemy intent is read exactly and the visibility stream is never drawn, across 20 seeds', () => {
   let seen = 0;
   for (let seed = 1; seed <= 20; seed++) {
-    const { combat, rng } = fixture('core', seed);
+    const { combat, rng } = fixture('ashen.core@1.0.0', seed);
     const reads = playTurns(combat, 4);
     for (const e of combat.enemies) if (e.intent?.combatProfile?.camp) assert.equal(e.intentRevealed, true, `seed ${seed}`);
     for (const read of reads) assert.equal(read, true, `seed ${seed}`);
@@ -49,8 +49,8 @@ test('Core: every enemy intent is read exactly and the visibility stream is neve
   assert.ok(seen > 0, 'the fixture must actually present camp intents');
 });
 
-test('Core: the exact rule survives a mid-fight save and restore', () => {
-  const { run, combat, rng } = fixture('core', 5);
+test('Core1: the exact rule survives a mid-fight save and restore', () => {
+  const { run, combat, rng } = fixture('ashen.core@1.0.0', 5);
   const saved = JSON.parse(JSON.stringify(serializeCombatSnapshot(combat)));
   const restored = restoreCombatSnapshot({ registries: combat.registries, rng: createRng(5), snapshot: saved, expectedGameProfile: run.gameProfile });
   playTurns(restored, 3);

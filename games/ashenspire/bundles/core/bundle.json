@@ -1,6 +1,6 @@
 {
   "id": "ashen.core",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "profileId": "core",
   "foundationMode": "configured",
   "modules": {
@@ -10,7 +10,9 @@
     },
     "resources": {
       "version": "1.0.0",
-      "settings": {}
+      "settings": {
+        "chargeFlaskCapacityPerPickup": 1
+      }
     },
     "stats": {
       "version": "1.0.0",
@@ -26,7 +28,9 @@
     },
     "effects": {
       "version": "1.0.0",
-      "settings": {}
+      "settings": {
+        "fixCoreVersion": 1
+      }
     },
     "statuses": {
       "version": "1.0.0",
@@ -39,7 +43,11 @@
     "gear": {
       "version": "1.0.0",
       "settings": {
-        "pools": "merged"
+        "pools": "merged",
+        "armorBudget": {
+          "baseline": 3,
+          "perRank": 1
+        }
       }
     },
     "class-selection": {
@@ -48,7 +56,9 @@
     },
     "progression": {
       "version": "1.0.0",
-      "settings": {}
+      "settings": {
+        "entitlementPolicy": "authored"
+      }
     },
     "routes": {
       "version": "1.0.0",
@@ -141,7 +151,7 @@
   "packs": [
     {
       "id": "ashen.core-content",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "path": "../../packs/core/pack.json"
     },
     {
@@ -162,7 +172,8 @@
         "branchColumns": "branchColumns",
         "minimumThreatFloor": "minimumThreatFloor",
         "mapMode": "mapMode",
-        "firstFloor": "firstFloor"
+        "firstFloor": "firstFloor",
+        "requirePrebossRest": "requirePrebossRest"
       }
     },
     {
@@ -181,7 +192,8 @@
       "module": "rewards",
       "settings": {
         "offerCount": "offerCount",
-        "takeCount": "takeCount"
+        "takeCount": "takeCount",
+        "rewardGroups": "rewardGroups"
       }
     },
     {
@@ -189,7 +201,8 @@
       "module": "shops",
       "settings": {
         "offerCount": "options",
-        "price": "price"
+        "price": "price",
+        "itemsPerCategory": "itemsPerCategory"
       }
     },
     {

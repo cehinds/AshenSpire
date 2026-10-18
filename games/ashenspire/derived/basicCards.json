@@ -276,9 +276,34 @@
         }
       ],
       "copiesWithBasicTraining": "owned"
+    },
+    {
+      "id": "core.cantrip",
+      "name": "Arcane Spark",
+      "rarity": "starter",
+      "rank": 0,
+      "type": "attack",
+      "sp": 1,
+      "mp": 0,
+      "tags": [
+        "camp:spell",
+        "source:spell",
+        "maneuver:casting",
+        "classification.attack",
+        "rank.cantrip"
+      ],
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 6
+        }
+      ],
+      "copiesWithBasicTraining": "owned"
     }
   ],
   "cantrips": [
-    "core.starseerSpecial"
+    "core.starseerSpecial",
+    "core.cantrip"
   ]
 }

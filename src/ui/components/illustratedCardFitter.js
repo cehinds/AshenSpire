@@ -16,9 +16,11 @@ export function fitIllustratedCards(cards) {
       const rules=text.dataset.cardBinding==='rules';
       const layer=text.parentElement;
       // Compact faces fit within the authored three-line rule budget. The
-      // inspection face keeps every line and may grow its parchment into art.
+      // inspection face keeps every line; it and selected hand faces may
+      // borrow artwork height so readable rules stay inside their parchment.
       const fullRules=face.dataset.fullRules==='true';
-      const row={face,text,layer,scale,rules,fullRules,compact:rules&&!fullRules,
+      const expandedHandRules=rules&&Number(text.dataset.maxLines)>3;
+      const row={face,text,layer,scale,rules,fullRules,compact:rules&&!fullRules&&!expandedHandRules,
         lines:rules?(fullRules?Infinity:Number(text.dataset.maxLines)||3):Number(text.dataset.maxLines)||1,
         hasHiddenLines:Boolean(face.querySelector('[data-face-overflow="true"]')),
         hasHiddenRules:face.dataset.rulesOverflow==='true'};
@@ -121,7 +123,7 @@ export function fitIllustratedCards(cards) {
   }
   for(const row of narrow){row.result=row.lo;row.text.style.fontSize=row.result+'px';row.text.dataset.fittedFont=String(row.result/row.scale);}
   for(const row of rules){
-    if(row.compact){row.face.dataset.rulesExpanded='false';row.face.dataset.rulesNarrowFit='false';continue;}
+    if(row.compact){row.face.dataset.rulesExpanded='false';row.face.dataset.rulesNarrowFit='false';row.text.dataset.rulesComplete='false';continue;}
     row.boxHeight=row.authoredHeight;row.extra=Math.min(row.growthLimit,Math.max(0,(row.text.scrollHeight-row.boxHeight)/row.interiorScale));row.face.dataset.rulesNarrowFit=String(narrow.includes(row));
   }
   for(const row of rules){

@@ -3,6 +3,7 @@
   "reference": { "file": "src/model/formulas.js", "symbol": "evaluate" },
   "description": "Closed set of formula objects. A value is a number or { f: <op>, ... }. No strings are parsed.",
   "flooring": {
+    "scalar": "Modifier calculations and formulas declaring numeric: scalar preserve fractions using evaluateRaw; default quantity formulas retain final flooring.",
     "rule": "The final result of every evaluation is floored once toward negative infinity (Math.floor).",
     "clamps": "Any node may carry min and max. They apply to that node's raw value before the final floor.",
     "exception": "stacks with per floors the division at once (whole groups of per).",

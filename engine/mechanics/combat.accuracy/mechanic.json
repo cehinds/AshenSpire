@@ -1,0 +1,83 @@
+{
+  "id": "combat.accuracy",
+  "tag": "combat:accuracy",
+  "version": "1.0.0",
+  "family": "combat",
+  "label": "Accuracy rules",
+  "description": "Validated parameters queried by the existing live combat primitives.",
+  "attaches": [
+    "run",
+    "entity",
+    "character",
+    "gear",
+    "relic",
+    "status",
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "portability": "portable",
+  "authored": true,
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "baseAC": {
+        "type": "number",
+        "minimum": 0
+      },
+      "evasionPerStack": {
+        "type": "number",
+        "minimum": 0
+      },
+      "precisionPerStack": {
+        "type": "number",
+        "minimum": 0
+      },
+      "maneuverPrecision": {
+        "type": "object",
+        "properties": {
+          "smash": {
+            "type": "number",
+            "minimum": 0
+          },
+          "sweep": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "smash",
+          "sweep"
+        ],
+        "additionalProperties": false
+      },
+      "stanceMinimum": {
+        "type": "number",
+        "minimum": 0
+      },
+      "stanceMaximum": {
+        "type": "number",
+        "minimum": 0
+      },
+      "stanceAdvantageBonus": {
+        "type": "number",
+        "minimum": 0
+      }
+    },
+    "required": [
+      "baseAC",
+      "evasionPerStack",
+      "precisionPerStack",
+      "maneuverPrecision",
+      "stanceMinimum",
+      "stanceMaximum"
+    ],
+    "additionalProperties": false
+  },
+  "stateScope": "instance"
+}

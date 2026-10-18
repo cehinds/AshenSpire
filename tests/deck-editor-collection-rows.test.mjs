@@ -54,10 +54,13 @@ test('different effects, upgrades and ranks stay separate even when their names 
     Object.assign(grant, saved);
   }
 });
-test('the ten-card core starter retains each distinct card row and accurate finite counts', () => {
+test('the ten-card core starter retains owned counts and exposes trained basics', () => {
   const { run, rows } = fixture('core');
   assert.equal(run.deck.length, 10);
-  assert.deepEqual(rows().map(row => row.cardId).sort(), [...new Set(run.deck.map(card => card.cardId))].sort());
+  assert.deepEqual(rows().filter(row => row.inDeck > 0).map(row => row.cardId).sort(), [...new Set(run.deck.map(card => card.cardId))].sort());
   assert.equal(rows().reduce((sum, row) => sum + row.inDeck, 0), 10);
-  assert.equal(rows().find(row => row.cardId === 'core.strike').owned, 3);
+  assert.equal(rows().find(row => row.cardId === 'core.strike').owned, Infinity);
+  assert.equal(rows().find(row => row.cardId === 'core.evade').inDeck, 0);
+  assert.equal(rows().find(row => row.cardId === 'core.evade').owned, Infinity);
+  assert.equal(rows().find(row => row.cardId === 'base.draw').owned, 1);
 });

@@ -1,0 +1,65 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { contentBundle } from '../src/content/index.js';
+import { createRegistries } from '../src/model/registries.js';
+import { createCombat, dispatch } from '../src/engine/combat.js';
+import { createRng } from '../src/engine/rng.js';
+import { applyStatus, decayAtTurnStart, getMult } from '../src/engine/statuses.js';
+import { staggerEnemy } from '../src/engine/actions.js';
+import { fixCoreRules } from '../src/model/fixCoreMechanics.js';
+import { sourceRatingValue } from '../src/model/combatRatings.js';
+import { stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../src/model/stanceRules.js';
+import { attackHitPreview, resolveAttackHit } from '../src/engine/stanceHit.js';
+import { rollKnowledgeRead } from '../src/model/enemyIntentKnowledge.js';
+import { enemyKnowledge } from '../src/content/enemyKnowledge.js';
+
+function setup() {
+ const ctx=createCombat({registries:createRegistries(contentBundle),rng:createRng(123),combatExpansionVersion:2,enemyIds:['wanderingSoldier'],
+  player:{classId:'rogue',maxHp:100,hp:100,maxMana:10,mana:10,maxStamina:10,stamina:10,energyMax:10,drawPerTurn:1,deck:[]}});
+ ctx.fixCoreRules=structuredClone(fixCoreRules(ctx));
+ ctx.player.ratings={ar:8,dr:5,pr:2,ward:0,poise:0};ctx.player.statuses={};delete ctx.player.combatStance;
+ const enemy=ctx.enemies[0];enemy.statuses={};enemy.attributes={dexterity:4};enemy.block=0;enemy.combatStance={maneuver:'attack',camp:'physical',range:'melee'};
+ return {ctx,enemy};
+}
+test('equipped totals affect sourced cards and Weak scales AR only',()=>{
+ const {ctx}=setup();ctx.player.ratingSources=[{kind:'attribute',ar:5},{kind:'equipment',sourceId:'sword',ar:2},{kind:'equipment',sourceId:'other',ar:100},{kind:'equipment',sourceId:'armor/reaver/plate',slot:'armor',ar:1}];
+ assert.equal(sourceRatingValue(ctx,ctx.player,'ar','sword',true),8);
+ applyStatus(ctx,ctx.player,'weak',2,ctx.player);
+ assert.equal(sourceRatingValue(ctx,ctx.player,'ar','sword',true),6);
+ assert.equal(getMult(ctx,ctx.player,'damageDealtMult'),1);
+});
+test('stagger adds all three stacks and owner-start decay runs once per round',()=>{
+ const {ctx,enemy}=setup();staggerEnemy(ctx,enemy);staggerEnemy(ctx,enemy);
+ assert.equal(enemy.statuses.staggered.stacks,2);assert.equal(enemy.statuses.weak.stacks,2);assert.equal(enemy.statuses.vulnerable.stacks,2);
+ assert.equal(getMult(ctx,enemy,'damageTakenMult'),1.25);
+ decayAtTurnStart(ctx,enemy);decayAtTurnStart(ctx,enemy);
+ assert.equal(enemy.statuses.staggered.stacks,1);assert.equal(enemy.skipNextTurn,true);
+ ctx.turn++;decayAtTurnStart(ctx,enemy);assert.equal(enemy.statuses.staggered,undefined);
+});
+test('matching stance discounts only the used resource lane and preserves fractions',()=>{
+ const {ctx}=setup();const physical={combatProfile:{camp:'physical',maneuver:'attack'}},magic={combatProfile:{camp:'spell',maneuver:'casting',range:'ranged'}};
+ ctx.player.combatStance={camp:'physical',maneuver:'attack'};
+ assert.equal(stanceStaminaCost(3,ctx.player,physical,ctx),2);assert.equal(stanceStaminaCost(0,ctx.player,physical,ctx),0);
+ assert.equal(stanceEffectiveness(ctx,ctx.player,physical),1.0025);
+ ctx.player.combatStance={camp:'spell',maneuver:'casting'};
+ assert.equal(stanceManaCost(3,ctx.player,magic,ctx),2);assert.equal(stanceManaCost(1,ctx.player,magic,ctx),1);assert.equal(stanceManaCost(0,ctx.player,magic,ctx),0);
+ assert.equal(stanceStaminaCost(3,ctx.player,magic,ctx),3);
+});
+test('d20 odds exactly match resolution, including natural limits and stance clamp',()=>{
+ const {ctx,enemy}=setup();const carrier={combatProfile:{camp:'physical',maneuver:'smash',range:'melee'}};
+ enemy.statuses.evade={stacks:3};enemy.stanceAdvantageRating=3;ctx.player.statuses.precision={stacks:2};
+ const preview=attackHitPreview(ctx,ctx.player,enemy,carrier);
+ assert.equal(preview.evasion,12);assert.equal(preview.accuracy,3);assert.equal(preview.stanceFactor,1.5);
+ let hit=0;
+ for(let roll=1;roll<=20;roll++) {ctx.rng={int:()=>roll};if(resolveAttackHit(ctx,ctx.player,{...enemy,statuses:structuredClone(enemy.statuses)},carrier).hit)hit++;}
+ assert.equal(preview.hitChance,hit*5);
+ ctx.rng={int:()=>1};assert.equal(resolveAttackHit(ctx,ctx.player,enemy,carrier).hit,false);
+ enemy.attributes.dexterity=1000;ctx.rng={int:()=>20};assert.equal(resolveAttackHit(ctx,ctx.player,enemy,carrier).hit,true);
+});
+test('Perception uses target level/INT and WIS d20, with stable read metadata',()=>{
+ const {ctx}=setup();const target={level:3,attributes:{intelligence:2}},observer={attributes:{wisdom:2}};
+ // DC5 +2 levels +2 INT =9; roll7 + WIS2 meets it.
+ const passed=rollKnowledgeRead({float:()=>.3},enemyKnowledge,observer,'Attack',{ctx,target});
+ assert.deepEqual(passed.perception,{roll:7,wisdom:2,dc:9,total:9,passed:true});
+ assert.equal(rollKnowledgeRead({float:()=>.25},enemyKnowledge,observer,'Attack',{ctx,target}).visibility,'unknown');
+});

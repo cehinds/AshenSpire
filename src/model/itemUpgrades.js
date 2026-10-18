@@ -122,7 +122,7 @@ export function resolveUpgradedEquipment(registries, itemRef, level = 0) {
       if (poiseThreshold < 0) throw new Error(`${itemRef} poiseThreshold would fall below zero`);
     }
   }
-  return Object.freeze({ ...base, poiseThreshold });
+  return Object.freeze({ ...base, poiseThreshold, upgradeLevel: level });
 }
 
 /** Resolve one relic definition at a tier without mutating frozen content. */
