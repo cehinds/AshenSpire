@@ -36,9 +36,10 @@ if (process.argv.includes('--selftest')) {
       },
       {
         name: 'a class loses its authored signature card',
-        file: 'src/content/classes.js',
-        find: "startingSignatureCard: 'gorefireSlash',",
-        replace: "startingSignatureCard: 'starstonePebble',",
+        file: 'content/source/classes.json',
+        find: '"startingSignatureCard": "gorefireSlash",',
+        replace: '"startingSignatureCard": "starstonePebble",',
+        prep: [['node', 'tools/content-build.mjs']],
         expectRed: /FAIL reaver declares exactly one signature/,
       },
       {
